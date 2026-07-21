@@ -79,6 +79,26 @@ describe('OrganizationService', () => {
       req.flush(mockResponse);
     });
 
+    // The list endpoint is the only one resolving caller-membership info
+    // (`isOwner` + `roles`); the account Roles tab renders these fields.
+    it('should expose caller membership info carried by list items', () => {
+      const memberOrg: OrganizationOutput = {
+        ...mockOrg,
+        isOwner: true,
+        roles: [{ id: 'role-uuid-1', label: 'fire_safety_officer' }],
+      };
+
+      service.list().subscribe((response) => {
+        expect(response.member[0].isOwner).toBe(true);
+        expect(response.member[0].roles).toEqual([
+          { id: 'role-uuid-1', label: 'fire_safety_officer' },
+        ]);
+      });
+
+      const req = httpMock.expectOne(baseUrl);
+      req.flush(mockCollection([memberOrg]));
+    });
+
     it('should send GET request with pagination options', () => {
       service.list({ page: 2, itemsPerPage: 10 }).subscribe();
 

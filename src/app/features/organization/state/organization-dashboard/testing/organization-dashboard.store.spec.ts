@@ -22,43 +22,41 @@ describe('DashboardStore', () => {
   };
 
   const organization = { id: 'org-1', name: 'Fireguard' } as unknown as OrganizationOutput;
-  const recentIntervention = {
-    id: 'int-1',
-    number: 2048,
-    name: 'Contrôle annuel extincteurs',
-    status: 'in_progress',
-    priority: 'high',
-    siteId: 'fac-1',
-    siteName: 'Siège — Paris 12e',
-    responsibleId: 'member-1',
-    responsibleName: 'Claire Lefèvre',
-    responsibleAvatarUrl: null,
-    dueAt: '2026-07-18T00:00:00+00:00',
-    updatedAt: '2026-07-15T09:30:00+00:00',
-  };
   const dashboard = {
     overview: {
-      facilities: { summary: [{ value: 4 }] },
-      members: { summary: [{ value: 12 }] },
-      equipment: { summary: [{ value: 18 }] },
-      inspections: { summary: [{ value: 7 }] },
+      equipment: {
+        summary: [
+          { key: 'total', value: 18 },
+          { key: 'active', value: 15 },
+          { key: 'maintenance', value: 2 },
+          { key: 'out_of_service', value: 1 },
+        ],
+      },
+      inspections: {
+        summary: [
+          { key: 'total', value: 7 },
+          { key: 'pass', value: 5 },
+          { key: 'partial', value: 1 },
+          { key: 'fail', value: 1 },
+        ],
+      },
+      nonConformities: {
+        summary: [
+          { key: 'open', value: 6 },
+          { key: 'severityCritical', value: 2 },
+          { key: 'severityHigh', value: 3 },
+          { key: 'severityMedium', value: 1 },
+          { key: 'severityLow', value: 0 },
+        ],
+      },
+      interventions: {
+        summary: [
+          { key: 'open', value: 4 },
+          { key: 'overdue', value: 2 },
+        ],
+      },
     },
-    comparison: {
-      metrics: [{ key: 'facilities', value: 2, direction: 'up' }],
-    },
-    trends: {
-      facilities: [
-        { bucket: '2026-07-13', value: 2 },
-        { bucket: '2026-07-14', value: 3 },
-        { bucket: '2026-07-15', value: 4 },
-      ],
-      members: [
-        { bucket: '2026-07-13', value: 12 },
-        { bucket: '2026-07-14', value: 12 },
-      ],
-      equipment: [],
-    },
-    recentInterventions: [recentIntervention],
+    comparison: {},
   } as unknown as OrganizationDashboardOutput;
 
   beforeEach(() => {
@@ -89,28 +87,40 @@ describe('DashboardStore', () => {
       expect.objectContaining({ from: expect.any(String), to: expect.any(String) }),
     );
     expect(store.queryData()).toEqual(dashboard);
-    expect(store.facilityCount()).toBe(4);
-    expect(store.membersComparison()).toBeNull();
-    expect(store.facilitiesComparison()).toEqual({ value: 2, direction: 'up' });
   });
 
-  it('should map embedded trend series to numeric sparkline points', async () => {
+  it('should read the open and overdue intervention counts by key', async () => {
     await flushEffects();
 
-    expect(store.facilitiesSparkline()).toEqual([2, 3, 4]);
-    expect(store.membersSparkline()).toEqual([12, 12]);
+    expect(store.openInterventionCount()).toBe(4);
+    expect(store.overdueInterventionCount()).toBe(2);
   });
 
-  it('should expose null sparklines for empty or missing series', async () => {
+  it('should expose the severity breakdown worst first with zero-filled buckets', async () => {
     await flushEffects();
 
-    expect(store.equipmentSparkline()).toBeNull();
-    expect(store.inspectionsSparkline()).toBeNull();
+    expect(store.nonConformitiesBySeverity()).toEqual([
+      { severity: 'critical', count: 2 },
+      { severity: 'high', count: 3 },
+      { severity: 'medium', count: 1 },
+      { severity: 'low', count: 0 },
+    ]);
   });
 
-  it('should expose the embedded recent interventions', async () => {
+  it('should expose the equipment status and inspection result breakdowns', async () => {
     await flushEffects();
 
-    expect(store.recentInterventions()).toEqual([recentIntervention]);
+    expect(store.equipmentByStatus().length).toBeGreaterThan(0);
+    expect(store.inspectionsByResult().length).toBeGreaterThan(0);
+  });
+
+  it('should read null intervention metrics when the section is absent', async () => {
+    mockOrganizationService.getDashboard.mockReturnValue(
+      of({ overview: {}, comparison: {} } as unknown as OrganizationDashboardOutput),
+    );
+    await flushEffects();
+
+    expect(store.openInterventionCount()).toBeNull();
+    expect(store.overdueInterventionCount()).toBeNull();
   });
 });

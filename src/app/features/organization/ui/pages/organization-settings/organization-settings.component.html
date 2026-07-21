@@ -10,12 +10,12 @@
   <div class="mb-6 flex flex-col gap-1">
     @if (activeOrganizationStore.selectedOrganization(); as organization) {
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span
-          class="truncate font-semibold text-surface-950 dark:text-surface-50"
+        <h1
+          class="truncate text-2xl font-semibold tracking-[-0.02em] text-surface-950 dark:text-surface-50"
           data-testid="organization-settings-name"
         >
           {{ organization.name }}
-        </span>
+        </h1>
         @if (statusDescriptor(); as status) {
           <app-tag
             [descriptor]="status"
@@ -24,14 +24,21 @@
           />
         }
       </div>
-    }
 
-    <p
-      i18n="@@org.settings.pageSubtitle"
-      class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
-    >
-      Manage workspace preferences, subscription, usage, and organization-wide policies.
-    </p>
+      <p
+        i18n="@@org.settings.pageSubtitleNamed"
+        class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+      >
+        Manage {{ organization.name }}'s profile, members and access.
+      </p>
+    } @else {
+      <p
+        i18n="@@org.settings.pageSubtitle"
+        class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+      >
+        Manage workspace preferences, subscription, usage, and organization-wide policies.
+      </p>
+    }
   </div>
 
   <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">

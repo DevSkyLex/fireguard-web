@@ -1,5 +1,4 @@
 import { computed, inject } from '@angular/core';
-import { MessagingSidebar } from '@features/organization/features/messaging/ui/components/messaging-sidebar/messaging-sidebar.component';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -39,7 +38,10 @@ export function withMessagingSidebar(): DashboardLayoutSidebarSlotFeature {
         id: 'messaging-sidebar',
         order: 20,
         region: 'content',
-        component: MessagingSidebar,
+        loadComponent: () =>
+          import('@features/organization/features/messaging/ui/components/messaging-sidebar/messaging-sidebar.component').then(
+            (m) => m.MessagingSidebar,
+          ),
         available: computed((): boolean => {
           if (!context.selectedOrganization()) return false;
 

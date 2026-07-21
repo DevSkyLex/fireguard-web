@@ -199,20 +199,6 @@ export interface OrganizationDashboardTrendOutput extends HydraItem {
 }
 
 /**
- * Type OrganizationDashboardOverviewTrendResource
- *
- * @description
- * Shape of the `rxResource` value for the overview trend card,
- * which combines all three dashboard trend datasets in a single
- * parallel load.
- */
-export type OrganizationDashboardOverviewTrendResource = {
-  readonly inspections: OrganizationDashboardTrendOutput;
-  readonly ncOpened: OrganizationDashboardTrendOutput;
-  readonly ncResolved: OrganizationDashboardTrendOutput;
-};
-
-/**
  * Type OrganizationDashboardTrendResourceParams
  *
  * @description

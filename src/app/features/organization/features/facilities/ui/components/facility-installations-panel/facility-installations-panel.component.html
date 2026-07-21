@@ -1,90 +1,83 @@
-@let facility = this.facility();
-
 <section
-  class="rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  class="flex min-h-0 flex-col overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
   <header
     class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
     <h2
-      i18n="@@facility.installations.title"
+      i18n="@@facility.subLocations.title"
       class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
     >
-      Installations
+      Sub-locations
     </h2>
     <span class="text-xs text-surface-500 tabular-nums dark:text-surface-400">{{
       installationCount()
     }}</span>
   </header>
 
-  <div class="space-y-2 p-4">
-    <div
-      class="flex items-center justify-between rounded-md border border-surface-200 px-3 py-2 dark:border-surface-700"
-    >
-      <div class="flex min-w-0 items-center gap-2">
-        <i [class]="facilityTypeIcons[facility.type]" class="text-sm text-surface-500"></i>
-        <span class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
-          {{ facility.name }}
-        </span>
-      </div>
-      <app-tag [descriptor]="statusDescriptor(facility.status)" />
-    </div>
-
+  <div class="max-h-[440px] overflow-y-auto p-2">
     @if (directChildren().length === 0) {
       <p
         i18n="@@facility.installations.empty"
-        class="px-1 text-xs text-surface-500 dark:text-surface-400"
+        class="px-2 py-2 text-xs text-surface-500 dark:text-surface-400"
       >
         No child installation loaded.
       </p>
     } @else {
-      <ul class="space-y-1 pl-3">
+      <ul class="space-y-1">
         @for (child of directChildren(); track child.id) {
           <li>
             <button
               type="button"
-              class="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left hover:bg-surface-50 dark:hover:bg-surface-800/60"
+              class="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left hover:bg-surface-50 dark:hover:bg-surface-800/60"
               (click)="navigate.emit(child)"
             >
-              <span class="flex min-w-0 items-center gap-2">
-                <i
-                  [class]="facilityTypeIcons[child.type]"
-                  class="text-xs text-surface-500"
-                  aria-hidden="true"
-                ></i>
-                <span class="truncate text-xs text-surface-700 dark:text-surface-300">
-                  {{ child.name }}
-                </span>
-                <!-- The glyph alone named nothing: not for a screen reader, and
-                     not for anyone who has not learnt the icon set. -->
+              <span
+                class="grid size-7 shrink-0 place-content-center rounded-md bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+              >
+                <i [class]="facilityTypeIcons[child.type]" class="text-xs" aria-hidden="true"></i>
+              </span>
+              <span
+                class="min-w-0 flex-1 truncate text-sm font-medium text-surface-900 dark:text-surface-100"
+              >
+                {{ child.name }}
+              </span>
+              <!-- The glyph alone named nothing: not for a screen reader, and
+                   not for anyone who has not learnt the icon set. -->
+              <span
+                class="shrink-0 text-[11px] text-surface-500 dark:text-surface-400"
+                data-testid="installation-type-label"
+              >
+                {{ typeLabel(child.type) }}
+              </span>
+              <!--
+                How much is actually installed here. `equipmentCount` is
+                counted server-side through the Equipment module's port; the
+                Facility resource carries no equipment data of its own, so
+                before it existed this row could only name the place.
+              -->
+              @if (child.equipmentCount !== undefined) {
                 <span
-                  class="shrink-0 text-[11px] text-surface-500 dark:text-surface-400"
-                  data-testid="installation-type-label"
+                  class="w-24 shrink-0 text-right text-xs text-surface-500 tabular-nums dark:text-surface-400"
+                  data-testid="installation-equipment-count"
                 >
-                  {{ typeLabel(child.type) }}
-                </span>
-              </span>
-              <span class="flex shrink-0 items-center gap-2">
-                <!--
-                  How much is actually installed here. `equipmentCount` is
-                  counted server-side through the Equipment module's port; the
-                  Facility resource carries no equipment data of its own, so
-                  before it existed this row could only name the place.
-                -->
-                @if (child.equipmentCount !== undefined) {
-                  <span
-                    class="flex items-center gap-1 text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
-                    data-testid="installation-equipment-count"
+                  <span class="sr-only" i18n="@@facility.installations.equipmentAria"
+                    >Equipment</span
                   >
-                    <i class="pi pi-box text-[10px]" aria-hidden="true"></i>
-                    <span class="sr-only" i18n="@@facility.installations.equipmentAria"
-                      >Equipment</span
-                    >
-                    {{ child.equipmentCount }}
-                  </span>
-                }
-                <app-tag [descriptor]="statusDescriptor(child.status)" />
-              </span>
+                  {{ child.equipmentCount }}
+                </span>
+              } @else {
+                <span
+                  class="w-24 shrink-0 text-right text-xs text-surface-400 dark:text-surface-500"
+                  aria-hidden="true"
+                  >—</span
+                >
+              }
+              <app-tag [descriptor]="statusDescriptor(child.status)" />
+              <i
+                class="pi pi-chevron-right shrink-0 text-[11px] text-surface-400 dark:text-surface-500"
+                aria-hidden="true"
+              ></i>
             </button>
 
             @if (childrenOf(child.id).length > 0) {
@@ -93,39 +86,51 @@
                   <li>
                     <button
                       type="button"
-                      class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-surface-50 dark:hover:bg-surface-800/60"
+                      class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-surface-50 dark:hover:bg-surface-800/60"
                       (click)="navigate.emit(grandChild)"
                     >
-                      <span class="flex min-w-0 items-center gap-2">
+                      <span
+                        class="grid size-6 shrink-0 place-content-center rounded-md bg-surface-100 text-surface-400 dark:bg-surface-800 dark:text-surface-500"
+                      >
                         <i
                           [class]="facilityTypeIcons[grandChild.type]"
-                          class="text-xs text-surface-400"
+                          class="text-[10px]"
+                          aria-hidden="true"
                         ></i>
-                        <span class="truncate text-xs text-surface-600 dark:text-surface-400">
-                          {{ grandChild.name }}
-                        </span>
                       </span>
-                      <span class="flex shrink-0 items-center gap-2">
-                        <!--
+                      <span
+                        class="min-w-0 flex-1 truncate text-xs text-surface-600 dark:text-surface-400"
+                      >
+                        {{ grandChild.name }}
+                      </span>
+                      <!--
                         How much is actually installed here. `equipmentCount` is
                         counted server-side through the Equipment module's port; the
                         Facility resource carries no equipment data of its own, so
                         before it existed this row could only name the place.
                       -->
-                        @if (grandChild.equipmentCount !== undefined) {
-                          <span
-                            class="flex items-center gap-1 text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
-                            data-testid="installation-equipment-count"
+                      @if (grandChild.equipmentCount !== undefined) {
+                        <span
+                          class="w-24 shrink-0 text-right text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
+                          data-testid="installation-equipment-count"
+                        >
+                          <span class="sr-only" i18n="@@facility.installations.equipmentAria"
+                            >Equipment</span
                           >
-                            <i class="pi pi-box text-[10px]" aria-hidden="true"></i>
-                            <span class="sr-only" i18n="@@facility.installations.equipmentAria"
-                              >Equipment</span
-                            >
-                            {{ grandChild.equipmentCount }}
-                          </span>
-                        }
-                        <app-tag [descriptor]="statusDescriptor(grandChild.status)" />
-                      </span>
+                          {{ grandChild.equipmentCount }}
+                        </span>
+                      } @else {
+                        <span
+                          class="w-24 shrink-0 text-right text-[11px] text-surface-400 dark:text-surface-500"
+                          aria-hidden="true"
+                          >—</span
+                        >
+                      }
+                      <app-tag [descriptor]="statusDescriptor(grandChild.status)" />
+                      <i
+                        class="pi pi-chevron-right shrink-0 text-[10px] text-surface-400 dark:text-surface-500"
+                        aria-hidden="true"
+                      ></i>
                     </button>
                   </li>
                 }

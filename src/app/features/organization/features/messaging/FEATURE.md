@@ -154,18 +154,53 @@ DM would be unreachable.
 - **A deleted message keeps its row** (`isDeleted`, `body: null`) so replies and
   reactions do not dangle. Renderers must handle a null body rather than
   filtering the message out.
-- `isChannel` discriminates a channel from a direct conversation; a channel has
-  a `name`, a DM carries `visibility: 'direct'`.
+- **`subjectType` discriminates**, not `visibility`. The API's values are
+  `channel | direct | facility | equipment | intervention | non_conformity`, and
+  `visibility` is only ever `subject | participants`. A direct conversation is
+  `subjectType === 'direct'` with a null `name`; "not a channel" also matches
+  record-bound threads and must not be used.
+
+## Listing conversations — two endpoints, not one
+
+`GET /api/conversations` **never returns a channel or a direct conversation**:
+the backend repository excludes both as a privacy invariant. So the inventory
+is built from TWO calls, forkJoined in `ConversationInventoryStore.load`:
+
+- `MessagingService.listChannels()` → `GET /api/channels` — the only endpoint
+  that lists a member's channels. Its `ChannelOutput` rows are normalized into
+  `ConversationOutput` by the pure `toConversation` adapter
+  (`data-access/adapters/channel-conversation.adapter.ts`), which sets
+  `subjectType: 'channel'` / `visibility: 'participants'` / `isChannel: true`
+  and reduces the `parent` IRI to a bare `parentConversationId`.
+- `MessagingService.listConversations()` → `GET /api/conversations` — the
+  record-bound subject threads only.
+
+> **Direct conversations cannot be listed at all.** The API has no
+> `GET /api/direct-conversations`; a DM is only ever returned by the
+> get-or-create POST. The store therefore keeps the DMs opened during the
+> session in `sessionDirectConversations` and merges them into the list, so a
+> DM at least stays in the sidebar until the tab is reloaded. Delete that state
+> the day the backend ships a DM collection — do not paper over it further.
 
 ## State and data access
 
-- `MessagingService` — conversations, messages, send, mark-read.
+- `MessagingService` — channels, conversations, messages, send, mark-read, plus
+  the panel's `listConversationLinks` (paged 30) and `getConversationActivity`
+  (unpaginated, zero-filled, `buckets` capped at 366 server-side).
+  `markRead` is a **PATCH** (the backend declares a `Patch` operation; a POST
+  answers 405), and `pingPresence` requires the organization IRI in its body.
 
 Live updates go through `resilientMercureStream` (`@core/mercure`), never
 `MercureService.subscribe` directly: the raw service errors its subscriber on
 the transport `error` event, which kills EventSource's own reconnect and leaves
 the channel silently dead. The subscription is re-requested per attempt because
 its token is short-lived.
+
+**A dead stream is announced, not swallowed.** `resilientMercureStream` gives
+up after its retry budget; the workspace store then sets `isRealtimeDown` and
+the page shows a "live updates unavailable" notice. Silence used to be the only
+symptom of an unreachable hub (in dev, Mercure's `cors_origins` must include the
+web origin).
 
 **A hub message the thread already holds is replaced, not appended.** The
 sender's own message arrives twice — once from the POST response, once echoed
@@ -189,6 +224,60 @@ transport model still carries no URL — the thread builds it from
 
 A file with no text is a valid message — "here is the report" is often just the
 report — so the composer sends when either a body or a file is present.
+
+## Message references
+
+A message can carry up to five `{type, id, label?, code?}` record cards
+(`MessageOutput.references`), rendered under the body in the same slot as the
+attachments by `MessageReferenceCard` (`ui/components/message-thread/components/`).
+Display only — attaching one from the composer is not built.
+
+- **`references` is optional on the model, not nullable.** API Platform omits
+  the field on a message that has none, so it arrives as `undefined`; the thread
+  reads it as `?? []`. Same for `label` / `code`, which are read through
+  `typeof` checks — a `=== null` guard would print `undefined` on screen.
+- **A tombstoned message shows none.** The backend redacts `references` to `[]`
+  with the body; the thread additionally drops them for a message marked
+  `isDeleted` locally, so an optimistic delete reads like the reload would.
+- **A non-conformity has no page**, and the reference does not carry the
+  inspection that could stand in for one, so its card renders as plain content
+  instead of a dead link. Facility, equipment and intervention cards link to
+  `/organizations/{organizationId}/{facilities|equipments|interventions}/{id}`;
+  the card reads the organization from `ORGANIZATION_CONTEXT_PORT` and degrades
+  to plain content when none is selected.
+- The non-conformity variant is the **danger** one (warning tile, red border and
+  tint), but never by colour alone: every card spells its kind out under the
+  title.
+
+## Conversation details panel
+
+A shell **panel-slot** contribution (ARCHITECTURE.md §9.4.3), keyed off
+`?conversation=` because the layout injector cannot see the page's store. Four
+tabs: Info, Pinned, Files, Links. The Creator row is rendered only for rows
+sourced from `GET /api/channels` (`ConversationOutput.createdByMember` is absent
+otherwise).
+
+- **Links come from `GET /api/conversations/{id}/links`**, paged 30 at a time,
+  newest first, with an explicit "Load more". They used to be scraped
+  client-side from the loaded page of messages, which only ever showed recent
+  history; the backend now extracts them across the whole thread. The rows carry
+  `label`, but it is **never populated today** — the tab shows the URL and a
+  relative timestamp. The links are their own call state, not part of the
+  panel's forkJoin: they page, and their failure degrades that tab alone.
+- **The Info tab carries an activity heatmap** built from
+  `GET /api/conversations/{id}/activity?buckets=26` (`ConversationActivityHeatmap`,
+  in the panel's `components/`): 13x2 cells, four fixed intensity steps, each
+  cell labelled with its count and day so the tint never carries the meaning
+  alone. Fetched inside the panel's forkJoin but with its own `catchError`: a
+  missing heatmap must not blank the members list.
+- **Linked threads are a computed, never a fetch.** There is no "related
+  conversations" endpoint; the panel derives parent, sub-channels, siblings
+  (same parent) and same-record threads from the `ConversationInventoryStore`
+  rows it already holds, with the sidebar's own label resolution (a DM has no
+  name — the counterpart is resolved through the member directory) and the
+  row's unread count. `subject` is matched with a `typeof` check: it is omitted
+  when null, and a bare null test would link every subject-less thread to every
+  other one.
 
 ## Not built yet
 

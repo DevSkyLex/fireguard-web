@@ -182,6 +182,7 @@
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
       i18n-currentPageReportTemplate="@@equipment.table.pageReport"
       [rowHover]="true"
+      [stripedRows]="true"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -203,7 +204,7 @@
           </th>
           <th class="min-w-44">
             <div class="flex items-center gap-2">
-              <span i18n="@@equipment.table.colLocation">Location</span>
+              <span i18n="@@equipment.table.colFacility">Facility</span>
             </div>
           </th>
           <th pSortableColumn="status" class="min-w-40">
@@ -264,16 +265,26 @@
             </td>
           }
           <td>
-            <div class="flex min-w-0 flex-col gap-0.5">
+            <!--
+              The row's (click) is a mouse convenience; this button is the
+              keyboard/AT target for the same action, so it stops propagation
+              to emit exactly once.
+            -->
+            <button
+              type="button"
+              class="flex min-w-0 cursor-pointer flex-col gap-0.5 rounded text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              data-testid="equipment-row-open"
+              (click)="$event.stopPropagation(); view.emit(equipment)"
+            >
               <span
-                class="truncate text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
+                class="truncate font-mono text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
               >
                 {{ getReference(equipment) }}
               </span>
               <span class="truncate font-semibold text-surface-950 dark:text-surface-50">
                 {{ getEquipmentTitle(equipment) }}
               </span>
-            </div>
+            </button>
           </td>
           <td class="hidden md:table-cell">
             @if (equipment.serialNumber) {

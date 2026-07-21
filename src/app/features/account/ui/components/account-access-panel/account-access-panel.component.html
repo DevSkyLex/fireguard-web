@@ -1,71 +1,176 @@
-<div class="flex flex-col gap-4">
-  <div>
-    <h3
-      class="text-[11px] font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
-      i18n="@@account.access.roles"
-    >
-      Roles
-    </h3>
+<div class="flex flex-col gap-[18px]">
+  <div
+    class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  >
+    <div class="border-b border-surface-200 px-[18px] py-[15px] dark:border-surface-800">
+      <h2
+        class="text-base font-semibold text-surface-950 dark:text-surface-50"
+        i18n="@@account.access.globalAccessTitle"
+      >
+        Global access
+      </h2>
+      <p
+        class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+        i18n="@@account.access.globalAccessDesc"
+      >
+        Platform-wide roles and permissions on your account.
+      </p>
+    </div>
+    <div class="flex flex-col gap-4 p-[18px]">
+      <div>
+        <h3
+          class="text-[11px] font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+          i18n="@@account.access.roles"
+        >
+          Roles
+        </h3>
 
-    <!--
+        <!--
       Roles read as identity, permissions as machinery: the first are pills in
       the brand tint, the second monospace chips. The mockup draws exactly that
       split, and it is the reason a user can scan "what am I" without wading
       through forty permission strings.
     -->
-    @if (userStore.roles().length > 0) {
-      <ul class="mt-2 flex flex-wrap gap-2">
-        @for (role of userStore.roles(); track role) {
-          <li
-            class="inline-flex h-6.5 items-center gap-1.5 rounded-full bg-primary-50 px-2.5 text-xs font-semibold text-primary-700 dark:bg-primary-400/15 dark:text-primary-300"
-            data-testid="account-role"
+        @if (userStore.roles().length > 0) {
+          <ul class="mt-2 flex flex-wrap gap-2">
+            @for (role of userStore.roles(); track role) {
+              <li
+                class="inline-flex h-6.5 items-center gap-1.5 rounded-full bg-primary-50 px-2.5 text-xs font-semibold text-primary-700 dark:bg-primary-400/15 dark:text-primary-300"
+                data-testid="account-role"
+              >
+                <i class="pi pi-shield text-[11px]" aria-hidden="true"></i>
+                {{ role }}
+              </li>
+            }
+          </ul>
+        } @else {
+          <p
+            class="mt-2 text-sm text-surface-500 dark:text-surface-400"
+            i18n="@@account.access.noRoles"
           >
-            <i class="pi pi-shield text-[11px]" aria-hidden="true"></i>
-            {{ role }}
-          </li>
+            No platform-wide role is granted on this account.
+          </p>
         }
-      </ul>
-    } @else {
-      <p
-        class="mt-2 text-sm text-surface-500 dark:text-surface-400"
-        i18n="@@account.access.noRoles"
-      >
-        No platform-wide role is granted on this account.
-      </p>
-    }
-  </div>
+      </div>
 
-  <div>
-    <h3
-      class="text-[11px] font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
-      i18n="@@account.access.permissions"
-    >
-      Permissions
-    </h3>
+      <div>
+        <h3
+          class="text-[11px] font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+          i18n="@@account.access.permissions"
+        >
+          Permissions
+        </h3>
 
-    @if (userStore.permissions().length > 0) {
-      <ul class="mt-2 flex flex-wrap gap-1.5">
-        @for (permission of userStore.permissions(); track permission) {
-          <li
-            class="inline-flex h-6 items-center rounded-md border border-surface-200 bg-surface-50 px-2 font-mono text-[11px] text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
-            data-testid="account-permission"
-          >
-            {{ permission }}
-          </li>
-        }
-      </ul>
-    } @else {
-      <!--
+        @if (userStore.permissions().length > 0) {
+          <ul class="mt-2 flex flex-wrap gap-1.5">
+            @for (permission of userStore.permissions(); track permission) {
+              <li
+                class="inline-flex h-6 items-center rounded-md border border-surface-200 bg-surface-50 px-2 font-mono text-[11px] text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
+                data-testid="account-permission"
+              >
+                {{ permission }}
+              </li>
+            }
+          </ul>
+        } @else {
+          <!--
         Distinct from the roles empty state: a user can hold a role that grants
         nothing platform-wide, and saying "no permissions" under a listed role
         would look like a bug rather than a fact.
       -->
-      <p
-        class="mt-2 text-sm text-surface-500 dark:text-surface-400"
-        i18n="@@account.access.noPermissions"
+          <p
+            class="mt-2 text-sm text-surface-500 dark:text-surface-400"
+            i18n="@@account.access.noPermissions"
+          >
+            This account carries no platform-wide permission.
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  >
+    <div class="border-b border-surface-200 px-[18px] py-[15px] dark:border-surface-800">
+      <h2
+        class="text-base font-semibold text-surface-950 dark:text-surface-50"
+        i18n="@@account.access.orgMemberships"
       >
-        This account carries no platform-wide permission.
+        Organization memberships
+      </h2>
+      <p
+        class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+        i18n="@@account.access.orgMembershipsDesc"
+      >
+        Workspaces you belong to and your role in each.
       </p>
-    }
+    </div>
+
+    <div class="p-[18px]">
+      <!--
+      One divider row per workspace rather than pills: a membership carries
+      three facts (which organization, owner or not, which org-roles), and a
+      row is the only shape where they stay aligned and scannable.
+    -->
+      @if (organizationStore.isLoadingOrganizations()) {
+        <p
+          class="text-sm text-surface-500 dark:text-surface-400"
+          data-testid="account-org-memberships-loading"
+          i18n="@@account.access.orgMembershipsLoading"
+        >
+          Loading your organizations…
+        </p>
+      } @else if (organizationStore.organizations().length > 0) {
+        <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
+          @for (organization of organizationStore.organizations(); track organization.id) {
+            <li class="flex items-center gap-3 py-2.5" data-testid="account-org-membership">
+              <!-- 28px / 8px-radius tile, quieter than the shell's organization rail switcher. -->
+              <span
+                class="grid size-7 shrink-0 place-content-center overflow-hidden rounded-lg bg-surface-200 text-[11px] font-semibold text-surface-700 dark:bg-surface-800 dark:text-surface-300"
+                aria-hidden="true"
+              >
+                @if (organization.logoUrl) {
+                  <img [src]="organization.logoUrl" [alt]="''" class="size-full object-cover" />
+                } @else {
+                  {{ initialOf(organization) }}
+                }
+              </span>
+
+              <span
+                class="min-w-0 flex-1 truncate text-sm font-medium text-surface-900 dark:text-surface-50"
+                data-testid="account-org-membership-name"
+              >
+                {{ organization.name }}
+              </span>
+
+              @if (organization.isOwner) {
+                <span
+                  class="inline-flex items-center rounded-full border border-surface-200 px-1.5 py-px text-[9px] font-bold tracking-[0.04em] text-surface-500 uppercase dark:border-surface-700 dark:text-surface-400"
+                  data-testid="account-org-owner"
+                  i18n="@@account.access.owner"
+                >
+                  Owner
+                </span>
+              }
+
+              <span class="flex flex-wrap justify-end gap-1.5">
+                @for (role of organization.roles ?? []; track role.id) {
+                  <app-tag [descriptor]="roleTag(role)" data-testid="account-org-role" />
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p
+          class="text-sm text-surface-500 dark:text-surface-400"
+          data-testid="account-org-memberships-empty"
+          i18n="@@account.access.noOrgMemberships"
+        >
+          You are not a member of any organization.
+        </p>
+      }
+    </div>
   </div>
 </div>

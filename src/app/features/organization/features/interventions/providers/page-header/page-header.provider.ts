@@ -1,4 +1,3 @@
-import { InterventionHeaderActions } from '@features/organization/features/interventions/ui/components';
 import type { DashboardLayoutPageHeaderSlotFeature } from '@layouts/dashboard-layout';
 
 /**
@@ -28,7 +27,10 @@ export function withInterventionHeaderActions(): DashboardLayoutPageHeaderSlotFe
     useFactory: () => ({
       id: 'intervention-header-actions',
       order: 10,
-      component: InterventionHeaderActions,
+      loadComponent: () =>
+        import('@features/organization/features/interventions/ui/components/intervention-header-actions/intervention-header-actions.component').then(
+          (m) => m.InterventionHeaderActions,
+        ),
     }),
   };
 }

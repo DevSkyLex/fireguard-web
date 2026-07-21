@@ -23,11 +23,12 @@ import { SelectivePreloadingStrategy } from '@core/routing/strategies/selective-
 import { provideSplashScreen } from '@core/splash-screen';
 import { provideTheme } from '@core/theme';
 import { environment } from '@env/environment';
-import { provideAccountFeature } from '@features/account';
-import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
+import { provideAccountFeature } from '@features/account/account.feature';
+import { provideAuthFeature } from '@features/auth/auth.feature';
+import { authInterceptor, unauthorizedInterceptor } from '@features/auth/http/interceptors';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
-import { provideInterventionsFeature } from '@features/organization/features/interventions';
+import { provideInterventionsFeature } from '@features/organization/features/interventions/interventions.feature';
 
 /**
  * Configuration appConfig

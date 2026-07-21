@@ -1,15 +1,4 @@
-<div class="flex flex-col gap-6">
-  <!-- Avatar: persisted through its own /api/me/avatar endpoint -->
-  <app-account-avatar-form
-    [avatarUrl]="userStore.avatarUrlMedium()"
-    [initials]="userStore.initials()"
-    [uploading]="editStore.isUploadingAvatar()"
-    [hasError]="editStore.avatarError() !== null"
-    (avatarSelected)="uploadAvatar($event)"
-  />
-
-  <p-divider class="my-0" />
-
+<div class="flex flex-col gap-[18px]">
   <!--
     Saving reported nothing back: the call reached success and no consumer read
     it, so a saved profile looked exactly like a click that did nothing. Same
@@ -19,16 +8,97 @@
     call state to pending, so the message clears itself.
   -->
   @if (editStore.saveSucceeded()) {
-    <div
-      class="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
+    <p-message
+      severity="success"
+      [closable]="false"
       role="status"
-      aria-live="polite"
       data-testid="account-profile-saved"
+      i18n="@@account.profile.saved"
     >
-      <i class="pi pi-check-circle" aria-hidden="true"></i>
-      <span i18n="@@account.profile.saved">Your profile has been saved.</span>
-    </div>
+      Your profile has been updated.
+    </p-message>
   }
+
+  <!-- Identity card -->
+  <div
+    class="flex flex-wrap items-center gap-[18px] rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-900"
+    data-testid="account-identity-card"
+  >
+    <div class="relative shrink-0">
+      <span class="inline-flex rounded-full p-0.5 ring-1 ring-surface-200 dark:ring-surface-700">
+        @if (userStore.avatarUrlMedium(); as avatarUrl) {
+          <p-avatar
+            [image]="avatarUrl"
+            [ariaLabel]="(userStore.displayName() ?? 'User') + ' avatar'"
+            [pt]="identityAvatarPt"
+            shape="circle"
+          />
+        } @else {
+          <p-avatar [label]="userStore.initials() ?? '?'" [pt]="identityAvatarPt" shape="circle" />
+        }
+      </span>
+      @if (editStore.isUploadingAvatar()) {
+        <span
+          class="absolute inset-0 flex items-center justify-center rounded-full bg-surface-900/40"
+          aria-hidden="true"
+        >
+          <i class="pi pi-spinner pi-spin text-surface-0"></i>
+        </span>
+      }
+    </div>
+
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <span
+          class="truncate text-lg font-semibold text-surface-950 dark:text-surface-50"
+          data-testid="account-identity-name"
+        >
+          @if (userStore.displayName(); as name) {
+            {{ name }}
+          } @else {
+            <ng-container i18n="@@account.defaultName">Your account</ng-container>
+          }
+        </span>
+        @if (statusDescriptor(); as status) {
+          <app-tag [descriptor]="status" data-testid="account-status" />
+        }
+      </div>
+
+      <div
+        class="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-xs text-surface-500 dark:text-surface-400"
+      >
+        @if (userStore.profile()?.username; as username) {
+          <span class="font-mono text-surface-400 dark:text-surface-500">&#64;{{ username }}</span>
+        }
+        @if (userStore.profile()?.email; as email) {
+          <span class="inline-flex items-center gap-1.5">
+            <i class="pi pi-envelope text-[11px]" aria-hidden="true"></i>
+            {{ email }}
+          </span>
+        }
+        @if (userStore.profile()?.emailVerified) {
+          <span class="inline-flex items-center gap-1.5 text-green-700 dark:text-green-400">
+            <i class="pi pi-verified text-[11px]" aria-hidden="true"></i>
+            <ng-container i18n="@@account.profile.identity.verified">Email verified</ng-container>
+          </span>
+        }
+        @if (userStore.profile()?.createdAt; as createdAt) {
+          <span class="inline-flex items-center gap-1.5" i18n="@@account.page.memberSince">
+            <i class="pi pi-calendar text-[11px]" aria-hidden="true"></i>
+            Member since {{ createdAt | date: 'MMMM yyyy' }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- Avatar: persisted through its own /api/me/avatar endpoint -->
+    <app-account-avatar-form
+      class="shrink-0"
+      [uploading]="editStore.isUploadingAvatar()"
+      [hasError]="editStore.avatarError() !== null"
+      (avatarSelected)="uploadAvatar($event)"
+    />
+  </div>
 
   <!-- Profile fields: persisted through PATCH /api/me -->
   <app-account-profile-form
@@ -38,22 +108,45 @@
     (submitted)="save($event)"
   />
 
-  <p-divider class="my-0" />
-
   <!-- Password: two-step OTP-protected change through /api/me/password -->
-  <app-account-password-form
-    [step]="passwordStore.step()"
-    [requesting]="passwordStore.isRequesting()"
-    [confirming]="passwordStore.isConfirming()"
-    [hasRequestError]="passwordStore.requestError() !== null"
-    [hasConfirmError]="passwordStore.confirmError() !== null"
-    [maskedRecipient]="passwordStore.maskedRecipient()"
-    (requested)="requestPasswordChange($event)"
-    (confirmed)="confirmPasswordChange($event)"
-    (cancelled)="restartPasswordChange()"
-  />
+  <div
+    class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  >
+    <div class="border-b border-surface-200 px-[18px] py-[15px] dark:border-surface-800">
+      <h2
+        class="text-base font-semibold text-surface-950 dark:text-surface-50"
+        i18n="@@account.passwordForm.title"
+      >
+        Password
+      </h2>
+      <p
+        class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+        i18n="@@account.passwordForm.subtitle"
+      >
+        Keep your account secure with a strong, unique password.
+      </p>
+    </div>
+    <div class="p-[18px]">
+      <app-account-password-form
+        [step]="passwordStore.step()"
+        [requesting]="passwordStore.isRequesting()"
+        [confirming]="passwordStore.isConfirming()"
+        [hasRequestError]="passwordStore.requestError() !== null"
+        [hasConfirmError]="passwordStore.confirmError() !== null"
+        [maskedRecipient]="passwordStore.maskedRecipient()"
+        (requested)="requestPasswordChange($event)"
+        (confirmed)="confirmPasswordChange($event)"
+        (cancelled)="restartPasswordChange()"
+      />
+    </div>
+  </div>
 
-  <p-divider class="my-0" />
+  <!-- Language & display preferences, folded in from the retired Settings tab -->
+  <div
+    class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 p-[18px] dark:border-surface-800 dark:bg-surface-900"
+  >
+    <app-account-settings-panel />
+  </div>
 
   <!--
     Deactivation is one-way from the user's side — reactivation is an admin
@@ -62,37 +155,41 @@
     profile resource was written and nothing on the frontend called it.
   -->
   <section
-    class="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900 dark:bg-red-950/30"
+    class="flex flex-wrap items-center justify-between gap-3.5 rounded-xl border border-surface-200 bg-surface-0 px-[18px] py-4 dark:border-surface-800 dark:bg-surface-900"
     data-testid="account-deactivate-card"
   >
-    <h3
-      class="text-sm font-semibold text-red-900 dark:text-red-200"
-      i18n="@@account.deactivate.title"
-    >
-      Deactivate account
-    </h3>
-    <p class="mt-1 text-sm text-red-800/90 dark:text-red-300/90" i18n="@@account.deactivate.desc">
-      Signs you out on every device and blocks further sign-ins. Your organization memberships are
-      kept, but only an administrator can reactivate your account.
-    </p>
-
-    @if (editStore.deactivateError() !== null) {
-      <p
-        class="mt-2 text-sm font-medium text-red-700 dark:text-red-300"
-        role="alert"
-        i18n="@@account.deactivate.error"
+    <div class="min-w-0">
+      <h3
+        class="text-sm font-semibold text-surface-950 dark:text-surface-50"
+        i18n="@@account.deactivate.title"
       >
-        Your account could not be deactivated. Please try again.
+        Deactivate account
+      </h3>
+      <p
+        class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+        i18n="@@account.deactivate.desc"
+      >
+        Your account is disabled and you're signed out everywhere. An admin can reactivate it later.
       </p>
-    }
+
+      @if (editStore.deactivateError() !== null) {
+        <p
+          class="mt-2 text-xs font-medium text-red-700 dark:text-red-300"
+          role="alert"
+          i18n="@@account.deactivate.error"
+        >
+          Your account could not be deactivated. Please try again.
+        </p>
+      }
+    </div>
 
     <p-button
-      class="mt-3 inline-block"
       i18n-label="@@account.deactivate.accept"
-      label="Deactivate"
+      label="Deactivate account"
       icon="pi pi-ban"
       severity="danger"
       [outlined]="true"
+      size="small"
       [loading]="editStore.isDeactivating()"
       data-testid="account-deactivate-button"
       (onClick)="deactivateAccount()"

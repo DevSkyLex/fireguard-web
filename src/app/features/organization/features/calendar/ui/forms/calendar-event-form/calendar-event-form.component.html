@@ -1,0 +1,167 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="flex h-full flex-col">
+  <div class="flex flex-1 flex-col gap-5 overflow-y-auto">
+    <div class="flex flex-col gap-2">
+      <label for="event-title" class="text-sm font-medium text-surface-900 dark:text-surface-50">
+        <ng-container i18n="@@calendar.eventForm.title">Title</ng-container>
+        <span class="text-red-500" aria-hidden="true">&nbsp;*</span>
+      </label>
+      <input
+        id="event-title"
+        pInputText
+        type="text"
+        formControlName="title"
+        i18n-placeholder="@@calendar.eventForm.titlePlaceholder"
+        placeholder="Fire drill"
+        class="w-full"
+        [invalid]="form.controls.title.invalid && form.controls.title.touched"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="form.controls.title.invalid && form.controls.title.touched"
+        [attr.aria-describedby]="
+          form.controls.title.invalid && form.controls.title.touched ? 'event-title-error' : null
+        "
+      />
+      @if (form.controls.title.invalid && form.controls.title.touched) {
+        <p-message severity="error" variant="simple" size="small">
+          <span id="event-title-error" i18n="@@calendar.eventForm.titleError"
+            >A title is required.</span
+          >
+        </p-message>
+      }
+    </div>
+
+    <div class="flex items-center justify-between gap-6">
+      <label for="event-all-day" class="flex cursor-pointer flex-col gap-0.5">
+        <span
+          i18n="@@calendar.eventForm.allDay"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >All day</span
+        >
+        <span
+          i18n="@@calendar.eventForm.allDayHelp"
+          class="text-sm text-surface-500 dark:text-surface-400"
+        >
+          The event spans whole day(s) rather than a specific time.
+        </span>
+      </label>
+      <p-toggleswitch inputId="event-all-day" formControlName="allDay" />
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div class="flex flex-col gap-2">
+        <label
+          for="event-starts-at"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+        >
+          <ng-container i18n="@@calendar.eventForm.startsAt">Starts</ng-container>
+          <span class="text-red-500" aria-hidden="true">&nbsp;*</span>
+        </label>
+        <p-datepicker
+          inputId="event-starts-at"
+          formControlName="startsAt"
+          [showTime]="!form.controls.allDay.value"
+          hourFormat="24"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          appendTo="body"
+          dateFormat="yy-mm-dd"
+          i18n-placeholder="@@calendar.eventForm.startsAtPlaceholder"
+          placeholder="Select a start"
+          class="w-full"
+          [invalid]="form.controls.startsAt.invalid && form.controls.startsAt.touched"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="form.controls.startsAt.invalid && form.controls.startsAt.touched"
+          [attr.aria-describedby]="
+            form.controls.startsAt.invalid && form.controls.startsAt.touched
+              ? 'event-starts-at-error'
+              : null
+          "
+        />
+        @if (form.controls.startsAt.invalid && form.controls.startsAt.touched) {
+          <p-message severity="error" variant="simple" size="small">
+            <span id="event-starts-at-error" i18n="@@calendar.eventForm.startsAtError"
+              >A start is required.</span
+            >
+          </p-message>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label
+          for="event-ends-at"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+        >
+          <ng-container i18n="@@calendar.eventForm.endsAt">Ends</ng-container>
+        </label>
+        <p-datepicker
+          inputId="event-ends-at"
+          formControlName="endsAt"
+          [showTime]="!form.controls.allDay.value"
+          hourFormat="24"
+          [showIcon]="true"
+          [showClear]="true"
+          [showButtonBar]="true"
+          [minDate]="form.controls.startsAt.value ?? undefined"
+          appendTo="body"
+          dateFormat="yy-mm-dd"
+          i18n-placeholder="@@calendar.eventForm.endsAtPlaceholder"
+          placeholder="Leave open-ended"
+          class="w-full"
+          [invalid]="form.hasError('endsBeforeStarts') && form.controls.endsAt.touched"
+          [attr.aria-invalid]="form.hasError('endsBeforeStarts') && form.controls.endsAt.touched"
+          [attr.aria-describedby]="
+            form.hasError('endsBeforeStarts') && form.controls.endsAt.touched
+              ? 'event-ends-at-error'
+              : null
+          "
+        />
+        @if (form.hasError('endsBeforeStarts') && form.controls.endsAt.touched) {
+          <p-message severity="error" variant="simple" size="small">
+            <span id="event-ends-at-error" i18n="@@calendar.eventForm.endsAtError"
+              >The end must be after the start.</span
+            >
+          </p-message>
+        }
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label
+        for="event-description"
+        class="text-sm font-medium text-surface-900 dark:text-surface-50"
+      >
+        <ng-container i18n="@@calendar.eventForm.description">Description</ng-container>
+      </label>
+      <textarea
+        id="event-description"
+        pTextarea
+        formControlName="description"
+        rows="4"
+        i18n-placeholder="@@calendar.eventForm.descriptionPlaceholder"
+        placeholder="Add context or instructions"
+        class="w-full"
+      ></textarea>
+    </div>
+  </div>
+
+  <div
+    class="mt-6 flex items-center justify-end gap-2 border-t border-surface-200 pt-4 dark:border-surface-800"
+  >
+    <p-button
+      type="button"
+      i18n-label="@@common.cancel"
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      [disabled]="loading()"
+      (onClick)="cancelled.emit()"
+    />
+    <p-button
+      type="submit"
+      i18n-label="@@calendar.eventForm.submit"
+      label="Create event"
+      icon="pi pi-plus"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
+</form>

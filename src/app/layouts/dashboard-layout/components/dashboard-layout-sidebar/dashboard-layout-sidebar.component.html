@@ -13,7 +13,7 @@
   @if (!isIconOnly() && leadContributions().length > 0) {
     <section class="flex shrink-0 flex-col gap-2 px-3 pt-3 pb-2">
       @for (contribution of leadContributions(); track contribution.id) {
-        <ng-container *ngComponentOutlet="contribution.component" />
+        <app-dashboard-layout-slot-outlet [source]="contribution" />
       }
     </section>
   }
@@ -30,9 +30,45 @@
     }
 
     @if (!isIconOnly() && contentContributions().length > 0) {
+      <div class="px-3 pb-2">
+        <div
+          class="flex h-8.5 items-center gap-2 rounded-md border border-surface-200 bg-surface-100 px-2.5 dark:border-surface-800 dark:bg-surface-900"
+        >
+          <i
+            class="pi pi-search text-xs text-surface-500 dark:text-surface-500"
+            aria-hidden="true"
+          ></i>
+
+          <input
+            type="text"
+            class="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-surface-950 outline-none placeholder:text-surface-500 dark:text-surface-50 dark:placeholder:text-surface-400"
+            placeholder="Search channels"
+            i18n-placeholder="@@layout.sidebar.searchChannels"
+            aria-label="Search channels"
+            i18n-aria-label="@@layout.sidebar.searchChannels"
+            data-testid="sidebar-channel-search-input"
+            [value]="sidebarService.channelSearchQuery()"
+            (input)="sidebarService.setChannelSearchQuery($any($event.target).value)"
+          />
+
+          @if (sidebarService.channelSearchQuery().length > 0) {
+            <button
+              type="button"
+              class="flex size-4 shrink-0 cursor-pointer items-center justify-center text-surface-500 transition-colors hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-500 dark:hover:text-surface-50"
+              aria-label="Clear channel search"
+              i18n-aria-label="@@layout.sidebar.clearChannelSearch"
+              data-testid="sidebar-channel-search-clear"
+              (click)="sidebarService.setChannelSearchQuery('')"
+            >
+              <i class="pi pi-times text-[11px]" aria-hidden="true"></i>
+            </button>
+          }
+        </div>
+      </div>
+
       <div class="px-3 pb-5">
         @for (contribution of contentContributions(); track contribution.id) {
-          <ng-container *ngComponentOutlet="contribution.component" />
+          <app-dashboard-layout-slot-outlet [source]="contribution" />
         }
       </div>
     }

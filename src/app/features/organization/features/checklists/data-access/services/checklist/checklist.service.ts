@@ -51,6 +51,9 @@ export class ChecklistService extends HydraApiService {
     const params: NonNullable<RequestOptions['params']> = {};
 
     if (options?.status) params['status'] = options.status;
+    // The backend only honours the first `order[field]` entry it sees
+    // (SortingExtractor), so this loop's iteration order picks the winner —
+    // callers should pass at most one field.
     if (options?.order) {
       for (const [field, direction] of Object.entries(options.order)) {
         params[`order[${field}]`] = direction;

@@ -1,5 +1,6 @@
-import { Component, signal, type Type, type WritableSignal } from '@angular/core';
+import { Component, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { PageHeaderContribution } from '@layouts/dashboard-layout';
 import { DashboardPageHeaderService } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutPageHeader } from '../dashboard-layout-page-header.component';
 
@@ -9,7 +10,7 @@ class TestExportAction {}
 describe('DashboardLayoutPageHeader', () => {
   const createComponent = (
     title: string | null,
-    actions: Type<unknown>[] = [],
+    actions: PageHeaderContribution[] = [],
     description: string | null = null,
   ) => {
     const titleSignal: WritableSignal<string | null> = signal(title);
@@ -49,7 +50,9 @@ describe('DashboardLayoutPageHeader', () => {
   });
 
   it('should render slot action components on the right', () => {
-    const { fixture } = createComponent('Settings', [TestExportAction]);
+    const { fixture } = createComponent('Settings', [
+      { id: 'export', order: 10, component: TestExportAction },
+    ]);
 
     expect(fixture.nativeElement.querySelector('test-export-action')).toBeTruthy();
     expect(fixture.nativeElement.textContent ?? '').toContain('Export');

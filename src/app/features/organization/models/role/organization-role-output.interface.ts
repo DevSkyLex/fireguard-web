@@ -29,6 +29,12 @@ export interface OrganizationRoleOutput extends HydraItem {
    * @type {ReadonlyArray<OrganizationPermissionDescriptor>}
    */
   readonly permissions: ReadonlyArray<OrganizationPermissionDescriptor>;
+  /**
+   * Number of active organization members currently assigned this role.
+   *
+   * @type {number}
+   */
+  readonly memberCount: number;
   /** @type {string} */
   readonly createdAt: string;
   /** @type {string} */

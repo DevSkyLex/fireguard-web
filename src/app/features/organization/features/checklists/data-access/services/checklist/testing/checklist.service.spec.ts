@@ -44,8 +44,10 @@ describe('ChecklistService', () => {
     id: checklistId,
     organizationId: orgId,
     name: 'Fire Safety Inspection Checklist v1',
+    referenceCode: 'CHK-0001',
     version: '1.0',
     status: 'active',
+    itemCount: 1,
     items: [
       {
         id: 'item-uuid-1',

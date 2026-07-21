@@ -6,6 +6,8 @@ import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
   ChannelOutput,
   ChannelParticipant,
+  ConversationActivityBucket,
+  ConversationLinkOutput,
   ConversationOutput,
   CreateChannelInput,
   CreateDirectConversationInput,
@@ -38,8 +40,11 @@ export class MessagingService extends HydraApiService {
    * @method listConversations
    *
    * @description
-   * Lists the conversations the current member can see — channels and direct
-   * conversations together.
+   * Lists the RECORD-BOUND conversations the current member can see.
+   *
+   * Channels and direct conversations are **never** returned here — the
+   * backend excludes both by design. Channels come from {@link listChannels};
+   * direct conversations have no list endpoint at all (see FEATURE.md).
    *
    * @access public
    * @since 1.0.0
@@ -57,6 +62,75 @@ export class MessagingService extends HydraApiService {
     options?: RequestOptions,
   ): Observable<HydraCollection<ConversationOutput>> {
     return this.getCollection<ConversationOutput>('/api/conversations', {
+      ...options,
+      params: {
+        ...options?.params,
+        organization: `/api/organizations/${organizationId}`,
+      },
+    });
+  }
+
+  /**
+   * Method listChannels
+   * @method listChannels
+   *
+   * @description
+   * Lists the channels the acting member participates in.
+   *
+   * This is the ONLY endpoint that returns channels: `/api/conversations`
+   * deliberately excludes `channel` and `direct` conversations (a privacy
+   * invariant on the backend), so the sidebar's channel sections are fed from
+   * here and nowhere else.
+   *
+   * @access public
+   * @since 5.1.0
+   *
+   * @param {string} organizationId - The active organization; sent as an IRI,
+   * the endpoint being unscoped in its path (400 without it).
+   * @param {RequestOptions} [options] - Optional pagination and `isArchived`.
+   *
+   * @return {Observable<HydraCollection<ChannelOutput>>} The channel collection.
+   */
+  public listChannels(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<ChannelOutput>> {
+    return this.getCollection<ChannelOutput>('/api/channels', {
+      ...options,
+      params: {
+        ...options?.params,
+        organization: `/api/organizations/${organizationId}`,
+      },
+    });
+  }
+
+  /**
+   * Method listDirectConversations
+   * @method listDirectConversations
+   *
+   * @description
+   * Lists the direct conversations the acting member takes part in.
+   *
+   * Counterpart of {@link listChannels}: `/api/conversations` excludes direct
+   * threads by the same privacy invariant, so the sidebar's Direct messages
+   * section is fed from here and nowhere else. Rows already come back in the
+   * `ConversationOutput` shape — unlike channels, no adapter is needed — and
+   * carry `counterpartMember` so the row can be labelled.
+   *
+   * @access public
+   * @since 5.2.0
+   *
+   * @param {string} organizationId - The active organization; sent as an IRI,
+   * the endpoint being unscoped in its path (400 without it).
+   * @param {RequestOptions} [options] - Optional pagination and `isArchived`.
+   *
+   * @return {Observable<HydraCollection<ConversationOutput>>} The direct-conversation collection.
+   */
+  public listDirectConversations(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<ConversationOutput>> {
+    return this.getCollection<ConversationOutput>('/api/direct-conversations', {
       ...options,
       params: {
         ...options?.params,
@@ -167,7 +241,8 @@ export class MessagingService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} conversationId - The conversation to post into.
-   * @param {SendMessageInput} input - The message body and mentions.
+   * @param {SendMessageInput} input - The message body; mentions are parsed
+   * server-side out of it.
    *
    * @return {Observable<MessageOutput>} The created message.
    */
@@ -219,6 +294,63 @@ export class MessagingService extends HydraApiService {
   public listPinnedMessages(conversationId: string): Observable<HydraCollection<MessageOutput>> {
     return this.getCollection<MessageOutput>(
       `/api/conversations/${conversationId}/pinned-messages`,
+    );
+  }
+
+  /**
+   * Method listConversationLinks
+   * @method listConversationLinks
+   *
+   * @description
+   * The URLs shared in a conversation, most recently posted first — the
+   * details panel's Links tab. Extracted server-side from the message bodies,
+   * so this covers the whole thread, not just the page of history a client
+   * happens to hold.
+   *
+   * @access public
+   * @since 6.0.0
+   *
+   * @param {string} conversationId - The conversation.
+   * @param {number} [page] - 1-based page to read; the endpoint pages by 30.
+   *
+   * @return {Observable<HydraCollection<ConversationLinkOutput>>} The links page.
+   */
+  public listConversationLinks(
+    conversationId: string,
+    page: number = 1,
+  ): Observable<HydraCollection<ConversationLinkOutput>> {
+    return this.getCollection<ConversationLinkOutput>(
+      `/api/conversations/${conversationId}/links`,
+      { params: { page: String(page) } },
+    );
+  }
+
+  /**
+   * Method getConversationActivity
+   * @method getConversationActivity
+   *
+   * @description
+   * Daily message counts for the conversation, oldest first and ending today
+   * (UTC). The backend zero-fills, so the answer always holds exactly
+   * `buckets` rows — the heatmap never has to reconstruct missing days.
+   *
+   * Not paginated: the list is small and fixed-size by construction.
+   *
+   * @access public
+   * @since 6.0.0
+   *
+   * @param {string} conversationId - The conversation.
+   * @param {number} [buckets] - Trailing days to return; capped at 366 by the backend.
+   *
+   * @return {Observable<HydraCollection<ConversationActivityBucket>>} The buckets.
+   */
+  public getConversationActivity(
+    conversationId: string,
+    buckets: number = 26,
+  ): Observable<HydraCollection<ConversationActivityBucket>> {
+    return this.getCollection<ConversationActivityBucket>(
+      `/api/conversations/${conversationId}/activity`,
+      { params: { buckets: String(buckets) } },
     );
   }
 
@@ -495,10 +627,15 @@ export class MessagingService extends HydraApiService {
    * @access public
    * @since 3.0.0
    *
+   * @param {string} organizationId - The organization the member is present in;
+   * required by the backend as an IRI (422 without it).
+   *
    * @return {Observable<PresenceOutput>} The refreshed presence.
    */
-  public pingPresence(): Observable<PresenceOutput> {
-    return this.post<Record<string, never>, PresenceOutput>('/api/presence/ping', {});
+  public pingPresence(organizationId: string): Observable<PresenceOutput> {
+    return this.post<{ organization: string }, PresenceOutput>('/api/presence/ping', {
+      organization: `/api/organizations/${organizationId}`,
+    });
   }
 
   /**
@@ -508,6 +645,9 @@ export class MessagingService extends HydraApiService {
    * @description
    * Clears a conversation's unread count for the current member.
    *
+   * PATCH, not POST: the backend declares the operation as a `Patch`, so a POST
+   * answered 405 and the badge silently came back on every reload.
+   *
    * @access public
    * @since 1.0.0
    *
@@ -516,7 +656,7 @@ export class MessagingService extends HydraApiService {
    * @return {Observable<ConversationOutput>} The updated conversation.
    */
   public markRead(conversationId: string): Observable<ConversationOutput> {
-    return this.post<Record<string, never>, ConversationOutput>(
+    return this.patch<Record<string, never>, ConversationOutput>(
       `/api/conversations/${conversationId}/read`,
       {},
     );

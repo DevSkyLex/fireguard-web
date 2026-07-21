@@ -9,7 +9,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, mergeMap, pipe, switchMap } from 'rxjs';
+import { EMPTY, forkJoin, mergeMap, pipe, switchMap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -21,7 +21,10 @@ import {
   toStoreError,
   type CallState,
 } from '@core/request-state';
-import { MessagingService } from '@features/organization/features/messaging/data-access';
+import {
+  MessagingService,
+  toConversation,
+} from '@features/organization/features/messaging/data-access';
 import type {
   ChannelOutput,
   ConversationOutput,
@@ -47,11 +50,23 @@ interface ConversationInventoryState {
    * reloaded instead, and the caller only needs the id to navigate.
    */
   readonly openedConversationCallState: CallState<string>;
+
+  /**
+   * Direct conversations opened during THIS session.
+   *
+   * The API has no `GET /api/direct-conversations` collection — a DM is only
+   * ever returned by the get-or-create POST — so a reload loses them. Holding
+   * them here at least keeps a DM in the sidebar for as long as the tab lives,
+   * instead of it vanishing the instant the dialog closes. Remove this the day
+   * the backend ships a DM list endpoint.
+   */
+  readonly sessionDirectConversations: readonly ConversationOutput[];
 }
 
 const INITIAL_STATE: ConversationInventoryState = {
   conversationsCallState: idleCallState(),
   openedConversationCallState: idleCallState(),
+  sessionDirectConversations: [],
 };
 
 /**
@@ -94,105 +109,124 @@ export const ConversationInventoryStore = signalStore(
   //#endregion
 
   //#region Computed
-  withComputed((store) => ({
+  withComputed((store) => {
     /**
-     * Computed conversations
-     *
-     * @type {Signal<readonly ConversationOutput[]>}
+     * Everything the member can open: what the two list calls returned, plus
+     * the direct conversations opened this session (which no list endpoint
+     * can return — see {@link ConversationInventoryState.sessionDirectConversations}).
      */
-    conversations: computed<readonly ConversationOutput[]>(
-      () => store.conversationsCallState().data ?? [],
-    ),
+    const all = computed<readonly ConversationOutput[]>(() => {
+      const loaded: readonly ConversationOutput[] = store.conversationsCallState().data ?? [];
+      const known: ReadonlySet<string> = new Set(
+        loaded.map((conversation: ConversationOutput): string => conversation.id),
+      );
 
-    /**
-     * Computed channels
-     *
-     * @description
-     * Named channels, in API order (most recently active first).
-     *
-     * @type {Signal<readonly ConversationOutput[]>}
-     */
-    channels: computed<readonly ConversationOutput[]>(() =>
-      (store.conversationsCallState().data ?? []).filter(
-        (conversation: ConversationOutput): boolean => conversation.isChannel,
+      return [
+        ...loaded,
+        ...store
+          .sessionDirectConversations()
+          .filter((conversation: ConversationOutput): boolean => !known.has(conversation.id)),
+      ];
+    });
+
+    return {
+      /**
+       * Computed conversations
+       *
+       * @type {Signal<readonly ConversationOutput[]>}
+       */
+      conversations: all,
+
+      /**
+       * Computed channels
+       *
+       * @description
+       * Named channels, in API order (most recently active first).
+       *
+       * @type {Signal<readonly ConversationOutput[]>}
+       */
+      channels: computed<readonly ConversationOutput[]>(() =>
+        all().filter((conversation: ConversationOutput): boolean => conversation.isChannel),
       ),
-    ),
 
-    /**
-     * Computed directConversations
-     *
-     * @type {Signal<readonly ConversationOutput[]>}
-     */
-    directConversations: computed<readonly ConversationOutput[]>(() =>
-      (store.conversationsCallState().data ?? []).filter(
-        (conversation: ConversationOutput): boolean => !conversation.isChannel,
+      /**
+       * Computed directConversations
+       *
+       * @description
+       * 1-to-1 threads only. Matched on `subjectType` rather than "not a
+       * channel", which would also sweep in record-bound subject threads.
+       *
+       * @type {Signal<readonly ConversationOutput[]>}
+       */
+      directConversations: computed<readonly ConversationOutput[]>(() =>
+        all().filter(
+          (conversation: ConversationOutput): boolean => conversation.subjectType === 'direct',
+        ),
       ),
-    ),
 
-    /**
-     * Computed favorites
-     *
-     * @description
-     * The member's favorited conversations — the sidebar's Favorites section.
-     *
-     * @type {Signal<readonly ConversationOutput[]>}
-     */
-    favorites: computed<readonly ConversationOutput[]>(() =>
-      (store.conversationsCallState().data ?? []).filter(
-        (conversation: ConversationOutput): boolean => conversation.isFavorite,
+      /**
+       * Computed favorites
+       *
+       * @description
+       * The member's favorited conversations — the sidebar's Favorites section.
+       *
+       * @type {Signal<readonly ConversationOutput[]>}
+       */
+      favorites: computed<readonly ConversationOutput[]>(() =>
+        all().filter((conversation: ConversationOutput): boolean => conversation.isFavorite),
       ),
-    ),
 
-    /**
-     * Computed isLoading
-     *
-     * @type {Signal<boolean>}
-     */
-    isLoading: computed<boolean>(() => isCallPending(store.conversationsCallState())),
+      /**
+       * Computed isLoading
+       *
+       * @type {Signal<boolean>}
+       */
+      isLoading: computed<boolean>(() => isCallPending(store.conversationsCallState())),
 
-    /**
-     * Computed totalUnread
-     *
-     * @description
-     * Unread messages across every conversation, for the shell's Messages
-     * badge. Summed here rather than in the navigation provider so both the
-     * sidebar rows and the nav entry read one source.
-     *
-     * @type {Signal<number>}
-     */
-    totalUnread: computed<number>(() =>
-      (store.conversationsCallState().data ?? []).reduce(
-        (total: number, conversation: ConversationOutput): number =>
-          total + conversation.unreadCount,
-        0,
+      /**
+       * Computed totalUnread
+       *
+       * @description
+       * Unread messages across every conversation, for the shell's Messages
+       * badge. Summed here rather than in the navigation provider so both the
+       * sidebar rows and the nav entry read one source.
+       *
+       * @type {Signal<number>}
+       */
+      totalUnread: computed<number>(() =>
+        all().reduce(
+          (total: number, conversation: ConversationOutput): number =>
+            total + conversation.unreadCount,
+          0,
+        ),
       ),
-    ),
 
-    /**
-     * Computed isOpening
-     *
-     * @description
-     * A channel is being created, or a direct conversation opened.
-     *
-     * @type {Signal<boolean>}
-     */
-    isOpening: computed<boolean>(() => isCallPending(store.openedConversationCallState())),
+      /**
+       * Computed isOpening
+       *
+       * @description
+       * A channel is being created, or a direct conversation opened.
+       *
+       * @type {Signal<boolean>}
+       */
+      isOpening: computed<boolean>(() => isCallPending(store.openedConversationCallState())),
 
-    /**
-     * Computed openedConversationId
-     *
-     * @description
-     * The conversation the last create/open produced, for the caller to
-     * navigate to. Null until one succeeds.
-     *
-     * @type {Signal<string | null>}
-     */
-    openedConversationId: computed<string | null>(() => {
-      const state: CallState<string> = store.openedConversationCallState();
+      /**
+       * Computed openedConversationId
+       *
+       * @description
+       * The conversation the last create/open produced, for the caller to
+       * navigate to. Null until one succeeds.
+       *
+       * @type {Signal<string | null>}
+       */
+      openedConversationId: computed<string | null>(() => {
+        const state: CallState<string> = store.openedConversationCallState();
 
-      return isCallSuccess(state) ? state.data : null;
-    }),
-  })),
+        return isCallSuccess(state) ? state.data : null;
+      }),
+    };
+  }),
   //#endregion
 
   //#region Methods
@@ -209,11 +243,27 @@ export const ConversationInventoryStore = signalStore(
             conversationsCallState: pendingCallState(store.conversationsCallState().data ?? []),
           });
 
-          return service.listConversations(organizationId, { itemsPerPage: 100 }).pipe(
+          // THREE calls, not one: `/api/conversations` deliberately excludes
+          // channels AND direct conversations (a backend privacy invariant), so
+          // each has its own endpoint. `forkJoin` because the sidebar is one
+          // list — a partial render would flicker sections in and out.
+          return forkJoin({
+            channels: service.listChannels(organizationId, { itemsPerPage: 100 }),
+            directs: service.listDirectConversations(organizationId, { itemsPerPage: 100 }),
+            conversations: service.listConversations(organizationId, { itemsPerPage: 100 }),
+          }).pipe(
             tapResponse({
-              next: (collection: HydraCollection<ConversationOutput>) =>
+              next: (result: {
+                readonly channels: HydraCollection<ChannelOutput>;
+                readonly directs: HydraCollection<ConversationOutput>;
+                readonly conversations: HydraCollection<ConversationOutput>;
+              }) =>
                 patchState(store, {
-                  conversationsCallState: successCallState(collection.member),
+                  conversationsCallState: successCallState([
+                    ...result.channels.member.map(toConversation),
+                    ...result.directs.member,
+                    ...result.conversations.member,
+                  ]),
                 }),
               error: (error: unknown) =>
                 patchState(store, {
@@ -227,6 +277,23 @@ export const ConversationInventoryStore = signalStore(
         }),
       ),
     );
+
+    /**
+     * Swaps one conversation in BOTH slices — the loaded list and the
+     * session-only direct conversations. A DM lives in the second one, so an
+     * update written only to the first would silently do nothing.
+     */
+    const replaceEverywhere = (updated: ConversationOutput): void => {
+      patchState(store, {
+        conversationsCallState: successCallState(
+          replaceConversation(store.conversationsCallState().data ?? [], updated),
+        ),
+        sessionDirectConversations: replaceConversation(
+          store.sessionDirectConversations(),
+          updated,
+        ),
+      });
+    };
 
     return {
       load,
@@ -275,6 +342,11 @@ export const ConversationInventoryStore = signalStore(
        * Get-or-create against a member: addressing someone already spoken to
        * returns the existing conversation, so this doubles as "open".
        *
+       * The answer is kept in `sessionDirectConversations` because no endpoint
+       * can list DMs back: without this the row would disappear from the
+       * sidebar as soon as the dialog closed. It still does not survive a
+       * reload — that needs a backend list endpoint.
+       *
        * @param {{ organizationId: string; memberId: string }} input - Owning
        * organization and the addressed **organization member** id.
        *
@@ -291,8 +363,15 @@ export const ConversationInventoryStore = signalStore(
             return service.openDirectConversation(input.organizationId, input.memberId).pipe(
               tapResponse({
                 next: (conversation: ConversationOutput) => {
+                  const known: readonly ConversationOutput[] = store
+                    .sessionDirectConversations()
+                    .filter(
+                      (candidate: ConversationOutput): boolean => candidate.id !== conversation.id,
+                    );
+
                   patchState(store, {
                     openedConversationCallState: successCallState(conversation.id),
+                    sessionDirectConversations: [...known, conversation],
                   });
                   load(input.organizationId);
                 },
@@ -334,28 +413,19 @@ export const ConversationInventoryStore = signalStore(
       markRead: rxMethod<string>(
         pipe(
           mergeMap((conversationId: string) => {
-            const current: readonly ConversationOutput[] =
-              store.conversationsCallState().data ?? [];
-            const known: ConversationOutput | undefined = current.find(
-              (conversation: ConversationOutput): boolean => conversation.id === conversationId,
-            );
+            const known: ConversationOutput | undefined = store
+              .conversations()
+              .find(
+                (conversation: ConversationOutput): boolean => conversation.id === conversationId,
+              );
 
             if (known && known.unreadCount > 0) {
-              patchState(store, {
-                conversationsCallState: successCallState(
-                  replaceConversation(current, { ...known, unreadCount: 0 }),
-                ),
-              });
+              replaceEverywhere({ ...known, unreadCount: 0 });
             }
 
             return service.markRead(conversationId).pipe(
               tapResponse({
-                next: (updated: ConversationOutput) =>
-                  patchState(store, {
-                    conversationsCallState: successCallState(
-                      replaceConversation(store.conversationsCallState().data ?? [], updated),
-                    ),
-                  }),
+                next: replaceEverywhere,
                 error: () => undefined,
               }),
             );
@@ -380,32 +450,14 @@ export const ConversationInventoryStore = signalStore(
           mergeMap((conversation: ConversationOutput) => {
             const favorite: boolean = !conversation.isFavorite;
 
-            patchState(store, {
-              conversationsCallState: successCallState(
-                replaceConversation(store.conversationsCallState().data ?? [], {
-                  ...conversation,
-                  isFavorite: favorite,
-                }),
-              ),
-            });
+            replaceEverywhere({ ...conversation, isFavorite: favorite });
 
             return service.setFavorite(conversation.id, favorite).pipe(
               tapResponse({
                 next: (updated: ConversationOutput | void) => {
-                  if (updated) {
-                    patchState(store, {
-                      conversationsCallState: successCallState(
-                        replaceConversation(store.conversationsCallState().data ?? [], updated),
-                      ),
-                    });
-                  }
+                  if (updated) replaceEverywhere(updated);
                 },
-                error: () =>
-                  patchState(store, {
-                    conversationsCallState: successCallState(
-                      replaceConversation(store.conversationsCallState().data ?? [], conversation),
-                    ),
-                  }),
+                error: () => replaceEverywhere(conversation),
               }),
             );
           }),

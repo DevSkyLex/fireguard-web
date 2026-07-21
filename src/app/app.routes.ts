@@ -1,25 +1,31 @@
 import type { Routes } from '@angular/router';
-import { withAccountProfile, withAccountMenu, withNotificationBell } from '@features/account';
-import { withAuthShowcase } from '@features/auth';
+import {
+  withAccountProfile,
+  withAccountMenu,
+  withNotificationBell,
+} from '@features/account/providers';
 import { authGuard } from '@features/auth/http/guards';
-import { provideMainFeature } from '@features/main';
+import { withAuthShowcase } from '@features/auth/providers';
+import { provideMainFeature } from '@features/main/main.feature';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { onboardingGuard, onboardingRequiredGuard } from '@features/onboarding/http/guards';
 import { withOnboardingShowcase } from '@features/onboarding/providers';
 import {
-  provideOrganizationFeature,
+  withInterventionHeaderActions,
+  withInterventionSyncChip,
+} from '@features/organization/features/interventions/providers';
+import { provideOrganizationFeature } from '@features/organization/organization.feature';
+import {
   withAssistantPanel,
   withConversationDetailsPanel,
+  withMapFacilitiesPanel,
   withMessagingSidebar,
   withOrganizationNavigation,
   withOrganizationSwitcher,
-} from '@features/organization';
-import {
-  withInterventionHeaderActions,
-  withInterventionSyncChip,
-} from '@features/organization/features/interventions';
+  withShellAssistantAction,
+} from '@features/organization/providers';
 import { DashboardLayout, provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
-import { withThemeSwitcher } from '@shared/components';
+import { withThemeSwitcher } from '@shared/components/theme-switcher';
 import { FocusedLayout } from './layouts/focused-layout';
 import { provideSplitLayoutSlots, SplitLayout } from './layouts/split-layout';
 
@@ -75,12 +81,13 @@ export const APP_ROUTES: Routes = [
         sidebar: [withOrganizationSwitcher(), withAccountProfile(), withMessagingSidebar()],
         topbar: [
           withInterventionSyncChip(),
+          withShellAssistantAction(),
           withNotificationBell(),
           withThemeSwitcher(),
           withAccountMenu(),
         ],
         pageHeader: [withInterventionHeaderActions()],
-        panel: [withConversationDetailsPanel(), withAssistantPanel()],
+        panel: [withConversationDetailsPanel(), withAssistantPanel(), withMapFacilitiesPanel()],
       }),
     ],
     children: [

@@ -1,4 +1,7 @@
-<div id="organization-settings-danger" class="flex flex-col gap-6">
+<div
+  id="organization-settings-danger"
+  class="mx-auto flex w-full max-w-7xl flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8"
+>
   <app-organization-danger-zone
     [organization]="activeOrganizationStore.selectedOrganization()"
     [deleting]="store.isDeleting()"

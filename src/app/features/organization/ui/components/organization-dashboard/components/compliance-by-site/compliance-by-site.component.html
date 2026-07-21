@@ -57,32 +57,26 @@
         beside it so a 100% built on two assets is not mistaken for a clean
         estate.
       -->
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3.5">
         @for (site of topSites(); track site.facilityId) {
-          <div class="flex flex-col gap-1">
-            <div class="flex items-baseline justify-between gap-3">
-              <span
-                class="min-w-0 truncate text-xs text-surface-600 dark:text-surface-400"
+          <div class="flex items-center gap-3.5">
+            <div class="w-[150px] shrink-0">
+              <div
+                class="truncate text-sm font-medium text-surface-900 dark:text-surface-100"
                 [title]="site.path"
               >
-                {{ site.path }}
-              </span>
-
-              <span class="shrink-0 text-right">
-                <span
-                  class="text-sm font-semibold tabular-nums"
-                  [class]="rateTextClass(site.complianceRate)"
-                >
-                  {{ rateLabel(site.complianceRate) }}
-                </span>
-                <span class="ml-1 text-xs text-surface-400 tabular-nums dark:text-surface-500">
-                  ({{ site.trackedEquipmentCount }})
-                </span>
-              </span>
+                {{ site.name }}
+              </div>
+              <div
+                class="truncate text-[11px] text-surface-400 tabular-nums dark:text-surface-500"
+                i18n="@@org.dash.complianceBySite.tracked"
+              >
+                {{ site.trackedEquipmentCount }} tracked
+              </div>
             </div>
 
             <div
-              class="h-1.5 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+              class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
               role="meter"
               [attr.aria-label]="site.path"
               [attr.aria-valuenow]="site.complianceRate"
@@ -95,6 +89,13 @@
                 [style.width.%]="site.complianceRate ?? 0"
               ></div>
             </div>
+
+            <span
+              class="w-10 shrink-0 text-right text-sm font-semibold tabular-nums"
+              [class]="rateTextClass(site.complianceRate)"
+            >
+              {{ rateLabel(site.complianceRate) }}
+            </span>
           </div>
         }
 

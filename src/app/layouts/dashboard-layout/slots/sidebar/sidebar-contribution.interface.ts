@@ -1,4 +1,5 @@
-import type { Signal, Type } from '@angular/core';
+import type { Signal } from '@angular/core';
+import type { SlotComponentSource } from '../slot-component-source';
 
 /**
  * Interface SidebarContribution
@@ -11,7 +12,7 @@ import type { Signal, Type } from '@angular/core';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export interface SidebarContribution {
+export interface SidebarContribution extends SlotComponentSource {
   readonly id: string;
   readonly order: number;
 
@@ -29,7 +30,6 @@ export interface SidebarContribution {
    * @type {'rail' | 'rail-end' | 'lead' | 'content' | 'footer'}
    */
   readonly region: 'rail' | 'rail-end' | 'lead' | 'content' | 'footer';
-  readonly component: Type<unknown>;
 
   /**
    * Whether the widget applies right now. Registration cannot be conditional —

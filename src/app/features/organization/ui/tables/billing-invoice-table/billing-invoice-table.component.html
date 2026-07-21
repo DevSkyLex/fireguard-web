@@ -37,7 +37,7 @@
         <tr>
           <th i18n="@@org.invoiceTable.colInvoice" class="min-w-64">Invoice</th>
           <th i18n="@@org.invoiceTable.colDate" class="hidden min-w-36 md:table-cell">Date</th>
-          <th i18n="@@org.invoiceTable.colAmount" class="min-w-32">Amount</th>
+          <th i18n="@@org.invoiceTable.colAmount" class="min-w-32 text-right">Amount</th>
           <th i18n="@@org.invoiceTable.colStatus" class="min-w-40">Status</th>
           <th class="w-20">
             <span i18n="@@org.invoiceTable.actions" class="sr-only">Actions</span>
@@ -50,7 +50,9 @@
           <tr>
             <td><p-skeleton width="9rem" height="0.875rem" /></td>
             <td class="hidden md:table-cell"><p-skeleton width="7rem" height="0.875rem" /></td>
-            <td><p-skeleton width="5rem" height="0.875rem" /></td>
+            <td class="text-right">
+              <p-skeleton width="5rem" height="0.875rem" class="ml-auto" />
+            </td>
             <td><p-skeleton width="6rem" height="1.75rem" borderRadius="999px" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
@@ -58,7 +60,7 @@
           <tr>
             <td>
               <span
-                class="truncate font-semibold text-surface-950 tabular-nums dark:text-surface-50"
+                class="truncate font-mono text-sm font-medium text-surface-950 dark:text-surface-50"
               >
                 {{ invoice.number || invoice.id }}
               </span>
@@ -68,7 +70,7 @@
                 {{ invoice.createdAt | date: 'mediumDate' }}
               </span>
             </td>
-            <td>
+            <td class="text-right">
               <span class="font-medium text-surface-950 tabular-nums dark:text-surface-50">
                 {{ amountLabel(invoice) }}
               </span>

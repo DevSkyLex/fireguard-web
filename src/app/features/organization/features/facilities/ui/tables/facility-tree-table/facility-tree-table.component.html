@@ -24,10 +24,10 @@
   >
     <ng-template #header>
       <tr>
-        <th scope="col" i18n="@@facility.tree.col.name">Facility</th>
+        <th scope="col" i18n="@@facility.tree.col.name">Location</th>
         <th scope="col" i18n="@@facility.tree.col.type">Type</th>
         <th scope="col" class="text-right" i18n="@@facility.tree.col.equipment">Equipment</th>
-        <th scope="col" class="text-right" i18n="@@facility.tree.col.compliance">Compliance</th>
+        <th scope="col" i18n="@@facility.tree.col.compliance">Compliance</th>
       </tr>
     </ng-template>
 
@@ -54,17 +54,19 @@
 
         <td class="text-right tabular-nums">{{ rowData.equipmentCount }}</td>
 
-        <td class="text-right">
+        <td>
           <!--
             A bar beside the figure: scanning a column of percentages to find
             the weak site is work the eye does badly, and the tree is where a
             whole estate is compared at once. The number stays — the bar is
-            never the only carrier of the value.
+            never the only carrier of the value. The bar flexes to fill the
+            column rather than sitting at a fixed width so it reads as a
+            proportional track, not a constant-width stub.
           -->
-          <div class="flex items-center justify-end gap-2">
+          <div class="flex items-center gap-2">
             @if (rowData.complianceRate !== null) {
               <span
-                class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-800"
+                class="h-1.5 min-w-11 flex-1 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-800"
                 aria-hidden="true"
                 data-testid="facility-compliance-bar"
               >

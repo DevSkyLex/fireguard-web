@@ -5,22 +5,18 @@ export {
   getDashboardBaseActiveFilterCount,
   isDashboardDefaultDateRange,
 } from './features';
-export { AssetGrowthTrendStore } from './slices/asset-growth-trend';
-export type { AssetGrowthTrendStoreType } from './slices/asset-growth-trend';
-export { EquipmentCreatedTrendStore } from './slices/equipment-created-trend';
-export type { EquipmentCreatedTrendStoreType } from './slices/equipment-created-trend';
-export { FacilitiesCreatedTrendStore } from './slices/facilities-created-trend';
-export type { FacilitiesCreatedTrendStoreType } from './slices/facilities-created-trend';
-export { InspectionQualityTrendStore } from './slices/inspection-quality-trend';
-export type { InspectionQualityTrendStoreType } from './slices/inspection-quality-trend';
 export { InspectionsTrendStore } from './slices/inspections-trend';
 export type { InspectionsTrendStoreType } from './slices/inspections-trend';
-export { NonConformitiesOpenedTrendStore } from './slices/non-conformities-opened-trend';
-export type { NonConformitiesOpenedTrendStoreType } from './slices/non-conformities-opened-trend';
-export { NonConformitiesResolvedTrendStore } from './slices/non-conformities-resolved-trend';
-export type { NonConformitiesResolvedTrendStoreType } from './slices/non-conformities-resolved-trend';
-export { OverviewTrendStore } from './slices/overview-trend';
-export type { OverviewTrendStoreType } from './slices/overview-trend';
+export {
+  NonConformitiesTrendStore,
+  type NonConformitiesTrendResource,
+  type NonConformitiesTrendStoreType,
+} from './slices/non-conformities-trend';
+export {
+  UpcomingInterventionsStore,
+  type UpcomingInterventionsStoreType,
+} from './slices/upcoming-interventions';
+export { RecentActivityStore, type RecentActivityStoreType } from './slices/recent-activity';
 
 export { DashboardStore as OrganizationDashboardStore } from './organization-dashboard.store';
 export type { DashboardStore as OrganizationDashboardStoreType } from './organization-dashboard.store';
@@ -29,19 +25,5 @@ export {
   getDashboardBaseActiveFilterCount as getOrganizationDashboardBaseActiveFilterCount,
   isDashboardDefaultDateRange as isOrganizationDashboardDefaultDateRange,
 } from './features';
-export { AssetGrowthTrendStore as OrganizationDashboardAssetGrowthStore } from './slices/asset-growth-trend';
-export type { AssetGrowthTrendStoreType as OrganizationDashboardAssetGrowthStoreType } from './slices/asset-growth-trend';
-export { EquipmentCreatedTrendStore as OrganizationDashboardEquipmentCreatedStore } from './slices/equipment-created-trend';
-export type { EquipmentCreatedTrendStoreType as OrganizationDashboardEquipmentCreatedStoreType } from './slices/equipment-created-trend';
-export { FacilitiesCreatedTrendStore as OrganizationDashboardFacilitiesCreatedStore } from './slices/facilities-created-trend';
-export type { FacilitiesCreatedTrendStoreType as OrganizationDashboardFacilitiesCreatedStoreType } from './slices/facilities-created-trend';
-export { InspectionQualityTrendStore as OrganizationDashboardInspectionQualityStore } from './slices/inspection-quality-trend';
-export type { InspectionQualityTrendStoreType as OrganizationDashboardInspectionQualityStoreType } from './slices/inspection-quality-trend';
 export { InspectionsTrendStore as OrganizationDashboardInspectionsTrendStore } from './slices/inspections-trend';
 export type { InspectionsTrendStoreType as OrganizationDashboardInspectionsTrendStoreType } from './slices/inspections-trend';
-export { NonConformitiesOpenedTrendStore as OrganizationDashboardNonConformitiesOpenedStore } from './slices/non-conformities-opened-trend';
-export type { NonConformitiesOpenedTrendStoreType as OrganizationDashboardNonConformitiesOpenedStoreType } from './slices/non-conformities-opened-trend';
-export { NonConformitiesResolvedTrendStore as OrganizationDashboardNonConformitiesResolvedStore } from './slices/non-conformities-resolved-trend';
-export type { NonConformitiesResolvedTrendStoreType as OrganizationDashboardNonConformitiesResolvedStoreType } from './slices/non-conformities-resolved-trend';
-export { OverviewTrendStore as OrganizationDashboardOverviewTrendStore } from './slices/overview-trend';
-export type { OverviewTrendStoreType as OrganizationDashboardOverviewTrendStoreType } from './slices/overview-trend';

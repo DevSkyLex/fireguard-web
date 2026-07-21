@@ -14,25 +14,28 @@
   @if (loading()) {
     <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@common.loading">Loading…</p>
   } @else {
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <div
+      class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-surface-200 p-5 dark:border-surface-800"
+    >
       @if (hasCard()) {
-        <p class="flex items-center gap-2 text-sm">
-          <i
-            class="pi pi-credit-card text-surface-400 dark:text-surface-500"
+        <div class="flex min-w-0 items-center gap-3.5">
+          <span
+            class="grid h-[30px] w-[46px] shrink-0 place-items-center rounded-md border border-surface-200 bg-surface-100 text-[11px] font-bold tracking-[0.06em] text-surface-950 uppercase dark:border-surface-800 dark:bg-surface-800 dark:text-surface-50"
             aria-hidden="true"
-          ></i>
-          <span class="font-medium text-surface-900 capitalize dark:text-surface-100">
+          >
             {{ method()?.brand }}
           </span>
-          <span class="text-surface-500 tabular-nums dark:text-surface-400">
-            •••• {{ method()?.last4 }}
-          </span>
-          @if (expiry()) {
-            <span class="text-xs text-surface-400 tabular-nums dark:text-surface-500">
-              <span i18n="@@billing.paymentMethod.expires">expires</span> {{ expiry() }}
+          <div class="flex min-w-0 flex-col">
+            <span class="text-sm font-medium text-surface-950 tabular-nums dark:text-surface-50">
+              •••• •••• •••• {{ method()?.last4 }}
             </span>
-          }
-        </p>
+            @if (expiry()) {
+              <span class="mt-0.5 text-xs text-surface-500 tabular-nums dark:text-surface-400">
+                <span i18n="@@billing.paymentMethod.expires">Expires</span> {{ expiry() }}
+              </span>
+            }
+          </div>
+        </div>
       } @else {
         <p
           class="text-sm text-surface-500 dark:text-surface-400"

@@ -26,6 +26,7 @@ import { Menu, MenuModule } from 'primeng/menu';
 import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { ConnectivityService } from '@core/connectivity';
 import { isCallPending } from '@core/request-state';
@@ -116,6 +117,14 @@ import {
 } from '@shared/components';
 
 /**
+ * Which of the Work items / Proposed changes / Activity tabs is selected in
+ * the body's tab group.
+ *
+ * @since 8.0.0
+ */
+type InterventionSectionTab = 'work-items' | 'changes' | 'activity';
+
+/**
  * Component InterventionDetailPage
  * @class InterventionDetailPage
  *
@@ -125,13 +134,13 @@ import {
  * layout's main is unpadded and this page owns its own edges): an integrated
  * top bar (breadcrumb link, code, prev/next with list position, phase
  * actions), page-level banners, then a two-column body — title block, phase
- * stepper row, guided planning (draft) or flat work-item checklist, proposed
- * changes, publication summary and activity in the main column; a tinted
- * "Properties" rail (properties, linked resource counts, readiness,
- * publication) on the right. It orchestrates the same field workflow as
- * before — online/offline field actions, discovery, publication polling —
- * through the unchanged {@link InterventionWorkspaceStore} and services;
- * every child it composes stays presentational.
+ * stepper row, guided planning (draft) or a tabbed Work items / Proposed
+ * changes / Activity group in the main column; a tinted "Properties" rail
+ * (properties, linked resource counts, readiness, publication) on the right.
+ * It orchestrates the same field workflow as before — online/offline field
+ * actions, discovery, publication polling — through the unchanged
+ * {@link InterventionWorkspaceStore} and services; every child it composes
+ * stays presentational.
  *
  * @version 3.0.0
  *
@@ -163,6 +172,7 @@ import {
     ReactiveFormsModule,
     RouterLink,
     SkeletonModule,
+    TabsModule,
     TextareaModule,
   ],
   providers: [InterventionPlanningOptionsStore, InterventionWorkspaceStore],
@@ -1459,40 +1469,29 @@ export class InterventionDetailPage {
   );
 
   /**
-   * Property activityExpanded
+   * Property activeSectionTab
    * @readonly
    *
    * @description
-   * Whether the activity panel body is expanded. Defaults per phase —
-   * collapsed during preparation to keep the guided flow focused — and
-   * resets when the phase changes; the header toggle overrides in between.
+   * Which of the Work items / Proposed changes / Activity tabs is selected.
+   * Defaults per phase — activity (or changes, when any are pending) during
+   * review where the checklist has already given way to the review surfaces,
+   * work items otherwise — and resets whenever the phase changes; the tab
+   * list overrides in between.
    *
    * @access protected
-   * @since 5.3.0
+   * @since 8.0.0
    *
-   * @type {WritableSignal<boolean>}
+   * @type {WritableSignal<InterventionSectionTab>}
    */
-  protected readonly activityExpanded: WritableSignal<boolean> = linkedSignal<boolean>(
-    () => this.phase() !== 'prepare',
-  );
-
-  /**
-   * Property workItemsExpanded
-   * @readonly
-   *
-   * @description
-   * Whether the work-item checklist body is expanded. Defaults per phase —
-   * collapsed to a summary during review, where changes and publication
-   * take the stage — and resets when the phase changes.
-   *
-   * @access protected
-   * @since 5.3.0
-   *
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly workItemsExpanded: WritableSignal<boolean> = linkedSignal<boolean>(
-    () => this.phase() !== 'review',
-  );
+  protected readonly activeSectionTab: WritableSignal<InterventionSectionTab> =
+    linkedSignal<InterventionSectionTab>(() => {
+      if (this.showPlanningGuide()) return 'activity';
+      if (this.phase() === 'review') {
+        return this.store.changes().length > 0 ? 'changes' : 'activity';
+      }
+      return 'work-items';
+    });
 
   /**
    * Property propertiesExpanded
@@ -2236,7 +2235,7 @@ export class InterventionDetailPage {
    * @return {void}
    */
   private revealFieldWork(): void {
-    this.workItemsExpanded.set(true);
+    this.activeSectionTab.set('work-items');
     if (this.store.workItems().length === 0 && this.canAddDiscovery()) {
       this.discoveryDrawerVisible.set(true);
       return;
@@ -2247,6 +2246,27 @@ export class InterventionDetailPage {
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     section.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  /**
+   * Method onSectionTabChange
+   * @method onSectionTabChange
+   *
+   * @description
+   * Narrows `p-tabs`' `(valueChange)` payload — typed `string | number` by
+   * PrimeNG to cover every possible tab value — back to the section tab
+   * union this page actually uses.
+   *
+   * @access protected
+   * @since 8.0.0
+   *
+   * @param {string | number | undefined} value - Tab value emitted by `p-tabs`.
+   * @returns {void}
+   */
+  protected onSectionTabChange(value: string | number | undefined): void {
+    if (value === 'work-items' || value === 'changes' || value === 'activity') {
+      this.activeSectionTab.set(value);
+    }
   }
 
   /**

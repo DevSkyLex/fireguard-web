@@ -6,7 +6,6 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { AvatarModule } from 'primeng/avatar';
 import type { ButtonProps } from 'primeng/button';
 import { FileUploadModule, type FileUpload } from 'primeng/fileupload';
 import { MessageModule } from 'primeng/message';
@@ -20,15 +19,14 @@ import type { AvatarUploadEvent } from './models';
  * Presentational control dedicated to the avatar upload workflow. The avatar
  * is persisted through its own `/api/me/avatar` endpoint, so it is kept
  * separate from the profile-field form and emits the selected file without
- * depending on account stores.
+ * depending on account stores. Renders only the upload trigger; the avatar
+ * preview lives in the identity card that hosts this form.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
  * <app-account-avatar-form
- *   [avatarUrl]="avatarUrl()"
- *   [initials]="initials()"
  *   [uploading]="uploading()"
  *   [hasError]="hasError()"
  *   (avatarSelected)="uploadAvatar($event)"
@@ -39,40 +37,12 @@ import type { AvatarUploadEvent } from './models';
  */
 @Component({
   selector: 'app-account-avatar-form',
-  imports: [AvatarModule, FileUploadModule, MessageModule],
+  imports: [FileUploadModule, MessageModule],
   templateUrl: './account-avatar-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountAvatarForm {
   //#region Properties
-  /**
-   * Input avatarUrl
-   * @input
-   *
-   * @description
-   * Current avatar URL displayed beside the upload control.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<string | null>}
-   */
-  public readonly avatarUrl: InputSignal<string | null> = input<string | null>(null);
-
-  /**
-   * Input initials
-   * @input
-   *
-   * @description
-   * User initials displayed when no avatar URL is available.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<string | null>}
-   */
-  public readonly initials: InputSignal<string | null> = input<string | null>(null);
-
   /**
    * Input uploading
    * @input

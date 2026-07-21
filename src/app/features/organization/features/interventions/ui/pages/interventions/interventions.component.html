@@ -3,6 +3,13 @@
   class="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto p-3 sm:p-6 md:p-7 lg:p-8"
 >
   <header class="flex flex-wrap items-center gap-2.5">
+    <p class="shrink-0 text-sm text-surface-600 tabular-nums dark:text-surface-400">
+      <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
+        =1 {1 intervention}
+        other {{{ loadedCount() }} interventions}
+      }</ng-container>
+    </p>
+
     <div
       role="tablist"
       aria-label="Interventions view"
@@ -65,16 +72,9 @@
     />
 
     <div class="ml-auto flex shrink-0 items-center gap-3">
-      <p class="hidden text-sm text-surface-600 tabular-nums lg:block dark:text-surface-400">
-        <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
-          =1 {1 intervention}
-          other {{{ loadedCount() }} interventions}
-        }</ng-container>
-      </p>
-
       <p-button
         i18n-label="@@intervention.list.newButton"
-        label="New"
+        label="New intervention"
         icon="pi pi-plus"
         severity="primary"
         size="small"
@@ -257,7 +257,7 @@
       >
         <p-button
           i18n-label="@@intervention.list.newButton"
-          label="New"
+          label="New intervention"
           icon="pi pi-plus"
           severity="primary"
           size="small"
@@ -287,6 +287,10 @@
         @let vm = asItem(item);
         <div class="flex items-center gap-3">
           <app-intervention-priority-icon class="shrink-0" [priority]="vm.intervention.priority" />
+          <span
+            class="hidden w-16 shrink-0 text-sm text-surface-600 lg:block dark:text-surface-400"
+            >{{ priorityLabel(vm.intervention.priority) }}</span
+          >
           <div class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span
               class="text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"

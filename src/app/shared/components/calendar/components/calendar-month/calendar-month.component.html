@@ -9,10 +9,10 @@
     }
   </div>
 
-  <div class="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 overflow-y-auto">
+  <div class="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 overflow-hidden max-sm:overflow-y-auto">
     @for (day of days(); track day.date.getTime()) {
       <div
-        class="group flex min-h-20 flex-col gap-1 border-r border-b border-surface-100 px-1.5 pt-1.5 pb-2 sm:min-h-[118px] dark:border-surface-800/70 [&:nth-child(7n)]:border-r-0"
+        class="group flex flex-col gap-1 border-r border-b border-surface-100 px-1.5 pt-1.5 pb-2 max-sm:min-h-20 dark:border-surface-800/70 [&:nth-child(7n)]:border-r-0"
         [class]="cellClass(day)"
         [attr.aria-current]="day.isToday ? 'date' : null"
       >

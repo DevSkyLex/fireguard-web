@@ -1,87 +1,122 @@
 @let facility = this.facility();
 
 <div
-  class="flex flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-4 lg:flex-row lg:items-start lg:justify-between dark:border-surface-800 dark:bg-surface-900"
+  class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
-  <div class="flex min-w-0 items-start gap-3">
-    <p-avatar [icon]="facilityTypeIcons[facility.type]" shape="square" size="xlarge" />
-
-    <div class="flex min-w-0 flex-col gap-1">
-      <div class="flex flex-wrap items-center gap-2">
-        <h1
-          class="truncate text-2xl font-semibold tracking-[-0.035em] text-surface-950 dark:text-surface-50"
-          [title]="facility.name"
-        >
-          {{ facility.name }}
-        </h1>
-
-        <p-tag
-          class="rounded-md text-xs"
-          [severity]="facility.type === 'site' ? 'info' : 'secondary'"
-        >
-          <div class="flex items-center gap-1.5">
-            <i [class]="facilityTypeIcons[facility.type]" class="text-xs"></i>
-            <span class="font-semibold">{{ facility.type | titlecase }}</span>
-          </div>
-        </p-tag>
-
-        <app-tag [descriptor]="statusDescriptor(facility.status)" />
-      </div>
-
-      <div class="flex flex-wrap items-center gap-3 text-sm text-surface-600 dark:text-surface-400">
-        @if (facility.address) {
-          <span class="inline-flex items-center gap-1.5">
-            <i class="pi pi-map-marker text-xs"></i>
-            {{ facility.address }}
-          </span>
-        }
-
-        @if (facility.code) {
-          <span class="font-mono">{{ facility.code }}</span>
-        }
-
-        <span i18n="@@facility.header.updated"
-          >Updated {{ facility.updatedAt | date: 'mediumDate' }}</span
-        >
-      </div>
+  <!--
+    Photo banner: `FacilityOutput` carries no photo field yet, so this is a
+    placeholder-only region (structure matches the mockup; an upload path
+    would need a backend field first).
+  -->
+  <div class="relative h-[172px] bg-surface-100 dark:bg-surface-800">
+    <div
+      class="flex h-full flex-col items-center justify-center gap-2 text-surface-400 dark:text-surface-500"
+    >
+      <i class="pi pi-image text-2xl" aria-hidden="true"></i>
+      <span class="text-xs" i18n="@@facility.header.photoPlaceholder"
+        >Drop a photo of this site</span
+      >
     </div>
   </div>
 
-  @if (canManage()) {
-    <!--
-      Edit leads; Move and Delete sit under the caret. Three flat buttons gave
-      Delete the same weight as the routine action next to it — a destructive
-      action offered as prominently as the one used every day.
+  <div
+    class="flex flex-col gap-4 px-5 pt-4 pb-[18px] lg:flex-row lg:items-start lg:justify-between"
+  >
+    <div class="flex min-w-0 items-start gap-3.5">
+      <span
+        class="grid size-11 shrink-0 place-content-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-300"
+      >
+        <i [class]="facilityTypeIcons[facility.type]" class="text-[19px]"></i>
+      </span>
 
-      The plain button takes over while a delete is running: `p-splitbutton`
-      has no `loading` input in this PrimeNG version, and trading the spinner
-      for a caret would drop feedback at the moment it matters most.
-    -->
-    <div class="flex items-center gap-2">
-      @if (deleting()) {
-        <p-button
-          i18n-label="@@common.delete"
-          label="Delete"
-          icon="pi pi-trash"
-          severity="danger"
-          [outlined]="true"
-          size="small"
-          [loading]="true"
-        />
-      } @else {
-        <p-splitbutton
-          i18n-label="@@common.edit"
-          label="Edit"
-          icon="pi pi-pencil"
-          severity="secondary"
-          [outlined]="true"
-          size="small"
-          appendTo="body"
-          [model]="overflowItems()"
-          data-testid="facility-header-actions"
-          (onClick)="edit.emit()"
-        />
-      }
+      <div class="flex min-w-0 flex-col gap-1.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1
+            class="truncate text-2xl font-semibold tracking-[-0.035em] text-surface-950 dark:text-surface-50"
+            [title]="facility.name"
+          >
+            {{ facility.name }}
+          </h1>
+
+          <p-tag
+            class="rounded-md text-xs"
+            [severity]="facility.type === 'site' ? 'info' : 'secondary'"
+          >
+            <div class="flex items-center gap-1.5">
+              <i [class]="facilityTypeIcons[facility.type]" class="text-xs"></i>
+              <span class="font-semibold">{{ facility.type | titlecase }}</span>
+            </div>
+          </p-tag>
+
+          <app-tag [descriptor]="statusDescriptor(facility.status)" />
+        </div>
+
+        <!--
+          Mono reference first (the business code), then remaining metadata
+          as pill chips — matches the equipment header's identity block so
+          both record types read the same shape.
+        -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          @if (facility.code) {
+            <span class="font-mono text-sm text-surface-500 dark:text-surface-400">{{
+              facility.code
+            }}</span>
+          }
+
+          @if (facility.address) {
+            <span
+              class="inline-flex h-[22px] items-center rounded-full border border-surface-200 bg-surface-50 px-2.5 text-xs text-surface-500 dark:border-surface-800 dark:bg-surface-800 dark:text-surface-400"
+            >
+              {{ facility.address }}
+            </span>
+          }
+
+          <span
+            class="inline-flex h-[22px] items-center rounded-full border border-surface-200 bg-surface-50 px-2.5 text-xs text-surface-500 dark:border-surface-800 dark:bg-surface-800 dark:text-surface-400"
+            i18n="@@facility.header.updated"
+          >
+            Updated {{ facility.updatedAt | date: 'mediumDate' }}
+          </span>
+        </div>
+      </div>
     </div>
-  }
+
+    @if (canManage()) {
+      <!--
+        Edit leads; Move and Delete sit under the caret. Three flat buttons
+        gave Delete the same weight as the routine action next to it — a
+        destructive action offered as prominently as the one used every day.
+
+        The plain button takes over while a delete is running: `p-splitbutton`
+        has no `loading` input in this PrimeNG version, and trading the
+        spinner for a caret would drop feedback at the moment it matters most.
+      -->
+      <div class="flex items-center gap-2">
+        @if (deleting()) {
+          <p-button
+            i18n-label="@@common.delete"
+            label="Delete"
+            icon="pi pi-trash"
+            severity="danger"
+            [outlined]="true"
+            size="small"
+            [loading]="true"
+          />
+        } @else {
+          <p-splitbutton
+            i18n-label="@@common.edit"
+            label="Edit"
+            icon="pi pi-pencil"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            appendTo="body"
+            [model]="overflowItems()"
+            data-testid="facility-header-actions"
+            (onClick)="edit.emit()"
+          />
+        }
+      </div>
+    }
+  </div>
 </div>

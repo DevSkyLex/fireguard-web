@@ -1,176 +1,144 @@
-<p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
-
-<p-card data-shell="table">
-  <ng-template pTemplate="header">
-    <div class="flex flex-col">
-      <h2 class="font-semibold" i18n="@@account.sessionTable.title">Active sessions</h2>
-      <p class="text-sm text-surface-500" i18n="@@account.sessionTable.subtitle">
-        Review and revoke access to your account.
+<div
+  class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  data-shell="table"
+>
+  <div
+    class="flex flex-wrap items-center justify-between gap-2.5 border-b border-surface-200 px-[18px] py-3.5 dark:border-surface-800"
+  >
+    <div>
+      <h2
+        class="text-base font-semibold text-surface-950 dark:text-surface-50"
+        i18n="@@account.sessionTable.title"
+      >
+        Active sessions
+      </h2>
+      <p
+        class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+        i18n="@@account.sessionTable.subtitle"
+      >
+        Devices signed in to your account.
       </p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    @if (hasOtherSessions()) {
       <p-button
-        label="Refresh"
-        i18n-label="@@common.refresh"
-        icon="pi pi-refresh"
-        severity="secondary"
+        label="Revoke others"
+        i18n-label="@@account.sessionTable.revokeAll"
+        icon="pi pi-sign-out"
+        severity="danger"
         size="small"
         [outlined]="true"
-        [disabled]="loading()"
-        class="w-full sm:w-auto"
-        (onClick)="onRefresh()"
+        [loading]="revokingAll()"
+        (onClick)="revokeAll.emit()"
       />
+    }
+  </div>
 
-      @if (hasOtherSessions()) {
-        <p-button
-          label="Revoke all other sessions"
-          i18n-label="@@account.sessionTable.revokeAll"
-          icon="pi pi-sign-out"
-          severity="danger"
-          size="small"
-          [outlined]="true"
-          [loading]="revokingAll()"
-          class="w-full sm:w-auto"
-          (onClick)="revokeAll.emit()"
-        />
+  @if (loading()) {
+    <ul class="divide-y divide-surface-200 dark:divide-surface-800">
+      @for (item of skeletonItems; track item.id) {
+        <li class="flex items-center gap-3 px-[18px] py-3">
+          <p-skeleton shape="circle" size="2.125rem" />
+          <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+            <p-skeleton width="10rem" height="0.875rem" />
+            <p-skeleton width="7rem" height="0.75rem" />
+          </div>
+          <p-skeleton width="4rem" height="0.75rem" />
+        </li>
       }
-    </div>
-  </ng-template>
+    </ul>
+  } @else if (empty()) {
+    <app-empty-state
+      icon="pi-desktop"
+      title="No active sessions"
+      i18n-title="@@account.sessionTable.emptyTitle"
+      description="There are no other active sessions on your account."
+      i18n-description="@@account.sessionTable.emptyDesc"
+    />
+  } @else {
+    <ul class="divide-y divide-surface-200 dark:divide-surface-800">
+      @for (session of sessions(); track session.id) {
+        <li class="flex items-center gap-3 px-[18px] py-3">
+          <span
+            class="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+          >
+            <i
+              [class]="deviceIcon(session.deviceType)"
+              class="text-sm"
+              aria-hidden="true"
+              data-testid="session-device-icon"
+            ></i>
+          </span>
 
-  <ng-template pTemplate="content">
-    <p-table
-      [value]="loading() ? skeletonItems : empty() ? [] : [...sessions()]"
-      dataKey="id"
-      [paginator]="total() > 0"
-      [rows]="rows"
-      [first]="firstPage()"
-      [totalRecords]="total()"
-      [lazy]="true"
-      (onLazyLoad)="onLazyLoad($event)"
-      [rowsPerPageOptions]="rowsPerPageOptions"
-      [paginatorDropdownAppendTo]="'body'"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sessions"
-      i18n-currentPageReportTemplate="@@account.sessionTable.pageReport"
-      [stripedRows]="true"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th class="min-w-64" i18n="@@account.sessionTable.device">Device</th>
-          <th class="hidden min-w-32 md:table-cell" i18n="@@account.sessions.ipAddress">
-            IP address
-          </th>
-          <th class="min-w-40" i18n="@@account.sessionTable.lastActivity">Last activity</th>
-          <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="body" let-session>
-        @if (loading()) {
-          <tr>
-            <td>
-              <div class="flex items-center gap-3">
-                <p-skeleton shape="circle" size="2.25rem" />
-                <div class="flex flex-col gap-1.5">
-                  <p-skeleton width="10rem" height="0.875rem" />
-                  <p-skeleton width="7rem" height="0.75rem" />
-                </div>
-              </div>
-            </td>
-            <td class="hidden md:table-cell"><p-skeleton width="7rem" height="0.875rem" /></td>
-            <td><p-skeleton width="9rem" height="0.875rem" /></td>
-            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-          </tr>
-        } @else {
-          <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
-            <td>
-              <div class="flex min-w-0 items-center gap-3">
-                <p-avatar
-                  [icon]="deviceIcon(session.deviceType)"
-                  shape="circle"
-                  size="normal"
-                  class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                />
-
-                <div class="flex min-w-0 flex-col">
-                  <span
-                    class="flex items-center gap-2 truncate font-medium text-surface-900 dark:text-surface-100"
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
+                @if (session.browser) {
+                  {{ session.browser }}
+                } @else {
+                  <ng-container i18n="@@account.sessionTable.unknownBrowser"
+                    >Unknown browser</ng-container
                   >
-                    @if (session.browser) {
-                      {{ session.browser }}
-                    } @else {
-                      <ng-container i18n="@@account.sessionTable.unknownBrowser"
-                        >Unknown browser</ng-container
-                      >
-                    }
-                    @if (session.isCurrent) {
-                      <span
-                        class="inline-flex h-5 items-center rounded-full border border-primary-200 bg-primary-50 px-2 text-[0.65rem] leading-none font-semibold text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300"
-                        i18n="@@account.sessionTable.current"
-                      >
-                        Current
-                      </span>
-                    }
-                  </span>
-                  <span class="truncate text-xs text-surface-500">
-                    @if (session.deviceType) {
-                      {{ session.deviceType }}
-                    } @else {
-                      <ng-container i18n="@@account.sessionTable.unknownDevice"
-                        >Unknown device</ng-container
-                      >
-                    }
-                  </span>
-                </div>
-              </div>
-            </td>
-            <td class="hidden md:table-cell">
-              <span class="text-surface-600 dark:text-surface-400">{{ session.ipAddress }}</span>
-            </td>
-            <td>
-              <!--
-                The relative label answers the question this column is scanned
-                for; the exact timestamp stays reachable as the tooltip.
-              -->
-              <span
-                class="text-surface-500 dark:text-surface-400"
-                [title]="session.lastActivityAt | date: 'medium'"
-              >
-                {{
-                  lastActivityLabel(session.lastActivityAt) ??
-                    (session.lastActivityAt | date: 'medium')
-                }}
+                }
               </span>
-            </td>
-            <td class="text-right">
-              <p-button
-                icon="pi pi-ellipsis-v"
-                severity="secondary"
-                size="small"
-                [outlined]="true"
-                ariaLabel="Session actions"
-                i18n-ariaLabel="@@account.sessionTable.actions"
-                (onClick)="onActionMenuToggle($event, session)"
-              />
-            </td>
-          </tr>
-        }
-      </ng-template>
+              @if (session.isCurrent) {
+                <span
+                  class="inline-flex h-[18px] shrink-0 items-center rounded-full bg-primary-50 px-1.5 text-[9px] font-bold tracking-[0.04em] text-primary-700 uppercase dark:bg-primary-400/15 dark:text-primary-300"
+                  i18n="@@account.sessionTable.thisDevice"
+                >
+                  This device
+                </span>
+              }
+            </div>
+            <div class="truncate text-xs text-surface-500 dark:text-surface-400">
+              @if (session.deviceType) {
+                {{ session.deviceType }}
+              } @else {
+                <ng-container i18n="@@account.sessionTable.unknownDevice"
+                  >Unknown device</ng-container
+                >
+              }
+              &#183; {{ session.ipAddress }}
+            </div>
+          </div>
 
-      <ng-template pTemplate="emptymessage">
-        <tr class="bg-transparent! [&>td]:border-b-0!">
-          <td colspan="4">
-            <app-empty-state
-              icon="pi-desktop"
-              title="No active sessions"
-              i18n-title="@@account.sessionTable.emptyTitle"
-              description="There are no other active sessions on your account."
-              i18n-description="@@account.sessionTable.emptyDesc"
+          <!--
+            The relative label answers the question this column is scanned
+            for; the exact timestamp stays reachable as the tooltip.
+          -->
+          <span
+            class="shrink-0 text-xs whitespace-nowrap text-surface-500 dark:text-surface-400"
+            [title]="session.lastActivityAt | date: 'medium'"
+          >
+            {{
+              lastActivityLabel(session.lastActivityAt) ?? (session.lastActivityAt | date: 'medium')
+            }}
+          </span>
+
+          <span class="flex shrink-0 items-center gap-0.5">
+            <p-button
+              icon="pi pi-info-circle"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              ariaLabel="View details"
+              i18n-ariaLabel="@@account.sessionTable.viewDetails"
+              (onClick)="details.emit(session)"
             />
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </ng-template>
-</p-card>
+            @if (!session.isCurrent) {
+              <p-button
+                icon="pi pi-times"
+                severity="danger"
+                [text]="true"
+                size="small"
+                ariaLabel="Revoke"
+                i18n-ariaLabel="@@common.revoke"
+                (onClick)="revoke.emit(session)"
+              />
+            }
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</div>

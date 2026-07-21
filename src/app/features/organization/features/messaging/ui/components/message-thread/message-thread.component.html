@@ -46,16 +46,16 @@
         <!-- Sized explicitly to the avatar: without a definite box the
              absolutely-positioned dot anchors to the inline box instead and
              lands below it. -->
-        <span class="relative mt-0.5 block size-8 shrink-0">
+        <span class="relative mt-0.5 block size-9 shrink-0">
           @if (author.avatarUrl) {
             <img
-              class="size-8 rounded-full object-cover"
+              class="size-9 rounded-full object-cover"
               [src]="author.avatarUrl"
               [alt]="author.displayName"
             />
           } @else {
             <span
-              class="flex size-8 items-center justify-center rounded-full bg-surface-200 text-xs font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
+              class="flex size-9 items-center justify-center rounded-full bg-surface-200 text-xs font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
               aria-hidden="true"
             >
               {{ author.initials }}
@@ -192,6 +192,21 @@
             </p>
           }
 
+          <!--
+            Record cards, in the same slot as attachments: both are content the
+            author attached to the message, and both read as blocks under the
+            body rather than as metadata beside it.
+          -->
+          @if (references(message).length > 0) {
+            <ul class="mt-1 flex flex-col gap-1" data-testid="message-references">
+              @for (reference of references(message); track reference.type + reference.id) {
+                <li>
+                  <app-message-reference-card [reference]="reference" />
+                </li>
+              }
+            </ul>
+          }
+
           @if (attachments(message.id).length > 0) {
             <ul class="mt-1 flex flex-col gap-1">
               @for (attachment of attachments(message.id); track attachment.id) {
@@ -254,12 +269,12 @@
                       [href]="attachmentUrl(attachment)"
                       target="_blank"
                       rel="noopener"
-                      class="shrink-0 rounded p-1.5 text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-100"
-                      i18n-aria-label="@@messaging.attachment.quickView"
-                      aria-label="Quick view"
+                      class="shrink-0 rounded-md border border-surface-300 px-2.5 py-1 text-xs font-medium text-surface-700 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-600 dark:text-surface-300 dark:hover:bg-surface-800"
                       data-testid="message-attachment-quickview"
                     >
-                      <i class="pi pi-external-link" aria-hidden="true"></i>
+                      <!-- The kit labels this one: an icon alone made "open"
+                           and "keep" look like the same affordance. -->
+                      <span i18n="@@messaging.attachment.quickView">Quick view</span>
                     </a>
 
                     <a
@@ -309,17 +324,40 @@
                 <button
                   type="button"
                   data-testid="add-reaction-chip"
-                  class="flex h-[26px] cursor-pointer items-center rounded-full border border-dashed border-surface-300 px-2 text-xs text-surface-500 hover:border-surface-400 hover:text-surface-700 dark:border-surface-600 dark:text-surface-400 dark:hover:text-surface-200"
+                  class="flex h-[26px] cursor-pointer items-center gap-0.5 rounded-full border border-surface-300 bg-surface-0 px-2 text-xs text-surface-500 hover:border-surface-400 hover:text-surface-700 dark:border-surface-600 dark:bg-surface-900 dark:text-surface-400 dark:hover:text-surface-200"
                   i18n-aria-label="@@messaging.thread.reactAction"
                   aria-label="Add a reaction"
                   (click)="togglePicker(message.id)"
                 >
-                  <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
+                  <i class="pi pi-face-smile text-xs" aria-hidden="true"></i>
+                  <i class="pi pi-plus text-[8px]" aria-hidden="true"></i>
                 </button>
               </li>
             </ul>
           }
 
+          @if (pickerMessageId() === message.id) {
+            <!-- Quick reactions — the kit's eight. -->
+            <div
+              class="flex w-fit gap-0.5 rounded-lg border border-surface-200 bg-surface-0 p-1 shadow-lg dark:border-surface-700 dark:bg-surface-900"
+              role="group"
+              i18n-aria-label="@@messaging.thread.reactAction"
+              aria-label="Add a reaction"
+              data-testid="reaction-picker"
+            >
+              @for (emoji of quickReactions; track emoji) {
+                <button
+                  type="button"
+                  class="grid size-[30px] cursor-pointer place-content-center rounded text-base hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
+                  [attr.aria-label]="emoji"
+                  data-testid="quick-reaction"
+                  (click)="pickReaction(message, emoji)"
+                >
+                  {{ emoji }}
+                </button>
+              }
+            </div>
+          }
           @if (message.replyCount > 0) {
             <button
               type="button"
@@ -446,29 +484,6 @@
               >
                 <i class="pi pi-trash text-xs" aria-hidden="true"></i>
                 <ng-container i18n="@@messaging.thread.delete">Delete</ng-container>
-              </button>
-            }
-          </div>
-        }
-
-        @if (pickerMessageId() === message.id) {
-          <!-- Quick reactions — the kit's eight. -->
-          <div
-            class="absolute -top-11 right-0 z-10 flex gap-0.5 rounded-lg border border-surface-200 bg-surface-0 p-1 shadow-lg dark:border-surface-700 dark:bg-surface-900"
-            role="group"
-            i18n-aria-label="@@messaging.thread.reactAction"
-            aria-label="Add a reaction"
-            data-testid="reaction-picker"
-          >
-            @for (emoji of quickReactions; track emoji) {
-              <button
-                type="button"
-                class="grid size-7 cursor-pointer place-content-center rounded text-base hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
-                [attr.aria-label]="emoji"
-                data-testid="quick-reaction"
-                (click)="pickReaction(message, emoji)"
-              >
-                {{ emoji }}
               </button>
             }
           </div>

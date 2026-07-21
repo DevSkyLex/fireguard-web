@@ -6,3 +6,4 @@ export { DashboardLayoutBreadcrumb } from './dashboard-layout-breadcrumb/dashboa
 export { DashboardLayoutPageHeader } from './dashboard-layout-page-header/dashboard-layout-page-header.component';
 export { DashboardLayoutOrgRail } from './dashboard-layout-org-rail/dashboard-layout-org-rail.component';
 export { DashboardLayoutPanelHost } from './dashboard-layout-panel-host/dashboard-layout-panel-host.component';
+export { DashboardLayoutSlotOutlet } from './dashboard-layout-slot-outlet/dashboard-layout-slot-outlet.component';

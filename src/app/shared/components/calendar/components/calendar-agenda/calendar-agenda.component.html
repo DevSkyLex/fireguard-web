@@ -37,18 +37,18 @@
         />
       </div>
 
-      <ul class="mt-1 flex flex-col">
+      <ul class="mt-1 flex flex-col divide-y divide-surface-100 dark:divide-surface-800/70">
         @for (event of day.events; track event.id) {
           <li>
             <button
               type="button"
-              class="flex w-full items-start gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-surface-100 motion-reduce:transition-none dark:hover:bg-surface-800/60"
+              class="flex w-full items-start gap-4 px-1 py-3.5 text-left transition-colors hover:bg-surface-100 motion-reduce:transition-none dark:hover:bg-surface-800/60"
               [attr.aria-label]="openLabel(event.title)"
               (click)="eventClick.emit(event)"
             >
               <!-- Time gutter (agenda-owned chrome) -->
               <span
-                class="flex w-12 shrink-0 flex-col items-end pt-px leading-tight tabular-nums"
+                class="flex w-[74px] shrink-0 flex-col items-end pt-px leading-tight tabular-nums"
                 aria-hidden="false"
               >
                 @if (isAllDay(event)) {

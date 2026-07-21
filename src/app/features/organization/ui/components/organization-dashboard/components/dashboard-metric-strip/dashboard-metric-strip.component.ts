@@ -5,7 +5,6 @@ import {
   contentChildren,
   type Signal,
 } from '@angular/core';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DashboardMetricCell } from './components';
 
 /**
@@ -13,20 +12,18 @@ import { DashboardMetricCell } from './components';
  * @class DashboardMetricStrip
  *
  * @description
- * Single elevated panel hosting the dashboard KPI cells as one divided
- * grid instead of separate cards. Projected {@link DashboardMetricCell}
- * children become grid cells separated by 1px tinted gaps; the column
- * count adapts to how many cells survive their permission gates so no
- * empty tinted track is ever shown.
+ * Row of detached dashboard KPI tiles: each projected {@link DashboardMetricCell}
+ * renders its own bordered card, laid out on a gapped grid whose column count
+ * adapts to how many cells survive their permission gates so no track is ever
+ * left empty.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-dashboard-metric-strip',
   templateUrl: './dashboard-metric-strip.component.html',
-  imports: [CardModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardMetricStrip {
@@ -54,7 +51,7 @@ export class DashboardMetricStrip {
    *
    * @description
    * Column classes keeping every grid row fully occupied for the actual
-   * cell count, so the divider background never bleeds into empty tracks.
+   * cell count, so a permission-gated absence never leaves a half-empty row.
    *
    * @access protected
    * @since 1.0.0
@@ -71,33 +68,13 @@ export class DashboardMetricStrip {
         return 'grid-cols-1 sm:grid-cols-3';
       case 5:
         // Five never divides into two or four, so any intermediate breakpoint
-        // would leave a half-empty last row with the divider showing through.
+        // would leave a half-empty last row.
         // One column, then five.
         return 'grid-cols-1 xl:grid-cols-5';
       default:
         return 'grid-cols-2 xl:grid-cols-4';
     }
   });
-
-  /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * Pass-through options for the PrimeNG Card shell: bordered, clipped
-   * root (radius and elevation come from the preset) and flush
-   * body/content so the divider grid bleeds edge to edge.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: { class: 'overflow-hidden border border-surface-200 dark:border-surface-800' },
-    body: { class: 'p-0' },
-    content: { class: 'p-0' },
-  };
 
   //#endregion
 }

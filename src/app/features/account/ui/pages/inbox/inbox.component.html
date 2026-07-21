@@ -43,39 +43,50 @@
           <button
             type="button"
             data-testid="inbox-item"
-            class="flex w-full items-start gap-3 py-3 text-left hover:bg-surface-50 dark:hover:bg-surface-900"
+            class="flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left hover:bg-surface-50 dark:hover:bg-surface-900"
             (click)="open(item)"
           >
             <!--
               Unread is a dot *and* a bold title: status is never colour-only.
             -->
             <span
-              class="mt-1.5 size-2 shrink-0 rounded-full"
+              class="mt-4 size-2 shrink-0 rounded-full"
               [class]="item.isRead ? 'bg-transparent' : 'bg-primary-500'"
               aria-hidden="true"
             ></span>
 
+            <!-- The kit leads every system row with a 36px identity object;
+                 a non-person row gets a square muted tile holding its icon. -->
+            <span
+              class="grid size-9 shrink-0 place-content-center rounded-md bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+              aria-hidden="true"
+            >
+              <i [class]="sourceIcon(item)"></i>
+            </span>
+
             <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span
-                class="truncate text-sm text-surface-950 dark:text-surface-50"
-                [class.font-semibold]="!item.isRead"
-              >
-                {{ item.title }}
+              <span class="flex items-baseline gap-2">
+                <span
+                  class="truncate text-sm text-surface-950 dark:text-surface-50"
+                  [class.font-semibold]="!item.isRead"
+                >
+                  {{ item.title }}
+                </span>
+
+                <time
+                  class="ml-auto shrink-0 text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
+                  [attr.datetime]="item.occurredAt"
+                >
+                  {{ item.occurredAt | date: 'shortDate' }}
+                </time>
               </span>
 
               @if (item.snippet) {
-                <span class="truncate text-xs text-surface-500 dark:text-surface-400">
+                <span class="truncate text-[13px] text-surface-500 dark:text-surface-400">
                   {{ item.snippet }}
                 </span>
               }
             </span>
-
-            <time
-              class="shrink-0 text-xs text-surface-400 tabular-nums dark:text-surface-500"
-              [attr.datetime]="item.occurredAt"
-            >
-              {{ item.occurredAt | date: 'shortDate' }}
-            </time>
           </button>
         </li>
       }

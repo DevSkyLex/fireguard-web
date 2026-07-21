@@ -27,7 +27,7 @@ export { GroupedListHeaderDirective, GroupedListRowDirective } from './grouped-l
 export type { GroupedListHeaderContext, GroupedListRowContext } from './grouped-list';
 export { Logo } from './logo';
 export { MapCanvas } from './map';
-export type { MapMarker } from './map';
+export type { MapMarker, MapMarkerDetail } from './map';
 export { RadioCardGroup } from './radio-card-group';
 export type { RadioCardOption } from './radio-card-group';
 export { Skeleton } from './skeleton';

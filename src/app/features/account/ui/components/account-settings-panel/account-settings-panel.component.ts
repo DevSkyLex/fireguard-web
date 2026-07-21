@@ -10,9 +10,10 @@ import { AccountLanguageForm } from '../../forms';
  *
  * @description
  * Container for the personal preferences section. Hosts the display-language
- * picker and wires it to the app-wide {@link LocalePreferenceService}. Kept as a
- * dedicated panel (mirroring {@link AccountProfilePanel}) so the "Settings" tab
- * can grow with further preferences without bloating the profile panel.
+ * picker and wires it to the app-wide {@link LocalePreferenceService}. Kept as
+ * a dedicated panel, composed as an extra card inside {@link AccountProfilePanel}
+ * so language and display preferences can grow without bloating the profile
+ * form itself.
  *
  * @since 1.0.0
  *
@@ -21,8 +22,9 @@ import { AccountLanguageForm } from '../../forms';
 @Component({
   selector: 'app-account-settings-panel',
   imports: [AccountLanguageForm],
-  // Own instance: the store is component-scoped and the sibling profile panel
-  // provides its own, so there is no shared ancestor to inherit from.
+  // Own instance: the store is component-scoped, and this panel's locale save
+  // is independent of the profile/avatar edits made through the host panel's
+  // own AccountProfileEditStore instance.
   providers: [AccountProfileEditStore],
   templateUrl: './account-settings-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

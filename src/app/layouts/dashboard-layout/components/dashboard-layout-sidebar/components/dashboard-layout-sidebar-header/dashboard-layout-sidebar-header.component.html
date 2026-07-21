@@ -1,6 +1,6 @@
 @if (iconOnly()) {
   <div
-    class="flex h-16 items-center justify-center border-b border-surface-200 px-3 dark:border-surface-800"
+    class="flex h-14 items-center justify-center border-b border-surface-200 px-3 dark:border-surface-800"
   >
     @if (collapsible()) {
       <button
@@ -21,14 +21,14 @@
   </div>
 } @else {
   <div
-    class="flex h-16 items-center gap-2 border-b border-surface-200 px-4 dark:border-surface-800"
+    class="flex h-14 items-center gap-2 border-b border-surface-200 px-4 dark:border-surface-800"
   >
     @if (!hasOrganization()) {
       <app-logo class="size-7 shrink-0 text-surface-950 dark:text-surface-50" />
     }
 
     <p
-      class="min-w-0 flex-1 truncate pl-1 text-[15px] font-bold tracking-[-0.02em] text-surface-950 dark:text-surface-50"
+      class="min-w-0 flex-1 truncate pl-1 text-base font-bold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
       data-testid="sidebar-workspace-name"
     >
       {{ workspaceName() }}
@@ -60,7 +60,7 @@
         i18n-aria-label="@@layout.sidebar.collapse"
         (click)="sidebarService.togglePrimaryCollapsed()"
       >
-        <i class="pi pi-angle-left text-sm"></i>
+        <i class="pi pi-angle-left text-sm" aria-hidden="true"></i>
       </button>
     }
   </div>

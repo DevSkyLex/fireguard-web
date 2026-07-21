@@ -6,7 +6,7 @@
     i18n-aria-label="@@messaging.details.tabsAria"
     aria-label="Conversation details"
   >
-    @for (tab of ['info', 'pins', 'files']; track tab) {
+    @for (tab of ['info', 'pins', 'files', 'links']; track tab) {
       <button
         type="button"
         role="tab"
@@ -27,6 +27,9 @@
           @case ('pins') {
             <ng-container i18n="@@messaging.details.pins">Pinned</ng-container>
           }
+          @case ('links') {
+            <ng-container i18n="@@messaging.details.links">Links</ng-container>
+          }
           @default {
             <ng-container i18n="@@messaging.details.files">Files</ng-container>
           }
@@ -43,7 +46,7 @@
       facts we do not have went missing. Only the members list, which is part
       of that fetch, degrades, and it says so where it stands.
     -->
-    @if (store.hasError() && activeTab() !== 'info') {
+    @if (store.hasError() && activeTab() !== 'info' && activeTab() !== 'links') {
       <div class="flex flex-col items-center gap-2 py-8 text-center">
         <i class="pi pi-exclamation-triangle text-lg text-surface-400" aria-hidden="true"></i>
         <p class="text-sm text-surface-600 dark:text-surface-400" i18n="@@messaging.details.error">
@@ -62,14 +65,47 @@
     } @else {
       @switch (activeTab()) {
         @case ('info') {
+          <!--
+            A real heading, not an eyebrow: PRODUCT.md names tiny uppercase
+            tracked labels above every section as an anti-reference, and the kit
+            sets these at 15px semibold in sentence case.
+          -->
           <h3
-            class="pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
+            class="pt-1 pb-2.5 text-[15px] font-semibold text-surface-950 dark:text-surface-50"
             i18n="@@messaging.details.mainInfo"
           >
             Main info
           </h3>
 
           <dl class="flex flex-col">
+            <!--
+              Only channels report a creator, and only once the directory has
+              resolved them — an empty row would claim a fact we do not have.
+            -->
+            @if (creator(); as channelCreator) {
+              <div
+                class="flex min-h-9.5 items-center justify-between gap-3 border-b border-surface-200 py-2 dark:border-surface-800"
+                data-testid="details-creator"
+              >
+                <dt
+                  class="flex items-center gap-2 text-xs text-surface-500 dark:text-surface-400"
+                  i18n="@@messaging.details.creator"
+                >
+                  <i class="pi pi-user text-[11px]" aria-hidden="true"></i>Creator
+                </dt>
+                <dd class="flex items-center gap-2 text-xs font-medium">
+                  <span
+                    class="grid size-5.5 shrink-0 place-content-center rounded-full bg-surface-100 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                    aria-hidden="true"
+                    >{{ channelCreator.initials }}</span
+                  >
+                  <span class="truncate text-surface-950 dark:text-surface-50">{{
+                    channelCreator.displayName
+                  }}</span>
+                </dd>
+              </div>
+            }
+
             <div
               class="flex min-h-9.5 items-center justify-between gap-3 border-b border-surface-200 py-2 dark:border-surface-800"
             >
@@ -132,13 +168,30 @@
           </dl>
 
           <!--
-            Where this thread sits in the channel hierarchy. Rendered only when
-            there is a link to show: an empty "Linked threads" heading would
-            claim a relationship the conversation does not have.
+            Recent volume, from the activity endpoint. Rendered only when the
+            read succeeded: an all-zero grid we could not fetch would claim the
+            thread is dead.
+          -->
+          @if (store.activity().length > 0) {
+            <h3
+              class="pt-5 pb-2.5 text-[15px] font-semibold text-surface-950 dark:text-surface-50"
+              i18n="@@messaging.details.activity"
+            >
+              Activity
+            </h3>
+
+            <app-conversation-activity-heatmap [buckets]="store.activity()" />
+          }
+
+          <!--
+            Where this thread sits among its neighbours — parent, sub-channels,
+            channels sharing its parent, threads on the same record. Rendered
+            only when there is a link to show: an empty "Linked threads" heading
+            would claim a relationship the conversation does not have.
           -->
           @if (linkedThreads().length > 0) {
             <h3
-              class="pt-5 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
+              class="pt-5 pb-2.5 text-[15px] font-semibold text-surface-950 dark:text-surface-50"
               i18n="@@messaging.details.linkedThreads"
             >
               Linked threads
@@ -154,32 +207,58 @@
                     (click)="openThread(thread.id)"
                   >
                     <i
-                      class="pi shrink-0 text-[11px] text-surface-400"
-                      [class]="thread.relation === 'parent' ? 'pi-arrow-up' : 'pi-arrow-down'"
+                      class="pi pi-hashtag shrink-0 text-[11px] text-surface-400"
                       aria-hidden="true"
                     ></i>
                     <span
                       class="min-w-0 flex-1 truncate text-[13px] font-medium text-surface-950 dark:text-surface-50"
                       >{{ thread.name }}</span
                     >
+
                     <!--
-                      The arrow alone would not say which way the link runs, and
-                      "parent" versus "sub-channel" is the whole point of the
-                      section.
+                      Unread is a number, not a dot: the row is a shortcut, and
+                      "3 waiting" is what decides whether it is worth taking.
                     -->
-                    @if (thread.relation === 'parent') {
+                    @if (thread.unreadCount > 0) {
                       <span
-                        class="shrink-0 text-[10px] font-semibold tracking-wider text-surface-500 uppercase"
-                        i18n="@@messaging.details.threadParent"
-                        >Parent</span
-                      >
-                    } @else {
-                      <span
-                        class="shrink-0 text-[10px] font-semibold tracking-wider text-surface-500 uppercase"
-                        i18n="@@messaging.details.threadChild"
-                        >Sub-channel</span
+                        class="shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-contrast tabular-nums"
+                        data-testid="details-linked-thread-unread"
+                        [attr.aria-label]="thread.unreadCount + ' unread'"
+                        i18n-aria-label="@@messaging.details.threadUnreadAria"
+                        >{{ thread.unreadCount }}</span
                       >
                     }
+
+                    <!--
+                      The hash alone would not say how the two threads relate,
+                      and that is the whole point of the section.
+                    -->
+                    <span
+                      class="shrink-0 text-[10px] font-semibold tracking-wider text-surface-500 uppercase"
+                    >
+                      @switch (thread.relation) {
+                        @case ('parent') {
+                          <ng-container i18n="@@messaging.details.threadParent"
+                            >Parent</ng-container
+                          >
+                        }
+                        @case ('child') {
+                          <ng-container i18n="@@messaging.details.threadChild"
+                            >Sub-channel</ng-container
+                          >
+                        }
+                        @case ('sibling') {
+                          <ng-container i18n="@@messaging.details.threadSibling"
+                            >Sibling</ng-container
+                          >
+                        }
+                        @default {
+                          <ng-container i18n="@@messaging.details.threadSubject"
+                            >Same record</ng-container
+                          >
+                        }
+                      }
+                    </span>
                   </button>
                 </li>
               }
@@ -188,12 +267,14 @@
 
           @if (conversation.isChannel) {
             <h3
-              class="flex items-center gap-2 pt-5 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
+              class="flex items-center gap-2 pt-5 pb-2.5 text-[15px] font-semibold text-surface-950 dark:text-surface-50"
             >
               <ng-container i18n="@@messaging.details.members">Members</ng-container>
-              <span class="tabular-nums" data-testid="details-member-count">{{
-                participantRows().length
-              }}</span>
+              <span
+                class="text-[13px] font-normal text-surface-500 tabular-nums"
+                data-testid="details-member-count"
+                >{{ participantRows().length }}</span
+              >
             </h3>
 
             @if (store.hasError()) {
@@ -322,6 +403,102 @@
                 </li>
               }
             </ul>
+          }
+        }
+
+        @case ('links') {
+          <!--
+            Its own call, its own states: the links page independently of the
+            rest of the panel, so it neither waits on the members fetch nor
+            disappears with it.
+          -->
+          @if (store.isLoadingLinks() && store.links().length === 0) {
+            <p
+              class="py-3 text-xs text-surface-500 dark:text-surface-400"
+              i18n="@@messaging.details.loading"
+            >
+              Loading…
+            </p>
+          } @else if (store.hasLinksError() && store.links().length === 0) {
+            <p class="py-3 text-xs text-surface-500 dark:text-surface-400">
+              <ng-container i18n="@@messaging.details.linksError"
+                >The links could not be loaded.</ng-container
+              >
+              <button
+                type="button"
+                class="ml-1 cursor-pointer font-semibold text-primary hover:underline"
+                i18n="@@messaging.details.retry"
+                data-testid="details-links-retry"
+                (click)="retry()"
+              >
+                Retry
+              </button>
+            </p>
+          } @else if (store.links().length === 0) {
+            <div class="flex flex-col items-center gap-2 py-8 text-center">
+              <i class="pi pi-link text-lg text-surface-400" aria-hidden="true"></i>
+              <p
+                class="text-sm text-surface-600 dark:text-surface-400"
+                i18n="@@messaging.details.noLinks"
+              >
+                No links in this thread yet.
+              </p>
+            </div>
+          } @else {
+            <ul class="flex flex-col">
+              @for (link of store.links(); track link.id) {
+                <li>
+                  <a
+                    [href]="link.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center gap-2.5 rounded-lg px-1 py-2 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
+                    data-testid="details-link"
+                  >
+                    <span
+                      class="grid size-9 shrink-0 place-content-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
+                      aria-hidden="true"
+                    >
+                      <i class="pi pi-globe text-sm"></i>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span
+                        class="block truncate text-[13px] font-medium text-surface-950 dark:text-surface-50"
+                        >{{ link.url }}</span
+                      >
+                      <span class="block text-xs text-surface-500 dark:text-surface-400">{{
+                        relativeTime(link.createdAt)
+                      }}</span>
+                    </span>
+                    <i
+                      class="pi pi-external-link shrink-0 text-xs text-surface-400"
+                      aria-hidden="true"
+                    ></i>
+                  </a>
+                </li>
+              }
+            </ul>
+
+            <!--
+              Explicit "load more" rather than infinite scroll, matching the
+              pins and files tabs: the panel column is short, and a scroll
+              trigger inside it fires on almost any wheel movement.
+            -->
+            @if (store.hasMoreLinks()) {
+              <button
+                type="button"
+                class="mt-2 w-full cursor-pointer rounded-md border border-surface-200 py-1.5 text-xs font-medium text-surface-600 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60 dark:border-surface-700 dark:text-surface-400 dark:hover:bg-surface-800"
+                data-testid="details-links-more"
+                [disabled]="store.isLoadingLinks()"
+                (click)="store.loadMoreLinks()"
+              >
+                @if (store.isLoadingLinks()) {
+                  <ng-container i18n="@@messaging.details.loading">Loading…</ng-container>
+                } @else {
+                  <ng-container i18n="@@messaging.details.loadMoreLinks">Load more</ng-container>
+                }
+              </button>
+            }
           }
         }
 

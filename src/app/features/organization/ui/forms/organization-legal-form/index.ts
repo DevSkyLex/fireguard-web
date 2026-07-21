@@ -1,1 +1,4 @@
-export { OrganizationLegalForm } from './organization-legal-form.component';
+export {
+  OrganizationLegalForm,
+  type LegalFormCompleteness,
+} from './organization-legal-form.component';

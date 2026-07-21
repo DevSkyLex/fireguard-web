@@ -5,15 +5,15 @@
 >
   @for (step of steps(); track step.key; let last = $last) {
     <li
-      class="flex min-w-0 items-center"
+      class="flex min-w-0 items-start"
       [class.flex-1]="!last"
       [attr.aria-current]="step.state === 'active' ? 'step' : null"
       [attr.aria-label]="step.label"
     >
-      <span class="flex shrink-0 items-center gap-2">
+      <span class="flex shrink-0 flex-col items-center gap-1.5">
         @if (step.state === 'active') {
           <span class="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary">
-            <span class="size-[7px] rounded-full bg-white" aria-hidden="true"></span>
+            <i [class]="step.icon + ' text-[9px] text-white'" aria-hidden="true"></i>
           </span>
           <span
             class="text-xs font-semibold whitespace-nowrap text-surface-950 dark:text-surface-50"
@@ -21,9 +21,7 @@
             {{ step.label }}
           </span>
           @if (activeDetail(); as detail) {
-            <span
-              class="hidden text-xs font-medium text-surface-500 tabular-nums sm:inline dark:text-surface-400"
-            >
+            <span class="text-xs font-medium text-surface-500 tabular-nums dark:text-surface-400">
               {{ detail }}
             </span>
           }
@@ -34,7 +32,7 @@
             <i class="pi pi-check text-[9px]" aria-hidden="true"></i>
           </span>
           <span
-            class="hidden text-xs font-semibold whitespace-nowrap text-surface-600 sm:inline dark:text-surface-400"
+            class="text-xs font-semibold whitespace-nowrap text-surface-600 dark:text-surface-400"
           >
             {{ step.label }}
           </span>
@@ -48,7 +46,7 @@
             <i [class]="step.icon + ' text-[9px]'" aria-hidden="true"></i>
           </span>
           <span
-            class="hidden text-xs font-semibold whitespace-nowrap text-surface-500 sm:inline dark:text-surface-400"
+            class="text-xs font-semibold whitespace-nowrap text-surface-500 dark:text-surface-400"
           >
             {{ step.label }}
           </span>
@@ -56,7 +54,7 @@
       </span>
       @if (!last) {
         <span
-          class="mx-2 h-[1.5px] min-w-2 flex-1 rounded-full sm:mx-3 sm:min-w-4"
+          class="mx-2 mt-2.5 h-[1.5px] min-w-2 flex-1 self-start rounded-full sm:mx-3 sm:min-w-4"
           [class]="connectorClasses(step.state)"
           aria-hidden="true"
         ></span>

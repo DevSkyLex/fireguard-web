@@ -3,43 +3,60 @@ import type { EquipmentKpiOutput } from '@features/organization/features/equipme
 import { EquipmentFleetSummary } from '../equipment-fleet-summary.component';
 
 const KPIS = {
-  totalAssets: 40,
-  compliant: 28,
-  dueSoon: 4,
-  openNonConformities: 12,
+  totalAssets: 85,
+  compliant: 78,
+  dueSoon: 5,
+  openNonConformities: 2,
 } as EquipmentKpiOutput;
 
 describe('EquipmentFleetSummary', () => {
-  const createComponent = (kpis: EquipmentKpiOutput | null) => {
+  const createComponent = (kpis: EquipmentKpiOutput | null, loading = false) => {
     TestBed.configureTestingModule({ imports: [EquipmentFleetSummary] });
 
     const fixture = TestBed.createComponent(EquipmentFleetSummary);
     fixture.componentRef.setInput('kpis', kpis);
+    fixture.componentRef.setInput('loading', loading);
     fixture.detectChanges();
     return fixture;
   };
 
-  it('should render the three fleet counters', () => {
+  it('should render the four KPI cards with their values', () => {
     const text: string = createComponent(KPIS).nativeElement.textContent ?? '';
 
-    expect(text).toContain('40');
-    expect(text).toContain('28');
-    expect(text).toContain('4');
+    expect(text).toContain('85');
+    expect(text).toContain('78');
+    expect(text).toContain('5');
+    expect(text).toContain('2');
   });
 
-  // The backend computes openNonConformities organization-wide because
-  // non-conformities attach to inspections, not equipment. Beside equipment
-  // counters it would read as a per-asset figure it is not.
-  it('should not show the organization-wide non-conformity count', () => {
-    expect(createComponent(KPIS).nativeElement.textContent ?? '').not.toContain('12');
+  it('should render the organization-wide non-conformity count as its own card', () => {
+    const fixture = createComponent(KPIS);
+    const strip: Element | null = fixture.nativeElement.querySelector(
+      '[data-testid="equipment-kpi-strip"]',
+    );
+
+    expect(strip).not.toBeNull();
+    expect(strip?.textContent).toContain('2');
   });
 
-  // The summary is secondary to the table: while it loads it stays out of the
-  // way rather than reserving space with a skeleton.
-  it('should render nothing before the counters arrive', () => {
-    const fixture = createComponent(null);
+  it('should render the computed compliant percentage as the compliant card subtitle', () => {
+    const text: string = createComponent(KPIS).nativeElement.textContent ?? '';
 
-    expect(fixture.nativeElement.querySelector('p')).toBeNull();
+    // 78 / 85 rounds to 92%.
+    expect(text).toContain('92%');
+  });
+
+  it('should render four loading cards while the counters are in flight', () => {
+    const fixture = createComponent(null, true);
+    const cards: NodeListOf<Element> = fixture.nativeElement.querySelectorAll('app-metric-card');
+
+    expect(cards.length).toBe(4);
+  });
+
+  it('should render nothing when there is no data and no load in flight', () => {
+    const fixture = createComponent(null, false);
+
+    expect(fixture.nativeElement.querySelector('[data-testid="equipment-kpi-strip"]')).toBeNull();
   });
 
   it('should render a zero counter rather than hiding it', () => {

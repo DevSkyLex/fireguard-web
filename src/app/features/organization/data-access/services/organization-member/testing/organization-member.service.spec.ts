@@ -64,6 +64,7 @@ describe('OrganizationMemberService', () => {
       { name: ORGANIZATION_PERMISSION.FACILITIES_READ, description: '' },
       { name: ORGANIZATION_PERMISSION.FACILITIES_WRITE, description: '' },
     ],
+    memberCount: 1,
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-01-01T00:00:00+00:00',
   };

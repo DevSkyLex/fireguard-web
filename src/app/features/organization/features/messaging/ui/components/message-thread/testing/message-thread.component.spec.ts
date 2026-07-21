@@ -1,7 +1,10 @@
+import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { ENV_CONFIG } from '@core/config/environment';
 import type { MessageOutput } from '@features/organization/features/messaging/models';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { MessageThread } from '../message-thread.component';
 
 const message = (id: string): MessageOutput =>
@@ -206,5 +209,80 @@ describe('MessageThread edit and delete', () => {
     expect(deleteRequested).toHaveBeenCalledTimes(1);
     // The menu closes: the confirmation belongs to the page.
     expect(at('message-more-menu')).toBeNull();
+  });
+});
+
+/**
+ * Record cards hang off the message like its attachments do. Two things must
+ * hold: an absent `references` field (API Platform omits it) is not a crash,
+ * and a tombstoned message shows none — a reference is content, redacted with
+ * the body.
+ */
+describe('MessageThread references', () => {
+  let fixture: ComponentFixture<MessageThread>;
+
+  const render = (row: MessageOutput): void => {
+    fixture = TestBed.createComponent(MessageThread);
+    fixture.componentRef.setInput('messages', [row]);
+    fixture.detectChanges();
+  };
+
+  const cards = (): readonly HTMLElement[] =>
+    fixture.debugElement
+      .queryAll(By.css('[data-testid="message-reference"]'))
+      .map((debug) => debug.nativeElement as HTMLElement);
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [MessageThread],
+      providers: [
+        provideRouter([]),
+        { provide: ENV_CONFIG, useValue: { apiUrl: 'http://localhost' } },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganization: signal({ id: 'org-1' }) },
+        },
+      ],
+    });
+  });
+
+  it('renders one card per reference, under the body', () => {
+    render({
+      ...message('m1'),
+      references: [
+        { type: 'non_conformity', id: 'nc-1', code: 'FG-NC-231' },
+        { type: 'facility', id: 'f-1', label: 'Tour Nord' },
+      ],
+    } as MessageOutput);
+
+    expect(cards()).toHaveLength(2);
+    expect(cards()[0]?.getAttribute('data-reference-type')).toBe('non_conformity');
+  });
+
+  // The field is omitted entirely on a message that carries none — reading it
+  // as `=== null` would let `undefined` through and blow up the `@for`.
+  it('renders nothing when the payload omits references', () => {
+    render(message('m1'));
+
+    expect(cards()).toHaveLength(0);
+  });
+
+  it('renders nothing for a tombstoned message', () => {
+    render({ ...message('m1'), isDeleted: true, body: null, references: [] } as MessageOutput);
+
+    expect(cards()).toHaveLength(0);
+  });
+
+  // A delete derived locally keeps the payload it was built from; the thread
+  // must still read like the reload would.
+  it('drops the cards of a message deleted locally', () => {
+    render({
+      ...message('m1'),
+      isDeleted: true,
+      body: null,
+      references: [{ type: 'equipment', id: 'e-1' }],
+    } as MessageOutput);
+
+    expect(cards()).toHaveLength(0);
   });
 });

@@ -1,54 +1,44 @@
 import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
 import { ENV_CONFIG } from '@core/config/environment';
+import { SHELL_PANEL_PORT } from '@core/shell-panel';
 import { THEME_PORT } from '@core/theme';
-import { FacilityService } from '@features/organization/features/facilities';
-import type { FacilityOutput } from '@features/organization/features/facilities';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { MAP_FACILITIES_PANEL_ID } from '@features/organization/providers';
+import { MapFacilitiesStore } from '@features/organization/state';
+import { MapCanvas, type MapMarker } from '@shared/components';
 import { OrganizationMapPage } from '../organization-map.component';
 
-const facility = (id: string, name: string, type: string, placed = true): FacilityOutput =>
-  ({
-    id,
-    name,
-    type,
-    status: 'active',
-    latitude: placed ? 48.85 : null,
-    longitude: placed ? 2.35 : null,
-  }) as unknown as FacilityOutput;
-
-const FACILITIES: readonly FacilityOutput[] = [
-  facility('f1', 'Acme HQ', 'office'),
-  facility('f2', 'North Depot', 'warehouse'),
-  facility('f3', 'Unplaced Annex', 'office', false),
-];
-
-const at = (fixture: ComponentFixture<OrganizationMapPage>, testId: string): HTMLElement | null =>
-  (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`);
-
-const items = (fixture: ComponentFixture<OrganizationMapPage>): string[] =>
-  [
-    ...(fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="map-panel-item"]'),
-  ].map((node: Element): string => node.textContent?.trim() ?? '');
+const MARKER: MapMarker = { id: 'f1', latitude: 48.85, longitude: 2.35, title: 'Acme HQ' };
 
 describe('OrganizationMapPage', () => {
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let shellPanel: { open: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> };
+  let storeMock: {
+    markers: ReturnType<typeof signal<readonly MapMarker[]>>;
+    showAddForm: ReturnType<typeof signal<boolean>>;
+    fitAllRequestId: ReturnType<typeof signal<number>>;
+    selectFacility: ReturnType<typeof vi.fn>;
+    dragMarker: ReturnType<typeof vi.fn>;
+    setMapCenter: ReturnType<typeof vi.fn>;
+  };
 
   const render = (): ComponentFixture<OrganizationMapPage> => {
-    router = { navigate: vi.fn().mockResolvedValue(true) };
+    shellPanel = { open: vi.fn(), close: vi.fn() };
+    storeMock = {
+      markers: signal<readonly MapMarker[]>([MARKER]),
+      showAddForm: signal(false),
+      fitAllRequestId: signal(0),
+      selectFacility: vi.fn(),
+      dragMarker: vi.fn(),
+      setMapCenter: vi.fn(),
+    };
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: Router, useValue: router },
         { provide: ENV_CONFIG, useValue: { mapStyleUrl: 'https://example.invalid/s' } },
         { provide: THEME_PORT, useValue: { resolvedTheme: signal('light') } },
-        { provide: FacilityService, useValue: { listAll: () => of(FACILITIES) } },
-        {
-          provide: ActiveOrganizationStore,
-          useValue: { selectedOrganization: signal({ id: 'org-1' }) },
-        },
+        { provide: SHELL_PANEL_PORT, useValue: shellPanel },
+        { provide: MapFacilitiesStore, useValue: storeMock },
       ],
     });
 
@@ -57,68 +47,86 @@ describe('OrganizationMapPage', () => {
     return fixture;
   };
 
-  /**
-   * The panel and the map must describe the same set. A row with no pin cannot
-   * be selected from the map, and would make the count disagree with what is
-   * plotted.
-   */
-  it('lists only the facilities the map can plot', () => {
-    const fixture = render();
-
-    expect(items(fixture)).toHaveLength(2);
-    expect(items(fixture).join(' ')).not.toContain('Unplaced Annex');
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('counts the listed sites', () => {
-    expect(at(render(), 'map-panel-count')?.textContent).toContain('2 sites');
+  it('renders the map with the store’s markers', () => {
+    const fixture = render();
+    const mapCanvas = fixture.debugElement.query(By.directive(MapCanvas))
+      .componentInstance as MapCanvas;
+
+    expect(mapCanvas.markers()).toEqual([MARKER]);
   });
 
-  it('filters on name and on type', () => {
-    const fixture = render();
-    const component = fixture.componentInstance as unknown as {
-      search: { set(value: string): void };
-    };
+  it('opens the facilities panel on mount', () => {
+    render();
 
-    component.search.set('depot');
-    fixture.detectChanges();
-    expect(items(fixture)).toHaveLength(1);
-
-    component.search.set('office');
-    fixture.detectChanges();
-    expect(items(fixture)).toHaveLength(1);
+    expect(shellPanel.open).toHaveBeenCalledWith(MAP_FACILITIES_PANEL_ID);
   });
 
-  it('distinguishes "no match" from "no facilities"', () => {
+  it('closes the facilities panel on destroy', () => {
     const fixture = render();
-    (fixture.componentInstance as unknown as { search: { set(value: string): void } }).search.set(
-      'nothing matches this',
-    );
-    fixture.detectChanges();
 
-    expect(at(fixture, 'map-panel-no-match')).not.toBeNull();
+    fixture.destroy();
+
+    expect(shellPanel.close).toHaveBeenCalledWith(MAP_FACILITIES_PANEL_ID);
   });
 
-  /**
-   * Selecting used to navigate straight to the record, which defeats the point
-   * of plotting sites together — you left the map on the first click.
-   */
-  it('selects a site without leaving the map', () => {
+  it('selects the facility a pin represents through the shared store', () => {
     const fixture = render();
+    const mapCanvas = fixture.debugElement.query(By.directive(MapCanvas))
+      .componentInstance as MapCanvas;
 
-    at(fixture, 'map-panel-item')?.click();
-    fixture.detectChanges();
+    mapCanvas.markerSelect.emit(MARKER);
 
-    expect(router.navigate).not.toHaveBeenCalled();
-    expect(at(fixture, 'map-panel-open')).not.toBeNull();
+    expect(storeMock.selectFacility).toHaveBeenCalledWith('f1');
   });
 
-  it('opens the record only through the explicit action', () => {
+  it('forwards a dragged pin to the shared store', () => {
     const fixture = render();
-    at(fixture, 'map-panel-item')?.click();
+    const mapCanvas = fixture.debugElement.query(By.directive(MapCanvas))
+      .componentInstance as MapCanvas;
+
+    mapCanvas.markerDragEnd.emit({ id: 'f1', latitude: 40, longitude: 3 });
+
+    expect(storeMock.dragMarker).toHaveBeenCalledWith({ id: 'f1', latitude: 40, longitude: 3 });
+  });
+
+  it('reads the map center on demand when the panel opens the add-facility form', () => {
+    vi.spyOn(MapCanvas.prototype, 'getCenter').mockReturnValue({ latitude: 10, longitude: 20 });
+    const fixture = render();
+
+    storeMock.showAddForm.set(true);
     fixture.detectChanges();
+    TestBed.tick();
 
-    at(fixture, 'map-panel-open')?.querySelector('button')?.click();
+    expect(storeMock.setMapCenter).toHaveBeenCalledWith({ latitude: 10, longitude: 20 });
+  });
 
-    expect(router.navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'facilities', 'f1']);
+  it('does not read the map center before the add-facility form opens', () => {
+    render();
+    TestBed.tick();
+
+    expect(storeMock.setMapCenter).not.toHaveBeenCalled();
+  });
+
+  it('re-frames the map when the panel requests a fit-all', () => {
+    const fitAll = vi.spyOn(MapCanvas.prototype, 'fitAll');
+    const fixture = render();
+
+    storeMock.fitAllRequestId.set(1);
+    fixture.detectChanges();
+    TestBed.tick();
+
+    expect(fitAll).toHaveBeenCalled();
+  });
+
+  it('never re-frames the map on initial mount, only on a real request', () => {
+    const fitAll = vi.spyOn(MapCanvas.prototype, 'fitAll');
+    render();
+    TestBed.tick();
+
+    expect(fitAll).not.toHaveBeenCalled();
   });
 });

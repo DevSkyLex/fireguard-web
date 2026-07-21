@@ -1,60 +1,25 @@
-<section class="flex flex-col gap-4" data-testid="account-avatar-form">
+<div class="flex flex-col items-start gap-1.5" data-testid="account-avatar-form">
   @if (hasError()) {
     <p-message severity="error" class="w-full" [closable]="false" i18n="@@account.avatar.error">
       We couldn't upload your picture. Please try again.
     </p-message>
   }
 
-  <div class="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-2">
-    <div class="flex flex-col gap-1">
-      <span
-        class="text-sm font-medium text-surface-900 dark:text-surface-50"
-        i18n="@@account.avatar.title"
-      >
-        Profile picture
-      </span>
-      <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@account.avatar.subtitle">
-        Shown next to your name across the app.
-      </p>
-    </div>
-
-    <div class="flex items-center gap-4">
-      <div class="relative shrink-0">
-        <p-avatar
-          [image]="avatarUrl() || undefined"
-          [label]="avatarUrl() ? undefined : initials() || '?'"
-          shape="circle"
-          size="xlarge"
-        />
-        @if (uploading()) {
-          <span
-            class="absolute inset-0 flex items-center justify-center rounded-full bg-surface-900/40"
-            aria-hidden="true"
-          >
-            <i class="pi pi-spinner pi-spin text-surface-0"></i>
-          </span>
-        }
-      </div>
-
-      <div class="flex min-w-0 flex-col items-start gap-1.5">
-        <p-fileupload
-          #avatarUpload
-          mode="basic"
-          [accept]="acceptedAvatarTypes"
-          [auto]="true"
-          [customUpload]="true"
-          [maxFileSize]="maxAvatarSize"
-          [disabled]="uploading()"
-          chooseLabel="Change picture"
-          i18n-chooseLabel="@@account.avatar.change"
-          chooseIcon="pi pi-upload"
-          [chooseButtonProps]="chooseButtonProps"
-          (uploadHandler)="onAvatarUpload($event, avatarUpload)"
-        />
-        <p class="text-xs text-surface-500 dark:text-surface-400" i18n="@@account.avatar.hint">
-          JPEG, PNG, WebP or GIF — 5 MB max.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
+  <p-fileupload
+    #avatarUpload
+    mode="basic"
+    [accept]="acceptedAvatarTypes"
+    [auto]="true"
+    [customUpload]="true"
+    [maxFileSize]="maxAvatarSize"
+    [disabled]="uploading()"
+    chooseLabel="Change picture"
+    i18n-chooseLabel="@@account.avatar.change"
+    chooseIcon="pi pi-upload"
+    [chooseButtonProps]="chooseButtonProps"
+    (uploadHandler)="onAvatarUpload($event, avatarUpload)"
+  />
+  <p class="text-xs text-surface-500 dark:text-surface-400" i18n="@@account.avatar.hint">
+    JPEG, PNG, WebP or GIF — 5 MB max.
+  </p>
+</div>

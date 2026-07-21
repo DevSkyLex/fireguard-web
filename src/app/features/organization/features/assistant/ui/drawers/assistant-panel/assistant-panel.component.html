@@ -51,7 +51,7 @@
         -->
         @if (message.role !== 'user') {
           <span
-            class="mt-0.5 grid size-6 shrink-0 place-content-center rounded-full bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
+            class="mt-0.5 grid size-6.5 shrink-0 place-content-center rounded-md bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
             data-testid="assistant-author-icon"
           >
             <i class="pi pi-sparkles text-[11px]" aria-hidden="true"></i>
@@ -64,7 +64,9 @@
           [class]="
             message.role === 'user'
               ? 'bg-primary-500 text-white'
-              : 'bg-surface-100 text-surface-800 dark:bg-surface-800 dark:text-surface-200'
+              : message.status !== 'failed' && message.body.length === 0
+                ? 'bg-transparent px-0 py-0 text-surface-500 dark:bg-transparent dark:text-surface-400'
+                : 'bg-surface-100 text-surface-800 dark:bg-surface-800 dark:text-surface-200'
           "
         >
           <!--
@@ -76,12 +78,12 @@
               The assistant could not answer this one.
             </span>
           } @else if (message.body.length === 0) {
-            <span
-              class="text-surface-500 italic dark:text-surface-400"
-              data-testid="assistant-thinking"
-              i18n="@@assistant.message.thinking"
-            >
-              Thinking…
+            <span class="inline-flex items-center gap-1.5" data-testid="assistant-thinking">
+              <span
+                class="inline-block size-3 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500 motion-reduce:animate-none dark:border-primary-900 dark:border-t-primary-400"
+                aria-hidden="true"
+              ></span>
+              <span i18n="@@assistant.message.thinking">Thinking…</span>
             </span>
           } @else {
             {{ message.body }}
@@ -94,57 +96,65 @@
         and asking with no thread open starts one. The old page dead-ended a
         member who had never used the assistant.
       -->
-      <div class="flex flex-col gap-3 px-2 py-6" data-testid="assistant-panel-empty">
+      <div
+        class="rounded-lg border border-surface-200 bg-surface-50 p-3.5 dark:border-surface-800 dark:bg-surface-900"
+        data-testid="assistant-panel-empty"
+      >
         <p
-          class="text-center text-sm text-surface-500 dark:text-surface-400"
+          class="text-sm leading-normal text-surface-700 dark:text-surface-300"
           i18n="@@assistant.panel.empty"
         >
           Ask anything about your sites, equipment or interventions.
         </p>
-
-        <div class="flex flex-col gap-1.5">
-          @for (suggestion of suggestions; track suggestion) {
-            <button
-              type="button"
-              data-testid="assistant-suggestion"
-              class="cursor-pointer rounded-lg border border-surface-200 px-3 py-2 text-left text-sm text-surface-700 hover:border-primary hover:bg-surface-50 disabled:opacity-50 dark:border-surface-700 dark:text-surface-300 dark:hover:bg-surface-800"
-              [disabled]="store.isStartingThread() || store.isAnswering()"
-              (click)="useSuggestion(suggestion)"
-            >
-              {{ suggestion }}
-            </button>
-          }
-        </div>
       </div>
     }
   }
 </div>
 
-<div
-  class="mx-4 mb-4 flex items-end gap-2 rounded-xl border border-surface-300 p-2 dark:border-surface-700"
->
-  <textarea
-    pTextarea
-    rows="1"
-    data-testid="assistant-composer"
-    class="max-h-32 min-h-9 flex-1 resize-none border-0 bg-transparent shadow-none focus:ring-0"
-    i18n-placeholder="@@assistant.panel.composerPlaceholder"
-    placeholder="Ask the assistant…"
-    i18n-aria-label="@@assistant.composer.aria"
-    aria-label="Question"
-    [ngModel]="draft()"
-    (ngModelChange)="draft.set($event)"
-    (keydown)="onComposerKeydown($event)"
-  ></textarea>
+@if (showSuggestions()) {
+  <div class="flex flex-wrap gap-1.5 px-4 pb-2.5">
+    @for (suggestion of suggestions; track suggestion) {
+      <button
+        type="button"
+        data-testid="assistant-suggestion"
+        class="cursor-pointer rounded-full border border-surface-200 bg-surface-0 px-3 py-1.5 text-xs text-surface-700 hover:border-surface-300 hover:bg-surface-50 disabled:opacity-50 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 dark:hover:border-surface-600 dark:hover:bg-surface-800"
+        [disabled]="store.isStartingThread() || store.isAnswering()"
+        (click)="useSuggestion(suggestion)"
+      >
+        {{ suggestion }}
+      </button>
+    }
+  </div>
+}
 
-  <p-button
-    icon="pi pi-send"
-    size="small"
-    data-testid="assistant-send"
-    i18n-ariaLabel="@@assistant.composer.send"
-    ariaLabel="Ask"
-    [disabled]="!canAsk()"
-    [loading]="store.isAnswering() || store.isStartingThread()"
-    (onClick)="ask()"
-  />
+<div class="shrink-0 border-t border-surface-200 px-4 pt-3 pb-4 dark:border-surface-800">
+  <div
+    class="flex items-end gap-2 rounded-xl border border-surface-300 py-2 pr-2 pl-3.5 dark:border-surface-700"
+  >
+    <textarea
+      pTextarea
+      rows="1"
+      data-testid="assistant-composer"
+      class="max-h-32 min-h-9 flex-1 resize-none border-0 bg-transparent shadow-none focus:ring-0"
+      i18n-placeholder="@@assistant.panel.composerPlaceholder"
+      placeholder="Ask the assistant…"
+      i18n-aria-label="@@assistant.composer.aria"
+      aria-label="Question"
+      [ngModel]="draft()"
+      (ngModelChange)="draft.set($event)"
+      (keydown)="onComposerKeydown($event)"
+    ></textarea>
+
+    <p-button
+      icon="pi pi-arrow-up"
+      size="small"
+      [rounded]="true"
+      data-testid="assistant-send"
+      i18n-ariaLabel="@@assistant.composer.send"
+      ariaLabel="Ask"
+      [disabled]="!canAsk()"
+      [loading]="store.isAnswering() || store.isStartingThread()"
+      (onClick)="ask()"
+    />
+  </div>
 </div>

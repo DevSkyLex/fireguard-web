@@ -45,6 +45,14 @@ interface MessagingWorkspaceState {
    */
   readonly loadedMessagesPage: number;
   readonly messagesTotal: number;
+
+  /**
+   * Whether the live stream is down. `resilientMercureStream` retries forever,
+   * so a hub that is unreachable (dev CORS, offline) used to be perfectly
+   * silent: the thread simply stopped updating. Surfaced instead of swallowed,
+   * so the reader knows to refresh.
+   */
+  readonly isRealtimeDown: boolean;
 }
 
 const INITIAL_STATE: MessagingWorkspaceState = {
@@ -57,6 +65,7 @@ const INITIAL_STATE: MessagingWorkspaceState = {
   activeConversationId: null,
   loadedMessagesPage: 1,
   messagesTotal: 0,
+  isRealtimeDown: false,
 };
 
 /**
@@ -343,6 +352,8 @@ export const MessagingWorkspaceStore = signalStore(
           switchMap((conversationId: string | null) => {
             if (conversationId === null) return EMPTY;
 
+            patchState(store, { isRealtimeDown: false });
+
             return resilientMercureStream<MessageOutput>(() =>
               service
                 .getSubscription(conversationId)
@@ -358,6 +369,7 @@ export const MessagingWorkspaceStore = signalStore(
                   const known: boolean = current.some((m: MessageOutput) => m.id === message.id);
 
                   patchState(store, {
+                    isRealtimeDown: false,
                     messagesCallState: successCallState(
                       known
                         ? current.map((m: MessageOutput) => (m.id === message.id ? message : m))
@@ -365,7 +377,11 @@ export const MessagingWorkspaceStore = signalStore(
                     ),
                   });
                 },
-                error: () => undefined,
+                // The retry budget is spent: the thread will not update on its
+                // own any more. Flagged rather than swallowed — the page shows
+                // a "live updates unavailable" notice instead of quietly
+                // going stale.
+                error: (): void => patchState(store, { isRealtimeDown: true }),
               }),
             );
           }),
@@ -442,14 +458,22 @@ export const MessagingWorkspaceStore = signalStore(
          *
          * @returns {void}
          */
-        selectConversation(conversationId: string | null): void {
-          patchState(store, { activeConversationId: conversationId });
-          loadAttachments(conversationId);
-          loadMessages(conversationId);
-          streamMessages(conversationId);
+        selectConversation(conversationId: string | null | undefined): void {
+          // Router component-input binding sets an ABSENT query param to
+          // `undefined`, not to the input's declared `null` default. Everything
+          // downstream guards on `=== null`, so without this normalization the
+          // literal string "undefined" reached the URLs — /conversations/
+          // undefined/messages 404'd and the Mercure subscription retried in a
+          // loop. Normalize once, here, rather than widening every guard.
+          const id: string | null = conversationId ?? null;
 
-          if (conversationId !== null) {
-            inventory.markRead(conversationId);
+          patchState(store, { activeConversationId: id });
+          loadAttachments(id);
+          loadMessages(id);
+          streamMessages(id);
+
+          if (id !== null) {
+            inventory.markRead(id);
           }
         },
 
@@ -595,22 +619,23 @@ export const MessagingWorkspaceStore = signalStore(
          * Announces this member as online, and keeps announcing while the
          * workspace stays open.
          *
-         * Nothing called `pingPresence` before, so the app read everyone else's
-         * presence while never publishing its own — the dot could only ever
-         * appear for members using some other client. The server holds a
-         * presence for 90s, so the beat is well inside that: a missed request
-         * must not read as "left".
+         * The server holds a presence for 90s, so the beat is well inside that:
+         * a missed request must not read as "left". The organization IRI is
+         * required by the endpoint — sending `{}` 422'd on every beat.
+         *
+         * @param {string | null} organizationId - Organization to announce
+         * presence in; `null` stops the beat.
          *
          * @returns {void}
          */
-        publishPresence: rxMethod<boolean>(
+        publishPresence: rxMethod<string | null>(
           pipe(
-            switchMap((active: boolean) => {
-              if (!active) return EMPTY;
+            switchMap((organizationId: string | null) => {
+              if (organizationId === null) return EMPTY;
 
               return timer(0, PRESENCE_PING_INTERVAL_MS).pipe(
                 switchMap(() =>
-                  service.pingPresence().pipe(
+                  service.pingPresence(organizationId).pipe(
                     // A failed beat is not worth surfacing: the next one is
                     // seconds away and presence is ambient, not an action.
                     tapResponse({ next: (): void => undefined, error: (): void => undefined }),

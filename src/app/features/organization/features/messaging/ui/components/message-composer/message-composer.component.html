@@ -25,7 +25,14 @@
     Two rows: a borderless textarea over a toolbar. The kit's metrics are
     literal — 14px/16px/6px around the field, 6px/12px/10px around the toolbar.
   -->
-  <div class="relative rounded-xl border border-surface-300 dark:border-surface-700">
+  <!--
+    A raised card on the thread background, per the kit: the fill is what
+    separates the composer from the messages above it. No shadow — the binding
+    rule keeps those for overlays, and the surface plus border already read.
+  -->
+  <div
+    class="relative rounded-2xl border border-surface-300 bg-surface-0 dark:border-surface-600 dark:bg-surface-900"
+  >
     @if (emojiOpen()) {
       <div
         class="absolute right-3 bottom-full z-20 mb-2 grid grid-cols-4 gap-0.5 rounded-lg border border-surface-200 bg-surface-0 p-2 shadow-lg dark:border-surface-700 dark:bg-surface-900"

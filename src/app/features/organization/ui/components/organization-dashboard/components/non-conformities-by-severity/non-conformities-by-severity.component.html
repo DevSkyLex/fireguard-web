@@ -1,10 +1,17 @@
 <app-trend-card
   i18n-title="@@org.dash.ncSeverity.title"
   title="By severity"
-  i18n-description="@@org.dash.ncSeverity.desc"
-  description="Open non-conformities, most urgent first"
   [loading]="isLoading()"
 >
+  <ng-template #action>
+    <span class="shrink-0 text-xs text-surface-500 dark:text-surface-400">
+      <span class="font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+        {{ total() }}
+      </span>
+      <span i18n="@@org.dash.ncSeverity.total">open</span>
+    </span>
+  </ng-template>
+
   <ng-template #content>
     <!--
       Ported from the prototype's "By severity" card: a 56px label column, an
@@ -12,7 +19,7 @@
       severity colour, and the label carries the severity name — status is
       never colour-only (PRODUCT.md).
     -->
-    <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-4">
       @for (row of rows(); track row.label) {
         <div class="flex items-center gap-3">
           <span class="w-14 shrink-0 truncate text-xs text-surface-600 dark:text-surface-400">
@@ -41,13 +48,6 @@
           </span>
         </div>
       }
-
-      <p class="text-xs text-surface-500 dark:text-surface-400">
-        <span class="font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-          {{ total() }}
-        </span>
-        <span i18n="@@org.dash.ncSeverity.total">open</span>
-      </p>
     </div>
   </ng-template>
 </app-trend-card>

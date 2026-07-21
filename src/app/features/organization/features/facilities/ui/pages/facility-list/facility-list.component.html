@@ -92,48 +92,17 @@
       depot with two extinguishers must not offset a plant with two hundred.
       Facilities reporting no rate are excluded rather than counted as zero —
       no data is not a failure.
+
+      The standard bordered figure strip every collection surface wears
+      (equipment list, facility detail), rather than a bare inline `<dl>`.
     -->
-    @if (!treeStore.isQueryLoading() && treeSummary().facilities > 0) {
-      <dl
-        class="mb-4 flex flex-wrap items-baseline gap-x-8 gap-y-2"
+    @if (treeSummary().facilities > 0 || treeStore.isQueryLoading()) {
+      <app-facility-kpi-strip
+        class="mb-4"
+        [kpis]="treeKpis()"
+        [loading]="treeStore.isQueryLoading()"
         data-testid="facility-tree-summary"
-      >
-        <div class="flex items-baseline gap-2">
-          <dt
-            class="text-xs text-surface-500 dark:text-surface-400"
-            i18n="@@facility.summary.facilities"
-          >
-            Facilities
-          </dt>
-          <dd class="text-lg font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-            {{ treeSummary().facilities }}
-          </dd>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <dt
-            class="text-xs text-surface-500 dark:text-surface-400"
-            i18n="@@facility.summary.equipment"
-          >
-            Equipment
-          </dt>
-          <dd class="text-lg font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-            {{ treeSummary().equipment }}
-          </dd>
-        </div>
-        @if (treeSummary().complianceRate !== null) {
-          <div class="flex items-baseline gap-2">
-            <dt
-              class="text-xs text-surface-500 dark:text-surface-400"
-              i18n="@@facility.summary.compliance"
-            >
-              Compliance
-            </dt>
-            <dd class="text-lg font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-              {{ treeSummary().complianceRate }}%
-            </dd>
-          </div>
-        }
-      </dl>
+      />
     }
 
     @if (hasNoTreeMatch()) {

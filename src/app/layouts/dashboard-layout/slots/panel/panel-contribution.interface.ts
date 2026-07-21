@@ -1,4 +1,5 @@
-import type { Signal, Type } from '@angular/core';
+import type { Signal } from '@angular/core';
+import type { SlotComponentSource } from '../slot-component-source';
 
 /**
  * Interface PanelContribution
@@ -23,7 +24,7 @@ import type { Signal, Type } from '@angular/core';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export interface PanelContribution {
+export interface PanelContribution extends SlotComponentSource {
   /**
    * Stable key used to open, close and identify the panel.
    *
@@ -38,12 +39,9 @@ export interface PanelContribution {
    */
   readonly order: number;
 
-  /**
-   * The panel body. Rendered through `NgComponentOutlet`.
-   *
-   * @type {Type<unknown>}
-   */
-  readonly component: Type<unknown>;
+  // The panel body comes from `SlotComponentSource`: either `component` (a
+  // class) or `loadComponent` (a deferred loader). A panel is closed on first
+  // paint, so it should almost always use `loadComponent`.
 
   /**
    * Header label. A signal because most panels title themselves after the

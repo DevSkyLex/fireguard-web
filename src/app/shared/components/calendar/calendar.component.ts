@@ -49,7 +49,7 @@ import {
   addMonths,
   addWeeks,
   buildAgendaDays,
-  buildDayColumn,
+  buildDayAgenda,
   buildMonthDays,
   buildWeekDays,
   filterEventsByCategories,
@@ -524,6 +524,21 @@ export class Calendar {
   );
 
   /**
+   * Property flush
+   * @readonly
+   *
+   * @description
+   * Whether the calendar renders as a flush, borderless working surface
+   * instead of the default carded shell.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly flush: Signal<boolean> = computed<boolean>(() => this.config().flush ?? false);
+
+  /**
    * Property viewOptions
    * @readonly
    *
@@ -646,6 +661,25 @@ export class Calendar {
   );
 
   /**
+   * Property dayAgendaDays
+   * @readonly
+   *
+   * @description
+   * The focused day as a single-day agenda group (zero or one entry), rendered
+   * by {@link CalendarAgenda} in the day view: a day view is a chronological
+   * list, not a time grid, so it shares the agenda's row shape rather than the
+   * week's hour columns.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<readonly CalendarAgendaDay[]>}
+   */
+  protected readonly dayAgendaDays: Signal<readonly CalendarAgendaDay[]> = computed<
+    readonly CalendarAgendaDay[]
+  >(() => buildDayAgenda(this.activeDate(), this.visibleEvents()));
+
+  /**
    * Property weekDays
    * @readonly
    *
@@ -657,32 +691,6 @@ export class Calendar {
    *
    * @type {Signal<readonly CalendarWeekDay[]>}
    */
-  /**
-   * Property dayColumn
-   * @readonly
-   *
-   * @description
-   * The focused day as a one-column time grid, rendered by the same component
-   * as the week: a day view is a week of one, and giving it its own component
-   * would duplicate the all-day split and the overlap packing.
-   *
-   * @access protected
-   * @since 1.3.0
-   *
-   * @type {Signal<readonly CalendarWeekDay[]>}
-   */
-  protected readonly dayColumn: Signal<readonly CalendarWeekDay[]> = computed<
-    readonly CalendarWeekDay[]
-  >(() => [
-    buildDayColumn(
-      this.activeDate(),
-      this.visibleEvents(),
-      this.today,
-      this.dayStartHour(),
-      this.dayEndHour(),
-    ),
-  ]);
-
   protected readonly weekDays: Signal<readonly CalendarWeekDay[]> = computed<
     readonly CalendarWeekDay[]
   >(() =>
@@ -937,8 +945,10 @@ export class Calendar {
    * Method openDay
    *
    * @description
-   * Opens a day in the week view — reached from the month grid's date number
-   * and from its "+N more" overflow affordance.
+   * Opens a day, reached from the month grid's date number and from its "+N
+   * more" overflow affordance. Prefers the week view when it is offered — the
+   * surrounding days give a clicked day some scale — and falls back to the day
+   * view for consumers that only offer month/day.
    *
    * @access protected
    * @since 1.0.0
@@ -947,7 +957,10 @@ export class Calendar {
    * @returns {void}
    */
   protected openDay(date: Date): void {
-    this.setView('week');
+    const offersWeek: boolean = this.viewOptions().some(
+      (option: ViewOption): boolean => option.value === 'week',
+    );
+    this.setView(offersWeek ? 'week' : 'day');
     this.focusDate(date);
   }
 

@@ -34,4 +34,11 @@ export interface CalendarConfig {
    * No legend is shown when absent or when the group id is unknown.
    */
   readonly legendGroupId?: string;
+
+  /**
+   * Whether the calendar renders as a flush, borderless working surface (no
+   * outer card, no radius) instead of the default carded shell. Defaults to
+   * `false`, so existing card-shell consumers are unaffected.
+   */
+  readonly flush?: boolean;
 }

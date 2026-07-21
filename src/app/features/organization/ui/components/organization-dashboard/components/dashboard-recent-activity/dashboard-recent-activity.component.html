@@ -1,0 +1,70 @@
+<app-trend-card
+  i18n-title="@@org.dash.activityFeed.title"
+  title="Recent activity"
+  i18n-description="@@org.dash.activityFeed.desc"
+  description="Latest events from the audit ledger"
+  [loading]="loading()"
+>
+  <ng-template #content>
+    @if (hasError()) {
+      <app-error-state
+        icon="pi-exclamation-triangle"
+        i18n-title="@@org.dash.activityFeed.errorTitle"
+        title="Couldn't load recent activity"
+      >
+        <p-button
+          i18n-label="@@org.dash.activityFeed.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="retry.emit()"
+        />
+      </app-error-state>
+    } @else if (loading()) {
+      <app-skeleton
+        preset="list-row"
+        [count]="5"
+        i18n-label="@@org.dash.activityFeed.loading"
+        label="Loading recent activity"
+      />
+    } @else if (events().length === 0) {
+      <app-empty-state
+        icon="pi-history"
+        i18n-title="@@org.dash.activityFeed.emptyTitle"
+        title="No activity yet"
+        i18n-description="@@org.dash.activityFeed.emptyDesc"
+        description="Ledger events appear here as they are recorded."
+      />
+    } @else {
+      <ul class="flex flex-col divide-y divide-surface-100 dark:divide-surface-800" role="list">
+        @for (event of events(); track event.id) {
+          <li class="flex items-center gap-2.5 py-2.5 first:pt-0 last:pb-0">
+            <span
+              class="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+              aria-hidden="true"
+            >
+              {{ actorInitials(event) }}
+            </span>
+
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span
+                class="truncate text-sm leading-[1.4] text-surface-600 dark:text-surface-400"
+                [title]="actorLabel(event)"
+              >
+                <span class="font-medium text-surface-900 dark:text-surface-100">{{
+                  actorLabel(event)
+                }}</span>
+                {{ eventLabel(event.action) }}
+              </span>
+              <span class="mt-px text-[11px] text-surface-400 tabular-nums dark:text-surface-500">
+                {{ event.occurredAt | date: 'MMM d, HH:mm' }}
+              </span>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </ng-template>
+</app-trend-card>

@@ -46,6 +46,12 @@ Primary service:
 - Depends on organization route context from the parent feature.
 - May compose facility, equipment, and checklist data as supporting inputs for inspection workflows.
 - Must not absorb ownership of those sibling subfeatures just because the create flow depends on them.
+- Consumed by the sibling `compliance` subfeature: its Inspections and
+  Non-conformities tabs call this feature's public `InspectionService`
+  (`list`, `listOrganizationNonConformities`) and its non-conformity tag
+  registry (`resolveInspectionTag`, `inspectionTagOptions`) read-only, through
+  the `data-access`/`models` public barrels — never a deep import. Ownership
+  of inspection and non-conformity data, and of the tag registry, stays here.
 
 ## Invariants
 

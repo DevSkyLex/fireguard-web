@@ -11,6 +11,7 @@ import type {
   UpdateNonConformityStatusInput,
   InspectionListOptions,
   NonConformityListOptions,
+  OrganizationNonConformityListOptions,
 } from '@features/organization/features/inspections/models';
 
 /**
@@ -189,6 +190,12 @@ export class InspectionService extends HydraApiService {
     if (options?.equipmentId) params['equipmentId'] = options.equipmentId;
     if (options?.result) params['result'] = options.result;
     if (options?.status) params['status'] = options.status;
+    if (options?.search) params['search'] = options.search;
+    if (options?.order) {
+      for (const [field, direction] of Object.entries(options.order)) {
+        if (direction) params[`order[${field}]`] = direction;
+      }
+    }
 
     if (facilityId) {
       return this.listByFacility(organizationId, facilityId, {
@@ -410,6 +417,50 @@ export class InspectionService extends HydraApiService {
 
     return this.getCollection<NonConformityOutput>(
       `${this.inspectionPath(organizationId, inspectionId)}/non-conformities`,
+      {
+        page: options?.page,
+        itemsPerPage: options?.itemsPerPage,
+        params,
+      },
+    );
+  }
+
+  /**
+   * Method listOrganizationNonConformities
+   * @method listOrganizationNonConformities
+   *
+   * @description
+   * Retrieves a paginated list of non-conformities across every inspection of
+   * the organization, newest first by default — the Compliance register's
+   * flat, cross-inspection view. Requires `organization.inspection.read`
+   * (not `organization.compliance.read`): the register page must gate this
+   * tab separately from its own route guard.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {OrganizationNonConformityListOptions} [options] - Optional filter, search, sort and pagination parameters.
+   *
+   * @return {Observable<HydraCollection<NonConformityOutput>>} An observable emitting the non-conformities collection.
+   */
+  public listOrganizationNonConformities(
+    organizationId: string,
+    options?: OrganizationNonConformityListOptions,
+  ): Observable<HydraCollection<NonConformityOutput>> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.severity) params['severity'] = options.severity;
+    if (options?.status) params['status'] = options.status;
+    if (options?.search) params['search'] = options.search;
+    if (options?.order) {
+      for (const [field, direction] of Object.entries(options.order)) {
+        if (direction) params[`order[${field}]`] = direction;
+      }
+    }
+
+    return this.getCollection<NonConformityOutput>(
+      `${InspectionService.BASE_PATH}/${organizationId}/non-conformities`,
       {
         page: options?.page,
         itemsPerPage: options?.itemsPerPage,

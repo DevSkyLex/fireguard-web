@@ -29,6 +29,10 @@ export interface ChannelOutput extends HydraItem {
   readonly updatedAt: string;
   readonly isFavorite: boolean;
 
-  /** Parent channel IRI when nested, null for a root channel. */
-  readonly parent: string | null;
+  /**
+   * Parent channel IRI when nested. A root channel omits the key entirely —
+   * API Platform does not serialize null relations — so this is optional, not
+   * merely nullable.
+   */
+  readonly parent?: string | null;
 }

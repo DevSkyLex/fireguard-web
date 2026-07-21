@@ -41,14 +41,26 @@ single column — doing so would hide overdue maintenance behind a green
 
 The fleet counters above the table come from
 `GET /organizations/{orgId}/equipment/kpis` (`EquipmentKpiStore`), kept in a
-separate store so paging the list does not refetch them. `openNonConformities`
-is returned by that endpoint but **deliberately not rendered**: the backend
-computes it organization-wide because non-conformities attach to inspections
-rather than equipment, so beside equipment counters it would read as a per-asset
-figure it is not.
+separate store so paging the list does not refetch them, and render as a
+4-card KPI strip (`EquipmentFleetSummary`, reusing `shared/components/metric-card`)
+matching the collaboration-phase prototype: Total assets, Compliant (with a
+computed `compliant / totalAssets` percentage subtitle), Due soon (subtitle
+names the platform default 30-day reminder window — see
+`OrganizationComplianceDefaults::REMINDER_WINDOW_DAYS`; an organization that
+customized its window still sees this fixed copy since `EquipmentKpiOutput`
+does not expose the effective value), and Non-conformity.
 
-The counters render as a text line, not metric cards — those are reserved for the
-dashboard (`PRODUCT.md` lists card-everything layouts as an anti-reference).
+`openNonConformities` — rendered as the "Non-conformity" card — is
+organization-wide, not equipment-scoped: the backend computes it that way
+because non-conformities attach to inspections rather than equipment, so the
+count does not describe only the assets in the table above it. Surfacing it
+here is a deliberate, prototype-driven exception to that boundary, not a claim
+that the number is per-asset.
+
+This supersedes an earlier decision to render the counters as a plain text
+line to avoid `PRODUCT.md`'s card-everything anti-reference; the prototype
+treats this specific 4-metric strip as the page's headline KPI row rather than
+a generic card-per-section layout.
 
 ## State and Data Access
 

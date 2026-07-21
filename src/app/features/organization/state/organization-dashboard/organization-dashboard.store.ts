@@ -24,14 +24,7 @@ import {
   adaptNonConformitySeverity,
   type NonConformitySeverityBucket,
 } from '@features/organization/data-access/adapters/organization-dashboard-severity.adapter';
-import { getDashboardTrendPointValue } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
-import type {
-  OrganizationDashboardComparisonMetric,
-  OrganizationDashboardComparisonMetricGroup,
-  OrganizationDashboardOutput,
-  OrganizationDashboardRecentIntervention,
-  OrganizationDashboardTrends,
-} from '@features/organization/models';
+import type { OrganizationDashboardOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -43,38 +36,6 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  * the backend, plus null when the metric is absent.
  */
 type OrganizationDashboardKpiValue = number | string | null;
-
-/**
- * Type OrganizationDashboardComparisonDelta
- *
- * @description
- * Scalar delta entry shown below a KPI card when the
- * previous-period comparison is enabled.
- */
-type OrganizationDashboardComparisonDelta = {
-  readonly value: string | number | null;
-  readonly direction: string | null;
-};
-
-/**
- * Function extractSparkline
- *
- * @description
- * Maps one embedded trend series to the plain numeric points consumed
- * by the KPI sparklines, or null when the series is absent or empty.
- *
- * @param {OrganizationDashboardTrends | undefined} trends - Embedded trends map from the dashboard payload.
- * @param {string} key - Backend-defined series key (e.g. `facilities`).
- * @returns {readonly number[] | null} Ordered numeric points, or null.
- */
-function extractSparkline(
-  trends: OrganizationDashboardTrends | undefined,
-  key: string,
-): readonly number[] | null {
-  const points = trends?.[key];
-  if (!points?.length) return null;
-  return points.map(getDashboardTrendPointValue);
-}
 
 /**
  * Function readOverviewMetric
@@ -112,9 +73,10 @@ function readOverviewMetric(section: unknown, key: string): number | null {
  *
  * @description
  * Component-scoped NgRx SignalStore for the aggregate `/dashboard`
- * endpoint. Fetches KPI summary and comparison data for the active
- * organization and exposes derived signals for the four KPI cards
- * and their period-over-period comparison deltas.
+ * endpoint. Fetches the overview payload for the active organization and
+ * exposes derived signals for the metric strip (open/overdue interventions,
+ * open non-conformities) and the breakdown cards (severity, equipment
+ * status, inspection results).
  *
  * @example
  * ```typescript
@@ -148,24 +110,12 @@ export const DashboardStore = signalStore(
    * Feature withComputed
    *
    * @description
-   * Derives the four KPI count values and four comparison deltas
+   * Derives the metric-strip counts and the population breakdowns
    * from the raw `queryData` signal.
    *
    * @since 1.0.0
    */
   withComputed((store) => ({
-    /**
-     * Computed facilityCount
-     *
-     * @description
-     * Total facility count from `overview.facilities.summary[0].value`.
-     *
-     * @since 1.0.0
-     */
-    facilityCount: computed<OrganizationDashboardKpiValue>(
-      () => store.queryData()?.overview?.['facilities']?.['summary']?.[0]?.['value'] ?? null,
-    ),
-
     /**
      * Computed nonConformitiesBySeverity
      *
@@ -216,18 +166,6 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed memberCount
-     *
-     * @description
-     * Total member count from `overview.members.summary[0].value`.
-     *
-     * @since 1.0.0
-     */
-    memberCount: computed<OrganizationDashboardKpiValue>(
-      () => store.queryData()?.overview?.['members']?.['summary']?.[0]?.['value'] ?? null,
-    ),
-
-    /**
      * Computed openInterventionCount
      *
      * @description
@@ -254,180 +192,6 @@ export const DashboardStore = signalStore(
      */
     overdueInterventionCount: computed<OrganizationDashboardKpiValue>(
       () => readOverviewMetric(store.queryData()?.overview?.['interventions'], 'overdue') ?? null,
-    ),
-
-    /**
-     * Computed equipmentCount
-     *
-     * @description
-     * Total equipment count from `overview.equipment.summary[0].value`.
-     *
-     * @since 1.0.0
-     */
-    equipmentCount: computed<OrganizationDashboardKpiValue>(
-      () => store.queryData()?.overview?.['equipment']?.['summary']?.[0]?.['value'] ?? null,
-    ),
-
-    /**
-     * Computed inspectionCount
-     *
-     * @description
-     * Total inspection count from `overview.inspections.summary[0].value`.
-     *
-     * @since 1.0.0
-     */
-    inspectionCount: computed<OrganizationDashboardKpiValue>(
-      () => store.queryData()?.overview?.['inspections']?.['summary']?.[0]?.['value'] ?? null,
-    ),
-
-    /**
-     * Computed facilitiesComparison
-     *
-     * @description
-     * Period-over-period delta for the facilities KPI.
-     *
-     * @since 1.0.0
-     */
-    facilitiesComparison: computed<OrganizationDashboardComparisonDelta | null>(() => {
-      const metrics: OrganizationDashboardComparisonMetricGroup | undefined =
-        store.queryData()?.comparison?.metrics;
-      const entry: OrganizationDashboardComparisonMetric | undefined = metrics?.find(
-        (m: OrganizationDashboardComparisonMetric) => m['key'] === 'facilities',
-      );
-      if (!entry) return null;
-      return {
-        value: entry['value'],
-        direction: entry['direction'] != null ? String(entry['direction']) : null,
-      };
-    }),
-
-    /**
-     * Computed membersComparison
-     *
-     * @description
-     * Period-over-period delta for the members KPI.
-     *
-     * @since 1.0.0
-     */
-    membersComparison: computed<OrganizationDashboardComparisonDelta | null>(() => {
-      const metrics: OrganizationDashboardComparisonMetricGroup | undefined =
-        store.queryData()?.comparison?.metrics;
-      const entry: OrganizationDashboardComparisonMetric | undefined = metrics?.find(
-        (m: OrganizationDashboardComparisonMetric) => m['key'] === 'members',
-      );
-      if (!entry) return null;
-      return {
-        value: entry['value'],
-        direction: entry['direction'] != null ? String(entry['direction']) : null,
-      };
-    }),
-
-    /**
-     * Computed equipmentComparison
-     *
-     * @description
-     * Period-over-period delta for the equipment KPI.
-     *
-     * @since 1.0.0
-     */
-    equipmentComparison: computed<OrganizationDashboardComparisonDelta | null>(() => {
-      const metrics: OrganizationDashboardComparisonMetricGroup | undefined =
-        store.queryData()?.comparison?.metrics;
-      const entry: OrganizationDashboardComparisonMetric | undefined = metrics?.find(
-        (m: OrganizationDashboardComparisonMetric) => m['key'] === 'equipment',
-      );
-      if (!entry) return null;
-      return {
-        value: entry['value'],
-        direction: entry['direction'] != null ? String(entry['direction']) : null,
-      };
-    }),
-
-    /**
-     * Computed inspectionsComparison
-     *
-     * @description
-     * Period-over-period delta for the inspections KPI.
-     *
-     * @since 1.0.0
-     */
-    inspectionsComparison: computed<OrganizationDashboardComparisonDelta | null>(() => {
-      const metrics: OrganizationDashboardComparisonMetricGroup | undefined =
-        store.queryData()?.comparison?.metrics;
-      const entry: OrganizationDashboardComparisonMetric | undefined = metrics?.find(
-        (m: OrganizationDashboardComparisonMetric) => m['key'] === 'inspections',
-      );
-      if (!entry) return null;
-      return {
-        value: entry['value'],
-        direction: entry['direction'] != null ? String(entry['direction']) : null,
-      };
-    }),
-
-    /**
-     * Computed facilitiesSparkline
-     *
-     * @description
-     * Daily running-total points for the facilities KPI sparkline,
-     * from the embedded `trends.facilities` series.
-     *
-     * @since 1.1.0
-     */
-    facilitiesSparkline: computed<readonly number[] | null>(() =>
-      extractSparkline(store.queryData()?.trends, 'facilities'),
-    ),
-
-    /**
-     * Computed membersSparkline
-     *
-     * @description
-     * Daily running-total points for the members KPI sparkline,
-     * from the embedded `trends.members` series.
-     *
-     * @since 1.1.0
-     */
-    membersSparkline: computed<readonly number[] | null>(() =>
-      extractSparkline(store.queryData()?.trends, 'members'),
-    ),
-
-    /**
-     * Computed equipmentSparkline
-     *
-     * @description
-     * Daily running-total points for the equipment KPI sparkline,
-     * from the embedded `trends.equipment` series.
-     *
-     * @since 1.1.0
-     */
-    equipmentSparkline: computed<readonly number[] | null>(() =>
-      extractSparkline(store.queryData()?.trends, 'equipment'),
-    ),
-
-    /**
-     * Computed inspectionsSparkline
-     *
-     * @description
-     * Daily running-total points for the inspections KPI sparkline,
-     * from the embedded `trends.inspections` series.
-     *
-     * @since 1.1.0
-     */
-    inspectionsSparkline: computed<readonly number[] | null>(() =>
-      extractSparkline(store.queryData()?.trends, 'inspections'),
-    ),
-
-    /**
-     * Computed recentInterventions
-     *
-     * @description
-     * Most recently updated interventions embedded in the dashboard
-     * payload. Empty until loaded or when the caller lacks the
-     * interventions read permission.
-     *
-     * @since 1.1.0
-     */
-    recentInterventions: computed<readonly OrganizationDashboardRecentIntervention[]>(
-      () => store.queryData()?.recentInterventions ?? [],
     ),
   })),
   //#endregion

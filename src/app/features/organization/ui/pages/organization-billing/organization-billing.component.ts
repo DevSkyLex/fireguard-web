@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import { OrganizationPermissionService } from '@features/organization/access';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import {
@@ -58,6 +60,37 @@ export class OrganizationBillingPage {
    */
   protected readonly store: OrganizationBillingStore =
     inject<OrganizationBillingStore>(OrganizationBillingStore);
+
+  /**
+   * Property permissionService
+   * @readonly
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {OrganizationPermissionService}
+   */
+  private readonly permissionService: OrganizationPermissionService = inject(
+    OrganizationPermissionService,
+  );
+
+  /**
+   * Property canManageBilling
+   * @readonly
+   *
+   * @description
+   * Whether the active member may change the plan or payment method. Gated on
+   * `SETTINGS_WRITE` as an interim, mirroring the route guard: the backend
+   * exposes no `organization.billing.*` permission yet.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canManageBilling: Signal<boolean> = computed(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.SETTINGS_WRITE),
+  );
   //#endregion
 
   //#region Lifecycle

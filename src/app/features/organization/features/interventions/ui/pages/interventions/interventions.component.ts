@@ -1298,6 +1298,25 @@ export class InterventionsPage {
   }
 
   /**
+   * Method priorityLabel
+   * @method priorityLabel
+   *
+   * @description
+   * Localized label for a priority value, read from the tag registry so the
+   * list row's visible word and the priority icon's `aria-label` never
+   * disagree.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {string} priority - Raw priority value.
+   * @returns {string} Localized priority label.
+   */
+  protected priorityLabel(priority: string): string {
+    return resolveInterventionTag('priority', priority).label;
+  }
+
+  /**
    * Method boardColumnDotClass
    * @method boardColumnDotClass
    *

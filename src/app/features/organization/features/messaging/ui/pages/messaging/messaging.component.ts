@@ -438,7 +438,7 @@ export class MessagingPage {
    */
   protected readonly composerPlaceholder: Signal<string> = computed((): string => {
     const conversation: ConversationOutput | null = this.store.activeConversation();
-    const label: string = (conversation?.name ?? conversation?.subjectLabel ?? '').trim();
+    const label: string = this.activeConversationLabel().trim();
 
     if (label.length === 0) return $localize`:@@messaging.composer.placeholder:Write a message…`;
 
@@ -447,12 +447,40 @@ export class MessagingPage {
       : $localize`:@@messaging.composer.placeholderDirect:Message ${label}:member:`;
   });
 
-  protected readonly conversationInitials: Signal<string> = computed((): string => {
+  /**
+   * Property activeConversationLabel
+   * @readonly
+   *
+   * @description
+   * The open conversation's display name: its channel name, its subject label,
+   * or — for a direct conversation, which the API sends with neither — the
+   * counterpart member resolved against the directory.
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly activeConversationLabel: Signal<string> = computed((): string => {
     const conversation: ConversationOutput | null = this.store.activeConversation();
-    const label: string = conversation?.name ?? conversation?.subjectLabel ?? '';
+    if (conversation === null) return '';
 
-    return label.trim().charAt(0).toUpperCase() || '?';
+    // `?? null` on the tail: API Platform omits null fields entirely, so a
+    // direct conversation arrives with these UNDEFINED, not null.
+    const named: string | null = conversation.name ?? conversation.subjectLabel ?? null;
+    if (named !== null) return named;
+
+    const counterpart: string | null | undefined = conversation.counterpartMember;
+    if (typeof counterpart !== 'string' || '' === counterpart) return '';
+
+    const memberId: string = counterpart.slice(counterpart.lastIndexOf('/') + 1);
+
+    return this.directory.identities().get(memberId)?.displayName ?? '';
   });
+
+  protected readonly conversationInitials: Signal<string> = computed(
+    (): string => this.activeConversationLabel().trim().charAt(0).toUpperCase() || '?',
+  );
 
   //#region Lifecycle
   /**
@@ -484,9 +512,13 @@ export class MessagingPage {
      * "list all online" mode, so the ids are derived from the thread.
      */
     // Announce this member as online for as long as the workspace is open.
-    // Nothing did before, so the app read everyone else's presence while never
-    // publishing its own.
-    this.store.publishPresence(true);
+    // The endpoint requires the organization IRI, so the beat only starts once
+    // an organization is selected.
+    this.store.publishPresence(
+      computed(
+        (): string | null => this.activeOrganizationStore.selectedOrganization()?.id ?? null,
+      ),
+    );
 
     effect((): void => {
       const organizationId: string | undefined =
@@ -519,7 +551,9 @@ export class MessagingPage {
      * so the effect no-ops once the ids already match.
      */
     effect((): void => {
-      const target: string | null = this.conversation();
+      // `?? null`: an absent query param arrives as `undefined` through router
+      // input binding, which the identity guard below would let through.
+      const target: string | null = this.conversation() ?? null;
 
       if (target === null || target === untracked(this.store.activeConversationId)) {
         return;

@@ -212,13 +212,14 @@ describe('MessagingWorkspaceStore live thread', () => {
       const store = createStore([]);
       TestBed.tick();
 
-      store.publishPresence(true);
+      store.publishPresence('org-1');
       // `timer(0, …)` still schedules a macrotask, so the clock has to move
       // before the first beat fires.
       vi.advanceTimersByTime(0);
       TestBed.tick();
-      // Nothing published its own presence before this: the dot could only ever
-      // appear for members using some other client.
+      // The organization is required by the endpoint — sending nothing 422'd
+      // on every beat, so the dot never lit up.
+      expect(pingPresence).toHaveBeenCalledWith('org-1');
       expect(pingPresence).toHaveBeenCalledTimes(1);
 
       // Well inside the server's 90s hold, so a dropped beat is not "left".

@@ -1,0 +1,119 @@
+<div
+  class="flex h-14 flex-none items-center justify-between gap-2 border-b border-surface-200 pr-2.5 pl-3.5 dark:border-surface-800"
+>
+  <div class="flex min-w-0 flex-col">
+    <h2
+      class="text-[15px] leading-[1.15] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+      i18n="@@map.panel.title"
+    >
+      Facilities
+    </h2>
+    <span
+      class="text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
+      data-testid="map-panel-count"
+      i18n="@@map.panel.count"
+    >
+      {store.filteredFacilities().length, plural,
+        =1 {1 facility}
+        other {{{ store.filteredFacilities().length }} facilities}
+      }
+    </span>
+  </div>
+  <p-button
+    icon="pi pi-compass"
+    severity="secondary"
+    size="small"
+    [text]="true"
+    [rounded]="true"
+    i18n-ariaLabel="@@map.panel.fitAll"
+    ariaLabel="Fit all facilities to view"
+    data-testid="map-panel-fit-all"
+    (onClick)="store.requestFitAll()"
+  />
+</div>
+
+<div class="flex flex-col gap-2.5 border-b border-surface-200 px-3.5 py-3 dark:border-surface-800">
+  @if (store.actionError()) {
+    <p
+      class="rounded-md bg-red-50 px-2.5 py-2 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300"
+      data-testid="map-panel-error"
+    >
+      {{ store.actionError() }}
+    </p>
+  }
+
+  <input
+    pInputText
+    type="search"
+    class="w-full"
+    i18n-placeholder="@@map.panel.search"
+    placeholder="Search facilities or cities"
+    aria-label="Search facilities or cities"
+    i18n-aria-label="@@map.panel.searchAria"
+    data-testid="map-panel-search"
+    [ngModel]="store.search()"
+    (ngModelChange)="store.setSearch($event)"
+  />
+
+  @if (store.showAddForm()) {
+    <app-map-add-facility-form
+      [loading]="store.creating()"
+      (submitted)="submitAddFacility($event)"
+      (cancelled)="store.cancelAddForm()"
+    />
+  } @else {
+    <p-button
+      label="Add facility"
+      i18n-label="@@map.panel.addFacility"
+      icon="pi pi-plus"
+      severity="contrast"
+      size="small"
+      styleClass="w-full justify-center"
+      data-testid="map-panel-add"
+      (onClick)="store.openAddForm()"
+    />
+  }
+</div>
+
+<div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pt-2.5 pb-4">
+  @if (isLoading()) {
+    <ul class="flex flex-col gap-[7px]" aria-hidden="true">
+      @for (placeholder of loadingPlaceholders; track placeholder) {
+        <li
+          class="h-16 animate-pulse rounded-md bg-surface-100 motion-reduce:animate-none dark:bg-surface-800"
+        ></li>
+      }
+    </ul>
+  } @else if (store.isEmpty()) {
+    <app-empty-state
+      icon="pi pi-map-marker"
+      i18n-title="@@map.empty.title"
+      title="No facilities to place yet"
+      i18n-description="@@map.empty.desc"
+      description="Facilities with an address will appear here once they are added."
+    />
+  } @else if (store.isSearchEmpty()) {
+    <p
+      class="px-1 py-6 text-center text-sm text-surface-500 dark:text-surface-400"
+      data-testid="map-panel-no-match"
+      i18n="@@map.panel.noMatch"
+    >
+      No facilities match your search.
+    </p>
+  } @else {
+    <ul class="flex flex-col gap-[7px]">
+      @for (facility of store.filteredFacilities(); track facility.id) {
+        <li data-testid="map-panel-item">
+          <app-map-facility-card
+            [facility]="facility"
+            [buildingsCount]="store.mapStats().get(facility.id)?.buildingsCount ?? 0"
+            [complianceRate]="store.mapStats().get(facility.id)?.complianceRate ?? null"
+            [selected]="facility.id === store.selectedFacilityId()"
+            (select)="store.selectFacility(facility.id)"
+            (open)="openFacility(facility.id)"
+          />
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -1,5 +1,4 @@
 import { computed, inject } from '@angular/core';
-import { AssistantPanel } from '@features/organization/features/assistant/ui/drawers';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -39,7 +38,10 @@ export function withAssistantPanel(): DashboardLayoutPanelSlotFeature {
       return {
         id: ASSISTANT_PANEL_ID,
         order: 20,
-        component: AssistantPanel,
+        loadComponent: () =>
+          import('@features/organization/features/assistant/ui/drawers/assistant-panel/assistant-panel.component').then(
+            (m) => m.AssistantPanel,
+          ),
         title: computed((): string => $localize`:@@assistant.panel.title:Assistant`),
         icon: 'pi pi-sparkles',
         available: computed((): boolean => {

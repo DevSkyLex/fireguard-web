@@ -29,12 +29,28 @@ inspections, maintenance and standalone events, merged by the backend.
 
 ## State and data access
 
-- `CalendarFeedStore` — component-scoped, one query.
+- `CalendarFeedStore` — component-scoped, one query (`withQueryState`); reads
+  the merged, read-only feed.
 - `CalendarService.getFeed` — `GET /organizations/{orgId}/calendar/feed`.
 - `adaptCalendarFeed` maps the feed onto the shared `Calendar` component's
   event shape; the grid itself is `@shared/components`, not feature-owned.
+- `CalendarEventsStore` — component-scoped, named `CallState` (`createCallState`);
+  drives the "New event" drawer only. Dispatches `calendarEventsStoreEvents`
+  (`createSucceeded` / `createFailed`, both `FeedbackEventPayload`) picked up
+  by the app-wide feedback listener as toasts.
+- `CalendarEventService.create` — `POST /organizations/{orgId}/calendar/events`,
+  gated server-side by `organization.events.write`; the page also hides the
+  "New event" button when the active member lacks that permission.
+- `CalendarPage` orchestrates: opens `CalendarEventDrawer` (hosting
+  `CalendarEventForm`, both under `ui/`), calls `CalendarEventsStore.create`
+  on submit, and — on success — closes the drawer and re-triggers
+  `CalendarFeedStore.load` with the current window so the new entry appears
+  without a page reload.
 
 ## Not built yet
 
-Creating and editing events (`POST`/`PATCH /calendar/events`). The feed is
-read-only for now.
+- Editing and deleting events (`PATCH`/`DELETE /calendar/events/{id}`) — the
+  backend resource supports both, but no UI calls them yet.
+- A facility picker for the create form's optional `facilityId` — the feature
+  has no facility list data source of its own yet; the field is omitted from
+  `CalendarEventForm` rather than stubbed.

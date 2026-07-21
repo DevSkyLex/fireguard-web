@@ -1,0 +1,104 @@
+<div class="mb-3 flex flex-wrap items-center justify-between gap-2.5">
+  <span
+    class="text-sm font-medium text-surface-500 dark:text-surface-400"
+    i18n="@@compliance.checklists.count"
+    data-testid="compliance-checklists-count"
+    >{total(), plural, =1 {1 checklist} other {{{ total() }} checklists}}</span
+  >
+
+  <p-select
+    [options]="statusOptions"
+    optionLabel="label"
+    optionValue="value"
+    size="small"
+    [showClear]="true"
+    i18n-placeholder="@@common.status"
+    placeholder="Status"
+    data-testid="compliance-checklist-status"
+    [ngModel]="status()"
+    (ngModelChange)="status.set($event); onFilterChange()"
+  />
+</div>
+
+@if (!loading() && rows().length === 0) {
+  <app-empty-state
+    icon="pi-list-check"
+    i18n-title="@@compliance.checklists.empty.title"
+    title="No checklist templates yet"
+    i18n-description="@@compliance.checklists.empty.desc"
+    description="Checklist templates defined for this organization will appear here."
+  />
+} @else {
+  <p-table
+    [value]="loading() ? skeletonItems : mutableRows()"
+    dataKey="id"
+    styleClass="text-sm"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [paginator]="total() > pageSize"
+    [rows]="pageSize"
+    [totalRecords]="total()"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [paginatorDropdownAppendTo]="'body'"
+    [showCurrentPageReport]="true"
+    i18n-currentPageReportTemplate="@@compliance.checklists.table.pageReport"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} checklists"
+    [rowHover]="true"
+    [stripedRows]="true"
+  >
+    <ng-template #header>
+      <tr>
+        <th scope="col" i18n="@@compliance.checklists.col.ref">Ref</th>
+        <th scope="col" pSortableColumn="name">
+          <span i18n="@@compliance.checklists.col.checklist">Checklist</span>
+          <p-sortIcon field="name" />
+        </th>
+        <th scope="col" class="text-right" i18n="@@compliance.checklists.col.items">Items</th>
+        <th
+          scope="col"
+          class="hidden text-right md:table-cell"
+          i18n="@@compliance.checklists.col.updated"
+        >
+          Last updated
+        </th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-row>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="5rem" /></td>
+          <td><p-skeleton width="12rem" /></td>
+          <td><p-skeleton width="2rem" /></td>
+          <td class="hidden md:table-cell"><p-skeleton width="6rem" /></td>
+        </tr>
+      } @else {
+        <tr>
+          <td>
+            <span class="font-mono text-xs text-surface-500 dark:text-surface-400">
+              {{ shortRef(row) }}
+            </span>
+          </td>
+          <td>
+            <div class="flex min-w-0 flex-col">
+              <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+                {{ row.name }}
+              </span>
+              <span class="truncate text-xs text-surface-500 dark:text-surface-400">
+                {{ row.version }}
+              </span>
+            </div>
+          </td>
+          <td class="text-right tabular-nums">
+            <span class="text-surface-600 dark:text-surface-400">{{ row.itemCount }}</span>
+          </td>
+          <td class="hidden text-right md:table-cell">
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">
+              {{ row.updatedAt | date: 'mediumDate' }}
+            </span>
+          </td>
+        </tr>
+      }
+    </ng-template>
+  </p-table>
+}

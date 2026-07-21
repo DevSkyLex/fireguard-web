@@ -438,6 +438,34 @@
         <source>Failed to load notifications. Please try again later.</source>
         <target>No se pudieron cargar las notificaciones. Inténtalo de nuevo más tarde.</target>
       </trans-unit>
+      <trans-unit id="account.access.orgMemberships" datatype="html">
+        <source>Organization memberships</source>
+        <target>Membresías de organizaciones</target>
+      </trans-unit>
+      <trans-unit id="account.access.orgMembershipsDesc" datatype="html">
+        <source>Workspaces you belong to and your role in each.</source>
+        <target>Espacios de trabajo a los que perteneces y tu rol en cada uno.</target>
+      </trans-unit>
+      <trans-unit id="account.access.globalAccessTitle" datatype="html">
+        <source>Global access</source>
+        <target>Acceso global</target>
+      </trans-unit>
+      <trans-unit id="account.access.globalAccessDesc" datatype="html">
+        <source>Platform-wide roles and permissions on your account.</source>
+        <target>Roles y permisos a nivel de plataforma en tu cuenta.</target>
+      </trans-unit>
+      <trans-unit id="account.access.orgMembershipsLoading" datatype="html">
+        <source>Loading your organizations…</source>
+        <target>Cargando tus organizaciones…</target>
+      </trans-unit>
+      <trans-unit id="account.access.noOrgMemberships" datatype="html">
+        <source>You are not a member of any organization.</source>
+        <target>No eres miembro de ninguna organización.</target>
+      </trans-unit>
+      <trans-unit id="account.access.owner" datatype="html">
+        <source>Owner</source>
+        <target>Propietario</target>
+      </trans-unit>
       <trans-unit id="account.sessions.loadError" datatype="html">
         <source>Active sessions could not be loaded.</source>
         <target>No se pudieron cargar las sesiones activas.</target>
@@ -725,8 +753,16 @@
         <target>Dirección de correo electrónico</target>
       </trans-unit>
       <trans-unit id="account.profileForm.readonlyHint" datatype="html">
-        <source> Your username and email address cannot be changed here. </source>
-        <target>Tu nombre de usuario y tu dirección de correo electrónico no se pueden cambiar aquí.</target>
+        <source> Your username and email are managed by your identity provider and can't be changed here. </source>
+        <target>Tu nombre de usuario y tu correo electrónico los gestiona tu proveedor de identidad y no se pueden cambiar aquí.</target>
+      </trans-unit>
+      <trans-unit id="account.profileForm.personalInfoTitle" datatype="html">
+        <source>Personal information</source>
+        <target>Información personal</target>
+      </trans-unit>
+      <trans-unit id="account.profileForm.personalInfoDesc" datatype="html">
+        <source>Your name is visible to other members of your organizations.</source>
+        <target>Tu nombre es visible para los demás miembros de tus organizaciones.</target>
       </trans-unit>
       <trans-unit id="common.reset" datatype="html">
         <source>Reset</source>
@@ -744,9 +780,57 @@
         <source>Your account</source>
         <target>Tu cuenta</target>
       </trans-unit>
+      <trans-unit id="account.page.title" datatype="html">
+        <source>Your profile</source>
+        <target>Tu perfil</target>
+      </trans-unit>
       <trans-unit id="account.page.subtitle" datatype="html">
-        <source> Your personal account </source>
-        <target>Tu cuenta personal</target>
+        <source>Your personal account, sign-in and security across Fireguard.</source>
+        <target>Tu cuenta personal, inicio de sesión y seguridad en Fireguard.</target>
+      </trans-unit>
+      <trans-unit id="account.tabs.profile" datatype="html">
+        <source>Profile</source>
+        <target>Perfil</target>
+      </trans-unit>
+      <trans-unit id="account.tabs.security" datatype="html">
+        <source>Security</source>
+        <target>Seguridad</target>
+      </trans-unit>
+      <trans-unit id="account.tabs.roles" datatype="html">
+        <source>Roles</source>
+        <target>Roles</target>
+      </trans-unit>
+      <trans-unit id="account.profile.identity.verified" datatype="html">
+        <source>Email verified</source>
+        <target>Correo verificado</target>
+      </trans-unit>
+      <trans-unit id="account.profile.saved" datatype="html">
+        <source>Your profile has been updated.</source>
+        <target>Tu perfil se ha actualizado.</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.title" datatype="html">
+        <source>Deactivate account</source>
+        <target>Desactivar cuenta</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.desc" datatype="html">
+        <source>Your account is disabled and you're signed out everywhere. An admin can reactivate it later.</source>
+        <target>Tu cuenta está desactivada y se ha cerrado la sesión en todas partes. Un administrador podrá reactivarla más tarde.</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.error" datatype="html">
+        <source>Your account could not be deactivated. Please try again.</source>
+        <target>No se ha podido desactivar tu cuenta. Inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.accept" datatype="html">
+        <source>Deactivate account</source>
+        <target>Desactivar cuenta</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.header" datatype="html">
+        <source>Deactivate account</source>
+        <target>Desactivar cuenta</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.confirm" datatype="html">
+        <source>You will be signed out everywhere and will not be able to sign back in. Only an administrator can reactivate your account. Continue?</source>
+        <target>Se cerrará tu sesión en todas partes y no podrás volver a iniciar sesión. Solo un administrador puede reactivar tu cuenta. ¿Continuar?</target>
       </trans-unit>
       <trans-unit id="account.page.memberSince" datatype="html">
         <source><x id="START_ITALIC_TEXT" ctype="x-i" equiv-text="&lt;i class=&quot;pi pi-calendar text-xs&quot; aria-hidden=&quot;true&quot;&gt;"/><x id="CLOSE_ITALIC_TEXT" ctype="x-i" equiv-text="&lt;/i&gt;"/> Member since <x id="INTERPOLATION" equiv-text="{{ createdAt | date: &apos;MMMM yyyy&apos; }}"/> </source>
@@ -841,12 +925,16 @@
         <target>Sesiones activas</target>
       </trans-unit>
       <trans-unit id="account.sessionTable.subtitle" datatype="html">
-        <source> Review and revoke access to your account. </source>
-        <target>Revisa y revoca el acceso a tu cuenta.</target>
+        <source>Devices signed in to your account.</source>
+        <target>Dispositivos con sesión iniciada en tu cuenta.</target>
       </trans-unit>
       <trans-unit id="account.sessionTable.revokeAll" datatype="html">
-        <source>Revoke all other sessions</source>
-        <target>Revocar todas las demás sesiones</target>
+        <source>Revoke others</source>
+        <target>Revocar otras</target>
+      </trans-unit>
+      <trans-unit id="account.sessionTable.thisDevice" datatype="html">
+        <source>This device</source>
+        <target>Este dispositivo</target>
       </trans-unit>
       <trans-unit id="account.sessionTable.pageReport" datatype="html">
         <source>Showing {first} to {last} of {totalRecords} sessions</source>
@@ -887,6 +975,18 @@
       <trans-unit id="account.deviceTable.title" datatype="html">
         <source>Trusted devices</source>
         <target>Dispositivos de confianza</target>
+      </trans-unit>
+      <trans-unit id="account.deviceTable.lastUsedOn" datatype="html">
+        <source>Last used <x id="INTERPOLATION" equiv-text="{{ device.lastUsedAt | date: 'mediumDate' }}"/></source>
+        <target>Usado por última vez el <x id="INTERPOLATION" equiv-text="{{ device.lastUsedAt | date: 'mediumDate' }}"/></target>
+      </trans-unit>
+      <trans-unit id="account.deviceTable.expiresOn" datatype="html">
+        <source>Expires <x id="INTERPOLATION" equiv-text="{{ device.expiresAt | date: 'mediumDate' }}"/></source>
+        <target>Caduca el <x id="INTERPOLATION" equiv-text="{{ device.expiresAt | date: 'mediumDate' }}"/></target>
+      </trans-unit>
+      <trans-unit id="account.deviceTable.revoke" datatype="html">
+        <source>Revoke</source>
+        <target>Revocar</target>
       </trans-unit>
       <trans-unit id="account.deviceTable.subtitle" datatype="html">
         <source> Devices allowed to bypass repeated MFA verification. </source>
@@ -943,6 +1043,14 @@
       <trans-unit id="layout.sidebar.collapse" datatype="html">
         <source>Collapse sidebar</source>
         <target>Contraer barra lateral</target>
+      </trans-unit>
+      <trans-unit id="layout.sidebar.searchChannels" datatype="html">
+        <source>Search channels</source>
+        <target>Buscar canales</target>
+      </trans-unit>
+      <trans-unit id="layout.sidebar.clearChannelSearch" datatype="html">
+        <source>Clear channel search</source>
+        <target>Borrar la búsqueda de canales</target>
       </trans-unit>
       <trans-unit id="layout.nav.empty" datatype="html">
         <source> No navigation items available. </source>
@@ -1396,6 +1504,10 @@
         <source> Equipment information </source>
         <target>Información del equipo</target>
       </trans-unit>
+      <trans-unit id="equipment.overview.title" datatype="html">
+        <source>Overview</source>
+        <target>Resumen</target>
+      </trans-unit>
       <trans-unit id="equipment.info.type" datatype="html">
         <source>Type</source>
         <target>Tipo</target>
@@ -1679,6 +1791,10 @@
       <trans-unit id="equipment.table.colLocation" datatype="html">
         <source>Location</source>
         <target>Ubicación</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.colFacility" datatype="html">
+        <source>Facility</source>
+        <target>Instalación</target>
       </trans-unit>
       <trans-unit id="equipment.table.actions" datatype="html">
         <source>Equipment actions</source>
@@ -2135,6 +2251,18 @@
       <trans-unit id="facility.header.updated" datatype="html">
         <source>Updated <x id="INTERPOLATION" equiv-text="{{ facility.updatedAt | date: &apos;mediumDate&apos; }}"/></source>
         <target>Actualizado <x id="INTERPOLATION" equiv-text="{{ facility.updatedAt | date: &apos;mediumDate&apos; }}"/></target>
+      </trans-unit>
+      <trans-unit id="facility.header.photoPlaceholder" datatype="html">
+        <source>Drop a photo of this site</source>
+        <target>Suelta una foto de este sitio</target>
+      </trans-unit>
+      <trans-unit id="facility.location.title" datatype="html">
+        <source>Location</source>
+        <target>Ubicación</target>
+      </trans-unit>
+      <trans-unit id="facility.subLocations.title" datatype="html">
+        <source>Sub-locations</source>
+        <target>Sububicaciones</target>
       </trans-unit>
       <trans-unit id="facility.equipmentStatus.assets" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ store.equipmentCount() }}"/> assets</source>
@@ -2793,8 +2921,8 @@
         <target>Nota <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;text-red-500&quot; aria-hidden=&quot;true&quot;&gt;"/>*<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
       </trans-unit>
       <trans-unit id="intervention.rc.notePlaceholder" datatype="html">
-        <source>e.g. Re-inspect the extinguishers — the pressure gauge photo is missing.</source>
-        <target>p. ej. Vuelva a inspeccionar los extintores: falta la foto del manómetro.</target>
+        <source>What needs to change before this can be resubmitted?</source>
+        <target>¿Qué debe cambiar antes de volver a enviarlo?</target>
       </trans-unit>
       <trans-unit id="intervention.rc.noteRequired" datatype="html">
         <source>A note is required so the agent knows what to fix.</source>
@@ -3588,6 +3716,10 @@
         <source>Monthly</source>
         <target>Mensual</target>
       </trans-unit>
+      <trans-unit id="org.billing.readOnly" datatype="html">
+        <source>You can view this organization's billing, but only an owner can change the plan.</source>
+        <target>Puedes ver la facturación de esta organización, pero solo un propietario puede cambiar de plan.</target>
+      </trans-unit>
       <trans-unit id="org.danger.title" datatype="html">
         <source> Delete this organization </source>
         <target>Eliminar esta organización</target>
@@ -3772,6 +3904,38 @@
         <source>View all non-conformities</source>
         <target>Ver todas las no conformidades</target>
       </trans-unit>
+      <trans-unit id="org.trend.nc.title" datatype="html">
+        <source>Non-conformities trend</source>
+        <target>Tendencia de no conformidades</target>
+      </trans-unit>
+      <trans-unit id="org.trend.nc.desc" datatype="html">
+        <source>Opened vs resolved · last 8 weeks</source>
+        <target>Abiertas vs resueltas · últimas 8 semanas</target>
+      </trans-unit>
+      <trans-unit id="org.trend.nc.openedLabel" datatype="html">
+        <source>Opened</source>
+        <target>Abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.trend.nc.resolvedLabel" datatype="html">
+        <source>Resolved</source>
+        <target>Resueltas</target>
+      </trans-unit>
+      <trans-unit id="org.trend.nc.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.nc.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.nc.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.nc.chartEmptyDesc" datatype="html">
+        <source>No non-conformity activity in the last 8 weeks.</source>
+        <target>Sin actividad de no conformidades en las últimas 8 semanas.</target>
+      </trans-unit>
       <trans-unit id="org.trend.ncResolved.title" datatype="html">
         <source>Non-Conformities Resolved</source>
         <target>No conformidades resueltas</target>
@@ -3912,14 +4076,6 @@
         <source>Waived</source>
         <target>Exonerada</target>
       </trans-unit>
-      <trans-unit id="org.dash.activity" datatype="html">
-        <source>Activity</source>
-        <target>Actividad</target>
-      </trans-unit>
-      <trans-unit id="org.dash.activityDesc" datatype="html">
-        <source> Overview of activity trends and key metrics for your organization. </source>
-        <target>Resumen de las tendencias de actividad y las métricas clave de tu organización.</target>
-      </trans-unit>
       <trans-unit id="org.dash.facilities" datatype="html">
         <source>Facilities</source>
         <target>Instalaciones</target>
@@ -3991,6 +4147,10 @@
       <trans-unit id="org.plan.plans" datatype="html">
         <source>Plans</source>
         <target>Planes</target>
+      </trans-unit>
+      <trans-unit id="org.plan.plansSubtitle" datatype="html">
+        <source>Upgrade or downgrade at any time.</source>
+        <target>Cambia de plan en cualquier momento.</target>
       </trans-unit>
       <trans-unit id="org.plan.cadenceAria" datatype="html">
         <source>Billing cadence</source>
@@ -4392,6 +4552,10 @@
         <source> Manage workspace preferences, subscription, usage, and organization-wide policies. </source>
         <target>Gestiona las preferencias del espacio de trabajo, la suscripción, el uso y las políticas de la organización.</target>
       </trans-unit>
+      <trans-unit id="org.settings.pageSubtitleNamed" datatype="html">
+        <source>Manage <x id="INTERPOLATION" equiv-text="{{ organization.name }}"/>'s profile, members and access.</source>
+        <target>Gestiona el perfil, los miembros y el acceso de <x id="INTERPOLATION" equiv-text="{{ organization.name }}"/>.</target>
+      </trans-unit>
       <trans-unit id="org.settings.saveError" datatype="html">
         <source>The settings could not be saved.</source>
         <target>No se pudieron guardar los ajustes.</target>
@@ -4581,8 +4745,8 @@
         <target>Las personas que se unan a esta organización aparecerán aquí.</target>
       </trans-unit>
       <trans-unit id="org.roleTable.system" datatype="html">
-        <source>(system)</source>
-        <target>(sistema)</target>
+        <source>System</source>
+        <target>Sistema</target>
       </trans-unit>
       <trans-unit id="org.roleTable.emptyTitle" datatype="html">
         <source>No roles yet</source>
@@ -5437,8 +5601,8 @@
         <target>No se pudieron cargar las intervenciones. Comprueba tu conexión e inténtalo de nuevo.</target>
       </trans-unit>
       <trans-unit id="intervention.list.newButton" datatype="html">
-        <source>New</source>
-        <target>Nueva</target>
+        <source>New intervention</source>
+        <target>Nueva intervención</target>
       </trans-unit>
       <trans-unit id="intervention.list.retry" datatype="html">
         <source>Retry</source>
@@ -5565,8 +5729,8 @@
         <target>Autenticación de dos factores</target>
       </trans-unit>
       <trans-unit id="account.mfa.subtitle" datatype="html">
-        <source>Extra verification methods used when you sign in.</source>
-        <target>Métodos de verificación adicionales utilizados al iniciar sesión.</target>
+        <source>Extra verification used when you sign in.</source>
+        <target>Verificación adicional utilizada al iniciar sesión.</target>
       </trans-unit>
       <trans-unit id="account.mfa.emailLabel" datatype="html">
         <source>Email code</source>
@@ -5589,8 +5753,8 @@
         <target>Aplicación de autenticación</target>
       </trans-unit>
       <trans-unit id="account.mfa.totpHint" datatype="html">
-        <source>Generate a time-based one-time code with an app like Google Authenticator or 1Password.</source>
-        <target>Genere un código de un solo uso basado en el tiempo con una aplicación como Google Authenticator o 1Password.</target>
+        <source>Time-based codes from Google Authenticator, 1Password…</source>
+        <target>Códigos basados en el tiempo desde Google Authenticator, 1Password…</target>
       </trans-unit>
       <trans-unit id="account.mfa.pendingConfirmation" datatype="html">
         <source>Pending confirmation</source>
@@ -6456,6 +6620,10 @@
         <source>Organization roles</source>
         <target>Roles de la organización</target>
       </trans-unit>
+      <trans-unit id="org.roleCard.memberCount" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 member} other {<x id="INTERPOLATION"/> members}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 miembro} other {<x id="INTERPOLATION"/> miembros}}</target>
+      </trans-unit>
       <trans-unit id="org.roleCard.permissionCount" datatype="html">
         <source>{VAR_PLURAL, plural, =1 {1 permission} other {<x id="INTERPOLATION"/> permissions}}</source>
         <target>{VAR_PLURAL, plural, =1 {1 permiso} other {<x id="INTERPOLATION"/> permisos}}</target>
@@ -6537,8 +6705,8 @@
         <target>Los datos de la tarjeta se gestionan en el portal de facturación seguro.</target>
       </trans-unit>
       <trans-unit id="billing.paymentMethod.expires" datatype="html">
-        <source>expires</source>
-        <target>vence</target>
+        <source>Expires</source>
+        <target>Vence</target>
       </trans-unit>
       <trans-unit id="billing.paymentMethod.manage" datatype="html">
         <source>Manage in portal</source>
@@ -6572,6 +6740,10 @@
         <source>Sources</source>
         <target>Fuentes</target>
       </trans-unit>
+      <trans-unit id="calendar.categories" datatype="html">
+        <source>Categories</source>
+        <target>Categorías</target>
+      </trans-unit>
       <trans-unit id="common.loading" datatype="html">
         <source>Loading…</source>
         <target>Cargando…</target>
@@ -6595,6 +6767,30 @@
       <trans-unit id="compliance.kpi.openNonConformities" datatype="html">
         <source>Open non-conformities</source>
         <target>No conformidades abiertas</target>
+      </trans-unit>
+      <trans-unit id="compliance.kpi.openNonConformities.sub" datatype="html">
+        <source><x id="count" equiv-text="count"/> critical</source>
+        <target><x id="count" equiv-text="count"/> críticas</target>
+      </trans-unit>
+      <trans-unit id="compliance.inspections.count" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 inspection} other {<x id="INTERPOLATION"/> inspections}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 inspección} other {<x id="INTERPOLATION"/> inspecciones}}</target>
+      </trans-unit>
+      <trans-unit id="compliance.inspections.search" datatype="html">
+        <source>Search inspections…</source>
+        <target>Buscar inspecciones…</target>
+      </trans-unit>
+      <trans-unit id="compliance.inspections.searchAria" datatype="html">
+        <source>Search inspections</source>
+        <target>Buscar inspecciones</target>
+      </trans-unit>
+      <trans-unit id="compliance.nc.count" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 non-conformity} other {<x id="INTERPOLATION"/> non-conformities}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 no conformidad} other {<x id="INTERPOLATION"/> no conformidades}}</target>
+      </trans-unit>
+      <trans-unit id="compliance.checklists.count" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 checklist} other {<x id="INTERPOLATION"/> checklists}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 checklist} other {<x id="INTERPOLATION"/> checklists}}</target>
       </trans-unit>
       <trans-unit id="compliance.kpi.overdue" datatype="html">
         <source>Overdue</source>
@@ -6652,17 +6848,29 @@
         <source>By site</source>
         <target>Por sitio</target>
       </trans-unit>
-      <trans-unit id="equipment.summary.dueSoon" datatype="html">
-        <source>due soon</source>
-        <target>próximos</target>
+      <trans-unit id="equipment.kpi.totalAssets" datatype="html">
+        <source>Total assets</source>
+        <target>Activos totales</target>
       </trans-unit>
-      <trans-unit id="equipment.summary.total" datatype="html">
-        <source>assets</source>
-        <target>activos</target>
+      <trans-unit id="equipment.kpi.compliant" datatype="html">
+        <source>Compliant</source>
+        <target>Conformes</target>
       </trans-unit>
-      <trans-unit id="equipment.summary.upToDate" datatype="html">
-        <source>up to date</source>
-        <target>al día</target>
+      <trans-unit id="equipment.kpi.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Próximos a vencer</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.dueSoonSubtitle" datatype="html">
+        <source>next 30 days</source>
+        <target>próximos 30 días</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.nonConformity" datatype="html">
+        <source>Non-conformity</source>
+        <target>No conformidad</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.nonConformitySubtitle" datatype="html">
+        <source>open</source>
+        <target>abierta</target>
       </trans-unit>
       <trans-unit id="equipment.table.colMaintenance" datatype="html">
         <source>Maintenance</source>
@@ -6693,8 +6901,8 @@
         <target>Equipos</target>
       </trans-unit>
       <trans-unit id="facility.tree.col.name" datatype="html">
-        <source>Facility</source>
-        <target>Instalación</target>
+        <source>Location</source>
+        <target>Ubicación</target>
       </trans-unit>
       <trans-unit id="facility.tree.col.type" datatype="html">
         <source>Type</source>
@@ -6772,6 +6980,10 @@
         <source>Close panel</source>
         <target>Cerrar el panel</target>
       </trans-unit>
+      <trans-unit id="map.addForm.title" datatype="html">
+        <source>New facility</source>
+        <target>Nueva instalación</target>
+      </trans-unit>
       <trans-unit id="map.empty.desc" datatype="html">
         <source>Facilities with an address will appear here once they are added.</source>
         <target>Las instalaciones con dirección aparecerán aquí una vez añadidas.</target>
@@ -6783,6 +6995,18 @@
       <trans-unit id="map.facilitiesAria" datatype="html">
         <source>Facilities map</source>
         <target>Mapa de instalaciones</target>
+      </trans-unit>
+      <trans-unit id="map.legend.title" datatype="html">
+        <source>Compliance</source>
+        <target>Cumplimiento</target>
+      </trans-unit>
+      <trans-unit id="map.panel.searchAria" datatype="html">
+        <source>Search facilities or cities</source>
+        <target>Buscar instalaciones o ciudades</target>
+      </trans-unit>
+      <trans-unit id="compliance.nc.searchAria" datatype="html">
+        <source>Search non-conformities</source>
+        <target>Buscar no conformidades</target>
       </trans-unit>
       <trans-unit id="messaging.composer.aria" datatype="html">
         <source>Message</source>
@@ -6880,13 +7104,25 @@
         <source>replies</source>
         <target>respuestas</target>
       </trans-unit>
+      <trans-unit id="messaging.details.creator" datatype="html">
+        <source>Creator</source>
+        <target>Creador</target>
+      </trans-unit>
+      <trans-unit id="messaging.details.links" datatype="html">
+        <source>Links</source>
+        <target>Enlaces</target>
+      </trans-unit>
+      <trans-unit id="messaging.details.noLinks" datatype="html">
+        <source>No links in this conversation yet.</source>
+        <target>Todavía no hay enlaces en esta conversación.</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.realtimeDown" datatype="html">
+        <source>Live updates are unavailable — refresh to see new messages.</source>
+        <target>Las actualizaciones en vivo no están disponibles: actualiza para ver los mensajes nuevos.</target>
+      </trans-unit>
       <trans-unit id="messaging.thread.saveAction" datatype="html">
         <source>Save message</source>
         <target>Guardar el mensaje</target>
-      </trans-unit>
-      <trans-unit id="org.dash.equipStatus.desc" datatype="html">
-        <source>Equipment by current status</source>
-        <target>Equipos por estado actual</target>
       </trans-unit>
       <trans-unit id="org.dash.equipStatus.empty" datatype="html">
         <source>No equipment recorded yet.</source>
@@ -6900,10 +7136,6 @@
         <source>units</source>
         <target>unidades</target>
       </trans-unit>
-      <trans-unit id="org.dash.ncSeverity.desc" datatype="html">
-        <source>Open non-conformities, most urgent first</source>
-        <target>No conformidades abiertas, las más urgentes primero</target>
-      </trans-unit>
       <trans-unit id="org.dash.ncSeverity.title" datatype="html">
         <source>By severity</source>
         <target>Por severidad</target>
@@ -6911,6 +7143,14 @@
       <trans-unit id="org.dash.ncSeverity.total" datatype="html">
         <source>open</source>
         <target>abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.legal.complete" datatype="html">
+        <source>Legal profile complete</source>
+        <target>Perfil legal completo</target>
+      </trans-unit>
+      <trans-unit id="org.legal.completeness" datatype="html">
+        <source><x id="filled" equiv-text="completeness.filled"/> of <x id="total" equiv-text="completeness.total"/> legal details provided</source>
+        <target><x id="filled" equiv-text="completeness.filled"/> de <x id="total" equiv-text="completeness.total"/> datos legales completados</target>
       </trans-unit>
       <trans-unit id="org.legal.country" datatype="html">
         <source>Country</source>
@@ -6921,8 +7161,8 @@
         <target>Código de dos letras, p. ej. ES.</target>
       </trans-unit>
       <trans-unit id="org.legal.intro" datatype="html">
-        <source>Used on reports, invoices and compliance exports. Every field is optional.</source>
-        <target>Se usa en informes, facturas y exportaciones de conformidad. Cada campo es opcional.</target>
+        <source>Used on reports, invoices and compliance documents.</source>
+        <target>Se usa en informes, facturas y documentos de conformidad.</target>
       </trans-unit>
       <trans-unit id="org.legal.name" datatype="html">
         <source>Registered name</source>
@@ -6935,6 +7175,10 @@
       <trans-unit id="org.legal.registration" datatype="html">
         <source>Registration number</source>
         <target>Número de registro</target>
+      </trans-unit>
+      <trans-unit id="org.legal.title" datatype="html">
+        <source>Legal profile</source>
+        <target>Perfil legal</target>
       </trans-unit>
       <trans-unit id="org.legal.type" datatype="html">
         <source>Legal type</source>
@@ -7268,6 +7512,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
           <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.tracked" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ site.trackedEquipmentCount }}"/> tracked</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ site.trackedEquipmentCount }}"/> seguidos</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">72,75</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.dash.complianceBySite.view" datatype="html">

@@ -30,7 +30,7 @@ const conversation = (
     subjectType: 'channel',
     subject: null,
     subjectLabel: null,
-    visibility: 'public',
+    visibility: 'participants',
     lastMessageAt: null,
     messagesCount: 0,
     isArchived: false,
@@ -67,6 +67,7 @@ describe('MessagingSidebar', () => {
     }),
     conversation('amelie', {
       isChannel: false,
+      subjectType: 'direct',
       name: null,
       subjectLabel: 'Amélie Rivet',
       isFavorite: true,
@@ -89,6 +90,11 @@ describe('MessagingSidebar', () => {
         {
           provide: MessagingService,
           useValue: {
+            // Channels reach the inventory through `/api/channels`; this spec
+            // feeds them all through the conversation list because the store
+            // simply concatenates the two sources.
+            listChannels: vi.fn(() => of({ member: [], totalItems: 0 })),
+            listDirectConversations: vi.fn(() => of({ member: [], totalItems: 0 })),
             listConversations: vi.fn(() => of({ member: rows, totalItems: rows.length })),
             markRead: vi.fn(() => of()),
             setFavorite: vi.fn(() => of(undefined)),
@@ -202,6 +208,8 @@ describe('MessagingSidebar', () => {
     // workspace could never create its first channel.
     TestBed.overrideProvider(MessagingService, {
       useValue: {
+        listChannels: vi.fn(() => of({ member: [], totalItems: 0 })),
+        listDirectConversations: vi.fn(() => of({ member: [], totalItems: 0 })),
         listConversations: vi.fn(() => of({ member: [], totalItems: 0 })),
         markRead: vi.fn(() => of()),
         setFavorite: vi.fn(() => of(undefined)),

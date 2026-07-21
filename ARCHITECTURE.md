@@ -982,6 +982,19 @@ Structure rules:
 - keep these nested folders private by default; external consumers import through the concern-level `ui/drawers` barrel, not through deep implementation paths,
 - if a drawer-local helper or type becomes broadly reusable across the feature, promote it to the appropriate feature-level concern instead of importing it through another drawer's private folder.
 
+### 9.4.3 Shell-panel-slot components
+
+Some feature components are registered as dashboard-shell `panel` contributions (for example the assistant, conversation-details, and map-facilities panels). The panel host instantiates them without page inputs, so the ordinary `ui/drawers/` contract — parent provides data through inputs and reacts to outputs — cannot apply.
+
+Panel-slot components therefore MAY:
+
+- inject their feature's shared store, provided at the shell's environment injector,
+- own their internal orchestration and navigation.
+
+They must still stay scoped to their single concern, must not perform transport directly (data flows through the store), and share state with their sibling routed page only through that store — never through private component state or ad-hoc services.
+
+Inside the owning parent feature, an import of a nested feature's published panel id may target the nested feature's providers barrel directly when routing through the parent's own barrels would create an import cycle.
+
 ### 9.5 `data-access/`
 
 `data-access/` is the feature-owned transport boundary and remains a first-class sibling of `ui/`, `state/`, and `models/`.

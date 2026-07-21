@@ -166,6 +166,34 @@ export function buildAgendaDays(
     );
 }
 
+/**
+ * Function buildDayAgenda
+ *
+ * @description
+ * Builds a single-day agenda group for `date`: the events anchored on that day
+ * sorted the way an agenda reads (all-day first, then ascending by start
+ * instant). Shares {@link compareAgendaEvents} with {@link buildAgendaDays} so
+ * the month agenda and the day view cannot disagree about row order.
+ *
+ * @param {Date} date - The day to group.
+ * @param {readonly CalendarEvent[]} events - Events to filter and group.
+ * @returns {readonly CalendarAgendaDay[]} Zero or one day group.
+ *
+ * @since 1.4.0
+ */
+export function buildDayAgenda(
+  date: Date,
+  events: readonly CalendarEvent[],
+): readonly CalendarAgendaDay[] {
+  const dayEvents: readonly CalendarEvent[] = events.filter((event: CalendarEvent): boolean =>
+    isSameDay(event.start, date),
+  );
+
+  if (dayEvents.length === 0) return [];
+
+  return [{ date: startOfDay(date), events: dayEvents.toSorted(compareAgendaEvents) }];
+}
+
 /** Resolves the start/end minutes of a timed event within its start day. */
 function toSpan(event: CalendarEvent): EventSpan {
   const startMin: number = minutesSinceMidnight(event.start);

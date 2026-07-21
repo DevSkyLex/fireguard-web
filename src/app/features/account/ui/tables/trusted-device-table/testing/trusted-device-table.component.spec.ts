@@ -94,4 +94,21 @@ describe('TrustedDeviceTable', () => {
 
     expect(spy).toHaveBeenCalledWith({ page: 1, itemsPerPage: 10 });
   });
+
+  it('should request the first page on init instead of relying on a paginator', () => {
+    const spy = vi.fn();
+    TestBed.configureTestingModule({ imports: [TrustedDeviceTable] });
+    const fixture = TestBed.createComponent(TrustedDeviceTable);
+    fixture.componentInstance.load.subscribe(spy);
+    fixture.componentRef.setInput('devices', []);
+    fixture.componentRef.setInput('total', 0);
+    fixture.componentRef.setInput('loading', false);
+    fixture.componentRef.setInput('empty', true);
+    fixture.componentRef.setInput('revokingAll', false);
+    fixture.componentRef.setInput('hasDevices', false);
+
+    fixture.detectChanges();
+
+    expect(spy).toHaveBeenCalledWith({ page: 1, itemsPerPage: 50 });
+  });
 });

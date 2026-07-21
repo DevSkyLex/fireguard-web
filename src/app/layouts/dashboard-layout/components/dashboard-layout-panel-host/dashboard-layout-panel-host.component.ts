@@ -1,4 +1,3 @@
-import { NgComponentOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,6 +11,7 @@ import { ButtonModule } from 'primeng/button';
 import { SHELL_PANEL_WIDTH_PX } from '@layouts/dashboard-layout/constants';
 import { DashboardPanelService } from '@layouts/dashboard-layout/services';
 import type { PanelContribution } from '@layouts/dashboard-layout/slots/panel';
+import { DashboardLayoutSlotOutlet } from '../dashboard-layout-slot-outlet/dashboard-layout-slot-outlet.component';
 
 /**
  * Component DashboardLayoutPanelHost
@@ -36,7 +36,7 @@ import type { PanelContribution } from '@layouts/dashboard-layout/slots/panel';
  */
 @Component({
   selector: 'app-dashboard-layout-panel-host',
-  imports: [NgComponentOutlet, ButtonModule],
+  imports: [DashboardLayoutSlotOutlet, ButtonModule],
   templateUrl: './dashboard-layout-panel-host.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

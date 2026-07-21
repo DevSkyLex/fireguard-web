@@ -91,4 +91,18 @@ describe('MapCanvas', () => {
       expect(api.canFitAll()).toBe(false);
     });
   });
+
+  /**
+   * `getCenter` is a public escape hatch for a consumer that wants to place
+   * something "at the map center" (e.g. a new record). jsdom carries no WebGL,
+   * so the underlying MapLibre instance never initializes here — this only
+   * covers the pre-init null guard, real center reads are exercised manually.
+   */
+  describe('getCenter', () => {
+    it('returns null before the map has finished initializing', () => {
+      render([MARKER]);
+
+      expect(api.getCenter()).toBeNull();
+    });
+  });
 });

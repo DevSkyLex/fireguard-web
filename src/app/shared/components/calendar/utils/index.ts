@@ -21,6 +21,7 @@ export {
 } from './calendar-date.utils';
 export {
   buildAgendaDays,
+  buildDayAgenda,
   buildMonthDays,
   buildDayColumn,
   buildWeekDays,

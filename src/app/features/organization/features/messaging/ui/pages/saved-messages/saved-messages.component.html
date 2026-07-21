@@ -25,9 +25,12 @@
   } @else {
     <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
       @for (message of store.queryData() ?? []; track message.id) {
-        <li class="flex items-start gap-3 py-3.5" data-testid="saved-message-row">
+        <li
+          class="flex items-start gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-surface-100 dark:hover:bg-surface-800"
+          data-testid="saved-message-row"
+        >
           <span
-            class="grid size-7 shrink-0 place-content-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-900 dark:text-surface-400"
+            class="grid size-9 shrink-0 place-content-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-900 dark:text-surface-400"
             aria-hidden="true"
           >
             {{ authorName(message).charAt(0).toUpperCase() }}
@@ -40,8 +43,10 @@
               >
                 {{ authorName(message) }}
               </span>
-              <span class="shrink-0 text-xs text-surface-500 dark:text-surface-400">
-                {{ message.createdAt | date: 'medium' }}
+              <span
+                class="ml-auto shrink-0 text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
+              >
+                {{ message.createdAt | date: 'shortDate' }}
               </span>
             </div>
 
@@ -53,7 +58,7 @@
                 This message was deleted.
               </p>
             } @else {
-              <p class="mt-0.5 text-[13px] break-words text-surface-700 dark:text-surface-300">
+              <p class="mt-0.5 truncate text-[13px] text-surface-500 dark:text-surface-400">
                 {{ message.body }}
               </p>
             }

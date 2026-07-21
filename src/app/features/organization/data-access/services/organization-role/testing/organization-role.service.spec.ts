@@ -51,6 +51,7 @@ describe('OrganizationRoleService', () => {
       { name: 'facility:read', description: '' },
       { name: 'facility:write', description: '' },
     ],
+    memberCount: 3,
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-03-01T00:00:00+00:00',
   };

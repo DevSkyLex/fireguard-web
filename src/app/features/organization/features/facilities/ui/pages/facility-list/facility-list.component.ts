@@ -32,6 +32,10 @@ import {
   type FacilityTreeStoreType,
 } from '@features/organization/features/facilities/state';
 import {
+  FacilityKpiStrip,
+  type FacilityKpi,
+} from '@features/organization/features/facilities/ui/components';
+import {
   FacilityTable,
   FacilityTreeTable,
 } from '@features/organization/features/facilities/ui/tables';
@@ -70,6 +74,7 @@ import {
     TooltipModule,
     FormsModule,
     CollectionToolbar,
+    FacilityKpiStrip,
     FacilityTable,
     FacilityTreeTable,
   ],
@@ -293,6 +298,47 @@ export class FacilityListPage {
    */
   protected readonly treeSummary: Signal<FacilityTreeSummary> = computed(
     (): FacilityTreeSummary => summariseFacilityTree(this.visibleTreeNodes()),
+  );
+
+  /**
+   * Property treeKpis
+   * @readonly
+   *
+   * @description
+   * {@link treeSummary} shaped for the standard bordered KPI strip every
+   * collection surface wears (equipment list, facility detail), replacing
+   * the page's own bare inline figure row. Compliance is omitted rather than
+   * shown as "—" when no node reports a rate: absent data is not the same
+   * fact as a tracked-but-empty estate.
+   *
+   * @access protected
+   * @since 2.4.0
+   *
+   * @type {Signal<readonly FacilityKpi[]>}
+   */
+  protected readonly treeKpis: Signal<readonly FacilityKpi[]> = computed(
+    (): readonly FacilityKpi[] => {
+      const summary: FacilityTreeSummary = this.treeSummary();
+      const kpis: FacilityKpi[] = [
+        {
+          label: $localize`:@@facility.summary.facilities:Facilities`,
+          value: String(summary.facilities),
+        },
+        {
+          label: $localize`:@@facility.summary.equipment:Equipment`,
+          value: String(summary.equipment),
+        },
+      ];
+
+      if (summary.complianceRate !== null) {
+        kpis.push({
+          label: $localize`:@@facility.summary.compliance:Compliance`,
+          value: `${summary.complianceRate}%`,
+        });
+      }
+
+      return kpis;
+    },
   );
 
   /** True when the search excluded every node — not "no facilities". */

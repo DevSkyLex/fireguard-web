@@ -45,5 +45,28 @@ export interface NonConformityOutput extends HydraItem {
   readonly createdAt: string;
   /** @type {string} */
   readonly updatedAt: string;
+
+  /**
+   * Identifier of the equipment the parent inspection was performed on.
+   * Populated only by listings that resolve it (the organization-wide
+   * non-conformity collection); `null` on the per-inspection endpoints, which
+   * already carry the inspection context the frontend used to get here.
+   *
+   * @type {(string | null | undefined)}
+   * @since 1.2.0
+   */
+  readonly equipmentId?: string | null;
+
+  /**
+   * Serial number of the inspected equipment, resolved server-side through the
+   * Equipment module's naming port for the same reason
+   * {@link InspectionOutput.equipmentSerialNumber} exists: a UUID names
+   * nothing to the agent standing in front of the device. `null` when
+   * unresolved, or when the endpoint does not resolve it.
+   *
+   * @type {(string | null | undefined)}
+   * @since 1.2.0
+   */
+  readonly equipmentSerialNumber?: string | null;
   //#endregion
 }

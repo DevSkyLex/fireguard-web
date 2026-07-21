@@ -1,5 +1,4 @@
 import { computed, inject } from '@angular/core';
-import { ConversationDetailsPanel } from '@features/organization/features/messaging/ui/drawers/conversation-details-panel';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -46,7 +45,10 @@ export function withConversationDetailsPanel(): DashboardLayoutPanelSlotFeature 
       return {
         id: CONVERSATION_DETAILS_PANEL_ID,
         order: 10,
-        component: ConversationDetailsPanel,
+        loadComponent: () =>
+          import('@features/organization/features/messaging/ui/drawers/conversation-details-panel/conversation-details-panel.component').then(
+            (m) => m.ConversationDetailsPanel,
+          ),
         title: computed((): string => $localize`:@@messaging.details.title:Details`),
         icon: 'pi pi-info-circle',
         available: computed((): boolean => {

@@ -77,7 +77,7 @@
   @for (group of categoryGroups(); track group.id) {
     <section>
       <h2
-        class="mb-2 text-xs font-semibold tracking-wide text-surface-500 uppercase dark:text-surface-400"
+        class="mb-2 text-[11px] font-semibold tracking-[0.06em] text-surface-500 uppercase dark:text-surface-400"
       >
         {{ group.label }}
       </h2>
@@ -92,17 +92,27 @@
               (click)="toggle(group, category)"
             >
               <span
-                class="grid size-4 shrink-0 place-items-center rounded transition-colors motion-reduce:transition-none"
+                class="grid size-4 shrink-0 place-items-center rounded border transition-colors motion-reduce:transition-none"
                 [class]="
                   category.active
-                    ? dotClass(category.tone)
-                    : 'border border-surface-300 dark:border-surface-600'
+                    ? 'border-primary-500 bg-primary-500'
+                    : 'border-surface-300 dark:border-surface-600'
                 "
               >
                 @if (category.active) {
                   <i class="pi pi-check text-[0.55rem] text-white" aria-hidden="true"></i>
                 }
               </span>
+              <!--
+                Kept separate from the checkbox: the colour must stay visible
+                even when the category is switched off, or the row loses its
+                only visual link to its chips once unchecked.
+              -->
+              <span
+                class="size-2.5 shrink-0 rounded-[3px]"
+                [class]="dotClass(category.tone)"
+                aria-hidden="true"
+              ></span>
               <span
                 class="truncate text-sm"
                 [class]="
@@ -117,15 +127,15 @@
               <!--
                 Counted over every event, not the visible ones: a category's own
                 count must not collapse to zero when it is switched off, or it
-                stops answering "is it worth turning this back on".
+                stops answering "is it worth turning this back on". Rendered
+                unconditionally, including "0" — a row with no figure at all
+                would lose alignment with its neighbours.
               -->
-              @if (categoryCounts()[category.id]; as count) {
-                <span
-                  class="ml-auto shrink-0 text-xs text-surface-400 tabular-nums dark:text-surface-500"
-                  data-testid="calendar-category-count"
-                  >{{ count }}</span
-                >
-              }
+              <span
+                class="ml-auto shrink-0 text-xs text-surface-400 tabular-nums dark:text-surface-500"
+                data-testid="calendar-category-count"
+                >{{ countFor(category.id) }}</span
+              >
             </button>
           </li>
         }

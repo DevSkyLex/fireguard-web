@@ -1,4 +1,5 @@
 export type { OrganizationOutput } from './organization-entity/organization-output.interface';
+export type { OrganizationMembershipRole } from './organization-entity/organization-membership-role.interface';
 export type { CreateOrganizationInput } from './organization-entity/create-organization-input.interface';
 export type { InviteOrganizationMemberInput } from './member/invite-organization-member-input.interface';
 export type { OrganizationInvitationOutput } from './member/organization-invitation-output.interface';
@@ -56,13 +57,13 @@ export type {
   OrganizationDashboardTrendSeriesPointValue,
   OrganizationDashboardTrendSummary,
   OrganizationDashboardTrendSummaryValue,
-  OrganizationDashboardOverviewTrendResource,
   OrganizationDashboardTrendResourceParams,
   OrganizationDashboardEquipmentTrendResourceParams,
   OrganizationDashboardFacilityTrendResourceParams,
   OrganizationDashboardInspectionTrendResourceParams,
   OrganizationDashboardNonConformityTrendResourceParams,
 } from './dashboard/organization-dashboard-trend-output.interface';
+export type { OrganizationNavigationCountersOutput } from './navigation-counters/organization-navigation-counters-output.interface';
 export type { AuditEventListOptions } from './organization-audit/audit-event-list-options.interface';
 export type { AuditEventOutput } from './organization-audit/audit-event-output.interface';
 export type { OrganizationPermissionOutput } from './role/organization-permission-output.interface';
@@ -98,6 +99,13 @@ export { resolveSubscriptionStatusTag } from './billing-tag/subscription-status-
 export type { InvitationTagDescriptor } from './invitation-tag/invitation-tag-descriptor.interface';
 export type { InvitationTagKind } from './invitation-tag/invitation-tag-kind.type';
 export { resolveInvitationTag } from './invitation-tag/invitation-tag.util';
+export type { ComplianceBucket } from './facility-compliance-tag/facility-compliance-bucket.type';
+export type { ComplianceBucketDescriptor } from './facility-compliance-tag/facility-compliance-tag-descriptor.interface';
+export {
+  COMPLIANCE_BUCKET_LEGEND,
+  resolveComplianceBucket,
+} from './facility-compliance-tag/facility-compliance-tag.util';
+export type { FacilityMapStats } from './facility-map-stats/facility-map-stats.interface';
 export type { OrganizationStatusTagDescriptor } from './organization-status-tag/organization-status-tag-descriptor.interface';
 export type { OrganizationStatusTagKind } from './organization-status-tag/organization-status-tag-kind.type';
 export { resolveOrganizationStatusTag } from './organization-status-tag/organization-status-tag.util';

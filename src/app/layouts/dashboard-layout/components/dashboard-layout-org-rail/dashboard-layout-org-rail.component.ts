@@ -1,8 +1,8 @@
-import { NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SIDEBAR_SLOT, type SidebarContribution } from '@layouts/dashboard-layout/slots/sidebar';
-import { Logo } from '@shared/components';
+import { Logo } from '@shared/components/logo';
+import { DashboardLayoutSlotOutlet } from '../dashboard-layout-slot-outlet/dashboard-layout-slot-outlet.component';
 
 /**
  * Component DashboardLayoutOrgRail
@@ -29,7 +29,7 @@ import { Logo } from '@shared/components';
  */
 @Component({
   selector: 'app-dashboard-layout-org-rail',
-  imports: [NgComponentOutlet, RouterLink, Logo],
+  imports: [DashboardLayoutSlotOutlet, RouterLink, Logo],
   templateUrl: './dashboard-layout-org-rail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

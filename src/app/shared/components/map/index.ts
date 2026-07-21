@@ -1,2 +1,2 @@
 export { MapCanvas } from './map.component';
-export type { MapMarker } from './models';
+export type { MapMarker, MapMarkerDetail } from './models';

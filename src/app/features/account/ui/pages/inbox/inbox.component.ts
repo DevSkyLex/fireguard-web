@@ -130,6 +130,28 @@ export class InboxPage {
   }
 
   /**
+   * Method sourceIcon
+   *
+   * @description
+   * The glyph for an entry's source, shown in the row's leading tile. Falls
+   * back to a neutral marker so an unknown source still renders a row of the
+   * same height.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {InboxItem} item - The entry.
+   *
+   * @returns {string} A PrimeIcons class.
+   */
+  protected sourceIcon(item: InboxItem): string {
+    if (item.targetType === 'notification') return 'pi pi-bell';
+    if (item.targetType === 'conversation') return 'pi pi-comment';
+
+    return 'pi pi-circle';
+  }
+
+  /**
    * Method loadMore
    *
    * @access protected

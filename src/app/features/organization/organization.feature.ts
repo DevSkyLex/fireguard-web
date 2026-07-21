@@ -6,6 +6,8 @@ import {
 } from '@features/organization/ports';
 import {
   ActiveOrganizationStore,
+  MapFacilitiesStore,
+  NavigationCountersStore,
   OrganizationMemberAccessStore,
 } from '@features/organization/state';
 
@@ -39,5 +41,14 @@ export function provideOrganizationFeature(): EnvironmentProviders {
     // sections and the messaging workspace page. Provided here — not
     // root — because its hooks inject the two ports bound above.
     ConversationInventoryStore,
+    // Sidebar badge counters (Interventions / Compliance). Same reasoning:
+    // its hooks follow the organization context port bound above.
+    NavigationCountersStore,
+    // One map-facilities store per shell, shared by the organization map page
+    // (the canvas) and the map facilities shell panel (the sidebar) — they
+    // are siblings under the shell now, not parent/child, so this is their
+    // only shared source of truth. Same reasoning as the two stores above:
+    // its hooks follow the organization ports bound in this same injector.
+    MapFacilitiesStore,
   ]);
 }

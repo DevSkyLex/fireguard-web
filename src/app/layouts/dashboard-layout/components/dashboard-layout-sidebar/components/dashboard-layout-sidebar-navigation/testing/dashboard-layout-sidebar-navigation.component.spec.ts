@@ -3,11 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
+import { SHELL_PANEL_PORT } from '@core/shell-panel';
 import { NOTIFICATION_CENTER_PORT } from '@features/account';
 import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
+import { NavigationCountersStore } from '@features/organization/state';
 import { provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import {
   DashboardSidebarNavigationService,
@@ -46,6 +48,15 @@ describe('DashboardLayoutSidebarNavigation', () => {
   };
   const unreadCount = signal(0);
   const mockNotificationCenter = { unreadCount };
+  const mockShellPanel = {
+    openPanelIds: signal<readonly string[]>([]),
+    open: vi.fn(),
+    close: vi.fn(),
+    toggle: vi.fn(),
+  };
+  const openInterventions = signal(0);
+  const openNonConformities = signal(0);
+  const mockNavigationCounters = { openInterventions, openNonConformities };
 
   beforeEach(() => {
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
@@ -56,6 +67,9 @@ describe('DashboardLayoutSidebarNavigation', () => {
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]);
     unreadCount.set(0);
+    openInterventions.set(0);
+    openNonConformities.set(0);
+    mockShellPanel.toggle.mockClear();
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutSidebarNavigation],
@@ -68,6 +82,8 @@ describe('DashboardLayoutSidebarNavigation', () => {
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenter },
+        { provide: SHELL_PANEL_PORT, useValue: mockShellPanel },
+        { provide: NavigationCountersStore, useValue: mockNavigationCounters },
         provideRouter([
           { path: '', component: DummyPage },
           { path: 'organizations/:organizationId', component: DummyPage },
@@ -89,8 +105,13 @@ describe('DashboardLayoutSidebarNavigation', () => {
     fixture.detectChanges();
 
     // Workspace cluster: dashboard, facilities, map (also facilities.read),
-    // equipments, inspections. Utilities cluster: the permissionless inbox.
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(6);
+    // equipments — Inspections has no sidebar entry per the prototype.
+    // Utilities cluster: the permissionless inbox, plus the Assistant panel
+    // trigger which renders as a button, not a link.
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(5);
+    expect(
+      fixture.debugElement.queryAll(By.css('button[data-sidebar-item-id="assistant"]')).length,
+    ).toBe(1);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
 
     // Both clusters are headerless — the prototype separates them by spacing.
@@ -164,6 +185,63 @@ describe('DashboardLayoutSidebarNavigation', () => {
     const inbox = utilities?.items?.find((item) => item.id === 'inbox');
 
     expect(inbox?.badge).toBeUndefined();
+  });
+
+  it('should badge interventions and compliance with the live counters', () => {
+    openInterventions.set(4);
+    openNonConformities.set(12);
+    mockOrganizationMemberAccess.permissions.set([
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+      ORGANIZATION_PERMISSION.INTERVENTIONS_READ,
+      ORGANIZATION_PERMISSION.COMPLIANCE_READ,
+    ]);
+
+    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    const component = fixture.componentInstance as unknown as {
+      readonly menuItems: () => readonly MenuItem[];
+    };
+
+    const workspace = component.menuItems().find((group) => group.id === 'workspace');
+    const interventions = workspace?.items?.find((item) => item.id === 'interventions');
+    const compliance = workspace?.items?.find((item) => item.id === 'compliance');
+
+    expect(interventions?.badge).toBe('4');
+    expect(compliance?.badge).toBe('12');
+  });
+
+  it('should not badge the workspace items when the counters are zero', () => {
+    mockOrganizationMemberAccess.permissions.set([
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+      ORGANIZATION_PERMISSION.INTERVENTIONS_READ,
+      ORGANIZATION_PERMISSION.COMPLIANCE_READ,
+    ]);
+
+    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    const component = fixture.componentInstance as unknown as {
+      readonly menuItems: () => readonly MenuItem[];
+    };
+
+    const workspace = component.menuItems().find((group) => group.id === 'workspace');
+    const interventions = workspace?.items?.find((item) => item.id === 'interventions');
+
+    expect(interventions?.badge).toBeUndefined();
+  });
+
+  it('should render the assistant entry as a tagged button that toggles the panel', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    fixture.detectChanges();
+
+    const assistantButton = fixture.debugElement.query(
+      By.css('button[data-sidebar-item-id="assistant"]'),
+    );
+
+    expect(assistantButton).toBeTruthy();
+    expect(assistantButton.nativeElement.textContent).toContain('Assistant');
+    expect(assistantButton.nativeElement.textContent).toContain('New');
+
+    assistantButton.nativeElement.click();
+
+    expect(mockShellPanel.toggle).toHaveBeenCalledWith('assistant');
   });
 
   it('should show an empty state when no menu items are available', () => {

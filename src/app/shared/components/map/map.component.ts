@@ -18,7 +18,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { FeatureCollection, Point } from 'geojson';
-import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
+import type { GeoJSONSource, Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ENV_CONFIG, type EnvironmentConfig } from '@core/config/environment';
@@ -26,6 +26,9 @@ import { THEME_PORT, type ThemePort } from '@core/theme';
 import { ErrorState } from '../error-state';
 import { Skeleton } from '../skeleton';
 import type { MapMarker } from './models';
+
+/** The dynamically-imported MapLibre module, kept for its `Popup` constructor. */
+type MapLibreModule = typeof import('maplibre-gl');
 
 /** GeoJSON source id holding the marker points. */
 const SOURCE_ID = 'markers';
@@ -41,9 +44,15 @@ const PIN_COLOR = '#f97316';
  * clustered pins. MapLibre is imported dynamically inside `afterNextRender` so
  * its WebGL bundle never touches SSR or the initial client bundle, and every map
  * mutation is guarded so a MapLibre/WebGL failure surfaces on the console instead
- * of crashing the host. Clicking a cluster zooms in; clicking a pin emits
- * {@link markerSelect} so the parent owns navigation and any richer chrome. The
- * base style follows the application theme via {@link THEME_PORT} and fly-to
+ * of crashing the host. Clicking a cluster zooms in; clicking a pin flies to it,
+ * opens a popup built from the marker's `title`/`subtitle`/`details`, and emits
+ * {@link markerSelect} so the parent owns navigation and any richer chrome. A pin
+ * flagged `draggable` can be repositioned by mouse drag, emitting
+ * {@link markerDragEnd} on release so the parent owns persisting it. A marker's
+ * `color` drives its pin fill via a data-driven paint expression, always as a
+ * secondary cue to whatever the caller already labels elsewhere — this component
+ * renders no text next to a pin, so color is never the only signal. The base
+ * style follows the application theme via {@link THEME_PORT} and fly-to
  * animation is suppressed under `prefers-reduced-motion`. It owns no business
  * state — the parent passes the markers to plot.
  *
@@ -104,6 +113,24 @@ export class MapCanvas {
    * @type {OutputEmitterRef<MapMarker>}
    */
   public readonly markerSelect: OutputEmitterRef<MapMarker> = output<MapMarker>();
+
+  /**
+   * Property markerDragEnd
+   * @readonly
+   *
+   * @description
+   * Emits a draggable marker's new position once the drag gesture releases, so
+   * the parent can persist it (or reject and re-render the original `markers`
+   * input to snap the pin back).
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {OutputEmitterRef<Pick<MapMarker, 'id' | 'latitude' | 'longitude'>>}
+   */
+  public readonly markerDragEnd: OutputEmitterRef<
+    Pick<MapMarker, 'id' | 'latitude' | 'longitude'>
+  > = output<Pick<MapMarker, 'id' | 'latitude' | 'longitude'>>();
   //#endregion
 
   //#region Properties
@@ -152,6 +179,10 @@ export class MapCanvas {
   private styleReady = false;
   /** Whether the (map-level, style-independent) interaction handlers are wired. */
   private interactionsWired = false;
+  /** The dynamically-imported MapLibre module, kept for its `Popup` constructor. */
+  private glModule: MapLibreModule | null = null;
+  /** Id of the marker currently mid-drag, or `null` when no drag is in progress. */
+  private draggingMarkerId: string | null = null;
 
   private readonly env: EnvironmentConfig = inject<EnvironmentConfig>(ENV_CONFIG);
   private readonly theme: ThemePort = inject<ThemePort>(THEME_PORT);
@@ -275,6 +306,7 @@ export class MapCanvas {
     this.loadMapStylesheet();
 
     const gl = await import('maplibre-gl');
+    this.glModule = gl;
     const dark: boolean = this.theme.resolvedTheme() === 'dark';
 
     let map: MapLibreMap;
@@ -335,18 +367,42 @@ export class MapCanvas {
    * @description
    * Re-frames the viewport on every marker. The same framing already runs once
    * on load, but panning or zooming away left no way back short of a reload —
-   * on a wide estate, a stray drag loses the markers entirely.
+   * on a wide estate, a stray drag loses the markers entirely. Public so a
+   * consumer can offer its own re-frame affordance outside this component's
+   * template (in addition to the built-in corner button).
    *
-   * @access protected
+   * @access public
    * @since 1.2.0
    *
    * @returns {void}
    */
-  protected fitAll(): void {
+  public fitAll(): void {
     const map: MapLibreMap | null = this.mapInstance;
     if (map === null) return;
 
     this.fitToMarkers(map, this.markers());
+  }
+
+  /**
+   * Method getCenter
+   * @method getCenter
+   *
+   * @description
+   * Reads the map's current viewport center, for a consumer that needs to
+   * place something "at the map center" (e.g. a new record before it has its
+   * own coordinates). Returns `null` before the map has finished initializing.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @returns {{ readonly latitude: number; readonly longitude: number } | null} The current center, or `null` before init.
+   */
+  public getCenter(): { readonly latitude: number; readonly longitude: number } | null {
+    const map: MapLibreMap | null = this.mapInstance;
+    if (map === null) return null;
+
+    const center = map.getCenter();
+    return { latitude: center.lat, longitude: center.lng };
   }
 
   /**
@@ -428,7 +484,9 @@ export class MapCanvas {
         source: SOURCE_ID,
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-color': PIN_COLOR,
+          // Data-driven: a marker's own `color` wins, falling back to the
+          // brand accent when the caller does not carry one.
+          'circle-color': ['coalesce', ['get', 'color'], PIN_COLOR],
           'circle-radius': 7,
           'circle-stroke-width': 2,
           'circle-stroke-color': '#ffffff',
@@ -492,8 +550,169 @@ export class MapCanvas {
       const marker: MapMarker | undefined = this.markers().find(
         (candidate: MapMarker): boolean => candidate.id === id,
       );
-      if (marker) this.markerSelect.emit(marker);
+      if (!marker) return;
+
+      this.markerSelect.emit(marker);
+      this.flyToMarker(map, marker);
+      this.openPopup(map, marker);
     });
+
+    // A pin flagged `draggable` can be repositioned by mouse drag. This deliberately
+    // moves the underlying GeoJSON point by hand (mousedown/mousemove/mouseup) rather
+    // than switching to MapLibre's DOM `Marker` class, so dragging composes with the
+    // existing clustered circle layer instead of requiring a second rendering path.
+    map.on('mousedown', 'marker-points', (event): void => {
+      const feature = event.features?.[0];
+      if (!feature || feature.properties?.['draggable'] !== true) return;
+
+      // Prevents the default drag-pan behavior so the gesture moves the pin,
+      // not the whole map.
+      event.preventDefault();
+      this.draggingMarkerId = String(feature.properties?.['id'] ?? '');
+      map.getCanvas().style.cursor = 'grabbing';
+
+      const onMove = (moveEvent: MapMouseEvent): void => {
+        this.runSafely((): void => {
+          const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+          const draggingId: string | null = this.draggingMarkerId;
+          if (!source || draggingId === null) return;
+
+          source.setData(
+            this.toFeatureCollection(
+              this.markers().map(
+                (marker: MapMarker): MapMarker =>
+                  marker.id === draggingId
+                    ? Object.assign({}, marker, {
+                        longitude: moveEvent.lngLat.lng,
+                        latitude: moveEvent.lngLat.lat,
+                      })
+                    : marker,
+              ),
+            ),
+          );
+        });
+      };
+
+      const onUp = (upEvent: MapMouseEvent): void => {
+        map.off('mousemove', onMove);
+        map.getCanvas().style.cursor = '';
+        const draggedId: string | null = this.draggingMarkerId;
+        this.draggingMarkerId = null;
+        if (draggedId !== null) {
+          this.markerDragEnd.emit({
+            id: draggedId,
+            latitude: upEvent.lngLat.lat,
+            longitude: upEvent.lngLat.lng,
+          });
+        }
+      };
+
+      map.on('mousemove', onMove);
+      map.once('mouseup', onUp);
+    });
+  }
+
+  /**
+   * Method flyToMarker
+   * @method flyToMarker
+   *
+   * @description
+   * Animates the viewport to center on a clicked pin without zooming out past
+   * its current level, honoring `prefers-reduced-motion`.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @param {MapLibreMap} map - The initialized map.
+   * @param {MapMarker} marker - The marker to fly to.
+   *
+   * @returns {void}
+   */
+  private flyToMarker(map: MapLibreMap, marker: MapMarker): void {
+    const reduceMotion: boolean =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    this.runSafely((): void => {
+      map.flyTo({
+        center: [marker.longitude, marker.latitude],
+        zoom: Math.max(map.getZoom(), 14),
+        animate: !reduceMotion,
+        duration: reduceMotion ? 0 : 600,
+      });
+    });
+  }
+
+  /**
+   * Method openPopup
+   * @method openPopup
+   *
+   * @description
+   * Opens a MapLibre popup anchored on a clicked pin, built from the marker's
+   * `title`, `subtitle` and `details` through safe DOM construction (no HTML
+   * string interpolation, so marker text can never be interpreted as markup).
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @param {MapLibreMap} map - The initialized map.
+   * @param {MapMarker} marker - The marker whose popup to open.
+   *
+   * @returns {void}
+   */
+  private openPopup(map: MapLibreMap, marker: MapMarker): void {
+    const gl: MapLibreModule | null = this.glModule;
+    if (gl === null) return;
+
+    this.runSafely((): void => {
+      new gl.Popup({ closeButton: true, offset: 14, maxWidth: '240px' })
+        .setLngLat([marker.longitude, marker.latitude])
+        .setDOMContent(this.buildPopupContent(marker))
+        .addTo(map);
+    });
+  }
+
+  /**
+   * Method buildPopupContent
+   * @method buildPopupContent
+   *
+   * @description
+   * Builds a marker's popup body as plain DOM nodes with `textContent` only,
+   * so the marker's text is never parsed as HTML.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @param {MapMarker} marker - The marker to render.
+   *
+   * @returns {HTMLElement} The popup body.
+   */
+  private buildPopupContent(marker: MapMarker): HTMLElement {
+    const container: HTMLDivElement = this.document.createElement('div');
+    container.className = 'flex flex-col gap-1 py-1';
+
+    if (marker.title) {
+      const title: HTMLParagraphElement = this.document.createElement('p');
+      title.className = 'text-sm font-semibold text-surface-900 dark:text-surface-100';
+      title.textContent = marker.title;
+      container.appendChild(title);
+    }
+
+    if (marker.subtitle) {
+      const subtitle: HTMLParagraphElement = this.document.createElement('p');
+      subtitle.className = 'text-xs text-surface-500 dark:text-surface-400';
+      subtitle.textContent = marker.subtitle;
+      container.appendChild(subtitle);
+    }
+
+    for (const detail of marker.details ?? []) {
+      const row: HTMLParagraphElement = this.document.createElement('p');
+      row.className = 'text-xs text-surface-600 dark:text-surface-300';
+      row.textContent = `${detail.label}: ${detail.value}`;
+      container.appendChild(row);
+    }
+
+    return container;
   }
 
   /**
@@ -599,7 +818,13 @@ export class MapCanvas {
             type: 'Point' as const,
             coordinates: [marker.longitude, marker.latitude],
           },
-          properties: { id: marker.id, title: marker.title ?? '', subtitle: marker.subtitle ?? '' },
+          properties: {
+            id: marker.id,
+            title: marker.title ?? '',
+            subtitle: marker.subtitle ?? '',
+            color: marker.color ?? PIN_COLOR,
+            draggable: marker.draggable === true,
+          },
         })),
     };
   }

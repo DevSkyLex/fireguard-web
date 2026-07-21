@@ -9,8 +9,9 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
-import { AvatarModule } from 'primeng/avatar';
+import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import {
   resolveEquipmentTag,
   type EquipmentOutput,
@@ -22,7 +23,7 @@ import { Tag, type TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-equipment-detail-header',
-  imports: [AvatarModule, ButtonModule, DatePipe, TitleCasePipe, Tag],
+  imports: [ButtonModule, SplitButtonModule, DatePipe, TitleCasePipe, Tag],
   templateUrl: './equipment-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -50,4 +51,58 @@ export class EquipmentDetailHeader {
   protected statusDescriptor(status: string): TagDescriptor {
     return resolveEquipmentTag('status', status);
   }
+
+  /**
+   * Property overflowItems
+   * @readonly
+   *
+   * @description
+   * The lifecycle actions, under the Edit split button's caret: Resume
+   * service/Commission, Maintenance and Decommission are situational status
+   * transitions, not the routine action a reader reaches for every visit —
+   * four flat buttons gave Decommission the same weight as Edit.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly overflowItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
+    const equipment: EquipmentOutput = this.equipment();
+    const items: MenuItem[] = [];
+
+    if (equipment.status === 'under_maintenance') {
+      items.push({
+        label: $localize`:@@equipment.resumeService:Resume service`,
+        icon: 'pi pi-check',
+        command: (): void => this.commission.emit(),
+      });
+    } else if (equipment.status !== 'operational' && equipment.status !== 'decommissioned') {
+      items.push({
+        label: $localize`:@@equipment.commission:Commission`,
+        icon: 'pi pi-check',
+        disabled: !equipment.facilityId,
+        command: (): void => this.commission.emit(),
+      });
+    }
+
+    if (equipment.status === 'operational') {
+      items.push({
+        label: $localize`:@@equipment.maintenance:Maintenance`,
+        icon: 'pi pi-wrench',
+        command: (): void => this.maintenance.emit(),
+      });
+    }
+
+    if (equipment.status !== 'decommissioned') {
+      items.push({
+        label: $localize`:@@equipment.decommission:Decommission`,
+        icon: 'pi pi-ban',
+        styleClass: 'text-red-500',
+        command: (): void => this.decommission.emit(),
+      });
+    }
+
+    return items;
+  });
 }

@@ -15,3 +15,4 @@ export type { TopbarContribution } from './slots/topbar';
 export type { NavigationContribution } from './slots/navigation';
 export type { PageHeaderContribution } from './slots/page-header';
 export type { PanelContribution } from './slots/panel';
+export type { SlotComponentSource } from './slots/slot-component-source';

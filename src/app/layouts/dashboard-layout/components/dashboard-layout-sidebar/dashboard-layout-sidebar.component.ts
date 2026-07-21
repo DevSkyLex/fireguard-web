@@ -1,4 +1,3 @@
-import { NgComponentOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,8 +7,12 @@ import {
   InputSignal,
   type Signal,
 } from '@angular/core';
-import { DashboardSidebarNavigationService } from '@layouts/dashboard-layout/services';
+import {
+  DashboardSidebarNavigationService,
+  DashboardSidebarService,
+} from '@layouts/dashboard-layout/services';
 import { SIDEBAR_SLOT, type SidebarContribution } from '@layouts/dashboard-layout/slots/sidebar';
+import { DashboardLayoutSlotOutlet } from '../dashboard-layout-slot-outlet/dashboard-layout-slot-outlet.component';
 import {
   DashboardLayoutSidebarFooter,
   DashboardLayoutSidebarHeader,
@@ -32,7 +35,7 @@ import {
 @Component({
   selector: 'app-dashboard-layout-sidebar',
   imports: [
-    NgComponentOutlet,
+    DashboardLayoutSlotOutlet,
     DashboardLayoutSidebarHeader,
     DashboardLayoutSidebarNavigation,
     DashboardLayoutSidebarFooter,
@@ -56,6 +59,23 @@ export class DashboardLayoutSidebar {
    */
   protected readonly navigationService: DashboardSidebarNavigationService =
     inject<DashboardSidebarNavigationService>(DashboardSidebarNavigationService);
+
+  /**
+   * Property sidebarService
+   * @readonly
+   *
+   * @description
+   * Layout-scoped sidebar service. Used here to publish the channel filter
+   * query typed into the search row so the messaging sidebar contribution
+   * can filter its Favorites/Channels lists.
+   *
+   * @access protected
+   * @since 4.1.0
+   *
+   * @type {DashboardSidebarService}
+   */
+  protected readonly sidebarService: DashboardSidebarService =
+    inject<DashboardSidebarService>(DashboardSidebarService);
 
   /**
    * Property contributions

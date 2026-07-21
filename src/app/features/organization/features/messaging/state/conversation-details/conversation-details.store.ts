@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, forkJoin, map, of, pipe, switchMap } from 'rxjs';
+import { EMPTY, catchError, forkJoin, map, of, pipe, switchMap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -17,6 +17,8 @@ import {
 import { MessagingService } from '@features/organization/features/messaging/data-access';
 import type {
   ChannelParticipant,
+  ConversationActivityBucket,
+  ConversationLinkOutput,
   MessageAttachment,
   MessageOutput,
   PresenceOutput,
@@ -39,10 +41,20 @@ interface ConversationDetailsState {
    * spinner or an error row in a 330px column.
    */
   readonly onlineMemberIds: readonly string[];
+
+  /**
+   * The Links tab's own call, kept out of {@link ConversationDetails} because
+   * it is paged: the tab appends page after page while the rest of the panel
+   * is fetched once. Its failure degrades the tab alone, per the panel's
+   * per-section rule.
+   */
+  readonly linksCallState: CallState<readonly ConversationLinkOutput[]>;
+  readonly linksPage: number;
+  readonly linksTotal: number;
 }
 
 /**
- * The three collections the panel reads, fetched together.
+ * The collections the panel reads, fetched together.
  *
  * @since 1.0.0
  */
@@ -50,14 +62,34 @@ interface ConversationDetails {
   readonly pinned: readonly MessageOutput[];
   readonly attachments: readonly MessageAttachment[];
   readonly participants: readonly ChannelParticipant[];
+
+  /**
+   * Daily message counts backing the Info tab's heatmap, oldest first. Falls
+   * back to an empty list on failure rather than failing the panel: a missing
+   * heatmap hides one widget, a failed forkJoin would blank the members too.
+   */
+  readonly activity: readonly ConversationActivityBucket[];
 }
 
-const EMPTY_DETAILS: ConversationDetails = { pinned: [], attachments: [], participants: [] };
+/**
+ * How many trailing days the heatmap asks for — the panel renders 26 cells.
+ */
+const ACTIVITY_BUCKETS: number = 26;
+
+const EMPTY_DETAILS: ConversationDetails = {
+  pinned: [],
+  attachments: [],
+  participants: [],
+  activity: [],
+};
 
 const INITIAL_STATE: ConversationDetailsState = {
   conversationId: null,
   detailsCallState: idleCallState(),
   onlineMemberIds: [],
+  linksCallState: idleCallState(),
+  linksPage: 1,
+  linksTotal: 0,
 };
 
 /**
@@ -65,19 +97,20 @@ const INITIAL_STATE: ConversationDetailsState = {
  * @const ConversationDetailsStore
  *
  * @description
- * Backs the conversation details panel: pinned messages, files and channel
- * participants for whichever conversation the URL currently opens.
+ * Backs the conversation details panel: pinned messages, files, channel
+ * participants, the activity heatmap and the paged link list, for whichever
+ * conversation the URL currently opens.
  *
  * Keyed off the URL rather than off the messaging page's workspace store: the
  * panel is instantiated by the shell's panel host, in the layout's injector,
  * where a page-provided store is not reachable. The URL is the one source of
  * truth both surfaces already share.
  *
- * The three calls are fetched as one unit — the panel shows them as one
+ * The single-shot calls are fetched as one unit — the panel shows them as one
  * object, and three independent spinners in a 330px column would read as
- * breakage rather than progress.
+ * breakage rather than progress. The links are the exception: they page.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const ConversationDetailsStore = signalStore(
@@ -122,6 +155,56 @@ export const ConversationDetailsStore = signalStore(
     ),
 
     /**
+     * Computed activity
+     *
+     * @description
+     * The conversation's daily message counts, oldest first, ending today.
+     * Empty when the read failed — the heatmap then simply does not render.
+     *
+     * @type {Signal<readonly ConversationActivityBucket[]>}
+     */
+    activity: computed<readonly ConversationActivityBucket[]>(
+      () => (store.detailsCallState().data ?? EMPTY_DETAILS).activity,
+    ),
+
+    /**
+     * Computed links
+     *
+     * @description
+     * The URLs shared in the conversation, newest first, accumulated across
+     * the pages loaded so far.
+     *
+     * @type {Signal<readonly ConversationLinkOutput[]>}
+     */
+    links: computed<readonly ConversationLinkOutput[]>(() => store.linksCallState().data ?? []),
+
+    /**
+     * Computed isLoadingLinks
+     *
+     * @type {Signal<boolean>}
+     */
+    isLoadingLinks: computed<boolean>(() => isCallPending(store.linksCallState())),
+
+    /**
+     * Computed hasLinksError
+     *
+     * @type {Signal<boolean>}
+     */
+    hasLinksError: computed<boolean>(() => isCallError(store.linksCallState())),
+
+    /**
+     * Computed hasMoreLinks
+     *
+     * @description
+     * Whether the backend holds links beyond the pages already loaded.
+     *
+     * @type {Signal<boolean>}
+     */
+    hasMoreLinks: computed<boolean>(
+      () => (store.linksCallState().data ?? []).length < store.linksTotal(),
+    ),
+
+    /**
      * Computed isLoading
      *
      * @type {Signal<boolean>}
@@ -139,6 +222,53 @@ export const ConversationDetailsStore = signalStore(
 
   //#region Methods
   withMethods((store, service = inject(MessagingService)) => {
+    const loadLinksPage = rxMethod<{
+      readonly conversationId: string | null;
+      readonly page: number;
+    }>(
+      pipe(
+        switchMap((target) => {
+          if (target.conversationId === null) {
+            patchState(store, { linksCallState: idleCallState(), linksPage: 1, linksTotal: 0 });
+            return EMPTY;
+          }
+
+          // Page 1 replaces, later pages append: the tab is a growing list, but
+          // reopening a conversation must not stack its links onto the previous
+          // one's.
+          const known: readonly ConversationLinkOutput[] =
+            target.page === 1 ? [] : (store.linksCallState().data ?? []);
+
+          patchState(store, { linksCallState: pendingCallState(known) });
+
+          return service.listConversationLinks(target.conversationId, target.page).pipe(
+            tapResponse({
+              next: (collection: HydraCollection<ConversationLinkOutput>) => {
+                const seen: ReadonlySet<string> = new Set(
+                  known.map((link: ConversationLinkOutput): string => link.id),
+                );
+
+                patchState(store, {
+                  linksCallState: successCallState([
+                    ...known,
+                    ...collection.member.filter(
+                      (link: ConversationLinkOutput): boolean => !seen.has(link.id),
+                    ),
+                  ]),
+                  linksPage: target.page,
+                  linksTotal: collection.totalItems,
+                });
+              },
+              error: (error: unknown) =>
+                patchState(store, {
+                  linksCallState: errorCallState(toStoreError(error), known),
+                }),
+            }),
+          );
+        }),
+      ),
+    );
+
     const load = rxMethod<{ readonly conversationId: string | null; readonly isChannel: boolean }>(
       pipe(
         switchMap((target) => {
@@ -148,6 +278,10 @@ export const ConversationDetailsStore = signalStore(
           // arriving: keeping it would paint the new channel's members online
           // until their own read lands.
           patchState(store, { onlineMemberIds: [] });
+
+          // The Links tab loads on the same trigger, but as its own call: it
+          // pages, and a link failure must not blank the members.
+          loadLinksPage({ conversationId: target.conversationId, page: 1 });
 
           if (target.conversationId === null) {
             patchState(store, { detailsCallState: idleCallState() });
@@ -163,6 +297,12 @@ export const ConversationDetailsStore = signalStore(
             attachments: service
               .listAttachments(target.conversationId)
               .pipe(map((collection: HydraCollection<MessageAttachment>) => collection.member)),
+            // The heatmap is an enrichment, not a fact the panel is about:
+            // failing it here would take the members down with it.
+            activity: service.getConversationActivity(target.conversationId, ACTIVITY_BUCKETS).pipe(
+              map((collection: HydraCollection<ConversationActivityBucket>) => collection.member),
+              catchError(() => of<readonly ConversationActivityBucket[]>([])),
+            ),
             // Only channels have a participant collection; asking for a direct
             // conversation's would 404, so it resolves to an empty list here
             // rather than a faked Hydra envelope.
@@ -185,6 +325,23 @@ export const ConversationDetailsStore = signalStore(
 
     return {
       load,
+
+      /**
+       * Method loadMoreLinks
+       *
+       * @description
+       * Appends the next page of links. A no-op while a page is in flight or
+       * once everything is loaded, so a double click cannot skip a page.
+       *
+       * @returns {void}
+       */
+      loadMoreLinks(): void {
+        const loaded: number = (store.linksCallState().data ?? []).length;
+
+        if (isCallPending(store.linksCallState()) || loaded >= store.linksTotal()) return;
+
+        loadLinksPage({ conversationId: store.conversationId(), page: store.linksPage() + 1 });
+      },
 
       /**
        * Method loadPresence

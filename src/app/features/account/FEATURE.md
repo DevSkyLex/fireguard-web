@@ -23,12 +23,14 @@ This feature does not own authentication, session restoration, or auth transport
 
 ## Routes
 
-- `/account` — single profile page with a hero header (decorative banner, avatar and
-  read-only user identity) followed by a sticky **vertical navigation menu** that switches
-  between three sections: **Profile** (detailed identity/access attributes), **Security**
-  (MFA status + authenticator app key generation, active sessions, trusted devices) and
-  **Notifications**. The active section is driven by the `tab` query parameter
-  (`?tab=profile|security|notifications`).
+- `/account` — a title/subtitle header followed by a horizontal **tab strip** that
+  switches between three sections: **Profile** (identity card, editable profile fields,
+  password change, language preference, deactivation), **Security** (MFA status +
+  authenticator app key generation, active sessions, trusted devices) and **Roles**
+  (global roles/permissions, organization memberships). The active tab is driven by
+  the `tab` query parameter (`?tab=profile|security|roles`); the retired `access`
+  value keeps resolving to `roles` for existing deep links. Notifications live on the
+  separate inbox page, not as an Account tab.
 
 Account navigation is exposed through the **header user menu** (`AccountUserMenu`),
 not the sidebar.
@@ -80,6 +82,12 @@ first consumers.
 - Must not own auth guards, auth interceptors, or refresh-token behavior.
 - `accountPermissionGuard`/`ACCOUNT_PERMISSION`/`UserPermissionService` may be consumed by other
   features to gate routes or UI on a global permission (e.g. `features/organization`'s audit log).
+- The account page's Access tab (`AccountAccessPanel`) renders the caller's organization
+  memberships (owner flag + assigned org-role labels from `GET /api/organizations`). It consumes
+  `features/organization` through its published barrels only — `OrganizationStore` from
+  `@features/organization/state` (component-scoped instance, the same list slice the shell's rail
+  switcher uses) and the `OrganizationOutput`/`OrganizationMembershipRole` types from
+  `@features/organization/models`. Approved in `features/organization/FEATURE.md`.
 
 ## Shell Integration Notes
 

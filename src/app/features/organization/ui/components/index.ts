@@ -2,9 +2,7 @@ export { BillingPaymentMethod } from './billing-payment-method';
 export {
   OrganizationDashboard,
   InspectionsTrend,
-  NonConformitiesOpenedTrend,
-  NonConformitiesResolvedTrend,
-  OverviewTrend,
+  NonConformitiesTrend,
 } from './organization-dashboard';
 export { OrganizationDangerZone } from './organization-danger-zone';
 export { OrganizationPlanSelector } from './organization-plan-selector';

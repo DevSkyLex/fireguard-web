@@ -7,11 +7,14 @@ export { provideOrganizationFeature } from './organization.feature';
 export {
   ASSISTANT_PANEL_ID,
   CONVERSATION_DETAILS_PANEL_ID,
+  MAP_FACILITIES_PANEL_ID,
   withAssistantPanel,
   withConversationDetailsPanel,
+  withMapFacilitiesPanel,
   withMessagingSidebar,
   withOrganizationNavigation,
   withOrganizationSwitcher,
+  withShellAssistantAction,
 } from './providers';
 export { organizationGuard, organizationPermissionGuard } from './http/guards';
 export type {

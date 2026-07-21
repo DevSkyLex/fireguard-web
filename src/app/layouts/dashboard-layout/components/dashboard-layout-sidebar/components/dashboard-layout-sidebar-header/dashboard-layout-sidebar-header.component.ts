@@ -16,7 +16,7 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
 import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
-import { Logo } from '@shared/components';
+import { Logo } from '@shared/components/logo';
 
 /**
  * Component DashboardLayoutSidebarHeader

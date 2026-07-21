@@ -1,6 +1,6 @@
-import { NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
 import type { SidebarContribution } from '@layouts/dashboard-layout/slots/sidebar';
+import { DashboardLayoutSlotOutlet } from '../../../dashboard-layout-slot-outlet/dashboard-layout-slot-outlet.component';
 
 /**
  * Component DashboardLayoutSidebarFooter
@@ -16,7 +16,7 @@ import type { SidebarContribution } from '@layouts/dashboard-layout/slots/sideba
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-footer',
-  imports: [NgComponentOutlet],
+  imports: [DashboardLayoutSlotOutlet],
   templateUrl: './dashboard-layout-sidebar-footer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

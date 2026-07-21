@@ -45,8 +45,10 @@ type InterventionDetailPageHarness = {
   readonly readyToPublish: () => boolean;
   readonly canRequestChanges: () => boolean;
   readonly showPlanningGuide: () => boolean;
-  readonly activityExpanded: { (): boolean; set(value: boolean): void };
-  readonly workItemsExpanded: { (): boolean; set(value: boolean): void };
+  readonly activeSectionTab: {
+    (): 'work-items' | 'changes' | 'activity';
+    set(value: 'work-items' | 'changes' | 'activity'): void;
+  };
   saveGuideStep(values: Record<string, unknown>): void;
   readonly requestChangesDrawerVisible: { (): boolean; set(value: boolean): void };
   readonly editDrawerVisible: { (): boolean; set(value: boolean): void };
@@ -474,16 +476,20 @@ describe('InterventionDetailPage', () => {
     expect(harness.showPlanningGuide()).toBe(false);
   });
 
-  it('should collapse activity during preparation and the checklist during review', () => {
+  it('should default to the work-items tab in preparation and the activity tab in review', () => {
     store.intervention.set({ status: 'draft' } as InterventionOutput);
     const harness = build();
 
-    expect(harness.activityExpanded()).toBe(false);
-    expect(harness.workItemsExpanded()).toBe(true);
+    expect(harness.activeSectionTab()).toBe('activity');
+
+    store.intervention.set({ status: 'planned' } as InterventionOutput);
+    expect(harness.activeSectionTab()).toBe('work-items');
 
     store.intervention.set({ status: 'submitted' } as InterventionOutput);
-    expect(harness.activityExpanded()).toBe(true);
-    expect(harness.workItemsExpanded()).toBe(false);
+    expect(harness.activeSectionTab()).toBe('activity');
+
+    store.changes.set([{ status: 'proposed' }]);
+    expect(harness.activeSectionTab()).toBe('changes');
   });
 
   it('should merge-patch the fields edited on a guided step', () => {

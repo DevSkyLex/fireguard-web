@@ -22,6 +22,9 @@ class LeadWidgetStub {}
 @Component({ template: '<div data-testid="footer-widget-stub"></div>' })
 class FooterWidgetStub {}
 
+@Component({ template: '<div data-testid="content-widget-stub"></div>' })
+class ContentWidgetStub {}
+
 const MOCK_ORG = {
   id: 'org-1',
   name: 'Acme Corp',
@@ -112,8 +115,9 @@ describe('DashboardLayoutSidebar', () => {
     expect(fixture.debugElement.query(By.css('[data-testid="footer-widget-stub"]'))).toBeTruthy();
 
     // Workspace cluster: dashboard, facilities, map (also facilities.read),
-    // equipments, inspections — plus the permissionless inbox utility.
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(6);
+    // equipments — Inspections has no sidebar entry per the prototype — plus
+    // the permissionless inbox utility. The Assistant entry is a button.
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(5);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
 
     const textContent = fixture.nativeElement.textContent;
@@ -122,7 +126,8 @@ describe('DashboardLayoutSidebar', () => {
     expect(textContent).toContain('Overview');
     expect(textContent).toContain('Facilities');
     expect(textContent).toContain('Equipments');
-    expect(textContent).toContain('Inspections');
+    expect(textContent).not.toContain('Inspections');
+    expect(textContent).toContain('Assistant');
     expect(textContent).toContain('Inbox');
     // The flat prototype sidebar has no section headers.
     expect(textContent).not.toContain('Assets');
@@ -193,6 +198,61 @@ describe('DashboardLayoutSidebar', () => {
     const ids = navigation.menuItems().map((group) => group.id);
 
     expect(ids).toEqual(['workspace', 'utilities']);
+  });
+
+  it('should render and wire the channel search row only when a content contribution exists', () => {
+    const fixtureWithoutContent = TestBed.createComponent(DashboardLayoutSidebar);
+    fixtureWithoutContent.detectChanges();
+
+    expect(
+      fixtureWithoutContent.debugElement.query(
+        By.css('[data-testid="sidebar-channel-search-input"]'),
+      ),
+    ).toBeFalsy();
+  });
+
+  it('should publish the channel search query through the sidebar service', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideDashboardLayoutSlots({
+          sidebar: [
+            {
+              useFactory: () => ({
+                id: 'content-stub',
+                order: 10,
+                region: 'content',
+                component: ContentWidgetStub,
+              }),
+            },
+          ],
+        }),
+      ],
+    });
+
+    const fixture = TestBed.createComponent(DashboardLayoutSidebar);
+    fixture.detectChanges();
+
+    const input = fixture.debugElement.query(
+      By.css('[data-testid="sidebar-channel-search-input"]'),
+    );
+    expect(input).toBeTruthy();
+
+    const sidebarService = TestBed.inject(DashboardSidebarService);
+    input.nativeElement.value = 'alarm';
+    input.nativeElement.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(sidebarService.channelSearchQuery()).toBe('alarm');
+
+    const clearButton = fixture.debugElement.query(
+      By.css('[data-testid="sidebar-channel-search-clear"]'),
+    );
+    expect(clearButton).toBeTruthy();
+
+    clearButton.nativeElement.click();
+    fixture.detectChanges();
+
+    expect(sidebarService.channelSearchQuery()).toBe('');
   });
 
   it('should not render collapsed flyout ui', () => {

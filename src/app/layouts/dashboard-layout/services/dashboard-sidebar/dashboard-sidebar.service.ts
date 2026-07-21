@@ -51,6 +51,23 @@ export class DashboardSidebarService {
   private readonly _primaryCollapsed: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property _channelSearchQuery
+   * @readonly
+   *
+   * @description
+   * Internal writable signal for the sidebar's channel filter query, typed
+   * in the shell-owned search row. Exposed publicly as a read-only signal
+   * through `channelSearchQuery` for the messaging sidebar contribution to
+   * consume when filtering its Favorites/Channels lists.
+   *
+   * @access private
+   * @since 4.1.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  private readonly _channelSearchQuery: WritableSignal<string> = signal<string>('');
+
+  /**
    * Property visible
    * @readonly
    *
@@ -79,6 +96,22 @@ export class DashboardSidebarService {
    * @type {Signal<boolean>}
    */
   public readonly primaryCollapsed: Signal<boolean> = this._primaryCollapsed.asReadonly();
+
+  /**
+   * Property channelSearchQuery
+   * @readonly
+   *
+   * @description
+   * Current channel filter query typed into the sidebar's search row.
+   * Published for the messaging sidebar contribution to filter its
+   * Favorites/Channels lists.
+   *
+   * @access public
+   * @since 4.1.0
+   *
+   * @type {Signal<string>}
+   */
+  public readonly channelSearchQuery: Signal<string> = this._channelSearchQuery.asReadonly();
 
   //#endregion
 
@@ -182,6 +215,25 @@ export class DashboardSidebarService {
    */
   public setPrimaryCollapsed(collapsed: boolean): void {
     this._primaryCollapsed.set(collapsed);
+  }
+
+  /**
+   * Method setChannelSearchQuery
+   * @method setChannelSearchQuery
+   *
+   * @description
+   * Sets the sidebar's channel filter query, typed in the shell-owned
+   * search row and consumed by the messaging sidebar contribution.
+   *
+   * @access public
+   * @since 4.1.0
+   *
+   * @param {string} query - The raw channel filter text.
+   *
+   * @returns {void} - This method does not return a value.
+   */
+  public setChannelSearchQuery(query: string): void {
+    this._channelSearchQuery.set(query);
   }
   //#endregion
 }

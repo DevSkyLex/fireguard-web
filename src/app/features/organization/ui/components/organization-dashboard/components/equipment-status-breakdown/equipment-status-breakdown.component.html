@@ -1,29 +1,27 @@
 <app-trend-card
   i18n-title="@@org.dash.equipStatus.title"
   title="Fleet status"
-  i18n-description="@@org.dash.equipStatus.desc"
-  description="Equipment by current status"
   [loading]="isLoading()"
 >
   <ng-template #content>
     @if (hasData()) {
-      <div class="flex flex-col items-center gap-6 sm:flex-row">
+      <div class="flex flex-col items-center gap-4 sm:flex-row">
         <!--
           The canvas is decorative: every number it encodes is also in the
           legend below, which is real text. `aria-hidden` keeps a screen
           reader from announcing an empty graphic.
         -->
-        <div class="relative h-40 w-40 shrink-0" aria-hidden="true">
-          <p-chart type="doughnut" [data]="data()" [options]="options()" height="160px" />
+        <div class="relative h-29 w-29 shrink-0" aria-hidden="true">
+          <p-chart type="doughnut" [data]="data()" [options]="options()" height="116px" />
 
           <div
             class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"
           >
-            <span class="text-lg font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+            <span class="text-2xl font-bold text-surface-950 tabular-nums dark:text-surface-50">
               {{ total() }}
             </span>
             <span
-              class="text-xs text-surface-500 dark:text-surface-400"
+              class="text-[9px] font-medium tracking-[0.08em] text-surface-500 dark:text-surface-400"
               i18n="@@org.dash.equipStatus.unit"
             >
               units
@@ -31,7 +29,7 @@
           </div>
         </div>
 
-        <ul class="flex min-w-0 flex-1 flex-col gap-2">
+        <ul class="flex min-w-0 flex-1 flex-col gap-2.5">
           @for (row of legend(); track row.label) {
             <li class="flex items-center gap-2.5">
               <span
@@ -44,7 +42,7 @@
               </span>
 
               <span
-                class="shrink-0 text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-50"
+                class="shrink-0 text-xs font-semibold text-surface-950 tabular-nums dark:text-surface-50"
               >
                 {{ row.count }}
               </span>

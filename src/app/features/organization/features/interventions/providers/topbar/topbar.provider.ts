@@ -1,4 +1,3 @@
-import { InterventionSyncChip } from '@features/organization/features/interventions/ui/components';
 import type { DashboardLayoutTopbarSlotFeature } from '@layouts/dashboard-layout';
 
 /**
@@ -27,7 +26,10 @@ export function withInterventionSyncChip(): DashboardLayoutTopbarSlotFeature {
     useFactory: () => ({
       id: 'intervention-sync-chip',
       order: 10,
-      component: InterventionSyncChip,
+      loadComponent: () =>
+        import('@features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component').then(
+          (m) => m.InterventionSyncChip,
+        ),
     }),
   };
 }

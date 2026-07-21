@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ConfirmationService, type Confirmation } from 'primeng/api';
 import type { UpdateCurrentUserProfileInput } from '@features/account/models';
@@ -15,6 +16,7 @@ interface PanelInternals {
   confirmPasswordChange(confirmation: { code: string; newPassword: string }): void;
   restartPasswordChange(): void;
   deactivateAccount(): void;
+  statusDescriptor(): { label: string; severity: string } | null;
 }
 
 interface MockAccountProfileEditStore {
@@ -36,11 +38,17 @@ interface SetupResult {
   readonly mockEditStore: MockAccountProfileEditStore;
   readonly mockPasswordStore: MockAccountPasswordChangeStore;
   readonly confirmations: Confirmation[];
+  readonly mockUserStore: { profile: ReturnType<typeof signal<{ status?: string | null } | null>> };
 }
 
 describe('AccountProfilePanel', () => {
   const setup = (): SetupResult => {
-    const mockUserStore: Record<string, never> = {};
+    const mockUserStore = {
+      profile: signal<{ status?: string | null } | null>(null),
+      displayName: signal<string | null>(null),
+      initials: signal<string | null>(null),
+      avatarUrlMedium: signal<string | null>(null),
+    };
     const mockEditStore: MockAccountProfileEditStore = {
       save: vi.fn<(input: UpdateCurrentUserProfileInput) => void>(),
       uploadAvatar: vi.fn<(file: File) => void>(),
@@ -72,8 +80,29 @@ describe('AccountProfilePanel', () => {
     const component = TestBed.runInInjectionContext(
       () => new AccountProfilePanel(),
     ) as unknown as PanelInternals;
-    return { component, mockEditStore, mockPasswordStore, confirmations };
+    return { component, mockEditStore, mockPasswordStore, confirmations, mockUserStore };
   };
+
+  // The identity card reads the account status through the same tag registry
+  // the page used to own directly.
+  describe('account status', () => {
+    it('resolves the status through the tag registry', () => {
+      const { component, mockUserStore } = setup();
+      mockUserStore.profile.set({ status: 'locked' });
+
+      expect(component.statusDescriptor()).toEqual({
+        label: 'Locked',
+        severity: 'danger',
+        icon: 'pi pi-lock',
+      });
+    });
+
+    it('shows nothing while the profile has not loaded', () => {
+      const { component } = setup();
+
+      expect(component.statusDescriptor()).toBeNull();
+    });
+  });
 
   it('should forward submitted profile values to the edit store', () => {
     const { component, mockEditStore } = setup();

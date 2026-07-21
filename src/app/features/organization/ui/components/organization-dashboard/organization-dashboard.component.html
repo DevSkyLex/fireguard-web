@@ -1,226 +1,127 @@
-﻿<div id="organization-dashboard" class="flex flex-col gap-6">
-  @if (showActivitySection()) {
-    <div class="flex flex-col gap-6">
-      <section
-        class="flex flex-row items-start gap-3 border-b border-surface-200 pb-4 dark:border-surface-800"
-      >
-        <i
-          class="pi pi-chart-line mt-0.5 text-lg text-surface-500 dark:text-surface-400"
-          aria-hidden="true"
-        ></i>
-
-        <div class="flex flex-col">
-          <h2
-            i18n="@@org.dash.activity"
-            class="text-lg font-semibold tracking-[-0.015em] text-surface-950 dark:text-surface-50"
-          >
-            Activity
-          </h2>
-          <p
-            i18n="@@org.dash.activityDesc"
-            class="text-sm leading-6 text-surface-600 dark:text-surface-400"
-          >
-            Overview of activity trends and key metrics for your organization.
-          </p>
-        </div>
-      </section>
-
-      <section class="flex flex-col gap-6">
-        @if (hasActivityMetrics()) {
-          <app-dashboard-metric-strip>
-            @if (canReadFacilities()) {
-              <app-dashboard-metric-cell
-                i18n-title="@@org.dash.facilities"
-                title="Facilities"
-                icon="pi pi-building"
-                [value]="store.facilityCount()"
-                [loading]="store.isQueryLoading()"
-                [comparison]="store.facilitiesComparison()"
-                [points]="store.facilitiesSparkline()"
-              />
-            }
-
-            @if (canReadMembers()) {
-              <app-dashboard-metric-cell
-                i18n-title="@@org.dash.members"
-                title="Members"
-                icon="pi pi-users"
-                [value]="store.memberCount()"
-                [loading]="store.isQueryLoading()"
-                [comparison]="store.membersComparison()"
-                [points]="store.membersSparkline()"
-              />
-            }
-
-            @if (canReadEquipment()) {
-              <app-dashboard-metric-cell
-                i18n-title="@@org.dash.equipment"
-                title="Equipment"
-                icon="pi pi-shield"
-                [value]="store.equipmentCount()"
-                [loading]="store.isQueryLoading()"
-                [comparison]="store.equipmentComparison()"
-                [points]="store.equipmentSparkline()"
-              />
-            }
-
-            @if (canReadInspections()) {
-              <app-dashboard-metric-cell
-                i18n-title="@@org.dash.inspections"
-                title="Inspections"
-                icon="pi pi-check-square"
-                [value]="store.inspectionCount()"
-                [loading]="store.isQueryLoading()"
-                [comparison]="store.inspectionsComparison()"
-                [points]="store.inspectionsSparkline()"
-              />
-            }
-
-            <!--
-              The mockup's headline metric, and the one the backend had no
-              section for: the dashboard overview carried facilities, members,
-              equipment, inspections and non-conformities, but never the work
-              in flight. Gated on the same permission the backend gates the
-              section with, so the cell is absent rather than empty.
-            -->
-            @if (canReadRecentInterventions()) {
-              <app-dashboard-metric-cell
-                i18n-title="@@org.dash.openInterventions"
-                title="Open interventions"
-                icon="pi pi-bolt"
-                [value]="store.openInterventionCount()"
-                [loading]="store.isQueryLoading()"
-                [note]="overdueInterventionsNote()"
-              />
-            }
-          </app-dashboard-metric-strip>
-        }
-
-        @if (hasActivityInsights() || canReadCompliance()) {
-          <!--
-            The 12-column composition stays hole-free whichever permissions
-            are granted: 7+5 / 12 / 6+6 / 4+4+4 for the three doughnuts, then
-            the compliance card on its own full-width row — or that row alone
-            when only compliance is readable.
-          -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            @if (hasActivityInsights()) {
-              <app-overview-trend class="lg:col-span-7" />
-              <app-inspection-quality-trend class="lg:col-span-5" />
-
-              <!--
-                Placed straight after the quality card because the two answer
-                one question together — how many inspections were run, and how
-                many passed. A rate without its volume is unreadable: 100% of
-                two inspections is not the same claim as 100% of two hundred.
-
-                Full width rather than re-splitting the row above: every other
-                span here is part of an existing pair, and this card was
-                complete but mounted nowhere, so the cheapest correct fix
-                touches no other card.
-              -->
-              <app-inspections-trend class="lg:col-span-12" />
-              <app-non-conformities-opened-trend class="lg:col-span-6" />
-              <app-non-conformities-resolved-trend class="lg:col-span-6" />
-              <!--
-                Three doughnuts on one row, each answering "what is this
-                population made of": non-conformities by severity, inspections
-                by outcome, equipment by status. The outcome split was the one
-                missing — the handler has written pass/partial/fail into
-                `overview.inspections` all along and nothing read past the
-                total.
-              -->
-              <app-non-conformities-by-severity class="lg:col-span-4" />
-              <app-inspection-result-breakdown class="lg:col-span-4" />
-              <app-equipment-status-breakdown class="lg:col-span-4" />
-            }
-
-            @if (canReadCompliance()) {
-              <app-compliance-by-site
-                class="lg:col-span-12"
-                [rows]="complianceStore.facilities()"
-                [loading]="complianceStore.isQueryLoading()"
-                [hasError]="complianceStore.queryHasError()"
-                (viewCompliance)="openCompliance()"
-                (retry)="retryCompliance()"
-              />
-            }
-          </div>
-        }
-
-        @if (canReadRecentInterventions()) {
-          <app-dashboard-recent-interventions
-            [interventions]="store.recentInterventions()"
-            [loading]="store.isQueryLoading()"
-            [hasError]="store.queryHasError()"
-            (open)="openIntervention($event)"
-            (openAll)="openInterventionList()"
-            (retry)="retryDashboard()"
-          />
-        }
-      </section>
-    </div>
-  }
-
-  @if (showResourcesSection()) {
-    <div class="flex flex-col gap-6">
-      <section
-        class="flex flex-row items-start gap-3 border-b border-surface-200 pb-4 dark:border-surface-800"
-      >
-        <i
-          class="pi pi-building mt-0.5 text-lg text-surface-500 dark:text-surface-400"
-          aria-hidden="true"
-        ></i>
-
-        <div class="flex flex-col">
-          <h2
-            i18n="@@org.dash.resources"
-            class="text-lg font-semibold tracking-[-0.015em] text-surface-950 dark:text-surface-50"
-          >
-            Resources
-          </h2>
-          <p
-            i18n="@@org.dash.resourcesDesc"
-            class="text-sm leading-6 text-surface-600 dark:text-surface-400"
-          >
-            Overview of resource trends and key metrics for your organization.
-          </p>
-        </div>
-      </section>
-
-      <section class="flex flex-col gap-6">
-        @defer (on viewport) {
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <!--
-              Asset growth is the combined curve; these two are the halves it
-              adds up. Both were built with their own dashboard store slice and
-              service call and mounted nowhere — the same defect as the
-              "Inspections performed" card, found by checking every component
-              selector against every template rather than by reading the
-              inventory.
-
-              Beside the total rather than replacing it: the combined line
-              answers "is the estate growing", the split answers "which of the
-              two is driving it", and neither substitutes for the other.
-            -->
-            <app-asset-growth-trend class="lg:col-span-2" />
-            <app-facilities-created-trend />
-            <app-equipment-created-trend />
-          </div>
-        } @placeholder {
-          <div class="grid grid-cols-1 gap-6">
-            <app-skeleton
-              preset="chart"
-              i18n-label="@@org.dash.resourcesLoading"
-              label="Loading resource trends"
+<div id="organization-dashboard" class="flex flex-col gap-[22px]">
+  @if (showDashboard()) {
+    <section class="flex flex-col gap-[22px]">
+      @if (hasMetricCells()) {
+        <app-dashboard-metric-strip>
+          @if (canReadInterventions()) {
+            <app-dashboard-metric-cell
+              i18n-title="@@org.dash.openInterventions"
+              title="Open interventions"
+              icon="pi pi-bolt"
+              [value]="store.openInterventionCount()"
+              [loading]="store.isQueryLoading()"
+              [note]="overdueInterventionsNote()"
             />
+          }
+
+          @if (canReadCompliance()) {
+            <app-dashboard-metric-cell
+              i18n-title="@@org.dash.complianceRate"
+              title="Compliance rate"
+              icon="pi pi-verified"
+              [value]="complianceRateValue()"
+              [loading]="complianceStore.isQueryLoading()"
+              i18n-note="@@org.dash.complianceRateNote"
+              note="All sites"
+            />
+          }
+
+          @if (canReadInspections()) {
+            <app-dashboard-metric-cell
+              i18n-title="@@org.dash.openNc"
+              title="Open non-conformities"
+              icon="pi pi-exclamation-triangle"
+              [value]="openNonConformityCount()"
+              [loading]="store.isQueryLoading()"
+              [note]="criticalNonConformitiesNote()"
+            />
+          }
+
+          @if (canReadCompliance()) {
+            <app-dashboard-metric-cell
+              i18n-title="@@org.dash.equipmentDueSoon"
+              title="Equipment due soon"
+              icon="pi pi-wrench"
+              [value]="equipmentDueSoonCount()"
+              [loading]="complianceStore.isQueryLoading()"
+              i18n-note="@@org.dash.equipmentDueSoonNote"
+              note="Next 30 days"
+            />
+          }
+        </app-dashboard-metric-strip>
+      }
+
+      @if (hasChartCards()) {
+        <!--
+          Chart grid, prototype order: the merged opened-vs-resolved trend
+          beside the equipment donut on the first row, then a second row
+          pairing the inspections sparkline (it keeps its filter toolbar)
+          with the severity bars and the inspection-results donut as a
+          1.4fr/1fr/1fr triptych.
+        -->
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-12">
+          @if (canReadInspections()) {
+            <app-non-conformities-trend class="lg:col-span-7" />
+          }
+
+          @if (canReadEquipment()) {
+            <app-equipment-status-breakdown
+              [class]="canReadInspections() ? 'lg:col-span-5' : 'lg:col-span-12'"
+            />
+          }
+        </div>
+
+        @if (canReadInspections()) {
+          <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr_1fr]">
+            <app-inspections-trend />
+            <app-non-conformities-by-severity />
+            <app-inspection-result-breakdown />
           </div>
         }
-      </section>
-    </div>
-  }
+      }
 
-  @if (!showActivitySection() && !showResourcesSection()) {
+      @if (canReadInterventions() || canReadAudit() || canReadCompliance()) {
+        <!--
+          Lower band: the two lists side by side, then site compliance on
+          its own full-width row.
+        -->
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-12">
+          @if (canReadInterventions()) {
+            <app-dashboard-upcoming-interventions
+              [class]="canReadAudit() ? 'lg:col-span-6' : 'lg:col-span-12'"
+              [interventions]="upcomingStore.queryData() ?? []"
+              [loading]="upcomingStore.isQueryLoading()"
+              [hasError]="upcomingStore.queryHasError()"
+              (open)="openIntervention($event)"
+              (viewAll)="openInterventionList()"
+              (retry)="retryUpcoming()"
+            />
+          }
+
+          @if (canReadAudit()) {
+            <app-dashboard-recent-activity
+              [class]="canReadInterventions() ? 'lg:col-span-6' : 'lg:col-span-12'"
+              [events]="activityStore.queryData() ?? []"
+              [loading]="activityStore.isQueryLoading()"
+              [hasError]="activityStore.queryHasError()"
+              (retry)="retryActivity()"
+            />
+          }
+
+          @if (canReadCompliance()) {
+            <app-compliance-by-site
+              class="lg:col-span-12"
+              [rows]="complianceStore.facilities()"
+              [loading]="complianceStore.isQueryLoading()"
+              [hasError]="complianceStore.queryHasError()"
+              (viewCompliance)="openCompliance()"
+              (retry)="retryCompliance()"
+            />
+          }
+        </div>
+      }
+    </section>
+  } @else {
     <app-empty-state
       icon="pi-lock"
       i18n-title="@@org.dash.noAccessTitle"

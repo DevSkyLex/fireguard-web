@@ -123,6 +123,24 @@ export class AssistantPanel {
   ];
 
   /**
+   * Property showSuggestions
+   * @readonly
+   *
+   * @description
+   * Whether the opener chips render below the thread. Openers only make sense
+   * before the thread has turns — once a member has asked something, resolving
+   * blank slate anxiety is no longer the point.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showSuggestions: Signal<boolean> = computed(
+    (): boolean => !this.store.isLoadingMessages() && this.store.messages().length === 0,
+  );
+
+  /**
    * Property canAsk
    * @readonly
    *

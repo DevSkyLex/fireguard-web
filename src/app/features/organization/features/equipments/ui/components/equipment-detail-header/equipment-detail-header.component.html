@@ -1,9 +1,13 @@
 <div
   class="flex flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-4 lg:flex-row lg:items-start lg:justify-between dark:border-surface-800 dark:bg-surface-900"
 >
-  <div class="flex min-w-0 items-start gap-3">
-    <p-avatar icon="pi pi-box" shape="square" size="xlarge" />
-    <div class="flex min-w-0 flex-col gap-1">
+  <div class="flex min-w-0 items-start gap-3.5">
+    <span
+      class="grid size-11 shrink-0 place-content-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-300"
+    >
+      <i class="pi pi-box text-[19px]"></i>
+    </span>
+    <div class="flex min-w-0 flex-col gap-1.5">
       <div class="flex flex-wrap items-center gap-2">
         <h1
           class="truncate text-2xl font-semibold tracking-[-0.035em] text-surface-950 dark:text-surface-50"
@@ -12,79 +16,71 @@
         </h1>
         <app-tag [descriptor]="statusDescriptor(equipment().status)" />
       </div>
-      <div class="flex flex-wrap items-center gap-3 text-sm text-surface-600 dark:text-surface-400">
-        <span class="inline-flex items-center gap-1.5">
-          <i class="pi pi-hashtag text-xs"></i>
-          @if (equipment().serialNumber; as serial) {
-            {{ serial }}
-          } @else {
-            <ng-container i18n="@@equipment.noSerial">No serial number</ng-container>
-          }
-        </span>
-        @if (equipment().facilityId) {
-          <span class="inline-flex items-center gap-1.5">
-            <i class="pi pi-building text-xs"></i>
-            <ng-container i18n="@@equipment.assigned">Assigned</ng-container>
-          </span>
+
+      <!--
+        Mono reference first (the serial number), then remaining metadata as
+        pill chips — matches the facility header's identity block so both
+        record types read the same shape.
+      -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        @if (equipment().serialNumber; as serial) {
+          <span class="font-mono text-sm text-surface-500 dark:text-surface-400">{{ serial }}</span>
+        } @else {
+          <span
+            class="font-mono text-sm text-surface-400 dark:text-surface-500"
+            i18n="@@equipment.noSerial"
+            >No serial number</span
+          >
         }
-        <span i18n="@@equipment.updatedLabel"
-          >Updated {{ equipment().updatedAt | date: 'mediumDate' }}</span
+
+        @if (equipment().facilityId) {
+          <span
+            class="inline-flex h-[22px] items-center rounded-full border border-surface-200 bg-surface-50 px-2.5 text-xs text-surface-500 dark:border-surface-800 dark:bg-surface-800 dark:text-surface-400"
+            i18n="@@equipment.assigned"
+            >Assigned</span
+          >
+        }
+
+        <span
+          class="inline-flex h-[22px] items-center rounded-full border border-surface-200 bg-surface-50 px-2.5 text-xs text-surface-500 dark:border-surface-800 dark:bg-surface-800 dark:text-surface-400"
+          i18n="@@equipment.updatedLabel"
         >
+          Updated {{ equipment().updatedAt | date: 'mediumDate' }}
+        </span>
       </div>
     </div>
   </div>
   @if (canManage()) {
-    <div class="flex flex-wrap items-center gap-2">
-      <p-button
-        label="Edit"
-        i18n-label="@@common.edit"
-        icon="pi pi-pencil"
-        severity="secondary"
-        [outlined]="true"
-        size="small"
-        (onClick)="edit.emit()"
-      />
-      @if (equipment().status === 'under_maintenance') {
+    <!--
+      Edit leads; the lifecycle transitions (Resume service/Commission,
+      Maintenance, Decommission) sit under the caret — see
+      `overflowItems()`. The plain button takes over while a lifecycle
+      transition is running: `p-splitbutton` has no `loading` input in this
+      PrimeNG version, mirroring the facility header's documented reason.
+    -->
+    <div class="flex items-center gap-2">
+      @if (lifecycleLoading()) {
         <p-button
-          label="Resume service"
-          i18n-label="@@equipment.resumeService"
-          icon="pi pi-check"
-          size="small"
-          [loading]="lifecycleLoading()"
-          (onClick)="commission.emit()"
-        />
-      } @else if (equipment().status !== 'operational' && equipment().status !== 'decommissioned') {
-        <p-button
-          label="Commission"
-          i18n-label="@@equipment.commission"
-          icon="pi pi-check"
-          size="small"
-          [loading]="lifecycleLoading()"
-          [disabled]="!equipment().facilityId"
-          (onClick)="commission.emit()"
-        />
-      }
-      @if (equipment().status === 'operational') {
-        <p-button
-          label="Maintenance"
-          i18n-label="@@equipment.maintenance"
-          icon="pi pi-wrench"
-          severity="warn"
-          size="small"
-          [loading]="lifecycleLoading()"
-          (onClick)="maintenance.emit()"
-        />
-      }
-      @if (equipment().status !== 'decommissioned') {
-        <p-button
-          label="Decommission"
-          i18n-label="@@equipment.decommission"
-          icon="pi pi-ban"
-          severity="danger"
+          i18n-label="@@common.edit"
+          label="Edit"
+          icon="pi pi-pencil"
+          severity="secondary"
           [outlined]="true"
           size="small"
-          [loading]="lifecycleLoading()"
-          (onClick)="decommission.emit()"
+          [loading]="true"
+        />
+      } @else {
+        <p-splitbutton
+          i18n-label="@@common.edit"
+          label="Edit"
+          icon="pi pi-pencil"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          appendTo="body"
+          [model]="overflowItems()"
+          data-testid="equipment-header-actions"
+          (onClick)="edit.emit()"
         />
       }
     </div>

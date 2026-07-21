@@ -2,27 +2,21 @@ import { DatePipe, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   effect,
   inject,
   input,
   output,
   signal,
-  viewChild,
   LOCALE_ID,
   PLATFORM_ID,
   type InputSignal,
+  type OnInit,
   type OutputEmitterRef,
-  type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { MenuItem, PrimeIcons } from 'primeng/api';
-import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
+import type { TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import type { SessionOutput } from '@features/auth/models';
 import { EmptyState } from '@shared/components';
@@ -47,31 +41,22 @@ const RELATIVE_UNITS: ReadonlyArray<readonly [Intl.RelativeTimeFormatUnit, numbe
  * @class SessionTable
  *
  * @description
- * Presentational table component that displays a paginated, lazy-loaded list
- * of active account sessions. It owns pagination and row action menu state
- * while delegating data loading and revocation actions to the parent panel
- * through output emitters.
+ * Presentational divider-list component that displays the caller's active
+ * account sessions. It owns the single-page load request and its
+ * reconciliation after a revocation while delegating data loading and
+ * revocation actions to the parent panel through output emitters.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-session-table',
-  imports: [
-    AvatarModule,
-    ButtonModule,
-    CardModule,
-    DatePipe,
-    EmptyState,
-    MenuModule,
-    SkeletonModule,
-    TableModule,
-  ],
+  imports: [ButtonModule, DatePipe, EmptyState, SkeletonModule],
   templateUrl: './session-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SessionTable {
+export class SessionTable implements OnInit {
   //#region Environment
   /**
    * Property isBrowser
@@ -109,7 +94,7 @@ export class SessionTable {
    * @readonly
    *
    * @description
-   * Active session rows currently displayed by the table.
+   * Active session rows currently displayed by the list.
    *
    * @access public
    * @since 1.0.0
@@ -196,7 +181,7 @@ export class SessionTable {
    * @readonly
    *
    * @description
-   * Emits normalized lazy-load request options for the parent store.
+   * Emits normalized load request options for the parent store.
    *
    * @access public
    * @since 1.0.0
@@ -254,28 +239,16 @@ export class SessionTable {
    * @readonly
    *
    * @description
-   * Default number of active session rows per page.
+   * Number of active sessions requested per load. The list has no visible
+   * paginator, so this is set generously high for the realistic size of an
+   * account's session list.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @type {number}
    */
-  protected readonly rows: number = 12;
-
-  /**
-   * Property rowsPerPageOptions
-   * @readonly
-   *
-   * @description
-   * Page-size choices offered by the paginator.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {number[]}
-   */
-  protected readonly rowsPerPageOptions: number[] = [12, 24, 48];
+  protected readonly rows: number = 50;
 
   /**
    * Property skeletonItems
@@ -290,92 +263,16 @@ export class SessionTable {
    * @type {{ id: string }[]}
    */
   protected readonly skeletonItems: { readonly id: string }[] = Array.from(
-    { length: this.rows },
+    { length: 6 },
     (_, index: number) => ({ id: `session-skeleton-${index}` }),
   );
-
-  /**
-   * Property actionMenu
-   * @readonly
-   *
-   * @description
-   * Shared popup menu used by session rows for contextual actions.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Signal<Menu>}
-   */
-  private readonly actionMenu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
-
-  /**
-   * Property selectedSession
-   * @readonly
-   *
-   * @description
-   * Session row currently targeted by the action menu.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<SessionOutput | null>}
-   */
-  private readonly selectedSession: WritableSignal<SessionOutput | null> =
-    signal<SessionOutput | null>(null);
-
-  /**
-   * Property actionMenuItems
-   * @readonly
-   *
-   * @description
-   * Contextual row actions for the selected session.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<MenuItem[]>}
-   */
-  protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
-    const session: SessionOutput | null = this.selectedSession();
-
-    if (!session) {
-      return [];
-    }
-
-    // The header names the row the menu was opened from. The overlay covers
-    // the table, so "revoke" without it asks the reader to remember which
-    // session they clicked — on a destructive action, against a list where
-    // every row looks alike.
-    return [
-      {
-        label: session.browser ?? $localize`:@@account.sessionTable.unknownBrowser:Unknown browser`,
-        items: [
-          {
-            label: $localize`:@@account.sessionTable.viewDetails:View details`,
-            icon: PrimeIcons.EYE,
-            command: (): void => this.details.emit(session),
-          },
-          ...(session.isCurrent
-            ? []
-            : [
-                {
-                  label: $localize`:@@common.revoke:Revoke`,
-                  icon: PrimeIcons.TIMES_CIRCLE,
-                  styleClass: 'text-red-500',
-                  command: (): void => this.revoke.emit(session),
-                },
-              ]),
-        ],
-      },
-    ];
-  });
 
   /**
    * Property firstPage
    * @readonly
    *
    * @description
-   * Zero-based row offset consumed by PrimeNG for the current page.
+   * Zero-based row offset of the last requested load.
    *
    * @access protected
    * @since 1.0.0
@@ -389,7 +286,7 @@ export class SessionTable {
    * @readonly
    *
    * @description
-   * Last lazy-load event reused when the user refreshes the table.
+   * Last load event reused when the list reloads after a revocation.
    *
    * @access private
    * @since 1.0.0
@@ -419,8 +316,8 @@ export class SessionTable {
    * Constructor
    *
    * @description
-   * Keeps the paginator on an existing page when a mutation reduces the
-   * server-reported total below the current page offset.
+   * Reloads the session list when a revocation leaves the currently loaded
+   * page empty relative to the server-reported total.
    */
   public constructor() {
     effect(() => {
@@ -455,17 +352,31 @@ export class SessionTable {
   }
   //#endregion
 
+  //#region Lifecycle
+  /**
+   * Requests the first (and only) page of sessions. The list has no
+   * paginator, so this replaces the implicit first load a lazy `p-table`
+   * used to trigger.
+   *
+   * @since 2.0.0
+   */
+  public ngOnInit(): void {
+    this.onLazyLoad({ first: 0, rows: this.rows });
+  }
+  //#endregion
+
   //#region Methods
   /**
    * Method onLazyLoad
    *
    * @description
-   * Handles PrimeNG lazy-load events and emits normalized request options.
+   * Normalizes a load event into request options emitted for the parent
+   * store.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {TableLazyLoadEvent} event PrimeNG lazy-load event.
+   * @param {TableLazyLoadEvent} event Load event describing the requested page.
    *
    * @returns {void}
    */
@@ -542,44 +453,10 @@ export class SessionTable {
   }
 
   /**
-   * Method onRefresh
-   *
-   * @description
-   * Reloads the first page while preserving the selected page size.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onRefresh(): void {
-    this.reload(1);
-  }
-
-  /**
-   * Method onActionMenuToggle
-   *
-   * @description
-   * Stores the targeted session and toggles the shared action menu.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {MouseEvent} event Click event emitted by the row action button.
-   * @param {SessionOutput} session Session row targeted by the menu.
-   *
-   * @returns {void}
-   */
-  protected onActionMenuToggle(event: MouseEvent, session: SessionOutput): void {
-    this.selectedSession.set(session);
-    this.actionMenu().toggle(event);
-  }
-
-  /**
    * Method reload
    *
    * @description
-   * Replays the last lazy-load event on the requested page.
+   * Replays the last load event on the requested page.
    *
    * @access public
    * @since 1.0.0

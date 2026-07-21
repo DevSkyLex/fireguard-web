@@ -19,8 +19,12 @@ export { activeOrganizationStoreEvents } from './active-organization';
 export { organizationStoreEvents } from './organization-list';
 export { OrganizationQuotaStore } from './organization-quota';
 export type { OrganizationQuotaStoreType } from './organization-quota';
+export { NavigationCountersStore } from './navigation-counters';
+export type { NavigationCountersStoreType } from './navigation-counters';
 export { OrganizationMemberDirectoryStore } from './organization-member-directory';
 export type {
   MemberIdentity,
   OrganizationMemberDirectoryStoreType,
 } from './organization-member-directory';
+export { MapFacilitiesStore } from './map-facilities';
+export type { MapCenter, MapFacilitiesStoreType } from './map-facilities';

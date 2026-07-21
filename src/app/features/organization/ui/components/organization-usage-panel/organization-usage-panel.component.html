@@ -7,36 +7,36 @@
     label="Loading usage…"
   />
 } @else {
-  <div class="flex flex-col gap-5">
+  <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">
     @for (row of rows(); track row.label) {
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-1.5">
         <div class="flex items-baseline justify-between gap-2">
-          <span class="text-[13px] font-medium text-surface-600 dark:text-surface-400">
+          <span
+            class="flex items-center gap-1.5 text-[13px] font-medium text-surface-600 dark:text-surface-400"
+          >
+            <i class="{{ row.icon }} text-xs" aria-hidden="true"></i>
             {{ row.label }}
           </span>
-          <span class="flex items-center gap-2">
-            @if (row.atLimit) {
-              <app-tag [descriptor]="atLimitTag" />
-            }
-            <span
-              class="text-[13px] font-semibold text-surface-950 tabular-nums dark:text-surface-50"
-            >
-              @if (row.limit === null) {
-                <ng-container i18n="@@org.usage.unlimited"
-                  >{{ row.used }} used · Unlimited</ng-container
-                >
-              } @else {
-                {{ row.used }}
-                <span class="font-medium text-surface-500 dark:text-surface-400"
-                  >/ {{ row.limit }} ({{ row.percent }}%)</span
-                >
-              }
-            </span>
-          </span>
+          @if (row.atLimit) {
+            <app-tag [descriptor]="atLimitTag" />
+          }
         </div>
 
+        <span class="text-[13px] font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+          @if (row.limit === null) {
+            <ng-container i18n="@@org.usage.unlimited"
+              >{{ row.used }} used · Unlimited</ng-container
+            >
+          } @else {
+            {{ row.used }}
+            <span class="font-medium text-surface-500 dark:text-surface-400"
+              >/ {{ row.limit }} ({{ row.percent }}%)</span
+            >
+          }
+        </span>
+
         <div
-          class="h-2 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-800"
+          class="h-1.5 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-800"
           aria-hidden="true"
         >
           @if (row.limit !== null) {
@@ -52,6 +52,7 @@
       </div>
     } @empty {
       <app-empty-state
+        class="col-span-full"
         icon="pi-gauge"
         i18n-title="@@org.usage.empty"
         title="Usage data is not available yet."

@@ -57,6 +57,36 @@
     <app-facility-kpi-strip [kpis]="kpis()" [loading]="overviewStore.isLoadingInspections()" />
   }
 
+  <!--
+    Under the address it belongs to. The information panel prints the address
+    as text, which does not say where the site is; a facility with no
+    coordinates simply has no address on file, so the card is omitted rather
+    than shown empty. Lifted out of the Overview aside into its own bordered
+    card directly under the KPI strip so it reads as a primary section instead
+    of a buried aside item.
+  -->
+  @if (locationMarkers().length > 0) {
+    <section
+      class="flex min-h-0 flex-col overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+    >
+      <header class="border-b border-surface-200 px-[18px] py-3.5 dark:border-surface-800">
+        <h2
+          class="text-[15px] font-semibold text-surface-950 dark:text-surface-50"
+          i18n="@@facility.location.title"
+        >
+          Location
+        </h2>
+      </header>
+      <app-map
+        class="block min-h-[400px] flex-1"
+        [markers]="locationMarkers()"
+        i18n-ariaLabel="@@facility.location.mapAria"
+        ariaLabel="Facility location"
+        data-testid="facility-location-map"
+      />
+    </section>
+  }
+
   <!-- Workspace -->
   <section class="flex min-h-0 flex-1 flex-col">
     <p-tabs [value]="activeTab()" data-shell="detail" (valueChange)="activeTab.set(+$event!)">
@@ -102,21 +132,6 @@
               <aside class="flex min-h-0 flex-col gap-6 xl:col-span-4">
                 <app-facility-information-panel [facility]="facility" />
 
-                <!--
-                  Under the address it belongs to. The panel above prints the
-                  address as text, which does not say where the site is; a
-                  facility with no coordinates simply has no address on file,
-                  so the card is omitted rather than shown empty.
-                -->
-                @if (locationMarkers().length > 0) {
-                  <app-map
-                    class="block h-56 overflow-hidden rounded-xl border border-surface-200 dark:border-surface-800"
-                    [markers]="locationMarkers()"
-                    i18n-ariaLabel="@@facility.location.mapAria"
-                    ariaLabel="Facility location"
-                    data-testid="facility-location-map"
-                  />
-                }
                 <app-facility-installations-panel
                   [facility]="facility"
                   (navigate)="onNavigateToFacility($event)"

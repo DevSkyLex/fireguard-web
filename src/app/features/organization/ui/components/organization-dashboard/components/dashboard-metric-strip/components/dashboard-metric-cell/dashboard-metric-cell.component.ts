@@ -17,10 +17,10 @@ import { buildSparklinePath, type MetricComparison } from '@shared/components';
  * Single KPI cell projected inside {@link DashboardMetricStrip}.
  * Renders an icon + label line, a large tabular value and an optional
  * period-over-period comparison delta. Shows skeletons while loading.
- * The host itself paints the panel surface so the strip's 1px-gap grid
- * reads as internal dividers.
+ * The host itself paints a detached, bordered tile — the strip lays its
+ * projected cells out on a gapped grid rather than a single divided panel.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -28,7 +28,10 @@ import { buildSparklinePath, type MetricComparison } from '@shared/components';
   selector: 'app-dashboard-metric-cell',
   templateUrl: './dashboard-metric-cell.component.html',
   imports: [SkeletonModule],
-  host: { class: 'block min-w-0 bg-surface-0 p-5 dark:bg-surface-900' },
+  host: {
+    class:
+      'block min-w-0 rounded-xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardMetricCell {

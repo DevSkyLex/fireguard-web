@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/api/models';
+import type { MessageReference } from './message-reference.interface';
 
 /**
  * One emoji reaction and who reacted.
@@ -46,6 +47,17 @@ export interface MessageOutput extends HydraItem {
   readonly reactions: readonly MessageReaction[];
   readonly isSaved: boolean;
   readonly replyCount: number;
+
+  /**
+   * Record cards attached to the message — at most five, `[]` once the message
+   * is tombstoned (a reference is content, like the body and the attachments).
+   *
+   * Optional on purpose: API Platform omits an empty/absent collection from
+   * some payloads, and every message written before lot B3 has none, so this
+   * arrives as `undefined` rather than `[]`. Read it as `references ?? []`.
+   */
+  readonly references?: readonly MessageReference[];
+
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -53,9 +65,12 @@ export interface MessageOutput extends HydraItem {
 /**
  * What the composer sends.
  *
+ * `body` is the whole payload: the backend parses `@{memberUuid}` mentions out
+ * of it server-side, so a client-sent `mentions` array is meaningless and was
+ * dropped — it was an unknown attribute on every POST.
+ *
  * @since 1.0.0
  */
 export interface SendMessageInput {
   readonly body: string;
-  readonly mentions?: readonly string[];
 }

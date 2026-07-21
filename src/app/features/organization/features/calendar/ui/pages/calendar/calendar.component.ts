@@ -2,22 +2,35 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import type { CalendarFeedItem } from '@features/organization/features/calendar/models';
+import { ButtonModule } from 'primeng/button';
+import { isCallSuccess } from '@core/request-state';
+import { OrganizationPermissionService } from '@features/organization/access';
+import type {
+  CalendarFeedItem,
+  CreateCalendarEventInput,
+} from '@features/organization/features/calendar/models';
 import {
+  CalendarEventsStore,
   CalendarFeedStore,
+  type CalendarEventsStoreType,
   type CalendarFeedRequest,
   type CalendarFeedStoreType,
 } from '@features/organization/features/calendar/state';
+import { CalendarEventDrawer } from '@features/organization/features/calendar/ui/drawers';
+import type { CalendarEventFormValues } from '@features/organization/features/calendar/ui/forms';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import {
   Calendar,
   type CalendarCategoryGroup,
+  type CalendarConfig,
   type CalendarEvent,
   type CalendarView,
 } from '@shared/components';
@@ -49,8 +62,8 @@ const TARGET_ROUTE: Readonly<Record<string, string | null>> = {
   // `app-calendar` belongs to the shared grid component; a page reusing that
   // selector makes both match the same node (NG0300).
   selector: 'app-calendar-page',
-  imports: [Calendar],
-  providers: [CalendarFeedStore],
+  imports: [ButtonModule, Calendar, CalendarEventDrawer],
+  providers: [CalendarFeedStore, CalendarEventsStore],
   host: { class: 'flex min-h-0 flex-1' },
   templateUrl: './calendar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,6 +81,21 @@ export class CalendarPage {
    */
   protected readonly store: CalendarFeedStoreType =
     inject<CalendarFeedStoreType>(CalendarFeedStore);
+
+  /**
+   * Property eventStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped mutation store backing the "New event" drawer.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {CalendarEventsStoreType}
+   */
+  protected readonly eventStore: CalendarEventsStoreType =
+    inject<CalendarEventsStoreType>(CalendarEventsStore);
 
   /**
    * Property router
@@ -93,6 +121,18 @@ export class CalendarPage {
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
+   * Property permissionService
+   * @readonly
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationPermissionService}
+   */
+  private readonly permissionService: OrganizationPermissionService =
+    inject<OrganizationPermissionService>(OrganizationPermissionService);
+
+  /**
    * Property focusedDate
    *
    * @access protected
@@ -113,6 +153,21 @@ export class CalendarPage {
   protected readonly view: WritableSignal<CalendarView> = signal<CalendarView>('month');
 
   /**
+   * Property calendarConfig
+   * @readonly
+   *
+   * @description
+   * Restricts the toolbar to month/day and renders the calendar as a flush,
+   * borderless working surface flowing into the page.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {CalendarConfig}
+   */
+  protected readonly calendarConfig: CalendarConfig = { views: ['month', 'day'], flush: true };
+
+  /**
    * Property categoryGroups
    * @readonly
    *
@@ -130,7 +185,7 @@ export class CalendarPage {
   >([
     {
       id: 'sources',
-      label: $localize`:@@calendar.sources:Sources`,
+      label: $localize`:@@calendar.categories:Categories`,
       categories: [
         {
           id: 'intervention',
@@ -186,16 +241,54 @@ export class CalendarPage {
       return { organizationId, from: from.toISOString(), to: to.toISOString() };
     },
   );
+
+  /**
+   * Property canCreateEvent
+   * @readonly
+   *
+   * @description
+   * Whether the active member may create standalone calendar events
+   * (`organization.events.write`). Gates the "New event" button.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canCreateEvent: Signal<boolean> = computed<boolean>(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.EVENTS_WRITE),
+  );
+
+  /**
+   * Property createDrawerVisible
+   *
+   * @description
+   * Visibility of the "New event" creation drawer.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly createDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
   //#endregion
 
   //#region Lifecycle
   /**
-   * Keeps the feed in step with the focused month.
+   * Keeps the feed in step with the focused month, and watches the event
+   * mutation store: on a successful creation, closes the drawer and
+   * re-triggers the feed query so the new entry appears.
    *
    * @since 1.0.0
    */
   public constructor() {
     this.store.load(this.request);
+
+    effect(() => {
+      if (!isCallSuccess(this.eventStore.createCallState())) return;
+      this.createDrawerVisible.set(false);
+      this.store.load(this.request());
+    });
   }
   //#endregion
 
@@ -225,6 +318,52 @@ export class CalendarPage {
     if (segment === null) return;
 
     void this.router.navigate(['/organizations', organizationId, segment, item.targetId]);
+  }
+
+  /**
+   * Method openCreateDrawer
+   *
+   * @description
+   * Opens the "New event" drawer.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected openCreateDrawer(): void {
+    this.createDrawerVisible.set(true);
+  }
+
+  /**
+   * Method submitEvent
+   *
+   * @description
+   * Converts the submitted form values to a {@link CreateCalendarEventInput}
+   * and dispatches the create action. The drawer closes itself once the
+   * mutation succeeds (see the constructor's effect).
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {CalendarEventFormValues} values - The submitted form values.
+   *
+   * @returns {void}
+   */
+  protected submitEvent(values: CalendarEventFormValues): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (!organizationId || values.startsAt === null) return;
+
+    const input: CreateCalendarEventInput = {
+      title: values.title,
+      startsAt: values.startsAt.toISOString(),
+      allDay: values.allDay,
+      ...(values.description ? { description: values.description } : {}),
+      ...(values.endsAt !== null ? { endsAt: values.endsAt.toISOString() } : {}),
+    };
+
+    this.eventStore.create({ organizationId, input });
   }
   //#endregion
 }

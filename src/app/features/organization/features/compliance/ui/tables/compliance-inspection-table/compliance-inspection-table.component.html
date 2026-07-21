@@ -1,0 +1,127 @@
+<div class="mb-3 flex flex-wrap items-center justify-between gap-2.5">
+  <span
+    class="text-sm font-medium text-surface-500 dark:text-surface-400"
+    i18n="@@compliance.inspections.count"
+    data-testid="compliance-inspections-count"
+    >{total(), plural, =1 {1 inspection} other {{{ total() }} inspections}}</span
+  >
+  <input
+    pInputText
+    type="search"
+    class="min-w-60 sm:w-72"
+    placeholder="Search inspections…"
+    i18n-placeholder="@@compliance.inspections.search"
+    aria-label="Search inspections"
+    i18n-aria-label="@@compliance.inspections.searchAria"
+    data-testid="compliance-inspection-search"
+    [ngModel]="search()"
+    (ngModelChange)="search.set($event); onFilterChange()"
+  />
+</div>
+
+@if (!loading() && rows().length === 0) {
+  <app-empty-state
+    icon="pi-clipboard"
+    i18n-title="@@compliance.inspections.empty.title"
+    title="No inspections yet"
+    i18n-description="@@compliance.inspections.empty.desc"
+    description="Inspections recorded for this organization will appear here."
+  />
+} @else {
+  <p-table
+    [value]="loading() ? skeletonItems : mutableRows()"
+    dataKey="id"
+    styleClass="text-sm"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [paginator]="total() > pageSize"
+    [rows]="pageSize"
+    [totalRecords]="total()"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [paginatorDropdownAppendTo]="'body'"
+    [showCurrentPageReport]="true"
+    i18n-currentPageReportTemplate="@@compliance.inspections.table.pageReport"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
+    [rowHover]="true"
+    [stripedRows]="true"
+  >
+    <ng-template #header>
+      <tr>
+        <th scope="col" i18n="@@compliance.inspections.col.ref">Ref</th>
+        <th scope="col" pSortableColumn="performedAt">
+          <span i18n="@@compliance.inspections.col.inspection">Inspection</span>
+          <p-sortIcon field="performedAt" />
+        </th>
+        <th scope="col" class="hidden md:table-cell" i18n="@@compliance.inspections.col.facility">
+          Facility
+        </th>
+        <th scope="col" pSortableColumn="status">
+          <span i18n="@@compliance.inspections.col.status">Status</span>
+          <p-sortIcon field="status" />
+        </th>
+        <th scope="col" class="text-right" i18n="@@compliance.inspections.col.nc">NC</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-row>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="4rem" /></td>
+          <td><p-skeleton width="10rem" /></td>
+          <td class="hidden md:table-cell"><p-skeleton width="8rem" /></td>
+          <td><p-skeleton width="6rem" /></td>
+          <td><p-skeleton width="2rem" /></td>
+        </tr>
+      } @else {
+        <tr
+          class="cursor-pointer transition-colors hover:bg-surface-50 motion-reduce:transition-none dark:hover:bg-surface-900/50"
+          data-testid="compliance-inspection-row"
+          (click)="view.emit(row)"
+        >
+          <td>
+            <span class="font-mono text-xs text-surface-500 dark:text-surface-400">
+              {{ shortRef(row.id) }}
+            </span>
+          </td>
+          <td>
+            <!--
+              The row's (click) is a mouse convenience; this button is the
+              keyboard/AT target for the same action, so it stops propagation
+              to emit exactly once.
+            -->
+            <button
+              type="button"
+              class="flex min-w-0 cursor-pointer flex-col rounded text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              data-testid="compliance-inspection-row-open"
+              (click)="$event.stopPropagation(); view.emit(row)"
+            >
+              <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+                {{ row.checklistName ?? row.equipmentSerialNumber ?? '—' }}
+              </span>
+              <span class="truncate text-xs text-surface-500 dark:text-surface-400">
+                {{ row.performedAt | date: 'mediumDate' }}
+              </span>
+            </button>
+          </td>
+          <td class="hidden md:table-cell">
+            <span class="text-surface-600 dark:text-surface-400">
+              {{ row.facilityName ?? '—' }}
+            </span>
+          </td>
+          <td>
+            <app-tag [descriptor]="statusDescriptor(row.status)" />
+          </td>
+          <td class="text-right tabular-nums">
+            @if (row.nonConformitiesCount > 0) {
+              <span class="font-semibold text-red-600 dark:text-red-400">
+                {{ row.nonConformitiesCount }}
+              </span>
+            } @else {
+              <span class="text-surface-400 dark:text-surface-500">0</span>
+            }
+          </td>
+        </tr>
+      }
+    </ng-template>
+  </p-table>
+}

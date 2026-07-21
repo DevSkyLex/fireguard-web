@@ -38,6 +38,18 @@ interface LegalFormValue {
 }
 
 /**
+ * How many legal fields currently carry a value, out of the total field count.
+ * Emitted so the hosting page can render a completeness indicator in its own
+ * section header rather than duplicating the form's internal field count.
+ *
+ * @since 1.3.0
+ */
+export interface LegalFormCompleteness {
+  readonly filled: number;
+  readonly total: number;
+}
+
+/**
  * Component OrganizationLegalForm
  * @class OrganizationLegalForm
  *
@@ -122,6 +134,23 @@ export class OrganizationLegalForm {
    */
   public readonly submitted: OutputEmitterRef<UpdateOrganizationInput> =
     output<UpdateOrganizationInput>();
+
+  /**
+   * Property completenessChange
+   * @readonly
+   *
+   * @description
+   * Emits the current field-completeness count whenever it changes, so the
+   * hosting page can render it in its own section header (ARCHITECTURE §9.4 —
+   * the form manages its own state but may surface it through an output).
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @type {OutputEmitterRef<LegalFormCompleteness>}
+   */
+  public readonly completenessChange: OutputEmitterRef<LegalFormCompleteness> =
+    output<LegalFormCompleteness>();
   //#endregion
 
   //#region Properties
@@ -204,15 +233,16 @@ export class OrganizationLegalForm {
    * @description
    * How many legal fields carry a value. Every field is optional, so nothing
    * here is an error — but a half-filled legal profile blocks compliance
-   * exports downstream, and the form otherwise gives no sign of it.
+   * exports downstream. Rendered by the hosting page via
+   * {@link OrganizationLegalForm#completenessChange}, not by this form.
    *
-   * @access protected
+   * @access private
    * @since 1.1.0
    *
-   * @type {Signal<{ filled: number; total: number }>}
+   * @type {Signal<LegalFormCompleteness>}
    */
-  protected readonly completeness: Signal<{ filled: number; total: number }> = computed(
-    (): { filled: number; total: number } => {
+  private readonly completeness: Signal<LegalFormCompleteness> = computed(
+    (): LegalFormCompleteness => {
       const values: readonly unknown[] = Object.values(this.formValue());
 
       return {
@@ -226,7 +256,8 @@ export class OrganizationLegalForm {
 
   //#region Lifecycle
   /**
-   * Refills the form whenever the organization resolves or changes.
+   * Refills the form whenever the organization resolves or changes, and
+   * forwards the current field-completeness count to the hosting page.
    *
    * @since 1.0.0
    */
@@ -242,6 +273,10 @@ export class OrganizationLegalForm {
         vatNumber: organization.vatNumber ?? '',
         country: organization.country ?? '',
       });
+    });
+
+    effect((): void => {
+      this.completenessChange.emit(this.completeness());
     });
   }
   //#endregion

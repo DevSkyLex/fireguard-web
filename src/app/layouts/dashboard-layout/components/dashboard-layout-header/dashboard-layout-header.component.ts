@@ -1,4 +1,3 @@
-import { NgComponentOutlet } from '@angular/common';
 import { Component, ChangeDetectionStrategy, inject, input, type InputSignal } from '@angular/core';
 import {
   DashboardSidebarService,
@@ -6,6 +5,7 @@ import {
 } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
 import { DashboardLayoutSearch } from '../dashboard-layout-search/dashboard-layout-search.component';
+import { DashboardLayoutSlotOutlet } from '../dashboard-layout-slot-outlet/dashboard-layout-slot-outlet.component';
 
 /**
  * Component DashboardLayoutHeader
@@ -28,7 +28,7 @@ import { DashboardLayoutSearch } from '../dashboard-layout-search/dashboard-layo
  */
 @Component({
   selector: 'app-dashboard-layout-header',
-  imports: [NgComponentOutlet, DashboardLayoutBreadcrumb, DashboardLayoutSearch],
+  imports: [DashboardLayoutSlotOutlet, DashboardLayoutBreadcrumb, DashboardLayoutSearch],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

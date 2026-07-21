@@ -1,14 +1,13 @@
-@if (counters().length > 0) {
-  <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-    @for (counter of counters(); track counter.label; let last = $last) {
-      <span class="font-semibold tabular-nums" [class]="counter.toneClass">
-        {{ counter.value }}
-      </span>
-      <span class="text-surface-500 dark:text-surface-400">{{ counter.label }}</span>
-
-      @if (!last) {
-        <span class="px-1 text-surface-300 dark:text-surface-700" aria-hidden="true">·</span>
-      }
+@if (hasContent()) {
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="equipment-kpi-strip">
+    @for (metric of metrics(); track metric.title) {
+      <app-metric-card
+        [icon]="metric.icon"
+        [title]="metric.title"
+        [value]="metric.value"
+        [description]="metric.description"
+        [loading]="loading()"
+      />
     }
-  </p>
+  </div>
 }

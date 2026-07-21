@@ -82,7 +82,7 @@ Primary stores:
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
-- `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; the overview dashboard component additionally instantiates the nested compliance feature's `ComplianceSummaryStore` for the "Compliance by site" card — see Cross-Feature Dependencies)
+- `OrganizationDashboardStore` (aggregate slice: metric strip counts and population breakdowns, plus the card slices under `state/organization-dashboard/slices/` — `inspections-trend`, the merged `non-conformities-trend`, `upcoming-interventions` and `recent-activity`; the overview dashboard component additionally instantiates the nested compliance feature's `ComplianceSummaryStore` for the compliance-rate/equipment-due-soon metric cells and the "Compliance by site" card — see Cross-Feature Dependencies)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
 - `OrganizationMembersStore` (component-scoped to the members page and the settings-invitations page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
@@ -160,12 +160,27 @@ These contracts are the stable boundaries for approved consumers:
   (em dash), never 0%, and `trackedEquipmentCount` stays visible beside every
   rate.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
+- Approves `features/account` (the account page's Access tab) consuming the organization **list**
+  through the published `@features/organization/state` barrel (`OrganizationStore`, provided
+  component-scoped by the consumer) plus the `OrganizationOutput`/`OrganizationMembershipRole`
+  transport types from `@features/organization/models`, to render the caller's organization
+  memberships (`isOwner` + `roles` carried per item by `GET /api/organizations`). The port
+  `ORGANIZATION_CONTEXT_PORT` stays the boundary for the _active_ organization only — it does not
+  expose the list, and widening it for a read-only listing was judged worse than sanctioning the
+  published state barrel this feature already exposes for approved siblings.
 - Consumes `@features/account`'s `accountPermissionGuard` and `ACCOUNT_PERMISSION` to gate the
   `settings/audit` route, and its `UserPermissionService` to resolve "Audit log" visibility in
   `organizationSettingsLandingGuard` and in the settings page's vertical navigation. `audit.read`
   is a global user permission, not an `OrganizationPermissionName`, so it cannot be expressed
   through the org-member-RBAC-only navigation catalogs — visibility must be resolved directly
-  against the account permission surface.
+  against the account permission surface. The overview dashboard's "Recent activity" feed is
+  gated the same way (`audit.read` via `UserPermissionService`); the audit ledger endpoint is
+  platform-wide, so the feed shows the caller's ledger view exactly like the audit log page.
+- Consumes the nested `interventions` subfeature through its published barrels only
+  (`@features/organization/features/interventions/data-access` → `InterventionService`,
+  `.../interventions/models` → `InterventionOutput` + the tag registry) to render the overview
+  dashboard's "Upcoming interventions" card (due-date-sorted collection query, gated by
+  `organization.interventions.read`).
 
 ## Invariants
 

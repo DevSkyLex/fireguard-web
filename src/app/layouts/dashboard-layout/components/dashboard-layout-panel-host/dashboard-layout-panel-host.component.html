@@ -57,7 +57,7 @@
     </header>
 
     <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-      <ng-container *ngComponentOutlet="panel.component" />
+      <app-dashboard-layout-slot-outlet [source]="panel" />
     </div>
   </aside>
 }

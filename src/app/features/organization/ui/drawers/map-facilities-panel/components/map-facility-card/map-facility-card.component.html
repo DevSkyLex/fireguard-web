@@ -1,0 +1,123 @@
+<div
+  class="flex flex-col gap-2 rounded-md border px-2.5 py-2.5 transition-colors motion-reduce:transition-none"
+  [class]="
+    selected()
+      ? 'border-primary bg-primary-50 dark:bg-primary-950/40'
+      : 'border-surface-200 hover:bg-surface-100 dark:border-surface-800 dark:hover:bg-surface-800'
+  "
+  data-testid="map-facility-card"
+>
+  <button
+    type="button"
+    class="flex w-full cursor-pointer flex-col items-start gap-0.5 text-left"
+    [attr.aria-pressed]="selected()"
+    data-testid="map-facility-card-select"
+    (click)="select.emit()"
+  >
+    <span class="flex w-full items-center gap-2">
+      <span
+        class="h-2 w-2 shrink-0 rounded-full"
+        [class]="complianceBucket().barClass"
+        [attr.aria-label]="complianceBucket().label"
+        [attr.title]="complianceBucket().label"
+      ></span>
+      <span
+        class="min-w-0 flex-1 truncate text-sm font-medium text-surface-900 dark:text-surface-100"
+      >
+        {{ facility().name }}
+      </span>
+      <span
+        class="shrink-0 text-xs font-medium tabular-nums"
+        [class]="complianceBucket().textClass"
+      >
+        {{ complianceLabel() }}
+      </span>
+    </span>
+    @if (city()) {
+      <span
+        class="flex w-full items-center gap-1.5 pl-[18px] text-xs text-surface-500 dark:text-surface-400"
+      >
+        <i class="pi pi-map-marker text-[10px]" aria-hidden="true"></i>
+        <span class="truncate">{{ city() }}</span>
+      </span>
+    }
+  </button>
+
+  @if (selected()) {
+    <div
+      class="mt-2.5 flex flex-col gap-2.5 border-t border-surface-200 pt-2.5 dark:border-surface-800"
+    >
+      @if (facility().address) {
+        <p class="text-xs leading-[1.4] text-surface-700 dark:text-surface-300">
+          {{ facility().address }}
+        </p>
+      }
+
+      <div class="grid grid-cols-2 gap-2">
+        <div
+          class="rounded-md bg-surface-100 px-2 py-1.5 dark:bg-surface-800"
+          data-testid="map-facility-card-buildings"
+        >
+          <div class="text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+            {{ buildingsCount() }}
+          </div>
+          <div
+            class="text-[11px] text-surface-500 dark:text-surface-400"
+            i18n="@@map.card.buildings"
+          >
+            Buildings
+          </div>
+        </div>
+        <div
+          class="rounded-md bg-surface-100 px-2 py-1.5 dark:bg-surface-800"
+          data-testid="map-facility-card-equipment"
+        >
+          <div class="text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+            {{ facility().equipmentCount ?? 0 }}
+          </div>
+          <div
+            class="text-[11px] text-surface-500 dark:text-surface-400"
+            i18n="@@map.card.equipment"
+          >
+            Equipment
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1" data-testid="map-facility-card-compliance">
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="text-surface-500 dark:text-surface-400">{{ complianceBucket().label }}</span>
+          <span class="font-medium tabular-nums" [class]="complianceBucket().textClass">
+            {{ complianceLabel() }}
+          </span>
+        </div>
+        <div
+          class="h-1.5 w-full overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700"
+          role="progressbar"
+          [attr.aria-valuenow]="complianceRate()"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-label]="complianceBucket().label"
+        >
+          <div
+            class="h-full rounded-full"
+            [class]="complianceBucket().barClass"
+            [style.width.%]="complianceBarWidth()"
+          ></div>
+        </div>
+      </div>
+
+      <p-button
+        label="Open in Facilities"
+        i18n-label="@@map.card.open"
+        icon="pi pi-arrow-up-right"
+        severity="secondary"
+        size="small"
+        [outlined]="true"
+        styleClass="w-full justify-center"
+        data-testid="map-facility-card-open"
+        (onClick)="open.emit()"
+      />
+    </div>
+  }
+</div>

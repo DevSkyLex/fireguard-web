@@ -8,6 +8,13 @@ import { Injectable } from '@angular/core';
 export interface StoredMessageDraft {
   readonly conversationId: string;
   readonly body: string;
+
+  /**
+   * When the draft was last written, ISO-8601. Null for an entry stored by an
+   * older build, which kept the bare body — the Drafts view renders no time
+   * rather than inventing one.
+   */
+  readonly updatedAt: string | null;
 }
 
 /**
@@ -57,7 +64,7 @@ export class MessageDraftService {
     const storage: Storage | null = this.storage();
     if (storage === null) return '';
 
-    return storage.getItem(this.key(organizationId, conversationId)) ?? '';
+    return this.parse(storage.getItem(this.key(organizationId, conversationId))).body;
   }
 
   /**
@@ -87,7 +94,9 @@ export class MessageDraftService {
       return;
     }
 
-    storage.setItem(key, body);
+    // Stored as an envelope so the Drafts view can tell a draft written a
+    // minute ago from one left over for a week.
+    storage.setItem(key, JSON.stringify({ body, updatedAt: new Date().toISOString() }));
   }
 
   /**
@@ -133,13 +142,55 @@ export class MessageDraftService {
       const key: string | null = storage.key(index);
       if (key === null || !key.startsWith(prefix)) continue;
 
-      const body: string | null = storage.getItem(key);
-      if (body === null || body.trim().length === 0) continue;
+      const entry: { readonly body: string; readonly updatedAt: string | null } = this.parse(
+        storage.getItem(key),
+      );
+      if (entry.body.trim().length === 0) continue;
 
-      drafts.push({ conversationId: key.slice(prefix.length), body });
+      drafts.push({
+        conversationId: key.slice(prefix.length),
+        body: entry.body,
+        updatedAt: entry.updatedAt,
+      });
     }
 
     return drafts;
+  }
+
+  /**
+   * Method parse
+   *
+   * @description
+   * Reads a stored entry, tolerating the pre-envelope format: builds before
+   * 1.1.0 stored the bare body, and those entries must keep working rather
+   * than silently reading as an empty draft.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @param {string | null} raw - The stored value, if any.
+   *
+   * @returns {{ body: string; updatedAt: string | null }} The draft body and its timestamp.
+   */
+  private parse(raw: string | null): { readonly body: string; readonly updatedAt: string | null } {
+    if (raw === null) return { body: '', updatedAt: null };
+
+    try {
+      const parsed: unknown = JSON.parse(raw);
+
+      if (typeof parsed === 'object' && parsed !== null && 'body' in parsed) {
+        const entry = parsed as { body?: unknown; updatedAt?: unknown };
+
+        return {
+          body: typeof entry.body === 'string' ? entry.body : '',
+          updatedAt: typeof entry.updatedAt === 'string' ? entry.updatedAt : null,
+        };
+      }
+    } catch {
+      // Not JSON: a legacy bare-body entry.
+    }
+
+    return { body: raw, updatedAt: null };
   }
 
   /**

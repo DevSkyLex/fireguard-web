@@ -19,12 +19,12 @@
   </a>
 
   @for (contribution of railContributions(); track contribution.id) {
-    <ng-container *ngComponentOutlet="contribution.component" />
+    <app-dashboard-layout-slot-outlet [source]="contribution" />
   }
 
   <div class="min-h-2 flex-1" aria-hidden="true"></div>
 
   @for (contribution of railEndContributions(); track contribution.id) {
-    <ng-container *ngComponentOutlet="contribution.component" />
+    <app-dashboard-layout-slot-outlet [source]="contribution" />
   }
 </nav>

@@ -1,9 +1,31 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { ORGANIZATION_QUOTA_RESOURCE_LABELS } from '@features/organization/constants';
-import { type OrganizationQuotaItemOutput, type QuotaStatus } from '@features/organization/models';
+import {
+  type OrganizationQuotaItemOutput,
+  type OrganizationQuotaResource,
+  type QuotaStatus,
+} from '@features/organization/models';
 import { OrganizationQuotaStore } from '@features/organization/state';
 import { resolveQuotaStatus } from '@features/organization/utils';
 import { EmptyState, Skeleton, Tag, type TagDescriptor } from '@shared/components';
+
+/**
+ * Constant ORGANIZATION_QUOTA_RESOURCE_ICONS
+ *
+ * @description
+ * PrimeIcons glyph for each capped resource, rendered beside its label in the
+ * usage meter strip. Local to this panel — its only consumer — matching the
+ * icon already used for the same resource elsewhere in the feature (members,
+ * facilities, equipment, inspections navigation and cards).
+ *
+ * @since 1.1.0
+ */
+const ORGANIZATION_QUOTA_RESOURCE_ICONS: Record<OrganizationQuotaResource, string> = {
+  members: 'pi pi-users',
+  facilities: 'pi pi-building',
+  equipment: 'pi pi-wrench',
+  inspections: 'pi pi-clipboard',
+};
 
 /**
  * Interface OrganizationUsageRow
@@ -17,6 +39,7 @@ import { EmptyState, Skeleton, Tag, type TagDescriptor } from '@shared/component
  */
 interface OrganizationUsageRow {
   readonly label: string;
+  readonly icon: string;
   readonly used: number;
   readonly limit: number | null;
   readonly percent: number | null;
@@ -67,6 +90,7 @@ export class OrganizationUsagePanel {
 
       return {
         label: ORGANIZATION_QUOTA_RESOURCE_LABELS[item.resource] ?? item.resource,
+        icon: ORGANIZATION_QUOTA_RESOURCE_ICONS[item.resource] ?? 'pi pi-gauge',
         used: item.used,
         limit,
         percent: limit !== null && limit > 0 ? Math.min(Math.round(ratio * 100), 100) : null,

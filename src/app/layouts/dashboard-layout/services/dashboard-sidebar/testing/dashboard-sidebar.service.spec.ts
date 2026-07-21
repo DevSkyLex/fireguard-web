@@ -54,4 +54,14 @@ describe('DashboardSidebarService', () => {
     service.setPrimaryCollapsed(false);
     expect(service.primaryCollapsed()).toBe(false);
   });
+
+  it('should set and clear the channel search query', () => {
+    expect(service.channelSearchQuery()).toBe('');
+
+    service.setChannelSearchQuery('alarm');
+    expect(service.channelSearchQuery()).toBe('alarm');
+
+    service.setChannelSearchQuery('');
+    expect(service.channelSearchQuery()).toBe('');
+  });
 });

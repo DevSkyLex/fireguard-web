@@ -53,8 +53,8 @@
               @if (role.isSystem) {
                 <span
                   i18n="@@org.roleTable.system"
-                  class="ml-1 text-xs font-normal text-surface-500 dark:text-surface-400"
-                  >(system)</span
+                  class="ml-1.5 rounded-full border border-surface-200 px-1.5 py-px text-[9px] font-bold tracking-[0.04em] text-surface-500 uppercase dark:border-surface-700 dark:text-surface-400"
+                  >System</span
                 >
               }
             </span>
@@ -79,7 +79,7 @@
             <span class="flex flex-wrap items-center gap-1" data-testid="role-permission-areas">
               @for (area of areas.slice(0, 4); track area) {
                 <span
-                  class="rounded bg-surface-100 px-1.5 py-0.5 text-[0.7rem] text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                  class="rounded-md border border-surface-200 bg-surface-100 px-1.5 py-0.5 font-mono text-[0.7rem] text-surface-600 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
                 >
                   {{ area }}
                 </span>
@@ -96,13 +96,18 @@
 
           <span class="flex items-center justify-between gap-2.5">
             <span
-              i18n="@@org.roleCard.permissionCount"
-              class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
-              >{role.permissions.length, plural,
+              class="flex items-center gap-1.5 text-xs text-surface-500 tabular-nums dark:text-surface-400"
+            >
+              <span i18n="@@org.roleCard.memberCount">{role.memberCount, plural,
+                =1 {1 member}
+                other {{{ role.memberCount }} members}
+              }</span>
+              <span aria-hidden="true">·</span>
+              <span i18n="@@org.roleCard.permissionCount">{role.permissions.length, plural,
                 =1 {1 permission}
                 other {{{ role.permissions.length }} permissions}
-              }</span
-            >
+              }</span>
+            </span>
 
             @if (canManage()) {
               <span

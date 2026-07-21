@@ -1,0 +1,32 @@
+<!--
+  13 columns by 2 rows: 26 days fit the panel's 330px column at a legible cell
+  size, where a single row of 26 would leave 6px squares. The column count is
+  set explicitly rather than via a utility so the grid does not reflow with the
+  number of cells.
+-->
+<ul
+  class="grid [grid-template-columns:repeat(13,minmax(0,1fr))] gap-1"
+  data-testid="activity-heatmap"
+>
+  @for (cell of cells(); track cell.bucket) {
+    <li
+      class="aspect-square rounded-sm motion-safe:transition-colors"
+      [class]="cellClass(cell)"
+      role="img"
+      [attr.aria-label]="cell.label"
+      [attr.title]="cell.label"
+      [attr.data-level]="cell.level"
+      data-testid="activity-cell"
+    ></li>
+  }
+</ul>
+
+<!--
+  The tint scale is not self-explanatory, and the cells' own labels are only
+  reachable on hover or with a screen reader — the caption states the window and
+  its volume in words.
+-->
+<p class="pt-2 text-xs text-surface-500 dark:text-surface-400" data-testid="activity-caption">
+  <span i18n="@@messaging.activity.caption">Messages over the last 26 days</span>
+  <span class="tabular-nums"> · {{ totalMessages() }}</span>
+</p>

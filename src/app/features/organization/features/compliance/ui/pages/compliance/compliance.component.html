@@ -1,5 +1,5 @@
 <div id="compliance" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  @if (store.queryHasError()) {
+  @if (summaryStore.queryHasError()) {
     <p-message severity="error" class="block">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <span class="flex items-center gap-2">
@@ -21,175 +21,109 @@
     </p-message>
   }
 
-  <!--
-    Two sections, one query, one permission — so they are tabs in the URL, not
-    child routes. A section that needed its own guard would have to become a
-    real route (see the refonte plan, §3.2).
-  -->
-  <div
-    class="flex gap-1 border-b border-surface-200 dark:border-surface-800"
-    role="tablist"
-    i18n-aria-label="@@compliance.tabs.aria"
-    aria-label="Compliance sections"
-  >
-    <button
-      type="button"
-      role="tab"
-      class="-mb-px border-b-2 px-3 py-2 text-sm font-medium"
-      [class]="
-        activeTab() === 'overview'
-          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-          : 'border-transparent text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
-      "
-      [attr.aria-selected]="activeTab() === 'overview'"
-      (click)="selectTab('overview')"
-      i18n="@@compliance.tabs.overview"
-    >
-      Overview
-    </button>
-    <button
-      type="button"
-      role="tab"
-      class="-mb-px border-b-2 px-3 py-2 text-sm font-medium"
-      [class]="
-        activeTab() === 'sites'
-          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-          : 'border-transparent text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
-      "
-      [attr.aria-selected]="activeTab() === 'sites'"
-      (click)="selectTab('sites')"
-      i18n="@@compliance.tabs.sites"
-    >
-      By site
-    </button>
-  </div>
-
-  @if (store.isQueryLoading()) {
-    <app-skeleton height="8rem" />
-  } @else if (activeTab() === 'overview') {
-    <section class="flex flex-col gap-6">
-      <div class="flex flex-col gap-1">
-        <p class="text-3xl font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-          {{ coverageLabel() }}
-        </p>
-        <p class="text-sm text-surface-500 dark:text-surface-400">
-          <span i18n="@@compliance.coverage.caption">Maintenance coverage across</span>
-          <span class="font-semibold tabular-nums">{{ rollup().trackedEquipmentCount }}</span>
-          <span i18n="@@compliance.coverage.tracked">tracked assets</span>
-        </p>
-      </div>
-
-      <!--
-        A flat definition list rather than a row of metric cards: those are the
-        dashboard's treatment, and this page is a register to read, not a
-        dashboard to scan.
-      -->
-      <dl class="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
-        <div class="flex flex-col gap-0.5">
-          <dt
-            class="text-xs text-surface-500 dark:text-surface-400"
-            i18n="@@compliance.kpi.overdue"
-          >
-            Overdue
-          </dt>
-          <dd class="text-xl font-semibold text-red-600 tabular-nums dark:text-red-400">
-            {{ rollup().overdueEquipmentCount }}
-          </dd>
-        </div>
-        <div class="flex flex-col gap-0.5">
-          <dt
-            class="text-xs text-surface-500 dark:text-surface-400"
-            i18n="@@compliance.kpi.dueSoon"
-          >
-            Due soon
-          </dt>
-          <dd class="text-xl font-semibold text-amber-600 tabular-nums dark:text-amber-400">
-            {{ rollup().dueSoonEquipmentCount }}
-          </dd>
-        </div>
-        <div class="flex flex-col gap-0.5">
-          <dt
-            class="text-xs text-surface-500 dark:text-surface-400"
-            i18n="@@compliance.kpi.unscheduled"
-          >
-            Unscheduled
-          </dt>
-          <dd class="text-xl font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-            {{ rollup().unscheduledEquipmentCount }}
-          </dd>
-        </div>
-        <div class="flex flex-col gap-0.5">
-          <dt
-            class="text-xs text-surface-500 dark:text-surface-400"
-            i18n="@@compliance.kpi.openNonConformities"
-          >
-            Open non-conformities
-          </dt>
-          <dd class="text-xl font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-            {{ openNonConformities() }}
-          </dd>
-        </div>
-      </dl>
-    </section>
+  @if (summaryStore.isQueryLoading()) {
+    <app-skeleton height="6rem" />
   } @else {
-    <!--
-      Filtering happens here, not in the table: the table renders what it is
-      given and owns no query state (ARCHITECTURE §9.3). The attention filter is
-      built from "which sites need me" rather than from the row's own status —
-      a site can be active and still be the most overdue one on the estate.
-    -->
-    <div class="flex flex-wrap items-center gap-2.5">
-      <input
-        pInputText
-        type="search"
-        class="min-w-60 flex-1 sm:max-w-96"
-        placeholder="Search sites…"
-        i18n-placeholder="@@compliance.search"
-        data-testid="compliance-search"
-        [ngModel]="siteSearch()"
-        (ngModelChange)="siteSearch.set($event)"
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="compliance-kpi-strip">
+      <app-metric-card
+        icon="pi pi-verified"
+        i18n-title="@@compliance.kpi.rate"
+        title="Compliance rate"
+        [value]="complianceRateLabel()"
       />
-
-      <p-selectButton
-        [options]="[...siteFilterOptions]"
-        [ngModel]="siteFilter()"
-        (ngModelChange)="siteFilter.set($event)"
-        optionLabel="label"
-        optionValue="value"
-        [allowEmpty]="false"
-        size="small"
-        aria-label="Filter sites by attention"
-        i18n-aria-label="@@compliance.filter.aria"
-        data-testid="compliance-filter"
+      <app-metric-card
+        icon="pi pi-exclamation-triangle"
+        i18n-title="@@compliance.kpi.openNonConformities"
+        title="Open non-conformities"
+        polarity="lower"
+        [value]="openNonConformities()"
+        [description]="openNonConformitiesSub()"
       />
-
-      <span
-        class="ml-auto text-sm text-surface-500 tabular-nums dark:text-surface-400"
-        data-testid="compliance-count"
-        i18n="@@compliance.count"
-      >
-        {visibleFacilities().length, plural,
-          =1 {1 site}
-          other {{{ visibleFacilities().length }} sites}
-        }
-      </span>
+      <app-metric-card
+        icon="pi pi-hourglass"
+        i18n-title="@@compliance.kpi.inReview"
+        title="Inspections in review"
+        [value]="inspectionsInReview()"
+      />
+      <app-metric-card
+        icon="pi pi-list-check"
+        i18n-title="@@compliance.kpi.templates"
+        title="Checklist templates"
+        [value]="checklistTemplateCount()"
+      />
     </div>
-
-    @if (hasNoMatch()) {
-      <p
-        class="py-10 text-center text-sm text-surface-500 dark:text-surface-400"
-        data-testid="compliance-no-match"
-        i18n="@@compliance.noMatch"
-      >
-        No site matches your search or filter.
-      </p>
-    } @else {
-      <app-compliance-facility-table
-        class="flex min-h-0 flex-1 flex-col"
-        [rows]="visibleFacilities()"
-        [loading]="store.isQueryLoading()"
-        (view)="openFacility($event)"
-      />
-    }
   }
+
+  <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
+    <p-tablist
+      [pt]="{ root: { class: 'bg-transparent!' } }"
+      i18n-aria-label="@@compliance.tabs.aria"
+      aria-label="Compliance sections"
+    >
+      <p-tab value="inspections">
+        <span class="flex items-center gap-2">
+          <span i18n="@@compliance.tabs.inspections" class="text-sm">Inspections</span>
+        </span>
+      </p-tab>
+      <p-tab value="non-conformities">
+        <span class="flex items-center gap-2">
+          <span i18n="@@compliance.tabs.nonConformities" class="text-sm">Non-conformities</span>
+        </span>
+      </p-tab>
+      <p-tab value="checklists">
+        <span class="flex items-center gap-2">
+          <span i18n="@@compliance.tabs.checklists" class="text-sm">Checklists</span>
+        </span>
+      </p-tab>
+    </p-tablist>
+
+    <p-tabpanels [pt]="{ root: { class: 'bg-transparent! p-0' } }">
+      <p-tabpanel value="inspections">
+        @if (canViewInspectionData()) {
+          <app-compliance-inspection-table
+            [rows]="inspectionsStore.queryData()?.member ?? []"
+            [total]="inspectionsStore.queryData()?.totalItems ?? 0"
+            [loading]="inspectionsStore.isQueryLoading()"
+            (queryChange)="onInspectionsQuery($event)"
+            (view)="openInspection($event)"
+          />
+        } @else {
+          <p-message severity="warn" i18n="@@compliance.restricted">
+            You need inspection access to view this section.
+          </p-message>
+        }
+      </p-tabpanel>
+
+      <p-tabpanel value="non-conformities">
+        @if (canViewInspectionData()) {
+          <app-compliance-non-conformity-table
+            [rows]="nonConformitiesStore.queryData()?.member ?? []"
+            [total]="nonConformitiesStore.queryData()?.totalItems ?? 0"
+            [loading]="nonConformitiesStore.isQueryLoading()"
+            (queryChange)="onNonConformitiesQuery($event)"
+            (view)="openInspectionFromNonConformity($event)"
+          />
+        } @else {
+          <p-message severity="warn" i18n="@@compliance.restricted">
+            You need inspection access to view this section.
+          </p-message>
+        }
+      </p-tabpanel>
+
+      <p-tabpanel value="checklists">
+        @if (canViewInspectionData()) {
+          <app-compliance-checklist-table
+            [rows]="checklistsStore.queryData()?.member ?? []"
+            [total]="checklistsStore.queryData()?.totalItems ?? 0"
+            [loading]="checklistsStore.isQueryLoading()"
+            (queryChange)="onChecklistsQuery($event)"
+          />
+        } @else {
+          <p-message severity="warn" i18n="@@compliance.restricted">
+            You need inspection access to view this section.
+          </p-message>
+        }
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
 </div>

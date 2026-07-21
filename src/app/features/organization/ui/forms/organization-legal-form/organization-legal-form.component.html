@@ -1,11 +1,7 @@
 <form class="flex flex-col gap-5" [formGroup]="form" (ngSubmit)="onSubmit()">
-  <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@org.legal.intro">
-    Used on reports, invoices and compliance exports. Every field is optional.
-  </p>
-
   <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
     <div class="flex flex-col gap-1.5 sm:col-span-2">
-      <label class="text-sm text-surface-900/50 dark:text-surface-0/50" for="legalName">
+      <label class="text-sm font-medium text-surface-900 dark:text-surface-50" for="legalName">
         <span i18n="@@org.legal.name">Registered name</span>
       </label>
       <input
@@ -21,7 +17,7 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-sm text-surface-900/50 dark:text-surface-0/50" for="legalType">
+      <label class="text-sm font-medium text-surface-900 dark:text-surface-50" for="legalType">
         <span i18n="@@org.legal.type">Legal type</span>
       </label>
       <!--
@@ -50,7 +46,7 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-sm text-surface-900/50 dark:text-surface-0/50" for="country">
+      <label class="text-sm font-medium text-surface-900 dark:text-surface-50" for="country">
         <span i18n="@@org.legal.country">Country</span>
       </label>
       <input
@@ -89,7 +85,10 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-sm text-surface-900/50 dark:text-surface-0/50" for="registrationNumber">
+      <label
+        class="text-sm font-medium text-surface-900 dark:text-surface-50"
+        for="registrationNumber"
+      >
         <span i18n="@@org.legal.registration">Registration number</span>
       </label>
       <input
@@ -101,34 +100,14 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-sm text-surface-900/50 dark:text-surface-0/50" for="vatNumber">
+      <label class="text-sm font-medium text-surface-900 dark:text-surface-50" for="vatNumber">
         <span i18n="@@org.legal.vat">VAT number</span>
       </label>
       <input id="vatNumber" pInputText formControlName="vatNumber" class="w-full" />
     </div>
   </div>
 
-  <!--
-    Every field here is optional, so nothing is flagged as an error — but an
-    incomplete legal profile blocks compliance exports downstream, and the form
-    gave no sign of it. A count, not a validation.
-  -->
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <span
-      class="inline-flex items-center gap-2 text-xs text-surface-500 dark:text-surface-400"
-      data-testid="organization-legal-completeness"
-    >
-      @if (completeness().filled === completeness().total) {
-        <i class="pi pi-check-circle text-green-600 dark:text-green-500" aria-hidden="true"></i>
-        <ng-container i18n="@@org.legal.complete">Legal profile complete</ng-container>
-      } @else {
-        <i class="pi pi-info-circle" aria-hidden="true"></i>
-        <span i18n="@@org.legal.completeness"
-          >{{ completeness().filled }} of {{ completeness().total }} legal details provided</span
-        >
-      }
-    </span>
-
+  <div class="flex justify-end">
     <p-button
       type="submit"
       i18n-label="@@common.save"

@@ -11,6 +11,9 @@ export type {
   MessageReaction,
   SendMessageInput,
 } from './message/message-output.interface';
+export type { MessageReference, MessageReferenceType } from './message/message-reference.interface';
+export type { ConversationLinkOutput } from './link/conversation-link.interface';
+export type { ConversationActivityBucket } from './activity/conversation-activity-bucket.interface';
 export type { PresenceOutput } from './presence/presence-output.interface';
 export type { MessageAttachment } from './attachment/message-attachment.interface';
 export type {

@@ -3,11 +3,10 @@ import type { TableLazyLoadEvent } from 'primeng/table';
 import type { SessionOutput } from '@features/auth/models';
 import { SessionTable } from '../session-table.component';
 
-/** Classes carried by the row's avatar glyph, or '' when no glyph rendered. */
+/** Classes carried by the row's device glyph, or '' when no glyph rendered. */
 const iconClasses = (fixture: ComponentFixture<SessionTable>): string =>
-  (fixture.nativeElement as HTMLElement).querySelector(
-    '.p-avatar .p-icon, .p-avatar span[class*="pi-"]',
-  )?.className ?? '';
+  (fixture.nativeElement as HTMLElement).querySelector('[data-testid="session-device-icon"]')
+    ?.className ?? '';
 
 const MOCK_SESSION: SessionOutput = {
   '@id': '/api/sessions/session-1',
@@ -170,6 +169,23 @@ describe('SessionTable', () => {
     fixture.detectChanges();
     TestBed.flushEffects();
 
-    expect(spy).toHaveBeenCalledWith({ page: 1, itemsPerPage: 12 });
+    expect(spy).toHaveBeenCalledWith({ page: 1, itemsPerPage: 50 });
+  });
+
+  it('should request the first page on init instead of relying on a paginator', () => {
+    const spy = vi.fn();
+    TestBed.configureTestingModule({ imports: [SessionTable] });
+    const fixture = TestBed.createComponent(SessionTable);
+    fixture.componentInstance.load.subscribe(spy);
+    fixture.componentRef.setInput('sessions', []);
+    fixture.componentRef.setInput('total', 0);
+    fixture.componentRef.setInput('loading', false);
+    fixture.componentRef.setInput('empty', true);
+    fixture.componentRef.setInput('revokingAll', false);
+    fixture.componentRef.setInput('hasOtherSessions', false);
+
+    fixture.detectChanges();
+
+    expect(spy).toHaveBeenCalledWith({ page: 1, itemsPerPage: 50 });
   });
 });

@@ -20,9 +20,11 @@ import type {
   MessageAttachment,
   MessageOutput,
   MessageReaction,
+  MessageReference,
 } from '@features/organization/features/messaging/models';
 import type { MemberIdentity } from '@features/organization/state';
 import { EmptyState, Skeleton } from '@shared/components';
+import { MessageReferenceCard } from './components/message-reference-card';
 import { toMessageBodyParts, type MessageBodyPart } from './utils/message-body-parts.utils';
 
 /**
@@ -48,7 +50,7 @@ import { toMessageBodyParts, type MessageBodyPart } from './utils/message-body-p
  */
 @Component({
   selector: 'app-message-thread',
-  imports: [DatePipe, EmptyState, Skeleton],
+  imports: [DatePipe, EmptyState, MessageReferenceCard, Skeleton],
   templateUrl: './message-thread.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -776,6 +778,28 @@ export class MessageThread {
    */
   protected attachments(messageId: string): readonly MessageAttachment[] {
     return this.attachmentsByMessage().get(messageId) ?? [];
+  }
+
+  /**
+   * Method references
+   *
+   * @description
+   * The record cards attached to a message.
+   *
+   * `?? []` rather than a null check: API Platform omits the field entirely on
+   * a message that carries none, so it arrives as `undefined`. A tombstoned
+   * message shows none either — the backend redacts them to `[]`, and a delete
+   * derived locally must read the same way.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @param {MessageOutput} message - The row's message.
+   *
+   * @returns {readonly MessageReference[]} Its references.
+   */
+  protected references(message: MessageOutput): readonly MessageReference[] {
+    return message.isDeleted ? [] : (message.references ?? []);
   }
 
   /**

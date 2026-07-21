@@ -1,12 +1,9 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { OrganizationOutput, UpdateOrganizationInput } from '@features/organization/models';
-import { OrganizationLegalForm } from '../organization-legal-form.component';
-
-/** Text of the completeness readout, or '' when it is not rendered. */
-const readout = (fixture: ComponentFixture<OrganizationLegalForm>): string =>
-  (fixture.nativeElement as HTMLElement)
-    .querySelector('[data-testid="organization-legal-completeness"]')
-    ?.textContent?.trim() ?? '';
+import {
+  OrganizationLegalForm,
+  type LegalFormCompleteness,
+} from '../organization-legal-form.component';
 
 const ORGANIZATION = {
   id: 'org-1',
@@ -20,11 +17,15 @@ const ORGANIZATION = {
 } as OrganizationOutput;
 
 describe('OrganizationLegalForm', () => {
-  const createComponent = (organization: OrganizationOutput | null = ORGANIZATION) => {
+  const createComponent = (
+    organization: OrganizationOutput | null = ORGANIZATION,
+    configure?: (fixture: ComponentFixture<OrganizationLegalForm>) => void,
+  ) => {
     TestBed.configureTestingModule({ imports: [OrganizationLegalForm] });
 
     const fixture = TestBed.createComponent(OrganizationLegalForm);
     fixture.componentRef.setInput('organization', organization);
+    configure?.(fixture);
     fixture.detectChanges();
     return fixture;
   };
@@ -36,6 +37,19 @@ describe('OrganizationLegalForm', () => {
     );
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
     return emitted;
+  };
+
+  /** Captures the field-completeness count emitted through `completenessChange`. */
+  const captureCompleteness = (
+    organization: OrganizationOutput | null,
+  ): LegalFormCompleteness | undefined => {
+    let latest: LegalFormCompleteness | undefined;
+    createComponent(organization, (fixture) =>
+      fixture.componentInstance.completenessChange.subscribe(
+        (completeness: LegalFormCompleteness) => (latest = completeness),
+      ),
+    );
+    return latest;
   };
 
   it('should fill the form from the organization', () => {
@@ -90,15 +104,16 @@ describe('OrganizationLegalForm', () => {
 
   /**
    * No field here is required, so validation says nothing — but an incomplete
-   * legal profile blocks compliance exports, and the form has to admit it.
+   * legal profile blocks compliance exports, and the form reports it through
+   * `completenessChange` for the hosting page to render.
    */
-  describe('completeness', () => {
-    it('declares the profile complete when every field carries a value', () => {
-      expect(readout(createComponent())).toContain('Legal profile complete');
+  describe('completenessChange', () => {
+    it('reports every field filled when the profile is complete', () => {
+      expect(captureCompleteness(ORGANIZATION)).toEqual({ filled: 5, total: 5 });
     });
 
     it('counts what is filled when the profile is partial', () => {
-      const fixture = createComponent({
+      const completeness = captureCompleteness({
         id: 'org-2',
         name: 'New',
         slug: 'new',
@@ -106,28 +121,28 @@ describe('OrganizationLegalForm', () => {
         country: 'FR',
       } as OrganizationOutput);
 
-      expect(readout(fixture)).toContain('2 of 5');
+      expect(completeness).toEqual({ filled: 2, total: 5 });
     });
 
     it('counts nothing for an organization with no legal profile at all', () => {
-      const fixture = createComponent({
+      const completeness = captureCompleteness({
         id: 'org-2',
         name: 'New',
         slug: 'new',
       } as OrganizationOutput);
 
-      expect(readout(fixture)).toContain('0 of 5');
+      expect(completeness).toEqual({ filled: 0, total: 5 });
     });
 
     it('does not count a field holding only whitespace', () => {
-      const fixture = createComponent({
+      const completeness = captureCompleteness({
         id: 'org-2',
         name: 'New',
         slug: 'new',
         legalName: '   ',
       } as OrganizationOutput);
 
-      expect(readout(fixture)).toContain('0 of 5');
+      expect(completeness).toEqual({ filled: 0, total: 5 });
     });
   });
 });

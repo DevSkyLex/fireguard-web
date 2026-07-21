@@ -10,7 +10,6 @@ import {
   type Signal,
 } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TagModule } from 'primeng/tag';
@@ -36,7 +35,7 @@ import { Tag, type TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-facility-detail-header',
-  imports: [DatePipe, TitleCasePipe, AvatarModule, ButtonModule, SplitButtonModule, TagModule, Tag],
+  imports: [DatePipe, TitleCasePipe, ButtonModule, SplitButtonModule, TagModule, Tag],
   templateUrl: './facility-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,0 +1,71 @@
+<app-trend-card
+  i18n-title="@@org.trend.nc.title"
+  title="Non-conformities trend"
+  i18n-description="@@org.trend.nc.desc"
+  description="Opened vs resolved · last 8 weeks"
+  [loading]="isLoading()"
+>
+  <ng-template #action>
+    <div class="flex shrink-0 items-center gap-4">
+      <span class="inline-flex items-center gap-1.5 text-xs text-surface-500 dark:text-surface-400">
+        <span class="size-2.5 rounded-[3px] bg-red-500" aria-hidden="true"></span>
+        <span i18n="@@org.trend.nc.openedLabel">Opened</span>
+        <b class="font-semibold text-surface-950 tabular-nums dark:text-surface-50">{{
+          openedTotal()
+        }}</b>
+      </span>
+      <span class="inline-flex items-center gap-1.5 text-xs text-surface-500 dark:text-surface-400">
+        <span class="size-2.5 rounded-[3px] bg-green-500" aria-hidden="true"></span>
+        <span i18n="@@org.trend.nc.resolvedLabel">Resolved</span>
+        <b class="font-semibold text-surface-950 tabular-nums dark:text-surface-50">{{
+          resolvedTotal()
+        }}</b>
+      </span>
+    </div>
+  </ng-template>
+
+  <ng-template #content>
+    <div class="h-40">
+      @if (isLoading()) {
+        <p-skeleton height="100%" class="w-full" />
+      } @else if (hasError()) {
+        <div class="flex h-full items-center justify-center">
+          <app-error-state
+            icon="pi-exclamation-triangle"
+            i18n-title="@@org.trend.nc.chartErrorTitle"
+            title="Couldn't load this chart"
+          >
+            <p-button
+              i18n-label="@@org.trend.nc.chartRetry"
+              label="Retry"
+              icon="pi pi-refresh"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              (onClick)="retry()"
+            />
+          </app-error-state>
+        </div>
+      } @else if (!hasData()) {
+        <div class="flex h-full items-center justify-center">
+          <app-empty-state
+            icon="pi-chart-line"
+            i18n-title="@@org.trend.nc.chartEmptyTitle"
+            title="No data yet"
+            i18n-description="@@org.trend.nc.chartEmptyDesc"
+            description="No non-conformity activity in the last 8 weeks."
+          />
+        </div>
+      } @else {
+        <p-chart
+          type="line"
+          [data]="data()"
+          [options]="options()"
+          class="block h-full"
+          [style]="{ height: '100%' }"
+          fluid
+        />
+      }
+    </div>
+  </ng-template>
+</app-trend-card>

@@ -1,0 +1,31 @@
+<p-drawer
+  i18n-header="@@calendar.eventDrawer.header"
+  header="New event"
+  i18n-ariaCloseLabel="@@calendar.eventDrawer.closeAria"
+  ariaCloseLabel="Close new event"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  [appendTo]="'body'"
+  [modal]="true"
+  [blockScroll]="true"
+  [dismissible]="!loading()"
+  [closeOnEscape]="!loading()"
+  position="right"
+  [pt]="drawerPt"
+>
+  <ng-template #content>
+    <div class="flex h-full flex-col gap-6">
+      <p i18n="@@calendar.eventDrawer.intro" class="text-sm text-surface-600 dark:text-surface-300">
+        Add a standalone event to the organization calendar.
+      </p>
+
+      <div class="min-h-0 flex-1">
+        <app-calendar-event-form
+          [loading]="loading()"
+          (submitted)="submitted.emit($event)"
+          (cancelled)="visibleChange.emit(false)"
+        />
+      </div>
+    </div>
+  </ng-template>
+</p-drawer>

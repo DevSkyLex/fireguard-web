@@ -1,0 +1,82 @@
+<app-trend-card
+  i18n-title="@@org.dash.upcoming.title"
+  title="Upcoming interventions"
+  [loading]="loading()"
+>
+  <ng-template #content>
+    @if (hasError()) {
+      <app-error-state
+        icon="pi-exclamation-triangle"
+        i18n-title="@@org.dash.upcoming.errorTitle"
+        title="Couldn't load upcoming interventions"
+      >
+        <p-button
+          i18n-label="@@org.dash.upcoming.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="retry.emit()"
+        />
+      </app-error-state>
+    } @else if (loading()) {
+      <app-skeleton
+        preset="list-row"
+        [count]="5"
+        i18n-label="@@org.dash.upcoming.loading"
+        label="Loading upcoming interventions"
+      />
+    } @else if (interventions().length === 0) {
+      <app-empty-state
+        icon="pi-calendar"
+        i18n-title="@@org.dash.upcoming.emptyTitle"
+        title="Nothing due soon"
+        i18n-description="@@org.dash.upcoming.emptyDesc"
+        description="No intervention has an upcoming due date."
+      />
+    } @else {
+      <ul class="flex flex-col divide-y divide-surface-100 dark:divide-surface-800" role="list">
+        @for (intervention of interventions(); track intervention.id) {
+          <li class="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+            <!-- Status is never colour-only: the dot carries the label as accessible text. -->
+            <span
+              class="size-2 shrink-0 rounded-full"
+              [class]="statusDotClass(intervention.status)"
+              role="img"
+              [attr.aria-label]="statusLabel(intervention.status)"
+              [title]="statusLabel(intervention.status)"
+            ></span>
+
+            <button
+              type="button"
+              class="min-w-0 flex-1 truncate text-left text-sm font-medium text-surface-900 hover:text-primary hover:underline dark:text-surface-100"
+              (click)="open.emit(intervention)"
+            >
+              {{ intervention.name }}
+            </button>
+
+            <span class="shrink-0 text-xs text-surface-500 tabular-nums dark:text-surface-400">
+              @if (intervention.dueAt) {
+                {{ intervention.dueAt | date: 'mediumDate' }}
+              } @else {
+                —
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </ng-template>
+
+  <ng-template #footer>
+    <button
+      type="button"
+      i18n="@@org.dash.upcoming.viewAll"
+      class="-mx-4 -my-3 block w-[calc(100%+2rem)] py-2.5 text-center text-sm text-primary hover:bg-surface-50 dark:hover:bg-surface-800"
+      (click)="viewAll.emit()"
+    >
+      View all interventions
+    </button>
+  </ng-template>
+</app-trend-card>

@@ -218,6 +218,26 @@ export class DashboardLayoutSidebarNavigation {
   }
 
   /**
+   * Method onCommandItemClick
+   * @method onCommandItemClick
+   *
+   * @description
+   * Runs a command-only item (a shell-panel trigger such as the Assistant
+   * entry) and closes the mobile sidebar so the opened panel is visible.
+   *
+   * @access protected
+   * @since 3.3.0
+   *
+   * @param {MenuItem} item - Clicked command item.
+   *
+   * @returns {void}
+   */
+  protected onCommandItemClick(item: MenuItem): void {
+    item.command?.({ item });
+    this.sidebarService.close();
+  }
+
+  /**
    * Method getRouterLinkActiveOptions
    * @method getRouterLinkActiveOptions
    *

@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -46,7 +47,7 @@ interface DraftRow {
  */
 @Component({
   selector: 'app-drafts-page',
-  imports: [ButtonModule, EmptyState],
+  imports: [ButtonModule, DatePipe, EmptyState],
   templateUrl: './drafts.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

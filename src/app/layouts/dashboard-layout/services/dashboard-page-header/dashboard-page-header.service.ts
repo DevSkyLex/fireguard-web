@@ -1,4 +1,4 @@
-import { inject, Injectable, type Signal, type Type } from '@angular/core';
+import { inject, Injectable, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -68,13 +68,14 @@ export class DashboardPageHeaderService {
    * @readonly
    *
    * @description
-   * Page header action components contributed through `PAGE_HEADER_SLOT`,
-   * sorted by ascending `order` and ready to render via `NgComponentOutlet`.
+   * Page header action contributions registered through `PAGE_HEADER_SLOT`,
+   * sorted by ascending `order`. The layout renders each through the slot
+   * outlet, which resolves eager and deferred components alike.
    *
    * @access public
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {Type<unknown>[]}
+   * @type {PageHeaderContribution[]}
    */
   /**
    * Property description
@@ -102,9 +103,9 @@ export class DashboardPageHeaderService {
     { initialValue: null },
   );
 
-  public readonly actions: Type<unknown>[] = (inject(PAGE_HEADER_SLOT, { optional: true }) ?? [])
-    .toSorted((a: PageHeaderContribution, b: PageHeaderContribution): number => a.order - b.order)
-    .map((contribution: PageHeaderContribution): Type<unknown> => contribution.component);
+  public readonly actions: PageHeaderContribution[] = (
+    inject(PAGE_HEADER_SLOT, { optional: true }) ?? []
+  ).toSorted((a: PageHeaderContribution, b: PageHeaderContribution): number => a.order - b.order);
   //#endregion
 
   //#region Methods

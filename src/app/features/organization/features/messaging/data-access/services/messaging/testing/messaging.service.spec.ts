@@ -54,6 +54,27 @@ describe('MessagingService', () => {
     request.flush({ member: [], totalItems: 0 });
   });
 
+  it('should page the conversation links', () => {
+    service.listConversationLinks('c1', 2).subscribe();
+
+    const request = http.expectOne(
+      (candidate) => candidate.url === `${apiUrl}/api/conversations/c1/links`,
+    );
+    expect(request.request.method).toBe('GET');
+    expect(request.request.params.get('page')).toBe('2');
+    request.flush({ member: [], totalItems: 0 });
+  });
+
+  it('should ask the activity endpoint for a bucket count', () => {
+    service.getConversationActivity('c1', 26).subscribe();
+
+    const request = http.expectOne(
+      (candidate) => candidate.url === `${apiUrl}/api/conversations/c1/activity`,
+    );
+    expect(request.request.params.get('buckets')).toBe('26');
+    request.flush({ member: [], totalItems: 0 });
+  });
+
   it('should post a message body to the conversation', () => {
     service.sendMessage('c1', { body: 'hello' }).subscribe();
 
@@ -67,7 +88,29 @@ describe('MessagingService', () => {
     service.markRead('c1').subscribe();
 
     const request = http.expectOne(`${apiUrl}/api/conversations/c1/read`);
+    // PATCH, not POST: the backend declares a Patch operation and answered 405
+    // to the POST this used to send, so the badge never cleared server-side.
+    expect(request.request.method).toBe('PATCH');
+    request.flush({});
+  });
+
+  it('should list channels with the required organization filter', () => {
+    service.listChannels('org-1').subscribe();
+
+    const request = http.expectOne(
+      (candidate) => candidate.url === `${apiUrl}/api/channels` && candidate.method === 'GET',
+    );
+    expect(request.request.params.get('organization')).toBe('/api/organizations/org-1');
+    request.flush({ member: [], totalItems: 0 });
+  });
+
+  it('should send the organization with a presence ping', () => {
+    service.pingPresence('org-1').subscribe();
+
+    const request = http.expectOne(`${apiUrl}/api/presence/ping`);
     expect(request.request.method).toBe('POST');
+    // The backend requires it; an empty body 422'd on every beat.
+    expect(request.request.body).toEqual({ organization: '/api/organizations/org-1' });
     request.flush({});
   });
 

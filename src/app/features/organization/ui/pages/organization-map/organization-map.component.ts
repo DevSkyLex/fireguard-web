@@ -1,47 +1,49 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
+  DestroyRef,
   effect,
   inject,
-  signal,
   untracked,
+  viewChild,
   type Signal,
-  type WritableSignal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { FacilityService } from '@features/organization/features/facilities';
-import type { FacilityOutput } from '@features/organization/features/facilities';
-import {
-  resolveFacilityTag,
-  type FacilityTagDescriptor,
-} from '@features/organization/features/facilities/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { EmptyState, MapCanvas, Tag, type MapMarker } from '@shared/components';
+import { SHELL_PANEL_PORT, type ShellPanelPort } from '@core/shell-panel';
+import { MAP_FACILITIES_PANEL_ID } from '@features/organization/providers';
+import { MapFacilitiesStore, type MapFacilitiesStoreType } from '@features/organization/state';
+import { MapCanvas, type MapMarker } from '@shared/components';
+import { MapLegend } from './components/map-legend';
 
 /**
  * Component OrganizationMapPage
  * @class OrganizationMapPage
  *
  * @description
- * Every geolocated facility on one map.
+ * The organization map: a full-bleed MapLibre canvas with its legend
+ * overlay. The facilities browser (search, cards, the add-facility form)
+ * used to live here as a page-local sidebar column; it now renders as the
+ * shell's `MapFacilitiesPanel`, a sibling under the dashboard shell rather
+ * than a child of this page — this page opens it on mount and closes it on
+ * destroy, and the two surfaces coordinate only through the shared
+ * `MapFacilitiesStore` (selection, search, the add-at-center flow, the
+ * fit-all trigger).
  *
  * Owned by the organization parent, not the facilities subfeature: a route
- * outside `facilities/` would fall out of that feature's route tree and break
- * the URL-to-ownership correspondence the nested feature exists to keep. It
- * reads facilities through the feature's public API rather than reaching into
- * its store.
+ * outside `facilities/` would fall out of that feature's route tree and
+ * break the URL-to-ownership correspondence the nested feature exists to
+ * keep.
  *
- * @version 1.0.0
+ * Pin drag is mouse/touch-only by design; the keyboard-accessible
+ * equivalent for repositioning a facility is the editable latitude and
+ * longitude inputs on the facility edit form (`facility-form`).
+ *
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-map',
-  imports: [MapCanvas, EmptyState, ButtonModule, FormsModule, InputTextModule, Tag],
+  imports: [MapCanvas, MapLegend],
   host: { class: 'flex min-h-0 flex-1' },
   templateUrl: './organization-map.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,169 +51,86 @@ import { EmptyState, MapCanvas, Tag, type MapMarker } from '@shared/components';
 export class OrganizationMapPage {
   //#region Properties
   /**
-   * Property facilityService
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {FacilityService}
-   */
-  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
-
-  /**
-   * Property router
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Router}
-   */
-  private readonly router: Router = inject<Router>(Router);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
-
-  /**
-   * Property facilities
-   *
-   * @description
-   * Every facility, loaded once. Held raw so the marker mapping and the
-   * "nothing to place" check both read the same source.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<readonly FacilityOutput[]>}
-   */
-  private readonly facilities: WritableSignal<readonly FacilityOutput[]> = signal<
-    readonly FacilityOutput[]
-  >([]);
-
-  /**
-   * Property markers
+   * Property store
    * @readonly
    *
    * @description
-   * Only facilities with both coordinates. One without is not an error — it
-   * simply has no address on file — so it is dropped from the map, not flagged.
+   * Shared map-facilities state — the same instance `MapFacilitiesPanel`
+   * reads and writes.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {Signal<readonly MapMarker[]>}
+   * @type {MapFacilitiesStoreType}
    */
-  protected readonly markers: Signal<readonly MapMarker[]> = computed((): readonly MapMarker[] =>
-    this.facilities()
-      .filter(
-        (facility: FacilityOutput): boolean =>
-          typeof facility.latitude === 'number' && typeof facility.longitude === 'number',
-      )
-      .map(
-        (facility: FacilityOutput): MapMarker => ({
-          id: facility.id,
-          latitude: facility.latitude as number,
-          longitude: facility.longitude as number,
-          title: facility.name,
-          subtitle: facility.type,
-        }),
-      ),
-  );
+  protected readonly store: MapFacilitiesStoreType =
+    inject<MapFacilitiesStoreType>(MapFacilitiesStore);
 
   /**
-   * Property hasLoaded
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly hasLoaded: WritableSignal<boolean> = signal<boolean>(false);
-
-  /**
-   * Property isEmpty
+   * Property shellPanel
    * @readonly
    *
    * @description
-   * True once loaded with nothing to place — distinct from "still loading".
+   * Shell panel port — how a routed page opens/closes the right-hand region
+   * without importing the layout, which ARCHITECTURE §5 forbids.
    *
-   * @access protected
-   * @since 1.0.0
+   * @access private
+   * @since 2.0.0
    *
-   * @type {Signal<boolean>}
+   * @type {ShellPanelPort}
    */
-  protected readonly isEmpty: Signal<boolean> = computed(
-    (): boolean => this.hasLoaded() && this.markers().length === 0,
-  );
-
-  /** Free-text filter applied to the side panel's list. */
-  protected readonly search: WritableSignal<string> = signal<string>('');
-
-  /** Facility currently selected from a pin or the list, if any. */
-  protected readonly selectedFacilityId: WritableSignal<string | null> = signal<string | null>(
-    null,
-  );
+  private readonly shellPanel: ShellPanelPort = inject<ShellPanelPort>(SHELL_PANEL_PORT);
 
   /**
-   * Facilities matching the search, name first then type.
+   * Property mapCanvas
+   * @readonly
    *
-   * Only placed facilities are listed, so the panel and the map always describe
-   * the same set — a row with no pin would be unselectable from the map and
-   * would make the count disagree with what is plotted.
+   * @description
+   * Handle to the map surface, used to read its current viewport center when
+   * the panel's add-facility form opens, and to re-frame on the panel's
+   * fit-all request.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {Signal<MapCanvas | undefined>}
    */
-  protected readonly filteredFacilities: Signal<readonly FacilityOutput[]> = computed(
-    (): readonly FacilityOutput[] => {
-      const term: string = this.search().trim().toLowerCase();
-      const placed: readonly FacilityOutput[] = this.facilities().filter(
-        (facility: FacilityOutput): boolean =>
-          typeof facility.latitude === 'number' && typeof facility.longitude === 'number',
-      );
-
-      if (term === '') return placed;
-
-      return placed.filter((facility: FacilityOutput): boolean =>
-        `${facility.name} ${facility.type}`.toLowerCase().includes(term),
-      );
-    },
-  );
-
-  /** True when a search excluded everything — distinct from having no facilities. */
-  protected readonly isSearchEmpty: Signal<boolean> = computed(
-    (): boolean => this.search().trim() !== '' && this.filteredFacilities().length === 0,
-  );
+  private readonly mapCanvas: Signal<MapCanvas | undefined> = viewChild(MapCanvas);
   //#endregion
 
   //#region Lifecycle
   /**
-   * Loads every facility for the active organization.
+   * Opens the facilities panel on mount and closes it on destroy — this page
+   * has nothing else to show beside the map, so the panel's lifecycle
+   * follows the page's rather than needing a manual toggle. Also wires the
+   * two effects that bridge the map's imperative surface (`MapCanvas`,
+   * injected here) to the shared store the panel reads: the map center on
+   * demand when the add-form opens, and the fit-all re-frame on request.
    *
-   * @since 1.0.0
+   * @since 2.0.0
    */
   public constructor() {
+    this.shellPanel.open(MAP_FACILITIES_PANEL_ID);
+    inject(DestroyRef).onDestroy((): void => this.shellPanel.close(MAP_FACILITIES_PANEL_ID));
+
+    // The map does not move while the add-form is open, so the center only
+    // needs to be read once, on demand, rather than tracked continuously.
     effect((): void => {
-      const organizationId: string | undefined =
-        this.activeOrganizationStore.selectedOrganization()?.id;
-      if (organizationId === undefined) return;
+      if (!this.store.showAddForm()) return;
 
       untracked((): void => {
-        this.hasLoaded.set(false);
-        this.facilityService.listAll(organizationId).subscribe({
-          next: (facilities: readonly FacilityOutput[]) => {
-            this.facilities.set(facilities);
-            this.hasLoaded.set(true);
-          },
-          error: () => this.hasLoaded.set(true),
-        });
+        this.store.setMapCenter(this.mapCanvas()?.getCenter() ?? null);
+      });
+    });
+
+    // `fitAllRequestId` starts at 0 (never requested); a real request from
+    // the panel is always >= 1, so this never fires on initial mount.
+    effect((): void => {
+      const requestId: number = this.store.fitAllRequestId();
+      if (requestId === 0) return;
+
+      untracked((): void => {
+        this.mapCanvas()?.fitAll();
       });
     });
   }
@@ -219,35 +138,11 @@ export class OrganizationMapPage {
 
   //#region Methods
   /**
-   * Method openFacility
-   *
-   * @description
-   * Opens a facility's record. An explicit action from the panel, not a
-   * side effect of selecting it.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {string} facilityId - Identifier of the facility to open.
-   *
-   * @returns {void}
-   */
-  protected openFacility(facilityId: string): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId === undefined) return;
-
-    void this.router.navigate(['/organizations', organizationId, 'facilities', facilityId]);
-  }
-
-  /**
    * Method selectMarker
    *
    * @description
-   * Selects the facility a pin stands for, rather than navigating away from the
-   * map. Leaving the map on a single click made comparing sites impossible —
-   * the whole point of plotting them together. Opening the record stays
-   * available as an explicit action on the selected row.
+   * Selects the facility a pin stands for, so the panel's card highlights
+   * without leaving the map.
    *
    * @access protected
    * @since 1.1.0
@@ -257,43 +152,25 @@ export class OrganizationMapPage {
    * @returns {void}
    */
   protected selectMarker(marker: MapMarker): void {
-    this.selectedFacilityId.set(marker.id);
+    this.store.selectFacility(marker.id);
+  }
+
+  /**
+   * Method onMarkerDragEnd
+   *
+   * @description
+   * Forwards a dragged pin's new position to the store, which persists it
+   * optimistically and reverts on failure.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {Pick<MapMarker, 'id' | 'latitude' | 'longitude'>} position - The dragged marker's new position.
+   *
+   * @returns {void}
+   */
+  protected onMarkerDragEnd(position: Pick<MapMarker, 'id' | 'latitude' | 'longitude'>): void {
+    this.store.dragMarker(position);
   }
   //#endregion
-
-  /**
-   * Method statusDescriptor
-   *
-   * @description
-   * Presentation of a site's lifecycle status, read through the facility tag
-   * registry so the panel, the tree and the list never disagree.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @param {string} status - Raw facility status.
-   *
-   * @returns {FacilityTagDescriptor} Matching descriptor.
-   */
-  protected statusDescriptor(status: string): FacilityTagDescriptor {
-    return resolveFacilityTag('status', status);
-  }
-
-  /**
-   * Method typeLabel
-   *
-   * @description
-   * The site's type in words. The row printed the raw enum ("site",
-   * "building"), which is the value the API sends, not something to show.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @param {string} type - Raw facility type.
-   *
-   * @returns {string} Human label.
-   */
-  protected typeLabel(type: string): string {
-    return resolveFacilityTag('type', type).label;
-  }
 }

@@ -1,5 +1,5 @@
 <section class="shrink-0 border-t border-surface-200 px-3 py-2.5 dark:border-surface-800">
   @for (contribution of contributions(); track contribution.id) {
-    <ng-container *ngComponentOutlet="contribution.component" />
+    <app-dashboard-layout-slot-outlet [source]="contribution" />
   }
 </section>

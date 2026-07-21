@@ -7,16 +7,20 @@ import {
   type Signal,
 } from '@angular/core';
 import type { EquipmentKpiOutput } from '@features/organization/features/equipments/models';
+import { MetricCard } from '@shared/components';
 
 /**
- * One counter, ready to render.
+ * One KPI card, ready to render. `value` is `null` before the first load
+ * completes so `app-metric-card` renders an em dash instead of a misleading
+ * zero.
  *
- * @since 1.0.0
+ * @since 2.0.0
  */
-interface FleetCounter {
-  readonly label: string;
-  readonly value: number;
-  readonly toneClass: string;
+interface FleetMetric {
+  readonly icon: string;
+  readonly title: string;
+  readonly value: number | null;
+  readonly description: string;
 }
 
 /**
@@ -24,29 +28,35 @@ interface FleetCounter {
  * @class EquipmentFleetSummary
  *
  * @description
- * A single line of fleet counters above the equipment table: total assets, how
- * many are up to date, and how many fall due soon.
+ * The KPI strip above the equipment table: total assets, compliant, due soon
+ * and open non-conformities, rendered as a responsive row of the shared
+ * `app-metric-card`.
  *
- * A line rather than a row of metric cards — the app reserves metric cards for
- * the dashboard, and repeating that treatment on every listing is the
- * "card-everything" layout PRODUCT.md lists as an anti-reference.
+ * `openNonConformities` is backend-computed organization-wide because
+ * non-conformities attach to inspections rather than equipment — there is no
+ * reliable per-asset count. Labelling the card "Non-conformity" next to
+ * equipment counters is a deliberate exception to that boundary, matching the
+ * approved collaboration-phase prototype; the count still describes the whole
+ * organization, not the assets above it.
  *
- * `openNonConformities` is deliberately not shown: the backend computes it
- * organization-wide because non-conformities attach to inspections rather than
- * equipment, so beside equipment counters it would read as a per-asset figure
- * it is not.
+ * The "next 30 days" due-soon subtitle names the platform default reminder
+ * window (`OrganizationComplianceDefaults::REMINDER_WINDOW_DAYS`); an
+ * organization that customized its window (1–180 days) sees the same fixed
+ * copy even though the backend counts against its own configured window.
+ * `EquipmentKpiOutput` does not expose the effective window today.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
- * <app-equipment-fleet-summary [kpis]="kpiStore.queryData()" />
+ * <app-equipment-fleet-summary [kpis]="kpiStore.queryData()" [loading]="kpiStore.isQueryLoading()" />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-equipment-fleet-summary',
+  imports: [MetricCard],
   templateUrl: './equipment-fleet-summary.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -57,9 +67,8 @@ export class EquipmentFleetSummary {
    * @readonly
    *
    * @description
-   * The counters, or `null` while they load or after a failure — the summary is
-   * secondary to the table and simply stays out of the way rather than showing
-   * a skeleton or an error of its own.
+   * The counters, or `null` while they load or after a failure — the cards
+   * render an em dash in that case rather than a misleading zero.
    *
    * @access public
    * @since 1.0.0
@@ -69,44 +78,111 @@ export class EquipmentFleetSummary {
   public readonly kpis: InputSignal<EquipmentKpiOutput | null> = input<EquipmentKpiOutput | null>(
     null,
   );
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether the counters are currently being fetched, forwarded to each
+   * card's own skeleton state.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Properties
   /**
-   * Property counters
+   * Property metrics
    * @readonly
    *
    * @description
-   * The counters to render, empty until they arrive.
+   * The four KPI cards to render, in prototype order: total assets,
+   * compliant, due soon, non-conformity. Labels and icons are always present
+   * so the strip can render as loading skeletons before {@link kpis} arrives.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {Signal<readonly FleetCounter[]>}
+   * @type {Signal<readonly FleetMetric[]>}
    */
-  protected readonly counters: Signal<readonly FleetCounter[]> = computed(
-    (): readonly FleetCounter[] => {
+  protected readonly metrics: Signal<readonly FleetMetric[]> = computed(
+    (): readonly FleetMetric[] => {
       const kpis: EquipmentKpiOutput | null = this.kpis();
-      if (kpis === null) return [];
 
       return [
         {
-          label: $localize`:@@equipment.summary.total:assets`,
-          value: kpis.totalAssets,
-          toneClass: 'text-surface-950 dark:text-surface-50',
+          icon: 'pi pi-box',
+          title: $localize`:@@equipment.kpi.totalAssets:Total assets`,
+          value: kpis?.totalAssets ?? null,
+          description: '',
         },
         {
-          label: $localize`:@@equipment.summary.upToDate:up to date`,
-          value: kpis.compliant,
-          toneClass: 'text-green-600 dark:text-green-400',
+          icon: 'pi pi-check-circle',
+          title: $localize`:@@equipment.kpi.compliant:Compliant`,
+          value: kpis?.compliant ?? null,
+          description: kpis ? EquipmentFleetSummary.compliantShare(kpis) : '',
         },
         {
-          label: $localize`:@@equipment.summary.dueSoon:due soon`,
-          value: kpis.dueSoon,
-          toneClass: 'text-amber-600 dark:text-amber-400',
+          icon: 'pi pi-clock',
+          title: $localize`:@@equipment.kpi.dueSoon:Due soon`,
+          value: kpis?.dueSoon ?? null,
+          description: $localize`:@@equipment.kpi.dueSoonSubtitle:next 30 days`,
+        },
+        {
+          icon: 'pi pi-exclamation-triangle',
+          title: $localize`:@@equipment.kpi.nonConformity:Non-conformity`,
+          value: kpis?.openNonConformities ?? null,
+          description: $localize`:@@equipment.kpi.nonConformitySubtitle:open`,
         },
       ];
     },
   );
+
+  /**
+   * Property hasContent
+   * @readonly
+   *
+   * @description
+   * Whether the strip has anything to show: either the counters arrived, or
+   * a load is in flight and the cards should render as skeletons. Stays
+   * hidden on a failed load with no cached data, matching the rest of this
+   * secondary summary — it stays out of the way rather than showing a
+   * permanent skeleton or an error of its own.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasContent: Signal<boolean> = computed(
+    (): boolean => this.loading() || this.kpis() !== null,
+  );
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method compliantShare
+   * @static
+   *
+   * @description
+   * The compliant share of the fleet as a rounded percentage string, or an
+   * empty subtitle when there are no assets to divide by.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @param {EquipmentKpiOutput} kpis - The loaded counters.
+   *
+   * @returns {string} The rounded percentage (e.g. `"92%"`), or `''`.
+   */
+  private static compliantShare(kpis: EquipmentKpiOutput): string {
+    if (kpis.totalAssets <= 0) return '';
+    return `${Math.round((kpis.compliant / kpis.totalAssets) * 100)}%`;
+  }
   //#endregion
 }

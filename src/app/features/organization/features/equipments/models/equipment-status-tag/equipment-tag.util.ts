@@ -63,10 +63,82 @@ const MAINTENANCE_DUE: Record<string, EquipmentTagDescriptor> = {
   },
 };
 
+/**
+ * Equipment type descriptors, one per {@link EquipmentType} value. Neutral
+ * (`secondary`) severity throughout — a fire-safety equipment type carries no
+ * inherent risk verdict, only an identity — so only the icon varies. Labels
+ * reuse the same `$localize` ids as `EQUIPMENT_TYPE_OPTIONS` (the create/edit
+ * form and table filter): the source text is identical, so the translation
+ * stays a single fact in the catalog instead of two.
+ */
+const TYPE: Record<string, EquipmentTagDescriptor> = {
+  fire_extinguisher: {
+    label: $localize`:@@equipmentType.fireExtinguisher:Fire extinguisher`,
+    severity: 'secondary',
+    icon: 'pi pi-shield',
+  },
+  smoke_detector: {
+    label: $localize`:@@equipmentType.smokeDetector:Smoke detector`,
+    severity: 'secondary',
+    icon: 'pi pi-bell',
+  },
+  heat_detector: {
+    label: $localize`:@@equipmentType.heatDetector:Heat detector`,
+    severity: 'secondary',
+    icon: 'pi pi-sun',
+  },
+  sprinkler: {
+    label: $localize`:@@equipmentType.sprinkler:Sprinkler`,
+    severity: 'secondary',
+    icon: 'pi pi-cloud',
+  },
+  fire_alarm_panel: {
+    label: $localize`:@@equipmentType.fireAlarmPanel:Fire alarm panel`,
+    severity: 'secondary',
+    icon: 'pi pi-megaphone',
+  },
+  hydrant: {
+    label: $localize`:@@equipmentType.hydrant:Hydrant`,
+    severity: 'secondary',
+    icon: 'pi pi-map-marker',
+  },
+  fire_door: {
+    label: $localize`:@@equipmentType.fireDoor:Fire door`,
+    severity: 'secondary',
+    icon: 'pi pi-sign-in',
+  },
+  emergency_lighting: {
+    label: $localize`:@@equipmentType.emergencyLighting:Emergency lighting`,
+    severity: 'secondary',
+    icon: 'pi pi-lightbulb',
+  },
+  access_control: {
+    label: $localize`:@@equipmentType.accessControl:Access control`,
+    severity: 'secondary',
+    icon: 'pi pi-lock',
+  },
+  camera: {
+    label: $localize`:@@equipmentType.camera:Camera`,
+    severity: 'secondary',
+    icon: 'pi pi-camera',
+  },
+  gas_detector: {
+    label: $localize`:@@equipmentType.gasDetector:Gas detector`,
+    severity: 'secondary',
+    icon: 'pi pi-exclamation-triangle',
+  },
+  other: {
+    label: $localize`:@@equipmentType.other:Other`,
+    severity: 'secondary',
+    icon: 'pi pi-box',
+  },
+};
+
 /** Registry indexed by tag kind. */
 const REGISTRY: Record<EquipmentTagKind, Record<string, EquipmentTagDescriptor>> = {
   status: STATUS,
   maintenanceDueStatus: MAINTENANCE_DUE,
+  type: TYPE,
 };
 
 /**

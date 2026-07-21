@@ -146,6 +146,31 @@ export interface OrganizationNavigationItem {
    * @type {OrganizationNavigationMatch}
    */
   readonly match?: OrganizationNavigationMatch;
+
+  /**
+   * Property kind
+   * @readonly
+   *
+   * @description
+   * Distinguishes routed destinations (`route`, the default) from shell-panel
+   * triggers (`panel`) rendered as buttons that open a right-hand panel
+   * instead of navigating.
+   *
+   * @type {'route' | 'panel'}
+   */
+  readonly kind?: 'route' | 'panel';
+
+  /**
+   * Property tag
+   * @readonly
+   *
+   * @description
+   * Optional short uppercase label rendered as a pill next to the item
+   * (the prototype's "NEW" tag on Assistant).
+   *
+   * @type {string}
+   */
+  readonly tag?: string;
 }
 
 /**
@@ -160,9 +185,9 @@ export interface OrganizationNavigationItem {
  * The list mirrors the collaboration prototype's flat sidebar. Members, Roles,
  * Settings and the audit log are deliberately absent: they are settings child
  * routes now, reached through the sidebar header's cog and the settings
- * vertical navigation. Inspections is the one addition over the prototype's
- * eight entries — it is a distinct permission (`inspection.read`) and hiding
- * it would strand members who hold only that grant.
+ * vertical navigation. Inspections has no entry either — the prototype's
+ * eight business destinations are reproduced verbatim; inspections stay
+ * reachable through the Compliance tabs and deep links.
  *
  * @since 1.0.0
  */
@@ -221,14 +246,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
   },
   {
-    id: 'inspections',
-    label: $localize`:@@route.inspections:Inspections`,
-    icon: 'pi pi-clipboard',
-    path: 'inspections',
-    group: 'workspace',
-    permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
-  },
-  {
     id: 'compliance',
     label: $localize`:@@route.compliance:Compliance`,
     icon: 'pi pi-verified',
@@ -244,8 +261,22 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     group: 'workspace',
     permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
   },
-  // No assistant entry: it is a shell panel now, not a destination. It opens
-  // from the composer's sparkles action, beside the thread it answers from.
+  /**
+   * The assistant is a shell panel, not a destination: the prototype's TOPNAV
+   * lists it first with a "NEW" tag, so it renders as a button that toggles
+   * the assistant panel through the shell-panel port (wired by the navigation
+   * provider — the catalog itself stays free of runtime dependencies).
+   */
+  {
+    id: 'assistant',
+    label: $localize`:@@route.assistant:Assistant`,
+    icon: 'pi pi-sparkles',
+    path: '',
+    group: 'utilities',
+    permissions: [],
+    kind: 'panel',
+    tag: $localize`:@@org.nav.assistantTag:New`,
+  },
   {
     id: 'drafts',
     label: $localize`:@@route.drafts:Drafts`,
@@ -382,14 +413,25 @@ export function buildOrganizationNavigationSection(
   const items: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
     (item: OrganizationNavigationItem): boolean =>
       item.group === group.id && hasOrganizationNavigationAccess(item, grantedPermissions),
-  ).map(
-    (item: OrganizationNavigationItem): MenuItem => ({
+  ).map((item: OrganizationNavigationItem): MenuItem => {
+    const menuItem: MenuItem = {
       id: item.id,
       label: item.label,
       icon: item.icon,
-      routerLink: resolveOrganizationNavigationLink(item, prefix),
-    }),
-  );
+    };
+
+    if (item.tag) {
+      menuItem.badge = item.tag;
+    }
+
+    // Panel items carry no route: the navigation provider attaches their
+    // command against the shell-panel port.
+    if (item.kind !== 'panel') {
+      menuItem.routerLink = resolveOrganizationNavigationLink(item, prefix);
+    }
+
+    return menuItem;
+  });
 
   if (items.length === 0) {
     return null;

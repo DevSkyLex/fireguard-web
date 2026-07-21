@@ -1,5 +1,6 @@
 import type { HydraItem } from '@core/api/models';
 import type { OrganizationSettings } from '../organization-settings/organization-settings.interface';
+import type { OrganizationMembershipRole } from './organization-membership-role.interface';
 
 /**
  * Interface OrganizationOutput
@@ -52,6 +53,23 @@ export interface OrganizationOutput extends HydraItem {
   readonly registrationNumber?: string | null;
   /** @type {(string | null | undefined)} */
   readonly vatNumber?: string | null;
+  /**
+   * Caller membership info, resolved only by the user's organization list
+   * (`GET /api/organizations`): whether the authenticated user owns this
+   * organization. `null`/absent on operations that do not resolve caller
+   * membership (e.g. `GET /api/organizations/{id}`).
+   *
+   * @type {(boolean | null | undefined)}
+   */
+  readonly isOwner?: boolean | null;
+  /**
+   * Organization roles assigned to the authenticated user's membership
+   * (`[]` for a member without any assigned role). Same resolution caveat
+   * as `isOwner`.
+   *
+   * @type {(readonly OrganizationMembershipRole[] | null | undefined)}
+   */
+  readonly roles?: readonly OrganizationMembershipRole[] | null;
   /** @type {string} */
   readonly createdAt: string;
   /** @type {string} */

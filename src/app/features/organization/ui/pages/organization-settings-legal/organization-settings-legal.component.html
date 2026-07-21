@@ -1,8 +1,11 @@
-<div id="organization-settings-legal">
+<div
+  id="organization-settings-legal"
+  class="mx-auto flex w-full max-w-7xl flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8"
+>
   <!-- Same silent save as the settings page; same store, same feedback. -->
   @if (store.saveSucceeded()) {
     <div
-      class="mb-4 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
+      class="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
       role="status"
       aria-live="polite"
       data-testid="organization-legal-saved"
@@ -12,10 +15,34 @@
     </div>
   }
 
-  <app-organization-legal-form
-    [organization]="activeOrganizationStore.selectedOrganization()"
-    [saving]="store.isSaving()"
-    [legalTypes]="legalTypes()"
-    (submitted)="save($event)"
-  />
+  <p-card [pt]="sectionCardPt">
+    <ng-template pTemplate="header">
+      <div
+        class="flex flex-wrap items-start justify-between gap-3 border-b border-surface-200 px-5 py-4 dark:border-surface-800"
+      >
+        <div class="flex flex-col">
+          <h2
+            class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+            data-testid="organization-legal-title"
+          >
+            <ng-container i18n="@@org.legal.title">Legal profile</ng-container>
+          </h2>
+          <p class="mt-0.5 text-xs text-surface-500 dark:text-surface-400" i18n="@@org.legal.intro">
+            Used on reports, invoices and compliance documents.
+          </p>
+        </div>
+        @if (completenessTag(); as tag) {
+          <app-tag [descriptor]="tag" data-testid="organization-legal-completeness" />
+        }
+      </div>
+    </ng-template>
+
+    <app-organization-legal-form
+      [organization]="activeOrganizationStore.selectedOrganization()"
+      [saving]="store.isSaving()"
+      [legalTypes]="legalTypes()"
+      (submitted)="save($event)"
+      (completenessChange)="onCompletenessChange($event)"
+    />
+  </p-card>
 </div>

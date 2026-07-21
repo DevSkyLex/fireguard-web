@@ -88,12 +88,12 @@ describe('DashboardPageHeaderService', () => {
     expect(service.actions).toEqual([]);
   });
 
-  it('should expose slot action components sorted by ascending order', () => {
+  it('should expose slot action contributions sorted by ascending order', () => {
     const { service } = setup([
       { id: 'import', order: 20, component: ImportAction },
       { id: 'export', order: 10, component: ExportAction },
     ]);
 
-    expect(service.actions).toEqual([ExportAction, ImportAction]);
+    expect(service.actions.map((action) => action.component)).toEqual([ExportAction, ImportAction]);
   });
 });

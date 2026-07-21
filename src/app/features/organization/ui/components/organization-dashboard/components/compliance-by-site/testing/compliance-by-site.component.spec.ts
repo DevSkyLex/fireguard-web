@@ -99,16 +99,16 @@ describe('ComplianceBySite', () => {
   });
 
   // A 100% built on two assets must not read as a clean estate: the
-  // denominator stays beside the rate.
-  it('should show the tracked-equipment denominator beside each rate', () => {
+  // denominator stays visible per row, as the name column's sub-line.
+  it('should show the tracked-equipment denominator under each site name', () => {
     const fixture = createComponent([
       row({ facilityId: 'f-1', path: 'Small', complianceRate: 100, trackedEquipmentCount: 2 }),
       row({ facilityId: 'f-2', path: 'Large', complianceRate: 40, trackedEquipmentCount: 128 }),
     ]);
     const text: string = fixture.nativeElement.textContent ?? '';
 
-    expect(text).toContain('(2)');
-    expect(text).toContain('(128)');
+    expect(text).toContain('2 tracked');
+    expect(text).toContain('128 tracked');
   });
 
   it('should size each bar by its coverage rate', () => {

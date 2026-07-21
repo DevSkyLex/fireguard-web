@@ -187,5 +187,24 @@ export class CalendarSidebar {
   protected dotClass(tone: TagSeverity | undefined): string {
     return tagSeverityDotClass(tone ?? 'secondary');
   }
+
+  /**
+   * Method countFor
+   *
+   * @description
+   * Resolves a category's event count, defaulting to `0` so every row keeps a
+   * trailing figure — a missing count would misalign the row against its
+   * neighbours.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @param {string} categoryId - Category id to look up.
+   * @returns {number} The category's event count, or `0` when absent.
+   */
+  protected countFor(categoryId: string): number {
+    const counts: Readonly<Record<string, number | undefined>> = this.categoryCounts();
+    return counts[categoryId] ?? 0;
+  }
   //#endregion
 }

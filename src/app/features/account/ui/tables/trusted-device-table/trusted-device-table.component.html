@@ -1,142 +1,98 @@
-<p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
-
-<p-card data-shell="table">
-  <ng-template pTemplate="header">
-    <div class="flex flex-col">
-      <h2 class="font-semibold" i18n="@@account.deviceTable.title">Trusted devices</h2>
-      <p class="text-sm text-surface-500" i18n="@@account.deviceTable.subtitle">
+<div
+  class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  data-shell="table"
+>
+  <div
+    class="flex flex-wrap items-center justify-between gap-2.5 border-b border-surface-200 px-[18px] py-3.5 dark:border-surface-800"
+  >
+    <div>
+      <h2
+        class="text-base font-semibold text-surface-950 dark:text-surface-50"
+        i18n="@@account.deviceTable.title"
+      >
+        Trusted devices
+      </h2>
+      <p
+        class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+        i18n="@@account.deviceTable.subtitle"
+      >
         Devices allowed to bypass repeated MFA verification.
       </p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    @if (hasDevices()) {
       <p-button
-        label="Refresh"
-        i18n-label="@@common.refresh"
-        icon="pi pi-refresh"
-        severity="secondary"
+        label="Revoke all"
+        i18n-label="@@account.deviceTable.revokeAll"
+        icon="pi pi-shield"
+        severity="danger"
         size="small"
         [outlined]="true"
-        [disabled]="loading()"
-        class="w-full sm:w-auto"
-        (onClick)="onRefresh()"
+        [loading]="revokingAll()"
+        (onClick)="revokeAll.emit()"
       />
+    }
+  </div>
 
-      @if (hasDevices()) {
-        <p-button
-          label="Revoke all"
-          i18n-label="@@account.deviceTable.revokeAll"
-          icon="pi pi-shield"
-          severity="danger"
-          size="small"
-          [outlined]="true"
-          [loading]="revokingAll()"
-          class="w-full sm:w-auto"
-          (onClick)="revokeAll.emit()"
-        />
+  @if (loading()) {
+    <ul class="divide-y divide-surface-200 dark:divide-surface-800">
+      @for (item of skeletonItems; track item.id) {
+        <li class="flex items-center gap-3 px-[18px] py-3">
+          <p-skeleton shape="circle" size="2rem" />
+          <p-skeleton width="10rem" height="0.875rem" />
+        </li>
       }
-    </div>
-  </ng-template>
+    </ul>
+  } @else if (empty()) {
+    <app-empty-state
+      icon="pi-shield"
+      title="No trusted devices"
+      i18n-title="@@account.deviceTable.emptyTitle"
+      description="Devices you mark as trusted during sign-in will appear here."
+      i18n-description="@@account.deviceTable.emptyDesc"
+    />
+  } @else {
+    <ul class="divide-y divide-surface-200 dark:divide-surface-800">
+      @for (device of devices(); track device.id) {
+        <li class="flex items-center gap-3 px-[18px] py-3">
+          <span
+            class="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+          >
+            <i class="pi pi-shield text-sm" aria-hidden="true"></i>
+          </span>
 
-  <ng-template pTemplate="content">
-    <p-table
-      [value]="loading() ? skeletonItems : empty() ? [] : [...devices()]"
-      dataKey="id"
-      [paginator]="total() > 0"
-      [rows]="rows"
-      [first]="firstPage()"
-      [totalRecords]="total()"
-      [lazy]="true"
-      (onLazyLoad)="onLazyLoad($event)"
-      [rowsPerPageOptions]="rowsPerPageOptions"
-      [paginatorDropdownAppendTo]="'body'"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} devices"
-      i18n-currentPageReportTemplate="@@account.deviceTable.pageReport"
-      [stripedRows]="true"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th class="min-w-64" i18n="@@account.sessionTable.device">Device</th>
-          <th class="hidden min-w-36 md:table-cell" i18n="@@common.created">Created</th>
-          <th class="min-w-36" i18n="@@account.deviceTable.lastUsed">Last used</th>
-          <th class="min-w-36" i18n="@@account.deviceTable.expires">Expires</th>
-          <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
-        </tr>
-      </ng-template>
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
+              {{ device.name }}
+            </div>
+            <!--
+              Real per-device expiry, not the mockup's hardcoded "30 days": the
+              trusted-device endpoint returns the actual expiry per device, so
+              that is what this line reports.
+            -->
+            <div
+              class="flex flex-wrap items-center gap-x-1 truncate text-xs text-surface-500 dark:text-surface-400"
+            >
+              <span i18n="@@account.deviceTable.lastUsedOn"
+                >Last used {{ device.lastUsedAt | date: 'mediumDate' }}</span
+              >
+              <span aria-hidden="true">&#183;</span>
+              <span i18n="@@account.deviceTable.expiresOn"
+                >Expires {{ device.expiresAt | date: 'mediumDate' }}</span
+              >
+            </div>
+          </div>
 
-      <ng-template pTemplate="body" let-device>
-        @if (loading()) {
-          <tr>
-            <td>
-              <div class="flex items-center gap-3">
-                <p-skeleton shape="circle" size="2.25rem" />
-                <p-skeleton width="10rem" height="0.875rem" />
-              </div>
-            </td>
-            <td class="hidden md:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-          </tr>
-        } @else {
-          <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
-            <td>
-              <div class="flex min-w-0 items-center gap-3">
-                <p-avatar
-                  icon="pi pi-shield"
-                  shape="circle"
-                  size="normal"
-                  class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                />
-                <span class="truncate font-medium text-surface-900 dark:text-surface-100">
-                  {{ device.name }}
-                </span>
-              </div>
-            </td>
-            <td class="hidden md:table-cell">
-              <span class="text-surface-500 dark:text-surface-400">
-                {{ device.createdAt | date: 'medium' }}
-              </span>
-            </td>
-            <td>
-              <span class="text-surface-500 dark:text-surface-400">
-                {{ device.lastUsedAt | date: 'medium' }}
-              </span>
-            </td>
-            <td>
-              <span class="text-surface-500 dark:text-surface-400">
-                {{ device.expiresAt | date: 'medium' }}
-              </span>
-            </td>
-            <td class="text-right">
-              <p-button
-                icon="pi pi-ellipsis-v"
-                severity="secondary"
-                size="small"
-                [outlined]="true"
-                ariaLabel="Trusted device actions"
-                i18n-ariaLabel="@@account.deviceTable.actions"
-                (onClick)="onActionMenuToggle($event, device)"
-              />
-            </td>
-          </tr>
-        }
-      </ng-template>
-
-      <ng-template pTemplate="emptymessage">
-        <tr class="bg-transparent! [&>td]:border-b-0!">
-          <td colspan="5">
-            <app-empty-state
-              icon="pi-shield"
-              title="No trusted devices"
-              i18n-title="@@account.deviceTable.emptyTitle"
-              description="Devices you mark as trusted during sign-in will appear here."
-              i18n-description="@@account.deviceTable.emptyDesc"
-            />
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </ng-template>
-</p-card>
+          <p-button
+            label="Revoke"
+            i18n-label="@@account.deviceTable.revoke"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            (onClick)="revoke.emit(device)"
+          />
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -1,32 +1,32 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { ACCOUNT_PERMISSION, UserPermissionService } from '@features/account';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   ComplianceSummaryStore,
   type ComplianceSummaryStoreType,
 } from '@features/organization/features/compliance/state';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
-  ORGANIZATION_PERMISSION,
-  type OrganizationDashboardRecentIntervention,
-} from '@features/organization/models';
-import { DashboardStore } from '@features/organization/state/organization-dashboard';
-import { EmptyState, Skeleton } from '@shared/components';
+  DashboardStore,
+  RecentActivityStore,
+  UpcomingInterventionsStore,
+  type RecentActivityStoreType,
+  type UpcomingInterventionsStoreType,
+} from '@features/organization/state/organization-dashboard';
+import { EmptyState } from '@shared/components';
 import {
-  AssetGrowthTrend,
-  EquipmentCreatedTrend,
-  FacilitiesCreatedTrend,
   ComplianceBySite,
   DashboardMetricCell,
   DashboardMetricStrip,
-  DashboardRecentInterventions,
-  InspectionQualityTrend,
-  InspectionsTrend,
-  NonConformitiesResolvedTrend,
+  DashboardRecentActivity,
+  DashboardUpcomingInterventions,
   EquipmentStatusBreakdown,
   InspectionResultBreakdown,
+  InspectionsTrend,
   NonConformitiesBySeverity,
-  NonConformitiesOpenedTrend,
-  OverviewTrend,
+  NonConformitiesTrend,
 } from './components';
 
 /**
@@ -34,12 +34,15 @@ import {
  * @class OrganizationDashboard
  *
  * @description
- * Smart dashboard component for the organization overview page.
- * Delegates data fetching and KPI derivation to `OrganizationDashboardStore`.
- * Child trend components handle their own independent data requests
- * and are mounted below the summary row.
+ * Smart dashboard component for the organization overview page, laid out as
+ * the prototype's nine modules: the four-cell metric strip, a grid of chart
+ * cards (non-conformities trend, equipment status, inspections, severity
+ * bars, inspection results), and a lower band with upcoming interventions,
+ * recent activity and compliance by site. Delegates data fetching to the
+ * aggregate `DashboardStore` plus the compliance, upcoming-interventions and
+ * recent-activity slices, each gated by its own permission.
  *
- * @version 1.4.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -49,23 +52,22 @@ import {
   imports: [
     DashboardMetricStrip,
     DashboardMetricCell,
-    DashboardRecentInterventions,
-    OverviewTrend,
-    InspectionQualityTrend,
+    DashboardRecentActivity,
+    DashboardUpcomingInterventions,
+    NonConformitiesTrend,
     InspectionsTrend,
     EquipmentStatusBreakdown,
     InspectionResultBreakdown,
     NonConformitiesBySeverity,
-    NonConformitiesOpenedTrend,
-    NonConformitiesResolvedTrend,
     ComplianceBySite,
-    AssetGrowthTrend,
-    EquipmentCreatedTrend,
-    FacilitiesCreatedTrend,
-    Skeleton,
     EmptyState,
   ],
-  providers: [DashboardStore, ComplianceSummaryStore],
+  providers: [
+    DashboardStore,
+    ComplianceSummaryStore,
+    UpcomingInterventionsStore,
+    RecentActivityStore,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboard {
@@ -76,8 +78,8 @@ export class OrganizationDashboard {
    * @readonly
    *
    * @description
-   * Component-scoped store that owns the aggregate `/dashboard` fetch,
-   * KPI derivation and comparison delta computation.
+   * Component-scoped store that owns the aggregate `/dashboard` fetch and
+   * the metric/breakdown derivations.
    *
    * @access protected
    * @since 1.1.0
@@ -93,7 +95,8 @@ export class OrganizationDashboard {
    * @description
    * Component-scoped instance of the nested compliance feature's summary
    * store, consumed through its published `state` barrel. It feeds the
-   * "Compliance by site" card with the worst-first per-site breakdown.
+   * compliance-rate and equipment-due-soon metric cells plus the
+   * "Compliance by site" card.
    *
    * @access protected
    * @since 1.4.0
@@ -102,6 +105,38 @@ export class OrganizationDashboard {
    */
   protected readonly complianceStore: ComplianceSummaryStoreType =
     inject<ComplianceSummaryStoreType>(ComplianceSummaryStore);
+
+  /**
+   * Property upcomingStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped slice loading the five soonest-due interventions for
+   * the "Upcoming interventions" card.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {UpcomingInterventionsStoreType}
+   */
+  protected readonly upcomingStore: UpcomingInterventionsStoreType =
+    inject<UpcomingInterventionsStoreType>(UpcomingInterventionsStore);
+
+  /**
+   * Property activityStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped slice loading the newest audit ledger entries for the
+   * "Recent activity" feed.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {RecentActivityStoreType}
+   */
+  protected readonly activityStore: RecentActivityStoreType =
+    inject<RecentActivityStoreType>(RecentActivityStore);
 
   /**
    * Property organizationPermissionService
@@ -120,12 +155,29 @@ export class OrganizationDashboard {
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
+   * Property userPermissionService
+   * @readonly
+   *
+   * @description
+   * Account-owned helper for the **global** permission surface — the audit
+   * ledger is gated by `audit.read`, a platform capability rather than an
+   * organization permission.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {UserPermissionService}
+   */
+  private readonly userPermissionService: UserPermissionService =
+    inject<UserPermissionService>(UserPermissionService);
+
+  /**
    * Property router
    * @readonly
    *
    * @description
-   * Router used to open an intervention from the recent-interventions
-   * table.
+   * Router used to leave for the intervention workspace, the intervention
+   * list and the compliance register.
    *
    * @access private
    * @since 1.3.0
@@ -152,47 +204,11 @@ export class OrganizationDashboard {
   );
 
   /**
-   * Property canReadFacilities
-   * @readonly
-   *
-   * @description
-   * Indicates whether facilities metrics and resource trends can be rendered.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly canReadFacilities: Signal<boolean> = computed<boolean>(
-    () =>
-      this.canReadDashboard() ||
-      this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ),
-  );
-
-  /**
-   * Property canReadMembers
-   * @readonly
-   *
-   * @description
-   * Indicates whether member metrics can be rendered.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly canReadMembers: Signal<boolean> = computed<boolean>(
-    () =>
-      this.canReadDashboard() ||
-      this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ),
-  );
-
-  /**
    * Property canReadEquipment
    * @readonly
    *
    * @description
-   * Indicates whether equipment metrics and resource trends can be rendered.
+   * Indicates whether the equipment status donut can be rendered.
    *
    * @access protected
    * @since 1.2.0
@@ -210,7 +226,9 @@ export class OrganizationDashboard {
    * @readonly
    *
    * @description
-   * Indicates whether inspection metrics and inspection-driven trends can be rendered.
+   * Indicates whether inspection-driven cards (non-conformities trend and
+   * metric cell, inspections trend, severity bars, result donut) can be
+   * rendered.
    *
    * @access protected
    * @since 1.2.0
@@ -224,22 +242,61 @@ export class OrganizationDashboard {
   );
 
   /**
-   * Property canReadRecentInterventions
+   * Property canReadInterventions
    * @readonly
    *
    * @description
-   * Indicates whether the recent-interventions table can be rendered.
-   * Gated on the interventions read permission alone (not the dashboard
-   * permission), because the backend embeds the rows only for callers
-   * holding `organization.interventions.read`.
+   * Indicates whether the open-interventions metric cell and the upcoming
+   * interventions card can be rendered. Gated on the interventions read
+   * permission alone (not the dashboard permission), because the backend
+   * scopes both the embedded section and the collection endpoint to
+   * `organization.interventions.read`.
    *
    * @access protected
    * @since 1.3.0
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canReadRecentInterventions: Signal<boolean> = computed<boolean>(() =>
+  protected readonly canReadInterventions: Signal<boolean> = computed<boolean>(() =>
     this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
+  );
+
+  /**
+   * Property canReadCompliance
+   * @readonly
+   *
+   * @description
+   * Indicates whether the compliance-fed surfaces (compliance-rate and
+   * equipment-due-soon metric cells, "Compliance by site" card) can be
+   * rendered. Gated on the compliance read permission alone because the
+   * summary endpoint requires `organization.compliance.read` in its own
+   * right.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadCompliance: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_READ),
+  );
+
+  /**
+   * Property canReadAudit
+   * @readonly
+   *
+   * @description
+   * Indicates whether the "Recent activity" feed can be rendered. Gated on
+   * the **global** `audit.read` permission — the ledger endpoint is
+   * platform-wide, exactly like the audit log page.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadAudit: Signal<boolean> = computed<boolean>(() =>
+    this.userPermissionService.hasPermission(ACCOUNT_PERMISSION.AUDIT_READ),
   );
 
   /**
@@ -266,22 +323,82 @@ export class OrganizationDashboard {
   );
 
   /**
-   * Property canReadCompliance
+   * Property complianceRateValue
    * @readonly
    *
    * @description
-   * Indicates whether the "Compliance by site" card can be rendered. Gated
-   * on the compliance read permission alone (not the dashboard permission),
-   * because the compliance summary endpoint requires
-   * `organization.compliance.read` in its own right.
+   * Organization-wide compliance rate as a percent string, or null while
+   * nothing is tracked — "no schedule yet" must not render as "0%".
    *
    * @access protected
-   * @since 1.4.0
+   * @since 2.0.0
    *
-   * @type {Signal<boolean>}
+   * @type {Signal<string | null>}
    */
-  protected readonly canReadCompliance: Signal<boolean> = computed<boolean>(() =>
-    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_READ),
+  protected readonly complianceRateValue: Signal<string | null> = computed<string | null>(() => {
+    const rate: number | null = this.complianceStore.rollup().complianceRate;
+    return rate !== null ? `${Math.round(rate)}%` : null;
+  });
+
+  /**
+   * Property openNonConformityCount
+   * @readonly
+   *
+   * @description
+   * Open non-conformities across every severity, summed from the dashboard
+   * payload's severity breakdown.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly openNonConformityCount: Signal<number> = computed<number>(() =>
+    this.store
+      .nonConformitiesBySeverity()
+      .reduce((sum: number, bucket: { readonly count: number }): number => sum + bucket.count, 0),
+  );
+
+  /**
+   * Property criticalNonConformitiesNote
+   * @readonly
+   *
+   * @description
+   * "N critical" under the open non-conformities figure — the bucket that
+   * decides tonight's priorities.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly criticalNonConformitiesNote: Signal<string> = computed<string>(() => {
+    const critical: number =
+      this.store
+        .nonConformitiesBySeverity()
+        .find(
+          (bucket: { readonly severity: string; readonly count: number }) =>
+            bucket.severity === 'critical',
+        )?.count ?? 0;
+
+    return $localize`:@@org.dash.criticalNc:${critical}:count: critical`;
+  });
+
+  /**
+   * Property equipmentDueSoonCount
+   * @readonly
+   *
+   * @description
+   * Equipment whose next maintenance falls due soon, from the compliance
+   * rollup.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly equipmentDueSoonCount: Signal<number> = computed<number>(
+    () => this.complianceStore.rollup().dueSoonEquipmentCount,
   );
 
   /**
@@ -290,8 +407,8 @@ export class OrganizationDashboard {
    *
    * @description
    * Organization id forwarded to the compliance summary query, or `null`
-   * while the card is not visible to the member — no permission means no
-   * fetch, and the query starts only once the card actually renders.
+   * while its surfaces are not visible to the member — no permission means
+   * no fetch.
    *
    * @access private
    * @since 1.4.0
@@ -303,75 +420,93 @@ export class OrganizationDashboard {
   );
 
   /**
-   * Property hasActivityMetrics
+   * Property upcomingLoadParams
    * @readonly
    *
    * @description
-   * Indicates whether at least one activity KPI card can be rendered.
+   * Organization id forwarded to the upcoming interventions query, or
+   * `null` while the card is not visible to the member.
    *
-   * @access protected
-   * @since 1.2.0
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  private readonly upcomingLoadParams: Signal<string | null> = computed<string | null>(() =>
+    this.canReadInterventions() ? (this.store.loadParams() ?? null) : null,
+  );
+
+  /**
+   * Property activityLoadGate
+   * @readonly
+   *
+   * @description
+   * `true` once the recent-activity feed may fetch: the member holds
+   * `audit.read` and the browser-side organization context is resolved (the
+   * ledger query itself is organization-agnostic — see the slice's JSDoc).
+   *
+   * @access private
+   * @since 2.0.0
    *
    * @type {Signal<boolean>}
    */
-  protected readonly hasActivityMetrics: Signal<boolean> = computed<boolean>(
+  private readonly activityLoadGate: Signal<boolean> = computed<boolean>(
+    () => this.canReadAudit() && this.store.loadParams() !== undefined,
+  );
+
+  /**
+   * Property hasMetricCells
+   * @readonly
+   *
+   * @description
+   * Indicates whether at least one metric-strip cell survives its
+   * permission gate.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasMetricCells: Signal<boolean> = computed<boolean>(
+    () => this.canReadInterventions() || this.canReadCompliance() || this.canReadInspections(),
+  );
+
+  /**
+   * Property hasChartCards
+   * @readonly
+   *
+   * @description
+   * Indicates whether the chart grid contains at least one visible card.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasChartCards: Signal<boolean> = computed<boolean>(
+    () => this.canReadInspections() || this.canReadEquipment(),
+  );
+
+  /**
+   * Property showDashboard
+   * @readonly
+   *
+   * @description
+   * Indicates whether any dashboard module is visible; otherwise the
+   * no-access empty state renders alone.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showDashboard: Signal<boolean> = computed<boolean>(
     () =>
-      this.canReadFacilities() ||
-      this.canReadMembers() ||
-      this.canReadEquipment() ||
-      this.canReadInspections(),
-  );
-
-  /**
-   * Property hasActivityInsights
-   * @readonly
-   *
-   * @description
-   * Indicates whether at least one activity trend card can be rendered.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly hasActivityInsights: Signal<boolean> = computed<boolean>(() =>
-    this.canReadInspections(),
-  );
-
-  /**
-   * Property showActivitySection
-   * @readonly
-   *
-   * @description
-   * Indicates whether the activity section contains at least one visible block.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly showActivitySection: Signal<boolean> = computed<boolean>(
-    () =>
-      this.hasActivityMetrics() ||
-      this.hasActivityInsights() ||
-      this.canReadRecentInterventions() ||
-      this.canReadCompliance(),
-  );
-
-  /**
-   * Property showResourcesSection
-   * @readonly
-   *
-   * @description
-   * Indicates whether the resource section contains at least one visible block.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly showResourcesSection: Signal<boolean> = computed<boolean>(
-    () => this.canReadFacilities() || this.canReadEquipment(),
+      this.hasMetricCells() ||
+      this.hasChartCards() ||
+      this.canReadInterventions() ||
+      this.canReadCompliance() ||
+      this.canReadAudit(),
   );
 
   //#endregion
@@ -379,14 +514,16 @@ export class OrganizationDashboard {
   //#region Lifecycle
 
   /**
-   * Wires the compliance summary query to its reactive parameters: the
-   * query runs only while the member can see the card, and re-runs when
+   * Wires the permission-gated queries to their reactive parameters: each
+   * runs only while its surface is visible to the member, and re-runs when
    * the active organization changes.
    *
    * @since 1.4.0
    */
   public constructor() {
     this.complianceStore.load(this.complianceLoadParams);
+    this.upcomingStore.load(this.upcomingLoadParams);
+    this.activityStore.load(this.activityLoadGate);
   }
 
   //#endregion
@@ -398,15 +535,15 @@ export class OrganizationDashboard {
    *
    * @description
    * Routes into the intervention workspace for the row activated in the
-   * recent-interventions table.
+   * upcoming interventions card.
    *
    * @access protected
    * @since 1.3.0
    *
-   * @param {OrganizationDashboardRecentIntervention} intervention - Activated table row.
+   * @param {InterventionOutput} intervention - Activated row.
    * @returns {void}
    */
-  protected openIntervention(intervention: OrganizationDashboardRecentIntervention): void {
+  protected openIntervention(intervention: InterventionOutput): void {
     const organizationId: string | undefined = this.store.loadParams();
     if (!organizationId) return;
 
@@ -417,8 +554,8 @@ export class OrganizationDashboard {
    * Method openInterventionList
    *
    * @description
-   * Leaves for the full intervention list. The card shows five rows and had no
-   * way through to the rest.
+   * Leaves for the full intervention list from the upcoming card's
+   * "View all interventions" link.
    *
    * @access protected
    * @since 1.4.0
@@ -433,19 +570,34 @@ export class OrganizationDashboard {
   }
 
   /**
-   * Method retryDashboard
+   * Method retryUpcoming
    *
    * @description
-   * Re-triggers the aggregate dashboard query after a failure surfaced
-   * by the recent-interventions table.
+   * Re-runs the upcoming interventions query after a failure surfaced by
+   * the card.
    *
    * @access protected
-   * @since 1.3.0
+   * @since 2.0.0
    *
    * @returns {void}
    */
-  protected retryDashboard(): void {
-    this.store.load(this.store.loadParams());
+  protected retryUpcoming(): void {
+    this.upcomingStore.load(this.store.loadParams() ?? null);
+  }
+
+  /**
+   * Method retryActivity
+   *
+   * @description
+   * Re-runs the recent activity query after a failure surfaced by the feed.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected retryActivity(): void {
+    this.activityStore.load(this.canReadAudit());
   }
 
   /**

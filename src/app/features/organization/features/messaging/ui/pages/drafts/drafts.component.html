@@ -11,26 +11,42 @@
   } @else {
     <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
       @for (row of rows(); track row.draft.conversationId) {
-        <li class="flex items-start gap-3 py-3.5" data-testid="draft-row">
+        <li
+          class="flex items-start gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-surface-100 dark:hover:bg-surface-800"
+          data-testid="draft-row"
+        >
           <span
-            class="grid size-7 shrink-0 place-content-center rounded-full bg-surface-100 text-surface-500 dark:bg-surface-900 dark:text-surface-400"
+            class="grid size-9 shrink-0 place-content-center rounded-md bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400"
             aria-hidden="true"
           >
             <i class="pi pi-file-edit text-xs"></i>
           </span>
 
           <div class="min-w-0 flex-1">
-            <p class="truncate text-[13px] font-semibold text-surface-950 dark:text-surface-50">
-              @if (labelOf(row).length > 0) {
-                {{ labelOf(row) }}
-              } @else {
-                <ng-container i18n="@@messaging.drafts.unknownConversation"
-                  >Conversation unavailable</ng-container
+            <div class="flex items-baseline gap-2">
+              <p class="truncate text-[13px] font-semibold text-surface-950 dark:text-surface-50">
+                @if (labelOf(row).length > 0) {
+                  {{ labelOf(row) }}
+                } @else {
+                  <ng-container i18n="@@messaging.drafts.unknownConversation"
+                    >Conversation unavailable</ng-container
+                  >
+                }
+              </p>
+
+              <!-- Without it a week-old draft looks exactly like one written a
+                   minute ago. Absent on entries stored before drafts were
+                   stamped, rather than faked. -->
+              @if (row.draft.updatedAt; as updatedAt) {
+                <time
+                  class="ml-auto shrink-0 text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
+                  [attr.datetime]="updatedAt"
+                  >{{ updatedAt | date: 'shortDate' }}</time
                 >
               }
-            </p>
+            </div>
             <p
-              class="mt-0.5 line-clamp-2 text-[13px] break-words text-surface-600 dark:text-surface-400"
+              class="mt-0.5 truncate text-[13px] text-surface-500 dark:text-surface-400"
               data-testid="draft-excerpt"
             >
               {{ row.draft.body }}

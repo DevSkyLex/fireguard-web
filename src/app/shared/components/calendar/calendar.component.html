@@ -1,33 +1,22 @@
 <div
-  class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  class="flex min-h-0 flex-1 flex-col overflow-hidden"
+  [class]="
+    flush()
+      ? 'bg-transparent'
+      : 'rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900'
+  "
 >
-  <div class="grid min-h-0 flex-1 lg:grid-cols-[15rem_minmax(0,1fr)]">
-    <!-- Configuration sidebar -->
-    @if (showSidebar()) {
-      <aside
-        class="border-surface-200 p-4 lg:block lg:min-h-0 lg:overflow-y-auto lg:border-r dark:border-surface-800"
-        [class.hidden]="!sidebarOpen()"
-        [class.border-b]="sidebarOpen()"
-      >
-        <app-calendar-sidebar
-          [focusedDate]="activeDate()"
-          [categoryGroups]="activeGroups()"
-          [categoryCounts]="categoryCounts()"
-          [events]="visibleEvents()"
-          [weekStartsOn]="weekStartsOn()"
-          [today]="today"
-          (focusedDateChange)="focusDate($event)"
-          (categoryToggle)="toggleCategory($event)"
-        />
-      </aside>
-    }
-
+  <div
+    class="grid min-h-0 flex-1"
+    [class]="showSidebar() ? 'lg:grid-cols-[minmax(0,1fr)_16.625rem]' : ''"
+  >
     <!-- Main pane: toolbar + view -->
     <div class="flex min-h-0 min-w-0 flex-col">
       <div
-        class="flex shrink-0 flex-col gap-3 border-b border-surface-200 p-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+        class="flex shrink-0 flex-col gap-3 border-b border-surface-200 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+        [class]="flush() ? 'px-6 py-3.5' : 'p-3'"
       >
-        <div class="flex items-center gap-1">
+        <div class="flex min-w-0 items-center gap-3.5">
           @if (showSidebar()) {
             <p-button
               icon="pi pi-sliders-h"
@@ -41,60 +30,63 @@
               (onClick)="sidebarOpen.set(!sidebarOpen())"
             />
           }
-          <p-button
-            icon="pi pi-chevron-left"
-            severity="secondary"
-            size="small"
-            [text]="true"
-            [rounded]="true"
-            ariaLabel="Previous period"
-            i18n-ariaLabel="@@calendar.prevPeriod"
-            (onClick)="previous()"
-          />
-          <div class="min-w-44 px-1 text-center sm:text-left">
-            <h2
-              class="text-[15px] font-semibold tracking-[-0.01em] text-surface-900 dark:text-surface-50"
-            >
-              {{ periodLabel() }}
-            </h2>
-            <!--
-              Bounded exactly like the grid beside it, so the figure can never
-              contradict what is plotted.
-            -->
-            <p
-              class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
-              data-testid="calendar-period-summary"
-              i18n="@@calendar.periodSummary"
-            >
-              {periodEventCount(), plural,
-                =0 {No events}
-                =1 {1 event}
-                other {{{ periodEventCount() }} events}
-              }
-            </p>
+          <div class="flex items-center gap-0.5">
+            <p-button
+              icon="pi pi-chevron-left"
+              severity="secondary"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Previous period"
+              i18n-ariaLabel="@@calendar.prevPeriod"
+              (onClick)="previous()"
+            />
+            <p-button
+              icon="pi pi-chevron-right"
+              severity="secondary"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Next period"
+              i18n-ariaLabel="@@calendar.nextPeriod"
+              (onClick)="next()"
+            />
           </div>
-          <p-button
-            icon="pi pi-chevron-right"
-            severity="secondary"
-            size="small"
-            [text]="true"
-            [rounded]="true"
-            ariaLabel="Next period"
-            i18n-ariaLabel="@@calendar.nextPeriod"
-            (onClick)="next()"
-          />
+          <h2
+            class="text-xl font-semibold tracking-tight whitespace-nowrap text-surface-900 dark:text-surface-50"
+          >
+            {{ periodLabel() }}
+          </h2>
           <p-button
             label="Today"
             i18n-label="@@calendar.today"
             severity="secondary"
             size="small"
             [outlined]="true"
-            class="ml-1"
             (onClick)="goToday()"
           />
+          <!--
+            Bounded exactly like the grid beside it, so the figure can never
+            contradict what is plotted. Hidden below the width where the
+            leading cluster already has to wrap.
+          -->
+          <p
+            class="hidden text-[13px] whitespace-nowrap text-surface-500 tabular-nums sm:block dark:text-surface-400"
+            data-testid="calendar-period-summary"
+            i18n="@@calendar.periodSummary"
+          >
+            {periodEventCount(), plural,
+              =0 {No events}
+              =1 {1 event}
+              other {{{ periodEventCount() }} events}
+            }
+          </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2.5">
+          @if (actionsTemplate(); as actions) {
+            <ng-container [ngTemplateOutlet]="actions" />
+          }
           @if (viewOptions().length > 1) {
             <p-selectButton
               [options]="[...viewOptions()]"
@@ -107,9 +99,6 @@
               aria-label="Calendar view"
               i18n-aria-label="@@calendar.viewSelector"
             />
-          }
-          @if (actionsTemplate(); as actions) {
-            <ng-container [ngTemplateOutlet]="actions" />
           }
         </div>
       </div>
@@ -152,43 +141,27 @@
           }
           @case ('day') {
             <!--
-              A day is a week of one, rendered by the same grid: giving it its
-              own component would duplicate the all-day split and the overlap
-              packing, which are exactly the parts that drift when copied.
-
-              It takes the *detail* template, not the compact chip. The chip
-              exists because a month cell or one of seven week columns is
-              narrow; a day column is the full width of the grid, so the
-              richer row — title plus time — fits and the chip would waste it.
+              A day is an agenda of one, rendered by the same list component
+              as the "agenda" view: a single column is too narrow to earn a
+              dedicated time-grid, and it takes the *detail* template so the
+              richer row — title plus type plus time — fits its full width.
             -->
-            <div class="relative h-full">
-              <app-calendar-week
-                class="block h-full"
-                [weekDays]="dayColumn()"
-                [hours]="weekHours()"
-                [eventTemplate]="eventDetailTemplate() ?? eventTemplate() ?? defaultDetail"
-                (eventClick)="eventClick.emit($event)"
-                (dayCreate)="dayCreate.emit($event)"
-              />
-
-              <!--
-                Over the grid, not instead of it: the hours stay usable for
-                creating something, and the message answers the question an
-                empty column raises — is this day free, or did nothing load?
-                Only in the day view; an empty *week* still reads as empty
-                because six neighbouring columns give it scale.
-              -->
-              @if (periodEventCount() === 0) {
+            <div class="h-full overflow-y-auto px-7 pt-1.5 pb-7">
+              @if (dayAgendaDays().length > 0) {
+                <app-calendar-agenda
+                  [agendaDays]="dayAgendaDays()"
+                  [today]="today"
+                  [eventTemplate]="eventDetailTemplate() ?? eventTemplate() ?? defaultDetail"
+                  (eventClick)="eventClick.emit($event)"
+                  (dayCreate)="dayCreate.emit($event)"
+                />
+              } @else {
                 <div
-                  class="pointer-events-none absolute inset-0 flex items-start justify-center pt-16"
+                  class="flex flex-col items-center justify-center gap-2.5 py-18 text-surface-400 dark:text-surface-500"
                   data-testid="calendar-day-empty"
                 >
-                  <p
-                    class="rounded-md bg-surface-0/90 px-3 py-1.5 text-sm text-surface-500 backdrop-blur-sm dark:bg-surface-900/90 dark:text-surface-400"
-                    i18n="@@calendar.empty.day"
-                  >
-                    Nothing scheduled on this day.
-                  </p>
+                  <i class="pi pi-calendar text-3xl" aria-hidden="true"></i>
+                  <p class="text-sm" i18n="@@calendar.empty.day">Nothing scheduled on this day.</p>
                 </div>
               }
             </div>
@@ -240,6 +213,26 @@
         </ul>
       }
     </div>
+
+    <!-- Configuration sidebar -->
+    @if (showSidebar()) {
+      <aside
+        class="border-surface-200 p-4 lg:block lg:min-h-0 lg:overflow-y-auto lg:border-l dark:border-surface-800"
+        [class.hidden]="!sidebarOpen()"
+        [class.border-t]="sidebarOpen()"
+      >
+        <app-calendar-sidebar
+          [focusedDate]="activeDate()"
+          [categoryGroups]="activeGroups()"
+          [categoryCounts]="categoryCounts()"
+          [events]="visibleEvents()"
+          [weekStartsOn]="weekStartsOn()"
+          [today]="today"
+          (focusedDateChange)="focusDate($event)"
+          (categoryToggle)="toggleCategory($event)"
+        />
+      </aside>
+    }
   </div>
 </div>
 

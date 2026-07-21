@@ -47,7 +47,7 @@
             role="status"
             aria-live="assertive"
             data-testid="intervention-publishing-banner"
-            class="flex items-start gap-3 rounded-lg border border-primary-600/20 bg-primary-50 px-3.5 py-3 text-sm leading-5 text-primary-700 dark:border-primary-400/20 dark:bg-primary-400/10 dark:text-primary-300"
+            class="flex items-start gap-3 rounded-xl border border-primary-600/20 bg-primary-50 px-4 py-3.5 text-sm leading-5 text-primary-700 dark:border-primary-400/20 dark:bg-primary-400/10 dark:text-primary-300"
           >
             <i class="pi pi-spin pi-spinner mt-0.5 shrink-0" aria-hidden="true"></i>
             <span i18n="@@intervention.detail.publishingBanner"
@@ -60,7 +60,7 @@
         @if (store.error(); as error) {
           <div
             role="alert"
-            class="flex items-start gap-3 rounded-lg border border-red-600/20 bg-red-50 px-3.5 py-3 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
+            class="flex items-start gap-3 rounded-xl border border-red-600/20 bg-red-50 px-4 py-3.5 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
           >
             <i
               class="pi pi-times-circle mt-0.5 shrink-0 text-red-600 dark:text-red-400"
@@ -83,7 +83,7 @@
           <div
             data-testid="sync-blocked-banner"
             role="alert"
-            class="flex flex-wrap items-center gap-3 rounded-lg border border-red-600/20 bg-red-50 px-3.5 py-3 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
+            class="flex flex-wrap items-center gap-3 rounded-xl border border-red-600/20 bg-red-50 px-4 py-3.5 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
           >
             <i
               class="pi pi-exclamation-circle shrink-0 text-red-600 dark:text-red-400"
@@ -122,7 +122,7 @@
           <div
             data-testid="sync-waiting-banner"
             role="status"
-            class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-600/20 bg-amber-50 px-3.5 py-3 text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
+            class="flex flex-wrap items-center gap-3 rounded-xl border border-amber-600/20 bg-amber-50 px-4 py-3.5 text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
           >
             <div class="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3">
               <span i18n="@@intervention.detail.offlineWaiting" class="flex items-center gap-2">
@@ -145,7 +145,7 @@
         @if (intervention.status === 'changes_requested' && intervention.reviewNote; as note) {
           <div
             role="note"
-            class="flex items-start gap-3 rounded-lg border border-amber-600/20 bg-amber-50 px-3.5 py-3 text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
+            class="flex items-start gap-3 rounded-xl border border-amber-600/20 bg-amber-50 px-4 py-3.5 text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
           >
             <i
               class="pi pi-comment mt-0.5 shrink-0 text-amber-600 dark:text-amber-400"
@@ -168,7 +168,7 @@
         @if (phase() === 'review' && store.blockerCount() > 0) {
           <div
             role="alert"
-            class="flex items-start gap-3 rounded-lg border border-red-600/20 bg-red-50 px-3.5 py-3 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
+            class="flex items-start gap-3 rounded-xl border border-red-600/20 bg-red-50 px-4 py-3.5 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
           >
             <i
               class="pi pi-lock mt-0.5 shrink-0 text-red-600 dark:text-red-400"
@@ -192,7 +192,7 @@
         @if (readyToPublish()) {
           <div
             role="status"
-            class="flex items-start gap-3 rounded-lg border border-green-600/20 bg-green-50 px-3.5 py-3 text-sm leading-5 text-green-700 dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300"
+            class="flex items-start gap-3 rounded-xl border border-green-600/20 bg-green-50 px-4 py-3.5 text-sm leading-5 text-green-700 dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300"
           >
             <i
               class="pi pi-check-circle mt-0.5 shrink-0 text-green-600 dark:text-green-400"
@@ -205,7 +205,7 @@
         } @else if (intervention.status === 'published') {
           <div
             role="status"
-            class="flex items-start gap-3 rounded-lg border border-green-600/20 bg-green-50 px-3.5 py-3 text-sm leading-5 text-green-700 dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300"
+            class="flex items-start gap-3 rounded-xl border border-green-600/20 bg-green-50 px-4 py-3.5 text-sm leading-5 text-green-700 dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300"
           >
             <i
               class="pi pi-check-circle mt-0.5 shrink-0 text-green-600 dark:text-green-400"
@@ -265,7 +265,7 @@
           -->
           <div
             role="status"
-            class="flex items-start gap-3 rounded-lg border border-surface-300 bg-surface-100 px-3.5 py-3 text-sm leading-5 text-surface-700 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300"
+            class="flex items-start gap-3 rounded-xl border border-surface-300 bg-surface-100 px-4 py-3.5 text-sm leading-5 text-surface-700 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300"
             data-testid="intervention-abandoned-banner"
           >
             <i class="pi pi-ban mt-0.5 shrink-0 text-surface-500" aria-hidden="true"></i>
@@ -294,13 +294,22 @@
             <span class="font-mono text-xs text-surface-500 tabular-nums dark:text-surface-400">
               FG-{{ intervention.number }}
             </span>
-            <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
+            <span
+              class="h-3 w-px shrink-0 bg-surface-200 dark:bg-surface-700"
+              aria-hidden="true"
+            ></span>
             <app-intervention-tag kind="type" [value]="intervention.type" variant="inline" />
             @if (siteLabel(); as site) {
-              <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
+              <span
+                class="h-3 w-px shrink-0 bg-surface-200 dark:bg-surface-700"
+                aria-hidden="true"
+              ></span>
               <span>{{ site }}</span>
             }
-            <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
+            <span
+              class="h-3 w-px shrink-0 bg-surface-200 dark:bg-surface-700"
+              aria-hidden="true"
+            ></span>
             <span i18n="@@intervention.header.updatedLabel"
               >Updated {{ intervention.updatedAt | date: 'mediumDate' }}</span
             >
@@ -312,7 +321,10 @@
               Same chip as the rail and the list, so the three read alike.
             -->
             @if (intervention.labels.length > 0) {
-              <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
+              <span
+                class="h-3 w-px shrink-0 bg-surface-200 dark:bg-surface-700"
+                aria-hidden="true"
+              ></span>
               <span
                 class="flex flex-wrap items-center gap-1.5"
                 data-testid="intervention-header-labels"
@@ -391,7 +403,7 @@
         <!-- Stage progress -->
         @if (intervention.status !== 'abandoned') {
           <div
-            class="flex flex-wrap items-center gap-3 border-y border-surface-200 bg-surface-50/50 px-4 py-4 sm:px-7 sm:py-4.5 dark:border-surface-800 dark:bg-surface-900/25"
+            class="flex flex-wrap items-center gap-3 border-b border-surface-200 px-4 py-4 sm:px-7 sm:py-4.5 dark:border-surface-800"
           >
             <div class="min-w-0 flex-1">
               <app-intervention-phase-stepper
@@ -442,273 +454,340 @@
           </div>
         }
 
-        <!-- Work item checklist -->
-        @if (!showPlanningGuide()) {
-          <div #workItemsSection class="scroll-mt-4 px-4 py-6 sm:px-7 sm:py-7">
-            <div class="flex flex-wrap items-center gap-2.5">
-              <h2
-                i18n="@@intervention.detail.checklist"
-                class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
-              >
-                Work items
-              </h2>
-              @if (store.workItems().length > 0) {
-                <span
-                  class="text-xs font-semibold text-surface-600 tabular-nums dark:text-surface-400"
-                >
-                  {{ workItemsDoneCount() }}/{{ store.workItems().length }}
-                </span>
-                <div
-                  class="h-1.5 w-16 overflow-hidden rounded-full bg-surface-200 dark:bg-surface-800"
-                  aria-hidden="true"
-                >
-                  <div
-                    class="h-full w-full origin-left rounded-full bg-green-600 motion-safe:transition-transform motion-safe:duration-300 dark:bg-green-400"
-                    [style.transform]="'scaleX(' + store.progress() / 100 + ')'"
-                  ></div>
-                </div>
-              }
-              <span class="flex-1"></span>
-              <div class="flex items-center gap-1">
-                @if (canAddDiscovery()) {
-                  @if (scanSupported()) {
-                    <p-button
-                      icon="pi pi-qrcode"
-                      severity="secondary"
-                      [text]="true"
-                      [rounded]="true"
-                      size="small"
-                      i18n-ariaLabel="@@intervention.fwt.scanQr"
-                      ariaLabel="Scan QR"
-                      [disabled]="fieldActionBusy()"
-                      (onClick)="scanInput.click()"
-                    />
-                  }
-                  <p-button
-                    icon="pi pi-plus"
-                    severity="secondary"
-                    [text]="true"
-                    [rounded]="true"
-                    size="small"
-                    i18n-ariaLabel="@@intervention.df.submit"
-                    ariaLabel="Add discovery"
-                    [disabled]="fieldActionBusy()"
-                    (onClick)="discoveryDrawerVisible.set(true)"
-                  />
-                } @else if (canAddWorkItem()) {
-                  <p-button
-                    icon="pi pi-plus"
-                    severity="secondary"
-                    [text]="true"
-                    [rounded]="true"
-                    size="small"
-                    i18n-ariaLabel="@@intervention.wit.addItem"
-                    ariaLabel="Add item"
-                    (onClick)="workItemDrawerVisible.set(true)"
-                  />
-                }
-                <p-button
-                  [icon]="workItemsExpanded() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-                  severity="secondary"
-                  [text]="true"
-                  [rounded]="true"
-                  size="small"
-                  i18n-ariaLabel="@@intervention.detail.toggleChecklist"
-                  ariaLabel="Toggle work items"
-                  [attr.aria-expanded]="workItemsExpanded()"
-                  (onClick)="workItemsExpanded.set(!workItemsExpanded())"
-                />
-              </div>
-            </div>
-
-            @if (fieldMessage(); as message) {
-              <p-message severity="info" [closable]="false" class="mt-3 block">{{
-                message
-              }}</p-message>
-            }
-
-            @if (workItemsExpanded()) {
-              @if (store.workItems().length > 0) {
-                <ul class="mt-4 flex flex-col">
-                  @for (item of store.workItems(); track item.id) {
-                    <li
-                      class="flex items-center gap-3 border-b border-surface-100 px-0.5 py-2.5 transition-colors last:border-0 dark:border-surface-800"
-                      [class.bg-primary-50]="isNextWorkItem(item)"
-                      [class.dark:bg-primary-400/10]="isNextWorkItem(item)"
-                    >
-                      <!-- 44px hit area (field gloves) around the 18px visual checkbox -->
-                      <button
-                        data-testid="work-item-toggle"
-                        type="button"
-                        class="-m-3 flex size-11 shrink-0 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
-                        [attr.aria-pressed]="isWorkItemDone(item)"
-                        i18n-aria-label="@@intervention.checklist.toggleAria"
-                        aria-label="Toggle work item complete"
-                        [disabled]="!canToggleWorkItem(item)"
-                        (click)="toggleWorkItemComplete(item)"
-                      >
-                        <span
-                          class="flex size-[18px] items-center justify-center rounded border-[1.5px] transition-colors"
-                          [class.border-green-600/40]="isWorkItemDone(item)"
-                          [class.bg-green-50]="isWorkItemDone(item)"
-                          [class.dark:border-green-400/40]="isWorkItemDone(item)"
-                          [class.dark:bg-green-400/10]="isWorkItemDone(item)"
-                          [class.border-surface-200]="!isWorkItemDone(item)"
-                          [class.bg-surface-0]="!isWorkItemDone(item)"
-                          [class.dark:border-surface-700]="!isWorkItemDone(item)"
-                          [class.dark:bg-surface-950]="!isWorkItemDone(item)"
-                        >
-                          @if (isWorkItemDone(item)) {
-                            <i
-                              class="pi pi-check text-[9px] text-green-700 dark:text-green-300"
-                              aria-hidden="true"
-                            ></i>
-                          } @else if (isNextWorkItem(item)) {
-                            <span
-                              class="size-1.5 rounded-full bg-primary"
-                              aria-hidden="true"
-                            ></span>
-                          }
-                        </span>
-                      </button>
-
+        <!-- Work items / Proposed changes / Activity -->
+        <div
+          #workItemsSection
+          class="scroll-mt-4 border-t border-surface-100 px-4 py-2 sm:px-7 dark:border-surface-800"
+        >
+          <p-tabs [value]="activeSectionTab()" (valueChange)="onSectionTabChange($event)">
+            <p-tablist>
+              @if (!showPlanningGuide()) {
+                <p-tab value="work-items">
+                  <span class="flex items-center gap-2">
+                    <span i18n="@@intervention.detail.checklist" class="text-sm">Work items</span>
+                    @if (store.workItems().length > 0) {
                       <span
-                        class="min-w-0 flex-1 truncate text-sm"
-                        [class.text-surface-500]="isWorkItemDone(item)"
-                        [class.dark:text-surface-400]="isWorkItemDone(item)"
-                        [class.font-medium]="isNextWorkItem(item)"
+                        class="rounded-full bg-surface-100 px-1.5 py-0.5 text-xs font-semibold text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-400"
                       >
-                        {{ workItemLabel(item) }}
+                        {{ workItemsDoneCount() }}/{{ store.workItems().length }}
                       </span>
+                    }
+                  </span>
+                </p-tab>
+              }
+              @if (store.changes().length > 0) {
+                <p-tab value="changes">
+                  <span class="flex items-center gap-2">
+                    <span i18n="@@intervention.review.changesTitle" class="text-sm"
+                      >Proposed changes</span
+                    >
+                    <span
+                      class="rounded-full bg-surface-100 px-1.5 py-0.5 text-xs font-semibold text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-400"
+                    >
+                      {{ pendingChangesCount() }}/{{ store.changes().length }}
+                    </span>
+                  </span>
+                </p-tab>
+              }
+              <p-tab value="activity">
+                <span class="flex items-center gap-2">
+                  <span i18n="@@intervention.detail.activity" class="text-sm">Activity</span>
+                  @if (activityFeedItems().length > 0) {
+                    <span
+                      class="rounded-full bg-surface-100 px-1.5 py-0.5 text-xs font-semibold text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-400"
+                    >
+                      {{ activityFeedItems().length }}
+                    </span>
+                  }
+                </span>
+              </p-tab>
+            </p-tablist>
 
-                      <span class="hidden sm:block">
-                        <app-intervention-tag
-                          kind="workItemStatus"
-                          [value]="item.status"
-                          variant="inline"
-                        />
-                      </span>
-
-                      @if (checklistRowHasActions(item)) {
+            <p-tabpanels>
+              @if (!showPlanningGuide()) {
+                <p-tabpanel value="work-items">
+                  <div class="flex flex-wrap items-center justify-end gap-1 py-3">
+                    @if (canAddDiscovery()) {
+                      @if (scanSupported()) {
                         <p-button
-                          icon="pi pi-ellipsis-v"
+                          icon="pi pi-qrcode"
                           severity="secondary"
                           [text]="true"
                           [rounded]="true"
                           size="small"
-                          i18n-ariaLabel="@@intervention.wit.rowActions"
-                          ariaLabel="Work item actions"
-                          (onClick)="onChecklistMenuToggle($event, item)"
+                          i18n-ariaLabel="@@intervention.fwt.scanQr"
+                          ariaLabel="Scan QR"
+                          [disabled]="fieldActionBusy()"
+                          (onClick)="scanInput.click()"
                         />
                       }
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <div
-                  class="mt-3 flex flex-col items-center gap-1.5 rounded-lg border border-dashed border-surface-200 px-4 py-6 text-center dark:border-surface-700"
-                >
-                  <i
-                    class="pi pi-check-square text-xl text-surface-300 dark:text-surface-600"
-                    aria-hidden="true"
-                  ></i>
-                  <p
-                    i18n="@@intervention.wit.emptyTitle"
-                    class="text-sm font-medium text-surface-700 dark:text-surface-200"
-                  >
-                    No work items yet
-                  </p>
-                  <p
-                    i18n="@@intervention.wit.emptyDesc"
-                    class="text-xs text-surface-500 dark:text-surface-400"
-                  >
-                    List the tasks to complete during this intervention.
-                  </p>
-                  @if (canAddWorkItem()) {
-                    <p-button
-                      class="mt-1.5"
-                      i18n-label="@@intervention.wit.newItem"
-                      label="New item"
-                      icon="pi pi-plus"
-                      severity="secondary"
-                      size="small"
-                      [outlined]="true"
-                      (onClick)="workItemDrawerVisible.set(true)"
-                    />
-                  }
-                </div>
-              }
-            }
-            <p-menu #checklistMenu [model]="checklistMenuItems()" [popup]="true" appendTo="body" />
-          </div>
-        }
-
-        <!-- Proposed changes (review) -->
-        @if (store.changes().length > 0) {
-          <div
-            class="border-t border-surface-100 px-4 py-6 sm:px-7 sm:py-7 dark:border-surface-800"
-          >
-            <div class="flex items-center gap-2.5">
-              <h2
-                i18n="@@intervention.review.changesTitle"
-                class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
-              >
-                Proposed changes
-              </h2>
-              <span
-                class="text-xs font-semibold text-surface-600 tabular-nums dark:text-surface-400"
-              >
-                {{ pendingChangesCount() }}/{{ store.changes().length }}
-              </span>
-            </div>
-            <p
-              i18n="@@intervention.review.changesDesc"
-              class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
-            >
-              Updates applied atomically when the intervention is published.
-            </p>
-            <ul class="mt-3 divide-y divide-surface-100 dark:divide-surface-800">
-              @for (change of store.changes(); track change.id) {
-                <li class="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-medium">{{ change.resource }}</p>
-                    <app-intervention-change-diff class="mt-1.5 block" [patch]="change.patch" />
-                  </div>
-
-                  <div class="flex shrink-0 items-center gap-2">
-                    <app-intervention-tag kind="changeStatus" [value]="change.status" />
-
-                    <!--
-                      Reject is the only verdict there is: publication applies
-                      every change still standing, atomically, so there is
-                      nothing to "accept" — the contract admits `proposed` or
-                      `rejected` and nothing else. Offered only while the
-                      change is still proposed and the reviewer may act.
-                    -->
-                    @if (change.status === 'proposed' && canReview()) {
                       <p-button
-                        icon="pi pi-times"
-                        severity="danger"
-                        size="small"
+                        icon="pi pi-plus"
+                        severity="secondary"
                         [text]="true"
                         [rounded]="true"
-                        [disabled]="store.saving()"
-                        i18n-ariaLabel="@@intervention.review.rejectChange"
-                        ariaLabel="Reject this change"
-                        data-testid="intervention-reject-change"
-                        (onClick)="rejectChange(change)"
+                        size="small"
+                        i18n-ariaLabel="@@intervention.df.submit"
+                        ariaLabel="Add discovery"
+                        [disabled]="fieldActionBusy()"
+                        (onClick)="discoveryDrawerVisible.set(true)"
+                      />
+                    } @else if (canAddWorkItem()) {
+                      <p-button
+                        icon="pi pi-plus"
+                        severity="secondary"
+                        [text]="true"
+                        [rounded]="true"
+                        size="small"
+                        i18n-ariaLabel="@@intervention.wit.addItem"
+                        ariaLabel="Add item"
+                        (onClick)="workItemDrawerVisible.set(true)"
                       />
                     }
                   </div>
-                </li>
+
+                  @if (store.workItems().length > 0) {
+                    <div
+                      class="h-1.5 w-full overflow-hidden rounded-full bg-surface-200 dark:bg-surface-800"
+                      aria-hidden="true"
+                    >
+                      <div
+                        class="h-full w-full origin-left rounded-full bg-green-600 motion-safe:transition-transform motion-safe:duration-300 dark:bg-green-400"
+                        [style.transform]="'scaleX(' + store.progress() / 100 + ')'"
+                      ></div>
+                    </div>
+                  }
+
+                  @if (fieldMessage(); as message) {
+                    <p-message severity="info" [closable]="false" class="mt-3 block">{{
+                      message
+                    }}</p-message>
+                  }
+
+                  @if (store.workItems().length > 0) {
+                    <ul class="mt-4 flex flex-col">
+                      @for (item of store.workItems(); track item.id) {
+                        <li
+                          class="flex items-center gap-3 border-b border-surface-100 px-0.5 py-2.5 transition-colors last:border-0 dark:border-surface-800"
+                          [class.bg-primary-50]="isNextWorkItem(item)"
+                          [class.dark:bg-primary-400/10]="isNextWorkItem(item)"
+                        >
+                          <!-- 44px hit area (field gloves) around the 18px visual checkbox -->
+                          <button
+                            data-testid="work-item-toggle"
+                            type="button"
+                            class="-m-3 flex size-11 shrink-0 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+                            [attr.aria-pressed]="isWorkItemDone(item)"
+                            i18n-aria-label="@@intervention.checklist.toggleAria"
+                            aria-label="Toggle work item complete"
+                            [disabled]="!canToggleWorkItem(item)"
+                            (click)="toggleWorkItemComplete(item)"
+                          >
+                            <span
+                              class="flex size-[18px] items-center justify-center rounded border-[1.5px] transition-colors"
+                              [class.border-green-600/40]="isWorkItemDone(item)"
+                              [class.bg-green-50]="isWorkItemDone(item)"
+                              [class.dark:border-green-400/40]="isWorkItemDone(item)"
+                              [class.dark:bg-green-400/10]="isWorkItemDone(item)"
+                              [class.border-surface-200]="!isWorkItemDone(item)"
+                              [class.bg-surface-0]="!isWorkItemDone(item)"
+                              [class.dark:border-surface-700]="!isWorkItemDone(item)"
+                              [class.dark:bg-surface-950]="!isWorkItemDone(item)"
+                            >
+                              @if (isWorkItemDone(item)) {
+                                <i
+                                  class="pi pi-check text-[9px] text-green-700 dark:text-green-300"
+                                  aria-hidden="true"
+                                ></i>
+                              } @else if (isNextWorkItem(item)) {
+                                <span
+                                  class="size-1.5 rounded-full bg-primary"
+                                  aria-hidden="true"
+                                ></span>
+                              }
+                            </span>
+                          </button>
+
+                          <span
+                            class="min-w-0 flex-1 truncate text-sm"
+                            [class.text-surface-500]="isWorkItemDone(item)"
+                            [class.dark:text-surface-400]="isWorkItemDone(item)"
+                            [class.font-medium]="isNextWorkItem(item)"
+                          >
+                            {{ workItemLabel(item) }}
+                          </span>
+
+                          <span class="hidden sm:block">
+                            <app-intervention-tag
+                              kind="workItemStatus"
+                              [value]="item.status"
+                              variant="inline"
+                            />
+                          </span>
+
+                          @if (checklistRowHasActions(item)) {
+                            <p-button
+                              icon="pi pi-ellipsis-v"
+                              severity="secondary"
+                              [text]="true"
+                              [rounded]="true"
+                              size="small"
+                              i18n-ariaLabel="@@intervention.wit.rowActions"
+                              ariaLabel="Work item actions"
+                              (onClick)="onChecklistMenuToggle($event, item)"
+                            />
+                          }
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <div
+                      class="mt-3 flex flex-col items-center gap-1.5 rounded-lg border border-dashed border-surface-200 px-4 py-6 text-center dark:border-surface-700"
+                    >
+                      <i
+                        class="pi pi-check-square text-xl text-surface-300 dark:text-surface-600"
+                        aria-hidden="true"
+                      ></i>
+                      <p
+                        i18n="@@intervention.wit.emptyTitle"
+                        class="text-sm font-medium text-surface-700 dark:text-surface-200"
+                      >
+                        No work items yet
+                      </p>
+                      <p
+                        i18n="@@intervention.wit.emptyDesc"
+                        class="text-xs text-surface-500 dark:text-surface-400"
+                      >
+                        List the tasks to complete during this intervention.
+                      </p>
+                      @if (canAddWorkItem()) {
+                        <p-button
+                          class="mt-1.5"
+                          i18n-label="@@intervention.wit.newItem"
+                          label="New item"
+                          icon="pi pi-plus"
+                          severity="secondary"
+                          size="small"
+                          [outlined]="true"
+                          (onClick)="workItemDrawerVisible.set(true)"
+                        />
+                      }
+                    </div>
+                  }
+                  <p-menu
+                    #checklistMenu
+                    [model]="checklistMenuItems()"
+                    [popup]="true"
+                    appendTo="body"
+                  />
+                </p-tabpanel>
               }
-            </ul>
-          </div>
-        }
+
+              @if (store.changes().length > 0) {
+                <p-tabpanel value="changes">
+                  <p
+                    i18n="@@intervention.review.changesDesc"
+                    class="mt-3 text-xs text-surface-500 dark:text-surface-400"
+                  >
+                    Updates applied atomically when the intervention is published.
+                  </p>
+                  <ul class="mt-3 divide-y divide-surface-100 dark:divide-surface-800">
+                    @for (change of store.changes(); track change.id) {
+                      <li class="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                        <div class="min-w-0 flex-1">
+                          <p class="truncate text-sm font-medium">{{ change.resource }}</p>
+                          <app-intervention-change-diff
+                            class="mt-1.5 block"
+                            [patch]="change.patch"
+                          />
+                        </div>
+
+                        <div class="flex shrink-0 items-center gap-2">
+                          <app-intervention-tag kind="changeStatus" [value]="change.status" />
+
+                          <!--
+                            Reject is the only verdict there is: publication applies
+                            every change still standing, atomically, so there is
+                            nothing to "accept" — the contract admits `proposed` or
+                            `rejected` and nothing else. Offered only while the
+                            change is still proposed and the reviewer may act.
+                          -->
+                          @if (change.status === 'proposed' && canReview()) {
+                            <p-button
+                              icon="pi pi-times"
+                              severity="danger"
+                              size="small"
+                              [text]="true"
+                              [rounded]="true"
+                              [disabled]="store.saving()"
+                              i18n-ariaLabel="@@intervention.review.rejectChange"
+                              ariaLabel="Reject this change"
+                              data-testid="intervention-reject-change"
+                              (onClick)="rejectChange(change)"
+                            />
+                          }
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                </p-tabpanel>
+              }
+
+              <p-tabpanel value="activity">
+                <div class="mt-5 flex flex-col gap-4">
+                  @if (activitiesLoading()) {
+                    <div class="flex flex-col gap-2.5" aria-hidden="true">
+                      @for (row of [1, 2, 3]; track row) {
+                        <div class="flex items-start gap-2">
+                          <p-skeleton shape="circle" size="1.25rem" />
+                          <p-skeleton [width]="row === 2 ? '55%' : '70%'" height="0.9rem" />
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <app-activity-feed [items]="activityFeedItems()" />
+                  }
+                  <!--
+                    A terminal intervention takes no new comment: offering the field
+                    only to have the post rejected is worse than not offering it.
+                    The feed above stays readable.
+                  -->
+                  @if (canComment()) {
+                    <app-comment-composer
+                      i18n-placeholder="@@intervention.detail.commentPlaceholder"
+                      placeholder="Write a comment…"
+                      [pending]="store.saving()"
+                      (submitted)="addComment($event)"
+                    />
+                  } @else {
+                    <p
+                      class="text-xs text-surface-400 dark:text-surface-500"
+                      data-testid="comments-closed-hint"
+                      i18n="@@intervention.detail.commentsClosed"
+                    >
+                      This intervention is closed — its activity is kept for the record.
+                    </p>
+                  }
+                  @if (!online()) {
+                    <p
+                      data-testid="offline-comment-hint"
+                      i18n="@@intervention.detail.commentOffline"
+                      class="text-xs text-surface-400 dark:text-surface-500"
+                    >
+                      Comments are saved locally and posted when you reconnect.
+                    </p>
+                  }
+                </div>
+              </p-tabpanel>
+            </p-tabpanels>
+          </p-tabs>
+        </div>
 
         <!-- Publication summary (review) -->
         @if (intervention.status === 'submitted') {
-          <div class="px-4 pb-6 sm:px-7 sm:pb-7">
+          <div
+            class="border-t border-surface-100 px-4 py-6 sm:px-7 sm:py-7 dark:border-surface-800"
+          >
             <aside
               class="flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-100/60 p-4 dark:border-surface-800 dark:bg-surface-900"
             >
@@ -757,85 +836,6 @@
             </aside>
           </div>
         }
-
-        <!-- Activity -->
-        <div
-          class="flex flex-1 flex-col border-t border-surface-100 px-4 py-6 sm:px-7 sm:py-7 dark:border-surface-800"
-        >
-          <div class="flex items-center gap-2.5">
-            <h2
-              i18n="@@intervention.detail.activity"
-              class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
-            >
-              Activity
-            </h2>
-            @if (activityFeedItems().length > 0) {
-              <span
-                class="text-xs font-semibold text-surface-600 tabular-nums dark:text-surface-400"
-              >
-                {{ activityFeedItems().length }}
-              </span>
-            }
-            <span class="flex-1"></span>
-            <p-button
-              [icon]="activityExpanded() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-              severity="secondary"
-              [text]="true"
-              [rounded]="true"
-              size="small"
-              i18n-ariaLabel="@@intervention.detail.toggleActivity"
-              ariaLabel="Toggle activity"
-              [attr.aria-expanded]="activityExpanded()"
-              (onClick)="activityExpanded.set(!activityExpanded())"
-            />
-          </div>
-          @if (activityExpanded()) {
-            <div class="mt-5 flex flex-col gap-4">
-              @if (activitiesLoading()) {
-                <div class="flex flex-col gap-2.5" aria-hidden="true">
-                  @for (row of [1, 2, 3]; track row) {
-                    <div class="flex items-start gap-2">
-                      <p-skeleton shape="circle" size="1.25rem" />
-                      <p-skeleton [width]="row === 2 ? '55%' : '70%'" height="0.9rem" />
-                    </div>
-                  }
-                </div>
-              } @else {
-                <app-activity-feed [items]="activityFeedItems()" />
-              }
-              <!--
-                A terminal intervention takes no new comment: offering the field
-                only to have the post rejected is worse than not offering it.
-                The feed above stays readable.
-              -->
-              @if (canComment()) {
-                <app-comment-composer
-                  i18n-placeholder="@@intervention.detail.commentPlaceholder"
-                  placeholder="Write a comment…"
-                  [pending]="store.saving()"
-                  (submitted)="addComment($event)"
-                />
-              } @else {
-                <p
-                  class="text-xs text-surface-400 dark:text-surface-500"
-                  data-testid="comments-closed-hint"
-                  i18n="@@intervention.detail.commentsClosed"
-                >
-                  This intervention is closed — its activity is kept for the record.
-                </p>
-              }
-              @if (!online()) {
-                <p
-                  data-testid="offline-comment-hint"
-                  i18n="@@intervention.detail.commentOffline"
-                  class="text-xs text-surface-400 dark:text-surface-500"
-                >
-                  Comments are saved locally and posted when you reconnect.
-                </p>
-              }
-            </div>
-          }
-        </div>
       </div>
 
       <!-- Properties rail -->

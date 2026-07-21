@@ -1,27 +1,38 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { ConfirmationService } from 'primeng/api';
+import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { DividerModule } from 'primeng/divider';
-import type { UpdateCurrentUserProfileInput } from '@features/account/models';
+import { MessageModule } from 'primeng/message';
+import {
+  resolveAccountStatusTag,
+  type AccountStatusTagDescriptor,
+  type UpdateCurrentUserProfileInput,
+} from '@features/account/models';
 import {
   AccountPasswordChangeStore,
   AccountProfileEditStore,
   UserStore,
 } from '@features/account/state';
+import { Tag } from '@shared/components';
 import {
   AccountAvatarForm,
   AccountPasswordForm,
   AccountProfileForm,
   type PasswordChangeConfirmation,
 } from '../../forms';
+import { AccountSettingsPanel } from '../account-settings-panel/account-settings-panel.component';
 
 /**
  * Component AccountProfilePanel
  * @class AccountProfilePanel
  *
  * @description
- * Container for the editable profile section. Connects the presentational
- * {@link AccountProfileForm} to the account-owned profile and edit stores.
+ * Container for the Profile tab: an identity card (avatar, name, status,
+ * verification and membership facts), the editable {@link AccountProfileForm},
+ * the password-change workflow, the folded-in language preference and account
+ * deactivation. Connects presentational children to the account-owned profile
+ * and edit stores.
  *
  * @since 2.0.0
  *
@@ -30,11 +41,15 @@ import {
 @Component({
   selector: 'app-account-profile-panel',
   imports: [
+    DatePipe,
+    AvatarModule,
     ButtonModule,
-    DividerModule,
+    MessageModule,
+    Tag,
     AccountAvatarForm,
     AccountPasswordForm,
     AccountProfileForm,
+    AccountSettingsPanel,
   ],
   providers: [AccountProfileEditStore, AccountPasswordChangeStore],
   templateUrl: './account-profile-panel.component.html',
@@ -55,6 +70,45 @@ export class AccountProfilePanel {
    * @type {UserStore}
    */
   protected readonly userStore: UserStore = inject<UserStore>(UserStore);
+
+  /**
+   * Property statusDescriptor
+   * @readonly
+   *
+   * @description
+   * Presentation descriptor for the account status, or null while the profile
+   * has not loaded or the backend sent no status. Resolved through the account
+   * tag registry so the label, colour and icon are not restated here.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<AccountStatusTagDescriptor | null>}
+   */
+  protected readonly statusDescriptor: Signal<AccountStatusTagDescriptor | null> = computed(
+    (): AccountStatusTagDescriptor | null => {
+      const status: string | null | undefined = this.userStore.profile()?.status;
+
+      return status ? resolveAccountStatusTag('accountStatus', status) : null;
+    },
+  );
+
+  /**
+   * Property identityAvatarPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options of the identity card avatar: a compact 44px surface
+   * matching the mockup's ringed identity tile.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {AvatarPassThroughOptions}
+   */
+  protected readonly identityAvatarPt: AvatarPassThroughOptions = {
+    root: { class: 'h-11 w-11 text-base' },
+  };
 
   /**
    * Property editStore
@@ -213,7 +267,7 @@ export class AccountProfilePanel {
       message: $localize`:@@account.deactivate.confirm:You will be signed out everywhere and will not be able to sign back in. Only an administrator can reactivate your account. Continue?`,
       icon: 'pi pi-exclamation-triangle',
       acceptButtonProps: {
-        label: $localize`:@@account.deactivate.accept:Deactivate`,
+        label: $localize`:@@account.deactivate.accept:Deactivate account`,
         severity: 'danger',
       },
       rejectButtonProps: {

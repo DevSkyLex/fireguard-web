@@ -278,12 +278,14 @@ describe('Calendar', () => {
       expect(counts(fixture)).toEqual(['1']);
     });
 
-    it('renders no count for a category no event carries', () => {
+    it('renders a zero count rather than dropping the figure for a category no event carries', () => {
+      // Dropping the count entirely would misalign the row against its
+      // neighbours, which all carry a trailing figure.
       const fixture = createCalendar();
       fixture.componentRef.setInput('events', []);
       fixture.detectChanges();
 
-      expect(counts(fixture)).toEqual([]);
+      expect(counts(fixture)).toEqual(['0']);
     });
   });
 

@@ -38,6 +38,9 @@ Primary service:
 
 - May be consumed by sibling organization subfeatures such as inspections.
 - Must stay owned here even when another subfeature uses checklist selection in its UI.
+- Also consumed by the sibling `compliance` subfeature: its Checklists tab
+  calls this feature's public `ChecklistService.list` read-only, through the
+  `data-access`/`models` public barrels — never a deep import.
 
 ## Invariants
 

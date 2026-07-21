@@ -1,6 +1,6 @@
-import { NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DashboardPageHeaderService } from '@layouts/dashboard-layout/services';
+import { DashboardLayoutSlotOutlet } from '../dashboard-layout-slot-outlet/dashboard-layout-slot-outlet.component';
 
 /**
  * Component DashboardLayoutPageHeader
@@ -27,7 +27,7 @@ import { DashboardPageHeaderService } from '@layouts/dashboard-layout/services';
  */
 @Component({
   selector: 'app-dashboard-layout-page-header',
-  imports: [NgComponentOutlet],
+  imports: [DashboardLayoutSlotOutlet],
   templateUrl: './dashboard-layout-page-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

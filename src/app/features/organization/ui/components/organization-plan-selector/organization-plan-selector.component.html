@@ -144,13 +144,21 @@
 
 <!-- Plans -->
 <section class="mb-8">
-  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-    <h3
-      i18n="@@org.plan.plans"
-      class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
-    >
-      Plans
-    </h3>
+  <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h3
+        i18n="@@org.plan.plans"
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+      >
+        Plans
+      </h3>
+      <p
+        i18n="@@org.plan.plansSubtitle"
+        class="mt-0.5 text-sm text-surface-600 dark:text-surface-400"
+      >
+        Upgrade or downgrade at any time.
+      </p>
+    </div>
     <!-- Segmented cadence toggle -->
     <div
       role="group"
@@ -260,49 +268,8 @@
             }
           </p>
 
-          <!-- Quotas -->
-          <div
-            class="flex flex-col gap-2.5 border-t border-surface-100 pt-4 dark:border-surface-800"
-          >
-            <p
-              i18n="@@org.plan.includes"
-              class="text-xs font-medium text-surface-500 dark:text-surface-400"
-            >
-              This plan includes
-            </p>
-            <ul class="flex flex-col gap-2">
-              @for (quota of plan.quotas; track quota.resource) {
-                <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-200">
-                  <i
-                    class="pi pi-check mt-0.5 shrink-0 text-xs text-green-600 dark:text-green-400"
-                    aria-hidden="true"
-                  ></i>
-                  <span>{{ quota.summary }}</span>
-                </li>
-              }
-              <!--
-                Perks continue the same list: to a reader deciding between
-                plans, a quota and a perk are both "what I get". They keep a
-                distinct glyph because only the quotas above are enforced
-                numbers — the perks are configured copy.
-              -->
-              @for (perk of plan.perks; track perk) {
-                <li
-                  class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-200"
-                  data-testid="plan-perk"
-                >
-                  <i
-                    class="pi pi-sparkles mt-0.5 shrink-0 text-xs text-primary-600 dark:text-primary-400"
-                    aria-hidden="true"
-                  ></i>
-                  <span>{{ perk }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-
           <!-- Action -->
-          <div class="mt-auto pt-2">
+          <div class="pt-1">
             @if (isCurrentPlan(plan)) {
               <p-button
                 i18n-label="@@org.plan.currentPlan"
@@ -346,6 +313,47 @@
                 (onClick)="selectPlan(plan)"
               />
             }
+          </div>
+
+          <!-- Quotas -->
+          <div
+            class="flex flex-col gap-2.5 border-t border-surface-100 pt-4 dark:border-surface-800"
+          >
+            <p
+              i18n="@@org.plan.includes"
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+            >
+              This plan includes
+            </p>
+            <ul class="flex flex-col gap-2">
+              @for (quota of plan.quotas; track quota.resource) {
+                <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-200">
+                  <i
+                    class="pi pi-check mt-0.5 shrink-0 text-xs text-green-600 dark:text-green-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span>{{ quota.summary }}</span>
+                </li>
+              }
+              <!--
+                Perks continue the same list: to a reader deciding between
+                plans, a quota and a perk are both "what I get". They keep a
+                distinct glyph because only the quotas above are enforced
+                numbers — the perks are configured copy.
+              -->
+              @for (perk of plan.perks; track perk) {
+                <li
+                  class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-200"
+                  data-testid="plan-perk"
+                >
+                  <i
+                    class="pi pi-sparkles mt-0.5 shrink-0 text-xs text-primary-600 dark:text-primary-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span>{{ perk }}</span>
+                </li>
+              }
+            </ul>
           </div>
         </article>
       } @empty {

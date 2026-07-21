@@ -1,33 +1,33 @@
 <section
   class="rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
-  <header
-    class="flex items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
-  >
-    <i
-      class="pi pi-info-circle text-sm text-surface-500 dark:text-surface-400"
-      aria-hidden="true"
-    ></i>
+  <header class="border-b border-surface-200 px-4 py-3 dark:border-surface-800">
     <h2
       class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
-      i18n="@@equipment.info.title"
+      i18n="@@equipment.overview.title"
     >
-      Equipment information
+      Overview
     </h2>
   </header>
   <dl
-    class="grid divide-y divide-surface-100 px-4 py-2 sm:grid-cols-2 sm:divide-y-0 dark:divide-surface-800"
+    class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-px bg-surface-100 dark:bg-surface-800"
   >
-    <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.type">
+    <div class="bg-surface-0 px-[18px] py-4 dark:bg-surface-900">
+      <dt
+        class="text-[11px] font-semibold tracking-[0.05em] text-surface-400 uppercase dark:text-surface-500"
+        i18n="@@equipment.info.type"
+      >
         Type
       </dt>
-      <dd class="mt-1 text-sm font-medium text-surface-900 dark:text-surface-100">
-        {{ equipment().type | titlecase }}
+      <dd class="mt-2">
+        <app-tag [descriptor]="typeDescriptor(equipment().type)" />
       </dd>
     </div>
-    <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.subtype">
+    <div class="bg-surface-0 px-[18px] py-4 dark:bg-surface-900">
+      <dt
+        class="text-[11px] font-semibold tracking-[0.05em] text-surface-400 uppercase dark:text-surface-500"
+        i18n="@@equipment.info.subtype"
+      >
         Subtype
       </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
@@ -38,8 +38,11 @@
         }
       </dd>
     </div>
-    <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.brand">
+    <div class="bg-surface-0 px-[18px] py-4 dark:bg-surface-900">
+      <dt
+        class="text-[11px] font-semibold tracking-[0.05em] text-surface-400 uppercase dark:text-surface-500"
+        i18n="@@equipment.info.brand"
+      >
         Brand
       </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
@@ -50,8 +53,11 @@
         }
       </dd>
     </div>
-    <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.model">
+    <div class="bg-surface-0 px-[18px] py-4 dark:bg-surface-900">
+      <dt
+        class="text-[11px] font-semibold tracking-[0.05em] text-surface-400 uppercase dark:text-surface-500"
+        i18n="@@equipment.info.model"
+      >
         Model
       </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
@@ -62,8 +68,11 @@
         }
       </dd>
     </div>
-    <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.serial">
+    <div class="bg-surface-0 px-[18px] py-4 dark:bg-surface-900">
+      <dt
+        class="text-[11px] font-semibold tracking-[0.05em] text-surface-400 uppercase dark:text-surface-500"
+        i18n="@@equipment.info.serial"
+      >
         Serial number
       </dt>
       <dd class="mt-1 font-mono text-sm text-surface-900 dark:text-surface-100">
@@ -74,8 +83,11 @@
         }
       </dd>
     </div>
-    <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.location">
+    <div class="bg-surface-0 px-[18px] py-4 dark:bg-surface-900">
+      <dt
+        class="text-[11px] font-semibold tracking-[0.05em] text-surface-400 uppercase dark:text-surface-500"
+        i18n="@@equipment.info.location"
+      >
         Location
       </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
@@ -86,8 +98,11 @@
         }
       </dd>
     </div>
-    <div class="py-3 sm:pr-4">
-      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.installed">
+    <div class="bg-surface-0 px-[18px] py-4 dark:bg-surface-900">
+      <dt
+        class="text-[11px] font-semibold tracking-[0.05em] text-surface-400 uppercase dark:text-surface-500"
+        i18n="@@equipment.info.installed"
+      >
         Installed
       </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
@@ -98,9 +113,9 @@
         }
       </dd>
     </div>
-    <div class="py-3 sm:pl-4">
+    <div class="bg-surface-0 px-[18px] py-4 dark:bg-surface-900">
       <dt
-        class="text-xs text-surface-500 dark:text-surface-400"
+        class="text-[11px] font-semibold tracking-[0.05em] text-surface-400 uppercase dark:text-surface-500"
         i18n="@@equipment.info.commissioned"
       >
         Commissioned

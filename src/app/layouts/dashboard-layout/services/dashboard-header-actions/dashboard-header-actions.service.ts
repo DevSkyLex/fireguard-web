@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, type Signal, type Type } from '@angular/core';
+import { computed, inject, Injectable, type Signal } from '@angular/core';
 import { TOPBAR_SLOT } from '@layouts/dashboard-layout/slots/topbar';
 import type { TopbarContribution } from '@layouts/dashboard-layout/slots/topbar';
 
@@ -53,26 +53,6 @@ export class DashboardHeaderActionsService {
     (): readonly TopbarContribution[] =>
       this.registered.filter(
         (contribution: TopbarContribution): boolean => contribution.available?.() ?? true,
-      ),
-  );
-
-  /**
-   * Property components
-   * @readonly
-   *
-   * @description
-   * Component types of the applicable contributions, ready to be rendered via
-   * `NgComponentOutlet`.
-   *
-   * @access public
-   * @since 2.0.0
-   *
-   * @type {Signal<readonly Type<unknown>[]>}
-   */
-  public readonly components: Signal<readonly Type<unknown>[]> = computed(
-    (): readonly Type<unknown>[] =>
-      this.actions().map(
-        (contribution: TopbarContribution): Type<unknown> => contribution.component,
       ),
   );
 

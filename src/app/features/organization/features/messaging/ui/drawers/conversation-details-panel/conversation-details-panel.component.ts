@@ -1,9 +1,10 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, formatDate, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  LOCALE_ID,
   signal,
   type Signal,
   type WritableSignal,
@@ -32,48 +33,48 @@ import {
   type MemberIdentity,
   type OrganizationMemberDirectoryStoreType,
 } from '@features/organization/state';
+import { ConversationActivityHeatmap } from './components/conversation-activity-heatmap';
 
 /**
  * Which body the panel shows.
  *
  * @since 1.0.0
  */
-type DetailsTab = 'info' | 'pins' | 'files';
+type DetailsTab = 'info' | 'pins' | 'files' | 'links';
 
 /**
- * A conversation linked to the open one through the channel hierarchy.
+ * The creating member, resolved for display.
  *
- * @since 1.2.0
+ * @since 1.3.0
+ */
+interface CreatorRow {
+  readonly displayName: string;
+  readonly initials: string;
+}
+
+/**
+ * A conversation linked to the open one — through the channel hierarchy, or by
+ * hanging off the same business record.
+ *
+ * @since 1.4.0
  */
 interface LinkedThreadRow {
   readonly id: string;
   readonly name: string;
-  readonly relation: 'parent' | 'child';
+  readonly relation: 'parent' | 'child' | 'sibling' | 'subject';
+  readonly unreadCount: number;
 }
 
 /**
- * Projects a conversation into a linked-thread row.
- *
- * A channel falls back to its subject label and then to its id, so a row is
- * never rendered nameless — an unnamed link is not clickable in practice.
- *
- * @param {ConversationOutput} thread - The linked conversation.
- * @param {LinkedThreadRow['relation']} relation - How it relates to the open one.
- *
- * @returns {LinkedThreadRow} The row.
- *
- * @since 1.2.0
+ * Rendering order of the relations: up the tree, then down, then across, then
+ * the record-bound threads. Alphabetical inside each group.
  */
-function toLinkedThreadRow(
-  thread: ConversationOutput,
-  relation: LinkedThreadRow['relation'],
-): LinkedThreadRow {
-  return {
-    id: thread.id,
-    name: thread.name ?? thread.subjectLabel ?? thread.id,
-    relation,
-  };
-}
+const RELATION_ORDER: Readonly<Record<LinkedThreadRow['relation'], number>> = {
+  parent: 0,
+  child: 1,
+  sibling: 2,
+  subject: 3,
+};
 
 /**
  * A participant joined with the identity the directory knows.
@@ -109,7 +110,7 @@ interface ParticipantRow {
  */
 @Component({
   selector: 'app-conversation-details-panel',
-  imports: [DatePipe, NgTemplateOutlet],
+  imports: [ConversationActivityHeatmap, DatePipe, NgTemplateOutlet],
   providers: [ConversationDetailsStore],
   templateUrl: './conversation-details-panel.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -173,6 +174,20 @@ export class ConversationDetailsPanel {
    * @type {EnvironmentConfig}
    */
   private readonly env: EnvironmentConfig = inject<EnvironmentConfig>(ENV_CONFIG);
+
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * Active locale, for the dates the link rows fall back to.
+   *
+   * @access private
+   * @since 1.4.0
+   *
+   * @type {string}
+   */
+  private readonly locale: string = inject<string>(LOCALE_ID);
 
   /**
    * Property router
@@ -260,15 +275,17 @@ export class ConversationDetailsPanel {
    * @readonly
    *
    * @description
-   * The open conversation's place in the channel hierarchy: its parent first,
-   * then its children, each as a row that opens that thread.
+   * Everything that sits next to the open conversation: its parent, its
+   * sub-channels, the channels sharing its parent, and the threads hanging off
+   * the same business record.
    *
-   * Read from the inventory the panel already holds — the parent id is on the
-   * conversation and the children are the rows pointing back at it, so this
-   * costs no request.
+   * Derived from the inventory the panel already holds, never fetched — the
+   * API has no "related conversations" endpoint, and every fact needed
+   * (`parentConversationId`, `subject`, `unreadCount`) is already on the rows
+   * the sidebar renders.
    *
    * @access protected
-   * @since 1.2.0
+   * @since 1.4.0
    *
    * @type {Signal<readonly LinkedThreadRow[]>}
    */
@@ -277,25 +294,45 @@ export class ConversationDetailsPanel {
       const conversation: ConversationOutput | null = this.conversation();
       if (conversation === null) return [];
 
-      const all: readonly ConversationOutput[] = this.inventory.conversations();
-      const parent: ConversationOutput | undefined = conversation.parentConversationId
-        ? all.find(
-            (candidate: ConversationOutput): boolean =>
-              candidate.id === conversation.parentConversationId,
-          )
-        : undefined;
+      const parentId: string | null | undefined = conversation.parentConversationId;
+      // `typeof`, not `!== null`: API Platform omits a null field entirely, so
+      // an absent subject arrives as `undefined` and a bare null check would
+      // match every other subject-less thread against it.
+      const subject: string | null | undefined = conversation.subject;
+      const hasSubject: boolean = typeof subject === 'string' && subject.length > 0;
 
-      const children: readonly ConversationOutput[] = all.filter(
-        (candidate: ConversationOutput): boolean =>
-          candidate.parentConversationId === conversation.id,
+      const rows: LinkedThreadRow[] = [];
+
+      for (const candidate of this.inventory.conversations()) {
+        if (candidate.id === conversation.id) continue;
+
+        let relation: LinkedThreadRow['relation'] | null = null;
+
+        if (typeof parentId === 'string' && candidate.id === parentId) {
+          relation = 'parent';
+        } else if (candidate.parentConversationId === conversation.id) {
+          relation = 'child';
+        } else if (typeof parentId === 'string' && candidate.parentConversationId === parentId) {
+          relation = 'sibling';
+        } else if (hasSubject && candidate.subject === subject) {
+          relation = 'subject';
+        }
+
+        if (relation === null) continue;
+
+        rows.push({
+          id: candidate.id,
+          name: this.labelOf(candidate),
+          relation,
+          unreadCount: candidate.unreadCount,
+        });
+      }
+
+      return rows.toSorted((left: LinkedThreadRow, right: LinkedThreadRow): number =>
+        RELATION_ORDER[left.relation] === RELATION_ORDER[right.relation]
+          ? left.name.localeCompare(right.name)
+          : RELATION_ORDER[left.relation] - RELATION_ORDER[right.relation],
       );
-
-      return [
-        ...(parent ? [toLinkedThreadRow(parent, 'parent')] : []),
-        ...children.map(
-          (child: ConversationOutput): LinkedThreadRow => toLinkedThreadRow(child, 'child'),
-        ),
-      ];
     },
   );
 
@@ -339,6 +376,32 @@ export class ConversationDetailsPanel {
         );
     },
   );
+
+  /**
+   * Property creator
+   * @readonly
+   *
+   * @description
+   * Who opened the channel. Null when the conversation is not a channel or the
+   * row carries no creator — the API only reports one on `GET /api/channels`,
+   * and an empty creator row would claim a fact the panel does not have.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {Signal<CreatorRow | null>}
+   */
+  protected readonly creator: Signal<CreatorRow | null> = computed((): CreatorRow | null => {
+    const reference: string | null | undefined = this.conversation()?.createdByMember;
+    if (reference === null || reference === undefined) return null;
+
+    const identity: MemberIdentity | undefined = this.directory
+      .identities()
+      .get(toMemberId(reference));
+    if (identity === undefined) return null;
+
+    return { displayName: identity.displayName, initials: identity.initials };
+  });
 
   /**
    * Property onlineParticipants
@@ -496,6 +559,72 @@ export class ConversationDetailsPanel {
    *
    * @returns {void}
    */
+  /**
+   * Method labelOf
+   *
+   * @description
+   * A conversation's display label — channel name, subject label, or, for a
+   * direct conversation, the counterpart member resolved through the
+   * directory. Same resolution as the shell sidebar's rows: a DM has no name
+   * of its own, and the backend deliberately embeds no display name.
+   *
+   * @access private
+   * @since 1.4.0
+   *
+   * @param {ConversationOutput} conversation - Conversation to label.
+   *
+   * @returns {string} Display label, falling back to the id so a row is never nameless.
+   */
+  private labelOf(conversation: ConversationOutput): string {
+    if (typeof conversation.name === 'string' && conversation.name.length > 0) {
+      return conversation.name;
+    }
+
+    if (typeof conversation.subjectLabel === 'string' && conversation.subjectLabel.length > 0) {
+      return conversation.subjectLabel;
+    }
+
+    // `typeof`, not a null check: the field is omitted from the JSON on every
+    // conversation that is not a DM.
+    const counterpart: string | null | undefined = conversation.counterpartMember;
+    if (typeof counterpart !== 'string' || counterpart === '') return conversation.id;
+
+    return this.directory.identities().get(toMemberId(counterpart))?.displayName ?? conversation.id;
+  }
+
+  /**
+   * Method relativeTime
+   *
+   * @description
+   * How long ago something was posted, in the panel's narrow column. Falls
+   * back to a plain date past a week: "23 days ago" is harder to place than
+   * the date itself.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @param {string} isoDate - The instant to describe.
+   *
+   * @returns {string} A short relative label.
+   */
+  protected relativeTime(isoDate: string): string {
+    const timestamp: number = Date.parse(isoDate);
+    if (Number.isNaN(timestamp)) return isoDate;
+
+    const minutes: number = Math.floor((Date.now() - timestamp) / 60_000);
+
+    if (minutes < 1) return $localize`:@@messaging.relative.now:Just now`;
+    if (minutes < 60) return $localize`:@@messaging.relative.minutes:${minutes}:count: min ago`;
+
+    const hours: number = Math.floor(minutes / 60);
+    if (hours < 24) return $localize`:@@messaging.relative.hours:${hours}:count: h ago`;
+
+    const days: number = Math.floor(hours / 24);
+    if (days <= 7) return $localize`:@@messaging.relative.days:${days}:count: d ago`;
+
+    return formatDate(isoDate, 'mediumDate', this.locale);
+  }
+
   protected openThread(conversationId: string): void {
     void this.router.navigate([], {
       queryParams: { conversation: conversationId },

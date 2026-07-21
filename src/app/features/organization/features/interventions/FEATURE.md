@@ -166,24 +166,29 @@ plan action, whose enablement reads the persisted intervention, unlocks
 without navigating away; the scope step
 lists work items and delegates add/remove to the page (drawer /
 confirm-delete), and the final step carries the plan action once every step is
-complete. The activity section defaults collapsed during preparation, the
-checklist defaults collapsed during review, the rail's Readiness section is
+complete. Below the guide (or, past draft, below the identity block and the
+stage progress row) the main column carries a **`p-tabs` group** — Work items /
+Proposed changes (shown only once changes exist) / Activity, each tab carrying
+its own `{done}/{total}` count badge — instead of independently collapsible
+accordion sections: `activeSectionTab` defaults to `work-items` during
+preparation/execution and to `changes` (or `activity` when there are none)
+during review, reset by phase change, and the guide's own progress replaces
+the Work items tab entirely while it runs. The rail's Readiness section is
 hidden while the guide runs (the steps convey it) and the Publication section
-only renders in review. Otherwise the main column stacks flat, divider-
-separated sections: a **single work-item checklist** — the one work-item
-surface, no duplicate table view — whose header pairs the `{done}/{total}`
-counter with a thin completion bar and the phase affordances ("+" to create in
+only renders in review. The **work items** tab panel is the **single
+work-item checklist** — the one work-item surface, no duplicate table view —
+topped by a thin completion bar and the phase affordances ("+" to create in
 draft; add-discovery and scan-QR in execution), each row a hover-highlighted
 flat line toggling complete via its circle checkbox (the workspace's next
 recommended item is tinted with the brand accent) with an overflow menu for
 the per-item phase actions (attach evidence photo for equipment, skip,
-delete); a **proposed changes** section
+delete). The **proposed changes** tab panel
 (`ui/components/intervention-change-diff` — a legible field → value diff, not
-raw JSON) headed by a pending/total counter and the atomic-application note;
-while submitted, a tinted **publication summary** aside recapping the atomic
-contract (pending changes, inspections recorded, revision); and the activity
-section (`@shared/components` `ActivityFeed` + `CommentComposer`, fed by the
-workspace store's `activities`/`loadActivities`/`addComment`). The properties
+raw JSON) carries the atomic-application note. The **activity** tab panel is
+`@shared/components` `ActivityFeed` + `CommentComposer`, fed by the workspace
+store's `activities`/`loadActivities`/`addComment`. Outside the tab group,
+while submitted, a tinted **publication summary** aside recaps the atomic
+contract (pending changes, inspections recorded, revision). The properties
 rail stacks divider-separated groups: **Properties** — status (with a
 transition menu — selecting `changes_requested` opens
 `ui/drawers/intervention-request-changes-drawer` with a required note),

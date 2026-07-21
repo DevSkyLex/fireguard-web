@@ -3,14 +3,15 @@ import type { HydraItem } from '@core/api/models';
 /**
  * What a conversation is attached to.
  *
- * A conversation is either a standalone channel/DM (`none`) or bound to a
- * record. The record-bound values exist in the API but no view surfaces them
- * yet — see the messaging FEATURE.md.
+ * Mirrors the backend `MessagingSubjectType` exactly: a conversation is either
+ * a named channel, a 1-to-1 direct thread, or bound to a business record. There
+ * is no `none` value — the API never emits one.
  *
  * @since 1.0.0
  */
 export type ConversationSubjectType =
-  | 'none'
+  | 'channel'
+  | 'direct'
   | 'facility'
   | 'equipment'
   | 'intervention'
@@ -19,15 +20,22 @@ export type ConversationSubjectType =
 /**
  * Who can see a conversation.
  *
+ * Mirrors the backend `ConversationVisibility`: `subject` for a record-bound
+ * thread (anyone who can see the record), `participants` for a channel or a
+ * direct conversation. A direct conversation is identified by
+ * `subjectType === 'direct'`, never by this field.
+ *
  * @since 1.0.0
  */
-export type ConversationVisibility = 'public' | 'private' | 'direct';
+export type ConversationVisibility = 'subject' | 'participants';
 
 /**
  * A channel, direct conversation, or record-bound thread.
  *
- * `isChannel` discriminates: a channel has a `name`, a direct conversation is
- * named after its participants and carries `visibility: 'direct'`.
+ * `subjectType` discriminates: `'channel'` has a `name`, `'direct'` is a 1-to-1
+ * thread named after its participants (`name` is null), anything else is bound
+ * to a business record. `isChannel` is the backend's convenience flag for
+ * `subjectType === 'channel'`.
  *
  * @since 1.0.0
  */
@@ -55,4 +63,23 @@ export interface ConversationOutput extends HydraItem {
    * sidebar renders parented channels indented under their parent.
    */
   readonly parentConversationId: string | null;
+
+  /**
+   * The OTHER participant's member IRI on a direct conversation.
+   *
+   * Only sent by `GET /api/direct-conversations`. A DM has no `name`, so this
+   * is what the sidebar resolves against the member directory to label the
+   * row; the backend deliberately does not embed a display name.
+   */
+  readonly counterpartMember?: string | null;
+
+  /**
+   * The creating member's IRI.
+   *
+   * Only present on rows sourced from `GET /api/channels`, which is the sole
+   * endpoint that reports a creator — `GET /api/conversations` does not send
+   * the field at all, so it is absent (not null) on those rows and any view
+   * must render nothing rather than an empty creator.
+   */
+  readonly createdByMember?: string | null;
 }

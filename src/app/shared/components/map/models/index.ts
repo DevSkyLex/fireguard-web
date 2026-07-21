@@ -1,1 +1,1 @@
-export type { MapMarker } from './map-marker.interface';
+export type { MapMarker, MapMarkerDetail } from './map-marker.interface';

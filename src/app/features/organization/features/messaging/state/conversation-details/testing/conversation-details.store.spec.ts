@@ -3,12 +3,15 @@ import { of, throwError } from 'rxjs';
 import { MessagingService } from '@features/organization/features/messaging/data-access';
 import { ConversationDetailsStore } from '../conversation-details.store';
 
-const collection = <T>(member: readonly T[]) => of({ member, totalItems: member.length });
+const collection = <T>(member: readonly T[], totalItems: number = member.length) =>
+  of({ member, totalItems });
 
 describe('ConversationDetailsStore', () => {
   let listPinnedMessages: ReturnType<typeof vi.fn>;
   let listAttachments: ReturnType<typeof vi.fn>;
   let listParticipants: ReturnType<typeof vi.fn>;
+  let listConversationLinks: ReturnType<typeof vi.fn>;
+  let getConversationActivity: ReturnType<typeof vi.fn>;
   let getPresence: ReturnType<typeof vi.fn>;
 
   const configure = (): InstanceType<typeof ConversationDetailsStore> => {
@@ -17,7 +20,14 @@ describe('ConversationDetailsStore', () => {
         ConversationDetailsStore,
         {
           provide: MessagingService,
-          useValue: { listPinnedMessages, listAttachments, listParticipants, getPresence },
+          useValue: {
+            listPinnedMessages,
+            listAttachments,
+            listParticipants,
+            listConversationLinks,
+            getConversationActivity,
+            getPresence,
+          },
         },
       ],
     });
@@ -34,6 +44,15 @@ describe('ConversationDetailsStore', () => {
       ]),
     );
     listParticipants = vi.fn(() => collection([{ memberId: 'm1' }]));
+    listConversationLinks = vi.fn(() =>
+      collection([{ id: 'l1', url: 'https://example.com/report.pdf' }], 1),
+    );
+    getConversationActivity = vi.fn(() =>
+      collection([
+        { bucket: '2026-07-20', count: 0 },
+        { bucket: '2026-07-21', count: 3 },
+      ]),
+    );
     getPresence = vi.fn(() =>
       collection([
         { memberId: 'm1', online: true },
@@ -42,7 +61,7 @@ describe('ConversationDetailsStore', () => {
     );
   });
 
-  it('should load the three collections together for a channel', () => {
+  it('should load the collections together for a channel', () => {
     const store = configure();
 
     store.load({ conversationId: 'c1', isChannel: true });
@@ -50,8 +69,10 @@ describe('ConversationDetailsStore', () => {
     expect(listPinnedMessages).toHaveBeenCalledWith('c1');
     expect(listAttachments).toHaveBeenCalledWith('c1');
     expect(listParticipants).toHaveBeenCalledWith('c1');
+    expect(getConversationActivity).toHaveBeenCalledWith('c1', 26);
     expect(store.pinnedMessages()).toHaveLength(1);
     expect(store.participants()).toHaveLength(1);
+    expect(store.activity()).toHaveLength(2);
     expect(store.isLoading()).toBe(false);
   });
 
@@ -81,8 +102,102 @@ describe('ConversationDetailsStore', () => {
     store.load({ conversationId: null, isChannel: false });
 
     expect(listPinnedMessages).not.toHaveBeenCalled();
+    expect(listConversationLinks).not.toHaveBeenCalled();
     expect(store.pinnedMessages()).toEqual([]);
+    expect(store.links()).toEqual([]);
     expect(store.hasError()).toBe(false);
+  });
+
+  // The heatmap enriches the Info tab; it is not what the panel is about. A
+  // failed read hides one widget instead of taking the members down with it.
+  it('should degrade the activity read to an empty heatmap', () => {
+    getConversationActivity = vi.fn(() => throwError(() => new Error('nope')));
+    const store = configure();
+
+    store.load({ conversationId: 'c1', isChannel: true });
+
+    expect(store.activity()).toEqual([]);
+    expect(store.hasError()).toBe(false);
+    expect(store.participants()).toHaveLength(1);
+  });
+
+  describe('links', () => {
+    it('should load the first page on the same trigger as the rest of the panel', () => {
+      const store = configure();
+
+      store.load({ conversationId: 'c1', isChannel: true });
+
+      expect(listConversationLinks).toHaveBeenCalledWith('c1', 1);
+      expect(store.links().map((link) => link.id)).toEqual(['l1']);
+      expect(store.isLoadingLinks()).toBe(false);
+      expect(store.hasMoreLinks()).toBe(false);
+    });
+
+    it('should append the next page and stop once everything is loaded', () => {
+      listConversationLinks = vi.fn((_id: string, page: number) =>
+        page === 1
+          ? collection([{ id: 'l1', url: 'https://a.test' }], 3)
+          : collection(
+              [
+                { id: 'l2', url: 'https://b.test' },
+                { id: 'l3', url: 'https://c.test' },
+              ],
+              3,
+            ),
+      );
+      const store = configure();
+
+      store.load({ conversationId: 'c1', isChannel: true });
+      expect(store.hasMoreLinks()).toBe(true);
+
+      store.loadMoreLinks();
+
+      expect(listConversationLinks).toHaveBeenLastCalledWith('c1', 2);
+      expect(store.links().map((link) => link.id)).toEqual(['l1', 'l2', 'l3']);
+      expect(store.hasMoreLinks()).toBe(false);
+
+      store.loadMoreLinks();
+
+      expect(listConversationLinks).toHaveBeenCalledTimes(2);
+    });
+
+    // A message can straddle two pages when one is posted between the requests.
+    it('should not duplicate a link returned by two pages', () => {
+      listConversationLinks = vi.fn(() => collection([{ id: 'l1', url: 'https://a.test' }], 4));
+      const store = configure();
+
+      store.load({ conversationId: 'c1', isChannel: true });
+      store.loadMoreLinks();
+
+      expect(store.links().map((link) => link.id)).toEqual(['l1']);
+    });
+
+    // Reopening a conversation must not stack its links onto the previous one's.
+    it('should replace the list when another conversation opens', () => {
+      listConversationLinks = vi.fn((id: string) =>
+        collection([{ id: `${id}-link`, url: 'https://a.test' }], 1),
+      );
+      const store = configure();
+
+      store.load({ conversationId: 'c1', isChannel: true });
+      store.load({ conversationId: 'c2', isChannel: true });
+
+      expect(store.links().map((link) => link.id)).toEqual(['c2-link']);
+    });
+
+    // The tab degrades on its own: a link failure must leave the members and
+    // the pins standing.
+    it('should surface a links failure without failing the panel', () => {
+      listConversationLinks = vi.fn(() => throwError(() => new Error('nope')));
+      const store = configure();
+
+      store.load({ conversationId: 'c1', isChannel: true });
+
+      expect(store.hasLinksError()).toBe(true);
+      expect(store.links()).toEqual([]);
+      expect(store.hasError()).toBe(false);
+      expect(store.pinnedMessages()).toHaveLength(1);
+    });
   });
 
   describe('presence', () => {

@@ -368,18 +368,30 @@ export class MessagingSidebar {
    * Method labelOf
    *
    * @description
-   * A conversation's display label — channel name, or the subject label for
-   * direct conversations.
+   * A conversation's display label — channel name, subject label, or, for a
+   * direct conversation, the counterpart member's name resolved against the
+   * directory (the API sends only their IRI, never a display name).
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.1.0
    *
    * @param {ConversationOutput} conversation - Conversation to label.
    *
    * @returns {string} Display label.
    */
   protected labelOf(conversation: ConversationOutput): string {
-    return conversation.name ?? conversation.subjectLabel ?? '';
+    // `?? null` on the tail: API Platform omits null fields entirely, so a
+    // direct conversation arrives with `name`/`subjectLabel` UNDEFINED, which a
+    // bare `!== null` check would let through as the label.
+    const named: string | null = conversation.name ?? conversation.subjectLabel ?? null;
+    if (named !== null) return named;
+
+    const counterpart: string | null | undefined = conversation.counterpartMember;
+    if (typeof counterpart !== 'string' || '' === counterpart) return '';
+
+    const memberId: string = counterpart.slice(counterpart.lastIndexOf('/') + 1);
+
+    return this.directory.identities().get(memberId)?.displayName ?? '';
   }
 
   /**

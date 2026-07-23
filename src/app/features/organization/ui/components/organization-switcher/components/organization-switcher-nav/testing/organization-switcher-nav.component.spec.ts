@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationSwitcherNav } from '../organization-switcher-nav.component';
 
@@ -21,6 +21,12 @@ describe('OrganizationSwitcherNav', () => {
       imports: [OrganizationSwitcherNav],
       providers: [provideRouter([])],
     });
+
+    // Clicking a routerLink anchor triggers a real router navigation that
+    // resolves asynchronously, after TestBed has torn down the injector —
+    // raising NG0205 as an unhandled rejection. Stub the navigation so link
+    // clicks resolve synchronously without hitting the router.
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
   });
 
   it('should create', () => {

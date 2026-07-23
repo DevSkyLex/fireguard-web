@@ -1,0 +1,142 @@
+area:github:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+
+area:auth:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/auth/**'
+
+area:account:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/account/**'
+
+area:organization:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/organization/**'
+          - 'src/app/features/onboarding/**'
+
+area:facility:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/organization/features/facilities/**'
+
+area:equipment:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/organization/features/equipments/**'
+
+area:inspection:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/organization/features/inspections/**'
+          - 'src/app/features/organization/features/checklists/**'
+
+area:intervention:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/organization/features/interventions/**'
+
+area:collaboration:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/collaboration/**'
+
+area:core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/core/**'
+
+area:shared:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/shared/**'
+
+area:layout:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/layouts/**'
+
+area:i18n:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/locale/**'
+
+area:styles:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/styles.css'
+          - 'src/app/core/primeng/**'
+          - 'src/app/core/theme/**'
+          - '.postcssrc.json'
+
+area:tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/testing/**'
+          - '**/*.spec.ts'
+          - 'e2e/**'
+          - 'playwright.config.ts'
+          - 'tsconfig.spec.json'
+
+area:docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'README.md'
+          - 'ARCHITECTURE.md'
+          - 'AGENTS.md'
+          - 'CLAUDE.md'
+          - 'PRODUCT.md'
+          - 'DEPLOYMENT.md'
+          - '**/FEATURE.md'
+          - 'docs/**'
+
+area:config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'angular.json'
+          - 'tsconfig*.json'
+          - '.oxlintrc.json'
+          - '.oxfmtrc.json'
+          - 'ngsw-config.json'
+          - 'src/environments/**'
+
+type:dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'package.json'
+          - 'package-lock.json'
+
+risk:security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/features/auth/**'
+          - 'src/app/core/http/**'
+          - 'src/app/core/cookie/**'
+          - 'src/app/**/ports/**'
+
+risk:api-contract:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/app/**/data-access/**'
+          - 'src/app/**/models/**'
+          - 'src/app/core/api/**'
+
+risk:ssr:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/server.ts'
+          - 'src/main.server.ts'
+          - 'src/app/app.config.server.ts'
+          - 'src/app/**/http/resolvers/**'
+
+risk:delivery:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'Dockerfile'
+          - '.dockerignore'
+          - 'docker-compose.prod.yml'
+          - '.github/workflows/**'

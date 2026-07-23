@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { EMPTY } from 'rxjs';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
@@ -41,6 +41,12 @@ describe('AccountUserMenu', () => {
         { provide: Events, useValue: { on: () => EMPTY } },
       ],
     });
+
+    // Clicking a routerLink anchor triggers a real router navigation that
+    // resolves asynchronously, after TestBed has torn down the injector —
+    // raising NG0205 as an unhandled rejection. Stub the navigation so link
+    // clicks resolve synchronously without hitting the router.
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
 
     const fixture: ComponentFixture<AccountUserMenu> = TestBed.createComponent(AccountUserMenu);
     fixture.detectChanges();

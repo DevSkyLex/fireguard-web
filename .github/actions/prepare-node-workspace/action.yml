@@ -1,0 +1,47 @@
+name: Prepare Node Workspace
+description: Setup Node.js, restore the npm cache, install project dependencies, and optionally install Playwright browsers.
+
+inputs:
+  node-version:
+    description: Node.js version to install
+    required: false
+    default: '22'
+  install-dependencies:
+    description: Whether npm dependencies should be installed
+    required: false
+    default: 'true'
+  install-playwright-browsers:
+    description: Whether Playwright browsers should be installed
+    required: false
+    default: 'false'
+  playwright-browsers:
+    description: Space-separated list of Playwright browsers to install
+    required: false
+    default: chromium
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+
+    - name: Install dependencies
+      if: ${{ inputs.install-dependencies == 'true' }}
+      shell: bash
+      run: npm ci --no-audit --no-fund
+
+    - name: Cache Playwright browsers
+      if: ${{ inputs.install-playwright-browsers == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}-${{ inputs.playwright-browsers }}
+        restore-keys: ${{ runner.os }}-playwright-
+
+    - name: Install Playwright browsers
+      if: ${{ inputs.install-playwright-browsers == 'true' }}
+      shell: bash
+      run: npx playwright install --with-deps ${{ inputs.playwright-browsers }}

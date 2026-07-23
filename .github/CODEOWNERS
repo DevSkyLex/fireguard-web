@@ -1,0 +1,48 @@
+# Default owner
+* @DevSkyLex
+
+# GitHub automation and repo governance
+/.github/ @DevSkyLex
+
+# Core repository documentation
+/README.md @DevSkyLex
+/ARCHITECTURE.md @DevSkyLex
+/AGENTS.md @DevSkyLex
+/CLAUDE.md @DevSkyLex
+/PRODUCT.md @DevSkyLex
+/DEPLOYMENT.md @DevSkyLex
+
+# Build, tooling, and infrastructure
+/angular.json @DevSkyLex
+/package.json @DevSkyLex
+/package-lock.json @DevSkyLex
+/tsconfig.json @DevSkyLex
+/tsconfig.app.json @DevSkyLex
+/tsconfig.spec.json @DevSkyLex
+/.oxlintrc.json @DevSkyLex
+/.oxfmtrc.json @DevSkyLex
+/ngsw-config.json @DevSkyLex
+/Dockerfile @DevSkyLex
+/docker-compose.prod.yml @DevSkyLex
+/playwright.config.ts @DevSkyLex
+
+# Application shell and infrastructure
+/src/app/core/ @DevSkyLex
+/src/app/layouts/ @DevSkyLex
+/src/app/shared/ @DevSkyLex
+/src/environments/ @DevSkyLex
+/src/styles.css @DevSkyLex
+/src/locale/ @DevSkyLex
+
+# Features
+/src/app/features/auth/ @DevSkyLex
+/src/app/features/account/ @DevSkyLex
+/src/app/features/onboarding/ @DevSkyLex
+/src/app/features/organization/ @DevSkyLex
+/src/app/features/collaboration/ @DevSkyLex
+/src/app/features/main/ @DevSkyLex
+/src/app/features/error/ @DevSkyLex
+/src/app/features/maintenance/ @DevSkyLex
+
+# Tests
+/e2e/ @DevSkyLex

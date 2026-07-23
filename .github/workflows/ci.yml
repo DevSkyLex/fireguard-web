@@ -1,48 +1,252 @@
 name: CI
 
 on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      run_e2e:
+        description: Run the end-to-end test job
+        required: false
+        type: boolean
+        default: false
+      e2e_browsers:
+        description: Playwright projects to run for the end-to-end job
+        required: false
+        type: string
+        default: chromium
   pull_request:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [main]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
+env:
+  NODE_VERSION: '22'
+  CI: true
+
 jobs:
-  quality:
-    name: Quality gates
+  # ==========================================================================
+  # Code Style Check
+  # ==========================================================================
+  format:
+    name: Code Style
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      CI: true
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
         with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Check formatting
         run: npm run format:check
 
-      - name: Lint
+  # ==========================================================================
+  # Static Analysis
+  # ==========================================================================
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run oxlint
         run: npm run lint
 
-      - name: Run unit tests
-        run: npm run test:ci
+  # ==========================================================================
+  # Unit and Integration Tests
+  # ==========================================================================
+  tests-unit:
+    name: Unit and Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
 
-      - name: Build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run unit tests with coverage
+        run: |
+          npx ng test --watch=false \
+            --coverage \
+            --coverage-reporters=lcovonly \
+            --coverage-reporters=text-summary
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: github.event_name != 'workflow_call'
+        with:
+          directory: coverage
+          flags: unit
+          fail_ci_if_error: false
+          verbose: true
+        continue-on-error: true
+
+  # ==========================================================================
+  # Production Build (strict templates, i18n locales, bundle budgets)
+  # ==========================================================================
+  build:
+    name: Production Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build application
         run: npm run build
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        if: github.event_name != 'workflow_call'
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+        continue-on-error: true
+
+  # ==========================================================================
+  # Translation Catalog Drift (non-blocking)
+  # ==========================================================================
+  i18n:
+    name: Translation Catalog Drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Extract messages
+        run: npm run i18n:extract
+
+      - name: Report catalog drift
+        run: |
+          if git diff --quiet -- src/locale; then
+            echo "Translation catalogs are in sync." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "::warning::Translation catalogs are out of sync. Run 'npm run i18n:extract' and commit src/locale."
+          {
+            echo "### Translation catalog drift"
+            echo
+            echo 'Run `npm run i18n:extract` and commit the updated `src/locale` catalogs.'
+            echo
+            echo '```diff'
+            git diff --stat -- src/locale
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ==========================================================================
+  # Security Check
+  # ==========================================================================
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Non-blocking: the audit reports upstream advisories that are resolved by
+    # dependency bumps, not by the change under review.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          install-dependencies: 'false'
+
+      - name: Check for security vulnerabilities
+        run: |
+          if npm audit --omit=dev --audit-level=high; then
+            echo "No high or critical runtime advisory." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "::warning::npm audit reported high or critical runtime advisories."
+          {
+            echo "### npm audit"
+            echo
+            echo '```'
+            npm audit --omit=dev --audit-level=high || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1
+
+  # ==========================================================================
+  # End-to-End Tests (manual opt-in only)
+  # ==========================================================================
+  tests-end-to-end:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event_name == 'workflow_dispatch' && inputs.run_e2e == true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          install-playwright-browsers: 'true'
+          playwright-browsers: ${{ inputs.e2e_browsers }}
+
+      - name: Run Playwright tests
+        env:
+          E2E_BROWSERS: ${{ inputs.e2e_browsers }}
+        run: |
+          projects=()
+          for browser in ${E2E_BROWSERS:-chromium}; do
+            projects+=("--project=${browser}")
+          done
+
+          npx playwright test "${projects[@]}"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+        continue-on-error: true

@@ -28,17 +28,17 @@ import type { Preset } from '@primeuix/themes/types';
 export const FireguardTheme: Preset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{indigo.50}',
-      100: '{indigo.100}',
-      200: '{indigo.200}',
-      300: '{indigo.300}',
-      400: '{indigo.400}',
-      500: '{indigo.500}',
-      600: '{indigo.600}',
-      700: '{indigo.700}',
-      800: '{indigo.800}',
-      900: '{indigo.900}',
-      950: '{indigo.950}',
+      50: '{orange.50}',
+      100: '{orange.100}',
+      200: '{orange.200}',
+      300: '{orange.300}',
+      400: '{orange.400}',
+      500: '{orange.500}',
+      600: '{orange.600}',
+      700: '{orange.700}',
+      800: '{orange.800}',
+      900: '{orange.900}',
+      950: '{orange.950}',
     },
     focusRing: {
       width: '2px',
@@ -251,6 +251,17 @@ export const FireguardTheme: Preset = definePreset(Aura, {
     letter-spacing: 0.05em;
     text-transform: uppercase;
     white-space: nowrap;
+}
+
+/*
+ * Entity grids declare rem-based column floors (min-w-64, min-w-36, …) whose
+ * sum can exceed the card holding them, and that card is overflow-hidden — so
+ * without this the rightmost columns are clipped with no way to reach them.
+ * Scrolling the table container is what the shell already does by hand in
+ * organization-team; doing it here covers every grid at once.
+ */
+.p-datatable-table-container {
+    overflow-x: auto;
 }
 `,
     },

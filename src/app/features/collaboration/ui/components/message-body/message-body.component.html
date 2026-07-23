@@ -1,0 +1,17 @@
+@for (segment of segments(); track $index) {
+  @if (segment.kind === 'mention') {
+    <!--
+      Inline chip, not a p-chip: the prototype's mention sits in the text flow
+      with no height of its own, while p-chip is a 24px pill that would break
+      the line rhythm.
+    -->
+    <!-- prettier-ignore -->
+    <span class="rounded-sm bg-primary/10 px-1 font-medium text-primary">&#64;{{ labelFor(segment.value) }}</span>
+  } @else {
+    <!--
+      Already sanitized twice: once server-side against a fixed allow-list,
+      once by Angular on binding.
+    -->
+    <span [innerHTML]="segment.value"></span>
+  }
+}

@@ -1,0 +1,18 @@
+<!--
+  One scroller for the whole sidebar, matching the prototype's single
+  `overflow-y-auto` region. Each contribution used to own its own scroller, so
+  the channel list — the last one — had none, and its channels below the fold
+  were unreachable.
+
+  A 1px rule separates the business nav from the channel sections, emitted only
+  *between* contributions so a single registered section leaves no orphan rule.
+-->
+<div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+  @for (section of sections(); track section.id; let last = $last) {
+    <ng-container *ngComponentOutlet="section.component" />
+
+    @if (!last) {
+      <div class="mx-3 my-3 border-t border-surface-200 dark:border-surface-800"></div>
+    }
+  }
+</div>

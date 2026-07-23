@@ -1,0 +1,60 @@
+<!--
+  A system view, not a conversation: it owns its own scroller and has no
+  composer, because a bookmark list is not somewhere you post.
+-->
+<section
+  class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3.5 py-4 md:gap-5 md:px-6 md:py-[22px]"
+  [attr.aria-busy]="store.isLoading()"
+  data-testid="saved-messages"
+>
+  @if (store.loadError()) {
+    <p class="text-sm text-red-600 dark:text-red-400" i18n="@@workspace.saved.loadFailed">
+      Saved messages could not be loaded.
+    </p>
+  }
+
+  @for (message of store.savedEntities(); track message.id) {
+    <!--
+      `quickActions` off: this page can only unsave. `SavedMessagesStore`
+      has no react or pin method, so leaving those controls mounted put five
+      focusable buttons per row in the tab order that did nothing at all.
+    -->
+    <app-message-row
+      [message]="message"
+      [authorName]="authorNameFor(message)"
+      [memberNames]="message.mentionNames"
+      [quickActions]="false"
+      (saveToggled)="store.unsave(message.id)"
+    />
+  } @empty {
+    @if (store.isLoading()) {
+      <app-skeleton
+        preset="list-row"
+        [count]="5"
+        i18n-label="@@workspace.saved.loading"
+        label="Loading saved messages"
+      />
+    } @else {
+      <app-empty-state
+        class="m-auto"
+        icon="pi pi-bookmark"
+        i18n-title="@@workspace.saved.empty.title"
+        title="Nothing saved yet"
+        i18n-description="@@workspace.saved.empty.description"
+        description="Bookmark a message to find it here."
+      />
+    }
+  }
+
+  @if (store.hasMore()) {
+    <button
+      type="button"
+      class="mx-auto cursor-pointer rounded-md px-3 py-1 text-[13px] text-surface-500 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
+      data-testid="saved-messages-load-more"
+      (click)="loadMore()"
+    >
+      <ng-container i18n="@@common.loadMore">Load more</ng-container>
+      ({{ store.savedEntities().length }}/{{ store.total() }})
+    </button>
+  }
+</section>

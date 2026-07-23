@@ -9,6 +9,7 @@ import {
 import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
 import { TooltipModule } from 'primeng/tooltip';
+import { deriveInitials } from '@shared/utils';
 import type { AvatarStackPerson } from './models';
 
 /**
@@ -208,10 +209,7 @@ export class AvatarStack {
    * @returns {string} The derived initials, or an empty string for a blank label.
    */
   protected initialsFor(label: string): string {
-    const parts: string[] = label.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return '';
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+    return deriveInitials(label);
   }
   //#endregion
 }

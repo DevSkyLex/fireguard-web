@@ -34,6 +34,9 @@ describe('organizationPermissionGuard', () => {
       paramMap: {
         get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
       },
+      // The guard reads its own ancestry to pick the shell for the default
+      // denial redirect; a bare dashboard route has no `workspace` segment.
+      pathFromRoot: [{ url: [] }],
     } as unknown as Parameters<ReturnType<typeof organizationPermissionGuard>>[0];
   }
 
@@ -84,6 +87,21 @@ describe('organizationPermissionGuard', () => {
 
     expect(result).toBe(redirectUrlTree);
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/organizations', 'org-1']);
+  });
+
+  it('should keep the denial redirect inside the workspace shell', async () => {
+    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(false);
+    const route = createRouteWithOrganizationId('org-1');
+    (route as { pathFromRoot: unknown }).pathFromRoot = [{ url: [{ path: 'workspace' }] }];
+
+    const guard = organizationPermissionGuard({
+      permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE],
+    });
+    await TestBed.runInInjectionContext(() => resolveGuardResult(guard(route, {} as never)));
+
+    // A denied member stays in the workspace shell rather than being ejected
+    // to the dashboard tree.
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/organizations', 'org-1', 'workspace']);
   });
 
   it('should support the any match strategy', async () => {

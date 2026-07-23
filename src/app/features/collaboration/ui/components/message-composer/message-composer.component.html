@@ -1,0 +1,106 @@
+<!--
+  The focus ring lives here, not on the textarea: the field sets `outline-none`
+  so the browser's default ring does not cut across the rounded card, which left
+  the composer — the most-used control in the app — with no visible focus at all.
+-->
+<div
+  class="relative rounded-2xl border border-surface-300 bg-surface-0 shadow-sm has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-primary dark:border-surface-700 dark:bg-surface-900"
+>
+  <!--
+    A plain auto-growing textarea, not the shared CommentComposer: that one is
+    Quill-based, emits HTML and has no mention or emoji affordances.
+
+    `cdkTextareaAutosize` writes an inline `height` equal to the content's line
+    box and does not add the vertical padding, which pinned this to 24px and
+    clipped the first line. `min-h-12` (line-height 24 + padding 24) settles it:
+    a min-height always wins over a height in CSS, and the directive is still
+    free to grow the box beyond it. `max-h` supplies the prototype's 150px cap.
+  -->
+  <textarea
+    #input
+    class="block max-h-[150px] min-h-12 w-full resize-none bg-transparent px-4 py-3 text-base leading-normal text-surface-900 outline-none placeholder:text-surface-600 dark:text-surface-100 dark:placeholder:text-surface-400"
+    cdkTextareaAutosize
+    [attr.maxlength]="maxLength"
+    i18n-aria-label="@@workspace.composer.aria"
+    aria-label="Write a message"
+    [placeholder]="placeholder()"
+    [value]="draft()"
+    data-testid="message-composer-input"
+    (input)="onInput($event)"
+    (keydown)="onKeydown($event)"
+  ></textarea>
+
+  <div class="flex items-center justify-between gap-3 px-3 pt-1.5 pb-2.5">
+    <button
+      type="button"
+      #emojiTrigger
+      class="grid size-7 shrink-0 cursor-pointer place-content-center rounded-md text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5 dark:hover:text-surface-300"
+      i18n-aria-label="@@workspace.composer.emoji.aria"
+      aria-label="Insert an emoji"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="emojiOpen()"
+      data-testid="message-composer-emoji"
+      (click)="emojiPopover.toggle($event)"
+    >
+      <i class="pi pi-face-smile text-sm" aria-hidden="true"></i>
+    </button>
+
+    <p-popover
+      #emojiPopover
+      appendTo="body"
+      (onShow)="emojiOpen.set(true)"
+      (onHide)="onEmojiHide()"
+    >
+      <!-- A short curated palette, not a full picker: the prototype offers one row of common marks. -->
+      <div class="grid w-max grid-cols-8 gap-1">
+        @for (emoji of palette; track emoji) {
+          <button
+            type="button"
+            class="grid size-8 cursor-pointer place-content-center rounded-md text-base transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-white/5"
+            [attr.autofocus]="$first ? '' : null"
+            [attr.aria-label]="emoji"
+            (click)="insertEmoji(emoji); emojiPopover.hide()"
+          >
+            {{ emoji }}
+          </button>
+        }
+      </div>
+    </p-popover>
+
+    <span class="min-w-0 flex-1 truncate text-xs text-surface-500 dark:text-surface-400">
+      @if (remaining() !== null) {
+        <ng-container i18n="@@workspace.composer.remaining">
+          {{ remaining() }} characters left
+        </ng-container>
+      } @else {
+        <ng-container i18n="@@workspace.composer.hint">
+          Enter to send · Shift+Enter for a new line
+        </ng-container>
+      }
+    </span>
+
+    <div class="flex items-center gap-2">
+      <p-button
+        severity="secondary"
+        size="small"
+        [text]="true"
+        [disabled]="draft().length === 0"
+        i18n-label="@@common.discard"
+        label="Discard"
+        data-testid="message-composer-discard"
+        (onClick)="discard()"
+      />
+
+      <p-button
+        severity="contrast"
+        size="small"
+        [disabled]="!canSend()"
+        [loading]="pending()"
+        i18n-label="@@common.send"
+        label="Send"
+        data-testid="message-composer-send"
+        (onClick)="send()"
+      />
+    </div>
+  </div>
+</div>

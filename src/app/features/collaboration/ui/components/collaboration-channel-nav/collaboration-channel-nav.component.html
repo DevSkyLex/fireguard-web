@@ -1,0 +1,156 @@
+<!--
+  Channel search: filters the favorites and channel sections below by name,
+  matching the prototype. The business nav above is intentionally untouched.
+-->
+<div class="pt-1 pb-2">
+  <div
+    class="flex h-[34px] items-center gap-2 rounded-md border border-surface-200 bg-surface-100 px-2.5 focus-within:border-surface-300 dark:border-surface-800 dark:bg-surface-800"
+  >
+    <i class="pi pi-search text-xs text-surface-500 dark:text-surface-400" aria-hidden="true"></i>
+    <input
+      type="search"
+      class="min-w-0 flex-1 border-0 bg-transparent text-sm text-surface-900 outline-none placeholder:text-surface-500 dark:text-surface-100 dark:placeholder:text-surface-400"
+      [value]="search()"
+      i18n-placeholder="@@workspace.sidebar.search.placeholder"
+      placeholder="Search channels"
+      i18n-aria-label="@@workspace.sidebar.search.placeholder"
+      aria-label="Search channels"
+      data-testid="channel-nav-search"
+      (input)="onSearch($event)"
+    />
+    @if (search().length > 0) {
+      <button
+        type="button"
+        class="grid size-5 shrink-0 cursor-pointer place-content-center rounded-sm text-surface-500 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:text-surface-100"
+        i18n-aria-label="@@workspace.sidebar.search.clear"
+        aria-label="Clear search"
+        data-testid="channel-nav-search-clear"
+        (click)="clearSearch()"
+      >
+        <i class="pi pi-times text-[11px]" aria-hidden="true"></i>
+      </button>
+    }
+  </div>
+</div>
+
+@if (savedLink(); as link) {
+  <!--
+    The only system view backed by a real endpoint. Inbox and Drafts stay out
+    until there is something honest behind them — the channel list hard-codes
+    `unreadCount` to zero, and drafts have no persistence before the offline
+    layer lands.
+  -->
+  <ul class="flex flex-col gap-px pt-1">
+    <li>
+      <app-nav-row
+        icon="pi pi-bookmark"
+        i18n-label="@@workspace.sidebar.saved"
+        label="Saved"
+        [routerLink]="link"
+      />
+    </li>
+  </ul>
+}
+
+@if (favorites().length > 0) {
+  <button
+    type="button"
+    class="flex cursor-pointer items-center justify-between px-2.5 pt-4 pb-1 text-[11px] font-semibold tracking-wide text-surface-500 uppercase hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100"
+    [attr.aria-expanded]="favoritesExpanded()"
+    aria-controls="workspace-favorites"
+    data-testid="channel-nav-favorites-toggle"
+    (click)="toggleFavorites()"
+  >
+    <span i18n="@@workspace.sidebar.favorites">Favorites</span>
+    <i
+      class="pi text-[10px]"
+      [class.pi-chevron-up]="favoritesExpanded()"
+      [class.pi-chevron-down]="!favoritesExpanded()"
+      aria-hidden="true"
+    ></i>
+  </button>
+
+  @if (favoritesExpanded()) {
+    <ul id="workspace-favorites" class="flex flex-col gap-px">
+      @for (row of favorites(); track row.id) {
+        <li>
+          <app-nav-row
+            icon="pi pi-hashtag"
+            [label]="row.name"
+            [routerLink]="row.link"
+            [count]="row.unreadCount"
+          />
+        </li>
+      }
+    </ul>
+  }
+}
+
+<button
+  type="button"
+  class="flex cursor-pointer items-center justify-between px-2.5 pt-4 pb-1 text-[11px] font-semibold tracking-wide text-surface-500 uppercase hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100"
+  [attr.aria-expanded]="channelsExpanded()"
+  aria-controls="workspace-channels"
+  data-testid="channel-nav-channels-toggle"
+  (click)="toggleChannels()"
+>
+  <span i18n="@@workspace.sidebar.channels">Channels</span>
+  <i
+    class="pi text-[10px]"
+    [class.pi-chevron-up]="channelsExpanded()"
+    [class.pi-chevron-down]="!channelsExpanded()"
+    aria-hidden="true"
+  ></i>
+</button>
+
+@if (channelsExpanded()) {
+  <ul id="workspace-channels" class="flex flex-col gap-px">
+    @if (store.isLoading() && channelRows().length === 0) {
+      @for (placeholder of [1, 2, 3]; track $index) {
+        <li
+          class="h-8 animate-pulse rounded-md bg-surface-100 motion-reduce:animate-none dark:bg-surface-800"
+        ></li>
+      }
+    } @else if (store.loadError() && channelRows().length === 0) {
+      <!--
+        Distinct from the empty state: "No channels yet." is a fact, a failed
+        load is recoverable. Compact and inline — the full-page ErrorState would
+        dwarf a 266px sidebar section.
+      -->
+      <li
+        class="flex flex-col items-start gap-1 px-2.5 py-2 text-[13px] text-red-600 dark:text-red-400"
+        role="alert"
+        data-testid="channel-nav-error"
+      >
+        <span i18n="@@workspace.sidebar.channels.loadFailed">Channels could not be loaded.</span>
+        <button
+          type="button"
+          class="cursor-pointer rounded-sm font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          data-testid="channel-nav-retry"
+          (click)="reload()"
+        >
+          <ng-container i18n="@@common.retry">Retry</ng-container>
+        </button>
+      </li>
+    } @else {
+      @for (row of channelRows(); track row.id) {
+        <li>
+          <app-nav-row
+            icon="pi pi-hashtag"
+            [label]="row.name"
+            [routerLink]="row.link"
+            [count]="row.unreadCount"
+            [nested]="row.nested"
+          />
+        </li>
+      } @empty {
+        <li
+          class="px-2.5 py-2 text-[13px] text-surface-500 dark:text-surface-400"
+          i18n="@@workspace.sidebar.channels.empty"
+        >
+          No channels yet.
+        </li>
+      }
+    }
+  </ul>
+}

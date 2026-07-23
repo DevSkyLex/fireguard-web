@@ -291,6 +291,10 @@ export const ALL_ORGANIZATION_PERMISSIONS: ReadonlyArray<string> = [
   'organization.interventions.execute',
   'organization.interventions.review',
   'organization.interventions.publish',
+  'organization.messaging.read',
+  'organization.messaging.write',
+  'organization.messaging.manage',
+  'organization.assistant.use',
   'organization.settings.write',
   'organization.delete',
 ];

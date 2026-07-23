@@ -1,0 +1,45 @@
+<a
+  class="flex h-8 items-center gap-2.5 text-sm text-surface-900 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:text-surface-100 dark:hover:bg-white/5"
+  [class]="
+    nested()
+      ? 'ml-3.5 rounded-r-md border-l border-surface-200 pr-2.5 pl-3 dark:border-surface-800'
+      : 'rounded-md px-2.5'
+  "
+  [routerLink]="routerLink()"
+  routerLinkActive="bg-surface-200 font-semibold text-surface-950 dark:bg-white/10 dark:text-surface-50"
+  #active="routerLinkActive"
+  [routerLinkActiveOptions]="{ exact: exact() }"
+  ariaCurrentWhenActive="page"
+>
+  @if (icon(); as iconClass) {
+    <!--
+      One `[class]` binding only: a second would overwrite the first. The icon
+      class arrives whole ("pi pi-compass") from the navigation config.
+    -->
+    <i
+      class="w-4 shrink-0 text-center text-[13px]"
+      [class]="
+        iconClass + (active.isActive ? ' text-primary' : ' text-surface-400 dark:text-surface-500')
+      "
+      aria-hidden="true"
+    ></i>
+  }
+
+  <span class="min-w-0 flex-1 truncate">{{ label() }}</span>
+
+  @if (tag(); as tagLabel) {
+    <span
+      class="inline-flex shrink-0 items-center rounded-sm bg-primary/10 px-1.5 py-px text-[9px] font-bold tracking-wider text-primary uppercase"
+    >
+      {{ tagLabel }}
+    </span>
+  }
+
+  @if (count(); as total) {
+    <span
+      class="min-w-[18px] shrink-0 text-center text-[11px] font-semibold text-surface-600 tabular-nums dark:text-surface-400"
+    >
+      {{ total }}
+    </span>
+  }
+</a>

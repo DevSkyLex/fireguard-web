@@ -118,6 +118,8 @@ Nested subfeatures under `features/organization/features/` own their own local r
 - `OrganizationContextPort`
 - `ORGANIZATION_MEMBER_ACCESS_PORT`
 - `OrganizationMemberAccessPort`
+- `MEMBER_DIRECTORY_PORT`
+- `MemberDirectoryPort`
 - `organization/setup`
 - `OrganizationSetupService`
 
@@ -125,7 +127,14 @@ These contracts are the stable boundaries for approved consumers:
 
 - layouts consume active organization context through `ORGANIZATION_CONTEXT_PORT`,
 - approved sibling features consume current organization member roles and permissions through `ORGANIZATION_MEMBER_ACCESS_PORT`,
+- approved sibling features resolve a bare member id to a name and an avatar through `MEMBER_DIRECTORY_PORT`,
 - onboarding consumes organization-owned setup workflows through `organization/setup`.
+
+`MEMBER_DIRECTORY_PORT` exists because member IRIs are not dereferenceable: messaging hands out
+`/api/organizations/{orgId}/members/{memberId}` with no GET route behind it. Reading the directory
+requires `organization.members.read`, which messaging permissions do **not** imply, so the port
+publishes `isAvailable` and consumers must degrade to raw ids rather than surface an error. The
+store never calls the API without the permission — the request would be a guaranteed 403.
 
 ## Routing Notes
 

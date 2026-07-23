@@ -9,6 +9,8 @@ export type { OrganizationState } from './organization-list';
 export type { OrganizationRoleListState } from './organization-roles';
 export { ActiveOrganizationStore } from './active-organization';
 export type { ActiveOrganizationStoreType } from './active-organization';
+export { MemberDirectoryStore } from './member-directory';
+export type { MemberDirectoryStoreType } from './member-directory';
 export { OrganizationMemberAccessStore } from './organization-member-access';
 export type { OrganizationMemberAccessStoreType } from './organization-member-access';
 export { OrganizationStore } from './organization-list';

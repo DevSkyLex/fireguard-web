@@ -1,0 +1,28 @@
+@if (store.channelId() !== null) {
+  <!--
+    `aria-controls` is claimed only while this panel is the one on screen. The
+    assistant toggle points at the same `#workspace-panel`, and two controls
+    claiming one element with contradictory expanded states is worse than one
+    control that stops pointing at something it no longer governs.
+  -->
+  <button
+    type="button"
+    class="grid size-8 cursor-pointer place-content-center rounded-md transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-white/5"
+    [class]="
+      isShowing()
+        ? 'bg-surface-100 text-surface-950 dark:bg-white/10 dark:text-surface-50'
+        : 'text-surface-500 dark:text-surface-400'
+    "
+    [attr.aria-expanded]="isShowing()"
+    [attr.aria-controls]="isShowing() ? 'workspace-panel' : null"
+    i18n-aria-label="@@workspace.panel.toggle.aria"
+    aria-label="Channel details"
+    i18n-pTooltip="@@workspace.panel.toggle.aria"
+    pTooltip="Channel details"
+    tooltipPosition="bottom"
+    data-testid="channel-info-toggle"
+    (click)="toggle()"
+  >
+    <i class="pi pi-info-circle text-sm" aria-hidden="true"></i>
+  </button>
+}

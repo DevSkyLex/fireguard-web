@@ -1,0 +1,9 @@
+@for (contribution of leadContributions(); track contribution.id) {
+  <ng-container *ngComponentOutlet="contribution.component" />
+}
+
+<div class="flex-1"></div>
+
+@for (contribution of footerContributions(); track contribution.id) {
+  <ng-container *ngComponentOutlet="contribution.component" />
+}

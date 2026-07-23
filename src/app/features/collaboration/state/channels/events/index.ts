@@ -1,0 +1,1 @@
+export { channelsStoreEvents } from './events';

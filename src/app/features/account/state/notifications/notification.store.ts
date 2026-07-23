@@ -565,8 +565,13 @@ export const NotificationStore = signalStore(
          * @description
          * Establishes a Server-Sent Events (SSE) connection via Mercure to
          * receive real-time notification pushes. Incoming notifications are
-         * prepended to the entity collection. Sets `mercureConnected` to
-         * `true` once subscribed, and back to `false` on connection error.
+         * prepended to the entity collection.
+         *
+         * `mercureConnected` is a re-entry guard: it is set before the hub is
+         * contacted and cleared only when the bootstrap itself fails. A dropped
+         * connection no longer clears it, because `MercureService` reconnects
+         * on its own — clearing it would let a later call refetch the
+         * subscription and open a second one.
          *
          * @since 1.0.0
          *

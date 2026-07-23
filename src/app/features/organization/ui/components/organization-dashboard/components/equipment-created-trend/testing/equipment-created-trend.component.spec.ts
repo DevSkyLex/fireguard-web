@@ -155,7 +155,7 @@ describe('EquipmentCreatedTrend', () => {
     expect(component.summaryMetrics()[0]?.value).toBe('9');
     expect(component.menuItems()[0]).toMatchObject({
       label: 'View all equipment',
-      routerLink: ['/organizations', MOCK_ORGANIZATION.id, 'equipment'],
+      routerLink: ['/organizations', MOCK_ORGANIZATION.id, 'equipments'],
     });
   });
 

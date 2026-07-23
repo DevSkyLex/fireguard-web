@@ -81,12 +81,21 @@ export function organizationPermissionGuard(
     // If no organizationId is present in the route, redirect to the home page.
     if (!organizationId) return router.createUrlTree(['/']);
 
-    // Determine the redirection URL tree to use when access is denied,
-    // based on the provided options.
+    // Determine the redirection URL tree to use when access is denied, based on
+    // the provided options. The default stays in the shell the route was
+    // activated in: the same route objects are mounted under both the dashboard
+    // and the workspace tree, so a hard-coded dashboard prefix ejected a denied
+    // member out of the workspace shell.
+    const inWorkspace: boolean = route.pathFromRoot.some((snapshot): boolean =>
+      snapshot.url.some((segment): boolean => segment.path === 'workspace'),
+    );
+    const defaultRedirect: ReadonlyArray<string> = inWorkspace
+      ? ['/organizations', organizationId, 'workspace']
+      : ['/organizations', organizationId];
     const redirectTo: ReadonlyArray<string> =
       typeof options.redirectTo === 'function'
         ? options.redirectTo(organizationId)
-        : (options.redirectTo ?? ['/organizations', organizationId]);
+        : (options.redirectTo ?? defaultRedirect);
     const redirectUrlTree: UrlTree = router.createUrlTree([...redirectTo]);
 
     // Check if the user has the required permissions for the organization.

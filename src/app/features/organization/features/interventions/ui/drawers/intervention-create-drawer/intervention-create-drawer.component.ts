@@ -179,8 +179,15 @@ export class InterventionCreateDrawer {
    *
    * @type {DrawerPassThroughOptions}
    */
+  /*
+   * The `md` step must fit inside the breakpoint that triggers it: `md` is
+   * 48rem = 768px (a media query, so it does not track the root font size),
+   * while `52rem` does — it was 728px under the old 14px root and would now be
+   * 832px, i.e. wider than the viewport it opens at. `!max-w-[100vw]` keeps
+   * that class of mistake from reaching the user again.
+   */
   protected readonly drawerPt: DrawerPassThroughOptions = {
-    root: { class: '!w-full md:!w-[52rem] xl:!w-[60rem]' },
+    root: { class: '!w-full !max-w-[100vw] md:!w-[45rem] xl:!w-[60rem]' },
   };
   //#endregion
 

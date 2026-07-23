@@ -1,0 +1,246 @@
+<div
+  class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-surface-200 pr-2 pl-4.5 dark:border-surface-800"
+>
+  <div class="flex min-w-0 items-center gap-2.5">
+    <span
+      class="grid size-6.5 shrink-0 place-content-center rounded-md bg-primary-50 text-primary-700 dark:bg-primary-400/15 dark:text-primary-300"
+    >
+      <i class="pi pi-sparkles text-[13px]" aria-hidden="true"></i>
+    </span>
+    <span class="min-w-0">
+      <span
+        class="block truncate text-[15px] leading-tight font-semibold text-surface-950 dark:text-surface-50"
+        i18n="@@workspace.assistant.title"
+      >
+        Assistant
+      </span>
+      <!--
+        Not "Answers using this thread" as in the prototype: the endpoint is
+        organization-scoped and is handed no conversation.
+      -->
+      <span
+        class="block truncate text-[11px] text-surface-500 dark:text-surface-400"
+        i18n="@@workspace.assistant.subtitle"
+      >
+        Answers about this organization
+      </span>
+    </span>
+  </div>
+
+  <div class="flex shrink-0 items-center gap-0.5">
+    @if (store.messages().length > 0) {
+      <button
+        type="button"
+        class="grid size-8 cursor-pointer place-content-center rounded-md text-surface-500 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
+        i18n-aria-label="@@workspace.assistant.new"
+        aria-label="New conversation"
+        i18n-pTooltip="@@workspace.assistant.new"
+        pTooltip="New conversation"
+        tooltipPosition="bottom"
+        data-testid="assistant-new-thread"
+        (click)="store.startNewThread()"
+      >
+        <i class="pi pi-pencil text-sm" aria-hidden="true"></i>
+      </button>
+    }
+    <button
+      type="button"
+      class="grid size-8 cursor-pointer place-content-center rounded-md text-surface-500 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
+      i18n-aria-label="@@workspace.assistant.close"
+      aria-label="Close assistant"
+      data-testid="assistant-panel-close"
+      (click)="close()"
+    >
+      <i class="pi pi-times text-sm" aria-hidden="true"></i>
+    </button>
+  </div>
+</div>
+
+<!--
+  The one thing that is announced: a short sentence per state change, not the
+  answer itself.
+-->
+<p class="sr-only" role="status" data-testid="assistant-status">{{ status() }}</p>
+
+<!--
+  The transcript is deliberately NOT a live region.
+
+  A reply arrives as ~20 Mercure frames, each carrying the whole accumulated
+  answer rather than a delta. Marked `aria-live`, the container would re-read
+  the entire growing paragraph on every frame — a screen-reader user would hear
+  the answer restart twenty times and never reach its end. What they need is
+  that something is happening and when it is done, so the announcement lives in
+  the status line below and the transcript stays silently readable.
+-->
+<div
+  #transcript
+  class="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-4 pt-4 pb-2"
+  [attr.aria-busy]="store.isGenerating()"
+  data-testid="assistant-transcript"
+>
+  @if (store.isLoading()) {
+    <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@workspace.assistant.loading">
+      Loading the conversation…
+    </p>
+  } @else if (store.loadError(); as error) {
+    <div
+      class="rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm wrap-anywhere text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+      data-testid="assistant-load-error"
+    >
+      {{ error.message }}
+    </div>
+  }
+
+  @if (store.messages().length === 0 && !store.isLoading()) {
+    <div
+      class="rounded-lg border border-surface-200 bg-surface-100 p-3.5 dark:border-surface-800 dark:bg-surface-800"
+      data-testid="assistant-intro"
+    >
+      <p
+        class="text-sm leading-normal text-surface-900 dark:text-surface-100"
+        i18n="@@workspace.assistant.intro"
+      >
+        Ask me about your organization — I can summarise where inspections stand, surface open
+        non-conformities, or draft a status update.
+      </p>
+    </div>
+  }
+
+  @for (message of store.messages(); track message.id) {
+    @if (message.role === 'user') {
+      <div class="flex justify-end gap-2.5">
+        <p
+          class="max-w-[82%] rounded-[14px_14px_4px_14px] bg-primary px-3.5 py-2.5 text-sm leading-normal wrap-anywhere whitespace-pre-wrap text-primary-contrast"
+        >
+          {{ message.body }}
+        </p>
+      </div>
+    } @else {
+      <div class="flex items-start gap-2.5">
+        <span
+          class="mt-0.5 grid size-6.5 shrink-0 place-content-center rounded-md bg-primary-50 text-primary-700 dark:bg-primary-400/15 dark:text-primary-300"
+        >
+          <i class="pi pi-sparkles text-xs" aria-hidden="true"></i>
+        </span>
+        @if (message.status === 'failed') {
+          <p
+            class="max-w-[82%] rounded-[14px_14px_14px_4px] bg-red-50 px-3.5 py-2.5 text-sm leading-normal wrap-anywhere text-red-700 dark:bg-red-950/40 dark:text-red-300"
+            data-testid="assistant-message-failed"
+          >
+            <ng-container i18n="@@workspace.assistant.failed">
+              The assistant could not answer.
+            </ng-container>
+            @if (message.errorCode) {
+              <span class="mt-1 block text-xs opacity-80">{{ message.errorCode }}</span>
+            }
+          </p>
+        } @else if (message.body.length > 0) {
+          <!--
+            Plain text, not rendered Markdown: the model emits Markdown, but
+            turning model output into HTML needs a sanitizing pipeline this app
+            does not have.
+          -->
+          <p
+            class="max-w-[82%] rounded-[14px_14px_14px_4px] bg-surface-100 px-3.5 py-2.5 text-sm leading-normal wrap-anywhere whitespace-pre-wrap text-surface-900 dark:bg-surface-800 dark:text-surface-100"
+            data-testid="assistant-message"
+          >
+            {{ message.body }}
+          </p>
+        } @else {
+          <!--
+            An empty body is the normal state of a reply that is pending or
+            still streaming: partial text is never persisted, so this is what a
+            turn looks like until its first frame lands.
+          -->
+          <span
+            class="flex items-center gap-2 py-1.5 text-sm text-surface-500 dark:text-surface-400"
+            data-testid="assistant-thinking"
+          >
+            <span
+              class="inline-block size-3 rounded-full border-2 border-primary-200 border-t-primary motion-safe:animate-spin dark:border-primary-900 dark:border-t-primary"
+              aria-hidden="true"
+            ></span>
+            <ng-container i18n="@@workspace.assistant.thinking">Thinking…</ng-container>
+          </span>
+        }
+      </div>
+    }
+  }
+
+  @if (store.generationStalled()) {
+    <div
+      class="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+      data-testid="assistant-stalled"
+    >
+      <p i18n="@@workspace.assistant.stalled">
+        The assistant has been quiet for a while. It may have stopped answering.
+      </p>
+      <button
+        type="button"
+        class="mt-2 cursor-pointer rounded-md px-2 py-1 text-xs font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        i18n="@@workspace.assistant.stalled.dismiss"
+        data-testid="assistant-stalled-dismiss"
+        (click)="store.dismissStalled()"
+      >
+        Give up and ask again
+      </button>
+    </div>
+  }
+</div>
+
+@if (store.messages().length === 0 && !store.isLoading()) {
+  <div class="flex shrink-0 flex-wrap gap-1.5 px-4 pb-2.5">
+    @for (suggestion of suggestions; track suggestion) {
+      <button
+        type="button"
+        class="cursor-pointer rounded-full border border-surface-200 bg-surface-0 px-3 py-1.5 text-xs text-surface-900 transition-colors hover:border-surface-300 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:bg-surface-900 dark:text-surface-100 dark:hover:border-surface-700 dark:hover:bg-white/5"
+        data-testid="assistant-suggestion"
+        (click)="ask(suggestion)"
+      >
+        {{ suggestion }}
+      </button>
+    }
+  </div>
+}
+
+<div class="shrink-0 border-t border-surface-200 px-4 pt-3 pb-4 dark:border-surface-800">
+  @if (store.askError(); as error) {
+    <p
+      class="mb-2 text-xs wrap-anywhere text-red-600 dark:text-red-400"
+      data-testid="assistant-ask-error"
+    >
+      {{ error.message }}
+    </p>
+  }
+  <div
+    class="flex items-end gap-2 rounded-xl border border-surface-300 bg-surface-0 py-2 pr-2 pl-3.5 focus-within:border-primary dark:border-surface-700 dark:bg-surface-900"
+  >
+    <textarea
+      cdkTextareaAutosize
+      cdkAutosizeMinRows="1"
+      cdkAutosizeMaxRows="5"
+      class="max-h-30 flex-1 resize-none border-0 bg-transparent text-sm leading-normal text-surface-900 outline-none placeholder:text-surface-600 dark:text-surface-100 dark:placeholder:text-surface-400"
+      rows="1"
+      [value]="draft()"
+      [attr.maxlength]="maxLength"
+      i18n-placeholder="@@workspace.assistant.placeholder"
+      placeholder="Ask the assistant…"
+      i18n-aria-label="@@workspace.assistant.placeholder"
+      aria-label="Ask the assistant…"
+      data-testid="assistant-input"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+    ></textarea>
+    <button
+      type="button"
+      class="grid size-8 shrink-0 cursor-pointer place-content-center rounded-full bg-primary text-primary-contrast transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
+      [disabled]="!canSend()"
+      i18n-aria-label="@@common.send"
+      aria-label="Send"
+      data-testid="assistant-send"
+      (click)="send()"
+    >
+      <i class="pi pi-arrow-up text-xs" aria-hidden="true"></i>
+    </button>
+  </div>
+</div>

@@ -99,7 +99,7 @@ describe('DashboardLayoutSidebar', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render branding, slot widgets and section labels', () => {
+  it('should render branding, slot widgets and a flat destination list', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     fixture.detectChanges();
 
@@ -116,13 +116,26 @@ describe('DashboardLayoutSidebar', () => {
 
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Fireguard');
-    expect(textContent).toContain('Overview');
-    expect(textContent).toContain('Assets');
-    expect(textContent).toContain('Compliance');
+    // The destinations render, but no longer under section headings: both
+    // shells now show a single flat nav.
     expect(textContent).toContain('Dashboard');
     expect(textContent).toContain('Facilities');
     expect(textContent).toContain('Equipments');
     expect(textContent).toContain('Inspections');
+    expect(textContent).not.toContain('Overview');
+    expect(textContent).not.toContain('Assets');
+    expect(textContent).not.toContain('Compliance');
+    // The grouping still exists in the data, driving RBAC — it is simply not
+    // rendered as headings.
+    const navigation = fixture.debugElement.query(By.directive(DashboardLayoutSidebarNavigation))
+      .componentInstance as unknown as {
+      readonly menuItems: () => ReadonlyArray<{ label?: string }>;
+    };
+    expect(navigation.menuItems().map((group) => group.label)).toEqual([
+      'Overview',
+      'Assets',
+      'Compliance',
+    ]);
   });
 
   it('should hide the slot widgets in primary icon-only mode', () => {

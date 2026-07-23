@@ -28,6 +28,7 @@ export type { GroupedListHeaderContext, GroupedListRowContext } from './grouped-
 export { Logo } from './logo';
 export { MapCanvas } from './map';
 export type { MapMarker } from './map';
+export { NavRow } from './nav-row';
 export { RadioCardGroup } from './radio-card-group';
 export type { RadioCardOption } from './radio-card-group';
 export { Skeleton } from './skeleton';

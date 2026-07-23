@@ -9,6 +9,7 @@ import {
   type Signal,
   type TemplateRef,
 } from '@angular/core';
+import { deriveInitials } from '@shared/utils';
 import { EmptyState } from '../empty-state';
 import { ActivityFeedItemDirective } from './activity-feed-item.directive';
 import type { ActivityFeedItem, ActivityFeedItemContext } from './models';
@@ -137,10 +138,7 @@ export class ActivityFeed {
    * @returns {string} The derived initials, or an empty string for a blank label.
    */
   protected initialsFor(label: string): string {
-    const parts: string[] = label.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return '';
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+    return deriveInitials(label);
   }
   //#endregion
 }

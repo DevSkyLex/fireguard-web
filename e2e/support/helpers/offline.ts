@@ -162,3 +162,47 @@ export async function seedOutboxOperations(
     },
   );
 }
+
+/** IndexedDB database owning the messaging outbox — deliberately separate. */
+const MESSAGING_DATABASE_NAME = 'fireguard-messaging';
+
+/** One persisted messaging outbox operation. */
+export interface MessagingOutboxRecord {
+  readonly id: string;
+  readonly conversationId: string;
+  readonly type: string;
+  readonly payload: { readonly clientId: string; readonly input: { readonly body: string } };
+  readonly createdAt: string;
+  readonly status?: 'pending' | 'failed';
+  readonly error?: string | null;
+}
+
+/**
+ * Reads the messaging outbox.
+ *
+ * Its own database, not the intervention one: that database purges every store
+ * when the authenticated user changes, which would take queued messages with
+ * it.
+ */
+export async function readMessagingOutbox(
+  page: Page,
+): Promise<ReadonlyArray<MessagingOutboxRecord>> {
+  return page.evaluate(async (dbName: string): Promise<ReadonlyArray<MessagingOutboxRecord>> => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(dbName);
+      request.addEventListener('success', () => resolve(request.result));
+      request.addEventListener('error', () => reject(request.error));
+    });
+    if (!db.objectStoreNames.contains('outbox')) {
+      db.close();
+      return [];
+    }
+    const all = await new Promise<MessagingOutboxRecord[]>((resolve, reject) => {
+      const request = db.transaction('outbox', 'readonly').objectStore('outbox').getAll();
+      request.addEventListener('success', () => resolve(request.result as MessagingOutboxRecord[]));
+      request.addEventListener('error', () => reject(request.error));
+    });
+    db.close();
+    return all;
+  }, MESSAGING_DATABASE_NAME);
+}

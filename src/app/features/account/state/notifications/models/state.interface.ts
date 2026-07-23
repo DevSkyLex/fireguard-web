@@ -98,8 +98,13 @@ export interface NotificationStoreState {
    * @readonly
    *
    * @description
-   * True while the Mercure SSE connection for real-time notification
-   * push is alive.
+   * Whether a real-time subscription has been started — a re-entry guard, not
+   * connection health.
+   *
+   * It goes true before the hub is contacted and stays true across
+   * reconnections, because `MercureService` now recovers from a dropped
+   * connection on its own and re-running the bootstrap would only refetch the
+   * subscription for nothing. Actual health lives in `MercureService.status()`.
    *
    * @since 1.0.0
    *

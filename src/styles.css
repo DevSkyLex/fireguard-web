@@ -26,6 +26,22 @@ router-outlet {
   display: none;
 }
 
+/*
+ * Root stays at the 16px default so every rem-based Tailwind utility resolves
+ * to its nominal value — which is exactly what the Fireguard design system
+ * prescribes: its spacing scale (4/8/12/16/24px) and radius scale
+ * (2/4/6/8/12/16/24px) ARE Tailwind's defaults at a 16px root, and its type
+ * steps (12/18/20/24/30px) line up with `text-xs`/`lg`/`xl`/`2xl`/`3xl`.
+ *
+ * Body text is 14px, per the design system's `--text-base`. Setting it here
+ * rather than on `html` keeps `rem` honest: shrinking the root instead scaled
+ * spacing, radii and every type step down by 12.5%, which is why the codebase
+ * had accumulated hand-written `text-[15px]`/`[13px]`/`[11px]` overrides.
+ */
 html {
-  font-size: 14px;
+  font-size: 16px;
+}
+
+body {
+  font-size: 0.875rem;
 }

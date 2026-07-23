@@ -35,6 +35,25 @@ import { buildChartTooltipStyle } from '@shared/utils';
 })
 export class FacilitiesCreatedChart {
   //#region Properties
+  /**
+   * Property reduceMotion
+   * @readonly
+   *
+   * @description
+   * Whether the visitor asked for reduced motion, read once at construction.
+   *
+   * Chart.js animates in JavaScript, so no CSS media query can reach it — the
+   * preference has to be read here and folded into the chart options.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {boolean}
+   */
+  private readonly reduceMotion: boolean =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /**
    * Property store
@@ -181,7 +200,7 @@ export class FacilitiesCreatedChart {
   protected readonly options: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 500 },
+    animation: { duration: this.reduceMotion ? 0 : 500 },
     interaction: { mode: 'index', intersect: false },
     datasets: {
       bar: {

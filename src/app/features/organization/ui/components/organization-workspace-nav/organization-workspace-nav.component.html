@@ -1,0 +1,47 @@
+<!--
+  Workspace header: organization name + settings shortcut. No bottom border —
+  the prototype's sidebar header carries none.
+-->
+<div class="flex h-14 shrink-0 items-center justify-between gap-2 pr-3 pl-4">
+  <span
+    class="min-w-0 truncate text-base font-bold tracking-tight text-surface-950 dark:text-surface-50"
+  >
+    {{ organizationContext.selectedOrganization()?.name }}
+  </span>
+
+  @if (settingsLink(); as link) {
+    <a
+      class="grid size-8 shrink-0 place-content-center rounded-md text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5 dark:hover:text-surface-100"
+      [routerLink]="link"
+      i18n-aria-label="@@workspace.sidebar.settings.aria"
+      aria-label="Organization settings"
+      data-testid="workspace-nav-settings"
+    >
+      <i class="pi pi-cog text-[13px]" aria-hidden="true"></i>
+    </a>
+  }
+</div>
+
+<!--
+  A single flat destination list, matching the prototype's business nav. The
+  grouping still drives RBAC filtering upstream; only the section headings are
+  gone. No scroller here — the sidebar's one scroller lives in the slot host.
+-->
+<nav
+  class="flex flex-col px-2 pb-1"
+  i18n-aria-label="@@workspace.sidebar.nav.aria"
+  aria-label="Organization"
+>
+  <ul class="flex flex-col gap-px">
+    @for (item of destinations(); track item.id) {
+      <li>
+        <app-nav-row
+          [icon]="item.icon ?? null"
+          [label]="item.label ?? ''"
+          [routerLink]="item.routerLink"
+          [exact]="item.id === 'dashboard'"
+        />
+      </li>
+    }
+  </ul>
+</nav>

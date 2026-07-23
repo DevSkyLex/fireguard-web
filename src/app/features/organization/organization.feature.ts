@@ -1,10 +1,12 @@
 import { makeEnvironmentProviders, type EnvironmentProviders } from '@angular/core';
 import {
+  MEMBER_DIRECTORY_PORT,
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
 import {
   ActiveOrganizationStore,
+  MemberDirectoryStore,
   OrganizationMemberAccessStore,
 } from '@features/organization/state';
 
@@ -33,6 +35,10 @@ export function provideOrganizationFeature(): EnvironmentProviders {
     {
       provide: ORGANIZATION_MEMBER_ACCESS_PORT,
       useExisting: OrganizationMemberAccessStore,
+    },
+    {
+      provide: MEMBER_DIRECTORY_PORT,
+      useExisting: MemberDirectoryStore,
     },
   ]);
 }

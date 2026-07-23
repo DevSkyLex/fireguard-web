@@ -34,8 +34,16 @@ core/
   api/            theme/         primeng/         splash-screen/
   breadcrumb/     connectivity/  cookie/          mercure/
   title/          request-state/ boot-readiness/  locale/
+  indexed-db/
   config/         http/          routing/         # infrastructure groupings
 ```
+
+`indexed-db/` is the one concern that exposes an **abstract base class** rather
+than an injectable service: there is no such thing as "the" local database,
+only a feature's. Extend `IndexedDbService` and declare a schema, the same way
+feature API services extend `HydraApiService`. Because `core` must not depend on
+a feature, the owner id used by the per-user binding is a **parameter** — the
+owning feature reads its identity port and passes it in.
 
 Do **not** reintroduce flat type-first buckets (`core/services`, `core/ports`,
 `core/models`, `core/utils`, `core/state`, `core/themes`). A concern's own

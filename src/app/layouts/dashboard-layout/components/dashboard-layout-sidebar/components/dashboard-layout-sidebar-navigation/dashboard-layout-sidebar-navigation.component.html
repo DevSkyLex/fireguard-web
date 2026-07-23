@@ -11,17 +11,14 @@
       No navigation items available.
     </div>
   } @else {
-    <ul class="flex flex-col">
-      @for (section of menuItems(); track section.id ?? section.label; let isFirst = $first) {
-        <li [class]="isFirst ? '' : 'mt-4'">
-          @if (!iconOnly() && section.label) {
-            <p
-              class="px-2.5 pt-1 pb-1.5 text-[11px] font-semibold text-surface-500 dark:text-surface-500"
-            >
-              {{ section.label }}
-            </p>
-          }
-
+    <ul class="flex flex-col gap-0.5">
+      <!--
+        Flat, like the workspace sidebar: the section headings were dropped so
+        both shells read the same. RBAC filtering still runs per group upstream;
+        only the visual grouping is gone.
+      -->
+      @for (section of menuItems(); track section.id ?? section.label) {
+        <li>
           <ul class="flex flex-col gap-0.5">
             @for (item of section.items ?? []; track item.id ?? item.label) {
               <li>

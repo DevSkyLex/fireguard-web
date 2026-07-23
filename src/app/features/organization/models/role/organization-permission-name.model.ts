@@ -31,6 +31,14 @@ export const ORGANIZATION_PERMISSION = {
   INTERVENTIONS_REVIEW: 'organization.interventions.review',
   /** Permission required to trigger intervention publication. */
   INTERVENTIONS_PUBLISH: 'organization.interventions.publish',
+  /** Read access to conversations, channels, direct messages and their contents. */
+  MESSAGING_READ: 'organization.messaging.read',
+  /** Permission required to post, edit and delete own messages, replies and attachments. */
+  MESSAGING_WRITE: 'organization.messaging.write',
+  /** Permission required to create/archive channels, manage participants and moderate messages. */
+  MESSAGING_MANAGE: 'organization.messaging.manage',
+  /** Permission required to open an assistant thread and ask questions. */
+  ASSISTANT_USE: 'organization.assistant.use',
   /** Permission required to manage organization settings (general, notifications, regional). */
   SETTINGS_WRITE: 'organization.settings.write',
   /** Permission required to permanently delete the organization. */

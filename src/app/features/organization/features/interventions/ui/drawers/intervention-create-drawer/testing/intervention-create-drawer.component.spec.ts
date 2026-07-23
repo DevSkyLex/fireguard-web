@@ -48,7 +48,29 @@ describe('InterventionCreateDrawer', () => {
     const rootClass = (component.drawerPt.root as { class: string }).class;
 
     expect(rootClass).toContain('!w-full');
-    expect(rootClass).toContain('md:!w-[52rem]');
+    expect(rootClass).toContain('md:!w-[45rem]');
     expect(rootClass).toContain('xl:!w-[60rem]');
+  });
+
+  it('should never size the panel wider than the breakpoint that reveals it', () => {
+    const component = createComponent();
+    const rootClass = (component.drawerPt.root as { class: string }).class;
+
+    // Breakpoints are media queries, so they are fixed in px regardless of the
+    // root font size; the widths are rem and are not. A step wider than its own
+    // breakpoint puts the drawer off-screen — which is exactly what happened
+    // when `md:!w-[52rem]` (832px) met the 768px `md` breakpoint.
+    const BREAKPOINTS_PX: Readonly<Record<string, number>> = { md: 768, lg: 1024, xl: 1280 };
+    const REM_PX = 16;
+
+    const steps = [...rootClass.matchAll(/(sm|md|lg|xl):!w-\[([0-9.]+)rem]/g)];
+
+    expect(steps.length).toBeGreaterThan(0);
+
+    steps.forEach(([, breakpoint, rem]: RegExpMatchArray) => {
+      expect(Number(rem) * REM_PX).toBeLessThanOrEqual(BREAKPOINTS_PX[breakpoint]);
+    });
+
+    expect(rootClass).toContain('!max-w-[100vw]');
   });
 });

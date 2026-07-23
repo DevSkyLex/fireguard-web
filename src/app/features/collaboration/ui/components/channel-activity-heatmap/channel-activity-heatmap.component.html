@@ -1,0 +1,28 @@
+<!--
+  The grid is hidden from assistive tech and replaced by the sentence below it:
+  26 unlabelled coloured squares read as noise, and the useful facts — how many
+  messages, over how many days — are not in any one cell.
+-->
+<!--
+  `w-fit` is load-bearing: with `1fr` columns the cells would stretch to the
+  container, and the strip becomes 66px blocks the moment the panel is a
+  full-width mobile overlay.
+-->
+<div class="grid w-fit grid-cols-13 gap-1" aria-hidden="true">
+  @for (cell of cells(); track cell.bucket) {
+    <span
+      class="size-4 rounded-sm"
+      [class]="levelClass(cell.level)"
+      [title]="cell.bucket + ' · ' + cell.count"
+    ></span>
+  }
+</div>
+
+<p class="sr-only" data-testid="channel-activity-summary">
+  <ng-container i18n="@@workspace.panel.activity.summary">
+    {total(), plural,
+      =1 {1 message over the last {{ cells().length }} days}
+      other {{{ total() }} messages over the last {{ cells().length }} days}
+    }
+  </ng-container>
+</p>

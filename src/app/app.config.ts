@@ -9,7 +9,12 @@ import {
   withEventReplay,
   withHttpTransferCacheOptions,
 } from '@angular/platform-browser';
-import { provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withPreloading,
+  withRouterConfig,
+} from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
@@ -25,6 +30,7 @@ import { provideTheme } from '@core/theme';
 import { environment } from '@env/environment';
 import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
+import { provideCollaborationFeature } from '@features/collaboration';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
 import { provideInterventionsFeature } from '@features/organization/features/interventions';
@@ -58,6 +64,15 @@ export const appConfig: ApplicationConfig = {
       APP_ROUTES,
       withComponentInputBinding(),
       withPreloading(SelectivePreloadingStrategy),
+      // Route params reach every descendant, not only children of a
+      // component-less or empty-path parent (Angular's `emptyOnly` default).
+      // The workspace shell mounts a layout component between
+      // `:organizationId` and the organization pages, which under `emptyOnly`
+      // hid the parameter from guards reading
+      // `route.paramMap.get('organizationId')` — they then bounced to `/`.
+      // Widening this only ever adds params; no route in the app redefines an
+      // inherited one.
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
     ),
     provideClientHydration(
       withEventReplay(),
@@ -87,6 +102,8 @@ export const appConfig: ApplicationConfig = {
     }),
     /** Intervention feature bootstrap (PWA update guard + offline safety). */
     provideInterventionsFeature(),
+    /** Messaging outbox replay, so queued messages leave without a navigation. */
+    provideCollaborationFeature(),
     provideEnv(environment),
     provideMaintenanceMode(),
     provideAuthFeature(),

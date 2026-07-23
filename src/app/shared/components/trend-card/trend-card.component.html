@@ -1,9 +1,15 @@
 <p-card class="h-full" [pt]="cardPt">
   <!-- Header -->
   <ng-template pTemplate="header">
-    <section class="flex items-center justify-between gap-3">
-      <section class="flex min-w-0 flex-col">
-        <h2 class="truncate text-lg font-semibold text-surface-900 dark:text-surface-100">
+    <!--
+      Wraps rather than squeezing: the action toolbar has an intrinsic width, so
+      on a narrow card a non-wrapping row would clip the title instead. The
+      title itself is allowed to run onto a second line — truncating it hid the
+      widget's subject ("Inspection Qual…").
+    -->
+    <section class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <section class="flex min-w-0 flex-1 basis-48 flex-col">
+        <h2 class="text-lg font-semibold text-balance text-surface-900 dark:text-surface-100">
           {{ title() }}
         </h2>
         @if (description(); as description) {
@@ -26,7 +32,12 @@
         <div
           class="mb-5 border-y border-surface-200 bg-surface-200 dark:border-surface-800 dark:bg-surface-800"
         >
-          <div class="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-px">
+          <!--
+            Minimum track kept at 9rem (144px): a 4-metric strip inside a
+            half-width dashboard card has ~157px per column, so a 10rem (160px)
+            minimum silently dropped it to 3 columns and left an empty cell.
+          -->
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-px">
             @if (loading()) {
               @for (_ of [1, 2, 3, 4]; track $index) {
                 <div class="flex flex-col gap-3 bg-surface-0 p-4 dark:bg-surface-900">

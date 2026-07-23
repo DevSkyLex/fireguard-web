@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY angular.json tsconfig*.json .postcssrc.json ./
+COPY angular.json tsconfig*.json .postcssrc.json ngsw-config.json ./
 COPY public ./public
 COPY src ./src
 

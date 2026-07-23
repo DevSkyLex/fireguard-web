@@ -2,6 +2,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import type { FormControl } from '@angular/forms';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { InterventionPlanningGuide } from '../intervention-planning-guide.component';
 import type { InterventionPlanningGuideStep, InterventionPlanningGuideValues } from '../models';
 
@@ -39,6 +40,11 @@ function makeIntervention(overrides: Partial<InterventionOutput> = {}): Interven
 
 describe('InterventionPlanningGuide', () => {
   let fixture: ComponentFixture<InterventionPlanningGuide>;
+
+  // The 'schedule' step renders p-datepicker, whose PrimeNG motion config reads
+  // window.matchMedia — undefined in jsdom. Install the shared mock so any step
+  // that renders the datepicker can be built.
+  beforeAll(() => installMatchMediaMock());
 
   function build(intervention: InterventionOutput): InterventionPlanningGuideHarness {
     fixture = TestBed.createComponent(InterventionPlanningGuide);

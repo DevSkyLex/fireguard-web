@@ -179,9 +179,6 @@ jobs:
     name: Security Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Non-blocking: the audit reports upstream advisories that are resolved by
-    # dependency bumps, not by the change under review.
-    continue-on-error: true
 
     steps:
       - name: Checkout code

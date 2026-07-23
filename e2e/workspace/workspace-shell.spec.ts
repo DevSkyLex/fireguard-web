@@ -82,7 +82,7 @@ test.describe('Workspace shell', () => {
     await expect(workspace.main).toBeHidden();
   });
 
-  test('bypasses the rail and the sidebar with a skip link', async ({ page }) => {
+  test('bypasses the rail and the sidebar with a skip link', async ({ page, browserName }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
 
@@ -90,7 +90,16 @@ test.describe('Workspace shell', () => {
     await workspace.goto(ORGANIZATION_ID);
 
     const skip = page.getByTestId('workspace-skip-link');
-    await page.keyboard.press('Tab');
+
+    // WebKit omits links from the Tab order unless Full Keyboard Access is on,
+    // so a bare Tab never lands on the skip link there. Focus it directly on
+    // WebKit; keep the real "first Tab stop" assertion where the browser tabs
+    // to links natively (Chromium, Firefox).
+    if (browserName === 'webkit') {
+      await skip.focus();
+    } else {
+      await page.keyboard.press('Tab');
+    }
     await expect(skip).toBeFocused();
     await expect(skip).toBeVisible();
 

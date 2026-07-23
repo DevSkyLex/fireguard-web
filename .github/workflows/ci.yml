@@ -4,13 +4,8 @@ on:
   workflow_call:
   workflow_dispatch:
     inputs:
-      run_e2e:
-        description: Run the end-to-end test job
-        required: false
-        type: boolean
-        default: false
       e2e_browsers:
-        description: Playwright projects to run for the end-to-end job
+        description: Space-separated Playwright projects for the end-to-end job
         required: false
         type: string
         default: chromium
@@ -209,13 +204,14 @@ jobs:
           exit 1
 
   # ==========================================================================
-  # End-to-End Tests (manual opt-in only)
+  # End-to-End Tests
   # ==========================================================================
+  # Runs on every pull request and on main. Defaults to chromium; pass
+  # `e2e_browsers` on a manual run to widen the matrix (e.g. "chromium webkit").
   tests-end-to-end:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    if: github.event_name == 'workflow_dispatch' && inputs.run_e2e == true
 
     steps:
       - name: Checkout code
@@ -226,11 +222,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           install-playwright-browsers: 'true'
-          playwright-browsers: ${{ inputs.e2e_browsers }}
+          playwright-browsers: ${{ inputs.e2e_browsers || 'chromium' }}
 
       - name: Run Playwright tests
         env:
-          E2E_BROWSERS: ${{ inputs.e2e_browsers }}
+          E2E_BROWSERS: ${{ inputs.e2e_browsers || 'chromium' }}
         run: |
           projects=()
           for browser in ${E2E_BROWSERS:-chromium}; do

@@ -100,8 +100,8 @@ Needs manual confirmation.
 
 <!-- GitHub Actions is the source of truth for automated validation on this PR. -->
 
-- [ ] I expect the standard PR checks (format, lint, unit tests, build, audit) to cover this change
-- [ ] This PR needs the opt-in end-to-end job (`CI` → `Run workflow` → `run_e2e`)
+- [ ] I expect the standard PR checks (format, lint, unit tests, build, audit, e2e) to cover this change
+- [ ] This PR needs the e2e suite on more than chromium (`CI` → `Run workflow` → `e2e_browsers`)
 - [ ] This PR needs an extra manual verification outside standard CI
 
 ### Additional Evidence

@@ -17,8 +17,7 @@ const query = <T extends HTMLElement>(
 const queryButton = (
   fixture: ComponentFixture<AccountMfaPanel>,
   testid: string,
-): HTMLButtonElement | null =>
-  query<HTMLElement>(fixture, testid)?.querySelector('button') ?? null;
+): HTMLButtonElement | null => query<HTMLElement>(fixture, testid)?.querySelector('button') ?? null;
 
 describe('AccountMfaPanel', () => {
   const buildResult = (overrides: Partial<SetupTotpOutput> = {}): SetupTotpOutput =>
@@ -135,9 +134,7 @@ describe('AccountMfaPanel', () => {
     it('should format the generated secret into 4-character groups', () => {
       const { fixture } = setup({ setupResult: () => buildResult() });
 
-      expect(query(fixture, 'account-mfa-secret')?.textContent?.trim()).toBe(
-        'JBSW Y3DP EHPK 3PXP',
-      );
+      expect(query(fixture, 'account-mfa-secret')?.textContent?.trim()).toBe('JBSW Y3DP EHPK 3PXP');
     });
 
     it('should render the setup URI', () => {

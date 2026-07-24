@@ -48,9 +48,7 @@ describe('InterventionWorkItemForm', () => {
   it('should render target and assignee selects', () => {
     build();
 
-    expect(
-      fixture.debugElement.query(By.css('p-select[formcontrolname="target"]')),
-    ).not.toBeNull();
+    expect(fixture.debugElement.query(By.css('p-select[formcontrolname="target"]'))).not.toBeNull();
     expect(
       fixture.debugElement.query(By.css('p-select[formcontrolname="assignee"]')),
     ).not.toBeNull();
@@ -70,7 +68,9 @@ describe('InterventionWorkItemForm', () => {
     fixture.componentRef.setInput('disabled', true);
     fixture.detectChanges();
 
-    expect((component as unknown as InterventionWorkItemForm & { form: { disabled: boolean } }).form
-      .disabled).toBe(true);
+    expect(
+      (component as unknown as InterventionWorkItemForm & { form: { disabled: boolean } }).form
+        .disabled,
+    ).toBe(true);
   });
 });

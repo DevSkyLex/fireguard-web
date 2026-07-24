@@ -65,7 +65,12 @@ describe('AccountSessionsPanel', () => {
       TestBed.createComponent(AccountSessionsPanel);
     fixture.detectChanges();
 
-    return { fixture, component: fixture.componentInstance, mockSessionStore, mockConfirmationService };
+    return {
+      fixture,
+      component: fixture.componentInstance,
+      mockSessionStore,
+      mockConfirmationService,
+    };
   };
 
   describe('class logic', () => {
@@ -92,9 +97,7 @@ describe('AccountSessionsPanel', () => {
     it('should confirm before revoking a non-current session', () => {
       const { component, mockSessionStore, mockConfirmationService } = setup();
 
-      (component as unknown as { revoke: (session: SessionOutput) => void }).revoke(
-        buildSession(),
-      );
+      (component as unknown as { revoke: (session: SessionOutput) => void }).revoke(buildSession());
 
       expect(mockConfirmationService.confirm).toHaveBeenCalledTimes(1);
       const confirmation = mockConfirmationService.confirm.mock.calls[0][0] as Confirmation;
@@ -139,8 +142,9 @@ describe('AccountSessionsPanel', () => {
     it('should open the session details dialog when the table emits details', () => {
       const { fixture, component } = setup({ sessions: [buildSession()], totalSessions: 1 });
 
-      (component as unknown as { selectedSession: { set(v: SessionOutput | null): void } })
-        .selectedSession.set(buildSession());
+      (
+        component as unknown as { selectedSession: { set(v: SessionOutput | null): void } }
+      ).selectedSession.set(buildSession());
       fixture.detectChanges();
 
       const dialog = fixture.nativeElement.querySelector('p-dialog');
@@ -152,8 +156,9 @@ describe('AccountSessionsPanel', () => {
     it('should show "Yes" for the current session in the details dialog', () => {
       const { fixture, component } = setup({ sessions: [buildSession()], totalSessions: 1 });
 
-      (component as unknown as { selectedSession: { set(v: SessionOutput | null): void } })
-        .selectedSession.set(buildSession({ isCurrent: true }));
+      (
+        component as unknown as { selectedSession: { set(v: SessionOutput | null): void } }
+      ).selectedSession.set(buildSession({ isCurrent: true }));
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain('Yes');
@@ -162,8 +167,9 @@ describe('AccountSessionsPanel', () => {
     it('should show "No" for a non-current session in the details dialog', () => {
       const { fixture, component } = setup({ sessions: [buildSession()], totalSessions: 1 });
 
-      (component as unknown as { selectedSession: { set(v: SessionOutput | null): void } })
-        .selectedSession.set(buildSession({ isCurrent: false }));
+      (
+        component as unknown as { selectedSession: { set(v: SessionOutput | null): void } }
+      ).selectedSession.set(buildSession({ isCurrent: false }));
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain('No');
@@ -198,9 +204,9 @@ describe('AccountSessionsPanel', () => {
 
       expect(fixture.nativeElement.textContent).toContain('Load failed');
 
-      const retryButton = fixture.nativeElement.querySelector('p-button button') as
-        | HTMLButtonElement
-        | null;
+      const retryButton = fixture.nativeElement.querySelector(
+        'p-button button',
+      ) as HTMLButtonElement | null;
       retryButton?.click();
 
       expect(mockSessionStore.loadSessions).toHaveBeenCalled();
@@ -232,7 +238,11 @@ describe('AccountSessionsPanel', () => {
 
     it('should render the revoke-all error with its message', () => {
       const { fixture } = setup({
-        revokeAllCallState: { status: 'error', data: null, error: { message: 'Revoke all failed' } },
+        revokeAllCallState: {
+          status: 'error',
+          data: null,
+          error: { message: 'Revoke all failed' },
+        },
       });
 
       expect(fixture.nativeElement.textContent).toContain('Revoke all failed');

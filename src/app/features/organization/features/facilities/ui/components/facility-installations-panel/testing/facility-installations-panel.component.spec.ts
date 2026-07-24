@@ -60,8 +60,8 @@ describe('FacilityInstallationsPanel', () => {
     });
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    const names = Array.from(host.querySelectorAll('ul > li > button span span')).map(
-      (el) => el.textContent?.trim(),
+    const names = Array.from(host.querySelectorAll('ul > li > button span span')).map((el) =>
+      el.textContent?.trim(),
     );
     expect(names.indexOf('Zone A')).toBeLessThan(names.indexOf('Zone B'));
   });

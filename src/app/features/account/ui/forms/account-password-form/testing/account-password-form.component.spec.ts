@@ -113,7 +113,9 @@ describe('AccountPasswordForm', () => {
 
   it('should collapse the request form when cancel is clicked', () => {
     const fixture = TestBed.createComponent(AccountPasswordForm);
-    const instance = fixture.componentInstance as unknown as { expanded: { set(v: boolean): void } };
+    const instance = fixture.componentInstance as unknown as {
+      expanded: { set(v: boolean): void };
+    };
     instance.expanded.set(true);
     fixture.detectChanges();
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
@@ -129,14 +131,18 @@ describe('AccountPasswordForm', () => {
 
   it('should render the request error message when hasRequestError is true', () => {
     const fixture = TestBed.createComponent(AccountPasswordForm);
-    const instance = fixture.componentInstance as unknown as { expanded: { set(v: boolean): void } };
+    const instance = fixture.componentInstance as unknown as {
+      expanded: { set(v: boolean): void };
+    };
     fixture.componentRef.setInput('hasRequestError', true);
     instance.expanded.set(true);
 
     fixture.detectChanges();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(host.querySelector('[data-testid="account-password-request-form"] p-message')).toBeTruthy();
+    expect(
+      host.querySelector('[data-testid="account-password-request-form"] p-message'),
+    ).toBeTruthy();
   });
 
   it('should render the verify step form when the step input is "verify"', () => {
@@ -169,7 +175,9 @@ describe('AccountPasswordForm', () => {
     fixture.detectChanges();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(host.querySelector('[data-testid="account-password-confirm-form"] p-message')).toBeTruthy();
+    expect(
+      host.querySelector('[data-testid="account-password-confirm-form"] p-message'),
+    ).toBeTruthy();
   });
 
   it('should show the confirming loading state on the confirm submit button', () => {
@@ -180,7 +188,9 @@ describe('AccountPasswordForm', () => {
     fixture.detectChanges();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    const submitButton = host.querySelector('[data-testid="account-password-confirm-submit"] button');
+    const submitButton = host.querySelector(
+      '[data-testid="account-password-confirm-submit"] button',
+    );
     expect(submitButton?.hasAttribute('disabled')).toBe(true);
   });
 

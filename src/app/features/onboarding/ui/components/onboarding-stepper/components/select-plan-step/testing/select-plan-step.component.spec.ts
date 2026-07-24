@@ -44,7 +44,9 @@ const freePlan: PlanOutput = {
   name: 'Free',
   description: 'Get started',
   limits: {},
-  quotas: [{ resource: 'facilities', label: 'Facilities', limit: 5, summary: 'Up to 5 facilities' }],
+  quotas: [
+    { resource: 'facilities', label: 'Facilities', limit: 5, summary: 'Up to 5 facilities' },
+  ],
   isActive: true,
   isDefault: true,
   sortOrder: 0,
@@ -158,7 +160,10 @@ describe('SelectPlanStep', () => {
     mockBillingService = {
       getPricing: vi.fn(() => of(collectionOf([proPricing]))),
       createCheckoutSession: vi.fn(() =>
-        of({ organizationId: 'org-1', url: 'https://checkout.stripe.com/session' } as CheckoutSessionOutput),
+        of({
+          organizationId: 'org-1',
+          url: 'https://checkout.stripe.com/session',
+        } as CheckoutSessionOutput),
       ),
     };
     mockMessageService = { add: vi.fn() };
@@ -222,7 +227,11 @@ describe('SelectPlanStep', () => {
     const listAvailable = vi.fn(
       (): Observable<HydraCollection<PlanOutput>> => throwError(() => new Error('boom')),
     );
-    configure({}, { listAvailable }, { getPricing: vi.fn(() => of(emptyCollection<PlanPricingOutput>())) });
+    configure(
+      {},
+      { listAvailable },
+      { getPricing: vi.fn(() => of(emptyCollection<PlanPricingOutput>())) },
+    );
     const fixture = createFixture();
 
     fixture.detectChanges();

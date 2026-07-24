@@ -22,7 +22,9 @@ describe('BillingInvoiceTable', () => {
     TestBed.configureTestingModule({ imports: [BillingInvoiceTable] });
   });
 
-  const createFixture = (overrides: { invoices?: readonly InvoiceOutput[]; loading?: boolean } = {}) => {
+  const createFixture = (
+    overrides: { invoices?: readonly InvoiceOutput[]; loading?: boolean } = {},
+  ) => {
     const fixture = TestBed.createComponent(BillingInvoiceTable);
     fixture.componentRef.setInput('invoices', overrides.invoices ?? []);
     fixture.componentRef.setInput('loading', overrides.loading ?? false);
@@ -132,7 +134,10 @@ describe('BillingInvoiceTable', () => {
 
   it('should render multiple invoice rows', () => {
     const fixture = createFixture({
-      invoices: [invoice({ id: 'inv-1', number: 'INV-0001' }), invoice({ id: 'inv-2', number: 'INV-0002' })],
+      invoices: [
+        invoice({ id: 'inv-1', number: 'INV-0001' }),
+        invoice({ id: 'inv-2', number: 'INV-0002' }),
+      ],
     });
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;

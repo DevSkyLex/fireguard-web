@@ -42,12 +42,14 @@ describe('NotificationBellList', () => {
     TestBed.configureTestingModule({ imports: [NotificationBellList] });
   });
 
-  const createFixture = (overrides: {
-    notifications?: ReadonlyArray<NotificationOutput>;
-    loading?: boolean;
-    loadingMore?: boolean;
-    hasMore?: boolean;
-  } = {}) => {
+  const createFixture = (
+    overrides: {
+      notifications?: ReadonlyArray<NotificationOutput>;
+      loading?: boolean;
+      loadingMore?: boolean;
+      hasMore?: boolean;
+    } = {},
+  ) => {
     const fixture = TestBed.createComponent(NotificationBellList);
     fixture.componentRef.setInput('notifications', overrides.notifications ?? []);
     fixture.componentRef.setInput('loading', overrides.loading ?? false);

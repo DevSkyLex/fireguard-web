@@ -224,7 +224,9 @@ describe('FacilityTable', () => {
       empty: false,
     });
     const component = fixture.componentInstance;
-    const rowMenu = component['rowMenu' as never] as unknown as () => { toggle: (event: Event) => void };
+    const rowMenu = component['rowMenu' as never] as unknown as () => {
+      toggle: (event: Event) => void;
+    };
     const toggleSpy = vi.spyOn(rowMenu(), 'toggle');
     const event = new MouseEvent('click');
 
@@ -313,7 +315,9 @@ describe('FacilityTable', () => {
       empty: false,
     });
     const component = fixture.componentInstance;
-    const table = component['table' as never] as unknown as () => { filter: (...args: unknown[]) => void };
+    const table = component['table' as never] as unknown as () => {
+      filter: (...args: unknown[]) => void;
+    };
     const filterSpy = vi.spyOn(table(), 'filter');
     component['statusControl'].setValue('active');
     component['typeControl'].setValue('site');

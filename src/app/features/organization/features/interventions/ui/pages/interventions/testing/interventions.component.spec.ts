@@ -567,9 +567,7 @@ describe('InterventionsPage', () => {
       const fixture = TestBed.createComponent(InterventionsPage);
       fixture.detectChanges();
 
-      expect(
-        fixture.nativeElement.querySelector('app-intervention-create-drawer'),
-      ).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('app-intervention-create-drawer')).toBeTruthy();
     });
   });
 });

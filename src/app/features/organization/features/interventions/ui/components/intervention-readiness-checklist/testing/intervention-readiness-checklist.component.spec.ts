@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import type { InterventionReadinessCheck } from '../models';
 import { InterventionReadinessChecklist } from '../intervention-readiness-checklist.component';
+import type { InterventionReadinessCheck } from '../models';
 
 describe('InterventionReadinessChecklist', () => {
   beforeEach(() => {

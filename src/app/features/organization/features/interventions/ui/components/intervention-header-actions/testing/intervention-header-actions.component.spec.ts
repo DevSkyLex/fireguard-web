@@ -174,9 +174,9 @@ describe('InterventionHeaderActions', () => {
     });
     const harness = build();
     const singleButton = fixture.debugElement.queryAll(By.css('p-button')).at(-1);
-    (harness as unknown as { invokeSingleOverflowItem(item: unknown): void }).invokeSingleOverflowItem(
-      { label: 'Archive', icon: 'pi pi-inbox', command },
-    );
+    (
+      harness as unknown as { invokeSingleOverflowItem(item: unknown): void }
+    ).invokeSingleOverflowItem({ label: 'Archive', icon: 'pi pi-inbox', command });
 
     expect(singleButton).not.toBeNull();
     expect(command).toHaveBeenCalled();

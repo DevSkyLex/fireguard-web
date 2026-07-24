@@ -140,7 +140,10 @@ describe('OrganizationRoleTable', () => {
 
   it('should render multiple role cards', () => {
     const fixture = createFixture({
-      roles: [role({ id: 'role-1', name: 'Administrator' }), role({ id: 'role-2', name: 'Viewer' })],
+      roles: [
+        role({ id: 'role-1', name: 'Administrator' }),
+        role({ id: 'role-2', name: 'Viewer' }),
+      ],
     });
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;

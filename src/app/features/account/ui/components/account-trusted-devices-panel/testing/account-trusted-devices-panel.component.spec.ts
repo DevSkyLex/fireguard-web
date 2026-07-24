@@ -59,7 +59,12 @@ describe('AccountTrustedDevicesPanel', () => {
     );
     fixture.detectChanges();
 
-    return { fixture, component: fixture.componentInstance, mockTrustedDeviceStore, mockConfirmationService };
+    return {
+      fixture,
+      component: fixture.componentInstance,
+      mockTrustedDeviceStore,
+      mockConfirmationService,
+    };
   };
 
   describe('class logic', () => {
@@ -149,9 +154,9 @@ describe('AccountTrustedDevicesPanel', () => {
 
       expect(fixture.nativeElement.textContent).toContain('Load failed');
 
-      const retryButton = fixture.nativeElement.querySelector('p-button button') as
-        | HTMLButtonElement
-        | null;
+      const retryButton = fixture.nativeElement.querySelector(
+        'p-button button',
+      ) as HTMLButtonElement | null;
       retryButton?.click();
 
       expect(mockTrustedDeviceStore.loadDevices).toHaveBeenCalled();
@@ -185,7 +190,11 @@ describe('AccountTrustedDevicesPanel', () => {
 
     it('should render the revoke-all error with its message', () => {
       const { fixture } = setup({
-        revokeAllCallState: { status: 'error', data: null, error: { message: 'Revoke all failed' } },
+        revokeAllCallState: {
+          status: 'error',
+          data: null,
+          error: { message: 'Revoke all failed' },
+        },
       });
 
       expect(fixture.nativeElement.textContent).toContain('Revoke all failed');
@@ -196,9 +205,7 @@ describe('AccountTrustedDevicesPanel', () => {
         revokeAllCallState: { status: 'error', data: null, error: { message: null } },
       });
 
-      expect(fixture.nativeElement.textContent).toContain(
-        'Trusted devices could not be revoked.',
-      );
+      expect(fixture.nativeElement.textContent).toContain('Trusted devices could not be revoked.');
     });
   });
 });

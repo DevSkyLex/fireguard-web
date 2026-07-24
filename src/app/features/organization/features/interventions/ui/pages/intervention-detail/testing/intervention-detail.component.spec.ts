@@ -695,8 +695,18 @@ describe('InterventionDetailPage', () => {
     it('should render the work-item checklist during execution with items listed', () => {
       store.intervention.set(buildIntervention({ status: 'in_progress' }));
       store.workItems.set([
-        { id: 'wi-1', status: 'completed', action: 'inspect', target: null } as unknown as InterventionWorkItemOutput,
-        { id: 'wi-2', status: 'planned', action: 'inspect', target: null } as unknown as InterventionWorkItemOutput,
+        {
+          id: 'wi-1',
+          status: 'completed',
+          action: 'inspect',
+          target: null,
+        } as unknown as InterventionWorkItemOutput,
+        {
+          id: 'wi-2',
+          status: 'planned',
+          action: 'inspect',
+          target: null,
+        } as unknown as InterventionWorkItemOutput,
       ]);
       const fixture = render();
 
@@ -715,8 +725,18 @@ describe('InterventionDetailPage', () => {
     it('should render the proposed-changes and publication summary sections while submitted', () => {
       store.intervention.set(buildIntervention({ status: 'submitted' }));
       store.changes.set([
-        { id: 'ch-1', resource: '/api/facilities/site-1', status: 'proposed', patch: { name: 'New' } },
-        { id: 'ch-2', resource: '/api/facilities/site-2', status: 'applied', patch: { name: 'Old' } },
+        {
+          id: 'ch-1',
+          resource: '/api/facilities/site-1',
+          status: 'proposed',
+          patch: { name: 'New' },
+        },
+        {
+          id: 'ch-2',
+          resource: '/api/facilities/site-2',
+          status: 'applied',
+          patch: { name: 'Old' },
+        },
       ]);
       const fixture = render();
 
@@ -746,7 +766,10 @@ describe('InterventionDetailPage', () => {
 
     it('should render the changes-requested review note banner', () => {
       store.intervention.set(
-        buildIntervention({ status: 'changes_requested', reviewNote: 'Please redo the roof check.' }),
+        buildIntervention({
+          status: 'changes_requested',
+          reviewNote: 'Please redo the roof check.',
+        }),
       );
       const fixture = render();
 
@@ -821,9 +844,7 @@ describe('InterventionDetailPage', () => {
       store.intervention.set(buildIntervention({ status: 'abandoned' }));
       const fixture = render();
 
-      expect(
-        fixture.nativeElement.querySelector('app-intervention-phase-stepper'),
-      ).toBeFalsy();
+      expect(fixture.nativeElement.querySelector('app-intervention-phase-stepper')).toBeFalsy();
     });
   });
 });

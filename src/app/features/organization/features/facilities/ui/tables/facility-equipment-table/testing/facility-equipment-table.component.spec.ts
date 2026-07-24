@@ -159,7 +159,12 @@ describe('FacilityEquipmentTable', () => {
   it('should render the serial number and location dashes when absent', () => {
     const fixture = createComponent({
       equipments: [
-        { ...MOCK_EQUIPMENT, serialNumber: null, locationLabel: null, installedAt: null } as EquipmentOutput,
+        {
+          ...MOCK_EQUIPMENT,
+          serialNumber: null,
+          locationLabel: null,
+          installedAt: null,
+        } as EquipmentOutput,
       ],
       total: 1,
       empty: false,

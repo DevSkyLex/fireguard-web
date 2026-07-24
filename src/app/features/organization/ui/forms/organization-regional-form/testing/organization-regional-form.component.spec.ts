@@ -61,7 +61,9 @@ describe('OrganizationRegionalForm', () => {
   });
 
   it('should fall back to defaults for settings fields not persisted yet', () => {
-    const fixture = createFixture(organization({ settings: { regional: { locale: 'fr-FR' } } } as never));
+    const fixture = createFixture(
+      organization({ settings: { regional: { locale: 'fr-FR' } } } as never),
+    );
 
     const component = fixture.componentInstance;
     expect(component['form'].value.timezone).toBe('UTC');

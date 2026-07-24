@@ -96,7 +96,9 @@ describe('CalendarAgenda', () => {
   it('should render the start and end time for a timed event', () => {
     const day: CalendarAgendaDay = {
       date: new Date(2026, 5, 15),
-      events: [timedEvent({ start: new Date(2026, 5, 15, 9, 0), end: new Date(2026, 5, 15, 10, 30) })],
+      events: [
+        timedEvent({ start: new Date(2026, 5, 15, 9, 0), end: new Date(2026, 5, 15, 10, 30) }),
+      ],
     };
     const fixture = createFixture([day]);
 

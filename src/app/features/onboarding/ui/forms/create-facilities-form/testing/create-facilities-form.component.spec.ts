@@ -66,7 +66,9 @@ describe('CreateFacilitiesForm', () => {
     fixture.detectChanges();
     expect(host.querySelectorAll('input[formControlName="name"]').length).toBe(2);
 
-    const removeButton = host.querySelector<HTMLButtonElement>('p-button[severity="danger"] button');
+    const removeButton = host.querySelector<HTMLButtonElement>(
+      'p-button[severity="danger"] button',
+    );
     removeButton?.click();
     fixture.detectChanges();
 

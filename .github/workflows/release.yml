@@ -101,10 +101,22 @@ jobs:
           image_name="${GITHUB_REPOSITORY,,}"
           echo "name=${REGISTRY}/${image_name}" >> "$GITHUB_OUTPUT"
 
+      - name: Generate changelog
+        id: changelog
+        uses: orhun/git-cliff-action@v3
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        continue-on-error: true
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           body: |
+            ## What's Changed
+
+            ${{ steps.changelog.outputs.content || 'See commit history for changes.' }}
+
             ## Docker Image
 
             ```bash

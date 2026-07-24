@@ -48,24 +48,24 @@ swaps in `src/environments/environment.ts` (production) or
 
 ## Available scripts
 
-| Script | Description |
-| --- | --- |
-| `npm start` | `ng serve` — dev server with SSR |
-| `npm run build` | Production build (strict templates, SSR) |
-| `npm run watch` | Development build in watch mode |
-| `npm test` | `ng test` — unit tests, watch mode |
-| `npm run test:ci` | `ng test --watch=false` — unit tests, single run |
-| `npm run lint` | `oxlint` against the whole project |
-| `npm run lint:fix` | `oxlint --fix` |
-| `npm run format` | `oxfmt` — apply formatting |
-| `npm run format:check` | `oxfmt --check` — verify formatting |
-| `npm run quality` | `format:check` + `lint` + `test:ci` + `build` (the CI gate, reproducible locally) |
-| `npm run i18n:extract` | Extract i18n message catalogs to `src/locale` |
-| `npm run e2e:install` | Install Playwright browser binaries (once) |
-| `npm run e2e:test` | Run the full Playwright end-to-end suite |
-| `npm run e2e:chromium` | Run e2e tests on Chromium only (fastest feedback) |
-| `npm run e2e:ui` | Playwright interactive UI mode |
-| `npm run serve:ssr:fireguard-web` | Run the built SSR server (`dist/fireguard-web/server/server.mjs`) |
+| Script                            | Description                                                                       |
+| --------------------------------- | --------------------------------------------------------------------------------- |
+| `npm start`                       | `ng serve` — dev server with SSR                                                  |
+| `npm run build`                   | Production build (strict templates, SSR)                                          |
+| `npm run watch`                   | Development build in watch mode                                                   |
+| `npm test`                        | `ng test` — unit tests, watch mode                                                |
+| `npm run test:ci`                 | `ng test --watch=false` — unit tests, single run                                  |
+| `npm run lint`                    | `oxlint` against the whole project                                                |
+| `npm run lint:fix`                | `oxlint --fix`                                                                    |
+| `npm run format`                  | `oxfmt` — apply formatting                                                        |
+| `npm run format:check`            | `oxfmt --check` — verify formatting                                               |
+| `npm run quality`                 | `format:check` + `lint` + `test:ci` + `build` (the CI gate, reproducible locally) |
+| `npm run i18n:extract`            | Extract i18n message catalogs to `src/locale`                                     |
+| `npm run e2e:install`             | Install Playwright browser binaries (once)                                        |
+| `npm run e2e:test`                | Run the full Playwright end-to-end suite                                          |
+| `npm run e2e:chromium`            | Run e2e tests on Chromium only (fastest feedback)                                 |
+| `npm run e2e:ui`                  | Playwright interactive UI mode                                                    |
+| `npm run serve:ssr:fireguard-web` | Run the built SSR server (`dist/fireguard-web/server/server.mjs`)                 |
 
 ## Project structure
 
@@ -83,15 +83,15 @@ src/app/
 
 Top-level features (each documented in its own `FEATURE.md`):
 
-| Feature | Owns |
-| --- | --- |
-| `auth` | Sign-in, MFA, registration, password reset, session/token bootstrap |
-| `account` | User profile, sessions, trusted devices, notifications, global permission helpers |
-| `onboarding` | Mandatory guided organization activation wizard |
-| `main` | Root landing route (`/`), redirects into the active organization workspace |
-| `organization` | Organization context, members, roles, billing/subscription, audit log, dashboard, and nested subfeatures: `facilities`, `equipments`, `inspections`, `checklists`, `interventions` |
-| `collaboration` | Organization channels, direct conversations, messages, presence, and the AI assistant |
-| `error` | Static error pages (404 / 403 / 500 / maintenance) |
+| Feature         | Owns                                                                                                                                                                               |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth`          | Sign-in, MFA, registration, password reset, session/token bootstrap                                                                                                                |
+| `account`       | User profile, sessions, trusted devices, notifications, global permission helpers                                                                                                  |
+| `onboarding`    | Mandatory guided organization activation wizard                                                                                                                                    |
+| `main`          | Root landing route (`/`), redirects into the active organization workspace                                                                                                         |
+| `organization`  | Organization context, members, roles, billing/subscription, audit log, dashboard, and nested subfeatures: `facilities`, `equipments`, `inspections`, `checklists`, `interventions` |
+| `collaboration` | Organization channels, direct conversations, messages, presence, and the AI assistant                                                                                              |
+| `error`         | Static error pages (404 / 403 / 500 / maintenance)                                                                                                                                 |
 
 ## Testing
 

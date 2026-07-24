@@ -17,10 +17,10 @@ Mounted inside the workspace shell at `/organizations/:organizationId/workspace`
 contributes to the shell rather than owning the frame:
 
 | Slot                       | Contribution                                                                                     |
-| --------------------------- | -------------------------------------------------------------------------------------------------|
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
 | `SECONDARY_NAV_SLOT`       | `withCollaborationChannelNav()` — favorites and channel sections                                 |
-| `CONVERSATION_HEADER_SLOT` | `withCollaborationInfoToggle()`, `withCollaborationAssistantToggle()`, `withMessagingSyncChip()`  |
-| `PANEL_SLOT`               | `withCollaborationAssistantPanel()` (priority 90), `withCollaborationInfoPanel()` (priority 10)   |
+| `CONVERSATION_HEADER_SLOT` | `withCollaborationInfoToggle()`, `withCollaborationAssistantToggle()`, `withMessagingSyncChip()` |
+| `PANEL_SLOT`               | `withCollaborationAssistantPanel()` (priority 90), `withCollaborationInfoPanel()` (priority 10)  |
 
 The panel is instantiated by the layout, so it receives no routed input. `ChannelPanelStore` is the
 bridge: root-provided, it reads the routed channel off the router and republishes it, and the
@@ -36,7 +36,7 @@ store. Moving that lookup back into the store throws `NG0201`.
 Its own routes, gated by `organization.messaging.read`:
 
 | Path                  | Surface                                                         |
-| ---------------------- | -----------------------------------------------------------------|
+| --------------------- | --------------------------------------------------------------- |
 | `channels/:channelId` | the conversation column — a channel id _is_ its conversation id |
 | `saved`               | the member's bookmarks across the organization                  |
 
@@ -59,7 +59,7 @@ yesterday must not wait for someone to navigate back to its channel.
 Replay classification, in one place so it is not re-derived:
 
 | Outcome                 | Meaning                                               | Action                                                    |
-| ------------------------ | ------------------------------------------------------| -----------------------------------------------------------|
+| ----------------------- | ----------------------------------------------------- | --------------------------------------------------------- |
 | `2xx`                   | sent                                                  | dequeue                                                   |
 | `409`                   | the client id was already used — it is already stored | dequeue, **not** an error                                 |
 | network / `5xx` / `429` | temporary                                             | leave queued, stop that conversation's chain, retry later |

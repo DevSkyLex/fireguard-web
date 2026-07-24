@@ -12,12 +12,12 @@ These pages are always accessible — no auth or onboarding guards are applied.
 
 ## Routes
 
-| Route                 | Component          | Title              |
-| ---------------------- | ------------------- | ------------------- |
-| `/error/404`           | `NotFoundPage`       | Page not found       |
-| `/error/403`           | `ForbiddenPage`       | Access denied         |
-| `/error/500`           | `ServerErrorPage`     | Server error           |
-| `/error/maintenance`   | `MaintenancePage`     | Under maintenance      |
+| Route                | Component         | Title             |
+| -------------------- | ----------------- | ----------------- |
+| `/error/404`         | `NotFoundPage`    | Page not found    |
+| `/error/403`         | `ForbiddenPage`   | Access denied     |
+| `/error/500`         | `ServerErrorPage` | Server error      |
+| `/error/maintenance` | `MaintenancePage` | Under maintenance |
 
 Rendered inside `FocusedLayout` (see `app.routes.ts`). All pages are standalone,
 lazy-loaded, `ChangeDetectionStrategy.OnPush`.
@@ -31,13 +31,13 @@ No stores or services — purely presentational.
 Other layers navigate here; this feature does not own any workflow that leads to
 these pages:
 
-| Trigger                        | What it does                                                    |
-| -------------------------------- | ------------------------------------------------------------------|
-| `GlobalErrorHandler`            | Navigates to `/error/500`                                          |
-| `maintenanceInterceptor`        | Navigates to `/error/maintenance` on 503                            |
-| `maintenanceGuard`              | Redirects to `/error/maintenance` when maintenance is active         |
-| `unauthorizedInterceptor`       | Navigates to `/error/403` on 403                                      |
-| `app.routes.ts` wildcard `**`   | Redirects to `/error/404`                                              |
+| Trigger                       | What it does                                                 |
+| ----------------------------- | ------------------------------------------------------------ |
+| `GlobalErrorHandler`          | Navigates to `/error/500`                                    |
+| `maintenanceInterceptor`      | Navigates to `/error/maintenance` on 503                     |
+| `maintenanceGuard`            | Redirects to `/error/maintenance` when maintenance is active |
+| `unauthorizedInterceptor`     | Navigates to `/error/403` on 403                             |
+| `app.routes.ts` wildcard `**` | Redirects to `/error/404`                                    |
 
 ## Cross-Feature Dependencies
 

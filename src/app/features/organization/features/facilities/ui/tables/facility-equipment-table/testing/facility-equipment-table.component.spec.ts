@@ -145,4 +145,245 @@ describe('FacilityEquipmentTable', () => {
     expect(fixture.debugElement.query(By.css('p-splitbutton'))).toBeNull();
     expect(fixture.debugElement.query(By.css('p-tableheadercheckbox'))).toBeNull();
   });
+
+  it('should render the reference as a fallback when brand and model are missing', () => {
+    const fixture = createComponent({
+      equipments: [{ ...MOCK_EQUIPMENT, brand: null, model: null } as EquipmentOutput],
+      total: 1,
+      empty: false,
+    });
+
+    expect(fixture.nativeElement.textContent).toContain('No reference');
+  });
+
+  it('should render the serial number and location dashes when absent', () => {
+    const fixture = createComponent({
+      equipments: [
+        { ...MOCK_EQUIPMENT, serialNumber: null, locationLabel: null, installedAt: null } as EquipmentOutput,
+      ],
+      total: 1,
+      empty: false,
+    });
+
+    const codes = fixture.nativeElement.querySelectorAll('code');
+    expect(codes.length).toBe(0);
+  });
+
+  it('should toggle the action menu and store the targeted equipment', () => {
+    const fixture = createComponent({
+      equipments: [MOCK_EQUIPMENT],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    const actionMenu = component['actionMenu' as never] as unknown as () => {
+      toggle: (event: Event) => void;
+    };
+    const toggleSpy = vi.spyOn(actionMenu(), 'toggle');
+    const event = new MouseEvent('click');
+
+    component['onActionMenuToggle'](event, MOCK_EQUIPMENT);
+
+    expect(toggleSpy).toHaveBeenCalledWith(event);
+  });
+
+  it('should expose view and edit action menu items with manage permission', () => {
+    const fixture = createComponent({ canManage: true });
+    const component = fixture.componentInstance;
+    component['onActionMenuToggle'](new MouseEvent('click'), MOCK_EQUIPMENT);
+
+    const items = component['actionMenuItems']();
+
+    expect(items.some((item) => item.label === 'View')).toBe(true);
+    expect(items.some((item) => item.label === 'Edit')).toBe(true);
+  });
+
+  it('should only expose the view action without manage permission', () => {
+    const fixture = createComponent({ canManage: false });
+    const component = fixture.componentInstance;
+    component['onActionMenuToggle'](new MouseEvent('click'), MOCK_EQUIPMENT);
+
+    const items = component['actionMenuItems']();
+
+    expect(items).toHaveLength(1);
+    expect(items[0]?.label).toBe('View');
+  });
+
+  it('should return no action menu items when nothing is targeted', () => {
+    const fixture = createComponent();
+    expect(fixture.componentInstance['actionMenuItems']()).toEqual([]);
+  });
+
+  it('should emit view and edit from the action menu commands', () => {
+    const fixture = createComponent({ canManage: true });
+    const component = fixture.componentInstance;
+    const viewSpy = vi.fn();
+    const editSpy = vi.fn();
+    component.view.subscribe(viewSpy);
+    component.edit.subscribe(editSpy);
+    component['onActionMenuToggle'](new MouseEvent('click'), MOCK_EQUIPMENT);
+
+    const items = component['actionMenuItems']();
+    items.find((item) => item.label === 'View')?.command?.({} as never);
+    items.find((item) => item.label === 'Edit')?.command?.({} as never);
+
+    expect(viewSpy).toHaveBeenCalledWith(MOCK_EQUIPMENT);
+    expect(editSpy).toHaveBeenCalledWith(MOCK_EQUIPMENT);
+  });
+
+  it('should clear the selection and reload on onClearFilters', () => {
+    const fixture = createComponent({
+      equipments: [MOCK_EQUIPMENT],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    component.onLazyLoad({ first: 0, rows: 12 } as TableLazyLoadEvent);
+    component['selectedEquipments'].set([MOCK_EQUIPMENT]);
+    component['searchControl'].setValue('acme', { emitEvent: false });
+    component['statusControl'].setValue('operational', { emitEvent: false });
+
+    component['onClearFilters']();
+
+    expect(component['searchControl'].value).toBe('');
+    expect(component['statusControl'].value).toBeNull();
+    expect(component['selectedEquipments']()).toEqual([]);
+  });
+
+  it('should include the search and status params in the load request', () => {
+    const fixture = createComponent({
+      equipments: [MOCK_EQUIPMENT],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    const spy = vi.fn();
+    component.load.subscribe(spy);
+    component['searchControl'].setValue('acme', { emitEvent: false });
+    component['statusControl'].setValue('operational', { emitEvent: false });
+
+    component.onLazyLoad({ first: 0, rows: 12 } as TableLazyLoadEvent);
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: expect.objectContaining({ search: 'acme', status: 'operational' }),
+      }),
+    );
+  });
+
+  it('should include sort parameters in the load request', () => {
+    const fixture = createComponent({
+      equipments: [MOCK_EQUIPMENT],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    const spy = vi.fn();
+    component.load.subscribe(spy);
+
+    component.onLazyLoad({
+      first: 0,
+      rows: 12,
+      sortField: 'status',
+      sortOrder: -1,
+    } as TableLazyLoadEvent);
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ 'order[status]': 'desc' }) }),
+    );
+  });
+
+  it('should clear selection when a subsequent lazy-load event targets a different dataset', () => {
+    const fixture = createComponent({
+      equipments: [MOCK_EQUIPMENT],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    component.onLazyLoad({ first: 0, rows: 12 } as TableLazyLoadEvent);
+    component['selectedEquipments'].set([MOCK_EQUIPMENT]);
+
+    component.onLazyLoad({ first: 12, rows: 12 } as TableLazyLoadEvent);
+
+    expect(component['selectedEquipments']()).toEqual([]);
+  });
+
+  it('should reload when the status filter changes', () => {
+    vi.useFakeTimers();
+    const fixture = createComponent({
+      equipments: [MOCK_EQUIPMENT],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    component.onLazyLoad({ first: 24, rows: 12 } as TableLazyLoadEvent);
+    const spy = vi.fn();
+    component.load.subscribe(spy);
+
+    component['statusControl'].setValue('operational');
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ status: 'operational' }) }),
+    );
+    vi.useRealTimers();
+  });
+
+  it('should reload when the search control changes after debounce', () => {
+    vi.useFakeTimers();
+    const fixture = createComponent({
+      equipments: [MOCK_EQUIPMENT],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    const spy = vi.fn();
+    component.load.subscribe(spy);
+
+    component['searchControl'].setValue('acme');
+    vi.advanceTimersByTime(400);
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ search: 'acme' }) }),
+    );
+    vi.useRealTimers();
+  });
+
+  it('should disable search and status controls while loading', () => {
+    const fixture = createComponent({ loading: true });
+    const component = fixture.componentInstance;
+
+    expect(component['searchControl'].disabled).toBe(true);
+    expect(component['statusControl'].disabled).toBe(true);
+  });
+
+  it('should resolve the status descriptor for an equipment status', () => {
+    const fixture = createComponent();
+    expect(fixture.componentInstance['getStatusOption']('operational')).toBeTruthy();
+  });
+
+  it('should restore the initial page on init', () => {
+    TestBed.configureTestingModule({
+      imports: [FacilityEquipmentTable],
+      providers: [
+        { provide: OrganizationPermissionService, useValue: { hasPermission: vi.fn(() => true) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(FacilityEquipmentTable);
+    fixture.componentRef.setInput('equipments', []);
+    fixture.componentRef.setInput('total', 0);
+    fixture.componentRef.setInput('loading', false);
+    fixture.componentRef.setInput('empty', true);
+    fixture.componentRef.setInput('initialPage', 4);
+
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['firstPage']()).toBe(36);
+  });
+
+  it('should show the empty-state action button to create equipment when permitted', () => {
+    const fixture = createComponent({ canManage: true, equipments: [], total: 0, empty: true });
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('New equipment');
+  });
 });

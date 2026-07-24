@@ -2,7 +2,13 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { NotificationStore, UserStore } from '@features/account/state';
+import {
+  AccountPasswordChangeStore,
+  AccountProfileEditStore,
+  NotificationStore,
+  UserStore,
+} from '@features/account/state';
+import { AccountProfilePanel } from '../../../components/account-profile-panel/account-profile-panel.component';
 import { AccountPage } from '../account-page.component';
 
 describe('AccountPage', () => {
@@ -88,5 +94,67 @@ describe('AccountPage', () => {
       queryParams: { tab: 'notifications' },
       queryParamsHandling: 'merge',
     });
+  });
+
+  it('should render the header and the profile panel for the default tab', () => {
+    const mockRoute = {
+      queryParamMap: of(convertToParamMap({})),
+    };
+    const mockRouter = { navigate: vi.fn().mockResolvedValue(true) };
+    const mockNotificationStore = {
+      hasUnread: signal(false),
+      unreadCount: signal(0),
+    };
+    const mockUserStore = {
+      profile: signal(null),
+      displayName: signal<string | null>('Ada Lovelace'),
+      initials: signal<string | null>('AL'),
+      avatarUrlMedium: signal<string | null>(null),
+    };
+
+    const mockEditStore = {
+      save: vi.fn(),
+      uploadAvatar: vi.fn(),
+      isUploadingAvatar: signal(false),
+      avatarError: signal(null),
+      isSaving: signal(false),
+      saveError: signal(null),
+    };
+    const mockPasswordStore = {
+      request: vi.fn(),
+      confirm: vi.fn(),
+      restart: vi.fn(),
+      step: signal('request'),
+      isRequesting: signal(false),
+      isConfirming: signal(false),
+      requestError: signal(null),
+      confirmError: signal(null),
+      maskedRecipient: signal<string | null>(null),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ActivatedRoute, useValue: mockRoute },
+        { provide: Router, useValue: mockRouter },
+        { provide: NotificationStore, useValue: mockNotificationStore },
+        { provide: UserStore, useValue: mockUserStore },
+      ],
+    });
+    TestBed.overrideComponent(AccountProfilePanel, {
+      set: {
+        providers: [
+          { provide: AccountProfileEditStore, useValue: mockEditStore },
+          { provide: AccountPasswordChangeStore, useValue: mockPasswordStore },
+        ],
+      },
+    });
+
+    const fixture = TestBed.createComponent(AccountPage);
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('[data-testid="account-page-header"]')).toBeTruthy();
+    expect(host.textContent).toContain('Ada Lovelace');
+    expect(host.querySelector('app-account-profile-panel')).toBeTruthy();
   });
 });

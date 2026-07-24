@@ -100,4 +100,21 @@ describe('AccountNotificationsPanel', () => {
     expect(rootNotificationStore.synchronizeNotification).toHaveBeenCalledWith(updatedNotification);
     fixture.destroy();
   });
+
+  it('should render the notification table with the store-provided notifications', () => {
+    const mockNotificationStore = buildMockNotificationStore();
+    mockNotificationStore.notifications.set([{ id: 'abc-123' } as NotificationOutput]);
+    mockNotificationStore.totalNotifications.set(1);
+
+    TestBed.configureTestingModule({
+      providers: [{ provide: NotificationStore, useValue: mockNotificationStore }],
+    });
+    TestBed.overrideComponent(AccountNotificationsPanel, { set: { providers: [] } });
+
+    const fixture = TestBed.createComponent(AccountNotificationsPanel);
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-notification-table')).toBeTruthy();
+  });
 });

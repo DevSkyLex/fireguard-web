@@ -45,4 +45,22 @@ describe('AccountSettingsPanel', () => {
 
     expect(mockLocale.useBrowserDefault).toHaveBeenCalledTimes(1);
   });
+
+  it('should render the language form pre-selected with the current locale', () => {
+    const mockLocale: MockLocalePreferenceService & { current: ReturnType<typeof vi.fn> } = {
+      setLocale: vi.fn<(subPath: AppLocaleSubPath) => void>(),
+      useBrowserDefault: vi.fn<() => void>(),
+      current: vi.fn(() => 'en'),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [{ provide: LocalePreferenceService, useValue: mockLocale }],
+    });
+
+    const fixture = TestBed.createComponent(AccountSettingsPanel);
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-account-language-form')).toBeTruthy();
+  });
 });

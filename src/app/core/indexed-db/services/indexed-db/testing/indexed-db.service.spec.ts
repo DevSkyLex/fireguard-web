@@ -1,6 +1,6 @@
 import { Injectable, PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { IndexedDbSchema } from '@core/indexed-db/models';
+import type { IndexedDbSchema, IndexedEntry } from '@core/indexed-db/models';
 import { IndexedDbService } from '../indexed-db.service';
 
 const SCHEMA: IndexedDbSchema = {
@@ -32,8 +32,57 @@ class InMemoryDatabase extends IndexedDbService {
     return (this.store.get(`${storeName}:${key}`) as T | undefined) ?? null;
   }
 
+  public override async getAll<T>(storeName: string): Promise<readonly T[]> {
+    const prefix = `${storeName}:`;
+    const values: T[] = [];
+    for (const [entryKey, value] of this.store) {
+      if (entryKey.startsWith(prefix)) values.push(value as T);
+    }
+
+    return values;
+  }
+
+  public override async count(storeName: string): Promise<number> {
+    return (await this.getAll(storeName)).length;
+  }
+
   public override async put(storeName: string, key: string, value: unknown): Promise<void> {
     this.store.set(`${storeName}:${key}`, value);
+  }
+
+  public override async putMany(
+    storeName: string,
+    entries: readonly IndexedEntry<unknown>[],
+  ): Promise<void> {
+    for (const entry of entries) {
+      this.store.set(`${storeName}:${entry.key}`, entry.value);
+    }
+  }
+
+  public override async putTransaction(
+    entries: Readonly<Record<string, readonly IndexedEntry<unknown>[]>>,
+  ): Promise<void> {
+    for (const [storeName, storeEntries] of Object.entries(entries)) {
+      for (const entry of storeEntries) {
+        this.store.set(`${storeName}:${entry.key}`, entry.value);
+      }
+    }
+  }
+
+  public override async remove(storeName: string, key: string): Promise<void> {
+    this.store.delete(`${storeName}:${key}`);
+  }
+
+  public override async removeWhere<T>(
+    storeName: string,
+    predicate: (value: T, key: IDBValidKey) => boolean,
+  ): Promise<void> {
+    const prefix = `${storeName}:`;
+    for (const [entryKey, value] of this.store) {
+      if (!entryKey.startsWith(prefix)) continue;
+      const key = entryKey.slice(prefix.length);
+      if (predicate(value as T, key)) this.store.delete(entryKey);
+    }
   }
 
   public override async clearAll(): Promise<void> {
@@ -86,6 +135,89 @@ describe('IndexedDbService', () => {
 
     it('should never bind an owner', async () => {
       await expect(service.ensureOwnerBound('user-1')).resolves.toBeUndefined();
+    });
+  });
+
+  describe('CRUD primitives', () => {
+    let service: InMemoryDatabase;
+
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        providers: [InMemoryDatabase, { provide: PLATFORM_ID, useValue: 'browser' }],
+      });
+      service = TestBed.inject(InMemoryDatabase);
+    });
+
+    afterEach(() => TestBed.resetTestingModule());
+
+    it('should read back a value written with put', async () => {
+      await service.put('outbox', 'item-1', { body: 'draft' });
+
+      await expect(service.get('outbox', 'item-1')).resolves.toEqual({ body: 'draft' });
+    });
+
+    it('should return null for a missing key', async () => {
+      await expect(service.get('outbox', 'missing')).resolves.toBeNull();
+    });
+
+    it('should write multiple entries with putMany', async () => {
+      await service.putMany('outbox', [
+        { key: 'a', value: 1 },
+        { key: 'b', value: 2 },
+      ]);
+
+      await expect(service.getAll('outbox')).resolves.toEqual(
+        expect.arrayContaining([1, 2]) as unknown as readonly number[],
+      );
+    });
+
+    it('should no-op putMany on empty input', async () => {
+      await expect(service.putMany('outbox', [])).resolves.toBeUndefined();
+      await expect(service.getAll('outbox')).resolves.toEqual([]);
+    });
+
+    it('should write entries across stores with putTransaction', async () => {
+      await service.putTransaction({
+        outbox: [{ key: 'a', value: 1 }],
+        metadata: [{ key: 'flag', value: true }],
+      });
+
+      await expect(service.get('outbox', 'a')).resolves.toBe(1);
+      await expect(service.get('metadata', 'flag')).resolves.toBe(true);
+    });
+
+    it('should count the records of a store', async () => {
+      await service.putMany('outbox', [
+        { key: 'a', value: 1 },
+        { key: 'b', value: 2 },
+      ]);
+
+      await expect(service.count('outbox')).resolves.toBe(2);
+    });
+
+    it('should return 0 for an empty store', async () => {
+      await expect(service.count('outbox')).resolves.toBe(0);
+    });
+
+    it('should delete one record with remove', async () => {
+      await service.put('outbox', 'a', 1);
+      await service.put('outbox', 'b', 2);
+
+      await service.remove('outbox', 'a');
+
+      await expect(service.get('outbox', 'a')).resolves.toBeNull();
+      await expect(service.get('outbox', 'b')).resolves.toBe(2);
+    });
+
+    it('should delete only matching records with removeWhere', async () => {
+      await service.putMany('outbox', [
+        { key: 'a', value: { synced: true } },
+        { key: 'b', value: { synced: false } },
+      ]);
+
+      await service.removeWhere<{ synced: boolean }>('outbox', (value) => value.synced);
+
+      await expect(service.getAll('outbox')).resolves.toEqual([{ synced: false }]);
     });
   });
 

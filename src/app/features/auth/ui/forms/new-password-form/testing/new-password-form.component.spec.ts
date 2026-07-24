@@ -54,4 +54,71 @@ describe('NewPasswordForm', () => {
 
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
+
+  describe('rendering', () => {
+    beforeEach(() => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ imports: [NewPasswordForm] });
+    });
+
+    it('should render the password fields and action buttons', () => {
+      const fixture = TestBed.createComponent(NewPasswordForm);
+      fixture.detectChanges();
+
+      const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(nativeElement.querySelector('#newPassword')).not.toBeNull();
+      expect(nativeElement.querySelector('#confirmPassword')).not.toBeNull();
+      expect(nativeElement.querySelector('button[type="submit"]')).not.toBeNull();
+      expect(nativeElement.querySelector('button[type="button"]')).not.toBeNull();
+    });
+
+    it('should show a mismatch error message once fields are touched and differ', () => {
+      const fixture = TestBed.createComponent(NewPasswordForm);
+      fixture.detectChanges();
+
+      const instance = fixture.componentInstance as unknown as NewPasswordFormTestApi;
+      instance.form.setValue({ newPassword: 'password123', confirmPassword: 'different123' });
+      (
+        instance as unknown as {
+          form: { controls: { confirmPassword: { markAsTouched(): void } } };
+        }
+      ).form.controls.confirmPassword.markAsTouched();
+      fixture.detectChanges();
+
+      const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(nativeElement.querySelectorAll('p-message').length).toBeGreaterThan(0);
+    });
+
+    it('should emit cancelled when the cancel button is clicked', () => {
+      const fixture = TestBed.createComponent(NewPasswordForm);
+      fixture.detectChanges();
+      const emitSpy = vi.spyOn(fixture.componentInstance.cancelled, 'emit');
+
+      const cancelButton: HTMLButtonElement | null = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector('button[type="button"]');
+      cancelButton?.click();
+      fixture.detectChanges();
+
+      expect(emitSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should emit submitted when the form is filled and submitted via the DOM', () => {
+      const fixture = TestBed.createComponent(NewPasswordForm);
+      fixture.detectChanges();
+      const emitSpy = vi.spyOn(fixture.componentInstance.submitted, 'emit');
+
+      const instance = fixture.componentInstance as unknown as NewPasswordFormTestApi;
+      instance.form.setValue({ newPassword: 'password123', confirmPassword: 'password123' });
+      fixture.detectChanges();
+
+      const formElement: HTMLFormElement | null = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector('form');
+      formElement?.dispatchEvent(new Event('submit'));
+      fixture.detectChanges();
+
+      expect(emitSpy).toHaveBeenCalledWith({ newPassword: 'password123' });
+    });
+  });
 });

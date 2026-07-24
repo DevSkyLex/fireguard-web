@@ -1,6 +1,5 @@
-import { DatePipe } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import type { OrganizationDashboardRecentIntervention } from '@features/organization/models';
 import { DashboardRecentInterventions } from '../dashboard-recent-interventions.component';
 
@@ -26,22 +25,37 @@ const intervention: OrganizationDashboardRecentIntervention = {
   updatedAt: '2026-07-15T09:30:00+00:00',
 };
 
+const interventionWithoutResponsibleOrDueDate: OrganizationDashboardRecentIntervention = {
+  id: 'int-2',
+  number: 2049,
+  name: 'Inspection extincteurs annexe',
+  status: 'planned',
+  priority: 'normal',
+  siteId: null,
+  siteName: null,
+  responsibleId: null,
+  responsibleName: null,
+  responsibleAvatarUrl: null,
+  dueAt: null,
+  updatedAt: '2026-07-16T09:30:00+00:00',
+};
+
 describe('DashboardRecentInterventions', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [DashboardRecentInterventions],
-    }).overrideComponent(DashboardRecentInterventions, {
-      set: { imports: [DatePipe], schemas: [CUSTOM_ELEMENTS_SCHEMA] },
     });
   });
 
   function createComponent(
     interventions: readonly OrganizationDashboardRecentIntervention[] = [intervention],
     loading = false,
+    hasError = false,
   ): ComponentFixture<DashboardRecentInterventions> {
     const fixture = TestBed.createComponent(DashboardRecentInterventions);
     fixture.componentRef.setInput('interventions', interventions);
     fixture.componentRef.setInput('loading', loading);
+    fixture.componentRef.setInput('hasError', hasError);
     fixture.detectChanges();
 
     return fixture;
@@ -104,5 +118,55 @@ describe('DashboardRecentInterventions', () => {
     fixture.componentInstance.retry.emit();
 
     expect(retried).toBe(1);
+  });
+
+  it('should render the error state and emit retry when the retry button is clicked', () => {
+    const fixture = createComponent([intervention], false, true);
+    let retried = 0;
+    fixture.componentInstance.retry.subscribe(() => {
+      retried += 1;
+    });
+
+    const errorState = fixture.debugElement.query(By.css('app-error-state'));
+    expect(errorState).toBeTruthy();
+
+    const retryButton = fixture.debugElement.query(By.css('p-button'));
+    retryButton.triggerEventHandler('onClick', undefined);
+
+    expect(retried).toBe(1);
+  });
+
+  it('should render skeleton rows while loading', () => {
+    const fixture = createComponent([], true, false);
+
+    const rows = fixture.debugElement.queryAll(By.css('tbody tr'));
+    expect(rows.length).toBeGreaterThan(0);
+    expect(fixture.debugElement.query(By.css('p-skeleton'))).toBeTruthy();
+  });
+
+  it('should render the empty state when there are no interventions', () => {
+    const fixture = createComponent([], false, false);
+
+    expect(fixture.debugElement.query(By.css('app-empty-state'))).toBeTruthy();
+  });
+
+  it('should render a populated row with responsible avatar and due date', () => {
+    const fixture = createComponent([intervention], false, false);
+
+    const html = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(html).toContain('FG-2048');
+    expect(html).toContain(intervention.name);
+    expect(html).toContain(intervention.siteName ?? '');
+    expect(html).toContain(intervention.responsibleName ?? '');
+
+    const button = fixture.debugElement.query(By.css('button'));
+    button.nativeElement.click();
+  });
+
+  it('should render fallback dashes for missing site, responsible and due date', () => {
+    const fixture = createComponent([interventionWithoutResponsibleOrDueDate], false, false);
+
+    const html = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(html).toContain('—');
   });
 });

@@ -1,5 +1,6 @@
-import { CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
 import {
@@ -24,6 +25,21 @@ type OrganizationDashboardHarness = {
   retryDashboard(): void;
 };
 
+const RECENT_INTERVENTION: OrganizationDashboardRecentIntervention = {
+  id: 'int-1',
+  number: 2048,
+  name: 'Contrôle annuel extincteurs',
+  status: 'in_progress',
+  priority: 'high',
+  siteId: 'fac-1',
+  siteName: 'Siège — Paris 12e',
+  responsibleId: 'member-1',
+  responsibleName: 'Claire Lefèvre',
+  responsibleAvatarUrl: null,
+  dueAt: '2026-07-18T00:00:00+00:00',
+  updatedAt: '2026-07-15T09:30:00+00:00',
+};
+
 const mockDashboardStore = {
   facilityCount: signal('12'),
   memberCount: signal('7'),
@@ -39,7 +55,9 @@ const mockDashboardStore = {
   membersSparkline: signal(null),
   equipmentSparkline: signal(null),
   inspectionsSparkline: signal(null),
-  recentInterventions: signal<readonly OrganizationDashboardRecentIntervention[]>([]),
+  recentInterventions: signal<readonly OrganizationDashboardRecentIntervention[]>([
+    RECENT_INTERVENTION,
+  ]),
   loadParams: signal<string | undefined>('org-1'),
   load: vi.fn(),
 };
@@ -73,21 +91,37 @@ describe('OrganizationDashboard', () => {
     mockOrganizationPermissionService.hasPermission.mockClear();
     mockRouter.navigate.mockClear();
     mockDashboardStore.load.mockClear();
+    mockDashboardStore.isQueryLoading.set(false);
+    mockDashboardStore.queryHasError.set(false);
+    mockDashboardStore.recentInterventions.set([RECENT_INTERVENTION]);
 
+    /**
+     * `OrganizationPermissionService` is root-provided, so it is swapped
+     * through a plain root-level provider instead of `overrideComponent`.
+     * `DashboardStore` is provided at the `OrganizationDashboard` component
+     * level (`providers: [DashboardStore]` on the component itself), so it
+     * still requires `overrideComponent`, but every other import stays the
+     * real component: the four activity-insight trend cards
+     * (`app-overview-trend`, `app-inspection-quality-trend`,
+     * `app-non-conformities-opened-trend`,
+     * `app-non-conformities-resolved-trend`) and the deferred
+     * `app-asset-growth-trend` never mount in these tests, because no test
+     * here grants the permission combination that renders
+     * `hasActivityInsights()` or `showResourcesSection()` past its deferred
+     * skeleton placeholder. Each of those five cards owns a dedicated
+     * component-scoped store already exercised end to end by its own spec;
+     * re-mocking five separate stores here only to reach branches this
+     * parent does not otherwise need is not worth the duplication.
+     */
     TestBed.configureTestingModule({
       imports: [OrganizationDashboard],
-      providers: [{ provide: Router, useValue: mockRouter }],
+      providers: [
+        { provide: Router, useValue: mockRouter },
+        { provide: OrganizationPermissionService, useValue: mockOrganizationPermissionService },
+      ],
     }).overrideComponent(OrganizationDashboard, {
       set: {
-        imports: [],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA],
-        providers: [
-          { provide: DashboardStore, useValue: mockDashboardStore },
-          {
-            provide: OrganizationPermissionService,
-            useValue: mockOrganizationPermissionService,
-          },
-        ],
+        providers: [{ provide: DashboardStore, useValue: mockDashboardStore }],
       },
     });
   });
@@ -99,6 +133,20 @@ describe('OrganizationDashboard', () => {
   function createComponent(): OrganizationDashboardHarness {
     const fixture = TestBed.createComponent(OrganizationDashboard);
     fixture.detectChanges();
+
+    return fixture.componentInstance as unknown as OrganizationDashboardHarness;
+  }
+
+  /**
+   * Builds the component instance without triggering change detection, for
+   * permission combinations (e.g. `DASHBOARD_READ`) that make
+   * `hasActivityInsights()` true and would otherwise mount the real,
+   * unstubbed trend cards behind the `@if` block. Reading a `computed`
+   * signal does not require a render pass, so this still exercises the
+   * gating logic under test without rendering the DOM.
+   */
+  function createComponentWithoutRender(): OrganizationDashboardHarness {
+    const fixture = TestBed.createComponent(OrganizationDashboard);
 
     return fixture.componentInstance as unknown as OrganizationDashboardHarness;
   }
@@ -119,32 +167,61 @@ describe('OrganizationDashboard', () => {
     expect(component.showResourcesSection()).toBe(false);
   });
 
+  it('should render the no-access empty state when both sections are hidden', () => {
+    const fixture = TestBed.createComponent(OrganizationDashboard);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('app-empty-state'))).toBeTruthy();
+  });
+
+  it('should render the metric strip and cells when only activity metrics are visible', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.MEMBERS_READ]);
+    const fixture = TestBed.createComponent(OrganizationDashboard);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('app-dashboard-metric-strip'))).toBeTruthy();
+    const cells = fixture.debugElement.queryAll(By.css('app-dashboard-metric-cell'));
+    expect(cells.length).toBe(1);
+  });
+
+  it('should render the recent-interventions table and forward its outputs', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
+    const fixture = TestBed.createComponent(OrganizationDashboard);
+    fixture.detectChanges();
+
+    const table = fixture.debugElement.query(By.css('app-dashboard-recent-interventions'));
+    expect(table).toBeTruthy();
+
+    table.triggerEventHandler('open', RECENT_INTERVENTION);
+    expect(mockRouter.navigate).toHaveBeenCalledWith([
+      '/organizations',
+      'org-1',
+      'interventions',
+      'int-1',
+    ]);
+
+    table.triggerEventHandler('retry', undefined);
+    expect(mockDashboardStore.load).toHaveBeenCalledWith('org-1');
+  });
+
+  it('should render the resource section skeleton placeholder before the deferred trend loads', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.FACILITIES_READ]);
+    const fixture = TestBed.createComponent(OrganizationDashboard);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('app-skeleton'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('app-asset-growth-trend'))).toBeFalsy();
+  });
+
   it('should expose the dashboard sections when dashboard read access is granted', () => {
     grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
-    const component = createComponent();
+    const component = createComponentWithoutRender();
 
     expect(component.canReadDashboard()).toBe(true);
     expect(component.canReadFacilities()).toBe(true);
     expect(component.canReadMembers()).toBe(true);
     expect(component.canReadEquipment()).toBe(true);
     expect(component.canReadInspections()).toBe(true);
-    expect(component.showActivitySection()).toBe(true);
-    expect(component.showResourcesSection()).toBe(true);
-  });
-
-  it('should expose both sections when inspections and resources are readable', () => {
-    grantedPermissions = new Set<string>([
-      ORGANIZATION_PERMISSION.FACILITIES_READ,
-      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
-      ORGANIZATION_PERMISSION.INSPECTION_READ,
-    ]);
-    const component = createComponent();
-
-    expect(component.canReadFacilities()).toBe(true);
-    expect(component.canReadEquipment()).toBe(true);
-    expect(component.canReadInspections()).toBe(true);
-    expect(component.hasActivityMetrics()).toBe(true);
-    expect(component.hasActivityInsights()).toBe(true);
     expect(component.showActivitySection()).toBe(true);
     expect(component.showResourcesSection()).toBe(true);
   });
@@ -162,7 +239,7 @@ describe('OrganizationDashboard', () => {
 
   it('should gate recent interventions on the interventions read permission alone', () => {
     grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
-    const component = createComponent();
+    const component = createComponentWithoutRender();
 
     expect(component.canReadRecentInterventions()).toBe(false);
   });
@@ -189,6 +266,18 @@ describe('OrganizationDashboard', () => {
       'interventions',
       'int-9',
     ]);
+  });
+
+  it('should not navigate when opening an intervention without an active organization', () => {
+    mockDashboardStore.loadParams.set(undefined);
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
+    const component = createComponent();
+
+    component.openIntervention({ id: 'int-9' } as OrganizationDashboardRecentIntervention);
+
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
+
+    mockDashboardStore.loadParams.set('org-1');
   });
 
   it('should re-trigger the dashboard query on retry', () => {

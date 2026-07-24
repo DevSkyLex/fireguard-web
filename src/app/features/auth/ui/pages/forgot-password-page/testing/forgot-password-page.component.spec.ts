@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY } from 'rxjs';
@@ -63,5 +63,66 @@ describe('ForgotPasswordPage', () => {
     page.handleSubmit({ email: 'test@example.com' });
 
     expect(mockPasswordResetStore.request).toHaveBeenCalledWith({ email: 'test@example.com' });
+  });
+
+  describe('rendering', () => {
+    const renderSetup = () => {
+      TestBed.resetTestingModule();
+      const mockPasswordResetStore = {
+        clear: vi.fn(),
+        request: vi.fn(),
+        isRequesting: signal(false),
+        currentRequest: signal(null),
+      };
+      const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
+      const mockMessageService = { add: vi.fn() };
+
+      TestBed.configureTestingModule({
+        imports: [ForgotPasswordPage],
+        providers: [
+          provideRouter([]),
+          { provide: PasswordResetStore, useValue: mockPasswordResetStore },
+          { provide: Events, useValue: mockEvents },
+          { provide: MessageService, useValue: mockMessageService },
+        ],
+      });
+
+      return { mockPasswordResetStore };
+    };
+
+    it('should render the page heading and the forgot password form', () => {
+      renderSetup();
+      const fixture = TestBed.createComponent(ForgotPasswordPage);
+      fixture.detectChanges();
+
+      const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(nativeElement.textContent).toContain('Forgot Your Password?');
+      expect(nativeElement.querySelector('app-forgot-password-form')).not.toBeNull();
+    });
+
+    it('should request a password reset when the form is submitted via the DOM', () => {
+      const { mockPasswordResetStore } = renderSetup();
+      const fixture = TestBed.createComponent(ForgotPasswordPage);
+      fixture.detectChanges();
+
+      const emailInput: HTMLInputElement | null = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector('#email');
+      if (emailInput) {
+        emailInput.value = 'test@example.com';
+        emailInput.dispatchEvent(new Event('input'));
+      }
+      fixture.detectChanges();
+
+      const formElement: HTMLFormElement | null = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector('form');
+      formElement?.dispatchEvent(new Event('submit'));
+      fixture.detectChanges();
+
+      expect(mockPasswordResetStore.request).toHaveBeenCalledWith({
+        email: 'test@example.com',
+      });
+    });
   });
 });

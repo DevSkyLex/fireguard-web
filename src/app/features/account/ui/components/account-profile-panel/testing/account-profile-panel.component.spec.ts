@@ -1,5 +1,6 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { UpdateCurrentUserProfileInput } from '@features/account/models';
+import type { UpdateCurrentUserProfileInput, UserProfileOutput } from '@features/account/models';
 import {
   AccountPasswordChangeStore,
   AccountProfileEditStore,
@@ -95,5 +96,49 @@ describe('AccountProfilePanel', () => {
       newPassword: 'NewP@ssw0rd!',
     });
     expect(mockPasswordStore.restart).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render the composed avatar, profile and password forms', () => {
+    const mockUserStore = {
+      profile: signal<UserProfileOutput | null>(null),
+      avatarUrlMedium: signal<string | null>(null),
+      initials: signal<string | null>('AL'),
+    };
+    const mockEditStore = {
+      save: vi.fn(),
+      uploadAvatar: vi.fn(),
+      isUploadingAvatar: signal(false),
+      avatarError: signal(null),
+      isSaving: signal(false),
+      saveError: signal(null),
+    };
+    const mockPasswordStore = {
+      request: vi.fn(),
+      confirm: vi.fn(),
+      restart: vi.fn(),
+      step: signal('request'),
+      isRequesting: signal(false),
+      isConfirming: signal(false),
+      requestError: signal(null),
+      confirmError: signal(null),
+      maskedRecipient: signal<string | null>(null),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: UserStore, useValue: mockUserStore },
+        { provide: AccountProfileEditStore, useValue: mockEditStore },
+        { provide: AccountPasswordChangeStore, useValue: mockPasswordStore },
+      ],
+    });
+    TestBed.overrideComponent(AccountProfilePanel, { set: { providers: [] } });
+
+    const fixture = TestBed.createComponent(AccountProfilePanel);
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-account-avatar-form')).toBeTruthy();
+    expect(host.querySelector('app-account-profile-form')).toBeTruthy();
+    expect(host.querySelector('app-account-password-form')).toBeTruthy();
   });
 });

@@ -14,6 +14,7 @@ type AcceptPageTestApi = OrganizationInvitationAcceptPage & {
   signIn(): void;
   register(): void;
   switchAccount(): void;
+  goToWorkspace(): void;
 };
 
 interface StoreMock {
@@ -52,6 +53,7 @@ interface SetupOptions {
 function setup(options: SetupOptions = {}): {
   component: AcceptPageTestApi;
   detect(): void;
+  fixture: ReturnType<typeof TestBed.createComponent>;
   store: StoreMock;
   router: { navigate: ReturnType<typeof vi.fn> };
   session: { clearSession: ReturnType<typeof vi.fn> };
@@ -109,7 +111,14 @@ function setup(options: SetupOptions = {}): {
 
   const fixture = TestBed.createComponent(OrganizationInvitationAcceptPage);
   const component = fixture.componentInstance as unknown as AcceptPageTestApi;
-  return { component, detect: () => fixture.detectChanges(), store, router, session };
+  return {
+    component,
+    detect: () => fixture.detectChanges(),
+    fixture,
+    store,
+    router,
+    session,
+  };
 }
 
 describe('OrganizationInvitationAcceptPage', () => {
@@ -167,6 +176,159 @@ describe('OrganizationInvitationAcceptPage', () => {
 
     expect(session.clearSession).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { returnUrl: '/organizations/invitations/accept?token=tok-1' },
+    });
+  });
+
+  it('renders the missing-token message when the URL carries no token', () => {
+    const { detect, fixture } = setup({ token: undefined });
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'The invitation link is missing its token.',
+    );
+  });
+
+  it('renders the loading skeleton while the preview request is pending', () => {
+    const { detect, fixture, store } = setup({ token: 'tok-1' });
+    store.isLoadingPreview.set(true);
+
+    detect();
+
+    expect(fixture.nativeElement.querySelector('[role="status"]')).not.toBeNull();
+  });
+
+  it('renders an error message when the preview request fails', () => {
+    const { detect, fixture, store } = setup({ token: 'tok-1' });
+    store.isPreviewError.set(true);
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'This invitation link is invalid or no longer available.',
+    );
+  });
+
+  it('renders the organization summary and status tag once the preview resolves', () => {
+    const { detect, fixture } = setup({
+      token: 'tok-1',
+      preview: previewFor('bob@example.com'),
+    });
+
+    detect();
+
+    const text: string = fixture.nativeElement.textContent;
+    expect(text).toContain('Acme');
+    expect(text).toContain('Invited by Alice');
+    expect(text).toContain('bob@example.com');
+    expect(fixture.nativeElement.querySelector('app-tag')).not.toBeNull();
+  });
+
+  it('renders the success state and navigates to the workspace on click', () => {
+    const { component, detect, fixture, router, store } = setup({
+      token: 'tok-1',
+      preview: previewFor('bob@example.com'),
+    });
+    store.isAccepted.set(true);
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain('Invitation accepted. Welcome aboard!');
+
+    component.goToWorkspace();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/organizations', 'org-1']);
+  });
+
+  it('goes to the default workspace when not accepted', () => {
+    const { component, router, store } = setup({
+      token: 'tok-1',
+      preview: previewFor('bob@example.com'),
+    });
+    store.isAccepted.set(false);
+
+    component.goToWorkspace();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/']);
+  });
+
+  it('renders the mismatch warning with the switch-account and open-workspace actions', () => {
+    const { detect, fixture, store } = setup({
+      token: 'tok-1',
+      authenticated: true,
+      currentEmail: 'other@example.com',
+      preview: previewFor('bob@example.com'),
+    });
+
+    detect();
+
+    const text: string = fixture.nativeElement.textContent;
+    expect(text).toContain("You're signed in as other@example.com");
+    expect(text).toContain('bob@example.com');
+    expect(store.accept).not.toHaveBeenCalled();
+  });
+
+  it('renders the not-pending warning for a resolved invitation', () => {
+    const { detect, fixture } = setup({
+      token: 'tok-1',
+      preview: previewFor('bob@example.com', 'revoked'),
+    });
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain('This invitation is no longer active.');
+  });
+
+  it('renders the accept CTA for an authenticated pending invitation and forwards the click', () => {
+    const { component, detect, fixture, store } = setup({
+      token: 'tok-1',
+      authenticated: true,
+      currentEmail: 'bob@example.com',
+      preview: previewFor('bob@example.com'),
+    });
+    // Prevent the auto-accept effect from firing so the button click is what triggers accept.
+    store.isAccepting.set(false);
+
+    detect();
+    store.accept.mockClear();
+
+    component.accept();
+
+    expect(store.accept).toHaveBeenCalledWith('tok-1');
+    void fixture;
+  });
+
+  it('renders the accept-error message when a prior acceptance attempt failed', () => {
+    const { detect, fixture, store } = setup({
+      token: 'tok-1',
+      authenticated: true,
+      currentEmail: 'bob@example.com',
+      preview: previewFor('bob@example.com'),
+    });
+    store.isAcceptError.set(true);
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'The invitation could not be accepted. It may have expired or been revoked.',
+    );
+  });
+
+  it('renders the sign-in / register prompt for an anonymous visitor and forwards register', () => {
+    const { component, detect, fixture, router } = setup({
+      token: 'tok-1',
+      authenticated: false,
+      preview: previewFor('bob@example.com'),
+    });
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain('Sign in or create an account with');
+
+    component.register();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/auth/register'], {
       queryParams: { returnUrl: '/organizations/invitations/accept?token=tok-1' },
     });
   });

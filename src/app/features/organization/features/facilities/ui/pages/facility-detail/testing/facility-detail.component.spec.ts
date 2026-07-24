@@ -126,6 +126,7 @@ describe('FacilityDetailPage', () => {
     equipmentList: signal([]),
     isLoadingEquipment: signal(false),
     isEmpty: signal(true),
+    totalEquipment: signal(0),
     load: vi.fn(),
   };
 
@@ -133,6 +134,7 @@ describe('FacilityDetailPage', () => {
     inspections: signal([]),
     isLoadingInspections: signal(false),
     isEmpty: signal(true),
+    totalInspections: signal(0),
     load: vi.fn(),
   };
 
@@ -355,6 +357,181 @@ describe('FacilityDetailPage', () => {
       facilityId: 'fac-1',
       input: { parentFacilityId: null },
     });
+  });
+
+  it('should show the not-found empty state when no facility is resolved and not loading', () => {
+    mockActiveFacilityStore.selectedFacility.set(null);
+    mockActiveFacilityStore.isLoadingFacility.set(false);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Facility not found');
+    const emptyState = fixture.debugElement.query(By.css('app-empty-state'));
+    expect(emptyState).toBeTruthy();
+  });
+
+  it('should navigate back to the facility list from the not-found empty state', () => {
+    mockActiveFacilityStore.selectedFacility.set(null);
+    mockActiveFacilityStore.isLoadingFacility.set(false);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const backButton = fixture.debugElement.query(By.css('p-button'));
+    backButton.triggerEventHandler('onClick', undefined);
+
+    expect(navigateSpy).toHaveBeenCalledWith(['..', '..'], expect.anything());
+  });
+
+  it('should render the equipments tab content when switched to tab index 1', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance['activeTab'].set(1);
+    fixture.detectChanges();
+
+    const equipmentTab = fixture.debugElement.query(By.css('app-facility-equipment-tab'));
+    expect(equipmentTab).toBeTruthy();
+  });
+
+  it('should render the inspections tab content when switched to tab index 2', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance['activeTab'].set(2);
+    fixture.detectChanges();
+
+    const inspectionTab = fixture.debugElement.query(By.css('app-facility-inspection-tab'));
+    expect(inspectionTab).toBeTruthy();
+  });
+
+  it('should render the move dialog select with parent options when opened', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    mockFacilityStore.facilities.set([
+      MOCK_FACILITY,
+      { ...MOCK_FACILITY, id: 'fac-2', name: 'Valid Parent' } as unknown as FacilityOutput,
+    ]);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance['onOpenMoveDialog']();
+    fixture.detectChanges();
+
+    const select = fixture.debugElement.query(By.css('p-select'));
+    expect(select).toBeTruthy();
+  });
+
+  it('should disable the move dialog select and cancel button while a move is pending', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    mockFacilityStore.moveCallState.set({ status: 'pending', data: null });
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance['onOpenMoveDialog']();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['isMoving']()).toBe(true);
+  });
+
+  it('should confirm and delete the facility when the delete action is accepted', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    mockConfirmationService.confirm.mockImplementation((options: { accept?: () => void }): void => {
+      options.accept?.();
+    });
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance['onConfirmDelete']();
+
+    expect(mockConfirmationService.confirm).toHaveBeenCalled();
+    expect(mockFacilityStore.remove).toHaveBeenCalledWith({ facilityId: 'fac-1' });
+  });
+
+  it('should not delete the facility when the confirmation is not accepted', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    mockConfirmationService.confirm.mockImplementation((): void => {
+      // Simulate the user rejecting the confirm dialog: accept is never invoked.
+    });
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance['onConfirmDelete']();
+
+    expect(mockFacilityStore.remove).not.toHaveBeenCalled();
+  });
+
+  it('should navigate back to the facility list once the delete succeeds', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    mockFacilityStore.deleteCallState.set({ status: 'success' });
+    fixture.detectChanges();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['..', '..'], expect.anything());
+  });
+
+  it('should navigate to the edit page when onEdit is called', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    fixture.componentInstance['onEdit']();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['edit'], expect.anything());
+  });
+
+  it('should gate header management actions on the FACILITIES_WRITE permission', () => {
+    TestBed.resetTestingModule();
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+
+    TestBed.configureTestingModule({
+      imports: [FacilityDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+        { provide: ActiveFacilityStore, useValue: mockActiveFacilityStore },
+        { provide: Events, useValue: mockEvents },
+        { provide: MessageService, useValue: mockMessageService },
+        { provide: ConfirmationService, useValue: mockConfirmationService },
+        { provide: EquipmentService, useValue: mockEquipmentService },
+        { provide: InspectionService, useValue: mockInspectionService },
+        {
+          provide: OrganizationPermissionService,
+          useValue: { hasPermission: (): boolean => false },
+        },
+      ],
+    })
+      .overrideComponent(FacilityDetailPage, {
+        set: {
+          providers: [
+            { provide: FacilityStore, useValue: mockFacilityStore },
+            FacilityOverviewStore,
+          ],
+        },
+      })
+      .overrideComponent(FacilityEquipmentTab, {
+        set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
+      })
+      .overrideComponent(FacilityInspectionTab, {
+        set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
+      });
+
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['canManage']()).toBe(false);
   });
 
   it('should not load move dialog parent options during SSR', () => {

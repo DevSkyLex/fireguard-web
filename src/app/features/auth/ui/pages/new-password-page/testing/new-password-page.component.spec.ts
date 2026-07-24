@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY } from 'rxjs';
@@ -84,5 +84,59 @@ describe('NewPasswordPage', () => {
 
     expect(mockPasswordResetStore.clear).toHaveBeenCalledTimes(1);
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
+  });
+
+  describe('rendering', () => {
+    const renderSetup = () => {
+      TestBed.resetTestingModule();
+      const mockPasswordResetStore = {
+        isConfirming: signal(false),
+        verificationCode: signal<string | null>('123456'),
+        confirmCallState: signal({ status: 'idle', data: null, error: null }),
+        confirm: vi.fn(),
+        clear: vi.fn(),
+      };
+      const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
+      const mockMessageService = { add: vi.fn() };
+
+      TestBed.configureTestingModule({
+        imports: [NewPasswordPage],
+        providers: [
+          provideRouter([]),
+          { provide: PasswordResetStore, useValue: mockPasswordResetStore },
+          { provide: Events, useValue: mockEvents },
+          { provide: MessageService, useValue: mockMessageService },
+        ],
+      });
+
+      return { mockPasswordResetStore };
+    };
+
+    it('should render the page heading and the new password form', () => {
+      renderSetup();
+      const fixture = TestBed.createComponent(NewPasswordPage);
+      fixture.detectChanges();
+
+      const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(nativeElement.textContent).toContain('Set Your New Password');
+      expect(nativeElement.querySelector('app-new-password-form')).not.toBeNull();
+    });
+
+    it('should confirm the new password when the form is submitted via the DOM', () => {
+      const { mockPasswordResetStore } = renderSetup();
+      const fixture = TestBed.createComponent(NewPasswordPage);
+      fixture.detectChanges();
+
+      const instance = fixture.componentInstance as unknown as {
+        handlePasswordSubmit(values: { newPassword: string }): void;
+      };
+      instance.handlePasswordSubmit({ newPassword: 'NewPass123!' });
+      fixture.detectChanges();
+
+      expect(mockPasswordResetStore.confirm).toHaveBeenCalledWith({
+        code: '123456',
+        newPassword: 'NewPass123!',
+      });
+    });
   });
 });

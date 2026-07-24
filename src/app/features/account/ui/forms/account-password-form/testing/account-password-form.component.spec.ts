@@ -77,4 +77,24 @@ describe('AccountPasswordForm', () => {
 
     expect(emitSpy).toHaveBeenCalledWith({ code: '123456', newPassword: 'NewP@ssw0rd!' });
   });
+
+  it('should render the request step by default', () => {
+    const fixture = TestBed.createComponent(AccountPasswordForm);
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('p-button')).toBeTruthy();
+  });
+
+  it('should render the verify step form when the step input is "verify"', () => {
+    const fixture = TestBed.createComponent(AccountPasswordForm);
+    fixture.componentRef.setInput('step', 'verify');
+    fixture.componentRef.setInput('maskedRecipient', 'a***@example.com');
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('a***@example.com');
+  });
 });

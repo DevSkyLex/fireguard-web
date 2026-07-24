@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA, signal, type WritableSignal } from '@angular/core';
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -90,6 +90,7 @@ describe('InterventionsPage', () => {
   let calendarStore: {
     interventions: WritableSignal<readonly InterventionOutput[]>;
     loading: WritableSignal<boolean>;
+    loadError: WritableSignal<unknown>;
     load: ReturnType<typeof vi.fn>;
   };
   let planningOptions: {
@@ -139,6 +140,7 @@ describe('InterventionsPage', () => {
     calendarStore = {
       interventions: signal<readonly InterventionOutput[]>([]),
       loading: signal(false),
+      loadError: signal<unknown>(null),
       load: vi.fn(),
     };
     planningOptions = {
@@ -165,8 +167,6 @@ describe('InterventionsPage', () => {
       ],
     }).overrideComponent(InterventionsPage, {
       set: {
-        imports: [],
-        schemas: [NO_ERRORS_SCHEMA],
         providers: [
           { provide: InterventionStore, useValue: store },
           { provide: InterventionCalendarStore, useValue: calendarStore },
@@ -474,6 +474,102 @@ describe('InterventionsPage', () => {
       expect(harness.items()).toHaveLength(0);
       expect(harness.listGroups()).toHaveLength(0);
       expect(harness.boardColumns().every((column) => column.items.length === 0)).toBe(true);
+    });
+  });
+
+  describe('rendering', () => {
+    it('should render the list view grouped by status', () => {
+      store.interventionList.set([
+        intervention({ id: 'a', status: 'in_progress', name: 'Roof check' }),
+      ]);
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Roof check');
+    });
+
+    it('should render the loading skeleton for the list view', () => {
+      store.isLoadingInterventions.set(true);
+      store.isEmpty.set(true);
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[role="status"]')).toBeTruthy();
+    });
+
+    it('should render the loading skeleton for the board view', () => {
+      store.isLoadingInterventions.set(true);
+      store.isEmpty.set(true);
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('view', 'board');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelectorAll('app-skeleton').length).toBeGreaterThan(0);
+    });
+
+    it('should render the search-empty state with a clear-search action', () => {
+      store.isEmpty.set(true);
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('q', 'roof');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('No results for');
+    });
+
+    it('should render the first-run empty state with a New action', () => {
+      store.isEmpty.set(true);
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('No interventions yet');
+    });
+
+    it('should render the list error banner', () => {
+      store.listError.set('Network error');
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('could not be loaded');
+    });
+
+    it('should render the capped-results notice', () => {
+      store.isListCapped.set(true);
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('500 most recent interventions');
+    });
+
+    it('should render the board view with columns and an abandoned toggle', () => {
+      store.interventionList.set([
+        intervention({ id: 'a', status: 'draft', name: 'Draft item' }),
+        intervention({ id: 'b', status: 'abandoned', name: 'Abandoned item' }),
+      ]);
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('view', 'board');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Draft item');
+      expect(fixture.nativeElement.textContent).toContain('Show abandoned');
+    });
+
+    it('should render the calendar view and its error banner', () => {
+      calendarStore.loadError.set('Calendar failed');
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('view', 'calendar');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('calendar could not be loaded');
+      expect(fixture.nativeElement.querySelector('app-intervention-calendar')).toBeTruthy();
+    });
+
+    it('should render the creation drawer', () => {
+      const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('app-intervention-create-drawer'),
+      ).toBeTruthy();
     });
   });
 });

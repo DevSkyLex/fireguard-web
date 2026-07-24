@@ -43,4 +43,14 @@ describe('AccountAvatarForm', () => {
     expect(emitSpy).not.toHaveBeenCalled();
     expect(fileUpload.clear).toHaveBeenCalledTimes(1);
   });
+
+  it('should render the upload control with the provided initials', () => {
+    const fixture = TestBed.createComponent(AccountAvatarForm);
+    fixture.componentRef.setInput('initials', 'AL');
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('AL');
+  });
 });

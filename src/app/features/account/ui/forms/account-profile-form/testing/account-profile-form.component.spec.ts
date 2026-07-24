@@ -52,4 +52,19 @@ describe('AccountProfileForm', () => {
 
     expect(emitSpy).not.toHaveBeenCalled();
   });
+
+  it('should render the form fields populated from the profile input', () => {
+    const fixture = TestBed.createComponent(AccountProfileForm);
+    fixture.componentRef.setInput('profile', {
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+    });
+
+    fixture.detectChanges();
+
+    const firstNameInput: HTMLInputElement | null = (
+      fixture.nativeElement as HTMLElement
+    ).querySelector('input[formcontrolname="firstName"]');
+    expect(firstNameInput?.value).toBe('Ada');
+  });
 });

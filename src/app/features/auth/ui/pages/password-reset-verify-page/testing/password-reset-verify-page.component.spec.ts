@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY } from 'rxjs';
@@ -75,5 +75,56 @@ describe('PasswordResetVerifyPage', () => {
     page.handleResend();
 
     expect(mockPasswordResetStore.resend).toHaveBeenCalledTimes(1);
+  });
+
+  describe('rendering', () => {
+    const renderSetup = () => {
+      TestBed.resetTestingModule();
+      const mockPasswordResetStore = {
+        isResending: signal(false),
+        currentRequest: signal<{ canResendIn: number } | null>(null),
+        setVerificationCode: vi.fn(),
+        clear: vi.fn(),
+        resend: vi.fn(),
+      };
+      const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
+      const mockMessageService = { add: vi.fn() };
+
+      TestBed.configureTestingModule({
+        imports: [PasswordResetVerifyPage],
+        providers: [
+          provideRouter([]),
+          { provide: PasswordResetStore, useValue: mockPasswordResetStore },
+          { provide: Events, useValue: mockEvents },
+          { provide: MessageService, useValue: mockMessageService },
+        ],
+      });
+
+      return { mockPasswordResetStore };
+    };
+
+    it('should render the page heading and the OTP verification form', () => {
+      renderSetup();
+      const fixture = TestBed.createComponent(PasswordResetVerifyPage);
+      fixture.detectChanges();
+
+      const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(nativeElement.textContent).toContain('Verify Password Reset');
+      expect(nativeElement.querySelector('app-otp-verification-form')).not.toBeNull();
+    });
+
+    it('should set the verification code when the form is submitted via the DOM', () => {
+      const { mockPasswordResetStore } = renderSetup();
+      const fixture = TestBed.createComponent(PasswordResetVerifyPage);
+      fixture.detectChanges();
+
+      const instance = fixture.componentInstance as unknown as {
+        handleVerify(values: { code: string; trustDevice: boolean }): Promise<void>;
+      };
+      void instance.handleVerify({ code: '123456', trustDevice: false });
+      fixture.detectChanges();
+
+      expect(mockPasswordResetStore.setVerificationCode).toHaveBeenCalledWith('123456');
+    });
   });
 });

@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY } from 'rxjs';
@@ -149,5 +149,79 @@ describe('MfaVerificationPage', () => {
 
     expect(page.showResend()).toBe(false);
     expect(page.mfaDestination()).toBe('Authenticator App');
+  });
+
+  describe('rendering', () => {
+    const renderSetup = (options?: { mfaDestination?: string | null }) => {
+      TestBed.resetTestingModule();
+      const mockAuthStore = {
+        isAuthenticated: signal(false),
+        isVerifyingMfa: signal(false),
+        mfaToken: signal<string | null>('mfa-token'),
+        mfaMethod: signal<string | null>('email'),
+        mfaDestination: signal<string | null>(options?.mfaDestination ?? null),
+        loginCallState: signal({ status: 'idle', data: null }),
+        mfaVerify: vi.fn(),
+        clearMfaState: vi.fn(),
+        mfaResend: vi.fn(),
+      };
+      const mockActiveTrustedDeviceStore = { setPendingTrustDevice: vi.fn() };
+      const mockUserProfilePort = { load: vi.fn() };
+      const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
+      const mockMessageService = { add: vi.fn() };
+
+      TestBed.configureTestingModule({
+        imports: [MfaVerificationPage],
+        providers: [
+          provideRouter([]),
+          { provide: AuthStore, useValue: mockAuthStore },
+          { provide: ActiveTrustedDeviceStore, useValue: mockActiveTrustedDeviceStore },
+          { provide: USER_PROFILE_PORT, useValue: mockUserProfilePort },
+          { provide: Events, useValue: mockEvents },
+          { provide: MessageService, useValue: mockMessageService },
+        ],
+      });
+
+      return { mockAuthStore, mockActiveTrustedDeviceStore };
+    };
+
+    it('should render the page heading and the OTP verification form', () => {
+      renderSetup();
+      const fixture = TestBed.createComponent(MfaVerificationPage);
+      fixture.detectChanges();
+
+      const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(nativeElement.textContent).toContain('Multi-Factor Authentication');
+      expect(nativeElement.querySelector('app-otp-verification-form')).not.toBeNull();
+    });
+
+    it('should display the MFA destination when provided', () => {
+      renderSetup({ mfaDestination: 'j***e@example.com' });
+      const fixture = TestBed.createComponent(MfaVerificationPage);
+      fixture.detectChanges();
+
+      const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(
+        nativeElement.querySelector('[data-testid="mfa-verification-destination"]'),
+      ).not.toBeNull();
+      expect(nativeElement.textContent).toContain('j***e@example.com');
+    });
+
+    it('should verify the OTP code when the form is submitted via the DOM', () => {
+      const { mockAuthStore } = renderSetup();
+      const fixture = TestBed.createComponent(MfaVerificationPage);
+      fixture.detectChanges();
+
+      const instance = fixture.componentInstance as unknown as {
+        handleOtpSubmit(values: { code: string; trustDevice: boolean }): void;
+      };
+      instance.handleOtpSubmit({ code: '123456', trustDevice: false });
+      fixture.detectChanges();
+
+      expect(mockAuthStore.mfaVerify).toHaveBeenCalledWith({
+        preAuthToken: 'mfa-token',
+        code: '123456',
+      });
+    });
   });
 });

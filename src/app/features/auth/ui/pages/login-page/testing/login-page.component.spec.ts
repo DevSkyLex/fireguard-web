@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY } from 'rxjs';
@@ -110,5 +110,76 @@ describe('LoginPage', () => {
     const { mockRouter } = setup({ authenticated: true, returnUrl: 'https://evil.example.com' });
 
     expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/');
+  });
+
+  describe('rendering', () => {
+    const renderSetup = (options?: { loading?: boolean }) => {
+      TestBed.resetTestingModule();
+      const authState = {
+        isLoggingIn: signal(options?.loading ?? false),
+        mfaRequired: signal(false),
+        isAuthenticated: signal(false),
+      };
+      const mockAuthStore = { ...authState, login: vi.fn() };
+      const mockUserProfilePort = { load: vi.fn() };
+      const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
+      const mockMessageService = { add: vi.fn() };
+
+      TestBed.configureTestingModule({
+        imports: [LoginPage],
+        providers: [
+          provideRouter([]),
+          { provide: AuthStore, useValue: mockAuthStore },
+          { provide: USER_PROFILE_PORT, useValue: mockUserProfilePort },
+          { provide: Events, useValue: mockEvents },
+          { provide: MessageService, useValue: mockMessageService },
+        ],
+      });
+
+      return { mockAuthStore };
+    };
+
+    it('should render the page heading and the login form', () => {
+      renderSetup();
+      const fixture = TestBed.createComponent(LoginPage);
+      fixture.detectChanges();
+
+      const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(nativeElement.textContent).toContain('Welcome Back');
+      expect(nativeElement.querySelector('app-login-form')).not.toBeNull();
+    });
+
+    it('should call authStore.login when the login form is submitted via the DOM', () => {
+      const { mockAuthStore } = renderSetup();
+      const fixture = TestBed.createComponent(LoginPage);
+      fixture.detectChanges();
+
+      const loginFormDebugElement = fixture.debugElement.query(
+        (node) => node.name === 'app-login-form',
+      );
+      const loginForm = loginFormDebugElement.componentInstance as unknown as {
+        form: {
+          setValue(value: { email: string; password: string; remember_me: boolean }): void;
+        };
+      };
+      loginForm.form.setValue({
+        email: 'test@example.com',
+        password: 'password123',
+        remember_me: false,
+      });
+      fixture.detectChanges();
+
+      const formElement: HTMLFormElement | null = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector('form');
+      formElement?.dispatchEvent(new Event('submit'));
+      fixture.detectChanges();
+
+      expect(mockAuthStore.login).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'password123',
+        remember_me: false,
+      });
+    });
   });
 });

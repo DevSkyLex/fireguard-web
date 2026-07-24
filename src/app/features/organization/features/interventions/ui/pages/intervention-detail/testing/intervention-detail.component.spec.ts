@@ -1,7 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { Events } from '@ngrx/signals/events';
 import { ConfirmationService, type MenuItem } from 'primeng/api';
+import { EMPTY } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
@@ -28,6 +30,48 @@ import {
   OrganizationMemberAccessStore,
 } from '@features/organization/state';
 import { InterventionDetailPage } from '../intervention-detail.component';
+
+/**
+ * Base {@link InterventionOutput} fixture for the rendering describe block:
+ * every field is populated so the real template (identity block, stage
+ * progress, checklist, rail) renders every branch without hitting `undefined`
+ * property reads. Individual tests override only the fields relevant to the
+ * scenario under test.
+ */
+function buildIntervention(overrides: Partial<InterventionOutput> = {}): InterventionOutput {
+  return {
+    '@id': '/api/interventions/i-1',
+    '@type': 'Intervention',
+    id: 'i-1',
+    organization: '/api/organizations/org-1',
+    number: 42,
+    type: 'inspection_campaign',
+    name: 'Roof inspection',
+    description: 'Check the roof access hatches.',
+    status: 'draft',
+    allowedTransitions: ['planned', 'abandoned'],
+    site: '/api/facilities/site-1',
+    responsible: '/api/organizations/org-1/members/member-1',
+    participants: [],
+    labels: [],
+    priority: 'normal',
+    plannedStartAt: '2026-01-10T09:00:00Z',
+    dueAt: '2026-01-20T17:00:00Z',
+    reviewNote: null,
+    revision: 1,
+    facilitiesCount: 0,
+    equipmentCount: 0,
+    inspectionsCount: 0,
+    blockersCount: 0,
+    workItemsCount: 0,
+    completedWorkItemsCount: 0,
+    proposedChangesCount: 0,
+    commentsCount: 0,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-02T00:00:00Z',
+    ...overrides,
+  } as InterventionOutput;
+}
 
 interface ConfirmConfig {
   readonly header?: string;
@@ -91,6 +135,7 @@ describe('InterventionDetailPage', () => {
     issues: ReturnType<typeof signal<readonly InterventionIssueOutput[]>>;
     changes: ReturnType<typeof signal<readonly unknown[]>>;
     activities: ReturnType<typeof signal<readonly unknown[]>>;
+    activityCallState: ReturnType<typeof signal<{ status: string }>>;
     loading: ReturnType<typeof signal<boolean>>;
     saving: ReturnType<typeof signal<boolean>>;
     error: ReturnType<typeof signal<string | null>>;
@@ -116,6 +161,34 @@ describe('InterventionDetailPage', () => {
     return fixture.componentInstance as unknown as InterventionDetailPageHarness;
   }
 
+  beforeAll(() => {
+    const windowWithResizeObserver = window as Window & {
+      ResizeObserver?: typeof ResizeObserver;
+    };
+    if (typeof windowWithResizeObserver.ResizeObserver === 'undefined') {
+      class ResizeObserverMock {
+        public readonly observe = vi.fn();
+        public readonly unobserve = vi.fn();
+        public readonly disconnect = vi.fn();
+      }
+      windowWithResizeObserver.ResizeObserver =
+        ResizeObserverMock as unknown as typeof ResizeObserver;
+    }
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+        onchange: null,
+      })),
+    });
+  });
+
   beforeEach(() => {
     store = {
       intervention: signal<InterventionOutput | null>(null),
@@ -123,6 +196,7 @@ describe('InterventionDetailPage', () => {
       issues: signal<readonly InterventionIssueOutput[]>([]),
       changes: signal<readonly unknown[]>([]),
       activities: signal<readonly unknown[]>([]),
+      activityCallState: signal<{ status: string }>({ status: 'idle' }),
       loading: signal(false),
       saving: signal(false),
       error: signal<string | null>(null),
@@ -154,14 +228,25 @@ describe('InterventionDetailPage', () => {
     TestBed.configureTestingModule({
       imports: [InterventionDetailPage],
       providers: [
+        provideRouter([]),
         { provide: ConfirmationService, useValue: confirmationService },
         {
           provide: ConnectivityService,
           useValue: { online: signal(true), isOffline: () => false },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission: () => true } },
-        { provide: InterventionOfflineService, useValue: {} },
-        { provide: InterventionSyncCoordinatorService, useValue: { discardBlocked: vi.fn() } },
+        { provide: InterventionOfflineService, useValue: { hasUnsyncedChanges: () => false } },
+        {
+          provide: InterventionSyncCoordinatorService,
+          useValue: {
+            discardBlocked: vi.fn(),
+            blockedOperations: () => 0,
+            problem: () => null,
+            syncing: () => false,
+            retryBlocked: vi.fn(),
+            syncAll: vi.fn(),
+          },
+        },
         {
           provide: InterventionFieldExecutionService,
           useValue: { scanSupported: () => false, scan: vi.fn(), attachPhoto: vi.fn() },
@@ -178,6 +263,7 @@ describe('InterventionDetailPage', () => {
           useValue: { selectedOrganization: signal({ id: 'org-1' }) },
         },
         { provide: OrganizationMemberAccessStore, useValue: { profile: signal(null) } },
+        { provide: Events, useValue: { on: vi.fn().mockReturnValue(EMPTY) } },
         { provide: Router, useValue: router },
         { provide: ActivatedRoute, useValue: {} },
       ],
@@ -573,6 +659,171 @@ describe('InterventionDetailPage', () => {
     expect(store.updateDetails).toHaveBeenCalledWith({
       interventionId: 'i-1',
       input: expect.objectContaining({ description: null }),
+    });
+  });
+
+  describe('rendering', () => {
+    function render(): ReturnType<typeof TestBed.createComponent<InterventionDetailPage>> {
+      const fixture = TestBed.createComponent(InterventionDetailPage);
+      fixture.componentRef.setInput('interventionId', 'i-1');
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    it('should render the loading skeleton while the workspace is loading', () => {
+      store.loading.set(true);
+      const fixture = render();
+
+      expect(fixture.nativeElement.querySelector('[role="status"]')).toBeTruthy();
+    });
+
+    it('should render the not-found empty state when no intervention is loaded', () => {
+      store.intervention.set(null);
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('Intervention not found');
+    });
+
+    it('should render the draft workspace with the guided planning surface', () => {
+      store.intervention.set(buildIntervention({ status: 'draft' }));
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('Check the roof access hatches.');
+      expect(fixture.nativeElement.querySelector('app-intervention-planning-guide')).toBeTruthy();
+    });
+
+    it('should render the work-item checklist during execution with items listed', () => {
+      store.intervention.set(buildIntervention({ status: 'in_progress' }));
+      store.workItems.set([
+        { id: 'wi-1', status: 'completed', action: 'inspect', target: null } as unknown as InterventionWorkItemOutput,
+        { id: 'wi-2', status: 'planned', action: 'inspect', target: null } as unknown as InterventionWorkItemOutput,
+      ]);
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('Work items');
+      expect(fixture.nativeElement.querySelectorAll('li').length).toBeGreaterThan(0);
+    });
+
+    it('should render the empty checklist state when there are no work items', () => {
+      store.intervention.set(buildIntervention({ status: 'planned' }));
+      store.workItems.set([]);
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('No work items yet');
+    });
+
+    it('should render the proposed-changes and publication summary sections while submitted', () => {
+      store.intervention.set(buildIntervention({ status: 'submitted' }));
+      store.changes.set([
+        { id: 'ch-1', resource: '/api/facilities/site-1', status: 'proposed', patch: { name: 'New' } },
+        { id: 'ch-2', resource: '/api/facilities/site-2', status: 'applied', patch: { name: 'Old' } },
+      ]);
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('Proposed changes');
+      expect(fixture.nativeElement.textContent).toContain('Publication summary');
+    });
+
+    it('should render the review banners: blockers, ready-to-publish and published', () => {
+      store.intervention.set(buildIntervention({ status: 'submitted' }));
+      store.issues.set([
+        { severity: 'blocker', message: 'Missing sign-off', resource: '/api/x' },
+      ] as InterventionIssueOutput[]);
+      store.blockerCount.set(1);
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('Missing sign-off');
+
+      store.issues.set([]);
+      store.blockerCount.set(0);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Execution complete');
+
+      store.intervention.set(buildIntervention({ status: 'published' }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Published');
+    });
+
+    it('should render the changes-requested review note banner', () => {
+      store.intervention.set(
+        buildIntervention({ status: 'changes_requested', reviewNote: 'Please redo the roof check.' }),
+      );
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('Please redo the roof check.');
+    });
+
+    it('should render the top-level error banner and clear it on dismiss', () => {
+      store.intervention.set(buildIntervention());
+      store.error.set('Something went wrong');
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('Something went wrong');
+
+      const closeButton: HTMLButtonElement | null =
+        fixture.nativeElement.querySelector('[aria-label="Close"]');
+      closeButton?.click();
+      fixture.detectChanges();
+      expect(store.clearError).toHaveBeenCalled();
+    });
+
+    it('should render the offline unsynced-changes banner', () => {
+      TestBed.overrideProvider(InterventionOfflineService, {
+        useValue: { hasUnsyncedChanges: () => true },
+      });
+      store.intervention.set(buildIntervention());
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('saved offline');
+    });
+
+    it('should render the mobile command bar when a command action is available', () => {
+      store.intervention.set(buildIntervention({ status: 'draft' }));
+      const fixture = render();
+
+      expect(fixture.nativeElement.textContent).toContain('Plan intervention');
+    });
+
+    it('should open the inline description editor and render the textarea', () => {
+      store.intervention.set(buildIntervention({ status: 'in_progress' }));
+      const fixture = render();
+      const harness = fixture.componentInstance as unknown as InterventionDetailPageHarness;
+
+      harness.openDescriptionEditor();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('textarea')).toBeTruthy();
+    });
+
+    it('should open the labels editor and render the multiselect', () => {
+      store.intervention.set(
+        buildIntervention({ labels: [{ id: 'label-1', name: 'Roof', color: '#fff' }] }),
+      );
+      const fixture = render();
+      const harness = fixture.componentInstance as unknown as InterventionDetailPageHarness;
+
+      harness.openLabelsEditor();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('p-multiselect')).toBeTruthy();
+    });
+
+    it('should publish the list position to the header store when the id is cached', () => {
+      interventionListStore.orderedIds.set(['i-0', 'i-1', 'i-2']);
+      store.intervention.set(buildIntervention());
+      const fixture = render();
+      const harness = fixture.componentInstance as unknown as InterventionDetailPageHarness;
+
+      expect(harness.listPosition()).toBe('2 / 3');
+    });
+
+    it('should render the abandoned workspace without the stage progress row', () => {
+      store.intervention.set(buildIntervention({ status: 'abandoned' }));
+      const fixture = render();
+
+      expect(
+        fixture.nativeElement.querySelector('app-intervention-phase-stepper'),
+      ).toBeFalsy();
     });
   });
 });

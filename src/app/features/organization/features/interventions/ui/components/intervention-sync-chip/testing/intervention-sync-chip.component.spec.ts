@@ -7,6 +7,22 @@ import { InterventionSyncCoordinatorService } from '@features/organization/featu
 import { InterventionSyncChip } from '../intervention-sync-chip.component';
 
 describe('InterventionSyncChip', () => {
+  beforeAll(() => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
   const online = signal(true);
   const pendingCount = signal(0);
   const blockedOperations = signal(0);

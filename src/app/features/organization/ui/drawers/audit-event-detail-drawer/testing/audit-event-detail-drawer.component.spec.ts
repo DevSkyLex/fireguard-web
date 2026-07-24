@@ -18,6 +18,22 @@ const BASE_EVENT: AuditEventOutput = {
 } as unknown as AuditEventOutput;
 
 describe('AuditEventDetailDrawer', () => {
+  beforeAll(() => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
   function createComponent(): {
     readonly component: AuditEventDetailDrawer;
     readonly fixture: import('@angular/core/testing').ComponentFixture<AuditEventDetailDrawer>;

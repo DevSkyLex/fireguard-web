@@ -1,8 +1,9 @@
-import { Component, input, output, signal, type WritableSignal } from '@angular/core';
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { MenuModule } from 'primeng/menu';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import type {
+  OrganizationDashboardGranularity,
   OrganizationDashboardTrendOutput,
   OrganizationOutput,
 } from '@features/organization/models';
@@ -37,6 +38,7 @@ type AssetGrowthTrendHarness = {
 
 type MockAssetGrowthStore = {
   readonly isQueryLoading: WritableSignal<boolean>;
+  readonly queryHasError: WritableSignal<boolean>;
   readonly isFilterDrawerVisible: WritableSignal<boolean>;
   readonly canReadEquipment: WritableSignal<boolean>;
   readonly canReadFacilities: WritableSignal<boolean>;
@@ -45,64 +47,37 @@ type MockAssetGrowthStore = {
   readonly selectedEquipmentType: WritableSignal<string | null>;
   readonly selectedEquipmentStatus: WritableSignal<string | null>;
   readonly selectedFacilityType: WritableSignal<string | null>;
+  readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity>;
+  readonly granularityOptions: WritableSignal<
+    ReadonlyArray<{ readonly label: string; readonly value: OrganizationDashboardGranularity }>
+  >;
+  readonly draftDateRange: WritableSignal<Date[] | null>;
+  readonly draftCompareEnabled: WritableSignal<boolean>;
+  readonly draftEquipmentType: WritableSignal<string | null>;
+  readonly draftEquipmentStatus: WritableSignal<string | null>;
+  readonly draftFacilityType: WritableSignal<string | null>;
+  readonly alignedTrendData: WritableSignal<{
+    readonly labels: readonly string[];
+    readonly datasets: readonly number[][];
+  }>;
   readonly queryData: WritableSignal<MockAssetGrowthData | null>;
+  readonly loadParams: WritableSignal<Record<string, unknown>>;
+  readonly load: ReturnType<typeof vi.fn>;
   readonly openFilters: ReturnType<typeof vi.fn>;
   readonly cancelDraftFilters: ReturnType<typeof vi.fn>;
   readonly resetDraftFilters: ReturnType<typeof vi.fn>;
   readonly applyDraftFilters: ReturnType<typeof vi.fn>;
+  readonly setGranularity: ReturnType<typeof vi.fn>;
+  readonly setDraftDateRange: ReturnType<typeof vi.fn>;
+  readonly setDraftCompareEnabled: ReturnType<typeof vi.fn>;
+  readonly setDraftEquipmentType: ReturnType<typeof vi.fn>;
+  readonly setDraftEquipmentStatus: ReturnType<typeof vi.fn>;
+  readonly setDraftFacilityType: ReturnType<typeof vi.fn>;
 };
 
 type MockActiveOrganizationStore = {
   readonly selectedOrganization: WritableSignal<OrganizationOutput | null>;
 };
-
-@Component({
-  selector: 'app-trend-card',
-  template: '<ng-content />',
-})
-class TrendCardStub {
-  public readonly title = input<string>('');
-  public readonly description = input<string>('');
-  public readonly metrics = input<readonly unknown[]>([]);
-  public readonly loading = input<boolean>(false);
-}
-
-@Component({
-  selector: 'app-asset-growth-toolbar',
-  template: '',
-})
-class AssetGrowthToolbarStub {
-  public readonly activeFilterCount = input<number>(0);
-  public readonly filtersAvailable = input<boolean>(false);
-  public readonly filterToggle = output<void>();
-  public readonly menuToggle = output<MouseEvent>();
-}
-
-@Component({
-  selector: 'app-asset-growth-chart',
-  template: '',
-})
-class AssetGrowthChartStub {}
-
-@Component({
-  selector: 'app-asset-growth-filters',
-  template: '',
-})
-class AssetGrowthFiltersStub {}
-
-@Component({
-  selector: 'app-trend-filter-drawer',
-  template: '<ng-content />',
-})
-class TrendFilterDrawerStub {
-  public readonly title = input<string>('');
-  public readonly description = input<string | undefined>(undefined);
-  public readonly visible = input<boolean>(false);
-  public readonly loading = input<boolean>(false);
-  public readonly cancel = output<void>();
-  public readonly reset = output<void>();
-  public readonly apply = output<void>();
-}
 
 const MOCK_ORGANIZATION: OrganizationOutput = {
   '@id': '/organizations/org-asset-growth',
@@ -148,8 +123,15 @@ const MOCK_QUERY_DATA: MockAssetGrowthData = {
   facilities: createTrendOutput('facilities-created', [2, 1], [1, 0]),
 };
 
+const mockThemePort: ThemePort = {
+  theme: signal<ThemeMode>('light'),
+  resolvedTheme: signal<'light' | 'dark'>('light'),
+  setTheme: vi.fn(),
+};
+
 const mockDashboardStore: MockAssetGrowthStore = {
   isQueryLoading: signal<boolean>(false),
+  queryHasError: signal<boolean>(false),
   isFilterDrawerVisible: signal<boolean>(false),
   canReadEquipment: signal<boolean>(true),
   canReadFacilities: signal<boolean>(true),
@@ -158,11 +140,36 @@ const mockDashboardStore: MockAssetGrowthStore = {
   selectedEquipmentType: signal<string | null>(null),
   selectedEquipmentStatus: signal<string | null>(null),
   selectedFacilityType: signal<string | null>(null),
+  selectedGranularity: signal<OrganizationDashboardGranularity>('day'),
+  granularityOptions: signal<
+    ReadonlyArray<{ readonly label: string; readonly value: OrganizationDashboardGranularity }>
+  >([
+    { label: 'Daily', value: 'day' },
+    { label: 'Weekly', value: 'week' },
+    { label: 'Monthly', value: 'month' },
+  ]),
+  draftDateRange: signal<Date[] | null>(null),
+  draftCompareEnabled: signal<boolean>(true),
+  draftEquipmentType: signal<string | null>(null),
+  draftEquipmentStatus: signal<string | null>(null),
+  draftFacilityType: signal<string | null>(null),
+  alignedTrendData: signal<{
+    readonly labels: readonly string[];
+    readonly datasets: readonly number[][];
+  }>({ labels: [], datasets: [[], []] }),
   queryData: signal<MockAssetGrowthData | null>(null),
+  loadParams: signal<Record<string, unknown>>({}),
+  load: vi.fn(),
   openFilters: vi.fn(),
   cancelDraftFilters: vi.fn(),
   resetDraftFilters: vi.fn(),
   applyDraftFilters: vi.fn(),
+  setGranularity: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
+  setDraftEquipmentType: vi.fn(),
+  setDraftEquipmentStatus: vi.fn(),
+  setDraftFacilityType: vi.fn(),
 };
 
 const mockActiveOrganizationStore: MockActiveOrganizationStore = {
@@ -173,6 +180,7 @@ describe('AssetGrowthTrend', () => {
   beforeEach(() => {
     installMatchMediaMock();
     mockDashboardStore.isQueryLoading.set(false);
+    mockDashboardStore.queryHasError.set(false);
     mockDashboardStore.isFilterDrawerVisible.set(false);
     mockDashboardStore.canReadEquipment.set(true);
     mockDashboardStore.canReadFacilities.set(true);
@@ -181,32 +189,34 @@ describe('AssetGrowthTrend', () => {
     mockDashboardStore.selectedEquipmentType.set(null);
     mockDashboardStore.selectedEquipmentStatus.set(null);
     mockDashboardStore.selectedFacilityType.set(null);
+    mockDashboardStore.selectedGranularity.set('day');
+    mockDashboardStore.draftDateRange.set(null);
+    mockDashboardStore.draftCompareEnabled.set(true);
+    mockDashboardStore.draftEquipmentType.set(null);
+    mockDashboardStore.draftEquipmentStatus.set(null);
+    mockDashboardStore.draftFacilityType.set(null);
+    mockDashboardStore.alignedTrendData.set({ labels: [], datasets: [[], []] });
     mockDashboardStore.queryData.set(null);
+    mockDashboardStore.loadParams.set({});
+    mockDashboardStore.load.mockReset();
     mockDashboardStore.openFilters.mockReset();
     mockDashboardStore.cancelDraftFilters.mockReset();
     mockDashboardStore.resetDraftFilters.mockReset();
     mockDashboardStore.applyDraftFilters.mockReset();
+    mockDashboardStore.setGranularity.mockReset();
+    mockDashboardStore.setDraftDateRange.mockReset();
+    mockDashboardStore.setDraftCompareEnabled.mockReset();
+    mockDashboardStore.setDraftEquipmentType.mockReset();
+    mockDashboardStore.setDraftEquipmentStatus.mockReset();
+    mockDashboardStore.setDraftFacilityType.mockReset();
     mockActiveOrganizationStore.selectedOrganization.set(MOCK_ORGANIZATION);
 
     TestBed.configureTestingModule({
       imports: [AssetGrowthTrend],
-      providers: [provideRouter([])],
-    }).overrideComponent(AssetGrowthTrend, {
-      set: {
-        imports: [
-          MenuModule,
-          TrendCardStub,
-          TrendFilterDrawerStub,
-          AssetGrowthToolbarStub,
-          AssetGrowthChartStub,
-          AssetGrowthFiltersStub,
-        ],
-        providers: [
-          { provide: AssetGrowthTrendStore, useValue: mockDashboardStore },
-          { provide: ActiveOrganizationStore, useValue: mockActiveOrganizationStore },
-        ],
-      },
-    });
+      providers: [provideRouter([]), { provide: THEME_PORT, useValue: mockThemePort }],
+    })
+      .overrideProvider(AssetGrowthTrendStore, { useValue: mockDashboardStore })
+      .overrideProvider(ActiveOrganizationStore, { useValue: mockActiveOrganizationStore });
   });
 
   function createComponent(): AssetGrowthTrendHarness {
@@ -285,5 +295,38 @@ describe('AssetGrowthTrend', () => {
     expect(mockDashboardStore.cancelDraftFilters).toHaveBeenCalledTimes(1);
     expect(mockDashboardStore.resetDraftFilters).toHaveBeenCalledTimes(1);
     expect(mockDashboardStore.applyDraftFilters).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render skeleton placeholders while the trend query is loading', () => {
+    mockDashboardStore.isQueryLoading.set(true);
+    const fixture = TestBed.createComponent(AssetGrowthTrend);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('p-skeleton')).not.toBeNull();
+  });
+
+  it('should render the error state and allow retrying the query', () => {
+    mockDashboardStore.queryHasError.set(true);
+    const fixture = TestBed.createComponent(AssetGrowthTrend);
+    fixture.detectChanges();
+
+    const retryButton: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      'app-asset-growth-chart button',
+    );
+    expect(retryButton).not.toBeNull();
+
+    retryButton?.click();
+    fixture.detectChanges();
+
+    expect(mockDashboardStore.load).toHaveBeenCalledWith(mockDashboardStore.loadParams());
+  });
+
+  it('should open the filter drawer with the current draft values', () => {
+    mockDashboardStore.isFilterDrawerVisible.set(true);
+    const fixture = TestBed.createComponent(AssetGrowthTrend);
+    fixture.detectChanges();
+
+    // p-drawer renders its content via `appendTo: 'body'`, outside the fixture root.
+    expect(document.body.textContent).toContain('Asset Growth Filters');
   });
 });

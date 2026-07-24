@@ -39,6 +39,8 @@ describe('InterventionSyncService', () => {
     get: ReturnType<typeof vi.fn>;
     listAllWorkItems: ReturnType<typeof vi.fn>;
     listAllChanges: ReturnType<typeof vi.fn>;
+    createChange: ReturnType<typeof vi.fn>;
+    updateChange: ReturnType<typeof vi.fn>;
   };
   let mockFacilities: { createForIntervention: ReturnType<typeof vi.fn> };
   let mockEquipment: {
@@ -63,6 +65,8 @@ describe('InterventionSyncService', () => {
       get: vi.fn().mockReturnValue(of({ revision: 0 })),
       listAllWorkItems: vi.fn().mockReturnValue(of([])),
       listAllChanges: vi.fn().mockReturnValue(of([])),
+      createChange: vi.fn().mockReturnValue(of({})),
+      updateChange: vi.fn().mockReturnValue(of({})),
     };
     mockFacilities = { createForIntervention: vi.fn().mockReturnValue(of({})) };
     mockEquipment = {
@@ -374,6 +378,125 @@ describe('InterventionSyncService', () => {
       'Checked the extinguisher on site.',
     );
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('should replay an inspection creation', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'inspection.create', {
+        clientId: 'inspection-client-id',
+        equipmentId: 'equipment-1',
+        result: 'pass',
+        performedAt: '2026-07-01T10:00:00.000Z',
+        inspectorType: 'user',
+        inspectorName: 'Jane Doe',
+      }),
+    ]);
+
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(replayed).toBe(1);
+    expect(mockInspections.createForIntervention).toHaveBeenCalledWith(
+      'org-1',
+      'intervention-1',
+      expect.objectContaining({ clientId: 'inspection-client-id' }),
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('should replay a queued work-item update', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'work-item.update', {
+        workItemId: 'work-item-1',
+        status: 'completed',
+        revision: 2,
+      }),
+    ]);
+
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(replayed).toBe(1);
+    expect(mockInterventionService.updateWorkItem).toHaveBeenCalledWith(
+      'work-item-1',
+      expect.objectContaining({ status: 'completed' }),
+      2,
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('should replay a queued intervention change creation', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'change.create', {
+        clientId: 'change-client-id',
+        intervention: '/api/interventions/intervention-1',
+        resource: '/api/equipment/equipment-1',
+        patch: { status: 'replaced' },
+      }),
+    ]);
+
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(replayed).toBe(1);
+    expect(mockInterventionService.createChange).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId: 'change-client-id' }),
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('should replay a queued intervention change update', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'change.update', {
+        changeId: 'change-1',
+        revision: 3,
+        patch: { status: 'accepted' },
+      }),
+    ]);
+
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(replayed).toBe(1);
+    expect(mockInterventionService.updateChange).toHaveBeenCalledWith(
+      'change-1',
+      expect.objectContaining({ patch: { status: 'accepted' } }),
+      3,
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('should replay an intervention detail update and rehydrate ISO dates', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'intervention.update', {
+        revision: 2,
+        plannedStartAt: '2026-07-01T10:00:00.000Z',
+        dueAt: null,
+      }),
+    ]);
+
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(replayed).toBe(1);
+    expect(mockInterventionService.update).toHaveBeenCalledWith(
+      'intervention-1',
+      expect.objectContaining({
+        plannedStartAt: new Date('2026-07-01T10:00:00.000Z'),
+        dueAt: null,
+      }),
+      2,
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('should rethrow and stop replay on a non-Error, non-HTTP failure', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'facility.create', { name: 'Building A', type: 'building' }),
+      operation('op-2', 'equipment.create', { type: 'fire_extinguisher' }),
+    ]);
+    mockFacilities.createForIntervention.mockReturnValue(throwError(() => 'not an error object'));
+
+    await expect(service.replayOutbox('org-1', 'intervention-1')).rejects.toBe(
+      'not an error object',
+    );
+    // Aborts the whole replay pass rather than continuing to the next operation.
+    expect(mockEquipment.createForIntervention).not.toHaveBeenCalled();
   });
 
   it('should reject malformed media operations', async () => {

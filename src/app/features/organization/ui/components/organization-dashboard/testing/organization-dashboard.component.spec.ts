@@ -96,22 +96,12 @@ describe('OrganizationDashboard', () => {
     mockDashboardStore.recentInterventions.set([RECENT_INTERVENTION]);
 
     /**
-     * `OrganizationPermissionService` is root-provided, so it is swapped
-     * through a plain root-level provider instead of `overrideComponent`.
      * `DashboardStore` is provided at the `OrganizationDashboard` component
-     * level (`providers: [DashboardStore]` on the component itself), so it
-     * still requires `overrideComponent`, but every other import stays the
-     * real component: the four activity-insight trend cards
-     * (`app-overview-trend`, `app-inspection-quality-trend`,
-     * `app-non-conformities-opened-trend`,
-     * `app-non-conformities-resolved-trend`) and the deferred
-     * `app-asset-growth-trend` never mount in these tests, because no test
-     * here grants the permission combination that renders
-     * `hasActivityInsights()` or `showResourcesSection()` past its deferred
-     * skeleton placeholder. Each of those five cards owns a dedicated
-     * component-scoped store already exercised end to end by its own spec;
-     * re-mocking five separate stores here only to reach branches this
-     * parent does not otherwise need is not worth the duplication.
+     * level (`providers: [DashboardStore]`), so it is swapped with
+     * `overrideProvider` rather than `overrideComponent` — recompiling the
+     * target component through `overrideComponent` breaks V8 coverage
+     * source-map attribution for its own external template. Every child
+     * import stays the real component.
      */
     TestBed.configureTestingModule({
       imports: [OrganizationDashboard],
@@ -119,11 +109,7 @@ describe('OrganizationDashboard', () => {
         { provide: Router, useValue: mockRouter },
         { provide: OrganizationPermissionService, useValue: mockOrganizationPermissionService },
       ],
-    }).overrideComponent(OrganizationDashboard, {
-      set: {
-        providers: [{ provide: DashboardStore, useValue: mockDashboardStore }],
-      },
-    });
+    }).overrideProvider(DashboardStore, { useValue: mockDashboardStore });
   });
 
   afterEach(() => {

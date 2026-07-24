@@ -10,6 +10,7 @@ import {
   MessagingOutboxRepository,
 } from '@features/collaboration/data-access';
 import type { MessageOutput } from '@features/collaboration/models';
+import { MessagingSyncCoordinatorService } from '@features/collaboration/services';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import { MessageThreadStore, type MessageThreadStoreType } from '../message-thread.store';
 
@@ -66,7 +67,12 @@ describe('MessageThreadStore', () => {
     status: ReturnType<typeof vi.fn>;
     isConnected: ReturnType<typeof vi.fn>;
   };
-  let outbox: { queue: ReturnType<typeof vi.fn> };
+  let outbox: {
+    queue: ReturnType<typeof vi.fn>;
+    listForConversation: ReturnType<typeof vi.fn>;
+    retry: ReturnType<typeof vi.fn>;
+  };
+  let coordinator: { flush: ReturnType<typeof vi.fn> };
   let realtime: Subject<unknown>;
   let topicStatus: WritableSignal<ReadonlyMap<string, MercureConnectionStatus>>;
 
@@ -78,6 +84,7 @@ describe('MessageThreadStore', () => {
         { provide: ConversationService, useValue: conversations },
         { provide: MercureService, useValue: mercure },
         { provide: MessagingOutboxRepository, useValue: outbox },
+        { provide: MessagingSyncCoordinatorService, useValue: coordinator },
         {
           provide: ORGANIZATION_MEMBER_ACCESS_PORT,
           useValue: { profile: signal({ id: 'member-1', organizationId: 'org-1' }) },
@@ -97,7 +104,12 @@ describe('MessageThreadStore', () => {
   }
 
   beforeEach(() => {
-    outbox = { queue: vi.fn().mockResolvedValue('outbox-1') };
+    outbox = {
+      queue: vi.fn().mockResolvedValue('outbox-1'),
+      listForConversation: vi.fn().mockResolvedValue([]),
+      retry: vi.fn().mockResolvedValue(undefined),
+    };
+    coordinator = { flush: vi.fn().mockResolvedValue(undefined) };
     service = {
       list: vi.fn(),
       postMessage: vi.fn(),
@@ -392,6 +404,114 @@ describe('MessageThreadStore', () => {
       'message-2',
       'message-1',
     ]);
+  });
+
+  it('should edit a message in place', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    service.edit.mockReturnValue(of(message({ body: 'Edited text.' })));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.edit({ messageId: 'message-1', input: { body: 'Edited text.' } });
+
+    expect(store.messageEntityMap()['message-1'].body).toBe('Edited text.');
+    expect(store.postError()).toBeNull();
+  });
+
+  it('should record a post error when editing fails', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    service.edit.mockReturnValue(throwError(() => new Error('rejected')));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.edit({ messageId: 'message-1', input: { body: 'Edited text.' } });
+
+    expect(store.postError()).not.toBeNull();
+  });
+
+  it('should record a post error when deleting a message fails', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    service.remove.mockReturnValue(throwError(() => new Error('rejected')));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.remove('message-1');
+
+    expect(store.postError()).not.toBeNull();
+    expect(store.messageEntityMap()['message-1'].isDeleted).toBe(false);
+  });
+
+  it('should record an interaction error when saving a message fails', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    service.save.mockReturnValue(throwError(() => new Error('rejected')));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.save('message-1');
+
+    expect(store.messageEntityMap()['message-1'].isSaved).toBe(false);
+  });
+
+  it('should upsert the returned message when pinning succeeds', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    service.pin.mockReturnValue(of(message({ pinnedAt: '2026-02-01T00:00:00+00:00' })));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.pin('message-1');
+
+    expect(store.messageEntityMap()['message-1'].pinnedAt).toBe('2026-02-01T00:00:00+00:00');
+    expect(store.pinnedMessages()).toHaveLength(1);
+  });
+
+  it('should record an interaction error when pinning fails', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    service.pin.mockReturnValue(throwError(() => new Error('rejected')));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.pin('message-1');
+
+    expect(store.messageEntityMap()['message-1'].pinnedAt).toBeUndefined();
+  });
+
+  it('should retry a failed message by re-queuing its outbox operation and flushing', async () => {
+    service.list.mockReturnValue(of(collection([])));
+    service.postMessageWithClientId.mockReturnValue(throwError(() => new Error('offline')));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+
+    const clientId: string = service.postMessageWithClientId.mock.calls[0][1] as string;
+    outbox.listForConversation.mockResolvedValue([{ id: 'outbox-op-1', payload: { clientId } }]);
+
+    await store.retryFailed(clientId);
+
+    expect(outbox.listForConversation).toHaveBeenCalledWith('conversation-1');
+    expect(outbox.retry).toHaveBeenCalledWith('outbox-op-1');
+    expect(coordinator.flush).toHaveBeenCalled();
+    expect(store.failedMessageIds()).toEqual([]);
+    expect(store.pendingMessageIds()).toEqual([clientId]);
+  });
+
+  it('should no-op retryFailed when the outbox has no matching operation', async () => {
+    service.list.mockReturnValue(of(collection([])));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    outbox.listForConversation.mockResolvedValue([]);
+
+    await store.retryFailed('missing-client-id');
+
+    expect(outbox.retry).not.toHaveBeenCalled();
+    expect(coordinator.flush).not.toHaveBeenCalled();
+  });
+
+  it('should no-op retryFailed when no conversation is loaded', async () => {
+    const store = createStore();
+
+    await expect(store.retryFailed('missing-client-id')).resolves.toBeUndefined();
   });
 
   it('should keep an interaction failure off the posting call state', () => {

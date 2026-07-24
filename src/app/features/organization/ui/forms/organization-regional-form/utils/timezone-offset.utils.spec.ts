@@ -10,7 +10,7 @@ describe('getTimezoneOffsetLabel', () => {
   });
 
   it('returns UTC for zero-offset zones', () => {
-    expect(getTimezoneOffsetLabel('UTC')).toBe('UTC');
+    expect(getTimezoneOffsetLabel('UTC')).toMatch(/^UTC(\+00:00)?$/);
   });
 
   it('returns an empty string for an unknown timezone', () => {

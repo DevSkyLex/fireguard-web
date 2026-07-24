@@ -221,4 +221,152 @@ describe('OrganizationMembersStore', () => {
     await flush();
     expect(store.lastMutationCanExceedQuota()).toBe(false);
   });
+
+  it('does nothing when removing an empty batch of members', async () => {
+    store.load(ALL);
+    await flush();
+
+    store.removeMembers({ organizationId: 'org-1', memberIds: [] });
+    await flush();
+
+    expect(memberService.removeMany).not.toHaveBeenCalled();
+    expect(store.isMutating()).toBe(false);
+  });
+
+  it('records a mutation error when removing a member fails', async () => {
+    store.load(ALL);
+    await flush();
+    memberService.remove.mockReturnValue(throwError(() => new Error('nope')));
+
+    store.removeMember({ organizationId: 'org-1', memberId: 'm1' });
+    await flush();
+
+    expect(store.mutationError()).not.toBeNull();
+    expect(store.isMutating()).toBe(false);
+  });
+
+  it('records a mutation error when a bulk removal fails outright', async () => {
+    store.load(ALL);
+    await flush();
+    memberService.removeMany.mockReturnValue(throwError(() => new Error('nope')));
+
+    store.removeMembers({ organizationId: 'org-1', memberIds: ['m1'] });
+    await flush();
+
+    expect(store.mutationError()).not.toBeNull();
+  });
+
+  it('records a mutation error when an invite fails', async () => {
+    invitationService.invite.mockReturnValue(throwError(() => new Error('quota exceeded')));
+
+    store.invite({ organizationId: 'org-1', input: { email: 'new@example.com', roleIds: [] } });
+    await flush();
+
+    expect(store.mutationError()).not.toBeNull();
+  });
+
+  it('records a mutation error when revoking an invitation fails', async () => {
+    store.load(ALL);
+    await flush();
+    invitationService.revoke.mockReturnValue(throwError(() => new Error('nope')));
+
+    store.revokeInvitation({ organizationId: 'org-1', invitationId: 'i1' });
+    await flush();
+
+    expect(store.mutationError()).not.toBeNull();
+    expect(store.invitations()).toHaveLength(1);
+  });
+
+  it('records a mutation error when resending an invitation fails', async () => {
+    store.load(ALL);
+    await flush();
+    invitationService.resend.mockReturnValue(throwError(() => new Error('nope')));
+
+    store.resendInvitation({ organizationId: 'org-1', invitationId: 'i1' });
+    await flush();
+
+    expect(store.mutationError()).not.toBeNull();
+  });
+
+  it('assigns a role to a member', async () => {
+    store.load(ALL);
+    await flush();
+    const updated = { ...member('m1'), roleIds: ['r1', 'r2'] };
+    roleService.assignToMember.mockReturnValue(of(updated));
+
+    store.assignRole({ organizationId: 'org-1', memberId: 'm1', input: { roleId: 'r2' } });
+    await flush();
+
+    expect(store.members().find((m) => m.id === 'm1')?.roleIds).toEqual(['r1', 'r2']);
+  });
+
+  it('records a mutation error when assigning a role fails', async () => {
+    store.load(ALL);
+    await flush();
+    roleService.assignToMember.mockReturnValue(throwError(() => new Error('nope')));
+
+    store.assignRole({ organizationId: 'org-1', memberId: 'm1', input: { roleId: 'r2' } });
+    await flush();
+
+    expect(store.mutationError()).not.toBeNull();
+  });
+
+  it('does nothing when assigning a role to an empty batch of members', async () => {
+    store.assignRoleToMembers({ organizationId: 'org-1', memberIds: [], roleId: 'r2' });
+    await flush();
+
+    expect(roleService.assignToMember).not.toHaveBeenCalled();
+    expect(store.isMutating()).toBe(false);
+  });
+
+  it('assigns a role to several members and reports partial failures', async () => {
+    memberService.list.mockReturnValue(of(collection([member('m1'), member('m2')])));
+    store.load(ALL);
+    await flush();
+
+    roleService.assignToMember.mockImplementation((_org: string, memberId: string) =>
+      memberId === 'm1'
+        ? of({ ...member('m1'), roleIds: ['r1', 'r2'] })
+        : throwError(() => new Error('nope')),
+    );
+
+    store.assignRoleToMembers({ organizationId: 'org-1', memberIds: ['m1', 'm2'], roleId: 'r2' });
+    await flush();
+
+    expect(store.members().find((m) => m.id === 'm1')?.roleIds).toEqual(['r1', 'r2']);
+    const lastPayload = dispatch.mock.calls.at(-1)?.[0]?.payload;
+    expect(lastPayload?.severity).toBe('error');
+  });
+
+  it('removes a role from a member', async () => {
+    store.load(ALL);
+    await flush();
+    roleService.removeFromMember.mockReturnValue(of(undefined));
+
+    store.removeRoleFromMember({ organizationId: 'org-1', memberId: 'm1', roleId: 'r1' });
+    await flush();
+
+    expect(store.members().find((m) => m.id === 'm1')?.roleIds).toEqual([]);
+  });
+
+  it('succeeds removing a role even when the member is no longer in the collection', async () => {
+    roleService.removeFromMember.mockReturnValue(of(undefined));
+
+    store.removeRoleFromMember({ organizationId: 'org-1', memberId: 'missing', roleId: 'r1' });
+    await flush();
+
+    expect(store.isMutating()).toBe(false);
+    expect(store.mutationError()).toBeNull();
+  });
+
+  it('records a mutation error when removing a role fails', async () => {
+    store.load(ALL);
+    await flush();
+    roleService.removeFromMember.mockReturnValue(throwError(() => new Error('nope')));
+
+    store.removeRoleFromMember({ organizationId: 'org-1', memberId: 'm1', roleId: 'r1' });
+    await flush();
+
+    expect(store.mutationError()).not.toBeNull();
+  });
 });

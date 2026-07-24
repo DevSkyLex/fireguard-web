@@ -64,12 +64,15 @@ describe('OrganizationAuditLogPage', () => {
       load: vi.fn(),
     };
 
+    // `overrideProvider` (rather than `overrideComponent`) preserves the
+    // page's real, unstubbed template so its `.html` renders through
+    // `AuditEventTable` and `AuditEventDetailDrawer` for real — `overrideComponent`
+    // recompiles the target component in a way that breaks V8 coverage
+    // source-map attribution for its own external template.
     TestBed.configureTestingModule({
       imports: [OrganizationAuditLogPage],
       providers: [provideRouter([])],
-    }).overrideComponent(OrganizationAuditLogPage, {
-      set: { providers: [{ provide: AuditStore, useValue: store }] },
-    });
+    }).overrideProvider(AuditStore, { useValue: store });
 
     component = TestBed.createComponent(OrganizationAuditLogPage)
       .componentInstance as unknown as AuditLogPageTestApi;
@@ -102,7 +105,15 @@ describe('OrganizationAuditLogPage', () => {
   });
 
   it('should replay an undefined request on retry when no load happened yet', () => {
-    component.retry();
+    // A fresh, unrendered fixture: the real audit event table only emits its
+    // initial lazy-load event once `detectChanges()` runs, so this instance
+    // has not received any `onLoad` call yet.
+    const fixture = TestBed.createComponent(OrganizationAuditLogPage);
+    const freshComponent = fixture.componentInstance as unknown as AuditLogPageTestApi;
+    store.load.mockClear();
+
+    freshComponent.retry();
+
     expect(store.load).toHaveBeenCalledWith(undefined);
   });
 

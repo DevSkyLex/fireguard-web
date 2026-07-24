@@ -1,8 +1,9 @@
-import { CUSTOM_ELEMENTS_SCHEMA, signal, type WritableSignal } from '@angular/core';
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { MenuModule } from 'primeng/menu';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import type {
+  OrganizationDashboardGranularity,
   OrganizationDashboardTrendOutput,
   OrganizationOutput,
 } from '@features/organization/models';
@@ -35,15 +36,30 @@ type OverviewTrendHarness = {
 
 type MockOverviewTrendStore = {
   readonly isQueryLoading: WritableSignal<boolean>;
+  readonly queryHasError: WritableSignal<boolean>;
   readonly isFilterDrawerVisible: WritableSignal<boolean>;
   readonly selectedDateRange: WritableSignal<Date[] | null>;
   readonly compareEnabled: WritableSignal<boolean>;
-  readonly alignedTrendData: WritableSignal<{ readonly datasets: readonly number[][] }>;
+  readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity>;
+  readonly granularityOptions: WritableSignal<
+    ReadonlyArray<{ readonly label: string; readonly value: OrganizationDashboardGranularity }>
+  >;
+  readonly draftDateRange: WritableSignal<Date[] | null>;
+  readonly draftCompareEnabled: WritableSignal<boolean>;
+  readonly alignedTrendData: WritableSignal<{
+    readonly labels: readonly string[];
+    readonly datasets: readonly number[][];
+  }>;
   readonly queryData: WritableSignal<OverviewTrendData | null>;
+  readonly loadParams: WritableSignal<Record<string, unknown>>;
+  readonly load: ReturnType<typeof vi.fn>;
   readonly openFilters: ReturnType<typeof vi.fn>;
   readonly cancelDraftFilters: ReturnType<typeof vi.fn>;
   readonly resetDraftFilters: ReturnType<typeof vi.fn>;
   readonly applyDraftFilters: ReturnType<typeof vi.fn>;
+  readonly setGranularity: ReturnType<typeof vi.fn>;
+  readonly setDraftDateRange: ReturnType<typeof vi.fn>;
+  readonly setDraftCompareEnabled: ReturnType<typeof vi.fn>;
 };
 
 type MockActiveOrganizationStore = {
@@ -89,19 +105,45 @@ const createTrendOutput = (
     } as OrganizationDashboardTrendOutput['comparison'],
   }) as OrganizationDashboardTrendOutput;
 
+const mockThemePort: ThemePort = {
+  theme: signal<ThemeMode>('light'),
+  resolvedTheme: signal<'light' | 'dark'>('light'),
+  setTheme: vi.fn(),
+};
+
 const mockDashboardStore: MockOverviewTrendStore = {
   isQueryLoading: signal<boolean>(false),
+  queryHasError: signal<boolean>(false),
   isFilterDrawerVisible: signal<boolean>(false),
   selectedDateRange: signal<Date[] | null>(null),
   compareEnabled: signal<boolean>(true),
-  alignedTrendData: signal<{ readonly datasets: readonly number[][] }>({
+  selectedGranularity: signal<OrganizationDashboardGranularity>('day'),
+  granularityOptions: signal<
+    ReadonlyArray<{ readonly label: string; readonly value: OrganizationDashboardGranularity }>
+  >([
+    { label: 'Daily', value: 'day' },
+    { label: 'Weekly', value: 'week' },
+    { label: 'Monthly', value: 'month' },
+  ]),
+  draftDateRange: signal<Date[] | null>(null),
+  draftCompareEnabled: signal<boolean>(true),
+  alignedTrendData: signal<{
+    readonly labels: readonly string[];
+    readonly datasets: readonly number[][];
+  }>({
+    labels: [],
     datasets: [[], [], []],
   }),
   queryData: signal<OverviewTrendData | null>(null),
+  loadParams: signal<Record<string, unknown>>({}),
+  load: vi.fn(),
   openFilters: vi.fn(),
   cancelDraftFilters: vi.fn(),
   resetDraftFilters: vi.fn(),
   applyDraftFilters: vi.fn(),
+  setGranularity: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
 };
 
 const mockActiveOrganizationStore: MockActiveOrganizationStore = {
@@ -112,30 +154,32 @@ describe('OverviewTrend', () => {
   beforeEach(() => {
     installMatchMediaMock();
     mockDashboardStore.isQueryLoading.set(false);
+    mockDashboardStore.queryHasError.set(false);
     mockDashboardStore.isFilterDrawerVisible.set(false);
     mockDashboardStore.selectedDateRange.set(null);
     mockDashboardStore.compareEnabled.set(true);
-    mockDashboardStore.alignedTrendData.set({ datasets: [[], [], []] });
+    mockDashboardStore.selectedGranularity.set('day');
+    mockDashboardStore.draftDateRange.set(null);
+    mockDashboardStore.draftCompareEnabled.set(true);
+    mockDashboardStore.alignedTrendData.set({ labels: [], datasets: [[], [], []] });
     mockDashboardStore.queryData.set(null);
+    mockDashboardStore.loadParams.set({});
+    mockDashboardStore.load.mockReset();
     mockDashboardStore.openFilters.mockReset();
     mockDashboardStore.cancelDraftFilters.mockReset();
     mockDashboardStore.resetDraftFilters.mockReset();
     mockDashboardStore.applyDraftFilters.mockReset();
+    mockDashboardStore.setGranularity.mockReset();
+    mockDashboardStore.setDraftDateRange.mockReset();
+    mockDashboardStore.setDraftCompareEnabled.mockReset();
     mockActiveOrganizationStore.selectedOrganization.set(MOCK_ORGANIZATION);
 
     TestBed.configureTestingModule({
       imports: [OverviewTrend],
-      providers: [provideRouter([])],
-    }).overrideComponent(OverviewTrend, {
-      set: {
-        imports: [MenuModule],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA],
-        providers: [
-          { provide: OverviewTrendStore, useValue: mockDashboardStore },
-          { provide: ActiveOrganizationStore, useValue: mockActiveOrganizationStore },
-        ],
-      },
-    });
+      providers: [provideRouter([]), { provide: THEME_PORT, useValue: mockThemePort }],
+    })
+      .overrideProvider(OverviewTrendStore, { useValue: mockDashboardStore })
+      .overrideProvider(ActiveOrganizationStore, { useValue: mockActiveOrganizationStore });
   });
 
   function createComponent(): OverviewTrendHarness {
@@ -153,6 +197,7 @@ describe('OverviewTrend', () => {
 
   it('should expose overview summary metrics and the inspections quick link', () => {
     mockDashboardStore.alignedTrendData.set({
+      labels: ['Apr 1', 'Apr 2'],
       datasets: [
         [6, 4],
         [2, 2],
@@ -199,5 +244,39 @@ describe('OverviewTrend', () => {
     expect(mockDashboardStore.cancelDraftFilters).toHaveBeenCalledTimes(1);
     expect(mockDashboardStore.resetDraftFilters).toHaveBeenCalledTimes(1);
     expect(mockDashboardStore.applyDraftFilters).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render skeleton placeholders while the trend query is loading', () => {
+    mockDashboardStore.isQueryLoading.set(true);
+    const fixture = TestBed.createComponent(OverviewTrend);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('p-skeleton')).not.toBeNull();
+  });
+
+  it('should render the error state and allow retrying the query', () => {
+    mockDashboardStore.queryHasError.set(true);
+    const fixture = TestBed.createComponent(OverviewTrend);
+    fixture.detectChanges();
+
+    const retryButton: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      'app-overview-chart button',
+    );
+    expect(retryButton).not.toBeNull();
+
+    retryButton?.click();
+    fixture.detectChanges();
+
+    expect(mockDashboardStore.load).toHaveBeenCalledWith(mockDashboardStore.loadParams());
+  });
+
+  it('should open the filter drawer with the current draft values', () => {
+    mockDashboardStore.isFilterDrawerVisible.set(true);
+    mockDashboardStore.draftDateRange.set([new Date('2026-01-01'), new Date('2026-01-08')]);
+    const fixture = TestBed.createComponent(OverviewTrend);
+    fixture.detectChanges();
+
+    // p-drawer renders its content via `appendTo: 'body'`, outside the fixture root.
+    expect(document.body.textContent).toContain('Operational Flow Filters');
   });
 });

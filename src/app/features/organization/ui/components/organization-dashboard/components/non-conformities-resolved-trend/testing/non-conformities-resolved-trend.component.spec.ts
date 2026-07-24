@@ -1,8 +1,9 @@
-import { CUSTOM_ELEMENTS_SCHEMA, signal, type WritableSignal } from '@angular/core';
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { MenuModule } from 'primeng/menu';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import type {
+  OrganizationDashboardGranularity,
   OrganizationDashboardTrendOutput,
   OrganizationOutput,
 } from '@features/organization/models';
@@ -29,16 +30,32 @@ type NonConformitiesResolvedTrendHarness = {
 
 type MockNonConformitiesResolvedTrendStore = {
   readonly isQueryLoading: WritableSignal<boolean>;
+  readonly queryHasError: WritableSignal<boolean>;
   readonly isFilterDrawerVisible: WritableSignal<boolean>;
   readonly selectedDateRange: WritableSignal<Date[] | null>;
   readonly compareEnabled: WritableSignal<boolean>;
   readonly selectedNonConformityStatus: WritableSignal<string | null>;
   readonly selectedNonConformitySeverity: WritableSignal<string | null>;
+  readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity>;
+  readonly granularityOptions: WritableSignal<
+    ReadonlyArray<{ readonly label: string; readonly value: OrganizationDashboardGranularity }>
+  >;
+  readonly draftDateRange: WritableSignal<Date[] | null>;
+  readonly draftCompareEnabled: WritableSignal<boolean>;
+  readonly draftNonConformityStatus: WritableSignal<string | null>;
+  readonly draftNonConformitySeverity: WritableSignal<string | null>;
   readonly queryData: WritableSignal<OrganizationDashboardTrendOutput | null>;
+  readonly loadParams: WritableSignal<Record<string, unknown>>;
+  readonly load: ReturnType<typeof vi.fn>;
   readonly openFilters: ReturnType<typeof vi.fn>;
   readonly cancelDraftFilters: ReturnType<typeof vi.fn>;
   readonly resetDraftFilters: ReturnType<typeof vi.fn>;
   readonly applyDraftFilters: ReturnType<typeof vi.fn>;
+  readonly setGranularity: ReturnType<typeof vi.fn>;
+  readonly setDraftDateRange: ReturnType<typeof vi.fn>;
+  readonly setDraftCompareEnabled: ReturnType<typeof vi.fn>;
+  readonly setDraftNonConformityStatus: ReturnType<typeof vi.fn>;
+  readonly setDraftNonConformitySeverity: ReturnType<typeof vi.fn>;
 };
 
 type MockActiveOrganizationStore = {
@@ -84,18 +101,44 @@ const createTrendOutput = (
     } as OrganizationDashboardTrendOutput['comparison'],
   }) as OrganizationDashboardTrendOutput;
 
+const mockThemePort: ThemePort = {
+  theme: signal<ThemeMode>('light'),
+  resolvedTheme: signal<'light' | 'dark'>('light'),
+  setTheme: vi.fn(),
+};
+
 const mockDashboardStore: MockNonConformitiesResolvedTrendStore = {
   isQueryLoading: signal<boolean>(false),
+  queryHasError: signal<boolean>(false),
   isFilterDrawerVisible: signal<boolean>(false),
   selectedDateRange: signal<Date[] | null>(null),
   compareEnabled: signal<boolean>(true),
   selectedNonConformityStatus: signal<string | null>(null),
   selectedNonConformitySeverity: signal<string | null>(null),
+  selectedGranularity: signal<OrganizationDashboardGranularity>('day'),
+  granularityOptions: signal<
+    ReadonlyArray<{ readonly label: string; readonly value: OrganizationDashboardGranularity }>
+  >([
+    { label: 'Daily', value: 'day' },
+    { label: 'Weekly', value: 'week' },
+    { label: 'Monthly', value: 'month' },
+  ]),
+  draftDateRange: signal<Date[] | null>(null),
+  draftCompareEnabled: signal<boolean>(true),
+  draftNonConformityStatus: signal<string | null>(null),
+  draftNonConformitySeverity: signal<string | null>(null),
   queryData: signal<OrganizationDashboardTrendOutput | null>(null),
+  loadParams: signal<Record<string, unknown>>({}),
+  load: vi.fn(),
   openFilters: vi.fn(),
   cancelDraftFilters: vi.fn(),
   resetDraftFilters: vi.fn(),
   applyDraftFilters: vi.fn(),
+  setGranularity: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
+  setDraftNonConformityStatus: vi.fn(),
+  setDraftNonConformitySeverity: vi.fn(),
 };
 
 const mockActiveOrganizationStore: MockActiveOrganizationStore = {
@@ -106,31 +149,37 @@ describe('NonConformitiesResolvedTrend', () => {
   beforeEach(() => {
     installMatchMediaMock();
     mockDashboardStore.isQueryLoading.set(false);
+    mockDashboardStore.queryHasError.set(false);
     mockDashboardStore.isFilterDrawerVisible.set(false);
     mockDashboardStore.selectedDateRange.set(null);
     mockDashboardStore.compareEnabled.set(true);
     mockDashboardStore.selectedNonConformityStatus.set(null);
     mockDashboardStore.selectedNonConformitySeverity.set(null);
+    mockDashboardStore.selectedGranularity.set('day');
+    mockDashboardStore.draftDateRange.set(null);
+    mockDashboardStore.draftCompareEnabled.set(true);
+    mockDashboardStore.draftNonConformityStatus.set(null);
+    mockDashboardStore.draftNonConformitySeverity.set(null);
     mockDashboardStore.queryData.set(null);
+    mockDashboardStore.loadParams.set({});
+    mockDashboardStore.load.mockReset();
     mockDashboardStore.openFilters.mockReset();
     mockDashboardStore.cancelDraftFilters.mockReset();
     mockDashboardStore.resetDraftFilters.mockReset();
     mockDashboardStore.applyDraftFilters.mockReset();
+    mockDashboardStore.setGranularity.mockReset();
+    mockDashboardStore.setDraftDateRange.mockReset();
+    mockDashboardStore.setDraftCompareEnabled.mockReset();
+    mockDashboardStore.setDraftNonConformityStatus.mockReset();
+    mockDashboardStore.setDraftNonConformitySeverity.mockReset();
     mockActiveOrganizationStore.selectedOrganization.set(MOCK_ORGANIZATION);
 
     TestBed.configureTestingModule({
       imports: [NonConformitiesResolvedTrend],
-      providers: [provideRouter([])],
-    }).overrideComponent(NonConformitiesResolvedTrend, {
-      set: {
-        imports: [MenuModule],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA],
-        providers: [
-          { provide: NonConformitiesResolvedTrendStore, useValue: mockDashboardStore },
-          { provide: ActiveOrganizationStore, useValue: mockActiveOrganizationStore },
-        ],
-      },
-    });
+      providers: [provideRouter([]), { provide: THEME_PORT, useValue: mockThemePort }],
+    })
+      .overrideProvider(NonConformitiesResolvedTrendStore, { useValue: mockDashboardStore })
+      .overrideProvider(ActiveOrganizationStore, { useValue: mockActiveOrganizationStore });
   });
 
   function createComponent(): NonConformitiesResolvedTrendHarness {
@@ -181,5 +230,38 @@ describe('NonConformitiesResolvedTrend', () => {
     expect(mockDashboardStore.cancelDraftFilters).toHaveBeenCalledTimes(1);
     expect(mockDashboardStore.resetDraftFilters).toHaveBeenCalledTimes(1);
     expect(mockDashboardStore.applyDraftFilters).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render skeleton placeholders while the trend query is loading', () => {
+    mockDashboardStore.isQueryLoading.set(true);
+    const fixture = TestBed.createComponent(NonConformitiesResolvedTrend);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('p-skeleton')).not.toBeNull();
+  });
+
+  it('should render the error state and allow retrying the query', () => {
+    mockDashboardStore.queryHasError.set(true);
+    const fixture = TestBed.createComponent(NonConformitiesResolvedTrend);
+    fixture.detectChanges();
+
+    const retryButton: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      'app-non-conformities-resolved-chart button',
+    );
+    expect(retryButton).not.toBeNull();
+
+    retryButton?.click();
+    fixture.detectChanges();
+
+    expect(mockDashboardStore.load).toHaveBeenCalledWith(mockDashboardStore.loadParams());
+  });
+
+  it('should open the filter drawer with the current draft values', () => {
+    mockDashboardStore.isFilterDrawerVisible.set(true);
+    const fixture = TestBed.createComponent(NonConformitiesResolvedTrend);
+    fixture.detectChanges();
+
+    // p-drawer renders its content via `appendTo: 'body'`, outside the fixture root.
+    expect(document.body.textContent).toContain('Non-Conformities Resolved Filters');
   });
 });

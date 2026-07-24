@@ -304,4 +304,189 @@ describe('InterventionService', () => {
     expect(request.request.body).toEqual({ body: 'Looks good' });
     request.flush({});
   });
+
+  it('creates an intervention with default type/priority/participants when no options are given', () => {
+    service.create('organization-1', 'Site visit').subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/interventions`);
+    expect(request.request.body).toMatchObject({
+      organization: '/api/organizations/organization-1',
+      type: 'site_setup',
+      name: 'Site visit',
+      participants: [],
+      priority: 'normal',
+    });
+    request.flush({});
+  });
+
+  it('uses POST for work-item creation when no clientId is provided', () => {
+    service
+      .createWorkItem({
+        intervention: '/api/interventions/intervention-1',
+        action: 'inventory',
+        source: 'planned',
+        required: true,
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-work-items`);
+    expect(request.request.method).toBe('POST');
+    request.flush({});
+  });
+
+  it('sends the persisted revision as If-Match when updating a work item', () => {
+    service.updateWorkItem('work-item-1', { status: 'completed' }, 2).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-work-items/work-item-1`);
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.headers.get('If-Match')).toBe('"revision-2"');
+    request.flush({});
+  });
+
+  it('omits If-Match when no revision is given on work-item update', () => {
+    service.updateWorkItem('work-item-1', { status: 'completed' }).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-work-items/work-item-1`);
+    expect(request.request.headers.has('If-Match')).toBe(false);
+    request.flush({});
+  });
+
+  it('sends a DELETE with the current revision when removing a work item', () => {
+    service.removeWorkItem('work-item-1', 3).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-work-items/work-item-1`);
+    expect(request.request.method).toBe('DELETE');
+    expect(request.request.headers.get('If-Match')).toBe('"revision-3"');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('forwards resource and status filters when listing changes', () => {
+    service
+      .listChanges('intervention-1', { resource: '/api/equipment/equipment-1', status: 'open' })
+      .subscribe();
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === `${mockEnv.apiUrl}/api/intervention-changes` &&
+        req.params.get('resource') === '/api/equipment/equipment-1' &&
+        req.params.get('status') === 'open',
+    );
+    request.flush({
+      '@id': '/api/intervention-changes',
+      '@type': 'Collection',
+      totalItems: 0,
+      member: [],
+    });
+  });
+
+  it('loads every change page', () => {
+    service.listAllChanges('intervention-1').subscribe();
+
+    const firstRequest = httpMock.expectOne(
+      (request) =>
+        request.url === `${mockEnv.apiUrl}/api/intervention-changes` &&
+        request.params.get('page') === '1',
+    );
+    firstRequest.flush({
+      '@id': '/api/intervention-changes',
+      '@type': 'Collection',
+      totalItems: 1,
+      member: [{ id: 'change-1' }],
+    });
+  });
+
+  it('uses conditional PUT for offline change creation and POST otherwise', () => {
+    service
+      .createChange({
+        clientId: 'change-client-id',
+        intervention: '/api/interventions/intervention-1',
+        resource: '/api/equipment/equipment-1',
+        patch: { status: 'replaced' },
+      })
+      .subscribe();
+
+    const putRequest = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/intervention-changes/change-client-id`,
+    );
+    expect(putRequest.request.method).toBe('PUT');
+    expect(putRequest.request.headers.get('If-None-Match')).toBe('*');
+    putRequest.flush({});
+
+    service
+      .createChange({
+        intervention: '/api/interventions/intervention-1',
+        resource: '/api/equipment/equipment-1',
+        patch: { status: 'replaced' },
+      })
+      .subscribe();
+
+    const postRequest = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-changes`);
+    expect(postRequest.request.method).toBe('POST');
+    postRequest.flush({});
+  });
+
+  it('sends the persisted revision as If-Match when updating a change', () => {
+    service.updateChange('change-1', { patch: { status: 'updated' } }, 4).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-changes/change-1`);
+    expect(request.request.headers.get('If-Match')).toBe('"revision-4"');
+    request.flush({});
+  });
+
+  it('loads intervention quality issues', () => {
+    service.listIssues('intervention-1').subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/interventions/intervention-1/issues`);
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      '@id': '/api/interventions/intervention-1/issues',
+      '@type': 'Collection',
+      totalItems: 0,
+      member: [],
+    });
+  });
+
+  it('loads intervention types', () => {
+    service.listTypes().subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-types`);
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      '@id': '/api/intervention-types',
+      '@type': 'Collection',
+      totalItems: 0,
+      member: [],
+    });
+  });
+
+  it('publishes an intervention at its current revision', () => {
+    const intervention = { id: 'intervention-1', revision: 5 } as InterventionOutput;
+    service.publish(intervention).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/publications`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      intervention: '/api/interventions/intervention-1',
+      interventionRevision: 5,
+    });
+    request.flush({});
+  });
+
+  it('polls a running publication until it settles', () => {
+    vi.useFakeTimers();
+    const running = { id: 'publication-1', status: 'processing' } as PublicationOutput;
+    const settled = { id: 'publication-1', status: 'completed' } as PublicationOutput;
+    let result: PublicationOutput | undefined;
+
+    service.pollPublication(running).subscribe((publication) => {
+      result = publication;
+    });
+
+    vi.advanceTimersByTime(1_000);
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/publications/publication-1`);
+    request.flush(settled);
+
+    expect(result).toEqual(settled);
+    vi.useRealTimers();
+  });
 });

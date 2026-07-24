@@ -47,7 +47,7 @@ Les secrets ci-dessous peuvent etre crees dans cet environnement. Les workflows 
 
 ## Fonctionnement du pipeline
 
-1. `CI` lance `npm ci`, `npm run format:check`, `npm run lint`, `npm run test:ci` et `npm run build` sur pull request, push `main` et execution manuelle.
+1. `CI` lance en parallele: le formatage (`npm run format:check`), le lint (`npm run lint`), les tests unitaires avec couverture (`ng test --watch=false --coverage`), le build de production (`npm run build`), un audit de securite (`npm audit --omit=dev --audit-level=high`, bloquant) et les tests end-to-end Playwright (projet `chromium` par defaut, elargissable via l'entree manuelle `e2e_browsers`). Un job non-bloquant signale en plus la derive des catalogues i18n. Declenchement: pull request, push `main`, execution manuelle ou appel depuis un autre workflow.
 2. `Docker Image` se lance apres un `CI` reussi sur `main`, ou manuellement, build l'image Docker SSR avec les fichiers d'environnement Angular presents dans le depot puis pousse l'image sur GHCR.
 3. Apres une publication Docker reussie, `Docker Image` declenche `Deploy VPS` avec la reference exacte de l'image a deployer.
 4. `Deploy VPS` peut aussi etre lance manuellement avec une image precise ou, sans saisie, avec l'image `latest`.

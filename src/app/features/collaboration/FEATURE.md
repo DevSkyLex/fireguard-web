@@ -7,16 +7,20 @@ messages and their reactions, pins, saves and attachments, plus presence and the
 
 Backed end-to-end by the API's `Messaging` and `Assistant` modules — nothing here is mocked.
 
-## Route entry points
+## Entry Points
+
+- Routes: `collaboration.routes.ts`
+- Public API: `index.ts`
+- Shell contribution: `collaboration.feature.ts`
 
 Mounted inside the workspace shell at `/organizations/:organizationId/workspace`. The feature
 contributes to the shell rather than owning the frame:
 
 | Slot                       | Contribution                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| --------------------------- | -------------------------------------------------------------------------------------------------|
 | `SECONDARY_NAV_SLOT`       | `withCollaborationChannelNav()` — favorites and channel sections                                 |
-| `CONVERSATION_HEADER_SLOT` | `withCollaborationInfoToggle()`, `withCollaborationAssistantToggle()`, `withMessagingSyncChip()` |
-| `PANEL_SLOT`               | `withCollaborationAssistantPanel()` (priority 90), `withCollaborationInfoPanel()` (priority 10)  |
+| `CONVERSATION_HEADER_SLOT` | `withCollaborationInfoToggle()`, `withCollaborationAssistantToggle()`, `withMessagingSyncChip()`  |
+| `PANEL_SLOT`               | `withCollaborationAssistantPanel()` (priority 90), `withCollaborationInfoPanel()` (priority 10)   |
 
 The panel is instantiated by the layout, so it receives no routed input. `ChannelPanelStore` is the
 bridge: root-provided, it reads the routed channel off the router and republishes it, and the
@@ -27,10 +31,12 @@ Because that store lives in the **root** injector it cannot see `MEMBER_DIRECTOR
 workspace route provides. Member names are therefore resolved by `ChannelInfoPanel`, not by the
 store. Moving that lookup back into the store throws `NG0201`.
 
+## Routes
+
 Its own routes, gated by `organization.messaging.read`:
 
 | Path                  | Surface                                                         |
-| --------------------- | --------------------------------------------------------------- |
+| ---------------------- | -----------------------------------------------------------------|
 | `channels/:channelId` | the conversation column — a channel id _is_ its conversation id |
 | `saved`               | the member's bookmarks across the organization                  |
 
@@ -53,7 +59,7 @@ yesterday must not wait for someone to navigate back to its channel.
 Replay classification, in one place so it is not re-derived:
 
 | Outcome                 | Meaning                                               | Action                                                    |
-| ----------------------- | ----------------------------------------------------- | --------------------------------------------------------- |
+| ------------------------ | ------------------------------------------------------| -----------------------------------------------------------|
 | `2xx`                   | sent                                                  | dequeue                                                   |
 | `409`                   | the client id was already used — it is already stored | dequeue, **not** an error                                 |
 | network / `5xx` / `429` | temporary                                             | leave queued, stop that conversation's chain, retry later |
@@ -98,11 +104,54 @@ The organization is a **parameter**, like everywhere else a root-provided unit n
 and no cache key, and the subscriber JWT is minted with `publish: []`, so a browser physically
 cannot fan out its own signal. This needs backend work before any UI is worth designing.
 
-## Main stores and services
+## Assistant
+
+`AssistantStore` is provided by the **workspace route**, not root: it reads the organization through
+`ORGANIZATION_CONTEXT_PORT` (a route binding) and both slot contributions resolve from that same
+environment injector. Root would throw `NG0201` on the port.
+
+Four behaviours exist because of gaps in the API, and each will look wrong to anyone who assumes
+otherwise:
+
+- **The thread is created on the first question, never on panel open**, and its id is remembered in
+  a per-organization cookie. `listAssistantThreads` takes no member filter, so a thread that is not
+  remembered is unreachable; and creating one eagerly would leave an empty thread behind on every
+  open. A remembered thread that 404s is forgotten silently rather than surfaced as an error.
+- **Frames are applied directly to state.** The `body` column stays empty until the reply completes,
+  so partial text exists _only_ in the Mercure frames. The refetch-on-frame pattern the message
+  thread uses (`§ Realtime`) would read `body: ''` here. Each frame carries the whole accumulated
+  body, not a delta.
+- **The subscription is re-minted every 10 minutes.** The subscriber token expires at 900s and
+  nothing renews it, while `MercureService` reconnects forever without surfacing an error — so a
+  panel left open would go quiet with no symptom.
+- **A silent generation is reported after 90s.** There is no cancel endpoint, no retry endpoint and
+  no server-side deadline: a reply whose worker died stays `streaming` forever. `dismissStalled()` is
+  therefore local-only — it marks the turn failed on screen and leaves the row untouched server-side.
+
+Cut deliberately: the model picker and `temperature` (validated against an operator allowlist no
+endpoint exposes), thread management (no rename, archive or delete exists), and Markdown rendering
+(replies are plain text with preserved whitespace — turning model output into HTML needs a
+sanitizing pipeline this app does not have).
+
+Requires the API's `assistant` Messenger worker to be running (`assistant_worker` in the backend's
+compose file); without it, questions are accepted and never answered.
+
+## State and Data Access
 
 `data-access/services/` holds the transport boundary, every class extending `HydraApiService`.
 `state/` holds one slice per concern. Slices that key rows by id use `withEntities`; single-resource
 slices use plain `CallState` fields.
+
+## Cross-Feature Dependencies
+
+- Consumes `ORGANIZATION_CONTEXT_PORT` (bound by the workspace route) wherever a root-provided
+  unit needs the active organization as a parameter — for example presence pinging and the
+  assistant store.
+- Consumes `MEMBER_DIRECTORY_PORT` (provided by the workspace route) to resolve member ids to
+  names/avatars; a root-provided store cannot see it, which is why member-name resolution lives in
+  `ChannelInfoPanel` rather than in `ChannelPanelStore`.
+- Contributes to `workspace-layout` shell slots (`SECONDARY_NAV_SLOT`, `CONVERSATION_HEADER_SLOT`,
+  `PANEL_SLOT`) instead of owning the shell frame.
 
 ## Invariants reviewers must preserve
 
@@ -169,38 +218,6 @@ These come from the backend contract and are easy to get wrong:
 - Collections use `member` / `totalItems`. `ARCHITECTURE.md` §16.7 still documents the prefixed
   `hydra:` keys; it is stale, `core/api/models/hydra-collection.interface.ts` is correct.
 
-## Assistant
-
-`AssistantStore` is provided by the **workspace route**, not root: it reads the organization through
-`ORGANIZATION_CONTEXT_PORT` (a route binding) and both slot contributions resolve from that same
-environment injector. Root would throw `NG0201` on the port.
-
-Four behaviours exist because of gaps in the API, and each will look wrong to anyone who assumes
-otherwise:
-
-- **The thread is created on the first question, never on panel open**, and its id is remembered in
-  a per-organization cookie. `listAssistantThreads` takes no member filter, so a thread that is not
-  remembered is unreachable; and creating one eagerly would leave an empty thread behind on every
-  open. A remembered thread that 404s is forgotten silently rather than surfaced as an error.
-- **Frames are applied directly to state.** The `body` column stays empty until the reply completes,
-  so partial text exists _only_ in the Mercure frames. The refetch-on-frame pattern the message
-  thread uses (`§ Realtime`) would read `body: ''` here. Each frame carries the whole accumulated
-  body, not a delta.
-- **The subscription is re-minted every 10 minutes.** The subscriber token expires at 900s and
-  nothing renews it, while `MercureService` reconnects forever without surfacing an error — so a
-  panel left open would go quiet with no symptom.
-- **A silent generation is reported after 90s.** There is no cancel endpoint, no retry endpoint and
-  no server-side deadline: a reply whose worker died stays `streaming` forever. `dismissStalled()` is
-  therefore local-only — it marks the turn failed on screen and leaves the row untouched server-side.
-
-Cut deliberately: the model picker and `temperature` (validated against an operator allowlist no
-endpoint exposes), thread management (no rename, archive or delete exists), and Markdown rendering
-(replies are plain text with preserved whitespace — turning model output into HTML needs a
-sanitizing pipeline this app does not have).
-
-Requires the API's `assistant` Messenger worker to be running (`assistant_worker` in the backend's
-compose file); without it, questions are accepted and never answered.
-
 ## Accessibility decisions worth keeping
 
 Four of these look like they could be simplified. They cannot.
@@ -233,3 +250,12 @@ the channel it belongs to, so "2 not sent" is a dead end once the member has nav
 `organization.messaging.read` gates reading, `.write` posting and editing, `.manage` channel
 administration and moderation. `organization.assistant.use` gates the assistant — without it neither
 the panel nor its toggle renders.
+
+## Invariants
+
+- See "Invariants reviewers must preserve" above for the full backend-contract list; those are the
+  invariants that matter most for this feature and must not regress silently.
+- Collaboration contributes to the workspace shell through published slots; it must not take over
+  shell composition or route ownership from `layouts/workspace-layout`.
+- Only replay-safe operations (message send, reactions, pins, saves) may be queued in the offline
+  outbox; read-state mutations (conversation read markers) must never be queued.

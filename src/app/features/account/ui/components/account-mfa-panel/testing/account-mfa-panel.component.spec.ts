@@ -211,7 +211,10 @@ describe('AccountMfaPanel', () => {
 
     it('should copy the secret and confirm with a success toast', async () => {
       const writeText = vi.fn().mockResolvedValue(undefined);
-      Object.assign(navigator, { clipboard: { writeText } });
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText },
+      });
       const { fixture, mockFeedback } = setup({ setupResult: () => buildResult() });
 
       expect(query(fixture, 'account-mfa-secret')).toBeTruthy();
@@ -224,7 +227,10 @@ describe('AccountMfaPanel', () => {
     });
 
     it('should notify a copy failure when the clipboard API is unavailable', () => {
-      Object.assign(navigator, { clipboard: undefined });
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: undefined,
+      });
       const { fixture, mockFeedback } = setup({ setupResult: () => buildResult() });
 
       (fixture.componentInstance as unknown as { copyUri(): void }).copyUri();

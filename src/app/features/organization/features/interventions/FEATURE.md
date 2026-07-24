@@ -86,6 +86,14 @@ Main provider:
 
 - `provideInterventionsFeature`
 
+## Cross-Feature Dependencies
+
+- Depends on organization route context and permissions from the parent `features/organization`
+  feature (`organizationPermissionGuard` from `@features/organization/http/guards`,
+  `ORGANIZATION_PERMISSION` from `@features/organization/models`).
+- May reference facility, equipment, and inspection ids as linked counts on the workspace properties
+  rail, but must not absorb ownership of those sibling organization subfeatures.
+
 ## Detail workspace composition
 
 The detail page (`ui/pages/intervention-detail`) is a **full-bleed,

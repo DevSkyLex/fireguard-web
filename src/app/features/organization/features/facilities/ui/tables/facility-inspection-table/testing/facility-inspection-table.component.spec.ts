@@ -152,4 +152,176 @@ describe('FacilityInspectionTable', () => {
     expect(fixture.debugElement.query(By.css('p-splitbutton'))).toBeNull();
     expect(fixture.debugElement.query(By.css('p-tableheadercheckbox'))).toBeNull();
   });
+
+  it('should render the organization context label when the inspector has an organization', () => {
+    const fixture = createComponent({
+      inspections: [MOCK_INSPECTION],
+      total: 1,
+      empty: false,
+    });
+
+    expect(fixture.nativeElement.textContent).toContain('User - Acme Corp');
+  });
+
+  it('should render a generic context label when the inspector has no organization', () => {
+    const fixture = createComponent({
+      inspections: [
+        {
+          ...MOCK_INSPECTION,
+          inspector: { ...MOCK_INSPECTION.inspector, organizationName: null },
+        } as InspectionOutput,
+      ],
+      total: 1,
+      empty: false,
+    });
+
+    expect(fixture.nativeElement.textContent).toContain('User inspector');
+  });
+
+  it('should fall back to the inspector display name when first/last name are missing', () => {
+    const fixture = createComponent({
+      inspections: [
+        {
+          ...MOCK_INSPECTION,
+          inspector: { ...MOCK_INSPECTION.inspector, firstName: null, lastName: null },
+        } as InspectionOutput,
+      ],
+      total: 1,
+      empty: false,
+    });
+
+    expect(fixture.nativeElement.textContent).toContain('Jane Doe');
+  });
+
+  it('should render a dash instead of the findings tag when there are no non-conformities', () => {
+    const fixture = createComponent({
+      inspections: [{ ...MOCK_INSPECTION, nonConformitiesCount: 0 } as InspectionOutput],
+      total: 1,
+      empty: false,
+    });
+
+    expect(fixture.nativeElement.textContent).not.toContain('findings');
+  });
+
+  it('should toggle the action menu and store the targeted inspection', () => {
+    const fixture = createComponent({
+      inspections: [MOCK_INSPECTION],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    const actionMenu = component['actionMenu' as never] as unknown as () => {
+      toggle: (event: Event) => void;
+    };
+    const toggleSpy = vi.spyOn(actionMenu(), 'toggle');
+    const event = new MouseEvent('click');
+
+    component['onActionMenuToggle'](event, MOCK_INSPECTION);
+
+    expect(toggleSpy).toHaveBeenCalledWith(event);
+  });
+
+  it('should expose view and edit action menu items with manage permission', () => {
+    const fixture = createComponent({ canManage: true });
+    const component = fixture.componentInstance;
+    component['onActionMenuToggle'](new MouseEvent('click'), MOCK_INSPECTION);
+
+    const items = component['actionMenuItems']();
+
+    expect(items.length).toBeGreaterThan(0);
+  });
+
+  it('should return no action menu items when nothing is targeted', () => {
+    const fixture = createComponent();
+    expect(fixture.componentInstance['actionMenuItems']()).toEqual([]);
+  });
+
+  it('should clear the result/status filters and reload on onClearFilters', () => {
+    const fixture = createComponent({
+      inspections: [MOCK_INSPECTION],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    component.onLazyLoad({ first: 0, rows: 12 } as TableLazyLoadEvent);
+    component['resultControl'].setValue('pass', { emitEvent: false });
+    component['statusControl'].setValue('submitted', { emitEvent: false });
+
+    component['onClearFilters']();
+
+    expect(component['resultControl'].value).toBeNull();
+    expect(component['statusControl'].value).toBeNull();
+  });
+
+  it('should reload when the result or status filters change', () => {
+    const fixture = createComponent({
+      inspections: [MOCK_INSPECTION],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    const spy = vi.fn();
+    component.load.subscribe(spy);
+
+    component['resultControl'].setValue('fail');
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ result: 'fail' }) }),
+    );
+  });
+
+  it('should include sort parameters in the load request', () => {
+    const fixture = createComponent({
+      inspections: [MOCK_INSPECTION],
+      total: 1,
+      empty: false,
+    });
+    const component = fixture.componentInstance;
+    const spy = vi.fn();
+    component.load.subscribe(spy);
+
+    component.onLazyLoad({
+      first: 0,
+      rows: 12,
+      sortField: 'performedAt',
+      sortOrder: 1,
+    } as TableLazyLoadEvent);
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ 'order[performedAt]': 'asc' }) }),
+    );
+  });
+
+  it('should resolve the result and status descriptors', () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+
+    expect(component['getResultOption']('pass')).toBeTruthy();
+    expect(component['getStatusOption']('submitted')).toBeTruthy();
+  });
+
+  it('should render the empty-state action button to create an inspection when permitted', () => {
+    const fixture = createComponent({ canManage: true, inspections: [], total: 0, empty: true });
+
+    expect(fixture.nativeElement.textContent).toContain('New inspection');
+  });
+
+  it('should restore the initial page on init', () => {
+    TestBed.configureTestingModule({
+      imports: [FacilityInspectionTable],
+      providers: [
+        { provide: OrganizationPermissionService, useValue: { hasPermission: vi.fn(() => true) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(FacilityInspectionTable);
+    fixture.componentRef.setInput('inspections', []);
+    fixture.componentRef.setInput('total', 0);
+    fixture.componentRef.setInput('loading', false);
+    fixture.componentRef.setInput('empty', true);
+    fixture.componentRef.setInput('initialPage', 2);
+
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['firstPage']()).toBe(12);
+  });
 });

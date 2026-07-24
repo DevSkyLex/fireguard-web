@@ -6,6 +6,7 @@ import {
   DestroyRef,
   inject,
   signal,
+  type OnInit,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
@@ -64,7 +65,7 @@ interface IntervalOption {
   templateUrl: './select-plan-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SelectPlanStep extends OnboardingStepBase {
+export class SelectPlanStep extends OnboardingStepBase implements OnInit {
   //#region Dependencies
   protected readonly onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
   private readonly planService: PlanService = inject<PlanService>(PlanService);
@@ -120,11 +121,28 @@ export class SelectPlanStep extends OnboardingStepBase {
    * @constructor
    *
    * @description
-   * Loads the plan catalog and pricing, then handles a return from Stripe Checkout.
+   * Loads the plan catalog and pricing.
    */
   public constructor() {
     super();
     this.loadCatalog();
+  }
+  //#endregion
+
+  //#region Lifecycle
+  /**
+   * Method ngOnInit
+   *
+   * @description
+   * Handles a return from Stripe Checkout. Deferred past the constructor so the
+   * required `stepIndex`/`step` inputs (used by `confirmStep()`) are resolved first.
+   *
+   * @access public
+   * @since 1.0.1
+   *
+   * @returns {void}
+   */
+  public ngOnInit(): void {
     this.handleCheckoutReturn();
   }
   //#endregion

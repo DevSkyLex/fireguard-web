@@ -89,4 +89,111 @@ describe('FacilityHierarchyChart', () => {
 
     expect(emitted()).toBe(target);
   });
+
+  it('should render the empty state when there is no root facility', () => {
+    const fixture = TestBed.createComponent(FacilityHierarchyChart);
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('No hierarchy to display.');
+    expect(host.querySelector('p-organization-chart')).toBeNull();
+  });
+
+  it('should render the organization chart with the root facility node', () => {
+    const fixture = TestBed.createComponent(FacilityHierarchyChart);
+    const root = facility({ id: 'fac-root', name: 'Headquarters', code: 'HQ-1', type: 'site' });
+    fixture.componentRef.setInput('root', root);
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('Headquarters');
+    expect(host.textContent).toContain('HQ-1');
+    expect(host.querySelector('p-organization-chart')).toBeTruthy();
+  });
+
+  it('should not render a facility code when absent', () => {
+    const fixture = TestBed.createComponent(FacilityHierarchyChart);
+    const root = facility({ id: 'fac-root', name: 'Headquarters', code: null });
+    fixture.componentRef.setInput('root', root);
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('Headquarters');
+    expect(host.querySelector('.font-mono')).toBeNull();
+  });
+
+  it('should render a skeleton placeholder for an unloaded branch with children', () => {
+    const fixture = TestBed.createComponent(FacilityHierarchyChart);
+    const root = facility({ id: 'fac-root', name: 'Headquarters', hasChildren: true });
+    fixture.componentRef.setInput('root', root);
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('p-skeleton')).toBeTruthy();
+  });
+
+  it('should render loaded children nodes for an expanded branch', () => {
+    const fixture = TestBed.createComponent(FacilityHierarchyChart);
+    const root = facility({ id: 'fac-root', name: 'Headquarters', hasChildren: true });
+    const child = facility({ id: 'fac-child', name: 'Floor 1' });
+    fixture.componentRef.setInput('root', root);
+    fixture.componentRef.setInput('childrenByParent', { 'fac-root': [child] });
+    fixture.componentRef.setInput('loadedParentIds', ['fac-root']);
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('Floor 1');
+  });
+
+  it('should show the navigate action for non-root nodes but not for the root node', () => {
+    const fixture = TestBed.createComponent(FacilityHierarchyChart);
+    const root = facility({ id: 'fac-root', name: 'Headquarters', hasChildren: true });
+    const child = facility({ id: 'fac-child', name: 'Floor 1' });
+    fixture.componentRef.setInput('root', root);
+    fixture.componentRef.setInput('childrenByParent', { 'fac-root': [child] });
+    fixture.componentRef.setInput('loadedParentIds', ['fac-root']);
+
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const viewButtons = Array.from(host.querySelectorAll('button')).filter((el) =>
+      el.textContent?.includes('View'),
+    );
+    expect(viewButtons.length).toBe(1);
+  });
+
+  it('should navigate when the view action of a child node is clicked', () => {
+    const fixture = TestBed.createComponent(FacilityHierarchyChart);
+    const root = facility({ id: 'fac-root', name: 'Headquarters', hasChildren: true });
+    const child = facility({ id: 'fac-child', name: 'Floor 1' });
+    fixture.componentRef.setInput('root', root);
+    fixture.componentRef.setInput('childrenByParent', { 'fac-root': [child] });
+    fixture.componentRef.setInput('loadedParentIds', ['fac-root']);
+    fixture.detectChanges();
+    const navigateSpy = vi.fn();
+    fixture.componentInstance.navigate.subscribe(navigateSpy);
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const viewButton = Array.from(host.querySelectorAll('button')).find((el) =>
+      el.textContent?.includes('View'),
+    );
+    viewButton?.click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'fac-child' }));
+  });
+
+  it('should resolve the status descriptor for a facility status', () => {
+    const fixture = TestBed.createComponent(FacilityHierarchyChart);
+    const component = fixture.componentInstance;
+
+    const descriptor = component['statusDescriptor']('active');
+
+    expect(descriptor).toBeTruthy();
+    expect(descriptor.label).toBeTruthy();
+  });
 });

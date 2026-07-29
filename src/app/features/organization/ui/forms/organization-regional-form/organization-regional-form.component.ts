@@ -1,4 +1,5 @@
 import {
+  computed,
   ChangeDetectionStrategy,
   Component,
   effect,
@@ -7,9 +8,11 @@ import {
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type {
   OrganizationDateFormat,
@@ -18,6 +21,7 @@ import type {
   OrganizationOutput,
   UpdateOrganizationInput,
 } from '@features/organization/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import {
   ORGANIZATION_DATE_FORMAT_OPTIONS,
   ORGANIZATION_FIRST_DAY_OPTIONS,
@@ -51,7 +55,7 @@ const DEFAULT_MEASUREMENT_SYSTEM: OrganizationMeasurementSystem = 'metric';
  */
 @Component({
   selector: 'app-organization-regional-form',
-  imports: [ButtonModule, ReactiveFormsModule, SelectModule],
+  imports: [ButtonModule, ReactiveFormsModule, SelectModule, MessageModule],
   templateUrl: './organization-regional-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -62,6 +66,41 @@ export class OrganizationRegionalForm {
     input<OrganizationOutput | null>(null);
   /** Whether the settings submission is pending. */
   public readonly saving: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field the server refused; projecting it tells the user which
+   * one to fix instead of leaving them with a generic toast.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), [
+        'timezone',
+        'locale',
+        'dateFormat',
+        'firstDayOfWeek',
+        'measurementSystem',
+      ])[0]?.message ?? null,
+  );
+
   /** Emits the regional slice of the settings payload. */
   public readonly submitted: OutputEmitterRef<UpdateOrganizationInput> = output();
 

@@ -106,6 +106,8 @@
                 store.addAttachmentCallState().status === 'pending' ||
                 store.deleteAttachmentCallState().status === 'pending'
               "
+              [submitting]="store.addAttachmentCallState().status === 'pending'"
+              [submitError]="store.addAttachmentCallState().error"
               [canManage]="canManage()"
               (add)="addAttachment($event)"
               (remove)="deleteAttachment($event)"

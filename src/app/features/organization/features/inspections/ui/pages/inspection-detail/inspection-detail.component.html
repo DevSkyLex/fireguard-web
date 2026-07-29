@@ -71,6 +71,8 @@
               [loading]="store.isLoadingNonConformities()"
               [mutating]="store.isAddingNonConformity() || store.isUpdatingNonConformity()"
               [canManage]="canManage() && inspection.status !== 'closed'"
+              [submitting]="store.addNonConformityCallState().status === 'pending'"
+              [submitError]="store.addNonConformityCallState().error"
               [canAdd]="canManage() && inspection.status !== 'closed'"
               (add)="addNonConformity($event)"
               (statusChange)="updateStatus($event)"

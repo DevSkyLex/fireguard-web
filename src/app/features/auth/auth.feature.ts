@@ -104,6 +104,7 @@ export function provideAuthFeature(): EnvironmentProviders {
           authStore.clearToken();
           userProfilePort.clear();
         },
+        renewSession: () => authStore.renewSession(),
       }),
       deps: [AuthStore, USER_PROFILE_PORT],
     },

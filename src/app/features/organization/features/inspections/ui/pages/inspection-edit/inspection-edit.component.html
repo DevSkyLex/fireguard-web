@@ -28,6 +28,7 @@
         <app-inspection-form
           [inspection]="inspection"
           [loading]="store.isUpdating()"
+          [serverError]="store.updateError()"
           [equipments]="equipmentStore.equipmentList()"
           [facilities]="facilityStore.facilities()"
           [checklists]="checklistStore.checklists()"

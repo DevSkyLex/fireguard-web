@@ -25,6 +25,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputOtpModule } from 'primeng/inputotp';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { OtpVerificationFormData, OtpVerificationFormValues } from './models';
 
 /**
@@ -110,6 +111,33 @@ export class OtpVerificationForm {
    * @default false
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field the server refused; projecting it tells the user which
+   * one to fix instead of leaving them with a generic toast.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () => toUnmatchedViolations(this.serverError(), ['code', 'trustDevice'])[0]?.message ?? null,
+  );
 
   /**
    * Property resendIn

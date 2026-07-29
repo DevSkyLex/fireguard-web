@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <section class="flex flex-col gap-5" aria-labelledby="intervention-discovery-heading">
     <div>
       <h2
@@ -128,4 +134,19 @@
       [disabled]="form.invalid || disabled() || loading()"
     />
   </div>
+  @if (serverFieldErrors()['action']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['target']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['result']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
 </form>

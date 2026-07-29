@@ -63,7 +63,6 @@ export interface Violation {
  *   type: 'https://tools.ietf.org/html/rfc4918#section-11.2',
  *   title: 'Unprocessable Entity',
  *   detail: 'Validation failed',
- *   instance: null,
  *   violations: [
  *     { propertyPath: 'email', message: 'This value is not a valid email address.' },
  *     { propertyPath: 'password', message: 'This value is too short.' }

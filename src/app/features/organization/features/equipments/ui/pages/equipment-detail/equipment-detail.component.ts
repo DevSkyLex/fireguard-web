@@ -2,9 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
-  signal,
+  input,
+  type InputSignal,
   type Signal,
+  signal,
+  untracked,
   type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -43,7 +47,6 @@ import {
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import { EmptyState } from '@shared/components';
 
 /**
@@ -74,17 +77,31 @@ import { EmptyState } from '@shared/components';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentDetailPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   /** Router used by equipment detail actions. */
   private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative equipment routes. */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** PrimeNG confirmation service for destructive operations. */
   private readonly confirmationService: ConfirmationService =
-    inject<ConfirmationService>(ConfirmationService);
-  /** Active organization context store. */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
-  /** Active equipment context store populated by the route resolver. */
+    inject<ConfirmationService>(
+      ConfirmationService,
+    ); /** Active equipment context store populated by the route resolver. */
   private readonly activeEquipmentStore: ActiveEquipmentStore =
     inject<ActiveEquipmentStore>(ActiveEquipmentStore);
   /** Organization permission evaluator. */
@@ -128,12 +145,24 @@ export class EquipmentDetailPage {
    * Initializes supporting equipment detail collections.
    */
   public constructor() {
-    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    const equipmentId = this.equipment()?.id;
-    if (!organizationId || !equipmentId) return;
-    this.facilityStore.ensureParentOptionsLoaded(organizationId);
-    this.store.loadAttachments({ organizationId, equipmentId });
-    this.store.loadMaintenanceLogs({ organizationId, equipmentId, options: { itemsPerPage: 30 } });
+    // An effect, not a constructor call: the routed input is only bound after
+    // construction, and reading it here would throw NG0950.
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+      const equipmentId: string | undefined = this.equipment()?.id;
+
+      if (!equipmentId) return;
+
+      untracked((): void => {
+        this.facilityStore.ensureParentOptionsLoaded(organizationId);
+        this.store.loadAttachments({ organizationId, equipmentId });
+        this.store.loadMaintenanceLogs({
+          organizationId,
+          equipmentId,
+          options: { itemsPerPage: 30 },
+        });
+      });
+    });
   }
 
   /** Navigates to the active equipment edit page. */
@@ -146,9 +175,7 @@ export class EquipmentDetailPage {
    * not-found state so a failed or absent load never dead-ends.
    */
   protected navigateBack(): void {
-    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    if (!organizationId) return;
-    this.router.navigate(['/organizations', organizationId, 'equipments']);
+    this.router.navigate(['/organizations', this.organizationId(), 'equipments']);
   }
 
   /** Assigns the active equipment to a facility. */
@@ -221,9 +248,9 @@ export class EquipmentDetailPage {
   }
 
   /** Adds an attachment to the active equipment. */
-  protected addAttachment(input: AddAttachmentInput): void {
+  protected addAttachment(payload: AddAttachmentInput): void {
     this.run((organizationId, equipmentId) =>
-      this.store.addAttachment({ organizationId, equipmentId, input }),
+      this.store.addAttachment({ organizationId, equipmentId, input: payload }),
     );
   }
 
@@ -254,8 +281,8 @@ export class EquipmentDetailPage {
    * Runs an equipment operation when both route context identifiers exist.
    */
   private run(operation: (organizationId: string, equipmentId: string) => void): void {
-    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    const equipmentId = this.equipment()?.id;
-    if (organizationId && equipmentId) operation(organizationId, equipmentId);
+    const equipmentId: string | undefined = this.equipment()?.id;
+
+    if (equipmentId) operation(this.organizationId(), equipmentId);
   }
 }

@@ -5,14 +5,12 @@ import { WorkspacePage } from '../support/pages/workspace.page';
 const ORGANIZATION_ID = 'e2e-org-1';
 
 /**
- * Workspace shell — `/organizations/:organizationId/workspace`
+ * Workspace shell — the application shell for every authenticated route
  * (`WorkspaceLayout`, `src/app/layouts/workspace-layout`).
  *
- * Structural smoke coverage for the four-column collaboration shell mounted
- * alongside the untouched dashboard tree. The columns are deliberately empty
- * at this stage: rail, sidebar and panel contributions arrive with the
- * collaboration feature, so this suite asserts the frame, the responsive
- * behavior and the absence of a shell-level scroller.
+ * Structural smoke coverage for the four-column shell: this suite asserts the
+ * frame, the responsive behavior and the absence of a shell-level scroller,
+ * not the content any hosted route renders inside it.
  */
 test.describe('Workspace shell', () => {
   test('renders the shell for an authenticated member', async ({ page }) => {
@@ -22,7 +20,7 @@ test.describe('Workspace shell', () => {
     const workspace = new WorkspacePage(page);
     await workspace.goto(ORGANIZATION_ID);
 
-    await expect(page).toHaveURL(`/organizations/${ORGANIZATION_ID}/workspace`);
+    await expect(page).toHaveURL(`/organizations/${ORGANIZATION_ID}`);
     await expect(workspace.shell).toBeVisible();
     await expect(workspace.main).toBeAttached();
   });
@@ -110,17 +108,5 @@ test.describe('Workspace shell', () => {
     // would resolve against the app root and navigate out of the workspace.
     await expect(page).toHaveURL(before);
     await expect(page.locator('#workspace-main')).toBeFocused();
-  });
-
-  test('leaves the dashboard shell untouched on its own routes', async ({ page }) => {
-    const api = new ApiMock(page);
-    await api.mockAuthenticatedSession();
-
-    await page.goto(`/organizations/${ORGANIZATION_ID}`);
-
-    // The workspace route is an addition, not a replacement: sibling
-    // organization URLs must still resolve to the dashboard layout.
-    await expect(page.locator('#dashboard-layout')).toBeVisible();
-    await expect(page.locator('#workspace-layout')).toHaveCount(0);
   });
 });

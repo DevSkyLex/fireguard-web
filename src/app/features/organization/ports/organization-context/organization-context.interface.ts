@@ -9,22 +9,45 @@ import type { OrganizationOutput } from '@features/organization/models';
  * Feature-owned port publishing the active organization context to
  * external consumers such as layouts and approved sibling features.
  *
+ * Read-only by design: the context is derived from `:organizationId` in the
+ * URL, so there is nothing for a consumer to set. A write method here would be
+ * a second source of truth, free to drift from the address bar.
+ *
  * Concrete implementation: `ActiveOrganizationStore` in
  * `features/organization/state/active-organization/`.
  * Binding: `features/organization/providers/`.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface OrganizationContextPort {
   //#region Properties
   /**
+   * Property selectedOrganizationId
+   * @readonly
+   *
+   * @description
+   * Identifier of the organization the URL currently designates, or `null`
+   * outside an organization-scoped route.
+   *
+   * Prefer it over `selectedOrganization()?.id` for anything that only needs
+   * to know *which* organization is open — building a link, keying a request:
+   * it is available as soon as the URL changes, without waiting for the
+   * resource to load.
+   *
+   * @since 2.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  readonly selectedOrganizationId: Signal<string | null>;
+
+  /**
    * Property selectedOrganization
    * @readonly
    *
    * @description
-   * Signal of the currently selected organization.
-   * Null if no organization is selected.
+   * Signal of the currently selected organization resource. Null when no
+   * organization is routed, or while its resource is still loading.
    *
    * @since 1.0.0
    *
@@ -45,40 +68,5 @@ export interface OrganizationContextPort {
    * @type {Signal<boolean>}
    */
   readonly isLoadingOrganization: Signal<boolean>;
-  //#endregion
-
-  //#region Methods
-  /**
-   * Method setOrganization
-   * @method setOrganization
-   *
-   * @description
-   * Sets the active organization context. Should be called by the consumer
-   * of the port when the organization context is loaded or changes, typically
-   * in response to route changes in the main layout.
-   *
-   * @since 1.0.0
-   *
-   * @param {OrganizationOutput} organization - The organization to set as active context.
-   *
-   * @return {void} - This method does not return a value.
-   */
-  setOrganization(organization: OrganizationOutput): void;
-
-  /**
-   * Method clearSelectedOrganization
-   * @method clearSelectedOrganization
-   *
-   * @description
-   * Clears the active organization context, setting it to null.
-   * Should be called by the consumer of the port when the
-   * organization context needs to be reset, such as when navigating away from
-   * organization-specific routes in the main layout.
-   *
-   * @since 1.0.0
-   *
-   * @return {void} - This method does not return a value.
-   */
-  clearSelectedOrganization(): void;
   //#endregion
 }

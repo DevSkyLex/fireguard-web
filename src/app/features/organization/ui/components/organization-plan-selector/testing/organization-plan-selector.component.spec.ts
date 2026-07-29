@@ -187,7 +187,10 @@ describe('OrganizationPlanSelector', () => {
         { provide: ConfirmationService, useValue: confirmationService },
         {
           provide: ActiveOrganizationStore,
-          useValue: { selectedOrganization: signal(ORGANIZATION) },
+          useValue: {
+            selectedOrganization: signal(ORGANIZATION),
+            selectedOrganizationId: signal(ORGANIZATION.id),
+          },
         },
         { provide: OrganizationQuotaStore, useValue: quotaStore },
       ],

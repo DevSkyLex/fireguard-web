@@ -60,6 +60,7 @@ type MockNonConformitiesOpenedTrendStore = {
 
 type MockActiveOrganizationStore = {
   readonly selectedOrganization: WritableSignal<OrganizationOutput | null>;
+  readonly selectedOrganizationId: WritableSignal<string | null>;
 };
 
 const MOCK_ORGANIZATION: OrganizationOutput = {
@@ -143,6 +144,7 @@ const mockDashboardStore: MockNonConformitiesOpenedTrendStore = {
 
 const mockActiveOrganizationStore: MockActiveOrganizationStore = {
   selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORGANIZATION),
+  selectedOrganizationId: signal<string | null>(MOCK_ORGANIZATION.id),
 };
 
 describe('NonConformitiesOpenedTrend', () => {

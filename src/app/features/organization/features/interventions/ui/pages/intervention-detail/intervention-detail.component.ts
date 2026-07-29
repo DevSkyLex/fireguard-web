@@ -5,15 +5,15 @@ import {
   computed,
   DestroyRef,
   effect,
+  type ElementRef,
   inject,
   input,
+  type InputSignal,
   linkedSignal,
+  type Signal,
   signal,
   untracked,
   viewChild,
-  type ElementRef,
-  type InputSignal,
-  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -102,10 +102,7 @@ import {
   type InterventionTransitionCapability,
 } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import {
-  ActiveOrganizationStore,
-  OrganizationMemberAccessStore,
-} from '@features/organization/state';
+import { OrganizationMemberAccessStore } from '@features/organization/state';
 import {
   ActivityFeed,
   AvatarStack,
@@ -174,6 +171,22 @@ import {
   },
 })
 export class InterventionDetailPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Inputs
   /**
    * Property interventionId
@@ -437,21 +450,6 @@ export class InterventionDetailPage {
   private readonly fieldExecution: InterventionFieldExecutionService = inject(
     InterventionFieldExecutionService,
   );
-
-  /**
-   * Property organization
-   * @readonly
-   *
-   * @description
-   * Provides the organization value.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly organization: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property memberAccess
@@ -932,13 +930,12 @@ export class InterventionDetailPage {
    */
   protected readonly canSubmit: Signal<boolean> = computed<boolean>(() => {
     const intervention = this.store.intervention();
-    const organizationId = this.organization.selectedOrganization()?.id;
     const memberId = this.memberAccess.profile()?.id;
+
     return (
       !!intervention &&
-      !!organizationId &&
       !!memberId &&
-      intervention.responsible === `/api/organizations/${organizationId}/members/${memberId}`
+      intervention.responsible === `/api/organizations/${this.organizationId()}/members/${memberId}`
     );
   });
 
@@ -1997,9 +1994,7 @@ export class InterventionDetailPage {
       this.store.load(this.interventionId());
     });
     effect(() => {
-      this.planningOptions.loadWorkspaceOptions(
-        this.organization.selectedOrganization()?.id ?? null,
-      );
+      this.planningOptions.loadWorkspaceOptions(this.organizationId());
     });
     effect(() => {
       const intervention = this.store.intervention();
@@ -2785,9 +2780,10 @@ export class InterventionDetailPage {
    */
   protected async createDiscovery(event: InterventionDiscoveryRequest): Promise<void> {
     this.fieldMessage.set(null);
-    const organizationId = this.organization.selectedOrganization()?.id;
+    const organizationId: string = this.organizationId();
     const target = event.target?.trim();
-    if (!organizationId || !target) return;
+
+    if (!target) return;
 
     this.fieldActionBusy.set(true);
     try {
@@ -3260,9 +3256,7 @@ export class InterventionDetailPage {
    * @return {void}
    */
   protected navigateToList(): void {
-    const organizationId = this.organization.selectedOrganization()?.id;
-    if (!organizationId) return;
-    void this.router.navigate(['/organizations', organizationId, 'interventions']);
+    void this.router.navigate(['/organizations', this.organizationId(), 'interventions']);
   }
 
   /**
@@ -3281,9 +3275,8 @@ export class InterventionDetailPage {
    */
   private navigateToNeighbour(id: string | null): void {
     if (!id) return;
-    const organizationId = this.organization.selectedOrganization()?.id;
-    if (!organizationId) return;
-    void this.router.navigate(['/organizations', organizationId, 'interventions', id]);
+
+    void this.router.navigate(['/organizations', this.organizationId(), 'interventions', id]);
   }
   //#endregion
 

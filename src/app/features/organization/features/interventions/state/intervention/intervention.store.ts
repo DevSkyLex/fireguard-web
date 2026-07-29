@@ -159,6 +159,19 @@ export const InterventionStore = signalStore(
     createdIntervention: computed<InterventionOutput | null>(() => store.createCallState().data),
 
     /**
+     * Computed createError.
+     *
+     * @description
+     * Error from the last create operation, if any. Exposed so the page can hand a
+     * 422 back to the form and land it on the field the server refused.
+     *
+     * @since 1.1.0
+     *
+     * @type {StoreError | null}
+     */
+    createError: computed<StoreError | null>(() => store.createCallState().error),
+
+    /**
      * Computed listError.
      *
      * @description

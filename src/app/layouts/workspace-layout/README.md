@@ -2,23 +2,22 @@
 
 ## Purpose
 
-`workspace-layout` is the collaboration shell: a four-column, full-bleed application frame
-composed of an organization rail, a channel sidebar, a main column, and a mono-active right
-panel.
+`workspace-layout` is **the** application shell: a four-column, full-bleed frame composed of an
+organization rail, a channel sidebar, a main column, and a mono-active right panel.
 
-It exists **alongside** `dashboard-layout`, which it does not replace. The two shells are
-structurally incompatible on four points, and a `mode` input that disabled three of them would
-be a different layout wearing the same name:
+Every authenticated route is served here — organization pages, conversations and the account
+pages alike — at its canonical URL (`/`, `/organizations/:organizationId/…`, `/account`). The
+`dashboard-layout` it replaced is gone, along with the `/workspace` URL prefix that used to keep
+the two shells apart.
 
-|                  | `dashboard-layout`                                              | `workspace-layout`                                              |
-| ---------------- | --------------------------------------------------------------- | --------------------------------------------------------------- |
-| Content plane    | `mx-auto max-w-[1440px]`, centred                               | full-bleed, `width: 100%`                                       |
-| Scroll ownership | one vertical scroller at the **layout** level                   | shell is `overflow: hidden`; every column scrolls independently |
-| Page title       | `<h1>` banner rendered for any route with a `title`, no opt-out | rendered by the conversation header                             |
-| Slots            | four, all additive and eager                                    | four additive **plus** one mono-active panel                    |
+Structural properties worth knowing before contributing to it:
 
-Routes migrate into this shell one family at a time. `dashboard-layout` stays functional
-throughout.
+| Aspect           | Behaviour                                                       |
+| ---------------- | --------------------------------------------------------------- |
+| Content plane    | full-bleed, `width: 100%`                                       |
+| Scroll ownership | shell is `overflow: hidden`; every column scrolls independently |
+| Page title       | rendered by the conversation header, from the route trail       |
+| Slots            | four additive **plus** one mono-active panel                    |
 
 ## Ownership
 
@@ -27,7 +26,7 @@ outlet, and shell-local UI state (active panel, sidebar collapse, mobile pane).
 
 It must not own business workflows, inject feature stores, or call data-access services. Domain
 UI reaches the shell exclusively through slot contributions published by the owning feature
-(`ARCHITECTURE.md` §3.4, §8.2).
+(`ARCHITECTURE.md` §2.4, §8.2).
 
 ## Geometry
 
@@ -72,15 +71,14 @@ own. Do not factor them into one shared width.
 The layout knows no feature. It exposes extension points; each feature contributes from its own
 `providers/with*()` helper, wired in `app.routes.ts` through `provideWorkspaceLayoutSlots()`.
 
-**Additive** — `{ id: string; order: number; component: Type<unknown> }`, mirroring
-`TopbarContribution` in `dashboard-layout`:
+**Additive** — `{ id: string; order: number; component: Type<unknown> }`:
 
-| Slot                       | Renders                                             | Notes                                                                                        |
-| -------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `RAIL_SLOT`                | the 60px rail                                       | adds `region: 'lead' \| 'footer'` so org tiles and the user menu can be placed independently |
-| `SECONDARY_NAV_SLOT`       | sections of the channel sidebar, stacked by `order` | each feature pushes its own section rather than one monolithic sidebar                       |
-| `CONVERSATION_HEADER_SLOT` | the tool cluster at the right of the 56px header    |                                                                                              |
-| `PAGE_HEADER_SLOT`         | contextual page actions                             | keeps `withInterventionHeaderActions()` alive after migration                                |
+| Slot                         | Renders                                             | Notes                                                                                        |
+| ---------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `RAIL_SLOT`                  | the 60px rail                                       | adds `region: 'lead' \| 'footer'` so org tiles and the user menu can be placed independently |
+| `SECONDARY_NAV_SLOT`         | sections of the channel sidebar, stacked by `order` | each feature pushes its own section rather than one monolithic sidebar                       |
+| `CONVERSATION_HEADER_SLOT`   | the tool cluster at the right of the 56px header    |                                                                                              |
+| `WORKSPACE_PAGE_HEADER_SLOT` | contextual page actions                             | where `withInterventionHeaderActions()` lands                                                |
 
 **Mono-active** — `{ id; priority: number; component; active: Signal<boolean> }`, copied from
 `ShowcaseContribution` in `split-layout`:
@@ -156,8 +154,8 @@ a contribution starts competing the suite fails instead of shipping two rails.
 ### …and a root-provided bridge store cannot reach route-provided ports
 
 The corollary, learned the hard way. A bridge store solves the first problem by living in the root
-injector — which means it cannot see anything the **workspace route** provides either.
-`MEMBER_DIRECTORY_PORT` is bound by `provideOrganizationFeature()` in that route's `providers: []`,
+injector — which means it cannot see anything the **shell route** provides either.
+`MEMBER_DIRECTORY_PORT` is bound by `provideOrganizationFeature()` in the shell route's `providers: []`,
 so injecting it from a root store throws `NG0201` the moment the panel mounts.
 
 Split the two concerns: the root store owns routed state and transport; the contributed

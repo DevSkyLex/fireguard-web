@@ -4,8 +4,11 @@ import {
   Component,
   effect,
   inject,
+  input,
+  type InputSignal,
   PLATFORM_ID,
   signal,
+  untracked,
   type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +22,7 @@ import {
   type InspectionFormValues,
 } from '@features/organization/features/inspections/ui/forms';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
 import { isQuotaExceededError } from '@features/organization/utils';
 
@@ -45,6 +48,22 @@ import { isQuotaExceededError } from '@features/organization/utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionCreatePage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Properties
   /**
    * Property router
@@ -67,18 +86,6 @@ export class InspectionCreatePage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   private readonly platformId: object = inject<object>(PLATFORM_ID);
 
@@ -162,13 +169,19 @@ export class InspectionCreatePage {
    * @since 1.0.0
    */
   public constructor() {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId && isPlatformBrowser(this.platformId)) {
-      this.equipmentStore.ensureInspectionCreateOptionsLoaded(organizationId);
-      this.facilityStore.ensureParentOptionsLoaded(organizationId);
-      this.checklistStore.ensureInspectionCreateOptionsLoaded(organizationId);
-    }
+    // An effect, not a constructor call: the routed input is only bound after
+    // construction, and reading it here would throw NG0950.
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+
+      if (!isPlatformBrowser(this.platformId)) return;
+
+      untracked((): void => {
+        this.equipmentStore.ensureInspectionCreateOptionsLoaded(organizationId);
+        this.facilityStore.ensureParentOptionsLoaded(organizationId);
+        this.checklistStore.ensureInspectionCreateOptionsLoaded(organizationId);
+      });
+    });
 
     // React to the create outcome: navigate on success, open the upgrade dialog
     // on a quota (409) failure. Success and generic error toasts are produced
@@ -210,11 +223,7 @@ export class InspectionCreatePage {
    * @returns {void}
    */
   protected handleSubmit(values: InspectionFormValues): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (!organizationId) return;
-
-    const input: CreateInspectionInput = {
+    const payload: CreateInspectionInput = {
       equipmentId: values.equipmentId,
       result: values.result,
       performedAt: values.performedAt?.toISOString() ?? new Date().toISOString(),
@@ -226,7 +235,7 @@ export class InspectionCreatePage {
       ...(values.signature ? { signature: values.signature } : {}),
     };
 
-    this.store.create({ organizationId, input });
+    this.store.create({ organizationId: this.organizationId(), input: payload });
   }
 
   /**

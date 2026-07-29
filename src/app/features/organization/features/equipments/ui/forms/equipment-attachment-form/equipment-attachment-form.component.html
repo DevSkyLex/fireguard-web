@@ -5,6 +5,8 @@
     fluid
     placeholder="File name"
     i18n-placeholder="@@equipment.attach.fileName"
+    aria-label="File name"
+    i18n-aria-label="@@equipment.attach.fileName"
     [invalid]="form.controls.fileName.invalid && form.controls.fileName.touched"
   />
   <input
@@ -13,6 +15,8 @@
     fluid
     placeholder="MIME type"
     i18n-placeholder="@@equipment.attach.mimeType"
+    aria-label="MIME type"
+    i18n-aria-label="@@equipment.attach.mimeType"
     [invalid]="form.controls.mimeType.invalid && form.controls.mimeType.touched"
   />
   <input
@@ -21,6 +25,8 @@
     fluid
     placeholder="Base64 content"
     i18n-placeholder="@@equipment.attach.content"
+    aria-label="Base64 content"
+    i18n-aria-label="@@equipment.attach.content"
     [invalid]="form.controls.content.invalid && form.controls.content.touched"
   />
   <p-button
@@ -39,5 +45,17 @@
       i18n="@@equipment.attach.error"
       >File name, MIME type and Base64 content are required.</p-message
     >
+  }
+  @for (field of ['fileName', 'mimeType', 'content']; track field) {
+    @if (serverFieldErrors()[field]; as serverMessage) {
+      <p-message severity="error" variant="simple" class="lg:col-span-4" role="alert">
+        <span>{{ serverMessage }}</span>
+      </p-message>
+    }
+  }
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" class="lg:col-span-4" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
   }
 </form>

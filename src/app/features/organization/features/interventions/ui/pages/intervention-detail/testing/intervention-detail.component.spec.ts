@@ -139,6 +139,7 @@ describe('InterventionDetailPage', () => {
     loading: ReturnType<typeof signal<boolean>>;
     saving: ReturnType<typeof signal<boolean>>;
     error: ReturnType<typeof signal<string | null>>;
+    mutationError: ReturnType<typeof signal<unknown>>;
     progress: ReturnType<typeof signal<number>>;
     blockerCount: ReturnType<typeof signal<number>>;
     nextWorkItem: ReturnType<typeof signal<InterventionWorkItemOutput | null>>;
@@ -157,6 +158,7 @@ describe('InterventionDetailPage', () => {
 
   function build(): InterventionDetailPageHarness {
     const fixture = TestBed.createComponent(InterventionDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('interventionId', 'i-1');
     return fixture.componentInstance as unknown as InterventionDetailPageHarness;
   }
@@ -200,6 +202,7 @@ describe('InterventionDetailPage', () => {
       loading: signal(false),
       saving: signal(false),
       error: signal<string | null>(null),
+      mutationError: signal<unknown>(null),
       progress: signal(0),
       blockerCount: signal(0),
       nextWorkItem: signal<InterventionWorkItemOutput | null>(null),
@@ -665,6 +668,7 @@ describe('InterventionDetailPage', () => {
   describe('rendering', () => {
     function render(): ReturnType<typeof TestBed.createComponent<InterventionDetailPage>> {
       const fixture = TestBed.createComponent(InterventionDetailPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.componentRef.setInput('interventionId', 'i-1');
       fixture.detectChanges();
       return fixture;

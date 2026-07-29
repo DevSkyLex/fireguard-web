@@ -17,6 +17,7 @@
   <ng-template #content>
     <app-intervention-discovery-form
       [loading]="loading()"
+      [serverError]="serverError()"
       [disabled]="disabled()"
       [equipmentTypeOptions]="equipmentTypeOptions()"
       (submitted)="submitted.emit($event)"

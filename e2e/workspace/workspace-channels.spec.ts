@@ -146,7 +146,7 @@ test.describe('Workspace channels', () => {
       .getByRole('link', { name: 'Bâtiment Nord' })
       .click();
 
-    await expect(page).toHaveURL(`/organizations/${ORGANIZATION.id}/workspace/channels/c1`);
+    await expect(page).toHaveURL(`/organizations/${ORGANIZATION.id}/channels/c1`);
     await expect(workspace.shell).toBeVisible();
     await expect(page.getByTestId('channel-conversation')).toBeVisible();
   });
@@ -184,7 +184,7 @@ test.describe('Workspace channels', () => {
     await mockChannels(page, [{ id: 'c1', name: 'Bâtiment Nord' }]);
     await page.setViewportSize({ width: 900, height: 900 });
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/c1`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/c1`);
 
     const workspace = new WorkspacePage(page);
     await expect(workspace.main).toBeVisible();
@@ -196,7 +196,7 @@ test.describe('Workspace channels', () => {
     await mockChannels(page, [{ id: 'c1', name: 'Bâtiment Nord' }]);
     await page.setViewportSize({ width: 900, height: 900 });
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/c1`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/c1`);
 
     const workspace = new WorkspacePage(page);
     await expect(workspace.main).toBeVisible();
@@ -213,7 +213,7 @@ test.describe('Workspace channels', () => {
     await mockChannels(page, [{ id: 'c1', name: 'Bâtiment Nord' }]);
     await page.setViewportSize({ width: 900, height: 900 });
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/c1`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/c1`);
 
     const workspace = new WorkspacePage(page);
     await expect(workspace.main).toBeVisible();
@@ -240,7 +240,7 @@ test.describe('Workspace channels', () => {
     await mockChannels(page, [{ id: 'c1', name: 'Bâtiment Nord' }]);
     await page.setViewportSize({ width: 900, height: 900 });
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/c1`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/c1`);
 
     const workspace = new WorkspacePage(page);
     await page.getByTestId('workspace-header-back').click();
@@ -254,7 +254,7 @@ test.describe('Workspace channels', () => {
       .getByRole('link', { name: 'Dashboard' })
       .click();
 
-    await expect(page).toHaveURL(`/organizations/${ORGANIZATION.id}/workspace`);
+    await expect(page).toHaveURL(`/organizations/${ORGANIZATION.id}`);
     await expect(workspace.main).toBeVisible();
   });
 

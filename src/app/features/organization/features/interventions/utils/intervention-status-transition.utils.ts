@@ -33,25 +33,6 @@ export interface InterventionTransitionSubject {
 }
 
 /**
- * Function canTransition
- *
- * @description
- * Whether moving an intervention from `from` to `to` is allowed by the workflow
- * policy. A no-op transition (`from === to`) is always allowed so same-lane
- * drops and reorders are accepted.
- *
- * @param {InterventionStatus} from - Current status.
- * @param {InterventionStatus} to - Candidate target status.
- *
- * @returns {boolean} True when the transition is permitted.
- *
- * @since 1.0.0
- */
-export function canTransition(from: InterventionStatus, to: InterventionStatus): boolean {
-  return from === to || INTERVENTION_STATUS_TRANSITIONS[from].includes(to);
-}
-
-/**
  * Function allowedTransitions
  *
  * @description

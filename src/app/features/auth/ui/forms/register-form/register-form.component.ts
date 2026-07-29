@@ -3,10 +3,13 @@ import {
   ChangeDetectionStrategy,
   effect,
   inject,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
+  untracked,
 } from '@angular/core';
 import {
   NonNullableFormBuilder,
@@ -18,20 +21,14 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_PATTERN,
+} from '@features/auth/constants';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
 import type { RegisterFormData, RegisterFormValues } from './models';
-
-/**
- * Constant PASSWORD_PATTERN
- *
- * @description
- * Mirrors the backend password policy: at least one lowercase, one uppercase,
- * one digit, and one special character.
- *
- * @since 1.0.0
- */
-const PASSWORD_PATTERN: RegExp =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/;
 
 /**
  * Component RegisterForm
@@ -74,6 +71,80 @@ export class RegisterForm {
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 carries per-field violations; they are projected onto the matching
+   * controls so the user sees which field the server refused instead of a generic
+   * toast. Anything else is ignored here and stays the page's business.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property serverFieldErrors
+   * @readonly
+   *
+   * @description
+   * Server message per field, projected from the last 422.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<ServerFieldErrors>}
+   */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /**
+   * Property unmatchedViolation
+   * @readonly
+   *
+   * @description
+   * Message of the first violation that named no field in this form, so it can be
+   * shown at form level rather than silently dropped.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), [
+        'firstName',
+        'lastName',
+        'email',
+        'password',
+        'confirmPassword',
+      ])[0]?.message ?? null,
+  );
+
+  /**
+   * Input email
+   * @input
+   *
+   * @description
+   * Address the account is being created for, when the caller already knows it
+   * — an invitation names its recipient, and making them retype it only invites
+   * a typo that breaks the match.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly email: InputSignal<string | null> = input<string | null>(null);
+
+  /**
    * Property formBuilder
    * @readonly
    *
@@ -113,7 +184,8 @@ export class RegisterForm {
       email: this.formBuilder.control<string>('', [Validators.required, Validators.email]),
       password: this.formBuilder.control<string>('', [
         Validators.required,
-        Validators.minLength(8),
+        Validators.minLength(PASSWORD_MIN_LENGTH),
+        Validators.maxLength(PASSWORD_MAX_LENGTH),
         Validators.pattern(PASSWORD_PATTERN),
       ]),
       confirmPassword: this.formBuilder.control<string>('', [Validators.required]),
@@ -159,9 +231,20 @@ export class RegisterForm {
    * Constructor
    *
    * @description
-   * Disables the form while a submission is in flight.
+   * Seeds the email control from a routed address, and disables the form while
+   * a submission is in flight.
+   *
+   * @since 1.0.0
    */
   public constructor() {
+    effect((): void => {
+      const email: string | null = this.email();
+
+      if (email === null || email === '') return;
+
+      untracked((): void => this.form.controls.email.setValue(email));
+    });
+
     effect(() => {
       if (this.loading()) {
         this.form.disable({ emitEvent: false });

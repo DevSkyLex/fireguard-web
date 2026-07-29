@@ -16,15 +16,18 @@ import {
   tap,
   throwError,
 } from 'rxjs';
+import { isApiError } from '@core/api';
 import { ConnectivityService } from '@core/connectivity';
 import {
   errorCallState,
   idleCallState,
+  isCallPending,
   pendingCallState,
   successCallState,
   successFeedback,
   toStoreError,
   toStoreFailureEventPayload,
+  type StoreError,
 } from '@core/request-state';
 import {
   InterventionOfflineService,
@@ -53,7 +56,7 @@ import type {
  *
  * @description
  * Empty starting state for the component-scoped InterventionWorkspaceStore.
- * All collections are empty, flags default to false, and no error is set.
+ * All collections are empty and every call state starts idle.
  *
  * @since 1.0.0
  *
@@ -64,12 +67,40 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   workItems: [],
   changes: [],
   issues: [],
-  loading: false,
-  saving: false,
-  error: null,
+  loadCallState: idleCallState(),
+  mutationCallState: idleCallState(),
   activities: [],
   activityCallState: idleCallState(),
 };
+
+/**
+ * Function workspaceFailure
+ * @function workspaceFailure
+ *
+ * @description
+ * Normalizes a caught error and guarantees it carries a human-readable message.
+ *
+ * A structured API problem (RFC 7807) is trusted for its `detail`: it is the most
+ * specific explanation available, and for a 422 it travels with the `violations` a
+ * form can project onto its fields. Everything else — transport failures, bare
+ * 500s — falls back to `fallback`.
+ *
+ * @since 1.1.0
+ *
+ * @param {unknown} error - The caught error.
+ * @param {string} fallback - Localized message to use when the API said nothing.
+ *
+ * @return {StoreError} Normalized error with a non-null message.
+ */
+function workspaceFailure(error: unknown, fallback: string): StoreError {
+  const storeError: StoreError = toStoreError(error);
+  // Only a structured API problem carries a message worth showing. A raw Error
+  // yields things like "Http failure response for /api/...", which `toStoreError`
+  // happily copies into `message` — never put that in front of a field agent.
+  const detail: string | null = isApiError(storeError.error) ? storeError.message : null;
+
+  return { ...storeError, message: detail ?? fallback };
+}
 
 /**
  * Function replaceWorkItem
@@ -117,6 +148,31 @@ function replaceWorkItem(
 export const InterventionWorkspaceStore = signalStore(
   withState<InterventionWorkspaceState>(INITIAL_STATE),
   withComputed((store) => ({
+    /** Whether the workspace fetch is in flight. */
+    loading: computed<boolean>(() => isCallPending(store.loadCallState())),
+
+    /** Whether any write is in flight. */
+    saving: computed<boolean>(() => isCallPending(store.mutationCallState())),
+
+    /**
+     * Message of the last failure, load or write, for the page banner.
+     *
+     * A write failure wins over a stale load failure: it is the more recent thing
+     * the user did.
+     */
+    error: computed<string | null>(
+      () =>
+        store.mutationCallState().error?.message ?? store.loadCallState().error?.message ?? null,
+    ),
+
+    /**
+     * Normalized error of the last write.
+     *
+     * Unlike {@link error}, this keeps the whole payload, so a page can hand a 422
+     * to the form that caused it and land each violation on the field it names.
+     */
+    mutationError: computed<StoreError | null>(() => store.mutationCallState().error),
+
     progress: computed<number>(() => {
       const total = store.workItems().length;
       if (total === 0) return 0;
@@ -154,8 +210,8 @@ export const InterventionWorkspaceStore = signalStore(
               workItems: [],
               changes: [],
               issues: [],
-              loading: true,
-              error: null,
+              loadCallState: pendingCallState(),
+              mutationCallState: idleCallState(),
             }),
           ),
           switchMap((interventionId) =>
@@ -187,18 +243,22 @@ export const InterventionWorkspaceStore = signalStore(
                     workItems,
                     changes,
                     issues: issues.member,
-                    loading: false,
+                    loadCallState: successCallState(null),
                   });
                   void offline.saveWorkspace(intervention, workItems, changes, issues.member);
                 },
-                error: () =>
+                error: (error: unknown) =>
                   patchState(store, {
                     intervention: null,
                     workItems: [],
                     changes: [],
                     issues: [],
-                    loading: false,
-                    error: $localize`:@@intervention.workspace.loadFailed:The intervention workspace could not be loaded.`,
+                    loadCallState: errorCallState(
+                      workspaceFailure(
+                        error,
+                        $localize`:@@intervention.workspace.loadFailed:The intervention workspace could not be loaded.`,
+                      ),
+                    ),
                   }),
               }),
             ),
@@ -264,7 +324,7 @@ export const InterventionWorkspaceStore = signalStore(
                 ...store.activities(),
                 optimistic.comment(interventionId, body, clientId),
               ],
-              saving: false,
+              mutationCallState: successCallState(null),
             });
           }),
         );
@@ -290,7 +350,7 @@ export const InterventionWorkspaceStore = signalStore(
        */
       const addComment = rxMethod<InterventionCommentAddCommand>(
         pipe(
-          tap(() => patchState(store, { saving: true })),
+          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
           // concatMap (not switchMap): comments are independent and must never
           // cancel a previous in-flight post — a dropped comment is lost work.
           concatMap(({ interventionId, body }) => {
@@ -302,14 +362,14 @@ export const InterventionWorkspaceStore = signalStore(
               map((activity) => {
                 patchState(store, {
                   activities: [...store.activities(), activity],
-                  saving: false,
+                  mutationCallState: successCallState(null),
                 });
               }),
               catchError((error: unknown) => {
                 if (connectivity.isNetworkFailure(error)) {
                   return queueComment(interventionId, body);
                 }
-                patchState(store, { saving: false });
+                patchState(store, { mutationCallState: successCallState(null) });
                 dispatcher.dispatch(
                   interventionWorkspaceStoreEvents.commentAddFailed(
                     toStoreFailureEventPayload(
@@ -332,7 +392,7 @@ export const InterventionWorkspaceStore = signalStore(
 
         transition: rxMethod<InterventionTransitionRequest>(
           pipe(
-            tap(() => patchState(store, { saving: true, error: null })),
+            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
             switchMap(({ interventionId, status, reviewNote }) => {
               const intervention = store.intervention();
 
@@ -356,7 +416,7 @@ export const InterventionWorkspaceStore = signalStore(
                     });
                     patchState(store, {
                       intervention: updatedIntervention,
-                      saving: false,
+                      mutationCallState: successCallState(null),
                     });
                     void offline
                       .saveWorkspace(
@@ -380,7 +440,10 @@ export const InterventionWorkspaceStore = signalStore(
                 .update(interventionId, { status, reviewNote }, intervention?.revision)
                 .pipe(
                   tap((updatedIntervention) =>
-                    patchState(store, { intervention: updatedIntervention, saving: false }),
+                    patchState(store, {
+                      intervention: updatedIntervention,
+                      mutationCallState: successCallState(null),
+                    }),
                   ),
                   catchError((error: unknown) => {
                     if (connectivity.isNetworkFailure(error) && intervention) {
@@ -391,15 +454,21 @@ export const InterventionWorkspaceStore = signalStore(
                     // retrying in a loop, mirroring the list store's mapping.
                     const storeError = toStoreError(error);
                     patchState(store, {
-                      saving: false,
-                      error:
-                        storeError.code === 412
-                          ? $localize`:@@intervention.store.transitionStale:This intervention changed since it was loaded. Refresh and try again.`
-                          : storeError.code === 403
-                            ? $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`
-                            : storeError.code === 422
-                              ? $localize`:@@intervention.store.transitionInvalid:This status change is not allowed from the intervention's current status.`
-                              : $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`,
+                      // Spread the normalized error rather than replace it: the
+                      // status-specific wording below is friendlier than the API's
+                      // `detail`, but the payload underneath still carries the 422
+                      // violations a form needs.
+                      mutationCallState: errorCallState({
+                        ...storeError,
+                        message:
+                          storeError.code === 412
+                            ? $localize`:@@intervention.store.transitionStale:This intervention changed since it was loaded. Refresh and try again.`
+                            : storeError.code === 403
+                              ? $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`
+                              : storeError.code === 422
+                                ? $localize`:@@intervention.store.transitionInvalid:This status change is not allowed from the intervention's current status.`
+                                : $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`,
+                      }),
                     });
                     return EMPTY;
                   }),
@@ -409,7 +478,7 @@ export const InterventionWorkspaceStore = signalStore(
         ),
         updateDetails: rxMethod<InterventionDetailsUpdateCommand>(
           pipe(
-            tap(() => patchState(store, { saving: true, error: null })),
+            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
             concatMap(({ interventionId, input }) => {
               const intervention = store.intervention();
 
@@ -440,7 +509,10 @@ export const InterventionWorkspaceStore = signalStore(
                       revision: current.revision + 1,
                       updatedAt: new Date().toISOString(),
                     };
-                    patchState(store, { intervention: updatedIntervention, saving: false });
+                    patchState(store, {
+                      intervention: updatedIntervention,
+                      mutationCallState: successCallState(null),
+                    });
                     await offline.saveWorkspace(
                       updatedIntervention,
                       store.workItems(),
@@ -451,10 +523,14 @@ export const InterventionWorkspaceStore = signalStore(
                     );
                     return updatedIntervention;
                   }),
-                  catchError(() => {
+                  catchError((error: unknown) => {
                     patchState(store, {
-                      saving: false,
-                      error: $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
+                      mutationCallState: errorCallState(
+                        workspaceFailure(
+                          error,
+                          $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
+                        ),
+                      ),
                     });
                     return EMPTY;
                   }),
@@ -467,15 +543,22 @@ export const InterventionWorkspaceStore = signalStore(
 
               return service.update(interventionId, input, intervention?.revision).pipe(
                 tap((updatedIntervention) =>
-                  patchState(store, { intervention: updatedIntervention, saving: false }),
+                  patchState(store, {
+                    intervention: updatedIntervention,
+                    mutationCallState: successCallState(null),
+                  }),
                 ),
                 catchError((error: unknown) => {
                   if (connectivity.isNetworkFailure(error) && intervention) {
                     return queueDetails(intervention);
                   }
                   patchState(store, {
-                    saving: false,
-                    error: $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
+                    mutationCallState: errorCallState(
+                      workspaceFailure(
+                        error,
+                        $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
+                      ),
+                    ),
                   });
                   return EMPTY;
                 }),
@@ -486,7 +569,7 @@ export const InterventionWorkspaceStore = signalStore(
 
         createWorkItem: rxMethod<InterventionWorkItemCreateCommand>(
           pipe(
-            tap(() => patchState(store, { saving: true, error: null })),
+            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
             switchMap(({ interventionId, input }) => {
               if (connectivity.isOffline()) {
                 const clientId = input.clientId ?? crypto.randomUUID();
@@ -504,7 +587,7 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       intervention: updatedIntervention,
                       workItems,
-                      saving: false,
+                      mutationCallState: successCallState(null),
                     });
                     if (updatedIntervention) {
                       void offline
@@ -540,7 +623,7 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       workItems,
                       intervention: updatedIntervention,
-                      saving: false,
+                      mutationCallState: successCallState(null),
                     });
                     if (updatedIntervention) {
                       void offline
@@ -555,10 +638,14 @@ export const InterventionWorkspaceStore = signalStore(
                         .catch(() => undefined);
                     }
                   },
-                  error: () =>
+                  error: (error: unknown) =>
                     patchState(store, {
-                      saving: false,
-                      error: $localize`:@@intervention.workspace.workItemCreateFailed:The work item could not be created.`,
+                      mutationCallState: errorCallState(
+                        workspaceFailure(
+                          error,
+                          $localize`:@@intervention.workspace.workItemCreateFailed:The work item could not be created.`,
+                        ),
+                      ),
                     }),
                 }),
               );
@@ -567,7 +654,7 @@ export const InterventionWorkspaceStore = signalStore(
         ),
         setWorkItemStatus: rxMethod<InterventionWorkItemStatusCommand>(
           pipe(
-            tap(() => patchState(store, { saving: true, error: null })),
+            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
             // mergeMap (not switchMap): a field agent ticks several checklist
             // items quickly; each toggle is independent and must not cancel the
             // previous in-flight PATCH.
@@ -596,7 +683,7 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       intervention: updatedIntervention,
                       workItems,
-                      saving: false,
+                      mutationCallState: successCallState(null),
                     });
                     if (updatedIntervention) {
                       void offline
@@ -630,7 +717,7 @@ export const InterventionWorkspaceStore = signalStore(
                     // ticks don't each trigger a competing reload.
                     next: () => {
                       if (!item) {
-                        patchState(store, { saving: false });
+                        patchState(store, { mutationCallState: successCallState(null) });
 
                         return;
                       }
@@ -647,7 +734,7 @@ export const InterventionWorkspaceStore = signalStore(
                       patchState(store, {
                         intervention: result.intervention,
                         workItems,
-                        saving: false,
+                        mutationCallState: successCallState(null),
                       });
                       if (result.intervention) {
                         void offline
@@ -662,10 +749,14 @@ export const InterventionWorkspaceStore = signalStore(
                           .catch(() => undefined);
                       }
                     },
-                    error: () =>
+                    error: (error: unknown) =>
                       patchState(store, {
-                        saving: false,
-                        error: $localize`:@@intervention.workspace.workItemUpdateFailed:The work item could not be updated.`,
+                        mutationCallState: errorCallState(
+                          workspaceFailure(
+                            error,
+                            $localize`:@@intervention.workspace.workItemUpdateFailed:The work item could not be updated.`,
+                          ),
+                        ),
                       }),
                   }),
                 );
@@ -675,10 +766,10 @@ export const InterventionWorkspaceStore = signalStore(
 
         deleteWorkItems: rxMethod<InterventionWorkItemDeleteCommand>(
           pipe(
-            tap(() => patchState(store, { saving: true, error: null })),
+            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
             switchMap(({ workItems }) => {
               if (workItems.length === 0) {
-                patchState(store, { saving: false });
+                patchState(store, { mutationCallState: successCallState(null) });
                 return EMPTY;
               }
 
@@ -687,8 +778,13 @@ export const InterventionWorkspaceStore = signalStore(
               // changes, so surface a clear message instead of silently failing.
               if (connectivity.isOffline()) {
                 patchState(store, {
-                  saving: false,
-                  error: $localize`:@@intervention.workspace.workItemDeleteOffline:Connect to the network to delete planned work items.`,
+                  mutationCallState: errorCallState({
+                    error: null,
+                    message: $localize`:@@intervention.workspace.workItemDeleteOffline:Connect to the network to delete planned work items.`,
+                    code: null,
+                    retryable: true,
+                    timestamp: 0,
+                  }),
                 });
                 return EMPTY;
               }
@@ -712,7 +808,7 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       workItems: remaining,
                       intervention: updatedIntervention,
-                      saving: false,
+                      mutationCallState: successCallState(null),
                     });
                     if (updatedIntervention) {
                       void offline
@@ -727,10 +823,14 @@ export const InterventionWorkspaceStore = signalStore(
                         .catch(() => undefined);
                     }
                   },
-                  error: () =>
+                  error: (error: unknown) =>
                     patchState(store, {
-                      saving: false,
-                      error: $localize`:@@intervention.workspace.workItemDeleteFailed:The work item could not be deleted.`,
+                      mutationCallState: errorCallState(
+                        workspaceFailure(
+                          error,
+                          $localize`:@@intervention.workspace.workItemDeleteFailed:The work item could not be deleted.`,
+                        ),
+                      ),
                     }),
                 }),
               );
@@ -757,17 +857,17 @@ export const InterventionWorkspaceStore = signalStore(
          */
         delete: rxMethod<{ interventionId: string }>(
           pipe(
-            tap(() => patchState(store, { saving: true, error: null })),
+            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
             switchMap(({ interventionId }) => {
               const intervention = store.intervention();
               if (!intervention) {
-                patchState(store, { saving: false });
+                patchState(store, { mutationCallState: successCallState(null) });
                 return EMPTY;
               }
 
               return service.remove(interventionId, intervention.revision).pipe(
                 tap(() => {
-                  patchState(store, { saving: false });
+                  patchState(store, { mutationCallState: successCallState(null) });
                   dispatcher.dispatch(
                     interventionWorkspaceStoreEvents.deleteSucceeded(
                       successFeedback($localize`:@@intervention.delete.toast:Intervention deleted`),
@@ -777,14 +877,16 @@ export const InterventionWorkspaceStore = signalStore(
                 catchError((error: unknown) => {
                   const storeError = toStoreError(error);
                   patchState(store, {
-                    saving: false,
-                    error:
-                      storeError.code === 409
-                        ? (storeError.message ??
-                          $localize`:@@intervention.store.deleteConflict:Only draft or abandoned interventions can be deleted.`)
-                        : storeError.code === 403
-                          ? $localize`:@@intervention.store.deleteForbidden:You do not have permission to delete this intervention.`
-                          : $localize`:@@intervention.workspace.deleteFailed:The intervention could not be deleted.`,
+                    mutationCallState: errorCallState({
+                      ...storeError,
+                      message:
+                        storeError.code === 409
+                          ? (storeError.message ??
+                            $localize`:@@intervention.store.deleteConflict:Only draft or abandoned interventions can be deleted.`)
+                          : storeError.code === 403
+                            ? $localize`:@@intervention.store.deleteForbidden:You do not have permission to delete this intervention.`
+                            : $localize`:@@intervention.workspace.deleteFailed:The intervention could not be deleted.`,
+                    }),
                   });
                   return EMPTY;
                 }),
@@ -871,7 +973,10 @@ export const InterventionWorkspaceStore = signalStore(
          * @return {void}
          */
         clearError(): void {
-          patchState(store, { error: null });
+          patchState(store, {
+            loadCallState: idleCallState(),
+            mutationCallState: idleCallState(),
+          });
         },
       };
     },

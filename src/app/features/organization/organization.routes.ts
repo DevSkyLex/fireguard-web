@@ -1,5 +1,4 @@
 import type { Routes } from '@angular/router';
-import { ACCOUNT_PERMISSION, accountPermissionGuard } from '@features/account';
 import {
   organizationAccessGuard,
   organizationGuard,
@@ -10,19 +9,19 @@ import { organizationResolver, organizationTitleResolver } from './http/resolver
 import { ORGANIZATION_PERMISSION } from './models';
 
 /**
- * Constant ORGANIZATION_ROUTES
+ * Constant ORGANIZATION_SCOPED_ROUTES
  *
  * @description
- * Routes for the organization feature module.
+ * Everything served under an organization: this feature's own pages and its
+ * nested subfeatures, each mounted through its own lazy route file.
  *
- * - `/organizations` — redirect-only entry point: `organizationGuard` forwards
- *   to the user's default organization workspace (last used, else first
- *   accessible, else onboarding)
- * - `/organizations/:organizationId` — organization-scoped pages
+ * Private to this file — external consumers mount {@link ORGANIZATION_ROUTES},
+ * which wraps these children with the `:organizationId` segment that gates and
+ * resolves them.
  *
  * @since 1.0.0
  */
-export const ORGANIZATION_SCOPED_ROUTES: Routes = [
+const ORGANIZATION_SCOPED_ROUTES: Routes = [
   /**
    * Intervention workspace entrypoint.
    *
@@ -33,7 +32,6 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
     path: 'interventions',
     data: {
       breadcrumb: 'Interventions',
-      preload: true,
     },
     loadChildren: () =>
       import('./features/interventions/interventions.routes').then((m) => m.INTERVENTION_ROUTES),
@@ -42,7 +40,6 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
     path: 'facilities',
     data: {
       breadcrumb: 'Facilities',
-      preload: true,
     },
     loadChildren: () =>
       import('./features/facilities/facilities.routes').then((m) => m.FACILITY_ROUTES),
@@ -51,7 +48,6 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
     path: 'equipments',
     data: {
       breadcrumb: 'Equipments',
-      preload: true,
     },
     loadChildren: () =>
       import('./features/equipments/equipments.routes').then((m) => m.EQUIPMENT_ROUTES),
@@ -60,7 +56,6 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
     path: 'inspections',
     data: {
       breadcrumb: 'Inspections',
-      preload: true,
     },
     loadChildren: () =>
       import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
@@ -80,7 +75,6 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
     title: $localize`:@@route.members:Members`,
     data: {
       breadcrumb: 'Members',
-      preload: true,
     },
   },
   {
@@ -98,30 +92,6 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
     title: $localize`:@@route.team:Roles`,
     data: {
       breadcrumb: 'Roles',
-      preload: true,
-    },
-  },
-  {
-    /**
-     * Audit log entry point. Gated by the global `audit.read` permission
-     * (`@features/account`), not organization-member RBAC: audit access is a
-     * platform-wide capability that happens to be reachable from inside the
-     * organization shell rather than a per-organization member permission.
-     */
-    path: 'audit',
-    canActivate: [
-      accountPermissionGuard({
-        permissions: [ACCOUNT_PERMISSION.AUDIT_READ],
-      }),
-    ],
-    loadComponent: () =>
-      import('./ui/pages/organization-audit-log/organization-audit-log.component').then(
-        (m) => m.OrganizationAuditLogPage,
-      ),
-    title: $localize`:@@route.audit:Audit log`,
-    data: {
-      breadcrumb: 'Audit log',
-      preload: true,
     },
   },
   {
@@ -138,7 +108,6 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
     title: $localize`:@@route.settings:Settings`,
     data: {
       breadcrumb: 'Settings',
-      preload: true,
     },
   },
   {
@@ -151,8 +120,22 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
     title: organizationTitleResolver,
     data: {
       breadcrumb: false,
-      preload: true,
     },
+  },
+  {
+    /**
+     * Conversational destinations (`channels/:channelId`, `direct/:conversationId`,
+     * `saved`). Unlike its sibling subfeatures they share no prefix segment, so
+     * the subfeature is mounted path-less rather than under a folder segment.
+     *
+     * Declared last on purpose: an empty-path route is tried in order, and the
+     * organization overview above already answers the bare organization URL —
+     * so that URL never loads this chunk. Anything the overview cannot consume
+     * falls through to here.
+     */
+    path: '',
+    loadChildren: () =>
+      import('./features/collaboration/collaboration.routes').then((m) => m.COLLABORATION_ROUTES),
   },
 ];
 
@@ -160,13 +143,13 @@ export const ORGANIZATION_SCOPED_ROUTES: Routes = [
  * Constant ORGANIZATION_ROUTES
  *
  * @description
- * Organization route tree as mounted by the dashboard shell: the
- * `:organizationId` segment carries the access guard and the context
- * resolvers, then delegates to {@link ORGANIZATION_SCOPED_ROUTES}.
+ * The feature's route tree, mounted by the app shell at `/organizations`.
  *
- * The workspace shell mounts the very same children under its own
- * `:organizationId` segment, so neither shell can drift from the other on
- * destinations, guards or breadcrumbs.
+ * The `:organizationId` segment is deliberately component-less: it exists to
+ * carry the parameter, gate access and seed the organization context, then hand
+ * over to {@link ORGANIZATION_SCOPED_ROUTES}.
+ *
+ * @since 1.0.0
  */
 export const ORGANIZATION_ROUTES: Routes = [
   {
@@ -180,11 +163,10 @@ export const ORGANIZATION_ROUTES: Routes = [
   },
   {
     /**
-     * Redirect-only default-organization entry point.
-     *
-     * `organizationGuard` always returns a UrlTree (last-used organization,
-     * first accessible organization, or onboarding), so this route never
-     * activates and needs no component.
+     * Redirect-only default-organization entry point. `organizationGuard`
+     * always returns a UrlTree (last-used organization, first accessible
+     * organization, or onboarding), so this route never activates and needs no
+     * component.
      */
     path: '',
     pathMatch: 'full',

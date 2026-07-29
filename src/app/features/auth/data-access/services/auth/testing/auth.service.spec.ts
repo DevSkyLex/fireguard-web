@@ -90,7 +90,6 @@ describe('AuthService', () => {
         type: 'https://api.test.com/errors/invalid-credentials',
         title: 'Invalid Credentials',
         detail: 'The email or password is incorrect.',
-        instance: null,
       };
 
       service.login(credentials).subscribe({
@@ -156,7 +155,6 @@ describe('AuthService', () => {
         type: 'https://api.test.com/errors/token-expired',
         title: 'Token Expired',
         detail: 'The refresh token has expired.',
-        instance: null,
       };
 
       service.refresh().subscribe({
@@ -205,7 +203,6 @@ describe('AuthService', () => {
         type: 'https://api.test.com/errors/invalid-otp',
         title: 'Invalid OTP',
         detail: 'The verification code is invalid or expired.',
-        instance: null,
       };
 
       service.mfaVerify(mfaInput).subscribe({

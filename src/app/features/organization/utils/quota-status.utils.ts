@@ -44,34 +44,6 @@ export function resolveQuotaStatus(used: number, limit: number | null): QuotaSta
 }
 
 /**
- * Function quotaUsageColor
- * @function quotaUsageColor
- *
- * @description
- * Resolves the meter colour for a quota status: red at the limit, orange near
- * it, and the primary brand colour otherwise. Returns a CSS variable so the
- * value follows the active PrimeNG theme and dark mode.
- *
- * @since 1.0.0
- *
- * @param {QuotaStatus} status - The resolved quota status.
- *
- * @returns {string} A CSS colour value (PrimeNG theme variable).
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
-export function quotaUsageColor(status: QuotaStatus): string {
-  switch (status) {
-    case 'full':
-      return 'var(--p-red-500)';
-    case 'near':
-      return 'var(--p-orange-400)';
-    default:
-      return 'var(--p-primary-color)';
-  }
-}
-
-/**
  * Function isQuotaExceededError
  * @function isQuotaExceededError
  *

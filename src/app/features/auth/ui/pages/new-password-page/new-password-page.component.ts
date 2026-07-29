@@ -7,6 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import type { StoreError } from '@core/request-state';
 import { PasswordResetStore } from '@features/auth/state';
 import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/forms';
 
@@ -72,6 +73,23 @@ export class NewPasswordPage {
    */
   protected readonly isResetting: Signal<boolean> = computed(() =>
     this.passwordResetStore.isConfirming(),
+  );
+
+  /**
+   * Computed confirmError
+   * @readonly
+   *
+   * @description
+   * Last confirmation failure, handed to the form so a 422 lands on the field the
+   * server named rather than only in a toast.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly confirmError: Signal<StoreError | null> = computed(() =>
+    this.passwordResetStore.confirmError(),
   );
 
   //#endregion

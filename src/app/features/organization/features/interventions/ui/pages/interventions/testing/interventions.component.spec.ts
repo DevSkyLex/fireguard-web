@@ -81,6 +81,7 @@ describe('InterventionsPage', () => {
     listError: WritableSignal<unknown>;
     isListCapped: WritableSignal<boolean>;
     isCreating: WritableSignal<boolean>;
+    createError: WritableSignal<unknown>;
     createdIntervention: WritableSignal<InterventionOutput | null>;
     load: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
@@ -131,6 +132,7 @@ describe('InterventionsPage', () => {
       listError: signal<unknown>(null),
       isListCapped: signal(false),
       isCreating: signal(false),
+      createError: signal<unknown>(null),
       createdIntervention: signal<InterventionOutput | null>(null),
       load: vi.fn(),
       create: vi.fn(),
@@ -178,6 +180,7 @@ describe('InterventionsPage', () => {
 
   function build(): InterventionsPageHarness {
     const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     return fixture.componentInstance as unknown as InterventionsPageHarness;
   }
@@ -198,6 +201,7 @@ describe('InterventionsPage', () => {
 
   it('should reload with a name filter when the ?q= input changes', () => {
     const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentRef.setInput('q', 'roof');
@@ -249,6 +253,7 @@ describe('InterventionsPage', () => {
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     store.createdIntervention.set(created);
@@ -483,6 +488,7 @@ describe('InterventionsPage', () => {
         intervention({ id: 'a', status: 'in_progress', name: 'Roof check' }),
       ]);
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain('Roof check');
@@ -492,6 +498,7 @@ describe('InterventionsPage', () => {
       store.isLoadingInterventions.set(true);
       store.isEmpty.set(true);
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('[role="status"]')).toBeTruthy();
@@ -501,6 +508,7 @@ describe('InterventionsPage', () => {
       store.isLoadingInterventions.set(true);
       store.isEmpty.set(true);
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.componentRef.setInput('view', 'board');
       fixture.detectChanges();
 
@@ -510,6 +518,7 @@ describe('InterventionsPage', () => {
     it('should render the search-empty state with a clear-search action', () => {
       store.isEmpty.set(true);
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.componentRef.setInput('q', 'roof');
       fixture.detectChanges();
 
@@ -519,6 +528,7 @@ describe('InterventionsPage', () => {
     it('should render the first-run empty state with a New action', () => {
       store.isEmpty.set(true);
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain('No interventions yet');
@@ -527,6 +537,7 @@ describe('InterventionsPage', () => {
     it('should render the list error banner', () => {
       store.listError.set('Network error');
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain('could not be loaded');
@@ -535,6 +546,7 @@ describe('InterventionsPage', () => {
     it('should render the capped-results notice', () => {
       store.isListCapped.set(true);
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain('500 most recent interventions');
@@ -546,6 +558,7 @@ describe('InterventionsPage', () => {
         intervention({ id: 'b', status: 'abandoned', name: 'Abandoned item' }),
       ]);
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.componentRef.setInput('view', 'board');
       fixture.detectChanges();
 
@@ -556,6 +569,7 @@ describe('InterventionsPage', () => {
     it('should render the calendar view and its error banner', () => {
       calendarStore.loadError.set('Calendar failed');
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.componentRef.setInput('view', 'calendar');
       fixture.detectChanges();
 
@@ -565,6 +579,7 @@ describe('InterventionsPage', () => {
 
     it('should render the creation drawer', () => {
       const fixture = TestBed.createComponent(InterventionsPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('app-intervention-create-drawer')).toBeTruthy();

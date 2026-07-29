@@ -129,26 +129,27 @@ describe('OrganizationMemberAccessStore', () => {
     expect(store.accessCallState().status).toBe('success');
   });
 
-  it('should clear access after navigation outside an organization completes', async () => {
-    selectedOrganization.set({ id: 'org-1' });
-    await flushEffects();
-
-    routerEvents.next(new NavigationEnd(1, '/organizations/org-1', '/organizations'));
-
-    expect(store.profile()).toBeNull();
-    expect(store.permissions()).toEqual([]);
-    expect(store.accessCallState().status).toBe('idle');
-  });
-
-  it('should preserve access while the active organization is temporarily null', async () => {
+  it('should clear access once the URL leaves the organization scope', async () => {
     selectedOrganization.set({ id: 'org-1' });
     await flushEffects();
 
     selectedOrganization.set(null);
     await flushEffects();
 
-    expect(store.profile()).toEqual(profile);
-    expect(store.permissions()).toEqual([ORGANIZATION_PERMISSION.FACILITIES_WRITE]);
+    expect(store.profile()).toBeNull();
+    expect(store.permissions()).toEqual([]);
+    expect(store.accessCallState().status).toBe('idle');
+  });
+
+  it('should keep an access load started before the URL is known', async () => {
+    // `organizationAccessGuard` resolves access while the navigation is still
+    // in flight, so the routed identifier is not published yet. That `null` is
+    // "not known yet", not "left the scope" — clearing here would throw away
+    // the very request the guard is waiting on.
+    store.loadAccess('org-1');
+    await flushEffects();
+
+    expect(store.currentOrganizationId()).toBe('org-1');
     expect(store.accessCallState().status).toBe('success');
   });
 

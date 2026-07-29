@@ -46,6 +46,7 @@ describe('FacilityEquipmentTab', () => {
 
   const mockActiveOrgStore = {
     selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG),
+    selectedOrganizationId: signal<string | null>(MOCK_ORG.id),
   };
 
   beforeEach(() => {

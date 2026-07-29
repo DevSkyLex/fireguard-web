@@ -57,6 +57,7 @@ describe('FacilityListPage', () => {
 
   const mockActiveOrgStore = {
     selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG),
+    selectedOrganizationId: signal<string | null>(MOCK_ORG.id),
   };
 
   const mockQuotaStore = {
@@ -90,12 +91,14 @@ describe('FacilityListPage', () => {
 
   it('should create', () => {
     const fixture = TestBed.createComponent(FacilityListPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
 
   it('should display the page heading', () => {
     const fixture = TestBed.createComponent(FacilityListPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Facilities');
   });
@@ -106,6 +109,7 @@ describe('FacilityListPage', () => {
     mockFacilityStore.totalRootFacilities.set(1);
 
     const fixture = TestBed.createComponent(FacilityListPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Main Site');
   });
@@ -117,6 +121,7 @@ describe('FacilityListPage', () => {
     mockFacilityStore.isRootEmpty.set(false);
 
     const fixture = TestBed.createComponent(FacilityListPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     const skeleton = fixture.debugElement.query(By.css('.p-skeleton'));
     expect(skeleton).toBeTruthy();
@@ -125,6 +130,7 @@ describe('FacilityListPage', () => {
   it('should forward the root load request to the store', () => {
     mockActiveOrgStore.selectedOrganization.set(MOCK_ORG);
     const fixture = TestBed.createComponent(FacilityListPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     fixture.componentInstance.onLoad({ page: 2, itemsPerPage: 20 });
     expect(mockFacilityStore.loadRootFacilities).toHaveBeenCalledWith({
@@ -136,19 +142,12 @@ describe('FacilityListPage', () => {
   it('should forward the archive event to the store', () => {
     mockActiveOrgStore.selectedOrganization.set(MOCK_ORG);
     const fixture = TestBed.createComponent(FacilityListPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     fixture.componentInstance.onArchive(MOCK_FACILITY);
     expect(mockFacilityStore.archive).toHaveBeenCalledWith({
       organizationId: 'org-1',
       facilityId: 'fac-1',
     });
-  });
-
-  it('should not call archive when organization is missing', () => {
-    mockActiveOrgStore.selectedOrganization.set(null);
-    const fixture = TestBed.createComponent(FacilityListPage);
-    fixture.detectChanges();
-    fixture.componentInstance.onArchive(MOCK_FACILITY);
-    expect(mockFacilityStore.archive).not.toHaveBeenCalled();
   });
 });

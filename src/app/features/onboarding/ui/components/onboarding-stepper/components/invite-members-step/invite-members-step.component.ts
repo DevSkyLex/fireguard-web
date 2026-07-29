@@ -12,6 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MessageService } from 'primeng/api';
+import type { StoreError } from '@core/request-state';
 import { OnboardingStore } from '@features/onboarding/state';
 import { InviteMembersForm, type InviteMembersFormValues } from '@features/onboarding/ui/forms';
 import { OrganizationSetupService, type SetupOrganizationRole } from '@features/organization/setup';
@@ -113,6 +114,21 @@ export class InviteMembersStep extends OnboardingStepBase {
    * @type {Signal<boolean>}
    */
   protected readonly isExecuting: Signal<boolean> = this.onboardingStore.isExecutingStep;
+
+  /**
+   * Property stepError
+   * @readonly
+   *
+   * @description
+   * Last step-execution failure, handed to the form so a 422 — an address already
+   * invited, a quota reached — lands on the field the server named.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly stepError: Signal<StoreError | null> = this.onboardingStore.executeStepError;
 
   /**
    * Property isBusy

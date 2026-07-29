@@ -4,6 +4,8 @@ import {
   computed,
   effect,
   inject,
+  input,
+  type InputSignal,
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,7 +22,6 @@ import {
   EquipmentForm,
   type EquipmentFormValues,
 } from '@features/organization/features/equipments/ui/forms';
-import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Page coordinating updates to the active equipment.
@@ -33,13 +34,12 @@ import { ActiveOrganizationStore } from '@features/organization/state';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentEditPage {
+  /** Routed organization, bound from `:organizationId` by the router. */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
   /** Router used after equipment update or cancellation. */
   private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative equipment routes. */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-  /** Active organization context store. */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Active equipment context store populated by the route resolver. */
   private readonly activeEquipmentStore: ActiveEquipmentStore =
     inject<ActiveEquipmentStore>(ActiveEquipmentStore);
@@ -65,12 +65,10 @@ export class EquipmentEditPage {
 
   /** Updates the active equipment with valid form values. */
   protected handleSubmit(values: EquipmentFormValues): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
     const equipmentId: string | undefined = this.equipment()?.id;
-    if (!organizationId || !equipmentId) return;
+    if (!equipmentId) return;
 
-    const input: UpdateEquipmentInput = {
+    const payload: UpdateEquipmentInput = {
       type: values.type,
       subType: values.subType || null,
       brand: values.brand || null,
@@ -78,7 +76,7 @@ export class EquipmentEditPage {
       serialNumber: values.serialNumber || null,
       locationLabel: values.locationLabel || null,
     };
-    this.store.update({ organizationId, equipmentId, input });
+    this.store.update({ organizationId: this.organizationId(), equipmentId, input: payload });
   }
 
   /** Returns to equipment detail without updating. */

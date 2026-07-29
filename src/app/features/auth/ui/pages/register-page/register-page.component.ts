@@ -85,6 +85,24 @@ export class RegisterPage {
    * @type {Signal<boolean>}
    */
   protected readonly loading: Signal<boolean> = computed(() => this.registerStore.isRegistering());
+
+  /**
+   * Property invitedEmail
+   * @readonly
+   *
+   * @description
+   * Address carried by the `email` query parameter, set when the visitor comes
+   * from an invitation. Pre-filling it keeps the account they create matched to
+   * the invitation they are answering.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly invitedEmail: Signal<string | null> = computed(() =>
+    this.route.snapshot.queryParamMap.get('email'),
+  );
   //#endregion
 
   //#region Constructor

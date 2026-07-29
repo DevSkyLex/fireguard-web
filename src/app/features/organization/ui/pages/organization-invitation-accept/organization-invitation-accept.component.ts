@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,8 +14,16 @@ import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
-import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
-import { resolveInvitationTag } from '@features/organization/models';
+import {
+  AUTH_LOGOUT_PORT,
+  AUTH_SESSION_PORT,
+  type AuthLogoutPort,
+  type AuthSessionPort,
+} from '@features/auth/ports';
+import {
+  resolveInvitationTag,
+  type OrganizationInvitationStatus,
+} from '@features/organization/models';
 import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
 import { Tag } from '@shared/components';
 import type { TagDescriptor } from '@shared/components';
@@ -35,7 +43,7 @@ import type { TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-organization-invitation-accept',
-  imports: [ButtonModule, CardModule, MessageModule, SkeletonModule, Tag],
+  imports: [ButtonModule, CardModule, DatePipe, MessageModule, SkeletonModule, Tag],
   providers: [OrganizationInvitationAcceptStore],
   templateUrl: './organization-invitation-accept.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,6 +55,21 @@ export class OrganizationInvitationAcceptPage {
   private readonly router: Router = inject<Router>(Router);
   /** Auth session port (authentication state + sign-out). */
   private readonly session: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
+
+  /**
+   * Property logoutPort
+   * @readonly
+   *
+   * @description
+   * Auth-owned logout contract, used to end the current session properly when the
+   * invitee turns out to be signed in as somebody else.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {AuthLogoutPort}
+   */
+  private readonly logoutPort: AuthLogoutPort = inject<AuthLogoutPort>(AUTH_LOGOUT_PORT);
   /** User identity port used to compare the signed-in email with the invite. */
   private readonly identity: UserIdentityPort = inject<UserIdentityPort>(USER_IDENTITY_PORT);
   /** Page-scoped invitation acceptance store. */
@@ -68,11 +91,36 @@ export class OrganizationInvitationAcceptPage {
     () => this.store.preview()?.invitedEmail ?? null,
   );
   /** Effective status of the previewed invitation. */
-  protected readonly status: Signal<string | null> = computed(
+  protected readonly status: Signal<OrganizationInvitationStatus | null> = computed(
     () => this.store.preview()?.status ?? null,
   );
   /** Whether the previewed invitation is still pending (acceptable). */
   protected readonly isPending: Signal<boolean> = computed(() => this.status() === 'pending');
+  /**
+   * Why a non-pending invitation cannot be accepted, in the invitee's terms.
+   *
+   * Each dead end calls for a different move — ask for a new link, sign in,
+   * or nothing at all — so they do not share one message. `expired` is
+   * resolved server-side, hence no date comparison here.
+   */
+  protected readonly blockedReason: Signal<string | null> = computed((): string | null => {
+    switch (this.status()) {
+      case 'expired':
+        return $localize`:@@org.invAccept.expired:This invitation has expired. Ask an organization administrator to send you a new one.`;
+      case 'revoked':
+        return $localize`:@@org.invAccept.revoked:This invitation was revoked. Ask an organization administrator if you think this is a mistake.`;
+      case 'accepted':
+        return $localize`:@@org.invAccept.alreadyAccepted:This invitation has already been accepted. Sign in to open the workspace.`;
+      default:
+        return null;
+    }
+  });
+
+  /** Deadline shown while the invitation can still be accepted. */
+  protected readonly expiresAt: Signal<string | null> = computed(() =>
+    this.isPending() ? (this.store.preview()?.expiresAt ?? null) : null,
+  );
+
   /** Presentation descriptor for the invitation status badge. */
   protected readonly statusDescriptor: Signal<TagDescriptor | null> = computed(() => {
     const status = this.status();
@@ -139,13 +187,26 @@ export class OrganizationInvitationAcceptPage {
   /** Redirects to sign-up, returning to this page afterwards. */
   protected register(): void {
     this.router
-      .navigate(['/auth/register'], { queryParams: { returnUrl: this.returnUrl() } })
+      .navigate(['/auth/register'], {
+        queryParams: { returnUrl: this.returnUrl(), email: this.invitedEmail() ?? undefined },
+      })
       .catch(() => undefined);
   }
 
-  /** Clears the current session and sends the user to sign in again. */
+  /**
+   * Ends the current session and sends the user to sign in as someone else.
+   *
+   * Goes through the real logout rather than clearing locally: only the server can
+   * revoke the `refresh_token` cookie, and it is `HttpOnly`, so a local clear left
+   * the previous member's session resurrectable from this very browser. On a
+   * shared field device that is somebody else's account left unlocked.
+   *
+   * Navigation does not wait for the response — the request is already in flight
+   * and the local state is dropped synchronously, so the sign-in page is correct
+   * either way.
+   */
   protected switchAccount(): void {
-    this.session.clearSession();
+    this.logoutPort.logout();
     this.router
       .navigate(['/auth/login'], { queryParams: { returnUrl: this.returnUrl() } })
       .catch(() => undefined);

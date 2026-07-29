@@ -72,7 +72,10 @@ describe('DashboardStore', () => {
         { provide: OrganizationService, useValue: mockOrganizationService },
         {
           provide: ActiveOrganizationStore,
-          useValue: { selectedOrganization: signal<OrganizationOutput | null>(organization) },
+          useValue: {
+            selectedOrganization: signal<OrganizationOutput | null>(organization),
+            selectedOrganizationId: signal<string | null>(organization.id),
+          },
         },
         { provide: PLATFORM_ID, useValue: 'browser' },
       ],

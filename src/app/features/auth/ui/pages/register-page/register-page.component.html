@@ -15,7 +15,12 @@
   </section>
 
   <!-- Registration form -->
-  <app-register-form [loading]="loading()" (submitted)="handleRegister($event)" />
+  <app-register-form
+    [loading]="loading()"
+    [email]="invitedEmail()"
+    [serverError]="registerStore.registerError()"
+    (submitted)="handleRegister($event)"
+  />
 
   <!-- Sign-in link -->
   <p class="text-center text-sm text-surface-500 dark:text-surface-400">

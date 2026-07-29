@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex h-full flex-col">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <div class="flex flex-1 flex-col gap-5">
     <div class="flex flex-col gap-2">
       <label for="assign-member" class="text-sm font-medium text-surface-900 dark:text-surface-50">
@@ -72,4 +78,14 @@
       [disabled]="form.invalid || loading()"
     />
   </div>
+  @if (serverFieldErrors()['memberId']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['roleId']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
 </form>

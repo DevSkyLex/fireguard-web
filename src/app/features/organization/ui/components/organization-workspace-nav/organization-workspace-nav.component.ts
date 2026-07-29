@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { ACCOUNT_PERMISSION, UserPermissionService } from '@features/account';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
-  appendOrganizationAuditNavigationItem,
   buildOrganizationNavigationSection,
   ORGANIZATION_NAVIGATION_GROUPS,
   type OrganizationNavigationGroup,
@@ -81,22 +79,6 @@ export class OrganizationWorkspaceNav {
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
   /**
-   * Property userPermissions
-   * @readonly
-   *
-   * @description
-   * Account-level permissions. The audit destination is gated by `audit.read`,
-   * which is a user permission rather than an organization-member one.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {UserPermissionService}
-   */
-  private readonly userPermissions: UserPermissionService =
-    inject<UserPermissionService>(UserPermissionService);
-
-  /**
    * Property sections
    * @readonly
    *
@@ -132,21 +114,11 @@ export class OrganizationWorkspaceNav {
     if (!organization) return [];
 
     const granted: ReadonlySet<string> = new Set(this.memberAccess.permissions());
-    // Destinations stay inside the shell they were opened from. The workspace
-    // hosts the same route objects under its own segment, so pointing at the
-    // dashboard prefix here would eject the member from the workspace on the
-    // first click.
-    const prefix: string = `/organizations/${organization.id}/workspace`;
-    const canReadAudit: boolean = this.userPermissions.hasPermission(ACCOUNT_PERMISSION.AUDIT_READ);
+    const prefix: string = `/organizations/${organization.id}`;
 
     return ORGANIZATION_NAVIGATION_GROUPS.map(
-      (group: OrganizationNavigationGroup): MenuItem | null => {
-        const section: MenuItem | null = buildOrganizationNavigationSection(group, prefix, granted);
-
-        if (group.id !== 'administration' || !canReadAudit) return section;
-
-        return appendOrganizationAuditNavigationItem(section, prefix);
-      },
+      (group: OrganizationNavigationGroup): MenuItem | null =>
+        buildOrganizationNavigationSection(group, prefix, granted),
     ).filter((section: MenuItem | null): section is MenuItem => Boolean(section?.items?.length));
   });
 
@@ -174,7 +146,7 @@ export class OrganizationWorkspaceNav {
         return null;
       }
 
-      return ['/organizations', organization.id, 'workspace', 'settings'];
+      return ['/organizations', organization.id, 'settings'];
     },
   );
   //#endregion

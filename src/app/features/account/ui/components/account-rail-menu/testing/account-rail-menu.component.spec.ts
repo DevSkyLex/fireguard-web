@@ -5,8 +5,6 @@ import { Events } from '@ngrx/signals/events';
 import { EMPTY } from 'rxjs';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT } from '@features/auth';
-import type { OrganizationOutput } from '@features/organization/models';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { AccountRailMenu } from '../account-rail-menu.component';
 
 const query = <T extends HTMLElement>(
@@ -22,22 +20,14 @@ const queryInPopover = <T extends HTMLElement>(testid: string): T | null =>
   document.body.querySelector(`[data-testid="${testid}"]`);
 
 describe('AccountRailMenu', () => {
-  const buildOrganization = (overrides: Partial<OrganizationOutput> = {}): OrganizationOutput =>
-    ({
-      id: 'org-1',
-      name: 'FireGuard Org',
-      ...overrides,
-    }) as OrganizationOutput;
-
   const setup = (
     options: {
       unread?: number;
       isLoading?: boolean;
-      organization?: OrganizationOutput | null;
       isLoggingOut?: boolean;
     } = {},
   ) => {
-    const { unread = 0, isLoading = false, organization = null, isLoggingOut = false } = options;
+    const { unread = 0, isLoading = false, isLoggingOut = false } = options;
 
     const mockUserIdentityPort = {
       isLoading: signal(isLoading),
@@ -55,12 +45,6 @@ describe('AccountRailMenu', () => {
       hasUnread: signal(unread > 0),
       unreadCount: signal(unread),
     };
-    const mockOrganizationContextPort = {
-      selectedOrganization: signal<OrganizationOutput | null>(organization),
-      isLoadingOrganization: signal(false),
-      setOrganization: vi.fn(),
-      clearSelectedOrganization: vi.fn(),
-    };
 
     TestBed.configureTestingModule({
       imports: [AccountRailMenu],
@@ -69,7 +53,6 @@ describe('AccountRailMenu', () => {
         { provide: USER_IDENTITY_PORT, useValue: mockUserIdentityPort },
         { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
-        { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationContextPort },
         { provide: Events, useValue: { on: () => EMPTY } },
       ],
     });
@@ -81,7 +64,7 @@ describe('AccountRailMenu', () => {
     const fixture: ComponentFixture<AccountRailMenu> = TestBed.createComponent(AccountRailMenu);
     fixture.detectChanges();
 
-    return { fixture, mockAuthLogoutPort, mockOrganizationContextPort };
+    return { fixture, mockAuthLogoutPort };
   };
 
   describe('loading', () => {
@@ -146,7 +129,7 @@ describe('AccountRailMenu', () => {
   });
 
   describe('popover destinations', () => {
-    it('should link the account destinations to /account when no organization is selected', () => {
+    it('should link the account destinations to /account', () => {
       const { fixture } = setup();
       query<HTMLButtonElement>(fixture, 'account-rail-menu-trigger')?.click();
       fixture.detectChanges();
@@ -156,18 +139,6 @@ describe('AccountRailMenu', () => {
 
       expect(profile?.getAttribute('href')).toBe('/account?tab=profile');
       expect(notifications?.getAttribute('href')).toBe('/account?tab=notifications');
-    });
-
-    it('should link the account destinations into the workspace shell when an organization is selected', () => {
-      const { fixture } = setup({ organization: buildOrganization() });
-      query<HTMLButtonElement>(fixture, 'account-rail-menu-trigger')?.click();
-      fixture.detectChanges();
-
-      const profile = queryInPopover<HTMLAnchorElement>('account-rail-menu-profile');
-
-      expect(profile?.getAttribute('href')).toBe(
-        '/organizations/org-1/workspace/account?tab=profile',
-      );
     });
 
     it('should render the display name and email in the popover header', () => {

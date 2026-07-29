@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -18,6 +20,7 @@ import type {
   OrganizationPermissionOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { OrganizationRoleFormValues } from './models';
 
 /**
@@ -52,6 +55,33 @@ export class OrganizationRoleForm {
     input.required();
   /** Whether role submission is pending. */
   public readonly loading: InputSignal<boolean> = input(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page. Role names are unique per organization,
+   * so a clash returns a 422 naming `name`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), ['name', 'description', 'permissions'])[0]
+        ?.message ?? null,
+  );
   /** Emits valid role values. */
   public readonly submitted: OutputEmitterRef<OrganizationRoleFormValues> = output();
   /** Emits cancellation of role editing. */

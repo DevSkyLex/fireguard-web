@@ -9,12 +9,7 @@ import {
   withEventReplay,
   withHttpTransferCacheOptions,
 } from '@angular/platform-browser';
-import {
-  provideRouter,
-  withComponentInputBinding,
-  withPreloading,
-  withRouterConfig,
-} from '@angular/router';
+import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
@@ -24,16 +19,20 @@ import { provideFeedback } from '@core/feedback';
 import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-forward';
 import { FireguardTheme } from '@core/primeng';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
-import { SelectivePreloadingStrategy } from '@core/routing/strategies/selective-preloading/selective-preloading.strategy';
 import { provideSplashScreen } from '@core/splash-screen';
 import { provideTheme } from '@core/theme';
 import { environment } from '@env/environment';
 import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
-import { provideCollaborationFeature } from '@features/collaboration';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
-import { provideInterventionsFeature } from '@features/organization/features/interventions';
+// Imported by file rather than through the feature barrels on purpose: those
+// barrels also expose the shell contributions, which reach the UI components and
+// from there the offline/sync graph. Pulling that in here would put the whole of
+// messaging and field work in the initial bundle for every visitor, including the
+// ones who only ever see a login screen.
+import { provideCollaborationFeature } from '@features/organization/features/collaboration/collaboration.feature';
+import { provideInterventionsFeature } from '@features/organization/features/interventions/interventions.feature';
 
 /**
  * Configuration appConfig
@@ -63,15 +62,13 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       APP_ROUTES,
       withComponentInputBinding(),
-      withPreloading(SelectivePreloadingStrategy),
       // Route params reach every descendant, not only children of a
       // component-less or empty-path parent (Angular's `emptyOnly` default).
-      // The workspace shell mounts a layout component between
-      // `:organizationId` and the organization pages, which under `emptyOnly`
-      // hid the parameter from guards reading
-      // `route.paramMap.get('organizationId')` — they then bounced to `/`.
-      // Widening this only ever adds params; no route in the app redefines an
-      // inherited one.
+      // Organization pages sit several levels below `:organizationId`, and
+      // under `emptyOnly` any component in between hid the parameter from
+      // guards reading `route.paramMap.get('organizationId')` — they then
+      // bounced to `/`. Widening this only ever adds params; no route in the
+      // app redefines an inherited one.
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
     ),
     provideClientHydration(

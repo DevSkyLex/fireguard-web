@@ -1,2 +1,10 @@
 export { HydraApiService } from './services/hydra-api/hydra-api.service';
-export type { ApiRequestOptions, PaginationOptions, RequestOptions } from './models';
+export type {
+  ApiError,
+  ApiRequestOptions,
+  ConstraintViolation,
+  PaginationOptions,
+  RequestOptions,
+  Violation,
+} from './models';
+export { isApiError, isConstraintViolation } from './utils';

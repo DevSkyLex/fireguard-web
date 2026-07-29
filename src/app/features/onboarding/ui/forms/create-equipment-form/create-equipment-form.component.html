@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <!-- Equipment Type -->
   <div class="flex flex-col gap-2">
     <label
@@ -95,4 +101,24 @@
     [disabled]="form.invalid || loading()"
     fluid
   />
+  @if (serverFieldErrors()['type']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['brand']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['model']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['serialNumber']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
 </form>

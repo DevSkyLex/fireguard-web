@@ -19,7 +19,6 @@ const apiError = (status: number, detail: string): ApiError => ({
   type: 'about:blank',
   title: 'Error',
   detail,
-  instance: null,
 });
 
 describe('FacilityStore', () => {
@@ -250,7 +249,6 @@ describe('FacilityStore', () => {
           title: 'Conflict',
           detail:
             'Cannot delete a facility that still has child facilities; move or remove them first.',
-          instance: null,
         })),
       );
 

@@ -19,6 +19,7 @@
     >
       <app-equipment-form
         [loading]="store.isCreating()"
+        [serverError]="store.createError()"
         (submitted)="handleSubmit($event)"
         (cancelled)="handleCancel()"
       />

@@ -67,7 +67,6 @@ export const EQUIPMENT_ROUTES: Routes = [
     title: $localize`:@@route.equipments:Equipments`,
     data: {
       breadcrumb: false,
-      preload: true,
     },
   },
 ];

@@ -81,35 +81,7 @@ export const organizationLandingGuard: CanActivateFn = (
 
   // No permitted destination in this organization: let the default-organization
   // guard pick another workspace, excluding this one to avoid a redirect loop.
-  //
-  // The redirect must stay in the shell the route was activated in. The same
-  // route objects are mounted under both `/organizations/:id` (dashboard) and
-  // `/organizations/:id/workspace`, so a hard-coded dashboard prefix ejected a
-  // member out of the workspace shell mid-session.
-  const prefix: readonly string[] = isInWorkspaceShell(route)
-    ? ['/organizations', organizationId, 'workspace']
-    : ['/organizations', organizationId];
-
   return destination
-    ? router.createUrlTree([...prefix, ...destination.path.split('/')])
+    ? router.createUrlTree(['/organizations', organizationId, ...destination.path.split('/')])
     : router.createUrlTree(['/organizations'], { queryParams: { excluded: organizationId } });
 };
-
-/**
- * Function isInWorkspaceShell
- *
- * @description
- * Whether the activated route is mounted inside the workspace shell, read from
- * its own ancestry so a redirect lands in the shell the member is actually in.
- *
- * @param {ActivatedRouteSnapshot} route - Snapshot to inspect.
- *
- * @returns {boolean} `true` when a `workspace` segment is in the route's path.
- *
- * @since 1.1.0
- */
-function isInWorkspaceShell(route: ActivatedRouteSnapshot): boolean {
-  return route.pathFromRoot.some((snapshot: ActivatedRouteSnapshot): boolean =>
-    snapshot.url.some((segment): boolean => segment.path === 'workspace'),
-  );
-}

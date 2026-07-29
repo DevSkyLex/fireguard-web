@@ -14,7 +14,7 @@
   <app-account-profile-form
     [profile]="userStore.profile()"
     [saving]="editStore.isSaving()"
-    [hasSaveError]="editStore.saveError() !== null"
+    [serverError]="editStore.saveError()"
     (submitted)="save($event)"
   />
 
@@ -25,8 +25,8 @@
     [step]="passwordStore.step()"
     [requesting]="passwordStore.isRequesting()"
     [confirming]="passwordStore.isConfirming()"
-    [hasRequestError]="passwordStore.requestError() !== null"
-    [hasConfirmError]="passwordStore.confirmError() !== null"
+    [requestError]="passwordStore.requestError()"
+    [confirmError]="passwordStore.confirmError()"
     [maskedRecipient]="passwordStore.maskedRecipient()"
     (requested)="requestPasswordChange($event)"
     (confirmed)="confirmPasswordChange($event)"

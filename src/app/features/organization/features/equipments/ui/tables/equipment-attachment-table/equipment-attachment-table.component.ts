@@ -41,6 +41,16 @@ export class EquipmentAttachmentTable {
   public readonly loading: InputSignal<boolean> = input(false);
   /** Whether an attachment mutation is pending. */
   public readonly mutating: InputSignal<boolean> = input(false);
+
+  /**
+   * Whether an *add* is pending, as opposed to {@link mutating}, which also covers
+   * deletions. The form clears itself when its own submission completes, so it must
+   * not be told a delete finished.
+   */
+  public readonly submitting: InputSignal<boolean> = input(false);
+
+  /** Last add rejection, relayed to the form so a 422 lands on its fields. */
+  public readonly submitError: InputSignal<unknown> = input<unknown>(null);
   /** Whether the active member can manage attachments. */
   public readonly canManage: InputSignal<boolean> = input(false);
   /** Emits valid attachment creation values. */

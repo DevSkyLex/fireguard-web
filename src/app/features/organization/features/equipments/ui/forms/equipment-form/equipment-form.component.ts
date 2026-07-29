@@ -1,12 +1,14 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import {
   NonNullableFormBuilder,
@@ -20,6 +22,7 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { EquipmentFormData, EquipmentFormValues } from './models';
 
 /**
@@ -56,6 +59,41 @@ export class EquipmentForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field it refused — a serial number already registered, an
+   * unknown type — which no client-side validator can anticipate.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), [
+        'type',
+        'subType',
+        'brand',
+        'model',
+        'serialNumber',
+        'locationLabel',
+      ])[0]?.message ?? null,
+  );
 
   /** Existing equipment when the form is used in edit mode. */
   public readonly equipment: InputSignal<EquipmentOutput | null> = input<EquipmentOutput | null>(

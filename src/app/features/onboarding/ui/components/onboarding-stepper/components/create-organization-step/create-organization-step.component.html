@@ -1,4 +1,5 @@
 <app-create-organization-form
   [loading]="isCreatingOrganization() || isExecuting()"
+  [serverError]="createError()"
   (submitted)="handleSubmit($event)"
 />

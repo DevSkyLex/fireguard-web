@@ -352,7 +352,6 @@ describe('FacilityService', () => {
           title: 'Conflict',
           detail:
             'Cannot delete a facility that still has child facilities; move or remove them first.',
-          instance: null,
         },
         { status: 409, statusText: 'Conflict' },
       );

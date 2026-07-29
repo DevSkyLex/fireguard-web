@@ -64,7 +64,7 @@
       <a
         class="flex min-h-8 items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-50"
         autofocus
-        [routerLink]="accountLink()"
+        routerLink="/account"
         [queryParams]="{ tab: 'profile' }"
         data-testid="account-rail-menu-profile"
         (click)="close()"
@@ -75,7 +75,7 @@
 
       <a
         class="flex min-h-8 items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-50"
-        [routerLink]="accountLink()"
+        routerLink="/account"
         [queryParams]="{ tab: 'notifications' }"
         data-testid="account-rail-menu-notifications"
         (click)="close()"

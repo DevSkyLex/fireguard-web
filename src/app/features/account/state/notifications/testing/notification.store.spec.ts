@@ -6,6 +6,7 @@ import type { HydraCollection } from '@core/api/models';
 import { MercureService } from '@core/mercure';
 import { NotificationService } from '@features/account/data-access';
 import type { NotificationOutput, NotificationTypeOutput } from '@features/account/models';
+import { authStoreEvents } from '@features/auth';
 import { NotificationStore } from '../notification.store';
 
 describe('NotificationStore', () => {
@@ -110,13 +111,30 @@ describe('NotificationStore', () => {
     expect(store.listCallState().status).toBe('success');
   });
 
-  it('should fetch notifications and write them to transfer state when not hydrated', async () => {
+  it('should fetch notifications without seeding transfer state on the browser', async () => {
     mockNotificationService.list.mockReturnValue(of(notificationCollection));
 
     await store.initialize();
 
     expect(mockNotificationService.list).toHaveBeenCalledTimes(1);
     expect(store.notifications()).toEqual([notification]);
+    // `TransferState` is an SSR-to-browser handoff. A browser-side write would sit
+    // there holding this user's notifications until the next `initialize()` read it
+    // back — which is how the previous user's list reappeared after a re-login.
+    expect(
+      transferState.get(
+        makeStateKey<HydraCollection<NotificationOutput> | null>('notification-list'),
+        null,
+      ),
+    ).toBeNull();
+  });
+
+  it('should write notifications to transfer state when rendering on the server', async () => {
+    configure('server');
+    mockNotificationService.list.mockReturnValue(of(notificationCollection));
+
+    await store.initialize();
+
     expect(
       transferState.get(
         makeStateKey<HydraCollection<NotificationOutput> | null>('notification-list'),
@@ -219,13 +237,27 @@ describe('NotificationStore', () => {
   });
 
   describe('initializeTypes', () => {
-    it('should fetch and cache types when not hydrated', async () => {
+    it('should fetch types without seeding transfer state on the browser', async () => {
       mockNotificationService.listTypes.mockReturnValue(of(notificationTypes));
 
       await store.initializeTypes();
 
       expect(mockNotificationService.listTypes).toHaveBeenCalledTimes(1);
       expect(store.types()).toEqual(notificationTypes);
+      expect(
+        transferState.get(
+          makeStateKey<ReadonlyArray<NotificationTypeOutput> | null>('notification-types'),
+          null,
+        ),
+      ).toBeNull();
+    });
+
+    it('should write types to transfer state when rendering on the server', async () => {
+      configure('server');
+      mockNotificationService.listTypes.mockReturnValue(of(notificationTypes));
+
+      await store.initializeTypes();
+
       expect(
         transferState.get(
           makeStateKey<ReadonlyArray<NotificationTypeOutput> | null>('notification-types'),
@@ -534,6 +566,89 @@ describe('NotificationStore', () => {
 
     it('should report listError as null when there is no error', () => {
       expect(store.listError()).toBeNull();
+    });
+  });
+
+  describe('session teardown', () => {
+    /**
+     * The real `Dispatcher` is required here: the store reacts through `Events`,
+     * which only sees what a genuine dispatcher publishes. The shared `configure()`
+     * replaces it with a spy, so these tests build their own TestBed.
+     */
+    const configureWithRealDispatcher = () => {
+      mockNotificationService = {
+        list: vi.fn(),
+        listTypes: vi.fn(),
+        markAsRead: vi.fn(),
+        getSubscription: vi.fn(),
+      };
+      mockMercureService = { subscribe: vi.fn() };
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          { provide: NotificationService, useValue: mockNotificationService },
+          { provide: MercureService, useValue: mockMercureService },
+        ],
+      });
+
+      store = TestBed.inject(NotificationStore);
+    };
+
+    it('should drop the previous user notifications when the session ends', async () => {
+      configureWithRealDispatcher();
+      mockNotificationService.list.mockReturnValue(of(notificationCollection));
+
+      store.load();
+      await Promise.resolve();
+      expect(store.notifications()).toEqual([notification]);
+
+      TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
+
+      expect(store.notifications()).toEqual([]);
+      expect(store.totalNotifications()).toBe(0);
+      expect(store.unreadCount()).toBe(0);
+      expect(store.listCallState().status).toBe('idle');
+    });
+
+    it('should let the next user re-initialize after the session ended', async () => {
+      configureWithRealDispatcher();
+      mockNotificationService.list.mockReturnValue(of(notificationCollection));
+
+      await store.initialize();
+      expect(mockNotificationService.list).toHaveBeenCalledTimes(1);
+
+      TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
+
+      // `initialize()` memoizes its promise; if `clear()` did not drop that memo the
+      // next user would silently reuse the previous one and never refetch.
+      mockNotificationService.list.mockReturnValue(of(otherNotificationCollection));
+      await store.initialize();
+
+      expect(mockNotificationService.list).toHaveBeenCalledTimes(2);
+      expect(store.notifications()).toEqual([otherNotification]);
+    });
+
+    it('should stop the Mercure stream when the session ends', async () => {
+      configureWithRealDispatcher();
+      const pushed = new Subject<NotificationOutput>();
+      mockNotificationService.getSubscription.mockReturnValue(
+        of({ topic: 'topic', token: 'token' }),
+      );
+      mockMercureService.subscribe.mockReturnValue(pushed.asObservable());
+
+      store.connectMercure();
+      await Promise.resolve();
+
+      TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
+
+      // The hub streams with the departing user's token: anything it pushes after
+      // logout must not reach the store the next user reads.
+      pushed.next(otherNotification);
+
+      expect(store.notifications()).toEqual([]);
+      expect(pushed.observed).toBe(false);
     });
   });
 });

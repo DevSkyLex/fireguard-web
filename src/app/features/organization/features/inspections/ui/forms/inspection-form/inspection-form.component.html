@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <!-- Equipment (required) -->
   <div class="flex flex-col gap-2">
     <label
@@ -8,7 +14,7 @@
       >Equipment</label
     >
     <p-select
-      id="equipmentId"
+      inputId="equipmentId"
       formControlName="equipmentId"
       [options]="equipmentOptions"
       optionLabel="label"
@@ -38,7 +44,7 @@
       >Result</label
     >
     <p-select
-      id="result"
+      inputId="result"
       formControlName="result"
       [options]="resultOptions"
       optionLabel="label"
@@ -65,7 +71,7 @@
       >Performed At</label
     >
     <p-datepicker
-      id="performedAt"
+      inputId="performedAt"
       formControlName="performedAt"
       [showTime]="true"
       [showIcon]="true"
@@ -91,7 +97,7 @@
       >Inspector Type</label
     >
     <p-select
-      id="inspectorType"
+      inputId="inspectorType"
       formControlName="inspectorType"
       [options]="inspectorTypeOptions"
       optionLabel="label"
@@ -140,6 +146,11 @@
         }
       </p-message>
     }
+    @if (serverFieldErrors()['inspectorName']; as serverMessage) {
+      <p-message severity="error" variant="simple" size="small" role="alert">
+        <span>{{ serverMessage }}</span>
+      </p-message>
+    }
   </div>
 
   <!-- Facility (optional) -->
@@ -153,7 +164,7 @@
       <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
     <p-select
-      id="facilityId"
+      inputId="facilityId"
       formControlName="facilityId"
       [options]="facilityOptions"
       optionLabel="label"
@@ -178,7 +189,7 @@
       <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
     <p-select
-      id="checklistId"
+      inputId="checklistId"
       formControlName="checklistId"
       [options]="checklistOptions"
       optionLabel="label"

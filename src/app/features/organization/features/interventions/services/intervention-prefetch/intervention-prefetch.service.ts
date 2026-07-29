@@ -206,7 +206,9 @@ export class InterventionPrefetchService {
       issues: this.service.listIssues(intervention.id),
     }).pipe(
       switchMap(({ workItems, changes, issues }) => {
-        if (this.organization.selectedOrganization()?.id !== organizationId) return EMPTY;
+        // The routed identifier, not the loaded entity: mid-switch the entity
+        // is briefly absent, which would abort a prefetch that is still valid.
+        if (this.organization.selectedOrganizationId() !== organizationId) return EMPTY;
         return from(this.offline.saveWorkspace(intervention, workItems, changes, issues.member));
       }),
       map(() => undefined),

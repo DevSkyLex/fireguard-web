@@ -53,6 +53,11 @@
             <app-tag [descriptor]="descriptor" />
           }
         </div>
+        @if (expiresAt(); as deadline) {
+          <p class="text-sm text-surface-500" i18n="@@org.invAccept.expiresAt">
+            Expires on {{ deadline | date: 'medium' }}
+          </p>
+        }
       </div>
 
       @if (store.isAccepted()) {
@@ -89,11 +94,10 @@
             (onClick)="goToWorkspace()"
           />
         </div>
-      } @else if (!isPending()) {
-        <p-message i18n="@@org.invAccept.notPending" severity="warn" class="mb-4 block"
-          >This invitation is no longer active. Ask an organization administrator to send a new
-          one.</p-message
-        >
+      } @else if (blockedReason(); as reason) {
+        <p-message [severity]="status() === 'accepted' ? 'info' : 'warn'" class="mb-4 block">
+          <span>{{ reason }}</span>
+        </p-message>
         <p-button
           i18n-label="@@org.invAccept.openOrgs"
           label="Open workspace"

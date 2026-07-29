@@ -161,7 +161,7 @@ export interface OrganizationNavigationItem {
  * organization landing guard both consume this list so route visibility and
  * fallback behavior cannot diverge. The audit log destination is deliberately
  * absent: it is gated by the global `audit.read` account permission and is
- * appended separately via {@link appendOrganizationAuditNavigationItem}.
+ * platform-wide and lives outside the organization scope.
  *
  * @since 1.0.0
  */
@@ -356,49 +356,4 @@ export function buildOrganizationNavigationSection(
     expanded: true,
     items,
   };
-}
-
-/**
- * Function appendOrganizationAuditNavigationItem
- *
- * @description
- * Appends the audit log destination to the "Administration" section, creating
- * that section when no organization-permission item is visible in it. The
- * destination is gated by the global `audit.read` account permission — not an
- * `OrganizationPermissionName` — so it cannot be expressed as an
- * {@link OrganizationNavigationItem}; the caller resolves visibility against
- * the account permission surface before appending.
- *
- * @param {MenuItem | null} section - Administration section built from organization-member permissions, or `null` when empty.
- * @param {string} prefix - Active organization route prefix.
- *
- * @returns {MenuItem} Administration section including the audit log destination.
- *
- * @since 1.2.0
- */
-export function appendOrganizationAuditNavigationItem(
-  section: MenuItem | null,
-  prefix: string,
-): MenuItem {
-  const auditItem: MenuItem = {
-    id: 'audit',
-    label: $localize`:@@org.nav.audit:Audit log`,
-    icon: 'pi pi-history',
-    routerLink: `${prefix}/audit`,
-  };
-
-  if (section === null) {
-    const group: OrganizationNavigationGroup | undefined = ORGANIZATION_NAVIGATION_GROUPS.find(
-      (candidate: OrganizationNavigationGroup): boolean => candidate.id === 'administration',
-    );
-
-    return {
-      id: 'administration',
-      label: group?.label ?? '',
-      expanded: true,
-      items: [auditItem],
-    };
-  }
-
-  return { ...section, items: [...(section.items ?? []), auditItem] };
 }

@@ -1,3 +1,2 @@
+export { withNotificationBell } from './conversation-header';
 export { withAccountRailMenu } from './rail';
-export { withAccountProfile } from './sidebar';
-export { withNotificationBell } from './topbar';

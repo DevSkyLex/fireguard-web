@@ -1,5 +1,5 @@
 import type { DashboardSingleTrendViewModel } from '@features/organization/ui/components/organization-dashboard/models';
-import { buildDashboardSingleTrendBarChartData, buildDashboardSingleTrendLineChartData } from '..';
+import { buildDashboardSingleTrendLineChartData } from '..';
 
 describe('buildDashboardSingleTrendChartData utils', () => {
   const viewModel: DashboardSingleTrendViewModel = {
@@ -11,46 +11,6 @@ describe('buildDashboardSingleTrendChartData utils', () => {
     compareEnabled: true,
     hasComparisonData: true,
   };
-
-  it('builds bar chart data with comparison dataset', () => {
-    const chartData = buildDashboardSingleTrendBarChartData({
-      viewModel,
-      label: 'Equipment Created',
-      currentBackgroundColor: '#8b5cf6',
-      currentHoverBackgroundColor: '#7c3aed',
-      comparisonBackgroundColor: '#c4b5fd',
-      comparisonHoverBackgroundColor: '#a78bfa',
-    });
-
-    expect(chartData.labels).toEqual(['', '', '']);
-    expect(chartData.datasets).toHaveLength(2);
-    expect(chartData.datasets[0]).toMatchObject({
-      label: 'Equipment Created',
-      data: [3, 5, 2],
-      backgroundColor: '#8b5cf6',
-      hoverBackgroundColor: '#7c3aed',
-    });
-    expect(chartData.datasets[1]).toMatchObject({
-      label: 'Previous Period',
-      data: [1, 4, 2],
-      backgroundColor: '#c4b5fd',
-      hoverBackgroundColor: '#a78bfa',
-    });
-  });
-
-  it('omits the comparison dataset when no comparison should be rendered', () => {
-    const chartData = buildDashboardSingleTrendBarChartData({
-      viewModel: {
-        ...viewModel,
-        compareEnabled: false,
-      },
-      label: 'Facilities Created',
-      currentBackgroundColor: '#14b8a6',
-      comparisonBackgroundColor: '#99f6e4',
-    });
-
-    expect(chartData.datasets).toHaveLength(1);
-  });
 
   it('builds line chart data and derives a default comparison color', () => {
     const chartData = buildDashboardSingleTrendLineChartData({

@@ -26,7 +26,8 @@
   @if (canAdd()) {
     <app-non-conformity-form
       class="block border-b border-surface-200 p-4 dark:border-surface-800"
-      [loading]="mutating()"
+      [loading]="submitting()"
+      [serverError]="submitError()"
       (submitted)="add.emit($event)"
     />
   }

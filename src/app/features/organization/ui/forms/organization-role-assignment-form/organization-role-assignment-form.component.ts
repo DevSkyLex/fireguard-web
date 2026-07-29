@@ -18,6 +18,7 @@ import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { MemberOption, OrganizationRoleAssignmentValues } from './models';
 
 /**
@@ -83,6 +84,34 @@ export class OrganizationRoleAssignmentForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field the server refused; projecting it tells the user which
+   * one to fix instead of leaving them with a generic toast.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () => toUnmatchedViolations(this.serverError(), ['memberId', 'roleId'])[0]?.message ?? null,
+  );
+
   //#endregion
 
   //#region Outputs
@@ -187,17 +216,20 @@ export class OrganizationRoleAssignmentForm {
    * Method submit
    *
    * @description
-   * Emits the validated role assignment values and resets the form.
+   * Emits the validated role assignment values.
+   *
+   * Deliberately does not reset: the outcome is not known yet, and clearing here
+   * discarded the selection whenever the assignment was refused. The parent closes
+   * this surface once the server confirms.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @returns {void}
    */
   protected submit(): void {
     if (this.form.invalid) return;
     this.submitted.emit(this.form.getRawValue());
-    this.form.reset({ memberId: '', roleId: '' });
   }
 
   /**

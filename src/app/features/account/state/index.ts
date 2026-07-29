@@ -2,8 +2,6 @@ export type { UserState } from './user';
 export { UserStore } from './user';
 export type { UserStoreType } from './user';
 export { userStoreEvents } from './user';
-export { UsersStore } from './users';
-export type { UsersStoreType } from './users';
 export type { NotificationStoreState } from './notifications';
 export { NotificationStore } from './notifications';
 export type { NotificationStoreType } from './notifications';

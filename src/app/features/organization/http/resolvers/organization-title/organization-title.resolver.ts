@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import type { MaybeAsync, ResolveFn } from '@angular/router';
+import type { ActivatedRouteSnapshot, MaybeAsync, ResolveFn } from '@angular/router';
 import { filter, first, map, type Observable } from 'rxjs';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -10,24 +10,34 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  *
  * @description
  * Returns the organization name as the page title or breadcrumb label.
- * Waits for the selected organization to be available in {@link ActiveOrganizationStore},
- * which is populated by {@link organizationResolver}.
+ * Waits for the organization named by `:organizationId` to land in
+ * {@link ActiveOrganizationStore}, which the parallel `organizationResolver`
+ * populates.
+ *
+ * It deliberately reads the store's cached entity rather than its
+ * `selectedOrganization` projection: that projection only publishes the
+ * organization the **URL** designates, and the URL is not committed until the
+ * navigation ends — which is what this resolver is holding up. Waiting on it
+ * would deadlock the navigation against itself.
  *
  * Can be used as both a `title` resolver and a `breadcrumb` resolver.
  *
- * @version 1.2.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
- * @returns {MaybeAsync<string>} The organization name, or 'Overview' as fallback.
+ * @param {ActivatedRouteSnapshot} route - Snapshot carrying the `:organizationId` parameter.
+ *
+ * @returns {MaybeAsync<string>} The organization name.
  */
-export const organizationTitleResolver: ResolveFn<string> = (): MaybeAsync<string> => {
+export const organizationTitleResolver: ResolveFn<string> = (
+  route: ActivatedRouteSnapshot,
+): MaybeAsync<string> => {
   /**
    * Constant activeOrganizationStore
    * @const activeOrganizationStore
    *
    * @description
-   * Active organization store for accessing the currently selected organization
-   * and retrieving its name for the title resolution.
+   * Active organization store holding the resource the sibling resolver loads.
    *
    * @var {ActiveOrganizationStore}
    */
@@ -35,28 +45,32 @@ export const organizationTitleResolver: ResolveFn<string> = (): MaybeAsync<strin
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
-   * Constant organization
-   * @const organization
+   * Constant organizationId
+   * @const organizationId
    *
    * @description
-   * The currently selected organization retrieved from the store. If already
-   * available (e.g. when used on a child route after the parent resolver
-   * has completed), the name is returned synchronously. Otherwise, we
-   * wait for the store to be populated by the parallel organizationResolver.
+   * Organization the route is navigating to, so a resource left over from the
+   * previous one is not mistaken for the answer.
    *
-   * @var {OrganizationOutput | null}
+   * @var {string | null}
    */
-  const organization: OrganizationOutput | null = activeOrganizationStore.selectedOrganization();
+  const organizationId: string | null = route.paramMap.get('organizationId');
 
-  // If the organization is already loaded (child route case), return immediately.
-  if (organization) return organization.name;
+  const isTargetOrganization = (
+    organization: OrganizationOutput | null,
+  ): organization is OrganizationOutput =>
+    organization !== null && (organizationId === null || organization.id === organizationId);
 
-  // Otherwise, wait for the organizationResolver to populate the store.
+  const cached: OrganizationOutput | null = activeOrganizationStore.organizationEntity();
+
+  // Already loaded (child route case, or a revisit): answer synchronously.
+  if (isTargetOrganization(cached)) return cached.name;
+
   const organization$: Observable<string> = toObservable(
-    activeOrganizationStore.selectedOrganization,
+    activeOrganizationStore.organizationEntity,
   ).pipe(
-    filter((org: OrganizationOutput | null): org is OrganizationOutput => org !== null),
-    map((org: OrganizationOutput) => org.name),
+    filter(isTargetOrganization),
+    map((organization: OrganizationOutput): string => organization.name),
     first(),
   );
 

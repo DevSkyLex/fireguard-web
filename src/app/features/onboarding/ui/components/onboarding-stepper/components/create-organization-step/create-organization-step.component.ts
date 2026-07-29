@@ -105,6 +105,20 @@ export class CreateOrganizationStep extends OnboardingStepBase {
   protected readonly isCreatingOrganization: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property createError
+   *
+   * @description
+   * Last creation failure, handed to the form so a 422 lands on the field the
+   * server named instead of only reaching the user as a toast.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<unknown>}
+   */
+  protected readonly createError: WritableSignal<unknown> = signal<unknown>(null);
+
+  /**
    * Property isExecuting
    * @readonly
    *
@@ -133,6 +147,7 @@ export class CreateOrganizationStep extends OnboardingStepBase {
   protected handleSubmit(values: CreateOrganizationFormValues): void {
     if (this.onboardingStore.isBusy() || this.isCreatingOrganization()) return;
     this.isCreatingOrganization.set(true);
+    this.createError.set(null);
 
     this.organizationSetupService
       .createOrganization({ name: values.organizationName })
@@ -146,14 +161,20 @@ export class CreateOrganizationStep extends OnboardingStepBase {
         },
         error: (error: unknown) => {
           this.isCreatingOrganization.set(false);
-          const message: string =
-            error instanceof Error
-              ? error.message
-              : $localize`:@@onboarding.org.createError:Failed to create organization.`;
+          // Handed to the form so a 422 lands on the field the server named.
+          this.createError.set(error);
+
+          // `HydraApiService` rethrows a plain `ApiError` object, never an `Error`
+          // instance, so the previous `instanceof Error` branch was dead and every
+          // failure showed the generic message. Read `detail` from the payload.
+          const detail: unknown = (error as { detail?: unknown } | null)?.detail;
           this.messageService.add({
             severity: 'error',
             summary: $localize`:@@common.error:Error`,
-            detail: message,
+            detail:
+              typeof detail === 'string' && detail.length > 0
+                ? detail
+                : $localize`:@@onboarding.org.createError:Failed to create organization.`,
             life: 5000,
           });
         },

@@ -4,8 +4,9 @@ import {
   computed,
   inject,
   input,
-  numberAttribute,
+  type InputSignal,
   type InputSignalWithTransform,
+  numberAttribute,
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -17,7 +18,7 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { FacilityTable } from '@features/organization/features/facilities/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaStore } from '@features/organization/state';
 
 /**
  * Component FacilityListPage
@@ -39,6 +40,22 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityListPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Inputs
   /**
    * Input page
@@ -89,22 +106,6 @@ export class FacilityListPage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @description
-   * Root-scoped store providing the current organization context.
-   * Used to obtain the organizationId for API calls.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property store
@@ -228,22 +229,14 @@ export class FacilityListPage {
    * @returns {void}
    */
   public onArchive(facility: FacilityOutput): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.archive({ organizationId, facilityId: facility.id });
-    }
+    this.store.archive({ organizationId: this.organizationId(), facilityId: facility.id });
   }
 
   /**
    * Restores an archived facility via the store.
    */
   public onRestore(facility: FacilityOutput): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.restore({ organizationId, facilityId: facility.id });
-    }
+    this.store.restore({ organizationId: this.organizationId(), facilityId: facility.id });
   }
 
   /**
@@ -261,12 +254,7 @@ export class FacilityListPage {
    * @returns {void}
    */
   public onBulkArchive(facilities: readonly FacilityOutput[]): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-
-    if (!organizationId) {
-      return;
-    }
+    const organizationId: string = this.organizationId();
 
     for (const facility of facilities) {
       this.store.archive({ organizationId, facilityId: facility.id });
@@ -289,11 +277,7 @@ export class FacilityListPage {
    */
   public onLoad(options: RequestOptions): void {
     this.lastLoadOptions = options;
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.loadRootFacilities({ organizationId, options });
-    }
+    this.store.loadRootFacilities({ organizationId: this.organizationId(), options });
   }
 
   /**
@@ -311,11 +295,10 @@ export class FacilityListPage {
    * @returns {void}
    */
   public retry(): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.loadRootFacilities({ organizationId, options: this.lastLoadOptions });
-    }
+    this.store.loadRootFacilities({
+      organizationId: this.organizationId(),
+      options: this.lastLoadOptions,
+    });
   }
 
   /**

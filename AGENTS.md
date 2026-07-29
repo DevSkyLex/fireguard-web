@@ -25,18 +25,19 @@ These instructions are mandatory for AI agents working in this repository.
 
 ## Feature Structure
 
-- New feature code follows the concern-oriented layout from [ARCHITECTURE.md](ARCHITECTURE.md): `data-access/`, `http/`, `ports/`, `ui/`, `state/`, `models/`, `providers/`, and optional nested `features/`.
+- New feature code follows the concern-oriented layout from [ARCHITECTURE.md](ARCHITECTURE.md) §8.3: `data-access/`, `services/`, `access/`, `setup/`, `navigation/`, `http/`, `ports/`, `ui/`, `state/`, `models/`, `utils/`, `constants/`, `options/`, `providers/`, and optional nested `features/`. Do not invent undocumented sibling folders.
+- Naming (file suffixes, class names, selectors, tokens, routes, state, tests) follows ARCHITECTURE.md §9.
 - Put pages, feature components, dataviews, and forms under `ui/`.
 - Put feature guards, resolvers, and feature-scoped interceptors under `http/{guards,resolvers,interceptors}`. Do not place new guards or resolvers at the feature root.
 - Put API services under `data-access/services/<concern>/` and pure normalization helpers under `data-access/adapters/`.
 - Put reusable feature contracts under concept-first `models/<concept>/` folders. Store state interfaces belong in `state/`, not `models/`.
-- Put stores in slice-first `state/<slice>/` folders. Each externally consumed slice exposes a local `index.ts`, and `state/index.ts` re-exports only stable public store APIs.
+- Put stores in slice-first `state/<slice>/` folders. Each slice exposes a local `index.ts`, and `state/index.ts` re-exports only the slices that are part of the feature's public surface.
 - Do not create empty architecture folders.
 
 ## Ports And Boundaries
 
 - Published behavioral contracts live with the owner: prefer `features/<feature>/ports/<port-name>/` or `core/<concern>/ports/<port-name>/`.
-- Do not create new top-level `src/app/ports/` contracts unless no stable owner exists; treat existing ones as compatibility only.
+- Do not create top-level `src/app/ports/` contracts; every contract has an owner (`features/<feature>/ports/` or `core/<concern>/ports/`).
 - A port folder contains `<port-name>.interface.ts`, `<port-name>.token.ts`, and `index.ts`.
 - Bind ports from the owner using providers and prefer `{ provide: TOKEN, useExisting: ConcreteService }` to avoid double instantiation.
 - Do not create a port for behavior consumed only inside one feature.
@@ -47,7 +48,7 @@ These instructions are mandatory for AI agents working in this repository.
 - Use relative imports only within a tight local area such as one component folder, one state slice, or one concern-local file group.
 - External consumers import through documented public APIs and barrels, not private implementation paths.
 - `core` must never import from `features`.
-- `shared` must never import from `features`, feature state, feature services, or feature domain models.
+- `shared` must never import feature internals: feature state, feature services, feature domain models, or feature UI. The only feature code `shared` may consume is a published port (interface + token) from the owning feature's `ports/` barrel.
 - Cross-feature dependencies are forbidden by default. Use only documented public APIs or owner-published ports approved by the relevant `FEATURE.md`.
 
 ## State And Async Work

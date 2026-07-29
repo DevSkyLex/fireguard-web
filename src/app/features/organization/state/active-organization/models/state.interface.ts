@@ -17,29 +17,43 @@ import type { OrganizationOutput } from '@features/organization/models';
 export interface ActiveOrganizationState {
   //#region Properties
   /**
-   * Property selectedOrganization
+   * Property routedOrganizationId
    * @readonly
    *
    * @description
-   * Currently selected / viewed organization (set by
-   * resolver or DashboardLayout).
+   * Identifier the URL currently designates, read from the activated route
+   * tree on every navigation. This — not the cached entity — is what makes an
+   * organization "active": the URL is the source of truth, so the context can
+   * never lag behind it while a fetch is in flight.
    *
-   * @since 1.0.0
+   * @since 1.1.0
+   *
+   * @type {string | null}
+   */
+  readonly routedOrganizationId: string | null;
+
+  /**
+   * Property organizationEntity
+   * @readonly
+   *
+   * @description
+   * Cached organization resource, seeded by the resolver. Kept behind the
+   * `selectedOrganization` computed, which only exposes it while it matches
+   * {@link routedOrganizationId} — otherwise a switch would show the previous
+   * organization's name until its fetch resolves.
+   *
+   * @since 1.1.0
    *
    * @type {OrganizationOutput | null}
    */
-  readonly selectedOrganization: OrganizationOutput | null;
+  readonly organizationEntity: OrganizationOutput | null;
 
   /**
    * Property getCallState
    * @readonly
    *
    * @description
-   * Call state for fetching the selected organization.
-   *
-   * This call state is managed by the resolver and DashboardLayout, not by
-   * the store itself, but it's included here for convenience since it's
-   * tightly coupled to the selected organization.
+   * Call state for fetching the selected organization, driven by the resolver.
    *
    * @since 1.0.0
    *

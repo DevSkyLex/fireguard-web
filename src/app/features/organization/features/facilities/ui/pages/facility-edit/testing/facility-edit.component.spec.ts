@@ -45,6 +45,7 @@ describe('FacilityEditPage', () => {
 
   const mockFacilityStore = {
     isUpdating: signal<boolean>(false),
+    updateError: signal(null),
     updateCallState: signal<{ status: string; data: FacilityOutput | null }>({
       status: 'idle',
       data: null,
@@ -54,6 +55,7 @@ describe('FacilityEditPage', () => {
 
   const mockActiveOrgStore = {
     selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG),
+    selectedOrganizationId: signal<string | null>(MOCK_ORG.id),
   };
 
   const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
@@ -83,12 +85,14 @@ describe('FacilityEditPage', () => {
 
   it('should create', () => {
     const fixture = TestBed.createComponent(FacilityEditPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
 
   it('should display page heading', () => {
     const fixture = TestBed.createComponent(FacilityEditPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Edit Facility');
   });
@@ -96,6 +100,7 @@ describe('FacilityEditPage', () => {
   it('should show skeleton while loading', () => {
     mockActiveFacilityStore.isLoadingFacility.set(true);
     const fixture = TestBed.createComponent(FacilityEditPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     const skeletons = fixture.debugElement.queryAll(By.css('p-skeleton'));
     expect(skeletons.length).toBeGreaterThan(0);
@@ -104,6 +109,7 @@ describe('FacilityEditPage', () => {
   it('should not render form while loading', () => {
     mockActiveFacilityStore.isLoadingFacility.set(true);
     const fixture = TestBed.createComponent(FacilityEditPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-facility-form')).toBeNull();
   });
@@ -111,6 +117,7 @@ describe('FacilityEditPage', () => {
   it('should render form when facility is resolved', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityEditPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-facility-form')).not.toBeNull();
   });
@@ -118,6 +125,7 @@ describe('FacilityEditPage', () => {
   it('should dispatch update action with correct payload on handleSubmit', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityEditPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     const values: FacilityFormValues = {
@@ -148,6 +156,7 @@ describe('FacilityEditPage', () => {
     mockActiveOrgStore.selectedOrganization.set(null);
     mockActiveFacilityStore.selectedFacility.set(null);
     const fixture = TestBed.createComponent(FacilityEditPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['handleSubmit']({

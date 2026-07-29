@@ -98,6 +98,7 @@
       (visibleChange)="inviteDrawerVisible.set($event)"
       [roles]="store.roles()"
       [loading]="store.isMutating()"
+      [serverError]="store.mutationError()"
       (submitted)="invite($event)"
     />
   }
@@ -109,6 +110,7 @@
       [members]="store.members()"
       [roles]="store.roles()"
       [loading]="store.isMutating()"
+      [serverError]="store.mutationError()"
       (submitted)="assignRole($event)"
     />
   }

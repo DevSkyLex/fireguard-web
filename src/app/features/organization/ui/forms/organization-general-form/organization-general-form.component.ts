@@ -2,12 +2,14 @@ import { SlicePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AvatarModule } from 'primeng/avatar';
@@ -18,6 +20,7 @@ import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import type { OrganizationOutput, UpdateOrganizationInput } from '@features/organization/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { LogoUploadEvent } from './models';
 
 /**
@@ -60,6 +63,57 @@ export class OrganizationGeneralForm {
   public readonly saving: InputSignal<boolean> = input<boolean>(false);
   /** Whether a logo upload is in progress. */
   public readonly uploadingLogo: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * Name and slug are unique per tenant, so a clash comes back as a 422 naming the
+   * offending field — the one case a client-side validator cannot anticipate.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property serverFieldErrors
+   * @readonly
+   *
+   * @description
+   * Server message per field, projected from the last 422.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<ServerFieldErrors>}
+   */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /**
+   * Property unmatchedViolation
+   * @readonly
+   *
+   * @description
+   * Message of the first violation naming no field of this form.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), ['name', 'slug', 'description', 'isActive'])[0]
+        ?.message ?? null,
+  );
   /** Emits valid general settings values. */
   public readonly submitted: OutputEmitterRef<UpdateOrganizationInput> = output();
   /** Emits the logo file selected through the upload control. */

@@ -1,4 +1,5 @@
 import {
+  computed,
   Component,
   ChangeDetectionStrategy,
   effect,
@@ -7,6 +8,7 @@ import {
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import {
   NonNullableFormBuilder,
@@ -19,6 +21,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { CreateEquipmentFormData, CreateEquipmentFormValues } from './models';
 
 /**
@@ -51,6 +54,36 @@ export class CreateEquipmentForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field the server refused; projecting it tells the user which
+   * one to fix instead of leaving them with a generic toast.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), ['type', 'brand', 'model', 'serialNumber'])[0]
+        ?.message ?? null,
+  );
+
   //#endregion
 
   //#region Outputs

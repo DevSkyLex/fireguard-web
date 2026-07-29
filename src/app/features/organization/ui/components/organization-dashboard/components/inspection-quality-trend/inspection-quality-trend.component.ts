@@ -6,7 +6,6 @@ import {
   viewChild,
   type Signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
@@ -27,7 +26,6 @@ import {
   WHOLE_NUMBER_FMT,
   buildDashboardComparison,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import { organizationShellPrefix } from '@features/organization/utils';
 import { TrendCard } from '@shared/components';
 import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 import {
@@ -79,21 +77,6 @@ export class InspectionQualityTrend {
    *
    * @type {ActiveOrganizationStore}
    */
-  /**
-   * Property router
-   * @readonly
-   *
-   * @description
-   * Router, read only for its current URL so the trend card's "view all"
-   * links stay in the shell the dashboard is being viewed in.
-   *
-   * @access private
-   * @since 1.1.0
-   *
-   * @type {Router}
-   */
-  private readonly router: Router = inject<Router>(Router);
-
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
@@ -274,9 +257,7 @@ export class InspectionQualityTrend {
       {
         label: $localize`:@@dash.viewAll.inspections:View all inspections`,
         icon: PrimeIcons.LIST,
-        routerLink: organizationId
-          ? [...organizationShellPrefix(this.router.url, organizationId), 'inspections']
-          : null,
+        routerLink: organizationId ? ['/organizations', organizationId, 'inspections'] : null,
       },
     ];
   });

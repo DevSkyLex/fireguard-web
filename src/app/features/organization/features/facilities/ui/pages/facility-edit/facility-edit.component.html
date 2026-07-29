@@ -29,6 +29,7 @@
         <app-facility-form
           [facility]="facility"
           [loading]="store.isUpdating()"
+          [serverError]="store.updateError()"
           (submitted)="handleSubmit($event)"
           (cancelled)="handleCancel()"
         />

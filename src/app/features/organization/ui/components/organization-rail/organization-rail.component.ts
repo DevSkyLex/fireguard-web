@@ -27,7 +27,7 @@ import type { OrganizationRailTile } from './models';
  * Contributed to the workspace layout's `RAIL_SLOT` lead region.
  *
  * Feature-owned rather than layout-owned because it reads organization state
- * — the layout only provides the column (`ARCHITECTURE.md` §3.7).
+ * — the layout only provides the column (`ARCHITECTURE.md` §2.7).
  *
  * @version 1.0.0
  *
@@ -113,7 +113,7 @@ export class OrganizationRail implements OnInit {
    */
   protected readonly tiles: Signal<readonly OrganizationRailTile[]> = computed(
     (): readonly OrganizationRailTile[] => {
-      const activeId: string | null = this.organizationContext.selectedOrganization()?.id ?? null;
+      const activeId: string | null = this.organizationContext.selectedOrganizationId();
 
       return this.organizationStore
         .organizations()
@@ -194,7 +194,7 @@ export class OrganizationRail implements OnInit {
   protected select(tile: OrganizationRailTile): void {
     if (tile.active) return;
 
-    const target: UrlTree = this.router.createUrlTree(['/organizations', tile.id, 'workspace']);
+    const target: UrlTree = this.router.createUrlTree(['/organizations', tile.id]);
 
     void this.router.navigateByUrl(target);
   }

@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-10">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">{{
+      violation
+    }}</p-message>
+  }
+
   <!-- Branding -->
   <section class="flex flex-col">
     <h3
@@ -109,6 +115,11 @@
               >A name of 2 to 120 characters is required.</p-message
             >
           }
+          @if (serverFieldErrors()['name']; as serverMessage) {
+            <p-message severity="error" variant="simple" size="small" role="alert">{{
+              serverMessage
+            }}</p-message>
+          }
         </div>
       </div>
 
@@ -140,6 +151,11 @@
             <p-message i18n="@@org.general.slugError" severity="error" variant="simple" size="small"
               >Use lowercase letters, numbers and single dashes (min. 3 characters).</p-message
             >
+          }
+          @if (serverFieldErrors()['slug']; as serverMessage) {
+            <p-message severity="error" variant="simple" size="small" role="alert">{{
+              serverMessage
+            }}</p-message>
           }
         </div>
       </div>

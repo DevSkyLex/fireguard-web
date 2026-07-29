@@ -2,9 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
+  input,
+  type InputSignal,
   signal,
   type Signal,
+  untracked,
   type WritableSignal,
 } from '@angular/core';
 import { ConfirmationService } from 'primeng/api';
@@ -15,7 +19,6 @@ import { TableModule } from 'primeng/table';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { OrganizationRoleOutput } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationTeamStore } from '@features/organization/state/organization-team';
 import {
   OrganizationRoleForm,
@@ -50,11 +53,24 @@ import type { PermissionMatrixRow } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationTeamPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   /** PrimeNG confirmation service for destructive role operations. */
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
-  /** Active organization context store. */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
   /** Organization permission evaluator. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
@@ -177,15 +193,20 @@ export class OrganizationTeamPage {
 
   /** Initializes the role resources visible to the active member. */
   public constructor() {
-    this.reload();
+    // An effect, not a direct call: the routed input is only bound after
+    // construction, and reading it here would throw NG0950. Reloading is
+    // untracked so the permission signals it reads cannot re-trigger it.
+    effect((): void => {
+      this.organizationId();
+
+      untracked((): void => this.reload());
+    });
   }
 
   /** Reloads roles and (when manageable) the permission catalog. */
   protected reload(): void {
-    const organizationId = this.organizationId();
-    if (!organizationId) return;
     this.store.load({
-      organizationId,
+      organizationId: this.organizationId(),
       includeMembers: false,
       includeRoles: true,
       includeInvitations: false,
@@ -222,8 +243,7 @@ export class OrganizationTeamPage {
 
   /** Creates a role or updates the currently selected role, then closes the form. */
   protected saveRole(values: OrganizationRoleFormValues): void {
-    const organizationId = this.organizationId();
-    if (!organizationId) return;
+    const organizationId: string = this.organizationId();
     const role = this.selectedRole();
     if (role) {
       this.store.updateRole({
@@ -259,8 +279,7 @@ export class OrganizationTeamPage {
         outlined: true,
       },
       accept: () => {
-        const organizationId = this.organizationId();
-        if (organizationId) this.store.removeRole({ organizationId, roleId: role.id });
+        this.store.removeRole({ organizationId: this.organizationId(), roleId: role.id });
       },
     });
   }
@@ -275,10 +294,5 @@ export class OrganizationTeamPage {
   private permissionAction(name: string): string {
     const separator = name.lastIndexOf('.');
     return separator > 0 ? name.slice(separator + 1) : '';
-  }
-
-  /** Returns the active organization identifier when available. */
-  private organizationId(): string | undefined {
-    return this.activeOrganizationStore.selectedOrganization()?.id;
   }
 }

@@ -79,12 +79,14 @@ describe('OrganizationInvitationForm', () => {
     expect(emitSpy).not.toHaveBeenCalled();
   });
 
-  it('resets the email after a successful submit', () => {
+  it('keeps the typed email after submitting, so a rejection does not discard it', () => {
     const { component } = createFixture();
     component.form.controls.email.setValue('member@example.com');
     component.submit();
 
-    expect(component.form.controls.email.value).toBe('');
+    // The outcome is unknown at this point: the address may already be invited or
+    // the seat quota exhausted. Clearing here left the member nothing to correct.
+    expect(component.form.controls.email.value).toBe('member@example.com');
   });
 
   it('surfaces a validation message once the email is touched and empty', () => {

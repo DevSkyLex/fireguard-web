@@ -63,7 +63,7 @@ sibling infrastructure primitives rather than a single concern.
 
 `core/` must **never** depend on `features/`. When app-wide infrastructure must
 consume state a feature owns, define a core-owned port and let the feature
-implement it (see `boot-readiness` in `ARCHITECTURE.md` §5.1).
+implement it (see `boot-readiness` in `ARCHITECTURE.md` §5.6).
 
 ## Public API
 
@@ -71,4 +71,4 @@ Each concern is imported through its alias barrel — `@core/api`,
 `@core/request-state`, `@core/theme`, `@core/cookie`, `@core/config/environment`,
 etc. Import the concern barrel, never a deep implementation file.
 
-See `ARCHITECTURE.md` §3.2, §8.1, and §16 for the normative rules.
+See `ARCHITECTURE.md` §2.2, §8.1, and §11 for the normative rules.

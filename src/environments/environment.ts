@@ -12,10 +12,8 @@ import { type EnvironmentConfig } from '@core/config/environment';
  */
 export const environment: EnvironmentConfig = {
   production: true,
-  apiUrl: 'http://localhost:8000',
+  apiUrl: 'https://api.fireguard.valentin-fortin.pro',
   appName: 'Fireguard',
-  mercureHubUrl: 'http://localhost:3000/.well-known/mercure',
-  mapStyleUrl: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  mapStyleUrlDark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  mercureHubUrl: 'https://mercure.fireguard.valentin-fortin.pro/.well-known/mercure',
   maintenance: false,
 };

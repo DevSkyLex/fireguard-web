@@ -15,7 +15,11 @@
   </section>
 
   <!-- Login form -->
-  <app-login-form [loading]="loading()" (submitted)="handleLogin($event)" />
+  <app-login-form
+    [loading]="loading()"
+    [serverError]="authStore.loginError()"
+    (submitted)="handleLogin($event)"
+  />
 
   <!-- Sign-up link -->
   <p class="text-center text-sm text-surface-500 dark:text-surface-400">

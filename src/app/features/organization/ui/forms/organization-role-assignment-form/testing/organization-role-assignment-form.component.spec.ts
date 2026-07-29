@@ -142,13 +142,16 @@ describe('OrganizationRoleAssignmentForm', () => {
     expect(emitSpy).not.toHaveBeenCalled();
   });
 
-  it('resets after a successful submit', () => {
+  it('keeps the selection after submitting, so a rejection does not discard it', () => {
     const { component } = createFixture();
     component.form.controls.memberId.setValue('member-1');
     component.form.controls.roleId.setValue('role-1');
     component.submit();
 
-    expect(component.form.controls.memberId.value).toBe('');
+    // The parent closes this surface once the server confirms; until then the
+    // selection has to survive so a refused assignment can be corrected.
+    expect(component.form.controls.memberId.value).toBe('member-1');
+    expect(component.form.controls.roleId.value).toBe('role-1');
   });
 
   it('surfaces validation messages once the controls are touched', () => {

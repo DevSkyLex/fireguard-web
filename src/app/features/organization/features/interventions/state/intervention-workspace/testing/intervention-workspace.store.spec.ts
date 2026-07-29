@@ -327,7 +327,6 @@ describe('InterventionWorkspaceStore offline field work', () => {
         type: 'about:blank',
         title: 'Conflict',
         detail: 'Only draft or abandoned interventions can be deleted.',
-        instance: null,
       })),
     );
 
@@ -545,5 +544,125 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     );
     expect(store.activities()).toHaveLength(1);
     expect(dispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe('InterventionWorkspaceStore call state', () => {
+  let store: InstanceType<typeof InterventionWorkspaceStore>;
+  let mockService: Record<string, ReturnType<typeof vi.fn>>;
+
+  /** A 422 as API Platform reports a rejected planning update. */
+  const violation = {
+    '@id': '',
+    '@type': 'ConstraintViolation',
+    status: 422,
+    type: 'https://tools.ietf.org/html/rfc4918#section-11.2',
+    title: 'Unprocessable Entity',
+    detail: 'dueAt: This value should be greater than plannedStartAt.',
+    violations: [
+      { propertyPath: 'dueAt', message: 'This value should be greater than plannedStartAt.' },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    mockService = {
+      get: vi.fn().mockReturnValue(of(intervention)),
+      listAllWorkItems: vi.fn().mockReturnValue(of([workItem])),
+      listAllChanges: vi.fn().mockReturnValue(of([] as readonly InterventionChangeOutput[])),
+      listIssues: vi.fn().mockReturnValue(
+        of({
+          '@id': '/api/interventions/intervention-1/issues',
+          '@type': 'Collection',
+          totalItems: 0,
+          member: [] as readonly InterventionIssueOutput[],
+        }),
+      ),
+      update: vi.fn(),
+      createWorkItem: vi.fn(),
+      updateWorkItem: vi.fn(),
+      removeWorkItem: vi.fn().mockReturnValue(of(undefined)),
+      remove: vi.fn().mockReturnValue(of(undefined)),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        InterventionWorkspaceStore,
+        { provide: InterventionService, useValue: mockService },
+        {
+          provide: InterventionOfflineService,
+          useValue: {
+            getWorkspace: vi.fn(),
+            saveWorkspace: vi.fn().mockResolvedValue(undefined),
+            queue: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+      ],
+    });
+
+    store = TestBed.inject(InterventionWorkspaceStore);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('starts idle and reports neither loading nor saving', () => {
+    expect(store.loadCallState().status).toBe('idle');
+    expect(store.mutationCallState().status).toBe('idle');
+    expect(store.loading()).toBe(false);
+    expect(store.saving()).toBe(false);
+    expect(store.error()).toBeNull();
+    expect(store.mutationError()).toBeNull();
+  });
+
+  it('drives the load call state through to success', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    expect(store.loadCallState().status).toBe('success');
+    expect(store.error()).toBeNull();
+  });
+
+  it('keeps the whole 422 payload so a form can place each violation', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    mockService['update'].mockReturnValue(throwError(() => violation));
+    store.updateDetails({ interventionId: intervention.id, input: {} });
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(store.mutationCallState().status).toBe('error');
+    // The point of the migration: the violations survive, so the edit drawer can
+    // land "This value should be greater than plannedStartAt." on `dueAt`.
+    expect(store.mutationError()?.error).toEqual(violation);
+    expect(store.error()).toBe('dueAt: This value should be greater than plannedStartAt.');
+  });
+
+  it('falls back to a localized message when the failure carries nothing showable', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    mockService['update'].mockReturnValue(throwError(() => new Error('Http failure response')));
+    store.updateDetails({ interventionId: intervention.id, input: {} });
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    // A raw transport message must never reach a field agent.
+    expect(store.error()).toBe('Intervention planning details could not be saved.');
+  });
+
+  it('clears both call states on clearError', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    mockService['update'].mockReturnValue(throwError(() => violation));
+    store.updateDetails({ interventionId: intervention.id, input: {} });
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    store.clearError();
+
+    expect(store.mutationCallState().status).toBe('idle');
+    expect(store.loadCallState().status).toBe('idle');
+    expect(store.error()).toBeNull();
   });
 });

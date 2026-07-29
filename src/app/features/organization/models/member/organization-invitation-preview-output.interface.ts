@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/api/models';
+import type { OrganizationInvitationStatus } from './organization-invitation-status.type';
 
 /**
  * Interface OrganizationInvitationPreviewOutput
@@ -21,8 +22,8 @@ export interface OrganizationInvitationPreviewOutput extends HydraItem {
   readonly inviterDisplayName: string;
   /** @type {string} */
   readonly invitedEmail: string;
-  /** @type {string} */
-  readonly status: string;
+  /** @type {OrganizationInvitationStatus} */
+  readonly status: OrganizationInvitationStatus;
   /** @type {string} */
   readonly expiresAt: string;
   //#endregion

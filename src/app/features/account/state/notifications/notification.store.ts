@@ -1,7 +1,16 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntities,
   prependEntity,
@@ -10,7 +19,7 @@ import {
   setEntity,
   withEntities,
 } from '@ngrx/signals/entities';
-import { Dispatcher } from '@ngrx/signals/events';
+import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   catchError,
@@ -20,6 +29,7 @@ import {
   firstValueFrom,
   pipe,
   switchMap,
+  takeUntil,
   tap,
 } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
@@ -41,6 +51,7 @@ import type {
   NotificationOutput,
   NotificationTypeOutput,
 } from '@features/account/models';
+import { authStoreEvents } from '@features/auth';
 import { notificationStoreEvents } from './events';
 import type { NotificationStoreState } from './models';
 
@@ -229,6 +240,7 @@ export const NotificationStore = signalStore(
     (
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
+      events = inject<Events>(Events),
       notificationService = inject<NotificationService>(NotificationService),
       mercureService = inject<MercureService>(MercureService),
       platformId = inject<object>(PLATFORM_ID),
@@ -307,12 +319,20 @@ export const NotificationStore = signalStore(
                         listCallState: successCallState(null),
                       },
                     );
-                    transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, response);
+                    // Server-side only: `TransferState` is an SSR-to-browser handoff.
+                    // Writing it from the browser leaves this user's notifications in
+                    // a key that the *next* `initialize()` reads back — so signing in
+                    // as someone else replayed the previous user's list.
+                    if (!isPlatformBrowser(platformId)) {
+                      transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, response);
+                    }
                   },
                   error: (error: unknown) => {
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { listCallState: errorCallState(storeError) });
-                    transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, null);
+                    if (!isPlatformBrowser(platformId)) {
+                      transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, null);
+                    }
                     dispatcher.dispatch(
                       notificationStoreEvents.loadFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
@@ -369,10 +389,15 @@ export const NotificationStore = signalStore(
                 tapResponse({
                   next: (types: ReadonlyArray<NotificationTypeOutput>) => {
                     patchState(store, { types, typesLoaded: true });
-                    transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, types);
+                    // Server-side only, same reason as the list above.
+                    if (!isPlatformBrowser(platformId)) {
+                      transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, types);
+                    }
                   },
                   error: () => {
-                    transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, null);
+                    if (!isPlatformBrowser(platformId)) {
+                      transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, null);
+                    }
                   },
                 }),
               ),
@@ -587,6 +612,11 @@ export const NotificationStore = signalStore(
                   return mercureService
                     .subscribe<NotificationOutput>(subscription.topic, subscription.token)
                     .pipe(
+                      // The hub streams with the *departing* user's token, so the
+                      // subscription has to end with their session — clearing the
+                      // `mercureConnected` flag alone would leave it open and keep
+                      // pushing their notifications into a store the next user reads.
+                      takeUntil(events.on(authStoreEvents.sessionEnded)),
                       tap((notification: NotificationOutput) => {
                         patchState(
                           store,
@@ -693,6 +723,19 @@ export const NotificationStore = signalStore(
          * @author Valentin FORTIN <contact@valentin-fortin.pro>
          */
         clear(): void {
+          // `initialize()` and `loadTypes()` memoize their in-flight promise so
+          // concurrent callers share one request. Those memos outlive the state
+          // reset, so they must be dropped here too — otherwise the next user's
+          // `initialize()` resolves against the previous user's promise and never
+          // refetches anything.
+          initializePromise = null;
+          initializeTypesPromise = null;
+
+          // Drop any pending SSR handoff too: an unconsumed key would otherwise
+          // seed the next user with the departing one's list.
+          transferState.remove(NOTIFICATION_LIST_TRANSFER_KEY);
+          transferState.remove(NOTIFICATION_TYPES_TRANSFER_KEY);
+
           patchState(
             store,
             removeAllEntities({ collection: 'notification' }),
@@ -754,6 +797,29 @@ export const NotificationStore = signalStore(
       };
     },
   ),
+  //#endregion
+
+  //#region Hooks
+  withHooks({
+    /**
+     * This store is root-provided and holds one user's notifications, but logging
+     * out is a client-side navigation — the root injector survives it. Without
+     * this, signing in as someone else in the same tab shows the previous user's
+     * bell and unread badge.
+     *
+     * Listens to `sessionEnded` rather than `logoutSucceeded`: the store drops the
+     * session on both branches of logout, so a failed logout request must purge
+     * just the same.
+     */
+    onInit(store, events = inject<Events>(Events)): void {
+      events
+        .on(authStoreEvents.sessionEnded)
+        .pipe(takeUntilDestroyed())
+        .subscribe(() => {
+          store.clear();
+        });
+    },
+  }),
   //#endregion
 );
 

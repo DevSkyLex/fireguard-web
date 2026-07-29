@@ -293,13 +293,21 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} interventionId - intervention Id value.
    * @param {string} body - Comment text (max 2000 characters).
+   * @param {string} [clientId] - Idempotency key, set only when replaying from the
+   *   offline outbox. Replaying the same key returns the stored comment instead of
+   *   appending a second one — a response lost in the field is indistinguishable,
+   *   from the device, from a request that never arrived.
    *
    * @return {Observable<InterventionActivityOutput>} The created comment activity entry.
    */
-  public addComment(interventionId: string, body: string): Observable<InterventionActivityOutput> {
-    return this.post<{ body: string }, InterventionActivityOutput>(
+  public addComment(
+    interventionId: string,
+    body: string,
+    clientId?: string,
+  ): Observable<InterventionActivityOutput> {
+    return this.post<{ body: string; clientId?: string }, InterventionActivityOutput>(
       `/api/interventions/${interventionId}/comments`,
-      { body },
+      clientId === undefined ? { body } : { body, clientId },
     );
   }
 

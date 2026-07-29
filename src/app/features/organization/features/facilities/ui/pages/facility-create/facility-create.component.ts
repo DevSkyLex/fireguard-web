@@ -4,8 +4,11 @@ import {
   Component,
   effect,
   inject,
+  input,
+  type InputSignal,
   PLATFORM_ID,
   signal,
+  untracked,
   type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,7 +19,7 @@ import {
   type FacilityFormValues,
 } from '@features/organization/features/facilities/ui/forms';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
 import { isQuotaExceededError } from '@features/organization/utils';
 
@@ -41,6 +44,22 @@ import { isQuotaExceededError } from '@features/organization/utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityCreatePage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Properties
   /**
    * Property router
@@ -71,22 +90,6 @@ export class FacilityCreatePage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @description
-   * Root-scoped store providing the current organization context.
-   * Used to obtain the `organizationId` required by all API calls.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   private readonly platformId: object = inject<object>(PLATFORM_ID);
 
@@ -141,12 +144,15 @@ export class FacilityCreatePage {
    * @since 1.0.0
    */
   public constructor() {
-    // Load available facilities for parent selection only in the browser.
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId && isPlatformBrowser(this.platformId)) {
-      this.store.ensureParentOptionsLoaded(organizationId);
-    }
+    // Parent options load in the browser only, from an effect: the routed
+    // input is bound after construction, so reading it here would throw NG0950.
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+
+      if (!isPlatformBrowser(this.platformId)) return;
+
+      untracked((): void => this.store.ensureParentOptionsLoaded(organizationId));
+    });
 
     // React to the create outcome: navigate on success, open the actionable
     // upgrade dialog on a quota (409) failure (which is not toasted centrally).
@@ -187,11 +193,7 @@ export class FacilityCreatePage {
    * @returns {void}
    */
   protected handleSubmit(values: FacilityFormValues): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (!organizationId) return;
-
-    const input: CreateFacilityInput = {
+    const payload: CreateFacilityInput = {
       type: values.type,
       name: values.name,
       ...(values.code ? { code: values.code } : {}),
@@ -202,7 +204,7 @@ export class FacilityCreatePage {
         : {}),
     };
 
-    this.store.create({ organizationId, input });
+    this.store.create({ organizationId: this.organizationId(), input: payload });
   }
 
   /**

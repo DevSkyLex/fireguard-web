@@ -82,7 +82,6 @@ describe('OrganizationSettingsStore', () => {
       type: 'about:blank',
       title: 'Conflict',
       detail: 'Slug already in use',
-      instance: null,
     };
     mockOrganizationService.update.mockReturnValueOnce(throwError(() => apiError));
 

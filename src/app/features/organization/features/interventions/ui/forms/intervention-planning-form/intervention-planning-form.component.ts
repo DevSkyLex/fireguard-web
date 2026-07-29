@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
@@ -29,6 +31,7 @@ import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionPlanningFormData, InterventionPlanningFormValues } from './models';
@@ -124,6 +127,41 @@ export class InterventionPlanningForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field it refused — a responsible who left the organization, a
+   * window the schedule rejects — which no client-side validator can anticipate.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), [
+        'site',
+        'responsible',
+        'participants',
+        'priority',
+        'plannedStartAt',
+        'dueAt',
+        'description',
+      ])[0]?.message ?? null,
+  );
 
   /**
    * Property disabled

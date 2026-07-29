@@ -109,6 +109,7 @@ describe('FacilityDetailPage', () => {
 
   const mockActiveOrgStore = {
     selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG),
+    selectedOrganizationId: signal<string | null>(MOCK_ORG.id),
   };
   const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
   const mockMessageService = { add: vi.fn() };
@@ -197,6 +198,7 @@ describe('FacilityDetailPage', () => {
 
   it('should create', () => {
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
@@ -204,6 +206,7 @@ describe('FacilityDetailPage', () => {
   it('should show skeleton when loading', () => {
     mockActiveFacilityStore.isLoadingFacility.set(true);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     const skeletons = fixture.debugElement.queryAll(By.css('p-skeleton'));
     expect(skeletons.length).toBeGreaterThan(0);
@@ -212,6 +215,7 @@ describe('FacilityDetailPage', () => {
   it('should display the facility name when resolved', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Main Site');
   });
@@ -219,6 +223,7 @@ describe('FacilityDetailPage', () => {
   it('should display the facility code when present', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('SITE-01');
   });
@@ -226,6 +231,7 @@ describe('FacilityDetailPage', () => {
   it('should render tab navigation', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Overview');
     expect(fixture.nativeElement.textContent).toContain('Equipments');
@@ -235,6 +241,7 @@ describe('FacilityDetailPage', () => {
   it('should not load secondary tab data on initial render', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     expect(mockEquipmentStore.load).not.toHaveBeenCalled();
@@ -244,6 +251,7 @@ describe('FacilityDetailPage', () => {
   it('should not load child facilities when the facility has no children', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     expect(mockFacilityStore.ensureChildFacilitiesLoaded).not.toHaveBeenCalled();
@@ -253,6 +261,7 @@ describe('FacilityDetailPage', () => {
   it('should eagerly load descendants when the facility has children', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY_WITH_CHILDREN);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     expect(mockFacilityStore.ensureFacilityDescendantsLoaded).toHaveBeenCalledWith({
@@ -264,6 +273,7 @@ describe('FacilityDetailPage', () => {
   it('should navigate to a facility chosen from the installations panel', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY_WITH_CHILDREN);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     const router = TestBed.inject(Router);
@@ -278,6 +288,7 @@ describe('FacilityDetailPage', () => {
   it('should open the move dialog when onOpenMoveDialog is called', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['onOpenMoveDialog']();
@@ -290,6 +301,7 @@ describe('FacilityDetailPage', () => {
   it('should close the move dialog when onMoveCancel is called', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['onOpenMoveDialog']();
@@ -316,6 +328,7 @@ describe('FacilityDetailPage', () => {
     mockFacilityStore.childFacilityIdsByParent.set({ 'fac-1': ['fac-4'] });
 
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     const optionValues: string[] = fixture.componentInstance['parentOptions']().map(
@@ -332,6 +345,7 @@ describe('FacilityDetailPage', () => {
   it('should call store.move with correct payload on onMoveSubmit', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['moveParentId'].set('fac-99');
@@ -347,6 +361,7 @@ describe('FacilityDetailPage', () => {
   it('should pass null parentFacilityId when moving to root', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['moveParentId'].set('');
@@ -363,6 +378,7 @@ describe('FacilityDetailPage', () => {
     mockActiveFacilityStore.selectedFacility.set(null);
     mockActiveFacilityStore.isLoadingFacility.set(false);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Facility not found');
@@ -374,6 +390,7 @@ describe('FacilityDetailPage', () => {
     mockActiveFacilityStore.selectedFacility.set(null);
     mockActiveFacilityStore.isLoadingFacility.set(false);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     const router = TestBed.inject(Router);
@@ -388,6 +405,7 @@ describe('FacilityDetailPage', () => {
   it('should render the equipments tab content when switched to tab index 1', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['activeTab'].set(1);
@@ -400,6 +418,7 @@ describe('FacilityDetailPage', () => {
   it('should render the inspections tab content when switched to tab index 2', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['activeTab'].set(2);
@@ -416,6 +435,7 @@ describe('FacilityDetailPage', () => {
       { ...MOCK_FACILITY, id: 'fac-2', name: 'Valid Parent' } as unknown as FacilityOutput,
     ]);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['onOpenMoveDialog']();
@@ -429,6 +449,7 @@ describe('FacilityDetailPage', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     mockFacilityStore.moveCallState.set({ status: 'pending', data: null });
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['onOpenMoveDialog']();
@@ -443,6 +464,7 @@ describe('FacilityDetailPage', () => {
       options.accept?.();
     });
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['onConfirmDelete']();
@@ -457,6 +479,7 @@ describe('FacilityDetailPage', () => {
       // Simulate the user rejecting the confirm dialog: accept is never invoked.
     });
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     fixture.componentInstance['onConfirmDelete']();
@@ -467,6 +490,7 @@ describe('FacilityDetailPage', () => {
   it('should navigate back to the facility list once the delete succeeds', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     const router = TestBed.inject(Router);
@@ -481,6 +505,7 @@ describe('FacilityDetailPage', () => {
   it('should navigate to the edit page when onEdit is called', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     const router = TestBed.inject(Router);
@@ -529,6 +554,7 @@ describe('FacilityDetailPage', () => {
       });
 
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     expect(fixture.componentInstance['canManage']()).toBe(false);
@@ -572,6 +598,7 @@ describe('FacilityDetailPage', () => {
       });
 
     const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     fixture.componentInstance['onOpenMoveDialog']();
 

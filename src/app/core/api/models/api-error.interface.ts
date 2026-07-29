@@ -63,7 +63,7 @@ export interface ApiError extends HydraItem {
    *
    * @type {string | null}
    */
-  readonly title: string | null;
+  readonly title?: string;
 
   /**
    * Property detail
@@ -89,7 +89,7 @@ export interface ApiError extends HydraItem {
    *
    * @type {string | null}
    */
-  readonly instance: string | null;
+  readonly instance?: string;
 
   /**
    * Property description
@@ -102,5 +102,5 @@ export interface ApiError extends HydraItem {
    *
    * @type {string | null | undefined}
    */
-  readonly description?: string | null;
+  readonly description?: string;
 }

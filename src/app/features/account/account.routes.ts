@@ -21,7 +21,6 @@ export const ACCOUNT_ROUTES: Routes = [
     title: $localize`:@@route.account:Account`,
     data: {
       breadcrumb: $localize`:@@route.account:Account`,
-      preload: true,
     },
   },
 ];

@@ -9,8 +9,8 @@ import { WorkspacePage } from '../support/pages/workspace.page';
  * The rail is assembled from two independent slot contributions that know
  * nothing of each other: `withOrganizationRail()` (lead region) and
  * `withAccountRailMenu()` (footer). This suite covers the composition, the
- * active-organization marking, and the 60px column's size constraint — the
- * dashboard's `AccountUserMenu` measures ~215px and would silently overflow it.
+ * active-organization marking, and the 60px column's size constraint — a
+ * full-width seat row would silently overflow it.
  */
 test.describe('Workspace rail', () => {
   const organizations = [

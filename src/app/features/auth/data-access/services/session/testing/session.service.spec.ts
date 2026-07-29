@@ -133,7 +133,6 @@ describe('SessionService', () => {
         type: 'https://api.test.com/errors/unauthorized',
         title: 'Unauthorized',
         detail: 'Authentication required.',
-        instance: null,
       };
 
       service.list().subscribe({
@@ -172,7 +171,6 @@ describe('SessionService', () => {
         type: 'https://api.test.com/errors/not-found',
         title: 'Not Found',
         detail: 'Session not found.',
-        instance: null,
       };
 
       service.get('invalid-id').subscribe({
@@ -210,7 +208,6 @@ describe('SessionService', () => {
         type: 'https://api.test.com/errors/not-found',
         title: 'Not Found',
         detail: 'Session not found or already revoked.',
-        instance: null,
       };
 
       service.revoke('invalid-id').subscribe({
@@ -231,7 +228,6 @@ describe('SessionService', () => {
         type: 'https://api.test.com/errors/forbidden',
         title: 'Forbidden',
         detail: 'Cannot revoke current session. Use logout instead.',
-        instance: null,
       };
 
       service.revoke('current-session-id').subscribe({
@@ -267,7 +263,6 @@ describe('SessionService', () => {
         type: 'https://api.test.com/errors/no-sessions',
         title: 'Bad Request',
         detail: 'No other sessions to revoke.',
-        instance: null,
       };
 
       service.revokeAll().subscribe({

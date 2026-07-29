@@ -17,6 +17,7 @@ describe('ForgotPasswordPage', () => {
       clear: vi.fn(),
       request: vi.fn(),
       isRequesting: signal(false),
+      requestError: signal(null),
       currentRequest: signal(
         options?.challengeToken
           ? {
@@ -72,6 +73,7 @@ describe('ForgotPasswordPage', () => {
         clear: vi.fn(),
         request: vi.fn(),
         isRequesting: signal(false),
+        requestError: signal(null),
         currentRequest: signal(null),
       };
       const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };

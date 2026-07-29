@@ -288,9 +288,8 @@ export class OrganizationPlanSelector implements OnInit {
     this.store.loadPlans();
     this.billingStore.loadPricing();
 
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId !== undefined) {
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
+    if (organizationId !== null) {
       this.billingStore.loadSubscription(organizationId);
       this.billingStore.loadInvoices(organizationId);
     }
@@ -428,9 +427,8 @@ export class OrganizationPlanSelector implements OnInit {
    * @returns {void}
    */
   protected manageBilling(): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId !== undefined && !this.isBusy()) {
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
+    if (organizationId !== null && !this.isBusy()) {
       this.billingStore.startPortal(organizationId);
     }
   }
@@ -457,9 +455,8 @@ export class OrganizationPlanSelector implements OnInit {
    * @returns {void}
    */
   protected retryInvoices(): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId !== undefined) {
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
+    if (organizationId !== null) {
       this.billingStore.loadInvoices(organizationId);
     }
   }
@@ -474,9 +471,8 @@ export class OrganizationPlanSelector implements OnInit {
    * @returns {void}
    */
   protected requestCancel(): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId === undefined || this.isBusy()) {
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
+    if (organizationId === null || this.isBusy()) {
       return;
     }
 
@@ -506,9 +502,8 @@ export class OrganizationPlanSelector implements OnInit {
    * @returns {void}
    */
   protected requestResume(): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId !== undefined && !this.isBusy()) {
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
+    if (organizationId !== null && !this.isBusy()) {
       this.billingStore.resumeSubscription(organizationId);
     }
   }

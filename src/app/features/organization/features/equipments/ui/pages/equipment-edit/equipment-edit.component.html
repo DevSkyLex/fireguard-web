@@ -28,6 +28,7 @@
         <app-equipment-form
           [equipment]="equipment"
           [loading]="store.isUpdating()"
+          [serverError]="store.updateError()"
           (submitted)="handleSubmit($event)"
           (cancelled)="handleCancel()"
         />

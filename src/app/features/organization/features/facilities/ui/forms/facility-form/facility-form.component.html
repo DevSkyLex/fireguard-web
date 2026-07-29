@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <!-- Facility Type -->
   <div class="flex flex-col gap-2">
     <label
@@ -8,7 +14,7 @@
       >Type</label
     >
     <p-select
-      id="type"
+      inputId="type"
       formControlName="type"
       [options]="typeOptions"
       optionLabel="label"
@@ -59,6 +65,11 @@
         }
       </p-message>
     }
+    @if (serverFieldErrors()['name']; as serverMessage) {
+      <p-message severity="error" variant="simple" size="small" role="alert">
+        <span>{{ serverMessage }}</span>
+      </p-message>
+    }
   </div>
 
   <!-- Code -->
@@ -79,6 +90,11 @@
       i18n-placeholder="@@facility.form.codePlaceholder"
       placeholder="BLD-001"
     />
+    @if (serverFieldErrors()['code']; as serverMessage) {
+      <p-message severity="error" variant="simple" size="small" role="alert">
+        <span>{{ serverMessage }}</span>
+      </p-message>
+    }
   </div>
 
   <!-- Address -->
@@ -156,7 +172,7 @@
         <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
       </label>
       <p-select
-        id="parentFacilityId"
+        inputId="parentFacilityId"
         formControlName="parentFacilityId"
         [options]="parentOptions"
         optionLabel="label"

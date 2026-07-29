@@ -5,8 +5,11 @@ import {
   computed,
   effect,
   inject,
+  input,
+  type InputSignal,
   PLATFORM_ID,
   type Signal,
+  untracked,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -25,7 +28,6 @@ import {
   InspectionForm,
   type InspectionFormValues,
 } from '@features/organization/features/inspections/ui/forms';
-import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Page coordinating updates to the active draft inspection.
@@ -38,15 +40,28 @@ import { ActiveOrganizationStore } from '@features/organization/state';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionEditPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   /** Router used after inspection update or cancellation. */
   private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative inspection routes. */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** Platform identifier used to guard browser-only reference loading. */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
-  /** Active organization context store. */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Active inspection context store populated by the route resolver. */
   private readonly activeInspectionStore: ActiveInspectionStore =
     inject<ActiveInspectionStore>(ActiveInspectionStore);
@@ -69,13 +84,19 @@ export class InspectionEditPage {
 
   /** Loads form reference data and observes update success. */
   public constructor() {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId && isPlatformBrowser(this.platformId)) {
-      this.equipmentStore.ensureInspectionCreateOptionsLoaded(organizationId);
-      this.facilityStore.ensureParentOptionsLoaded(organizationId);
-      this.checklistStore.ensureInspectionCreateOptionsLoaded(organizationId);
-    }
+    // An effect, not a constructor call: the routed input is only bound after
+    // construction, and reading it here would throw NG0950.
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+
+      if (!isPlatformBrowser(this.platformId)) return;
+
+      untracked((): void => {
+        this.equipmentStore.ensureInspectionCreateOptionsLoaded(organizationId);
+        this.facilityStore.ensureParentOptionsLoaded(organizationId);
+        this.checklistStore.ensureInspectionCreateOptionsLoaded(organizationId);
+      });
+    });
 
     effect(() => {
       if (this.store.updateCallState().status === 'success') {
@@ -86,12 +107,10 @@ export class InspectionEditPage {
 
   /** Updates the active draft inspection with valid form values. */
   protected handleSubmit(values: InspectionFormValues): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
     const inspectionId: string | undefined = this.inspection()?.id;
-    if (!organizationId || !inspectionId) return;
+    if (!inspectionId) return;
 
-    const input: UpdateInspectionInput = {
+    const payload: UpdateInspectionInput = {
       equipmentId: values.equipmentId,
       result: values.result,
       performedAt: values.performedAt?.toISOString(),
@@ -100,7 +119,7 @@ export class InspectionEditPage {
       notes: values.notes || null,
       signature: values.signature || null,
     };
-    this.store.update({ organizationId, inspectionId, input });
+    this.store.update({ organizationId: this.organizationId(), inspectionId, input: payload });
   }
 
   /** Returns to inspection detail without updating. */

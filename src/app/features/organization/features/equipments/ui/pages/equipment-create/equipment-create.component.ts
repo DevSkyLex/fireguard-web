@@ -3,6 +3,8 @@ import {
   Component,
   effect,
   inject,
+  input,
+  type InputSignal,
   signal,
   type WritableSignal,
 } from '@angular/core';
@@ -14,7 +16,7 @@ import {
   type EquipmentFormValues,
 } from '@features/organization/features/equipments/ui/forms';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
 import { isQuotaExceededError } from '@features/organization/utils';
 
@@ -39,6 +41,22 @@ import { isQuotaExceededError } from '@features/organization/utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentCreatePage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Properties
   /**
    * Property router
@@ -61,18 +79,6 @@ export class EquipmentCreatePage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property store
@@ -158,11 +164,7 @@ export class EquipmentCreatePage {
    * @returns {void}
    */
   protected handleSubmit(values: EquipmentFormValues): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (!organizationId) return;
-
-    const input: CreateEquipmentInput = {
+    const payload: CreateEquipmentInput = {
       type: values.type,
       ...(values.subType ? { subType: values.subType } : {}),
       ...(values.brand ? { brand: values.brand } : {}),
@@ -171,7 +173,7 @@ export class EquipmentCreatePage {
       ...(values.locationLabel ? { locationLabel: values.locationLabel } : {}),
     };
 
-    this.store.create({ organizationId, input });
+    this.store.create({ organizationId: this.organizationId(), input: payload });
   }
 
   /**

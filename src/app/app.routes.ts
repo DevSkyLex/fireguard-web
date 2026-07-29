@@ -1,9 +1,17 @@
 import type { Routes } from '@angular/router';
-import { withAccountProfile, withAccountRailMenu, withNotificationBell } from '@features/account';
+import { withAccountRailMenu, withNotificationBell } from '@features/account';
 import { withAuthShowcase } from '@features/auth';
 import { authGuard } from '@features/auth/http/guards';
+import { provideMainFeature } from '@features/main';
+import { maintenanceGuard } from '@features/maintenance/http/guards';
+import { onboardingGuard, onboardingRequiredGuard } from '@features/onboarding/http/guards';
+import { withOnboardingShowcase } from '@features/onboarding/providers';
 import {
-  COLLABORATION_ROUTES,
+  provideOrganizationFeature,
+  withOrganizationRail,
+  withOrganizationWorkspaceNav,
+} from '@features/organization';
+import {
   provideCollaborationAssistant,
   withCollaborationAssistantPanel,
   withCollaborationAssistantToggle,
@@ -12,29 +20,11 @@ import {
   withCollaborationInfoPanel,
   withCollaborationInfoToggle,
   withMessagingSyncChip,
-} from '@features/collaboration';
-import { provideMainFeature } from '@features/main';
-import { maintenanceGuard } from '@features/maintenance/http/guards';
-import { onboardingGuard, onboardingRequiredGuard } from '@features/onboarding/http/guards';
-import { withOnboardingShowcase } from '@features/onboarding/providers';
-import {
-  provideOrganizationFeature,
-  withOrganizationNavigation,
-  withOrganizationRail,
-  withOrganizationSwitcher,
-  withOrganizationWorkspaceNav,
-} from '@features/organization';
+} from '@features/organization/features/collaboration';
 import {
   withInterventionHeaderActions,
   withInterventionSyncChip,
 } from '@features/organization/features/interventions';
-import { organizationAccessGuard } from '@features/organization/http/guards';
-import {
-  organizationResolver,
-  organizationTitleResolver,
-} from '@features/organization/http/resolvers';
-import { ORGANIZATION_SCOPED_ROUTES } from '@features/organization/organization.routes';
-import { DashboardLayout, provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { provideWorkspaceLayoutSlots, WorkspaceLayout } from '@layouts/workspace-layout';
 import { withThemeSwitcher } from '@shared/components';
 import { FocusedLayout } from './layouts/focused-layout';
@@ -46,8 +36,11 @@ import { provideSplitLayoutSlots, SplitLayout } from './layouts/split-layout';
  * @description
  * Application root routes configuration.
  *
- * The root path (`/`) serves the home page.
- * Organization-scoped pages live under `/organizations/:organizationId`.
+ * Every authenticated destination is served by a single shell,
+ * {@link WorkspaceLayout}: the root path (`/`) forwards to the active
+ * organization, organization-scoped pages live under
+ * `/organizations/:organizationId`, and the cross-organization page —
+ * `/account` — sits beside them.
  */
 export const APP_ROUTES: Routes = [
   {
@@ -81,30 +74,12 @@ export const APP_ROUTES: Routes = [
       import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
   },
   {
-    // Collaboration shell, mounted alongside the dashboard tree rather than
-    // replacing it. Declared before the `''` dashboard route so this exact
-    // path wins; every other organization URL still falls through to it.
-    // This level carries the parameter and is deliberately COMPONENT-LESS.
-    // Angular only passes a parent's params down when that parent is
-    // component-less or path-less (`paramsInheritanceStrategy: 'emptyOnly'`,
-    // the default). Mounting `WorkspaceLayout` here instead would hide
-    // `organizationId` from every hosted route, and guards reading
-    // `route.paramMap.get('organizationId')` would bounce to `/`.
-    path: 'organizations/:organizationId/workspace',
-    canActivate: [authGuard, maintenanceGuard, onboardingRequiredGuard, organizationAccessGuard],
-    // Same context seeding the dashboard tree performs for `:organizationId`:
-    // without it `ORGANIZATION_CONTEXT_PORT` stays null and the shell cannot
-    // tell which organization is open.
-    resolve: {
-      organization: organizationResolver,
-      breadcrumb: organizationTitleResolver,
-    },
+    path: '',
+    component: WorkspaceLayout,
+    canActivate: [authGuard, maintenanceGuard, onboardingRequiredGuard],
     providers: [
       provideMainFeature(),
       provideOrganizationFeature(),
-      // Route-scoped: the assistant store reads the organization through
-      // `ORGANIZATION_CONTEXT_PORT`, bound here, and both its slot
-      // contributions resolve from this same injector.
       provideCollaborationAssistant(),
       provideWorkspaceLayoutSlots({
         rail: [withOrganizationRail(), withAccountRailMenu()],
@@ -115,68 +90,30 @@ export const APP_ROUTES: Routes = [
         ],
         conversationHeader: [
           withMessagingSyncChip(),
+          withInterventionSyncChip(),
           withCollaborationAssistantToggle(),
           withCollaborationInfoToggle(),
+          withNotificationBell(),
           withThemeSwitcher(),
         ],
-        // Same contribution the dashboard shell registers: without it the
-        // intervention detail page loses every header action once hosted here.
         pageHeader: [withInterventionHeaderActions()],
         panel: [withCollaborationAssistantPanel(), withCollaborationInfoPanel()],
       }),
     ],
     children: [
       {
-        // Path-less, so it inherits the parameter and passes it on.
         path: '',
-        component: WorkspaceLayout,
-        // Hosted inside the workspace shell at their own URLs rather than
-        // moved: the dashboard tree keeps serving the same pages untouched, so
-        // the two shells coexist and a route family can be validated before
-        // anything is retired. These are the *same* route objects the dashboard
-        // mounts, so guards, resolvers and breadcrumbs cannot drift.
-        children: [
-          ...COLLABORATION_ROUTES,
-          ...ORGANIZATION_SCOPED_ROUTES,
-          {
-            path: 'account',
-            data: { preload: true },
-            loadChildren: () =>
-              import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
-          },
-        ],
-      },
-    ],
-  },
-  {
-    path: '',
-    component: DashboardLayout,
-    canActivate: [authGuard, maintenanceGuard, onboardingRequiredGuard],
-    providers: [
-      provideMainFeature(),
-      provideOrganizationFeature(),
-      provideDashboardLayoutSlots({
-        navigation: [...withOrganizationNavigation()],
-        sidebar: [withOrganizationSwitcher(), withAccountProfile()],
-        topbar: [withInterventionSyncChip(), withNotificationBell(), withThemeSwitcher()],
-        pageHeader: [withInterventionHeaderActions()],
-      }),
-    ],
-    children: [
-      {
-        path: '',
-        data: { breadcrumb: false, preload: true },
+        data: { breadcrumb: false },
         loadChildren: () => import('@features/main/main.routes').then((m) => m.MAIN_ROUTES),
       },
       {
         path: 'organizations',
-        data: { breadcrumb: false, preload: true },
+        data: { breadcrumb: false },
         loadChildren: () =>
           import('@features/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
       },
       {
         path: 'account',
-        data: { preload: true },
         loadChildren: () =>
           import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
       },

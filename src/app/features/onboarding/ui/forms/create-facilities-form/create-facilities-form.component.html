@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <!-- Facility rows -->
   <div formArrayName="rows" class="flex flex-col gap-3">
     @for (row of rows.controls; track $index; let i = $index) {
@@ -6,6 +12,13 @@
         [formGroupName]="i"
         class="flex flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-900"
       >
+        @for (field of ['type', 'name', 'address']; track field) {
+          @if (serverFieldErrors()['rows[' + i + '].' + field]; as serverMessage) {
+            <p-message severity="error" variant="simple" size="small" role="alert">
+              <span>{{ serverMessage }}</span>
+            </p-message>
+          }
+        }
         <!-- Row header -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">

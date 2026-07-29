@@ -6,8 +6,9 @@ import {
   effect,
   inject,
   input,
-  signal,
+  type InputSignal,
   type InputSignalWithTransform,
+  signal,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
@@ -56,10 +57,7 @@ import {
   type InterventionTransitionCapability,
 } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import {
-  ActiveOrganizationStore,
-  OrganizationMemberAccessStore,
-} from '@features/organization/state';
+import { OrganizationMemberAccessStore } from '@features/organization/state';
 import {
   AvatarStack,
   Board,
@@ -178,22 +176,23 @@ interface InterventionListItemViewModel {
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
 export class InterventionsPage {
-  //#region Properties
   /**
-   * Property organization
+   * Property organizationId
    * @readonly
    *
    * @description
-   * Store exposing the active organization context.
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
    *
-   * @access private
-   * @since 1.0.0
+   * @access public
+   * @since 1.1.0
    *
-   * @type {ActiveOrganizationStore}
+   * @type {InputSignal<string>}
    */
-  private readonly organization: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  public readonly organizationId: InputSignal<string> = input.required<string>();
 
+  //#region Properties
   /**
    * Property memberAccess
    * @readonly
@@ -535,11 +534,9 @@ export class InterventionsPage {
    * @type {Signal<string | null>}
    */
   protected readonly currentMemberIri: Signal<string | null> = computed<string | null>(() => {
-    const organizationId: string | undefined = this.organization.selectedOrganization()?.id;
     const memberId: string | undefined = this.memberAccess.profile()?.id;
-    return organizationId && memberId
-      ? `/api/organizations/${organizationId}/members/${memberId}`
-      : null;
+
+    return memberId ? `/api/organizations/${this.organizationId()}/members/${memberId}` : null;
   });
 
   /**
@@ -818,15 +815,14 @@ export class InterventionsPage {
     });
 
     effect(() => {
-      const organizationId: string | undefined = this.organization.selectedOrganization()?.id;
+      const organizationId: string = this.organizationId();
       const name: string = this.q().trim();
-      if (!organizationId) return;
 
       this.store.load({ organizationId, options: name ? { name } : undefined });
     });
 
     effect(() => {
-      const organizationId: string | null = this.organization.selectedOrganization()?.id ?? null;
+      const organizationId: string = this.organizationId();
       if (organizationId === this.lastPlanningOptionsOrganizationId) return;
 
       this.lastPlanningOptionsOrganizationId = organizationId;
@@ -835,7 +831,7 @@ export class InterventionsPage {
 
     effect(() => {
       const isCalendarActive: boolean = this.view() === 'calendar';
-      const organizationId: string | null = this.organization.selectedOrganization()?.id ?? null;
+      const organizationId: string = this.organizationId();
       const focused: Date = this.calendarFocusedDate();
       if (!isCalendarActive) return;
 
@@ -850,11 +846,13 @@ export class InterventionsPage {
       const created: InterventionOutput | null = this.store.createdIntervention();
       if (!created) return;
 
-      const organizationId: string | undefined = this.organizationId();
       this.store.clearCreatedIntervention();
-      if (organizationId) {
-        void this.router.navigate(['/organizations', organizationId, 'interventions', created.id]);
-      }
+      void this.router.navigate([
+        '/organizations',
+        this.organizationId(),
+        'interventions',
+        created.id,
+      ]);
     });
   }
   //#endregion
@@ -957,9 +955,7 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected retry(): void {
-    const organizationId: string | undefined = this.organizationId();
-    if (!organizationId) return;
-
+    const organizationId: string = this.organizationId();
     const name: string = this.q().trim();
     this.store.load({ organizationId, options: name ? { name } : undefined });
   }
@@ -979,7 +975,8 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected retryCalendar(): void {
-    const organizationId: string | null = this.organization.selectedOrganization()?.id ?? null;
+    const organizationId: string = this.organizationId();
+
     this.calendarStore.load({
       organizationId,
       window: this.calendarWindowFor(this.calendarFocusedDate()),
@@ -1058,8 +1055,7 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected create(values: InterventionCreateFormValues): void {
-    const organizationId: string | undefined = this.organizationId();
-    if (!organizationId) return;
+    const organizationId: string = this.organizationId();
 
     this.store.create({
       organizationId,
@@ -1135,22 +1131,6 @@ export class InterventionsPage {
    */
   protected asItem(value: unknown): InterventionListItemViewModel {
     return value as InterventionListItemViewModel;
-  }
-
-  /**
-   * Method organizationId
-   * @method organizationId
-   *
-   * @description
-   * Returns the active organization identifier, if any.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @returns {string | undefined} Active organization identifier, if any.
-   */
-  private organizationId(): string | undefined {
-    return this.organization.selectedOrganization()?.id;
   }
 
   /**

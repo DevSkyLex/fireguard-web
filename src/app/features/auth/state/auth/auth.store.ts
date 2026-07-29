@@ -3,7 +3,20 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  exhaustMap,
+  finalize,
+  firstValueFrom,
+  map,
+  Observable,
+  of,
+  pipe,
+  shareReplay,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -289,6 +302,14 @@ export const AuthStore = signalStore(
       activeTrustedDeviceStore = inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore),
     ) => {
       /**
+       * In-flight session renewal, shared by every concurrent caller.
+       *
+       * Held outside the returned methods so a burst of parallel 401s resolves
+       * against one refresh rather than racing several against a rotating token.
+       */
+      let renewal: Observable<string | null> | null = null;
+
+      /**
        * Function applySessionTokens
        *
        * @description
@@ -387,6 +408,7 @@ export const AuthStore = signalStore(
                     activeTrustedDeviceStore.clear();
                     // Clear user profile on logout
                     userProfilePort.clear();
+                    dispatcher.dispatch(authStoreEvents.sessionEnded());
                     dispatcher.dispatch(authStoreEvents.logoutSucceeded());
                   },
                   error: (error: unknown) => {
@@ -399,6 +421,9 @@ export const AuthStore = signalStore(
                     activeTrustedDeviceStore.clear();
                     // Clear user profile even on logout error
                     userProfilePort.clear();
+                    // The local session is gone either way, so downstream data must
+                    // be purged here too — not only on the success branch.
+                    dispatcher.dispatch(authStoreEvents.sessionEnded());
                     dispatcher.dispatch(
                       authStoreEvents.logoutFailed(
                         toStoreFailureEventPayload(storeError, 'Logout failed'),
@@ -544,6 +569,54 @@ export const AuthStore = signalStore(
         ),
         //#endregion
 
+        /**
+         * Method renewSession
+         *
+         * @description
+         * Exchanges the `refresh_token` cookie for a fresh access token and returns
+         * it, or `null` when the session cannot be renewed.
+         *
+         * Unlike {@link refresh}, which is fire-and-forget, this is awaitable — the
+         * 401 interceptor needs to know the outcome before deciding whether to
+         * retry the failed request or sign the user out.
+         *
+         * Concurrent callers share one request: a burst of parallel calls all
+         * failing at once must not fire a burst of refreshes, which the server
+         * would treat as replay and could invalidate the rotating refresh token.
+         *
+         * @since 1.1.0
+         *
+         * @returns {Observable<string | null>} The new access token, or `null`.
+         */
+        renewSession(): Observable<string | null> {
+          renewal ??= authService.refresh().pipe(
+            map((response: LoginOutput): string | null => {
+              patchState(store, {
+                accessToken: response.access_token,
+                expiresAt: calculateExpiresAt(response.expires_in),
+                refreshCallState: successCallState(response),
+              });
+
+              return response.access_token;
+            }),
+            catchError((error: unknown) => {
+              patchState(store, {
+                accessToken: null,
+                expiresAt: null,
+                refreshCallState: errorCallState(toStoreError(error)),
+              });
+
+              return of(null);
+            }),
+            finalize(() => {
+              renewal = null;
+            }),
+            shareReplay({ bufferSize: 1, refCount: false }),
+          );
+
+          return renewal;
+        },
+
         //#region Initialization Methods
         /**
          * Method initialize
@@ -628,10 +701,18 @@ export const AuthStore = signalStore(
          * Method clearToken
          *
          * @description
-         * Clears the current access token.
-         * Useful for local logout without API call.
+         * Ends the session locally, without calling the API.
          *
-         * @since 1.0.0
+         * Used by the paths that drop a session without a logout round-trip: a 401
+         * from the interceptor, and switching accounts from an invitation. Those
+         * end a session just as much as `logout` does, so they dispatch
+         * `sessionEnded` too — otherwise the stores and offline databases holding
+         * the departing user's data survive into the next sign-in, which is the
+         * exact leak `sessionEnded` exists to prevent.
+         *
+         * @since 1.1.0
+         *
+         * @fires authStoreEvents.sessionEnded
          */
         clearToken(): void {
           activeTrustedDeviceStore.clear();
@@ -639,6 +720,7 @@ export const AuthStore = signalStore(
             accessToken: null,
             expiresAt: null,
           });
+          dispatcher.dispatch(authStoreEvents.sessionEnded());
         },
 
         /**

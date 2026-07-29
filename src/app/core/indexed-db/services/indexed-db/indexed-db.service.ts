@@ -474,6 +474,15 @@ export abstract class IndexedDbService {
    * construction, which is what lets a schema change be a one-line edit rather
    * than a migration ladder.
    *
+   * Two listeners make that one-line edit survivable in the field:
+   *
+   * - `blocked` fires when another tab still holds the previous version open.
+   *   Without it the promise never settles, and because every primitive awaits
+   *   `open()`, the whole offline queue silently hangs — a field agent keeps
+   *   working and loses everything on close. Rejecting surfaces the failure.
+   * - `versionchange` fires on *this* handle when another tab starts an upgrade.
+   *   Closing lets that upgrade proceed instead of being the tab that blocks it.
+   *
    * @access private
    * @since 1.0.0
    *
@@ -499,7 +508,19 @@ export abstract class IndexedDbService {
           }
         }
       });
-      request.addEventListener('success', () => resolve(request.result));
+      request.addEventListener('blocked', () => {
+        reject(
+          new Error(
+            `IndexedDB "${schema.name}" is blocked upgrading to version ${schema.version}: ` +
+              'another tab still holds an older version open. Close it and reload.',
+          ),
+        );
+      });
+      request.addEventListener('success', () => {
+        const database = request.result;
+        database.addEventListener('versionchange', () => database.close());
+        resolve(database);
+      });
       request.addEventListener('error', () => reject(request.error));
     });
   }

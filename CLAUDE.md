@@ -30,7 +30,7 @@
    behavior. Do not over-detail: never narrate the implementation line-by-line or
    restate what the signature and types already say.
 6. **Keep `models/` type-only.** Runtime values go to sibling `utils/`,
-   `constants/`, `options/`. See `ARCHITECTURE.md` §9 for the two cohesion
+   `constants/`, `options/`. See `ARCHITECTURE.md` §10.10 for the two cohesion
    exceptions (presentation registry, const-enum catalog).
 7. **Placement = usage locality.** Keep code local to its single consumer; lift
    to feature → `shared/` → `core/` only when a real second consumer appears.
@@ -38,7 +38,8 @@
    `data-access/`, `services/`, `access/`, `setup/`, `navigation/`, `http/`,
    `ports/`, `ui/{pages,components,tables,dataviews,forms,dialogs,drawers}`,
    `state/`, `models/`, `utils/`, `constants/`, `options/`, `providers/`); do
-   not invent undocumented sibling layers/folders.
+   not invent undocumented sibling layers/folders. Naming (file suffixes,
+   classes, selectors, tokens, routes) follows `ARCHITECTURE.md` §9.
 8. **Rule of three — don't force DRY.** Do not extract a shared util, helper,
    constant, or abstraction until the **third** real usage appears. Two
    near-duplicates are cheaper left inline than abstracted prematurely; a
@@ -54,7 +55,7 @@
   services, or domain models. Cross-feature imports only through published
   public APIs / ports approved by the relevant `FEATURE.md`.
 - Use path aliases across boundaries: `@app`, `@core`, `@shared`, `@layouts`,
-  `@features`, `@ports`, `@env`. Relative imports only inside one tight local
+  `@features`, `@env`. Relative imports only inside one tight local
   area (one component folder, one state slice).
 - Feature API services extend `HydraApiService` (`@core/api`).
   Never build `HttpParams`/`HttpHeaders` manually outside it.
@@ -92,7 +93,7 @@ that root. Web-focused subagents:
 - `fg-architecture-reviewer` — review Angular code against this `ARCHITECTURE.md`
   (ownership, dependency direction, type-only `models/`, ports, barrels; read-only).
 - `fg-feature-scaffolder` — scaffold a new feature / page / slice per §8.3/§8.4.
-- `fg-signal-store` — NgRx SignalStore work per §9.7/§17 and `@core/request-state`.
+- `fg-signal-store` — NgRx SignalStore work per §10.11 and `@core/request-state`.
 - `fg-primeng-ui` — PrimeNG tables/dataviews/forms/dialogs/drawers, Tailwind + `[pt]`,
   dark mode; it uses the PrimeNG MCP for real props/events/tokens.
 - `fg-a11y-auditor` — static WCAG 2.1 AA + `PRODUCT.md` audit of templates (read-only).

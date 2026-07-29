@@ -437,7 +437,7 @@ export const OrganizationStore = signalStore(
                       totalOrganizations: store.totalOrganizations() - 1,
                       deleteCallState: successCallState(null),
                     });
-                    if (activeOrganizationStore.selectedOrganization()?.id === id) {
+                    if (activeOrganizationStore.selectedOrganizationId() === id) {
                       activeOrganizationStore.clearSelectedOrganization();
                     }
                   },
@@ -484,9 +484,9 @@ export const OrganizationStore = signalStore(
                       totalOrganizations: store.totalOrganizations() - ids.length,
                       deleteCallState: successCallState(null),
                     });
-                    const selectedId: string | undefined =
-                      activeOrganizationStore.selectedOrganization()?.id;
-                    if (selectedId !== undefined && ids.includes(selectedId)) {
+                    const selectedId: string | null =
+                      activeOrganizationStore.selectedOrganizationId();
+                    if (selectedId !== null && ids.includes(selectedId)) {
                       activeOrganizationStore.clearSelectedOrganization();
                     }
                   },

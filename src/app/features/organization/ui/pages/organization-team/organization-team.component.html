@@ -59,6 +59,7 @@
             [role]="selectedRole()"
             [permissions]="store.permissions()"
             [loading]="store.isMutating()"
+            [serverError]="store.mutationError()"
             (submitted)="saveRole($event)"
             (cancelled)="onRoleFormCancelled()"
           />

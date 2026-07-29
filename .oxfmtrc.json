@@ -21,8 +21,6 @@
       "@app/**",
       "@core",
       "@core/**",
-      "@ports",
-      "@ports/**",
       "@shared",
       "@shared/**",
       "@layouts",

@@ -15,9 +15,23 @@ export interface InterventionWorkspaceState {
   readonly workItems: readonly InterventionWorkItemOutput[];
   readonly changes: readonly InterventionChangeOutput[];
   readonly issues: readonly InterventionIssueOutput[];
-  readonly loading: boolean;
-  readonly saving: boolean;
-  readonly error: string | null;
+  /**
+   * Lifecycle of the workspace fetch that seeds this state.
+   */
+  readonly loadCallState: CallState;
+
+  /**
+   * Lifecycle shared by every write this workspace performs — transitions,
+   * planning details, work items, comments, deletion.
+   *
+   * One field rather than one per command: the workspace surfaces a single busy
+   * state, and its drawers are modal, so two writes never race for the user's
+   * attention. What matters is that a failure now keeps the normalized
+   * `StoreError` — the previous `saving: boolean` + pre-localized `error: string`
+   * pair threw the payload away, so an HTTP 422 could never reach the form that
+   * caused it.
+   */
+  readonly mutationCallState: CallState;
 
   /**
    * Activity timeline (comments and system entries) of the active

@@ -23,8 +23,8 @@ describe('NewPasswordForm', () => {
     const emitSpy = vi.spyOn(component.submitted, 'emit');
     const formComponent = component as unknown as NewPasswordFormTestApi;
     formComponent.form.setValue({
-      newPassword: 'password123',
-      confirmPassword: 'different123',
+      newPassword: 'Password123!',
+      confirmPassword: 'Different123!',
     });
 
     formComponent.onSubmit();
@@ -37,13 +37,13 @@ describe('NewPasswordForm', () => {
     const emitSpy = vi.spyOn(component.submitted, 'emit');
     const formComponent = component as unknown as NewPasswordFormTestApi;
     formComponent.form.setValue({
-      newPassword: 'password123',
-      confirmPassword: 'password123',
+      newPassword: 'Password123!',
+      confirmPassword: 'Password123!',
     });
 
     formComponent.onSubmit();
 
-    expect(emitSpy).toHaveBeenCalledWith({ newPassword: 'password123' });
+    expect(emitSpy).toHaveBeenCalledWith({ newPassword: 'Password123!' });
   });
 
   it('should emit cancel event on cancel', () => {
@@ -77,7 +77,7 @@ describe('NewPasswordForm', () => {
       fixture.detectChanges();
 
       const instance = fixture.componentInstance as unknown as NewPasswordFormTestApi;
-      instance.form.setValue({ newPassword: 'password123', confirmPassword: 'different123' });
+      instance.form.setValue({ newPassword: 'Password123!', confirmPassword: 'Different123!' });
       (
         instance as unknown as {
           form: { controls: { confirmPassword: { markAsTouched(): void } } };
@@ -109,7 +109,7 @@ describe('NewPasswordForm', () => {
       const emitSpy = vi.spyOn(fixture.componentInstance.submitted, 'emit');
 
       const instance = fixture.componentInstance as unknown as NewPasswordFormTestApi;
-      instance.form.setValue({ newPassword: 'password123', confirmPassword: 'password123' });
+      instance.form.setValue({ newPassword: 'Password123!', confirmPassword: 'Password123!' });
       fixture.detectChanges();
 
       const formElement: HTMLFormElement | null = (
@@ -118,7 +118,55 @@ describe('NewPasswordForm', () => {
       formElement?.dispatchEvent(new Event('submit'));
       fixture.detectChanges();
 
-      expect(emitSpy).toHaveBeenCalledWith({ newPassword: 'password123' });
+      expect(emitSpy).toHaveBeenCalledWith({ newPassword: 'Password123!' });
+    });
+  });
+
+  describe('server validation', () => {
+    /** A 422 rejecting the new password, as the API reports a policy breach. */
+    const passwordViolation = {
+      '@id': '',
+      '@type': 'ConstraintViolation',
+      status: 422,
+      type: 'https://tools.ietf.org/html/rfc4918#section-11.2',
+      title: 'Unprocessable Entity',
+      detail: 'Validation failed',
+      violations: [{ propertyPath: 'newPassword', message: 'This password has been leaked.' }],
+    };
+
+    it('should show the server message on the field it names', () => {
+      const fixture = TestBed.createComponent(NewPasswordForm);
+      fixture.componentRef.setInput('serverError', { error: passwordViolation });
+      fixture.detectChanges();
+
+      const text: string = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(text).toContain('This password has been leaked.');
+    });
+
+    it('should surface a violation naming no field at form level', () => {
+      const fixture = TestBed.createComponent(NewPasswordForm);
+      fixture.componentRef.setInput('serverError', {
+        error: {
+          ...passwordViolation,
+          violations: [{ propertyPath: 'token', message: 'This reset link has expired.' }],
+        },
+      });
+      fixture.detectChanges();
+
+      const text: string = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(text).toContain('This reset link has expired.');
+    });
+
+    it('should drop the server message once the page clears the error', () => {
+      const fixture = TestBed.createComponent(NewPasswordForm);
+      fixture.componentRef.setInput('serverError', { error: passwordViolation });
+      fixture.detectChanges();
+
+      fixture.componentRef.setInput('serverError', null);
+      fixture.detectChanges();
+
+      const text: string = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(text).not.toContain('This password has been leaked.');
     });
   });
 });

@@ -1,5 +1,5 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-6">
-  @if (hasSaveError()) {
+  @if (hasGenericSaveError()) {
     <p-message
       severity="error"
       class="w-full"
@@ -43,6 +43,11 @@
           class="w-full"
           [invalid]="form.controls.firstName.invalid && form.controls.firstName.touched"
         />
+        @if (serverFieldErrors()['firstName']; as serverMessage) {
+          <p-message severity="error" variant="simple" size="small" role="alert">
+            <span>{{ serverMessage }}</span>
+          </p-message>
+        }
       </div>
       <div class="flex flex-col gap-1.5">
         <label
@@ -62,6 +67,11 @@
           class="w-full"
           [invalid]="form.controls.lastName.invalid && form.controls.lastName.touched"
         />
+        @if (serverFieldErrors()['lastName']; as serverMessage) {
+          <p-message severity="error" variant="simple" size="small" role="alert">
+            <span>{{ serverMessage }}</span>
+          </p-message>
+        }
       </div>
     </div>
   </div>

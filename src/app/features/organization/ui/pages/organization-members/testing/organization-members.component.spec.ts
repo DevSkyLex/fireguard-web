@@ -1,9 +1,10 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { Dispatcher } from '@ngrx/signals/events';
 import { ConfirmationService } from 'primeng/api';
 import { FeedbackService } from '@core/feedback';
-import type { StoreError } from '@core/request-state';
+import { successFeedback, type StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   OrganizationInvitationOutput,
@@ -11,7 +12,10 @@ import type {
   OrganizationRoleOutput,
 } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
-import { OrganizationMembersStore } from '@features/organization/state/organization-members';
+import {
+  organizationMembersStoreEvents,
+  OrganizationMembersStore,
+} from '@features/organization/state/organization-members';
 import { OrganizationMembersPage } from '../organization-members.component';
 
 type MembersPageTestApi = OrganizationMembersPage & {
@@ -163,6 +167,7 @@ describe('OrganizationMembersPage', () => {
     });
 
     fixture = TestBed.createComponent(OrganizationMembersPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     component = fixture.componentInstance as unknown as MembersPageTestApi;
   }
@@ -180,7 +185,7 @@ describe('OrganizationMembersPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Members');
   });
 
-  it('sends an invitation and closes the drawer', () => {
+  it('sends an invitation and keeps the drawer open until the server confirms', () => {
     component.inviteDrawerVisible.set(true);
     component.invite({ email: 'new@example.com', roleIds: [] });
 
@@ -188,10 +193,23 @@ describe('OrganizationMembersPage', () => {
       organizationId: 'org-1',
       input: { email: 'new@example.com', roleIds: [] },
     });
+    // Closing on submit discarded the typed address whenever the invite was
+    // refused — a duplicate, or an exhausted seat quota.
+    expect(component.inviteDrawerVisible()).toBe(true);
+  });
+
+  it('closes the invite drawer once the invitation succeeds', () => {
+    component.inviteDrawerVisible.set(true);
+    component.invite({ email: 'new@example.com', roleIds: [] });
+
+    TestBed.inject(Dispatcher).dispatch(
+      organizationMembersStoreEvents.inviteSucceeded(successFeedback('Invitation sent')),
+    );
+
     expect(component.inviteDrawerVisible()).toBe(false);
   });
 
-  it('assigns a role and closes the assign drawer', () => {
+  it('assigns a role and keeps the assign drawer open until the server confirms', () => {
     component.assignDrawerVisible.set(true);
     component.assignRole({ memberId: 'm1', roleId: 'r1' });
 
@@ -200,6 +218,17 @@ describe('OrganizationMembersPage', () => {
       memberId: 'm1',
       input: { roleId: 'r1' },
     });
+    expect(component.assignDrawerVisible()).toBe(true);
+  });
+
+  it('closes the assign drawer once the role assignment succeeds', () => {
+    component.assignDrawerVisible.set(true);
+    component.assignRole({ memberId: 'm1', roleId: 'r1' });
+
+    TestBed.inject(Dispatcher).dispatch(
+      organizationMembersStoreEvents.assignRoleSucceeded(successFeedback('Role assigned')),
+    );
+
     expect(component.assignDrawerVisible()).toBe(false);
   });
 
@@ -349,6 +378,7 @@ describe('OrganizationMembersPage', () => {
   it('shows the plan limit warning when at the member quota limit', () => {
     quotaStore.isAtLimit.mockReturnValue(true);
     const localFixture = TestBed.createComponent(OrganizationMembersPage);
+    localFixture.componentRef.setInput('organizationId', 'org-1');
     localFixture.detectChanges();
     expect(localFixture.nativeElement.textContent).toContain("reached your plan's member limit");
   });
@@ -356,31 +386,8 @@ describe('OrganizationMembersPage', () => {
   it('hides the tabs entirely when the member cannot view members', () => {
     permissionService.hasAnyPermission.mockReturnValue(false);
     const localFixture = TestBed.createComponent(OrganizationMembersPage);
+    localFixture.componentRef.setInput('organizationId', 'org-1');
     localFixture.detectChanges();
     expect(localFixture.nativeElement.querySelector('p-tabs')).toBeNull();
-  });
-
-  it('does nothing when reloading without an active organization', () => {
-    store.load.mockClear();
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      imports: [OrganizationMembersPage],
-      providers: [
-        provideRouter([]),
-        { provide: ConfirmationService, useValue: confirmationService },
-        { provide: FeedbackService, useValue: { show: vi.fn() } },
-        {
-          provide: ActiveOrganizationStore,
-          useValue: { selectedOrganization: signal(null), selectedOrganizationId: signal(null) },
-        },
-        { provide: OrganizationQuotaStore, useValue: quotaStore },
-        { provide: OrganizationPermissionService, useValue: permissionService },
-      ],
-    }).overrideComponent(OrganizationMembersPage, {
-      set: { providers: [{ provide: OrganizationMembersStore, useValue: store }] },
-    });
-    const localFixture = TestBed.createComponent(OrganizationMembersPage);
-    localFixture.detectChanges();
-    expect(store.load).not.toHaveBeenCalled();
   });
 });

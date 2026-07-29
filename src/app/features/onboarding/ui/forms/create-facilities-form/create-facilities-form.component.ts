@@ -1,4 +1,5 @@
 import {
+  computed,
   Component,
   ChangeDetectionStrategy,
   effect,
@@ -8,6 +9,7 @@ import {
   signal,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import {
@@ -22,11 +24,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type { SetupFacilityType } from '@features/organization/setup';
+import { toServerFieldErrors, type ServerFieldErrors } from '@shared/utils';
 import type {
+  CreateFacilitiesFormData,
   CreateFacilityFormData,
   CreateFacilityFormValues,
-} from '../create-facility-form/models';
-import type { CreateFacilitiesFormData } from './models';
+} from './models';
 
 /**
  * Component CreateFacilitiesForm
@@ -73,6 +76,42 @@ export class CreateFacilitiesForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent step, as held by the store's call state.
+   *
+   * The API reports per-row failures with bracketed paths (`rows[1].name`), so a
+   * rejected batch can point at the exact row instead of failing as a whole.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field path, keyed exactly as the API reports it. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /**
+   * Message of the first violation that names no row field.
+   *
+   * Row paths are matched by shape rather than enumerated, because the number of
+   * rows is only known at runtime.
+   */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(() => {
+    const rowPath = /^rows\[\d+]\.(type|name|address)$/;
+    const entries = Object.entries(this.serverFieldErrors());
+    const orphan = entries.find(([path]) => !rowPath.test(path));
+
+    return orphan?.[1] ?? null;
+  });
   //#endregion
 
   //#region Outputs
@@ -211,8 +250,7 @@ export class CreateFacilitiesForm {
    * @method buildRow
    *
    * @description
-   * Builds a new empty facility row FormGroup with the same validators
-   * as the single `CreateFacilityForm`.
+   * Builds a new empty facility row FormGroup.
    *
    * @access private
    * @since 1.0.0

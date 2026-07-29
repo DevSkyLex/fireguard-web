@@ -20,6 +20,7 @@
     >
       <app-facility-form
         [loading]="store.isCreating()"
+        [serverError]="store.createError()"
         [parentFacilities]="store.facilities()"
         (submitted)="handleSubmit($event)"
         (cancelled)="handleCancel()"

@@ -4,6 +4,8 @@ import {
   computed,
   effect,
   inject,
+  input,
+  type InputSignal,
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,7 +22,6 @@ import {
   FacilityForm,
   type FacilityFormValues,
 } from '@features/organization/features/facilities/ui/forms';
-import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component FacilityEditPage
@@ -44,6 +45,22 @@ import { ActiveOrganizationStore } from '@features/organization/state';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityEditPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Properties
   /**
    * Property router
@@ -74,22 +91,6 @@ export class FacilityEditPage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @description
-   * Root-scoped store providing the current organization context.
-   * Used to obtain the `organizationId` required by all API calls.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property activeFacilityStore
@@ -196,12 +197,11 @@ export class FacilityEditPage {
    * @returns {void}
    */
   protected handleSubmit(values: FacilityFormValues): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
     const facilityId: string | undefined = this.facility()?.id;
-    if (!organizationId || !facilityId) return;
 
-    const input: UpdateFacilityInput = {
+    if (!facilityId) return;
+
+    const payload: UpdateFacilityInput = {
       name: values.name,
       ...(values.code !== undefined ? { code: values.code || null } : {}),
       ...(values.address !== undefined ? { address: values.address || null } : {}),
@@ -209,7 +209,7 @@ export class FacilityEditPage {
       longitude: values.longitude,
     };
 
-    this.store.update({ organizationId, facilityId, input });
+    this.store.update({ organizationId: this.organizationId(), facilityId, input: payload });
   }
 
   /**

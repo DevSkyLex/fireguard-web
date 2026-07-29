@@ -5,9 +5,11 @@ import {
   computed,
   effect,
   inject,
+  input,
+  type InputSignal,
   PLATFORM_ID,
-  signal,
   type Signal,
+  signal,
   type WritableSignal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -46,7 +48,6 @@ import {
   FacilityInspectionDataview,
 } from '@features/organization/features/facilities/ui/dataviews';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import { EmptyState } from '@shared/components';
 
 /**
@@ -86,6 +87,22 @@ import { EmptyState } from '@shared/components';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityDetailPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Properties
   /**
    * Property router
@@ -129,22 +146,6 @@ export class FacilityDetailPage {
   protected readonly canManage: Signal<boolean> = computed<boolean>(() =>
     this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @description
-   * Root-scoped store providing the current organization context.
-   * Used to obtain the `organizationId` required by all API calls.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property platformId
@@ -441,15 +442,10 @@ export class FacilityDetailPage {
     // Eagerly load the descendant tree once the facility is resolved
     // (browser-only — the hierarchy chart is secondary UI data).
     effect(() => {
-      const organizationId: string | undefined =
-        this.activeOrganizationStore.selectedOrganization()?.id;
+      const organizationId: string = this.organizationId();
       const facility: FacilityOutput | null = this.facility();
-      if (
-        !organizationId ||
-        !facility ||
-        !facility.hasChildren ||
-        !isPlatformBrowser(this.platformId)
-      ) {
+
+      if (!facility || !facility.hasChildren || !isPlatformBrowser(this.platformId)) {
         return;
       }
 
@@ -462,11 +458,10 @@ export class FacilityDetailPage {
     // Load compact inspection/equipment previews used by the overview cards
     // (browser-only — secondary, non-critical KPI data).
     effect(() => {
-      const organizationId: string | undefined =
-        this.activeOrganizationStore.selectedOrganization()?.id;
+      const organizationId: string = this.organizationId();
       const facilityId: string | undefined = this.facility()?.id;
 
-      if (!organizationId || !facilityId || !isPlatformBrowser(this.platformId)) {
+      if (!facilityId || !isPlatformBrowser(this.platformId)) {
         return;
       }
 
@@ -509,10 +504,8 @@ export class FacilityDetailPage {
     const currentParentId: string = this.facility()?.parentFacilityId ?? '';
     this.moveParentId.set(currentParentId);
 
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId && isPlatformBrowser(this.platformId)) {
-      this.store.ensureParentOptionsLoaded(organizationId);
+    if (isPlatformBrowser(this.platformId)) {
+      this.store.ensureParentOptionsLoaded(this.organizationId());
     }
 
     this.showMoveDialog.set(true);
@@ -533,16 +526,16 @@ export class FacilityDetailPage {
    * @returns {void}
    */
   protected onMoveSubmit(): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string = this.organizationId();
     const facilityId: string | undefined = this.facility()?.id;
-    if (!organizationId || !facilityId) return;
 
-    const input: MoveFacilityInput = {
+    if (!facilityId) return;
+
+    const payload: MoveFacilityInput = {
       parentFacilityId: this.moveParentId() || null,
     };
 
-    this.store.move({ organizationId, facilityId, input });
+    this.store.move({ organizationId, facilityId, input: payload });
   }
 
   /**

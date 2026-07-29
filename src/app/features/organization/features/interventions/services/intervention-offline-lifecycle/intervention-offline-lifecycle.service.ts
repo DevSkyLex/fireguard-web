@@ -102,7 +102,7 @@ export class InterventionOfflineLifecycleService {
    *
    * @description
    * Registers the logout listener once for the application lifecycle.
-   * Subsequent calls are no-ops. On `logoutSucceeded`, resets all locally
+   * Subsequent calls are no-ops. On `sessionEnded`, resets all locally
    * persisted intervention data for the current owner.
    *
    * @access public
@@ -113,8 +113,10 @@ export class InterventionOfflineLifecycleService {
   public start(): void {
     if (this.started) return;
     this.started = true;
+    // `sessionEnded`, not `logoutSucceeded`: a failed logout request still ends the
+    // local session, and the offline data must not survive it.
     this.events
-      .on(authStoreEvents.logoutSucceeded)
+      .on(authStoreEvents.sessionEnded)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         void this.database.resetOwnerData().catch((error: unknown) => {

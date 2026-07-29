@@ -44,7 +44,7 @@ Environment configuration follows Angular's standard file-replacement
 pattern: application code imports `@env/environment`, and `angular.json`
 swaps in `src/environments/environment.ts` (production) or
 `environment.development.ts` (development) at build time — see
-`ARCHITECTURE.md` §16 and `DEPLOYMENT.md` for details.
+`ARCHITECTURE.md` §11 and `DEPLOYMENT.md` for details.
 
 ## Available scripts
 
@@ -83,15 +83,15 @@ src/app/
 
 Top-level features (each documented in its own `FEATURE.md`):
 
-| Feature         | Owns                                                                                                                                                                               |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth`          | Sign-in, MFA, registration, password reset, session/token bootstrap                                                                                                                |
-| `account`       | User profile, sessions, trusted devices, notifications, global permission helpers                                                                                                  |
-| `onboarding`    | Mandatory guided organization activation wizard                                                                                                                                    |
-| `main`          | Root landing route (`/`), redirects into the active organization workspace                                                                                                         |
-| `organization`  | Organization context, members, roles, billing/subscription, audit log, dashboard, and nested subfeatures: `facilities`, `equipments`, `inspections`, `checklists`, `interventions` |
-| `collaboration` | Organization channels, direct conversations, messages, presence, and the AI assistant                                                                                              |
-| `error`         | Static error pages (404 / 403 / 500 / maintenance)                                                                                                                                 |
+| Feature         | Owns                                                                                                                                                                    |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth`          | Sign-in, MFA, registration, password reset, session/token bootstrap                                                                                                     |
+| `account`       | User profile, sessions, trusted devices, notifications, global permission helpers                                                                                       |
+| `onboarding`    | Mandatory guided organization activation wizard                                                                                                                         |
+| `main`          | Root landing route (`/`), redirects into the active organization workspace                                                                                              |
+| `organization`  | Organization context, members, roles, billing/subscription, dashboard, and nested subfeatures: `facilities`, `equipments`, `inspections`, `checklists`, `interventions` |
+| `collaboration` | Organization channels, direct conversations, messages, presence, and the AI assistant                                                                                   |
+| `error`         | Static error pages (404 / 403 / 500 / maintenance)                                                                                                                      |
 
 ## Testing
 

@@ -66,7 +66,7 @@ export const INTERVENTION_ROUTES: Routes = [
             (module) => module.InterventionsPage,
           ),
         title: $localize`:@@route.interventions:Interventions`,
-        data: { breadcrumb: false, preload: true },
+        data: { breadcrumb: false },
       },
     ],
   },

@@ -31,6 +31,26 @@ const angularApp = new AngularNodeAppEngine();
  */
 
 /**
+ * Baseline security headers, applied to every response including static assets.
+ *
+ * `frame-ancestors` duplicates `X-Frame-Options` on purpose: the modern directive
+ * is the one browsers honour, the legacy header covers the rest. Framing an
+ * identity provider is how consent and session UI get hijacked, so both say no.
+ *
+ * Deliberately no `script-src`/`style-src` policy here: Angular's hydration and
+ * PrimeNG's runtime styling need a nonce pipeline to work under a strict CSP, and
+ * a half-configured policy either breaks the app or lulls you into thinking it is
+ * protected. That belongs in its own change, verified in a browser.
+ */
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
+/**
  * Serve static files from /browser
  */
 app.use(
@@ -40,6 +60,20 @@ app.use(
     redirect: false,
   }),
 );
+
+/**
+ * Everything past the static handler is server-rendered HTML built for one
+ * signed-in member: their organization, their name, their notifications.
+ *
+ * Without this it carries no cache directive at all, which leaves any shared
+ * proxy free to apply its own heuristics and hand one member's page to the next
+ * visitor. Hashed assets above keep their long max-age; only the rendered
+ * document is marked uncacheable.
+ */
+app.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, must-revalidate');
+  next();
+});
 
 /**
  * Bias locale resolution toward the explicit `lang` cookie.

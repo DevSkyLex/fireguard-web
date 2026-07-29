@@ -4,6 +4,8 @@ import {
   computed,
   effect,
   inject,
+  input,
+  type InputSignal,
   signal,
   type Signal,
   type WritableSignal,
@@ -82,6 +84,22 @@ interface OrganizationSettingsNavItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationSettingsPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Properties
   /** Active route used to read and update the selected settings section. */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
@@ -257,9 +275,8 @@ export class OrganizationSettingsPage {
    * @param {UpdateOrganizationInput} input - Settings fields to persist.
    * @returns {void}
    */
-  protected save(input: UpdateOrganizationInput): void {
-    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) this.store.save({ organizationId, input });
+  protected save(payload: UpdateOrganizationInput): void {
+    this.store.save({ organizationId: this.organizationId(), input: payload });
   }
 
   /**
@@ -272,8 +289,7 @@ export class OrganizationSettingsPage {
    * @returns {void}
    */
   protected uploadLogo(file: File): void {
-    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) this.store.uploadLogo({ organizationId, file, fileName: file.name });
+    this.store.uploadLogo({ organizationId: this.organizationId(), file, fileName: file.name });
   }
 
   /**
@@ -297,8 +313,7 @@ export class OrganizationSettingsPage {
    * @returns {void}
    */
   protected confirmDelete(): void {
-    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) this.store.deleteOrganization({ organizationId });
+    this.store.deleteOrganization({ organizationId: this.organizationId() });
   }
   //#endregion
 }

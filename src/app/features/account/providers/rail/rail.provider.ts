@@ -10,10 +10,6 @@ import type { WorkspaceLayoutRailSlotFeature } from '@layouts/workspace-layout';
  * the seat avatar the member opens to reach their profile, notifications and
  * sign-out.
  *
- * Deliberately not {@link AccountUserMenu}: that one is a full-width row that
- * expands inline in the dashboard sidebar and measures ~215px, which does not
- * fit a 60px rail. Both read the same ports.
- *
  * Use inside {@link provideWorkspaceLayoutSlots}:
  * ```typescript
  * provideWorkspaceLayoutSlots({ rail: [withAccountRailMenu()] })

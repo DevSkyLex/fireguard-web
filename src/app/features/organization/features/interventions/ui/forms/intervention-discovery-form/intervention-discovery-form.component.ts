@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
@@ -25,6 +27,7 @@ import type {
   InterventionWorkItemAction,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionDiscoveryFormData, InterventionDiscoveryFormValues } from './models';
 
@@ -67,6 +70,34 @@ export class InterventionDiscoveryForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field the server refused; projecting it tells the user which
+   * one to fix instead of leaving them with a generic toast.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), ['action', 'target', 'result'])[0]?.message ?? null,
+  );
 
   /**
    * Property disabled
@@ -277,7 +308,10 @@ export class InterventionDiscoveryForm {
       ...this.form.getRawValue(),
       target: this.form.controls.target.value.trim(),
     });
-    this.form.reset({ action: 'inventory', target: '', result: 'pass' });
+    // Deliberately no reset here: the outcome is not known yet. Clearing on emit
+    // meant a rejected submit — or a dropped connection in the field — wiped what
+    // the user typed. The drawer is destroyed when it closes, so the next open
+    // starts from a fresh form anyway.
   }
   //#endregion
 }

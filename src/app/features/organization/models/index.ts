@@ -3,6 +3,7 @@ export type { CreateOrganizationInput } from './organization-entity/create-organ
 export type { InviteOrganizationMemberInput } from './member/invite-organization-member-input.interface';
 export type { OrganizationInvitationOutput } from './member/organization-invitation-output.interface';
 export type { OrganizationInvitationPreviewOutput } from './member/organization-invitation-preview-output.interface';
+export type { OrganizationInvitationStatus } from './member/organization-invitation-status.type';
 export type { MemberDirectoryEntry } from './member/member-directory-entry.interface';
 export type { OrganizationMemberOutput } from './member/organization-member-output.interface';
 export type { CurrentOrganizationMemberProfileOutput } from './member/current-organization-member-profile-output.interface';
@@ -64,8 +65,6 @@ export type {
   OrganizationDashboardInspectionTrendResourceParams,
   OrganizationDashboardNonConformityTrendResourceParams,
 } from './dashboard/organization-dashboard-trend-output.interface';
-export type { AuditEventListOptions } from './organization-audit/audit-event-list-options.interface';
-export type { AuditEventOutput } from './organization-audit/audit-event-output.interface';
 export type { OrganizationPermissionOutput } from './role/organization-permission-output.interface';
 export type { UpdateOrganizationInput } from './organization-entity/update-organization-input.interface';
 export type { PlanLimits, PlanOutput } from './plan/plan-output.interface';
@@ -99,6 +98,3 @@ export { resolveSubscriptionStatusTag } from './billing-tag/subscription-status-
 export type { InvitationTagDescriptor } from './invitation-tag/invitation-tag-descriptor.interface';
 export type { InvitationTagKind } from './invitation-tag/invitation-tag-kind.type';
 export { resolveInvitationTag } from './invitation-tag/invitation-tag.util';
-export type { OrganizationStatusTagDescriptor } from './organization-status-tag/organization-status-tag-descriptor.interface';
-export type { OrganizationStatusTagKind } from './organization-status-tag/organization-status-tag-kind.type';
-export { resolveOrganizationStatusTag } from './organization-status-tag/organization-status-tag.util';

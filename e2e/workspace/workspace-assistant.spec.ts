@@ -110,7 +110,7 @@ async function mockAssistant(
 }
 
 async function openChannel(page: Page): Promise<void> {
-  await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/${CHANNEL_ID}`);
+  await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
 }
 
 test.describe('Workspace assistant', () => {

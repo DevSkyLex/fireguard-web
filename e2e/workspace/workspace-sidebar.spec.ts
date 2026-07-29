@@ -6,11 +6,10 @@ import { WorkspacePage } from '../support/pages/workspace.page';
 /**
  * Workspace channel sidebar — the organization's business destinations.
  *
- * The section is contributed through `SECONDARY_NAV_SLOT` and reads the same
- * permission-filtered configuration as the dashboard sidebar
- * (`buildOrganizationNavigationSection`), so the two shells cannot drift on
- * what a member may see. Favorites and channels arrive with the messaging
- * feature and are deliberately absent here.
+ * The section is contributed through `SECONDARY_NAV_SLOT` and reads the
+ * feature-owned, permission-filtered navigation configuration
+ * (`buildOrganizationNavigationSection`), so what a member may see follows the
+ * same RBAC rules as the routes themselves.
  */
 test.describe('Workspace sidebar', () => {
   const organization = organizationOutput();
@@ -25,7 +24,7 @@ test.describe('Workspace sidebar', () => {
     await expect(workspace.sidebar).toContainText(organization.name);
     await expect(page.getByTestId('workspace-nav-settings')).toHaveAttribute(
       'href',
-      `/organizations/${organization.id}/workspace/settings`,
+      `/organizations/${organization.id}/settings`,
     );
   });
 
@@ -57,14 +56,12 @@ test.describe('Workspace sidebar', () => {
     const nav = workspace.sidebar.getByRole('navigation', { name: 'Organization' });
     const interventions = nav.getByRole('link', { name: 'Interventions' });
 
-    // Nothing is current while the shell sits on /workspace itself.
+    // Nothing is current while the shell sits on the organization landing.
     await expect(interventions).not.toHaveAttribute('aria-current', 'page');
 
     await interventions.click();
 
-    // Destinations stay inside the workspace — a dashboard-prefixed link would
-    // eject the member from the shell on the first click.
-    await expect(page).toHaveURL(`/organizations/${organization.id}/workspace/interventions`);
+    await expect(page).toHaveURL(`/organizations/${organization.id}/interventions`);
     await expect(workspace.shell).toBeVisible();
     await expect(interventions).toHaveAttribute('aria-current', 'page');
   });

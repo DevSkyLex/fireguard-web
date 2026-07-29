@@ -1,7 +1,4 @@
-export {
-  buildDashboardSingleTrendBarChartData,
-  buildDashboardSingleTrendLineChartData,
-} from './build-dashboard-single-trend-chart-data.utils';
+export { buildDashboardSingleTrendLineChartData } from './build-dashboard-single-trend-chart-data.utils';
 export {
   buildDashboardSingleTrendSummaryMetric,
   buildDashboardSingleTrendViewModel,

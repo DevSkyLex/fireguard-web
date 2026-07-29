@@ -55,6 +55,7 @@ describe('FacilityInspectionTab', () => {
 
   const mockActiveOrgStore = {
     selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG),
+    selectedOrganizationId: signal<string | null>(MOCK_ORG.id),
   };
   const mockConfirmationService = {
     confirm: vi.fn(),

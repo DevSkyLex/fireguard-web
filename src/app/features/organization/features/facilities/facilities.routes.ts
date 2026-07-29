@@ -72,7 +72,6 @@ export const FACILITY_ROUTES: Routes = [
     title: $localize`:@@route.facilities:Facilities`,
     data: {
       breadcrumb: false,
-      preload: true,
     },
   },
 ];

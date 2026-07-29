@@ -1179,6 +1179,7 @@
       [siteOptions]="siteOptions()"
       [memberOptions]="memberOptions()"
       [loading]="store.saving()"
+      [serverError]="store.mutationError()"
       [disabled]="!canPlan()"
       (submitted)="savePlanningDetails($event)"
     />
@@ -1189,6 +1190,7 @@
       [targetOptions]="targetOptions()"
       [memberOptions]="memberOptions()"
       [loading]="store.saving()"
+      [serverError]="store.mutationError()"
       [disabled]="!canAddWorkItem()"
       (submitted)="createWorkItem($event)"
     />
@@ -1197,6 +1199,7 @@
       [visible]="skipDrawerVisible()"
       (visibleChange)="skipDrawerVisible.set($event)"
       [loading]="store.saving()"
+      [serverError]="store.mutationError()"
       [disabled]="!canExecute()"
       (submitted)="confirmSkip($event)"
     />
@@ -1205,6 +1208,7 @@
       [visible]="discoveryDrawerVisible()"
       (visibleChange)="discoveryDrawerVisible.set($event)"
       [loading]="store.saving() || fieldActionBusy()"
+      [serverError]="store.mutationError()"
       [disabled]="!canExecute()"
       [equipmentTypeOptions]="equipmentTypeOptions()"
       (submitted)="confirmDiscovery($event)"
@@ -1214,6 +1218,7 @@
       [visible]="requestChangesDrawerVisible()"
       (visibleChange)="requestChangesDrawerVisible.set($event)"
       [loading]="store.saving()"
+      [serverError]="store.mutationError()"
       [disabled]="!canReview() || intervention.status !== 'submitted'"
       (submitted)="requestChanges($event)"
     />

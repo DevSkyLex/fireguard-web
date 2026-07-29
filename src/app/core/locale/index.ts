@@ -8,7 +8,6 @@ export {
 export type { AppLocaleOption, AppLocaleSubPath } from './models/app-locale.type';
 export {
   isSupportedLocale,
-  localeSubPathFromPathname,
   matchAcceptLanguage,
   parseCookieHeader,
   resolveLocaleFromRequest,

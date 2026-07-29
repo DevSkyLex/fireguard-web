@@ -1,4 +1,10 @@
 <form novalidate (submit)="$event.preventDefault(); onSubmit()" class="flex w-full flex-col gap-6">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <div class="flex flex-col gap-3" [formGroup]="form">
     <div class="flex flex-col gap-3" formArrayName="rows">
       @for (row of rows.controls; track $index; let i = $index) {
@@ -110,4 +116,14 @@
     [disabled]="form.invalid || busy()"
     fluid
   />
+  @if (serverFieldErrors()['email']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['roleId']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
 </form>

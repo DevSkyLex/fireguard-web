@@ -12,6 +12,30 @@ describe('RegisterForm', () => {
     return fixture;
   };
 
+  it('should pre-fill the email when the caller already knows it', () => {
+    const fixture = TestBed.createComponent(RegisterForm);
+    fixture.componentRef.setInput('email', 'bob@example.com');
+    fixture.detectChanges();
+
+    const email: HTMLInputElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+      'input#email',
+    );
+
+    // An invitation names its recipient; retyping it is how the addresses end
+    // up mismatched.
+    expect(email?.value).toBe('bob@example.com');
+  });
+
+  it('should leave the email empty when none is supplied', () => {
+    const fixture = createFixture();
+
+    const email: HTMLInputElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+      'input#email',
+    );
+
+    expect(email?.value).toBe('');
+  });
+
   it('should render the registration fields', () => {
     const fixture = createFixture();
 
@@ -19,8 +43,27 @@ describe('RegisterForm', () => {
     expect(host.querySelector('input#firstName')).toBeTruthy();
     expect(host.querySelector('input#lastName')).toBeTruthy();
     expect(host.querySelector('input#email')).toBeTruthy();
-    expect(host.querySelector('p-password#password')).toBeTruthy();
-    expect(host.querySelector('p-password#confirmPassword')).toBeTruthy();
+    // `inputId`, not `id`: PrimeNG binds it on the inner <input>, whereas `id` lands
+    // on the <p-password> host — an element <label for> cannot be associated with.
+    expect(host.querySelector('input#password')).toBeTruthy();
+    expect(host.querySelector('input#confirmPassword')).toBeTruthy();
+  });
+
+  it('should associate every label with a real form control', () => {
+    const fixture = createFixture();
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+
+    const labels = [...host.querySelectorAll<HTMLLabelElement>('label[for]')];
+    expect(labels.length).toBeGreaterThan(0);
+
+    for (const label of labels) {
+      const target = host.querySelector(`#${label.htmlFor}`);
+      expect(target, `label[for="${label.htmlFor}"] points at nothing`).toBeTruthy();
+      expect(
+        target?.tagName.toLowerCase(),
+        `label[for="${label.htmlFor}"] must target a labelable control`,
+      ).toMatch(/^(input|select|textarea)$/);
+    }
   });
 
   it('should show required errors for firstName and lastName once touched', () => {

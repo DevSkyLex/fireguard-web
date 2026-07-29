@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -8,6 +9,7 @@ import {
   signal,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -16,24 +18,14 @@ import { InputOtpModule } from 'primeng/inputotp';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
 import type { AccountPasswordChangeStep } from '@features/account/state';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@features/auth';
+import { toServerFieldErrors, type ServerFieldErrors } from '@shared/utils';
 import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
 import type {
   AccountPasswordConfirmFormData,
   AccountPasswordRequestFormData,
   PasswordChangeConfirmation,
 } from './models';
-
-/**
- * Constant PASSWORD_PATTERN
- * @const PASSWORD_PATTERN
- *
- * @description
- * Password complexity pattern enforced by the backend: lowercase,
- * uppercase, digit and special character.
- *
- * @since 1.0.0
- */
-const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#].*$/;
 
 /**
  * Component AccountPasswordForm
@@ -53,8 +45,8 @@ const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z
  *   [step]="passwordStore.step()"
  *   [requesting]="passwordStore.isRequesting()"
  *   [confirming]="passwordStore.isConfirming()"
- *   [hasRequestError]="passwordStore.requestError() !== null"
- *   [hasConfirmError]="passwordStore.confirmError() !== null"
+ *   [requestError]="passwordStore.requestError()"
+ *   [confirmError]="passwordStore.confirmError()"
  *   [maskedRecipient]="passwordStore.maskedRecipient()"
  *   (requested)="requestPasswordChange($event)"
  *   (confirmed)="confirmPasswordChange($event)"
@@ -116,34 +108,48 @@ export class AccountPasswordForm {
   public readonly confirming: InputSignal<boolean> = input<boolean>(false);
 
   /**
-   * Input hasRequestError
+   * Input requestError
    * @input
    *
    * @description
-   * Whether the latest password change request failed (e.g. wrong
-   * current password).
+   * Last failure of the current-password check, as held by the store's call state.
+   *
+   * Carries the payload rather than a boolean: the server is the authority on what
+   * it refused, and a 422 names the field. Reducing it to `true` at the boundary is
+   * what forced the generic "please check it and try again" message.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {InputSignal<boolean>}
+   * @type {InputSignal<unknown>}
    */
-  public readonly hasRequestError: InputSignal<boolean> = input<boolean>(false);
+  public readonly requestError: InputSignal<unknown> = input<unknown>(null);
 
   /**
-   * Input hasConfirmError
+   * Input confirmError
    * @input
    *
    * @description
-   * Whether the latest password change confirmation failed (invalid or
-   * expired code, attempts exhausted).
+   * Last failure of the confirmation step (code plus new password), as held by the
+   * store's call state. Carries the payload so a rejected password policy lands on
+   * `newPassword` instead of hiding behind the generic code-expired message.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {InputSignal<boolean>}
+   * @type {InputSignal<unknown>}
    */
-  public readonly hasConfirmError: InputSignal<boolean> = input<boolean>(false);
+  public readonly confirmError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field of the confirmation step. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.confirmError()),
+  );
+
+  /** Whether the confirmation failed without naming any field this form renders. */
+  protected readonly hasGenericConfirmError: Signal<boolean> = computed(
+    () => this.confirmError() !== null && Object.keys(this.serverFieldErrors()).length === 0,
+  );
 
   /**
    * Input maskedRecipient
@@ -257,8 +263,8 @@ export class AccountPasswordForm {
         ]),
         newPassword: this.formBuilder.control('', [
           Validators.required,
-          Validators.minLength(8),
-          Validators.maxLength(128),
+          Validators.minLength(PASSWORD_MIN_LENGTH),
+          Validators.maxLength(PASSWORD_MAX_LENGTH),
           Validators.pattern(PASSWORD_PATTERN),
         ]),
         confirmPassword: this.formBuilder.control('', [Validators.required]),

@@ -57,7 +57,9 @@
             <app-organization-general-form
               [organization]="activeOrganizationStore.selectedOrganization()"
               [saving]="store.isSaving()"
+              [serverError]="store.saveError()"
               [uploadingLogo]="store.isUploadingLogo()"
+              [serverError]="store.saveError()"
               (submitted)="save($event)"
               (logoSelected)="uploadLogo($event)"
             />
@@ -72,6 +74,7 @@
             <app-organization-notifications-form
               [organization]="activeOrganizationStore.selectedOrganization()"
               [saving]="store.isSaving()"
+              [serverError]="store.saveError()"
               (submitted)="save($event)"
             />
           }
@@ -79,6 +82,7 @@
             <app-organization-regional-form
               [organization]="activeOrganizationStore.selectedOrganization()"
               [saving]="store.isSaving()"
+              [serverError]="store.saveError()"
               (submitted)="save($event)"
             />
           }

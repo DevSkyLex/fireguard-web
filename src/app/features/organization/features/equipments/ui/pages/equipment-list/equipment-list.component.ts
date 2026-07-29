@@ -4,8 +4,9 @@ import {
   computed,
   inject,
   input,
-  numberAttribute,
+  type InputSignal,
   type InputSignalWithTransform,
+  numberAttribute,
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,7 +18,7 @@ import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { EquipmentTable } from '@features/organization/features/equipments/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaStore } from '@features/organization/state';
 
 /**
  * Component EquipmentListPage
@@ -39,6 +40,22 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentListPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Inputs
   /**
    * Input page
@@ -79,18 +96,6 @@ export class EquipmentListPage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property store
@@ -195,12 +200,8 @@ export class EquipmentListPage {
    * @returns {void}
    */
   public onLoad(options: RequestOptions): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.lastLoadOptions = options;
-      this.store.load({ organizationId, options });
-    }
+    this.lastLoadOptions = options;
+    this.store.load({ organizationId: this.organizationId(), options });
   }
 
   /**
@@ -218,11 +219,7 @@ export class EquipmentListPage {
    * @returns {void}
    */
   public retry(): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.load({ organizationId, options: this.lastLoadOptions });
-    }
+    this.store.load({ organizationId: this.organizationId(), options: this.lastLoadOptions });
   }
 
   /**

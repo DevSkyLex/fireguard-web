@@ -19,6 +19,7 @@
     >
       <app-inspection-form
         [loading]="store.isCreating()"
+        [serverError]="store.createError()"
         [equipments]="equipmentStore.equipmentList()"
         [facilities]="facilityStore.facilities()"
         [checklists]="checklistStore.checklists()"

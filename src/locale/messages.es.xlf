@@ -4918,14 +4918,6 @@
         <source>Administration</source>
         <target>Administración</target>
       </trans-unit>
-      <trans-unit id="org.nav.audit" datatype="html">
-        <source>Audit log</source>
-        <target>Registro de auditoría</target>
-      </trans-unit>
-      <trans-unit id="route.audit" datatype="html">
-        <source>Audit log</source>
-        <target>Registro de auditoría</target>
-      </trans-unit>
       <trans-unit id="dash.granularity.daily" datatype="html">
         <source>Daily</source>
         <target>Diario</target>
@@ -5831,70 +5823,6 @@
           organizationSlug()
         }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> para confirmar.</target>
       </trans-unit>
-      <trans-unit id="audit.detailDrawer.header" datatype="html">
-        <source>Event details</source>
-        <target>Detalles del evento</target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.closeAria" datatype="html">
-        <source>Close event details</source>
-        <target>Cerrar los detalles del evento</target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.action" datatype="html">
-        <source> Action </source>
-        <target> Acción </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.occurredAt" datatype="html">
-        <source> Occurred at </source>
-        <target> Ocurrió el </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.recordedAt" datatype="html">
-        <source> Recorded at </source>
-        <target> Registrado el </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.actorType" datatype="html">
-        <source> Actor type </source>
-        <target> Tipo de actor </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.actorId" datatype="html">
-        <source> Actor </source>
-        <target> Actor </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.subjectType" datatype="html">
-        <source> Subject type </source>
-        <target> Tipo de sujeto </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.subjectId" datatype="html">
-        <source> Subject id </source>
-        <target> Id. del sujeto </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.clientId" datatype="html">
-        <source> Client id </source>
-        <target> Id. de cliente </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.tenantId" datatype="html">
-        <source> Tenant id </source>
-        <target> Id. de tenant </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.ipAddress" datatype="html">
-        <source> IP address </source>
-        <target> Dirección IP </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.userAgent" datatype="html">
-        <source> User agent </source>
-        <target> Agente de usuario </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.metadata" datatype="html">
-        <source> Metadata </source>
-        <target> Metadatos </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.chain" datatype="html">
-        <source> Chain </source>
-        <target> Cadena </target>
-      </trans-unit>
-      <trans-unit id="audit.detailDrawer.eventHash" datatype="html">
-        <source> Event hash </source>
-        <target> Hash del evento </target>
-      </trans-unit>
       <trans-unit id="org.members.inviteDrawer" datatype="html">
         <source>Invite member</source>
         <target>Invitar miembro</target>
@@ -6211,22 +6139,6 @@
         <source>Create role</source>
         <target>Crear rol</target>
       </trans-unit>
-      <trans-unit id="audit.page.title" datatype="html">
-        <source> Audit log </source>
-        <target>Registro de auditoría</target>
-      </trans-unit>
-      <trans-unit id="audit.page.subtitle" datatype="html">
-        <source> Platform-wide security and compliance ledger. Not limited to the current organization. </source>
-        <target> Registro de seguridad y cumplimiento de toda la plataforma. No está limitado a la organización actual. </target>
-      </trans-unit>
-      <trans-unit id="audit.page.retry" datatype="html">
-        <source>Retry</source>
-        <target>Reintentar</target>
-      </trans-unit>
-      <trans-unit id="audit.page.loadError" datatype="html">
-        <source>The audit log could not be loaded.</source>
-        <target>No se pudo cargar el registro de auditoría.</target>
-      </trans-unit>
       <trans-unit id="org.invAccept.header" datatype="html">
         <source>Organization invitation</source>
         <target>Invitación a la organización</target>
@@ -6510,94 +6422,6 @@
       <trans-unit id="org.team.deleteRoleMessage" datatype="html">
         <source>Delete role &quot;<x id="role" equiv-text="role.name"/>&quot;?</source>
         <target>¿Eliminar el rol "<x id="role" equiv-text="role.name"/>"?</target>
-      </trans-unit>
-      <trans-unit id="audit.table.title" datatype="html">
-        <source>Events</source>
-        <target>Eventos</target>
-      </trans-unit>
-      <trans-unit id="audit.table.subtitle" datatype="html">
-        <source> Immutable record of security and compliance events. </source>
-        <target> Registro inmutable de eventos de seguridad y cumplimiento. </target>
-      </trans-unit>
-      <trans-unit id="audit.table.filtersButton" datatype="html">
-        <source>Filters</source>
-        <target>Filtros</target>
-      </trans-unit>
-      <trans-unit id="audit.table.filterAction" datatype="html">
-        <source>Action</source>
-        <target>Acción</target>
-      </trans-unit>
-      <trans-unit id="audit.table.filterActionPlaceholder" datatype="html">
-        <source>e.g. organization.updated</source>
-        <target>ej. organization.updated</target>
-      </trans-unit>
-      <trans-unit id="audit.table.filterActorType" datatype="html">
-        <source>Actor type</source>
-        <target>Tipo de actor</target>
-      </trans-unit>
-      <trans-unit id="audit.table.filterSubjectType" datatype="html">
-        <source>Subject type</source>
-        <target>Tipo de sujeto</target>
-      </trans-unit>
-      <trans-unit id="audit.table.filterSubjectTypePlaceholder" datatype="html">
-        <source>e.g. organization, member</source>
-        <target>ej. organization, member</target>
-      </trans-unit>
-      <trans-unit id="audit.table.filterOccurred" datatype="html">
-        <source>Occurred range</source>
-        <target>Rango de fecha</target>
-      </trans-unit>
-      <trans-unit id="audit.table.pageReport" datatype="html">
-        <source>Showing {first} to {last} of {totalRecords} events</source>
-        <target>Mostrando {first} a {last} de {totalRecords} eventos</target>
-      </trans-unit>
-      <trans-unit id="audit.table.colTimestamp" datatype="html">
-        <source>Timestamp</source>
-        <target>Fecha y hora</target>
-      </trans-unit>
-      <trans-unit id="audit.table.colAction" datatype="html">
-        <source>Action</source>
-        <target>Acción</target>
-      </trans-unit>
-      <trans-unit id="audit.table.colActor" datatype="html">
-        <source>Actor</source>
-        <target>Actor</target>
-      </trans-unit>
-      <trans-unit id="audit.table.colSubject" datatype="html">
-        <source>Subject</source>
-        <target>Sujeto</target>
-      </trans-unit>
-      <trans-unit id="audit.table.srActions" datatype="html">
-        <source>Actions</source>
-        <target>Acciones</target>
-      </trans-unit>
-      <trans-unit id="audit.table.rowDetails" datatype="html">
-        <source>View event details</source>
-        <target>Ver detalles del evento</target>
-      </trans-unit>
-      <trans-unit id="audit.table.emptyTitle" datatype="html">
-        <source>No audit events</source>
-        <target>Sin eventos de auditoría</target>
-      </trans-unit>
-      <trans-unit id="audit.table.emptyDesc" datatype="html">
-        <source>Adjust your filters, or check back once activity occurs.</source>
-        <target>Ajuste sus filtros o vuelva más tarde cuando ocurra actividad.</target>
-      </trans-unit>
-      <trans-unit id="audit.table.actorTypeUser" datatype="html">
-        <source>User</source>
-        <target>Usuario</target>
-      </trans-unit>
-      <trans-unit id="audit.table.actorTypeClient" datatype="html">
-        <source>Client</source>
-        <target>Cliente</target>
-      </trans-unit>
-      <trans-unit id="audit.table.actorTypeSystem" datatype="html">
-        <source>System</source>
-        <target>Sistema</target>
-      </trans-unit>
-      <trans-unit id="audit.table.actorTypeAnonymous" datatype="html">
-        <source>Anonymous</source>
-        <target>Anónimo</target>
       </trans-unit>
       <trans-unit id="org.invoiceTable.title" datatype="html">
         <source> Invoices </source>

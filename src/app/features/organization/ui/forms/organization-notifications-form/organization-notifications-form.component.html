@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-10">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <!-- Delivery channels -->
   <section class="flex flex-col">
     <h3
@@ -169,4 +175,39 @@
       [disabled]="saving()"
     />
   </div>
+  @if (serverFieldErrors()['emailEnabled']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['inAppEnabled']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['interventionPublished']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['interventionAssigned']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['inspectionDue']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['nonConformityOpened']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
+  @if (serverFieldErrors()['memberInvited']; as serverMessage) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ serverMessage }}</span>
+    </p-message>
+  }
 </form>

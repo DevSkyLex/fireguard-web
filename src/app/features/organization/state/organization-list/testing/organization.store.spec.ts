@@ -26,6 +26,7 @@ describe('OrganizationStore', () => {
   let dispatchSpy: ReturnType<typeof vi.spyOn>;
   let activeOrganizationStoreStub: {
     selectedOrganization: ReturnType<typeof signal<OrganizationOutput | null>>;
+    selectedOrganizationId: ReturnType<typeof signal<string | null>>;
     isLoadingOrganization: ReturnType<typeof signal<boolean>>;
     clearSelectedOrganization: ReturnType<typeof vi.fn>;
   };
@@ -53,6 +54,7 @@ describe('OrganizationStore', () => {
     };
     activeOrganizationStoreStub = {
       selectedOrganization: signal<OrganizationOutput | null>(organization),
+      selectedOrganizationId: signal<string | null>(organization.id),
       isLoadingOrganization: signal(false),
       clearSelectedOrganization: vi.fn(),
     };

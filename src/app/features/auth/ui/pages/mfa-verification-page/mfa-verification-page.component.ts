@@ -7,6 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import type { StoreError } from '@core/request-state';
 import { AuthStore } from '@features/auth/state';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
@@ -133,6 +134,23 @@ export class MfaVerificationPage {
    * @type {Signal<boolean>}
    */
   protected readonly loading: Signal<boolean> = computed(() => this.authStore.isVerifyingMfa());
+
+  /**
+   * Computed verifyError
+   * @readonly
+   *
+   * @description
+   * Last MFA verification failure, handed to the form so a 422 lands on the code
+   * field rather than only in a toast.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly verifyError: Signal<StoreError | null> = computed(() =>
+    this.authStore.mfaVerifyError(),
+  );
 
   /**
    * Computed resendIn

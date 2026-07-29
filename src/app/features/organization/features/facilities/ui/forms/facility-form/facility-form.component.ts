@@ -1,12 +1,15 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  computed,
   effect,
   inject,
   input,
   output,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import {
   NonNullableFormBuilder,
@@ -25,6 +28,7 @@ import type {
   FacilityOutput,
   FacilityType,
 } from '@features/organization/features/facilities/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { FacilityFormData, FacilityFormValues } from './models';
 
 /**
@@ -95,6 +99,42 @@ export class FacilityForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field it refused — a duplicate code, a parent that would close
+   * a cycle — which no client-side validator can anticipate.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), [
+        'type',
+        'name',
+        'code',
+        'address',
+        'parentFacilityId',
+        'latitude',
+        'longitude',
+      ])[0]?.message ?? null,
+  );
 
   /**
    * Input facility
@@ -285,12 +325,48 @@ export class FacilityForm {
   //#endregion
 
   //#region Constructor
+  /**
+   * Constructor
+   *
+   * @description
+   * Mirrors the facility input into the form, and keeps the disabled state in sync
+   * with submission.
+   *
+   * The prefill is an effect, not `ngOnInit`: reading the input once meant the form
+   * stayed empty whenever the facility arrived after mount. It only works today
+   * because every caller happens to gate rendering behind its own loading check —
+   * a coupling the form should not depend on.
+   *
+   * @since 1.1.0
+   */
   public constructor() {
+    effect(() => {
+      const facility: FacilityOutput | null = this.facility();
+      if (facility === null) return;
+
+      untracked(() => {
+        this.form.patchValue(
+          {
+            type: facility.type,
+            name: facility.name,
+            code: facility.code ?? '',
+            address: facility.address ?? '',
+            parentFacilityId: facility.parentFacilityId ?? '',
+            latitude: facility.latitude ?? null,
+            longitude: facility.longitude ?? null,
+          },
+          { emitEvent: false },
+        );
+      });
+    });
+
     effect(() => {
       if (this.loading()) {
         this.form.disable({ emitEvent: false });
       } else {
         this.form.enable({ emitEvent: false });
+        // Type cannot be changed after creation, so re-disable it every time the
+        // group is re-enabled — `enable()` would otherwise undo it.
         if (this.isEditMode) {
           this.form.controls.type.disable({ emitEvent: false });
         }
@@ -298,32 +374,6 @@ export class FacilityForm {
     });
   }
   //#endregion
-
-  //#region Lifecycle
-  /**
-   * Method ngOnInit
-   *
-   * @description
-   * Pre-fills the form with existing facility data when in edit mode.
-   *
-   * @since 1.0.0
-   */
-  public ngOnInit(): void {
-    const facility: FacilityOutput | null = this.facility();
-    if (facility) {
-      this.form.patchValue({
-        type: facility.type,
-        name: facility.name,
-        code: facility.code ?? '',
-        address: facility.address ?? '',
-        parentFacilityId: facility.parentFacilityId ?? '',
-        latitude: facility.latitude ?? null,
-        longitude: facility.longitude ?? null,
-      });
-      // Type cannot be changed after creation
-      this.form.controls.type.disable();
-    }
-  }
   //#endregion
 
   //#region Methods

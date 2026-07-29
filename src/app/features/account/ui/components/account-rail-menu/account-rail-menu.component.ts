@@ -18,10 +18,6 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@features/auth';
 import {
-  ORGANIZATION_CONTEXT_PORT,
-  type OrganizationContextPort,
-} from '@features/organization/ports';
-import {
   NOTIFICATION_CENTER_PORT,
   USER_IDENTITY_PORT,
   type NotificationCenterPort,
@@ -36,10 +32,8 @@ import {
  * Seat avatar pinned to the foot of the workspace rail, opening the member's
  * account destinations in a popover anchored beside the rail.
  *
- * Distinct from {@link AccountUserMenu}, which is a full-width row that expands
- * inline inside the dashboard sidebar: a 60px rail has no room for a name and
- * email, and the source prototype anchors this menu outside the rail rather
- * than inside it. Both read the same ports, so the destinations stay in step.
+ * A 60px rail has no room for a name and email, so the menu is anchored
+ * outside the rail rather than expanded inline within it.
  *
  * @version 1.0.0
  *
@@ -103,48 +97,6 @@ export class AccountRailMenu {
    */
   protected readonly notificationCenter: NotificationCenterPort =
     inject<NotificationCenterPort>(NOTIFICATION_CENTER_PORT);
-
-  /**
-   * Property organizationContext
-   * @readonly
-   *
-   * @description
-   * The active organization, read through its published port so the account
-   * destinations point at the workspace-hosted account route rather than the
-   * dashboard one.
-   *
-   * @access private
-   * @since 1.1.0
-   *
-   * @type {OrganizationContextPort}
-   */
-  private readonly organizationContext: OrganizationContextPort =
-    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
-
-  /**
-   * Property accountLink
-   * @readonly
-   *
-   * @description
-   * Router link to the account page, scoped to the workspace shell.
-   *
-   * This menu is only ever rendered in the workspace rail, whose account route
-   * lives at `/organizations/{id}/workspace/account`; the previous absolute
-   * `/account` reached the dashboard tree, which the workspace shell does not
-   * mount, so the link went nowhere reachable.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @type {Signal<readonly string[]>}
-   */
-  protected readonly accountLink: Signal<readonly string[]> = computed((): readonly string[] => {
-    const organization = this.organizationContext.selectedOrganization();
-
-    return organization
-      ? ['/organizations', organization.id, 'workspace', 'account']
-      : ['/account'];
-  });
 
   /**
    * Property popover

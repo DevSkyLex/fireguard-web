@@ -97,7 +97,6 @@ describe('OrganizationService', () => {
         type: 'https://tools.ietf.org/html/rfc9110#section-15.5.2',
         title: 'Unauthorized',
         detail: 'Full authentication is required.',
-        instance: null,
       };
 
       service.list().subscribe({

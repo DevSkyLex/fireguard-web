@@ -404,7 +404,10 @@ export abstract class HydraApiService {
       return throwError(() => error.error as ApiError | ConstraintViolation);
     }
 
-    // Network error or non-structured error - create ApiError
+    // Network error or non-structured error - create ApiError.
+    // `instance` is omitted rather than nulled: the API omits absent fields
+    // entirely (verified against a live 401), and the synthesized error must have
+    // the same shape as a real one or consumers learn to expect the wrong thing.
     const apiError: ApiError = {
       '@id': '',
       '@type': 'Error',
@@ -412,7 +415,6 @@ export abstract class HydraApiService {
       type: 'about:blank',
       title: error.statusText || 'Network Error',
       detail: error.message || 'An unexpected error occurred',
-      instance: null,
     };
 
     return throwError(() => apiError);

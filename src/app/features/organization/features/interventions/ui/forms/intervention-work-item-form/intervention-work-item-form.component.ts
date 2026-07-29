@@ -1,16 +1,19 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, type FormGroup } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { map } from 'rxjs';
 import type {
@@ -18,6 +21,7 @@ import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionWorkItemFormData, InterventionWorkItemFormValues } from './models';
@@ -41,6 +45,7 @@ import type { InterventionWorkItemFormData, InterventionWorkItemFormValues } fro
     InterventionOption,
     ReactiveFormsModule,
     SelectModule,
+    MessageModule,
   ],
   templateUrl: './intervention-work-item-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,6 +97,35 @@ export class InterventionWorkItemForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field the server refused; projecting it tells the user which
+   * one to fix instead of leaving them with a generic toast.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), ['action', 'target', 'assignee'])[0]?.message ??
+      null,
+  );
 
   /**
    * Property disabled
@@ -237,7 +271,10 @@ export class InterventionWorkItemForm {
   protected onSubmit(): void {
     if (this.form.invalid || this.loading() || this.disabled()) return;
     this.submitted.emit(this.form.getRawValue());
-    this.form.reset({ action: 'inventory', target: '', assignee: '' });
+    // Deliberately no reset here: the outcome is not known yet. Clearing on emit
+    // meant a rejected submit — or a dropped connection in the field — wiped what
+    // the user typed. The drawer is destroyed when it closes, so the next open
+    // starts from a fresh form anyway.
   }
   //#endregion
 }

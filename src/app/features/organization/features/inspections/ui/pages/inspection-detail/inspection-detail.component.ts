@@ -4,8 +4,10 @@ import {
   computed,
   effect,
   inject,
-  signal,
+  input,
+  type InputSignal,
   type Signal,
+  signal,
   type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -40,7 +42,6 @@ import {
   type NonConformityStatusChange,
 } from '@features/organization/features/inspections/ui/tables';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 
 /**
@@ -70,17 +71,31 @@ import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionDetailPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   /** Router used by inspection detail actions. */
   private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative inspection routes. */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** PrimeNG confirmation service for destructive operations. */
   private readonly confirmationService: ConfirmationService =
-    inject<ConfirmationService>(ConfirmationService);
-  /** Active organization context store. */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
-  /** Active inspection context store populated by the route resolver. */
+    inject<ConfirmationService>(
+      ConfirmationService,
+    ); /** Active inspection context store populated by the route resolver. */
   private readonly activeInspectionStore: ActiveInspectionStore =
     inject<ActiveInspectionStore>(ActiveInspectionStore);
   /** Organization permission evaluator. */
@@ -222,9 +237,9 @@ export class InspectionDetailPage {
    * Runs an inspection operation when both route context identifiers exist.
    */
   private run(operation: (organizationId: string, inspectionId: string) => void): void {
-    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    const inspectionId = this.inspection()?.id;
-    if (organizationId && inspectionId) operation(organizationId, inspectionId);
+    const inspectionId: string | undefined = this.inspection()?.id;
+
+    if (inspectionId) operation(this.organizationId(), inspectionId);
   }
 
   /** Resolves the severity badge descriptor for the non-conformity dialog. */

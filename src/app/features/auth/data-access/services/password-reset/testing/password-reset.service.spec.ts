@@ -125,7 +125,6 @@ describe('PasswordResetService', () => {
       type: 'https://api.test.com/errors/rate-limit',
       title: 'Too Many Requests',
       detail: 'Please wait before requesting another code.',
-      instance: null,
     };
 
     service.request(input).subscribe({

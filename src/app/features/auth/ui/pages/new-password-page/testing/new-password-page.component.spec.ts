@@ -25,6 +25,7 @@ describe('NewPasswordPage', () => {
         data: null,
         error: null,
       }),
+      confirmError: signal(null),
       confirm: vi.fn(),
       clear: vi.fn(),
     };
@@ -93,6 +94,7 @@ describe('NewPasswordPage', () => {
         isConfirming: signal(false),
         verificationCode: signal<string | null>('123456'),
         confirmCallState: signal({ status: 'idle', data: null, error: null }),
+        confirmError: signal(null),
         confirm: vi.fn(),
         clear: vi.fn(),
       };

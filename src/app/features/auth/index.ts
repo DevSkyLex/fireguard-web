@@ -9,6 +9,8 @@ export {
   passwordResetNewGuard,
   passwordResetVerifyGuard,
 } from './http/guards';
-export { AuthUserProfile } from './ui/components';
 export { withAuthShowcase } from './providers';
 export { authStoreEvents } from './state';
+// Published because account owns its own change-password form but not the policy:
+// auth is the single authority mirroring the API's password constraints.
+export { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from './constants';

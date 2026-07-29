@@ -100,21 +100,6 @@ export function resolveLocaleFromRequest(
 }
 
 /**
- * Function localeSubPathFromPathname
- *
- * @description
- * Extracts the locale sub-path from a URL pathname when its first segment is a
- * supported locale (e.g. `/es/account` -> `es`).
- *
- * @param {string} pathname - URL pathname.
- * @returns {AppLocaleSubPath | null} The leading locale sub-path, or `null`.
- */
-export function localeSubPathFromPathname(pathname: string): AppLocaleSubPath | null {
-  const segment = pathname.split('/')[1];
-  return isSupportedLocale(segment) ? segment : null;
-}
-
-/**
  * Function stripLocaleFromPathname
  *
  * @description

@@ -31,7 +31,7 @@
       >Severity</label
     >
     <p-select
-      id="nc-severity"
+      inputId="nc-severity"
       [options]="severityOptions"
       optionLabel="label"
       optionValue="value"
@@ -46,7 +46,12 @@
       class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Due date</label
     >
-    <p-datepicker id="nc-due" formControlName="dueAt" [showIcon]="true" dateFormat="yy-mm-dd" />
+    <p-datepicker
+      inputId="nc-due"
+      formControlName="dueAt"
+      [showIcon]="true"
+      dateFormat="yy-mm-dd"
+    />
   </div>
   <div class="flex flex-col gap-2 lg:col-span-4">
     <label
@@ -68,4 +73,16 @@
       [disabled]="form.invalid || loading()"
     />
   </div>
+  @for (field of ['description', 'severity', 'dueAt', 'notes']; track field) {
+    @if (serverFieldErrors()[field]; as serverMessage) {
+      <p-message severity="error" variant="simple" role="alert">
+        <span>{{ serverMessage }}</span>
+      </p-message>
+    }
+  }
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
 </form>

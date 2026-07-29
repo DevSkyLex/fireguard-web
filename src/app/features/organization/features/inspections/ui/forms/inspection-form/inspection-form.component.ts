@@ -1,12 +1,14 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import {
   FormControl,
@@ -29,6 +31,7 @@ import type {
   InspectionOutput,
   InspectorType,
 } from '@features/organization/features/inspections/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { InspectionFormData, InspectionFormValues } from './models';
 import { INSPECTION_RESULT_OPTIONS, INSPECTOR_TYPE_OPTIONS } from './options';
 
@@ -74,6 +77,45 @@ export class InspectionForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * A 422 names the field it refused — an equipment that does not belong to the
+   * chosen facility, a date outside the allowed window — which no client-side
+   * validator can anticipate.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), [
+        'equipmentId',
+        'result',
+        'performedAt',
+        'inspectorType',
+        'inspectorName',
+        'facilityId',
+        'checklistId',
+        'notes',
+        'signature',
+      ])[0]?.message ?? null,
+  );
 
   /**
    * Input equipments

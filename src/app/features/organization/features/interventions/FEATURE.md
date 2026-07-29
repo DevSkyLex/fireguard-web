@@ -39,10 +39,10 @@ Stores:
 
 - `InterventionWorkspaceStore` additionally owns `delete` (`InterventionService.remove`, the canonical `DELETE /api/interventions/{id}`): only `draft` or `abandoned` interventions may be deleted (permission `INTERVENTIONS_PLAN` for draft, `INTERVENTIONS_EXECUTE` for abandoned — see `canDeleteIntervention` on the detail page), surfaced as a confirm-gated "Delete intervention" entry in the header overflow menu. The 409 for any other status is surfaced verbatim via the inline workspace error banner; success dispatches `deleteSucceeded` (toast) and the page navigates back to the list.
 - `InterventionStore` — component-scoped (provided in `InterventionsPage`); intervention list and creation (normalized entities + request state). `load` accumulates up to 500 interventions across 100-item pages (the backend clamps `itemsPerPage` at 100) and sets `isListCapped` when the organization has more, driving the list page's "refine your search" notice. `transition` applies a single status change optimistically (entity patch → PATCH with `If-Match` → merge fresh output on success, rollback + `transitionFailed` toast event on error); `orderedIds` exposes the current entity order for prev/next navigation.
-- `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations. Also owns the activity timeline (`activities` + `activityCallState`, `loadActivities`, `addComment`); comment posting is refused outright while offline (not queued to the outbox) and failures dispatch a `commentAddFailed` toast event via `interventionWorkspaceStoreEvents`.
+- `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations. Async state is held as `loadCallState` (the workspace fetch), `mutationCallState` (shared by every write) and `activityCallState`; `loading`, `saving` and `error` are derived signals over them, and `mutationError` exposes the normalized `StoreError` so a page can hand a 422 to the form that caused it. Also owns the activity timeline (`activities`, `loadActivities`, `addComment`); comment posting is refused outright while offline (not queued to the outbox) and failures dispatch a `commentAddFailed` toast event via `interventionWorkspaceStoreEvents`.
 - `InterventionCalendarStore` — component-scoped (provided in `InterventionsPage`); the interventions inside a bounded date window (the visible month ± one month) plus the current member IRI driving the calendar card's All/Mine scope. Loaded for the active organization and refetched when the visible month changes (fed by the calendar's `focusedDateChange`); the window is fetched as the de-duped union of a `plannedStartAt`-range query and a `dueAt`-range query (the anchor is `plannedStartAt ?? dueAt`), and the member IRI is resolved once per organization and reused across window refetches.
 - `InterventionSummaryStore` — component-scoped (provided in `InterventionsPage`); loads the full organization intervention set once (via `InterventionService.listAll`) and derives the dashboard metric-strip KPIs (in progress, planned, overdue, blocked). Overdue and blocked exclude interventions in a terminal status (`published`, `abandoned`).
-- `InterventionHeaderStore` — root-provided bridge between the detail page and the dashboard layout's page-header action slot: the page publishes its header view state (phase action, request-changes, prev/next, overflow) and clears it on destroy; the slot widget renders from it and dispatches `interventionHeaderEvents` back to the page.
+- `InterventionHeaderStore` — root-provided bridge between the detail page and the workspace layout's page-header action slot: the page publishes its header view state (phase action, request-changes, prev/next, overflow) and clears it on destroy; the slot widget renders from it and dispatches `interventionHeaderEvents` back to the page.
 
 Data-access (transport boundary — `data-access/`):
 
@@ -98,20 +98,21 @@ Main provider:
 
 The detail page (`ui/pages/intervention-detail`) is a **full-bleed,
 divider-based Linear-style workspace** (claude.ai/design "Intervention
-Dashboard" option 2a): the dashboard layout's `<main>` is unpadded (every
+Dashboard" option 2a): the workspace layout's `<main>` is unpadded (every
 other routed page applies the `p-3 sm:p-6 md:p-7 lg:p-8` convention on its own
 root) and this page owns its edges. The page renders **no top bar of its
-own** — the layout breadcrumb handles back navigation, the layout's
-page-header banner shows the intervention name (via `interventionTitleResolver`)
-as the page h1, and the **main actions live in the banner's action slot**:
-`ui/components/intervention-header-actions` is contributed to the dashboard
-layout's `PAGE_HEADER_SLOT` through `withInterventionHeaderActions()`
+own** — the layout breadcrumb handles back navigation and carries the
+intervention name (via `interventionTitleResolver`) as the page h1, and the
+**main actions live in the header's action slot**:
+`ui/components/intervention-header-actions` is contributed to the workspace
+layout's `WORKSPACE_PAGE_HEADER_SLOT` through `withInterventionHeaderActions()`
 (`providers/page-header/`, registered in `app.routes.ts` and exported from the
 feature `index.ts`). The feature also contributes the shell-wide
 offline/sync-status chip: `ui/components/intervention-sync-chip` (connectivity
 state, pending outbox count via `InterventionOfflineService.pendingCount`,
-blocked operations, manual "Sync now") is registered in the dashboard layout's
-`TOPBAR_SLOT` through `withInterventionSyncChip()` (`providers/topbar/`,
+blocked operations, manual "Sync now") is registered in the workspace layout's
+`CONVERSATION_HEADER_SLOT` through `withInterventionSyncChip()`
+(`providers/conversation-header/`,
 exported from the feature `index.ts`). The page publishes its header view state — prev/next
 chevrons with a `position / total` pill (walking the shared
 `InterventionStore`'s `orderedIds()`, provided at the parent route — see

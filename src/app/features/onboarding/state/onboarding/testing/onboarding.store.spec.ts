@@ -1,7 +1,8 @@
 import { makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { Subject, of, throwError } from 'rxjs';
+import { firstValueFrom, Subject, of, throwError } from 'rxjs';
+import { authStoreEvents } from '@features/auth';
 import { OnboardingService } from '@features/onboarding/data-access';
 import type { OnboardingOutput, OnboardingStepOutput } from '@features/onboarding/models';
 import { OnboardingStore } from '../onboarding.store';
@@ -76,26 +77,43 @@ describe('OnboardingStore', () => {
     configure();
   });
 
-  it('should reuse transferred onboarding on the browser without calling the API', async () => {
+  // The SSR handoff hangs off `ensureLoaded()`, not `initialize()`: the guards
+  // call it first on both sides, so that is the only place that sees the very
+  // first load.
+  it('should consume the transferred record on hydration without calling the API', async () => {
     transferState.set(makeStateKey<OnboardingOutput | null>('organization-onboarding'), onboarding);
 
-    await store.initialize({ reset: false });
+    const resolved = await firstValueFrom(store.ensureLoaded());
 
-    expect(mockOnboardingService.start).not.toHaveBeenCalled();
+    expect(mockOnboardingService.get).not.toHaveBeenCalled();
+    expect(resolved).toEqual(onboarding);
     expect(store.onboarding()).toEqual(onboarding);
-    expect(store.startCallState().status).toBe('success');
+    // Consumed, so a later load cannot read a stale record.
+    expect(
+      transferState.hasKey(makeStateKey<OnboardingOutput | null>('organization-onboarding')),
+    ).toBe(false);
   });
 
-  it('should fetch onboarding and write it to transfer state when not hydrated', async () => {
-    mockOnboardingService.start.mockReturnValue(of(onboarding));
+  it('should write the record to transfer state while rendering on the server', async () => {
+    configure('server');
+    mockOnboardingService.get.mockReturnValue(of(onboarding));
 
-    await store.initialize({ reset: false });
+    await firstValueFrom(store.ensureLoaded());
 
-    expect(mockOnboardingService.start).toHaveBeenCalledWith({ reset: false });
-    expect(store.onboarding()).toEqual(onboarding);
+    expect(mockOnboardingService.get).toHaveBeenCalled();
     expect(
       transferState.get(makeStateKey<OnboardingOutput | null>('organization-onboarding'), null),
     ).toEqual(onboarding);
+  });
+
+  it('should not write transfer state from the browser', async () => {
+    mockOnboardingService.get.mockReturnValue(of(onboarding));
+
+    await firstValueFrom(store.ensureLoaded());
+
+    expect(
+      transferState.hasKey(makeStateKey<OnboardingOutput | null>('organization-onboarding')),
+    ).toBe(false);
   });
 
   it('should only bootstrap onboarding once when state is already present', async () => {
@@ -557,6 +575,61 @@ describe('OnboardingStore', () => {
       store.start({ reset: false });
 
       expect(store.completedSteps()).toEqual(['create_organization']);
+    });
+  });
+
+  describe('session teardown', () => {
+    /**
+     * Needs the real `Dispatcher`: the store reacts through `Events`, which only
+     * sees what a genuine dispatcher publishes.
+     */
+    const configureWithRealDispatcher = () => {
+      mockOnboardingService = {
+        get: vi.fn(),
+        start: vi.fn(),
+        executeStep: vi.fn(),
+        skipStep: vi.fn(),
+        rollback: vi.fn(),
+        dismiss: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          { provide: OnboardingService, useValue: mockOnboardingService },
+        ],
+      });
+
+      store = TestBed.inject(OnboardingStore);
+    };
+
+    it('should drop the previous user record when the session ends', async () => {
+      configureWithRealDispatcher();
+      mockOnboardingService.get.mockReturnValue(of(onboarding));
+
+      await firstValueFrom(store.ensureLoaded());
+      expect(store.onboarding()).toEqual(onboarding);
+
+      TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
+
+      expect(store.onboarding()).toBeNull();
+    });
+
+    it('should refetch for the next user instead of reusing the previous record', async () => {
+      configureWithRealDispatcher();
+      mockOnboardingService.get.mockReturnValue(of(onboarding));
+
+      await firstValueFrom(store.ensureLoaded());
+      expect(mockOnboardingService.get).toHaveBeenCalledTimes(1);
+
+      TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
+
+      // Left populated, `ensureLoaded()` would hand the access guards the departing
+      // user's record and gate the next one on somebody else's activation state.
+      await firstValueFrom(store.ensureLoaded());
+      expect(mockOnboardingService.get).toHaveBeenCalledTimes(2);
     });
   });
 });

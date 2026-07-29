@@ -1,5 +1,5 @@
 import { InterventionHeaderActions } from '@features/organization/features/interventions/ui/components';
-import type { DashboardLayoutPageHeaderSlotFeature } from '@layouts/dashboard-layout';
+import type { WorkspaceLayoutPageHeaderSlotFeature } from '@layouts/workspace-layout';
 
 /**
  * Provider withInterventionHeaderActions
@@ -7,23 +7,23 @@ import type { DashboardLayoutPageHeaderSlotFeature } from '@layouts/dashboard-la
  * @description
  * Contributes the intervention detail's main actions (prev/next navigation,
  * request changes, the canonical phase action and the overflow menu) to the
- * dashboard layout's page-header action slot. The widget renders nothing on
+ * workspace layout's page-header action slot. The widget renders nothing on
  * routes where the detail page publishes no header state.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```typescript
- * provideDashboardLayoutSlots({
+ * provideWorkspaceLayoutSlots({
  *   pageHeader: [withInterventionHeaderActions()],
  * });
  * ```
  *
- * @returns {DashboardLayoutPageHeaderSlotFeature} The page-header slot contribution.
+ * @returns {WorkspaceLayoutPageHeaderSlotFeature} The page-header slot contribution.
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export function withInterventionHeaderActions(): DashboardLayoutPageHeaderSlotFeature {
+export function withInterventionHeaderActions(): WorkspaceLayoutPageHeaderSlotFeature {
   return {
     useFactory: () => ({
       id: 'intervention-header-actions',

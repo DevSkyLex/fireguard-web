@@ -108,7 +108,6 @@ describe('UserProfileService', () => {
         type: 'https://api.test.com/errors/unauthorized',
         title: 'Unauthorized',
         detail: 'Access token is missing or invalid.',
-        instance: null,
       };
 
       service.getCurrentProfile().subscribe({
@@ -130,7 +129,6 @@ describe('UserProfileService', () => {
         type: 'https://api.test.com/errors/token-expired',
         title: 'Token Expired',
         detail: 'The access token has expired.',
-        instance: null,
       };
 
       service.getCurrentProfile().subscribe({

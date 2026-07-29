@@ -88,8 +88,7 @@ export class FacilityEquipmentTab {
   protected onLoad(options: RequestOptions): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
     const facilityId: string = this.facilityId();
 
     if (organizationId && facilityId) {

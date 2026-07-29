@@ -2,8 +2,11 @@ import { PLATFORM_ID, signal, type Signal, type WritableSignal } from '@angular/
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
-import { AUTH_SESSION_PORT } from '@features/auth/ports';
-import type { OrganizationInvitationPreviewOutput } from '@features/organization/models';
+import { AUTH_LOGOUT_PORT, AUTH_SESSION_PORT } from '@features/auth/ports';
+import type {
+  OrganizationInvitationStatus,
+  OrganizationInvitationPreviewOutput,
+} from '@features/organization/models';
 import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
 import { OrganizationInvitationAcceptPage } from '../organization-invitation-accept.component';
 
@@ -31,7 +34,7 @@ interface StoreMock {
 
 const previewFor = (
   invitedEmail: string,
-  status = 'pending',
+  status: OrganizationInvitationStatus = 'pending',
 ): OrganizationInvitationPreviewOutput =>
   ({
     organizationId: 'org-1',
@@ -57,6 +60,7 @@ function setup(options: SetupOptions = {}): {
   store: StoreMock;
   router: { navigate: ReturnType<typeof vi.fn> };
   session: { clearSession: ReturnType<typeof vi.fn> };
+  logoutPort: { logout: ReturnType<typeof vi.fn> };
 } {
   const store: StoreMock = {
     preview: signal(options.preview ?? null),
@@ -75,6 +79,10 @@ function setup(options: SetupOptions = {}): {
     isAuthenticated: signal(options.authenticated ?? false),
     initialized: signal(true),
     clearSession: vi.fn(),
+  };
+  const logoutPort = {
+    isLoggingOut: signal(false),
+    logout: vi.fn(),
   };
   const profile =
     options.currentEmail === undefined || options.currentEmail === null
@@ -102,6 +110,7 @@ function setup(options: SetupOptions = {}): {
       },
       { provide: Router, useValue: router },
       { provide: AUTH_SESSION_PORT, useValue: session },
+      { provide: AUTH_LOGOUT_PORT, useValue: logoutPort },
       { provide: USER_IDENTITY_PORT, useValue: identity },
     ],
   });
@@ -118,6 +127,7 @@ function setup(options: SetupOptions = {}): {
     store,
     router,
     session,
+    logoutPort,
   };
 }
 
@@ -164,8 +174,8 @@ describe('OrganizationInvitationAcceptPage', () => {
     });
   });
 
-  it('clears the session and routes to login when switching account', () => {
-    const { component, router, session } = setup({
+  it('performs a real logout and routes to login when switching account', () => {
+    const { component, router, session, logoutPort } = setup({
       token: 'tok-1',
       authenticated: true,
       currentEmail: 'other@example.com',
@@ -174,7 +184,10 @@ describe('OrganizationInvitationAcceptPage', () => {
 
     component.switchAccount();
 
-    expect(session.clearSession).toHaveBeenCalled();
+    // A local clear cannot revoke the HttpOnly refresh cookie: only the server
+    // can, so switching accounts has to go through the real logout.
+    expect(logoutPort.logout).toHaveBeenCalledTimes(1);
+    expect(session.clearSession).not.toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], {
       queryParams: { returnUrl: '/organizations/invitations/accept?token=tok-1' },
     });
@@ -188,6 +201,73 @@ describe('OrganizationInvitationAcceptPage', () => {
     expect(fixture.nativeElement.textContent).toContain(
       'The invitation link is missing its token.',
     );
+  });
+
+  // Three dead ends, three different next moves — they must not share a message.
+  it('names an expired invitation as expired', () => {
+    const { detect, fixture } = setup({
+      token: 'tok-1',
+      preview: previewFor('bob@example.com', 'expired'),
+    });
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain('has expired');
+  });
+
+  it('names a revoked invitation as revoked', () => {
+    const { detect, fixture } = setup({
+      token: 'tok-1',
+      preview: previewFor('bob@example.com', 'revoked'),
+    });
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain('was revoked');
+  });
+
+  it('points an already-accepted invitation at signing in', () => {
+    const { detect, fixture } = setup({
+      token: 'tok-1',
+      preview: previewFor('bob@example.com', 'accepted'),
+    });
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain('already been accepted');
+  });
+
+  it('never offers to accept an invitation that is no longer pending', () => {
+    const { fixture, detect, store } = setup({
+      token: 'tok-1',
+      authenticated: true,
+      currentEmail: 'bob@example.com',
+      preview: previewFor('bob@example.com', 'expired'),
+    });
+
+    detect();
+
+    expect(store.accept).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).not.toContain('Accept invitation');
+  });
+
+  it('shows the deadline while the invitation can still be accepted', () => {
+    const { detect, fixture } = setup({ token: 'tok-1', preview: previewFor('bob@example.com') });
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).toContain('Expires on');
+  });
+
+  it('hides the deadline once the invitation is resolved', () => {
+    const { detect, fixture } = setup({
+      token: 'tok-1',
+      preview: previewFor('bob@example.com', 'revoked'),
+    });
+
+    detect();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Expires on');
   });
 
   it('renders the loading skeleton while the preview request is pending', () => {
@@ -269,17 +349,6 @@ describe('OrganizationInvitationAcceptPage', () => {
     expect(store.accept).not.toHaveBeenCalled();
   });
 
-  it('renders the not-pending warning for a resolved invitation', () => {
-    const { detect, fixture } = setup({
-      token: 'tok-1',
-      preview: previewFor('bob@example.com', 'revoked'),
-    });
-
-    detect();
-
-    expect(fixture.nativeElement.textContent).toContain('This invitation is no longer active.');
-  });
-
   it('renders the accept CTA for an authenticated pending invitation and forwards the click', () => {
     const { component, detect, fixture, store } = setup({
       token: 'tok-1',
@@ -329,7 +398,11 @@ describe('OrganizationInvitationAcceptPage', () => {
     component.register();
 
     expect(router.navigate).toHaveBeenCalledWith(['/auth/register'], {
-      queryParams: { returnUrl: '/organizations/invitations/accept?token=tok-1' },
+      queryParams: {
+        returnUrl: '/organizations/invitations/accept?token=tok-1',
+        // Pre-filled: retyping it is how invitees end up in the mismatch branch.
+        email: 'bob@example.com',
+      },
     });
   });
 });

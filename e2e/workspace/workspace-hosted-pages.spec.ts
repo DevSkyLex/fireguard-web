@@ -6,10 +6,9 @@ import { WorkspacePage } from '../support/pages/workspace.page';
 /**
  * Pages hosted inside the workspace shell.
  *
- * The workspace mounts the very same `ORGANIZATION_SCOPED_ROUTES` objects the
- * dashboard tree mounts, so guards, resolvers, titles and breadcrumbs cannot
- * drift between the two shells. Both remain reachable: hosting is additive,
- * nothing was moved.
+ * The shell serves every authenticated destination — organization pages,
+ * conversations and the account pages — so a route's own guards, resolvers,
+ * titles and breadcrumbs are the only thing that varies between them.
  */
 test.describe('Workspace hosted pages', () => {
   const organization = organizationOutput();
@@ -19,7 +18,7 @@ test.describe('Workspace hosted pages', () => {
     await api.mockAuthenticatedSession({ organizations: [organization] });
 
     const workspace = new WorkspacePage(page);
-    await page.goto(`/organizations/${organization.id}/workspace/account`);
+    await page.goto('/account');
     await workspace.shell.waitFor({ state: 'visible' });
 
     await expect(page.locator('app-account-page')).toBeVisible();
@@ -28,19 +27,17 @@ test.describe('Workspace hosted pages', () => {
     await expect(workspace.sidebar).toBeVisible();
   });
 
-  test('replaces the dashboard title banner with the header trail', async ({ page }) => {
+  test('carries the page name in the header trail', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession({ organizations: [organization] });
 
     const workspace = new WorkspacePage(page);
-    await page.goto(`/organizations/${organization.id}/workspace/account`);
+    await page.goto('/account');
     await workspace.shell.waitFor({ state: 'visible' });
 
     const header = page.locator('app-workspace-layout-header');
 
-    // Existing list pages have no in-page <h1> and relied on the dashboard
-    // banner; the trail is what carries the page name here.
-    await expect(header).toContainText(organization.name);
+    // List pages with no in-page <h1> depend on the trail for their name.
     await expect(header).toContainText('Account');
 
     const height = await header.evaluate((el: HTMLElement) =>
@@ -57,7 +54,7 @@ test.describe('Workspace hosted pages', () => {
     await api.mockAuthenticatedSession({ organizations: [organization] });
 
     const workspace = new WorkspacePage(page);
-    await page.goto(`/organizations/${organization.id}/workspace/account`);
+    await page.goto('/account');
     await workspace.shell.waitFor({ state: 'visible' });
 
     // The shell stays pinned to the viewport; the page scrolls inside it.
@@ -72,16 +69,5 @@ test.describe('Workspace hosted pages', () => {
     );
 
     expect(documentScrolls).toBe(false);
-  });
-
-  test('keeps the dashboard route serving the same page', async ({ page }) => {
-    const api = new ApiMock(page);
-    await api.mockAuthenticatedSession({ organizations: [organization] });
-
-    await page.goto('/account');
-
-    await expect(page.locator('#dashboard-layout')).toBeVisible();
-    await expect(page.locator('app-account-page')).toBeVisible();
-    await expect(page.locator('#workspace-layout')).toHaveCount(0);
   });
 });

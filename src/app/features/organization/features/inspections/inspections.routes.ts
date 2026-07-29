@@ -69,7 +69,6 @@ export const INSPECTION_ROUTES: Routes = [
     title: $localize`:@@route.inspections:Inspections`,
     data: {
       breadcrumb: false,
-      preload: true,
     },
   },
 ];

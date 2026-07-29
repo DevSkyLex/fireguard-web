@@ -58,14 +58,15 @@ mandatory.
 
 ## Routing and SSR Notes
 
-- Onboarding is **mandatory**: the application shell (`DashboardLayout` route)
+- Onboarding is **mandatory**: the application shell (`WorkspaceLayout` route)
   adds `onboardingRequiredGuard` to its `canActivate`, redirecting any
   non-completed (or missing) record to `/onboarding`. `onboardingGuard` keeps a
-  completed user from re-opening the wizard (redirects to `/`). Together they form
-  a mutual gate. Both delegate loading to `OnboardingStore.ensureLoaded()`, which
-  caches the record so the wizard page does not re-fetch on entry.
-- `OnboardingStore.initialize()` keeps the SSR/`TransferState` handoff for the
-  wizard page.
+  completed user from re-opening the wizard (redirects to `/`). Together they
+  form a mutual gate.
+- `OnboardingStore.ensureLoaded()` owns the SSR/`TransferState` handoff. It is
+  the first thing both guards call, on both server and browser — which
+  `initialize()` is not: the server filled the store, `initialize()` returned
+  early, and the key was never written, so the browser refetched on hydration.
 
 ## Invariants
 

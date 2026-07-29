@@ -1,6 +1,5 @@
 import {
   isSupportedLocale,
-  localeSubPathFromPathname,
   matchAcceptLanguage,
   parseCookieHeader,
   resolveLocaleFromRequest,
@@ -56,13 +55,6 @@ describe('locale-resolution.utils', () => {
     it('falls back to the default source locale otherwise', () => {
       expect(resolveLocaleFromRequest(undefined, undefined)).toBe('en');
       expect(resolveLocaleFromRequest('lang=de', 'it')).toBe('en');
-    });
-  });
-
-  describe('localeSubPathFromPathname', () => {
-    it('extracts a leading supported locale', () => {
-      expect(localeSubPathFromPathname('/es/account')).toBe('es');
-      expect(localeSubPathFromPathname('/account')).toBeNull();
     });
   });
 

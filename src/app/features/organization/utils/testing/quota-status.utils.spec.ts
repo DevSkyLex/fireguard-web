@@ -1,9 +1,5 @@
 import type { StoreError } from '@core/request-state';
-import {
-  isQuotaExceededError,
-  quotaUsageColor,
-  resolveQuotaStatus,
-} from '@features/organization/utils';
+import { isQuotaExceededError, resolveQuotaStatus } from '@features/organization/utils';
 
 describe('quota-status utils', () => {
   describe('resolveQuotaStatus', () => {
@@ -27,14 +23,6 @@ describe('quota-status utils', () => {
 
     it('treats a zero or negative limit as unlimited (ok)', () => {
       expect(resolveQuotaStatus(5, 0)).toBe('ok');
-    });
-  });
-
-  describe('quotaUsageColor', () => {
-    it('maps each status to its theme colour variable', () => {
-      expect(quotaUsageColor('full')).toBe('var(--p-red-500)');
-      expect(quotaUsageColor('near')).toBe('var(--p-orange-400)');
-      expect(quotaUsageColor('ok')).toBe('var(--p-primary-color)');
     });
   });
 

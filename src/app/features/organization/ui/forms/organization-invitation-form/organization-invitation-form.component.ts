@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -17,6 +19,7 @@ import type {
   InviteOrganizationMemberInput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 
 /**
  * Component OrganizationInvitationForm
@@ -67,6 +70,34 @@ export class OrganizationInvitationForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * Whether an address is already invited or already a member is only knowable
+   * server-side, and it comes back as a 422 naming `email` — the exact case that
+   * used to surface as a bare toast.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /** Message of the first violation naming no field of this form. */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () => toUnmatchedViolations(this.serverError(), ['email', 'roleId'])[0]?.message ?? null,
+  );
   //#endregion
 
   //#region Outputs
@@ -155,10 +186,14 @@ export class OrganizationInvitationForm {
    * Method submit
    *
    * @description
-   * Emits the validated invitation values and resets the form.
+   * Emits the validated invitation values.
+   *
+   * Deliberately does not reset: the outcome is not known yet, and clearing here
+   * meant a rejected address — already invited, quota reached — wiped what the
+   * member typed. The parent closes this surface once the server confirms.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @returns {void}
    */
@@ -166,7 +201,6 @@ export class OrganizationInvitationForm {
     if (this.form.invalid) return;
     const values = this.form.getRawValue();
     this.submitted.emit({ email: values.email, roleIds: values.roleId ? [values.roleId] : [] });
-    this.form.reset({ email: '', roleId: '' });
   }
   //#endregion
 }

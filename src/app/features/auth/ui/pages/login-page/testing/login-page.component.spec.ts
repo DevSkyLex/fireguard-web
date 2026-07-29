@@ -20,6 +20,7 @@ describe('LoginPage', () => {
   }) => {
     const authState = {
       isLoggingIn: signal(false),
+      loginError: signal(null),
       mfaRequired: signal(options?.mfaRequired ?? false),
       isAuthenticated: signal(options?.authenticated ?? false),
     };
@@ -117,6 +118,7 @@ describe('LoginPage', () => {
       TestBed.resetTestingModule();
       const authState = {
         isLoggingIn: signal(options?.loading ?? false),
+        loginError: signal(null),
         mfaRequired: signal(false),
         isAuthenticated: signal(false),
       };

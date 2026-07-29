@@ -376,7 +376,7 @@ export const DashboardStore = signalStore(
     return {
       loadParams: computed<string | undefined>(() => {
         if (!isPlatformBrowser(platformId)) return undefined;
-        return activeOrganizationStore.selectedOrganization()?.id ?? undefined;
+        return activeOrganizationStore.selectedOrganizationId() ?? undefined;
       }),
     };
   }),

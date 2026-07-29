@@ -14,9 +14,6 @@ const themeModeLookup: Record<ThemeMode, true> = {
   system: true,
 };
 
-/** Available theme modes as array. */
-export const THEME_MODES: readonly ThemeMode[] = ['light', 'dark', 'system'];
-
 /**
  * Function isThemeMode
  *

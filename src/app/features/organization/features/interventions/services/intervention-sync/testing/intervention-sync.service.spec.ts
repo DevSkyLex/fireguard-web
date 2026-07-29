@@ -373,9 +373,13 @@ describe('InterventionSyncService', () => {
     const replayed = await service.replayOutbox('org-1', 'intervention-1');
 
     expect(replayed).toBe(1);
+    // The queued `clientId` must travel with the replay: a response lost in the
+    // field is indistinguishable, from the device, from a request that never
+    // arrived, so without the key a retry appends a second comment.
     expect(mockInterventionService.addComment).toHaveBeenCalledWith(
       'intervention-1',
       'Checked the extinguisher on site.',
+      'comment-client-id',
     );
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
   });

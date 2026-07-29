@@ -13,24 +13,6 @@ import type { DashboardSingleTrendViewModel } from '@features/organization/ui/co
 const DEFAULT_COMPARISON_LABEL: string = $localize`:@@dash.previousPeriod:Previous Period`;
 
 /**
- * Type BuildDashboardSingleTrendBarChartDataOptions
- *
- * @description
- * Parameter bag for {@link buildDashboardSingleTrendBarChartData}.
- * Carries the view model, labelling strings, and colour tokens used to
- * construct the Chart.js bar payload for a single-series dashboard card.
- */
-type BuildDashboardSingleTrendBarChartDataOptions = {
-  readonly viewModel: DashboardSingleTrendViewModel;
-  readonly label: string;
-  readonly currentBackgroundColor: string;
-  readonly currentHoverBackgroundColor?: string;
-  readonly comparisonLabel?: string;
-  readonly comparisonBackgroundColor: string;
-  readonly comparisonHoverBackgroundColor?: string;
-};
-
-/**
  * Type BuildDashboardSingleTrendLineChartDataOptions
  *
  * @description
@@ -118,49 +100,6 @@ function buildLineGradientBackground(
     gradient.addColorStop(1, transparentColor);
 
     return gradient;
-  };
-}
-
-/**
- * Function buildDashboardSingleTrendBarChartData
- *
- * @description
- * Builds the standard Chart.js bar payload used by dashboard cards backed by
- * a single current-period series and an optional previous-period comparison.
- *
- * @param {BuildDashboardSingleTrendBarChartDataOptions} options - Bar chart configuration.
- * @returns {ChartData<'bar'>} The Chart.js data payload.
- */
-export function buildDashboardSingleTrendBarChartData({
-  viewModel,
-  label,
-  currentBackgroundColor,
-  currentHoverBackgroundColor = currentBackgroundColor,
-  comparisonLabel = DEFAULT_COMPARISON_LABEL,
-  comparisonBackgroundColor,
-  comparisonHoverBackgroundColor = comparisonBackgroundColor,
-}: BuildDashboardSingleTrendBarChartDataOptions): ChartData<'bar'> {
-  const datasets: ChartData<'bar'>['datasets'] = [
-    {
-      label,
-      data: viewModel.currentValues,
-      backgroundColor: currentBackgroundColor,
-      hoverBackgroundColor: currentHoverBackgroundColor,
-    },
-  ];
-
-  if (viewModel.compareEnabled && viewModel.hasComparisonData) {
-    datasets.push({
-      label: comparisonLabel,
-      data: viewModel.comparisonValues,
-      backgroundColor: comparisonBackgroundColor,
-      hoverBackgroundColor: comparisonHoverBackgroundColor,
-    });
-  }
-
-  return {
-    labels: [...viewModel.labels],
-    datasets,
   };
 }
 

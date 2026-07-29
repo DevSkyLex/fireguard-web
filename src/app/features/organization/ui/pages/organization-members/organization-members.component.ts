@@ -4,10 +4,15 @@ import {
   computed,
   effect,
   inject,
+  input,
+  type InputSignal,
   signal,
   type Signal,
+  untracked,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Events } from '@ngrx/signals/events';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -24,9 +29,10 @@ import type {
   OrganizationInvitationOutput,
   OrganizationMemberOutput,
 } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaStore } from '@features/organization/state';
 import {
   MEMBERS_PAGE_SIZE,
+  organizationMembersStoreEvents,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
 import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
@@ -73,13 +79,26 @@ import { isQuotaExceededError } from '@features/organization/utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMembersPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   /** PrimeNG confirmation service for destructive member operations. */
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
   /** App-wide feedback facade for transient toasts (copy link). */
   private readonly feedback: FeedbackService = inject(FeedbackService);
-  /** Active organization context store. */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
   /** Organization permission evaluator. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
@@ -88,6 +107,9 @@ export class OrganizationMembersPage {
   private readonly quotaStore: OrganizationQuotaStore = inject(OrganizationQuotaStore);
   /** Page-scoped members workflow store. */
   protected readonly store: OrganizationMembersStore = inject(OrganizationMembersStore);
+
+  /** Store event stream, used to close a drawer only once the server confirms. */
+  private readonly events: Events = inject<Events>(Events);
 
   /** Server-side page size for the members table. */
   protected readonly membersPageSize: number = MEMBERS_PAGE_SIZE;
@@ -148,7 +170,14 @@ export class OrganizationMembersPage {
 
   /** Loads members and wires the quota-failure and copy-after-resend effects. */
   public constructor() {
-    this.reload();
+    // An effect, not a direct call: the routed input is only bound after
+    // construction, and reading it here would throw NG0950. Reloading is
+    // untracked so the permission signals it reads cannot re-trigger it.
+    effect((): void => {
+      this.organizationId();
+
+      untracked((): void => this.reload());
+    });
 
     // Surface member quota (409) failures through the actionable upgrade dialog.
     // Only the invite mutation can hit the plan quota, so gate on that flag to
@@ -175,12 +204,23 @@ export class OrganizationMembersPage {
         this.copyTargetId.set(null);
       }
     });
+
+    // Close each drawer only once the server confirms. Closing on submit discarded
+    // the member's input on any failure and left them nothing to correct.
+    this.events
+      .on(organizationMembersStoreEvents.inviteSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.inviteDrawerVisible.set(false));
+
+    this.events
+      .on(organizationMembersStoreEvents.assignRoleSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.assignDrawerVisible.set(false));
   }
 
   /** Reloads the member resources allowed by current permissions. */
   protected reload(): void {
-    const organizationId = this.organizationId();
-    if (!organizationId) return;
+    const organizationId: string = this.organizationId();
     this.store.load({
       organizationId,
       includeMembers: this.canViewMembers(),
@@ -196,42 +236,41 @@ export class OrganizationMembersPage {
 
   /** Loads the requested members page, preserving the active search term. */
   protected onMembersPage(page: number): void {
-    const organizationId = this.organizationId();
-    if (organizationId) {
-      this.store.loadMembers({ organizationId, page, search: this.store.membersSearch() });
-    }
+    const organizationId: string = this.organizationId();
+    this.store.loadMembers({ organizationId, page, search: this.store.membersSearch() });
   }
 
   /** Runs a server-side member search from the first page. */
   protected onMembersSearch(search: string): void {
-    const organizationId = this.organizationId();
-    if (organizationId) this.store.loadMembers({ organizationId, page: 1, search });
+    const organizationId: string = this.organizationId();
+    this.store.loadMembers({ organizationId, page: 1, search });
   }
 
-  /** Sends an invitation, then closes the invite drawer. */
-  protected invite(input: InviteOrganizationMemberInput): void {
-    const organizationId = this.organizationId();
-    if (!organizationId) return;
-    this.store.invite({ organizationId, input });
-    this.inviteDrawerVisible.set(false);
+  /**
+   * Sends an invitation. The drawer stays open until the server confirms.
+   *
+   * Closing here would discard what the member typed the moment anything failed —
+   * a duplicate address, an exhausted seat quota — leaving them to retype it from
+   * a toast. {@link inviteSucceeded} closes it instead.
+   */
+  protected invite(payload: InviteOrganizationMemberInput): void {
+    const organizationId: string = this.organizationId();
+    this.store.invite({ organizationId, input: payload });
   }
 
   /** Assigns a role to a member, then closes the assign drawer. */
   protected assignRole(values: OrganizationRoleAssignmentValues): void {
-    const organizationId = this.organizationId();
-    if (!organizationId) return;
+    const organizationId: string = this.organizationId();
     this.store.assignRole({
       organizationId,
       memberId: values.memberId,
       input: { roleId: values.roleId },
     });
-    this.assignDrawerVisible.set(false);
   }
 
   /** Confirms and removes an assigned role from a member. */
   protected removeRoleFromMember(removal: OrganizationMemberRoleRemoval): void {
-    const organizationId = this.organizationId();
-    if (!organizationId) return;
+    const organizationId: string = this.organizationId();
     this.confirmationService.confirm({
       header: $localize`:@@org.members.removeRoleHeader:Remove role`,
       message: $localize`:@@org.members.removeRoleMessage:Remove this role from the member?`,
@@ -253,8 +292,8 @@ export class OrganizationMembersPage {
 
   /** Assigns one role to all selected members in one action. */
   protected bulkAssignRole(assignment: OrganizationMemberBulkRoleAssignment): void {
-    const organizationId = this.organizationId();
-    if (!organizationId || assignment.members.length === 0) return;
+    const organizationId: string = this.organizationId();
+    if (assignment.members.length === 0) return;
     this.store.assignRoleToMembers({
       organizationId,
       memberIds: assignment.members.map((member) => member.id),
@@ -264,8 +303,8 @@ export class OrganizationMembersPage {
 
   /** Confirms and removes the selected members in one action. */
   protected bulkRemoveMembers(members: readonly OrganizationMemberOutput[]): void {
-    const organizationId = this.organizationId();
-    if (!organizationId || members.length === 0) return;
+    const organizationId: string = this.organizationId();
+    if (members.length === 0) return;
     this.confirmationService.confirm({
       header: $localize`:@@org.members.bulkRemoveHeader:Remove members`,
       message: $localize`:@@org.members.bulkRemoveMessage:Remove the selected members from the organization?`,
@@ -297,8 +336,8 @@ export class OrganizationMembersPage {
         outlined: true,
       },
       accept: () => {
-        const organizationId = this.organizationId();
-        if (organizationId) this.store.removeMember({ organizationId, memberId: member.id });
+        const organizationId: string = this.organizationId();
+        this.store.removeMember({ organizationId, memberId: member.id });
       },
     });
   }
@@ -316,9 +355,8 @@ export class OrganizationMembersPage {
         outlined: true,
       },
       accept: () => {
-        const organizationId = this.organizationId();
-        if (organizationId)
-          this.store.revokeInvitation({ organizationId, invitationId: invitation.id });
+        const organizationId: string = this.organizationId();
+        this.store.revokeInvitation({ organizationId, invitationId: invitation.id });
       },
     });
   }
@@ -328,9 +366,8 @@ export class OrganizationMembersPage {
     // A manual resend is not a copy request: drop any pending copy intent so a
     // prior failed copy-resend cannot hijack this one into a silent clipboard copy.
     this.copyTargetId.set(null);
-    const organizationId = this.organizationId();
-    if (organizationId)
-      this.store.resendInvitation({ organizationId, invitationId: invitation.id });
+    const organizationId: string = this.organizationId();
+    this.store.resendInvitation({ organizationId, invitationId: invitation.id });
   }
 
   /**
@@ -345,8 +382,7 @@ export class OrganizationMembersPage {
       this.writeClipboard(link);
       return;
     }
-    const organizationId = this.organizationId();
-    if (!organizationId) return;
+    const organizationId: string = this.organizationId();
     this.confirmationService.confirm({
       header: $localize`:@@org.members.copyRegenerateHeader:Generate a new link`,
       message: $localize`:@@org.members.copyRegenerateMessage:A new invitation link will be generated, the previous one will stop working, and the invitation email will be sent again. Continue?`,
@@ -391,10 +427,5 @@ export class OrganizationMembersPage {
         { summary: $localize`:@@org.members.linkCopyErrorSummary:Copy failed` },
       ),
     );
-  }
-
-  /** Returns the active organization identifier when available. */
-  private organizationId(): string | undefined {
-    return this.activeOrganizationStore.selectedOrganization()?.id;
   }
 }

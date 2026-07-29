@@ -66,7 +66,6 @@ describe('TotpService', () => {
         type: 'https://api.test.com/errors/unauthorized',
         title: 'Unauthorized',
         detail: 'Access token is missing or invalid.',
-        instance: null,
       };
 
       service.setup().subscribe({
@@ -104,7 +103,6 @@ describe('TotpService', () => {
         type: 'https://api.test.com/errors/unprocessable-entity',
         title: 'Unprocessable Entity',
         detail: 'Invalid or expired verification code.',
-        instance: null,
       };
 
       service.confirm('000000').subscribe({
@@ -125,7 +123,6 @@ describe('TotpService', () => {
         type: 'https://api.test.com/errors/too-many-requests',
         title: 'Too Many Requests',
         detail: 'Too many confirmation attempts.',
-        instance: null,
       };
 
       service.confirm('000000').subscribe({
@@ -163,7 +160,6 @@ describe('TotpService', () => {
         type: 'https://api.test.com/errors/unprocessable-entity',
         title: 'Unprocessable Entity',
         detail: 'Invalid verification code.',
-        instance: null,
       };
 
       service.disable('000000').subscribe({

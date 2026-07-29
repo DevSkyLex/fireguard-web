@@ -1,8 +1,16 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
-import { Dispatcher } from '@ngrx/signals/events';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
+import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   Observable,
@@ -25,6 +33,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { authStoreEvents } from '@features/auth';
 import { OnboardingService } from '@features/onboarding/data-access';
 import type {
   OnboardingOutput,
@@ -352,19 +361,6 @@ export const OnboardingStore = signalStore(
           return;
         }
 
-        if (isPlatformBrowser(platformId) && transferState.hasKey(ONBOARDING_TRANSFER_KEY)) {
-          const transferred = transferState.get(ONBOARDING_TRANSFER_KEY, null);
-          transferState.remove(ONBOARDING_TRANSFER_KEY);
-
-          if (transferred) {
-            patchState(store, {
-              onboarding: transferred,
-              startCallState: successCallState(transferred),
-            });
-            return;
-          }
-        }
-
         patchState(store, { startCallState: pendingCallState() });
 
         await firstValueFrom(
@@ -375,12 +371,10 @@ export const OnboardingStore = signalStore(
                   onboarding: response,
                   startCallState: successCallState(response),
                 });
-                transferState.set(ONBOARDING_TRANSFER_KEY, response);
               },
               error: (error: unknown) => {
                 const storeError: StoreError = toStoreError(error);
                 patchState(store, { startCallState: errorCallState(storeError) });
-                transferState.set(ONBOARDING_TRANSFER_KEY, null);
                 dispatcher.dispatch(
                   onboardingStoreEvents.startFailed(
                     toStoreFailureEventPayload(storeError, 'Failed to start onboarding'),
@@ -737,19 +731,66 @@ export const OnboardingStore = signalStore(
           return of(current);
         }
 
+        // The SSR handoff lives here, not in `initialize()`: the guards call
+        // this first, on both sides. Writing the key from `initialize()` meant
+        // the server filled the store, `initialize()` returned early, the key
+        // was never set — and the browser refetched on hydration.
+        if (isPlatformBrowser(platformId) && transferState.hasKey(ONBOARDING_TRANSFER_KEY)) {
+          const transferred: OnboardingOutput | null = transferState.get(
+            ONBOARDING_TRANSFER_KEY,
+            null,
+          );
+          transferState.remove(ONBOARDING_TRANSFER_KEY);
+
+          if (transferred) {
+            patchState(store, {
+              onboarding: transferred,
+              loadCallState: successCallState(transferred),
+            });
+
+            return of(transferred);
+          }
+        }
+
         return onboardingService.get().pipe(
-          tap((response: OnboardingOutput) =>
+          tap((response: OnboardingOutput) => {
             patchState(store, {
               onboarding: response,
               loadCallState: successCallState(response),
-            }),
-          ),
+            });
+
+            if (!isPlatformBrowser(platformId)) {
+              transferState.set(ONBOARDING_TRANSFER_KEY, response);
+            }
+          }),
           map((response: OnboardingOutput): OnboardingOutput | null => response),
           catchError((): Observable<OnboardingOutput | null> => of(null)),
         );
       },
     }),
   ),
+  //#endregion
+
+  //#region Hooks
+  withHooks({
+    /**
+     * Root-provided, so the record survives the client-side navigation that logging
+     * out really is. Left in place, `ensureLoaded()` hands the previous user's
+     * onboarding record to the access guards, which then gate the next user on
+     * somebody else's activation state.
+     *
+     * Listens to `sessionEnded`, not `logoutSucceeded`: a failed logout request
+     * still ends the local session.
+     */
+    onInit(store, events = inject<Events>(Events)): void {
+      events
+        .on(authStoreEvents.sessionEnded)
+        .pipe(takeUntilDestroyed())
+        .subscribe(() => {
+          store.clear();
+        });
+    },
+  }),
   //#endregion
 );
 

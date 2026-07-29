@@ -1,4 +1,11 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-5">
+  <!-- Server validation failure that named no field in this form -->
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <!-- Name fields -->
   <div class="flex flex-col gap-5 sm:flex-row sm:gap-4">
     <div class="flex flex-1 flex-col gap-2">
@@ -81,6 +88,11 @@
         }
       </p-message>
     }
+    @if (serverFieldErrors()['email']; as serverMessage) {
+      <p-message severity="error" variant="simple" size="small" role="alert">
+        <span>{{ serverMessage }}</span>
+      </p-message>
+    }
   </div>
 
   <!-- Password Field -->
@@ -93,7 +105,7 @@
     >
 
     <p-password
-      id="password"
+      inputId="password"
       formControlName="password"
       [toggleMask]="true"
       [invalid]="form.controls.password.invalid && form.controls.password.touched"
@@ -115,6 +127,11 @@
         }
       </p-message>
     }
+    @if (serverFieldErrors()['password']; as serverMessage) {
+      <p-message severity="error" variant="simple" size="small" role="alert">
+        <span>{{ serverMessage }}</span>
+      </p-message>
+    }
   </div>
 
   <!-- Confirm Password Field -->
@@ -127,7 +144,7 @@
     >
 
     <p-password
-      id="confirmPassword"
+      inputId="confirmPassword"
       formControlName="confirmPassword"
       [feedback]="false"
       [toggleMask]="true"

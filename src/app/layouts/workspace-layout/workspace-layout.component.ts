@@ -36,13 +36,12 @@ import { WorkspaceShellService } from './services';
  * organization rail, the channel sidebar, the routed main column, and a
  * mono-active contextual panel.
  *
- * Unlike {@link DashboardLayout} the shell itself never scrolls — it is
- * `overflow-hidden` and every column owns its own scroll container, so a
+ * This is the shell for every authenticated route. It never scrolls itself —
+ * it is `overflow-hidden` and every column owns its own scroll container, so a
  * message thread can scroll while its composer stays pinned.
  *
  * Provides {@link WorkspaceShellService} and {@link BreadcrumbService} at the
- * component level; the latter is re-provided because it is layout-scoped in
- * `DashboardLayout` and would otherwise be missing for routes hosted here.
+ * component level, so hosted routes get the trail the header renders.
  *
  * Responsive behavior:
  * - Desktop (≥1024px): rail, sidebar, main column and panel side by side
@@ -240,8 +239,9 @@ export class WorkspaceLayout {
    * Decides which of the two stacked mobile panes is shown.
    *
    * Arriving — a deep link, or switching organization from the rail — the pane
-   * follows the URL: something routed opens the main column, the bare workspace
-   * URL leaves the member on the list they need to choose from.
+   * follows the URL: a destination below the organization opens the main
+   * column, the bare organization URL leaves the member on the list they need
+   * to choose from.
    *
    * Navigating *inside* the shell always opens the main column, even when the
    * destination contributes no URL segment. The organization overview is
@@ -267,22 +267,55 @@ export class WorkspaceLayout {
       return;
     }
 
+    if (this.hasRoutedDestination()) {
+      this.shell.showMain();
+
+      return;
+    }
+
+    this.shell.showList();
+  }
+
+  /**
+   * Method hasRoutedDestination
+   * @method hasRoutedDestination
+   *
+   * @description
+   * Whether the URL points at something the member chose, rather than at the
+   * organization landing the sidebar itself is the entry point for.
+   *
+   * Only the segments *below* `:organizationId` count: the shell is mounted at
+   * the app root, so `organizations/:id` is part of every in-shell URL and
+   * would otherwise read as a destination on its own. Outside an organization
+   * scope (`/account`) any segment counts.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @return {boolean} `true` when a routed destination is open.
+   */
+  private hasRoutedDestination(): boolean {
     // The snapshot tree, not the `ActivatedRoute` tree: this also runs from the
     // constructor, and a child `ActivatedRoute` being activated has no
     // `snapshot` yet — reading it there throws before the shell ever renders.
     let child: ActivatedRouteSnapshot | null = this.route.snapshot.firstChild;
+    let scoped = false;
+    let routed = false;
 
     while (child !== null) {
-      if (child.url.length > 0) {
-        this.shell.showMain();
-
-        return;
+      if (!scoped && child.paramMap.get('organizationId') !== null) {
+        // Everything above the organization is shell plumbing, not a
+        // destination.
+        scoped = true;
+        routed = false;
+      } else if (child.url.length > 0) {
+        routed = true;
       }
 
       child = child.firstChild;
     }
 
-    this.shell.showList();
+    return routed;
   }
 
   /**
@@ -290,8 +323,8 @@ export class WorkspaceLayout {
    * @method readOrganizationId
    *
    * @description
-   * The organization the shell is currently scoped to, read from the route
-   * chain because the parameter is declared on an ancestor of this layout.
+   * The organization the shell is currently scoped to, read from the routed
+   * chain because the parameter is declared on a descendant of this layout.
    *
    * @access private
    * @since 1.1.0
@@ -299,10 +332,14 @@ export class WorkspaceLayout {
    * @return {string | null} The bare organization id, or `null` outside a scoped route.
    */
   private readOrganizationId(): string | null {
-    for (let route: ActivatedRoute | null = this.route; route !== null; route = route.parent) {
-      const id: string | null = route.snapshot.paramMap.get('organizationId');
+    let child: ActivatedRouteSnapshot | null = this.route.snapshot.firstChild;
+
+    while (child !== null) {
+      const id: string | null = child.paramMap.get('organizationId');
 
       if (id !== null) return id;
+
+      child = child.firstChild;
     }
 
     return null;

@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <section class="flex flex-col gap-3" aria-labelledby="intervention-objective-heading">
     <div>
       <h2
@@ -69,6 +75,11 @@
                 <span i18n="@@intervention.cf.nameLength">Use between 2 and 255 characters.</span>
               }
             </span>
+          </p-message>
+        }
+        @if (serverFieldErrors()['name']; as serverMessage) {
+          <p-message severity="error" variant="simple" size="small" role="alert">
+            <span>{{ serverMessage }}</span>
           </p-message>
         }
       </label>

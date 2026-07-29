@@ -1,4 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-5">
+  @if (unmatchedViolation(); as violation) {
+    <p-message severity="error" variant="simple" size="small" role="alert">
+      <span>{{ violation }}</span>
+    </p-message>
+  }
+
   <div class="flex flex-col gap-2">
     <label for="role-name" class="text-sm font-medium text-surface-900 dark:text-surface-50">
       <ng-container i18n="@@org.roleForm.nameLabel">Role name</ng-container>
@@ -16,6 +22,11 @@
     @if (form.controls.name.invalid && form.controls.name.touched) {
       <p-message severity="error" variant="simple" size="small">
         <span i18n="@@org.roleForm.nameError">Enter a role name.</span>
+      </p-message>
+    }
+    @if (serverFieldErrors()['name']; as serverMessage) {
+      <p-message severity="error" variant="simple" size="small" role="alert">
+        <span>{{ serverMessage }}</span>
       </p-message>
     }
   </div>

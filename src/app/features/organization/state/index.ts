@@ -2,7 +2,7 @@
 // multiple pages/components (or by approved sibling features). Page-scoped stores
 // consumed by a single page (team, settings, plan, billing, invitation-accept,
 // audit) are intentionally NOT re-exported here — their owning page imports them
-// directly from the slice barrel (ARCHITECTURE.md §11.3).
+// directly from the slice barrel (ARCHITECTURE.md §13.3).
 export type { ActiveOrganizationState } from './active-organization';
 export type { OrganizationMemberAccessState } from './organization-member-access';
 export type { OrganizationState } from './organization-list';

@@ -129,12 +129,12 @@ describe('AccountPasswordForm', () => {
     expect(host.querySelector('[data-testid="account-password-expand"]')).toBeTruthy();
   });
 
-  it('should render the request error message when hasRequestError is true', () => {
+  it('should render the request error message when the check failed', () => {
     const fixture = TestBed.createComponent(AccountPasswordForm);
     const instance = fixture.componentInstance as unknown as {
       expanded: { set(v: boolean): void };
     };
-    fixture.componentRef.setInput('hasRequestError', true);
+    fixture.componentRef.setInput('requestError', { status: 401 });
     instance.expanded.set(true);
 
     fixture.detectChanges();
@@ -167,10 +167,10 @@ describe('AccountPasswordForm', () => {
     expect(host.textContent).toContain('your email address');
   });
 
-  it('should render the confirm error message when hasConfirmError is true', () => {
+  it('should render the generic confirm error when the failure names no field', () => {
     const fixture = TestBed.createComponent(AccountPasswordForm);
     fixture.componentRef.setInput('step', 'verify');
-    fixture.componentRef.setInput('hasConfirmError', true);
+    fixture.componentRef.setInput('confirmError', { status: 401 });
 
     fixture.detectChanges();
 
@@ -219,5 +219,28 @@ describe('AccountPasswordForm', () => {
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
     expect(host.querySelector('[data-testid="account-password-success"]')).toBeTruthy();
+  });
+
+  it('should surface the server message on the field it names', () => {
+    const fixture = TestBed.createComponent(AccountPasswordForm);
+    fixture.componentRef.setInput('step', 'verify');
+    fixture.componentRef.setInput('confirmError', {
+      error: {
+        '@id': '',
+        '@type': 'ConstraintViolation',
+        status: 422,
+        type: 't',
+        title: 'Unprocessable Entity',
+        detail: 'Validation failed',
+        violations: [{ propertyPath: 'newPassword', message: 'This password has been leaked.' }],
+      },
+    });
+    fixture.detectChanges();
+
+    const text: string = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    // The policy reason must replace the generic "code expired" message, which
+    // would otherwise send the user chasing the wrong problem.
+    expect(text).toContain('This password has been leaked.');
+    expect(text).not.toContain('The verification code is invalid or has expired.');
   });
 });

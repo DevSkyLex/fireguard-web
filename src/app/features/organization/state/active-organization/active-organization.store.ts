@@ -28,7 +28,7 @@ import {
 } from '@features/organization/constants';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
-import { routeTreeHasParam } from '@features/organization/utils';
+import { readRouteParam } from '@features/organization/utils';
 import { activeOrganizationStoreEvents } from './events';
 import type { ActiveOrganizationState } from './models';
 
@@ -46,7 +46,8 @@ import type { ActiveOrganizationState } from './models';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
-  selectedOrganization: null,
+  routedOrganizationId: null,
+  organizationEntity: null,
   getCallState: idleCallState(),
 } as const;
 //#endregion
@@ -63,10 +64,15 @@ const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
  * answering "which organization are we looking at right now?". All list
  * management and CRUD live in the component-scoped {@link OrganizationStore}.
  *
+ * The answer comes from the **URL**, not from whatever was last fetched: the
+ * store mirrors `:organizationId` on every navigation and only exposes the
+ * cached entity while it matches. Nothing can set an active organization the
+ * URL does not name.
+ *
  * Provided at the root level (`providedIn: 'root'`) so that any service or
  * component can read `selectedOrganization` without providing anything.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const ActiveOrganizationStore = signalStore(
@@ -80,16 +86,35 @@ export const ActiveOrganizationStore = signalStore(
      * Property selectedOrganizationId
      *
      * @description
-     * Identity of the active organization, derived with value (string)
-     * equality. Effects that only depend on *which* organization is active —
-     * not on its mutable metadata such as name or logo — should track this
-     * instead of {@link selectedOrganization}, so refreshing the active
-     * organization object (e.g. after a logo upload) does not re-trigger
-     * organization-scoped reloads.
+     * Identity of the active organization, straight from the URL. Effects that
+     * only depend on *which* organization is active — not on its mutable
+     * metadata such as name or logo — should track this instead of
+     * {@link selectedOrganization}, so refreshing the active organization
+     * object (e.g. after a logo upload) does not re-trigger organization-scoped
+     * reloads.
      *
      * @type {string | null}
      */
-    selectedOrganizationId: computed<string | null>(() => store.selectedOrganization()?.id ?? null),
+    selectedOrganizationId: computed<string | null>(() => store.routedOrganizationId()),
+
+    /**
+     * Property selectedOrganization
+     *
+     * @description
+     * The active organization resource, or `null` while the URL names an
+     * organization whose entity is not loaded yet.
+     *
+     * Gated on the routed identifier on purpose: without it, switching
+     * organization would leave the rail, the navigation and the page header
+     * showing the previous organization's name until the fetch resolved.
+     *
+     * @type {OrganizationOutput | null}
+     */
+    selectedOrganization: computed<OrganizationOutput | null>(() => {
+      const entity: OrganizationOutput | null = store.organizationEntity();
+
+      return entity !== null && entity.id === store.routedOrganizationId() ? entity : null;
+    }),
 
     /**
      * Property isLoadingOrganization
@@ -132,7 +157,7 @@ export const ActiveOrganizationStore = signalStore(
          */
         setOrganization(organization: OrganizationOutput): void {
           patchState(store, {
-            selectedOrganization: organization,
+            organizationEntity: organization,
             getCallState: successCallState(organization),
           });
         },
@@ -157,7 +182,7 @@ export const ActiveOrganizationStore = signalStore(
             tap({
               next: (organization: OrganizationOutput): void => {
                 patchState(store, {
-                  selectedOrganization: organization,
+                  organizationEntity: organization,
                   getCallState: successCallState(organization),
                 });
               },
@@ -187,7 +212,7 @@ export const ActiveOrganizationStore = signalStore(
          */
         clearSelectedOrganization(): void {
           patchState(store, {
-            selectedOrganization: null,
+            organizationEntity: null,
           });
         },
 
@@ -202,7 +227,7 @@ export const ActiveOrganizationStore = signalStore(
          */
         clear(): void {
           patchState(store, {
-            selectedOrganization: null,
+            organizationEntity: null,
             getCallState: idleCallState(),
           });
         },
@@ -240,21 +265,32 @@ export const ActiveOrganizationStore = signalStore(
           }
         });
 
+        /**
+         * Mirror `:organizationId` from the URL, which owns the answer to
+         * "which organization is open".
+         *
+         * Seeded synchronously from the current router state before the first
+         * `NavigationEnd`: on the server the store is built during a render
+         * that has already navigated, so waiting for the event would paint a
+         * shell with no organization and only fill it after hydration.
+         */
+        const syncRoutedOrganizationId = (): void => {
+          patchState(store, {
+            routedOrganizationId: readRouteParam(
+              router.routerState.snapshot.root,
+              'organizationId',
+            ),
+          });
+        };
+
+        syncRoutedOrganizationId();
+
         router.events
           .pipe(
             filter((e): e is NavigationEnd => e instanceof NavigationEnd),
             takeUntilDestroyed(),
           )
-          .subscribe((): void => {
-            const hasOrganizationId: boolean = routeTreeHasParam(
-              router.routerState.snapshot.root,
-              'organizationId',
-            );
-
-            if (!hasOrganizationId && store.selectedOrganization() !== null) {
-              store.clearSelectedOrganization();
-            }
-          });
+          .subscribe(syncRoutedOrganizationId);
       },
     };
   }),

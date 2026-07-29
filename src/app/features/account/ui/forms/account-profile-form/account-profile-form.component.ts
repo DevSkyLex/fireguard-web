@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -15,6 +17,7 @@ import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import type { UpdateCurrentUserProfileInput, UserProfileOutput } from '@features/account/models';
+import { toServerFieldErrors, type ServerFieldErrors } from '@shared/utils';
 import type { AccountProfileFormData } from './models';
 
 /**
@@ -86,18 +89,45 @@ export class AccountProfileForm {
   public readonly saving: InputSignal<boolean> = input<boolean>(false);
 
   /**
-   * Input hasSaveError
+   * Input serverError
    * @input
    *
    * @description
-   * Indicates whether the latest profile-field save operation failed.
+   * Last save rejection, as held by the store's call state.
+   *
+   * Replaces the former boolean flag: a 422 names the field it refused, and
+   * collapsing that to "something failed" forced a generic banner where the user
+   * could have been told exactly which value to fix. Non-422 failures still fall
+   * back to that banner.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {InputSignal<boolean>}
+   * @type {InputSignal<unknown>}
    */
-  public readonly hasSaveError: InputSignal<boolean> = input<boolean>(false);
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /** Server message per field, projected from the last 422. */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /**
+   * Property hasGenericSaveError
+   * @readonly
+   *
+   * @description
+   * Whether a failure occurred that no field can explain — a transport fault, or a
+   * 422 naming only fields this form does not render.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasGenericSaveError: Signal<boolean> = computed(
+    () => this.serverError() !== null && Object.keys(this.serverFieldErrors()).length === 0,
+  );
 
   /**
    * Output submitted

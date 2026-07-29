@@ -1,6 +1,5 @@
 export {
   OrganizationDashboard,
-  InspectionsTrend,
   NonConformitiesOpenedTrend,
   NonConformitiesResolvedTrend,
   OverviewTrend,

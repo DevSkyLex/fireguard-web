@@ -87,6 +87,20 @@ export class InterventionEditDrawer {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+  /**
+   * Property serverError
+   * @readonly
+   *
+   * @description
+   * Last submission failure, forwarded to the form so a 422 lands on the field the
+   * server named. The drawer only relays it; it owns no error handling.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
 
   /**
    * Input disabled

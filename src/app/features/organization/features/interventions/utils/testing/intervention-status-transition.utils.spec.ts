@@ -1,21 +1,6 @@
-import { allowedTransitions, canTransition } from '../intervention-status-transition.utils';
+import { allowedTransitions } from '../intervention-status-transition.utils';
 
 describe('intervention status transition utils', () => {
-  it('allows policy transitions and no-op moves', () => {
-    expect(canTransition('draft', 'planned')).toBe(true);
-    expect(canTransition('planned', 'in_progress')).toBe(true);
-    expect(canTransition('in_progress', 'submitted')).toBe(true);
-    expect(canTransition('changes_requested', 'in_progress')).toBe(true);
-    expect(canTransition('draft', 'draft')).toBe(true);
-  });
-
-  it('rejects illegal transitions, including publish', () => {
-    expect(canTransition('draft', 'in_progress')).toBe(false);
-    expect(canTransition('submitted', 'in_progress')).toBe(false);
-    expect(canTransition('submitted', 'published')).toBe(false);
-    expect(canTransition('published', 'planned')).toBe(false);
-  });
-
   it('exposes the allowed targets per status', () => {
     expect(allowedTransitions('changes_requested')).toEqual([
       'in_progress',

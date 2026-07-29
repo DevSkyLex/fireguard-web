@@ -29,6 +29,7 @@
   <app-otp-verification-form
     [showTrustDevice]="showTrustDevice()"
     [loading]="loading()"
+    [serverError]="verifyError()"
     [resendIn]="resendIn()"
     [showResend]="showResend()"
     (submitted)="handleOtpSubmit($event)"

@@ -122,8 +122,7 @@ export class FacilityInspectionTab {
   }
 
   protected onCancel(inspection: InspectionOutput): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
     if (!organizationId || inspection.status !== 'draft') return;
 
     this.confirmationService.confirm({
@@ -146,8 +145,7 @@ export class FacilityInspectionTab {
   protected onLoad(options: RequestOptions): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
     const facilityId: string = this.facilityId();
     const result: InspectionResult | undefined =
       typeof options.params?.['result'] === 'string'

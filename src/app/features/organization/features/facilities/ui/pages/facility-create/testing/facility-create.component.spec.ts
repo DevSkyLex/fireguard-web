@@ -32,6 +32,7 @@ describe('FacilityCreatePage', () => {
 
   const mockActiveOrgStore = {
     selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG),
+    selectedOrganizationId: signal<string | null>(MOCK_ORG.id),
   };
 
   const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
@@ -63,33 +64,30 @@ describe('FacilityCreatePage', () => {
 
   it('should create', () => {
     const fixture = TestBed.createComponent(FacilityCreatePage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
 
   it('should display page heading', () => {
     const fixture = TestBed.createComponent(FacilityCreatePage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('New Facility');
   });
 
   it('should render the facility form', () => {
     const fixture = TestBed.createComponent(FacilityCreatePage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-facility-form')).not.toBeNull();
   });
 
   it('should load parent facilities for selection on init in the browser', () => {
     const fixture = TestBed.createComponent(FacilityCreatePage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
     expect(mockFacilityStore.ensureParentOptionsLoaded).toHaveBeenCalledWith('org-1');
-  });
-
-  it('should not load parent facilities when organization is missing', () => {
-    mockActiveOrgStore.selectedOrganization.set(null);
-    const fixture = TestBed.createComponent(FacilityCreatePage);
-    fixture.detectChanges();
-    expect(mockFacilityStore.ensureParentOptionsLoaded).not.toHaveBeenCalled();
   });
 
   it('should not load parent facilities during SSR', () => {
@@ -111,6 +109,7 @@ describe('FacilityCreatePage', () => {
     });
 
     const fixture = TestBed.createComponent(FacilityCreatePage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     expect(mockFacilityStore.ensureParentOptionsLoaded).not.toHaveBeenCalled();
@@ -118,6 +117,7 @@ describe('FacilityCreatePage', () => {
 
   it('should dispatch create action with correct payload on handleSubmit', () => {
     const fixture = TestBed.createComponent(FacilityCreatePage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
     const values: FacilityFormValues = {
@@ -139,22 +139,5 @@ describe('FacilityCreatePage', () => {
         code: 'NS-01',
       },
     });
-  });
-
-  it('should not dispatch create when organization is missing', () => {
-    mockActiveOrgStore.selectedOrganization.set(null);
-    const fixture = TestBed.createComponent(FacilityCreatePage);
-    fixture.detectChanges();
-
-    fixture.componentInstance['handleSubmit']({
-      type: 'site',
-      name: 'New Site',
-      code: '',
-      address: '',
-      parentFacilityId: '',
-      latitude: null,
-      longitude: null,
-    });
-    expect(mockFacilityStore.create).not.toHaveBeenCalled();
   });
 });

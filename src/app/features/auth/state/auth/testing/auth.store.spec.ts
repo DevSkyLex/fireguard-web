@@ -1,11 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { delay, firstValueFrom, of, throwError } from 'rxjs';
 import { USER_PROFILE_PORT } from '@features/account/ports';
 import { AuthService } from '@features/auth/data-access';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import { AuthStore } from '../auth.store';
+import { authStoreEvents } from '../events';
+
+/** Event types seen by the dispatcher spy, in dispatch order. */
+const dispatchedTypes = (dispatcher: { dispatch: ReturnType<typeof vi.fn> }): string[] =>
+  dispatcher.dispatch.mock.calls.map((call) => (call[0] as { type: string }).type);
 
 const flushEffects = async (): Promise<void> => {
   await Promise.resolve();
@@ -214,7 +219,10 @@ describe('AuthStore', () => {
     expect(store.accessToken()).toBeNull();
     expect(mockTrustedDeviceStore.clear).toHaveBeenCalledTimes(1);
     expect(mockUserProfilePort.clear).toHaveBeenCalledTimes(1);
-    expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatchedTypes(mockDispatcher)).toEqual([
+      authStoreEvents.sessionEnded.type,
+      authStoreEvents.logoutSucceeded.type,
+    ]);
   });
 
   it('should clear state and dispatch an event on logout error', async () => {
@@ -229,7 +237,12 @@ describe('AuthStore', () => {
     expect(store.accessToken()).toBeNull();
     expect(mockTrustedDeviceStore.clear).toHaveBeenCalledTimes(1);
     expect(mockUserProfilePort.clear).toHaveBeenCalledTimes(1);
-    expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
+    // A failed logout still ends the local session, so `sessionEnded` must fire on
+    // this branch too — that is what purges the other users' data downstream.
+    expect(dispatchedTypes(mockDispatcher)).toEqual([
+      authStoreEvents.sessionEnded.type,
+      authStoreEvents.logoutFailed.type,
+    ]);
   });
 
   it('should resend MFA code and update tokens when MFA token is present', async () => {
@@ -462,5 +475,67 @@ describe('AuthStore', () => {
     expect(mockAuthService.mfaResend).toHaveBeenCalledWith({ preAuthToken: 'mfa-token' });
     expect(store.mfaResendCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should dispatch sessionEnded when the session is dropped without a logout call', () => {
+    store.setToken('access-token', 3600);
+    mockDispatcher.dispatch.mockClear();
+
+    store.clearToken();
+
+    // `clearToken` backs the 401 interceptor and "switch account". Both end a
+    // session, so the stores and offline databases holding the departing user's
+    // data must be purged just as they are on a real logout.
+    expect(store.accessToken()).toBeNull();
+    expect(dispatchedTypes(mockDispatcher)).toEqual([authStoreEvents.sessionEnded.type]);
+  });
+
+  describe('renewSession', () => {
+    it('should return the new access token and apply it', async () => {
+      mockAuthService.refresh.mockReturnValue(of(loginResponse));
+
+      const token = await firstValueFrom(store.renewSession());
+
+      expect(token).toBe('access-token');
+      expect(store.accessToken()).toBe('access-token');
+      expect(store.refreshCallState().status).toBe('success');
+    });
+
+    it('should resolve to null and drop the token when renewal fails', async () => {
+      mockAuthService.refresh.mockReturnValue(throwError(() => new Error('expired')));
+
+      const token = await firstValueFrom(store.renewSession());
+
+      expect(token).toBeNull();
+      expect(store.accessToken()).toBeNull();
+      expect(store.refreshCallState().status).toBe('error');
+    });
+
+    it('should share one request between concurrent callers', async () => {
+      // Must be asynchronous to model a real request: a synchronous source
+      // completes before the second caller ever arrives, which would hide the
+      // very overlap this guards against.
+      mockAuthService.refresh.mockReturnValue(of(loginResponse).pipe(delay(1)));
+
+      const [first, second] = await Promise.all([
+        firstValueFrom(store.renewSession()),
+        firstValueFrom(store.renewSession()),
+      ]);
+
+      // The refresh token rotates server-side: firing two refreshes at once looks
+      // like replay and can invalidate the session outright.
+      expect(mockAuthService.refresh).toHaveBeenCalledTimes(1);
+      expect(first).toBe('access-token');
+      expect(second).toBe('access-token');
+    });
+
+    it('should start a new request once the previous one settled', async () => {
+      mockAuthService.refresh.mockReturnValue(of(loginResponse));
+
+      await firstValueFrom(store.renewSession());
+      await firstValueFrom(store.renewSession());
+
+      expect(mockAuthService.refresh).toHaveBeenCalledTimes(2);
+    });
   });
 });

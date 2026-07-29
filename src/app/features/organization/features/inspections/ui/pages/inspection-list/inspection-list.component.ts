@@ -4,8 +4,9 @@ import {
   computed,
   inject,
   input,
-  numberAttribute,
+  type InputSignal,
   type InputSignalWithTransform,
+  numberAttribute,
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -18,7 +19,7 @@ import type { InspectionOutput } from '@features/organization/features/inspectio
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import { InspectionTable } from '@features/organization/features/inspections/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaStore } from '@features/organization/state';
 
 /**
  * Component InspectionListPage
@@ -40,6 +41,22 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionListPage {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Routed organization, bound from `:organizationId` by the router. The
+   * parameter — not the store — is the source of truth: a page rendered under
+   * this segment is, by construction, scoped to that organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   //#region Inputs
   /**
    * Input page
@@ -83,18 +100,6 @@ export class InspectionListPage {
    */
   private readonly confirmationService: ConfirmationService =
     inject<ConfirmationService>(ConfirmationService);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActiveOrganizationStore}
-   */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property store
@@ -176,10 +181,6 @@ export class InspectionListPage {
   public onCancel(inspection: InspectionOutput): void {
     if (inspection.status !== 'draft') return;
 
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (!organizationId) return;
-
     this.confirmationService.confirm({
       header: $localize`:@@inspection.cancel.header:Cancel inspection`,
       message: $localize`:@@inspection.cancel.message:Cancel this draft inspection?`,
@@ -193,7 +194,8 @@ export class InspectionListPage {
         severity: 'secondary',
         outlined: true,
       },
-      accept: () => this.store.cancel({ organizationId, inspectionId: inspection.id }),
+      accept: () =>
+        this.store.cancel({ organizationId: this.organizationId(), inspectionId: inspection.id }),
     });
   }
 
@@ -210,11 +212,7 @@ export class InspectionListPage {
    */
   public onLoad(options: RequestOptions): void {
     this.lastLoadOptions = options;
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.load({ organizationId, options });
-    }
+    this.store.load({ organizationId: this.organizationId(), options });
   }
 
   /**
@@ -231,11 +229,7 @@ export class InspectionListPage {
    * @returns {void}
    */
   protected retry(): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.load({ organizationId, options: this.lastLoadOptions });
-    }
+    this.store.load({ organizationId: this.organizationId(), options: this.lastLoadOptions });
   }
 
   /**

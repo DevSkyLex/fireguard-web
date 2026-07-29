@@ -28,6 +28,7 @@ describe('MfaVerificationPage', () => {
     const mockAuthStore = {
       isAuthenticated: signal(options?.authenticated ?? false),
       isVerifyingMfa: signal(false),
+      mfaVerifyError: signal(null),
       mfaToken: signal(options?.mfaToken ?? null),
       mfaMethod: signal(options?.mfaMethod ?? null),
       mfaDestination: signal(options?.mfaDestination ?? null),
@@ -157,6 +158,7 @@ describe('MfaVerificationPage', () => {
       const mockAuthStore = {
         isAuthenticated: signal(false),
         isVerifyingMfa: signal(false),
+        mfaVerifyError: signal(null),
         mfaToken: signal<string | null>('mfa-token'),
         mfaMethod: signal<string | null>('email'),
         mfaDestination: signal<string | null>(options?.mfaDestination ?? null),

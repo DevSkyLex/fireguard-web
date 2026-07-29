@@ -6,9 +6,9 @@ import { ApiMock } from '../support/mocks/api-mock';
 /**
  * The workspace right panel must never compete with a hosted page's own aside.
  *
- * `PANEL_SLOT` is mono-active and currently has no contributions, so the outlet
- * renders nothing and the intervention detail page keeps its single Properties
- * rail — exactly as it does in the dashboard shell.
+ * `PANEL_SLOT` is mono-active and has no contribution on this route, so the
+ * outlet renders nothing and the intervention detail page keeps its single
+ * Properties rail.
  *
  * This becomes load-bearing in phase 4: the moment a panel contribution claims
  * the slot on this route, the page would show two side columns. That is the
@@ -25,7 +25,7 @@ test.describe('Workspace panel', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession({ organizations: [organization] });
 
-    await page.goto(`/organizations/${organization.id}/workspace`);
+    await page.goto(`/organizations/${organization.id}`);
     await page.locator('#workspace-layout').waitFor({ state: 'visible' });
 
     const outlet = page.locator('app-workspace-layout-panel-outlet');
@@ -44,7 +44,7 @@ test.describe('Workspace panel', () => {
     await api.mockInterventionDetail(intervention);
     await api.mockInterventionWorkspace(intervention.id);
 
-    await page.goto(`/organizations/${organization.id}/workspace/interventions/${intervention.id}`);
+    await page.goto(`/organizations/${organization.id}/interventions/${intervention.id}`);
     await page.locator('#workspace-layout').waitFor({ state: 'visible' });
 
     const pageAsides = page.locator('#workspace-layout main aside');

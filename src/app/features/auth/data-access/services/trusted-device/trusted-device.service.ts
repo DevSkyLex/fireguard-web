@@ -28,7 +28,7 @@ import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/mode
  *
  * // List trusted devices
  * trustedDeviceService.list().subscribe(devices => {
- *   console.log('Trusted devices:', devices['hydra:member']);
+ *   console.log('Trusted devices:', devices.member);
  * });
  *
  * // Revoke a device

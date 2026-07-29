@@ -8,6 +8,7 @@ type TestApi = InterventionWorkItemForm & {
   form: {
     controls: { action: { setValue(value: string): void } };
     patchValue(values: { action: string; target: string; assignee: string }): void;
+    getRawValue(): { action: string; target: string; assignee: string };
   };
   onSubmit(): void;
 };
@@ -72,5 +73,23 @@ describe('InterventionWorkItemForm', () => {
       (component as unknown as InterventionWorkItemForm & { form: { disabled: boolean } }).form
         .disabled,
     ).toBe(true);
+  });
+
+  it('should keep the entered values after submitting', () => {
+    const component = build();
+    const values = {
+      action: 'inspection',
+      target: '/api/equipment/equipment-1',
+      assignee: '/api/organizations/org-1/members/member-1',
+    };
+    component.form.patchValue(values);
+
+    component.onSubmit();
+
+    // The parent has not confirmed anything yet. Clearing here used to wipe the
+    // entry whenever the call failed — a dropped connection in the field is
+    // enough — and the drawer stays open on failure, so the user must find their
+    // input still there.
+    expect(component.form.getRawValue()).toEqual(values);
   });
 });

@@ -30,8 +30,8 @@ This feature does not own authentication, session restoration, or auth transport
   **Notifications**. The active section is driven by the `tab` query parameter
   (`?tab=profile|security|notifications`).
 
-Account navigation is exposed through the **header user menu** (`AccountUserMenu`),
-not the sidebar.
+Account navigation is exposed through the **rail seat menu** (`AccountRailMenu`),
+contributed to the workspace rail's footer region.
 
 ## State and Data Access
 
@@ -70,16 +70,14 @@ Primary services:
 These contracts are intended for shell consumers such as layouts and shared shell widgets,
 plus approved external workflows that need to bootstrap or clear the authenticated user profile.
 `accountPermissionGuard`/`ACCOUNT_PERMISSION`/`UserPermissionService` are the stable surface for
-gating **global** (non-organization-scoped) permissions such as `audit.read` outside this feature —
-see `features/organization`'s `audit` route and its sidebar "Audit log" navigation entry for the
-first consumers.
+gating **global** (non-organization-scoped) permissions outside this feature.
 
 ## Cross-Feature Dependencies
 
 - May be initialized or cleared by `features/auth` through `USER_PROFILE_PORT` after successful session restoration or logout.
 - Must not own auth guards, auth interceptors, or refresh-token behavior.
 - `accountPermissionGuard`/`ACCOUNT_PERMISSION`/`UserPermissionService` may be consumed by other
-  features to gate routes or UI on a global permission (e.g. `features/organization`'s audit log).
+  features to gate routes or UI on a global permission.
 
 ## Shell Integration Notes
 

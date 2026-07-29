@@ -25,8 +25,6 @@ describe('organizationLandingGuard', () => {
         get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
       },
       parent,
-      // The guard reads its own ancestry to keep the redirect in the current
-      // shell; a dashboard-tree route has no `workspace` segment.
       pathFromRoot: [{ url: [] }],
     } as unknown as Parameters<typeof organizationLandingGuard>[0];
   }
@@ -75,27 +73,6 @@ describe('organizationLandingGuard', () => {
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith([
       '/organizations',
       'org-1',
-      'facilities',
-    ]);
-  });
-
-  it('should keep the redirect inside the workspace shell it was activated in', () => {
-    mockPermissionService.canAccessOrganization.mockImplementation(
-      (_organizationId: string, permissions: ReadonlyArray<string>) =>
-        permissions.length === 1 && permissions.includes(ORGANIZATION_PERMISSION.FACILITIES_READ),
-    );
-    const route = createRoute('org-1');
-    // The activated route sits under the workspace tree.
-    (route as { pathFromRoot: unknown }).pathFromRoot = [{ url: [{ path: 'workspace' }] }];
-
-    TestBed.runInInjectionContext(() => organizationLandingGuard(route, {} as never));
-
-    // The prefix carries the `workspace` segment so a permitted destination
-    // is reached without ejecting the member into the dashboard shell.
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith([
-      '/organizations',
-      'org-1',
-      'workspace',
       'facilities',
     ]);
   });

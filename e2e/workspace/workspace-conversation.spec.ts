@@ -111,7 +111,7 @@ async function openConversation(page: Page): Promise<void> {
   await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
   await mockChannel(page);
 
-  await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/${CHANNEL_ID}`);
+  await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
   await expect(page.getByTestId('channel-conversation')).toBeVisible();
 }
 
@@ -129,7 +129,7 @@ test.describe('Workspace conversation', () => {
       { id: 'm3', author: 'member-2', createdAt: '2026-07-21T08:00:00+00:00' },
     ]);
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/${CHANNEL_ID}`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
 
     const thread = page.getByTestId('channel-conversation');
     await expect(thread.getByTestId('channel-conversation-day')).toHaveCount(2);
@@ -152,7 +152,7 @@ test.describe('Workspace conversation', () => {
     ]);
     await page.setViewportSize({ width: 390, height: 844 });
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/${CHANNEL_ID}`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
 
     const rows = page.getByTestId('channel-conversation').locator('app-message-row');
     const toolbar = rows.nth(1).getByTestId('message-row-toolbar');
@@ -188,7 +188,7 @@ test.describe('Workspace conversation', () => {
       },
     ]);
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/${CHANNEL_ID}`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
 
     const thread = page.getByTestId('channel-conversation');
     await expect(thread).toContainText('Amélie Rousseau');
@@ -213,7 +213,7 @@ test.describe('Workspace conversation', () => {
       },
     ]);
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/channels/${CHANNEL_ID}`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
 
     const card = page.locator('app-message-reference-card');
     await expect(card).toContainText('Extincteur manquant');
@@ -258,7 +258,7 @@ test.describe('Workspace conversation', () => {
       .getByRole('link', { name: 'Saved' })
       .click();
 
-    await expect(page).toHaveURL(`/organizations/${ORGANIZATION.id}/workspace/saved`);
+    await expect(page).toHaveURL(`/organizations/${ORGANIZATION.id}/saved`);
     await expect(page.getByTestId('saved-messages')).toContainText('Rapport annuel à relire.');
   });
 
@@ -267,7 +267,7 @@ test.describe('Workspace conversation', () => {
     await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
     await mockSaved(page, []);
 
-    await page.goto(`/organizations/${ORGANIZATION.id}/workspace/saved`);
+    await page.goto(`/organizations/${ORGANIZATION.id}/saved`);
 
     await expect(page.getByTestId('saved-messages')).toContainText('Nothing saved yet');
   });

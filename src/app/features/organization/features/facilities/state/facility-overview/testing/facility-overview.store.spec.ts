@@ -18,7 +18,6 @@ const apiError = (status: number, detail: string): ApiError => ({
   type: 'about:blank',
   title: 'Error',
   detail,
-  instance: null,
 });
 
 describe('FacilityOverviewStore', () => {

@@ -192,8 +192,10 @@ export class InterventionOutboxRepository {
    * @since 1.0.0
    */
   public constructor() {
+    // `sessionEnded`, not `logoutSucceeded`: the session is dropped locally on both
+    // branches of logout, so a failed logout request must reset these counters too.
     this.events
-      .on(authStoreEvents.logoutSucceeded)
+      .on(authStoreEvents.sessionEnded)
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
         this.unsynced.set(false);

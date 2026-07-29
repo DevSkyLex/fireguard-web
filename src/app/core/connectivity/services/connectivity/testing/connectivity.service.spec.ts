@@ -15,7 +15,6 @@ const NORMALIZED_NETWORK_ERROR = {
   type: 'about:blank',
   title: 'Network Error',
   detail: 'Http failure response for /api: 0 Unknown Error',
-  instance: null,
 } as const;
 
 function setOnline(value: boolean): void {

@@ -1,6 +1,5 @@
 import { computed, effect, inject, untracked } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router } from '@angular/router';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -23,7 +22,6 @@ import {
 } from '@core/request-state';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
-import { routeTreeHasParam } from '@features/organization/utils';
 import { ActiveOrganizationStore } from '../active-organization';
 import type { OrganizationMemberAccessState } from './models';
 
@@ -178,7 +176,7 @@ export const OrganizationMemberAccessStore = signalStore(
          */
         reload(): void {
           const organizationId: string | null =
-            activeOrganizationStore.selectedOrganization()?.id ?? store.currentOrganizationId();
+            activeOrganizationStore.selectedOrganizationId() ?? store.currentOrganizationId();
 
           if (!organizationId) {
             this.clear();
@@ -208,35 +206,45 @@ export const OrganizationMemberAccessStore = signalStore(
   withHooks((store) => {
     const activeOrganizationStore: ActiveOrganizationStore =
       inject<ActiveOrganizationStore>(ActiveOrganizationStore);
-    const router: Router = inject<Router>(Router);
 
     return {
       onInit(): void {
+        /**
+         * Identifier seen by the previous run, so a *transition* to `null` can
+         * be told apart from simply not knowing it yet.
+         */
+        let previousOrganizationId: string | null = null;
+
+        /**
+         * Follow the routed organization: load its access payload, and drop it
+         * once the URL leaves the organization scope.
+         *
+         * One effect covers both directions because the identifier is
+         * URL-derived — leaving `/organizations/:id` turns it `null`, which is
+         * exactly the signal the previous `NavigationEnd` subscription had to
+         * recompute for itself.
+         *
+         * Clearing on the transition rather than on the value matters at boot:
+         * `organizationAccessGuard` calls `ensureAccessResolved()` while the
+         * navigation is still in flight, before the first `NavigationEnd` has
+         * published the identifier. Treating that `null` as "left the scope"
+         * would throw away the request the guard is waiting on.
+         */
         effect(() => {
           const organizationId: string | null = activeOrganizationStore.selectedOrganizationId();
+          const leftOrganizationScope: boolean =
+            organizationId === null && previousOrganizationId !== null;
 
-          if (!organizationId) {
+          previousOrganizationId = organizationId;
+
+          if (organizationId === null) {
+            if (leftOrganizationScope) untracked(() => store.clear());
+
             return;
           }
 
           untracked(() => store.loadAccess(organizationId));
         });
-
-        router.events
-          .pipe(
-            filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-            takeUntilDestroyed(),
-          )
-          .subscribe((): void => {
-            const hasOrganizationId: boolean = routeTreeHasParam(
-              router.routerState.snapshot.root,
-              'organizationId',
-            );
-
-            if (!hasOrganizationId) {
-              store.clear();
-            }
-          });
       },
     };
   }),

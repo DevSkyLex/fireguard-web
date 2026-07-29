@@ -3,10 +3,12 @@ import {
   ChangeDetectionStrategy,
   effect,
   inject,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import {
   NonNullableFormBuilder,
@@ -17,6 +19,12 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_PATTERN,
+} from '@features/auth/constants';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
 import type { NewPasswordFormData, NewPasswordFormValues } from './models';
 
@@ -54,6 +62,59 @@ export class NewPasswordForm {
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Input serverError
+   * @input
+   *
+   * @description
+   * Last rejection from the parent page, as held by the store's call state.
+   *
+   * The API enforces the password policy authoritatively and reports a breach as a
+   * 422 naming `newPassword`; projecting it onto the control tells the user which
+   * rule failed instead of leaving them with a generic toast.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property serverFieldErrors
+   * @readonly
+   *
+   * @description
+   * Server message per field, projected from the last 422.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<ServerFieldErrors>}
+   */
+  protected readonly serverFieldErrors: Signal<ServerFieldErrors> = computed(() =>
+    toServerFieldErrors(this.serverError()),
+  );
+
+  /**
+   * Property unmatchedViolation
+   * @readonly
+   *
+   * @description
+   * Message of the first violation that named no field in this form, surfaced at
+   * form level rather than dropped.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly unmatchedViolation: Signal<string | null> = computed(
+    () =>
+      toUnmatchedViolations(this.serverError(), ['newPassword', 'confirmPassword'])[0]?.message ??
+      null,
+  );
+
+  /**
    * Property formBuilder
    * @readonly
    *
@@ -85,7 +146,9 @@ export class NewPasswordForm {
       {
         newPassword: this.formBuilder.control<string>('', [
           Validators.required,
-          Validators.minLength(8),
+          Validators.minLength(PASSWORD_MIN_LENGTH),
+          Validators.maxLength(PASSWORD_MAX_LENGTH),
+          Validators.pattern(PASSWORD_PATTERN),
         ]),
         confirmPassword: this.formBuilder.control<string>('', [Validators.required]),
       },

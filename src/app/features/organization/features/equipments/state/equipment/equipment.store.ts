@@ -324,6 +324,19 @@ export const EquipmentStore = signalStore(
        * @type {StoreError | null}
        */
       createError: computed<StoreError | null>(() => store.createCallState().error),
+
+      /**
+       * Property updateError
+       *
+       * @description
+       * Error from the last update operation, if any. Exposed so the edit page can
+       * hand a 422 back to the form and land it on the field the server refused.
+       *
+       * @since 1.1.0
+       *
+       * @type {StoreError | null}
+       */
+      updateError: computed<StoreError | null>(() => store.updateCallState().error),
     };
   }),
 

@@ -355,7 +355,14 @@ export class InterventionSyncService {
       case 'comment.create': {
         const body = operation.payload['body'];
         if (typeof body !== 'string') throw new Error('Invalid offline comment operation');
-        await firstValueFrom(this.service.addComment(operation.interventionId, body));
+        const clientId = operation.payload['clientId'];
+        await firstValueFrom(
+          this.service.addComment(
+            operation.interventionId,
+            body,
+            typeof clientId === 'string' ? clientId : undefined,
+          ),
+        );
         break;
       }
       case 'intervention.update': {

@@ -26,6 +26,7 @@
         <app-organization-invitation-form
           [roles]="roles()"
           [loading]="loading()"
+          [serverError]="serverError()"
           (submitted)="submitted.emit($event)"
           (cancelled)="visibleChange.emit(false)"
         />

@@ -20,7 +20,7 @@ import {
   type CalendarCategoryGroup,
   type CalendarConfig,
   type CalendarEvent,
-} from '@shared/components';
+} from '@shared/calendar';
 import { InterventionTag } from '../intervention-tag';
 
 /**
@@ -108,21 +108,6 @@ export class InterventionCalendar {
    */
   public readonly currentMemberIri: InputSignal<string | null> = input<string | null>(null);
 
-  /**
-   * Input showCreate
-   * @readonly
-   *
-   * @description
-   * Whether to render the calendar's built-in "New intervention" toolbar action.
-   * Disabled when the host page owns a single creation action shared across its
-   * views, to avoid a duplicated primary action.
-   *
-   * @access public
-   * @since 2.1.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly showCreate: InputSignal<boolean> = input<boolean>(true);
   //#endregion
 
   //#region Outputs
@@ -154,20 +139,6 @@ export class InterventionCalendar {
    * @type {OutputEmitterRef<Date>}
    */
   public readonly selectDay: OutputEmitterRef<Date> = output<Date>();
-
-  /**
-   * Output create
-   * @readonly
-   *
-   * @description
-   * Emits the generic "New intervention" toolbar action.
-   *
-   * @access public
-   * @since 2.0.0
-   *
-   * @type {OutputEmitterRef<void>}
-   */
-  public readonly create: OutputEmitterRef<void> = output<void>();
 
   /**
    * Output focusedDateChange

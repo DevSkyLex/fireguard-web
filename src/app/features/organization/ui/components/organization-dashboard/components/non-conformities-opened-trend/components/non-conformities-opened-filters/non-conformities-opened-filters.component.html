@@ -19,12 +19,12 @@
       class="w-full"
     >
       <ng-template #item let-option>
-        <app-tag [descriptor]="option" variant="inline" />
+        <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
       </ng-template>
       <ng-template #selectedItem>
         @let option = selectedNonConformityStatusOption();
         @if (option) {
-          <app-tag [descriptor]="option" variant="inline" />
+          <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
         }
       </ng-template>
     </p-select>
@@ -50,12 +50,12 @@
       class="w-full"
     >
       <ng-template #item let-option>
-        <app-tag [descriptor]="option" variant="inline" />
+        <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
       </ng-template>
       <ng-template #selectedItem>
         @let option = selectedSeverityOption();
         @if (option) {
-          <app-tag [descriptor]="option" variant="inline" />
+          <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
         }
       </ng-template>
     </p-select>

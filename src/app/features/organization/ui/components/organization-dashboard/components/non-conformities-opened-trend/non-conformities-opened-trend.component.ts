@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -16,13 +17,14 @@ import {
   getDashboardBaseActiveFilterCount,
   NonConformitiesOpenedTrendStore,
 } from '@features/organization/state/organization-dashboard';
+import { TREND_CARD_PT } from '@features/organization/ui/components/organization-dashboard/constants';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendSummaryMetric,
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import { TrendCard } from '@shared/components';
 import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
+import { TrendMetricStrip } from '../trend-metric-strip';
 import {
   NonConformitiesOpenedChart,
   NonConformitiesOpenedFilters,
@@ -46,17 +48,32 @@ import {
   selector: 'app-non-conformities-opened-trend',
   templateUrl: './non-conformities-opened-trend.component.html',
   imports: [
-    TrendCard,
     MenuModule,
     TrendFilterDrawer,
     NonConformitiesOpenedToolbar,
     NonConformitiesOpenedChart,
     NonConformitiesOpenedFilters,
+    CardModule,
+    TrendMetricStrip,
   ],
   providers: [NonConformitiesOpenedTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NonConformitiesOpenedTrend {
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Pass-through shared by every dashboard trend card.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = TREND_CARD_PT;
+
   //#region Properties
   /**
    * Property activeOrganizationStore

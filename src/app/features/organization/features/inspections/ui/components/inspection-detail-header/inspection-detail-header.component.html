@@ -11,8 +11,16 @@
         >
           Inspection {{ inspection().performedAt | date: 'mediumDate' }}
         </h1>
-        <app-tag [descriptor]="statusDescriptor(inspection().status)" />
-        <app-tag [descriptor]="resultDescriptor(inspection().result)" />
+        <p-tag
+          [severity]="statusDescriptor(inspection().status).severity"
+          [icon]="statusDescriptor(inspection().status).icon"
+          [value]="statusDescriptor(inspection().status).label"
+        />
+        <p-tag
+          [severity]="resultDescriptor(inspection().result).severity"
+          [icon]="resultDescriptor(inspection().result).icon"
+          [value]="resultDescriptor(inspection().result).label"
+        />
       </div>
       <div class="flex flex-wrap items-center gap-3 text-sm text-surface-600 dark:text-surface-400">
         <span class="inline-flex items-center gap-1.5">

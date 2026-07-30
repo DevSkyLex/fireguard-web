@@ -14,6 +14,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type {
   OrganizationDateFormat,
   OrganizationFirstDayOfWeek,
@@ -21,7 +22,6 @@ import type {
   OrganizationOutput,
   UpdateOrganizationInput,
 } from '@features/organization/models';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import {
   ORGANIZATION_DATE_FORMAT_OPTIONS,
   ORGANIZATION_FIRST_DAY_OPTIONS,

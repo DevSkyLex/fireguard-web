@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import {
   buildDifferenceSeries,
@@ -20,13 +21,14 @@ import {
   getDashboardBaseActiveFilterCount,
   OverviewTrendStore,
 } from '@features/organization/state/organization-dashboard';
+import { TREND_CARD_PT } from '@features/organization/ui/components/organization-dashboard/constants';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   WHOLE_NUMBER_FMT,
   buildDashboardComparison,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import { TrendCard } from '@shared/components';
 import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
+import { TrendMetricStrip } from '../trend-metric-strip';
 import { OverviewChart, OverviewFilters, OverviewToolbar } from './components';
 
 /**
@@ -46,17 +48,32 @@ import { OverviewChart, OverviewFilters, OverviewToolbar } from './components';
   selector: 'app-overview-trend',
   templateUrl: './overview-trend.component.html',
   imports: [
-    TrendCard,
     MenuModule,
     TrendFilterDrawer,
     OverviewToolbar,
     OverviewChart,
     OverviewFilters,
+    CardModule,
+    TrendMetricStrip,
   ],
   providers: [OverviewTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverviewTrend {
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Pass-through shared by every dashboard trend card.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = TREND_CARD_PT;
+
   //#region Properties
 
   /**

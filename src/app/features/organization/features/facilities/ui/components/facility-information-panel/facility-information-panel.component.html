@@ -27,7 +27,11 @@
         Status
       </dt>
       <dd class="mt-1">
-        <app-tag [descriptor]="statusDescriptor(facility.status)" />
+        <p-tag
+          [severity]="statusDescriptor(facility.status).severity"
+          [icon]="statusDescriptor(facility.status).icon"
+          [value]="statusDescriptor(facility.status).label"
+        />
       </dd>
     </div>
 

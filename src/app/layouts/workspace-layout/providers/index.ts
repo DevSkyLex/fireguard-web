@@ -8,3 +8,4 @@ export {
   type WorkspaceLayoutSlotFeature,
   type WorkspaceLayoutSlotsConfig,
 } from './workspace-layout-slots';
+export { withThemeSwitcher } from './theme-switcher';

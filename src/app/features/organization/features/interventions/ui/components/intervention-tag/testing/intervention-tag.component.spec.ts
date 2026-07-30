@@ -5,11 +5,9 @@ import {
   type InterventionTagDescriptor,
   type InterventionTagKind,
 } from '@features/organization/features/interventions/models';
-import type { TagVariant } from '@shared/components';
 import { InterventionTag } from '../intervention-tag.component';
 
 type InterventionTagHarness = {
-  readonly variant: () => TagVariant;
   readonly descriptor: () => InterventionTagDescriptor;
 };
 
@@ -38,12 +36,6 @@ describe('InterventionTag', () => {
     const component = createComponent('workItemStatus', 'planned');
 
     expect(component).toBeTruthy();
-  });
-
-  it('should default to the badge variant', () => {
-    const component = createComponent('workItemStatus', 'planned');
-
-    expect(component.variant()).toBe('badge');
   });
 
   it('should resolve the descriptor from the intervention registry', () => {

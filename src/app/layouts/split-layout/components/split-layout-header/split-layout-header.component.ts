@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Logo, ThemeSwitcher } from '@shared/components';
+import { Logo } from '@shared/logo';
+import { ThemeSwitcher } from '@shared/theme-switcher';
 
 /**
  * Component SplitLayoutHeader

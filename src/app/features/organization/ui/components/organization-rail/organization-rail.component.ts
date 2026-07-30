@@ -14,7 +14,7 @@ import {
   type OrganizationContextPort,
 } from '@features/organization/ports';
 import { OrganizationStore } from '@features/organization/state';
-import { deriveInitials } from '@shared/utils';
+import { deriveInitials } from '@shared/initials';
 import type { OrganizationRailTile } from './models';
 
 /**

@@ -8,19 +8,6 @@
   (dayCreate)="selectDay.emit($event)"
   (focusedDateChange)="focusedDateChange.emit($event)"
 >
-  @if (showCreate()) {
-    <ng-template #actions>
-      <p-button
-        i18n-label="@@intervention.newButton"
-        label="New intervention"
-        icon="pi pi-plus"
-        severity="primary"
-        size="small"
-        (onClick)="create.emit()"
-      />
-    </ng-template>
-  }
-
   <!-- Compact chip for month / week cells -->
   <ng-template #event let-event>
     <span class="flex min-w-0 items-center gap-1.5 px-1.5 py-1 text-xs">

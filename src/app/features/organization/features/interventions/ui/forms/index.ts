@@ -1,3 +1,4 @@
+export { CommentComposer } from './comment-composer';
 export {
   InterventionCreateForm,
   type InterventionCreateFormValues,

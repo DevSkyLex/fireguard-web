@@ -16,6 +16,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
+import { TagModule } from 'primeng/tag';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -42,7 +43,8 @@ import {
   type NonConformityStatusChange,
 } from '@features/organization/features/inspections/ui/tables';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Page InspectionDetailPage
@@ -63,8 +65,8 @@ import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
     InspectionInformationPanel,
     NonConformityTable,
     SkeletonModule,
-    Tag,
     TabsModule,
+    TagModule,
   ],
   providers: [InspectionStore],
   templateUrl: './inspection-detail.component.html',

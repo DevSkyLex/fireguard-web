@@ -31,9 +31,11 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { Table, TableModule, type TableLazyLoadEvent } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/api';
+import { buildTableFilterParams } from '@core/api';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   EquipmentOutput,
@@ -45,9 +47,9 @@ import {
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
-import { buildTableFilterParams } from '@shared/utils';
+import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
+import { type TagDescriptor, type TagOption } from '@shared/tag';
 import { EQUIPMENT_FILTER_MAPPING } from './constants';
 
 /**
@@ -83,7 +85,7 @@ import { EQUIPMENT_FILTER_MAPPING } from './constants';
     TableModule,
     CardModule,
     TooltipModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './equipment-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

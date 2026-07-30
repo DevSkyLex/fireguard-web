@@ -155,7 +155,9 @@ Examples:
 
 - `NotificationBell` belongs to `features/account/ui/components` because it depends on account notifications.
 - `OrganizationSwitcher` belongs to `features/organization/ui/components` because it depends on organization context.
-- `TrendCard` and `MetricCard` belong to `shared/components` because they have no domain dependency — their inputs are plain scalars and generic types with no coupling to any feature model.
+- `Board` and `Calendar` belong to `shared` (as their own concepts, `shared/board/` and `shared/calendar/`) because they have no domain dependency — their inputs are plain scalars and generic types with no coupling to any feature model.
+
+The converse also holds: being domain-agnostic is necessary but not sufficient. A generic component whose consumers all sit inside one feature subtree belongs to that subtree (section 2.8), not to `shared` — that is why the dashboard trend card and its metric strip live under `features/organization/ui/components/organization-dashboard/`.
 
 ### 2.8 Usage locality decides placement
 
@@ -187,13 +189,13 @@ Duplication is a smell, not a crime. Prefer clarity now over a speculative abstr
 
 The frontend is organized into five top-level responsibilities under `src/app`.
 
-| Layer       | Owns                                                          | Must not own                                                                         |
-| ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `app` shell | top-level composition via `app.routes.ts` and `app.config.ts` | feature business logic                                                               |
-| `core`      | application-wide infrastructure                               | feature-specific workflows                                                           |
-| `layouts`   | shell composition and layout-local behavior                   | business workflows; concrete feature stores or services (consume ports — section 4)  |
-| `features`  | owned business workflows end-to-end                           | global infrastructure and generic primitives                                         |
-| `shared`    | generic, domain-agnostic primitives                           | business orchestration, feature state, API access                                    |
+| Layer       | Owns                                                          | Must not own                                                                        |
+| ----------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `app` shell | top-level composition via `app.routes.ts` and `app.config.ts` | feature business logic                                                              |
+| `core`      | application-wide infrastructure                               | feature-specific workflows                                                          |
+| `layouts`   | shell composition and layout-local behavior                   | business workflows; concrete feature stores or services (consume ports — section 4) |
+| `features`  | owned business workflows end-to-end                           | global infrastructure and generic primitives                                        |
+| `shared`    | generic, domain-agnostic primitives                           | business orchestration, feature state, API access                                   |
 
 ## 4. Dependency Direction
 
@@ -378,6 +380,7 @@ Contracts should live with the owning concern by default.
 `core/<concern>/ports/` holds app-wide infrastructure contracts intentionally published outside that core concern.
 
 See section 5 for placement rules and taxonomies.
+
 ## 8. Canonical Folder Templates
 
 The following templates define the default structure to create. They show the available buckets, not mandatory boilerplate: keep empty concern folders absent.
@@ -656,38 +659,39 @@ Bad use case:
 
 ### 8.5 `shared/` template
 
+`shared` is organized **concept-first**, exactly like `core` (section 8.1): one self-contained folder per shared concept, each with its own `index.ts` barrel. There are no type-first buckets (`shared/components`, `shared/directives`, `shared/validators`, `shared/models`, `shared/utils`, `shared/constants`) — the same rule that bans `core/services` bans them here.
+
 ```text
 shared/
-  components/
-    index.ts
-    <component>/
-      index.ts
-      <component>.component.ts
-      <component>.component.html
-      components/                      # optional nested Angular subcomponents
-      models/                          # optional local UI-only types and view models
-      options/                         # optional static UI option sets
-      utils/                           # optional pure helpers local to the component group
-      testing/                         # specs and optional test-only fixtures
-  directives/
-  validators/
-  pipes/                  # optional (none exist today; a new pipe goes here)
-  models/                 # optional — generic, domain-agnostic type-only declarations
-  utils/                  # optional — generic pure functions
-  constants/              # optional — generic fixed runtime values
-  testing/                # optional — shared test doubles (for example match-media.mock.ts)
-  README.md
+  <concept>/               # one self-contained folder per shared concept
+    index.ts               # the concept's public API (the only external entry point)
+    <concept>.component.ts # or .directive.ts / .validator.ts / .utils.ts / .constants.ts
+    <concept>.component.html
+    components/            # optional nested Angular subcomponents
+    models/                # optional local UI-only types and view models
+    options/               # optional static UI option sets
+    constants/             # optional local fixed runtime values
+    utils/                 # optional pure helpers local to the concept
+    testing/               # specs and optional test-only fixtures
+  testing/                 # cross-cutting test doubles (match-media.mock.ts) — the one sanctioned grouping
+  README.md                # inventories the concepts and their entry points
 ```
+
+A small concept stays flat (a directive, a validator, a util, a constants file plus their barrel — like `core/boot-readiness`); a large concept grows the optional sub-buckets it needs, per the canonical UI folder template (section 10.2). Illustrative concepts in this codebase: `tag`, `tag-severity`, `empty-state`, `error-state`, `board`, `calendar`, `infinite-scroll`, `match-fields`, `initials`, `nav-row`, `table-card-shell`, `toast`, `splash-screen`, `theme-switcher`, `logo`.
+
+**Prefer PrimeNG over a shared wrapper.** A `shared` component that exists only so call sites avoid repeating PrimeNG markup does not earn its place: use the PrimeNG component directly at each call site and accept the duplication. A wrapper is justified only when PrimeNG genuinely cannot express the need — a capability gap (`board`'s per-drop validation predicate, `calendar`'s scheduler, `toast`'s stacking deck), a rendering shape PrimeNG has no component for (`empty-state`, `error-state`), or an accessibility pattern its components get wrong for the context (`nav-row`, which must not be a `role="menu"`). Style through the design-token preset in `core/primeng/presets/` rather than re-skinning components with `[pt]` at every call site; reserve `[pt]` for structural adjustments (`table-card-shell`) and for ARIA that PrimeNG omits.
 
 Target rule:
 
-`shared` is for generic reuse with no business ownership. The same unit-folder taxonomy applies as in a feature (`models/` is type-only; `utils/`, `constants/`, `options/` hold runtime code — section 10.13), restricted to domain-agnostic units: anything that names a business concept does not belong in `shared`.
+`shared` is for generic reuse with no business ownership. Inside a concept, the unit-folder taxonomy of a feature applies (`models/` is type-only; `utils/`, `constants/`, `options/` hold runtime code — section 10.13), restricted to domain-agnostic units: anything that names a business concept does not belong in `shared`.
 
-External consumers import shared UI through concern-level public APIs such as `@shared/components`, not through implementation files.
+External consumers import a shared concept through its barrel — `@shared/tag`, `@shared/calendar`, `@shared/empty-state` — exactly as they import `@core/theme` or `@core/api`. There is no root `@shared` barrel and no aggregate kind barrel. Cross-concept imports inside `shared` also go through the sibling concept's barrel (`@shared/tag-severity` from `toast`), mirroring `core → core`.
+
+A deliberately **generic-by-design** UI primitive (zero feature imports, primitive or generic inputs, could move to another app unchanged) may live in `shared` before a second consumer exists — genericity, not consumer count, is the test for shared _UI_ (section 6.4). Runtime units (`utils/`, `constants/`, `options/`) still follow strict usage locality (section 2.8) and are only lifted here once several features consume them.
 
 Allowed in `shared`:
 
-- generic UI primitives,
+- generic UI primitives and generic collection surfaces,
 - pure directives,
 - pure pipes,
 - pure validators,
@@ -701,6 +705,8 @@ Not allowed in `shared`:
 - resolvers,
 - guards with business rules,
 - domain-aware components,
+- transport-shaped code (RFC 7807 helpers, query-param mapping — that is `core/api`),
+- slot-contribution providers that import a layout (the layout owns those),
 - compatibility re-exports that mask real ownership.
 
 If a shared component needs app-wide infrastructure, inject a contract from
@@ -708,19 +714,18 @@ the owning `core` concern instead of importing the concrete implementation.
 
 If a component imports feature models, feature stores, or domain services, it is not shared.
 
-The local component-folder structure defined in section 10.2 also applies to `shared/components/`.
 ## 9. Naming Conventions
 
 This section is the single normative reference for naming. Earlier and later sections show these conventions in context; when two passages seem to disagree, this section wins. Every convention below is the one the codebase actually follows — deviations that predate this section are transitional (section 9.11) and must not be copied.
 
 ### 9.1 Casing
 
-| Element                                                | Casing                  | Examples                                              |
-| ------------------------------------------------------ | ----------------------- | ----------------------------------------------------- |
-| files and folders                                      | `kebab-case`            | `organization-members.component.ts`, `trusted-device/` |
-| classes, interfaces, type aliases                      | `PascalCase`            | `OrganizationMembersPage`, `AuthSessionPort`, `InterventionStatus` |
-| functions, methods, members, signals                   | `camelCase`             | `resolveInterventionTag`, `isLoading`, `authGuard`    |
-| module-level constants, injection tokens, route consts | `SCREAMING_SNAKE_CASE`  | `INITIAL_STATE`, `AUTH_SESSION_PORT`, `ORGANIZATION_ROUTES` |
+| Element                                                | Casing                 | Examples                                                           |
+| ------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------ |
+| files and folders                                      | `kebab-case`           | `organization-members.component.ts`, `trusted-device/`             |
+| classes, interfaces, type aliases                      | `PascalCase`           | `OrganizationMembersPage`, `AuthSessionPort`, `InterventionStatus` |
+| functions, methods, members, signals                   | `camelCase`            | `resolveInterventionTag`, `isLoading`, `authGuard`                 |
+| module-level constants, injection tokens, route consts | `SCREAMING_SNAKE_CASE` | `INITIAL_STATE`, `AUTH_SESSION_PORT`, `ORGANIZATION_ROUTES`        |
 
 Interfaces never take an `I` prefix. TypeScript `enum` is banned entirely — enumerations are string-literal unions or const-enum catalogs (section 10.10).
 
@@ -728,36 +733,36 @@ Interfaces never take an `I` prefix. TypeScript `enum` is banned entirely — en
 
 One declaration per file. The file name states the concept, the suffix states the kind. The type separator is a dot (`auth.guard.ts`, never `auth-guard.ts`) — enforced by the schematics defaults in `angular.json`.
 
-| Suffix            | Used for                                                                     | Example                                        |
-| ----------------- | ---------------------------------------------------------------------------- | ---------------------------------------------- |
-| `.component.ts`   | Angular components, with an external `.component.html` template              | `organization-members.component.ts`            |
-| `.directive.ts`   | attribute directives                                                          | `infinite-scroll.directive.ts`                 |
-| `.service.ts`     | injectable services (transport, behavioral, access, core)                     | `organization.service.ts`                      |
-| `.repository.ts`  | IndexedDB/offline repositories                                                | `intervention-outbox.repository.ts`            |
-| `.store.ts`       | NgRx SignalStore definitions                                                  | `organization-members.store.ts`                |
-| `.routes.ts`      | route configuration, at the feature root                                      | `organization.routes.ts`                       |
-| `.guard.ts`       | functional route guards                                                       | `auth.guard.ts`                                |
-| `.resolver.ts`    | functional resolvers                                                          | `organization.resolver.ts`                     |
-| `.interceptor.ts` | HTTP interceptors                                                             | `ssr-cookie-forward.interceptor.ts`            |
-| `.provider.ts`    | provider factories (core concern wiring, feature slot providers)              | `theme.provider.ts`, `rail.provider.ts`        |
-| `.feature.ts`     | feature bootstrap (`provide<Feature>Feature()`) and `signalStoreFeature` blocks | `auth.feature.ts`, `with-query-state.feature.ts` |
-| `.token.ts`       | `InjectionToken` declarations                                                 | `session.token.ts`                             |
-| `.interface.ts`   | a single `interface`                                                          | `organization-member-output.interface.ts`      |
-| `.type.ts`        | a single `type` alias, including domain literal unions                        | `intervention-status.type.ts`                  |
+| Suffix            | Used for                                                                                                                    | Example                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `.component.ts`   | Angular components, with an external `.component.html` template                                                             | `organization-members.component.ts`                                   |
+| `.directive.ts`   | attribute directives                                                                                                        | `infinite-scroll.directive.ts`                                        |
+| `.service.ts`     | injectable services (transport, behavioral, access, core)                                                                   | `organization.service.ts`                                             |
+| `.repository.ts`  | IndexedDB/offline repositories                                                                                              | `intervention-outbox.repository.ts`                                   |
+| `.store.ts`       | NgRx SignalStore definitions                                                                                                | `organization-members.store.ts`                                       |
+| `.routes.ts`      | route configuration, at the feature root                                                                                    | `organization.routes.ts`                                              |
+| `.guard.ts`       | functional route guards                                                                                                     | `auth.guard.ts`                                                       |
+| `.resolver.ts`    | functional resolvers                                                                                                        | `organization.resolver.ts`                                            |
+| `.interceptor.ts` | HTTP interceptors                                                                                                           | `ssr-cookie-forward.interceptor.ts`                                   |
+| `.provider.ts`    | provider factories (core concern wiring, feature slot providers)                                                            | `theme.provider.ts`, `rail.provider.ts`                               |
+| `.feature.ts`     | feature bootstrap (`provide<Feature>Feature()`) and `signalStoreFeature` blocks                                             | `auth.feature.ts`, `with-query-state.feature.ts`                      |
+| `.token.ts`       | `InjectionToken` declarations                                                                                               | `session.token.ts`                                                    |
+| `.interface.ts`   | a single `interface`                                                                                                        | `organization-member-output.interface.ts`                             |
+| `.type.ts`        | a single `type` alias, including domain literal unions                                                                      | `intervention-status.type.ts`                                         |
 | `.model.ts`       | a const-enum catalog with its derived type (feature `models/`), or a local form value/data model (a form's local `models/`) | `organization-permission-name.model.ts`, `login-form-values.model.ts` |
-| `.utils.ts`       | pure functions inside a `utils/` folder (plural, matching the folder)         | `quota-status.utils.ts`                        |
-| `.util.ts`        | the resolver of a `<concept>-tag/` registry inside `models/` (singular)       | `intervention-tag.util.ts`                     |
-| `.constants.ts`   | fixed runtime values, in `constants/` and `options/` folders                  | `pagination-defaults.constants.ts`, `regional-options.constants.ts` |
-| `.config.ts`      | feature navigation configuration                                              | `organization-navigation.config.ts`            |
-| `.slot.ts`        | layout slot definitions                                                       | `rail.slot.ts`                                 |
-| `.adapter.ts`     | pure data adapters in `data-access/adapters/`                                 | `organization-dashboard-trend.adapter.ts`      |
-| `.validator.ts`   | form validators                                                               | `match-fields.validator.ts`                    |
-| `.strategy.ts`    | core routing strategies                                                       | `page-title.strategy.ts`                       |
-| `.preset.ts`      | PrimeNG design-token presets                                                  | `fireguard.preset.ts`                          |
-| `.mock.ts`        | shared test doubles inside `testing/` folders                                 | `match-media.mock.ts`                          |
-| `.spec.ts`        | unit specs, named after the subject file                                      | `organization-members.store.spec.ts`           |
-| `index.ts`        | public barrels                                                                | —                                              |
-| `events.ts`       | the event group of a single-store state slice (bare name inside `events/`)    | `state/auth/events/events.ts`                  |
+| `.utils.ts`       | pure functions inside a `utils/` folder (plural, matching the folder)                                                       | `quota-status.utils.ts`                                               |
+| `.util.ts`        | the resolver of a `<concept>-tag/` registry inside `models/` (singular)                                                     | `intervention-tag.util.ts`                                            |
+| `.constants.ts`   | fixed runtime values, in `constants/` and `options/` folders                                                                | `pagination-defaults.constants.ts`, `regional-options.constants.ts`   |
+| `.config.ts`      | feature navigation configuration                                                                                            | `organization-navigation.config.ts`                                   |
+| `.slot.ts`        | layout slot definitions                                                                                                     | `rail.slot.ts`                                                        |
+| `.adapter.ts`     | pure data adapters in `data-access/adapters/`                                                                               | `organization-dashboard-trend.adapter.ts`                             |
+| `.validator.ts`   | form validators                                                                                                             | `match-fields.validator.ts`                                           |
+| `.strategy.ts`    | core routing strategies                                                                                                     | `page-title.strategy.ts`                                              |
+| `.preset.ts`      | PrimeNG design-token presets                                                                                                | `fireguard.preset.ts`                                                 |
+| `.mock.ts`        | shared test doubles inside `testing/` folders                                                                               | `match-media.mock.ts`                                                 |
+| `.spec.ts`        | unit specs, named after the subject file                                                                                    | `organization-members.store.spec.ts`                                  |
+| `index.ts`        | public barrels                                                                                                              | —                                                                     |
+| `events.ts`       | the event group of a single-store state slice (bare name inside `events/`)                                                  | `state/auth/events/events.ts`                                         |
 
 Suffixes that must **not** be introduced:
 
@@ -766,7 +771,7 @@ Suffixes that must **not** be introduced:
 - `.dto.ts` — API DTOs are `…-input.interface.ts` / `…-output.interface.ts`,
 - `.page.ts` inside `src/app` — pages are components (`<page>.component.ts`); the `.page.ts` suffix is reserved for Playwright page objects under `e2e/support/pages/`,
 - bare `types.ts` or `constants.ts` without a concept prefix — existing occurrences are transitional,
-- `.pipe.ts` is currently unused; if a pipe is ever added it takes `.pipe.ts` under `shared/pipes/`.
+- `.pipe.ts` is currently unused; if a pipe is ever added it takes `.pipe.ts` inside its own `shared/<concept>/` folder.
 
 ### 9.3 Classes and symbols
 
@@ -866,6 +871,7 @@ The following minority patterns exist in the codebase, are **not** the target, a
 - five features (`auth`, `account`, `error`, `maintenance`, `onboarding` — roughly a third of all pages) name page folders with a `-page` suffix (`ui/pages/login-page/`); the target is the bare screen name (`ui/pages/organization-members/`) — do not rename existing folders wholesale, and do not add the suffix to new pages,
 - one state aggregate uses bare `utils/constants.ts` and `models/types.ts` file names without a concept prefix,
 - a store file occasionally differs from its slice folder name (`state/organization-list/organization.store.ts`); the target is a matching pair.
+
 ## 10. Responsibility By File Type
 
 The sections below follow the concern-oriented feature layout from section 8.3.
@@ -896,11 +902,11 @@ A feature component must not migrate into `shared` or a layout as a side effect 
 
 If a component is domain-aware, keep it in the owning feature even if it appears in a layout.
 
-If a component becomes domain-free and reusable across features, move it to `shared/components`.
+If a component becomes domain-free and reusable across features, move it to its own `shared/<concept>/` folder.
 
 #### Canonical UI folder template
 
-The structure below is the default convention for **any** UI artifact folder in the app — feature `ui/components/`, `ui/tables/`, `ui/dataviews/`, `ui/forms/`, `ui/dialogs/`, `ui/drawers/`, `shared/components/`, and layout shell components:
+The structure below is the default convention for **any** UI artifact folder in the app — feature `ui/components/`, `ui/tables/`, `ui/dataviews/`, `ui/forms/`, `ui/dialogs/`, `ui/drawers/`, `shared/<concept>/`, and layout shell components:
 
 ```text
 ui/<kind>/
@@ -967,7 +973,7 @@ They may manage internal form state.
 
 They must not own navigation or direct API access.
 
-Cross-feature reusable validators belong in `shared/validators`; promote a form-local validator only when it is truly domain-agnostic and reused.
+Cross-feature reusable validators belong in their own `shared/<concept>/` folder (for example `shared/match-fields/`); promote a form-local validator only when it is truly domain-agnostic and reused.
 
 ### 10.5 `ui/dialogs/` and `ui/drawers/`
 
@@ -1070,7 +1076,7 @@ Placement rules:
 
 - `data-access/adapters/<concern>.adapter.ts`, one file per concern,
 - adapters are feature-internal by default. Do not expose them through a feature public API unless the adapter is intentionally part of a stable cross-feature contract,
-- if multiple unrelated features need the same pure transformation, move it to `shared/utils` instead of importing another feature's adapter,
+- if multiple unrelated features need the same pure transformation, move it to its own `shared/<concept>/` folder instead of importing another feature's adapter,
 - an adapter co-located with UI code (`ui/components/<component>/utils/`) is acceptable only when it transforms store or input data for one tightly coupled component group,
 - do not scatter the same field-probing logic (`point['count'] ?? point['total'] ?? 0`) across multiple stores' `computed` blocks — that is exactly what the adapter centralizes.
 
@@ -1153,11 +1159,11 @@ Default structure rules:
 
 One declaration per file. The file name states the concept, and the suffix states the kind (full suffix reference in section 9.2). A feature `models/` folder carries three suffixes:
 
-| Suffix          | Kind                                                             | Example                                  |
-| --------------- | ---------------------------------------------------------------- | ---------------------------------------- |
-| `.interface.ts` | an `interface` (API contract or view model shape)                | `intervention-output.interface.ts`       |
-| `.type.ts`      | a `type` alias, including domain literal unions                  | `intervention-status.type.ts`            |
-| `.model.ts`     | a const-enum catalog and its derived type (exception 2)          | `organization-permission-name.model.ts`  |
+| Suffix          | Kind                                                    | Example                                 |
+| --------------- | ------------------------------------------------------- | --------------------------------------- |
+| `.interface.ts` | an `interface` (API contract or view model shape)       | `intervention-output.interface.ts`      |
+| `.type.ts`      | a `type` alias, including domain literal unions         | `intervention-status.type.ts`           |
+| `.model.ts`     | a const-enum catalog and its derived type (exception 2) | `organization-permission-name.model.ts` |
 
 Other runtime-bearing files belong in the sibling folders, **not** in `models/`: pure functions go to `utils/` (`.utils.ts`) and static `const` data to `constants/` (`.constants.ts`). Inside a presentation-registry concept folder (`<concept>-tag/`, exception 1), the resolver keeps the singular `.util.ts` suffix (`intervention-tag.util.ts`) and its descriptor maps stay co-located with the descriptor interface so the registry reads as one unit.
 
@@ -1289,6 +1295,7 @@ Do not centralize feature model catalogs under `core/api/models`.
 
 A transport model owned by a single core concern lives in that concern's own
 `models/` instead (for example Mercure subscription types in `core/mercure/models`).
+
 ### 10.11 `state/`
 
 The `state/` folder owns feature stores, store-local helpers, store events, and store state interfaces. This section is the complete store standard: structure, async call state, store templates, scoping, collections, events, and SSR handoff.
@@ -1481,9 +1488,10 @@ const INITIAL_STATE: FeatureState = {
 // state/<slice>/<slice>.store.ts
 export const FeatureStore = signalStore(
   withEntities({ entity: type<FeatureOutput>(), collection: 'entity' }), // optional
-  withState<FeatureState>(INITIAL_STATE),   // 1. raw state (CallState fields + filter state)
+  withState<FeatureState>(INITIAL_STATE), // 1. raw state (CallState fields + filter state)
 
-  withComputed((store) => ({                // 2. derived signals
+  withComputed((store) => ({
+    // 2. derived signals
     isLoading: computed(() => isCallPending(store.listCallState())),
     items: computed(() => {
       const state = store.listCallState();
@@ -1491,7 +1499,8 @@ export const FeatureStore = signalStore(
     }),
   })),
 
-  withMethods((store, service = inject(FeatureService), dispatcher = inject(Dispatcher)) => ({ // 3. actions
+  withMethods((store, service = inject(FeatureService), dispatcher = inject(Dispatcher)) => ({
+    // 3. actions
     load: rxMethod<RequestOptions>(
       pipe(
         tap(() =>
@@ -1520,7 +1529,8 @@ export const FeatureStore = signalStore(
     ),
   })),
 
-  withHooks((store) => ({                   // 4. lifecycle wiring
+  withHooks((store) => ({
+    // 4. lifecycle wiring
     onInit(): void {
       store.load({});
     },
@@ -1532,10 +1542,13 @@ export const FeatureStore = signalStore(
 
 ```typescript
 export const TrendStore = signalStore(
-  withQueryState<TrendResource>(),           // 1. async query state
+  withQueryState<TrendResource>(), // 1. async query state
   withState<TrendFilterState>(INITIAL_FILTER_STATE), // 2. local filter/UI state
-  withComputed((store) => ({ /* 3. derived signals */ })),
-  withMethods((store, service = inject(FeatureService)) => ({ // 4. actions
+  withComputed((store) => ({
+    /* 3. derived signals */
+  })),
+  withMethods((store, service = inject(FeatureService)) => ({
+    // 4. actions
     load: rxMethod<Params | undefined>(
       pipe(
         switchMap((params) => {
@@ -1551,7 +1564,9 @@ export const TrendStore = signalStore(
       ),
     ),
   })),
-  withHooks((store) => ({ /* 5. lifecycle wiring */ })),
+  withHooks((store) => ({
+    /* 5. lifecycle wiring */
+  })),
 );
 ```
 
@@ -1625,19 +1640,23 @@ Dispatch in the store via `inject(Dispatcher)`:
 
 ```typescript
 withMethods((store, dispatcher = inject(Dispatcher)) => ({
-  login: rxMethod<LoginInput>(pipe(
-    tapResponse({
-      next: () => { /* … */ },
-      error: (err) => {
-        const storeError = toStoreError(err);
-        patchState(store, { loginCallState: errorCallState(storeError) });
-        dispatcher.dispatch(
-          authStoreEvents.loginFailed(toStoreFailureEventPayload(storeError, 'Login failed')),
-        );
-      },
-    }),
-  )),
-}))
+  login: rxMethod<LoginInput>(
+    pipe(
+      tapResponse({
+        next: () => {
+          /* … */
+        },
+        error: (err) => {
+          const storeError = toStoreError(err);
+          patchState(store, { loginCallState: errorCallState(storeError) });
+          dispatcher.dispatch(
+            authStoreEvents.loginFailed(toStoreFailureEventPayload(storeError, 'Login failed')),
+          );
+        },
+      }),
+    ),
+  ),
+}));
 ```
 
 Listen to events via `inject(EventDispatcher)` in a service, page, or in `withHooks` of a different store.
@@ -1729,7 +1748,7 @@ Placement (apply section 2.8):
 
 - used by **one** component, dataview, or form → keep it in that group's local `utils/` · `constants/` · `options/` folder,
 - used by **several** units of one feature → lift to the feature-level `features/<feature>/utils` · `constants` · `options`,
-- used by **several** features and domain-agnostic → `shared/utils` · `shared/constants`,
+- used by **several** features and domain-agnostic → its own `shared/<concept>/` folder (section 8.5),
 - **app-wide infrastructure** → `core/` (for example `core/request-state` utilities).
 
 Feature-level layout:
@@ -1861,6 +1880,7 @@ Use `getCollection<T>()` when the endpoint returns a Hydra collection.
 Use `getOne<T>()` when the endpoint returns a single resource.
 
 Stores that need pagination must read `view` and `totalItems` from the collection response. Do not reintroduce the legacy `hydra:`-prefixed keys.
+
 ## 12. Routing, SSR, and Hydration
 
 ### 12.1 Route ownership
@@ -1939,14 +1959,14 @@ Do not move feature page loading into global bootstrap.
 
 The path aliases defined in `tsconfig.json` are:
 
-| Alias      | Target              |
-| ---------- | ------------------- |
-| `@app`     | `src/app`           |
-| `@core`    | `src/app/core`      |
-| `@shared`  | `src/app/shared`    |
-| `@layouts` | `src/app/layouts`   |
-| `@features`| `src/app/features`  |
-| `@env`     | `src/environments`  |
+| Alias       | Target             |
+| ----------- | ------------------ |
+| `@app`      | `src/app`          |
+| `@core`     | `src/app/core`     |
+| `@shared`   | `src/app/shared`   |
+| `@layouts`  | `src/app/layouts`  |
+| `@features` | `src/app/features` |
+| `@env`      | `src/environments` |
 
 Use path aliases for any import that crosses a feature, layer, or concern boundary.
 
@@ -1977,7 +1997,7 @@ Standard public API surfaces include:
 - `features/<feature>/models/index.ts` for feature contracts and reusable feature types intentionally consumed outside one local model slice,
 - `features/<feature>/state/index.ts` when stores or event groups are intentionally consumed outside their own state slice,
 - `core/<concern>/index.ts` for each app-wide infrastructure concern (`@core/api`, `@core/request-state`, `@core/theme`, `@core/cookie`, …),
-- `shared/components/index.ts` for shared UI primitives.
+- `shared/<concept>/index.ts` for each shared concept (`@shared/tag`, `@shared/empty-state`, `@shared/calendar`, …) — `shared` has no root barrel and no aggregate kind barrel (section 8.5).
 
 For core concerns, the concern barrel is the only entry point: outside code never imports a concern's `services/`, `models/`, `utils/`, `features/`, or `ports/` implementation files directly. Two deep buckets are sanctioned as public: `@core/api/models` (shared transport types) and `@core/api/utils` (transport guards).
 
@@ -1993,7 +2013,7 @@ Examples:
 
 - `@features/organization/ui/components`
 - `@features/account/ui/components`
-- `@shared/components`
+- `@shared/empty-state`
 
 External consumers must target the narrowest stable public barrel, usually the concern-level barrel. Deep imports into another area's implementation files or private folders are forbidden.
 
@@ -2019,7 +2039,8 @@ Anti-patterns:
 
 - putting feature business services under `@core/api`,
 - putting feature models under `@core/api/models`,
-- putting domain-aware widgets under `@shared/components`,
+- putting domain-aware widgets under `shared/`,
+- reintroducing type-first buckets in `shared` (`shared/components`, `shared/utils`, `shared/models`, …) instead of one folder per concept (section 8.5),
 - importing a component implementation file such as `@features/<feature>/ui/components/<name>/<name>.component` from outside its own local folder,
 - importing another feature's `data-access/services/` folder as if it were a public API,
 - importing another feature's `data-access/adapters/` folder as if it were a shared API,

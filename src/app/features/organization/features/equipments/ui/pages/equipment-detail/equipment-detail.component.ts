@@ -47,7 +47,7 @@ import {
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
 
 /**
  * Page EquipmentDetailPage

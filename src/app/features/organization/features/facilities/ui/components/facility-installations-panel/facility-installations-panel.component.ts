@@ -9,13 +9,14 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
+import { TagModule } from 'primeng/tag';
 import {
   resolveFacilityTag,
   type FacilityOutput,
   type FacilityType,
 } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
-import { Tag, type TagDescriptor } from '@shared/components';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Component FacilityInstallationsPanel
@@ -35,7 +36,7 @@ import { Tag, type TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-facility-installations-panel',
-  imports: [Tag],
+  imports: [TagModule],
   templateUrl: './facility-installations-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

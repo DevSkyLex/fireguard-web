@@ -19,8 +19,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type { OrganizationOutput, UpdateOrganizationInput } from '@features/organization/models';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { LogoUploadEvent } from './models';
 
 /**

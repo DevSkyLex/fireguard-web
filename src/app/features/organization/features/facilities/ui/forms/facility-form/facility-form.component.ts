@@ -24,11 +24,11 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type {
   FacilityOutput,
   FacilityType,
 } from '@features/organization/features/facilities/models';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { FacilityFormData, FacilityFormValues } from './models';
 
 /**

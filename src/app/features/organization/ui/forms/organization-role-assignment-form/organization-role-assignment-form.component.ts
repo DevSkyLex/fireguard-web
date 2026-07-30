@@ -14,11 +14,11 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { MemberOption, OrganizationRoleAssignmentValues } from './models';
 
 /**

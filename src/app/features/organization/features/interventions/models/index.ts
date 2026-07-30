@@ -52,3 +52,4 @@ export type {
   MemberSelectOption,
   SelectOption,
 } from './intervention-workflow';
+export type { MemberAvatar } from './member-avatar/member-avatar.interface';

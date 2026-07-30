@@ -10,7 +10,11 @@
         >
           {{ typeLabel() | titlecase }} {{ equipment().brand }} {{ equipment().model }}
         </h1>
-        <app-tag [descriptor]="statusDescriptor(equipment().status)" />
+        <p-tag
+          [severity]="statusDescriptor(equipment().status).severity"
+          [icon]="statusDescriptor(equipment().status).icon"
+          [value]="statusDescriptor(equipment().status).label"
+        />
       </div>
       <div class="flex flex-wrap items-center gap-3 text-sm text-surface-600 dark:text-surface-400">
         <span class="inline-flex items-center gap-1.5">

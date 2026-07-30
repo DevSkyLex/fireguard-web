@@ -19,13 +19,15 @@ import { ChipModule } from 'primeng/chip';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { resolveInvitationTag } from '@features/organization/models';
 import type {
   OrganizationInvitationOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
+import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
+import { type TagDescriptor } from '@shared/tag';
 import { invitationExpiryBucket } from './utils';
 
 /**
@@ -44,7 +46,7 @@ import { invitationExpiryBucket } from './utils';
     MenuModule,
     SkeletonModule,
     TableModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './organization-invitation-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

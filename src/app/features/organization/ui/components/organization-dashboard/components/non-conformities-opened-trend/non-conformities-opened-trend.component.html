@@ -1,25 +1,41 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
-<app-trend-card
-  i18n-title="@@org.trend.ncOpened.title"
-  title="Non-Conformities Opened"
-  i18n-description="@@org.trend.ncOpened.desc"
-  description="New non-conformities opened over time"
-  [metrics]="summaryMetrics()"
-  [loading]="isLoading()"
->
-  <ng-template #action>
-    <app-non-conformities-opened-toolbar
-      [activeFilterCount]="activeFilterCount()"
-      (filterToggle)="onFilterToggle()"
-      (menuToggle)="onMenuToggle($event)"
-    />
+<p-card class="h-full" [pt]="cardPt">
+  <ng-template pTemplate="header">
+    <section class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <section class="flex min-w-0 flex-1 basis-48 flex-col">
+        <h2
+          i18n="@@org.trend.ncOpened.title"
+          class="text-lg font-semibold text-balance text-surface-900 dark:text-surface-100"
+        >
+          Non-Conformities Opened
+        </h2>
+        <p
+          i18n="@@org.trend.ncOpened.desc"
+          class="truncate text-sm text-surface-500 dark:text-surface-300"
+        >
+          New non-conformities opened over time
+        </p>
+      </section>
+
+      <app-non-conformities-opened-toolbar
+        [activeFilterCount]="activeFilterCount()"
+        (filterToggle)="onFilterToggle()"
+        (menuToggle)="onMenuToggle($event)"
+      />
+    </section>
   </ng-template>
 
-  <ng-template #content>
-    <app-non-conformities-opened-chart />
+  <ng-template pTemplate="content">
+    <section class="flex flex-col">
+      <app-trend-metric-strip [metrics]="summaryMetrics()" [loading]="isLoading()" />
+
+      <div class="px-4">
+        <app-non-conformities-opened-chart />
+      </div>
+    </section>
   </ng-template>
-</app-trend-card>
+</p-card>
 
 <app-trend-filter-drawer
   i18n-title="@@org.trend.ncOpened.filterTitle"

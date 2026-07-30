@@ -21,11 +21,11 @@
         class="w-full sm:w-36"
       >
         <ng-template pTemplate="selectedItem" let-option>
-          <app-tag [descriptor]="option" variant="inline" />
+          <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
         </ng-template>
 
         <ng-template pTemplate="item" let-option>
-          <app-tag [descriptor]="option" variant="inline" />
+          <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
         </ng-template>
       </p-select>
 
@@ -41,11 +41,11 @@
         class="w-full sm:w-40"
       >
         <ng-template pTemplate="selectedItem" let-option>
-          <app-tag [descriptor]="option" variant="inline" />
+          <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
         </ng-template>
 
         <ng-template pTemplate="item" let-option>
-          <app-tag [descriptor]="option" variant="inline" />
+          <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
         </ng-template>
       </p-select>
 
@@ -216,19 +216,25 @@
               </span>
             </td>
             <td>
-              <app-tag [descriptor]="getResultOption(inspection.result)" />
+              <p-tag
+                [severity]="getResultOption(inspection.result).severity"
+                [icon]="getResultOption(inspection.result).icon"
+                [value]="getResultOption(inspection.result).label"
+              />
             </td>
             <td>
-              <app-tag [descriptor]="getStatusOption(inspection.status)" />
+              <p-tag
+                [severity]="getStatusOption(inspection.status).severity"
+                [icon]="getStatusOption(inspection.status).icon"
+                [value]="getStatusOption(inspection.status).label"
+              />
             </td>
             <td class="text-right">
               @if (inspection.nonConformitiesCount > 0) {
-                <app-tag
-                  [descriptor]="{
-                    label: getFindingsLabel(inspection.nonConformitiesCount),
-                    severity: 'danger',
-                    icon: 'pi pi-exclamation-circle',
-                  }"
+                <p-tag
+                  severity="danger"
+                  icon="pi pi-exclamation-circle"
+                  [value]="getFindingsLabel(inspection.nonConformitiesCount)"
                 />
               } @else {
                 <span class="text-surface-300 dark:text-surface-600">-</span>

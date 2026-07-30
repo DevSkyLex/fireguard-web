@@ -2,7 +2,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import type { FormControl } from '@angular/forms';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
-import { installMatchMediaMock } from '@shared/testing/match-media.mock';
+import { installMatchMediaMock } from '@shared/testing';
 import { InterventionPlanningGuide } from '../intervention-planning-guide.component';
 import type { InterventionPlanningGuideStep, InterventionPlanningGuideValues } from '../models';
 

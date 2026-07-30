@@ -10,8 +10,9 @@ import {
   buildDashboardSingleTrendLineChartData,
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import { EmptyState, ErrorState } from '@shared/components';
-import { buildChartTooltipStyle } from '@shared/utils';
+import { buildChartTooltipStyle } from '@features/organization/ui/components/organization-dashboard/utils';
+import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 
 /**
  * Component NonConformitiesOpenedChart

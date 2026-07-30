@@ -9,6 +9,7 @@ import {
   type InputSignal,
   type Signal,
 } from '@angular/core';
+import { SkeletonModule } from 'primeng/skeleton';
 import type {
   MessageOutput,
   ThreadEntry,
@@ -22,7 +23,7 @@ import {
   MessageRow,
 } from '@features/organization/features/collaboration/ui/components';
 import { groupThreadMessages } from '@features/organization/features/collaboration/utils';
-import { EmptyState, Skeleton } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
 
 /**
  * Component ChannelConversationPage
@@ -49,7 +50,7 @@ import { EmptyState, Skeleton } from '@shared/components';
  */
 @Component({
   selector: 'app-channel-conversation',
-  imports: [DatePipe, EmptyState, MessageComposer, MessageRow, Skeleton],
+  imports: [DatePipe, EmptyState, MessageComposer, MessageRow, SkeletonModule],
   providers: [ChannelsStore, MessageThreadStore],
   templateUrl: './channel-conversation.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },

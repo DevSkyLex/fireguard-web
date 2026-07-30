@@ -23,19 +23,23 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { RadioButtonModule } from 'primeng/radiobutton';
 import { SelectModule } from 'primeng/select';
 import { map } from 'rxjs';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type {
   InterventionPriority,
   InterventionType,
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
-import { RadioCardGroup, type RadioCardOption } from '@shared/components';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import { InterventionOption } from '../../components/intervention-option';
-import type { InterventionCreateFormData, InterventionCreateFormValues } from './models';
+import type {
+  InterventionCreateFormData,
+  InterventionCreateFormValues,
+  InterventionTypeOption,
+} from './models';
 
 /**
  * Component InterventionCreateForm
@@ -58,7 +62,7 @@ import type { InterventionCreateFormData, InterventionCreateFormValues } from '.
     InterventionOption,
     MessageModule,
     MultiSelectModule,
-    RadioCardGroup,
+    RadioButtonModule,
     ReactiveFormsModule,
     SelectModule,
   ],
@@ -283,15 +287,14 @@ export class InterventionCreateForm {
    * @readonly
    *
    * @description
-   * Static list of intervention type radio card options rendered by
-   * {@link RadioCardGroup}.
+   * Static list of intervention type radio card options.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {RadioCardOption[]}
+   * @type {readonly InterventionTypeOption[]}
    */
-  protected readonly interventionTypes: RadioCardOption[] = [
+  protected readonly interventionTypes: readonly InterventionTypeOption[] = [
     {
       value: 'site_setup',
       label: $localize`:@@intervention.action.siteSetup:Site setup`,

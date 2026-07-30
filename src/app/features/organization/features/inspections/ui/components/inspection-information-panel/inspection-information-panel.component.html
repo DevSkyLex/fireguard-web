@@ -20,7 +20,12 @@
       <p i18n="@@inspection.info.result" class="text-xs text-surface-500 dark:text-surface-400">
         Result
       </p>
-      <app-tag class="mt-2 inline-flex" [descriptor]="resultDescriptor(inspection().result)" />
+      <p-tag
+        class="mt-2 inline-flex"
+        [severity]="resultDescriptor(inspection().result).severity"
+        [icon]="resultDescriptor(inspection().result).icon"
+        [value]="resultDescriptor(inspection().result).label"
+      />
     </div>
     <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-800">
       <p i18n="@@inspection.info.performed" class="text-xs text-surface-500 dark:text-surface-400">

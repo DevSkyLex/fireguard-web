@@ -1,0 +1,60 @@
+@if (loading() || metrics().length > 0) {
+  <div
+    class="mb-5 border-y border-surface-200 bg-surface-200 dark:border-surface-800 dark:bg-surface-800"
+  >
+    <!--
+      Minimum track kept at 9rem (144px): a 4-metric strip inside a half-width
+      dashboard card has ~157px per column, so a 10rem (160px) minimum silently
+      dropped it to 3 columns and left an empty cell.
+    -->
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-px">
+      @if (loading()) {
+        @for (placeholder of [1, 2, 3, 4]; track placeholder) {
+          <div class="flex flex-col gap-3 bg-surface-0 p-4 dark:bg-surface-900">
+            <p-skeleton height="48px" />
+            <p-skeleton height="16px" width="60%" />
+          </div>
+        }
+      } @else {
+        @for (metric of metrics(); track metric.label) {
+          <div class="flex min-w-0 flex-col gap-1 bg-surface-0 p-4 dark:bg-surface-900">
+            <span class="truncate text-sm font-medium">{{ metric.label }}</span>
+
+            <span class="truncate text-3xl font-semibold">{{ metric.value }}</span>
+
+            @if (metric.comparison; as comparison) {
+              <div class="flex min-w-0 flex-row items-center gap-2">
+                @switch (comparison.direction) {
+                  @case ('up') {
+                    <i
+                      aria-hidden="true"
+                      class="pi pi-arrow-up-right shrink-0 text-xs text-green-500"
+                    ></i>
+                    <span class="sr-only" i18n="@@common.comparisonIncreased">increased</span>
+                  }
+                  @case ('down') {
+                    <i
+                      aria-hidden="true"
+                      class="pi pi-arrow-down-right shrink-0 text-xs text-red-500"
+                    ></i>
+                    <span class="sr-only" i18n="@@common.comparisonDecreased">decreased</span>
+                  }
+                  @default {
+                    <span aria-hidden="true">-</span>
+                    <span class="sr-only" i18n="@@common.comparisonNoChange">no change</span>
+                  }
+                }
+                <div class="flex min-w-0 flex-row gap-1 text-sm">
+                  <span class="truncate font-semibold">{{ comparison.value }}</span>
+                  <span class="shrink-0 text-surface-500" i18n="@@common.lastPeriod"
+                    >last period</span
+                  >
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+}

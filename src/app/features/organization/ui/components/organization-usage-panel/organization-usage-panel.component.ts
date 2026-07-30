@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import { SkeletonModule } from 'primeng/skeleton';
+import { TagModule } from 'primeng/tag';
 import { ORGANIZATION_QUOTA_RESOURCE_LABELS } from '@features/organization/constants';
 import { type OrganizationQuotaItemOutput, type QuotaStatus } from '@features/organization/models';
 import { OrganizationQuotaStore } from '@features/organization/state';
 import { resolveQuotaStatus } from '@features/organization/utils';
-import { EmptyState, Skeleton, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Interface OrganizationUsageRow
@@ -41,7 +44,7 @@ interface OrganizationUsageRow {
  */
 @Component({
   selector: 'app-organization-usage-panel',
-  imports: [EmptyState, Skeleton, Tag],
+  imports: [EmptyState, SkeletonModule, TagModule],
   templateUrl: './organization-usage-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

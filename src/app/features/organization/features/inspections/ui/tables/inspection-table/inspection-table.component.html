@@ -43,12 +43,12 @@
           class="w-full"
         >
           <ng-template pTemplate="item" let-option>
-            <app-tag [descriptor]="option" variant="inline" />
+            <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
           </ng-template>
 
           <ng-template pTemplate="selectedItem" let-option>
             @if (option) {
-              <app-tag [descriptor]="option" variant="inline" />
+              <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
             }
           </ng-template>
         </p-select>
@@ -68,12 +68,12 @@
           class="w-full"
         >
           <ng-template pTemplate="item" let-option>
-            <app-tag [descriptor]="option" variant="inline" />
+            <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
           </ng-template>
 
           <ng-template pTemplate="selectedItem" let-option>
             @if (option) {
-              <app-tag [descriptor]="option" variant="inline" />
+              <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
             }
           </ng-template>
         </p-select>
@@ -266,10 +266,18 @@
             </div>
           </td>
           <td>
-            <app-tag [descriptor]="getResultOption(inspection.result)" />
+            <p-tag
+              [severity]="getResultOption(inspection.result).severity"
+              [icon]="getResultOption(inspection.result).icon"
+              [value]="getResultOption(inspection.result).label"
+            />
           </td>
           <td>
-            <app-tag [descriptor]="getStatusOption(inspection.status)" />
+            <p-tag
+              [severity]="getStatusOption(inspection.status).severity"
+              [icon]="getStatusOption(inspection.status).icon"
+              [value]="getStatusOption(inspection.status).label"
+            />
           </td>
           <td class="hidden md:table-cell">
             <span class="text-surface-600 tabular-nums dark:text-surface-400">

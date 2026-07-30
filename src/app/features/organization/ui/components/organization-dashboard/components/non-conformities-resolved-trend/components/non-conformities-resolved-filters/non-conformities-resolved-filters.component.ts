@@ -9,6 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
 import { OrganizationDashboardNonConformitiesResolvedStore } from '@features/organization/state/organization-dashboard';
 import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import type {
@@ -19,7 +20,6 @@ import {
   NON_CONFORMITY_SEVERITY_OPTIONS,
   NON_CONFORMITY_STATUS_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { Tag } from '@shared/components';
 
 /**
  * Type NonConformitiesResolvedFiltersForm
@@ -49,7 +49,7 @@ type NonConformitiesResolvedFiltersForm = {
 @Component({
   selector: 'app-non-conformities-resolved-filters',
   templateUrl: './non-conformities-resolved-filters.component.html',
-  imports: [ReactiveFormsModule, SelectModule, Tag, TrendBaseFiltersForm],
+  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm, TagModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NonConformitiesResolvedFilters {

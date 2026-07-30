@@ -10,8 +10,9 @@ import {
   INSPECTION_STATUS_OPTIONS,
   NON_CONFORMITY_SEVERITY_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { EmptyState, ErrorState } from '@shared/components';
-import { buildChartTooltipStyle } from '@shared/utils';
+import { buildChartTooltipStyle } from '@features/organization/ui/components/organization-dashboard/utils';
+import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 
 /**
  * Function hexToRgb

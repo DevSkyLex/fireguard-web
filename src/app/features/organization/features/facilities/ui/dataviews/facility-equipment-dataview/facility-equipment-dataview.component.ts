@@ -2,13 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DataViewModule, type DataViewPassThroughOptions } from 'primeng/dataview';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TagModule } from 'primeng/tag';
 import { DATAVIEW_CARD_PT } from '@features/organization/constants';
 import {
   resolveEquipmentTag,
   type EquipmentOutput,
 } from '@features/organization/features/equipments/models';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Component FacilityEquipmentDataview
@@ -24,7 +26,7 @@ import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-facility-equipment-dataview',
-  imports: [CardModule, DataViewModule, EmptyState, SkeletonModule, Tag],
+  imports: [CardModule, DataViewModule, EmptyState, SkeletonModule, TagModule],
   templateUrl: './facility-equipment-dataview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

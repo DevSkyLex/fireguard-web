@@ -112,7 +112,13 @@
         >
           Severity
         </dt>
-        <dd class="mt-1"><app-tag [descriptor]="severityDescriptor(nonConformity.severity)" /></dd>
+        <dd class="mt-1">
+          <p-tag
+            [severity]="severityDescriptor(nonConformity.severity).severity"
+            [icon]="severityDescriptor(nonConformity.severity).icon"
+            [value]="severityDescriptor(nonConformity.severity).label"
+          />
+        </dd>
       </div>
       <div>
         <dt
@@ -121,7 +127,13 @@
         >
           Status
         </dt>
-        <dd class="mt-1"><app-tag [descriptor]="statusDescriptor(nonConformity.status)" /></dd>
+        <dd class="mt-1">
+          <p-tag
+            [severity]="statusDescriptor(nonConformity.status).severity"
+            [icon]="statusDescriptor(nonConformity.status).icon"
+            [value]="statusDescriptor(nonConformity.status).label"
+          />
+        </dd>
       </div>
       <div class="sm:col-span-2">
         <dt

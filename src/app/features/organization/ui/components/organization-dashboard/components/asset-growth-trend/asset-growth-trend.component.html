@@ -1,24 +1,36 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
-<app-trend-card
-  [title]="cardTitle()"
-  [description]="cardDescription()"
-  [metrics]="summaryMetrics()"
-  [loading]="isLoading()"
->
-  <ng-template #action>
-    <app-asset-growth-toolbar
-      [activeFilterCount]="activeFilterCount()"
-      [filtersAvailable]="filtersAvailable()"
-      (filterToggle)="onFilterToggle()"
-      (menuToggle)="onMenuToggle($event)"
-    />
+<p-card class="h-full" [pt]="cardPt">
+  <ng-template pTemplate="header">
+    <section class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <section class="flex min-w-0 flex-1 basis-48 flex-col">
+        <h2 class="text-lg font-semibold text-balance text-surface-900 dark:text-surface-100">
+          {{ cardTitle() }}
+        </h2>
+        <p class="truncate text-sm text-surface-500 dark:text-surface-300">
+          {{ cardDescription() }}
+        </p>
+      </section>
+
+      <app-asset-growth-toolbar
+        [activeFilterCount]="activeFilterCount()"
+        [filtersAvailable]="filtersAvailable()"
+        (filterToggle)="onFilterToggle()"
+        (menuToggle)="onMenuToggle($event)"
+      />
+    </section>
   </ng-template>
 
-  <ng-template #content>
-    <app-asset-growth-chart />
+  <ng-template pTemplate="content">
+    <section class="flex flex-col">
+      <app-trend-metric-strip [metrics]="summaryMetrics()" [loading]="isLoading()" />
+
+      <div class="px-4">
+        <app-asset-growth-chart />
+      </div>
+    </section>
   </ng-template>
-</app-trend-card>
+</p-card>
 
 <app-trend-filter-drawer
   [title]="filterDrawerTitle()"

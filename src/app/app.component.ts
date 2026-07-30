@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { SplashScreen, Toast } from '@shared/components';
+import { SplashScreen } from '@shared/splash-screen';
+import { Toast } from '@shared/toast';
 
 /**
  * Component App

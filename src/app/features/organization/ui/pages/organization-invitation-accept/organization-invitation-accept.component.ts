@@ -13,6 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TagModule } from 'primeng/tag';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import {
   AUTH_LOGOUT_PORT,
@@ -25,8 +26,7 @@ import {
   type OrganizationInvitationStatus,
 } from '@features/organization/models';
 import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
-import { Tag } from '@shared/components';
-import type { TagDescriptor } from '@shared/components';
+import type { TagDescriptor } from '@shared/tag';
 
 /**
  * Page OrganizationInvitationAcceptPage
@@ -43,7 +43,7 @@ import type { TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-organization-invitation-accept',
-  imports: [ButtonModule, CardModule, DatePipe, MessageModule, SkeletonModule, Tag],
+  imports: [ButtonModule, CardModule, DatePipe, MessageModule, SkeletonModule, TagModule],
   providers: [OrganizationInvitationAcceptStore],
   templateUrl: './organization-invitation-accept.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

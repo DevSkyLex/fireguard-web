@@ -39,12 +39,12 @@
           class="w-full"
         >
           <ng-template pTemplate="item" let-option>
-            <app-tag [descriptor]="option" variant="inline" />
+            <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
           </ng-template>
 
           <ng-template pTemplate="selectedItem" let-option>
             @if (option) {
-              <app-tag [descriptor]="option" variant="inline" />
+              <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
             }
           </ng-template>
         </p-select>
@@ -284,7 +284,11 @@
             }
           </td>
           <td>
-            <app-tag [descriptor]="getStatusOption(equipment.status)" />
+            <p-tag
+              [severity]="getStatusOption(equipment.status).severity"
+              [icon]="getStatusOption(equipment.status).icon"
+              [value]="getStatusOption(equipment.status).label"
+            />
           </td>
           <td class="hidden text-right lg:table-cell">
             <span class="text-surface-600 tabular-nums dark:text-surface-400">

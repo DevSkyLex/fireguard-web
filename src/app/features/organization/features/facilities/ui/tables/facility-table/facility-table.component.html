@@ -79,12 +79,12 @@
           class="w-full"
         >
           <ng-template pTemplate="item" let-option>
-            <app-tag [descriptor]="option" variant="inline" />
+            <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
           </ng-template>
 
           <ng-template pTemplate="selectedItem" let-option>
             @if (option) {
-              <app-tag [descriptor]="option" variant="inline" />
+              <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
             }
           </ng-template>
         </p-select>
@@ -321,7 +321,11 @@
             </span>
           </td>
           <td>
-            <app-tag [descriptor]="getStatusOption(facility.status)" />
+            <p-tag
+              [severity]="getStatusOption(facility.status).severity"
+              [icon]="getStatusOption(facility.status).icon"
+              [value]="getStatusOption(facility.status).label"
+            />
           </td>
           <td class="hidden md:table-cell">
             <span class="inline-flex items-center gap-1.5 text-surface-600 dark:text-surface-400">

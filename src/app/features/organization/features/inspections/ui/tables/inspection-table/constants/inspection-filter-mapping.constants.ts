@@ -1,5 +1,5 @@
-import type { TableFilterParamMapping } from '@shared/models';
-import { dateRangeResolver, stringEqualsResolver } from '@shared/utils';
+import type { TableFilterParamMapping } from '@core/api';
+import { dateRangeResolver, stringEqualsResolver } from '@core/api';
 
 /**
  * Constant INSPECTION_FILTER_MAPPING

@@ -23,8 +23,8 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { toServerFieldErrors, type ServerFieldErrors } from '@core/api';
 import type { SetupFacilityType } from '@features/organization/setup';
-import { toServerFieldErrors, type ServerFieldErrors } from '@shared/utils';
 import type {
   CreateFacilitiesFormData,
   CreateFacilityFormData,

@@ -1,4 +1,4 @@
-import type { TagDescriptor } from '@shared/components/tag';
+import type { TagDescriptor } from '@shared/tag';
 import type { SubscriptionStatus } from '../billing/subscription-status.type';
 
 /**
@@ -6,7 +6,7 @@ import type { SubscriptionStatus } from '../billing/subscription-status.type';
  *
  * @description
  * Presentation registry mapping each subscription status to its badge descriptor
- * (label, severity colour role, icon) for the shared `<app-tag>` component.
+ * (label, severity colour role, icon) for the shared `p-tag`.
  * Status is never conveyed by colour alone — each entry pairs a colour with a
  * label and icon.
  *

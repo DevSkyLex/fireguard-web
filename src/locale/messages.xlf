@@ -12851,7 +12851,7 @@
           <context context-type="linenumber">38,39</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="shared.activityFeed.emptyLabel" datatype="html">
+      <trans-unit id="intervention.detail.activityEmpty" datatype="html">
         <source>No activity yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/activity-feed/activity-feed.component.ts</context>

@@ -1,10 +1,11 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
+import { TagModule } from 'primeng/tag';
 import {
   resolveFacilityTag,
   type FacilityOutput,
 } from '@features/organization/features/facilities/models';
-import { Tag, type TagDescriptor } from '@shared/components';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Component FacilityInformationPanel
@@ -21,7 +22,7 @@ import { Tag, type TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-facility-information-panel',
-  imports: [DatePipe, TitleCasePipe, Tag],
+  imports: [DatePipe, TitleCasePipe, TagModule],
   templateUrl: './facility-information-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

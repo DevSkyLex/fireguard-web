@@ -13,13 +13,15 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DataViewModule, type DataViewPassThroughOptions } from 'primeng/dataview';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TagModule } from 'primeng/tag';
 import { DATAVIEW_CARD_PT } from '@features/organization/constants';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
 import {
   resolveInspectionTag,
   type InspectionOutput,
 } from '@features/organization/features/inspections/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Type InspectionOverviewFilter
@@ -51,7 +53,7 @@ export type InspectionOverviewFilter = 'all' | 'overdue' | 'upcoming';
     EmptyState,
     SelectButtonModule,
     SkeletonModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './facility-inspection-dataview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

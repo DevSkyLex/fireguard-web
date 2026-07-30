@@ -24,8 +24,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type { NonConformitySeverity } from '@features/organization/features/inspections/models';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { NonConformityFormData, NonConformityFormValues } from './models';
 
 /** Pristine values the form returns to once a finding is accepted. */

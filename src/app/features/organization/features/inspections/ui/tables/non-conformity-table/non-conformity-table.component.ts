@@ -12,6 +12,7 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import {
   inspectionTagOptions,
   resolveInspectionTag,
@@ -22,7 +23,8 @@ import {
   NonConformityForm,
   type NonConformityFormValues,
 } from '@features/organization/features/inspections/ui/forms';
-import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
+import { type TagDescriptor, type TagOption } from '@shared/tag';
 
 /** Describes a requested non-conformity status transition. */
 export interface NonConformityStatusChange {
@@ -44,7 +46,7 @@ export interface NonConformityStatusChange {
     SelectModule,
     SkeletonModule,
     TableModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './non-conformity-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -23,7 +23,7 @@ This subfeature is responsible for:
   Linear-style **List / Board / Calendar** browsing experience over one shared
   dataset, toggled with segmented toolbar view tabs and synced to `?view=`
   (default `list`, omitted from the URL). List groups interventions into
-  status sections (`app-grouped-list`); Board lays them into
+  status sections (collapsible `p-panel`s); Board lays them into
   draft/planned/in_progress/review/published columns (`app-board`,
   drag-and-drop applies a status `transition`, gated by the workflow policy
   and RBAC capability) with a "Show abandoned" toggle for a 6th read-only
@@ -187,7 +187,10 @@ delete); a **proposed changes** section
 raw JSON) headed by a pending/total counter and the atomic-application note;
 while submitted, a tinted **publication summary** aside recapping the atomic
 contract (pending changes, inspections recorded, revision); and the activity
-section (`@shared/components` `ActivityFeed` + `CommentComposer`, fed by the
+section (a PrimeNG `p-timeline` + this feature's own
+`ui/forms/comment-composer` — interventions-owned (§6.5, strongest ownership):
+it expresses this feature's activity-comment workflow, and collaboration
+deliberately uses a plain textarea instead — fed by the
 workspace store's `activities`/`loadActivities`/`addComment`). The properties
 rail stacks divider-separated groups: **Properties** — status (with a
 transition menu — selecting `changes_requested` opens
@@ -213,16 +216,14 @@ status is never conveyed by colour alone (icon + label always present).
     `intervention-tag-kind.type.ts`.
   - `intervention-tag.util.ts` — per-enum descriptor registry and
     `resolveInterventionTag(kind, value)` (graceful fallback for unknown values).
-    The `severity → text-*` icon colour mapping now lives in the shared
-    `@shared/components` `Tag` (`tagSeverityIconClass`).
+    The descriptor's `severity` maps straight onto PrimeNG's `p-tag` severity
+    scale, so no colour mapping is needed at the render site.
 - `ui/components/intervention-tag/` — `<app-intervention-tag kind value />`:
   the **table/panel badge**. A thin wrapper that resolves the descriptor and
-  forwards it to the shared `<app-tag>` (neutral pill, icon-only colour).
+  forwards it to PrimeNG's `p-tag`.
 - `ui/components/intervention-option/` — `<app-intervention-option kind value />`:
-  the **`p-select` option content** (used in `#item` / `#selectedItem`). A thin
-  wrapper over `<app-tag variant="inline">` (bare icon + label, no badge shell),
-  matching the dashboard trend-card filter selects. Never put
-  `<app-intervention-tag>` inside a select.
+  the **`p-select` option content** (used in `#item` / `#selectedItem`), also a
+  `p-tag`, matching the dashboard trend-card filter selects.
 
 To add a new enum value: extend the relevant descriptor map only — both the
 badge and the select option follow automatically.

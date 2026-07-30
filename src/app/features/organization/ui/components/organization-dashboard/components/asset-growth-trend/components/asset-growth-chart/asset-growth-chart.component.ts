@@ -6,8 +6,9 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { getDashboardTrendPointValue } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
-import { EmptyState, ErrorState } from '@shared/components';
-import { buildChartTooltipStyle } from '@shared/utils';
+import { buildChartTooltipStyle } from '@features/organization/ui/components/organization-dashboard/utils';
+import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 
 /**
  * Component AssetGrowthChart

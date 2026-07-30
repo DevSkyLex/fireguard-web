@@ -20,14 +20,15 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type { SetupOrganizationRole } from '@features/organization/setup';
-import { RadioCardGroup, type RadioCardOption } from '@shared/components';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type {
   InviteeRowData,
   InviteeRowValues,
   InviteMembersFormData,
   InviteMembersFormValues,
+  RoleCardOption,
 } from './models';
 
 /**
@@ -44,7 +45,7 @@ import type {
  */
 @Component({
   selector: 'app-invite-members-form',
-  imports: [ReactiveFormsModule, RadioCardGroup, InputTextModule, ButtonModule, MessageModule],
+  imports: [ReactiveFormsModule, RadioButtonModule, InputTextModule, ButtonModule, MessageModule],
   templateUrl: './invite-members-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -170,14 +171,16 @@ export class InviteMembersForm {
    * @readonly
    *
    * @description
-   * Maps the raw roles to the shape expected by {@link RadioCardGroup}.
+   * Maps the raw roles to the shape rendered by the row's radio-card group.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<RadioCardOption[]>}
+   * @type {Signal<readonly RoleCardOption[]>}
    */
-  protected readonly roleOptions: Signal<RadioCardOption[]> = computed<RadioCardOption[]>(() => {
+  protected readonly roleOptions: Signal<readonly RoleCardOption[]> = computed<
+    readonly RoleCardOption[]
+  >(() => {
     const roles: readonly SetupOrganizationRole[] = this.roles();
     return roles.map((role: SetupOrganizationRole) => ({
       value: role.id,

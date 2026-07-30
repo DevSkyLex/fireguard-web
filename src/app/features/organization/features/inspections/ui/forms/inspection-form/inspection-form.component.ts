@@ -23,6 +23,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
@@ -31,7 +32,6 @@ import type {
   InspectionOutput,
   InspectorType,
 } from '@features/organization/features/inspections/models';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { InspectionFormData, InspectionFormValues } from './models';
 import { INSPECTION_RESULT_OPTIONS, INSPECTOR_TYPE_OPTIONS } from './options';
 

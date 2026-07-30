@@ -27,7 +27,11 @@
           {{ facility.name }}
         </span>
       </div>
-      <app-tag [descriptor]="statusDescriptor(facility.status)" />
+      <p-tag
+        [severity]="statusDescriptor(facility.status).severity"
+        [icon]="statusDescriptor(facility.status).icon"
+        [value]="statusDescriptor(facility.status).label"
+      />
     </div>
 
     @if (directChildren().length === 0) {
@@ -52,7 +56,11 @@
                   {{ child.name }}
                 </span>
               </span>
-              <app-tag [descriptor]="statusDescriptor(child.status)" />
+              <p-tag
+                [severity]="statusDescriptor(child.status).severity"
+                [icon]="statusDescriptor(child.status).icon"
+                [value]="statusDescriptor(child.status).label"
+              />
             </button>
 
             @if (childrenOf(child.id).length > 0) {
@@ -73,7 +81,11 @@
                           {{ grandChild.name }}
                         </span>
                       </span>
-                      <app-tag [descriptor]="statusDescriptor(grandChild.status)" />
+                      <p-tag
+                        [severity]="statusDescriptor(grandChild.status).severity"
+                        [icon]="statusDescriptor(grandChild.status).icon"
+                        [value]="statusDescriptor(grandChild.status).label"
+                      />
                     </button>
                   </li>
                 }

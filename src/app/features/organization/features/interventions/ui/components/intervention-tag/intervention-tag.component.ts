@@ -6,22 +6,21 @@ import {
   type InputSignal,
   type Signal,
 } from '@angular/core';
+import { TagModule } from 'primeng/tag';
 import {
   resolveInterventionTag,
   type InterventionTagDescriptor,
   type InterventionTagKind,
 } from '@features/organization/features/interventions/models';
-import { Tag, type TagVariant } from '@shared/components';
 
 /**
  * Component InterventionTag
  * @class InterventionTag
  *
  * @description
- * Thin intervention-domain wrapper over the shared {@link Tag} component.
- * Resolves a `kind`/`value` pair into a descriptor via the intervention
- * registry and renders it as the neutral table/panel badge, so the value
- * looks identical wherever it appears and never relies on colour alone.
+ * Thin intervention-domain wrapper over PrimeNG's `p-tag`. Resolves a
+ * `kind`/`value` pair into a descriptor via the intervention registry, so the
+ * value looks identical wherever it appears and never relies on colour alone.
  *
  * @example
  * ```html
@@ -34,7 +33,7 @@ import { Tag, type TagVariant } from '@shared/components';
  */
 @Component({
   selector: 'app-intervention-tag',
-  imports: [Tag],
+  imports: [TagModule],
   templateUrl: './intervention-tag.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -69,21 +68,6 @@ export class InterventionTag {
    */
   public readonly value: InputSignal<string> = input.required<string>();
 
-  /**
-   * Property variant
-   * @readonly
-   *
-   * @description
-   * Visual variant forwarded to the shared {@link Tag}: neutral pill (`badge`,
-   * default) for tables and detail headers, or bare inline content (`inline`)
-   * for dense surfaces such as the properties rail and select options.
-   *
-   * @access public
-   * @since 1.1.0
-   *
-   * @type {InputSignal<TagVariant>}
-   */
-  public readonly variant: InputSignal<TagVariant> = input<TagVariant>('badge');
   //#endregion
 
   //#region Properties

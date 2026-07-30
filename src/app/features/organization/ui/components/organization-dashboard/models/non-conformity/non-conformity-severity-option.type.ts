@@ -1,5 +1,5 @@
 import type { NonConformitySeverity } from '@features/organization/features/inspections/models';
-import type { TagDescriptor } from '@shared/components';
+import type { TagDescriptor } from '@shared/tag';
 
 /**
  * Type NonConformitySeverityOption
@@ -7,7 +7,7 @@ import type { TagDescriptor } from '@shared/components';
  * @description
  * Select option exposing a dashboard non-conformity severity filter. Extends
  * the shared {@link TagDescriptor} (`label`, `severity`, `icon`) so it renders
- * through `<app-tag>`, and adds the dashboard `value` plus the raw hex `color`
+ * through `p-tag`, and adds the dashboard `value` plus the raw hex `color`
  * consumed by the trend chart canvas.
  */
 export type NonConformitySeverityOption = TagDescriptor & {

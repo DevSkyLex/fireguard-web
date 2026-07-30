@@ -512,7 +512,7 @@ describe('InterventionsPage', () => {
       fixture.componentRef.setInput('view', 'board');
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelectorAll('app-skeleton').length).toBeGreaterThan(0);
+      expect(fixture.nativeElement.querySelectorAll('p-skeleton').length).toBeGreaterThan(0);
     });
 
     it('should render the search-empty state with a clear-search action', () => {

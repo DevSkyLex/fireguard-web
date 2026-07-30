@@ -1,120 +1,87 @@
-# Shared
+# `shared/` — generic, domain-agnostic concepts
 
-## Purpose
+`shared` hosts the app's generic building blocks: UI primitives, collection
+surfaces, directives, validators, and pure utilities that carry **no business
+knowledge**. It is not a fallback folder — anything that names a business
+concept belongs to its owning feature.
 
-`shared/` owns generic, domain-agnostic frontend artifacts.
+Normative rules: `ARCHITECTURE.md` §8.5 (this boundary), §10.2 (folder
+template), §6.4 (domain-agnosticism test), §2.8 (usage locality).
 
-It is the home for reusable primitives that have no business ownership:
+## Layout — concept-first
 
-- generic UI components,
-- pure directives,
-- pure validators,
-- future pure pipes,
-- future pure utilities.
+One self-contained folder per concept, exactly like `core/<concern>/`. No
+type-first buckets (`components/`, `utils/`, `models/`, …). A small concept
+stays flat; a large one grows the optional sub-buckets of the canonical
+template (`components/`, `models/`, `options/`, `constants/`, `utils/`,
+`testing/`).
 
-`shared/` is not a fallback folder for code that happens to be reused.
-
-## Allowed Dependencies
-
-Artifacts in `shared/` may depend on:
-
-- other `shared/` artifacts,
-- Angular and framework libraries,
-- neutral contracts published by an owning concern.
-
-Artifacts in `shared/` must not depend on:
-
-- feature stores,
-- feature models,
-- feature data-access services,
-- concrete `core` service implementations,
-- business workflows or orchestration.
-
-When a shared UI primitive needs app-wide behavior, it must inject a neutral contract published by the owning concern instead of importing a concrete implementation directly.
-
-Current examples:
-
-- `ThemeSwitcher` consumes the theme contract.
-- `SplashScreen` consumes the splash-screen contract.
+| Concept                         | What it is                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| `board/`                        | generic drag-and-drop kanban (`Board<T>`)                                        |
+| `calendar/`                     | month/week/agenda calendar with category sidebar                                 |
+| `empty-state/` · `error-state/` | icon + title + description placeholders                                          |
+| `infinite-scroll/`              | infinite-scroll attribute directive                                              |
+| `initials/`                     | `deriveInitials` pure helper                                                     |
+| `logo/`                         | brand mark                                                                       |
+| `match-fields/`                 | cross-field equality validator + error key                                       |
+| `nav-row/`                      | sidebar navigation row                                                           |
+| `splash-screen/`                | boot overlay (consumes `SPLASH_SCREEN_PORT`)                                     |
+| `table-card-shell/`             | card-shell design tokens for feature `p-table` grids                             |
+| `tag/`                          | `TagDescriptor` / `TagOption` contracts for feature tag registries (types only)  |
+| `tag-severity/`                 | severity vocabulary + severity→class helpers                                     |
+| `theme-switcher/`               | light/dark toggle (consumes `THEME_PORT`)                                        |
+| `toast/`                        | app-wide toast outlet                                                            |
+| `testing/`                      | cross-cutting test doubles (`match-media.mock.ts`) — the one sanctioned grouping |
 
 ## Public API
 
-External consumers must import `shared` artifacts through public barrels only.
+Import a concept through its barrel, and only through it:
+`@shared/tag`, `@shared/calendar`, `@shared/empty-state`, `@shared/testing`, …
+There is **no root `@shared` barrel** and no aggregate kind barrel. Deep imports
+into a concept's implementation files are forbidden. Cross-concept imports
+inside `shared` also go through the sibling's barrel (mirrors `core → core`).
 
-Preferred entry points:
+## Dependency rules
 
-- `@shared/components`
-- `@shared/directives`
-- `@shared/validators`
+Allowed: other `shared` concepts (via barrels), Angular/PrimeNG/framework code,
+and **owner-published ports** (`THEME_PORT`, `SPLASH_SCREEN_PORT`).
 
-The root `@shared` barrel exists for discovery and composition, but concern-level barrels remain the default entry points for feature code.
+Forbidden: feature state/services/models/UI, concrete `core` services, layout
+imports, transport-shaped code (RFC 7807 helpers and query-param mapping live
+in `core/api`), slot-contribution providers (the owning layout or feature keeps
+those).
 
-Do not add deep imports to implementation files from outside the owning folder.
+## Prefer PrimeNG over a wrapper
 
-## Local Structure Rules
+A concept that exists only so call sites avoid repeating PrimeNG markup does not
+belong here: use the PrimeNG component directly and accept the duplication. Every
+concept above that wraps PrimeNG does so for a reason PrimeNG cannot cover —
 
-Each shared artifact starts with the smallest useful shape.
+- a **capability gap**: `board` needs a per-drop validation predicate that
+  `pDraggable` has no hook for; `calendar` has no scheduler equivalent in
+  PrimeNG 21; `toast` stacks its deck with `:nth-last-child()` selectors that
+  `[pt]` cannot express;
+- a **rendering shape PrimeNG has no component for**: `empty-state` and
+  `error-state` are centred blocks, not the inline banner `p-message` renders;
+- an **accessibility pattern PrimeNG gets wrong for the context**: `nav-row` must
+  not be the `role="menu"` that `p-menu` / `p-panelmenu` render, which is a
+  transient-menu pattern rather than primary navigation.
 
-### Components
+Style through the design-token preset in `core/primeng/presets/`, not by
+re-skinning a component with `[pt]` at each call site. Reserve `[pt]` for
+structural adjustments (`table-card-shell` makes an inner `p-table` scroll) and
+for ARIA that PrimeNG omits.
 
-Default folder shape:
+## Promotion into `shared`
 
-```text
-components/
-  <component-name>/
-    index.ts
-    <component-name>.component.ts
-    <component-name>.component.html
-    <component-name>.component.css        # optional
-    components/                           # optional nested Angular subcomponents
-    models/                               # optional local UI-only types and view models
-    options/                              # optional static UI option sets
-    utils/                                # optional pure helpers private to the component group
-    testing/                              # optional test-only fixtures and helpers
-```
+Move a unit here only when all of the following hold:
 
-Add nested folders only when the local area actually needs them.
-
-### Directives
-
-Default folder shape:
-
-```text
-directives/
-  <directive-name>/
-    index.ts
-    <directive-name>.directive.ts
-    utils/                                # optional private pure helpers
-    testing/                              # optional test-only helpers
-```
-
-### Validators
-
-Default folder shape:
-
-```text
-validators/
-  <validator-name>/
-    index.ts
-    <validator-name>.validator.ts
-    utils/                                # optional private constants and pure helpers
-    testing/                              # optional test-only helpers
-```
-
-### Optional Concerns
-
-The following concern folders are part of the target structure, but should only be created at the first concrete need:
-
-- `pipes/`
-- `utils/`
-
-## Promotion Rules
-
-Move an artifact into `shared/` only when all these statements are true:
-
-1. It is generic by design, not just reused in multiple places.
-2. It does not encode business rules or domain language.
-3. It does not depend on feature-owned state, models, or services.
-4. Its public API is stable enough to be consumed through a barrel.
-
-If one of these conditions is false, the artifact should stay with its owning feature or in `core` if it is app-wide infrastructure.
+1. it is domain-agnostic per §6.4 (no feature imports, primitive/generic inputs),
+2. PrimeNG cannot already do the job (see above),
+3. its consumers are not all inside one feature subtree — a generic component
+   used only by one feature belongs to that feature (§2.8),
+4. for UI: it is generic **by design** (may precede its second consumer);
+   for `utils`/`constants`/`options`: several features already consume it (§2.8),
+5. it gets its own concept folder with an `index.ts` barrel,
+6. its specs live in `testing/` folders next to their subjects.

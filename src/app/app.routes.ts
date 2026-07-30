@@ -25,8 +25,11 @@ import {
   withInterventionHeaderActions,
   withInterventionSyncChip,
 } from '@features/organization/features/interventions';
-import { provideWorkspaceLayoutSlots, WorkspaceLayout } from '@layouts/workspace-layout';
-import { withThemeSwitcher } from '@shared/components';
+import {
+  provideWorkspaceLayoutSlots,
+  withThemeSwitcher,
+  WorkspaceLayout,
+} from '@layouts/workspace-layout';
 import { FocusedLayout } from './layouts/focused-layout';
 import { provideSplitLayoutSlots, SplitLayout } from './layouts/split-layout';
 

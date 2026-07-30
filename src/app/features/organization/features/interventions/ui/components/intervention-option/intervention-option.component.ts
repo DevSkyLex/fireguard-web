@@ -6,12 +6,12 @@ import {
   type InputSignal,
   type Signal,
 } from '@angular/core';
+import { TagModule } from 'primeng/tag';
 import {
   resolveInterventionTag,
   type InterventionTagDescriptor,
   type InterventionTagKind,
 } from '@features/organization/features/interventions/models';
-import { Tag } from '@shared/components';
 
 /**
  * Component InterventionOption
@@ -38,7 +38,7 @@ import { Tag } from '@shared/components';
  */
 @Component({
   selector: 'app-intervention-option',
-  imports: [Tag],
+  imports: [TagModule],
   templateUrl: './intervention-option.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

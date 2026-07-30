@@ -30,6 +30,7 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/api';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -40,8 +41,9 @@ import {
   type EquipmentStatus,
 } from '@features/organization/features/equipments/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
+import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
+import { type TagDescriptor, type TagOption } from '@shared/tag';
 
 /**
  * Component FacilityEquipmentTable
@@ -72,7 +74,7 @@ import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/const
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './facility-equipment-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { OrganizationRoleOutput } from '@features/organization/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
 
 /**
  * Selectable role-card list presenting the organization roles: icon, name,

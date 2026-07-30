@@ -9,7 +9,7 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { InspectionQualityTrendStore } from '@features/organization/state/organization-dashboard';
-import { installMatchMediaMock } from '@shared/testing/match-media.mock';
+import { installMatchMediaMock } from '@shared/testing';
 import { InspectionQualityTrend } from '../inspection-quality-trend.component';
 
 type InspectionQualityTrendData = {

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MATCH_FIELDS_ERROR_KEY } from '@shared/validators';
+import { MATCH_FIELDS_ERROR_KEY } from '@shared/match-fields';
 import { NewPasswordForm } from '../new-password-form.component';
 
 type NewPasswordFormTestApi = NewPasswordForm & {

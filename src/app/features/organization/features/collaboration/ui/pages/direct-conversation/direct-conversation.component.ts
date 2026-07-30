@@ -10,6 +10,7 @@ import {
   type Signal,
   untracked,
 } from '@angular/core';
+import { SkeletonModule } from 'primeng/skeleton';
 import type {
   MessageOutput,
   ThreadEntry,
@@ -29,8 +30,8 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { EmptyState, Skeleton } from '@shared/components';
-import { deriveInitials } from '@shared/utils';
+import { EmptyState } from '@shared/empty-state';
+import { deriveInitials } from '@shared/initials';
 
 /**
  * Component DirectConversationPage
@@ -57,7 +58,7 @@ import { deriveInitials } from '@shared/utils';
  */
 @Component({
   selector: 'app-direct-conversation',
-  imports: [DatePipe, EmptyState, MessageComposer, MessageRow, Skeleton],
+  imports: [DatePipe, EmptyState, MessageComposer, MessageRow, SkeletonModule],
   providers: [MessageThreadStore],
   templateUrl: './direct-conversation.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },

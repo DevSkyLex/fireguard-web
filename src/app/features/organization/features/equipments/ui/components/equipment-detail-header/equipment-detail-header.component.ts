@@ -11,18 +11,19 @@ import {
 } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
 import {
   resolveEquipmentTag,
   type EquipmentOutput,
 } from '@features/organization/features/equipments/models';
-import { Tag, type TagDescriptor } from '@shared/components';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Header presenting equipment identity, status and lifecycle actions.
  */
 @Component({
   selector: 'app-equipment-detail-header',
-  imports: [AvatarModule, ButtonModule, DatePipe, TitleCasePipe, Tag],
+  imports: [AvatarModule, ButtonModule, DatePipe, TitleCasePipe, TagModule],
   templateUrl: './equipment-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -52,9 +52,17 @@
           </td>
           <td>
             @if (log.completedAt) {
-              <app-tag [descriptor]="completedDescriptor" />
+              <p-tag
+                [severity]="completedDescriptor.severity"
+                [icon]="completedDescriptor.icon"
+                [value]="completedDescriptor.label"
+              />
             } @else {
-              <app-tag [descriptor]="activeDescriptor" />
+              <p-tag
+                [severity]="activeDescriptor.severity"
+                [icon]="activeDescriptor.icon"
+                [value]="activeDescriptor.label"
+              />
             }
           </td>
         </tr>

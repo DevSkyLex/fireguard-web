@@ -121,7 +121,6 @@
         [interventions]="calendarStore.interventions()"
         [loading]="calendarStore.loading()"
         [currentMemberIri]="currentMemberIri()"
-        [showCreate]="false"
         (selectIntervention)="onView($event)"
         (selectDay)="openCreateOnDay($event)"
         (focusedDateChange)="onCalendarFocusChange($event)"
@@ -138,12 +137,20 @@
             class="flex w-full flex-col gap-3 rounded-xl border border-surface-200 bg-surface-100 p-3 sm:w-[296px] sm:shrink-0 dark:border-surface-800 dark:bg-surface-900"
           >
             <p-skeleton width="7rem" height="1.25rem" borderRadius="0.5rem" />
-            <app-skeleton
-              preset="card"
-              [count]="3"
-              label="Loading interventions"
-              i18n-label="@@intervention.board.loadingLabel"
-            />
+            <div class="flex flex-col gap-3" role="status">
+              <span class="sr-only" i18n="@@intervention.board.loadingLabel"
+                >Loading interventions</span
+              >
+              @for (row of [1, 2, 3]; track row) {
+                <div
+                  class="flex flex-col gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-800"
+                >
+                  <p-skeleton width="40%" height="1rem" />
+                  <p-skeleton width="100%" height="2rem" />
+                  <p-skeleton width="60%" height="1rem" />
+                </div>
+              }
+            </div>
           </div>
         }
       </div>
@@ -207,87 +214,125 @@
       </app-empty-state>
     }
   } @else if (view() === 'list') {
-    <app-grouped-list
-      class="min-h-0 flex-1 overflow-y-auto"
-      [groups]="listGroups()"
-      [itemId]="itemId"
-      [collapsible]="true"
-      [initiallyCollapsed]="listInitiallyCollapsed"
-      (rowClicked)="onView($event.intervention)"
-    >
-      <ng-template appGroupedListHeader let-group let-count="count">
-        <div class="flex items-center gap-2">
-          <app-intervention-tag kind="status" [value]="group.id" />
-          <span class="text-xs font-semibold text-surface-500 tabular-nums dark:text-surface-400">{{
-            count
-          }}</span>
-        </div>
-      </ng-template>
-
-      <ng-template appGroupedListRow let-item>
-        @let vm = asItem(item);
-        <div class="flex items-center gap-3">
-          <app-intervention-priority-icon class="shrink-0" [priority]="vm.intervention.priority" />
-          <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span
-              class="text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
-              >FG-{{ vm.intervention.number }}</span
-            >
-            <span class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50">{{
-              vm.intervention.name
-            }}</span>
-          </div>
-
-          <div class="hidden max-w-40 flex-wrap items-center gap-1 md:flex">
-            @for (label of vm.intervention.labels.slice(0, 3); track label.id) {
-              <app-intervention-label-chip [label]="label" />
-            }
-            @if (vm.intervention.labels.length > 3) {
-              <span class="text-sm text-surface-500 dark:text-surface-400"
-                >+{{ vm.intervention.labels.length - 3 }}</span
+    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+      @for (group of listGroups(); track group.id) {
+        <p-panel
+          [toggleable]="true"
+          [collapsed]="isGroupCollapsed(group.id)"
+          [pt]="groupPanelPt(group.id, boardColumnLabel(group.id))"
+          (collapsedChange)="onGroupCollapsedChange(group.id, $event)"
+        >
+          <ng-template #header>
+            <div class="flex items-center gap-2">
+              <app-intervention-tag kind="status" [value]="group.id" />
+              <span
+                class="text-xs font-semibold text-surface-500 tabular-nums dark:text-surface-400"
+                >{{ group.items.length }}</span
               >
+            </div>
+          </ng-template>
+
+          <div class="flex flex-col divide-y divide-surface-100 dark:divide-surface-800/60">
+            @for (vm of group.items; track vm.intervention.id) {
+              <div
+                role="button"
+                tabindex="0"
+                class="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 transition-colors duration-150 outline-none hover:bg-surface-100 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset motion-reduce:transition-none dark:hover:bg-surface-800"
+                (click)="onView(vm.intervention)"
+                (keydown.enter)="onView(vm.intervention)"
+                (keydown.space)="$event.preventDefault(); onView(vm.intervention)"
+              >
+                <app-intervention-priority-icon
+                  class="shrink-0"
+                  [priority]="vm.intervention.priority"
+                />
+                <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span
+                    class="text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
+                    >FG-{{ vm.intervention.number }}</span
+                  >
+                  <span
+                    class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50"
+                    >{{ vm.intervention.name }}</span
+                  >
+                </div>
+
+                <div class="hidden max-w-40 flex-wrap items-center gap-1 md:flex">
+                  @for (label of vm.intervention.labels.slice(0, 3); track label.id) {
+                    <app-intervention-label-chip [label]="label" />
+                  }
+                  @if (vm.intervention.labels.length > 3) {
+                    <span class="text-sm text-surface-500 dark:text-surface-400"
+                      >+{{ vm.intervention.labels.length - 3 }}</span
+                    >
+                  }
+                </div>
+
+                @if (vm.siteName) {
+                  <span
+                    class="hidden w-44 shrink-0 truncate text-sm text-surface-600 xl:block dark:text-surface-400"
+                    >{{ vm.siteName }}</span
+                  >
+                } @else {
+                  <span class="hidden w-44 shrink-0 xl:block" aria-hidden="true"></span>
+                }
+
+                <span
+                  class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-600 tabular-nums sm:flex dark:text-surface-400"
+                >
+                  <i class="pi pi-building text-xs" aria-hidden="true"></i
+                  >{{ vm.intervention.facilitiesCount }}
+                </span>
+                <span
+                  class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-600 tabular-nums sm:flex dark:text-surface-400"
+                >
+                  <i class="pi pi-box text-xs" aria-hidden="true"></i
+                  >{{ vm.intervention.equipmentCount }}
+                </span>
+
+                @if (vm.intervention.dueAt) {
+                  <span
+                    class="hidden w-24 shrink-0 text-right text-sm tabular-nums sm:block"
+                    [class.font-semibold]="vm.isOverdue"
+                    [class.text-red-600]="vm.isOverdue"
+                    [class.dark:text-red-400]="vm.isOverdue"
+                    [class.text-surface-600]="!vm.isOverdue"
+                    [class.dark:text-surface-400]="!vm.isOverdue"
+                    >{{ vm.intervention.dueAt | date: 'mediumDate' }}</span
+                  >
+                } @else {
+                  <span class="hidden w-24 shrink-0 sm:block" aria-hidden="true"></span>
+                }
+
+                <p-avatar-group class="shrink-0">
+                  @for (person of vm.people.slice(0, avatarMax); track person.label) {
+                    <p-avatar
+                      [image]="person.image ?? undefined"
+                      [label]="person.image ? undefined : initialsFor(person.label)"
+                      shape="circle"
+                      [pt]="avatarPt"
+                      [ariaLabel]="person.tooltip ?? person.label"
+                      [pTooltip]="person.tooltip ?? person.label"
+                      tooltipPosition="top"
+                    />
+                  }
+                  @if (vm.people.length > avatarMax) {
+                    <p-avatar
+                      [label]="'+' + (vm.people.length - avatarMax)"
+                      shape="circle"
+                      [pt]="avatarPt"
+                      [ariaLabel]="overflowTooltip(vm.people)"
+                      [pTooltip]="overflowTooltip(vm.people)"
+                      tooltipPosition="top"
+                    />
+                  }
+                </p-avatar-group>
+              </div>
             }
           </div>
-
-          @if (vm.siteName) {
-            <span
-              class="hidden w-44 shrink-0 truncate text-sm text-surface-600 xl:block dark:text-surface-400"
-              >{{ vm.siteName }}</span
-            >
-          } @else {
-            <span class="hidden w-44 shrink-0 xl:block" aria-hidden="true"></span>
-          }
-
-          <span
-            class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-600 tabular-nums sm:flex dark:text-surface-400"
-          >
-            <i class="pi pi-building text-xs" aria-hidden="true"></i
-            >{{ vm.intervention.facilitiesCount }}
-          </span>
-          <span
-            class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-600 tabular-nums sm:flex dark:text-surface-400"
-          >
-            <i class="pi pi-box text-xs" aria-hidden="true"></i>{{ vm.intervention.equipmentCount }}
-          </span>
-
-          @if (vm.intervention.dueAt) {
-            <span
-              class="hidden w-24 shrink-0 text-right text-sm tabular-nums sm:block"
-              [class.font-semibold]="vm.isOverdue"
-              [class.text-red-600]="vm.isOverdue"
-              [class.dark:text-red-400]="vm.isOverdue"
-              [class.text-surface-600]="!vm.isOverdue"
-              [class.dark:text-surface-400]="!vm.isOverdue"
-              >{{ vm.intervention.dueAt | date: 'mediumDate' }}</span
-            >
-          } @else {
-            <span class="hidden w-24 shrink-0 sm:block" aria-hidden="true"></span>
-          }
-
-          <app-avatar-stack class="shrink-0" [people]="vm.people" [max]="3" />
-        </div>
-      </ng-template>
-    </app-grouped-list>
+        </p-panel>
+      }
+    </div>
   } @else {
     <div class="flex items-center justify-end">
       <p-button
@@ -398,7 +443,29 @@
                 </span>
               }
             }
-            <app-avatar-stack class="ml-auto shrink-0" [people]="vm.people" [max]="3" />
+            <p-avatar-group class="ml-auto shrink-0">
+              @for (person of vm.people.slice(0, avatarMax); track person.label) {
+                <p-avatar
+                  [image]="person.image ?? undefined"
+                  [label]="person.image ? undefined : initialsFor(person.label)"
+                  shape="circle"
+                  [pt]="avatarPt"
+                  [ariaLabel]="person.tooltip ?? person.label"
+                  [pTooltip]="person.tooltip ?? person.label"
+                  tooltipPosition="top"
+                />
+              }
+              @if (vm.people.length > avatarMax) {
+                <p-avatar
+                  [label]="'+' + (vm.people.length - avatarMax)"
+                  shape="circle"
+                  [pt]="avatarPt"
+                  [ariaLabel]="overflowTooltip(vm.people)"
+                  [pTooltip]="overflowTooltip(vm.people)"
+                  tooltipPosition="top"
+                />
+              }
+            </p-avatar-group>
           </div>
         </div>
       </ng-template>

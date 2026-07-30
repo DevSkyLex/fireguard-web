@@ -1,5 +1,5 @@
-import type { TableFilterParamMapping } from '@shared/models';
-import { stringEqualsResolver } from '@shared/utils';
+import type { TableFilterParamMapping } from '@core/api';
+import { stringEqualsResolver } from '@core/api';
 
 /**
  * Constant EQUIPMENT_FILTER_MAPPING

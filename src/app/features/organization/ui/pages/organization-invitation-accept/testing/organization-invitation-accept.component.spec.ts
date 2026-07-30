@@ -302,7 +302,7 @@ describe('OrganizationInvitationAcceptPage', () => {
     expect(text).toContain('Acme');
     expect(text).toContain('Invited by Alice');
     expect(text).toContain('bob@example.com');
-    expect(fixture.nativeElement.querySelector('app-tag')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('p-tag')).not.toBeNull();
   });
 
   it('renders the success state and navigates to the workspace on click', () => {

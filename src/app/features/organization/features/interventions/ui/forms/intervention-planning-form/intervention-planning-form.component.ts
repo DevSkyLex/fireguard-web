@@ -25,13 +25,13 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { map } from 'rxjs';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type {
   InterventionOutput,
   InterventionPriority,
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionPlanningFormData, InterventionPlanningFormValues } from './models';

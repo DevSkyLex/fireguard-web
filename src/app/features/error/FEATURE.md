@@ -30,11 +30,11 @@ No stores or services — purely presentational.
 Other layers navigate here; this feature does not own any workflow that leads to
 these pages:
 
-| Trigger                       | What it does              |
-| ----------------------------- | ------------------------- |
-| `GlobalErrorHandler`          | Navigates to `/error/500` |
+| Trigger                       | What it does                     |
+| ----------------------------- | -------------------------------- |
+| `GlobalErrorHandler`          | Navigates to `/error/500`        |
 | `unauthorizedInterceptor`     | Navigates to `/error/403` on 403 |
-| `app.routes.ts` wildcard `**` | Redirects to `/error/404` |
+| `app.routes.ts` wildcard `**` | Redirects to `/error/404`        |
 
 Maintenance mode is not an error concern: `maintenanceInterceptor` and
 `maintenanceGuard` belong to `features/maintenance` and route to `/maintenance`

@@ -8,7 +8,7 @@ import type { InspectionOutput } from '@features/organization/features/inspectio
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { installMatchMediaMock } from '@shared/testing/match-media.mock';
+import { installMatchMediaMock } from '@shared/testing';
 import { FacilityInspectionTab } from '../facility-inspection-tab.component';
 
 const MOCK_ORG: OrganizationOutput = {

@@ -62,7 +62,11 @@
               </div>
 
               <div class="flex items-center gap-2">
-                <app-tag [descriptor]="statusDescriptor(item.status)" />
+                <p-tag
+                  [severity]="statusDescriptor(item.status).severity"
+                  [icon]="statusDescriptor(item.status).icon"
+                  [value]="statusDescriptor(item.status).label"
+                />
               </div>
             </article>
           }

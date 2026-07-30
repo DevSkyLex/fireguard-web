@@ -41,7 +41,7 @@ describe('FacilityInstallationsPanel', () => {
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
     expect(host.textContent).toContain('Headquarters');
-    expect(host.querySelector('app-tag')).toBeTruthy();
+    expect(host.querySelector('p-tag')).toBeTruthy();
   });
 
   it('should render the empty state when there are no loaded children', () => {

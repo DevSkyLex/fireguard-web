@@ -1,4 +1,4 @@
-import type { TagOption } from '@shared/components';
+import type { TagOption } from '@shared/tag';
 import type { FacilityTagDescriptor } from './facility-tag-descriptor.interface';
 import type { FacilityTagKind } from './facility-tag-kind.type';
 

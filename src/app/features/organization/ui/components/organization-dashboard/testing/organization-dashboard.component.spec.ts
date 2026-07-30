@@ -195,7 +195,7 @@ describe('OrganizationDashboard', () => {
     const fixture = TestBed.createComponent(OrganizationDashboard);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.query(By.css('app-skeleton'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('p-skeleton'))).toBeTruthy();
     expect(fixture.debugElement.query(By.css('app-asset-growth-trend'))).toBeFalsy();
   });
 

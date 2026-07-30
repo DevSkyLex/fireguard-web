@@ -20,7 +20,7 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { deriveInitials } from '@shared/utils';
+import { deriveInitials } from '@shared/initials';
 import type { DirectNavRow } from './models';
 
 /**

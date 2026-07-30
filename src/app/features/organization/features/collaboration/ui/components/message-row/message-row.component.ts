@@ -15,7 +15,7 @@ import type {
   MessageOutput,
   MessageReactionOutput,
 } from '@features/organization/features/collaboration/models';
-import { deriveInitials } from '@shared/utils';
+import { deriveInitials } from '@shared/initials';
 import { MessageBody } from '../message-body';
 import { MessageReferenceCard } from '../message-reference-card';
 

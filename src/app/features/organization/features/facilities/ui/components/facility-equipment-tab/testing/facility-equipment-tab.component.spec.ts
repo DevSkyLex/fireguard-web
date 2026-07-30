@@ -7,7 +7,7 @@ import type { EquipmentOutput } from '@features/organization/features/equipments
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { installMatchMediaMock } from '@shared/testing/match-media.mock';
+import { installMatchMediaMock } from '@shared/testing';
 import { FacilityEquipmentTab } from '../facility-equipment-tab.component';
 
 const MOCK_ORG: OrganizationOutput = {

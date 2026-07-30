@@ -17,12 +17,12 @@ import {
 import { ButtonModule, type ButtonPassThroughOptions } from 'primeng/button';
 import { InputOtpModule } from 'primeng/inputotp';
 import { MessageModule } from 'primeng/message';
+import { TagModule } from 'primeng/tag';
 import { FeedbackService } from '@core/feedback';
 import type { StoreError } from '@core/request-state';
 import type { MfaMethodTagDescriptor } from '@features/account/models';
 import { resolveMfaMethodTag } from '@features/account/models';
 import { AccountTotpEnrollmentStore, UserStore } from '@features/account/state';
-import { Tag } from '@shared/components';
 
 /**
  * Component AccountMfaPanel
@@ -44,7 +44,7 @@ import { Tag } from '@shared/components';
  */
 @Component({
   selector: 'app-account-mfa-panel',
-  imports: [ReactiveFormsModule, ButtonModule, MessageModule, InputOtpModule, Tag],
+  imports: [ReactiveFormsModule, ButtonModule, MessageModule, InputOtpModule, TagModule],
   providers: [AccountTotpEnrollmentStore],
   templateUrl: './account-mfa-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

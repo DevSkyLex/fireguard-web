@@ -1,11 +1,17 @@
 @if (quotaStore.isLoadingQuota() && rows().length === 0) {
   <!-- Loading -->
-  <app-skeleton
-    preset="list-row"
-    [count]="4"
-    i18n-label="@@org.usage.loading"
-    label="Loading usage…"
-  />
+  <div class="flex flex-col gap-3" role="status">
+    <span class="sr-only" i18n="@@org.usage.loading">Loading usage…</span>
+    @for (row of [1, 2, 3, 4]; track row) {
+      <div class="flex items-center gap-3">
+        <p-skeleton shape="circle" size="2.5rem" />
+        <div class="flex flex-1 flex-col gap-2">
+          <p-skeleton width="30%" height="0.875rem" />
+          <p-skeleton width="55%" height="0.875rem" />
+        </div>
+      </div>
+    }
+  </div>
 } @else {
   <div class="flex flex-col gap-5">
     @for (row of rows(); track row.label) {
@@ -16,7 +22,11 @@
           </span>
           <span class="flex items-center gap-2">
             @if (row.atLimit) {
-              <app-tag [descriptor]="atLimitTag" />
+              <p-tag
+                [severity]="atLimitTag.severity"
+                [icon]="atLimitTag.icon"
+                [value]="atLimitTag.label"
+              />
             }
             <span
               class="text-[13px] font-semibold text-surface-950 tabular-nums dark:text-surface-50"

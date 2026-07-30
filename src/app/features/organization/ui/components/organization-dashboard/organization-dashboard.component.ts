@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { SkeletonModule } from 'primeng/skeleton';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   ORGANIZATION_PERMISSION,
   type OrganizationDashboardRecentIntervention,
 } from '@features/organization/models';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
-import { EmptyState, Skeleton } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
 import {
   AssetGrowthTrend,
   DashboardMetricCell,
@@ -44,7 +45,7 @@ import {
     NonConformitiesOpenedTrend,
     NonConformitiesResolvedTrend,
     AssetGrowthTrend,
-    Skeleton,
+    SkeletonModule,
     EmptyState,
   ],
   providers: [DashboardStore],

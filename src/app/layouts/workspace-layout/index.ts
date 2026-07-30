@@ -1,6 +1,7 @@
 export { WorkspaceLayout } from './workspace-layout.component';
 export {
   provideWorkspaceLayoutSlots,
+  withThemeSwitcher,
   type WorkspaceLayoutConversationHeaderSlotFeature,
   type WorkspaceLayoutPageHeaderSlotFeature,
   type WorkspaceLayoutPanelSlotFeature,

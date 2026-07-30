@@ -4,9 +4,11 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import type { InvoiceOutput } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
+import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Component BillingInvoiceTable
@@ -26,7 +28,7 @@ import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/const
  */
 @Component({
   selector: 'app-billing-invoice-table',
-  imports: [ButtonModule, CardModule, DatePipe, EmptyState, SkeletonModule, TableModule, Tag],
+  imports: [ButtonModule, CardModule, DatePipe, EmptyState, SkeletonModule, TableModule, TagModule],
   templateUrl: './billing-invoice-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -199,7 +201,7 @@ export class BillingInvoiceTable {
    *
    * @description
    * Resolves an invoice status into a shared {@link TagDescriptor} (label,
-   * severity, icon) so the status renders through the app-standard `app-tag`
+   * severity, icon) so the status renders through the app-standard `p-tag`
    * and never relies on colour alone.
    *
    * @access protected

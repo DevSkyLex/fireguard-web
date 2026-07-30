@@ -28,6 +28,7 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import type { RequestOptions } from '@core/api';
 import { pickAvatarUrl } from '@core/api/utils';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -39,8 +40,9 @@ import {
   type InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
+import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
+import { type TagDescriptor, type TagOption } from '@shared/tag';
 
 /**
  * Component FacilityInspectionTable
@@ -69,7 +71,7 @@ import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/const
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './facility-inspection-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

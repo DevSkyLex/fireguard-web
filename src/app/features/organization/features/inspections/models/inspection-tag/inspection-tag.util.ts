@@ -1,4 +1,4 @@
-import type { TagOption } from '@shared/components';
+import type { TagOption } from '@shared/tag';
 import type { InspectionTagDescriptor } from './inspection-tag-descriptor.interface';
 import type { InspectionTagKind } from './inspection-tag-kind.type';
 

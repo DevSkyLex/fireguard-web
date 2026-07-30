@@ -56,12 +56,6 @@ describe('InterventionCalendar', () => {
     expect(text).not.toContain('Backlog draft');
   });
 
-  it('renders the New intervention action', () => {
-    const fixture = createFixture();
-    const text: string = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('New intervention');
-  });
-
   it('emits the intervention behind a clicked event', () => {
     const fixture = createFixture();
     const selected: InterventionOutput[] = [];

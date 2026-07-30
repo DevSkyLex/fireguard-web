@@ -1,4 +1,4 @@
-import type { TagDescriptor } from '@shared/components';
+import type { TagDescriptor } from '@shared/tag';
 
 /**
  * Presentation descriptor for a single equipment-owned enum value (equipment

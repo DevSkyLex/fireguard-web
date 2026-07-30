@@ -16,12 +16,12 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { map } from 'rxjs';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import type {
   InterventionWorkItemAction,
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionWorkItemFormData, InterventionWorkItemFormValues } from './models';

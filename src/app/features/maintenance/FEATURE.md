@@ -31,9 +31,9 @@ lazy-loaded, `ChangeDetectionStrategy.OnPush`, and purely presentational.
 
 Maintenance mode is raised through two paths:
 
-| Trigger                  | What it does                                                        |
-| ------------------------ | ------------------------------------------------------------------- |
-| `provideMaintenanceMode` | Activates the store at startup when `ENV_CONFIG.maintenance` is set |
+| Trigger                  | What it does                                                           |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `provideMaintenanceMode` | Activates the store at startup when `ENV_CONFIG.maintenance` is set    |
 | `maintenanceInterceptor` | On a 503 response: activates the store and navigates to `/maintenance` |
 
 `maintenanceGuard` (`http/guards/`) enforces the flag: it redirects to

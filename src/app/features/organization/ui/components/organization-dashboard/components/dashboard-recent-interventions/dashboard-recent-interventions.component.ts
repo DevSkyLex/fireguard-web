@@ -21,8 +21,9 @@ import {
   InterventionTag,
 } from '@features/organization/features/interventions/ui/components';
 import type { OrganizationDashboardRecentIntervention } from '@features/organization/models';
-import { EmptyState, ErrorState } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
+import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
 
 /**
  * Constant INTERVENTION_PRIORITIES

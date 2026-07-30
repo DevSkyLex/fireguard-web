@@ -13,7 +13,7 @@ import {
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
-import { NavRow } from '@shared/components';
+import { NavRow } from '@shared/nav-row';
 
 /**
  * Component OrganizationWorkspaceNav

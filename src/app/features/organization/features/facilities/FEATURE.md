@@ -29,9 +29,9 @@ Facility detail routes resolve facility context before child pages render.
 
 Facility coordinates come from the backend `latitude`/`longitude` fields
 (optional on `FacilityOutput`) and are captured in the facility create/edit form
-(`ui/forms/facility-form`, enforced both-or-neither). A generic, domain-agnostic
-map primitive (`@shared/components` `MapCanvas`) is available to plot located
-records as clustered pins if a map surface is reintroduced.
+(`ui/forms/facility-form`, enforced both-or-neither). If a map surface is
+reintroduced, a generic, domain-agnostic map primitive would live as its own
+`shared/<concept>/` folder per `ARCHITECTURE.md` §8.5.
 
 ## Facility Listing (Roots-Only DataView)
 

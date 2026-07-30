@@ -16,8 +16,8 @@ import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { toServerFieldErrors, type ServerFieldErrors } from '@core/api';
 import type { UpdateCurrentUserProfileInput, UserProfileOutput } from '@features/account/models';
-import { toServerFieldErrors, type ServerFieldErrors } from '@shared/utils';
 import type { AccountProfileFormData } from './models';
 
 /**

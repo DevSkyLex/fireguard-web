@@ -3,15 +3,17 @@ import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@an
 import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import type { EquipmentMaintenanceLogOutput } from '@features/organization/features/equipments/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Read-only table presenting equipment maintenance log entries.
  */
 @Component({
   selector: 'app-equipment-maintenance-log-table',
-  imports: [CardModule, DatePipe, EmptyState, SkeletonModule, TableModule, Tag],
+  imports: [CardModule, DatePipe, EmptyState, SkeletonModule, TableModule, TagModule],
   templateUrl: './equipment-maintenance-log-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

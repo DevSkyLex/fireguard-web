@@ -15,7 +15,7 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { NavRow } from '@shared/components';
+import { NavRow } from '@shared/nav-row';
 import type { ChannelNavRow } from './models';
 
 /**

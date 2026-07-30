@@ -28,12 +28,18 @@
     />
   } @empty {
     @if (store.isLoading()) {
-      <app-skeleton
-        preset="list-row"
-        [count]="5"
-        i18n-label="@@workspace.saved.loading"
-        label="Loading saved messages"
-      />
+      <div class="flex flex-col gap-3" role="status">
+        <span class="sr-only" i18n="@@workspace.saved.loading">Loading saved messages</span>
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+          <div class="flex items-center gap-3">
+            <p-skeleton shape="circle" size="2.5rem" />
+            <div class="flex flex-1 flex-col gap-2">
+              <p-skeleton width="30%" height="0.875rem" />
+              <p-skeleton width="55%" height="0.875rem" />
+            </div>
+          </div>
+        }
+      </div>
     } @else {
       <app-empty-state
         class="m-auto"

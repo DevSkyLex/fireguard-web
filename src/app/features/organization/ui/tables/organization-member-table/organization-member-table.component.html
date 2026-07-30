@@ -172,7 +172,13 @@
               }
             </div>
           </td>
-          <td><app-tag [descriptor]="memberStatusDescriptor(member)" /></td>
+          <td>
+            <p-tag
+              [severity]="memberStatusDescriptor(member).severity"
+              [icon]="memberStatusDescriptor(member).icon"
+              [value]="memberStatusDescriptor(member).label"
+            />
+          </td>
           <td class="hidden md:table-cell">
             <span class="text-surface-600 tabular-nums dark:text-surface-400">{{
               member.joinedAt | date: 'mediumDate'

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Logo } from '@shared/components';
+import { Logo } from '@shared/logo';
 
 /**
  * Type ShowcaseFeature

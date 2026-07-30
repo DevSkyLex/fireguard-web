@@ -1,17 +1,18 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
+import { TagModule } from 'primeng/tag';
 import {
   resolveInspectionTag,
   type InspectionOutput,
 } from '@features/organization/features/inspections/models';
-import { Tag, type TagDescriptor } from '@shared/components';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Read-only panel presenting inspection metadata.
  */
 @Component({
   selector: 'app-inspection-information-panel',
-  imports: [DatePipe, Tag],
+  imports: [DatePipe, TagModule],
   templateUrl: './inspection-information-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -6719,7 +6719,7 @@
         <source>Workspace sidebar</source>
         <target>Barra lateral del espacio de trabajo</target>
       </trans-unit>
-      <trans-unit id="shared.activityFeed.emptyLabel" datatype="html">
+      <trans-unit id="intervention.detail.activityEmpty" datatype="html">
         <source>No activity yet</source>
         <target>Aún no hay actividad</target>
       </trans-unit>

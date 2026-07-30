@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import {
   getDashboardTrendPointValue,
@@ -20,14 +21,15 @@ import {
   getDashboardBaseActiveFilterCount,
   InspectionQualityTrendStore,
 } from '@features/organization/state/organization-dashboard';
+import { TREND_CARD_PT } from '@features/organization/ui/components/organization-dashboard/constants';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   DECIMAL_FMT,
   WHOLE_NUMBER_FMT,
   buildDashboardComparison,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import { TrendCard } from '@shared/components';
 import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
+import { TrendMetricStrip } from '../trend-metric-strip';
 import {
   InspectionQualityChart,
   InspectionQualityFilters,
@@ -51,17 +53,32 @@ import {
   selector: 'app-inspection-quality-trend',
   templateUrl: './inspection-quality-trend.component.html',
   imports: [
-    TrendCard,
     MenuModule,
     TrendFilterDrawer,
     InspectionQualityToolbar,
     InspectionQualityChart,
     InspectionQualityFilters,
+    CardModule,
+    TrendMetricStrip,
   ],
   providers: [InspectionQualityTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionQualityTrend {
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Pass-through shared by every dashboard trend card.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = TREND_CARD_PT;
+
   //#region Properties
 
   /**

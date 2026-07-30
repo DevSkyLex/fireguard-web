@@ -67,7 +67,11 @@
               </span>
             </td>
             <td>
-              <app-tag [descriptor]="statusDescriptor(invoice.status)" />
+              <p-tag
+                [severity]="statusDescriptor(invoice.status).severity"
+                [icon]="statusDescriptor(invoice.status).icon"
+                [value]="statusDescriptor(invoice.status).label"
+              />
             </td>
             <td class="text-right">
               @if (invoice.invoicePdf || invoice.hostedInvoiceUrl) {

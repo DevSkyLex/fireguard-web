@@ -1,4 +1,10 @@
-export type { DashboardSummaryMetric, DashboardSingleTrendViewModel } from './dashboard';
+export type {
+  ChartTooltipFont,
+  ChartTooltipStyle,
+  DashboardSummaryMetric,
+  DashboardSingleTrendViewModel,
+  MetricComparison,
+} from './dashboard';
 export type { EquipmentStatusOption, EquipmentTypeOption } from './equipment';
 export type { FacilityTypeOption } from './facility';
 export type {

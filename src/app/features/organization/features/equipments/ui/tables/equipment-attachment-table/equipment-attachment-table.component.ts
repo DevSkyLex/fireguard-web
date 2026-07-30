@@ -15,7 +15,7 @@ import type {
   EquipmentAttachmentOutput,
 } from '@features/organization/features/equipments/models';
 import { EquipmentAttachmentForm } from '@features/organization/features/equipments/ui/forms';
-import { EmptyState } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
 
 /**
  * Table presenting equipment attachments and removal actions.

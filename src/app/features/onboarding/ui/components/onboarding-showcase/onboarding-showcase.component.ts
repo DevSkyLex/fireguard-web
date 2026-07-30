@@ -6,7 +6,7 @@ import type {
   OnboardingStepPresentation,
 } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
-import { Logo } from '@shared/components';
+import { Logo } from '@shared/logo';
 
 /**
  * Type ShowcaseStepStatus

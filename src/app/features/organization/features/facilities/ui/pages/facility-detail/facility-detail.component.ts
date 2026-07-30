@@ -48,7 +48,7 @@ import {
   FacilityInspectionDataview,
 } from '@features/organization/features/facilities/ui/dataviews';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
 
 /**
  * Component FacilityDetailPage

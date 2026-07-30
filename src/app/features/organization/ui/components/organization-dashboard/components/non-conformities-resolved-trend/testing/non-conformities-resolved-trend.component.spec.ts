@@ -9,7 +9,7 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { NonConformitiesResolvedTrendStore } from '@features/organization/state/organization-dashboard';
-import { installMatchMediaMock } from '@shared/testing/match-media.mock';
+import { installMatchMediaMock } from '@shared/testing';
 import { NonConformitiesResolvedTrend } from '../non-conformities-resolved-trend.component';
 
 type NonConformitiesResolvedTrendHarness = {

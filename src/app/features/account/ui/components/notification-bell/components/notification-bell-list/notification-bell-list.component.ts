@@ -11,7 +11,7 @@ import {
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { NotificationOutput } from '@features/account/models';
-import { InfiniteScrollDirective } from '@shared/directives';
+import { InfiniteScrollDirective } from '@shared/infinite-scroll';
 import { NotificationBellItem } from '../notification-bell-item/notification-bell-item.component';
 
 /**

@@ -1,4 +1,4 @@
-import type { MetricComparison } from '@shared/components';
+import type { MetricComparison } from './metric-comparison.interface';
 
 /**
  * Type DashboardSummaryMetric

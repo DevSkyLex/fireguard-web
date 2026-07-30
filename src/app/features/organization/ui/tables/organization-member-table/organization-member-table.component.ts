@@ -26,13 +26,15 @@ import { PaginatorModule } from 'primeng/paginator';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { resolveInvitationTag } from '@features/organization/models';
 import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
+import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
+import { type TagDescriptor } from '@shared/tag';
 import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemoval } from './models';
 
 /**
@@ -56,7 +58,7 @@ import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemova
     SelectModule,
     SkeletonModule,
     TableModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './organization-member-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

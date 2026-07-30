@@ -15,18 +15,27 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
+import { AvatarGroupModule } from 'primeng/avatargroup';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { PanelModule, type PanelPassThroughOptions } from 'primeng/panel';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
+import {
+  COMPACT_AVATAR_PT,
+  MEMBER_AVATAR_MAX,
+} from '@features/organization/features/interventions/constants';
 import {
   resolveInterventionTag,
   type InterventionOutput,
   type InterventionStatus,
+  type MemberAvatar,
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
@@ -59,20 +68,15 @@ import {
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import {
-  AvatarStack,
   Board,
   BoardCardDirective,
   BoardColumnHeaderDirective,
-  EmptyState,
-  GroupedList,
-  GroupedListHeaderDirective,
-  GroupedListRowDirective,
-  Skeleton,
-  tagSeverityDotClass,
-  type AvatarStackPerson,
   type BoardColumn,
   type BoardItemDropped,
-} from '@shared/components';
+} from '@shared/board';
+import { EmptyState } from '@shared/empty-state';
+import { deriveInitials } from '@shared/initials';
+import { tagSeverityDotClass } from '@shared/tag-severity';
 
 /**
  * Default hour (local) pre-filled as the planned start when an intervention is
@@ -120,7 +124,7 @@ interface InterventionListItemViewModel {
   readonly isOverdue: boolean;
   readonly isDueSoon: boolean;
   readonly siteName: string | null;
-  readonly people: readonly AvatarStackPerson[];
+  readonly people: readonly MemberAvatar[];
 }
 
 /**
@@ -145,16 +149,14 @@ interface InterventionListItemViewModel {
 @Component({
   selector: 'app-interventions-page',
   imports: [
-    AvatarStack,
+    AvatarGroupModule,
+    AvatarModule,
     Board,
     BoardCardDirective,
     BoardColumnHeaderDirective,
     ButtonModule,
     DatePipe,
     EmptyState,
-    GroupedList,
-    GroupedListHeaderDirective,
-    GroupedListRowDirective,
     IconFieldModule,
     InputIconModule,
     InputTextModule,
@@ -164,9 +166,10 @@ interface InterventionListItemViewModel {
     InterventionPriorityIcon,
     InterventionTag,
     MessageModule,
+    PanelModule,
     ReactiveFormsModule,
-    Skeleton,
     SkeletonModule,
+    TooltipModule,
   ],
   // InterventionStore is provided at the parent route level (interventions.routes.ts)
   // so it survives navigation into a detail page — do not re-provide it here.
@@ -735,7 +738,7 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * Stable identifier resolver forwarded to `app-grouped-list`/`app-board`.
+   * Stable identifier resolver forwarded to `app-board`.
    *
    * @access protected
    * @since 5.0.0
@@ -745,19 +748,21 @@ export class InterventionsPage {
   protected readonly itemId = (item: InterventionListItemViewModel): string => item.intervention.id;
 
   /**
-   * Property listInitiallyCollapsed
+   * Property collapsedGroups
    * @readonly
    *
    * @description
-   * Starts the `published` and `abandoned` list sections collapsed.
+   * Ids of the collapsed list sections. Seeded with the terminal statuses so
+   * `published` and `abandoned` start folded away.
    *
-   * @access protected
-   * @since 5.0.0
+   * @access private
+   * @since 5.4.0
    *
-   * @type {(columnId: string) => boolean}
+   * @type {WritableSignal<ReadonlySet<string>>}
    */
-  protected readonly listInitiallyCollapsed = (columnId: string): boolean =>
-    columnId === 'published' || columnId === 'abandoned';
+  private readonly collapsedGroups: WritableSignal<ReadonlySet<string>> = signal<
+    ReadonlySet<string>
+  >(new Set<string>(['published', 'abandoned']));
 
   /**
    * Property lastCalendarWindowKey
@@ -787,6 +792,36 @@ export class InterventionsPage {
    * @type {string | null}
    */
   private lastPlanningOptionsOrganizationId: string | null = null;
+
+  /**
+   * Property avatarPt
+   * @readonly
+   *
+   * @description
+   * Pass-through giving every stacked member avatar the compact ~20px
+   * footprint.
+   *
+   * @access protected
+   * @since 5.1.0
+   *
+   * @type {AvatarPassThroughOptions}
+   */
+  protected readonly avatarPt: AvatarPassThroughOptions = COMPACT_AVATAR_PT;
+
+  /**
+   * Property avatarMax
+   * @readonly
+   *
+   * @description
+   * How many member avatars render before the stack collapses the rest into
+   * a `+N` avatar.
+   *
+   * @access protected
+   * @since 5.1.0
+   *
+   * @type {number}
+   */
+  protected readonly avatarMax: number = MEMBER_AVATAR_MAX;
   //#endregion
 
   //#region Constructor
@@ -1117,11 +1152,11 @@ export class InterventionsPage {
    * @method asItem
    *
    * @description
-   * Narrows a projected row/card template's implicit value back to
-   * {@link InterventionListItemViewModel}. The `[appGroupedListRow]` and
-   * `[appBoardCard]` directives are generic with no input carrying `T`, so
-   * Angular's template checker infers `T = unknown` inside them; this single
-   * cast keeps the rest of the template typed.
+   * Narrows a projected card template's implicit value back to
+   * {@link InterventionListItemViewModel}. The `[appBoardCard]` directive is
+   * generic with no input carrying `T`, so Angular's template checker infers
+   * `T = unknown` inside it; this single cast keeps the rest of the template
+   * typed.
    *
    * @access protected
    * @since 5.0.0
@@ -1226,7 +1261,7 @@ export class InterventionsPage {
    * @method toPerson
    *
    * @description
-   * Resolves a member IRI to an {@link AvatarStackPerson} through
+   * Resolves a member IRI to an {@link MemberAvatar} through
    * {@link memberDisplayMap}, falling back to a generic label when the
    * planning-options member list hasn't loaded that member yet.
    *
@@ -1234,9 +1269,9 @@ export class InterventionsPage {
    * @since 5.0.0
    *
    * @param {string} memberIri - Member IRI (`/api/organizations/.../members/...`).
-   * @returns {AvatarStackPerson} The resolved (or generic fallback) person.
+   * @returns {MemberAvatar} The resolved (or generic fallback) person.
    */
-  private toPerson(memberIri: string): AvatarStackPerson {
+  private toPerson(memberIri: string): MemberAvatar {
     const member: MemberSelectOption | undefined = this.memberDisplayMap().get(memberIri);
     if (!member) {
       return { label: $localize`:@@intervention.list.unknownMember:Member` };
@@ -1248,6 +1283,119 @@ export class InterventionsPage {
         ? `${member.displayName} · ${member.roleLabel}`
         : member.displayName,
     };
+  }
+
+  /**
+   * Method initialsFor
+   * @method initialsFor
+   *
+   * @description
+   * Derives up to two uppercase initials from a display label, for a stacked
+   * avatar with no image.
+   *
+   * @access protected
+   * @since 5.1.0
+   *
+   * @param {string} label - Display name to derive initials from.
+   * @returns {string} The derived initials, or an empty string for a blank label.
+   */
+  protected initialsFor(label: string): string {
+    return deriveInitials(label);
+  }
+
+  /**
+   * Method isGroupCollapsed
+   * @method isGroupCollapsed
+   *
+   * @description
+   * Whether a list section currently renders folded.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {string} groupId - Status id of the section.
+   * @returns {boolean} `true` when the section is collapsed.
+   */
+  protected isGroupCollapsed(groupId: string): boolean {
+    return this.collapsedGroups().has(groupId);
+  }
+
+  /**
+   * Method onGroupCollapsedChange
+   * @method onGroupCollapsedChange
+   *
+   * @description
+   * Records a section's fold state so it survives re-renders of the list.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {string} groupId - Status id of the section.
+   * @param {boolean | undefined} collapsed - Whether the section is now
+   *   collapsed. PrimeNG types the emission as optional; absent reads as open.
+   * @returns {void}
+   */
+  /**
+   * Method groupPanelPt
+   * @method groupPanelPt
+   *
+   * @description
+   * Names the section's toggle and exposes its expanded state on the focusable
+   * `<button>`. `p-panel` derives its own `aria-label` from the plain `header`
+   * input — unused here because the header is a template — and puts
+   * `aria-expanded` on the non-focusable `p-button` host, so neither reaches
+   * assistive tech without this.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {string} groupId - Status id of the section.
+   * @param {string} label - Human status label announced for the toggle.
+   * @returns {PanelPassThroughOptions} Pass-through carrying the ARIA state.
+   */
+  protected groupPanelPt(groupId: string, label: string): PanelPassThroughOptions {
+    const expanded: boolean = !this.isGroupCollapsed(groupId);
+    return {
+      pcToggleButton: {
+        root: {
+          'aria-label': expanded
+            ? $localize`:@@intervention.list.collapseGroup:Collapse ${label}:status: interventions`
+            : $localize`:@@intervention.list.expandGroup:Expand ${label}:status: interventions`,
+          'aria-expanded': String(expanded),
+        },
+      },
+    };
+  }
+
+  protected onGroupCollapsedChange(groupId: string, collapsed: boolean | undefined): void {
+    const next: Set<string> = new Set<string>(this.collapsedGroups());
+    if (collapsed === true) {
+      next.add(groupId);
+    } else {
+      next.delete(groupId);
+    }
+    this.collapsedGroups.set(next);
+  }
+
+  /**
+   * Method overflowTooltip
+   * @method overflowTooltip
+   *
+   * @description
+   * Names the members hidden behind the stack's `+N` avatar, so the overflow
+   * is not an opaque count.
+   *
+   * @access protected
+   * @since 5.1.0
+   *
+   * @param {readonly MemberAvatar[]} people - Full member list of the stack.
+   * @returns {string} Comma-separated labels of the hidden members.
+   */
+  protected overflowTooltip(people: readonly MemberAvatar[]): string {
+    return people
+      .slice(MEMBER_AVATAR_MAX)
+      .map((person: MemberAvatar): string => person.tooltip ?? person.label)
+      .join(', ');
   }
 
   /**

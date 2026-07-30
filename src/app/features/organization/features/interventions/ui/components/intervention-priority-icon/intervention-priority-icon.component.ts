@@ -10,7 +10,7 @@ import {
   resolveInterventionTag,
   type InterventionPriority,
 } from '@features/organization/features/interventions/models';
-import { tagSeverityIconClass } from '@shared/components';
+import { tagSeverityIconClass } from '@shared/tag-severity';
 
 /**
  * Component InterventionPriorityIcon

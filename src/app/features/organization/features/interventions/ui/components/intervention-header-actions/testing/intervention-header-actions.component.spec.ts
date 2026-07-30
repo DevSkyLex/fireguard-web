@@ -7,7 +7,7 @@ import {
   interventionHeaderEvents,
   type InterventionHeaderStoreType,
 } from '@features/organization/features/interventions/state';
-import { installMatchMediaMock } from '@shared/testing/match-media.mock';
+import { installMatchMediaMock } from '@shared/testing';
 import { InterventionHeaderActions } from '../intervention-header-actions.component';
 
 type InterventionHeaderActionsHarness = {

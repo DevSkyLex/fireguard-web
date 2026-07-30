@@ -10,6 +10,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { AvatarModule } from 'primeng/avatar';
 import { TabsModule } from 'primeng/tabs';
+import { TagModule } from 'primeng/tag';
 import type {
   TabListPassThrough,
   TabPanelsPassThrough,
@@ -26,8 +27,9 @@ import { ChannelPanelStore } from '@features/organization/features/collaboration
 import { ChannelActivityHeatmap } from '@features/organization/features/collaboration/ui/components/channel-activity-heatmap';
 import { MEMBER_DIRECTORY_PORT, type MemberDirectoryPort } from '@features/organization/ports';
 import { WorkspaceShellService } from '@layouts/workspace-layout';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
-import { deriveInitials } from '@shared/utils';
+import { EmptyState } from '@shared/empty-state';
+import { deriveInitials } from '@shared/initials';
+import { type TagDescriptor } from '@shared/tag';
 import { PANEL_TAB_LIST_PT, PANEL_TAB_PANELS_PT, PANEL_TAB_PT, PANEL_TABS_PT } from './constants';
 import { formatFileSize } from './utils';
 
@@ -65,7 +67,7 @@ import { formatFileSize } from './utils';
     EmptyState,
     RouterLink,
     TabsModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './channel-info-panel.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },

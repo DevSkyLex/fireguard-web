@@ -50,7 +50,11 @@
           }
           <span>{{ preview.invitedEmail }}</span>
           @if (statusDescriptor(); as descriptor) {
-            <app-tag [descriptor]="descriptor" />
+            <p-tag
+              [severity]="descriptor.severity"
+              [icon]="descriptor.icon"
+              [value]="descriptor.label"
+            />
           }
         </div>
         @if (expiresAt(); as deadline) {

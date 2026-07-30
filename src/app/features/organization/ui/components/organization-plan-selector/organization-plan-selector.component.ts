@@ -13,6 +13,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { SkeletonModule } from 'primeng/skeleton';
+import { TagModule } from 'primeng/tag';
 import {
   type BillingInterval,
   type OrganizationOutput,
@@ -25,8 +27,9 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { BillingInvoiceTable } from '@features/organization/ui/tables';
-import { EmptyState, ErrorState, Skeleton } from '@shared/components';
-import { Tag, type TagDescriptor } from '@shared/components/tag';
+import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
+import { type TagDescriptor } from '@shared/tag';
 import { BillingCancelCard } from './components/billing-cancel-card/billing-cancel-card.component';
 
 /**
@@ -64,12 +67,12 @@ interface IntervalOption {
   imports: [
     ButtonModule,
     MessageModule,
-    Tag,
-    Skeleton,
+    SkeletonModule,
     EmptyState,
     ErrorState,
     BillingInvoiceTable,
     BillingCancelCard,
+    TagModule,
   ],
   providers: [OrganizationPlanStore, OrganizationBillingStore],
   templateUrl: './organization-plan-selector.component.html',

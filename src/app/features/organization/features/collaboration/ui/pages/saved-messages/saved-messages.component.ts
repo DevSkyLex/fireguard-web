@@ -6,10 +6,11 @@ import {
   input,
   type InputSignal,
 } from '@angular/core';
+import { SkeletonModule } from 'primeng/skeleton';
 import type { MessageOutput } from '@features/organization/features/collaboration/models';
 import { SavedMessagesStore } from '@features/organization/features/collaboration/state';
 import { MessageRow } from '@features/organization/features/collaboration/ui/components';
-import { EmptyState, Skeleton } from '@shared/components';
+import { EmptyState } from '@shared/empty-state';
 
 /**
  * Component SavedMessagesPage
@@ -33,7 +34,7 @@ import { EmptyState, Skeleton } from '@shared/components';
  */
 @Component({
   selector: 'app-saved-messages',
-  imports: [EmptyState, MessageRow, Skeleton],
+  imports: [EmptyState, MessageRow, SkeletonModule],
   providers: [SavedMessagesStore],
   templateUrl: './saved-messages.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },

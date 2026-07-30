@@ -31,9 +31,11 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { Table, TableModule, type TableLazyLoadEvent } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/api';
+import { buildTableFilterParams } from '@core/api';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   FacilityOutput,
@@ -45,9 +47,9 @@ import {
   resolveFacilityTag,
 } from '@features/organization/features/facilities/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
-import { buildTableFilterParams } from '@shared/utils';
+import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
+import { type TagDescriptor, type TagOption } from '@shared/tag';
 import { FACILITY_FILTER_MAPPING } from './constants';
 import type { FacilityTypeIconMap, FacilityTypeOption } from './models';
 
@@ -83,7 +85,7 @@ import type { FacilityTypeIconMap, FacilityTypeOption } from './models';
     TableModule,
     CardModule,
     TooltipModule,
-    Tag,
+    TagModule,
   ],
   templateUrl: './facility-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

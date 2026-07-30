@@ -20,8 +20,8 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
 import type { CreateEquipmentFormData, CreateEquipmentFormValues } from './models';
 
 /**

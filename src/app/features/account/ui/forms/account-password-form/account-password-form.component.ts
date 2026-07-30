@@ -17,10 +17,10 @@ import { ButtonModule } from 'primeng/button';
 import { InputOtpModule } from 'primeng/inputotp';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
+import { toServerFieldErrors, type ServerFieldErrors } from '@core/api';
 import type { AccountPasswordChangeStep } from '@features/account/state';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@features/auth';
-import { toServerFieldErrors, type ServerFieldErrors } from '@shared/utils';
-import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
+import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/match-fields';
 import type {
   AccountPasswordConfirmFormData,
   AccountPasswordRequestFormData,

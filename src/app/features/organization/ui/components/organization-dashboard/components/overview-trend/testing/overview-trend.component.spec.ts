@@ -9,7 +9,7 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OverviewTrendStore } from '@features/organization/state/organization-dashboard';
-import { installMatchMediaMock } from '@shared/testing/match-media.mock';
+import { installMatchMediaMock } from '@shared/testing';
 import { OverviewTrend } from '../overview-trend.component';
 
 type OverviewTrendData = {

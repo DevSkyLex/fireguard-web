@@ -71,7 +71,11 @@
             </div>
           </td>
           <td>
-            <app-tag [descriptor]="severityDescriptor(nonConformity.severity)" />
+            <p-tag
+              [severity]="severityDescriptor(nonConformity.severity).severity"
+              [icon]="severityDescriptor(nonConformity.severity).icon"
+              [value]="severityDescriptor(nonConformity.severity).label"
+            />
           </td>
           <td>
             @if (
@@ -90,7 +94,11 @@
             } @else {
               <!-- A resolved non-conformity is immutable (the backend rejects further
                    status changes with 422), so its status is shown frozen. -->
-              <app-tag [descriptor]="statusDescriptor(nonConformity.status)" />
+              <p-tag
+                [severity]="statusDescriptor(nonConformity.status).severity"
+                [icon]="statusDescriptor(nonConformity.status).icon"
+                [value]="statusDescriptor(nonConformity.status).label"
+              />
             }
           </td>
           <td class="hidden md:table-cell">

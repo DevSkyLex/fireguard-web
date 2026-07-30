@@ -21,13 +21,13 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
+import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@core/api';
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   PASSWORD_PATTERN,
 } from '@features/auth/constants';
-import { toServerFieldErrors, toUnmatchedViolations, type ServerFieldErrors } from '@shared/utils';
-import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
+import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/match-fields';
 import type { RegisterFormData, RegisterFormValues } from './models';
 
 /**

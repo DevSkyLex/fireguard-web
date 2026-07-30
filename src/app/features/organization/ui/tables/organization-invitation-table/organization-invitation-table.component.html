@@ -61,7 +61,13 @@
               invitation.createdAt | date: 'mediumDate'
             }}</span>
           </td>
-          <td><app-tag [descriptor]="statusDescriptor(invitation.status)" /></td>
+          <td>
+            <p-tag
+              [severity]="statusDescriptor(invitation.status).severity"
+              [icon]="statusDescriptor(invitation.status).icon"
+              [value]="statusDescriptor(invitation.status).label"
+            />
+          </td>
           <td>
             @let expires = expiresLabel(invitation.expiresAt);
             <span

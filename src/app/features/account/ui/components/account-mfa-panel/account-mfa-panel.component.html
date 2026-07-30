@@ -38,7 +38,11 @@
         }
       </div>
     </div>
-    <app-tag [descriptor]="emailStatus" />
+    <p-tag
+      [severity]="emailStatus.severity"
+      [icon]="emailStatus.icon"
+      [value]="emailStatus.label"
+    />
   </div>
 
   <!-- Authenticator app (TOTP) — full enrollment lifecycle -->
@@ -64,7 +68,12 @@
         </div>
       </div>
 
-      <app-tag [descriptor]="totpStatus()" data-testid="account-mfa-totp-status" />
+      <p-tag
+        data-testid="account-mfa-totp-status"
+        [severity]="totpStatus().severity"
+        [icon]="totpStatus().icon"
+        [value]="totpStatus().label"
+      />
     </div>
 
     @if (store.setupError(); as error) {

@@ -9,18 +9,19 @@ import {
 } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
 import {
   resolveInspectionTag,
   type InspectionOutput,
 } from '@features/organization/features/inspections/models';
-import { Tag, type TagDescriptor } from '@shared/components';
+import { type TagDescriptor } from '@shared/tag';
 
 /**
  * Header presenting inspection identity, status and lifecycle actions.
  */
 @Component({
   selector: 'app-inspection-detail-header',
-  imports: [AvatarModule, ButtonModule, DatePipe, Tag],
+  imports: [AvatarModule, ButtonModule, DatePipe, TagModule],
   templateUrl: './inspection-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

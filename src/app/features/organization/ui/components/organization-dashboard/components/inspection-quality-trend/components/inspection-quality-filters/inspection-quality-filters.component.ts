@@ -9,6 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
 import { OrganizationDashboardInspectionQualityStore } from '@features/organization/state/organization-dashboard';
 import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import type {
@@ -23,7 +24,6 @@ import {
   INSPECTOR_TYPE_OPTIONS,
   NON_CONFORMITY_SEVERITY_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { Tag } from '@shared/components';
 
 /**
  * Type InspectionQualityFiltersForm
@@ -55,7 +55,7 @@ type InspectionQualityFiltersForm = {
 @Component({
   selector: 'app-inspection-quality-filters',
   templateUrl: './inspection-quality-filters.component.html',
-  imports: [ReactiveFormsModule, SelectModule, Tag, TrendBaseFiltersForm],
+  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm, TagModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionQualityFilters {

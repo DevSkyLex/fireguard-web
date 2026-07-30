@@ -5,6 +5,18 @@ export type {
   ConstraintViolation,
   PaginationOptions,
   RequestOptions,
+  ServerFieldErrors,
+  TableFilterParamMapping,
+  TableFilterParamResolver,
+  TableFilterParamValue,
   Violation,
 } from './models';
-export { isApiError, isConstraintViolation } from './utils';
+export {
+  buildTableFilterParams,
+  dateRangeResolver,
+  isApiError,
+  isConstraintViolation,
+  stringEqualsResolver,
+  toServerFieldErrors,
+  toUnmatchedViolations,
+} from './utils';

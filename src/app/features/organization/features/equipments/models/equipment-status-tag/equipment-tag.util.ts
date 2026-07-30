@@ -1,4 +1,4 @@
-import type { TagOption } from '@shared/components';
+import type { TagOption } from '@shared/tag';
 import type { EquipmentTagDescriptor } from './equipment-tag-descriptor.interface';
 import type { EquipmentTagKind } from './equipment-tag-kind.type';
 

@@ -209,7 +209,7 @@
               FG-{{ intervention.number }}
             </span>
             <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
-            <app-intervention-tag kind="type" [value]="intervention.type" variant="inline" />
+            <app-intervention-tag kind="type" [value]="intervention.type" />
             @if (siteLabel(); as site) {
               <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
               <span>{{ site }}</span>
@@ -477,11 +477,7 @@
                       </span>
 
                       <span class="hidden sm:block">
-                        <app-intervention-tag
-                          kind="workItemStatus"
-                          [value]="item.status"
-                          variant="inline"
-                        />
+                        <app-intervention-tag kind="workItemStatus" [value]="item.status" />
                       </span>
 
                       @if (checklistRowHasActions(item)) {
@@ -670,8 +666,62 @@
                     </div>
                   }
                 </div>
+              } @else if (activityFeedItems().length === 0) {
+                <app-empty-state
+                  icon="pi-inbox"
+                  i18n-title="@@intervention.detail.activityEmpty"
+                  title="No activity yet"
+                />
               } @else {
-                <app-activity-feed [items]="activityFeedItems()" />
+                <p-timeline [value]="activityFeedItems()">
+                  <ng-template #marker let-item>
+                    <span
+                      class="grid size-5 shrink-0 place-items-center rounded-full bg-surface-100 text-[0.625rem] font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                    >
+                      @if (item.icon; as icon) {
+                        <i class="{{ icon }} text-[0.65rem]" aria-hidden="true"></i>
+                      } @else {
+                        {{ initialsFor(item.authorLabel) }}
+                      }
+                    </span>
+                  </ng-template>
+
+                  <ng-template #content let-item>
+                    @if (item.kind === 'event') {
+                      <span class="min-w-0 text-sm text-surface-600 dark:text-surface-400">
+                        <span class="font-medium text-surface-900 dark:text-surface-100">{{
+                          item.authorLabel
+                        }}</span>
+                        @if (item.text) {
+                          {{ ' ' + item.text }}
+                        }
+                        <span class="text-surface-400 dark:text-surface-500"
+                          >&middot; {{ item.timestamp | date: 'short' }}</span
+                        >
+                      </span>
+                    } @else {
+                      <div
+                        class="flex flex-col gap-1.5 rounded-lg border border-surface-200 bg-surface-0 p-3 dark:border-surface-800 dark:bg-surface-900"
+                      >
+                        <div class="flex items-center justify-between gap-2">
+                          <span
+                            class="text-sm font-medium text-surface-900 dark:text-surface-100"
+                            >{{ item.authorLabel }}</span
+                          >
+                          <span class="text-xs text-surface-400 dark:text-surface-500">{{
+                            item.timestamp | date: 'short'
+                          }}</span>
+                        </div>
+                        @if (item.body) {
+                          <div
+                            class="comment-prose text-surface-700 dark:text-surface-300"
+                            [innerHTML]="item.body"
+                          ></div>
+                        }
+                      </div>
+                    }
+                  </ng-template>
+                </p-timeline>
               }
               <app-comment-composer
                 i18n-placeholder="@@intervention.detail.commentPlaceholder"
@@ -768,7 +818,29 @@
             </dt>
             <dd class="flex min-w-0 items-center gap-2">
               @if (assigneePeople().length > 0) {
-                <app-avatar-stack [people]="assigneePeople()" />
+                <p-avatar-group>
+                  @for (person of assigneePeople().slice(0, avatarMax); track person.label) {
+                    <p-avatar
+                      [image]="person.image ?? undefined"
+                      [label]="person.image ? undefined : initialsFor(person.label)"
+                      shape="circle"
+                      [pt]="avatarPt"
+                      [ariaLabel]="person.tooltip ?? person.label"
+                      [pTooltip]="person.tooltip ?? person.label"
+                      tooltipPosition="top"
+                    />
+                  }
+                  @if (assigneePeople().length > avatarMax) {
+                    <p-avatar
+                      [label]="'+' + (assigneePeople().length - avatarMax)"
+                      shape="circle"
+                      [pt]="avatarPt"
+                      [ariaLabel]="overflowTooltip(assigneePeople())"
+                      [pTooltip]="overflowTooltip(assigneePeople())"
+                      tooltipPosition="top"
+                    />
+                  }
+                </p-avatar-group>
               } @else {
                 <span
                   i18n="@@intervention.prop.unassigned"

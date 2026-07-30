@@ -31,14 +31,14 @@ describe('InviteMembersForm', () => {
     const fixture = createFixture();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(host.querySelector('app-radio-card-group')).toBeTruthy();
+    expect(host.querySelector('[role="radiogroup"]')).toBeTruthy();
   });
 
   it('should not render role cards when there are no roles', () => {
     const fixture = createFixture([]);
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(host.querySelector('app-radio-card-group')).toBeNull();
+    expect(host.querySelector('[role="radiogroup"]')).toBeNull();
   });
 
   it('should add a new row when "Add another member" is clicked', () => {

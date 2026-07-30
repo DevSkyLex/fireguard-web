@@ -92,7 +92,13 @@
               <i class="pi pi-circle w-4 text-center text-xs" aria-hidden="true"></i>
               <ng-container i18n="@@common.status">Status</ng-container>
             </dt>
-            <dd><app-tag [descriptor]="statusDescriptor()" variant="inline" /></dd>
+            <dd>
+              <p-tag
+                [severity]="statusDescriptor().severity"
+                [icon]="statusDescriptor().icon"
+                [value]="statusDescriptor().label"
+              />
+            </dd>
           </div>
 
           <div

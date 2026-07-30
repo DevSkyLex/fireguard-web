@@ -7,7 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
-import type { MetricComparison } from '@shared/components';
+import type { MetricComparison } from '../../../../models';
 import { buildSparklinePath } from './utils/build-sparkline-path.utils';
 
 /**

@@ -31,7 +31,11 @@
               }
             </h3>
             @if (statusDescriptor(); as descriptor) {
-              <app-tag [descriptor]="descriptor" />
+              <p-tag
+                [severity]="descriptor.severity"
+                [icon]="descriptor.icon"
+                [value]="descriptor.label"
+              />
             }
           </div>
 
@@ -140,12 +144,16 @@
     <!-- Loading -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       @for (placeholder of [0, 1, 2]; track placeholder) {
-        <app-skeleton
-          preset="card"
-          [count]="1"
-          label="Loading plans…"
-          i18n-label="@@org.plan.loading"
-        />
+        <div class="flex flex-col gap-3" role="status">
+          <span class="sr-only" i18n="@@org.plan.loading">Loading plans…</span>
+          <div
+            class="flex flex-col gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-800"
+          >
+            <p-skeleton width="40%" height="1rem" />
+            <p-skeleton width="100%" height="2rem" />
+            <p-skeleton width="60%" height="1rem" />
+          </div>
+        </div>
       }
     </div>
   } @else if (store.plansError()) {
@@ -182,7 +190,11 @@
               }
             </div>
             @if (isCurrentPlan(plan)) {
-              <app-tag [descriptor]="currentPlanTag" />
+              <p-tag
+                [severity]="currentPlanTag.severity"
+                [icon]="currentPlanTag.icon"
+                [value]="currentPlanTag.label"
+              />
             }
           </div>
 

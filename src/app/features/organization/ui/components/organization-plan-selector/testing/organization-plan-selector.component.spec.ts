@@ -229,7 +229,7 @@ describe('OrganizationPlanSelector', () => {
     planStore.isLoadingPlans.set(true);
     const { fixture } = createComponent();
 
-    expect(fixture.nativeElement.querySelectorAll('app-skeleton').length).toBe(3);
+    expect(fixture.nativeElement.querySelectorAll('[role="status"]').length).toBe(3);
   });
 
   it('renders the plans error state and retries on click', () => {

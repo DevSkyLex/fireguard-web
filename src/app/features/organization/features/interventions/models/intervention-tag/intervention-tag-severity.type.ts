@@ -1,4 +1,4 @@
-import type { TagSeverity } from '@shared/components';
+import type { TagSeverity } from '@shared/tag-severity';
 
 /**
  * Severity vocabulary shared by every intervention status/enum indicator.

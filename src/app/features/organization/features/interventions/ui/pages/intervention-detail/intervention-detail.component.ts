@@ -21,15 +21,23 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { ConfirmationService, type MenuItem } from 'primeng/api';
+import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
+import { AvatarGroupModule } from 'primeng/avatargroup';
 import { ButtonModule } from 'primeng/button';
 import { Menu, MenuModule } from 'primeng/menu';
 import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
+import { TimelineModule } from 'primeng/timeline';
+import { TooltipModule } from 'primeng/tooltip';
 import { ConnectivityService } from '@core/connectivity';
 import { isCallPending } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import {
+  COMPACT_AVATAR_PT,
+  MEMBER_AVATAR_MAX,
+} from '@features/organization/features/interventions/constants';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,
@@ -44,6 +52,7 @@ import type {
   InterventionStatus,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
+  MemberAvatar,
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
@@ -89,6 +98,7 @@ import {
   InterventionSkipDrawer,
   InterventionWorkItemDrawer,
 } from '@features/organization/features/interventions/ui/drawers';
+import { CommentComposer } from '@features/organization/features/interventions/ui/forms';
 import type {
   InterventionDiscoveryFormValues,
   InterventionPlanningFormValues,
@@ -103,14 +113,10 @@ import {
 } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
-import {
-  ActivityFeed,
-  AvatarStack,
-  CommentComposer,
-  EmptyState,
-  type ActivityFeedItem,
-  type AvatarStackPerson,
-} from '@shared/components';
+import { deriveInitials } from '@shared/initials';
+import type { ActivityFeedItem } from './models';
+
+import { EmptyState } from '@shared/empty-state';
 
 /**
  * Component InterventionDetailPage
@@ -137,8 +143,9 @@ import {
 @Component({
   selector: 'app-intervention-detail-page',
   imports: [
-    ActivityFeed,
-    AvatarStack,
+    AvatarGroupModule,
+    AvatarModule,
+    TooltipModule,
     ButtonModule,
     CommentComposer,
     DatePipe,
@@ -161,6 +168,7 @@ import {
     RouterLink,
     SkeletonModule,
     TextareaModule,
+    TimelineModule,
   ],
   providers: [InterventionPlanningOptionsStore, InterventionWorkspaceStore],
   templateUrl: './intervention-detail.component.html',
@@ -1197,18 +1205,18 @@ export class InterventionDetailPage {
    *
    * @description
    * Responsible agent followed by every participant, resolved into
-   * {@link AvatarStackPerson}s for the sidebar's avatar stack.
+   * {@link MemberAvatar}s for the sidebar's avatar stack.
    *
    * @access protected
    * @since 3.0.0
    *
-   * @type {Signal<readonly AvatarStackPerson[]>}
+   * @type {Signal<readonly MemberAvatar[]>}
    */
-  protected readonly assigneePeople: Signal<readonly AvatarStackPerson[]> = computed<
-    readonly AvatarStackPerson[]
+  protected readonly assigneePeople: Signal<readonly MemberAvatar[]> = computed<
+    readonly MemberAvatar[]
   >(() => {
     const responsible: MemberSelectOption | null = this.responsibleMember();
-    const people: AvatarStackPerson[] = [];
+    const people: MemberAvatar[] = [];
     if (responsible) {
       people.push({
         label: responsible.displayName,
@@ -1227,6 +1235,36 @@ export class InterventionDetailPage {
     }
     return people;
   });
+
+  /**
+   * Property avatarPt
+   * @readonly
+   *
+   * @description
+   * Pass-through giving every stacked member avatar the compact ~20px
+   * footprint.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @type {AvatarPassThroughOptions}
+   */
+  protected readonly avatarPt: AvatarPassThroughOptions = COMPACT_AVATAR_PT;
+
+  /**
+   * Property avatarMax
+   * @readonly
+   *
+   * @description
+   * How many member avatars render before the stack collapses the rest into
+   * a `+N` avatar.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @type {number}
+   */
+  protected readonly avatarMax: number = MEMBER_AVATAR_MAX;
 
   /**
    * Property siteLabel
@@ -1945,16 +1983,17 @@ export class InterventionDetailPage {
    *
    * @description
    * Workspace activity timeline mapped to {@link ActivityFeedItem}s for the
-   * generic {@link ActivityFeed}.
+   * `p-timeline`. Mutable by necessity: PrimeNG types `value` as `any[]`, and
+   * a `readonly` array is not assignable to it.
    *
    * @access protected
    * @since 3.0.0
    *
-   * @type {Signal<readonly ActivityFeedItem[]>}
+   * @type {Signal<ActivityFeedItem[]>}
    */
-  protected readonly activityFeedItems: Signal<readonly ActivityFeedItem[]> = computed<
-    readonly ActivityFeedItem[]
-  >(() => this.store.activities().map((activity) => this.toActivityFeedItem(activity)));
+  protected readonly activityFeedItems: Signal<ActivityFeedItem[]> = computed<ActivityFeedItem[]>(
+    () => this.store.activities().map((activity) => this.toActivityFeedItem(activity)),
+  );
 
   /**
    * Property activitiesLoading
@@ -3074,6 +3113,47 @@ export class InterventionDetailPage {
       (option: MemberSelectOption): boolean => option.value === memberIri,
     );
     return member?.displayName ?? $localize`:@@intervention.list.unknownMember:Member`;
+  }
+
+  /**
+   * Method initialsFor
+   * @method initialsFor
+   *
+   * @description
+   * Derives up to two uppercase initials from a display label, for the
+   * activity timeline marker when the entry carries no icon.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @param {string} label - Display name to derive initials from.
+   *
+   * @return {string} The derived initials, or an empty string for a blank label.
+   */
+  protected initialsFor(label: string): string {
+    return deriveInitials(label);
+  }
+
+  /**
+   * Method overflowTooltip
+   * @method overflowTooltip
+   *
+   * @description
+   * Names the members hidden behind the stack's `+N` avatar, so the overflow
+   * is not an opaque count.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @param {readonly MemberAvatar[]} people - Full member list of the stack.
+   *
+   * @return {string} Comma-separated labels of the hidden members.
+   */
+  protected overflowTooltip(people: readonly MemberAvatar[]): string {
+    return people
+      .slice(MEMBER_AVATAR_MAX)
+      .map((person: MemberAvatar): string => person.tooltip ?? person.label)
+      .join(', ');
   }
 
   /**

@@ -1,1 +1,1 @@
-export { formatChangePatch } from './format-change-patch.utils';
+export { formatChangePatch } from './format-change-patch/format-change-patch.utils';

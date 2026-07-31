@@ -879,7 +879,7 @@ No other prefix is permitted.
 
 The following minority patterns exist in the codebase, are **not** the target, and must not be copied into new code:
 
-- a handful of specs sit flat next to their subject instead of in `testing/`,
+- two form component specs sit flat next to their subject instead of in `testing/` (`inspection-form`, `non-conformity-form`),
 - two account state slices use `<name>-state.model.ts` for store state instead of `state.interface.ts`,
 - five features (`auth`, `account`, `error`, `maintenance`, `onboarding` — roughly a third of all pages) name page folders with a `-page` suffix (`ui/pages/login-page/`); the target is the bare screen name (`ui/pages/organization-members/`) — do not rename existing folders wholesale, and do not add the suffix to new pages,
 - one state aggregate uses bare `utils/constants.ts` and `models/types.ts` file names without a concept prefix,
@@ -1749,9 +1749,21 @@ Providers must not be moved to `core` just because they are called from the app 
 
 The file inside a `utils/` folder takes the plural `.utils.ts` suffix, matching the folder name. A pure helper that stays co-located in a `models/` registry concept folder keeps the singular `.util.ts` (for example `intervention-tag.util.ts`); the suffix follows where the file lives.
 
+**`utils/` gives each helper its own folder.** A `utils/` folder holds one folder per util — `utils/<name>/<name>.utils.ts` plus its `testing/<name>.utils.spec.ts` — never loose `.utils.ts` files side by side with a single shared `utils/testing/`. Each helper then owns its spec, so a missing one is visible as an absent `testing/` rather than hidden in a bucket serving several subjects.
+
+```text
+utils/
+  index.ts                              # the folder's only public entry point
+  <name>/
+    <name>.utils.ts
+    testing/<name>.utils.spec.ts
+```
+
+The unit folder takes **no barrel of its own** (section 13.2): `utils/index.ts` re-exports `./<name>/<name>.utils` directly, and a util that needs a sibling imports `../<sibling>/<sibling>.utils`. `constants/` and `options/` stay flat — they hold data, and a data file has no spec to own.
+
 Shared rules:
 
-- **one declaration per file**, named after its purpose, with a barrel `index.ts` that is the only public entry point,
+- **one declaration per file**, named after its purpose, with the folder's `index.ts` as the only public entry point,
 - `utils/` functions are pure: no Angular DI, no HTTP, no store access, no side effects — anything that needs DI is a service (`data-access/` or `services/`) or a store helper (`state/`),
 - `constants/` holds data, not behavior; if a constant needs a function to be useful, the function lives in `utils/`. Do not park `.constants.ts` files inside a `utils/` folder,
 - `options/` is for presentation-layer choice lists; it never holds transport defaults (those are `constants/`),
@@ -1769,13 +1781,15 @@ Feature-level layout:
 ```text
 features/<feature>/
   models/        # type-only (+ the two sanctioned exceptions)
-  utils/         # pure functions
+  utils/         # pure functions — one folder per util
     index.ts
-    api-date-time.utils.ts
-  constants/     # fixed runtime values and lookup maps
+    api-date-time/
+      api-date-time.utils.ts
+      testing/api-date-time.utils.spec.ts
+  constants/     # fixed runtime values and lookup maps — flat
     index.ts
     pagination-defaults.constants.ts
-  options/       # UI option sets for selects, menus, filters
+  options/       # UI option sets for selects, menus, filters — flat
     index.ts
     facility-type-options.constants.ts
 ```
@@ -2020,7 +2034,8 @@ Internal-only folders do not require or deserve a public barrel by default:
 - `features/<feature>/data-access/adapters/`,
 - `features/<feature>/ui/pages/`,
 - `state/` slices that are not part of the feature's public surface (each slice still has a local `index.ts` for feature-internal consumption — section 10.11),
-- nested `utils/`, `testing/`, or helper folders local to one component or slice.
+- nested `utils/`, `testing/`, or helper folders local to one component or slice,
+- a `utils/<name>/` unit folder — the enclosing `utils/index.ts` is the public surface and re-exports `./<name>/<name>.utils` (section 10.13).
 
 Examples:
 

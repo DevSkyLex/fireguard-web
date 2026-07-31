@@ -11,10 +11,10 @@ export {
   startOfMonth,
   startOfWeek,
   weekdayLabels,
-} from './calendar-date.utils';
+} from './calendar-date/calendar-date.utils';
 export {
   buildAgendaDays,
   buildMonthDays,
   buildWeekDays,
   filterEventsByCategories,
-} from './calendar-grid.utils';
+} from './calendar-grid/calendar-grid.utils';

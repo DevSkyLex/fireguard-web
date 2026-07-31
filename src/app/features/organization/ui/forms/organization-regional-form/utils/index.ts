@@ -1,1 +1,1 @@
-export * from './timezone-offset.utils';
+export { getTimezoneOffsetLabel } from './timezone-offset/timezone-offset.utils';

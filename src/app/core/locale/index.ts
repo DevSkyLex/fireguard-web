@@ -12,4 +12,4 @@ export {
   parseCookieHeader,
   resolveLocaleFromRequest,
   stripLocaleFromPathname,
-} from './utils/locale-resolution.utils';
+} from './utils';

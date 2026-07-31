@@ -1,1 +1,1 @@
-export { invitationExpiryBucket } from './invitation-expiry.utils';
+export { invitationExpiryBucket } from './invitation-expiry/invitation-expiry.utils';

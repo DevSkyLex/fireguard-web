@@ -21,12 +21,12 @@ import {
   getDashboardBaseActiveFilterCount,
   OverviewTrendStore,
 } from '@features/organization/state/organization-dashboard';
-import { TREND_CARD_PT } from '@features/organization/ui/components/organization-dashboard/constants';
-import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
+  TREND_CARD_PT,
   WHOLE_NUMBER_FMT,
-  buildDashboardComparison,
-} from '@features/organization/ui/components/organization-dashboard/utils';
+} from '@features/organization/ui/components/organization-dashboard/constants';
+import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
+import { buildDashboardComparison } from '@features/organization/ui/components/organization-dashboard/utils';
 import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 import { TrendMetricStrip } from '../trend-metric-strip';
 import { OverviewChart, OverviewFilters, OverviewToolbar } from './components';

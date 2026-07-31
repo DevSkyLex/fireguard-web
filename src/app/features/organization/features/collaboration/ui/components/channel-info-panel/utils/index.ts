@@ -1,1 +1,1 @@
-export { formatFileSize } from './format-file-size.utils';
+export { formatFileSize } from './format-file-size/format-file-size.utils';

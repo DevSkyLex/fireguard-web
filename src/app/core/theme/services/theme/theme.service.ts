@@ -12,7 +12,7 @@ import {
 import { mediaQuery } from '@signality/core';
 import { CookieService } from '@core/cookie';
 import type { ThemeMode } from '../../models/theme-mode.type';
-import { isThemeMode } from '../../utils/theme-mode.utils';
+import { isThemeMode } from '../../utils';
 
 /**
  * Service ThemeService

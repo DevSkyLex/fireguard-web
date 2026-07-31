@@ -3,4 +3,4 @@ export { provideTheme } from './theme.provider';
 export { THEME_PORT } from './ports';
 export type { ThemePort } from './ports';
 export type { ThemeMode } from './models/theme-mode.type';
-export { isThemeMode } from './utils/theme-mode.utils';
+export { isThemeMode } from './utils';

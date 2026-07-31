@@ -7,7 +7,7 @@ import {
   SUPPORTED_LOCALES,
 } from '../../constants/app-locale.constants';
 import type { AppLocaleOption, AppLocaleSubPath } from '../../models/app-locale.type';
-import { isSupportedLocale, stripLocaleFromPathname } from '../../utils/locale-resolution.utils';
+import { isSupportedLocale, stripLocaleFromPathname } from '../../utils';
 
 /**
  * Service LocalePreferenceService

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { MetricComparison } from '../../../../models';
-import { buildSparklinePath } from './utils/build-sparkline-path.utils';
+import { buildSparklinePath } from './utils';
 
 /**
  * Component DashboardMetricCell

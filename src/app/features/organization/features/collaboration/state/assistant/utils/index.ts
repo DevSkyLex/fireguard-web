@@ -1,1 +1,1 @@
-export { applyAssistantFrame } from './apply-assistant-frame.utils';
+export { applyAssistantFrame } from './apply-assistant-frame/apply-assistant-frame.utils';

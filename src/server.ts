@@ -11,7 +11,7 @@ import {
   isSupportedLocale,
   parseCookieHeader,
   resolveLocaleFromRequest,
-} from './app/core/locale/utils/locale-resolution.utils';
+} from './app/core/locale/utils';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 

@@ -1,7 +1,7 @@
-export { ChatMessageExtraDirective } from './chat-message-extra.directive';
-export { ChatMessage } from './components/chat-message';
-export { ChatMessageBody } from './components/chat-message-body';
-export { ChatThread } from './components/chat-thread';
+export { ChatMessageExtraDirective } from './ui/directives/chat-message-extra';
+export { ChatMessage } from './ui/components/chat-message';
+export { ChatMessageBody } from './ui/components/chat-message-body';
+export { ChatThread } from './ui/components/chat-thread';
 export type {
   ChatAttachment,
   ChatDaySeparator,

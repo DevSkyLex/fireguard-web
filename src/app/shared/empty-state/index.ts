@@ -1,1 +1,1 @@
-export { EmptyState } from './empty-state.component';
+export { EmptyState } from './ui/components/empty-state';

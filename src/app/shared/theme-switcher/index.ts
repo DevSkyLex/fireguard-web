@@ -1,1 +1,1 @@
-export { ThemeSwitcher } from './theme-switcher.component';
+export { ThemeSwitcher } from './ui/components/theme-switcher';

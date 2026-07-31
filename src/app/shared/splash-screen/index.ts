@@ -1,1 +1,1 @@
-export { SplashScreen } from './splash-screen.component';
+export { SplashScreen } from './ui/components/splash-screen';

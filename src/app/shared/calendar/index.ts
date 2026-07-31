@@ -1,4 +1,4 @@
-export { Calendar } from './calendar.component';
+export { Calendar } from './ui/components/calendar';
 export type {
   CalendarCategoryGroup,
   CalendarConfig,

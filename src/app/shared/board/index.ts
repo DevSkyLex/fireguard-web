@@ -1,4 +1,4 @@
-export { Board } from './board.component';
-export { BoardCardDirective } from './board-card.directive';
-export { BoardColumnHeaderDirective } from './board-column-header.directive';
+export { Board } from './ui/components/board';
+export { BoardCardDirective } from './ui/directives/board-card';
+export { BoardColumnHeaderDirective } from './ui/directives/board-column-header';
 export type { BoardColumn, BoardItemDropped } from './models';

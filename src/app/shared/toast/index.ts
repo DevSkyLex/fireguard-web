@@ -1,1 +1,1 @@
-export { Toast } from './toast.component';
+export { Toast } from './ui/components/toast';

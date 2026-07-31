@@ -659,25 +659,38 @@ Bad use case:
 
 ### 8.5 `shared/` template
 
-`shared` is organized **concept-first**, exactly like `core` (section 8.1): one self-contained folder per shared concept, each with its own `index.ts` barrel. There are no type-first buckets (`shared/components`, `shared/directives`, `shared/validators`, `shared/models`, `shared/utils`, `shared/constants`) — the same rule that bans `core/services` bans them here.
+`shared` is organized **concept-first**, exactly like `core` (section 8.1): one self-contained folder per shared concept, each with its own `index.ts` barrel. **At the root of `shared` there are no type-first buckets** (`shared/components`, `shared/directives`, `shared/validators`, `shared/models`, `shared/utils`, `shared/constants`) — the same rule that bans `core/services` bans them there. Kind buckets belong one level lower, inside a concept's own `ui/`.
 
 ```text
 shared/
-  <concept>/               # one self-contained folder per shared concept
-    index.ts               # the concept's public API (the only external entry point)
-    <concept>.component.ts # or .directive.ts / .validator.ts / .utils.ts / .constants.ts
-    <concept>.component.html
-    components/            # optional nested Angular subcomponents
-    models/                # optional local UI-only types and view models
-    options/               # optional static UI option sets
-    constants/             # optional local fixed runtime values
-    utils/                 # optional pure helpers local to the concept
-    testing/               # specs and optional test-only fixtures
-  testing/                 # cross-cutting test doubles (match-media.mock.ts) — the one sanctioned grouping
-  README.md                # inventories the concepts and their entry points
+  <concept>/                 # one self-contained folder per shared concept
+    index.ts                 # the concept's public API (the only external entry point)
+    ui/                      # only when the concept renders something
+      components/
+        <name>/
+          index.ts
+          <name>.component.ts
+          <name>.component.html
+          testing/           # specs and optional test-only fixtures
+      directives/
+        <name>/
+          index.ts
+          <name>.directive.ts
+          testing/
+      pipes/                 # same shape, if a pipe is ever added
+    <concept>.validator.ts   # a concept with no UI stays flat: .validator.ts / .utils.ts / .constants.ts / .type.ts
+    models/                  # optional local UI-only types and view models
+    options/                 # optional static UI option sets
+    constants/               # optional local fixed runtime values
+    utils/                   # optional pure helpers local to the concept
+    testing/                 # specs of the flat, non-UI files
+  testing/                   # cross-cutting test doubles (match-media.mock.ts) — the one sanctioned grouping
+  README.md                  # inventories the concepts and their entry points
 ```
 
-A small concept stays flat (a directive, a validator, a util, a constants file plus their barrel — like `core/boot-readiness`); a large concept grows the optional sub-buckets it needs, per the canonical UI folder template (section 10.2). Illustrative concepts in this codebase: `tag`, `tag-severity`, `empty-state`, `error-state`, `board`, `calendar`, `chat`, `infinite-scroll`, `match-fields`, `initials`, `nav-row`, `table-card-shell`, `toast`, `splash-screen`, `theme-switcher`, `logo`.
+A concept that renders something gives **every component, directive, and pipe its own folder** under `<concept>/ui/<kind>/`, with an `index.ts` and a `testing/` — the canonical UI folder template (section 10.2) applied inside the concept. `models/`, `utils/`, `constants/`, and `options/` stay siblings of `ui/` at the concept root, so a shared concept reads like a feature. Nested subcomponents are not nested under their parent: they are sibling folders under `ui/components/`, and their own barrel keeps them addressable.
+
+A concept with **no UI** creates no `ui/` and stays flat (a validator, a util, a type, or a constants file plus their barrel — like `core/boot-readiness`): `initials`, `match-fields`, `table-card-shell`, `tag`, `tag-severity`. Illustrative concepts in this codebase: `tag`, `tag-severity`, `empty-state`, `error-state`, `board`, `calendar`, `chat`, `infinite-scroll`, `match-fields`, `initials`, `nav-row`, `table-card-shell`, `toast`, `splash-screen`, `theme-switcher`, `logo`.
 
 **Prefer PrimeNG over a shared wrapper.** A `shared` component that exists only so call sites avoid repeating PrimeNG markup does not earn its place: use the PrimeNG component directly at each call site and accept the duplication. A wrapper is justified only when PrimeNG genuinely cannot express the need — a capability gap (`board`'s per-drop validation predicate, `calendar`'s scheduler, `toast`'s stacking deck), a rendering shape PrimeNG has no component for (`empty-state`, `error-state`), or an accessibility pattern its components get wrong for the context (`nav-row`, which must not be a `role="menu"`). Style through the design-token preset in `core/primeng/presets/` rather than re-skinning components with `[pt]` at every call site; reserve `[pt]` for structural adjustments (`table-card-shell`) and for ARIA that PrimeNG omits.
 
@@ -771,7 +784,7 @@ Suffixes that must **not** be introduced:
 - `.dto.ts` — API DTOs are `…-input.interface.ts` / `…-output.interface.ts`,
 - `.page.ts` inside `src/app` — pages are components (`<page>.component.ts`); the `.page.ts` suffix is reserved for Playwright page objects under `e2e/support/pages/`,
 - bare `types.ts` or `constants.ts` without a concept prefix — existing occurrences are transitional,
-- `.pipe.ts` is currently unused; if a pipe is ever added it takes `.pipe.ts` inside its own `shared/<concept>/` folder.
+- `.pipe.ts` is currently unused; if a pipe is ever added it takes `.pipe.ts` inside its own folder under `shared/<concept>/ui/pipes/<name>/`.
 
 ### 9.3 Classes and symbols
 
@@ -906,7 +919,7 @@ If a component becomes domain-free and reusable across features, move it to its 
 
 #### Canonical UI folder template
 
-The structure below is the default convention for **any** UI artifact folder in the app — feature `ui/components/`, `ui/tables/`, `ui/dataviews/`, `ui/forms/`, `ui/dialogs/`, `ui/drawers/`, `shared/<concept>/`, and layout shell components:
+The structure below is the default convention for **any** UI artifact folder in the app — feature `ui/components/`, `ui/tables/`, `ui/dataviews/`, `ui/forms/`, `ui/dialogs/`, `ui/drawers/`, `shared/<concept>/ui/<kind>/`, and layout shell components. A shared concept applies it under its own `ui/`, where the admitted kinds are `components/`, `directives/`, and `pipes/` (section 8.5):
 
 ```text
 ui/<kind>/
@@ -2040,7 +2053,7 @@ Anti-patterns:
 - putting feature business services under `@core/api`,
 - putting feature models under `@core/api/models`,
 - putting domain-aware widgets under `shared/`,
-- reintroducing type-first buckets in `shared` (`shared/components`, `shared/utils`, `shared/models`, …) instead of one folder per concept (section 8.5),
+- reintroducing type-first buckets **at the root of** `shared` (`shared/components`, `shared/utils`, `shared/models`, …) instead of one folder per concept (section 8.5) — the kind buckets inside a concept's own `ui/` (`<concept>/ui/components/`, `<concept>/ui/directives/`) are the sanctioned shape, not a violation,
 - importing a component implementation file such as `@features/<feature>/ui/components/<name>/<name>.component` from outside its own local folder,
 - importing another feature's `data-access/services/` folder as if it were a public API,
 - importing another feature's `data-access/adapters/` folder as if it were a shared API,

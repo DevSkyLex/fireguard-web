@@ -1,1 +1,1 @@
-export { InfiniteScrollDirective } from './infinite-scroll.directive';
+export { InfiniteScrollDirective } from './ui/directives/infinite-scroll';

@@ -1,1 +1,1 @@
-export { NavRow } from './nav-row.component';
+export { NavRow } from './ui/components/nav-row';

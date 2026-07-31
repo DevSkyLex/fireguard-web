@@ -11,10 +11,26 @@ template), §6.4 (domain-agnosticism test), §2.8 (usage locality).
 ## Layout — concept-first
 
 One self-contained folder per concept, exactly like `core/<concern>/`. No
-type-first buckets (`components/`, `utils/`, `models/`, …). A small concept
-stays flat; a large one grows the optional sub-buckets of the canonical
-template (`components/`, `models/`, `options/`, `constants/`, `utils/`,
-`testing/`).
+type-first buckets **at this root** (`components/`, `utils/`, `models/`, …) —
+they belong one level lower, inside a concept's own `ui/`.
+
+A concept that renders something gives every component, directive, and pipe its
+own folder under `<concept>/ui/<kind>/<name>/`, with an `index.ts` and a
+`testing/`; `models/`, `utils/`, `constants/`, `options/` stay siblings of `ui/`
+at the concept root, so a concept reads like a feature:
+
+```text
+board/
+  index.ts                       # the only external entry point
+  ui/
+    components/board/            # index.ts + .component.ts + .component.html + testing/
+    directives/board-card/       # index.ts + .directive.ts
+    directives/board-column-header/
+  models/
+```
+
+A concept with **no UI** creates no `ui/` and stays flat — `initials`,
+`match-fields`, `table-card-shell`, `tag`, `tag-severity`.
 
 | Concept                         | What it is                                                                       |
 | ------------------------------- | -------------------------------------------------------------------------------- |
@@ -84,5 +100,6 @@ Move a unit here only when all of the following hold:
    used only by one feature belongs to that feature (§2.8),
 4. for UI: it is generic **by design** (may precede its second consumer);
    for `utils`/`constants`/`options`: several features already consume it (§2.8),
-5. it gets its own concept folder with an `index.ts` barrel,
+5. it gets its own concept folder with an `index.ts` barrel — and, for a UI unit,
+   its own folder under `<concept>/ui/<kind>/<name>/` with a local `index.ts`,
 6. its specs live in `testing/` folders next to their subjects.

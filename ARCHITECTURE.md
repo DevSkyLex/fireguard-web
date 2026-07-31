@@ -2074,7 +2074,7 @@ What to test, per unit type:
 Where and how:
 
 - unit specs live in a `testing/` folder beside the subject, named `<subject-file>.spec.ts` (naming in section 9.9); the `testing/` folder also hosts reusable local fixtures and `.mock.ts` doubles,
-- run specs with `npx ng test --watch=false --include="<glob>"` — never with bare `vitest`, which misses the project globals,
+- run specs with `npx ng test --watch=false --include="src/app/<area>/**/*.spec.ts"` — never with bare `vitest`, which misses the project globals. `--include` is the **spec-discovery glob**, not a path filter: it must end in `*.spec.ts`. A directory glob such as `--include="src/app/shared/**"` makes the runner treat every `.html` and `.component.ts` under it as a test entry and fails with `No loader is configured for ".html" files`,
 - the quality gate is `npm run quality` (format check, oxlint, tests, strict build); run the narrowest useful check first and widen as the blast radius grows,
 - browser-level flows live in the Playwright suite under `e2e/` (`e2e/<area>/<scenario>.spec.ts`, page objects in `e2e/support/pages/`); use e2e for what unit specs cannot prove (visual, responsive, offline, multi-page flows).
 

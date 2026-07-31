@@ -70,7 +70,7 @@ Run the narrowest useful check first, widening only as the blast radius grows:
 ```bash
 npm run format        # oxfmt — always run after editing
 npm run lint          # oxlint --tsconfig tsconfig.json
-npx ng test --watch=false --include="<glob>"   # targeted feature specs
+npx ng test --watch=false --include="src/app/<area>/**/*.spec.ts"   # targeted specs
 npm run build         # validates strict Angular templates
 ```
 
@@ -78,6 +78,11 @@ npm run build         # validates strict Angular templates
 
 > ⚠️ Run feature specs with `npx ng test`, **not** bare `npx vitest` — the bare
 > runner misses project globals and fails with "describe is not defined".
+>
+> ⚠️ `--include` is the **spec-discovery glob**, not a path filter — it must end
+> in `*.spec.ts`. A directory glob (`--include="src/app/shared/**"`) makes the
+> runner treat every `.html` and `.component.ts` under it as a test entry and
+> fails with `No loader is configured for ".html" files`.
 
 ## After changing code
 

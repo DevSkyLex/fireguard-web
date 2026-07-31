@@ -806,7 +806,7 @@ Suffixes that must **not** be introduced:
 - `.dto.ts` — API DTOs are `…-input.interface.ts` / `…-output.interface.ts`,
 - `.page.ts` inside `src/app` — pages are components (`<page>.component.ts`); the `.page.ts` suffix is reserved for Playwright page objects under `e2e/support/pages/`,
 - bare `types.ts` or `constants.ts` without a concept prefix — existing occurrences are transitional,
-- `.pipe.ts` is currently unused; if a pipe is ever added it takes `.pipe.ts` inside its own folder under `shared/<concept>/ui/pipes/<name>/`.
+  `.pipe.ts` is **not** in that list — it is permitted but unused. No `*.pipe.ts` exists in `src/app` today; if a pipe is ever added it takes `.pipe.ts` inside its own folder under `shared/<concept>/ui/pipes/<name>/`, and the same change moves it into the suffix table above and states its class-suffix rule in section 9.3 (section 14.3).
 
 ### 9.3 Classes and symbols
 

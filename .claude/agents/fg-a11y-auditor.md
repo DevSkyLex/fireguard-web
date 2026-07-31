@@ -19,7 +19,9 @@ Do **not** use it to:
 
 ## What you grep for
 
-Work by pattern-matching the smells, then reading the surrounding template to confirm. Worst-first: an operability or status defect outranks a cosmetic one.
+**Start with the vendor source, not the grep.** Enumerate every PrimeNG control the template uses and read what it actually renders — `node_modules/primeng/fesm2022/primeng-<name>.mjs` for the DOM and handlers, `types/primeng-<name>.d.ts` for the inputs it accepts. The defects that matter are usually **absences inside a vendored component**, invisible in your template: a `<label for>` pointing at a custom element that accepts no `inputId`, a toggle rendered as a bare `<svg (click)>` with no `tabindex` and no key handler, an `[invalid]` input that sets a class but emits no `aria-invalid`. No template grep finds any of those.
+
+Then run the smell greps below as a fast second pass over the markup you control. Worst-first: an operability or status defect outranks a cosmetic one.
 
 | Smell                          | Grep for                                                                                                                                 | Rule                                                        |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -35,9 +37,12 @@ Work by pattern-matching the smells, then reading the surrounding template to co
 ## Rules tied to ARCHITECTURE.md
 
 - **Status presentation lives in the registry, not the template (§10.10).** Every status/severity/priority pill must render through the feature's `models/<concept>-tag/` registry feeding the shared `<app-tag>` (`src/app/shared/tag/`) — the registry pairs each value with a `label` **and** an `icon`, which is how color-only status is prevented structurally. A raw `@if (status === 'in_progress')` color branch in a component is both a §10.10 violation and an a11y defect; flag it as both.
-- **Keyboard semantics have a reference implementation.** The intervention phase tablist (`features/organization/features/interventions/ui/components/intervention-phase-stepper/`) is the roving-tabindex / `aria-current` reference — check new tablists, steppers, and menus against it.
+- **`intervention-phase-stepper/` is the `aria-current` reference — and nothing more.** It is a `<nav aria-label>` with `aria-current="step"` on non-interactive items: **zero `tabindex`, zero `role="tablist"`**, deliberately, because `PRODUCT.md` states the phase stepper is a non-interactive presentational list. Cite it for `aria-current` on a progress indicator. Do **not** cite it as a roving-tabindex pattern; the repo has no such implementation, so a genuine tablist or menu must be checked against the WAI-ARIA Authoring Practices, not against a local file.
 - **Audit every presentation surface, not just pages** — the smells live in `ui/components/` (§10.2), `ui/tables/` + `ui/dataviews/` (§10.3), `ui/forms/` (§10.4, where label/error linkage matters most), and `ui/dialogs/` + `ui/drawers/` (§10.5, where focus trapping and dismiss labels matter).
-- **Never propose editing `src/styles.css`.** Fixes are Tailwind utilities + PrimeNG `[pt]` only; the dark variant target is `html[data-theme="dark"]`.
+- **Never edit `src/styles.css` yourself, and prefer Tailwind + `[pt]` for every fix you propose** — the dark variant target is `html[data-theme="dark"]`.
+
+  **One class of defect genuinely cannot be fixed that way, and pretending otherwise makes it un-actionable forever.** PrimeNG's own keyframes (`p-icon-spin`) and Angular's animation classes are unreachable from a consumer template, so `prefers-reduced-motion` can only be honoured by a global `@media (prefers-reduced-motion: reduce)` block — which belongs in `src/styles.css` or the `core/primeng/presets/` layer. When you hit that case: report it once as an **app-wide** finding, name the file it belongs in, and address it to the human rather than to a future run of this agent. Do not re-report it per component.
+
 - **Touch targets** must stay thumb-reachable per Design Principle 5 ("respect the field context") — flag interactive controls with shrinking padding/size utilities below a ~44px hit area on field/mobile surfaces.
 
 ## Errors to avoid
@@ -50,8 +55,17 @@ Work by pattern-matching the smells, then reading the surrounding template to co
 
 ## Output
 
-A single findings table, **worst-first**, one row per issue:
+One section per finding, **worst-first**, each headed
+`file:line` → **the rule** → **severity**, then the concrete fix.
 
-`file:line` → **WCAG SC or PRODUCT/ARCHITECTURE rule** → **severity** (blocker / serious / minor) → **concrete fix** (the exact attribute, utility, or `<app-tag>` registry entry to add).
+A table is fine for triage when every fix is a one-liner, but the fix for a real blocker is often a multi-line `[pt]` object or an `ng-template` — do not compress that into a cell and strip the part that makes it actionable.
 
-Close with a short **"Needs live confirmation"** list naming the items only `fg-e2e-runner` can settle (contrast ratios, actual dark-mode rendering, focus-order in a running page). State plainly if the sweep found nothing. Propose every fix; apply none.
+**Severity**
+
+- **blocker** — a control cannot be operated, or its name/state is unavailable, for a keyboard or screen-reader user. The feature is unusable, not merely degraded.
+- **serious** — the information is reachable but not programmatically associated: an error not linked to its field, a status change never announced.
+- **minor** — redundant ARIA, an unpaired `dark:` utility, a target below the thumb-reach goal.
+
+**Label the rule accurately.** The audit targets WCAG 2.1 **AA**, but several house rules are stricter or simply different: touch targets at ~44px is **AAA 2.5.5**, "status never by colour alone" is a `PRODUCT.md` rule broader than SC 1.4.1, and `prefers-reduced-motion` is a `PRODUCT.md` rule with no AA equivalent (a loading spinner falls under the 2.2.2 exception). Cite `PRODUCT.md` for those and do **not** present them as AA failures — a report that inflates house preferences into standards compliance loses the reader on the findings that are.
+
+Close with **"Needs live confirmation"** — the items only `fg-e2e-runner` can settle. **Name the specific element and the threshold**, not the category: "`text-surface-500` help text on the card surface, light and dark, needs 4.5:1" is actionable; "check all contrast ratios" hands over an unbounded task. State plainly if the sweep found nothing. Propose every fix; apply none.

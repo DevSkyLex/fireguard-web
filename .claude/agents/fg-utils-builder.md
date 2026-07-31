@@ -29,12 +29,16 @@ Three rules that catch the usual mistakes:
 
 Place at the **lowest scope covering all consumers**, and no higher:
 
-| Consumers                         | Scope                                                          |
-| --------------------------------- | -------------------------------------------------------------- |
-| one component / dataview / form   | that group's **local** `utils/` inside its unit folder (§10.2) |
-| several units of one feature      | `features/<f>/utils/`                                          |
-| several features, domain-agnostic | its own `shared/<concept>/` (§8.5)                             |
-| app-wide infrastructure           | `core/<concern>/utils/`                                        |
+| Consumers                                                          | Scope                                                                                            |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| **zero** — the named consumers turn out not to render this         | **do not create it.** Report what you checked                                                    |
+| one component / dataview / form                                    | that group's **local** `utils/` inside its unit folder (§10.2)                                   |
+| one store, one guard, one resolver                                 | the owning slice's or `http/`-local folder — same rule, keyed to whichever single consumer it is |
+| several units of one feature, in any mix of `ui/` `state/` `http/` | `features/<f>/utils/`                                                                            |
+| several features, domain-agnostic                                  | its own `shared/<concept>/` (§8.5)                                                               |
+| app-wide infrastructure                                            | `core/<concern>/utils/`                                                                          |
+
+**Verify the named consumers before placing anything.** "The dashboard and the members page need this" is a claim, not a fact — open both and confirm they render what the helper returns, with the shape it returns. If they do not, the count is zero and the answer is the first row.
 
 **Start local.** §2.8 forbids pre-hoisting to feature level "in case" another consumer appears — that is a listed §16 anti-pattern. Then apply the **rule of three** (§2.9): a second consumer justifies _lifting_ a unit that already earns its existence; it does **not** justify _inventing_ a new abstraction. If you cannot point at a third real usage, inline it and say so.
 
@@ -73,16 +77,34 @@ Why folder-per-util, in §10.13's own words: _"Each helper then owns its spec, s
 
 The spec needs no `TestBed`: import the function and assert directly, covering the edge cases — `null`, `undefined`, empty input, boundary values, and the fallback branch.
 
-## Exemplars — read one before writing
+## Exemplars — read one before writing, and read the rules over the exemplar
 
-- complete reference (function + spec + barrel line): `src/app/features/organization/utils/quota-status/`
-- another in the same folder: `src/app/features/organization/utils/read-route-param/`
+- **complete reference** (function + spec + barrel line): `src/app/features/organization/utils/quota-status/` — the only feature util that actually carries its `testing/`.
 - flat constants for contrast: `src/app/features/organization/constants/`
 - core-level, same shape: `src/app/core/api/utils/`
 
+> **The siblings of `quota-status/` are transitional — do not imitate them.**
+> `read-route-param/` and `get-organization-initials/` have **no `testing/`**, which this
+> definition lists as an error. `readRouteParam` has **one** consumer yet sits at feature
+> level — the pre-hoisting anti-pattern. `getOrganizationInitials` has **zero** consumers
+> and is exported through the barrel anyway. They predate the folder-per-util rule and are
+> not precedent. **Where an exemplar and the written rule disagree, the rule wins** — say so
+> in your report rather than silently following the looser standard.
+
 ## Hand off
 
-Needs DI or HTTP → **fg-service-builder** · belongs in a store → **fg-signal-store** · a `type`/`interface` fell out of the work → **fg-feature-builder** (`models/`) · a template-only transformation → **fg-pipe-builder** (which will usually tell you a `computed()` is right) · deeper specs → **fg-web-test-writer** · placement verdict → **fg-architecture-reviewer**.
+Needs DI or HTTP → **fg-service-builder** · belongs in a store → **fg-signal-store** · a `type`/`interface` fell out of the work → **fg-feature-builder** (`models/`) · deeper specs → **fg-web-test-writer** · placement verdict → **fg-architecture-reviewer**.
+
+**You own display-formatting helpers; do not route them away.** A pure function that a
+template consumes through a `computed()` is a util, and that is the default. Hand off to
+**fg-pipe-builder** only when the transformation must be applied **directly in many
+templates across at least two features** — its own three-call-site gate. Below that bar it
+is yours, and a pipe would be the wrong shape.
+
+If the helper returns **user-visible text** — a `—` placeholder, an "Unlimited" label —
+that string belongs in the template with `$localize` and an explicit id (§9.10), not in the
+util. Return the data; let the template phrase it. A util that returns display copy cannot
+be translated, and this codebase maintains real `fr`/`es` catalogs.
 
 ## Errors to avoid
 
@@ -110,4 +132,12 @@ npm run build
 
 ## Output
 
-Report: **the folder decision and the scope decision, each with the rule that drove it**, whether an existing helper already covered the need, the files created (absolute paths), the `utils/index.ts` line you added, and the format/lint/test/build results. If you declined to extract because the third usage does not exist yet, say so plainly — that is a valid outcome.
+**If you created it** — the folder decision and the scope decision, each with the rule that drove it · whether an existing helper already covered the need · the files created (absolute paths) · the `utils/index.ts` line you added · the format/lint/test/build results.
+
+**If you declined** — that is a first-class outcome, and it has its own shape. There is no scope decision to report, because nothing was placed:
+
+- the folder the unit _would_ have taken, and why (one line),
+- **the real consumer count and how you established it** — which files you opened, and what they actually render,
+- the rule that decided the decline (§2.9 rule of three, or zero consumers),
+- what you recommend instead, concretely enough to act on,
+- no format/lint/test results: nothing changed, and running the gate on an unchanged tree proves nothing. Say that explicitly rather than omitting the section.

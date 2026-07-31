@@ -22,7 +22,12 @@ Ask before building. In a signals codebase a pipe is rarely the answer:
 | Reusable pure transformation with no template involvement                                                                                  | `utils/<name>/<name>.utils.ts` (§10.13) — call it from a `computed` |
 | The same transformation applied across **many** templates in **several** features, where a computed at every call site would be pure noise | **a pipe**                                                          |
 
-Apply the **rule of three** (§2.9): do not create a shared abstraction until the third real usage. If you cannot name three real call sites across at least two features, say so and recommend the alternative instead of building the pipe. Angular's built-ins (`date`, `currency`, `decimal`, `percent`, `async`, `keyvalue`, `json`, `slice`) already cover the common cases — check before inventing.
+Two gates, and a pipe must clear both:
+
+- **Rule of three (§2.9)** — do not create a shared abstraction until the third real usage. Name three real call sites across at least two features, in the code, or recommend the alternative instead.
+- **§8.5's earn-its-place test** — _"a `shared` component that exists only so call sites avoid repeating markup does not earn its place."_ A pipe is a shared unit; the same test applies. Repetition alone is not a reason.
+
+Angular's built-ins (`date`, `currency`, `decimal`, `percent`, `async`, `keyvalue`, `json`, `slice`) already cover the common cases — check before inventing, and check whether the repo already uses one. Check the CSS answer too: for shortening text, `truncate` and `line-clamp-N` are width-aware, keep the full string in the DOM for search and screen readers, and cannot split an emoji — a character-count pipe does none of that.
 
 ## Step 1 — placement
 
@@ -37,6 +42,8 @@ shared/<concept>/ui/pipes/<name>/
 
 If the pipe completes an existing concept, add `ui/pipes/` inside that concept rather than creating a new one.
 
+**If it belongs to no existing concept, stop and reconsider.** A brand-new concept whose entire contents is one pipe gives `shared/<name>/ui/pipes/<name>/` — four levels for a single file — while §8.5 says a concept with no other UI _stays flat_. That mismatch is a signal, not a formatting problem: a generic string helper attached to no concept is usually a `utils/` function called from a `computed()`. Either attach it to a real concept, or hand it to **fg-utils-builder** and say why.
+
 ## Step 2 — the class
 
 Derived from the naming rules, since no in-repo instance exists:
@@ -49,7 +56,8 @@ export class ExampleNamePipe implements PipeTransform {
 ```
 
 - file `<name>.pipe.ts`, folder `kebab-case` (§9.1, §9.2),
-- class **keeps the `Pipe` suffix** — §9.3 drops `Component` from components but keeps `Directive` on directives; a pipe follows the directive, not the component,
+- class **keeps the `Pipe` suffix**. §9.3 says nothing about pipes; this is a judgment by analogy — components drop `Component`, directives keep `Directive`, and a pipe patterns with the directive. Record it in §9.3 as part of your change (below) rather than leaving it inferred,
+- the decorator `name:` is `camelCase` and prefixed `app` — also a judgment, **not** derived from §9.4, which governs _selectors_ and does not reach a pipe name. The prefix earns its place by disambiguating from Angular's built-ins (`date`, `slice`, `async`); say so rather than citing a section that does not cover it,
 - **no `standalone: true`** — it is the Angular 21 default and appears nowhere in this codebase,
 - **pure** — never set `pure: false`; an impure pipe runs on every change-detection cycle and defeats the `OnPush` discipline §1.1 mandates on every component,
 - no DI, no side effects, no `inject()`. A pipe needing a service is a `computed` over that service instead,
@@ -62,7 +70,10 @@ The `name:` is what templates type, so it is `camelCase`. Prefix it with `app` t
 
 In the same change, edit `ARCHITECTURE.md`:
 
-- **§9.2** — the final bullet of the "Suffixes that must not be introduced" list currently reads _"`.pipe.ts` is currently unused; if a pipe is ever added it takes…"_. That sentence is now wrong. Move `.pipe.ts` into the **suffix table** as a live suffix with your pipe as the example, and drop the "currently unused" bullet.
+- **§9.2** — add `.pipe.ts` to the **suffix table** as a live suffix, with your pipe as the example, and delete the trailing bullet that reads _"`.pipe.ts` is currently unused; if a pipe is ever added it takes…"_.
+
+  Note what you are actually fixing: that bullet sits at the end of the list headed **"Suffixes that must not be introduced"**, yet `.pipe.ts` is not banned there — it is a conditional _placement_ instruction mis-filed under a ban list. So this is not a clean move between two correct places; you are also correcting a pre-existing filing error. Say so in your report so the next reader knows the list changed meaning, not just contents.
+
 - **§8.5** — remove the `# same shape, if a pipe is ever added` annotation on `pipes/` in the `shared/` tree.
 - **§9.3** — add pipes to the class-suffix list ("directives keep the `Directive` suffix" → say the same for pipes), since nothing states it today.
 - If the pipe lives in a new concept, add it to the illustrative concept list in §8.5 and to `src/app/shared/README.md`.

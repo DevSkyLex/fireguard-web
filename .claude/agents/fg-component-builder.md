@@ -58,7 +58,7 @@ Non-negotiables:
 
 - **No `standalone: true`** — it is the Angular 21 default and appears nowhere in `src/app`.
 - **No `styleUrl` / `styles`** — Tailwind utilities + PrimeNG `[pt]`; the single `.css` in the app (`shared/toast`) is not precedent. Never touch `src/styles.css` (a hook blocks it).
-- **Class naming (§9.3)**: pages end in `Page`; other roles take their own suffix — `…Panel`, `…Card`, `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Drawer`, `…Chart`, `…Stepper`, `…Toolbar`; a generic widget may be a bare noun (`Board`, `Calendar`).
+- **Class naming (§9.3)**: pages end in `Page`; other roles take their own suffix — `…Panel`, `…Card`, `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Drawer`, `…Chart`, `…Stepper`, `…Toolbar`; a generic widget may be a bare noun (`Board`, `Calendar`). **The suffix list is illustrative, not closed** — §2.7 itself cites `NotificationBell`, a role noun that appears nowhere in it. When the role has no listed suffix, use the noun that names the role and keep it in step with the folder, since §9.4 derives the selector from the folder. Say in your report which you did and why.
 - **Members (§9.7)**: explicit access modifier + explicit type annotation + `readonly`. `public` for `input()`/`output()`, `protected` for anything the template reads, `private` for injected collaborators the template never touches.
 
 ```ts
@@ -71,6 +71,7 @@ private readonly feedback: FeedbackService = inject(FeedbackService);
 
 - Booleans are `is…`/`has…`/`can…`; overlay visibility is `<thing>Visible`; outputs are **past-tense or noun** (`submitted`, `cancelled`, `visibleChange`, `pageChange`) — never `submit`, never `onSubmit`. The `_` prefix is reserved for `withQueryState` internals.
 - **Every user-visible string is `$localize` with an explicit dotted id** (§9.10): `` $localize`:@@org.usage.atLimit:At limit` ``.
+- **Every new id is a translation debt.** `src/locale/messages.fr.xlf` and `messages.es.xlf` are actively maintained, and `npm run build` emits `No translation found` for any id missing from them. Do **not** invent French or Spanish copy — **list every id you introduced in your report** so the catalogs get filled deliberately.
 - JSDoc per class and per member — `@description` (one or two sentences), `@access`, `@since`, `@type`/`@param`/`@returns`, and `@author Valentin FORTIN <contact@valentin-fortin.pro>` on components. §14.4: keep it concise; never narrate the implementation.
 - Page/section root elements carry a kebab-case DOM `id` as the e2e hook (`id="organization-overview"`); `data-testid` is kebab-case prefixed by the owning component (§9.10).
 
@@ -84,6 +85,8 @@ private readonly feedback: FeedbackService = inject(FeedbackService);
 ## PrimeNG — look it up, do not guess
 
 Query the **primeng MCP** for the selector, props, events, `[pt]` keys, and a working example before writing markup: `search` → `get_component` → `get_example`, and `validate_usage` on the finished template.
+
+**If the MCP is unavailable**, do not guess and do not skip the step: read the installed package instead — `node_modules/primeng/types/primeng-<name>.d.ts` for props, `primeng-types-<name>.d.ts` for `[pt]` keys, and `node_modules/primeng/fesm2022/primeng-<name>.mjs` for what the component actually renders. That is the same source the version-skew note below makes authoritative anyway. Say in your report which route you took.
 
 > **Version skew you must respect.** The MCP serves **PrimeNG 22** docs; this project runs **PrimeNG 21.1.9**. The MCP is authoritative for _usage semantics_; `node_modules/primeng` on disk is authoritative for _what exists here_. If a prop or component looks unfamiliar, grep `node_modules/primeng` before relying on it, and say so in your report.
 
@@ -100,13 +103,17 @@ export { OrganizationUsagePanel } from './organization-usage-panel';
 
 Explicit named re-exports only — **never `export *`** (a hook blocks it). `ui/pages/` gets no barrel.
 
-## Exemplars — read one before writing
+**Add the concern-level line only when something outside the unit folder will import it.** The unit barrel (`<name>/index.ts`) always exists; the concern barrel (`<kind>/index.ts`) is a public surface, and `.claude/rules/barrels.md` is right that widening it is a deliberate act. A component built for one page, consumed through a relative import, does not need the concern-level line yet. Say which you did.
+
+## Exemplars — read one before writing, and read the rules over the exemplar
 
 - minimal shared: `src/app/shared/empty-state/ui/components/empty-state/`
 - shared with `host:` + router: `src/app/shared/nav-row/ui/components/nav-row/`
-- feature component, dark-mode pairs: `src/app/features/organization/ui/components/organization-usage-panel/`
 - presentational table (inputs/outputs only): `src/app/features/organization/ui/tables/organization-member-table/`
 - page (route input, scoped store, drawers): `src/app/features/organization/ui/pages/organization-members/`
+- feature component, dark-mode pairs: `src/app/features/organization/ui/components/organization-usage-panel/` — **copy its `dark:` pairing and nothing else.** It branches on a status enum inline (`status === 'full' ? … : status === 'near' ? …`) with no tag registry, which is the anti-pattern this file lists below. It is transitional.
+
+**Where an exemplar and the written rule disagree, the rule wins** — and say so in your report. An exemplar shows house style; it does not grant permission.
 
 ## Hand off
 
@@ -123,6 +130,10 @@ Rich PrimeNG surfaces → **fg-primeng-ui** · store logic → **fg-signal-store
 - A hard-coded user-visible string with no `$localize` id, or a computed Tailwind class string.
 - Emitting optional buckets nobody uses, or a spec placed next to the subject instead of in `testing/` (§16).
 - Branching on an enum value in the template instead of resolving it through the feature's `<concept>-tag/` registry (§10.10).
+
+  **If no registry exists yet for that enum**, you are allowed to create one — a single `models/<concept>-tag/<concept>-tag.util.ts` reusing `@shared/tag`'s `TagDescriptor`, mirroring `models/billing-tag/`, which is the lightest precedent in the repo. Do not build the full descriptor-interface + kind-type ceremony for one enum. Flag it explicitly in your report: it is a file outside your component's folder and a widening of `models/index.ts`, so the reviewer should see it as a deliberate choice rather than scope creep. If the enum is owned by another feature, stop and hand off instead.
+
+  §10.10 asks a registry resolver for "a graceful fallback for unknown values". That applies to a resolver fed **raw wire strings**. When the parameter is typed to a closed union and the map is total, a fallback branch is unreachable code and it hides a future widening that should be a compile error — prefer totality, and say you chose it.
 
 ## Validation
 

@@ -765,6 +765,14 @@
         <source>Password must be at least 8 characters.</source>
         <target>Le mot de passe doit contenir au moins 8 caractères.</target>
       </trans-unit>
+      <trans-unit id="auth.password.maxLength" datatype="html">
+        <source>Password cannot exceed 128 characters.</source>
+        <target>Le mot de passe ne peut pas dépasser 128 caractères.</target>
+      </trans-unit>
+      <trans-unit id="auth.password.pattern" datatype="html">
+        <source>Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character.</source>
+        <target>Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial.</target>
+      </trans-unit>
       <trans-unit id="auth.newPassword.confirmLabel" datatype="html">
         <source>Confirm Password</source>
         <target>Confirmer le mot de passe</target>
@@ -4027,6 +4035,10 @@
         <source> Choose what this intervention prepares. It drives the field workflow. </source>
         <target>Choisissez ce que cette intervention prépare. Cela détermine le flux terrain.</target>
       </trans-unit>
+      <trans-unit id="intervention.cf.objectiveGroup" datatype="html">
+        <source>Intervention objective</source>
+        <target>Objectif de l'intervention</target>
+      </trans-unit>
       <trans-unit id="intervention.cf.details" datatype="html">
         <source> Details </source>
         <target>Détails</target>
@@ -4806,6 +4818,14 @@
       <trans-unit id="intervention.list.searchEmptyTitle" datatype="html">
         <source>No results for “<x id="query" equiv-text="this.q().trim()"/>”</source>
         <target>Aucun résultat pour « <x id="query" equiv-text="this.q().trim()"/> »</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.collapseGroup" datatype="html">
+        <source>Collapse <x id="status" equiv-text="label"/> interventions</source>
+        <target>Réduire les interventions <x id="status" equiv-text="label"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.list.expandGroup" datatype="html">
+        <source>Expand <x id="status" equiv-text="label"/> interventions</source>
+        <target>Développer les interventions <x id="status" equiv-text="label"/></target>
       </trans-unit>
       <trans-unit id="intervention.board.review" datatype="html">
         <source>Review</source>
@@ -5798,6 +5818,18 @@
         <source>At limit</source>
         <target>Limite atteinte</target>
       </trans-unit>
+      <trans-unit id="org.quotaStatus.ok" datatype="html">
+        <source>Within limit</source>
+        <target>Dans la limite</target>
+      </trans-unit>
+      <trans-unit id="org.quotaStatus.near" datatype="html">
+        <source>Approaching limit</source>
+        <target>Proche de la limite</target>
+      </trans-unit>
+      <trans-unit id="org.quotaStatus.full" datatype="html">
+        <source>At limit</source>
+        <target>Limite atteinte</target>
+      </trans-unit>
       <trans-unit id="workspace.sidebar.settings.aria" datatype="html">
         <source>Organization settings</source>
         <target>Paramètres de l’organisation</target>
@@ -6156,6 +6188,10 @@
         <source>Invited by <x id="INTERPOLATION" equiv-text="{{ preview.inviterDisplayName }}"/></source>
         <target>Invité par <x id="INTERPOLATION" equiv-text="{{ preview.inviterDisplayName }}"/></target>
       </trans-unit>
+      <trans-unit id="org.invAccept.expiresAt" datatype="html">
+        <source> Expires on <x id="INTERPOLATION" equiv-text="{{ deadline | date: &apos;medium&apos; }}"/> </source>
+        <target>Expire le <x id="INTERPOLATION" equiv-text="{{ deadline | date: &apos;medium&apos; }}"/></target>
+      </trans-unit>
       <trans-unit id="org.invAccept.success" datatype="html">
         <source>Invitation accepted. Welcome aboard!</source>
         <target>Invitation acceptée. Bienvenue !</target>
@@ -6175,6 +6211,18 @@
       <trans-unit id="org.invAccept.notPending" datatype="html">
         <source>This invitation is no longer active. Ask an organization administrator to send a new one.</source>
         <target>Cette invitation n'est plus active. Demandez à un administrateur de l'organisation d'en envoyer une nouvelle.</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.expired" datatype="html">
+        <source>This invitation has expired. Ask an organization administrator to send you a new one.</source>
+        <target>Cette invitation a expiré. Demandez à un administrateur de l'organisation de vous en envoyer une nouvelle.</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.revoked" datatype="html">
+        <source>This invitation was revoked. Ask an organization administrator if you think this is a mistake.</source>
+        <target>Cette invitation a été révoquée. Si vous pensez qu'il s'agit d'une erreur, contactez un administrateur de l'organisation.</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.alreadyAccepted" datatype="html">
+        <source>This invitation has already been accepted. Sign in to open the workspace.</source>
+        <target>Cette invitation a déjà été acceptée. Connectez-vous pour ouvrir l'espace de travail.</target>
       </trans-unit>
       <trans-unit id="org.invAccept.error" datatype="html">
         <source>The invitation could not be accepted. It may have expired or been revoked.</source>

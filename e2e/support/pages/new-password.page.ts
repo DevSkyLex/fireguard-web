@@ -8,6 +8,9 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * challenge token and a verification code already in `PasswordResetStore`
  * (`passwordResetNewGuard`), so tests must arrive here through the forgot ->
  * verify flow rather than a direct `goto()`.
+ *
+ * `p-password` binds `[attr.id]="inputId"` on its own `<input>`, so
+ * `#newPassword` IS the input — never a wrapper holding one.
  */
 export class NewPasswordPage {
   public readonly page: Page;
@@ -17,8 +20,8 @@ export class NewPasswordPage {
 
   public constructor(page: Page) {
     this.page = page;
-    this.newPasswordInput = page.locator('#newPassword input');
-    this.confirmPasswordInput = page.locator('#confirmPassword input');
+    this.newPasswordInput = page.locator('input#newPassword');
+    this.confirmPasswordInput = page.locator('input#confirmPassword');
     this.submitButton = page.getByRole('button', { name: 'Reset Password' });
   }
 

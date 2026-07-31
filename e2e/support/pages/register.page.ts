@@ -5,6 +5,9 @@ import { expect, type Locator, type Page } from '@playwright/test';
  *
  * Page object for `/auth/register` (`RegisterPage` + `RegisterForm`,
  * `src/app/features/auth/ui/pages/register-page`).
+ *
+ * `p-password` binds `[attr.id]="inputId"` on its own `<input>`, so
+ * `#password` IS the input — never a wrapper holding one.
  */
 export class RegisterPage {
   public readonly page: Page;
@@ -20,8 +23,8 @@ export class RegisterPage {
     this.firstNameInput = page.locator('input#firstName');
     this.lastNameInput = page.locator('input#lastName');
     this.emailInput = page.locator('input#email');
-    this.passwordInput = page.locator('#password input');
-    this.confirmPasswordInput = page.locator('#confirmPassword input');
+    this.passwordInput = page.locator('input#password');
+    this.confirmPasswordInput = page.locator('input#confirmPassword');
     this.submitButton = page.locator('form button[type="submit"]');
   }
 

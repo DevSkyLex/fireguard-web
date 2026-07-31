@@ -7,6 +7,9 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * `src/app/features/auth/ui/pages/login-page`). Wraps the PrimeNG-driven
  * form controls behind intent-revealing methods so specs read as user
  * actions instead of raw selectors.
+ *
+ * `p-password` binds `[attr.id]="inputId"` on its own `<input>`, so
+ * `#password` IS the input — never a wrapper holding one.
  */
 export class LoginPage {
   public readonly page: Page;
@@ -21,7 +24,7 @@ export class LoginPage {
   public constructor(page: Page) {
     this.page = page;
     this.emailInput = page.locator('#login-page input#email');
-    this.passwordInput = page.locator('#login-page #password input');
+    this.passwordInput = page.locator('#login-page input#password');
     this.rememberMeCheckbox = page.locator('#login-page #remember_me');
     this.submitButton = page.locator('#login-page button[type="submit"]');
     this.forgotPasswordLink = page.getByRole('link', { name: /forgot password/i });

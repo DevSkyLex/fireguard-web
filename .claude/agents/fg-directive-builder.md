@@ -75,7 +75,14 @@ export class BoardCardDirective<T> {
 }
 ```
 
-The context interface is a **type**, so it lives in the concept's `models/` as `<name>-context.type.ts` and is re-exported through `models/index.ts` — never beside the directive (§10.10: `models/` is type-only, and a hook blocks runtime files there).
+The context type lives in the concept's `models/`, re-exported through `models/index.ts` — never beside the directive (§10.10: `models/` is type-only, and a hook blocks runtime files there).
+
+**The suffix follows the declaration, not the word "context" (§9.2):** `.interface.ts` for
+an `interface`, `.type.ts` for a `type` alias. Both are correct and both are in the repo —
+`board-card-context.type.ts` and `board-column-header-context.type.ts` declare `type`,
+`chat-message-context.interface.ts` declares `interface`. Pick the declaration that fits
+(an object shape you may extend → `interface`; a mapped, union or generic alias → `type`),
+then name the file after it. Do not rename an existing file to match the other exemplar.
 
 The host component reads it with `contentChild(BoardCardDirective)` and renders through `NgTemplateOutlet`. Give every context property an alias the template can bind (`$implicit` plus named keys) and cover each one in the spec — a missing alias fails silently at runtime, not at build.
 
@@ -105,7 +112,7 @@ Host component that consumes the directive → **fg-component-builder** · specs
 - Dropping the `Directive` suffix (components drop `Component`; directives keep theirs — §9.3).
 - A selector prefix other than `app`, or an element selector where an attribute selector belongs (§9.4).
 - Touching the DOM without an `isPlatformBrowser` guard, or forgetting teardown in `ngOnDestroy`.
-- Putting the context interface next to the directive instead of in the concept's `models/` (§10.10).
+- Putting the context type next to the directive instead of in the concept's `models/` (§10.10), or giving it a suffix that contradicts its declaration (§9.2).
 - Omitting `ngTemplateContextGuard` on a template-marker directive, leaving every `let-` binding untyped.
 - Creating a new `shared/<concept>/` when the directive completes an existing concept's contract.
 - A directive that injects a feature store or imports a feature model — that is not `shared` (§6.4).

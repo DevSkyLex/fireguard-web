@@ -56,7 +56,15 @@ state/<slice>/
 state/index.ts                # re-exports ONLY public stores/events
 ```
 
-Real examples to mirror: `features/auth/state/auth/`, `features/account/state/users/`, the aggregate `features/organization/state/organization-dashboard/` (parent store + `slices/` + `features/`). Cross-slice imports stay relative only inside the same `state/` concern; all wider consumers go through `state/index.ts`. Do not re-export every private helper.
+Real examples to mirror **for layout**: `features/auth/state/auth/`, `features/account/state/user/`, the aggregate `features/organization/state/organization-dashboard/` (parent store + `slices/` + `features/`). Cross-slice imports stay relative only inside the same `state/` concern; all wider consumers go through `state/index.ts`. Do not re-export every private helper.
+
+> **Mirror their folder shape, not their reads.** `auth/state/auth/auth.store.ts` derives
+> request state with **zero** `isCallPending` and **five** hand-rolled
+> `.status === 'pending'` comparisons — it is a live counter-example to the read rule three
+> lines above. It is still the right model for slice layout, barrels and event placement.
+> For the reads themselves, copy the rule, not the file, and do not treat the existing
+> comparisons as licence to write more (`AGENTS.md`: existing drift does not license new
+> drift).
 
 ## Errors to avoid
 

@@ -86,11 +86,37 @@ JSDoc on the class and every member.
 
 ## Styling law
 
-Tailwind v4 **literal** utility strings (so the scanner sees them) + PrimeNG `[pt]`
-passthrough only. **Never** edit `src/styles.css`. Dark is `html[data-theme="dark"]` —
-use the `dark:` variant, do not fork a component per theme. Status is never color-only:
-pair every severity color with a label or icon (WCAG 2.1 AA). Honor
-`prefers-reduced-motion` on any transition you add.
+**Never** edit `src/styles.css`. Beyond that, §8.5 sets an order — reach for these in
+sequence, and stop at the first that works:
+
+1. **The design-token preset**, `core/primeng/presets/` — the component's own look (colors,
+   radii, spacing, states). _"Style through the design-token preset rather than re-skinning
+   components with `[pt]` at every call site."_ A token fixed once is fixed everywhere.
+2. **Tailwind v4 literal utility strings** — layout, spacing and composition _around_ the
+   component. Literal, so the scanner sees them; never assembled at runtime.
+3. **`[pt]` passthrough — reserved, not routine.** §8.5 keeps it for two jobs: a
+   **structural** adjustment the preset cannot reach (`table-card-shell`), and **ARIA that
+   PrimeNG omits**. Reaching for `[pt]` to restyle a component is the call-site re-skinning
+   the rule exists to stop; if you find yourself repeating the same `[pt]` at three call
+   sites, it belongs in the preset.
+
+Dark is `html[data-theme="dark"]` — use the `dark:` variant, do not fork a component per
+theme. Status is never color-only: pair every severity color with a label or icon
+(WCAG 2.1 AA). Honor `prefers-reduced-motion` on any transition you add.
+
+## Every user-visible string is localized (§9.10)
+
+You write most of the app's visible text, so this is your obligation, not a reviewer's
+afterthought. Every label, placeholder, empty state, tooltip, `aria-label` and error
+message is `$localize` with an **explicit id** in a dotted `camelCase` namespace —
+`:@@org.members.loadError:`, `:@@inspectionStatus.draft:`. An auto-generated id is a
+defect: it changes when the string does and silently orphans the catalogue entry.
+
+Two more §9.10 hooks land in the markup you write: page and section roots carry a
+kebab-case DOM `id` (`id="organization-overview"`) that e2e uses for scoping, and any
+`data-testid` is kebab-case prefixed by the owning component
+(`account-password-request-submit`). Add them as you go — retrofitting them means
+rewriting the Playwright locators too.
 
 ## Prove dark mode and reach
 
@@ -118,6 +144,8 @@ structure.
 - Injecting a store or `data-access/` service into a table/dataview/form/dialog/drawer.
 - Hard-coding an enum's label/color/icon instead of the `<concept>-tag/` registry.
 - Editing `src/styles.css`, or dynamic class strings Tailwind cannot scan.
+- Re-skinning a component with `[pt]` at the call site when a preset token is the fix (§8.5).
+- A user-visible string that is not `$localize` with an explicit id (§9.10).
 - Color-only status; motion that ignores `prefers-reduced-motion`; a dark mode you never
   opened `colorScheme: "dark"` against.
 - Deep-importing another component's private `models/`/`utils/`, or misfiling a

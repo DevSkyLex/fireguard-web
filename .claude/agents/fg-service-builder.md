@@ -112,7 +112,12 @@ The store consuming the service → **fg-signal-store** · models/DTOs the servi
 - Reintroducing `hydra:`-prefixed collection keys (§11.7).
 - An adapter written as an injectable class, or one that calls `inject()`.
 - Re-exporting adapters or helpers through `data-access/index.ts` (§13.3).
-- Putting offline/sync/device services into `data-access/services/` instead of `services/` (§10.7).
+- Collapsing the two halves of "offline" into one bucket (§10.7). They split, and the split is the point:
+  - **persistence** — IndexedDB database service, repositories, outbox queues → `data-access/services/<concern>-offline/` (`intervention-offline/`, `messaging-offline/`),
+  - **orchestration** — sync, coordination, offline lifecycle, prefetch, device wrappers → feature-root `services/` (`intervention-sync/`, `intervention-sync-coordinator/`, `intervention-offline-lifecycle/`).
+
+  Sending a repository to `services/`, or a sync coordinator to `data-access/`, are both this error.
+
 - Adding a feature CRUD service under `core/api` (§16).
 - A spec without `httpMock.verify()`, or one asserting store state instead of transport.
 - Enum literals in a DTO drifting from the exact backend strings (§9.8).

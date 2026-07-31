@@ -40,8 +40,23 @@ Use this agent to author or repair `*.spec.ts` and run them. Hand off everything
 Run **only** via the Angular builder with a targeted glob:
 
 ```bash
-npx ng test --watch=false --include="src/app/features/<feature>/**/testing/*.spec.ts"
+npx ng test --watch=false --include="src/app/features/<feature>/**/*.spec.ts"
 ```
+
+Note where the glob ends. This distinction decides whether the run means anything:
+
+```text
+…/**/*.spec.ts            ← correct: reaches every spec
+…/**/testing/*.spec.ts    ← wrong: silently skips the flat ones
+```
+
+Colocated `testing/` folders are the convention, not the rule. §9.11 records two specs
+that sit flat beside their subject, in `inspection-form` and `non-conformity-form`, and a
+`testing/`-anchored glob cannot reach either. It does not error — it collects fewer files
+and reports green, which is the failure you never notice. Confirm the spec count is what
+you expect: a run that executed 0 specs also exits 0.
+
+Those two are a §9.11 transitional deviation. Run them; do not copy their placement.
 
 Never invoke `npx vitest` directly — the bare runner misses the project globals and every spec dies with `describe is not defined`. Run the **narrowest** glob that covers your change first (`npm run format` before, then the targeted `ng test`), widening only if the blast radius grows. Leave no `test.only`, `it.only`, or `fdescribe` in a committed spec — it silently skips the suite.
 

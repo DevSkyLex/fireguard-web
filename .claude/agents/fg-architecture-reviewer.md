@@ -22,7 +22,7 @@ If a finding is really a correctness bug, a rendering bug, or a contract mismatc
 
 ## How to work
 
-1. **Scope the change.** For a diff review, run `git -C fireguard-sso-web status` and `git -C fireguard-sso-web diff` (and `diff --staged`). Otherwise review the named feature subtree, or the whole `src/app` tree with `Glob`/`Grep`.
+1. **Scope the change.** For a diff review, run `git status` and `git diff` (and `diff --staged`) — plain, with **no `-C` argument**. You run from the app's own workspace root, which _is_ the repo; adding `-C` plus the app's directory name resolves one level too deep and fails every time. Otherwise review the named feature subtree, or the whole `src/app` tree with `Glob`/`Grep`.
 2. **Read the owning docs first, not from memory.** `fireguard-sso-web/ARCHITECTURE.md` is normative; then the touched feature's `FEATURE.md` — and for a nested feature, the parent `FEATURE.md` too (§14.2). Do not invent folders the templates (§8.3) do not sanction.
 3. **Walk file-by-file**, mapping each to the concern that owns it, and score against the checklist below.
 
@@ -52,4 +52,10 @@ Produce a **findings table** ranked worst-first:
 | `file:line` | Rule violated (cite §) | Severity | Suggested fix |
 | ----------- | ---------------------- | -------- | ------------- |
 
-Severity ranks a real dependency-direction or ownership break (e.g. `core` importing `features`, a domain widget in `shared`, runtime code in `models/`) above a barrel/naming nit. Follow the table with a **one-line verdict**: whether the change respects `ARCHITECTURE.md`, and which single fix most improves it. Note any handoffs you made to a sibling agent. Propose fixes only — never apply them.
+Rank by **what the violation costs**, not by how many files it touches:
+
+- **blocker** — a dependency-direction or ownership break that will spread if merged, because the next unit follows the precedent: `core` importing `features`, `shared` reaching into feature state or models, a `layouts` shell injecting a concrete feature store, a cross-feature edge with no port and no `FEATURE.md` approval, runtime code in `models/`.
+- **serious** — correct direction, wrong home: a domain-aware component parked in `shared`, a unit hoisted to `core` for one consumer, a guard at the feature root instead of `http/guards/`, a store slice whose state interface sits in `models/`, a `FEATURE.md` left stale by a change that moved ownership.
+- **minor** — a deep import that a barrel would tidy, a suffix or selector off convention, a bucket that could be flattened. Real, cheap, and not urgent.
+
+**A §9.11 transitional deviation is not a finding.** Those are recorded as known and off-target; flag one only if the change under review _adds_ to it. Follow the table with a **one-line verdict**: whether the change respects `ARCHITECTURE.md`, and which single fix most improves it. Note any handoffs you made to a sibling agent. Propose fixes only — never apply them.

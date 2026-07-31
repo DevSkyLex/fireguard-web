@@ -16,7 +16,8 @@ This subfeature does not own top-level organization selection. That remains in `
 ## Entry Points
 
 - Routes: `facilities.routes.ts`
-- Public API: `index.ts`
+- Public API: none. The feature root barrel was removed — it `export *`-ed
+  `state`, `models` and `data-access` and had no external consumer.
 
 ## Routes
 

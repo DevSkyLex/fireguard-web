@@ -1,1 +1,1 @@
-export * from './channel-title.resolver';
+export { channelTitleResolver } from './channel-title.resolver';

@@ -21,7 +21,9 @@ boundary, never through organization subfeature stores.
 ## Entry Points
 
 - Routes: `onboarding.routes.ts`
-- Public API: `index.ts` (state, models, data-access, guards, providers)
+- Public API: none. The feature root barrel was removed — it `export *`-ed the
+  state, models, data-access, guards and providers trees and had no external
+  consumer. Internal code imports the concern barrels directly.
 - Layout contribution: `withOnboardingShowcase()` (split layout showcase slot)
 
 ## Routes

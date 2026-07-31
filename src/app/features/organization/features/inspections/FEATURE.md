@@ -18,7 +18,8 @@ This subfeature does not own facility, equipment, or checklist data, even when i
 ## Entry Points
 
 - Routes: `inspections.routes.ts`
-- Public API: `index.ts`
+- Public API: none. The feature root barrel was removed — it `export *`-ed
+  `state`, `models` and `data-access` and had no external consumer.
 
 ## Routes
 

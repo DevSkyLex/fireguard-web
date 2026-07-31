@@ -17,7 +17,9 @@ This subfeature does not own top-level organization context or inspection workfl
 ## Entry Points
 
 - Routes: `equipments.routes.ts`
-- Public API: `index.ts`
+- Public API: `index.ts`, narrowed to `EQUIPMENT_TYPE_OPTIONS` — the only symbol
+  any external consumer imports (see below). It used to `export *` the state,
+  models, data-access and options trees.
 
 ## Routes
 

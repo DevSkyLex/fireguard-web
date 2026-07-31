@@ -19,7 +19,9 @@ Checklists are immutable after creation because the API does not expose an updat
 
 ## Entry Points
 
-- Public API: `index.ts` (re-exports `state`, `models`, `data-access`)
+- Public API: none. The feature root barrel was removed — it `export *`-ed
+  `state`, `models` and `data-access` and had no external consumer. Internal
+  code imports those concern barrels directly.
 
 No routes: the feature owns no `*.routes.ts` and no `ui/`.
 

@@ -65,6 +65,32 @@ that restated its rules would become a second source of truth that drifts.
 | `e2e-playwright`      | `ApiMock`, page objects, port 4273, the `id`/`data-testid` hooks                            |
 | `feature-md`          | the canonical headings and the four update triggers                                         |
 
+## Rules (`rules/`)
+
+Path-scoped instructions. Unlike a skill, a rule loads **automatically** whenever Claude reads a
+file matching its `paths:` glob — so it carries the few things that must never be got wrong on
+that kind of file, not the how-to.
+
+| Rule                  | Loads when you touch                       | Carries                                                                               |
+| --------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `components.md`       | `*.component.ts` / `.html`                 | no `Component` suffix, selector = folder name, `OnPush`, only a page injects a store  |
+| `directives-pipes.md` | `*.directive.ts` / `*.pipe.ts`             | the **opposite** suffix rule, `[appCamelCase]`, SSR guards, `ngTemplateContextGuard`  |
+| `state.md`            | `state/**`                                 | `patchState` only, `rxMethod` + `tapResponse`, `toStoreError` before `errorCallState` |
+| `data-access.md`      | `data-access/**`                           | extends `HydraApiService`, never `catch`/`map`, unprefixed Hydra keys                 |
+| `models-utils.md`     | `models/` `utils/` `constants/` `options/` | type-only `models/`, folder-per-util, no type in `utils/`                             |
+| `barrels.md`          | `**/index.ts`                              | never `export *`, narrow by default, which folders get none                           |
+| `testing.md`          | `*.spec.ts`                                | the boundary each unit owns, the harnesses, the `--include` trap                      |
+| `e2e.md`              | `e2e/**`                                   | `ApiMock`, port 4273, locate by `id`/`data-testid`, local-noon fixtures               |
+
+> `directives-pipes.md` has one deliberately unmatched pattern — `*.pipe.ts`. There are **zero
+> pipes** in this codebase; the rule exists to cadre the first one, including the
+> `ARCHITECTURE.md` edit it must carry.
+
+**Why this matters here:** `CLAUDE.md` `@`-imports `ARCHITECTURE.md`, which is **133 KB** and
+loads in full at every session start (152 KB in total with `AGENTS.md` and `PRODUCT.md`).
+Path-scoped rules are the documented way to cut that: instructions arrive only when Claude
+opens a matching file.
+
 ## MCP servers (`../.mcp.json`)
 
 | Server       | Command                        | Tools | Note                                                                                                                                                  |

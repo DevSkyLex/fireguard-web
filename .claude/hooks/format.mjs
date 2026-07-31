@@ -57,6 +57,12 @@ if (!FORMATTABLE.has(path.extname(normalized).toLowerCase())) process.exit(0);
 const root = (payload?.cwd ?? process.cwd()).replace(/\\/g, '/');
 if (!existsSync(path.join(root, '.oxfmtrc.json'))) process.exit(0);
 
+// The binary itself must be installed. `npx oxfmt` on a missing package exits
+// non-zero with "not recognized" rather than raising ENOENT, so execFileSync
+// cannot tell a missing toolchain from a real formatting failure — check first.
+const oxfmtBin = path.join(root, 'node_modules', '.bin', 'oxfmt');
+if (!existsSync(oxfmtBin) && !existsSync(`${oxfmtBin}.cmd`)) process.exit(0);
+
 try {
   execFileSync('npx', ['oxfmt', '-c', '.oxfmtrc.json', filePath], {
     cwd: root,

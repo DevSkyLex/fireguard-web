@@ -112,6 +112,12 @@ Open **`fireguard-sso-web/`** as the workspace root to activate it. Full guide i
 `/fg-util` · `/fg-primeng` `/fg-store` `/fg-arch-review` `/fg-a11y` `/fg-e2e` ·
 `/fg-quality` (the gate).
 
+**Rules** (`.claude/rules/`) are **path-scoped**: 8 files that load automatically when you open a
+matching file — `components`, `directives-pipes`, `state`, `data-access`, `models-utils`,
+`barrels`, `testing`, `e2e`. Each carries the few things that must never be got wrong on that
+kind of file. They exist to cut what this file `@`-imports: `ARCHITECTURE.md` alone is 133 KB,
+loaded in full at every session start.
+
 **Skills** carry the operational detail agents load on demand — `fireguard-naming`,
 `signalstore-recipes`, `primeng-styling`, `hydra-data-access`, `web-testing`,
 `e2e-playwright`, `feature-md`. They cite `ARCHITECTURE.md` by section rather than

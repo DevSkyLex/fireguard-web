@@ -1,6 +1,11 @@
-# Codex Instructions
+# Agent Instructions
 
-These instructions are mandatory for AI agents working in this repository.
+These instructions are mandatory for AI agents working in this repository. They are
+imported by [CLAUDE.md](CLAUDE.md) and apply to any assistant, not one vendor's.
+
+This file states the **architectural rules**. The Claude Code **tooling** — agents,
+commands, skills, MCP servers, hooks — is documented in
+[.claude/README.md](.claude/README.md).
 
 ## First Read
 

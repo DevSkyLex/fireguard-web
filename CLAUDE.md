@@ -89,22 +89,45 @@ npm run build         # validates strict Angular templates
 If a graphify graph exists (`graphify-out/`), run `graphify update .` and prefer
 `graphify query` for codebase questions.
 
-## Tooling available (from the monorepo root)
+## Tooling — this app ships its own `.claude/`
 
-This app no longer ships its own `.claude/`. All Claude Code tooling lives in the
-**monorepo-root** `G:\Projets\fireguard\.claude\` and is active when you work from
-that root. Web-focused subagents:
+Open **`fireguard-sso-web/`** as the workspace root to activate it. Full guide in
+[.claude/README.md](.claude/README.md).
 
-- `fg-architecture-reviewer` — review Angular code against this `ARCHITECTURE.md`
-  (ownership, dependency direction, type-only `models/`, ports, barrels; read-only).
-- `fg-feature-scaffolder` — scaffold a new feature / page / slice per §8.3/§8.4.
-- `fg-signal-store` — NgRx SignalStore work per §10.11 and `@core/request-state`.
-- `fg-primeng-ui` — PrimeNG tables/dataviews/forms/dialogs/drawers, Tailwind + `[pt]`,
-  dark mode; it uses the PrimeNG MCP for real props/events/tokens.
-- `fg-a11y-auditor` — static WCAG 2.1 AA + `PRODUCT.md` audit of templates (read-only).
-- `fg-web-test-writer` — unit/integration specs by architectural boundary
-  (`npx ng test --watch=false`, never bare `vitest`).
+**Builders — they create code.** One per kind of unit; each decides _placement_ first.
 
-Frontend gate and cross-cutting commands also live at the root: `/fg-web-quality`,
-`/fg-e2e`, `/fg-contract-check`, `/fg-map`. A PrimeNG MCP server is available — use
-it to look up component props, events, theming tokens and examples instead of guessing.
+- `fg-component-builder` — components, pages, tables, dataviews, forms, dialogs, drawers (§10.2).
+- `fg-directive-builder` — directives, behavioral or template-marker with a typed context guard.
+- `fg-pipe-builder` — pipes. There are **none** today, so the first one also updates §9.2.
+- `fg-feature-builder` — a feature or subfeature per §8.3/§8.4, plus its `FEATURE.md`.
+- `fg-service-builder` — transport / behavioral / access services and pure data adapters.
+- `fg-utils-builder` — pure helpers, constants, option sets per §10.13.
+
+**Specialists — they enrich or judge**, called after a builder or on existing code:
+`fg-primeng-ui` (rich PrimeNG markup) · `fg-signal-store` (§10.11) · `fg-web-test-writer`
+(specs) · `fg-e2e-runner` (Playwright, browser proof) · `fg-architecture-reviewer` and
+`fg-a11y-auditor` (both **read-only**).
+
+**Commands:** `/fg-component` `/fg-directive` `/fg-pipe` `/fg-feature` `/fg-service`
+`/fg-util` · `/fg-primeng` `/fg-store` `/fg-arch-review` `/fg-a11y` `/fg-e2e` ·
+`/fg-quality` (the gate).
+
+**Skills** carry the operational detail agents load on demand — `fireguard-naming`,
+`signalstore-recipes`, `primeng-styling`, `hydra-data-access`, `web-testing`,
+`e2e-playwright`, `feature-md`. They cite `ARCHITECTURE.md` by section rather than
+restating it, so there is no second source of truth.
+
+**MCP servers** (`.mcp.json`): `angular` (the **local** CLI, `--read-only`) · `primeng`
+· `playwright` · `context7`. 40 tools total.
+
+> **PrimeNG version skew.** `@primeng/mcp` serves **PrimeNG 22** docs; this project runs
+> **PrimeNG 21.1.9**. Pinning the MCP to its v21 line is not possible — it crashes on
+> startup against the current MCP SDK. So the MCP is authoritative for _usage semantics_,
+> and `node_modules/primeng` on disk is authoritative for _what exists here_. Grep the
+> installed package before trusting an unfamiliar prop.
+
+Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\fireguard\.claude\`):
+`/fg-contract-check`, `/fg-map`, `/fg-api-*`, `/fg-migrate`, `/fg-security-review`, plus
+pure-Bash `/fg-web-quality` and `/fg-e2e` wrappers usable from there. **None of the
+frontend agents, skills, or MCP servers load from the monorepo root** — a `.claude/` is
+read from the workspace root.

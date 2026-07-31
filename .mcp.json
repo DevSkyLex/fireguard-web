@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "angular": {
+      "command": "npx",
+      "args": ["ng", "mcp", "--read-only"]
+    },
+    "primeng": {
+      "command": "npx",
+      "args": ["-y", "@primeng/mcp@22"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  }
+}

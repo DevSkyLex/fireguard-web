@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enabledMcpjsonServers": ["angular", "primeng", "playwright", "context7"],
+  "permissions": {
+    "allow": [
+      "Bash(npm run format)",
+      "Bash(npm run format:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build)",
+      "Bash(npm run test:ci)",
+      "Bash(npm run quality)",
+      "Bash(npm run e2e:*)",
+      "Bash(npx ng test:*)",
+      "Bash(npx ng build:*)",
+      "Bash(npx oxfmt:*)",
+      "Bash(npx oxlint:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./src/environments/environment*.ts)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [{ "type": "command", "command": "node .claude/hooks/guard.mjs" }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [{ "type": "command", "command": "node .claude/hooks/format.mjs" }]
+      }
+    ]
+  }
+}

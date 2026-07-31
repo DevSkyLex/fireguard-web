@@ -440,6 +440,24 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/interventions` — the collection the list page reads for
+   * every one of its views.
+   *
+   * The board and the calendar share this one endpoint: the list store reads it
+   * paginated, the calendar store reads it again windowed by `plannedStartAt`.
+   * A single matcher therefore serves both, which is also what lets a spec
+   * switch views without re-mocking.
+   */
+  public async mockInterventionList(
+    interventions: ReadonlyArray<InterventionOutputFixture> = [interventionOutput()],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/interventions(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(interventions));
+    });
+  }
+
+  /**
    * Mocks the four workspace collection reads (`work-items`, `changes`,
    * `issues`, `activities`) as empty collections, enough for the detail page to
    * render its execute-phase workspace without any 404s.

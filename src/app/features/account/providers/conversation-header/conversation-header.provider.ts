@@ -1,4 +1,4 @@
-import { NotificationBell } from '@features/account/ui/components/notification-bell/notification-bell.component';
+import { NotificationBell } from '@features/account/ui/components';
 import type { WorkspaceLayoutConversationHeaderSlotFeature } from '@layouts/workspace-layout';
 
 /**

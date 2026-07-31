@@ -11,8 +11,7 @@ import type {
   OnboardingStepOutput,
 } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
-import { BillingService } from '@features/organization/data-access/services/billing/billing.service';
-import { PlanService } from '@features/organization/data-access/services/plan/plan.service';
+import { BillingService, PlanService } from '@features/organization/data-access';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
 import { OrganizationSetupService } from '@features/organization/setup';
 import { OnboardingWizard } from '../onboarding-wizard.component';

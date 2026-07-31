@@ -221,6 +221,28 @@ Additional rules:
 - a cross-feature dependency is acceptable only when one feature explicitly owns the business concern, exposes a stable port or documented public API for it, and the dependency is recorded in both features' `FEATURE.md` (section 14.2).
 - parent features and nested child features may depend on each other only through explicit public APIs; nested ownership does not justify private deep imports.
 
+### 4.1 The direction is lint-enforced
+
+Four of the rules above are checked mechanically by `oxlint` and fail `npm run lint` — and therefore CI, which runs it. They are declared as `no-restricted-imports` patterns in per-path `overrides` in `.oxlintrc.json`:
+
+| Enforced rule                                                           | Scope                |
+| ----------------------------------------------------------------------- | -------------------- |
+| `core` must not import `@features/**` or `@layouts/**`                  | `src/app/core/**`    |
+| `shared` must not import `@features/**`, **except** `@features/*/ports` | `src/app/shared/**`  |
+| `shared` must not import `@layouts/**`                                  | `src/app/shared/**`  |
+| a layout must not import a feature's `state` or `data-access`           | `src/app/layouts/**` |
+| nothing imports the non-existent root `@shared` barrel                  | `src/app/**`         |
+| nothing imports a core concern's `services/` implementation files       | `src/app/**`         |
+| nothing imports `ui/pages/`, which is internal-only (section 13.2)      | `src/app/**`         |
+
+This is the frontend counterpart of `deptrac` on the backend: the boundary stops being a convention a reviewer might notice and becomes a build failure. When you add a rule, add its `overrides` entry in the same change, and give the `message` the section number — the developer who trips it reads that message, not this document.
+
+A **cross-feature** dependency is enforced per pair, mirroring what the consuming feature's `FEATURE.md` records. `onboarding` is the worked example: it may consume exactly four organization surfaces (`setup`, `models`, `data-access`, `features/equipments`), and its `overrides` entry allows those and nothing deeper. To widen the dependency, record it in the `FEATURE.md` first, then extend the rule — the lint list and the document are meant to be read as one contract.
+
+This shape does not generalize to a single glob: "feature A must not deep-import feature B" needs one rule per approved pair, because a plain glob cannot express "any feature other than my own". Add a pair rule when a `FEATURE.md` documents a new cross-feature dependency; leave the rest to review (`fg-architecture-reviewer`).
+
+**Intra-feature** deep paths are deliberately _not_ linted. A component group importing its own `models/` or `utils/` through the alias is a section 13.1 style preference (relative would be better locally), not a boundary violation — the reach-down ban of section 2.8 concerns code _outside_ the owning folder, which a path glob cannot distinguish.
+
 ## 5. Published Contracts and Adapters
 
 A **port** is a behavioral contract expressed as a TypeScript interface and an `InjectionToken`. It has no implementation. It isolates a consumer from a concrete class.

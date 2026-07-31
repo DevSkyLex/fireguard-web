@@ -35,6 +35,118 @@
   },
   "overrides": [
     {
+      "files": ["src/app/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@shared"],
+                "message": "ARCHITECTURE.md 8.5 / 13.2 - `shared` has no root barrel. Import the concept: @shared/tag, @shared/empty-state, @shared/calendar."
+              },
+              {
+                "group": ["@core/*/services/**"],
+                "message": "ARCHITECTURE.md 13.2 - a core concern's barrel is its only entry point. Import @core/<concern>, never its services/ implementation files. The only sanctioned deep buckets are @core/api/models and @core/api/utils."
+              },
+              {
+                "group": ["@features/*/ui/pages/**", "@features/*/features/*/ui/pages/**"],
+                "message": "ARCHITECTURE.md 13.2 - `ui/pages/` is internal-only and has no public barrel. A page is a route entry; nothing imports it."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/app/core/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@features", "@features/**", "@layouts", "@layouts/**"],
+                "message": "ARCHITECTURE.md 4 - `core` must never depend on `features` or `layouts`. The one sanctioned inversion is a core-owned port that a feature implements and binds (section 5.6): define the port in core, let the feature bind the token."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/app/shared/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@features",
+                  "@features/**",
+                  "!@features/*/ports",
+                  "!@features/*/ports/**"
+                ],
+                "message": "ARCHITECTURE.md 4 / 8.5 - `shared` must not import feature state, services, models, or UI. The only feature code it may consume is a published port (interface + token) from the owning feature's ports/ barrel."
+              },
+              {
+                "group": ["@layouts", "@layouts/**"],
+                "message": "ARCHITECTURE.md 8.5 - `shared` must not import a layout. Slot-contribution providers that import a layout belong to the layout, not to shared."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/app/layouts/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@features/*/state",
+                  "@features/*/state/**",
+                  "@features/*/data-access",
+                  "@features/*/data-access/**",
+                  "@features/*/features/*/state",
+                  "@features/*/features/*/state/**",
+                  "@features/*/features/*/data-access",
+                  "@features/*/features/*/data-access/**"
+                ],
+                "message": "ARCHITECTURE.md 4 / 8.2 - a layout must not inject a concrete feature store or data-access service. Consume a published port instead, or receive the widget through a slot contribution."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/app/features/onboarding/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@features/organization/**",
+                  "!@features/organization/setup",
+                  "!@features/organization/models",
+                  "!@features/organization/data-access",
+                  "!@features/organization/features/equipments"
+                ],
+                "message": "ARCHITECTURE.md 4 / 14.2 - onboarding may consume exactly four organization surfaces, and they are the ones its FEATURE.md records: setup, models, data-access, and the equipments public API. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/**/*.spec.ts", "src/**/*.test.ts"],
       "plugins": ["typescript", "unicorn", "oxc", "vitest"],
       "env": {

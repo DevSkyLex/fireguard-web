@@ -1,7 +1,16 @@
 # FireGuard Web — Claude Code tooling
 
 This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspace root to
-activate it: 12 agents, 12 commands, 7 skills, 4 MCP servers, and 2 hooks.
+activate it: 12 agents, 12 commands, 7 skills, 8 rules, 4 MCP servers, and 2 hooks.
+
+> **This directory is also a plugin.** From the monorepo root,
+> `claude --plugin-dir ./fireguard-sso-web/.claude` loads the 12 agents and the commands
+> namespaced as `/fireguard-web:fg-component` and friends (~3 926 tokens per session,
+> measured with `claude plugin details`). It carries neither `.mcp.json` — a plugin reads
+> it from the plugin root, standalone needs it at the app root — nor `rules/`, which is not
+> a plugin component. Opening this directory as the workspace root remains the only way to
+> get everything. The manifest is `.claude-plugin/plugin.json`; plugin-mode hook wiring is
+> `hooks/hooks.json`. Nothing is duplicated between the two modes.
 
 Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\fireguard\.claude\`) —
 `/fg-api-module`, `/fg-api-quality`, `/fg-migrate`, `/fg-security-review`, `/fg-contract-check`,

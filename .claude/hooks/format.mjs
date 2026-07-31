@@ -19,6 +19,16 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// This file is `<app>/.claude/hooks/format.mjs`, so the app root is two levels up.
+// Deriving it from the script's own location rather than the payload cwd keeps the
+// hook correct in both modes: standalone (cwd IS the app root) and loaded as a plugin
+// from the monorepo root (cwd is the monorepo, and a cwd-based root would silently
+// find no .oxfmtrc.json and turn the hook into a no-op).
+const APP_ROOT = path
+  .resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
+  .replace(/\\/g, '/');
 
 const FORMATTABLE = new Set(['.ts', '.html', '.css', '.scss', '.json', '.mjs', '.js', '.md']);
 const SKIP_SEGMENTS = [
@@ -54,7 +64,7 @@ const normalized = filePath.replace(/\\/g, '/');
 if (SKIP_SEGMENTS.some((seg) => normalized.includes(seg))) process.exit(0);
 if (!FORMATTABLE.has(path.extname(normalized).toLowerCase())) process.exit(0);
 
-const root = (payload?.cwd ?? process.cwd()).replace(/\\/g, '/');
+const root = APP_ROOT;
 if (!existsSync(path.join(root, '.oxfmtrc.json'))) process.exit(0);
 
 // The binary itself must be installed. `npx oxfmt` on a missing package exits

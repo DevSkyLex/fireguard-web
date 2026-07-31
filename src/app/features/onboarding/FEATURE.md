@@ -51,10 +51,18 @@ mandatory.
   instead of keeping a local copy — the equipment type catalog is owned there.
 - The `select_plan` step proposes a subscription using the organization-owned,
   root-provided `PlanService` + `BillingService` (`@features/organization/data-access`)
-  and the billing/plan models — onboarding runs on its own top-level route
-  outside the dashboard's scoped `provideOrganizationFeature()`, so the step talks
-  to these root-provided services directly against the onboarding target
-  organization.
+  and the billing/plan types from `@features/organization/models` — onboarding runs on
+  its own top-level route outside the dashboard's scoped
+  `provideOrganizationFeature()`, so the step talks to these root-provided services
+  directly against the onboarding target organization.
+
+These four surfaces — `setup`, `models`, `data-access`, and
+`features/equipments` — are the **complete** set of organization code onboarding may
+consume, and the list is **lint-enforced**: `.oxlintrc.json` restricts
+`src/app/features/onboarding/**` to exactly them, so a deep import into an
+organization private path fails `npm run lint` and therefore CI. To widen the
+dependency, record it here first, then extend that rule (`ARCHITECTURE.md` §4.1).
+
 - Contributes `OnboardingShowcase` to the split layout showcase slot via the
   layout slot contract (`SplitLayoutShowcaseSlotFeature`), type-only import.
 

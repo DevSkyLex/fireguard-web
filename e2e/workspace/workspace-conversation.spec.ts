@@ -19,6 +19,7 @@ interface MessageRow {
     readonly code: string | null;
   }[];
   readonly attachments?: readonly { readonly id: string; readonly fileName: string }[];
+  readonly replyCount?: number;
 }
 
 /** Mocks the single-channel read the conversation page performs. */
@@ -67,7 +68,7 @@ function messagePayload(row: MessageRow): Record<string, unknown> {
     })),
     reactions: [],
     isSaved: false,
-    replyCount: 0,
+    replyCount: row.replyCount ?? 0,
     references: row.references ?? [],
     createdAt: row.createdAt,
     updatedAt: row.createdAt,
@@ -115,6 +116,76 @@ async function openConversation(page: Page): Promise<void> {
   await expect(page.getByTestId('channel-conversation')).toBeVisible();
 }
 
+/** Mocks the member directory the composer's mention picker offers from. */
+async function mockMembers(page: Page): Promise<void> {
+  await page.route(
+    new RegExp(`/api/organizations/${ORGANIZATION.id}/members(\\?.*)?$`),
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({
+          '@id': `/api/organizations/${ORGANIZATION.id}/members`,
+          '@type': 'Collection',
+          totalItems: 1,
+          member: [
+            {
+              '@id': `/api/organizations/${ORGANIZATION.id}/members/member-1`,
+              '@type': 'OrganizationMemberOutput',
+              id: 'member-1',
+              displayName: 'Amélie Rousseau',
+              roleNames: ['Manager'],
+              isActive: true,
+            },
+          ],
+        }),
+      });
+    },
+  );
+}
+
+/**
+ * Mocks a message's reply thread: the read, and the post that appends to it.
+ *
+ * Both share one URL and differ only by method — `GET /api/messages/{id}/replies`
+ * is the *only* way to see a reply, since the conversation listing excludes them.
+ */
+async function mockReplies(page: Page, parentId: string, rows: MessageRow[]): Promise<void> {
+  await page.route(
+    new RegExp(`/api/messages/${parentId}/replies(\\?.*)?$`),
+    async (route, request) => {
+      if (request.method() === 'POST') {
+        const posted: MessageRow = {
+          id: `r${rows.length + 1}`,
+          author: 'member-1',
+          createdAt: '2026-07-20T10:00:00+00:00',
+          body: String((request.postDataJSON() as { body?: string }).body ?? ''),
+        };
+        rows.push(posted);
+
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/ld+json',
+          body: JSON.stringify(messagePayload(posted)),
+        });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({
+          '@id': `/api/messages/${parentId}/replies`,
+          '@type': 'Collection',
+          totalItems: rows.length,
+          member: rows.map(messagePayload),
+        }),
+      });
+    },
+  );
+}
+
 /**
  * The conversation column: thread grouping, message anatomy, and the composer.
  */
@@ -132,10 +203,10 @@ test.describe('Workspace conversation', () => {
     await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
 
     const thread = page.getByTestId('channel-conversation');
-    await expect(thread.getByTestId('channel-conversation-day')).toHaveCount(2);
+    await expect(thread.getByTestId('chat-thread-day')).toHaveCount(2);
 
     // The run's second message drops its avatar; the new day's does not.
-    const rows = thread.locator('app-message-row');
+    const rows = thread.locator('app-chat-message');
     await expect(rows).toHaveCount(3);
     await expect(rows.nth(0).locator('p-avatar')).toHaveCount(1);
     await expect(rows.nth(1).locator('p-avatar')).toHaveCount(0);
@@ -154,8 +225,8 @@ test.describe('Workspace conversation', () => {
 
     await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
 
-    const rows = page.getByTestId('channel-conversation').locator('app-message-row');
-    const toolbar = rows.nth(1).getByTestId('message-row-toolbar');
+    const rows = page.getByTestId('channel-conversation').locator('app-chat-message');
+    const toolbar = rows.nth(1).getByTestId('chat-message-actions');
 
     // A touch device fires no hover, so a hover-only toolbar simply does not
     // exist there — and an absolutely positioned one would sit on top of the
@@ -229,13 +300,178 @@ test.describe('Workspace conversation', () => {
 
     const input = page.getByTestId('message-composer-input');
     await input.fill('ok');
-    // Caret between the two characters.
-    await input.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(1, 1));
+    /*
+     * Caret between the two characters. The field is a contenteditable, not a
+     * textarea, so there is no `setSelectionRange` — the caret is placed with a
+     * DOM range, which is what the editor listens to.
+     */
+    await input.evaluate((el: HTMLElement) => {
+      const text: ChildNode | null | undefined = el.querySelector('p')?.firstChild;
+
+      if (!text) throw new Error('the editor has no text node to place the caret in');
+
+      const range: Range = document.createRange();
+      range.setStart(text, 1);
+      range.collapse(true);
+
+      const selection: Selection | null = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    });
 
     await page.getByTestId('message-composer-emoji').click();
     await page.getByRole('button', { name: '🔥', exact: true }).click();
 
-    await expect(input).toHaveValue('o🔥k');
+    await expect(input).toHaveText('o🔥k');
+  });
+
+  test('inserts a mention when the suggestion is clicked, not just typed', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+    await mockChannel(page);
+    await mockThread(page, []);
+    // After the session mock: Playwright matches the most recently registered
+    // route first, and the session installs a catch-all safety net.
+    await mockMembers(page);
+
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
+    await expect(page.getByTestId('channel-conversation')).toBeVisible();
+
+    const input = page.getByTestId('message-composer-input');
+    await input.click();
+    await input.pressSequentially('ping @am');
+    await expect(input).toHaveText('ping @am');
+
+    const suggestion = page.getByTestId('message-composer-mentions').getByRole('option');
+    await expect(suggestion).toHaveCount(1);
+
+    /*
+     * A real press, which is the whole point of this test: it moves focus out
+     * of the editor before the click lands, and without the panel cancelling
+     * `mousedown` the list unmounts underneath the pointer and nothing is
+     * inserted. Synthetic events do not move focus and never caught this.
+     */
+    await suggestion.click();
+
+    await expect(input).toHaveText('ping @Amélie Rousseau');
+    await expect(page.getByTestId('message-composer-mentions')).toHaveCount(0);
+  });
+
+  test('keeps only the one-tap controls on the bar and the rest behind the trigger', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+    await mockChannel(page);
+    await mockThread(page, [
+      { id: 'm1', author: 'member-1', createdAt: '2026-07-20T09:00:00+00:00' },
+    ]);
+
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
+
+    const row = page.getByTestId('channel-conversation').locator('app-chat-message').first();
+    await row.hover();
+
+    // Four quick reactions, the bookmark, and the overflow trigger. Pinning
+    // used to sit here too; it is now one of the menu's entries.
+    const bar = row.getByTestId('chat-message-actions');
+    await expect(bar.locator('button')).toHaveCount(6);
+    await expect(bar.locator('.pi-thumbtack')).toHaveCount(0);
+
+    await row.getByTestId('chat-message-more').click();
+
+    const menu = page.locator('.p-menu-overlay');
+    await expect(menu).toBeVisible();
+    await expect(menu.locator('.p-menu-item-label')).toHaveText([
+      'Reply',
+      'Copy message',
+      'Mark as read',
+      'Pin message',
+      'Delete message',
+    ]);
+  });
+
+  test('asks before deleting a message, then redacts the row in place', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+    await mockChannel(page);
+    await mockThread(page, [
+      {
+        id: 'm1',
+        author: 'member-1',
+        createdAt: '2026-07-20T09:00:00+00:00',
+        body: '<p>Extincteur 3 non conforme.</p>',
+      },
+    ]);
+    await page.route(/\/api\/messages\/m1$/, async (route) => {
+      await route.fulfill({ status: 204, body: '' });
+    });
+
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
+
+    const row = page.getByTestId('channel-conversation').locator('app-chat-message').first();
+    await row.hover();
+    await row.getByTestId('chat-message-more').click();
+    await page.locator('.p-menu-overlay').getByText('Delete message').click();
+
+    // A tombstone cannot be undone, so it is never one click away.
+    const dialog = page.locator('.p-confirmdialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Delete message' }).click();
+
+    // The row survives, redacted — the API keeps it for compliance.
+    await expect(row).toContainText('This message was deleted.');
+    await expect(row).not.toContainText('Extincteur 3 non conforme.');
+  });
+
+  test('opens a message’s replies in a panel and posts one into it', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+    await mockChannel(page);
+    await mockThread(page, [
+      {
+        id: 'm1',
+        author: 'member-1',
+        createdAt: '2026-07-20T09:00:00+00:00',
+        body: '<p>Extincteur 3 non conforme.</p>',
+        replyCount: 1,
+      },
+    ]);
+    await mockReplies(page, 'm1', [
+      {
+        id: 'r1',
+        author: 'member-2',
+        authorDisplayName: 'Bruno Lemaire',
+        createdAt: '2026-07-20T09:05:00+00:00',
+        body: '<p>Je passe demain.</p>',
+      },
+    ]);
+
+    await page.goto(`/organizations/${ORGANIZATION.id}/channels/${CHANNEL_ID}`);
+
+    const row = page.getByTestId('channel-conversation').locator('app-chat-message').first();
+    // The count is the discoverable way in; the overflow menu is the other.
+    await row.getByTestId('chat-message-replies').click();
+
+    const drawer = page.getByTestId('message-thread-drawer');
+    await expect(drawer).toBeVisible();
+    // The root message heads the panel, and its replies follow.
+    await expect(drawer.getByTestId('message-thread-drawer-parent')).toContainText(
+      'Extincteur 3 non conforme.',
+    );
+    await expect(drawer.locator('app-chat-thread app-chat-message')).toHaveCount(1);
+    await expect(drawer).toContainText('Je passe demain.');
+
+    const input = drawer.getByTestId('message-composer-input');
+    await input.click();
+    await input.pressSequentially('Vu.');
+    await drawer.getByTestId('message-composer-send').click();
+
+    await expect(drawer.locator('app-chat-thread app-chat-message')).toHaveCount(2);
+    await expect(drawer).toContainText('Vu.');
+    // The parent's count is corrected in place: there is no endpoint to refetch
+    // a single message with.
+    await expect(row.getByTestId('chat-message-replies')).toContainText('2 replies');
   });
 
   test('opens the saved view from the sidebar', async ({ page }) => {

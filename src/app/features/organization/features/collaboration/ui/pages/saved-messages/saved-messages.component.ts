@@ -1,15 +1,19 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   type InputSignal,
+  type Signal,
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
+import { FeedbackService } from '@core/feedback';
+import { toChatMessageItem } from '@features/organization/features/collaboration/data-access/adapters';
 import type { MessageOutput } from '@features/organization/features/collaboration/models';
 import { SavedMessagesStore } from '@features/organization/features/collaboration/state';
-import { MessageRow } from '@features/organization/features/collaboration/ui/components';
+import { ChatMessage, type ChatMessageItem } from '@shared/chat';
 import { EmptyState } from '@shared/empty-state';
 
 /**
@@ -34,7 +38,7 @@ import { EmptyState } from '@shared/empty-state';
  */
 @Component({
   selector: 'app-saved-messages',
-  imports: [EmptyState, MessageRow, SkeletonModule],
+  imports: [ChatMessage, EmptyState, SkeletonModule],
   providers: [SavedMessagesStore],
   templateUrl: './saved-messages.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -72,6 +76,20 @@ export class SavedMessagesPage {
    * @type {InstanceType<typeof SavedMessagesStore>}
    */
   protected readonly store: InstanceType<typeof SavedMessagesStore> = inject(SavedMessagesStore);
+
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Toasts. Copying leaves no visible trace of its own, so it needs one.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {FeedbackService}
+   */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
   //#endregion
 
   //#region Constructor
@@ -91,32 +109,43 @@ export class SavedMessagesPage {
   }
   //#endregion
 
-  //#region Methods
   /**
-   * Method authorNameFor
-   * @method authorNameFor
+   * Property chatMessages
+   * @readonly
    *
    * @description
-   * Resolves an author's display label.
+   * The bookmarks projected onto the shared chat view-model.
    *
-   * The name rides on the message itself. Resolving it client-side needs the
-   * member directory, which is gated behind `organization.members.read`, so
-   * every member without that permission was shown a raw UUID above every
-   * message — which is what this used to render for everyone.
+   * No delivery state to apply: a saved message was posted long before it was
+   * bookmarked, so every row here is `sent`. Mention names come from the
+   * messages themselves — this page has no directory of its own.
+   *
+   * Deletion is off for the same reason reacting is: `SavedMessagesStore` has
+   * no method for it, and a tombstone here would leave the conversation that
+   * owns the message showing the text it just removed.
    *
    * @access protected
    * @since 1.1.0
    *
-   * @param {MessageOutput} message - Message whose author is being labelled.
-   *
-   * @return {string} The author's name, or a neutral label — never an id.
+   * @type {Signal<readonly ChatMessageItem<MessageOutput>[]>}
    */
-  protected authorNameFor(message: MessageOutput): string {
-    return (
-      message.authorDisplayName ?? $localize`:@@workspace.message.unknownAuthor:Unknown member`
-    );
-  }
+  protected readonly chatMessages: Signal<readonly ChatMessageItem<MessageOutput>[]> = computed(
+    (): readonly ChatMessageItem<MessageOutput>[] =>
+      this.store.savedEntities().map(
+        (message: MessageOutput): ChatMessageItem<MessageOutput> =>
+          toChatMessageItem(message, {
+            status: 'sent',
+            memberNames: message.mentionNames,
+            actingMember: null,
+            canModerate: false,
+            unknownMention: $localize`:@@workspace.mention.unknown:member`,
+            unknownAuthor: $localize`:@@workspace.message.unknownAuthor:Unknown member`,
+          }),
+      ),
+  );
+  //#endregion
 
+  //#region Methods
   /**
    * Method loadMore
    * @method loadMore
@@ -134,6 +163,32 @@ export class SavedMessagesPage {
       organization: `/api/organizations/${this.organizationId()}`,
       page: this.store.loadedPage() + 1,
     });
+  }
+
+  /**
+   * Method copy
+   * @method copy
+   *
+   * @description
+   * Puts a bookmark's text on the clipboard and says so — the action leaves no
+   * visible trace of its own.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {string} text - The message, already flattened to plain text.
+   *
+   * @return {void}
+   */
+  protected copy(text: string): void {
+    void navigator.clipboard.writeText(text).then(
+      (): void =>
+        this.feedback.success($localize`:@@workspace.message.copied:Message copied to clipboard.`),
+      (): void =>
+        this.feedback.error(
+          $localize`:@@workspace.message.copyFailed:The message could not be copied.`,
+        ),
+    );
   }
   //#endregion
 }

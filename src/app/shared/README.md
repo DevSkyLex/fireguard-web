@@ -20,6 +20,7 @@ template (`components/`, `models/`, `options/`, `constants/`, `utils/`,
 | ------------------------------- | -------------------------------------------------------------------------------- |
 | `board/`                        | generic drag-and-drop kanban (`Board<T>`)                                        |
 | `calendar/`                     | month/week/agenda calendar with category sidebar                                 |
+| `chat/`                         | conversation surface: thread, message row, body, reactions, attachments, actions |
 | `empty-state/` · `error-state/` | icon + title + description placeholders                                          |
 | `infinite-scroll/`              | infinite-scroll attribute directive                                              |
 | `initials/`                     | `deriveInitials` pure helper                                                     |

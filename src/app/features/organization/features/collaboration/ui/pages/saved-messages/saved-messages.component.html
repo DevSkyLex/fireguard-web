@@ -13,18 +13,20 @@
     </p>
   }
 
-  @for (message of store.savedEntities(); track message.id) {
+  @for (message of chatMessages(); track message.id) {
     <!--
-      `quickActions` off: this page can only unsave. `SavedMessagesStore`
-      has no react or pin method, so leaving those controls mounted put five
-      focusable buttons per row in the tab order that did nothing at all.
+      Reacting, pinning and replying are off: this page can only unsave and
+      copy. `SavedMessagesStore` has no method for the rest, so leaving those
+      controls mounted put focusable buttons in the tab order that did nothing
+      at all — and a reply here has no thread to open over.
     -->
-    <app-message-row
+    <app-chat-message
       [message]="message"
-      [authorName]="authorNameFor(message)"
-      [memberNames]="message.mentionNames"
-      [quickActions]="false"
+      [canReact]="false"
+      [canPin]="false"
+      [canReply]="false"
       (saveToggled)="store.unsave(message.id)"
+      (copied)="copy($event)"
     />
   } @empty {
     @if (store.isLoading()) {

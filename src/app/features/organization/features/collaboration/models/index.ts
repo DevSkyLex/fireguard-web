@@ -50,7 +50,7 @@ export type {
 } from './message';
 export type { ActivityCell, ActivityLevel, ChannelPanelTab } from './channel-panel';
 export type { MessagingLinkOutput } from './link';
-export type { MessageBodySegment } from './message-body';
+export type { MentionQuery, QuillEditor } from './composer';
 export type {
   ListPresenceQuery,
   PingPresenceInput,
@@ -63,4 +63,3 @@ export type {
   MessagingOutboxPayloadMap,
   MessagingOutboxType,
 } from './outbox';
-export type { ThreadDaySeparator, ThreadEntry, ThreadMessageEntry } from './thread-group';

@@ -25,88 +25,78 @@
   The thread owns the scroller so the composer stays pinned while history moves
   behind it. The shell deliberately does not scroll this column.
 -->
-<section
-  class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3.5 py-4 md:gap-5 md:px-6 md:py-[22px]"
-  role="log"
-  [attr.aria-busy]="thread.isLoading()"
-  i18n-aria-label="@@workspace.direct.thread.aria"
-  aria-label="Direct conversation"
-  data-testid="direct-conversation"
+<app-chat-thread
+  [messages]="chatMessages()"
+  i18n-label="@@workspace.direct.thread.aria"
+  label="Direct conversation"
+  [loading]="thread.isLoading()"
+  [errorMessage]="loadErrorMessage()"
+  [hasMore]="thread.hasMore()"
+  [loadedCount]="thread.messageEntities().length"
+  [totalCount]="thread.total()"
+  i18n-loadMoreLabel="@@workspace.thread.loadOlder"
+  loadMoreLabel="Load earlier messages"
+  i18n-loadingLabel="@@workspace.thread.loading"
+  loadingLabel="Loading the conversation"
+  emptyIcon="pi pi-comments"
+  i18n-emptyTitle="@@workspace.direct.empty.title"
+  emptyTitle="No messages yet"
+  i18n-emptyDescription="@@workspace.direct.empty.description"
+  emptyDescription="Say hello to start the conversation."
+  [canMarkRead]="true"
+  (loadMore)="loadOlder()"
+  (reacted)="react($event.messageId, $event.emoji)"
+  (reactionRemoved)="removeReaction($event.messageId, $event.emoji)"
+  (saveToggled)="thread.toggleSave($event)"
+  (pinToggled)="thread.togglePin($event)"
+  (replied)="openReplies($event)"
+  (copied)="copy($event)"
+  (markedRead)="markReadUpTo($event)"
+  (deleted)="requestDelete($event)"
+  (retried)="retry($event)"
 >
-  @if (thread.hasMore()) {
-    <button
-      type="button"
-      class="mx-auto cursor-pointer rounded-md px-3 py-1 text-[13px] text-surface-500 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
-      data-testid="direct-conversation-load-older"
-      (click)="loadOlder()"
-    >
-      <ng-container i18n="@@workspace.thread.loadOlder">Load earlier messages</ng-container>
-      ({{ thread.messageEntities().length }}/{{ thread.total() }})
-    </button>
-  }
-
-  @if (thread.loadError()) {
-    <p class="text-sm text-red-600 dark:text-red-400" i18n="@@workspace.thread.loadFailed">
-      Messages could not be loaded.
-    </p>
-  }
-
-  @for (entry of entries(); track entry.kind === 'day' ? entry.day : entry.message.id) {
-    @if (entry.kind === 'day') {
-      <div class="flex items-center gap-3" data-testid="direct-conversation-day">
-        <span class="h-px flex-1 bg-surface-200 dark:bg-surface-800" aria-hidden="true"></span>
-        <span class="text-[11px] font-semibold text-surface-500 dark:text-surface-400">
-          {{ entry.at | date: 'longDate' }}
-        </span>
-        <span class="h-px flex-1 bg-surface-200 dark:bg-surface-800" aria-hidden="true"></span>
-      </div>
-    } @else {
-      <app-message-row
-        [class.-mt-4]="entry.continuation"
-        [message]="entry.message"
-        [authorName]="authorNameFor(entry.message)"
-        [memberNames]="entry.message.mentionNames"
-        [continuation]="entry.continuation"
-        [pending]="thread.pendingMessageIds().includes(entry.message.id)"
-        [failed]="thread.failedMessageIds().includes(entry.message.id)"
-        (reacted)="react(entry.message.id, $event)"
-        (reactionRemoved)="removeReaction(entry.message.id, $event)"
-        (saveToggled)="thread.save(entry.message.id)"
-        (pinned)="thread.pin(entry.message.id)"
-        (retried)="retry(entry.message.id)"
-      />
+  <!--
+    Reference cards are the one thing in a message that `@shared/chat` cannot
+    understand: their four types are this domain's. They reach the row through
+    this template instead of through a field on the view-model.
+  -->
+  <ng-template appChatMessageExtra let-message>
+    @for (reference of message.data.references; track reference.type + reference.id) {
+      <app-message-reference-card [reference]="reference" />
     }
-  } @empty {
-    @if (thread.isLoading()) {
-      <div class="flex flex-col gap-3" role="status">
-        <span class="sr-only" i18n="@@workspace.thread.loading">Loading the conversation</span>
-        @for (row of [1, 2, 3, 4, 5, 6]; track row) {
-          <div class="flex items-center gap-3">
-            <p-skeleton shape="circle" size="2.5rem" />
-            <div class="flex flex-1 flex-col gap-2">
-              <p-skeleton width="30%" height="0.875rem" />
-              <p-skeleton width="55%" height="0.875rem" />
-            </div>
-          </div>
-        }
-      </div>
-    } @else {
-      <app-empty-state
-        class="m-auto"
-        icon="pi pi-comments"
-        i18n-title="@@workspace.direct.empty.title"
-        title="No messages yet"
-        i18n-description="@@workspace.direct.empty.description"
-        description="Say hello to start the conversation."
-      />
-    }
-  }
-</section>
+  </ng-template>
 
-<div class="shrink-0 px-3 pb-3 md:px-6 md:pb-5">
+  <!--
+    Projected into the thread, not placed beside it: it becomes the scroller's
+    sticky footer, so the scrollbar runs to the bottom of the pane and the
+    composer shares the messages' content box.
+  -->
   <app-message-composer
     [placeholder]="composerPlaceholder()"
     [pending]="thread.isPosting()"
+    [members]="mentionMembers()"
     (sent)="send($event)"
   />
-</div>
+</app-chat-thread>
+
+<!--
+  Outside the thread, not inside it: the panel is an overlay over the whole
+  conversation, and nesting it in the scroller would make it scroll with the
+  history it sits on top of.
+-->
+<app-message-thread-drawer
+  [visible]="replies.isOpen()"
+  [parentMessage]="replyParent()"
+  [replies]="replyMessages()"
+  [loading]="replies.isLoading()"
+  [posting]="replies.isPosting()"
+  [errorMessage]="replyErrorMessage()"
+  [hasMore]="replies.hasMore()"
+  [loadedCount]="replies.replyEntities().length"
+  [totalCount]="replies.total()"
+  [members]="mentionMembers()"
+  (visibleChange)="onRepliesVisibleChange($event)"
+  (loadMore)="loadOlderReplies()"
+  (sent)="sendReply($event)"
+  (copied)="copy($event)"
+/>

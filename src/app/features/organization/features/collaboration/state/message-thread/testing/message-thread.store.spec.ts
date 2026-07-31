@@ -1,5 +1,6 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService, type MercureConnectionStatus } from '@core/mercure';
@@ -12,6 +13,7 @@ import {
 import type { MessageOutput } from '@features/organization/features/collaboration/models';
 import { MessagingSyncCoordinatorService } from '@features/organization/features/collaboration/services';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
+import { messageRepliesStoreEvents } from '../../message-replies';
 import { MessageThreadStore, type MessageThreadStoreType } from '../message-thread.store';
 
 function message(overrides: Partial<MessageOutput> = {}): MessageOutput {
@@ -55,7 +57,9 @@ describe('MessageThreadStore', () => {
     addReaction: ReturnType<typeof vi.fn>;
     removeReaction: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
+    unsave: ReturnType<typeof vi.fn>;
     pin: ReturnType<typeof vi.fn>;
+    unpin: ReturnType<typeof vi.fn>;
   };
 
   let conversations: {
@@ -119,7 +123,9 @@ describe('MessageThreadStore', () => {
       addReaction: vi.fn(),
       removeReaction: vi.fn(),
       save: vi.fn(),
+      unsave: vi.fn(),
       pin: vi.fn(),
+      unpin: vi.fn(),
     };
     realtime = new Subject<unknown>();
     topicStatus = signal<ReadonlyMap<string, MercureConnectionStatus>>(
@@ -246,9 +252,68 @@ describe('MessageThreadStore', () => {
 
     const store = createStore();
     store.load({ conversationId: 'conversation-1' });
-    store.markRead('conversation-1');
+    store.markRead({ conversationId: 'conversation-1' });
 
-    expect(conversations.markRead).toHaveBeenCalledWith('conversation-1');
+    expect(conversations.markRead).toHaveBeenCalledWith('conversation-1', undefined);
+  });
+
+  it('should move the read marker to a chosen message when one is given', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.markRead({ conversationId: 'conversation-1', lastReadMessageId: 'message-1' });
+
+    expect(conversations.markRead).toHaveBeenCalledWith('conversation-1', {
+      lastReadMessageId: 'message-1',
+    });
+  });
+
+  it('should unsave a message that is already saved, and save one that is not', () => {
+    service.list.mockReturnValue(of(collection([message({ isSaved: true })])));
+    service.unsave.mockReturnValue(of(undefined));
+    service.save.mockReturnValue(of(message({ isSaved: true })));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+
+    // The bookmark button is a toggle; before this it only ever saved, so a
+    // second press re-saved an already-saved message.
+    store.toggleSave('message-1');
+    expect(service.unsave).toHaveBeenCalledWith('message-1');
+    expect(store.messageEntityMap()['message-1'].isSaved).toBe(false);
+
+    store.toggleSave('message-1');
+    expect(service.save).toHaveBeenCalledWith('message-1');
+  });
+
+  it('should unpin a pinned message and clear both pin fields', () => {
+    service.list.mockReturnValue(
+      of(collection([message({ pinnedAt: '2026-01-02T00:00:00+00:00', pinnedBy: 'member-2' })])),
+    );
+    service.unpin.mockReturnValue(of(undefined));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+    store.togglePin('message-1');
+
+    expect(service.unpin).toHaveBeenCalledWith('message-1');
+    // The Pins tab reads `pinnedAt`; a row that kept it would stay listed.
+    expect(store.messageEntityMap()['message-1'].pinnedAt).toBeUndefined();
+    expect(store.pinnedMessages()).toHaveLength(0);
+  });
+
+  it('should bump the parent reply count when the replies store posts', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+
+    const store = createStore();
+    store.load({ conversationId: 'conversation-1' });
+
+    TestBed.inject(Dispatcher).dispatch(messageRepliesStoreEvents.posted('message-1'));
+
+    // Refetching would not do: `refresh` only re-reads page 1, and a parent
+    // deep in the history is not on it.
+    expect(store.messageEntityMap()['message-1'].replyCount).toBe(5);
   });
 
   it('should keep replyCount and references when a save lands', () => {

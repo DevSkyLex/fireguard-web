@@ -49,6 +49,10 @@ Its own routes, gated by `organization.messaging.read`:
 | `channels/:channelId` | the conversation column — a channel id _is_ its conversation id |
 | `saved`               | the member's bookmarks across the organization                  |
 
+A message's secondary actions (reply, copy, mark as read, pin/unpin, delete) sit behind one overflow
+trigger on the row rather than on its action bar; only the quick reactions and the bookmark stay
+one tap away.
+
 Inbox and Drafts are deliberately absent. Nothing honest backs them yet: the channel list provider
 hard-codes `unreadCount: 0`, so an inbox derived from it would always be empty, and drafts have no
 persistence before the offline layer lands. Ship them with their data, not before.
@@ -91,6 +95,60 @@ is preserved as a message, which is more useful than a restored draft.
 reactions, pins and saves qualify because the server swallows duplicates. Marking a conversation
 read does **not**: the server's upsert has no monotonic guard, so a stale marker replayed later
 moves the read pointer backwards.
+
+## Composer and message bodies
+
+`MessageComposer` is a PrimeNG (Quill) editor, like `CommentComposer` on the intervention side.
+`POST /messages` stores rich text sanitized against `messaging.message` in the API's
+`config/packages/html_sanitizer.yaml`, and the editor's `getSemanticHTML()` output maps onto that
+allow-list directly — `<strong> <em> <u> <s> <ul>/<ol>/<li> <blockquote> <pre> <a href>`.
+
+Four things about that editor are not obvious and are easy to undo by accident:
+
+- **The toolbar may only offer marks that survive the round trip.** The allow-list keeps no
+  attribute but `a[href]`, so alignment, indentation, colour and syntax language — everything Quill
+  expresses through a `class` or a `data-` attribute — are dropped on the way in. Adding such a
+  button gives the member a control that silently does nothing. What is offered has been checked
+  against the stored result, including the code block, which arrives as
+  `<pre data-language="plain">` and keeps its `<pre>`.
+- **`getSemanticHTML()` encodes every space as `&nbsp;`**, not just runs of them.
+  `normalizeEditorHtml` undoes it before anything else touches the body. Left alone it breaks two
+  things at once: a stored message never wraps, and a mention label of more than one word stops
+  matching its entry and is never substituted for its marker.
+- **Enter is taken from the editor in the capture phase**, by a listener on the composer's own host.
+  Quill installs its own `keydown` handler on the editor root and bails on `event.defaultPrevented`,
+  so running first is all it takes — but a template `(keydown)` bubbles, and by then the line break
+  is already in. The same listener is what drives the mention list.
+- **The 4000-character ceiling is measured on the serialized HTML**, because that is what the domain
+  validates, and a contenteditable has no `maxlength` to lean on. `canSend` and the counter both
+  read the body that will actually be posted.
+
+**Mentions are text, not a field.** The author writes `@{memberUuid}` inline, the server parses it
+into `mentions[]` and leaves the marker in the body — **escaped**. Symfony's sanitizer rewrites
+every `@` in a text node to `&#64;`, so a body read back from the API always reads
+`&#64;{memberUuid}`; `renderMessageBodyHtml` matches both spellings, and only the escaped one ever
+occurs in practice. The composer therefore shows `@Name` and keeps
+a label → id map, substituting markers back on send (`applyMentionMarkers`). Labels are substituted
+longest-first, and a name already used for someone else in the same draft gets a short id suffix —
+without that, two members sharing a display name would silently mention the wrong one.
+
+Candidates come from `MEMBER_DIRECTORY_PORT`, resolved by the **page** and passed in: the composer
+is presentational, and the port is route-provided behind `organization.members.read`. Without that
+permission the list is simply empty — a working composer with no suggestions, never an error.
+
+`ChatMessageBody` (`@shared/chat`) renders the body in **one** binding, and takes HTML that is
+**already rendered**: `MessageRow` applies `renderMessageBodyHtml` before handing it over, because
+the marker form is this API's — the sanitizer rewrites every `@` — and a generic chat primitive
+must not inherit one backend's serialization. An earlier version tokenized the body at each marker
+and bound the runs separately, which was safe only while bodies were plain text: a mention inside
+formatting splits its `<strong>` across two bindings and the parser auto-closes each half.
+`renderMessageBodyHtml` substitutes the chip in place instead. The rich-text skin is a set of
+descendant rules on that element, for the same reason the chip's class is applied there — the
+stored HTML carries no classes of its own.
+
+The pages pass one `mentionNames` map for the whole thread, the directory underneath and the
+messages' own names on top. The messages' names are authoritative, but the optimistic row of a
+message just sent carries none, and its chips would read "member" until the server echoed back.
 
 ## Presence
 
@@ -247,9 +305,65 @@ Four of these look like they could be simplified. They cannot.
   all, so an image avatar was announced as its URL. The author's name is adjacent text in every
   call site.
 
-`MessageRow` takes a `quickActions` input for the same class of reason: the saved-messages page can
-only unsave, so leaving reactions and pin mounted put five focusable controls per row in the tab
-order that silently did nothing.
+`@shared/chat`'s `ChatMessage` takes `canReact` / `canPin` / `canSave` / `canReply` / `canCopy` /
+`canMarkRead` for the same class of reason: the saved-messages page can only unsave and copy, so
+leaving the rest mounted put focusable controls per row in the tab order that silently did nothing.
+
+`canDelete` is answered **twice**, and both answers must be yes. The view-model's `canDelete` says
+whether the _reader_ may delete this message — the API allows the author or a holder of
+`organization.messaging.manage`, and only the consumer can decide that, which the pages feed in
+through the adapter's `actingMember` and `canModerate` options. The `canDelete` **input** is the
+surface's veto over that: the reply panel's root message is deletable in principle but has nowhere
+to send the event, so it turns the input off. The input never grants; it only withholds. Both
+mirror, and neither replaces, the server's own check.
+
+## The conversation surface comes from `@shared/chat`
+
+`ChatThread` owns the scroller, the date rules, the empty/loading/error states and the "load older"
+affordance; `ChatMessage` owns a row. This feature supplies data and receives events — including
+`loadMore`, because how many pages there are is this feature's arithmetic, not the thread's.
+`data-access/adapters/chat-message.adapter.ts` is the whole boundary: it projects `MessageOutput`
+onto `ChatMessageItem`, and everything the chat concept must not know stops there — the mention
+marker form, the author IRI, and the fact that delivery state is tracked as id lists rather than
+per message.
+
+Both conversation pages are now the same three things: a thread, a composer, and (for a direct
+conversation) a counterpart header. **Every label is passed in**, because the two name themselves
+differently — `@@workspace.thread.aria` "Conversation" against `@@workspace.direct.thread.aria`
+"Direct conversation" — and a shared concept can own neither string.
+
+Three consequences worth keeping:
+
+- **Reference cards reach a row through a template, not a field.** Their four types are this
+  domain's, so `<ng-template appChatMessageExtra let-message>` renders them from `message.data`,
+  which is the message itself round-tripped untouched.
+- **Body rendering is memoized in two stages.** Turning mention markers into chips is a regex over
+  every body; sending a message touches the store's in-flight ids. Folded into one computed, every
+  send would re-render the mentions of the whole loaded thread — hence `baseMessages` (the regex)
+  and `chatMessages` (delivery state only) in both conversation pages.
+- **The composer is projected into the thread, not placed beside it.** It becomes the scroller's
+  sticky footer, which is what lets the scrollbar run to the bottom of the pane instead of stopping
+  short of the composer — and, because the two then share one content box, what makes them line up
+  at every width with no compensation for the scrollbar's gutter.
+
+## Threaded replies live in their own store and their own panel
+
+`GET /conversations/{id}/messages` **excludes replies** (`parentMessage IS NULL` in the repository),
+so a reply is not a row `MessageThreadStore` will ever hand back. It is a second collection, read
+from its parent — which is why `MessageRepliesStore` exists beside the thread rather than inside it,
+and why `MessageThreadDrawer` is a panel over the conversation rather than an inline expansion.
+
+Threading is single-level: the API refuses a reply to a reply, so nothing recurses.
+
+Two consequences:
+
+- **A reply has no optimistic row.** `POST /messages/{id}/replies` mints the id server-side, unlike
+  the thread's client-id send, so an optimistic reply could not be reconciled with the confirmed one
+  and would appear twice.
+- **The parent's `replyCount` is bumped through an event, not a refetch.** `MessageRepliesStore`
+  emits `posted`, and `MessageThreadStore` increments the parent in place — `refresh()` only re-reads
+  page 1, and a parent the member scrolled back to is not on it. There is no
+  `GET /api/messages/{id}` to refetch one message with.
 
 Known gaps, deliberately not fixed here because both need a new shell region rather than a finition
 edit: `MessagingSyncChip` lives in `CONVERSATION_HEADER_SLOT`, which is inside `<main>`, so it is

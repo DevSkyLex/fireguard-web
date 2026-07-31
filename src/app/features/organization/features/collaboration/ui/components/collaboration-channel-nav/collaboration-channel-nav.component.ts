@@ -8,6 +8,9 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 import type { ChannelOutput } from '@features/organization/features/collaboration/models';
 import { MemberPresenceService } from '@features/organization/features/collaboration/services';
 import { ChannelsStore } from '@features/organization/features/collaboration/state';
@@ -40,7 +43,7 @@ import type { ChannelNavRow } from './models';
  */
 @Component({
   selector: 'app-collaboration-channel-nav',
-  imports: [NavRow],
+  imports: [IconFieldModule, InputIconModule, InputTextModule, NavRow],
   providers: [ChannelsStore],
   templateUrl: './collaboration-channel-nav.component.html',
   host: { class: 'flex flex-col px-2 pb-4' },

@@ -1,0 +1,17 @@
+@if (attachments().length > 0) {
+  <ul class="flex flex-wrap gap-2">
+    @for (attachment of attachments(); track attachment.id) {
+      <li
+        class="flex items-center gap-2 rounded-lg border border-surface-200 bg-surface-0 px-2.5 py-1.5 dark:border-surface-800 dark:bg-surface-900"
+      >
+        <i
+          class="pi pi-paperclip text-xs text-surface-500 dark:text-surface-400"
+          aria-hidden="true"
+        ></i>
+        <span class="max-w-[220px] truncate text-[13px] text-surface-900 dark:text-surface-100">
+          {{ attachment.fileName }}
+        </span>
+      </li>
+    }
+  </ul>
+}

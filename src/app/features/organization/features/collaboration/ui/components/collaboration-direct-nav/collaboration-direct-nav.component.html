@@ -32,11 +32,6 @@
 </div>
 
 @if (pickerOpen() && directory.isAvailable()) {
-  <!--
-    A member picker to start a conversation, drawn straight from the directory —
-    "starting from the member directory", inside the feature that owns messaging
-    rather than reaching into the organization members page.
-  -->
   <div
     class="mb-1 flex flex-col gap-1 rounded-md border border-surface-200 bg-surface-50 p-1.5 dark:border-surface-800 dark:bg-surface-900"
     data-testid="direct-nav-picker"

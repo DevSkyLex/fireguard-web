@@ -12,6 +12,11 @@ export {
   type DirectConversationsStoreType,
 } from './direct-conversations';
 export {
+  MessageRepliesStore,
+  messageRepliesStoreEvents,
+  type MessageRepliesStoreType,
+} from './message-replies';
+export {
   MessageThreadStore,
   messageThreadStoreEvents,
   type MessageThreadStoreType,

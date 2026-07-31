@@ -1,0 +1,26 @@
+@if (reactions().length > 0) {
+  <ul class="mt-0.5 flex flex-wrap items-center gap-1.5">
+    @for (reaction of reactions(); track reaction.emoji) {
+      <li>
+        <button
+          type="button"
+          class="flex h-[26px] items-center gap-1 rounded-md border px-2 text-xs transition-colors not-disabled:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          [class]="
+            reaction.reactedByMe
+              ? 'border-primary-200 bg-primary-50/50 text-primary'
+              : 'border-surface-200 bg-surface-0 text-surface-500 not-disabled:hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-400 dark:not-disabled:hover:border-surface-700'
+          "
+          [disabled]="!interactive()"
+          [attr.aria-pressed]="interactive() ? reaction.reactedByMe : null"
+          (click)="toggle(reaction)"
+        >
+          <span class="text-[13px]">{{ reaction.emoji }}</span>
+          <span class="font-semibold">{{ reaction.count }}</span>
+          <span class="sr-only" i18n="@@workspace.message.reaction.aria">
+            {reaction.count, plural, =1 {reaction} other {reactions}}
+          </span>
+        </button>
+      </li>
+    }
+  </ul>
+}

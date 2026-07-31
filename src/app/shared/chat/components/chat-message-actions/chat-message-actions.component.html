@@ -1,0 +1,78 @@
+<!--
+  Dropped entirely when every capability is off: the bar is a bordered pill, and
+  an empty one still draws.
+
+  `group-*` variants below resolve against the row's host, which carries
+  `group`. See the component's JSDoc: this bar is invisible without it.
+
+  While the overflow menu is open the bar is held visible: the popup is
+  appended to the body, so focus leaves the row and `group-focus-within` stops
+  matching — the bar would fade out from under its own open menu.
+-->
+@if (hasActions()) {
+  <div
+    class="flex gap-0.5 rounded-md border border-surface-200 bg-surface-0 p-0.5 shadow-sm transition-opacity max-lg:mt-1 max-lg:ml-12 max-lg:basis-full max-lg:justify-start lg:absolute lg:-top-3 lg:right-0 lg:opacity-0 lg:group-focus-within:opacity-100 lg:group-hover:opacity-100 dark:border-surface-800 dark:bg-surface-900"
+    [class.lg:opacity-100]="menuOpen()"
+    data-testid="chat-message-actions"
+  >
+    @if (canReact()) {
+      @for (emoji of quickReactions(); track emoji) {
+        <button
+          type="button"
+          class="grid size-9 cursor-pointer place-content-center rounded text-[13px] hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:size-7 dark:hover:bg-white/5"
+          [attr.aria-label]="emoji"
+          (click)="reacted.emit(emoji)"
+        >
+          {{ emoji }}
+        </button>
+      }
+    }
+
+    @if (canSave()) {
+      <p-button
+        [icon]="isSaved() ? 'pi pi-bookmark-fill' : 'pi pi-bookmark'"
+        [severity]="isSaved() ? 'primary' : 'secondary'"
+        size="small"
+        [text]="true"
+        [pt]="{ root: { class: '!size-9 !p-0 lg:!size-7', 'aria-pressed': isSaved() } }"
+        [ariaLabel]="saveLabel()"
+        (onClick)="saveToggled.emit()"
+      />
+    }
+
+    <!--
+      Everything that is not a one-tap reaction lives behind this trigger rather
+      than beside it: a row carrying seven visible controls is a row nobody
+      reads, and deleting should not sit one stray click from a reaction.
+    -->
+    @if (menuItems().length > 0) {
+      <p-button
+        icon="pi pi-ellipsis-h"
+        severity="secondary"
+        size="small"
+        [text]="true"
+        [pt]="{
+          root: {
+            class: '!size-9 !p-0 lg:!size-7',
+            'aria-haspopup': 'menu',
+            'aria-expanded': menuOpen() ? 'true' : 'false',
+          },
+        }"
+        i18n-ariaLabel="@@chat.message.more.aria"
+        ariaLabel="More actions"
+        data-testid="chat-message-more"
+        (onClick)="menu.toggle($event)"
+      />
+
+      <!-- Left on the theme's own presentation: nothing here is restyled. -->
+      <p-menu
+        #menu
+        [model]="menuItems()"
+        [popup]="true"
+        appendTo="body"
+        (onShow)="menuOpen.set(true)"
+        (onHide)="menuOpen.set(false)"
+      />
+    }
+  </div>
+}

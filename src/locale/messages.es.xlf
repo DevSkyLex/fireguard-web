@@ -6895,6 +6895,158 @@
         <source>Message <x id="memberName" equiv-text="this.counterpartName()"/></source>
         <target>Mensaje para <x id="memberName" equiv-text="this.counterpartName()"/></target>
       </trans-unit>
+      <trans-unit id="chat.message.more.aria" datatype="html">
+        <source>More actions</source>
+        <target>Más acciones</target>
+      </trans-unit>
+      <trans-unit id="chat.message.reply" datatype="html">
+        <source>Reply</source>
+        <target>Responder</target>
+      </trans-unit>
+      <trans-unit id="chat.message.copy" datatype="html">
+        <source>Copy message</source>
+        <target>Copiar el mensaje</target>
+      </trans-unit>
+      <trans-unit id="chat.message.markRead" datatype="html">
+        <source>Mark as read</source>
+        <target>Marcar como leído</target>
+      </trans-unit>
+      <trans-unit id="chat.message.pin" datatype="html">
+        <source>Pin message</source>
+        <target>Fijar el mensaje</target>
+      </trans-unit>
+      <trans-unit id="chat.message.unpin" datatype="html">
+        <source>Unpin message</source>
+        <target>Dejar de fijar el mensaje</target>
+      </trans-unit>
+      <trans-unit id="chat.message.delete" datatype="html">
+        <source>Delete message</source>
+        <target>Eliminar el mensaje</target>
+      </trans-unit>
+      <trans-unit id="chat.message.replyCount" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="message().replyCount"/> <x id="ICU" equiv-text="{message().replyCount, plural, =1 {reply} other {replies}}" xid="5617961355997734504"/> </source>
+        <target><x id="INTERPOLATION"/> <x id="ICU"/></target>
+      </trans-unit>
+      <trans-unit id="5617961355997734504" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {reply} other {replies}}</source>
+        <target>{VAR_PLURAL, plural, =0 {respuesta} =1 {respuesta} other {respuestas}}</target>
+      </trans-unit>
+      <trans-unit id="workspace.message.copied" datatype="html">
+        <source>Message copied to clipboard.</source>
+        <target>Mensaje copiado al portapapeles.</target>
+      </trans-unit>
+      <trans-unit id="workspace.message.copyFailed" datatype="html">
+        <source>The message could not be copied.</source>
+        <target>No se pudo copiar el mensaje.</target>
+      </trans-unit>
+      <trans-unit id="workspace.message.markedRead" datatype="html">
+        <source>Marked as read.</source>
+        <target>Marcado como leído.</target>
+      </trans-unit>
+      <trans-unit id="workspace.message.delete.header" datatype="html">
+        <source>Delete message</source>
+        <target>Eliminar el mensaje</target>
+      </trans-unit>
+      <trans-unit id="workspace.message.delete.confirm" datatype="html">
+        <source>This message will be removed from the conversation for everyone. This cannot be undone.</source>
+        <target>Este mensaje se eliminará de la conversación para todos. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.header" datatype="html">
+        <source>Thread</source>
+        <target>Hilo</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.closeAria" datatype="html">
+        <source>Close thread</source>
+        <target>Cerrar el hilo</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.aria" datatype="html">
+        <source>Replies</source>
+        <target>Respuestas</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.loadOlder" datatype="html">
+        <source>Load earlier replies</source>
+        <target>Cargar respuestas anteriores</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.loading" datatype="html">
+        <source>Loading replies</source>
+        <target>Cargando respuestas</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.empty.title" datatype="html">
+        <source>No replies yet</source>
+        <target>Aún no hay respuestas</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.empty.description" datatype="html">
+        <source>Be the first to answer.</source>
+        <target>Sé el primero en responder.</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.placeholder" datatype="html">
+        <source>Reply to this message</source>
+        <target>Responder a este mensaje</target>
+      </trans-unit>
+      <trans-unit id="workspace.replies.loadFailed" datatype="html">
+        <source>Replies could not be loaded.</source>
+        <target>No se pudieron cargar las respuestas.</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.format.bold" datatype="html">
+        <source>Bold</source>
+        <target>Negrita</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.format.italic" datatype="html">
+        <source>Italic</source>
+        <target>Cursiva</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.syntax.underline" datatype="html">
+        <source>Underline</source>
+        <target>Subrayado</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.format.strike" datatype="html">
+        <source>Strikethrough</source>
+        <target>Tachado</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.syntax.list" datatype="html">
+        <source>Bulleted list</source>
+        <target>Lista con viñetas</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.format.orderedList" datatype="html">
+        <source>Numbered list</source>
+        <target>Lista numerada</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.syntax.quote" datatype="html">
+        <source>Quote</source>
+        <target>Cita</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.syntax.codeBlock" datatype="html">
+        <source>Code block</source>
+        <target>Bloque de código</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.format.link" datatype="html">
+        <source>Link</source>
+        <target>Enlace</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.format.clean" datatype="html">
+        <source>Clear formatting</source>
+        <target>Borrar el formato</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.mention.aria" datatype="html">
+        <source>Mention a member</source>
+        <target>Mencionar a un miembro</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.mention.listAria" datatype="html">
+        <source>Members you can mention</source>
+        <target>Miembros que puedes mencionar</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.mention.status" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="mentionCandidates().length"/> <x id="ICU" equiv-text="{mentionCandidates().length, plural, =1 {member matches} other {members match}}" xid="3889162096802201480"/>. Use the arrow keys and Enter to insert one. </source>
+        <target><x id="INTERPOLATION"/> <x id="ICU"/>. Usa las flechas y Enter para insertar uno.</target>
+      </trans-unit>
+      <trans-unit id="3889162096802201480" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {member matches} other {members match}}</source>
+        <target>{VAR_PLURAL, plural, =0 {miembro coincide} =1 {miembro coincide} other {miembros coinciden}}</target>
+      </trans-unit>
+      <trans-unit id="workspace.composer.overflow" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="overflow()"/> characters too many once formatted </source>
+        <target><x id="INTERPOLATION"/> caracteres de más una vez formateado</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

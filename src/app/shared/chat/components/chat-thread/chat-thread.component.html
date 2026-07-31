@@ -1,0 +1,102 @@
+<!--
+  The measure is held on this wrapper rather than on the scroller itself:
+  bounding the scroller would pull its scrollbar in from the edge of the
+  column. `flex-1` is what lets the empty placeholder's `m-auto` centre against
+  the full height instead of against the few rows above it — and what pushes the
+  footer to the bottom when the conversation is short.
+
+  The vertical padding lives here, not on the scroller: the footer sticks to the
+  scrollport's edge, and a padded scroller would leave a strip of messages
+  visible below it.
+-->
+<div class="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 pt-4 md:gap-5 md:pt-[22px]">
+  @if (hasMore()) {
+    <button
+      type="button"
+      class="mx-auto cursor-pointer rounded-md px-3 py-1 text-[13px] text-surface-500 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
+      data-testid="chat-thread-load-more"
+      (click)="loadMore.emit()"
+    >
+      {{ loadMoreLabel() }} ({{ loadedCount() }}/{{ totalCount() }})
+    </button>
+  }
+
+  @if (errorMessage(); as message) {
+    <p class="text-sm text-red-600 dark:text-red-400" data-testid="chat-thread-error">
+      {{ message }}
+    </p>
+  }
+
+  @for (entry of entries(); track entry.kind === 'day' ? entry.day : entry.message.id) {
+    @if (entry.kind === 'day') {
+      <div class="flex items-center gap-3" data-testid="chat-thread-day">
+        <span class="h-px flex-1 bg-surface-200 dark:bg-surface-800" aria-hidden="true"></span>
+        <span class="text-[11px] font-semibold text-surface-500 dark:text-surface-400">
+          {{ entry.at | date: 'longDate' }}
+        </span>
+        <span class="h-px flex-1 bg-surface-200 dark:bg-surface-800" aria-hidden="true"></span>
+      </div>
+    } @else {
+      <app-chat-message
+        [class.-mt-4]="entry.continuation"
+        [message]="entry.message"
+        [continuation]="entry.continuation"
+        [canReact]="canReact()"
+        [canPin]="canPin()"
+        [canSave]="canSave()"
+        [canReply]="canReply()"
+        [canCopy]="canCopy()"
+        [canMarkRead]="canMarkRead()"
+        [canDelete]="canDelete()"
+        [extraTemplate]="extraTemplate()"
+        (reacted)="reacted.emit({ messageId: entry.message.id, emoji: $event })"
+        (reactionRemoved)="reactionRemoved.emit({ messageId: entry.message.id, emoji: $event })"
+        (saveToggled)="saveToggled.emit(entry.message.id)"
+        (pinToggled)="pinToggled.emit(entry.message.id)"
+        (replied)="replied.emit(entry.message.id)"
+        (copied)="copied.emit($event)"
+        (markedRead)="markedRead.emit(entry.message.id)"
+        (deleted)="deleted.emit(entry.message.id)"
+        (retried)="retried.emit(entry.message.id)"
+      />
+    }
+  } @empty {
+    @if (loading()) {
+      <!-- A skeleton while the first page loads: the column would be blank otherwise. -->
+      <div class="flex flex-col gap-3" role="status">
+        <span class="sr-only">{{ loadingLabel() }}</span>
+        @for (row of skeletonRows; track row) {
+          <div class="flex items-center gap-3">
+            <p-skeleton shape="circle" size="2.5rem" />
+            <div class="flex flex-1 flex-col gap-2">
+              <p-skeleton width="30%" height="0.875rem" />
+              <p-skeleton width="55%" height="0.875rem" />
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <app-empty-state
+        class="m-auto"
+        [icon]="emptyIcon()"
+        [title]="emptyTitle()"
+        [description]="emptyDescription()"
+      />
+    }
+  }
+</div>
+
+<!--
+  The footer rides inside the scroller, stuck to its bottom edge: history passes
+  underneath it rather than stopping above it, which is what lets the scrollbar
+  reach the bottom of the pane.
+
+  It is opaque, in the shell's own surface, because content really does scroll
+  behind it. It carries the same measure as the messages, and being in the same
+  content box it needs no compensation for the scrollbar's gutter.
+-->
+<div class="sticky bottom-0 z-10 bg-surface-0 pt-2 pb-3 md:pt-3 md:pb-5 dark:bg-surface-950">
+  <div class="mx-auto w-full max-w-4xl">
+    <ng-content />
+  </div>
+</div>

@@ -246,8 +246,7 @@ export class AccountPage {
    */
   protected readonly sectionCardPt: CardPassThroughOptions = {
     root: {
-      class:
-        'border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+      class: 'border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900',
     },
     body: { class: 'p-6' },
   };

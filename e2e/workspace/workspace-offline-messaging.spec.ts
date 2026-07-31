@@ -110,7 +110,7 @@ test.describe('Workspace offline messaging', () => {
     // The message is on screen immediately, and marked as not sent.
     const thread = page.getByTestId('channel-conversation');
     await expect(thread).toContainText('Extincteur 3 non conforme.');
-    await expect(page.getByTestId('message-row-failed')).toBeVisible();
+    await expect(page.getByTestId('chat-message-failed')).toBeVisible();
 
     // And it is durable, not just in memory.
     await expect
@@ -119,7 +119,9 @@ test.describe('Workspace offline messaging', () => {
 
     const [queued] = await readMessagingOutbox(page);
     expect(queued.conversationId).toBe(CHANNEL_ID);
-    expect(queued.payload.input.body).toBe('Extincteur 3 non conforme.');
+    // The composer emits the editor's serialized HTML, so that is what is
+    // durably queued — the API stores rich text and sanitizes it server-side.
+    expect(queued.payload.input.body).toBe('<p>Extincteur 3 non conforme.</p>');
 
     // The header says so too.
     await expect(page.getByTestId('messaging-sync-chip')).toBeVisible();
@@ -132,13 +134,13 @@ test.describe('Workspace offline messaging', () => {
       .poll(async () => (await readMessagingOutbox(page)).length, { timeout: 15_000 })
       .toBe(0);
 
-    expect(sentBodies).toEqual(['Extincteur 3 non conforme.']);
+    expect(sentBodies).toEqual(['<p>Extincteur 3 non conforme.</p>']);
     // Mounted but hidden — asserted as both, because `toBeHidden()` alone also
     // passes for an element that was never rendered, which is exactly the bug
     // this guards against: a `role="status"` inserted together with its text is
     // a region the screen reader has never seen, and the announcement is lost.
-    await expect(page.getByTestId('message-row-failed')).toBeAttached();
-    await expect(page.getByTestId('message-row-failed')).toBeHidden();
+    await expect(page.getByTestId('chat-message-failed')).toBeAttached();
+    await expect(page.getByTestId('chat-message-failed')).toBeHidden();
   });
 
   test('replays a lost send under the same id and treats the conflict as done', async ({
@@ -199,8 +201,8 @@ test.describe('Workspace offline messaging', () => {
     // passes for an element that was never rendered, which is exactly the bug
     // this guards against: a `role="status"` inserted together with its text is
     // a region the screen reader has never seen, and the announcement is lost.
-    await expect(page.getByTestId('message-row-failed')).toBeAttached();
-    await expect(page.getByTestId('message-row-failed')).toBeHidden();
+    await expect(page.getByTestId('chat-message-failed')).toBeAttached();
+    await expect(page.getByTestId('chat-message-failed')).toBeHidden();
     await expect(page.getByTestId('channel-conversation')).toContainText('Rapport transmis.');
   });
 

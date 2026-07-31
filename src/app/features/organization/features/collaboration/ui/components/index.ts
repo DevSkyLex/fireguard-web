@@ -4,7 +4,5 @@ export { ChannelActivityHeatmap } from './channel-activity-heatmap';
 export { ChannelInfoPanel } from './channel-info-panel';
 export { CollaborationChannelNav } from './collaboration-channel-nav';
 export { MessagingSyncChip } from './messaging-sync-chip';
-export { MessageBody } from './message-body';
 export { MessageComposer } from './message-composer';
 export { MessageReferenceCard } from './message-reference-card';
-export { MessageRow } from './message-row';

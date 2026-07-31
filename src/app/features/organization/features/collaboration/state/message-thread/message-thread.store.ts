@@ -48,10 +48,12 @@ import {
   messagingSyncEvents,
   MessagingSyncCoordinatorService,
 } from '@features/organization/features/collaboration/services';
+import { memberIriOf } from '@features/organization/features/collaboration/utils';
 import {
   ORGANIZATION_MEMBER_ACCESS_PORT,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+import { messageRepliesStoreEvents } from '../message-replies';
 import { messageThreadStoreEvents } from './events';
 import type { MessageThreadState } from './models';
 
@@ -95,9 +97,7 @@ function optimisticMessage(
   memberAccess: OrganizationMemberAccessPort,
   authorDisplayName: string | null,
 ): MessageOutput {
-  const profile = memberAccess.profile();
-  const authorMember: string =
-    profile === null ? '' : `/api/organizations/${profile.organizationId}/members/${profile.id}`;
+  const authorMember: string = memberIriOf(memberAccess.profile()) ?? '';
   const now: string = new Date().toISOString();
 
   return {
@@ -522,6 +522,45 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * Removes the acting member's bookmark.
+       *
+       * `204`, so `isSaved` is flipped locally — the message stays in the
+       * thread, it has only left the bookmark list.
+       */
+      unsave: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
+          switchMap((messageId: string) =>
+            service.unsave(messageId).pipe(
+              tapResponse({
+                next: (): void =>
+                  patchState(
+                    store,
+                    updateEntity(
+                      { id: messageId, changes: { isSaved: false } },
+                      { collection: 'message' },
+                    ),
+                    { interactionCallState: successCallState(null) },
+                  ),
+                error: (error: unknown): void => {
+                  const storeError = toStoreError(error);
+                  patchState(store, { interactionCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.interactionFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        'The message could not be removed from saved messages.',
+                      ),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
        * Pins a message. Unlike reactions and saves, this response is complete.
        */
       pin: rxMethod<string>(
@@ -540,6 +579,42 @@ export const MessageThreadStore = signalStore(
                   dispatcher.dispatch(
                     messageThreadStoreEvents.interactionFailed(
                       toStoreFailureEventPayload(storeError, 'The message could not be pinned.'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Unpins a message.
+       *
+       * `204`, so both pin fields are cleared locally — the Pins tab reads
+       * `pinnedAt`, and a row that kept it would stay listed there.
+       */
+      unpin: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
+          switchMap((messageId: string) =>
+            service.unpin(messageId).pipe(
+              tapResponse({
+                next: (): void =>
+                  patchState(
+                    store,
+                    updateEntity(
+                      { id: messageId, changes: { pinnedAt: undefined, pinnedBy: undefined } },
+                      { collection: 'message' },
+                    ),
+                    { interactionCallState: successCallState(null) },
+                  ),
+                error: (error: unknown): void => {
+                  const storeError = toStoreError(error);
+                  patchState(store, { interactionCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.interactionFailed(
+                      toStoreFailureEventPayload(storeError, 'The message could not be unpinned.'),
                     ),
                   );
                 },
@@ -636,8 +711,43 @@ export const MessageThreadStore = signalStore(
         refresh,
 
         /**
-         * Moves the acting member's read marker to now, clearing the
-         * conversation's unread count.
+         * Flips a message's bookmark, whichever way it currently points.
+         *
+         * The direction lives here rather than at the call site because the
+         * store is what holds the message: a surface handed only an id would
+         * have to look the row up again to answer a question already answered.
+         */
+        toggleSave(messageId: string): void {
+          if (store.messageEntityMap()[messageId]?.isSaved === true) {
+            store.unsave(messageId);
+
+            return;
+          }
+
+          store.save(messageId);
+        },
+
+        /**
+         * Flips a message's pin. Same reasoning as {@link toggleSave}.
+         */
+        togglePin(messageId: string): void {
+          if (store.messageEntityMap()[messageId]?.pinnedAt !== undefined) {
+            store.unpin(messageId);
+
+            return;
+          }
+
+          store.pin(messageId);
+        },
+
+        /**
+         * Moves the acting member's read marker, clearing the conversation's
+         * unread count.
+         *
+         * With no `lastReadMessageId` the marker moves to now, which is what
+         * opening a conversation does. With one, it moves to that message —
+         * the API records both, and the marker is what the unread counts on
+         * `ListChannels`/`ListConversations` are computed from.
          *
          * Fire-and-forget: a read marker that fails to move is not worth
          * interrupting the member for. On success it emits `conversationRead`
@@ -645,15 +755,23 @@ export const MessageThreadStore = signalStore(
          * without a refetch. The response's own `unreadCount` is the pre-write
          * snapshot and is deliberately ignored.
          */
-        markRead: rxMethod<string>(
+        markRead: rxMethod<{
+          readonly conversationId: string;
+          readonly lastReadMessageId?: string;
+        }>(
           pipe(
-            switchMap((conversationId: string) =>
-              conversations.markRead(conversationId).pipe(
-                tap(() =>
-                  dispatcher.dispatch(messageThreadStoreEvents.conversationRead(conversationId)),
+            switchMap(({ conversationId, lastReadMessageId }) =>
+              conversations
+                .markRead(
+                  conversationId,
+                  lastReadMessageId === undefined ? undefined : { lastReadMessageId },
+                )
+                .pipe(
+                  tap(() =>
+                    dispatcher.dispatch(messageThreadStoreEvents.conversationRead(conversationId)),
+                  ),
+                  catchError(() => EMPTY),
                 ),
-                catchError(() => EMPTY),
-              ),
             ),
           ),
         ),
@@ -710,6 +828,26 @@ export const MessageThreadStore = signalStore(
               .filter((id: string): boolean => !payload.clientIds.includes(id)),
           });
           store.refresh();
+        });
+
+      // A reply belongs to the replies store, but the count belongs to the
+      // parent, which lives here. Refetching would not do: `refresh` only
+      // re-reads page 1, and the parent may have scrolled well past it.
+      events
+        .on(messageRepliesStoreEvents.posted)
+        .pipe(takeUntilDestroyed())
+        .subscribe(({ payload: parentMessageId }): void => {
+          const parent: MessageOutput | undefined = store.messageEntityMap()[parentMessageId];
+
+          if (parent === undefined) return;
+
+          patchState(
+            store,
+            updateEntity(
+              { id: parentMessageId, changes: { replyCount: parent.replyCount + 1 } },
+              { collection: 'message' },
+            ),
+          );
         });
 
       let missedUpdates = false;

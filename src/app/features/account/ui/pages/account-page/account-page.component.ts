@@ -265,7 +265,7 @@ export class AccountPage {
     root: {
       class: 'border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900',
     },
-    body: { class: 'p-6' },
+    body: { class: 'p-5' },
   };
 
   /**

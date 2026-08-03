@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ConfirmationService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import { TrustedDeviceTable } from '@features/account/ui/tables';
 import type { TrustedDeviceOutput } from '@features/auth/models';
 import { TrustedDeviceStore } from '@features/auth/state';
+import { ErrorBanner } from '@shared/error-state';
 
 /**
  * Component AccountTrustedDevicesPanel
@@ -22,7 +21,7 @@ import { TrustedDeviceStore } from '@features/auth/state';
  */
 @Component({
   selector: 'app-account-trusted-devices-panel',
-  imports: [ButtonModule, MessageModule, TrustedDeviceTable],
+  imports: [ErrorBanner, TrustedDeviceTable],
   providers: [TrustedDeviceStore],
   templateUrl: './account-trusted-devices-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +34,12 @@ export class AccountTrustedDevicesPanel {
   protected readonly store: TrustedDeviceStore = inject<TrustedDeviceStore>(TrustedDeviceStore);
   /** Last table request replayed after a list-loading error. */
   private lastLoadOptions: RequestOptions = { page: 1, itemsPerPage: 10 };
+  /** Fallback message shown when the device list fails to load without a server message. */
+  protected readonly loadErrorMessage: string = $localize`:@@account.devices.loadError:Trusted devices could not be loaded.`;
+  /** Fallback message shown when revoking a single device fails without a server message. */
+  protected readonly revokeErrorMessage: string = $localize`:@@account.devices.revokeError:The trusted device could not be revoked.`;
+  /** Fallback message shown when revoking all devices fails without a server message. */
+  protected readonly revokeAllErrorMessage: string = $localize`:@@account.devices.revokeAllError:Trusted devices could not be revoked.`;
 
   /** Loads a trusted device page requested by the lazy table. */
   protected load(options: RequestOptions): void {

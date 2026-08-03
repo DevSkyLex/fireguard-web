@@ -4,13 +4,13 @@
   <ng-template pTemplate="header">
     <div class="flex min-w-0 flex-col gap-0.5">
       <h2
-        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+        class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
         i18n="@@account.deviceTable.title"
       >
         Trusted devices
       </h2>
       <p
-        class="text-xs text-surface-500 dark:text-surface-400"
+        class="text-sm text-surface-500 dark:text-surface-400"
         i18n="@@account.deviceTable.subtitle"
       >
         Devices allowed to bypass repeated MFA verification.
@@ -26,7 +26,7 @@
         size="small"
         [outlined]="true"
         [disabled]="loading()"
-        class="w-full sm:w-auto"
+        class="w-full max-sm:min-h-11 sm:w-auto"
         (onClick)="onRefresh()"
       />
 
@@ -39,7 +39,7 @@
           size="small"
           [outlined]="true"
           [loading]="revokingAll()"
-          class="w-full sm:w-auto"
+          class="w-full max-sm:min-h-11 sm:w-auto"
           (onClick)="revokeAll.emit()"
         />
       }

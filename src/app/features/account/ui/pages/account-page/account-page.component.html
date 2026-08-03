@@ -64,7 +64,7 @@
 
   <p-divider class="my-0" />
 
-  <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
     <!-- Vertical account navigation (sticky on large screens) -->
     <nav
       class="lg:sticky lg:top-6"
@@ -83,9 +83,9 @@
     <div class="flex min-w-0 flex-col gap-6">
       <p-card [pt]="sectionCardPt">
         <ng-template pTemplate="header">
-          <div class="flex flex-col border-b border-surface-200 px-6 py-4 dark:border-surface-800">
+          <div class="flex flex-col border-b border-surface-200 px-5 py-4 dark:border-surface-800">
             <h2
-              class="font-semibold text-surface-900 dark:text-surface-50"
+              class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
               data-testid="account-page-section-title"
             >
               {{ activeSection().label }}

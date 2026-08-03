@@ -1,48 +1,16 @@
 <div class="flex flex-col gap-4">
   @if (store.listCallState().error; as error) {
-    <p-message severity="error">
-      <div class="flex flex-wrap items-center gap-3">
-        <span>
-          @if (error.message; as message) {
-            {{ message }}
-          } @else {
-            <ng-container i18n="@@account.devices.loadError"
-              >Trusted devices could not be loaded.</ng-container
-            >
-          }
-        </span>
-        <p-button
-          label="Retry"
-          i18n-label="@@common.retry"
-          icon="pi pi-refresh"
-          severity="secondary"
-          [text]="true"
-          (onClick)="reload()"
-        />
-      </div>
-    </p-message>
+    <app-error-banner
+      [message]="error.message ?? loadErrorMessage"
+      [retrying]="store.listCallState().status === 'pending'"
+      (retried)="reload()"
+    />
   }
   @if (store.revokeCallState().error; as error) {
-    <p-message severity="error">
-      @if (error.message; as message) {
-        {{ message }}
-      } @else {
-        <ng-container i18n="@@account.devices.revokeError"
-          >The trusted device could not be revoked.</ng-container
-        >
-      }
-    </p-message>
+    <app-error-banner [message]="error.message ?? revokeErrorMessage" [retryable]="false" />
   }
   @if (store.revokeAllCallState().error; as error) {
-    <p-message severity="error">
-      @if (error.message; as message) {
-        {{ message }}
-      } @else {
-        <ng-container i18n="@@account.devices.revokeAllError"
-          >Trusted devices could not be revoked.</ng-container
-        >
-      }
-    </p-message>
+    <app-error-banner [message]="error.message ?? revokeAllErrorMessage" [retryable]="false" />
   }
 
   <app-trusted-device-table

@@ -1,6 +1,7 @@
 <li
-  class="flex cursor-default gap-3 px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
+  class="flex cursor-default gap-3 px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-white/5"
   [class.bg-primary-50]="!notification().isRead"
+  [class.dark:bg-primary-950/30]="!notification().isRead"
 >
   <!-- Category icon -->
   <span

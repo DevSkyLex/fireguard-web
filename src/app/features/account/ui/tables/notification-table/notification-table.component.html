@@ -4,12 +4,12 @@
   <ng-template pTemplate="header">
     <div class="flex min-w-0 flex-col gap-0.5">
       <h2
-        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+        class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
         i18n="@@common.notifications"
       >
         Notifications
       </h2>
-      <p class="text-xs text-surface-500 tabular-nums dark:text-surface-400">
+      <p class="text-sm text-surface-500 tabular-nums dark:text-surface-400">
         @if (loading()) {
           <ng-container i18n="@@account.notifications.loading">Loading notifications…</ng-container>
         } @else {
@@ -39,7 +39,7 @@
         size="small"
         [outlined]="true"
         [disabled]="loading()"
-        class="w-full sm:w-auto"
+        class="w-full max-sm:min-h-11 sm:w-auto"
         (onClick)="onRefresh()"
       />
     </div>
@@ -124,7 +124,7 @@
                       ></span>
                     }
                   </span>
-                  <span class="line-clamp-1 text-xs text-surface-500">
+                  <span class="line-clamp-1 text-xs text-surface-500 dark:text-surface-400">
                     {{ notification.body }}
                   </span>
                 </div>

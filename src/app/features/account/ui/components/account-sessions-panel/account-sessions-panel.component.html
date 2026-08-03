@@ -1,48 +1,16 @@
 <div class="flex flex-col gap-4">
   @if (store.listCallState().error; as error) {
-    <p-message severity="error">
-      <div class="flex flex-wrap items-center gap-3">
-        <span>
-          @if (error.message; as message) {
-            {{ message }}
-          } @else {
-            <ng-container i18n="@@account.sessions.loadError"
-              >Active sessions could not be loaded.</ng-container
-            >
-          }
-        </span>
-        <p-button
-          label="Retry"
-          i18n-label="@@common.retry"
-          icon="pi pi-refresh"
-          severity="secondary"
-          [text]="true"
-          (onClick)="reload()"
-        />
-      </div>
-    </p-message>
+    <app-error-banner
+      [message]="error.message ?? loadErrorMessage"
+      [retrying]="store.listCallState().status === 'pending'"
+      (retried)="reload()"
+    />
   }
   @if (store.revokeCallState().error; as error) {
-    <p-message severity="error">
-      @if (error.message; as message) {
-        {{ message }}
-      } @else {
-        <ng-container i18n="@@account.sessions.revokeError"
-          >The session could not be revoked.</ng-container
-        >
-      }
-    </p-message>
+    <app-error-banner [message]="error.message ?? revokeErrorMessage" [retryable]="false" />
   }
   @if (store.revokeAllCallState().error; as error) {
-    <p-message severity="error">
-      @if (error.message; as message) {
-        {{ message }}
-      } @else {
-        <ng-container i18n="@@account.sessions.revokeAllError"
-          >The other sessions could not be revoked.</ng-container
-        >
-      }
-    </p-message>
+    <app-error-banner [message]="error.message ?? revokeAllErrorMessage" [retryable]="false" />
   }
 
   <app-session-table
@@ -71,21 +39,34 @@
   @if (selectedSession(); as session) {
     <dl class="grid gap-4 md:grid-cols-2">
       <div>
-        <dt class="text-xs text-surface-500" i18n="@@common.created">Created</dt>
+        <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@common.created">
+          Created
+        </dt>
         <dd>{{ session.createdAt | date: 'medium' }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-surface-500" i18n="@@account.sessions.lastActivity">
+        <dt
+          class="text-xs text-surface-500 dark:text-surface-400"
+          i18n="@@account.sessions.lastActivity"
+        >
           Last activity
         </dt>
         <dd>{{ session.lastActivityAt | date: 'medium' }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-surface-500" i18n="@@account.sessions.ipAddress">IP address</dt>
+        <dt
+          class="text-xs text-surface-500 dark:text-surface-400"
+          i18n="@@account.sessions.ipAddress"
+        >
+          IP address
+        </dt>
         <dd>{{ session.ipAddress }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-surface-500" i18n="@@account.sessions.currentSession">
+        <dt
+          class="text-xs text-surface-500 dark:text-surface-400"
+          i18n="@@account.sessions.currentSession"
+        >
           Current session
         </dt>
         <dd>
@@ -97,7 +78,12 @@
         </dd>
       </div>
       <div class="md:col-span-2">
-        <dt class="text-xs text-surface-500" i18n="@@account.sessions.userAgent">User agent</dt>
+        <dt
+          class="text-xs text-surface-500 dark:text-surface-400"
+          i18n="@@account.sessions.userAgent"
+        >
+          User agent
+        </dt>
         <dd class="break-all">{{ session.userAgent }}</dd>
       </div>
     </dl>

@@ -7,13 +7,12 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { ConfirmationService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import { SessionTable } from '@features/account/ui/tables';
 import type { SessionOutput } from '@features/auth/models';
 import { SessionStore } from '@features/auth/state';
+import { ErrorBanner } from '@shared/error-state';
 import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_LG } from '@shared/overlay-size';
 
 /**
@@ -31,7 +30,7 @@ import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_LG } from '@shared/overlay-size';
  */
 @Component({
   selector: 'app-account-sessions-panel',
-  imports: [ButtonModule, DatePipe, DialogModule, MessageModule, SessionTable],
+  imports: [DatePipe, DialogModule, ErrorBanner, SessionTable],
   providers: [SessionStore],
   templateUrl: './account-sessions-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +49,12 @@ export class AccountSessionsPanel {
   protected readonly dialogWidth: string = DIALOG_WIDTH_LG;
   /** Canonical `p-dialog` responsive breakpoints (DESIGN.md, "Overlays — sizes"). */
   protected readonly dialogBreakpoints: Record<string, string> = DIALOG_BREAKPOINTS;
+  /** Fallback message shown when the session list fails to load without a server message. */
+  protected readonly loadErrorMessage: string = $localize`:@@account.sessions.loadError:Active sessions could not be loaded.`;
+  /** Fallback message shown when revoking a single session fails without a server message. */
+  protected readonly revokeErrorMessage: string = $localize`:@@account.sessions.revokeError:The session could not be revoked.`;
+  /** Fallback message shown when revoking all other sessions fails without a server message. */
+  protected readonly revokeAllErrorMessage: string = $localize`:@@account.sessions.revokeAllError:The other sessions could not be revoked.`;
 
   /** Loads a session page requested by the lazy table. */
   protected load(options: RequestOptions): void {

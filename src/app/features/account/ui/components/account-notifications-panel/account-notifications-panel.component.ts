@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
+import { ErrorBanner } from '@shared/error-state';
 import { NotificationTable } from '../../tables';
 
 /**
@@ -22,7 +21,7 @@ import { NotificationTable } from '../../tables';
  */
 @Component({
   selector: 'app-account-notifications-panel',
-  imports: [ButtonModule, MessageModule, NotificationTable],
+  imports: [ErrorBanner, NotificationTable],
   providers: [NotificationStore],
   templateUrl: './account-notifications-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,6 +74,21 @@ export class AccountNotificationsPanel {
    * @type {RequestOptions}
    */
   private lastLoadOptions: RequestOptions = { page: 1, itemsPerPage: 10 };
+
+  /**
+   * Property loadErrorMessage
+   * @readonly
+   *
+   * @description
+   * Fallback message shown on the load-error banner; the account notification
+   * list has no server-provided error message to prefer.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {string}
+   */
+  protected readonly loadErrorMessage: string = $localize`:@@account.notifications.loadError:Failed to load notifications. Please try again later.`;
   //#endregion
 
   //#region Constructor

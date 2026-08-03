@@ -203,7 +203,7 @@ The root stays at 16px so every rem-based utility resolves to its nominal value;
 
 ### Hierarchy
 
-- **Display** (600, 30px / `text-3xl`, 1.2, `-0.025em`): rare — marketing-weight moments such as the auth showcase headline. Four uses app-wide.
+- **Display** (600, 30px / `text-3xl`, 1.2, `-0.025em`): rare. Its sanctioned consumers are the onboarding showcase headline and the focused-page `h1` (error and maintenance pages), which writes `text-3xl font-semibold tracking-[-0.025em] text-balance text-surface-950 dark:text-surface-0` — the historical `-0.03em` tracking there is drift. A dashboard count is **not** a Display consumer.
 - **Headline** (600, 24px / `text-2xl`, 32px, `-0.025em`): the page `h1`. The single largest thing on a routed page.
 - **Title** (600, 18px / `text-lg`, 1.5, `-0.015em`): section headings, empty-state titles, drawer headers.
 - **Card Title** (600, 15px / `0.9375rem`): the `p-card` heading — a half-step below Title so a card inside a section never competes with the section.
@@ -221,13 +221,21 @@ The root stays at 16px so every rem-based utility resolves to its nominal value;
 
 **The Tabular Figures Rule.** Any number that sits in a column, a counter, or a `{done}/{total}` pair takes `tabular-nums` so digits stop jittering as values change.
 
+**The Heading Ink Rule.** The light/dark ink pair of every heading role is fixed — there is exactly one per role, and the four historical pairings collapse onto them:
+
+- page `h1` (Headline): `text-surface-950 dark:text-surface-0`,
+- section `h2` (Title) and card titles (Card Title): `text-surface-900 dark:text-surface-0`,
+- subtitles and descriptions: `text-surface-500 dark:text-surface-400`.
+
+`dark:text-surface-50` and `dark:text-surface-100` on a heading are drift: dark-mode strongest text is pure white (see Colors). The full canonical strings live in the Canonical Class Strings section.
+
 ## Layout
 
 The app is a persistent shell, not a series of pages: a workspace layout composed of an icon rail, a secondary navigation column, the routed content area, and optional right-hand panel and header-action slots that features contribute into. Two other shells exist — a split layout (form beside a full-bleed showcase panel) for auth and onboarding, and a focused layout for errors and maintenance.
 
-**Page padding** follows one convention, and routed pages own their own edges: `p-3 sm:p-6 md:p-7 lg:p-8`, widening to `xl:p-10` on pages that benefit from air. The single documented exception is the intervention detail workspace, which runs full-bleed and manages its own edges.
+**Page padding** follows one convention, and routed pages own their own edges: `p-3 sm:p-6 md:p-7 lg:p-8`. The `xl:p-10` step is not free air — it is tied to width: **a page widens to `xl:p-10` iff it is a `mx-auto max-w-7xl` surface** (dashboard, settings, account). Collection pages (`h-full` table surfaces) never take it. The single documented exception is the intervention detail workspace, which runs full-bleed and manages its own edges.
 
-**Containers** are chosen by content, not by habit: `max-w-md` / `max-w-xl` for forms and dialog bodies, `max-w-3xl` for settings columns, `max-w-prose` for genuine reading passages, `max-w-7xl` for wide dashboards. Collection surfaces run to the full content width.
+**Containers** are chosen by content, not by habit: `max-w-md` / `max-w-xl` for forms and dialog bodies, `max-w-3xl` for settings columns, `max-w-prose` for genuine reading passages, `max-w-7xl` for wide dashboards. Collection surfaces run to the full content width. One root container string per page family — workspace collection, workspace wide, create/edit, auth, focused — is canonical; the five strings live in the Canonical Class Strings section. `max-w-prose` is the only reading width: the `[60ch]` / `[64ch]` arbitraries collapse onto it.
 
 **Spacing** is Tailwind's default scale at a 16px root — 4 / 8 / 12 / 16 / 24px does the vast majority of the work. Vertical rhythm inside a section is `gap-3` / `gap-4`; between sections it is a divider plus `py-4` rather than a large margin.
 
@@ -240,6 +248,8 @@ The app is a persistent shell, not a series of pages: a workspace layout compose
 ### Named Rules
 
 **The Rhythm-Not-Boxes Rule.** Hierarchy comes from varying surface levels — borderless section headers, one carded work surface, a tinted secondary aside, divider-separated lists. Wrapping every section in an identical bordered card is the house anti-pattern.
+
+**The 44px Floor.** Below `sm`, every interactive control is at least 44px tall (`min-h-11` or equivalent padding) — the field scene is a gloved thumb on a cold phone. A control under 44px justifies itself; the default does not.
 
 ## Elevation & Depth
 
@@ -264,7 +274,7 @@ Borders are the system's structural line: 1px, `surface-200` in light and `surfa
 
 ### Named Rules
 
-**The 6px Default Rule.** Unless the element is a pill, an avatar, or a large container, its radius is 6px. Do not introduce new radius values. The scale now has **no outlier**: the toast's 10px — the one value the system had to carve an exception for — moved onto the 12px large-container step it always belonged on.
+**The 6px Default Rule.** Unless the element is a pill, an avatar, or a large container, its radius is 6px. Do not introduce new radius values. The scale now has **no outlier**: the toast's 10px — the one value the system had to carve an exception for — moved onto the 12px large-container step it always belonged on. In utilities that means `rounded-md`: bare `rounded` and `rounded-sm` (both 4px) are drift, and `rounded-border` — the tailwindcss-primeui plugin utility mapping to `var(--p-content-border-radius)` — renders the same 6px but sits outside the project vocabulary; write `rounded-md`.
 
 ## Components
 
@@ -297,12 +307,18 @@ Everything is PrimeNG styled through the design-token preset (`core/primeng/pres
 - **Border:** 1px `surface-200` / `surface-800` where the card must separate from the page.
 - **Internal Padding:** 20px body padding with a 12px gap between blocks; the card title is 15px/600.
 
+The same visual object exists in two sanctioned implementations, chosen by structure — never a third:
+
+- **`p-card` + shared PT constants** where the pass-through structure earns it: the table card shell (`TABLE_CARD_SHELL_PT`) and dashboard widgets with header/body slots.
+- **The literal panel string** everywhere else: `rounded-md border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-900`. A plain bordered panel writes this string verbatim — the `p-3` / `p-4` / `sm:p-8` paddings, `rounded-lg`/`xl` radii, and `surface-700` border tints found on hand-rolled sections are drift. No shared constant wraps it: making cards easier to stamp out fights the Rhythm-Not-Boxes Rule.
+
 ### Tables
 
 - **Header cell:** `surface-500` / `surface-400` label at 12px semibold, padding `14px 20px 10px`, on the card background rather than a tinted strip.
 - **Body cell:** padding `12px 20px`.
 - **Row states:** striped rows use `surface-50` / `surface-800`; hover uses `surface-100` / `surface-800`.
 - **Shell:** collection tables sit in a flex card shell with a bordered header row (`px-4 py-3`, bottom border) and an internally scrolling body, so the toolbar stays put while rows scroll.
+- **Toolbar ownership:** the collection toolbar (search, filters, create) lives in the table card shell's header on single-table pages. It sits at page level only when it commands several views — the interventions List / Board / Calendar index is the one such page.
 
 ### Navigation
 
@@ -312,6 +328,8 @@ Everything is PrimeNG styled through the design-token preset (`core/primeng/pres
 - **Icons:** 13px, fixed 4-unit width so labels align regardless of icon shape; inactive icons are `surface-400`.
 - **Counts:** 12px semibold `tabular-nums`, right-aligned.
 - **Nested rows:** indented with a left 1px rule and a right-only radius, so hierarchy reads as an outline rather than a second list.
+
+**The Two-Context Hover Rule.** There are exactly two hover tints. Interactive rows and controls _outside_ tables — nav rows, ghost/icon buttons, list rows — hover `hover:bg-surface-50 dark:hover:bg-white/5`. Table rows hover `hover:bg-surface-100 dark:hover:bg-surface-800`, owned by the datatable preset. `dark:hover:bg-surface-900`, `surface-800/60`, and a `surface-100` hover outside a table are drift.
 
 ### Tags & Status
 
@@ -331,9 +349,66 @@ Centred blocks rather than inline banners: a 52px rounded-xl `surface-100` / `su
 
 Both blocks take a **`dense`** input for use inside a card, panel, or collapsible section rather than on an otherwise empty page: `py-7`, a 44px tile, and the 15px Card Title step. The default padding is right for a page and wrong for a section — a dashboard card reporting one failed query rendered a full-page-sized failure notice, and an empty checklist on a phone spent a quarter of the screen saying so. Every `app-error-state` in the app is card-embedded and therefore dense; `app-empty-state` uses both.
 
+The error concept has a **second shape**: the inline list-failure banner (`app-error-banner`), for "this surface could not load, retry" above content that keeps its place. It renders `p-message severity="error"` + icon + message + a Retry action — never a hand-rolled red `div` or a bare red paragraph.
+
+**The Quiet Retry Rule.** The retry action of any error surface is `severity="secondary" [outlined]="true" size="small"` with `pi pi-refresh` — never `danger`. The banner is already red; red marks the failure, not the recovery (One Alarm Rule).
+
 ### Toasts
 
 Width `min(25rem, calc(100vw - 2rem))`, 12px radius (`border.radius.xl`, the large-container step), summary at weight 650, stacked as a deck.
+
+### Overlays — sizes
+
+Dialog widths come from `shared/overlay-size`, three steps and nothing else: **S `28rem`** (confirmations), **M `32rem`** (single-column forms), **L `42rem`** (rich or two-column bodies) — historical 30rem and 36rem migrate to M and L. Every dialog also takes the one canonical `breakpoints` object (`≤ 640px → 92vw`) so no dialog ever exceeds a phone. Drawers are `!w-full sm:!w-[34rem]`.
+
+### Loading
+
+`p-skeleton` is the only load-in treatment, its shapes mirroring the final layout, with `motion-reduce:animate-none` on every loop. A spinner exists only as `p-button [loading]` on the triggering control — never a hand-rolled `animate-pulse` block, a raw `pi-spin` glyph, or a page-centred `p-progressSpinner`.
+
+### Counters
+
+A count pill (tab counts, list totals, unread counts) is one literal span, not a component: `rounded-full bg-surface-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-surface-600 dark:bg-surface-800 dark:text-surface-300`. Status pills go through `@shared/tag` + `@shared/tag-severity`; `p-badge` stays unused (it is an overlay-positioning component the preset does not theme).
+
+### Charts
+
+No chart draws a hard-coded colour. The palette is derived entirely from the token vocabulary:
+
+- **axes, grids, tick labels, tooltips:** the `surface-*` ramp (both themes),
+- **status series:** the four-tone status vocabulary (`green` / `blue` / `amber` / `red`),
+- **the primary or accent series:** indigo (`primary-*`),
+- **categorical pairs** (e.g. facilities vs equipment): indigo for the lead series, `surface-400`/`surface-500` for the secondary,
+- **temporal comparison** (current vs previous period): the same hue lightened (`primary-300`) or dashed — never a new hue.
+
+Introducing any other hue requires amending this document first. The activity heatmap's intensity ramp uses `green-*` steps (the success tone) — an `emerald` ramp is drift.
+
+## Canonical Class Strings
+
+The single source of truth for the literal strings the uniformization pass applies. When a template and this table disagree, the template is drift. Every string is one uninterrupted literal (Tailwind scans `.ts` and `.html`; a assembled class name produces no CSS).
+
+| Role                                                      | Canonical string                                                                                                                                                                  |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `h1` — workspace page title                               | `text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-0` (+ `min-w-0 truncate` when dynamic). The auth cluster keeps its documented `sm:text-[1.75rem]` step. |
+| `h1` — focused pages (error/maintenance)                  | `text-3xl font-semibold tracking-[-0.025em] text-balance text-surface-950 dark:text-surface-0` (the Display role)                                                                 |
+| `h2` — section title on the page                          | `text-lg font-semibold tracking-[-0.015em] text-surface-900 dark:text-surface-0`                                                                                                  |
+| Card/panel title (inside any bordered surface)            | `text-[15px] font-semibold text-surface-900 dark:text-surface-0` — no tracking; an `h2` never renders below 15px                                                                  |
+| Subtitle / description                                    | `text-sm text-surface-500 dark:text-surface-400`                                                                                                                                  |
+| Container — workspace collection                          | `flex h-full min-h-0 flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8` — never `xl:p-10`                                                                                                   |
+| Container — workspace wide (dashboard, settings, account) | `mx-auto flex w-full max-w-7xl flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8 xl:p-10`                                                                                                   |
+| Container — create/edit                                   | the standard ramp + inner `mx-auto w-full max-w-3xl` panel (panel string, `p-5`)                                                                                                  |
+| Container — auth                                          | `mx-auto flex w-full max-w-xl flex-col gap-8 px-6 sm:px-8` (the layout owns vertical); onboarding keeps `max-w-4xl`                                                               |
+| Container — focused                                       | `mx-auto flex w-full max-w-md flex-col px-6 py-16 text-center`                                                                                                                    |
+| Reading width                                             | `max-w-prose` only                                                                                                                                                                |
+| Panel surface (non-table)                                 | `rounded-md border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-900`                                                                               |
+| Radius                                                    | default `rounded-md`; bare `rounded` and `rounded-sm` migrate to it (pills → `rounded-full`); `rounded-lg`/`rounded-xl` only on large containers; `rounded-border` → `rounded-md` |
+| Hover — nav rows, ghost/icon buttons, list rows           | `hover:bg-surface-50 dark:hover:bg-white/5`                                                                                                                                       |
+| Hover — table rows                                        | `hover:bg-surface-100 dark:hover:bg-surface-800` (the datatable preset owns it)                                                                                                   |
+| Error-surface retry button                                | `severity="secondary" [outlined]="true" size="small"` + `pi pi-refresh` — never `danger`                                                                                          |
+| Dialog widths                                             | S `28rem` / M `32rem` / L `42rem` + the canonical `breakpoints` object (`≤ 640px → 92vw`), from `shared/overlay-size`                                                             |
+| Drawer width                                              | `!w-full sm:!w-[34rem]`                                                                                                                                                           |
+| Count pill                                                | `rounded-full bg-surface-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-surface-600 dark:bg-surface-800 dark:text-surface-300`                                           |
+| Focus ring                                                | `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary` (`-outline-offset-2` when the control fills its row) — never `ring-*`                      |
+| Touch target                                              | interactive controls ≥ 44px below `sm` (`min-h-11` or equivalent)                                                                                                                 |
+| Icon button                                               | `<p-button [text]="true" severity="secondary" size="small" icon="…" [ariaLabel]="…">` — not a hand-rolled `size-8` button                                                         |
 
 ## Do's and Don'ts
 

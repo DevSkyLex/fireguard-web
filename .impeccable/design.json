@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-31T21:48:17.575Z",
+  "generatedAt": "2026-08-03T20:52:43.419Z",
   "title": "Design System: FireGuard",
   "extensions": {
     "colorMeta": {
@@ -301,7 +301,7 @@
       "refersTo": "toast",
       "description": "The one component whose radius sits outside the scale (10px). Stacked as a deck, modal shadow.",
       "html": "<div class=\"ds-toast\" role=\"status\"><svg class=\"ds-toast__icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg><div class=\"ds-toast__body\"><p class=\"ds-toast__summary\">Intervention published</p><p class=\"ds-toast__detail\">14 inspections and 3 equipment changes were applied.</p></div></div>",
-      "css": ".ds-toast { display: flex; gap: 10px; width: min(25rem, calc(100vw - 2rem)); padding: 12px 14px; background: #ffffff; border: 1px solid #e5e5e5; border-radius: 10px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); font-family: 'Inter Variable', ui-sans-serif, system-ui, sans-serif; } .ds-toast__icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: #16a34a; } .ds-toast__summary { margin: 0; font-size: 14px; font-weight: 650; color: #171717; } .ds-toast__detail { margin: 2px 0 0; font-size: 14px; line-height: 20px; color: #525252; }"
+      "css": ".ds-toast { display: flex; gap: 10px; width: min(25rem, calc(100vw - 2rem)); padding: 12px 14px; background: #ffffff; border: 1px solid #e5e5e5; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); font-family: 'Inter Variable', ui-sans-serif, system-ui, sans-serif; } .ds-toast__icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: #16a34a; } .ds-toast__summary { margin: 0; font-size: 14px; font-weight: 650; color: #171717; } .ds-toast__detail { margin: 2px 0 0; font-size: 14px; line-height: 20px; color: #525252; }"
     }
   ],
   "narrative": {
@@ -338,7 +338,7 @@
       },
       {
         "name": "The One Arbitrary Size Rule",
-        "body": "Exactly one arbitrary type value is sanctioned: text-[15px], the Card Title role, which PrimeNG's preset already applies to p-card headings and Tailwind has no utility for. Everything else off the scale is drift. Three clusters still predate this rule and are not precedent: the sub-10px labels (text-[10px], text-[0.625rem], text-[9px], text-[0.55rem] — several below any sensible reading floor), the 28px auth page titles (text-[1.75rem]), and the 52px showcase hero (text-[3.25rem]).",
+        "body": "Exactly one arbitrary type value is sanctioned: text-[15px], the Card Title role, which PrimeNG's preset already applies to p-card headings and Tailwind has no utility for. Everything else off the scale is drift. Two clusters predate this rule and are not precedent: the 28px auth page titles (text-[1.75rem]) and the 52px showcase hero (text-[3.25rem]), the one marketing-weight moment in the app.",
         "section": "design-system"
       },
       {
@@ -347,8 +347,23 @@
         "section": "design-system"
       },
       {
+        "name": "The Heading Ink Rule",
+        "body": "The light/dark ink pair of every heading role is fixed — there is exactly one per role, and the four historical pairings collapse onto them: - page h1 (Headline): text-surface-950 dark:text-surface-0, - section h2 (Title) and card titles (Card Title): text-surface-900 dark:text-surface-0, - subtitles and descriptions: text-surface-500 dark:text-surface-400. dark:text-surface-50 and dark:text-surface-100 on a heading are drift: dark-mode strongest text is pure white (see Colors). The full canonical strings live in the Canonical Class Strings section.",
+        "section": "design-system"
+      },
+      {
+        "name": "The shell header names the page, and below `lg` it names only the page",
+        "body": "The 56px bar carries the breadcrumb as its visible title (with an sr-only h1 behind it). A full trail does not fit a phone — Home › Organization › Interventions › Intervention wrapped the bar onto two lines and still cut the last crumb mid-word, so the one crumb that says where the member actually is was the one that got truncated. Ancestors are hidden below lg rather than shortened: the hamburger beside them already goes back, so the trail was carrying navigation the header offers twice. This is done in CSS, not by swapping the model on isDesktop() — that signal is false during SSR, so the collapsed trail would render into the HTML and then visibly expand on a desktop hydration.",
+        "section": "design-system"
+      },
+      {
         "name": "The Rhythm-Not-Boxes Rule",
         "body": "Hierarchy comes from varying surface levels — borderless section headers, one carded work surface, a tinted secondary aside, divider-separated lists. Wrapping every section in an identical bordered card is the house anti-pattern.",
+        "section": "design-system"
+      },
+      {
+        "name": "The 44px Floor",
+        "body": "Below sm, every interactive control is at least 44px tall (min-h-11 or equivalent padding) — the field scene is a gloved thumb on a cold phone. A control under 44px justifies itself; the default does not.",
         "section": "design-system"
       },
       {
@@ -358,7 +373,22 @@
       },
       {
         "name": "The 6px Default Rule",
-        "body": "Unless the element is a pill, an avatar, or a large container, its radius is 6px. Do not introduce new radius values; the one outlier in the system (the 10px toast) is not a precedent.",
+        "body": "Unless the element is a pill, an avatar, or a large container, its radius is 6px. Do not introduce new radius values. The scale now has no outlier: the toast's 10px — the one value the system had to carve an exception for — moved onto the 12px large-container step it always belonged on. In utilities that means rounded-md: bare rounded and rounded-sm (both 4px) are drift, and rounded-border — the tailwindcss-primeui plugin utility mapping to var(--p-content-border-radius) — renders the same 6px but sits outside the project vocabulary; write rounded-md.",
+        "section": "design-system"
+      },
+      {
+        "name": "The focus ring is 2px everywhere",
+        "body": "The preset sets focusRing.width: 2px so PrimeNG controls match the focus-visible:outline-2 convention every hand-rolled control already follows — Aura ships 1px, which left the two halves of the app disagreeing about the thickness of a keyboard user's only wayfinding cue, with the PrimeNG half the thinner one. Form fields keep their own zero-width ring: an input signals focus by shifting its border to the accent, which is a deliberate exception rather than an oversight.",
+        "section": "design-system"
+      },
+      {
+        "name": "The Two-Context Hover Rule",
+        "body": "There are exactly two hover tints. Interactive rows and controls outside tables — nav rows, ghost/icon buttons, list rows — hover hover:bg-surface-50 dark:hover:bg-white/5. Table rows hover hover:bg-surface-100 dark:hover:bg-surface-800, owned by the datatable preset. dark:hover:bg-surface-900, surface-800/60, and a surface-100 hover outside a table are drift.",
+        "section": "design-system"
+      },
+      {
+        "name": "The Quiet Retry Rule",
+        "body": "The retry action of any error surface is severity=\"secondary\" [outlined]=\"true\" size=\"small\" with pi pi-refresh — never danger. The banner is already red; red marks the failure, not the recovery (One Alarm Rule).",
         "section": "design-system"
       }
     ],
@@ -370,13 +400,16 @@
       "Do name every control. A <label> wrapping a p-select does not name it: the focusable node is a span[role=\"combobox\"], which is not labelable, and PrimeNG fills its aria-label with the selected value. Point ariaLabelledBy at the visible label's id so the name follows the translation.",
       "Do let the global pt in app.config.ts carry live-region semantics for p-message — role=\"alert\"/assertive for errors, status/polite otherwise — instead of repeating them at 177 call sites.",
       "Do pair every status colour with an icon and a text label.",
+      "Do mark every decorative icon aria-hidden=\"true\". A PrimeIcon is an icon-font glyph drawn from the Private Use Area, so a screen reader that reaches one announces nothing useful at best and a junk character at worst; the accessible name belongs on the control, never on the glyph. A sweep found 40 of 152 <i> tags unmarked across 24 files — the convention was right and the coverage was not.",
       "Do vary surface levels to build hierarchy: a borderless page header, one carded work surface, a tinted aside, divider-separated rows.",
+      "Do set a property list as two columns — names down one, values down the other — with sentence-case labels in surface-500. Reading a stack of name-above-value pairs costs twice the height and gives the eye no column to run down.",
       "Do use text-sm for body copy and tabular-nums for anything counted.",
       "Do ship both themes in the same change — every bg-, text-, and border- gets its dark: counterpart.",
       "Do guard what actually moves: motion-reduce:animate-none on every looping animation and skeleton, motion-reduce:transition-none on transition-transform and the bare transition shorthand. Colour fades (transition-colors, 46 of them) are deliberately left unguarded — prefers-reduced-motion addresses movement, and blanket-guarding a 150ms tint change is noise dressed as accessibility."
     ],
     "donts": [
       "Don't edit src/styles.css. It carries the Tailwind import, the two font faces, the dark variant, and the root/body sizes — nothing else belongs there.",
+      "Don't write a tracked uppercase micro-label — above a heading, above a value, or as a section marker. This is a ban, not a preference, and it is the one the codebase kept losing: the intervention properties rail had stacked eleven of them. A heading carries its own weight at the Title or Card Title step; a property name is sentence case in surface-500. The day-of-week headers in the calendar (MON TUE WED) and the channel-group labels in the collaboration sidebar are the only sanctioned uppercase in the app, because both are established conventions of their own component genre rather than decoration.",
       "Don't use red for anything but danger and invalid state. The accent is indigo.",
       "Don't put a second filled indigo button in the same viewport as the primary action.",
       "Don't add a resting shadow to a card, table, panel, or input. If it does not dismiss, it is flat.",

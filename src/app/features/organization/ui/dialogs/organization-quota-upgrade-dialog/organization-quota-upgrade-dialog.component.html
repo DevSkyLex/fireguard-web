@@ -4,8 +4,8 @@
   [draggable]="false"
   [resizable]="false"
   [dismissableMask]="true"
-  [style]="{ width: '30rem' }"
-  [breakpoints]="{ '640px': '90vw' }"
+  [style]="{ width: dialogWidth }"
+  [breakpoints]="dialogBreakpoints"
   i18n-header="@@org.quota.header"
   header="Plan limit reached"
 >
@@ -32,7 +32,7 @@
         severity="secondary"
         [outlined]="true"
         class="flex-1"
-        styleClass="w-full justify-center"
+        styleClass="w-full justify-center max-sm:min-h-11"
         (onClick)="close()"
       />
       @if (subscriptionLink(); as link) {
@@ -42,7 +42,7 @@
           icon="pi pi-arrow-right"
           iconPos="right"
           class="flex-1"
-          styleClass="w-full justify-center"
+          styleClass="w-full justify-center max-sm:min-h-11"
           [routerLink]="link"
           [queryParams]="subscriptionQueryParams"
           (onClick)="close()"

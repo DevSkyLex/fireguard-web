@@ -1,4 +1,5 @@
 import type { ChartTooltipStyle } from '../../models';
+import { resolveChartColor } from '../chart-palette/chart-palette.utils';
 
 /**
  * Constant CHART_TOOLTIP_FONT_FAMILY
@@ -14,38 +15,20 @@ import type { ChartTooltipStyle } from '../../models';
 const CHART_TOOLTIP_FONT_FAMILY = "'Inter Variable', ui-sans-serif, system-ui, sans-serif";
 
 /**
- * Constant CHART_TOOLTIP_PALETTE
- *
- * @description
- * Per-theme colour set for the chart tooltip surface. Values mirror the app's
- * `surface-*` tokens exactly as used by the toast card
- * (`bg-surface-0 dark:bg-surface-900`, `border-surface-200 dark:border-surface-800`,
- * title `surface-950 / surface-50`, body `surface-500 / surface-400`) so the
- * tooltip reads as the same elevated surface as the rest of the app in both
- * light and dark themes.
- *
- * The Aura preset uses a different surface ramp per colour scheme — **slate**
- * (blue-tinted) in light and **zinc** (neutral grey) in dark — so the two rows
- * below intentionally come from different palettes rather than one shared ramp.
- *
- * @since 1.0.0
- */
-const CHART_TOOLTIP_PALETTE = {
-  light: { background: '#ffffff', title: '#0a0a0a', body: '#737373', border: '#e5e5e5' },
-  dark: { background: '#171717', title: '#fafafa', body: '#a3a3a3', border: '#262626' },
-} as const;
-
-/**
  * @function buildChartTooltipStyle
  *
  * @description
  * Builds the app-styled, theme-aware presentation options for a Chart.js
  * tooltip: an elevated `surface-0 / surface-900` card with a hairline border,
  * rounded corners, comfortable padding, circular series markers and the app's
- * Inter typography. Returns styling only — callers keep their own
- * `callbacks` for title/label formatting and spread this in.
+ * Inter typography. Colours are resolved live through `resolveChartColor`
+ * (`utils/chart-palette`) — title takes the Heading Ink Rule pair
+ * (`surface-950` light / pure-white `surface-0` dark, never `surface-50`) and
+ * body mirrors the same muted step used by the axis tick labels
+ * (`surface-500` light / `surface-400` dark). Returns styling only — callers
+ * keep their own `callbacks` for title/label formatting and spread this in.
  *
- * Pure: the theme is passed in (resolve it from `ThemeService.resolvedTheme()`)
+ * Pure: the theme is passed in (resolve it from `ThemePort.resolvedTheme()`)
  * so the result recomputes whenever the user switches theme.
  *
  * @param {boolean} isDark - Whether the dark theme is currently applied.
@@ -54,13 +37,11 @@ const CHART_TOOLTIP_PALETTE = {
  * @since 1.0.0
  */
 export function buildChartTooltipStyle(isDark: boolean): ChartTooltipStyle {
-  const palette = isDark ? CHART_TOOLTIP_PALETTE.dark : CHART_TOOLTIP_PALETTE.light;
-
   return {
-    backgroundColor: palette.background,
-    titleColor: palette.title,
-    bodyColor: palette.body,
-    borderColor: palette.border,
+    backgroundColor: resolveChartColor(isDark ? 'surface-900' : 'surface-0'),
+    titleColor: resolveChartColor(isDark ? 'surface-0' : 'surface-950'),
+    bodyColor: resolveChartColor(isDark ? 'surface-400' : 'surface-500'),
+    borderColor: resolveChartColor(isDark ? 'surface-800' : 'surface-200'),
     borderWidth: 1,
     padding: 12,
     cornerRadius: 8,

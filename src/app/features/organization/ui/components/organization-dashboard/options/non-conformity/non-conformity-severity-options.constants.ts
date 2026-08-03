@@ -26,14 +26,14 @@ export const NON_CONFORMITY_SEVERITY_OPTIONS: readonly NonConformitySeverityOpti
     value: 'medium',
     icon: PrimeIcons.MINUS,
     severity: 'warn',
-    color: '#eab308',
+    color: '#f59e0b',
   },
   {
     label: $localize`:@@ncSeverity.high:High`,
     value: 'high',
     icon: PrimeIcons.ANGLE_UP,
     severity: 'warn',
-    color: '#f97316',
+    color: '#f59e0b',
   },
   {
     label: $localize`:@@ncSeverity.critical:Critical`,

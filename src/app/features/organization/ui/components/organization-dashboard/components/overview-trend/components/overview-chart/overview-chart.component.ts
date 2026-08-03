@@ -6,7 +6,11 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { buildDifferenceSeries } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
-import { buildChartTooltipStyle } from '@features/organization/ui/components/organization-dashboard/utils';
+import {
+  buildChartTooltipStyle,
+  resolveChartColor,
+  withChartAlpha,
+} from '@features/organization/ui/components/organization-dashboard/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 
@@ -143,8 +147,14 @@ export class OverviewChart {
    *
    * @description
    * Fully computed line chart payload. Derives the Net Pressure series
-   * locally as the difference between NC Opened and NC Resolved.
-   * Recalculates reactively on every store change.
+   * locally as the difference between NC Opened and NC Resolved. Colours are
+   * resolved live through the chart palette (`utils/chart-palette`): Inspections
+   * takes the `info` status tone, NC Opened/Resolved mirror the same `danger`/
+   * `success` tones the non-conformity status registry already uses for
+   * `open`/`done`, and Net Pressure — the one synthesized headline metric —
+   * takes the app's actual theme-aware indigo accent. Recalculates reactively
+   * on every store change and on every theme switch, so the point-hover ring
+   * (matched to the card surface) never goes stale after a toggle.
    *
    * @access protected
    * @since 2.0.0
@@ -155,6 +165,12 @@ export class OverviewChart {
     const aligned = this.store.alignedTrendData();
     const [inspectionData = [], openedData = [], resolvedData = []] = aligned.datasets;
     const netPressureData = buildDifferenceSeries(openedData, resolvedData);
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+    const pointHoverBorderColor = resolveChartColor(isDark ? 'surface-900' : 'surface-0');
+    const inspectionColor = resolveChartColor('blue-500');
+    const openedColor = resolveChartColor('red-500');
+    const resolvedColor = resolveChartColor('green-500');
+    const netPressureColor = resolveChartColor('primary');
 
     return {
       labels: [...aligned.labels],
@@ -162,58 +178,58 @@ export class OverviewChart {
         {
           label: 'Inspections',
           data: inspectionData,
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.08)',
+          borderColor: inspectionColor,
+          backgroundColor: withChartAlpha(inspectionColor, 0.08),
           borderWidth: 2,
           tension: 0.3,
           pointRadius: 0,
           pointHoverRadius: 5,
           pointHoverBorderWidth: 2,
-          pointHoverBorderColor: '#fff',
-          pointHoverBackgroundColor: '#3b82f6',
+          pointHoverBorderColor,
+          pointHoverBackgroundColor: inspectionColor,
           fill: false,
         },
         {
           label: 'NC Opened',
           data: openedData,
-          borderColor: '#f97316',
-          backgroundColor: 'rgba(249, 115, 22, 0.08)',
+          borderColor: openedColor,
+          backgroundColor: withChartAlpha(openedColor, 0.08),
           borderWidth: 2,
           tension: 0.3,
           pointRadius: 0,
           pointHoverRadius: 5,
           pointHoverBorderWidth: 2,
-          pointHoverBorderColor: '#fff',
-          pointHoverBackgroundColor: '#f97316',
+          pointHoverBorderColor,
+          pointHoverBackgroundColor: openedColor,
           fill: false,
         },
         {
           label: 'NC Resolved',
           data: resolvedData,
-          borderColor: '#22c55e',
-          backgroundColor: 'rgba(34, 197, 94, 0.08)',
+          borderColor: resolvedColor,
+          backgroundColor: withChartAlpha(resolvedColor, 0.08),
           borderWidth: 2,
           tension: 0.3,
           pointRadius: 0,
           pointHoverRadius: 5,
           pointHoverBorderWidth: 2,
-          pointHoverBorderColor: '#fff',
-          pointHoverBackgroundColor: '#22c55e',
+          pointHoverBorderColor,
+          pointHoverBackgroundColor: resolvedColor,
           fill: false,
         },
         {
           label: 'Net Pressure',
           data: netPressureData,
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.08)',
+          borderColor: netPressureColor,
+          backgroundColor: withChartAlpha(netPressureColor, 0.08),
           borderWidth: 2,
           borderDash: [5, 4],
           tension: 0.3,
           pointRadius: 0,
           pointHoverRadius: 5,
           pointHoverBorderWidth: 2,
-          pointHoverBorderColor: '#fff',
-          pointHoverBackgroundColor: '#6366f1',
+          pointHoverBorderColor,
+          pointHoverBackgroundColor: netPressureColor,
           fill: false,
         },
       ],
@@ -235,47 +251,54 @@ export class OverviewChart {
    *
    * @type {Signal<ChartOptions<'line'>>}
    */
-  protected readonly options: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: this.reduceMotion ? 0 : 400 },
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8,
-          padding: 16,
+  protected readonly options: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(() => {
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: this.reduceMotion ? 0 : 400 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 16,
+          },
+        },
+        tooltip: {
+          ...buildChartTooltipStyle(isDark),
+          callbacks: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+          },
         },
       },
-      tooltip: {
-        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
-        callbacks: {
-          title: (items) => items[0]?.label ?? '',
-          label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+      scales: {
+        x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
+        y: {
+          border: { display: false },
+          beginAtZero: false,
+          grid: {
+            color: resolveChartColor(isDark ? 'surface-800' : 'surface-200'),
+            drawTicks: false,
+          },
+          ticks: {
+            precision: 0,
+            maxTicksLimit: 5,
+            color: resolveChartColor(isDark ? 'surface-400' : 'surface-500'),
+            font: { size: 11 },
+            padding: 8,
+          },
         },
       },
-    },
-    scales: {
-      x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
-      y: {
-        border: { display: false },
-        beginAtZero: false,
-        grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
-        ticks: {
-          precision: 0,
-          maxTicksLimit: 5,
-          color: '#a3a3a3',
-          font: { size: 11 },
-          padding: 8,
-        },
-      },
-    },
-  }));
+    };
+  });
 
   //#endregion
 

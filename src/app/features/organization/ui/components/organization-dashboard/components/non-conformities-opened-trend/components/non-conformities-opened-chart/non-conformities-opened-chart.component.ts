@@ -7,10 +7,11 @@ import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationDashboardNonConformitiesOpenedStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSingleTrendViewModel } from '@features/organization/ui/components/organization-dashboard/models';
 import {
+  buildChartTooltipStyle,
   buildDashboardSingleTrendLineChartData,
   buildDashboardSingleTrendViewModel,
+  resolveChartColor,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import { buildChartTooltipStyle } from '@features/organization/ui/components/organization-dashboard/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 
@@ -164,21 +165,27 @@ export class NonConformitiesOpenedChart {
    *
    * @description
    * Fully computed line chart payload derived from the trend view model.
-   * Recalculates reactively on every store change.
+   * Colour follows the same `danger` (red) tone the non-conformity status
+   * registry already uses for `open`, resolved live through the chart palette
+   * so it never drifts from the token vocabulary; the comparison series
+   * derives from the shared builder's default (the same hue at reduced alpha).
+   * Recalculates reactively on every store change and on every theme switch.
    *
    * @access protected
    * @since 2.0.0
    *
    * @type {Signal<ChartData<'line'>>}
    */
-  protected readonly data: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() =>
-    buildDashboardSingleTrendLineChartData({
+  protected readonly data: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() => {
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+
+    return buildDashboardSingleTrendLineChartData({
       viewModel: this.trendViewModel(),
       label: 'Non-Conformities Opened',
-      currentColor: '#f97316',
-      comparisonColor: '#fdba74',
-    }),
-  );
+      currentColor: resolveChartColor('red-500'),
+      pointHoverBorderColor: resolveChartColor(isDark ? 'surface-900' : 'surface-0'),
+    });
+  });
 
   /**
    * Property options
@@ -187,54 +194,61 @@ export class NonConformitiesOpenedChart {
    * @description
    * Chart.js configuration for axes, legend, tooltips and interaction.
    * Recomputes when compare mode toggles to update legend visibility and when
-   * the active theme changes so the tooltip stays theme-aware (light/dark).
+   * the active theme changes so the tooltip and axis chrome stay theme-aware.
    *
    * @access protected
    * @since 2.0.0
    *
    * @type {Signal<ChartOptions<'line'>>}
    */
-  protected readonly options: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: this.reduceMotion ? 0 : 500 },
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: {
-        display: this.store.compareEnabled(),
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8,
-          padding: 16,
+  protected readonly options: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(() => {
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: this.reduceMotion ? 0 : 500 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: this.store.compareEnabled(),
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 16,
+          },
+        },
+        tooltip: {
+          ...buildChartTooltipStyle(isDark),
+          callbacks: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+          },
         },
       },
-      tooltip: {
-        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
-        callbacks: {
-          title: (items) => items[0]?.label ?? '',
-          label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+      scales: {
+        x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
+        y: {
+          border: { display: false },
+          beginAtZero: true,
+          grid: {
+            color: resolveChartColor(isDark ? 'surface-800' : 'surface-200'),
+            drawTicks: false,
+          },
+          ticks: {
+            precision: 0,
+            maxTicksLimit: 5,
+            color: resolveChartColor(isDark ? 'surface-400' : 'surface-500'),
+            font: { size: 11 },
+            padding: 8,
+          },
         },
       },
-    },
-    scales: {
-      x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
-      y: {
-        border: { display: false },
-        beginAtZero: true,
-        grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
-        ticks: {
-          precision: 0,
-          maxTicksLimit: 5,
-          color: '#a3a3a3',
-          font: { size: 11 },
-          padding: 8,
-        },
-      },
-    },
-  }));
+    };
+  });
 
   //#endregion
 

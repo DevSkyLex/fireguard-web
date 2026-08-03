@@ -4,3 +4,4 @@ export type { MetricComparison } from './metric-comparison.interface';
 export type { DashboardSingleTrendViewModel } from './dashboard-single-trend-view-model.type';
 export type { ChartTooltipFont } from './chart-tooltip-font.interface';
 export type { ChartTooltipStyle } from './chart-tooltip-style.interface';
+export type { ChartPaletteToken } from './chart-palette-token.type';

@@ -4,9 +4,11 @@
     styleClass="border border-surface-200 dark:border-surface-800 dark:bg-surface-900"
   >
     <ng-template pTemplate="header">
-      <div class="flex items-center gap-2 px-6 pt-6">
+      <div class="flex items-center gap-2 px-5 pt-5">
         <i class="pi pi-send text-primary" aria-hidden="true"></i>
-        <span i18n="@@org.invAccept.header" class="text-lg font-semibold"
+        <span
+          i18n="@@org.invAccept.header"
+          class="text-lg font-semibold tracking-[-0.015em] text-surface-900 dark:text-surface-0"
           >Organization invitation</span
         >
       </div>
@@ -35,13 +37,15 @@
     } @else if (store.preview(); as preview) {
       <!-- Invitation summary -->
       <div class="mb-5 flex flex-col gap-2">
-        <p class="text-sm text-surface-500">
+        <p class="text-sm text-surface-500 dark:text-surface-400">
           <span i18n="@@org.invAccept.invitedTo">You've been invited to join</span>
         </p>
         <p class="text-xl font-semibold text-surface-900 dark:text-surface-0">
           {{ preview.organizationName }}
         </p>
-        <div class="flex flex-wrap items-center gap-2 text-sm text-surface-500">
+        <div
+          class="flex flex-wrap items-center gap-2 text-sm text-surface-500 dark:text-surface-400"
+        >
           @if (preview.inviterDisplayName) {
             <span i18n="@@org.invAccept.invitedBy"
               >Invited by {{ preview.inviterDisplayName }}</span
@@ -58,7 +62,10 @@
           }
         </div>
         @if (expiresAt(); as deadline) {
-          <p class="text-sm text-surface-500" i18n="@@org.invAccept.expiresAt">
+          <p
+            class="text-sm text-surface-500 dark:text-surface-400"
+            i18n="@@org.invAccept.expiresAt"
+          >
             Expires on {{ deadline | date: 'medium' }}
           </p>
         }
@@ -72,7 +79,7 @@
           i18n-label="@@org.invAccept.openOrgs"
           label="Open workspace"
           icon="pi pi-arrow-right"
-          styleClass="w-full"
+          styleClass="w-full max-sm:min-h-11"
           (onClick)="goToWorkspace()"
         />
       } @else if (emailMismatch()) {
@@ -87,14 +94,14 @@
             i18n-label="@@org.invAccept.switchAccount"
             label="Sign in with the invited email"
             icon="pi pi-sign-in"
-            styleClass="w-full"
+            styleClass="w-full max-sm:min-h-11"
             (onClick)="switchAccount()"
           />
           <p-button
             i18n-label="@@org.invAccept.openOrgs"
             label="Open workspace"
             [text]="true"
-            styleClass="w-full"
+            styleClass="w-full max-sm:min-h-11"
             (onClick)="goToWorkspace()"
           />
         </div>
@@ -106,7 +113,7 @@
           i18n-label="@@org.invAccept.openOrgs"
           label="Open workspace"
           [text]="true"
-          styleClass="w-full"
+          styleClass="w-full max-sm:min-h-11"
           (onClick)="goToWorkspace()"
         />
       } @else if (isAuthenticated()) {
@@ -119,12 +126,15 @@
           i18n-label="@@org.invAccept.acceptButton"
           label="Accept invitation"
           icon="pi pi-check"
-          styleClass="w-full"
+          styleClass="w-full max-sm:min-h-11"
           [loading]="store.isAccepting()"
           (onClick)="accept()"
         />
       } @else {
-        <p i18n="@@org.invAccept.authPrompt" class="mb-4 text-sm text-surface-500">
+        <p
+          i18n="@@org.invAccept.authPrompt"
+          class="mb-4 text-sm text-surface-500 dark:text-surface-400"
+        >
           Sign in or create an account with <strong>{{ preview.invitedEmail }}</strong> to accept
           this invitation.
         </p>
@@ -133,7 +143,7 @@
             i18n-label="@@org.invAccept.signIn"
             label="Sign in to accept"
             icon="pi pi-sign-in"
-            styleClass="w-full"
+            styleClass="w-full max-sm:min-h-11"
             (onClick)="signIn()"
           />
           <p-button
@@ -141,7 +151,7 @@
             label="Create an account"
             icon="pi pi-user-plus"
             [outlined]="true"
-            styleClass="w-full"
+            styleClass="w-full max-sm:min-h-11"
             (onClick)="register()"
           />
         </div>

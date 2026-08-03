@@ -1,8 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import type { DrawerPassThroughOptions } from 'primeng/drawer';
 import { OrganizationInviteDrawer } from '../organization-invite-drawer.component';
 
-type InviteDrawerTestApi = OrganizationInviteDrawer & { drawerPt: DrawerPassThroughOptions };
+type InviteDrawerTestApi = OrganizationInviteDrawer & { drawerStyleClass: string };
 
 describe('OrganizationInviteDrawer', () => {
   let component: InviteDrawerTestApi;
@@ -19,8 +18,7 @@ describe('OrganizationInviteDrawer', () => {
   });
 
   it('sizes the drawer responsively (full width on mobile)', () => {
-    const rootClass = (component.drawerPt.root as { class: string }).class;
-    expect(rootClass).toContain('!w-full');
-    expect(rootClass).toContain('sm:!w-[30rem]');
+    expect(component.drawerStyleClass).toContain('!w-full');
+    expect(component.drawerStyleClass).toContain('sm:!w-[34rem]');
   });
 });

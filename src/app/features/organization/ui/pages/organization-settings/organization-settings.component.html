@@ -34,15 +34,15 @@
       <p-card [pt]="sectionCardPt">
         <ng-template pTemplate="header">
           <div
-            class="flex min-w-0 flex-col gap-0.5 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+            class="flex min-w-0 flex-col gap-0.5 border-b border-surface-200 px-5 py-4 dark:border-surface-800"
           >
             <h2
-              class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+              class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
               data-testid="organization-settings-section-title"
             >
               {{ activeSection().label }}
             </h2>
-            <p class="text-xs text-surface-500 dark:text-surface-400">
+            <p class="text-sm text-surface-500 dark:text-surface-400">
               {{ activeSection().description }}
             </p>
           </div>

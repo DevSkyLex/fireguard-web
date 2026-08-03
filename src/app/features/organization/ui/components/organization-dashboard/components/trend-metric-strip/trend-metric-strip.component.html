@@ -18,9 +18,14 @@
       } @else {
         @for (metric of metrics(); track metric.label) {
           <div class="flex min-w-0 flex-col gap-1 bg-surface-0 p-4 dark:bg-surface-900">
-            <span class="truncate text-sm font-medium">{{ metric.label }}</span>
+            <span class="truncate text-sm text-surface-500 dark:text-surface-400">{{
+              metric.label
+            }}</span>
 
-            <span class="truncate text-3xl font-semibold">{{ metric.value }}</span>
+            <span
+              class="truncate text-2xl font-semibold text-surface-950 tabular-nums dark:text-surface-0"
+              >{{ metric.value }}</span
+            >
 
             @if (metric.comparison; as comparison) {
               <div class="flex min-w-0 flex-row items-center gap-2">
@@ -46,7 +51,9 @@
                 }
                 <div class="flex min-w-0 flex-row gap-1 text-sm">
                   <span class="truncate font-semibold">{{ comparison.value }}</span>
-                  <span class="shrink-0 text-surface-500" i18n="@@common.lastPeriod"
+                  <span
+                    class="shrink-0 text-surface-500 dark:text-surface-400"
+                    i18n="@@common.lastPeriod"
                     >last period</span
                   >
                 </div>

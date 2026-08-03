@@ -27,7 +27,7 @@ export const NON_CONFORMITY_STATUS_OPTIONS: readonly NonConformityStatusOption[]
     value: 'in_progress',
     icon: PrimeIcons.SPINNER,
     severity: 'warn',
-    color: '#f97316',
+    color: '#f59e0b',
   },
   {
     label: $localize`:@@dash.ncStatus.done:Done`,

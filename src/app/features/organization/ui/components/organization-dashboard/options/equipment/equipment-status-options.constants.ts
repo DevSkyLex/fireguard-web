@@ -31,7 +31,7 @@ export const EQUIPMENT_STATUS_OPTIONS: readonly EquipmentStatusOption[] = [
     value: 'under_maintenance',
     icon: PrimeIcons.WRENCH,
     severity: 'warn',
-    color: '#f97316',
+    color: '#f59e0b',
   },
   {
     label: $localize`:@@equipmentStatus.decommissioned:Decommissioned`,

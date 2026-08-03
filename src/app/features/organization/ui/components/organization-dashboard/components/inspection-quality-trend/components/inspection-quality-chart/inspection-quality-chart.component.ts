@@ -10,25 +10,13 @@ import {
   INSPECTION_STATUS_OPTIONS,
   NON_CONFORMITY_SEVERITY_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { buildChartTooltipStyle } from '@features/organization/ui/components/organization-dashboard/utils';
+import {
+  buildChartTooltipStyle,
+  resolveChartColor,
+  withChartAlpha,
+} from '@features/organization/ui/components/organization-dashboard/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
-
-/**
- * Function hexToRgb
- *
- * @description
- * Parses a six-digit hex colour string (with leading `#`) into its three RGB
- * integer channels. Used to build gradient fills and per-dataset colour variants.
- *
- * @param {string} hex - Six-digit hex colour string, e.g. `'#3b82f6'`.
- * @returns {[number, number, number]} Tuple of `[red, green, blue]` integer values.
- */
-const hexToRgb = (hex: string): [number, number, number] => [
-  parseInt(hex.slice(1, 3), 16),
-  parseInt(hex.slice(3, 5), 16),
-  parseInt(hex.slice(5, 7), 16),
-];
 
 /**
  * Component InspectionQualityChart
@@ -163,8 +151,17 @@ export class InspectionQualityChart {
    * @readonly
    *
    * @description
-   * Fully computed mixed bar/line chart payload derived from store data
-   * and active filter selections. Recalculates reactively on every change.
+   * Fully computed mixed bar/line chart payload derived from store data and
+   * active filter selections. The Inspections/NC Opened bars tint themselves
+   * from whichever filter option registry supplied the active selection
+   * (`INSPECTION_RESULT_OPTIONS`, `INSPECTION_STATUS_OPTIONS`,
+   * `NON_CONFORMITY_SEVERITY_OPTIONS` — already on the four-tone vocabulary),
+   * falling back to the `info` and `danger` status tones — matching the
+   * `open` non-conformity status colour — when no filter narrows them. NC
+   * Rate (%) is the one synthesized headline metric on this chart, so it
+   * takes the app's theme-aware indigo accent, like Net Pressure on the
+   * overview chart. Recalculates reactively on every store change and on
+   * every theme switch.
    *
    * @access protected
    * @since 2.0.0
@@ -176,23 +173,26 @@ export class InspectionQualityChart {
       const aligned = this.store.alignedTrendData();
       const [inspectionData = [], ncOpenedData = []] = aligned.datasets;
       const rateData = [...this.store.rateSeriesData()];
+      const isDark = this.themePort.resolvedTheme() === 'dark';
 
       const selectedResult = this.store.selectedInspectionResult();
       const selectedStatus = this.store.selectedInspectionStatus();
-      const inspectionHex = selectedResult
-        ? (INSPECTION_RESULT_OPTIONS.find((o) => o.value === selectedResult)?.color ?? '#3b82f6')
+      const inspectionColor = selectedResult
+        ? (INSPECTION_RESULT_OPTIONS.find((o) => o.value === selectedResult)?.color ??
+          resolveChartColor('blue-500'))
         : selectedStatus
-          ? (INSPECTION_STATUS_OPTIONS.find((o) => o.value === selectedStatus)?.color ?? '#3b82f6')
-          : '#3b82f6';
+          ? (INSPECTION_STATUS_OPTIONS.find((o) => o.value === selectedStatus)?.color ??
+            resolveChartColor('blue-500'))
+          : resolveChartColor('blue-500');
 
       const selectedSeverity = this.store.selectedNonConformitySeverity();
-      const ncHex = selectedSeverity
+      const ncColor = selectedSeverity
         ? (NON_CONFORMITY_SEVERITY_OPTIONS.find((o) => o.value === selectedSeverity)?.color ??
-          '#f97316')
-        : '#f97316';
+          resolveChartColor('red-500'))
+        : resolveChartColor('red-500');
 
-      const [ir, ig, ib] = hexToRgb(inspectionHex);
-      const [nr, ng, nb] = hexToRgb(ncHex);
+      const rateColor = resolveChartColor('primary');
+      const pointHoverBorderColor = resolveChartColor(isDark ? 'surface-900' : 'surface-0');
 
       return {
         labels: [...aligned.labels],
@@ -202,13 +202,13 @@ export class InspectionQualityChart {
             data: inspectionData,
             backgroundColor: (context: ScriptableContext<'bar'>) => {
               const { ctx, chartArea } = context.chart;
-              if (!chartArea) return `rgba(${ir}, ${ig}, ${ib}, 0.85)`;
+              if (!chartArea) return withChartAlpha(inspectionColor, 0.85);
               const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-              gradient.addColorStop(0, `rgba(${ir}, ${ig}, ${ib}, 0.95)`);
-              gradient.addColorStop(1, `rgba(${ir}, ${ig}, ${ib}, 0.65)`);
+              gradient.addColorStop(0, withChartAlpha(inspectionColor, 0.95));
+              gradient.addColorStop(1, withChartAlpha(inspectionColor, 0.65));
               return gradient;
             },
-            hoverBackgroundColor: `rgba(${ir}, ${ig}, ${ib}, 1)`,
+            hoverBackgroundColor: inspectionColor,
             borderRadius: 6,
             borderWidth: 0,
             yAxisID: 'y',
@@ -218,13 +218,13 @@ export class InspectionQualityChart {
             data: ncOpenedData,
             backgroundColor: (context: ScriptableContext<'bar'>) => {
               const { ctx, chartArea } = context.chart;
-              if (!chartArea) return `rgba(${nr}, ${ng}, ${nb}, 0.85)`;
+              if (!chartArea) return withChartAlpha(ncColor, 0.85);
               const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-              gradient.addColorStop(0, `rgba(${nr}, ${ng}, ${nb}, 0.95)`);
-              gradient.addColorStop(1, `rgba(${nr}, ${ng}, ${nb}, 0.65)`);
+              gradient.addColorStop(0, withChartAlpha(ncColor, 0.95));
+              gradient.addColorStop(1, withChartAlpha(ncColor, 0.65));
               return gradient;
             },
-            hoverBackgroundColor: `rgba(${nr}, ${ng}, ${nb}, 1)`,
+            hoverBackgroundColor: ncColor,
             borderRadius: 6,
             borderWidth: 0,
             yAxisID: 'y',
@@ -233,15 +233,15 @@ export class InspectionQualityChart {
             type: 'line' as const,
             label: 'NC Rate (%)',
             data: rateData,
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.08)',
+            borderColor: rateColor,
+            backgroundColor: withChartAlpha(rateColor, 0.08),
             borderWidth: 2,
             tension: 0.3,
             pointRadius: 0,
             pointHoverRadius: 5,
             pointHoverBorderWidth: 2,
-            pointHoverBorderColor: '#fff',
-            pointHoverBackgroundColor: '#6366f1',
+            pointHoverBorderColor,
+            pointHoverBackgroundColor: rateColor,
             fill: false,
             yAxisID: 'rateAxis',
           },
@@ -265,61 +265,68 @@ export class InspectionQualityChart {
    *
    * @type {Signal<ChartOptions<'bar'>>}
    */
-  protected readonly options: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: this.reduceMotion ? 0 : 500 },
-    interaction: { mode: 'index', intersect: false },
-    datasets: {
-      bar: {
-        barPercentage: 0.72,
-        categoryPercentage: 0.8,
-      },
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8,
-          padding: 16,
+  protected readonly options: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => {
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: this.reduceMotion ? 0 : 500 },
+      interaction: { mode: 'index', intersect: false },
+      datasets: {
+        bar: {
+          barPercentage: 0.72,
+          categoryPercentage: 0.8,
         },
       },
-      tooltip: {
-        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
-        callbacks: {
-          title: (items) => items[0]?.label ?? '',
-          label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 16,
+          },
+        },
+        tooltip: {
+          ...buildChartTooltipStyle(isDark),
+          callbacks: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+          },
         },
       },
-    },
-    scales: {
-      x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
-      y: {
-        border: { display: false },
-        beginAtZero: true,
-        grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
-        ticks: {
-          precision: 0,
-          maxTicksLimit: 5,
-          color: '#a3a3a3',
-          font: { size: 11 },
-          padding: 8,
+      scales: {
+        x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
+        y: {
+          border: { display: false },
+          beginAtZero: true,
+          grid: {
+            color: resolveChartColor(isDark ? 'surface-800' : 'surface-200'),
+            drawTicks: false,
+          },
+          ticks: {
+            precision: 0,
+            maxTicksLimit: 5,
+            color: resolveChartColor(isDark ? 'surface-400' : 'surface-500'),
+            font: { size: 11 },
+            padding: 8,
+          },
+        },
+        rateAxis: {
+          type: 'linear',
+          position: 'right',
+          border: { display: false },
+          beginAtZero: true,
+          grid: { drawOnChartArea: false },
+          ticks: { display: false },
         },
       },
-      rateAxis: {
-        type: 'linear',
-        position: 'right',
-        border: { display: false },
-        beginAtZero: true,
-        grid: { drawOnChartArea: false },
-        ticks: { display: false },
-      },
-    },
-  }));
+    };
+  });
 
   //#endregion
 

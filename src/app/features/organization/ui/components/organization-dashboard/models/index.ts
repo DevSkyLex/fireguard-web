@@ -1,4 +1,5 @@
 export type {
+  ChartPaletteToken,
   ChartTooltipFont,
   ChartTooltipStyle,
   DashboardSummaryMetric,

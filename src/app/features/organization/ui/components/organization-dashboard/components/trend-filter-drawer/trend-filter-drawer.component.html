@@ -31,6 +31,7 @@
         severity="secondary"
         (onClick)="onReset()"
         class="flex-none"
+        [pt]="{ root: { class: 'max-sm:min-h-11' } }"
         outlined
         fluid
       />
@@ -40,6 +41,7 @@
         [loading]="loading()"
         (onClick)="onApply()"
         class="flex-1"
+        [pt]="{ root: { class: 'max-sm:min-h-11' } }"
         fluid
       />
     </div>

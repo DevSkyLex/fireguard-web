@@ -6,7 +6,11 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { getDashboardTrendPointValue } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
-import { buildChartTooltipStyle } from '@features/organization/ui/components/organization-dashboard/utils';
+import {
+  buildChartTooltipStyle,
+  resolveChartColor,
+  withChartAlpha,
+} from '@features/organization/ui/components/organization-dashboard/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 
@@ -142,7 +146,13 @@ export class AssetGrowthChart {
    *
    * @description
    * Fully computed bar chart payload derived from the aligned trend data.
-   * Recalculates reactively on every store change.
+   * Colours follow DESIGN.md's categorical-pair rule: Equipment (the lead
+   * series) takes the theme-aware indigo accent, Facilities (the secondary
+   * series) takes the neutral `surface-500` / `surface-400` step. Each
+   * "Previous Period" comparison reuses its pair's exact hue at reduced alpha
+   * — the same lightening technique the single-trend line charts already use
+   * for their dashed comparison series — rather than a new hue. Recalculates
+   * reactively on every store change and on every theme switch.
    *
    * @access protected
    * @since 2.0.0
@@ -156,6 +166,11 @@ export class AssetGrowthChart {
     const canReadFacilities = this.store.canReadFacilities();
     const aligned = this.store.alignedTrendData();
     const [equipmentData = [], facilityData = []] = aligned.datasets;
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+    const equipmentColor = resolveChartColor('primary');
+    const equipmentHoverColor = resolveChartColor('primary-hover');
+    const facilityColor = resolveChartColor(isDark ? 'surface-400' : 'surface-500');
+    const facilityHoverColor = resolveChartColor(isDark ? 'surface-300' : 'surface-700');
 
     const datasets: ChartData<'bar'>['datasets'] = [];
 
@@ -163,8 +178,8 @@ export class AssetGrowthChart {
       datasets.push({
         label: 'Equipment Created',
         data: equipmentData,
-        backgroundColor: '#8b5cf6',
-        hoverBackgroundColor: '#7c3aed',
+        backgroundColor: equipmentColor,
+        hoverBackgroundColor: equipmentHoverColor,
       });
     }
 
@@ -172,8 +187,8 @@ export class AssetGrowthChart {
       datasets.push({
         label: 'Facilities Created',
         data: facilityData,
-        backgroundColor: '#14b8a6',
-        hoverBackgroundColor: '#0d9488',
+        backgroundColor: facilityColor,
+        hoverBackgroundColor: facilityHoverColor,
       });
     }
 
@@ -188,8 +203,8 @@ export class AssetGrowthChart {
       datasets.push({
         label: 'Equipment Previous Period',
         data: equipmentComparisonData,
-        backgroundColor: '#c4b5fd',
-        hoverBackgroundColor: '#a78bfa',
+        backgroundColor: withChartAlpha(equipmentColor, 0.45),
+        hoverBackgroundColor: withChartAlpha(equipmentColor, 0.65),
       });
     }
 
@@ -197,8 +212,8 @@ export class AssetGrowthChart {
       datasets.push({
         label: 'Facilities Previous Period',
         data: facilityComparisonData,
-        backgroundColor: '#99f6e4',
-        hoverBackgroundColor: '#5eead4',
+        backgroundColor: withChartAlpha(facilityColor, 0.45),
+        hoverBackgroundColor: withChartAlpha(facilityColor, 0.65),
       });
     }
 
@@ -219,55 +234,62 @@ export class AssetGrowthChart {
    *
    * @type {Signal<ChartOptions<'bar'>>}
    */
-  protected readonly options: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: this.reduceMotion ? 0 : 500 },
-    interaction: { mode: 'index', intersect: false },
-    datasets: {
-      bar: {
-        barPercentage: 0.72,
-        categoryPercentage: 0.8,
-        borderRadius: 6,
-        borderWidth: 0,
-      },
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8,
-          padding: 16,
+  protected readonly options: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => {
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: this.reduceMotion ? 0 : 500 },
+      interaction: { mode: 'index', intersect: false },
+      datasets: {
+        bar: {
+          barPercentage: 0.72,
+          categoryPercentage: 0.8,
+          borderRadius: 6,
+          borderWidth: 0,
         },
       },
-      tooltip: {
-        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
-        callbacks: {
-          title: (items) => items[0]?.label ?? '',
-          label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 16,
+          },
+        },
+        tooltip: {
+          ...buildChartTooltipStyle(isDark),
+          callbacks: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+          },
         },
       },
-    },
-    scales: {
-      x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
-      y: {
-        border: { display: false },
-        beginAtZero: true,
-        grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
-        ticks: {
-          precision: 0,
-          maxTicksLimit: 5,
-          color: '#a3a3a3',
-          font: { size: 11 },
-          padding: 8,
+      scales: {
+        x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
+        y: {
+          border: { display: false },
+          beginAtZero: true,
+          grid: {
+            color: resolveChartColor(isDark ? 'surface-800' : 'surface-200'),
+            drawTicks: false,
+          },
+          ticks: {
+            precision: 0,
+            maxTicksLimit: 5,
+            color: resolveChartColor(isDark ? 'surface-400' : 'surface-500'),
+            font: { size: 11 },
+            padding: 8,
+          },
         },
       },
-    },
-  }));
+    };
+  });
 
   //#endregion
 

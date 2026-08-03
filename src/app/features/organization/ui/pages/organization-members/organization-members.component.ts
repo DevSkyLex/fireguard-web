@@ -16,9 +16,15 @@ import { Events } from '@ngrx/signals/events';
 import { ConfirmationService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { TabsModule } from 'primeng/tabs';
+import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
 import { FeedbackService } from '@core/feedback';
 import { errorFeedback, successFeedback } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import {
+  DETAIL_TAB_LIST_PT,
+  DETAIL_TAB_PANELS_PT,
+  DETAIL_TABS_PT,
+} from '@features/organization/constants';
 import {
   ORGANIZATION_PERMISSION,
   ORGANIZATION_QUOTA_RESOURCE,
@@ -34,7 +40,7 @@ import {
   organizationMembersStoreEvents,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
-import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
+import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/dialogs/organization-quota-upgrade-dialog';
 import {
   OrganizationInviteDrawer,
   OrganizationRoleAssignmentDrawer,
@@ -117,6 +123,13 @@ export class OrganizationMembersPage {
   protected readonly loadErrorFallback: string = $localize`:@@org.members.loadError:The members could not be loaded.`;
   /** Localized fallback for the mutation-error banner. */
   protected readonly mutationErrorFallback: string = $localize`:@@org.members.mutationError:The operation could not be completed.`;
+
+  /** Shared entity-detail tab container pass-through (`@features/organization/constants`). */
+  protected readonly tabsPt: TabsPassThrough = DETAIL_TABS_PT;
+  /** Shared entity-detail tab list pass-through. */
+  protected readonly tabListPt: TabListPassThrough = DETAIL_TAB_LIST_PT;
+  /** Shared entity-detail tab panels pass-through. */
+  protected readonly tabPanelsPt: TabPanelsPassThrough = DETAIL_TAB_PANELS_PT;
 
   /** Zero-based index of the active view tab (members / pending invitations). */
   protected readonly activeTab: WritableSignal<number> = signal(0);

@@ -1,6 +1,9 @@
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <h2 i18n="@@org.dash.attention.title" class="text-[15px] font-semibold tracking-[-0.01em]">
+    <h2
+      i18n="@@org.dash.attention.title"
+      class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
+    >
       Needs your attention
     </h2>
   </ng-template>
@@ -64,13 +67,11 @@
                   [class]="row.icon + ' ' + iconClass(row.severity)"
                   aria-hidden="true"
                 ></i>
-                <span
-                  class="min-w-0 flex-1 truncate text-sm text-surface-900 dark:text-surface-100"
-                >
+                <span class="min-w-0 flex-1 truncate text-sm text-surface-900 dark:text-surface-0">
                   {{ row.label }}
                 </span>
                 <span
-                  class="shrink-0 text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-50"
+                  class="shrink-0 text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-0"
                 >
                   {{ row.count }}
                 </span>
@@ -86,13 +87,11 @@
                   [class]="row.icon + ' ' + iconClass(row.severity)"
                   aria-hidden="true"
                 ></i>
-                <span
-                  class="min-w-0 flex-1 truncate text-sm text-surface-900 dark:text-surface-100"
-                >
+                <span class="min-w-0 flex-1 truncate text-sm text-surface-900 dark:text-surface-0">
                   {{ row.label }}
                 </span>
                 <span
-                  class="shrink-0 text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-50"
+                  class="shrink-0 text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-0"
                 >
                   {{ row.count }}
                 </span>

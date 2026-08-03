@@ -3,7 +3,7 @@
     <div class="flex items-center gap-2">
       <h2
         i18n="@@org.dash.recentInterventions.title"
-        class="text-[15px] font-semibold tracking-[-0.01em]"
+        class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
       >
         Recent interventions
       </h2>
@@ -83,12 +83,12 @@
             <td>
               <div class="flex min-w-0 flex-col gap-0.5">
                 <span
-                  class="text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
+                  class="font-mono text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
                   >FG-{{ intervention.number }}</span
                 >
                 <button
                   type="button"
-                  class="w-fit max-w-full cursor-pointer truncate text-left font-semibold text-surface-950 transition-colors duration-150 hover:text-primary-600 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:text-surface-50 dark:hover:text-primary-400"
+                  class="w-fit max-w-full cursor-pointer truncate text-left font-semibold text-surface-950 transition-colors duration-150 hover:text-primary-600 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:text-surface-0 dark:hover:text-primary-400"
                   (click)="open.emit(intervention)"
                 >
                   {{ intervention.name }}

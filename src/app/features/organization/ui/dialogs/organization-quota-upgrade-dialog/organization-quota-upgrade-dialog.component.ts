@@ -16,6 +16,7 @@ import { MessageModule } from 'primeng/message';
 import { ORGANIZATION_QUOTA_RESOURCE_LABELS } from '@features/organization/constants';
 import type { OrganizationQuotaResource } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_MD } from '@shared/overlay-size';
 
 /**
  * Component OrganizationQuotaUpgradeDialog
@@ -70,6 +71,11 @@ export class OrganizationQuotaUpgradeDialog {
   protected readonly subscriptionQueryParams: Readonly<Record<string, string>> = {
     tab: 'subscription',
   };
+
+  /** Canonical `p-dialog` width for this single-column confirmation prompt. */
+  protected readonly dialogWidth: string = DIALOG_WIDTH_MD;
+  /** Canonical `p-dialog` responsive breakpoints (DESIGN.md, "Overlays — sizes"). */
+  protected readonly dialogBreakpoints: Record<string, string> = DIALOG_BREAKPOINTS;
   //#endregion
 
   //#region Methods

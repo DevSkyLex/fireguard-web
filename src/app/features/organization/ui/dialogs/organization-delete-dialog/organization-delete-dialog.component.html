@@ -55,7 +55,7 @@
         severity="secondary"
         [outlined]="true"
         class="flex-1"
-        styleClass="w-full justify-center"
+        styleClass="w-full justify-center max-sm:min-h-11"
         [disabled]="deleting()"
         (onClick)="cancel()"
       />
@@ -65,7 +65,7 @@
         icon="pi pi-trash"
         severity="danger"
         class="flex-1"
-        styleClass="w-full justify-center"
+        styleClass="w-full justify-center max-sm:min-h-11"
         [loading]="deleting()"
         [disabled]="!canConfirm() || deleting()"
         (onClick)="confirm()"

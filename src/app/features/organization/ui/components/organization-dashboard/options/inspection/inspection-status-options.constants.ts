@@ -33,6 +33,6 @@ export const INSPECTION_STATUS_OPTIONS: readonly InspectionStatusOption[] = [
     value: 'closed',
     icon: PrimeIcons.LOCK,
     severity: 'secondary',
-    color: '#737373',
+    color: '#a3a3a3',
   },
 ];

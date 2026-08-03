@@ -30,7 +30,7 @@
         label="Remove"
         icon="pi pi-trash"
         severity="danger"
-        class="w-full sm:w-auto"
+        class="w-full max-sm:min-h-11 sm:w-auto"
         (onClick)="emitBulkRemove()"
         size="small"
       />
@@ -39,7 +39,7 @@
         label="Clear"
         severity="secondary"
         [text]="true"
-        class="w-full sm:w-auto"
+        class="w-full max-sm:min-h-11 sm:w-auto"
         (onClick)="clearSelection()"
         size="small"
       />
@@ -69,7 +69,7 @@
           icon="pi pi-id-card"
           severity="secondary"
           [outlined]="true"
-          class="w-full sm:w-auto"
+          class="w-full max-sm:min-h-11 sm:w-auto"
           (onClick)="assignRole.emit()"
           size="small"
         />
@@ -81,7 +81,7 @@
           label="Invite member"
           icon="pi pi-envelope"
           severity="primary"
-          class="w-full sm:w-auto"
+          class="w-full max-sm:min-h-11 sm:w-auto"
           (onClick)="invite.emit()"
           size="small"
         />

@@ -17,6 +17,7 @@ describe('buildDashboardSingleTrendChartData utils', () => {
       viewModel,
       label: 'Inspections',
       currentColor: '#3b82f6',
+      pointHoverBorderColor: '#ffffff',
     });
 
     expect(chartData.labels).toEqual(['', '', '']);
@@ -25,12 +26,14 @@ describe('buildDashboardSingleTrendChartData utils', () => {
       label: 'Inspections',
       data: [3, 5, 2],
       borderColor: '#3b82f6',
+      pointHoverBorderColor: '#ffffff',
       pointHoverBackgroundColor: '#3b82f6',
     });
     expect(chartData.datasets[1]).toMatchObject({
       label: 'Previous Period',
       data: [1, 4, 2],
       borderColor: 'rgba(59, 130, 246, 0.4)',
+      pointHoverBorderColor: '#ffffff',
       pointHoverBackgroundColor: 'rgba(59, 130, 246, 0.4)',
     });
   });

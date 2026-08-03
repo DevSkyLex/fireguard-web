@@ -145,6 +145,18 @@ export class OrganizationPlanSelector implements OnInit {
     icon: 'pi pi-check',
   };
 
+  /**
+   * Key of the paid plan whose Subscribe action renders filled. Only the
+   * first payable plan in catalog order stays primary; every other card's
+   * action renders `[outlined]` so at most one filled action competes per
+   * viewport (the design system's Rare Accent Rule). Mirrors the onboarding
+   * select-plan step's identical `primaryPlanKey`.
+   */
+  protected readonly primaryPlanKey: Signal<string | null> = computed<string | null>(
+    () =>
+      this.store.plans().find((plan: PlanOutput): boolean => this.isPaidPlan(plan))?.key ?? null,
+  );
+
   /** Localized billing-cadence sentence of the active subscription, when known. */
   protected readonly intervalBillingLabel: Signal<string | null> = computed<string | null>(() => {
     const interval: BillingInterval | null | undefined = this.billingStore.subscription()?.interval;

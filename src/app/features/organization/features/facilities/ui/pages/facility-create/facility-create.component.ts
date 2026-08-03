@@ -20,7 +20,7 @@ import {
 } from '@features/organization/features/facilities/ui/forms';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
 import { OrganizationQuotaStore } from '@features/organization/state';
-import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
+import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/dialogs/organization-quota-upgrade-dialog';
 import { isQuotaExceededError } from '@features/organization/utils';
 
 /**

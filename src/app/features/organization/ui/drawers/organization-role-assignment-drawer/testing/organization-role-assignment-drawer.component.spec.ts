@@ -1,9 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import type { DrawerPassThroughOptions } from 'primeng/drawer';
 import { OrganizationRoleAssignmentDrawer } from '../organization-role-assignment-drawer.component';
 
 type RoleAssignmentDrawerTestApi = OrganizationRoleAssignmentDrawer & {
-  drawerPt: DrawerPassThroughOptions;
+  drawerStyleClass: string;
 };
 
 describe('OrganizationRoleAssignmentDrawer', () => {
@@ -21,8 +20,7 @@ describe('OrganizationRoleAssignmentDrawer', () => {
   });
 
   it('sizes the drawer responsively (full width on mobile)', () => {
-    const rootClass = (component.drawerPt.root as { class: string }).class;
-    expect(rootClass).toContain('!w-full');
-    expect(rootClass).toContain('sm:!w-[30rem]');
+    expect(component.drawerStyleClass).toContain('!w-full');
+    expect(component.drawerStyleClass).toContain('sm:!w-[34rem]');
   });
 });

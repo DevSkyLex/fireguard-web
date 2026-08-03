@@ -6,7 +6,7 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { DrawerModule, type DrawerPassThroughOptions } from 'primeng/drawer';
+import { DrawerModule } from 'primeng/drawer';
 import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
@@ -15,6 +15,7 @@ import {
   OrganizationRoleAssignmentForm,
   type OrganizationRoleAssignmentValues,
 } from '@features/organization/ui/forms';
+import { DRAWER_STYLE_CLASS } from '@shared/overlay-size';
 
 /**
  * Component OrganizationRoleAssignmentDrawer
@@ -148,19 +149,18 @@ export class OrganizationRoleAssignmentDrawer {
 
   //#region Properties
   /**
-   * Property drawerPt
+   * Property drawerStyleClass
    * @readonly
    *
    * @description
-   * Drawer pass-through: full width on mobile, comfortable form width above.
+   * Canonical `p-drawer` width (DESIGN.md, "Overlays — sizes"): full width on
+   * mobile, a fixed comfortable form width above.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {DrawerPassThroughOptions}
+   * @type {string}
    */
-  protected readonly drawerPt: DrawerPassThroughOptions = {
-    root: { class: '!w-full sm:!w-[30rem]' },
-  };
+  protected readonly drawerStyleClass: string = DRAWER_STYLE_CLASS;
   //#endregion
 }

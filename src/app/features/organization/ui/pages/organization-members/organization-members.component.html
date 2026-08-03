@@ -1,4 +1,4 @@
-<div id="organization-members" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+<div id="organization-members" class="flex h-full min-h-0 flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
   <!--
     The shell renders only a breadcrumb, so the page owns its heading. Without
     it the subtitle below was a lead paragraph under nothing, and the 24px
@@ -8,13 +8,13 @@
     <div class="flex min-w-0 flex-col gap-1.5">
       <h1
         i18n="@@org.members.pageTitle"
-        class="text-2xl font-semibold tracking-[-0.025em] text-surface-950 dark:text-surface-50"
+        class="text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-0"
       >
         Members
       </h1>
       <p
         i18n="@@org.members.pageSubtitle"
-        class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+        class="max-w-prose text-sm text-surface-500 dark:text-surface-400"
       >
         Invite teammates, manage their roles, and track pending invitations.
       </p>
@@ -41,13 +41,13 @@
   }
 
   @if (canViewMembers()) {
-    <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
-      <p-tablist [pt]="{ root: { class: 'bg-transparent!' } }">
+    <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="onTabChange($event)">
+      <p-tablist [pt]="tabListPt">
         <p-tab [value]="0">
           <span class="flex items-center gap-2">
             <span i18n="@@org.members.pageTitle" class="text-sm">Members</span>
             <span
-              class="rounded-full bg-surface-100 px-2 py-px text-xs font-semibold text-surface-500 tabular-nums dark:bg-surface-800 dark:text-surface-400"
+              class="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-semibold text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
               >{{ store.membersTotal() }}</span
             >
           </span>
@@ -56,14 +56,14 @@
           <span class="flex items-center gap-2">
             <span i18n="@@org.members.sectionInvitations" class="text-sm">Pending invitations</span>
             <span
-              class="rounded-full bg-surface-100 px-2 py-px text-xs font-semibold text-surface-500 tabular-nums dark:bg-surface-800 dark:text-surface-400"
+              class="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-semibold text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
               >{{ store.activeInvitations().length }}</span
             >
           </span>
         </p-tab>
       </p-tablist>
 
-      <p-tabpanels [pt]="{ root: { class: 'bg-transparent! p-0' } }">
+      <p-tabpanels [pt]="tabPanelsPt">
         <p-tabpanel [value]="0">
           <app-organization-member-table
             [members]="store.members()"

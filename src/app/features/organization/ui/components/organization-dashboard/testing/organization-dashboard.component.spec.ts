@@ -5,8 +5,10 @@ import { Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
 import {
   ORGANIZATION_PERMISSION,
+  type OrganizationDashboardAlert,
   type OrganizationDashboardRecentIntervention,
 } from '@features/organization/models';
+import { OrganizationAttentionStore } from '@features/organization/state/organization-attention';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
 import { OrganizationDashboard } from '../organization-dashboard.component';
 
@@ -58,6 +60,18 @@ const mockDashboardStore = {
   recentInterventions: signal<readonly OrganizationDashboardRecentIntervention[]>([
     RECENT_INTERVENTION,
   ]),
+  alerts: signal<readonly OrganizationDashboardAlert[]>([]),
+  loadParams: signal<string | undefined>('org-1'),
+  load: vi.fn(),
+};
+
+const mockAttentionStore = {
+  awaitingReviewCount: signal(0),
+  changesRequestedCount: signal(0),
+  overdueCount: signal(0),
+  hasAttention: signal(false),
+  isQueryLoading: signal(false),
+  queryHasError: signal(false),
   loadParams: signal<string | undefined>('org-1'),
   load: vi.fn(),
 };
@@ -91,6 +105,7 @@ describe('OrganizationDashboard', () => {
     mockOrganizationPermissionService.hasPermission.mockClear();
     mockRouter.navigate.mockClear();
     mockDashboardStore.load.mockClear();
+    mockAttentionStore.load.mockClear();
     mockDashboardStore.isQueryLoading.set(false);
     mockDashboardStore.queryHasError.set(false);
     mockDashboardStore.recentInterventions.set([RECENT_INTERVENTION]);
@@ -109,7 +124,9 @@ describe('OrganizationDashboard', () => {
         { provide: Router, useValue: mockRouter },
         { provide: OrganizationPermissionService, useValue: mockOrganizationPermissionService },
       ],
-    }).overrideProvider(DashboardStore, { useValue: mockDashboardStore });
+    })
+      .overrideProvider(DashboardStore, { useValue: mockDashboardStore })
+      .overrideProvider(OrganizationAttentionStore, { useValue: mockAttentionStore });
   });
 
   afterEach(() => {

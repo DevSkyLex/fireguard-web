@@ -1,31 +1,48 @@
 ﻿<div id="organization-dashboard" class="flex flex-col gap-6">
+  @if (canReadDashboard() || canReadRecentInterventions()) {
+    <app-dashboard-attention-panel
+      [rows]="attentionRows()"
+      [loading]="attentionLoading()"
+      [hasError]="attentionHasError()"
+      (selected)="openAttention($event)"
+      (retried)="retryAttention()"
+    />
+  }
+
   @if (showActivitySection()) {
     <div class="flex flex-col gap-6">
+      <!--
+        Heading and rule, no standfirst. "Overview of activity trends and key
+        metrics for your organization" restated the word above it and pushed
+        the first real metric further down every load; its twin under
+        "Resources" said the same sentence with one noun swapped.
+      -->
       <section
-        class="flex flex-row items-start gap-3 border-b border-surface-200 pb-4 dark:border-surface-800"
+        class="flex flex-row items-center gap-2.5 border-b border-surface-200 pb-3 dark:border-surface-800"
       >
         <i
-          class="pi pi-chart-line mt-0.5 text-lg text-surface-500 dark:text-surface-400"
+          class="pi pi-chart-line text-base text-surface-500 dark:text-surface-400"
           aria-hidden="true"
         ></i>
-
-        <div class="flex flex-col">
-          <h2
-            i18n="@@org.dash.activity"
-            class="text-lg font-semibold tracking-[-0.015em] text-surface-950 dark:text-surface-50"
-          >
-            Activity
-          </h2>
-          <p
-            i18n="@@org.dash.activityDesc"
-            class="text-sm leading-6 text-surface-600 dark:text-surface-400"
-          >
-            Overview of activity trends and key metrics for your organization.
-          </p>
-        </div>
+        <h2
+          i18n="@@org.dash.activity"
+          class="text-lg font-semibold tracking-[-0.015em] text-surface-950 dark:text-surface-50"
+        >
+          Activity
+        </h2>
       </section>
 
       <section class="flex flex-col gap-6">
+        @if (canReadRecentInterventions()) {
+          <app-dashboard-recent-interventions
+            [interventions]="store.recentInterventions()"
+            [loading]="store.isQueryLoading()"
+            [hasError]="store.queryHasError()"
+            (open)="openIntervention($event)"
+            (retry)="retryDashboard()"
+          />
+        }
+
         @if (hasActivityMetrics()) {
           <app-dashboard-metric-strip>
             @if (canReadFacilities()) {
@@ -86,16 +103,6 @@
             <app-non-conformities-resolved-trend class="lg:col-span-6" />
           </div>
         }
-
-        @if (canReadRecentInterventions()) {
-          <app-dashboard-recent-interventions
-            [interventions]="store.recentInterventions()"
-            [loading]="store.isQueryLoading()"
-            [hasError]="store.queryHasError()"
-            (open)="openIntervention($event)"
-            (retry)="retryDashboard()"
-          />
-        }
       </section>
     </div>
   }
@@ -103,27 +110,18 @@
   @if (showResourcesSection()) {
     <div class="flex flex-col gap-6">
       <section
-        class="flex flex-row items-start gap-3 border-b border-surface-200 pb-4 dark:border-surface-800"
+        class="flex flex-row items-center gap-2.5 border-b border-surface-200 pb-3 dark:border-surface-800"
       >
         <i
-          class="pi pi-building mt-0.5 text-lg text-surface-500 dark:text-surface-400"
+          class="pi pi-building text-base text-surface-500 dark:text-surface-400"
           aria-hidden="true"
         ></i>
-
-        <div class="flex flex-col">
-          <h2
-            i18n="@@org.dash.resources"
-            class="text-lg font-semibold tracking-[-0.015em] text-surface-950 dark:text-surface-50"
-          >
-            Resources
-          </h2>
-          <p
-            i18n="@@org.dash.resourcesDesc"
-            class="text-sm leading-6 text-surface-600 dark:text-surface-400"
-          >
-            Overview of resource trends and key metrics for your organization.
-          </p>
-        </div>
+        <h2
+          i18n="@@org.dash.resources"
+          class="text-lg font-semibold tracking-[-0.015em] text-surface-950 dark:text-surface-50"
+        >
+          Resources
+        </h2>
       </section>
 
       <section class="flex flex-col gap-6">

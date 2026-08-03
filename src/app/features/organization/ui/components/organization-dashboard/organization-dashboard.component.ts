@@ -4,12 +4,16 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   ORGANIZATION_PERMISSION,
+  type OrganizationDashboardAlert,
   type OrganizationDashboardRecentIntervention,
 } from '@features/organization/models';
+import { OrganizationAttentionStore } from '@features/organization/state/organization-attention';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
 import { EmptyState } from '@shared/empty-state';
+import type { TagSeverity } from '@shared/tag-severity';
 import {
   AssetGrowthTrend,
+  DashboardAttentionPanel,
   DashboardMetricCell,
   DashboardMetricStrip,
   DashboardRecentInterventions,
@@ -18,6 +22,18 @@ import {
   NonConformitiesOpenedTrend,
   OverviewTrend,
 } from './components';
+import type { DashboardAttentionRow } from './models/dashboard';
+
+/**
+ * Constant SEVERITY_ORDER
+ *
+ * @description
+ * Render order of the attention rows: what can hurt the operation first, what is
+ * merely waiting last.
+ *
+ * @since 1.4.0
+ */
+const SEVERITY_ORDER: readonly TagSeverity[] = ['danger', 'warn', 'info'];
 
 /**
  * Component OrganizationDashboard
@@ -37,6 +53,7 @@ import {
   selector: 'app-organization-dashboard',
   templateUrl: './organization-dashboard.component.html',
   imports: [
+    DashboardAttentionPanel,
     DashboardMetricStrip,
     DashboardMetricCell,
     DashboardRecentInterventions,
@@ -48,7 +65,7 @@ import {
     SkeletonModule,
     EmptyState,
   ],
-  providers: [DashboardStore],
+  providers: [DashboardStore, OrganizationAttentionStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboard {
@@ -68,6 +85,24 @@ export class OrganizationDashboard {
    * @type {DashboardStore}
    */
   protected readonly store: DashboardStore = inject<DashboardStore>(DashboardStore);
+
+  /**
+   * Property attention
+   * @readonly
+   *
+   * @description
+   * Component-scoped store owning the exact intervention counts behind the
+   * attention panel. Separate from {@link store} because the counts come from the
+   * interventions collection rather than the aggregate `/dashboard` payload.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {OrganizationAttentionStore}
+   */
+  protected readonly attention: OrganizationAttentionStore = inject<OrganizationAttentionStore>(
+    OrganizationAttentionStore,
+  );
 
   /**
    * Property organizationPermissionService
@@ -277,6 +312,109 @@ export class OrganizationDashboard {
     () => this.canReadFacilities() || this.canReadEquipment(),
   );
 
+  /**
+   * Property attentionLoading
+   * @readonly
+   *
+   * @description
+   * Whether either source feeding the attention panel is still resolving.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly attentionLoading: Signal<boolean> = computed<boolean>(
+    () => this.attention.isQueryLoading() || this.store.isQueryLoading(),
+  );
+
+  /**
+   * Property attentionHasError
+   * @readonly
+   *
+   * @description
+   * Whether either source failed. Deliberately an OR rather than an AND: with one
+   * source missing the panel cannot claim to list everything waiting, and an
+   * "all clear" that is merely a failed request would be a lie.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly attentionHasError: Signal<boolean> = computed<boolean>(
+    () => this.attention.queryHasError() || this.store.queryHasError(),
+  );
+
+  /**
+   * Property attentionRows
+   * @readonly
+   *
+   * @description
+   * The work waiting on the operator, most severe first: intervention counts from
+   * the interventions collection, then the backend alert feed. Rows at zero never
+   * reach the panel, and a row whose destination the operator cannot read is
+   * rendered but not navigable.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<readonly DashboardAttentionRow[]>}
+   */
+  protected readonly attentionRows: Signal<readonly DashboardAttentionRow[]> = computed<
+    readonly DashboardAttentionRow[]
+  >(() => {
+    const rows: DashboardAttentionRow[] = [];
+
+    if (this.canReadRecentInterventions()) {
+      const overdue: number = this.attention.overdueCount();
+      if (overdue > 0) {
+        rows.push({
+          id: 'interventions-overdue',
+          label: $localize`:@@org.dash.attention.overdue:Interventions past their due date`,
+          count: overdue,
+          severity: 'danger',
+          icon: 'pi pi-clock',
+          navigable: true,
+        });
+      }
+
+      const changesRequested: number = this.attention.changesRequestedCount();
+      if (changesRequested > 0) {
+        rows.push({
+          id: 'interventions-changes-requested',
+          label: $localize`:@@org.dash.attention.changesRequested:Interventions sent back for changes`,
+          count: changesRequested,
+          severity: 'warn',
+          icon: 'pi pi-reply',
+          navigable: true,
+        });
+      }
+
+      const awaitingReview: number = this.attention.awaitingReviewCount();
+      if (awaitingReview > 0) {
+        rows.push({
+          id: 'interventions-awaiting-review',
+          label: $localize`:@@org.dash.attention.awaitingReview:Interventions awaiting review`,
+          count: awaitingReview,
+          severity: 'info',
+          icon: 'pi pi-eye',
+          navigable: true,
+        });
+      }
+    }
+
+    for (const alert of this.store.alerts()) {
+      const row: DashboardAttentionRow | null = this.toAlertRow(alert);
+      if (row) rows.push(row);
+    }
+
+    return rows.toSorted(
+      (left, right) =>
+        SEVERITY_ORDER.indexOf(left.severity) - SEVERITY_ORDER.indexOf(right.severity),
+    );
+  });
+
   //#endregion
 
   //#region Methods
@@ -315,6 +453,124 @@ export class OrganizationDashboard {
    */
   protected retryDashboard(): void {
     this.store.load(this.store.loadParams());
+  }
+
+  /**
+   * Method openAttention
+   *
+   * @description
+   * Routes to the surface that owns the activated attention row.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @param {string} rowId - Identifier emitted by the attention panel.
+   * @returns {void}
+   */
+  protected openAttention(rowId: string): void {
+    const organizationId: string | undefined = this.store.loadParams();
+    if (!organizationId) return;
+
+    const base: readonly string[] = ['/organizations', organizationId];
+
+    switch (rowId) {
+      case 'interventions-overdue':
+      case 'interventions-changes-requested':
+      case 'interventions-awaiting-review':
+        void this.router.navigate([...base, 'interventions']);
+        return;
+      case 'critical_non_conformities_open':
+      case 'non_conformities_overdue':
+        void this.router.navigate([...base, 'inspections']);
+        return;
+      case 'expired_invitations':
+        void this.router.navigate([...base, 'members']);
+        return;
+      case 'equipment_under_maintenance':
+        void this.router.navigate([...base, 'equipments']);
+        return;
+      default:
+        return;
+    }
+  }
+
+  /**
+   * Method retryAttention
+   *
+   * @description
+   * Re-runs both sources behind the attention panel after a failure.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @returns {void}
+   */
+  protected retryAttention(): void {
+    this.attention.load(this.attention.loadParams());
+    this.store.load(this.store.loadParams());
+  }
+
+  /**
+   * Method toAlertRow
+   *
+   * @description
+   * Maps one backend alert onto a panel row, resolving its label, icon and
+   * whether the operator may reach its destination. Returns null for an empty
+   * count or a code this build does not know, so an unrecognised alert degrades
+   * to silence rather than to a blank row.
+   *
+   * @access private
+   * @since 1.4.0
+   *
+   * @param {OrganizationDashboardAlert} alert - One entry of the backend alert feed.
+   * @returns {DashboardAttentionRow | null} The row to render, or null.
+   */
+  private toAlertRow(alert: OrganizationDashboardAlert): DashboardAttentionRow | null {
+    const count: number = alert.count ?? 0;
+    if (count <= 0) return null;
+
+    const severity: TagSeverity = alert.severity === 'high' ? 'danger' : 'warn';
+
+    switch (alert.code) {
+      case 'critical_non_conformities_open':
+        return {
+          id: alert.code,
+          label: $localize`:@@org.dash.attention.criticalNonConformities:Critical non-conformities still open`,
+          count,
+          severity,
+          icon: 'pi pi-exclamation-triangle',
+          navigable: this.canReadInspections(),
+        };
+      case 'non_conformities_overdue':
+        return {
+          id: alert.code,
+          label: $localize`:@@org.dash.attention.overdueNonConformities:Non-conformities past their deadline`,
+          count,
+          severity,
+          icon: 'pi pi-clock',
+          navigable: this.canReadInspections(),
+        };
+      case 'expired_invitations':
+        return {
+          id: alert.code,
+          label: $localize`:@@org.dash.attention.expiredInvitations:Invitations that expired unaccepted`,
+          count,
+          severity,
+          icon: 'pi pi-envelope',
+          navigable: this.canReadMembers(),
+        };
+      case 'equipment_under_maintenance':
+        return {
+          id: alert.code,
+          label: $localize`:@@org.dash.attention.equipmentUnderMaintenance:Equipment currently under maintenance`,
+          count,
+          severity,
+          icon: 'pi pi-wrench',
+          navigable: this.canReadEquipment(),
+        };
+      default:
+        return null;
+    }
   }
 
   //#endregion

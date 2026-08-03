@@ -14,6 +14,7 @@ import {
 import { OrganizationService } from '@features/organization/data-access';
 import { getDashboardTrendPointValue } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import type {
+  OrganizationDashboardAlert,
   OrganizationDashboardComparisonMetric,
   OrganizationDashboardComparisonMetricGroup,
   OrganizationDashboardOutput,
@@ -309,6 +310,18 @@ export const DashboardStore = signalStore(
     recentInterventions: computed<readonly OrganizationDashboardRecentIntervention[]>(
       () => store.queryData()?.recentInterventions ?? [],
     ),
+
+    /**
+     * Computed alerts
+     *
+     * @description
+     * Backend-computed attention feed embedded in the dashboard payload.
+     * The API emits an entry only when its count is above zero, so the
+     * list is already filtered: an empty array means nothing is raised.
+     *
+     * @since 1.2.0
+     */
+    alerts: computed<readonly OrganizationDashboardAlert[]>(() => store.queryData()?.alerts ?? []),
   })),
   //#endregion
 

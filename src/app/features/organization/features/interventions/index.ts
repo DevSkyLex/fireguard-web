@@ -13,3 +13,16 @@
  */
 export { provideInterventionsFeature } from './interventions.feature';
 export { withInterventionHeaderActions, withInterventionSyncChip } from './providers';
+
+/**
+ * The transport service, for the parent feature's dashboard attention panel
+ * (ARCHITECTURE.md §4: parent and nested child depend on each other only through
+ * an explicit public API).
+ *
+ * Exported from its implementation path on purpose, NOT through `./data-access`:
+ * that barrel also re-exports `InterventionOfflineService` and
+ * `InterventionDatabaseService`, so importing through it would drag the IndexedDB
+ * layer into the organization dashboard bundle — the exact cost this file exists
+ * to avoid. `intervention.service.ts` itself imports only `@core/api` and types.
+ */
+export { InterventionService } from './data-access/services/intervention/intervention.service';

@@ -1,4 +1,5 @@
 export { AssetGrowthTrend } from './asset-growth-trend';
+export { DashboardAttentionPanel } from './dashboard-attention-panel';
 export { DashboardMetricCell, DashboardMetricStrip } from './dashboard-metric-strip';
 export { DashboardRecentInterventions } from './dashboard-recent-interventions';
 export { InspectionQualityTrend } from './inspection-quality-trend';

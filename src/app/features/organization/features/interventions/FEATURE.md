@@ -86,11 +86,28 @@ Main provider:
 
 - `provideInterventionsFeature`
 
+## Published Contracts
+
+The root `index.ts` stays deliberately narrow (see the comment in the file): a wide barrel
+drags the IndexedDB/offline graph into every consumer's initial bundle. It publishes:
+
+- `provideInterventionsFeature` — bootstrap providers.
+- `withInterventionHeaderActions`, `withInterventionSyncChip` — workspace shell contributions.
+- `InterventionService` — the transport service, consumed by the parent feature's dashboard
+  attention panel (`OrganizationAttentionStore`) to count interventions awaiting review, sent
+  back for changes, or past their due date. Exported from its implementation path rather than
+  through `./data-access`, because that barrel also carries the offline services.
+
+Nothing else is published. Internal code imports deep paths directly.
+
 ## Cross-Feature Dependencies
 
 - Depends on organization route context and permissions from the parent `features/organization`
   feature (`organizationPermissionGuard` from `@features/organization/http/guards`,
   `ORGANIZATION_PERMISSION` from `@features/organization/models`).
+- The parent feature consumes `InterventionService` through this feature's public API for the
+  dashboard attention panel (ARCHITECTURE.md §4). The counts are read-only `totalItems` probes
+  (`itemsPerPage=1`); no intervention state or workflow decision leaves this boundary.
 - May reference facility, equipment, and inspection ids as linked counts on the workspace properties
   rail, but must not absorb ownership of those sibling organization subfeatures.
 
@@ -254,6 +271,32 @@ badge and the select option follow automatically.
 
 ## Invariants
 
+- **Publication is confirm-gated, and the confirmation is the recap.** The phase command in
+  `review` opens `confirmPublish()`, which states how many pending changes and recorded
+  inspections are about to be written and at which revision, then repeats the atomic contract.
+  It must never call `publishIntervention()` directly: publication is the one step that writes
+  to the compliance record, and every other consequential action here (abandon, delete, discard
+  blocked sync) is already gated.
+- **In `execute`, the work comes before the context.** The identity block and the stage
+  progress row live in an `interventionContext` `ng-template` rendered _after_ the checklist
+  during execution and before it in every other phase. The reorder is in the DOM, not in CSS
+  `order`, so keyboard focus keeps matching the visual sequence (WCAG 2.4.3). Progressive
+  disclosure no longer stops at `draft`.
+- **One page-level notice is open at a time.** `activeNotices` ranks them — error, blocked
+  sync, reviewer note, publication blockers, offline outbox, ready-to-publish, published — and
+  only the first renders; the rest fold behind a counted toggle (`showNotice`,
+  `noticesExpanded`). Seven could co-render before, which put a wall between the operator and
+  the checklist they opened the page to run. Adding a notice means extending the ranking, not
+  appending another always-open banner.
+- **The properties rail has one edit entry, not one per row.** The rail is a read-only
+  summary with a single "Edit planning" control on its (now visible) group heading. It
+  previously carried four pencils — priority, assignees, due date, site — that all called the
+  same `editDrawerVisible.set(true)`, so the affordance advertised four scopes and delivered
+  one. Description and labels keep their own controls because they open genuinely different
+  editors (inline expand-in-place, and the label multiselect).
+- **The publication outcome renders where the action was taken.** `publicationMessage` appears in
+  the mobile command bar as well as the properties rail, because below `xl` the rail stacks under
+  the entire main column — a phone operator would otherwise tap Publish and see nothing change.
 - Intervention workflows remain organization-scoped.
 - Offline outbox replay belongs to this subfeature, not `core`.
 - Intervention pages orchestrate intervention services and intervention stores.

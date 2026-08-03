@@ -10,7 +10,9 @@ This feature is responsible for:
 - organization member, invitation, role, and settings (general & branding) data,
 - organization subscription plan selection and plan-driven resource quotas (usage meters),
 - organization billing (Stripe-hosted Checkout / customer Portal and invoice history),
-- the organization overview dashboard (KPI cards and trend charts),
+- the organization overview dashboard: an attention panel naming the work waiting on the
+  operator (overdue / sent back / awaiting review interventions, plus the backend alert feed),
+  then recent interventions, then KPI cards and trend charts,
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures: facilities, equipments, inspections, interventions,
@@ -67,6 +69,7 @@ Primary stores:
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
 - `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`)
+- `OrganizationAttentionStore` (component-scoped to the dashboard; the exact intervention counts — awaiting review, sent back for changes, overdue — behind the overview's attention panel)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
@@ -140,6 +143,9 @@ store never calls the API without the permission — the request would be a guar
 
 ## Cross-Feature Dependencies
 
+- Consumes `InterventionService` from the nested `features/interventions` public API for the
+  dashboard attention panel (ARCHITECTURE.md §4). Read-only `totalItems` probes only
+  (`itemsPerPage=1`), no intervention state or workflow decision crosses the boundary.
 - May expose organization context to shell composition through ports.
 - May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
 - May expose onboarding-approved setup workflows through `organization/setup`.

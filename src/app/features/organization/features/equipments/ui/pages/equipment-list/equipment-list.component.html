@@ -1,24 +1,10 @@
 <div id="equipment-list" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
   @if (hasListError()) {
-    <p-message severity="error" class="block">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <span class="flex items-center gap-2">
-          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-          <span i18n="@@equipment.list.errorText"
-            >The equipment could not be loaded. Check your connection and try again.</span
-          >
-        </span>
-        <p-button
-          i18n-label="@@equipment.list.retry"
-          label="Retry"
-          icon="pi pi-refresh"
-          severity="danger"
-          [text]="true"
-          size="small"
-          (onClick)="retry()"
-        />
-      </div>
-    </p-message>
+    <app-error-banner
+      [message]="listErrorMessage"
+      [retrying]="store.isLoadingEquipment()"
+      (retried)="retry()"
+    />
   }
   <app-equipment-table
     class="flex min-h-0 flex-1 flex-col"

@@ -15,6 +15,7 @@ import {
   type FacilityOutput,
   type FacilityType,
 } from '@features/organization/features/facilities/models';
+import { PageHeader } from '@shared/page-header';
 import { type TagDescriptor } from '@shared/tag';
 
 /**
@@ -32,7 +33,7 @@ import { type TagDescriptor } from '@shared/tag';
  */
 @Component({
   selector: 'app-facility-detail-header',
-  imports: [DatePipe, TitleCasePipe, AvatarModule, ButtonModule, TagModule],
+  imports: [DatePipe, TitleCasePipe, AvatarModule, ButtonModule, PageHeader, TagModule],
   templateUrl: './facility-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

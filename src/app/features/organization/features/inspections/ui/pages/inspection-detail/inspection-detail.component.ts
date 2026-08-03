@@ -44,6 +44,7 @@ import {
 } from '@features/organization/features/inspections/ui/tables';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState } from '@shared/empty-state';
+import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_LG } from '@shared/overlay-size';
 import { type TagDescriptor } from '@shared/tag';
 
 /**
@@ -132,6 +133,10 @@ export class InspectionDetailPage {
   protected readonly tabListPt: TabListPassThrough = DETAIL_TAB_LIST_PT;
   /** PrimeNG pass-through configuration for the tab panels. */
   protected readonly tabPanelsPt: TabPanelsPassThrough = DETAIL_TAB_PANELS_PT;
+  /** Canonical `p-dialog` width for the non-conformity detail dialog. */
+  protected readonly dialogWidth: string = DIALOG_WIDTH_LG;
+  /** Canonical `p-dialog` responsive breakpoints (DESIGN.md, "Overlays — sizes"). */
+  protected readonly dialogBreakpoints: Record<string, string> = DIALOG_BREAKPOINTS;
 
   /** Initializes the active inspection non-conformity collection. */
   public constructor() {

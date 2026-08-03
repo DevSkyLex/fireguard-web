@@ -10,8 +10,6 @@ import {
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import { isCallError } from '@core/request-state';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
@@ -19,6 +17,7 @@ import { EquipmentStore } from '@features/organization/features/equipments/state
 import { EquipmentTable } from '@features/organization/features/equipments/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
 import { OrganizationQuotaStore } from '@features/organization/state';
+import { ErrorBanner } from '@shared/error-state';
 
 /**
  * Component EquipmentListPage
@@ -34,7 +33,7 @@ import { OrganizationQuotaStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-equipment-list',
-  imports: [EquipmentTable, MessageModule, ButtonModule],
+  imports: [EquipmentTable, ErrorBanner],
   providers: [EquipmentStore],
   templateUrl: './equipment-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -119,6 +118,9 @@ export class EquipmentListPage {
 
   /** Tooltip explaining why equipment creation is disabled. */
   protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
+
+  /** Localized message shown in the load-error banner for the equipment list. */
+  protected readonly listErrorMessage: string = $localize`:@@equipment.list.errorText:The equipment could not be loaded. Check your connection and try again.`;
 
   /**
    * Property hasListError

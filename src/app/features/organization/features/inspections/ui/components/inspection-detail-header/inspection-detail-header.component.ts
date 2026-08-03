@@ -1,11 +1,15 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, formatDate } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
+  inject,
   input,
+  LOCALE_ID,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
@@ -14,6 +18,7 @@ import {
   resolveInspectionTag,
   type InspectionOutput,
 } from '@features/organization/features/inspections/models';
+import { PageHeader } from '@shared/page-header';
 import { type TagDescriptor } from '@shared/tag';
 
 /**
@@ -21,7 +26,7 @@ import { type TagDescriptor } from '@shared/tag';
  */
 @Component({
   selector: 'app-inspection-detail-header',
-  imports: [AvatarModule, ButtonModule, DatePipe, TagModule],
+  imports: [AvatarModule, ButtonModule, DatePipe, PageHeader, TagModule],
   templateUrl: './inspection-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -42,6 +47,19 @@ export class InspectionDetailHeader {
   public readonly cancelInspection: OutputEmitterRef<void> = output();
   /** Localized fallback shown when the inspector identity is unavailable. */
   protected readonly unknownInspectorLabel: string = $localize`:@@inspection.unknownInspector:Unknown inspector`;
+
+  /** Active locale, used to format {@link headerTitle}'s date the same way the `date` pipe would. */
+  private readonly localeId: string = inject<string>(LOCALE_ID);
+
+  /** `app-page-header` title: "Inspection {performedAt, mediumDate}". */
+  protected readonly headerTitle: Signal<string> = computed<string>(() => {
+    const performedAt: string = formatDate(
+      this.inspection().performedAt,
+      'mediumDate',
+      this.localeId,
+    );
+    return $localize`:@@inspection.header.title:Inspection ${performedAt}:INTERPOLATION:`;
+  });
 
   /** Resolves the status badge descriptor for the inspection. */
   protected statusDescriptor(status: string): TagDescriptor {

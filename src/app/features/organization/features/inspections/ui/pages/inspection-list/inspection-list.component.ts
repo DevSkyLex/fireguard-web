@@ -11,8 +11,6 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
@@ -20,6 +18,7 @@ import { InspectionStore } from '@features/organization/features/inspections/sta
 import { InspectionTable } from '@features/organization/features/inspections/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
 import { OrganizationQuotaStore } from '@features/organization/state';
+import { ErrorBanner } from '@shared/error-state';
 
 /**
  * Component InspectionListPage
@@ -35,7 +34,7 @@ import { OrganizationQuotaStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-inspection-list',
-  imports: [InspectionTable, ButtonModule, MessageModule],
+  imports: [InspectionTable, ErrorBanner],
   providers: [InspectionStore],
   templateUrl: './inspection-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -123,6 +122,9 @@ export class InspectionListPage {
 
   /** Tooltip explaining why inspection creation is disabled. */
   protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
+
+  /** Localized message shown in the load-error banner for the inspection list. */
+  protected readonly listErrorMessage: string = $localize`:@@inspection.list.errorText:The inspections could not be loaded. Check your connection and try again.`;
 
   /**
    * Property lastLoadOptions

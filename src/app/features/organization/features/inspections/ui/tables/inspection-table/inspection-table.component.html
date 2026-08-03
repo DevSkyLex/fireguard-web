@@ -98,6 +98,8 @@
           size="small"
           i18n-placeholder="@@inspection.table.filterPerformed"
           placeholder="Performed range"
+          i18n-ariaLabel="@@inspection.table.filterPerformed"
+          ariaLabel="Performed range"
           class="w-full"
         />
       </div>
@@ -139,7 +141,7 @@
           [model]="toolbarActions()"
           (onClick)="add.emit()"
           [disabled]="loading() || createDisabled()"
-          class="w-full sm:w-auto"
+          class="w-full max-sm:min-h-11 sm:w-auto"
           size="small"
         />
       </span>
@@ -151,7 +153,7 @@
         severity="secondary"
         [outlined]="true"
         [disabled]="loading()"
-        class="w-full sm:w-auto"
+        class="w-full max-sm:min-h-11 sm:w-auto"
         (onClick)="onRefresh()"
         size="small"
       />
@@ -163,7 +165,7 @@
         severity="secondary"
         [outlined]="true"
         [disabled]="loading()"
-        class="w-full sm:w-auto"
+        class="w-full max-sm:min-h-11 sm:w-auto"
         (onClick)="onClearFilters()"
         size="small"
       />
@@ -176,7 +178,7 @@
     <div class="flex min-w-0 flex-col gap-0.5">
       <h2
         i18n="@@inspection.table.title"
-        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+        class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
       >
         Inspections
       </h2>

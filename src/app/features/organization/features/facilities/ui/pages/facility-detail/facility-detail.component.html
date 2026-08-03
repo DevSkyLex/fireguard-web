@@ -12,10 +12,7 @@
             <p-skeleton width="9rem" height="0.875rem" />
           </div>
         </div>
-        <div class="hidden items-center gap-2 md:flex">
-          <p-skeleton width="5rem" height="2rem" />
-          <p-skeleton width="5rem" height="2rem" />
-        </div>
+        <p-skeleton class="hidden md:block" width="8rem" height="2rem" />
       </div>
     } @else if (facility(); as facility) {
       <app-facility-detail-header
@@ -103,62 +100,11 @@
 </div>
 
 <!-- Move Dialog -->
-<p-dialog
-  i18n-header="@@facility.move.header"
-  header="Move Facility"
-  [visible]="showMoveDialog()"
-  (visibleChange)="showMoveDialog.set($event)"
-  [modal]="true"
-  [style]="{ width: dialogWidth }"
-  [breakpoints]="dialogBreakpoints"
-  [closable]="!isMoving()"
->
-  <div class="flex flex-col gap-6">
-    <p i18n="@@facility.move.description" class="text-sm text-surface-600 dark:text-surface-400">
-      Select a new parent facility or choose "None" to move this facility to the root level.
-    </p>
-
-    <div class="flex flex-col gap-2">
-      <label
-        for="moveParent"
-        i18n="@@facility.move.parentLabel"
-        class="text-sm font-medium text-surface-700 dark:text-surface-300"
-      >
-        Parent Facility
-      </label>
-      <p-select
-        inputId="moveParent"
-        [options]="parentOptions()"
-        optionLabel="label"
-        optionValue="value"
-        [ngModel]="moveParentId()"
-        (ngModelChange)="moveParentId.set($event)"
-        [filter]="true"
-        i18n-filterPlaceholder="@@facility.searchFacilities"
-        filterPlaceholder="Search facilities..."
-        [disabled]="isMoving()"
-        class="w-full"
-      />
-    </div>
-  </div>
-
-  <ng-template #footer>
-    <div class="flex items-center justify-end gap-3">
-      <p-button
-        i18n-label="@@common.cancel"
-        label="Cancel"
-        severity="secondary"
-        [outlined]="true"
-        [disabled]="isMoving()"
-        (onClick)="onMoveCancel()"
-      />
-      <p-button
-        i18n-label="@@facility.header.move"
-        label="Move"
-        icon="pi pi-arrow-right-arrow-left"
-        [loading]="isMoving()"
-        (onClick)="onMoveSubmit()"
-      />
-    </div>
-  </ng-template>
-</p-dialog>
+<app-facility-move-dialog
+  [(visible)]="showMoveDialog"
+  [parentOptions]="parentOptions()"
+  [initialParentId]="facility()?.parentFacilityId ?? ''"
+  [moving]="isMoving()"
+  (confirmed)="onMoveConfirmed($event)"
+  (cancelled)="onMoveCancel()"
+/>

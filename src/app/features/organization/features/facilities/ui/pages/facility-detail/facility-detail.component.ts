@@ -12,12 +12,9 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
-import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
@@ -47,9 +44,9 @@ import {
   FacilityEquipmentDataview,
   FacilityInspectionDataview,
 } from '@features/organization/features/facilities/ui/dataviews';
+import { FacilityMoveDialog } from '@features/organization/features/facilities/ui/dialogs/facility-move-dialog';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState } from '@shared/empty-state';
-import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_SM } from '@shared/overlay-size';
 
 /**
  * Component FacilityDetailPage
@@ -68,19 +65,17 @@ import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_SM } from '@shared/overlay-size';
 @Component({
   selector: 'app-facility-detail',
   imports: [
-    FormsModule,
     ButtonModule,
-    DialogModule,
-    SelectModule,
     SkeletonModule,
     TabsModule,
     FacilityDetailHeader,
-    FacilityInspectionDataview,
+    FacilityEquipmentTab,
     FacilityEquipmentDataview,
     FacilityInformationPanel,
-    FacilityInstallationsPanel,
-    FacilityEquipmentTab,
+    FacilityInspectionDataview,
     FacilityInspectionTab,
+    FacilityInstallationsPanel,
+    FacilityMoveDialog,
     EmptyState,
   ],
   providers: [FacilityStore, FacilityOverviewStore],
@@ -274,48 +269,6 @@ export class FacilityDetailPage {
    * @type {WritableSignal<boolean>}
    */
   protected readonly showMoveDialog: WritableSignal<boolean> = signal<boolean>(false);
-
-  /**
-   * Property moveParentId
-   *
-   * @description
-   * The parent facility ID selected in the move dialog. An empty
-   * string represents the root level (no parent).
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<string>}
-   */
-  protected readonly moveParentId: WritableSignal<string> = signal<string>('');
-
-  /**
-   * Property dialogWidth
-   * @readonly
-   *
-   * @description
-   * Canonical `p-dialog` width for the Move Facility dialog.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {string}
-   */
-  protected readonly dialogWidth: string = DIALOG_WIDTH_SM;
-
-  /**
-   * Property dialogBreakpoints
-   * @readonly
-   *
-   * @description
-   * Canonical `p-dialog` responsive breakpoints (DESIGN.md, "Overlays — sizes").
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Record<string, string>}
-   */
-  protected readonly dialogBreakpoints: Record<string, string> = DIALOG_BREAKPOINTS;
 
   /**
    * Property isMoving
@@ -521,8 +474,8 @@ export class FacilityDetailPage {
    * @method onOpenMoveDialog
    *
    * @description
-   * Pre-selects the current parent facility in the picker, then
-   * opens the Move Facility dialog.
+   * Opens the Move Facility dialog. The picker seeds itself from the
+   * facility's current parent through `initialParentId`.
    *
    * @access protected
    * @since 1.0.0
@@ -530,9 +483,6 @@ export class FacilityDetailPage {
    * @returns {void}
    */
   protected onOpenMoveDialog(): void {
-    const currentParentId: string = this.facility()?.parentFacilityId ?? '';
-    this.moveParentId.set(currentParentId);
-
     if (isPlatformBrowser(this.platformId)) {
       this.store.ensureParentOptionsLoaded(this.organizationId());
     }
@@ -541,27 +491,29 @@ export class FacilityDetailPage {
   }
 
   /**
-   * Method onMoveSubmit
-   * @method onMoveSubmit
+   * Method onMoveConfirmed
+   * @method onMoveConfirmed
    *
    * @description
-   * Reads the selected parent facility ID from the dialog and
-   * dispatches a move operation to the store. A null value means
-   * the facility is moved to the root level.
+   * Dispatches a move operation to the store for the selected parent
+   * facility id, emitted by the move dialog's `confirmed` event. An empty
+   * string means the facility is moved to the root level.
    *
    * @access protected
    * @since 1.0.0
    *
+   * @param {string} parentId - Selected parent facility id, or `''` for the root level.
+   *
    * @returns {void}
    */
-  protected onMoveSubmit(): void {
+  protected onMoveConfirmed(parentId: string): void {
     const organizationId: string = this.organizationId();
     const facilityId: string | undefined = this.facility()?.id;
 
     if (!facilityId) return;
 
     const payload: MoveFacilityInput = {
-      parentFacilityId: this.moveParentId() || null,
+      parentFacilityId: parentId || null,
     };
 
     this.store.move({ organizationId, facilityId, input: payload });

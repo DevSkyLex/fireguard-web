@@ -342,14 +342,13 @@ describe('FacilityDetailPage', () => {
     expect(optionValues).not.toContain('fac-4');
   });
 
-  it('should call store.move with correct payload on onMoveSubmit', () => {
+  it('should call store.move with correct payload on onMoveConfirmed', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
-    fixture.componentInstance['moveParentId'].set('fac-99');
-    fixture.componentInstance['onMoveSubmit']();
+    fixture.componentInstance['onMoveConfirmed']('fac-99');
 
     expect(mockFacilityStore.move).toHaveBeenCalledWith({
       organizationId: 'org-1',
@@ -364,8 +363,7 @@ describe('FacilityDetailPage', () => {
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
-    fixture.componentInstance['moveParentId'].set('');
-    fixture.componentInstance['onMoveSubmit']();
+    fixture.componentInstance['onMoveConfirmed']('');
 
     expect(mockFacilityStore.move).toHaveBeenCalledWith({
       organizationId: 'org-1',

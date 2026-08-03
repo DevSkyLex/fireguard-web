@@ -1,16 +1,16 @@
-<div id="facility-create" class="flex flex-col p-3 sm:p-6 md:p-7 lg:p-8 xl:p-10">
+<div id="facility-create" class="flex flex-col p-3 sm:p-6 md:p-7 lg:p-8">
   <section class="mx-auto flex w-full max-w-3xl flex-col gap-6">
     <header class="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
       <div class="flex min-w-0 flex-col gap-1.5">
         <h1
           i18n="@@facility.create.title"
-          class="text-2xl font-semibold tracking-[-0.025em] text-surface-950 dark:text-surface-50"
+          class="text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-0"
         >
           New Facility
         </h1>
         <p
           i18n="@@facility.create.description"
-          class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+          class="max-w-prose text-sm text-surface-500 dark:text-surface-400"
         >
           Add a location and place it in your organization's facility hierarchy.
         </p>
@@ -18,7 +18,7 @@
     </header>
 
     <div
-      class="rounded-md border border-surface-200 bg-surface-0 p-5 sm:p-8 dark:border-surface-800 dark:bg-surface-900"
+      class="rounded-md border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-900"
     >
       <app-facility-form
         [loading]="store.isCreating()"

@@ -1,10 +1,13 @@
 <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
 
 <div class="mb-4 flex flex-wrap items-center gap-2.5">
-  <p-iconfield class="min-w-60 flex-1 sm:max-w-96">
+  <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-96 sm:min-w-60">
     <p-inputicon class="pi pi-search" />
     <input
+      i18n-aria-label="@@facility.searchFacilities"
+      aria-label="Search facilities..."
       pInputText
+      pSize="small"
       type="text"
       i18n-placeholder="@@facility.searchFacilities"
       placeholder="Search facilities..."
@@ -21,6 +24,7 @@
     [outlined]="true"
     [badge]="filterBadge()"
     (onClick)="onFilterToggle($event)"
+    size="small"
   />
 
   <p-popover #filterPopover>
@@ -147,6 +151,7 @@
           (onClick)="add.emit()"
           [disabled]="loading() || createDisabled()"
           class="w-full sm:w-auto"
+          size="small"
         />
       </span>
     } @else {
@@ -159,6 +164,7 @@
         [disabled]="loading()"
         class="w-full sm:w-auto"
         (onClick)="onRefresh()"
+        size="small"
       />
 
       <p-button
@@ -170,26 +176,29 @@
         [disabled]="loading()"
         class="w-full sm:w-auto"
         (onClick)="onClearFilters()"
+        size="small"
       />
     }
   </div>
 </div>
 
-<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
+<p-card class="flex min-h-0 flex-1 flex-col" [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <h2 i18n="@@facility.table.title" class="text-[15px] font-semibold tracking-[-0.01em]">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h2
+        i18n="@@facility.table.title"
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+      >
         Facilities
       </h2>
+      @if (total() > 0) {
+        <span
+          i18n="@@facility.table.resultCount"
+          class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
+          >{total(), plural, =1 {1 facility} other {{{ total() }} facilities}}</span
+        >
+      }
     </div>
-
-    @if (total() > 0) {
-      <span
-        i18n="@@facility.table.resultCount"
-        class="text-sm text-surface-600 tabular-nums dark:text-surface-400"
-        >{total(), plural, =1 {1 facility} other {{{ total() }} facilities}}</span
-      >
-    }
   </ng-template>
 
   <ng-template pTemplate="content">
@@ -210,6 +219,7 @@
       i18n-currentPageReportTemplate="@@facility.table.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} facilities"
       [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -291,7 +301,7 @@
             <div class="flex min-w-0 flex-col gap-0.5">
               <button
                 type="button"
-                class="w-fit max-w-full cursor-pointer truncate text-left font-semibold text-surface-950 transition-colors duration-150 hover:text-primary-600 dark:text-surface-50 dark:hover:text-primary-400"
+                class="w-fit max-w-full cursor-pointer truncate text-left font-semibold text-surface-950 transition-colors duration-150 hover:text-primary-600 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:text-surface-50 dark:hover:text-primary-400"
                 (click)="view.emit(facility)"
               >
                 {{ facility.name }}
@@ -311,7 +321,7 @@
                 {{ facility.code }}
               </code>
             } @else {
-              <span class="text-surface-300 dark:text-surface-600">-</span>
+              <span class="text-surface-300 dark:text-surface-600">&mdash;</span>
             }
           </td>
           <td class="hidden sm:table-cell">
@@ -330,11 +340,7 @@
           <td class="hidden md:table-cell">
             <span class="inline-flex items-center gap-1.5 text-surface-600 dark:text-surface-400">
               <i
-                [class]="
-                  facility.hasChildren
-                    ? 'pi pi-sitemap text-[0.7rem]'
-                    : 'pi pi-circle text-[0.55rem]'
-                "
+                [class]="facility.hasChildren ? 'pi pi-sitemap text-xs' : 'pi pi-minus text-xs'"
                 aria-hidden="true"
               ></i>
               {{ getChildrenLabel(facility) }}

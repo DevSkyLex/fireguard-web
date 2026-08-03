@@ -31,7 +31,7 @@
           <span
             class="flex size-5 shrink-0 items-center justify-center rounded-full border-[1.5px] border-green-600/30 bg-green-50 text-green-700 dark:border-green-400/30 dark:bg-green-400/10 dark:text-green-300"
           >
-            <i class="pi pi-check text-[9px]" aria-hidden="true"></i>
+            <i class="pi pi-check text-xs" aria-hidden="true"></i>
           </span>
           <span
             class="hidden text-xs font-semibold whitespace-nowrap text-surface-600 sm:inline dark:text-surface-400"
@@ -60,3 +60,31 @@
     </li>
   }
 </ol>
+
+<!--
+  Narrow-viewport summary. Four phase labels do not fit across a phone, so the
+  rail hides all but the active one — which left the field agent looking at one
+  name and three unnamed circles, unable to tell how far along the workflow the
+  intervention sits or what follows it.
+
+  Hidden from assistive technology on purpose: the list above already carries
+  every label and `aria-current="step"`, so announcing this too would repeat
+  the whole phase sequence a second time.
+-->
+@if (position(); as spot) {
+  <p
+    class="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-xs text-surface-500 sm:hidden dark:text-surface-400"
+    aria-hidden="true"
+  >
+    <span i18n="@@intervention.phase.position" class="tabular-nums"
+      >Step {{ spot.current }} of {{ spot.total }}</span
+    >
+    @if (nextLabel(); as next) {
+      <span class="text-surface-300 dark:text-surface-600">·</span>
+      <span i18n="@@intervention.phase.next"
+        >Next:
+        <span class="font-medium text-surface-600 dark:text-surface-300">{{ next }}</span></span
+      >
+    }
+  </p>
+}

@@ -1,6 +1,7 @@
 <div [formGroup]="form" class="grid gap-4">
   <div class="flex flex-col gap-2">
     <label
+      i18n="@@org.trendFilter.nonConformitiesOpenedStatus"
       for="non-conformities-opened-status"
       class="text-sm font-medium text-surface-700 dark:text-surface-300"
     >
@@ -13,6 +14,7 @@
       [options]="nonConformityStatusOptions"
       optionLabel="label"
       optionValue="value"
+      i18n-placeholder="@@org.trendFilter.nonConformitiesOpenedStatusPlaceholder"
       placeholder="All statuses"
       [showClear]="true"
       [loading]="store.isQueryLoading()"
@@ -32,6 +34,7 @@
 
   <div class="flex flex-col gap-2">
     <label
+      i18n="@@org.trendFilter.nonConformitiesOpenedSeverity"
       for="non-conformities-opened-severity"
       class="text-sm font-medium text-surface-700 dark:text-surface-300"
     >
@@ -44,6 +47,7 @@
       [options]="nonConformitySeverityOptions"
       optionLabel="label"
       optionValue="value"
+      i18n-placeholder="@@org.trendFilter.nonConformitiesOpenedSeverityPlaceholder"
       placeholder="All severities"
       [showClear]="true"
       [loading]="store.isQueryLoading()"

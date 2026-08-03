@@ -24,6 +24,19 @@
   overflow: visible;
 }
 
+/*
+ * Below `lg` a routed page may pin a thumb-zone command bar to the bottom of the
+ * viewport — the intervention workspace does, and its primary phase action lives
+ * there. The deck is anchored above that band so a toast fired BY that action
+ * never lands on top of it; the bar sits in the layer below (z-30) and would
+ * otherwise be covered by the overlay the toast renders into.
+ */
+@media (max-width: 1023.98px) {
+  :host ::ng-deep .p-toast.p-toast-bottom-center {
+    bottom: 6rem;
+  }
+}
+
 :host ::ng-deep .p-toast.p-toast-bottom-center > p-toastitem {
   grid-area: 1 / 1;
   align-self: end;

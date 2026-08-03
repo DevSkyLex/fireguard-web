@@ -4,7 +4,7 @@
     words, and the whole chip is labelled for assistive tech.
   -->
   <span
-    class="flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-[11px] font-medium"
+    class="flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium"
     role="status"
     data-testid="messaging-sync-chip"
     [class]="
@@ -23,7 +23,10 @@
       </ng-container>
     } @else if (coordinator.syncing()) {
       <!-- `motion-safe:` so the spin honours prefers-reduced-motion. -->
-      <i class="pi pi-sync text-[10px] motion-safe:animate-spin" aria-hidden="true"></i>
+      <i
+        class="pi pi-sync text-[10px] motion-safe:animate-spin motion-reduce:animate-none"
+        aria-hidden="true"
+      ></i>
       <ng-container i18n="@@workspace.sync.sending">Sending…</ng-container>
     } @else if (coordinator.pendingCount() > 0) {
       <i class="pi pi-clock text-[10px]" aria-hidden="true"></i>

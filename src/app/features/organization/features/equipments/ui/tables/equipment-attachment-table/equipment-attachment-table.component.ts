@@ -8,6 +8,7 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import type {
@@ -16,6 +17,7 @@ import type {
 } from '@features/organization/features/equipments/models';
 import { EquipmentAttachmentForm } from '@features/organization/features/equipments/ui/forms';
 import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
 
 /**
  * Table presenting equipment attachments and removal actions.
@@ -24,6 +26,7 @@ import { EmptyState } from '@shared/empty-state';
   selector: 'app-equipment-attachment-table',
   imports: [
     ButtonModule,
+    CardModule,
     DatePipe,
     DecimalPipe,
     EmptyState,
@@ -59,4 +62,8 @@ export class EquipmentAttachmentTable {
   public readonly remove: OutputEmitterRef<EquipmentAttachmentOutput> = output();
   /** Placeholder rows displayed while loading. */
   protected readonly skeletonItems = Array(5);
+  /** Shared card-shell `styleClass` so this table reads like every other carded table. */
+  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
+  /** Shared card-shell pass-through options (flush body, bordered header row). */
+  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
 }

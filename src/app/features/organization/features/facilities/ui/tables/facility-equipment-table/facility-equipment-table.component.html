@@ -2,16 +2,21 @@
 
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <h2 i18n="@@facility.equipTable.title" class="text-[15px] font-semibold tracking-[-0.01em]">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h2
+        i18n="@@facility.equipTable.title"
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+      >
         Equipments
       </h2>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <p-iconfield class="flex-1 sm:flex-none">
+      <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-72 sm:min-w-52">
         <p-inputicon class="pi pi-search" />
         <input
+          i18n-aria-label="@@equipment.table.searchPlaceholder"
+          aria-label="Search equipments..."
           pInputText
           type="text"
           pSize="small"
@@ -23,6 +28,8 @@
       </p-iconfield>
 
       <p-select
+        i18n-ariaLabel="@@common.status"
+        ariaLabel="Status"
         [options]="statusOptions"
         [formControl]="statusControl"
         optionLabel="label"
@@ -100,6 +107,7 @@
       i18n-currentPageReportTemplate="@@equipment.table.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
       [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -176,7 +184,7 @@
 
       <ng-template pTemplate="body" let-equipment>
         @if (loading()) {
-          <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+          <tr>
             @if (canManageEquipment()) {
               <td class="pl-5">
                 <p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" />
@@ -201,7 +209,7 @@
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
         } @else {
-          <tr>
+          <tr class="group">
             @if (canManageEquipment()) {
               <td class="pl-5">
                 <p-tableCheckbox [value]="equipment" />
@@ -228,7 +236,7 @@
                   {{ equipment.serialNumber }}
                 </code>
               } @else {
-                <span class="text-surface-300 dark:text-surface-600">-</span>
+                <span class="text-surface-300 dark:text-surface-600">&mdash;</span>
               }
             </td>
             <td>
@@ -244,7 +252,7 @@
                   {{ equipment.locationLabel }}
                 </span>
               } @else {
-                <span class="text-surface-300 dark:text-surface-600">-</span>
+                <span class="text-surface-300 dark:text-surface-600">&mdash;</span>
               }
             </td>
             <td class="hidden text-right lg:table-cell">
@@ -253,7 +261,7 @@
                   {{ equipment.installedAt | date: 'mediumDate' }}
                 </span>
               } @else {
-                <span class="text-surface-300 dark:text-surface-600">-</span>
+                <span class="text-surface-300 dark:text-surface-600">&mdash;</span>
               }
             </td>
             <td class="text-right">
@@ -265,6 +273,7 @@
                 i18n-ariaLabel="@@equipment.table.actions"
                 ariaLabel="Equipment actions"
                 (onClick)="onActionMenuToggle($event, equipment)"
+                class="transition-opacity duration-150 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
               />
             </td>
           </tr>

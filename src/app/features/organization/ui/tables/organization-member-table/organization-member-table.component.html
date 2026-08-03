@@ -10,17 +10,19 @@
       {{ selectedCount() }} <span i18n="@@org.members.selectedSuffix">selected</span>
     </span>
 
-    <div class="ml-auto flex flex-wrap items-center gap-2">
+    <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
       @if (canManageRoles()) {
         <p-select
+          i18n-ariaLabel="@@org.members.assignRole"
+          ariaLabel="Assign role"
           [options]="[...roles()]"
           optionLabel="name"
           optionValue="id"
-          size="small"
           i18n-placeholder="@@org.members.assignRole"
           placeholder="Assign role"
           styleClass="w-full sm:w-44"
           (onChange)="emitBulkAssignRole($event.value)"
+          size="small"
         />
       }
       <p-button
@@ -28,45 +30,48 @@
         label="Remove"
         icon="pi pi-trash"
         severity="danger"
-        size="small"
+        class="w-full sm:w-auto"
         (onClick)="emitBulkRemove()"
+        size="small"
       />
       <p-button
         i18n-label="@@org.members.clearSelection"
         label="Clear"
         severity="secondary"
-        size="small"
         [text]="true"
+        class="w-full sm:w-auto"
         (onClick)="clearSelection()"
+        size="small"
       />
     </div>
   } @else {
-    <div class="max-w-96 min-w-60 flex-1">
-      <p-iconfield>
-        <p-inputicon class="pi pi-search" />
-        <input
-          #search
-          pInputText
-          type="text"
-          pSize="small"
-          i18n-placeholder="@@org.memberTable.search"
-          placeholder="Search members"
-          class="w-full"
-          (input)="onSearch(search.value)"
-        />
-      </p-iconfield>
-    </div>
+    <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-96 sm:min-w-60">
+      <p-inputicon class="pi pi-search" />
+      <input
+        i18n-aria-label="@@org.memberTable.search"
+        aria-label="Search members"
+        #search
+        pInputText
+        pSize="small"
+        type="text"
+        i18n-placeholder="@@org.memberTable.search"
+        placeholder="Search members"
+        class="w-full"
+        (input)="onSearch(search.value)"
+      />
+    </p-iconfield>
 
-    <div class="ml-auto flex flex-wrap items-center gap-2">
+    <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
       @if (canManageRoles()) {
         <p-button
           i18n-label="@@org.members.assignRole"
           label="Assign role"
           icon="pi pi-id-card"
           severity="secondary"
-          size="small"
           [outlined]="true"
+          class="w-full sm:w-auto"
           (onClick)="assignRole.emit()"
+          size="small"
         />
       }
 
@@ -76,8 +81,9 @@
           label="Invite member"
           icon="pi pi-envelope"
           severity="primary"
-          size="small"
+          class="w-full sm:w-auto"
           (onClick)="invite.emit()"
+          size="small"
         />
       }
     </div>

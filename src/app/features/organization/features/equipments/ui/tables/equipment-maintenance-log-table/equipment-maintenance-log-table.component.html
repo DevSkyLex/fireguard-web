@@ -1,85 +1,91 @@
-<p-card
-  styleClass="flex min-h-0 flex-1 flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
-  [pt]="{
-    body: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    content: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    header: {
-      class:
-        'flex items-center justify-between gap-4 border-b border-surface-200 px-4 py-3 dark:border-surface-800',
-    },
-  }"
->
+<p-card class="flex min-h-0 flex-1 flex-col" [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <i class="pi pi-wrench text-sm text-surface-500 dark:text-surface-400" aria-hidden="true"></i>
+    <div class="flex min-w-0 flex-col gap-0.5">
       <h2
         class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
         i18n="@@equipment.maint.title"
       >
         Maintenance history
       </h2>
+      <p
+        class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
+        i18n="@@equipment.maint.eventCount"
+      >
+        {{ logs().length }} event(s)
+      </p>
     </div>
-    <span
-      class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
-      i18n="@@equipment.maint.eventCount"
-      >{{ logs().length }} event(s)</span
-    >
   </ng-template>
-  <p-table [value]="loading() ? skeletonItems : [...logs()]" dataKey="id">
-    <ng-template pTemplate="header">
-      <tr>
-        <th i18n="@@equipment.maint.colStarted">Started</th>
-        <th i18n="@@equipment.maint.colCompleted">Completed</th>
-        <th i18n="@@common.status">Status</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-log>
-      @if (loading()) {
+
+  <ng-template pTemplate="content">
+    <p-table
+      class="min-h-0 flex-1"
+      [value]="loading() ? skeletonItems : [...logs()]"
+      dataKey="id"
+      [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
+    >
+      <ng-template pTemplate="header">
         <tr>
-          <td><p-skeleton width="8rem" /></td>
-          <td><p-skeleton width="8rem" /></td>
-          <td><p-skeleton width="6rem" height="1.75rem" borderRadius="999px" /></td>
+          <th i18n="@@equipment.maint.colStarted" class="min-w-44">Started</th>
+          <th i18n="@@equipment.maint.colCompleted" class="min-w-44">Completed</th>
+          <th i18n="@@common.status" class="min-w-40">Status</th>
         </tr>
-      } @else {
-        <tr>
-          <td>{{ log.startedAt | date: 'medium' }}</td>
-          <td>
-            @if (log.completedAt) {
-              {{ log.completedAt | date: 'medium' }}
-            } @else {
-              <ng-container i18n="@@equipment.maint.inProgress">In progress</ng-container>
-            }
-          </td>
-          <td>
-            @if (log.completedAt) {
-              <p-tag
-                [severity]="completedDescriptor.severity"
-                [icon]="completedDescriptor.icon"
-                [value]="completedDescriptor.label"
-              />
-            } @else {
-              <p-tag
-                [severity]="activeDescriptor.severity"
-                [icon]="activeDescriptor.icon"
-                [value]="activeDescriptor.label"
-              />
-            }
+      </ng-template>
+      <ng-template pTemplate="body" let-log>
+        @if (loading()) {
+          <tr>
+            <td><p-skeleton width="8rem" height="0.875rem" /></td>
+            <td><p-skeleton width="8rem" height="0.875rem" /></td>
+            <td><p-skeleton width="6rem" height="1.75rem" borderRadius="999px" /></td>
+          </tr>
+        } @else {
+          <tr>
+            <td>
+              <span class="text-surface-600 tabular-nums dark:text-surface-400">
+                {{ log.startedAt | date: 'mediumDate' }}
+              </span>
+            </td>
+            <td>
+              @if (log.completedAt) {
+                <span class="text-surface-600 tabular-nums dark:text-surface-400">
+                  {{ log.completedAt | date: 'mediumDate' }}
+                </span>
+              } @else {
+                <span class="text-surface-300 dark:text-surface-600">&mdash;</span>
+              }
+            </td>
+            <td>
+              @if (log.completedAt) {
+                <p-tag
+                  [severity]="completedDescriptor.severity"
+                  [icon]="completedDescriptor.icon"
+                  [value]="completedDescriptor.label"
+                />
+              } @else {
+                <p-tag
+                  [severity]="activeDescriptor.severity"
+                  [icon]="activeDescriptor.icon"
+                  [value]="activeDescriptor.label"
+                />
+              }
+            </td>
+          </tr>
+        }
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr class="bg-transparent! [&>td]:border-b-0!">
+          <td colspan="3">
+            <app-empty-state
+              icon="pi-wrench"
+              title="No maintenance history"
+              i18n-title="@@equipment.maint.emptyTitle"
+              description="Lifecycle maintenance events will appear here."
+              i18n-description="@@equipment.maint.emptyDesc"
+              [dense]="true"
+            />
           </td>
         </tr>
-      }
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-      <tr class="bg-transparent! [&>td]:border-b-0!">
-        <td colspan="3">
-          <app-empty-state
-            icon="pi-wrench"
-            title="No maintenance history"
-            i18n-title="@@equipment.maint.emptyTitle"
-            description="Lifecycle maintenance events will appear here."
-            i18n-description="@@equipment.maint.emptyDesc"
-          />
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+      </ng-template>
+    </p-table>
+  </ng-template>
 </p-card>

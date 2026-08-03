@@ -2,9 +2,17 @@
 
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <div class="flex flex-col">
-      <h2 class="font-semibold" i18n="@@account.sessionTable.title">Active sessions</h2>
-      <p class="text-sm text-surface-500" i18n="@@account.sessionTable.subtitle">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h2
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+        i18n="@@account.sessionTable.title"
+      >
+        Active sessions
+      </h2>
+      <p
+        class="text-xs text-surface-500 dark:text-surface-400"
+        i18n="@@account.sessionTable.subtitle"
+      >
         Review and revoke access to your account.
       </p>
     </div>
@@ -53,7 +61,8 @@
       [showCurrentPageReport]="true"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sessions"
       i18n-currentPageReportTemplate="@@account.sessionTable.pageReport"
-      [stripedRows]="true"
+      [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -83,7 +92,7 @@
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
         } @else {
-          <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+          <tr class="group">
             <td>
               <div class="flex min-w-0 items-center gap-3">
                 <p-avatar
@@ -106,7 +115,7 @@
                     }
                     @if (session.isCurrent) {
                       <span
-                        class="inline-flex h-5 items-center rounded-full border border-primary-200 bg-primary-50 px-2 text-[0.65rem] leading-none font-semibold text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300"
+                        class="inline-flex h-5 items-center rounded-full border border-primary-200 bg-primary-50 px-2 text-xs leading-none font-semibold text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300"
                         i18n="@@account.sessionTable.current"
                       >
                         Current
@@ -142,6 +151,7 @@
                 ariaLabel="Session actions"
                 i18n-ariaLabel="@@account.sessionTable.actions"
                 (onClick)="onActionMenuToggle($event, session)"
+                class="transition-opacity duration-150 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
               />
             </td>
           </tr>

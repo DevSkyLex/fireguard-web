@@ -32,7 +32,7 @@
       <div
         class="flex flex-col gap-3 border-b border-surface-200 px-4 py-5 sm:px-7 sm:py-6 dark:border-surface-800"
       >
-        @if (store.error(); as error) {
+        @if (showNotice('error') && store.error(); as error) {
           <div
             role="alert"
             class="flex items-start gap-3 rounded-lg border border-red-600/20 bg-red-50 px-3.5 py-3 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
@@ -54,7 +54,7 @@
           </div>
         }
 
-        @if (sync.blockedOperations() > 0) {
+        @if (showNotice('blockedSync') && sync.blockedOperations() > 0) {
           <div
             role="alert"
             class="flex flex-wrap items-center gap-3 rounded-lg border border-red-600/20 bg-red-50 px-3.5 py-3 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
@@ -92,7 +92,7 @@
           </div>
         }
 
-        @if (offline.hasUnsyncedChanges()) {
+        @if (showNotice('offline') && offline.hasUnsyncedChanges()) {
           <div
             role="status"
             class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-600/20 bg-amber-50 px-3.5 py-3 text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
@@ -115,7 +115,12 @@
           </div>
         }
 
-        @if (intervention.status === 'changes_requested' && intervention.reviewNote; as note) {
+        @if (
+          showNotice('reviewNote') &&
+            intervention.status === 'changes_requested' &&
+            intervention.reviewNote;
+          as note
+        ) {
           <div
             role="note"
             class="flex items-start gap-3 rounded-lg border border-amber-600/20 bg-amber-50 px-3.5 py-3 text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
@@ -138,7 +143,7 @@
           </div>
         }
 
-        @if (phase() === 'review' && store.blockerCount() > 0) {
+        @if (showNotice('blockers') && phase() === 'review' && store.blockerCount() > 0) {
           <div
             role="alert"
             class="flex items-start gap-3 rounded-lg border border-red-600/20 bg-red-50 px-3.5 py-3 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
@@ -162,7 +167,7 @@
           </div>
         }
 
-        @if (readyToPublish()) {
+        @if (showNotice('readyToPublish') && readyToPublish()) {
           <div
             role="status"
             class="flex items-start gap-3 rounded-lg border border-green-600/20 bg-green-50 px-3.5 py-3 text-sm leading-5 text-green-700 dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300"
@@ -175,7 +180,7 @@
               >Execution complete — all field work is resolved and no blocking issues remain.</span
             >
           </div>
-        } @else if (intervention.status === 'published') {
+        } @else if (showNotice('published') && intervention.status === 'published') {
           <div
             role="status"
             class="flex items-start gap-3 rounded-lg border border-green-600/20 bg-green-50 px-3.5 py-3 text-sm leading-5 text-green-700 dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300"
@@ -189,6 +194,34 @@
             >
           </div>
         }
+
+        <!--
+          Only the most urgent notice stays open; the rest fold behind this row.
+          Seven could co-render, and in execution the operator reaches this page
+          to run a checklist — not to read a wall of banners.
+        -->
+        @if (collapsedNoticeCount() > 0) {
+          <button
+            type="button"
+            class="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg text-sm text-surface-600 transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
+            [attr.aria-expanded]="noticesExpanded()"
+            (click)="noticesExpanded.set(!noticesExpanded())"
+          >
+            <i
+              class="pi text-xs"
+              [class]="noticesExpanded() ? 'pi-chevron-up' : 'pi-chevron-down'"
+              aria-hidden="true"
+            ></i>
+            @if (noticesExpanded()) {
+              <span i18n="@@intervention.detail.noticesCollapse">Show less</span>
+            } @else {
+              <span i18n="@@intervention.detail.noticesExpand">{collapsedNoticeCount(), plural,
+                =1 {1 more notice}
+                other {{{ collapsedNoticeCount() }} more notices}
+              }</span>
+            }
+          </button>
+        }
       </div>
     }
 
@@ -198,125 +231,145 @@
       <div
         class="flex min-w-0 flex-col xl:border-r xl:border-surface-100 dark:xl:border-surface-800"
       >
-        <!-- Identity block (the layout banner owns the h1 title) -->
-        <div class="px-4 pt-6 pb-5 sm:px-7 sm:pt-7 sm:pb-6">
-          <div
-            class="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-sm text-surface-500 dark:text-surface-400"
-          >
-            <app-intervention-tag kind="status" [value]="intervention.status" />
-            <app-intervention-tag kind="priority" [value]="intervention.priority" />
-            <span class="font-mono text-xs text-surface-500 tabular-nums dark:text-surface-400">
-              FG-{{ intervention.number }}
-            </span>
-            <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
-            <app-intervention-tag kind="type" [value]="intervention.type" />
-            @if (siteLabel(); as site) {
-              <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
-              <span>{{ site }}</span>
-            }
-            <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
-            <span i18n="@@intervention.header.updatedLabel"
-              >Updated {{ intervention.updatedAt | date: 'mediumDate' }}</span
+        <!--
+          Identity and stage progress are the page context, not the work. In
+          EXECUTE they render after the checklist: the field agent opens this page
+          to tick items, and used to scroll past a metadata block and a stepper to
+          reach them. Moved in the DOM rather than with CSS order, so focus order
+          keeps matching what is on screen.
+        -->
+        <ng-template #interventionContext>
+          <!-- Identity block (the layout banner owns the h1 title) -->
+          <div class="px-4 pt-6 pb-5 sm:px-7 sm:pt-7 sm:pb-6">
+            <!--
+              Spacing separates this row, not interpunct spans. The row wraps —
+              on a phone it always does — and a separator is a flex item like
+              any other, so it wrapped too: the line ended on a dangling "·"
+              pointing at nothing. Tags are pills, the code is monospace and the
+              date is plain text; at `gap-x-3` the row reads without punctuation
+              holding it apart.
+            -->
+            <div
+              class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-surface-500 dark:text-surface-400"
             >
-          </div>
-          <div class="mt-4 max-w-prose">
-            @if (!descriptionEditorOpen()) {
-              <div class="flex items-start gap-2">
-                @if (intervention.description; as description) {
-                  <p
-                    class="text-sm leading-relaxed whitespace-pre-line text-surface-600 dark:text-surface-400"
-                  >
-                    {{ description }}
-                  </p>
-                } @else {
-                  <p
-                    i18n="@@intervention.detail.noDescription"
-                    class="text-sm text-surface-400 dark:text-surface-500"
-                  >
-                    No description yet. Add context, scope notes or instructions for this
-                    intervention.
-                  </p>
-                }
-                @if (canEditDetails()) {
-                  <p-button
-                    icon="pi pi-pencil"
-                    severity="secondary"
-                    [text]="true"
-                    [rounded]="true"
-                    size="small"
-                    i18n-ariaLabel="@@intervention.detail.editDescription"
-                    ariaLabel="Edit description"
-                    (onClick)="openDescriptionEditor()"
-                  />
-                }
-              </div>
-            } @else {
-              <div class="flex flex-col gap-2.5">
-                <textarea
-                  pTextarea
-                  [formControl]="descriptionControl"
-                  rows="2"
-                  [autoResize]="true"
-                  i18n-placeholder="@@intervention.pf.descriptionPlaceholder"
-                  placeholder="Add context, scope notes or instructions for this intervention"
-                  class="w-full resize-none text-sm"
-                ></textarea>
-                <div class="flex items-center justify-end gap-1.5">
-                  <p-button
-                    i18n-label="@@common.cancel"
-                    label="Cancel"
-                    severity="secondary"
-                    [text]="true"
-                    size="small"
-                    [disabled]="store.saving()"
-                    (onClick)="descriptionEditorOpen.set(false)"
-                  />
-                  <p-button
-                    i18n-label="@@common.save"
-                    label="Save"
-                    size="small"
-                    [loading]="store.saving()"
-                    (onClick)="saveDescription()"
-                  />
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- Stage progress -->
-        @if (intervention.status !== 'abandoned') {
-          <div
-            class="flex flex-wrap items-center gap-3 border-y border-surface-200 bg-surface-50/50 px-4 py-4 sm:px-7 sm:py-4.5 dark:border-surface-800 dark:bg-surface-900/25"
-          >
-            <div class="min-w-0 flex-1">
-              <app-intervention-phase-stepper
-                [status]="intervention.status"
-                [activeDetail]="stageDetail()"
-              />
-            </div>
-            @if (intervention.dueAt; as due) {
-              <span class="shrink-0 text-xs text-surface-500 dark:text-surface-400">
-                <span i18n="@@intervention.prop.due">Due</span>
-                <span
-                  class="font-medium"
-                  [class.text-red-600]="dueDanger()"
-                  [class.dark:text-red-400]="dueDanger()"
-                  [class.text-surface-700]="!dueDanger()"
-                  [class.dark:text-surface-200]="!dueDanger()"
-                >
-                  {{ due | date: 'MMM d' }}</span
-                >
-                @if (dueDanger()) {
-                  <span
-                    i18n="@@intervention.header.overdue"
-                    class="ml-1 rounded bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-400/10 dark:text-red-300"
-                    >Overdue</span
-                  >
-                }
+              <app-intervention-tag kind="status" [value]="intervention.status" />
+              <app-intervention-tag kind="priority" [value]="intervention.priority" />
+              <span class="font-mono text-xs text-surface-500 tabular-nums dark:text-surface-400">
+                FG-{{ intervention.number }}
               </span>
-            }
+              <app-intervention-tag kind="type" [value]="intervention.type" />
+              @if (siteLabel(); as site) {
+                <span>{{ site }}</span>
+              }
+              <span i18n="@@intervention.header.updatedLabel"
+                >Updated {{ intervention.updatedAt | date: 'mediumDate' }}</span
+              >
+            </div>
+            <div class="mt-4 max-w-prose">
+              @if (!descriptionEditorOpen()) {
+                <div class="flex items-start gap-2">
+                  @if (intervention.description; as description) {
+                    <p
+                      class="text-sm leading-relaxed whitespace-pre-line text-surface-600 dark:text-surface-400"
+                    >
+                      {{ description }}
+                    </p>
+                  } @else {
+                    <p
+                      i18n="@@intervention.detail.noDescription"
+                      class="text-sm text-surface-400 dark:text-surface-500"
+                    >
+                      No description yet. Add context, scope notes or instructions for this
+                      intervention.
+                    </p>
+                  }
+                  @if (canEditDetails()) {
+                    <p-button
+                      icon="pi pi-pencil"
+                      severity="secondary"
+                      [text]="true"
+                      [rounded]="true"
+                      size="small"
+                      i18n-ariaLabel="@@intervention.detail.editDescription"
+                      ariaLabel="Edit description"
+                      (onClick)="openDescriptionEditor()"
+                    />
+                  }
+                </div>
+              } @else {
+                <div class="flex flex-col gap-2.5">
+                  <textarea
+                    pTextarea
+                    [formControl]="descriptionControl"
+                    rows="2"
+                    [autoResize]="true"
+                    i18n-aria-label="@@intervention.pf.descriptionPlaceholder"
+                    aria-label="Add context, scope notes or instructions for this intervention"
+                    i18n-placeholder="@@intervention.pf.descriptionPlaceholder"
+                    placeholder="Add context, scope notes or instructions for this intervention"
+                    class="w-full resize-none text-sm"
+                  ></textarea>
+                  <div class="flex items-center justify-end gap-1.5">
+                    <p-button
+                      i18n-label="@@common.cancel"
+                      label="Cancel"
+                      severity="secondary"
+                      [text]="true"
+                      size="small"
+                      [disabled]="store.saving()"
+                      (onClick)="descriptionEditorOpen.set(false)"
+                    />
+                    <p-button
+                      i18n-label="@@common.save"
+                      label="Save"
+                      size="small"
+                      [loading]="store.saving()"
+                      (onClick)="saveDescription()"
+                    />
+                  </div>
+                </div>
+              }
+            </div>
           </div>
+
+          <!-- Stage progress -->
+          @if (intervention.status !== 'abandoned') {
+            <div
+              class="flex flex-wrap items-center gap-3 border-y border-surface-200 bg-surface-50/50 px-4 py-4 sm:px-7 sm:py-4.5 dark:border-surface-800 dark:bg-surface-900/25"
+            >
+              <div class="min-w-0 flex-1">
+                <app-intervention-phase-stepper
+                  [status]="intervention.status"
+                  [activeDetail]="stageDetail()"
+                />
+              </div>
+              @if (intervention.dueAt; as due) {
+                <span class="shrink-0 text-xs text-surface-500 dark:text-surface-400">
+                  <span i18n="@@intervention.prop.due">Due</span>
+                  <span
+                    class="font-medium"
+                    [class.text-red-600]="dueDanger()"
+                    [class.dark:text-red-400]="dueDanger()"
+                    [class.text-surface-700]="!dueDanger()"
+                    [class.dark:text-surface-200]="!dueDanger()"
+                  >
+                    {{ due | date: 'MMM d' }}</span
+                  >
+                  @if (dueDanger()) {
+                    <span
+                      i18n="@@intervention.header.overdue"
+                      class="ml-1 rounded bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-400/10 dark:text-red-300"
+                      >Overdue</span
+                    >
+                  }
+                </span>
+              }
+            </div>
+          }
+        </ng-template>
+
+        @if (phase() !== 'execute') {
+          <ng-container [ngTemplateOutlet]="interventionContext" />
         }
 
         <!-- Guided planning (draft) -->
@@ -359,7 +412,7 @@
                   aria-hidden="true"
                 >
                   <div
-                    class="h-full w-full origin-left rounded-full bg-green-600 motion-safe:transition-transform motion-safe:duration-300 dark:bg-green-400"
+                    class="size-full origin-left rounded-full bg-green-600 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:transition-none dark:bg-green-400"
                     [style.transform]="'scaleX(' + store.progress() / 100 + ')'"
                   ></div>
                 </div>
@@ -435,7 +488,7 @@
                       <!-- 44px hit area (field gloves) around the 18px visual checkbox -->
                       <button
                         type="button"
-                        class="-m-3 flex size-11 shrink-0 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+                        class="-m-3 flex size-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
                         [attr.aria-pressed]="isWorkItemDone(item)"
                         i18n-aria-label="@@intervention.checklist.toggleAria"
                         aria-label="Toggle work item complete"
@@ -455,7 +508,7 @@
                         >
                           @if (isWorkItemDone(item)) {
                             <i
-                              class="pi pi-check text-[9px] text-green-700 dark:text-green-300"
+                              class="pi pi-check text-xs text-green-700 dark:text-green-300"
                               aria-hidden="true"
                             ></i>
                           } @else if (isNextWorkItem(item)) {
@@ -496,28 +549,22 @@
                   }
                 </ul>
               } @else {
-                <div
-                  class="mt-3 flex flex-col items-center gap-1.5 rounded-lg border border-dashed border-surface-200 px-4 py-6 text-center dark:border-surface-700"
+                <!--
+                  The shared empty state, not a dashed box. The Activity
+                  section directly below already renders `app-empty-state`, so
+                  one page was showing two different answers to "there is
+                  nothing here yet" within a screen of each other.
+                -->
+                <app-empty-state
+                  icon="pi-check-square"
+                  [dense]="true"
+                  i18n-title="@@intervention.wit.emptyTitle"
+                  title="No work items yet"
+                  i18n-description="@@intervention.wit.emptyDesc"
+                  description="List the tasks to complete during this intervention."
                 >
-                  <i
-                    class="pi pi-check-square text-xl text-surface-300 dark:text-surface-600"
-                    aria-hidden="true"
-                  ></i>
-                  <p
-                    i18n="@@intervention.wit.emptyTitle"
-                    class="text-sm font-medium text-surface-700 dark:text-surface-200"
-                  >
-                    No work items yet
-                  </p>
-                  <p
-                    i18n="@@intervention.wit.emptyDesc"
-                    class="text-xs text-surface-500 dark:text-surface-400"
-                  >
-                    List the tasks to complete during this intervention.
-                  </p>
                   @if (canAddWorkItem()) {
                     <p-button
-                      class="mt-1.5"
                       i18n-label="@@intervention.wit.newItem"
                       label="New item"
                       icon="pi pi-plus"
@@ -527,11 +574,15 @@
                       (onClick)="workItemDrawerVisible.set(true)"
                     />
                   }
-                </div>
+                </app-empty-state>
               }
             }
             <p-menu #checklistMenu [model]="checklistMenuItems()" [popup]="true" appendTo="body" />
           </div>
+        }
+
+        @if (phase() === 'execute') {
+          <ng-container [ngTemplateOutlet]="interventionContext" />
         }
 
         <!-- Proposed changes (review) -->
@@ -669,17 +720,24 @@
               } @else if (activityFeedItems().length === 0) {
                 <app-empty-state
                   icon="pi-inbox"
+                  [dense]="true"
                   i18n-title="@@intervention.detail.activityEmpty"
                   title="No activity yet"
                 />
               } @else {
                 <p-timeline [value]="activityFeedItems()">
                   <ng-template #marker let-item>
+                    <!--
+                      24px, not 20px: the initials inside were set at 10px to
+                      fit the smaller marker, below the reading floor the type
+                      scale sets. Growing the marker one step lets them sit on
+                      the 12px label step instead of under it.
+                    -->
                     <span
-                      class="grid size-5 shrink-0 place-items-center rounded-full bg-surface-100 text-[0.625rem] font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                      class="grid size-6 shrink-0 place-items-center rounded-full bg-surface-100 text-xs font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                     >
                       @if (item.icon; as icon) {
-                        <i class="{{ icon }} text-[0.65rem]" aria-hidden="true"></i>
+                        <i class="{{ icon }} text-xs" aria-hidden="true"></i>
                       } @else {
                         {{ initialsFor(item.authorLabel) }}
                       }
@@ -746,19 +804,51 @@
       <aside
         class="border-t border-surface-100 px-5 py-6 xl:border-t-0 xl:px-6 xl:py-7 dark:border-surface-800"
       >
-        <h2 i18n="@@intervention.sidebar.title" class="sr-only">Properties</h2>
-
-        <dl class="flex flex-col text-sm">
-          <div
-            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
+        <!--
+          One edit entry for the whole group. The rail used to carry four pencils
+          — priority, assignees, due date, site — that all opened this same
+          planning drawer, so the affordance lied about its scope. Labels keep
+          their own control below because they open a different editor.
+        -->
+        <div class="mb-1 flex items-center justify-between gap-2">
+          <h2
+            i18n="@@intervention.sidebar.title"
+            class="text-sm font-semibold text-surface-900 dark:text-surface-100"
           >
+            Properties
+          </h2>
+          @if (canEditPlanning()) {
+            <p-button
+              i18n-label="@@intervention.detail.editPlanning"
+              label="Edit planning"
+              icon="pi pi-pencil"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              (onClick)="editDrawerVisible.set(true)"
+            />
+          }
+        </div>
+
+        <!--
+          A label column, not a stack of eyebrows. Each property used to set
+          its name as a tracked uppercase micro-label above its value, which
+          the product's own anti-references call out by name and which cost the
+          rail twice the height it needed: eight fields ran past the fold on a
+          laptop before the linked resources below them were reachable.
+
+          Reading the names down one column and the values down another is what
+          makes a property list scannable — and it halves the rail.
+        -->
+        <dl class="flex flex-col text-sm">
+          <div class="flex items-start gap-3 py-1.5">
             <dt
               i18n="@@intervention.prop.status"
-              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+              class="w-24 shrink-0 pt-1 text-surface-500 dark:text-surface-400"
             >
               Status
             </dt>
-            <dd class="flex flex-wrap items-center gap-2">
+            <dd class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
               <app-intervention-tag kind="status" [value]="intervention.status" />
               @if (transitionMenuItems().length > 0) {
                 <p-button
@@ -781,42 +871,26 @@
             </dd>
           </div>
 
-          <div
-            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
-          >
+          <div class="flex items-start gap-3 py-1.5">
             <dt
               i18n="@@intervention.prop.priority"
-              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+              class="w-24 shrink-0 pt-1 text-surface-500 dark:text-surface-400"
             >
               Priority
             </dt>
-            <dd class="flex flex-wrap items-center gap-2">
+            <dd class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
               <app-intervention-tag kind="priority" [value]="intervention.priority" />
-              @if (canEditPlanning()) {
-                <p-button
-                  icon="pi pi-pencil"
-                  severity="secondary"
-                  [text]="true"
-                  [rounded]="true"
-                  size="small"
-                  i18n-ariaLabel="@@intervention.detail.editPriority"
-                  ariaLabel="Edit priority"
-                  (onClick)="editDrawerVisible.set(true)"
-                />
-              }
             </dd>
           </div>
 
-          <div
-            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
-          >
+          <div class="flex items-start gap-3 py-1.5">
             <dt
               i18n="@@intervention.sidebar.assignees"
-              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+              class="w-24 shrink-0 pt-1 text-surface-500 dark:text-surface-400"
             >
               Assignees
             </dt>
-            <dd class="flex min-w-0 items-center gap-2">
+            <dd class="flex min-w-0 flex-1 items-center gap-2">
               @if (assigneePeople().length > 0) {
                 <p-avatar-group>
                   @for (person of assigneePeople().slice(0, avatarMax); track person.label) {
@@ -848,31 +922,19 @@
                   >Unassigned</span
                 >
               }
-              @if (canEditPlanning()) {
-                <p-button
-                  icon="pi pi-pencil"
-                  severity="secondary"
-                  [text]="true"
-                  [rounded]="true"
-                  size="small"
-                  i18n-ariaLabel="@@intervention.detail.editAssignees"
-                  ariaLabel="Edit assignees"
-                  (onClick)="editDrawerVisible.set(true)"
-                />
-              }
             </dd>
           </div>
 
-          <div
-            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
-          >
+          <div class="flex items-start gap-3 py-1.5">
             <dt
               i18n="@@intervention.prop.due"
-              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+              class="w-24 shrink-0 pt-1 text-surface-500 dark:text-surface-400"
             >
               Due
             </dt>
-            <dd class="flex min-w-0 items-center gap-1.5 font-medium tabular-nums">
+            <dd
+              class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 pt-0.5 font-medium tabular-nums"
+            >
               @if (intervention.dueAt; as due) {
                 <span [class.text-red-600]="dueDanger()" [class.dark:text-red-400]="dueDanger()">{{
                   due | date: 'MMM d, HH:mm'
@@ -891,31 +953,17 @@
                   >Not set</span
                 >
               }
-              @if (canEditPlanning()) {
-                <p-button
-                  icon="pi pi-pencil"
-                  severity="secondary"
-                  [text]="true"
-                  [rounded]="true"
-                  size="small"
-                  i18n-ariaLabel="@@intervention.detail.editDue"
-                  ariaLabel="Edit due date"
-                  (onClick)="editDrawerVisible.set(true)"
-                />
-              }
             </dd>
           </div>
 
-          <div
-            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
-          >
+          <div class="flex items-start gap-3 py-1.5">
             <dt
               i18n="@@intervention.prop.site"
-              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+              class="w-24 shrink-0 pt-1 text-surface-500 dark:text-surface-400"
             >
               Site
             </dt>
-            <dd class="flex min-w-0 items-center gap-1.5">
+            <dd class="flex min-w-0 flex-1 items-center gap-1.5 pt-0.5">
               @if (siteLabel(); as site) {
                 <span class="truncate font-medium">{{ site }}</span>
               } @else {
@@ -925,27 +973,13 @@
                   >No site</span
                 >
               }
-              @if (canEditPlanning()) {
-                <p-button
-                  icon="pi pi-pencil"
-                  severity="secondary"
-                  [text]="true"
-                  [rounded]="true"
-                  size="small"
-                  i18n-ariaLabel="@@intervention.detail.editSite"
-                  ariaLabel="Edit site"
-                  (onClick)="editDrawerVisible.set(true)"
-                />
-              }
             </dd>
           </div>
 
-          <div
-            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
-          >
+          <div class="flex items-start gap-3 py-1.5">
             <dt
               i18n="@@intervention.sidebar.labels"
-              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+              class="w-24 shrink-0 pt-1 text-surface-500 dark:text-surface-400"
             >
               Labels
             </dt>
@@ -976,6 +1010,8 @@
               } @else {
                 <div class="flex w-full flex-col gap-2">
                   <p-multiselect
+                    i18n-ariaLabel="@@intervention.sidebar.labels"
+                    ariaLabel="Labels"
                     [options]="[...labelOptions()]"
                     optionLabel="name"
                     optionValue="id"
@@ -1006,17 +1042,15 @@
             </dd>
           </div>
 
-          <div
-            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
-          >
+          <div class="flex items-start gap-3 py-1.5">
             <dt
               i18n="@@intervention.sidebar.revision"
-              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+              class="w-24 shrink-0 pt-1 text-surface-500 dark:text-surface-400"
             >
               Revision
             </dt>
             <dd
-              class="font-mono text-xs font-medium text-surface-500 tabular-nums dark:text-surface-400"
+              class="min-w-0 flex-1 pt-1 font-mono text-xs font-medium text-surface-500 tabular-nums dark:text-surface-400"
             >
               v{{ intervention.revision }}
             </dd>
@@ -1028,15 +1062,15 @@
         <!-- Linked resources -->
         <h2
           i18n="@@intervention.sidebar.linked"
-          class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+          class="text-sm font-semibold text-surface-900 dark:text-surface-100"
         >
           Linked
         </h2>
-        <ul class="mt-3.5 flex flex-col gap-1 text-sm">
+        <ul class="mt-2 flex flex-col gap-0.5 text-sm">
           <li class="-mx-2">
             <a
               [routerLink]="['../../facilities']"
-              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-100 dark:hover:bg-surface-800"
+              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
             >
               <i
                 class="pi pi-building text-sm text-surface-500 dark:text-surface-400"
@@ -1054,7 +1088,7 @@
                 >{{ intervention.facilitiesCount }}</span
               >
               <i
-                class="pi pi-chevron-right text-[10px] text-surface-400 dark:text-surface-500"
+                class="pi pi-chevron-right text-xs text-surface-400 dark:text-surface-500"
                 aria-hidden="true"
               ></i>
             </a>
@@ -1062,7 +1096,7 @@
           <li class="-mx-2">
             <a
               [routerLink]="['../../equipments']"
-              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-100 dark:hover:bg-surface-800"
+              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
             >
               <i
                 class="pi pi-box text-sm text-surface-500 dark:text-surface-400"
@@ -1080,7 +1114,7 @@
                 >{{ intervention.equipmentCount }}</span
               >
               <i
-                class="pi pi-chevron-right text-[10px] text-surface-400 dark:text-surface-500"
+                class="pi pi-chevron-right text-xs text-surface-400 dark:text-surface-500"
                 aria-hidden="true"
               ></i>
             </a>
@@ -1088,7 +1122,7 @@
           <li class="-mx-2">
             <a
               [routerLink]="['../../inspections']"
-              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-100 dark:hover:bg-surface-800"
+              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
             >
               <i
                 class="pi pi-check-square text-sm text-surface-500 dark:text-surface-400"
@@ -1106,7 +1140,7 @@
                 >{{ intervention.inspectionsCount }}</span
               >
               <i
-                class="pi pi-chevron-right text-[10px] text-surface-400 dark:text-surface-500"
+                class="pi pi-chevron-right text-xs text-surface-400 dark:text-surface-500"
                 aria-hidden="true"
               ></i>
             </a>
@@ -1119,7 +1153,7 @@
           <div class="flex items-center justify-between">
             <h2
               i18n="@@intervention.sidebar.readiness"
-              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+              class="text-sm font-semibold text-surface-900 dark:text-surface-100"
             >
               Readiness
             </h2>
@@ -1127,7 +1161,7 @@
               {{ readinessDoneCount() }}/{{ readinessChecks().length }}
             </span>
           </div>
-          <app-intervention-readiness-checklist class="mt-3.5 block" [checks]="readinessChecks()" />
+          <app-intervention-readiness-checklist class="mt-2.5 block" [checks]="readinessChecks()" />
         }
 
         <!-- Publication -->
@@ -1135,11 +1169,11 @@
           <div class="my-5 h-px bg-surface-100 dark:bg-surface-800" aria-hidden="true"></div>
           <h2
             i18n="@@intervention.sidebar.publication"
-            class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+            class="text-sm font-semibold text-surface-900 dark:text-surface-100"
           >
             Publication
           </h2>
-          <div class="mt-3.5 flex flex-col gap-2.5">
+          <div class="mt-2.5 flex flex-col gap-2.5">
             <div class="flex items-center gap-1.5 text-sm">
               @if (store.blockerCount() > 0) {
                 <i
@@ -1179,6 +1213,17 @@
       <div
         class="fixed inset-x-0 bottom-0 z-30 border-t border-surface-200 bg-surface-0/95 px-4 py-3 backdrop-blur-sm lg:hidden dark:border-surface-800 dark:bg-surface-950/95"
       >
+        <!--
+          The publication outcome also renders here, not only in the properties
+          rail: below `xl` the rail stacks under the whole main column, so on a
+          phone the operator taps Publish in this bar and the result lands
+          thousands of pixels away, out of sight.
+        -->
+        @if (publicationMessage(); as message) {
+          <p-message class="mb-2 block" [severity]="publicationSeverity()" [closable]="false">{{
+            message
+          }}</p-message>
+        }
         @if (commandAction(); as action) {
           @if (action.disabled && action.disabledReason; as reason) {
             <p class="pb-2 text-center text-xs text-surface-500 dark:text-surface-400">

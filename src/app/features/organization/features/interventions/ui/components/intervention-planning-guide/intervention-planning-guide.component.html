@@ -28,7 +28,7 @@
         <li class="shrink-0 md:shrink">
           <button
             type="button"
-            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
+            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-900"
             [class.bg-surface-100]="activeStep() === step.id"
             [class.dark:bg-surface-800]="activeStep() === step.id"
             [attr.aria-current]="activeStep() === step.id ? 'step' : null"
@@ -130,10 +130,11 @@
           </h3>
 
           <label class="grid gap-1.5 text-sm">
-            <span i18n="@@intervention.pf.site" class="font-medium"
+            <span id="intervention-pf-site-label" i18n="@@intervention.pf.site" class="font-medium"
               >Site <span class="text-red-500" aria-hidden="true">*</span></span
             ><span i18n="@@common.requiredSr" class="sr-only">required</span>
             <p-select
+              ariaLabelledBy="intervention-pf-site-label"
               [formControl]="siteControl"
               [options]="[...siteOptions()]"
               optionLabel="label"
@@ -211,10 +212,14 @@
           </h3>
 
           <label class="grid gap-1.5 text-sm">
-            <span i18n="@@intervention.pf.responsible" class="font-medium"
+            <span
+              id="intervention-pf-responsible-label"
+              i18n="@@intervention.pf.responsible"
+              class="font-medium"
               >Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span
             ><span i18n="@@common.requiredSr" class="sr-only">required</span>
             <p-select
+              ariaLabelledBy="intervention-pf-responsible-label"
               [formControl]="responsibleControl"
               [options]="[...memberOptions()]"
               optionLabel="label"
@@ -246,8 +251,14 @@
           </label>
 
           <label class="grid gap-1.5 text-sm">
-            <span i18n="@@intervention.pf.participants" class="font-medium">Participants</span>
+            <span
+              id="intervention-pf-participants-label"
+              i18n="@@intervention.pf.participants"
+              class="font-medium"
+              >Participants</span
+            >
             <p-multiselect
+              ariaLabelledBy="intervention-pf-participants-label"
               [formControl]="participantsControl"
               [options]="[...memberOptions()]"
               optionLabel="label"
@@ -334,10 +345,14 @@
           </div>
 
           <label class="grid gap-1.5 text-sm">
-            <span i18n="@@intervention.pf.priority" class="font-medium"
+            <span
+              id="intervention-pf-priority-label"
+              i18n="@@intervention.pf.priority"
+              class="font-medium"
               >Priority <span class="text-red-500" aria-hidden="true">*</span></span
             ><span i18n="@@common.requiredSr" class="sr-only">required</span>
             <p-select
+              ariaLabelledBy="intervention-pf-priority-label"
               [formControl]="priorityControl"
               [options]="[...priorityOptions]"
               optionLabel="label"

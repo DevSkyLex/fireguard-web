@@ -1,13 +1,16 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
 <div class="mb-4 flex flex-wrap items-center gap-2.5">
-  <p-iconfield class="min-w-60 flex-1 sm:max-w-96">
+  <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-96 sm:min-w-60">
     <p-inputicon class="pi pi-search" />
     <input
       pInputText
+      pSize="small"
       type="text"
       placeholder="Search equipments..."
       i18n-placeholder="@@equipment.table.searchPlaceholder"
+      i18n-aria-label="@@equipment.table.searchPlaceholder"
+      aria-label="Search equipments..."
       [formControl]="searchControl"
       class="w-full"
     />
@@ -21,13 +24,17 @@
     [outlined]="true"
     [badge]="filterBadge()"
     (onClick)="onFilterToggle($event)"
+    size="small"
   />
 
   <p-popover #filterPopover>
     <div class="flex w-72 flex-col gap-4">
       <div class="flex flex-col gap-1.5">
-        <label i18n="@@common.status" class="text-sm font-medium">Status</label>
+        <label for="equipment-filter-status" i18n="@@common.status" class="text-sm font-medium"
+          >Status</label
+        >
         <p-select
+          inputId="equipment-filter-status"
           [options]="statusOptions"
           [formControl]="statusControl"
           optionLabel="label"
@@ -51,8 +58,11 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label i18n="@@equipment.form.type" class="text-sm font-medium">Type</label>
+        <label for="equipment-filter-type" i18n="@@equipment.form.type" class="text-sm font-medium"
+          >Type</label
+        >
         <p-select
+          inputId="equipment-filter-type"
           [options]="typeOptions"
           [formControl]="typeControl"
           optionLabel="label"
@@ -67,18 +77,51 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label i18n="@@equipment.table.filterSubType" class="text-sm font-medium">Sub-type</label>
-        <input pInputText [formControl]="subTypeControl" size="small" class="w-full" />
+        <label
+          for="equipment-filter-sub-type"
+          i18n="@@equipment.table.filterSubType"
+          class="text-sm font-medium"
+          >Sub-type</label
+        >
+        <input
+          id="equipment-filter-sub-type"
+          pInputText
+          [formControl]="subTypeControl"
+          pSize="small"
+          class="w-full"
+        />
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label i18n="@@equipment.table.filterBrand" class="text-sm font-medium">Brand</label>
-        <input pInputText [formControl]="brandControl" size="small" class="w-full" />
+        <label
+          for="equipment-filter-brand"
+          i18n="@@equipment.table.filterBrand"
+          class="text-sm font-medium"
+          >Brand</label
+        >
+        <input
+          id="equipment-filter-brand"
+          pInputText
+          [formControl]="brandControl"
+          pSize="small"
+          class="w-full"
+        />
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label i18n="@@equipment.table.filterModel" class="text-sm font-medium">Model</label>
-        <input pInputText [formControl]="modelControl" size="small" class="w-full" />
+        <label
+          for="equipment-filter-model"
+          i18n="@@equipment.table.filterModel"
+          class="text-sm font-medium"
+          >Model</label
+        >
+        <input
+          id="equipment-filter-model"
+          pInputText
+          [formControl]="modelControl"
+          pSize="small"
+          class="w-full"
+        />
       </div>
 
       <div
@@ -119,6 +162,7 @@
           (onClick)="add.emit()"
           [disabled]="loading() || createDisabled()"
           class="w-full sm:w-auto"
+          size="small"
         />
       </span>
     } @else {
@@ -131,6 +175,7 @@
         [disabled]="loading()"
         class="w-full sm:w-auto"
         (onClick)="onRefresh()"
+        size="small"
       />
 
       <p-button
@@ -142,26 +187,29 @@
         [disabled]="loading()"
         class="w-full sm:w-auto"
         (onClick)="onClearFilters()"
+        size="small"
       />
     }
   </div>
 </div>
 
-<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
+<p-card class="flex min-h-0 flex-1 flex-col" [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <h2 class="text-[15px] font-semibold tracking-[-0.01em]" i18n="@@equipment.table.title">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h2
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+        i18n="@@equipment.table.title"
+      >
         Equipments
       </h2>
+      @if (total() > 0) {
+        <span
+          i18n="@@equipment.table.resultCount"
+          class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
+          >{total(), plural, =1 {1 equipment} other {{{ total() }} equipments}}</span
+        >
+      }
     </div>
-
-    @if (total() > 0) {
-      <span
-        i18n="@@equipment.table.resultCount"
-        class="text-sm text-surface-600 tabular-nums dark:text-surface-400"
-        >{total(), plural, =1 {1 equipment} other {{{ total() }} equipments}}</span
-      >
-    }
   </ng-template>
 
   <ng-template pTemplate="content">
@@ -182,6 +230,7 @@
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
       i18n-currentPageReportTemplate="@@equipment.table.pageReport"
       [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -270,17 +319,17 @@
                 {{ equipment.serialNumber }}
               </code>
             } @else {
-              <span class="text-surface-300 dark:text-surface-600">-</span>
+              <span class="text-surface-300 dark:text-surface-600">&mdash;</span>
             }
           </td>
           <td>
             @if (equipment.locationLabel) {
               <span class="inline-flex items-center gap-1.5 text-surface-600 dark:text-surface-400">
-                <i class="pi pi-map-marker text-[0.7rem]" aria-hidden="true"></i>
+                <i class="pi pi-map-marker text-xs" aria-hidden="true"></i>
                 {{ equipment.locationLabel }}
               </span>
             } @else {
-              <span class="text-surface-300 dark:text-surface-600">-</span>
+              <span class="text-surface-300 dark:text-surface-600">&mdash;</span>
             }
           </td>
           <td>

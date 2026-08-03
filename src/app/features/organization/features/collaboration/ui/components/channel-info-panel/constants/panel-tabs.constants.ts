@@ -62,7 +62,7 @@ export const PANEL_TAB_LIST_PT: TabListPassThrough = {
 export const PANEL_TAB_PT: TabPassThrough = {
   root: {
     class:
-      'flex-1 justify-center rounded-md border-0 bg-transparent px-3 py-1 text-[13px] font-medium text-surface-600 aria-selected:bg-surface-0 aria-selected:font-semibold aria-selected:text-surface-950 dark:text-surface-400 dark:aria-selected:bg-surface-900 dark:aria-selected:text-surface-50',
+      'flex-1 justify-center rounded-md border-0 bg-transparent px-3 py-1 text-sm font-medium text-surface-600 aria-selected:bg-surface-0 aria-selected:font-semibold aria-selected:text-surface-950 dark:text-surface-400 dark:aria-selected:bg-surface-900 dark:aria-selected:text-surface-50',
   },
 };
 

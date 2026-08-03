@@ -75,5 +75,23 @@ export class ErrorState {
    * @type {InputSignal<string | undefined>}
    */
   public readonly description: InputSignal<string | undefined> = input<string>();
+
+  /**
+   * Property dense
+   * @readonly
+   *
+   * @description
+   * Tightens the block for use inside a card or panel rather than on an
+   * otherwise empty page. Matches {@link EmptyState.dense}: a dashboard card
+   * reporting that one query failed was rendering a full-page-sized failure
+   * notice, which made a single unavailable panel look like the whole screen
+   * had fallen over.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly dense: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 }

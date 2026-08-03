@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
@@ -24,6 +25,7 @@ import {
   type NonConformityFormValues,
 } from '@features/organization/features/inspections/ui/forms';
 import { EmptyState } from '@shared/empty-state';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/table-card-shell';
 import { type TagDescriptor, type TagOption } from '@shared/tag';
 
 /** Describes a requested non-conformity status transition. */
@@ -39,6 +41,7 @@ export interface NonConformityStatusChange {
   selector: 'app-non-conformity-table',
   imports: [
     ButtonModule,
+    CardModule,
     DatePipe,
     EmptyState,
     FormsModule,
@@ -80,6 +83,10 @@ export class NonConformityTable {
   public readonly view: OutputEmitterRef<NonConformityOutput> = output();
   /** Placeholder rows displayed while loading. */
   protected readonly skeletonItems = Array(5);
+  /** Shared card-shell `styleClass` so this table reads like every other carded table. */
+  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
+  /** Shared card-shell pass-through options (flush body, bordered header row). */
+  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
   /** Localized placeholder for empty due-date cells. */
   protected readonly noneLabel: string = $localize`:@@inspection.info.none:None`;
   /** Supported non-conformity status options, resolved from the shared registry. */

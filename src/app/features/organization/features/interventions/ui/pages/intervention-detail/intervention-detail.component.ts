@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -149,6 +149,7 @@ import { EmptyState } from '@shared/empty-state';
     ButtonModule,
     CommentComposer,
     DatePipe,
+    NgTemplateOutlet,
     EmptyState,
     InterventionChangeDiff,
     InterventionDiscoveryDrawer,
@@ -1402,6 +1403,71 @@ export class InterventionDetailPage {
   );
 
   /**
+   * Property activeNotices
+   * @readonly
+   *
+   * @description
+   * The page-level notices that currently apply, most urgent first: something
+   * failed, sync is blocked, a reviewer sent the work back, publication is
+   * blocked, then the informational ones. Up to seven could co-render, which put
+   * a wall of banners between the operator and the work — the field scene reaches
+   * this page to run a checklist.
+   *
+   * @access protected
+   * @since 7.2.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeNotices: Signal<readonly string[]> = computed<readonly string[]>(() => {
+    const intervention = this.store.intervention();
+    const notices: string[] = [];
+
+    if (this.store.error()) notices.push('error');
+    if (this.sync.blockedOperations() > 0) notices.push('blockedSync');
+    if (intervention?.status === 'changes_requested' && intervention.reviewNote) {
+      notices.push('reviewNote');
+    }
+    if (this.phase() === 'review' && this.store.blockerCount() > 0) notices.push('blockers');
+    if (this.offline.hasUnsyncedChanges()) notices.push('offline');
+    if (this.readyToPublish()) notices.push('readyToPublish');
+    if (intervention?.status === 'published') notices.push('published');
+
+    return notices;
+  });
+
+  /**
+   * Property collapsedNoticeCount
+   * @readonly
+   *
+   * @description
+   * How many notices are folded behind the summary row. Zero when one or fewer
+   * apply, in which case no toggle renders at all.
+   *
+   * @access protected
+   * @since 7.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly collapsedNoticeCount: Signal<number> = computed<number>(() =>
+    Math.max(0, this.activeNotices().length - 1),
+  );
+
+  /**
+   * Property noticesExpanded
+   * @readonly
+   *
+   * @description
+   * Whether the operator unfolded the secondary notices. Resets on navigation
+   * because the page is component-scoped.
+   *
+   * @access protected
+   * @since 7.2.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly noticesExpanded: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property showPlanningGuide
    * @readonly
    *
@@ -2156,9 +2222,68 @@ export class InterventionDetailPage {
         break;
       }
       case 'review':
-        void this.publishIntervention();
+        this.confirmPublish();
         break;
     }
+  }
+
+  /**
+   * Method showNotice
+   * @method showNotice
+   *
+   * @description
+   * Whether a given page-level notice renders. The most urgent one is always
+   * visible; the rest stay folded behind the summary row until the operator
+   * unfolds them.
+   *
+   * @access protected
+   * @since 7.2.0
+   *
+   * @param {string} notice - Notice key, matching {@link activeNotices}.
+   * @returns {boolean} True when the notice should render.
+   */
+  protected showNotice(notice: string): boolean {
+    return this.noticesExpanded() || this.activeNotices()[0] === notice;
+  }
+
+  /**
+   * Method confirmPublish
+   * @method confirmPublish
+   *
+   * @description
+   * Gates publication behind the publication summary itself: the confirmation
+   * states what is about to be written and at which revision, then repeats the
+   * atomic contract. Publication is the one irreversible-feeling step of the
+   * lifecycle and was the only consequential action on this page reaching the
+   * backend without a confirmation — abandon, delete and discard all have one.
+   *
+   * @access protected
+   * @since 7.1.0
+   *
+   * @return {void}
+   */
+  protected confirmPublish(): void {
+    const intervention = this.store.intervention();
+    if (!intervention) return;
+
+    const changes: number = this.pendingChangesCount();
+    const inspections: number = intervention.inspectionsCount;
+    const revision: number = intervention.revision;
+
+    this.confirmationService.confirm({
+      header: $localize`:@@intervention.publish.header:Publish intervention`,
+      message: $localize`:@@intervention.publish.message:${changes}:changes: pending change(s) and ${inspections}:inspections: recorded inspection(s) will be written to the records in one operation, at revision ${revision}:revision:. Either everything succeeds, or no record is modified.`,
+      icon: 'pi pi-check-circle',
+      acceptButtonProps: {
+        label: $localize`:@@intervention.publish.accept:Publish`,
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void => void this.publishIntervention(),
+    });
   }
 
   /**

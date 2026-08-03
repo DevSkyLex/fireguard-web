@@ -4,11 +4,11 @@
 >
   <!-- Category icon -->
   <span
-    class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm"
+    class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-sm"
     [class]="iconBg() + ' ' + iconText()"
     [title]="notification().type"
   >
-    <i class="pi text-xs" [class]="icon()"></i>
+    <i class="pi text-xs" [class]="icon()" aria-hidden="true"></i>
   </span>
 
   <!-- Content -->
@@ -31,7 +31,7 @@
   @if (!notification().isRead) {
     <button
       type="button"
-      class="mt-2 h-2 w-2 shrink-0 cursor-pointer rounded-full bg-primary transition-transform hover:scale-125"
+      class="mt-2 size-2 shrink-0 cursor-pointer rounded-full bg-primary transition-transform hover:scale-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none"
       title="Mark as read"
       i18n-title="@@account.bell.markAsRead"
       (click)="onMarkAsRead($event)"

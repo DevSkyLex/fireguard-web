@@ -18,7 +18,7 @@
           </h2>
           @if (relativeLabel(day.date); as label) {
             <span
-              class="rounded-full bg-primary-50 px-1.5 py-0.5 text-[0.65rem] font-semibold tracking-wide text-primary-700 uppercase dark:bg-primary-950/40 dark:text-primary-300"
+              class="rounded-full bg-primary-50 px-1.5 py-0.5 text-xs font-semibold tracking-wide text-primary-700 uppercase dark:bg-primary-950/40 dark:text-primary-300"
             >
               {{ label }}
             </span>
@@ -42,7 +42,7 @@
           <li>
             <button
               type="button"
-              class="flex w-full items-start gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-surface-100 motion-reduce:transition-none dark:hover:bg-surface-800/60"
+              class="flex w-full items-start gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-surface-800/60"
               [attr.aria-label]="openLabel(event.title)"
               (click)="eventClick.emit(event)"
             >
@@ -53,7 +53,7 @@
               >
                 @if (isAllDay(event)) {
                   <span
-                    class="text-[0.7rem] font-medium text-surface-400 dark:text-surface-500"
+                    class="text-xs font-medium text-surface-400 dark:text-surface-500"
                     i18n="@@calendar.allDay"
                   >
                     all-day
@@ -63,7 +63,7 @@
                     {{ event.start | date: 'HH:mm' }}
                   </span>
                   @if (endTime(event); as end) {
-                    <span class="text-[0.7rem] text-surface-400 dark:text-surface-500">
+                    <span class="text-xs text-surface-400 dark:text-surface-500">
                       {{ end | date: 'HH:mm' }}
                     </span>
                   }

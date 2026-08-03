@@ -25,11 +25,13 @@
     <div class="grid gap-5">
       <label class="grid gap-1.5 text-sm">
         <span
+          id="intervention-df-action-label"
           i18n="@@intervention.df.action"
           class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Action</span
         >
         <p-select
+          ariaLabelledBy="intervention-df-action-label"
           formControlName="action"
           [options]="[...actionOptions]"
           optionLabel="label"
@@ -48,13 +50,17 @@
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="text-sm font-medium text-surface-900 dark:text-surface-50">
+        <span
+          id="intervention-discovery-target-label"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+        >
           {{ targetLabel() }}
           <span class="text-red-500" aria-hidden="true">*</span
           ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         </span>
         @if (form.controls.action.value === 'inventory') {
           <p-select
+            ariaLabelledBy="intervention-discovery-target-label"
             formControlName="target"
             [options]="[...equipmentTypeOptions()]"
             optionLabel="label"
@@ -98,11 +104,13 @@
       @if (form.controls.action.value === 'inspection') {
         <label class="grid gap-1.5 text-sm">
           <span
+            id="intervention-df-result-label"
             i18n="@@intervention.df.result"
             class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Initial result</span
           >
           <p-select
+            ariaLabelledBy="intervention-df-result-label"
             formControlName="result"
             [options]="[...resultOptions]"
             optionLabel="label"

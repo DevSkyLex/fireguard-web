@@ -26,11 +26,13 @@
     <div class="grid gap-5">
       <label class="flex flex-col gap-2">
         <span
+          id="intervention-wif-action-label"
           i18n="@@intervention.wif.action"
           class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Action <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
+          ariaLabelledBy="intervention-wif-action-label"
           formControlName="action"
           [options]="[...actionOptions]"
           optionLabel="label"
@@ -51,11 +53,13 @@
 
       <label class="flex flex-col gap-2">
         <span
+          id="intervention-wif-target-label"
           i18n="@@intervention.wif.target"
           class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Target resource</span
         >
         <p-select
+          ariaLabelledBy="intervention-wif-target-label"
           formControlName="target"
           [options]="[...targetOptions()]"
           optionLabel="label"
@@ -74,11 +78,13 @@
 
       <label class="flex flex-col gap-2">
         <span
+          id="intervention-wif-assignee-label"
           i18n="@@intervention.wif.assignee"
           class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Assignee</span
         >
         <p-select
+          ariaLabelledBy="intervention-wif-assignee-label"
           formControlName="assignee"
           [options]="[...memberOptions()]"
           optionLabel="label"

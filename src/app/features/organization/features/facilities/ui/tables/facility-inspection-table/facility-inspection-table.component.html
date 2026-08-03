@@ -2,14 +2,19 @@
 
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <h2 i18n="@@facility.inspections.title" class="text-[15px] font-semibold tracking-[-0.01em]">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h2
+        i18n="@@facility.inspections.title"
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+      >
         Inspections
       </h2>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
       <p-select
+        i18n-ariaLabel="@@common.result"
+        ariaLabel="Result"
         [options]="resultOptions"
         [formControl]="resultControl"
         optionLabel="label"
@@ -30,6 +35,8 @@
       </p-select>
 
       <p-select
+        i18n-ariaLabel="@@common.status"
+        ariaLabel="Status"
         [options]="statusOptions"
         [formControl]="statusControl"
         optionLabel="label"
@@ -105,6 +112,7 @@
       i18n-currentPageReportTemplate="@@facility.inspTable.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
       [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -170,7 +178,7 @@
 
       <ng-template pTemplate="body" let-inspection>
         @if (loading()) {
-          <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+          <tr>
             <td>
               <div class="flex flex-col gap-1.5">
                 <p-skeleton width="10rem" height="0.875rem" />
@@ -187,7 +195,7 @@
             <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
           </tr>
         } @else {
-          <tr>
+          <tr class="group">
             <td>
               <div class="flex min-w-0 items-center gap-3">
                 <p-avatar
@@ -237,7 +245,7 @@
                   [value]="getFindingsLabel(inspection.nonConformitiesCount)"
                 />
               } @else {
-                <span class="text-surface-300 dark:text-surface-600">-</span>
+                <span class="text-surface-300 dark:text-surface-600">&mdash;</span>
               }
             </td>
             <td class="hidden text-right lg:table-cell">
@@ -254,6 +262,7 @@
                 i18n-ariaLabel="@@facility.inspTable.rowActions"
                 ariaLabel="Inspection actions"
                 (onClick)="onActionMenuToggle($event, inspection)"
+                class="transition-opacity duration-150 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
               />
             </td>
           </tr>

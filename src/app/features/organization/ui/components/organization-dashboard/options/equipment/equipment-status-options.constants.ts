@@ -17,7 +17,7 @@ export const EQUIPMENT_STATUS_OPTIONS: readonly EquipmentStatusOption[] = [
     value: 'in_stock',
     icon: PrimeIcons.BOX,
     severity: 'secondary',
-    color: '#94a3b8',
+    color: '#a3a3a3',
   },
   {
     label: $localize`:@@equipmentStatus.operational:Operational`,

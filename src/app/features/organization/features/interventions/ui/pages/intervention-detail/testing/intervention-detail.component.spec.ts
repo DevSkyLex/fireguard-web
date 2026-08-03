@@ -75,6 +75,7 @@ function buildIntervention(overrides: Partial<InterventionOutput> = {}): Interve
 
 interface ConfirmConfig {
   readonly header?: string;
+  readonly message?: string;
   readonly accept?: () => void;
 }
 
@@ -96,6 +97,10 @@ type InterventionDetailPageHarness = {
   readonly editDrawerVisible: { (): boolean; set(value: boolean): void };
   readonly labelsEditorOpen: { (): boolean; set(value: boolean): void };
   readonly labelSelectionControl: { value: string[]; setValue(value: string[]): void };
+  invokeCommandAction(): void;
+  readonly collapsedNoticeCount: () => number;
+  readonly noticesExpanded: { (): boolean; set(value: boolean): void };
+  showNotice(notice: string): boolean;
   planIntervention(): void;
   updateWorkItem(event: InterventionWorkItemStatusChange): void;
   confirmDeleteWorkItems(workItems: readonly InterventionWorkItemOutput[]): void;
@@ -154,6 +159,7 @@ describe('InterventionDetailPage', () => {
   };
   let interventionListStore: { orderedIds: ReturnType<typeof signal<readonly string[]>> };
   let confirmationService: { confirm: ReturnType<typeof vi.fn> };
+  let publicationService: { publish: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   function build(): InterventionDetailPageHarness {
@@ -217,6 +223,7 @@ describe('InterventionDetailPage', () => {
     };
     interventionListStore = { orderedIds: signal<readonly string[]>([]) };
     confirmationService = { confirm: vi.fn() };
+    publicationService = { publish: vi.fn().mockResolvedValue({ status: 'succeeded' }) };
     router = { navigate: vi.fn() };
 
     const planningOptions = {
@@ -258,7 +265,7 @@ describe('InterventionDetailPage', () => {
           provide: InterventionDiscoveryService,
           useValue: { create: vi.fn(), normalizeScannedTarget: (value: string) => value },
         },
-        { provide: InterventionPublicationService, useValue: { publish: vi.fn() } },
+        { provide: InterventionPublicationService, useValue: publicationService },
         { provide: ActiveInterventionStore, useValue: { setIntervention: vi.fn() } },
         { provide: InterventionStore, useValue: interventionListStore },
         {
@@ -424,6 +431,26 @@ describe('InterventionDetailPage', () => {
 
     config.accept?.();
     expect(store.deleteWorkItems).toHaveBeenCalledWith({ interventionId: 'i-1', workItems });
+  });
+
+  it('should gate publication behind a confirmation carrying the record recap', () => {
+    store.intervention.set(
+      buildIntervention({ status: 'submitted', inspectionsCount: 3, revision: 7 }),
+    );
+    const harness = build();
+    expect(harness.phase()).toBe('review');
+
+    harness.invokeCommandAction();
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    const config = confirmationService.confirm.mock.calls[0][0] as ConfirmConfig;
+    expect(config.header).toBe('Publish intervention');
+    expect(config.message).toContain('3');
+    expect(config.message).toContain('7');
+    expect(publicationService.publish).not.toHaveBeenCalled();
+
+    config.accept?.();
+    expect(publicationService.publish).toHaveBeenCalledTimes(1);
   });
 
   it('should not open a confirmation for an empty deletion request', () => {
@@ -802,6 +829,77 @@ describe('InterventionDetailPage', () => {
       const fixture = render();
 
       expect(fixture.nativeElement.textContent).toContain('saved offline');
+    });
+
+    it('should keep only the most urgent notice open and fold the rest behind a count', () => {
+      TestBed.overrideProvider(InterventionOfflineService, {
+        useValue: { hasUnsyncedChanges: () => true },
+      });
+      store.error.set('Something failed');
+      store.intervention.set(buildIntervention());
+      const fixture = render();
+      const harness = fixture.componentInstance as unknown as InterventionDetailPageHarness;
+
+      // error (most urgent) + offline = two notices, one of them folded.
+      expect(harness.collapsedNoticeCount()).toBe(1);
+      expect(harness.showNotice('error')).toBe(true);
+      expect(harness.showNotice('offline')).toBe(false);
+      expect(fixture.nativeElement.textContent).toContain('Something failed');
+      expect(fixture.nativeElement.textContent).not.toContain('saved offline');
+      expect(fixture.nativeElement.textContent).toContain('more notice');
+
+      harness.noticesExpanded.set(true);
+      fixture.detectChanges();
+
+      expect(harness.showNotice('offline')).toBe(true);
+      expect(fixture.nativeElement.textContent).toContain('saved offline');
+      expect(fixture.nativeElement.textContent).toContain('Show less');
+    });
+
+    it('should put the checklist before the context block while executing', () => {
+      store.intervention.set(buildIntervention({ status: 'in_progress' }));
+      const fixture = render();
+      const host = fixture.nativeElement as HTMLElement;
+
+      const checklist = [...host.querySelectorAll('h2')].find((h) =>
+        /Work items/.test(h.textContent ?? ''),
+      );
+      const stepper = host.querySelector('app-intervention-phase-stepper');
+
+      if (!checklist || !stepper) throw new Error('checklist and stepper must both render');
+
+      // The stepper (page context) must FOLLOW the checklist in document order,
+      // so keyboard focus reaches the work before the metadata.
+      expect(
+        checklist.compareDocumentPosition(stepper) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('should keep the context block before the checklist outside execution', () => {
+      store.intervention.set(buildIntervention({ status: 'submitted' }));
+      const fixture = render();
+      const host = fixture.nativeElement as HTMLElement;
+
+      const checklist = [...host.querySelectorAll('h2')].find((h) =>
+        /Work items/.test(h.textContent ?? ''),
+      );
+      const stepper = host.querySelector('app-intervention-phase-stepper');
+
+      if (!checklist || !stepper) throw new Error('checklist and stepper must both render');
+
+      expect(
+        checklist.compareDocumentPosition(stepper) & Node.DOCUMENT_POSITION_PRECEDING,
+      ).toBeTruthy();
+    });
+
+    it('should not render the notice toggle when a single notice applies', () => {
+      store.error.set('Something failed');
+      store.intervention.set(buildIntervention());
+      const fixture = render();
+      const harness = fixture.componentInstance as unknown as InterventionDetailPageHarness;
+
+      expect(harness.collapsedNoticeCount()).toBe(0);
+      expect(fixture.nativeElement.textContent).not.toContain('more notice');
     });
 
     it('should render the mobile command bar when a command action is available', () => {

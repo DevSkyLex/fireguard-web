@@ -184,7 +184,7 @@ export class InterventionSyncChip {
 
     return {
       icon: 'pi pi-cloud',
-      iconClass: 'text-emerald-600 dark:text-emerald-400',
+      iconClass: 'text-green-600 dark:text-green-400',
       label: $localize`:@@interventions.syncChip.synced:Up to date`,
       count: '',
       aria: $localize`:@@interventions.syncChip.syncedAria:Sync status: everything is synced`,

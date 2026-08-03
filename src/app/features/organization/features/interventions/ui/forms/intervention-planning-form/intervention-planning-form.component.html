@@ -26,11 +26,13 @@
     <div class="grid gap-5 md:grid-cols-2">
       <label class="flex flex-col gap-2 md:col-span-2">
         <span
+          id="intervention-pf-priority-label"
           i18n="@@intervention.pf.priority"
           class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Priority <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
+          ariaLabelledBy="intervention-pf-priority-label"
           formControlName="priority"
           [options]="[...priorityOptions]"
           optionLabel="label"
@@ -51,11 +53,13 @@
 
       <label class="flex flex-col gap-2">
         <span
+          id="intervention-pf-site-label"
           i18n="@@intervention.pf.site"
           class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Site <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
+          ariaLabelledBy="intervention-pf-site-label"
           formControlName="site"
           [options]="[...siteOptions()]"
           optionLabel="label"
@@ -76,11 +80,13 @@
 
       <label class="flex flex-col gap-2">
         <span
+          id="intervention-pf-responsible-label"
           i18n="@@intervention.pf.responsible"
           class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
+          ariaLabelledBy="intervention-pf-responsible-label"
           formControlName="responsible"
           [options]="[...memberOptions()]"
           optionLabel="label"
@@ -113,11 +119,13 @@
 
       <label class="flex flex-col gap-2 md:col-span-2">
         <span
+          id="intervention-pf-participants-label"
           i18n="@@intervention.pf.participants"
           class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Participants</span
         >
         <p-multiselect
+          ariaLabelledBy="intervention-pf-participants-label"
           formControlName="participants"
           [options]="[...memberOptions()]"
           optionLabel="label"

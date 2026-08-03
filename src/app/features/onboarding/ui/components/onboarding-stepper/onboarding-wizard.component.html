@@ -20,9 +20,9 @@
         <ul class="mt-7 flex flex-col gap-4">
           <li class="flex items-center gap-3">
             <span
-              class="grid h-9 w-9 shrink-0 content-center justify-items-center rounded-lg border border-surface-200 text-surface-500 dark:border-surface-700 dark:text-surface-400"
+              class="grid size-9 shrink-0 content-center justify-items-center rounded-lg border border-surface-200 text-surface-500 dark:border-surface-700 dark:text-surface-400"
             >
-              <i class="pi pi-building"></i>
+              <i class="pi pi-building" aria-hidden="true"></i>
             </span>
             <span
               class="text-sm text-surface-700 dark:text-surface-200"
@@ -33,9 +33,9 @@
           </li>
           <li class="flex items-center gap-3">
             <span
-              class="grid h-9 w-9 shrink-0 content-center justify-items-center rounded-lg border border-surface-200 text-surface-500 dark:border-surface-700 dark:text-surface-400"
+              class="grid size-9 shrink-0 content-center justify-items-center rounded-lg border border-surface-200 text-surface-500 dark:border-surface-700 dark:text-surface-400"
             >
-              <i class="pi pi-map-marker"></i>
+              <i class="pi pi-map-marker" aria-hidden="true"></i>
             </span>
             <span
               class="text-sm text-surface-700 dark:text-surface-200"
@@ -46,9 +46,9 @@
           </li>
           <li class="flex items-center gap-3">
             <span
-              class="grid h-9 w-9 shrink-0 content-center justify-items-center rounded-lg border border-surface-200 text-surface-500 dark:border-surface-700 dark:text-surface-400"
+              class="grid size-9 shrink-0 content-center justify-items-center rounded-lg border border-surface-200 text-surface-500 dark:border-surface-700 dark:text-surface-400"
             >
-              <i class="pi pi-clipboard"></i>
+              <i class="pi pi-clipboard" aria-hidden="true"></i>
             </span>
             <span
               class="text-sm text-surface-700 dark:text-surface-200"
@@ -103,6 +103,7 @@
               >
                 <i
                   class="pi {{ presentation.icon }} text-lg text-surface-500 dark:text-surface-400"
+                  aria-hidden="true"
                 ></i>
               </div>
               <div class="flex min-w-0 flex-col gap-1">
@@ -135,7 +136,7 @@
           <p-message severity="warn" [pt]="messagePt">
             <div class="flex w-full flex-col gap-3">
               <div class="flex items-start gap-2">
-                <i class="pi pi-exclamation-triangle mt-0.5 shrink-0"></i>
+                <i class="pi pi-exclamation-triangle mt-0.5 shrink-0" aria-hidden="true"></i>
                 <div class="flex flex-col gap-0.5">
                   <p class="font-medium" i18n="@@onboarding.wizard.blocked.title">
                     Setup is paused
@@ -174,12 +175,12 @@
           <p-message severity="error" [pt]="messagePt">
             <span class="flex w-full items-center justify-between gap-3">
               <span class="flex items-center gap-2">
-                <i class="pi pi-times-circle"></i>
+                <i class="pi pi-times-circle" aria-hidden="true"></i>
                 <span>{{ error.message }}</span>
               </span>
               <button
                 type="button"
-                class="shrink-0 text-sm font-medium underline underline-offset-2 hover:no-underline"
+                class="shrink-0 text-sm font-medium underline underline-offset-2 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 (click)="dismissStepError()"
                 i18n="@@common.dismiss"
               >
@@ -249,9 +250,9 @@
     @case ('completion') {
       <section class="flex flex-col">
         <span
-          class="grid h-12 w-12 content-center justify-items-center rounded-xl border border-primary-500/35 bg-primary-500/10 text-primary-600 dark:border-primary-500/40 dark:text-primary-400"
+          class="grid size-12 content-center justify-items-center rounded-xl border border-primary-500/35 bg-primary-500/10 text-primary-600 dark:border-primary-500/40 dark:text-primary-400"
         >
-          <i class="pi pi-check text-2xl"></i>
+          <i class="pi pi-check text-2xl" aria-hidden="true"></i>
         </span>
         <h1
           class="mt-6 text-2xl font-semibold tracking-tight text-balance text-surface-900 sm:text-[1.75rem] dark:text-surface-0"

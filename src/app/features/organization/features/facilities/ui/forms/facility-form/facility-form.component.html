@@ -168,7 +168,13 @@
         for="parentFacilityId"
         class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >
-        <ng-container i18n="@@facility.form.parent">Parent Facility</ng-container>
+        <!--
+          `&ngsp;` is required here: Angular drops a whitespace-only text node
+          between two elements, so `</ng-container><span>` rendered as
+          "Parent Facility(optional)" while every sibling label — whose name is a
+          bare text node — kept its space.
+        -->
+        <ng-container i18n="@@facility.form.parent">Parent Facility</ng-container>&ngsp;
         <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
       </label>
       <p-select

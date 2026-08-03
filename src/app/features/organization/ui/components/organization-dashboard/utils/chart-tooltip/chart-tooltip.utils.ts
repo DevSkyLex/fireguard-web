@@ -31,8 +31,8 @@ const CHART_TOOLTIP_FONT_FAMILY = "'Inter Variable', ui-sans-serif, system-ui, s
  * @since 1.0.0
  */
 const CHART_TOOLTIP_PALETTE = {
-  light: { background: '#ffffff', title: '#020617', body: '#64748b', border: '#e2e8f0' },
-  dark: { background: '#18181b', title: '#fafafa', body: '#a1a1aa', border: '#27272a' },
+  light: { background: '#ffffff', title: '#0a0a0a', body: '#737373', border: '#e5e5e5' },
+  dark: { background: '#171717', title: '#fafafa', body: '#a3a3a3', border: '#262626' },
 } as const;
 
 /**

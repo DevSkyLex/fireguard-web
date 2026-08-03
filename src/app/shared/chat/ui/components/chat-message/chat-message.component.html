@@ -6,7 +6,7 @@
 } @else {
   <p-avatar
     aria-hidden="true"
-    styleClass="!size-9 shrink-0 !text-[13px] !font-semibold"
+    styleClass="!size-9 shrink-0 !text-sm !font-semibold"
     shape="circle"
     [label]="initials()"
   />
@@ -45,7 +45,7 @@
         screen reader and a low-contrast display.
       -->
       <p
-        class="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-surface-400"
+        class="flex items-center gap-1.5 text-xs text-surface-500 dark:text-surface-400"
         data-testid="chat-message-pending"
       >
         <i class="pi pi-clock text-[10px]" aria-hidden="true"></i>
@@ -59,7 +59,7 @@
       never seen, and the announcement is lost.
     -->
     <p
-      class="flex items-center gap-2 text-[11px] text-red-600 dark:text-red-400"
+      class="flex items-center gap-2 text-xs text-red-600 dark:text-red-400"
       role="status"
       [class.hidden]="message().status !== 'failed'"
       data-testid="chat-message-failed"
@@ -107,7 +107,7 @@
         data-testid="chat-message-replies"
         (click)="replied.emit()"
       >
-        <i class="pi pi-comments text-[11px]" aria-hidden="true"></i>
+        <i class="pi pi-comments text-xs" aria-hidden="true"></i>
         <ng-container i18n="@@chat.message.replyCount">
           {{ message().replyCount }}
           {message().replyCount, plural, =1 {reply} other {replies}}

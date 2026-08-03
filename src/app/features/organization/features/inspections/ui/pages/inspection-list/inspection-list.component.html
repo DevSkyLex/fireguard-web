@@ -1,11 +1,11 @@
+<!--
+  No standfirst. This was the only one of the four collection pages carrying a
+  sentence under its title, and the sentence — "History of the inspections
+  performed across your organization's facilities and equipment" — described
+  what the table underneath it already shows. Facilities, Equipment and
+  Interventions open straight onto their toolbar and rows; this one now matches.
+-->
 <div id="inspection-list" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <p
-    i18n="@@inspection.list.subtitle"
-    class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
-  >
-    History of the inspections performed across your organization's facilities and equipment.
-  </p>
-
   @if (store.listError()) {
     <p-message severity="error" class="block">
       <div class="flex flex-wrap items-center justify-between gap-3">

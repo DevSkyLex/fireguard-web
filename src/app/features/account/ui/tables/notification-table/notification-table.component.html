@@ -2,9 +2,14 @@
 
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <div class="flex flex-col">
-      <h2 class="font-semibold" i18n="@@common.notifications">Notifications</h2>
-      <p class="text-sm text-surface-500">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h2
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+        i18n="@@common.notifications"
+      >
+        Notifications
+      </h2>
+      <p class="text-xs text-surface-500 tabular-nums dark:text-surface-400">
         @if (loading()) {
           <ng-container i18n="@@account.notifications.loading">Loading notifications…</ng-container>
         } @else {
@@ -55,7 +60,8 @@
       [showCurrentPageReport]="true"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} notifications"
       i18n-currentPageReportTemplate="@@account.notifications.pageReport"
-      [stripedRows]="true"
+      [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -88,7 +94,7 @@
           </tr>
         } @else {
           <tr
-            class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50"
+            class="group"
             [class.bg-primary-50]="!notification.isRead"
             [class.dark:bg-primary-950/30]="!notification.isRead"
           >
@@ -110,7 +116,7 @@
                     {{ notification.subject }}
                     @if (!notification.isRead) {
                       <span
-                        class="h-2 w-2 shrink-0 rounded-full bg-primary"
+                        class="size-2 shrink-0 rounded-full bg-primary"
                         title="Unread"
                         i18n-title="@@account.notifications.unread"
                         aria-label="Unread"
@@ -144,6 +150,7 @@
                   ariaLabel="Notification actions"
                   i18n-ariaLabel="@@account.notifications.actions"
                   (onClick)="onActionMenuToggle($event, notification)"
+                  class="transition-opacity duration-150 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
                 />
               }
             </td>

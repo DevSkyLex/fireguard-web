@@ -125,16 +125,32 @@ export class WorkspaceLayoutHeader {
    *
    * @description
    * Strips the PrimeNG breadcrumb's own background and padding so it reads as
-   * part of the 56px bar rather than a card inside it. A genuinely local
-   * adjustment, which is what `pt` is for.
+   * part of the 56px bar rather than a card inside it, and collapses the trail
+   * to the current page below `lg`.
+   *
+   * The full trail does not fit a phone: `Home › Organization › Interventions ›
+   * Intervention` wrapped the 56px bar onto two lines and still cut the last
+   * crumb mid-word, so the one part that names where the member actually is was
+   * the part that got truncated. Ancestors are hidden rather than shortened —
+   * the hamburger beside it already goes back, so the trail was carrying
+   * navigation the header offers twice.
+   *
+   * Done in CSS rather than by swapping the model on `isDesktop()`: that signal
+   * is `false` during SSR, which would render the collapsed trail into the HTML
+   * and then visibly expand it on a desktop hydration.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @type {Record<string, { class: string }>}
    */
   protected readonly breadcrumbPt: Record<string, { class: string }> = {
-    root: { class: '!border-0 !bg-transparent !p-0' },
+    root: {
+      class:
+        '!border-0 !bg-transparent !p-0 max-lg:[&_.p-breadcrumb-home-item]:hidden max-lg:[&_.p-breadcrumb-separator]:hidden max-lg:[&_.p-breadcrumb-item:not(:last-child)]:hidden',
+    },
+    item: { class: 'min-w-0' },
+    itemLabel: { class: 'block truncate' },
   };
 
   /**

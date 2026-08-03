@@ -1,8 +1,21 @@
+<!--
+  Full content width, like the other three collection pages. This was the only
+  one capped at `max-w-7xl` and centred, which left it visibly narrower than
+  Facilities or Equipment on the same screen — and the cap cost most where it
+  helped least, squeezing the Board and Calendar views that actually want the
+  room. The scroll model (`min-h-0 flex-1 overflow-y-auto`) is this page's own
+  and stays: it owns an internally scrolling column, unlike its siblings.
+-->
 <div
   id="interventions"
-  class="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto p-3 sm:p-6 md:p-7 lg:p-8"
+  class="flex min-h-0 w-full flex-1 flex-col gap-6 overflow-y-auto p-3 sm:p-6 md:p-7 lg:p-8"
 >
   <header class="flex flex-wrap items-center gap-2.5">
+    <!--
+      29px buttons + 2px padding + 2px border = the 35px `size="small"` control
+      height, so the segmented toggle lines up with the search field and the
+      primary action beside it instead of sitting a few pixels proud.
+    -->
     <div
       role="tablist"
       aria-label="Interventions view"
@@ -14,10 +27,10 @@
           type="button"
           role="tab"
           [attr.aria-selected]="view() === option.value"
-          class="inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded px-3 text-[13px] font-medium transition-colors duration-150 motion-reduce:transition-none"
+          class="inline-flex h-[29px] cursor-pointer items-center gap-1.5 rounded px-3 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none"
           [class]="
             view() === option.value
-              ? 'bg-surface-0 text-surface-950 shadow-sm dark:bg-surface-800 dark:text-surface-50'
+              ? 'bg-surface-0 text-surface-950 dark:bg-surface-800 dark:text-surface-50'
               : 'text-surface-600 hover:text-surface-950 dark:text-surface-400 dark:hover:text-surface-50'
           "
           (click)="selectView(option.value)"
@@ -35,9 +48,11 @@
     <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-96 sm:min-w-60">
       <p-inputicon class="pi pi-search" />
       <input
+        i18n-aria-label="@@intervention.list.searchPlaceholder"
+        aria-label="Search interventions..."
         pInputText
-        type="text"
         pSize="small"
+        type="text"
         i18n-placeholder="@@intervention.list.searchPlaceholder"
         placeholder="Search interventions..."
         [formControl]="searchControl"
@@ -45,7 +60,7 @@
       />
     </p-iconfield>
 
-    <div class="ml-auto flex shrink-0 items-center gap-3">
+    <div class="ml-auto flex flex-wrap items-center justify-end gap-3">
       <p class="hidden text-sm text-surface-600 tabular-nums lg:block dark:text-surface-400">
         <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
           =1 {1 intervention}
@@ -55,11 +70,11 @@
 
       <p-button
         i18n-label="@@intervention.list.newButton"
-        label="New"
+        label="New intervention"
         icon="pi pi-plus"
         severity="primary"
-        size="small"
         (onClick)="openCreate()"
+        size="small"
       />
     </div>
   </header>
@@ -134,7 +149,7 @@
       >
         @for (column of [1, 2, 3, 4]; track column) {
           <div
-            class="flex w-full flex-col gap-3 rounded-xl border border-surface-200 bg-surface-100 p-3 sm:w-[296px] sm:shrink-0 dark:border-surface-800 dark:bg-surface-900"
+            class="flex w-full flex-col gap-3 rounded-md border border-surface-200 bg-surface-100 p-3 sm:w-[296px] sm:shrink-0 dark:border-surface-800 dark:bg-surface-900"
           >
             <p-skeleton width="7rem" height="1.25rem" borderRadius="0.5rem" />
             <div class="flex flex-col gap-3" role="status">
@@ -204,7 +219,7 @@
         description="Create your first intervention to start planning field work."
       >
         <p-button
-          i18n-label="@@intervention.list.newButton"
+          i18n-label="@@intervention.list.newButtonShort"
           label="New"
           icon="pi pi-plus"
           severity="primary"
@@ -361,11 +376,11 @@
             aria-hidden="true"
           ></span>
           <span
-            class="text-[13px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+            class="text-sm font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
             >{{ boardColumnLabel(column.id) }}</span
           >
           <span
-            class="min-w-5 rounded-full border border-surface-200 bg-surface-0 px-1.5 py-px text-center text-[11px] font-semibold text-surface-500 tabular-nums dark:border-surface-700 dark:bg-surface-800 dark:text-surface-400"
+            class="min-w-5 rounded-full border border-surface-200 bg-surface-0 px-1.5 py-px text-center text-xs font-semibold text-surface-500 tabular-nums dark:border-surface-700 dark:bg-surface-800 dark:text-surface-400"
             >{{ count }}</span
           >
         </div>
@@ -393,7 +408,7 @@
           </div>
 
           <span
-            class="line-clamp-2 text-[13px] leading-[1.35] font-semibold text-surface-950 dark:text-surface-50"
+            class="line-clamp-2 text-sm leading-[1.35] font-semibold text-surface-950 dark:text-surface-50"
             >{{ vm.intervention.name }}</span
           >
 
@@ -402,7 +417,7 @@
               class="flex min-w-0 items-center gap-1.5 text-xs text-surface-600 dark:text-surface-400"
             >
               <i
-                class="pi pi-map-marker text-[0.65rem] text-surface-500 dark:text-surface-400"
+                class="pi pi-map-marker text-xs text-surface-500 dark:text-surface-400"
                 aria-hidden="true"
               ></i>
               <span class="truncate">{{ vm.siteName }}</span>
@@ -415,7 +430,7 @@
                 <span
                   class="flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400"
                 >
-                  <i class="pi pi-exclamation-triangle text-[0.65rem]" aria-hidden="true"></i>
+                  <i class="pi pi-exclamation-triangle text-xs" aria-hidden="true"></i>
                   <span i18n="@@intervention.board.dueOverdue">Overdue</span>
                   <span class="tabular-nums"
                     >· {{ vm.intervention.dueAt | date: 'mediumDate' }}</span
@@ -425,7 +440,7 @@
                 <span
                   class="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400"
                 >
-                  <i class="pi pi-clock text-[0.65rem]" aria-hidden="true"></i>
+                  <i class="pi pi-clock text-xs" aria-hidden="true"></i>
                   <span i18n="@@intervention.board.dueSoon">Due soon</span>
                   <span class="tabular-nums"
                     >· {{ vm.intervention.dueAt | date: 'mediumDate' }}</span
@@ -436,7 +451,7 @@
                   class="flex items-center gap-1.5 text-xs font-medium text-surface-600 tabular-nums dark:text-surface-400"
                 >
                   <i
-                    class="pi pi-calendar text-[0.65rem] text-surface-500 dark:text-surface-400"
+                    class="pi pi-calendar text-xs text-surface-500 dark:text-surface-400"
                     aria-hidden="true"
                   ></i>
                   {{ vm.intervention.dueAt | date: 'mediumDate' }}

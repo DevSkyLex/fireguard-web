@@ -13,6 +13,7 @@
   <ng-template pTemplate="content">
     @if (hasError()) {
       <app-error-state
+        [dense]="true"
         icon="pi-exclamation-triangle"
         i18n-title="@@org.dash.recentInterventions.errorTitle"
         title="Couldn't load recent interventions"
@@ -87,7 +88,7 @@
                 >
                 <button
                   type="button"
-                  class="w-fit max-w-full cursor-pointer truncate text-left font-semibold text-surface-950 transition-colors duration-150 hover:text-primary-600 dark:text-surface-50 dark:hover:text-primary-400"
+                  class="w-fit max-w-full cursor-pointer truncate text-left font-semibold text-surface-950 transition-colors duration-150 hover:text-primary-600 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:text-surface-50 dark:hover:text-primary-400"
                   (click)="open.emit(intervention)"
                 >
                   {{ intervention.name }}

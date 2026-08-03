@@ -15,15 +15,28 @@
 />
 
 <!--
-  The heading the shell owes every hosted route.
+  The heading the shell owes every hosted route — but only the routes that do
+  not already have one.
 
   `DashboardLayout` rendered an `<h1>` from the route title in its page banner;
   the workspace replaced that banner with this 56px header and shipped nothing
   in its place, leaving every route in the shell with no level-1 heading at all.
   Visually hidden because the breadcrumb beside it already says the same thing.
+
+  It is a fallback, and it had stopped behaving like one: four routes render a
+  visible `h1` of their own, so those pages carried two level-1 headings. On
+  Members and Settings both said the identical word; on the overview and the
+  account page they disagreed, which is worse — someone navigating by heading
+  met two different answers to "what page is this?".
+
+  `main:has(div h1)` asks whether the routed column (the only `div` descendant
+  of `main` that holds page content — this header is not one) brought its own
+  heading, and stands down if so. `hidden` rather than a visual class: the
+  point is to leave the accessibility tree, not just the screen. Done in CSS so
+  it costs no shell/page coupling and survives SSR unchanged.
 -->
 @if (items().at(-1); as current) {
-  <h1 class="sr-only">{{ current.label }}</h1>
+  <h1 class="sr-only [main:has(div_h1)_&]:hidden">{{ current.label }}</h1>
 }
 
 <p-breadcrumb

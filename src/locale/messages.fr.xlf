@@ -3363,6 +3363,10 @@
         <source>Inspector</source>
         <target>Inspecteur</target>
       </trans-unit>
+      <trans-unit id="inspection.table.title" datatype="html">
+        <source>Inspections</source>
+        <target>Inspections</target>
+      </trans-unit>
       <trans-unit id="inspection.table.colResult" datatype="html">
         <source>Result</source>
         <target>Résultat</target>
@@ -3714,6 +3718,14 @@
       <trans-unit id="intervention.phase.publish" datatype="html">
         <source>Publication</source>
         <target>Publication</target>
+      </trans-unit>
+      <trans-unit id="intervention.phase.position" datatype="html">
+        <source>Step <x id="INTERPOLATION" equiv-text="{{ spot.current }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ spot.total }}"/></source>
+        <target>Étape <x id="INTERPOLATION" equiv-text="{{ spot.current }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ spot.total }}"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.phase.next" datatype="html">
+        <source>Next: <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-medium text-surface-600 dark:text-surface-300&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ next }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+        <target>Suivant : <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-medium text-surface-600 dark:text-surface-300&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ next }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
       </trans-unit>
       <trans-unit id="intervention.guide.title" datatype="html">
         <source> Prepare the intervention </source>
@@ -4740,8 +4752,8 @@
         <target>{VAR_PLURAL, plural, =1 {1 intervention} other {<x id="INTERPOLATION"/> interventions}}</target>
       </trans-unit>
       <trans-unit id="intervention.list.newButton" datatype="html">
-        <source>New</source>
-        <target>Nouvelle</target>
+        <source>New intervention</source>
+        <target>Nouvelle intervention</target>
       </trans-unit>
       <trans-unit id="intervention.list.errorText" datatype="html">
         <source>The interventions could not be loaded. Check your connection and try again.</source>
@@ -7087,6 +7099,186 @@
       <trans-unit id="workspace.composer.overflow" datatype="html">
         <source> <x id="INTERPOLATION" equiv-text="overflow()"/> characters too many once formatted </source>
         <target><x id="INTERPOLATION"/> caractères de trop une fois mis en forme</target>
+      </trans-unit>
+      <trans-unit id="account.notifications.filterAria" datatype="html">
+        <source>Filter notifications</source>
+        <target>Filtrer les notifications</target>
+      </trans-unit>
+      <trans-unit id="facility.inspections.filterAria" datatype="html">
+        <source>Filter inspections</source>
+        <target>Filtrer les inspections</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.noticesCollapse" datatype="html">
+        <source>Show less</source>
+        <target>Afficher moins</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.noticesExpand" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 more notice} other {<x id="INTERPOLATION"/> more notices}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 autre avis} other {<x id="INTERPOLATION"/> autres avis}}</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.editPlanning" datatype="html">
+        <source>Edit planning</source>
+        <target>Modifier la planification</target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.header" datatype="html">
+        <source>Publish intervention</source>
+        <target>Publier l'intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.message" datatype="html">
+        <source><x id="changes" equiv-text="changes"/> pending change(s) and <x id="inspections" equiv-text="inspections"/> recorded inspection(s) will be written to the records in one operation, at revision <x id="revision" equiv-text="revision"/>. Either everything succeeds, or no record is modified.</source>
+        <target><x id="changes" equiv-text="changes"/> modification(s) en attente et <x id="inspections" equiv-text="inspections"/> inspection(s) enregistrée(s) seront écrites dans les registres en une seule opération, à la révision <x id="revision" equiv-text="revision"/>. Soit tout réussit, soit aucun registre n'est modifié.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.accept" datatype="html">
+        <source>Publish</source>
+        <target>Publier</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.newButtonShort" datatype="html">
+        <source>New</source>
+        <target>Créer</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.assetGrowthEquipmentType" datatype="html">
+        <source> Equipment type </source>
+        <target>Type d'équipement</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.assetGrowthEquipmentTypePlaceholder" datatype="html">
+        <source>All equipment types</source>
+        <target>Tous les types d'équipement</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.assetGrowthEquipmentStatus" datatype="html">
+        <source> Equipment status </source>
+        <target>Statut de l'équipement</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.assetGrowthEquipmentStatusPlaceholder" datatype="html">
+        <source>All equipment statuses</source>
+        <target>Tous les statuts d'équipement</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.assetGrowthFacilityType" datatype="html">
+        <source> Facility type </source>
+        <target>Type de site</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.assetGrowthFacilityTypePlaceholder" datatype="html">
+        <source>All facility types</source>
+        <target>Tous les types de site</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.title" datatype="html">
+        <source> Needs your attention </source>
+        <target>Requiert votre attention</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.errorTitle" datatype="html">
+        <source>Couldn&apos;t load what needs your attention</source>
+        <target>Impossible de charger ce qui requiert votre attention</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.loading" datatype="html">
+        <source>Loading what needs your attention</source>
+        <target>Chargement de ce qui requiert votre attention</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.allClear" datatype="html">
+        <source>Nothing is waiting on you right now.</source>
+        <target>Rien n'est en attente de votre part pour le moment.</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.inspectionQualityInspectionStatus" datatype="html">
+        <source> Inspection status </source>
+        <target>Statut de l'inspection</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.inspectionQualityInspectionStatusPlaceholder" datatype="html">
+        <source>All inspection statuses</source>
+        <target>Tous les statuts d'inspection</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.inspectionQualityInspectionResult" datatype="html">
+        <source> Inspection result </source>
+        <target>Résultat de l'inspection</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.inspectionQualityInspectionResultPlaceholder" datatype="html">
+        <source>All inspection results</source>
+        <target>Tous les résultats d'inspection</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.inspectionQualityInspectorType" datatype="html">
+        <source> Inspector type </source>
+        <target>Type d'inspecteur</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.inspectionQualityInspectorTypePlaceholder" datatype="html">
+        <source>All inspector types</source>
+        <target>Tous les types d'inspecteur</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.inspectionQualityNcSeverity" datatype="html">
+        <source> NC severity </source>
+        <target>Gravité des NC</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.inspectionQualityNcSeverityPlaceholder" datatype="html">
+        <source>All severities</source>
+        <target>Toutes les gravités</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.nonConformitiesOpenedStatus" datatype="html">
+        <source> Status </source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.nonConformitiesOpenedStatusPlaceholder" datatype="html">
+        <source>All statuses</source>
+        <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.nonConformitiesOpenedSeverity" datatype="html">
+        <source> Severity </source>
+        <target>Gravité</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.nonConformitiesOpenedSeverityPlaceholder" datatype="html">
+        <source>All severities</source>
+        <target>Toutes les gravités</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.nonConformitiesResolvedStatus" datatype="html">
+        <source> Status </source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.nonConformitiesResolvedStatusPlaceholder" datatype="html">
+        <source>All statuses</source>
+        <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.nonConformitiesResolvedSeverity" datatype="html">
+        <source> Severity </source>
+        <target>Gravité</target>
+      </trans-unit>
+      <trans-unit id="org.trendFilter.nonConformitiesResolvedSeverityPlaceholder" datatype="html">
+        <source>All severities</source>
+        <target>Toutes les gravités</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.overdue" datatype="html">
+        <source>Interventions past their due date</source>
+        <target>Interventions ayant dépassé leur échéance</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.changesRequested" datatype="html">
+        <source>Interventions sent back for changes</source>
+        <target>Interventions renvoyées pour modifications</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.awaitingReview" datatype="html">
+        <source>Interventions awaiting review</source>
+        <target>Interventions en attente de révision</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.criticalNonConformities" datatype="html">
+        <source>Critical non-conformities still open</source>
+        <target>Non-conformités critiques toujours ouvertes</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.overdueNonConformities" datatype="html">
+        <source>Non-conformities past their deadline</source>
+        <target>Non-conformités ayant dépassé leur échéance</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.expiredInvitations" datatype="html">
+        <source>Invitations that expired unaccepted</source>
+        <target>Invitations expirées sans avoir été acceptées</target>
+      </trans-unit>
+      <trans-unit id="org.dash.attention.equipmentUnderMaintenance" datatype="html">
+        <source>Equipment currently under maintenance</source>
+        <target>Équipements actuellement en maintenance</target>
+      </trans-unit>
+      <trans-unit id="org.overview.pageTitle" datatype="html">
+        <source> Overview </source>
+        <target>Aperçu</target>
+      </trans-unit>
+      <trans-unit id="org.team.pageTitle" datatype="html">
+        <source> Roles </source>
+        <target>Rôles</target>
       </trans-unit>
     </body>
   </file>

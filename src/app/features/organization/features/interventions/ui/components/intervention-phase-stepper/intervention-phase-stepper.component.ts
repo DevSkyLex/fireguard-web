@@ -116,6 +116,52 @@ export class InterventionPhaseStepper {
       }),
     );
   });
+  /**
+   * Property position
+   * @readonly
+   *
+   * @description
+   * One-based index of the active milestone and the milestone count, for the
+   * narrow-viewport summary. Below `sm` the rail hides every label but the
+   * active one to fit four phases across a phone, which left the other three
+   * as unnamed circles: the operator could read *that* there were phases but
+   * not which, nor how far along this one sits.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<{ current: number; total: number } | null>}
+   */
+  protected readonly position: Signal<{ current: number; total: number } | null> = computed<{
+    current: number;
+    total: number;
+  } | null>(() => {
+    const steps: readonly InterventionPhaseStep[] = this.steps();
+    const index: number = steps.findIndex((step) => step.state === 'active');
+
+    return index === -1 ? null : { current: index + 1, total: steps.length };
+  });
+
+  /**
+   * Property nextLabel
+   * @readonly
+   *
+   * @description
+   * Label of the milestone following the active one, or `null` on the last
+   * milestone. Names what comes next on a phone, where the upcoming labels
+   * are hidden.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly nextLabel: Signal<string | null> = computed<string | null>(() => {
+    const steps: readonly InterventionPhaseStep[] = this.steps();
+    const index: number = steps.findIndex((step) => step.state === 'active');
+
+    return index === -1 ? null : (steps[index + 1]?.label ?? null);
+  });
   //#endregion
 
   //#region Methods

@@ -17,7 +17,7 @@
       -->
       <button
         type="button"
-        class="grid size-[38px] cursor-pointer place-content-center overflow-hidden rounded-[11px] text-[15px] font-bold transition-[filter] hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        class="grid size-[38px] cursor-pointer place-content-center overflow-hidden rounded-[11px] text-[15px] font-semibold transition-[filter] hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         [class]="
           tile.active
             ? 'bg-surface-100 text-surface-950 ring-2 ring-primary ring-inset dark:bg-surface-800 dark:text-surface-50'
@@ -48,6 +48,6 @@
     tooltipPosition="right"
     (click)="createOrganization()"
   >
-    <i class="pi pi-plus text-[13px]"></i>
+    <i class="pi pi-plus text-sm" aria-hidden="true"></i>
   </button>
 </nav>

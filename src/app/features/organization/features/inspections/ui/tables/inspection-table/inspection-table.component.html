@@ -1,37 +1,40 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
 <div class="mb-4 flex flex-wrap items-center gap-2.5">
-  <div class="max-w-96 min-w-60 flex-1">
-    <p-iconfield>
-      <p-inputicon class="pi pi-search" />
-      <input
-        pInputText
-        type="text"
-        pSize="small"
-        i18n-placeholder="@@inspection.table.searchPlaceholder"
-        placeholder="Search inspections..."
-        [formControl]="searchControl"
-        class="w-full"
-      />
-    </p-iconfield>
-  </div>
+  <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-96 sm:min-w-60">
+    <p-inputicon class="pi pi-search" />
+    <input
+      i18n-aria-label="@@inspection.table.searchPlaceholder"
+      aria-label="Search inspections..."
+      pInputText
+      pSize="small"
+      type="text"
+      i18n-placeholder="@@inspection.table.searchPlaceholder"
+      placeholder="Search inspections..."
+      [formControl]="searchControl"
+      class="w-full"
+    />
+  </p-iconfield>
 
   <p-button
     i18n-label="@@inspection.table.filtersButton"
     label="Filters"
     icon="pi pi-filter"
     severity="secondary"
-    size="small"
     [outlined]="true"
     [badge]="filterBadge()"
     (onClick)="onFilterToggle($event)"
+    size="small"
   />
 
   <p-popover #filterPopover>
     <div class="flex w-72 flex-col gap-4">
       <div class="flex flex-col gap-1.5">
-        <label i18n="@@common.result" class="text-sm font-medium">Result</label>
+        <label for="inspection-filter-result" i18n="@@common.result" class="text-sm font-medium"
+          >Result</label
+        >
         <p-select
+          inputId="inspection-filter-result"
           [options]="resultOptions"
           [formControl]="resultControl"
           optionLabel="label"
@@ -55,8 +58,11 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label i18n="@@common.status" class="text-sm font-medium">Status</label>
+        <label for="inspection-filter-status" i18n="@@common.status" class="text-sm font-medium"
+          >Status</label
+        >
         <p-select
+          inputId="inspection-filter-status"
           [options]="statusOptions"
           [formControl]="statusControl"
           optionLabel="label"
@@ -118,16 +124,10 @@
     </div>
   </p-popover>
 
-  @if (!showSkeleton()) {
-    <span class="text-sm text-surface-600 tabular-nums dark:text-surface-400">{{
-      countLabel()
-    }}</span>
-  }
-
-  <div class="ml-auto flex flex-wrap items-center gap-2">
+  <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
     @if (canManageInspections()) {
       <span
-        class="inline-flex"
+        class="inline-flex w-full sm:w-auto"
         [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
         tooltipPosition="bottom"
       >
@@ -137,9 +137,10 @@
           icon="pi pi-plus"
           severity="primary"
           [model]="toolbarActions()"
-          size="small"
           (onClick)="add.emit()"
           [disabled]="loading() || createDisabled()"
+          class="w-full sm:w-auto"
+          size="small"
         />
       </span>
     } @else {
@@ -148,10 +149,11 @@
         label="Refresh"
         icon="pi pi-refresh"
         severity="secondary"
-        size="small"
         [outlined]="true"
         [disabled]="loading()"
+        class="w-full sm:w-auto"
         (onClick)="onRefresh()"
+        size="small"
       />
 
       <p-button
@@ -159,16 +161,33 @@
         label="Clear filters"
         icon="pi pi-filter-slash"
         severity="secondary"
-        size="small"
         [outlined]="true"
         [disabled]="loading()"
+        class="w-full sm:w-auto"
         (onClick)="onClearFilters()"
+        size="small"
       />
     }
   </div>
 </div>
 
 <p-card class="flex min-h-0 flex-1 flex-col" [styleClass]="cardStyleClass" [pt]="cardPt">
+  <ng-template pTemplate="header">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h2
+        i18n="@@inspection.table.title"
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+      >
+        Inspections
+      </h2>
+      @if (!showSkeleton()) {
+        <p class="text-xs text-surface-500 tabular-nums dark:text-surface-400">
+          {{ countLabel() }}
+        </p>
+      }
+    </div>
+  </ng-template>
+
   <ng-template pTemplate="content">
     <p-table
       [value]="showSkeleton() ? skeletonItems : empty() ? [] : [...inspections()]"
@@ -185,6 +204,7 @@
       i18n-currentPageReportTemplate="@@inspection.table.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
       [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>

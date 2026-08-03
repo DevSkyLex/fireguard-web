@@ -4,6 +4,7 @@
   } @else if (hasError()) {
     <div class="flex h-full items-center justify-center">
       <app-error-state
+        [dense]="true"
         icon="pi-exclamation-triangle"
         i18n-title="@@org.trend.ncOpened.chartErrorTitle"
         title="Couldn't load this chart"

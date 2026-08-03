@@ -13,7 +13,7 @@
     <span class="flex min-w-0 items-center gap-1.5 px-1.5 py-1 text-xs">
       <i [class]="chipIcon(event) + ' shrink-0 text-[0.6rem]'" aria-hidden="true"></i>
       @if (chipTime(event); as time) {
-        <span class="shrink-0 text-[0.65rem] font-semibold tabular-nums opacity-80">{{
+        <span class="shrink-0 text-xs font-semibold tabular-nums opacity-80">{{
           time | date: 'shortTime'
         }}</span>
       }

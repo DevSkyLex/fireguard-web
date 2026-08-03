@@ -14,7 +14,7 @@
           [attr.aria-pressed]="interactive() ? reaction.reactedByMe : null"
           (click)="toggle(reaction)"
         >
-          <span class="text-[13px]">{{ reaction.emoji }}</span>
+          <span class="text-sm">{{ reaction.emoji }}</span>
           <span class="font-semibold">{{ reaction.count }}</span>
           <span class="sr-only" i18n="@@workspace.message.reaction.aria">
             {reaction.count, plural, =1 {reaction} other {reactions}}

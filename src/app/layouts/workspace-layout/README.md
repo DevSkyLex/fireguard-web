@@ -198,9 +198,14 @@ that exactly, so no token layer is needed to hit the mockup's values:
 | column header         | 56px          | `h-14`        | 56px     |
 | nav row               | 32px          | `h-8`         | 32px     |
 
-Three dense steps the design system inserts have no Tailwind equivalent — `--text-2xs` (11px),
-`--text-sm` (13px) and `--text-md` (15px). Use literal arbitrary values for those
-(`text-[11px]`), which is what the rest of the codebase already does.
+Only one dense step has no Tailwind equivalent: the 15px **Card Title** role (`text-[15px]`),
+which DESIGN.md documents as `typography.card-title` and PrimeNG's preset already applies to
+`p-card` headings. Use the arbitrary value only for that role.
+
+The 11px and 13px steps are gone: 104 arbitrary sizes clustered within ±1.6px of a real step
+(13 / 12.5 / 12 / 11.5 / 11px, 0.7rem, 0.65rem) were collapsed onto `text-sm` and `text-xs`.
+Reach for `text-xs` for meta and `text-sm` for body rather than reintroducing a hand-written
+size — DESIGN.md's _14px Body Rule_ is the reference.
 
 > This was not always true. The app previously set `html { font-size: 14px }`, which scaled every
 > rem utility by 0.875 and put _every_ radius, gutter and type step off by 12.5% — which is why

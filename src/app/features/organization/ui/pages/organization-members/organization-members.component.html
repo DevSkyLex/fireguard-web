@@ -1,31 +1,52 @@
 <div id="organization-members" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <p
-    i18n="@@org.members.pageSubtitle"
-    class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
-  >
-    Invite teammates, manage their roles, and track pending invitations.
-  </p>
+  <!--
+    The shell renders only a breadcrumb, so the page owns its heading. Without
+    it the subtitle below was a lead paragraph under nothing, and the 24px
+    Headline step DESIGN.md declares went unused on this route.
+  -->
+  <header class="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+    <div class="flex min-w-0 flex-col gap-1.5">
+      <h1
+        i18n="@@org.members.pageTitle"
+        class="text-2xl font-semibold tracking-[-0.025em] text-surface-950 dark:text-surface-50"
+      >
+        Members
+      </h1>
+      <p
+        i18n="@@org.members.pageSubtitle"
+        class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+      >
+        Invite teammates, manage their roles, and track pending invitations.
+      </p>
+    </div>
+  </header>
 
   @if (store.loadError(); as error) {
-    <p-message severity="error">
-      <div class="flex flex-wrap items-center gap-3">
-        <span>{{ error.message ?? loadErrorFallback }}</span>
+    <p-message severity="error" class="block">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span class="flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          <span>{{ error.message ?? loadErrorFallback }}</span>
+        </span>
         <p-button
           i18n-label="@@org.members.retry"
           label="Retry"
           icon="pi pi-refresh"
-          severity="secondary"
+          severity="danger"
           [text]="true"
+          size="small"
           (onClick)="reload()"
         />
       </div>
     </p-message>
   }
   @if (hasInlineMutationError() && store.mutationError(); as error) {
-    <p-message severity="error">{{ error.message ?? mutationErrorFallback }}</p-message>
+    <p-message severity="error" class="block">{{
+      error.message ?? mutationErrorFallback
+    }}</p-message>
   }
   @if (atMemberLimit()) {
-    <p-message i18n="@@org.members.atLimit" severity="warn"
+    <p-message i18n="@@org.members.atLimit" severity="warn" class="block"
       >You've reached your plan's member limit. Upgrade your plan to add or invite more
       members.</p-message
     >
@@ -38,7 +59,7 @@
           <span class="flex items-center gap-2">
             <span i18n="@@org.members.pageTitle" class="text-sm">Members</span>
             <span
-              class="rounded-full bg-surface-100 px-2 py-px text-[11px] font-semibold text-surface-500 tabular-nums dark:bg-surface-800 dark:text-surface-400"
+              class="rounded-full bg-surface-100 px-2 py-px text-xs font-semibold text-surface-500 tabular-nums dark:bg-surface-800 dark:text-surface-400"
               >{{ store.membersTotal() }}</span
             >
           </span>
@@ -47,7 +68,7 @@
           <span class="flex items-center gap-2">
             <span i18n="@@org.members.sectionInvitations" class="text-sm">Pending invitations</span>
             <span
-              class="rounded-full bg-surface-100 px-2 py-px text-[11px] font-semibold text-surface-500 tabular-nums dark:bg-surface-800 dark:text-surface-400"
+              class="rounded-full bg-surface-100 px-2 py-px text-xs font-semibold text-surface-500 tabular-nums dark:bg-surface-800 dark:text-surface-400"
               >{{ store.activeInvitations().length }}</span
             >
           </span>

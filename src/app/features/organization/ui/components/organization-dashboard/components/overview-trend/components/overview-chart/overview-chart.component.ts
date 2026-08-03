@@ -269,7 +269,7 @@ export class OverviewChart {
         ticks: {
           precision: 0,
           maxTicksLimit: 5,
-          color: '#94a3b8',
+          color: '#a3a3a3',
           font: { size: 11 },
           padding: 8,
         },

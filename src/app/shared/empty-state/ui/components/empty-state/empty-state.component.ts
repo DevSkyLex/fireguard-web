@@ -76,5 +76,22 @@ export class EmptyState {
    * @type {InputSignal<string | undefined>}
    */
   public readonly description: InputSignal<string | undefined> = input<string>();
+
+  /**
+   * Property dense
+   * @readonly
+   *
+   * @description
+   * Tightens the block for use inside a section rather than on an otherwise
+   * empty page. The default padding gives a full-page empty state the air it
+   * needs, but the same block nested in a collapsible section on a phone
+   * turns "nothing here yet" into a quarter-screen of blank space.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly dense: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 }

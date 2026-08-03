@@ -119,6 +119,31 @@ export const appConfig: ApplicationConfig = {
           },
         },
       },
+      /*
+       * Live-region semantics for every `p-message` in the app, set once here
+       * rather than at 177 call sites. 78 of them already declared
+       * `role="alert"` by hand and every one of those is a `severity="error"`
+       * message, so this generalizes the convention the codebase had already
+       * settled on and closes the 99 that were silent — a failed list load or a
+       * saved-password confirmation announced nothing to a screen reader.
+       *
+       * An error interrupts (`alert`/`assertive`); anything else waits for a
+       * pause (`status`/`polite`). Initial content of a live region is not
+       * announced on render, so static hints stay quiet.
+       */
+      pt: {
+        message: {
+          host: ({ instance }): Record<string, string> => {
+            const severity: string | undefined = (instance as { severity?: string }).severity;
+            const interrupts: boolean = severity === 'error';
+
+            return {
+              role: interrupts ? 'alert' : 'status',
+              'aria-live': interrupts ? 'assertive' : 'polite',
+            };
+          },
+        },
+      },
     }),
     MessageService,
     ConfirmationService,

@@ -1,12 +1,12 @@
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
-    <div class="flex flex-col gap-0.5">
-      <h3
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h2
         i18n="@@org.invoiceTable.title"
         class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
       >
         Invoices
-      </h3>
+      </h2>
       <p i18n="@@org.invoiceTable.subtitle" class="text-xs text-surface-500 dark:text-surface-400">
         Download your invoices as PDF documents.
       </p>
@@ -25,6 +25,7 @@
       i18n-currentPageReportTemplate="@@org.invoiceTable.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} invoices"
       [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -48,7 +49,7 @@
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
         } @else {
-          <tr>
+          <tr class="group">
             <td>
               <span
                 class="truncate font-semibold text-surface-950 tabular-nums dark:text-surface-50"
@@ -83,6 +84,7 @@
                   i18n-ariaLabel="@@org.invoiceTable.downloadAria"
                   ariaLabel="Download invoice"
                   (onClick)="openInvoice(invoice)"
+                  class="transition-opacity duration-150 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
                 />
               }
             </td>

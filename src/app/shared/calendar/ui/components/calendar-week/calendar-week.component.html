@@ -13,7 +13,7 @@
             class="group flex flex-col items-center gap-0.5 border-r border-surface-100 py-2 last:border-r-0 dark:border-surface-800/70"
           >
             <span
-              class="text-[0.7rem] font-medium tracking-wide text-surface-500 uppercase dark:text-surface-400"
+              class="text-xs font-medium tracking-wide text-surface-500 uppercase dark:text-surface-400"
             >
               {{ day.date | date: 'EEE' }}
             </span>
@@ -32,7 +32,7 @@
               i18n-aria-label="@@calendar.createOn"
               (click)="dayCreate.emit(day.date)"
             >
-              <i class="pi pi-plus text-[0.65rem]" aria-hidden="true"></i>
+              <i class="pi pi-plus text-xs" aria-hidden="true"></i>
             </button>
           </div>
         }
@@ -43,7 +43,7 @@
         class="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b border-surface-200 dark:border-surface-800"
       >
         <div
-          class="flex items-center justify-end border-r border-surface-100 px-1.5 text-[0.65rem] text-surface-400 dark:border-surface-800/70"
+          class="flex items-center justify-end border-r border-surface-100 px-1.5 text-xs text-surface-400 dark:border-surface-800/70"
           i18n="@@calendar.allDay"
         >
           all-day
@@ -55,7 +55,7 @@
             @for (event of day.allDayEvents; track event.id) {
               <button
                 type="button"
-                class="w-full cursor-pointer rounded text-left transition-colors hover:bg-surface-100 motion-reduce:transition-none dark:hover:bg-surface-800"
+                class="w-full cursor-pointer rounded text-left transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-surface-800"
                 [attr.aria-label]="openLabel(event.title)"
                 (click)="eventClick.emit(event)"
               >
@@ -76,7 +76,7 @@
       <div class="border-r border-surface-100 dark:border-surface-800/70">
         @for (hour of hours(); track hour) {
           <div class="relative h-14">
-            <span class="absolute -top-2 right-1.5 text-[0.65rem] text-surface-400 tabular-nums">
+            <span class="absolute -top-2 right-1.5 text-xs text-surface-400 tabular-nums">
               {{ hour }}:00
             </span>
           </div>
@@ -86,10 +86,25 @@
       <!-- Day columns -->
       @for (day of weekDays(); track day.date.getTime()) {
         <div
-          class="relative cursor-pointer border-r border-surface-100 last:border-r-0 dark:border-surface-800/70"
-          [attr.aria-label]="'Create on ' + (day.date | date: 'longDate')"
-          (click)="dayCreate.emit(day.date)"
+          class="relative border-r border-surface-100 last:border-r-0 dark:border-surface-800/70"
         >
+          <!--
+            The create affordance is a sibling layer, not the column itself: the
+            column also hosts the event buttons, and a role="button" wrapping
+            other buttons is invalid nesting. Absolute positioning puts it above
+            the static hour grid and below the z-10 events, so pointer targets
+            are unchanged while the keyboard finally reaches it.
+          -->
+          <div
+            class="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'Create on ' + (day.date | date: 'longDate')"
+            (click)="dayCreate.emit(day.date)"
+            (keydown.enter)="dayCreate.emit(day.date)"
+            (keydown.space)="$event.preventDefault(); dayCreate.emit(day.date)"
+          ></div>
+
           @for (hour of hours(); track hour) {
             <div class="h-14 border-b border-surface-100 dark:border-surface-800/70"></div>
           }
@@ -97,7 +112,7 @@
           @for (timed of day.timedEvents; track timed.event.id) {
             <button
               type="button"
-              class="absolute z-10 cursor-pointer overflow-hidden rounded-md border border-surface-0 bg-surface-0 px-px text-left shadow-sm transition-shadow hover:shadow-md motion-reduce:transition-none dark:border-surface-900 dark:bg-surface-900"
+              class="absolute z-10 cursor-pointer overflow-hidden rounded-md border border-surface-0 bg-surface-0 px-px text-left shadow-sm transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:border-surface-900 dark:bg-surface-900"
               [style.top.%]="timed.topPct"
               [style.height.%]="timed.heightPct"
               [style.left.%]="laneLeft(timed)"

@@ -1,7 +1,7 @@
 @let facility = this.facility();
 
 <section
-  class="rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  class="rounded-md border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
   <header
     class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
@@ -22,7 +22,11 @@
       class="flex items-center justify-between rounded-md border border-surface-200 px-3 py-2 dark:border-surface-700"
     >
       <div class="flex min-w-0 items-center gap-2">
-        <i [class]="facilityTypeIcons[facility.type]" class="text-sm text-surface-500"></i>
+        <i
+          [class]="facilityTypeIcons[facility.type]"
+          class="text-sm text-surface-500"
+          aria-hidden="true"
+        ></i>
         <span class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
           {{ facility.name }}
         </span>
@@ -47,11 +51,15 @@
           <li>
             <button
               type="button"
-              class="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left hover:bg-surface-50 dark:hover:bg-surface-800/60"
+              class="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800/60"
               (click)="navigate.emit(child)"
             >
               <span class="flex min-w-0 items-center gap-2">
-                <i [class]="facilityTypeIcons[child.type]" class="text-xs text-surface-500"></i>
+                <i
+                  [class]="facilityTypeIcons[child.type]"
+                  class="text-xs text-surface-500"
+                  aria-hidden="true"
+                ></i>
                 <span class="truncate text-xs text-surface-700 dark:text-surface-300">
                   {{ child.name }}
                 </span>
@@ -69,13 +77,14 @@
                   <li>
                     <button
                       type="button"
-                      class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-surface-50 dark:hover:bg-surface-800/60"
+                      class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800/60"
                       (click)="navigate.emit(grandChild)"
                     >
                       <span class="flex min-w-0 items-center gap-2">
                         <i
                           [class]="facilityTypeIcons[grandChild.type]"
                           class="text-xs text-surface-400"
+                          aria-hidden="true"
                         ></i>
                         <span class="truncate text-xs text-surface-600 dark:text-surface-400">
                           {{ grandChild.name }}

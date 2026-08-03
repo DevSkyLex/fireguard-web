@@ -23,7 +23,7 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span
-              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+              class="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
             >
               {{ i + 1 }}
             </span>
@@ -90,6 +90,8 @@
               Facility name
             </label>
             <input
+              i18n-aria-label="@@onboarding.facility.namePlaceholder"
+              aria-label="Paris HQ"
               pInputText
               [id]="'facilityName-' + i"
               formControlName="name"
@@ -122,6 +124,8 @@
             <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
           </label>
           <input
+            i18n-aria-label="@@onboarding.facility.addressPlaceholder"
+            aria-label="10 Rue de Rivoli, Paris"
             pInputText
             [id]="'facilityAddress-' + i"
             formControlName="address"
@@ -138,11 +142,11 @@
   @if (rows.length < maxRows) {
     <button
       type="button"
-      class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-surface-200 py-3 text-sm font-medium text-surface-500 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-surface-800 dark:text-surface-400"
+      class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-surface-200 py-3 text-sm font-medium text-surface-500 transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-surface-800 dark:text-surface-400"
       [disabled]="loading()"
       (click)="addRow()"
     >
-      <i class="pi pi-plus text-xs"></i>
+      <i class="pi pi-plus text-xs" aria-hidden="true"></i>
       <ng-container i18n="@@onboarding.facilities.addAnother">Add another facility</ng-container>
     </button>
   }

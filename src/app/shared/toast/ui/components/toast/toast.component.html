@@ -23,6 +23,21 @@
       <time class="mt-0.5 shrink-0 text-xs font-medium text-surface-400 dark:text-surface-500">
         {{ relativeLabel(message) }}
       </time>
+
+      <!--
+        The card itself dismisses on click, which is a pointer-only affordance:
+        a keyboard user had no way to clear a toast. This is the focusable
+        equivalent, and it stops the click from bubbling twice.
+      -->
+      <button
+        type="button"
+        class="-m-1.5 flex size-11 shrink-0 items-center justify-center rounded-md text-surface-400 transition-colors hover:text-surface-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:size-8 dark:text-surface-500 dark:hover:text-surface-300"
+        i18n-aria-label="@@common.dismiss"
+        aria-label="Dismiss"
+        (click)="closeFn($event); $event.stopPropagation()"
+      >
+        <i class="pi pi-times text-xs" aria-hidden="true"></i>
+      </button>
     </div>
   </ng-template>
 </p-toast>

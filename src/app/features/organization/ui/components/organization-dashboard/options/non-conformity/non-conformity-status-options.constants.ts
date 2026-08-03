@@ -41,6 +41,6 @@ export const NON_CONFORMITY_STATUS_OPTIONS: readonly NonConformityStatusOption[]
     value: 'waived',
     icon: PrimeIcons.MINUS_CIRCLE,
     severity: 'secondary',
-    color: '#94a3b8',
+    color: '#a3a3a3',
   },
 ];

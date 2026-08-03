@@ -2,15 +2,12 @@
   <!-- MFA Verification Form -->
   <section class="flex flex-col gap-2">
     <h1
-      class="text-2xl font-semibold tracking-tight text-surface-900 sm:text-[1.75rem] dark:text-surface-50"
+      class="text-2xl font-semibold tracking-tight text-surface-950 sm:text-[1.75rem] dark:text-surface-0"
       i18n="@@auth.mfa.title"
     >
       Multi-Factor Authentication
     </h1>
-    <p
-      class="text-sm leading-relaxed text-surface-500 dark:text-surface-400"
-      i18n="@@auth.mfa.subtitle"
-    >
+    <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@auth.mfa.subtitle">
       Please enter the verification code from your authenticator app or email.
     </p>
     @if (mfaDestination(); as destination) {

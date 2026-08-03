@@ -99,7 +99,7 @@
       type="submit"
       [loading]="loading()"
       [disabled]="form.invalid || loading()"
-      styleClass="w-full"
+      styleClass="w-full max-sm:min-h-11"
     />
 
     <p-button
@@ -109,7 +109,7 @@
       severity="secondary"
       [outlined]="true"
       [disabled]="loading()"
-      styleClass="w-full"
+      styleClass="w-full max-sm:min-h-11"
       (onClick)="onCancel()"
     />
   </div>

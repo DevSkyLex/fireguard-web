@@ -102,6 +102,7 @@
     [loading]="loading()"
     [disabled]="form.invalid || loading()"
     fluid
+    styleClass="max-sm:min-h-11"
   />
   @if (serverFieldErrors()['type']; as serverMessage) {
     <p-message severity="error" variant="simple" size="small" role="alert">

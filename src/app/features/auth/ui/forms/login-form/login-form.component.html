@@ -94,7 +94,7 @@
     type="submit"
     [loading]="loading()"
     [disabled]="form.invalid || loading()"
-    styleClass="mt-1 w-full"
+    styleClass="mt-1 w-full max-sm:min-h-11"
   />
   @if (serverFieldErrors()['email']; as serverMessage) {
     <p-message severity="error" variant="simple" size="small" role="alert">

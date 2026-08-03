@@ -1,2 +1,2 @@
-export { OnboardingWizard } from './onboarding-stepper';
+export { OnboardingWizard } from './onboarding-wizard';
 export { OnboardingShowcase } from './onboarding-showcase';

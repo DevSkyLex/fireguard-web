@@ -7,9 +7,9 @@ import type { OnboardingStepOutput } from '@features/onboarding/models';
  *
  * @description
  * Shared base for every onboarding wizard step component.
- * Declares the three inputs that the `OnboardingStepper` injects
+ * Declares the three inputs that the `OnboardingWizard` injects
  * via `NgComponentOutlet`, ensuring a typed contract between the
- * stepper and its step components.
+ * wizard and its step components.
  *
  * The `@Directive()` decorator is required for Angular's compiler to
  * discover and register the inherited signal inputs in the derived

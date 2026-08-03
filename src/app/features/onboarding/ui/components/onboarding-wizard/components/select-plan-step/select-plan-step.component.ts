@@ -114,6 +114,16 @@ export class SelectPlanStep extends OnboardingStepBase implements OnInit {
     ReadonlyMap<string, PlanPricingOutput>
   >(() => new Map(this.pricing().map((pricing) => [pricing.planKey, pricing])));
 
+  /**
+   * Key of the paid plan whose action renders filled. Only the first payable
+   * plan in catalog order stays primary; every other card's action renders
+   * `[outlined]` so at most one filled action competes per viewport (the
+   * design system's Rare Accent Rule).
+   */
+  protected readonly primaryPlanKey: Signal<string | null> = computed<string | null>(
+    () => this.plans().find((plan) => this.isPaidPlan(plan))?.key ?? null,
+  );
+
   //#endregion
 
   //#region Constructor

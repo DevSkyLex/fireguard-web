@@ -4,13 +4,13 @@
     @case ('welcome') {
       <section class="flex flex-col">
         <h1
-          class="text-2xl font-semibold tracking-tight text-balance text-surface-900 sm:text-[1.75rem] dark:text-surface-0"
+          class="text-2xl font-semibold tracking-tight text-balance text-surface-950 sm:text-[1.75rem] dark:text-surface-0"
           i18n="@@onboarding.wizard.welcome.title"
         >
           Let's set up your workspace
         </h1>
         <p
-          class="mt-2 max-w-md text-sm leading-relaxed text-surface-500 dark:text-surface-400"
+          class="mt-2 max-w-md text-sm text-surface-500 dark:text-surface-400"
           i18n="@@onboarding.wizard.welcome.lead"
         >
           A few quick steps to get your team, sites and equipment ready. About 5 minutes — you can
@@ -61,7 +61,7 @@
 
         <div class="mt-8">
           <p-button
-            styleClass="w-full sm:w-auto"
+            styleClass="w-full sm:w-auto max-sm:min-h-11"
             icon="pi pi-arrow-right"
             iconPos="right"
             label="Start setup"
@@ -108,13 +108,11 @@
               </div>
               <div class="flex min-w-0 flex-col gap-1">
                 <h1
-                  class="text-2xl font-semibold tracking-tight text-surface-900 sm:text-[1.75rem] dark:text-surface-0"
+                  class="text-2xl font-semibold tracking-tight text-surface-950 sm:text-[1.75rem] dark:text-surface-0"
                 >
                   {{ presentation.label }}
                 </h1>
-                <p
-                  class="max-w-prose text-sm leading-relaxed text-pretty text-surface-500 dark:text-surface-400"
-                >
+                <p class="max-w-prose text-sm text-pretty text-surface-500 dark:text-surface-400">
                   {{ presentation.description }}
                 </p>
               </div>
@@ -255,7 +253,7 @@
           <i class="pi pi-check text-2xl" aria-hidden="true"></i>
         </span>
         <h1
-          class="mt-6 text-2xl font-semibold tracking-tight text-balance text-surface-900 sm:text-[1.75rem] dark:text-surface-0"
+          class="mt-6 text-2xl font-semibold tracking-tight text-balance text-surface-950 sm:text-[1.75rem] dark:text-surface-0"
           i18n="@@onboarding.wizard.done.title"
         >
           You're all set
@@ -280,6 +278,7 @@
             iconPos="right"
             label="Go to dashboard"
             i18n-label="@@onboarding.wizard.done.cta"
+            styleClass="max-sm:min-h-11"
             (onClick)="goToDashboard()"
           />
         </div>
@@ -290,16 +289,16 @@
     @default {
       <div class="flex flex-col gap-6" aria-hidden="true">
         <div
-          class="h-3 w-24 animate-pulse rounded bg-surface-200 motion-reduce:animate-none dark:bg-surface-800"
+          class="h-3 w-24 animate-pulse rounded-md bg-surface-200 motion-reduce:animate-none dark:bg-surface-800"
         ></div>
         <div
-          class="h-8 w-2/3 animate-pulse rounded bg-surface-200 motion-reduce:animate-none dark:bg-surface-800"
+          class="h-8 w-2/3 animate-pulse rounded-md bg-surface-200 motion-reduce:animate-none dark:bg-surface-800"
         ></div>
         <div
-          class="h-4 w-1/2 animate-pulse rounded bg-surface-100 motion-reduce:animate-none dark:bg-surface-900"
+          class="h-4 w-1/2 animate-pulse rounded-md bg-surface-100 motion-reduce:animate-none dark:bg-surface-900"
         ></div>
         <div
-          class="mt-4 h-11 w-full animate-pulse rounded-lg bg-surface-100 motion-reduce:animate-none dark:bg-surface-900"
+          class="mt-4 h-11 w-full animate-pulse rounded-md bg-surface-100 motion-reduce:animate-none dark:bg-surface-900"
         ></div>
       </div>
     }

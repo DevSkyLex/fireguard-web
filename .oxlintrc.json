@@ -5,7 +5,16 @@
     "builtin": true,
     "browser": true
   },
-  "ignorePatterns": ["dist/**", "out-tsc/**", ".angular/**", "coverage/**", "tmp/**"],
+  "ignorePatterns": [
+    "dist/**",
+    "out-tsc/**",
+    ".angular/**",
+    "coverage/**",
+    "tmp/**",
+    ".claude/skills/**",
+    ".github/skills/**",
+    ".github/hooks/**"
+  ],
   "categories": {
     "correctness": "error",
     "suspicious": "error",

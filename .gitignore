@@ -48,3 +48,11 @@ Thumbs.db
 /test-results/
 /playwright-report/
 /playwright/.cache/
+/e2e/artifacts/
+
+# Impeccable (état local de l'outillage design)
+/.impeccable/live/
+/.impeccable/hook.cache.json
+
+# Claude Code (réglages locaux)
+.claude/settings.local.json

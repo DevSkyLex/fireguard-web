@@ -25,6 +25,7 @@ import {
   type OrganizationRoleFormValues,
 } from '@features/organization/ui/forms';
 import { OrganizationRoleTable } from '@features/organization/ui/tables';
+import { ErrorBanner } from '@shared/error-state';
 import type { PermissionMatrixRow } from './models';
 
 /**
@@ -45,6 +46,7 @@ import type { PermissionMatrixRow } from './models';
     ButtonModule,
     MessageModule,
     TableModule,
+    ErrorBanner,
     OrganizationRoleForm,
     OrganizationRoleTable,
   ],

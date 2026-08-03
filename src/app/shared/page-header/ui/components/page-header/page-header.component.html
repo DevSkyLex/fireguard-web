@@ -1,0 +1,31 @@
+<header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+  <div class="flex min-w-0 items-start gap-3">
+    <ng-content select="[avatar]" />
+
+    <!--
+      The h1 stays nested inside a div inside this header: the workspace
+      shell's sr-only fallback heading stands down through `main:has(div h1)`,
+      and flattening this wrapper would bring the duplicate heading back.
+    -->
+    <div class="flex min-w-0 flex-col gap-1.5">
+      <div class="flex min-w-0 items-center gap-2">
+        <h1
+          class="min-w-0 truncate text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-0"
+        >
+          {{ title() }}
+        </h1>
+        <ng-content select="[titleAccessory]" />
+      </div>
+
+      @if (subtitle(); as subtitle) {
+        <p class="max-w-prose text-sm text-surface-500 dark:text-surface-400">{{ subtitle }}</p>
+      }
+
+      <ng-content select="[meta]" />
+    </div>
+  </div>
+
+  <div class="flex shrink-0 flex-wrap items-center gap-2">
+    <ng-content select="[actions]" />
+  </div>
+</header>

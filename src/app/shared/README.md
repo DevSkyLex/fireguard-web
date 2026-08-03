@@ -30,19 +30,21 @@ board/
 ```
 
 A concept with **no UI** creates no `ui/` and stays flat — `initials`,
-`match-fields`, `table-card-shell`, `tag`, `tag-severity`.
+`match-fields`, `overlay-size`, `table-card-shell`, `tag`, `tag-severity`.
 
 | Concept                         | What it is                                                                       |
 | ------------------------------- | -------------------------------------------------------------------------------- |
 | `board/`                        | generic drag-and-drop kanban (`Board<T>`)                                        |
 | `calendar/`                     | month/week/agenda calendar with category sidebar                                 |
 | `chat/`                         | conversation surface: thread, message row, body, reactions, attachments, actions |
-| `empty-state/` · `error-state/` | icon + title + description placeholders                                          |
+| `empty-state/` · `error-state/` | icon + title + description placeholders; `error-state` also ships `error-banner` |
 | `infinite-scroll/`              | infinite-scroll attribute directive                                              |
 | `initials/`                     | `deriveInitials` pure helper                                                     |
 | `logo/`                         | brand mark                                                                       |
 | `match-fields/`                 | cross-field equality validator + error key                                       |
 | `nav-row/`                      | sidebar navigation row                                                           |
+| `overlay-size/`                 | canonical dialog width steps + breakpoints and drawer width (constants only)     |
+| `page-header/`                  | routed-page header: canonical `h1` + subtitle, avatar/accessory/meta/actions     |
 | `splash-screen/`                | boot overlay (consumes `SPLASH_SCREEN_PORT`)                                     |
 | `table-card-shell/`             | card-shell design tokens for feature `p-table` grids                             |
 | `tag/`                          | `TagDescriptor` / `TagOption` contracts for feature tag registries (types only)  |
@@ -80,7 +82,9 @@ concept above that wraps PrimeNG does so for a reason PrimeNG cannot cover —
   PrimeNG 21; `toast` stacks its deck with `:nth-last-child()` selectors that
   `[pt]` cannot express;
 - a **rendering shape PrimeNG has no component for**: `empty-state` and
-  `error-state` are centred blocks, not the inline banner `p-message` renders;
+  `error-state` are centred blocks, `page-header` is the routed page's canonical
+  `h1` scaffold, and `error-state`'s inline `error-banner` standardizes the
+  message + quiet-retry composition a bare `p-message` does not carry;
 - an **accessibility pattern PrimeNG gets wrong for the context**: `nav-row` must
   not be the `role="menu"` that `p-menu` / `p-panelmenu` render, which is a
   transient-menu pattern rather than primary navigation.

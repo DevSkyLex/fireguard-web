@@ -7280,6 +7280,10 @@
         <source> Roles </source>
         <target>Rôles</target>
       </trans-unit>
+      <trans-unit id="shared.errorState.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

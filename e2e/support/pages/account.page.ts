@@ -26,7 +26,10 @@ export class AccountPage {
   public constructor(page: Page) {
     this.page = page;
     this.header = page.getByTestId('account-page-header');
-    this.displayName = page.getByTestId('account-page-display-name');
+    // The display name is the page h1 rendered by the shared `app-page-header`
+    // primitive; located by role within the header hook since the primitive
+    // owns its internal markup.
+    this.displayName = this.header.getByRole('heading', { level: 1 });
     this.nav = page.getByTestId('account-page-nav');
     this.sectionTitle = page.getByTestId('account-page-section-title');
   }

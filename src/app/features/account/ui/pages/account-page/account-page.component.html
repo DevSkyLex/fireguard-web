@@ -3,79 +3,64 @@
   class="mx-auto flex w-full max-w-7xl flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8 xl:p-10"
 >
   <!-- Account identity header -->
-  <header
-    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+  <app-page-header
     data-testid="account-page-header"
+    [title]="userStore.displayName() ?? defaultDisplayName"
+    subtitle="Your personal account"
+    i18n-subtitle="@@account.page.subtitle"
   >
-    <div class="flex min-w-0 items-center gap-4">
-      @if (userStore.avatarUrlMedium(); as avatarUrl) {
-        <p-avatar
-          [image]="avatarUrl"
-          [ariaLabel]="(userStore.displayName() ?? 'User') + ' avatar'"
-          [pt]="headerAvatarPt"
-          shape="circle"
-          class="shrink-0"
-        />
-      } @else {
-        <p-avatar
-          [label]="userStore.initials() ?? '?'"
-          [pt]="headerAvatarPt"
-          shape="circle"
-          class="shrink-0"
+    @if (userStore.avatarUrlMedium(); as avatarUrl) {
+      <p-avatar
+        avatar
+        [image]="avatarUrl"
+        [ariaLabel]="(userStore.displayName() ?? 'User') + ' avatar'"
+        [pt]="headerAvatarPt"
+        shape="circle"
+        class="shrink-0"
+      />
+    } @else {
+      <p-avatar
+        avatar
+        [label]="userStore.initials() ?? '?'"
+        [pt]="headerAvatarPt"
+        shape="circle"
+        class="shrink-0"
+      />
+    }
+
+    @if (userStore.profile()?.username; as username) {
+      <span titleAccessory class="truncate text-base text-surface-500 dark:text-surface-400"
+        >&#64;{{ username }}</span
+      >
+    }
+
+    <div
+      meta
+      class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-surface-500 dark:text-surface-400"
+    >
+      @if (userStore.profile()?.email; as email) {
+        <span class="inline-flex items-center gap-1.5">
+          <i class="pi pi-envelope text-xs" aria-hidden="true"></i>
+          {{ email }}
+        </span>
+      }
+      @if (userStore.profile()?.createdAt; as createdAt) {
+        <span class="inline-flex items-center gap-1.5" i18n="@@account.page.memberSince">
+          <i class="pi pi-calendar text-xs" aria-hidden="true"></i>
+          Member since {{ createdAt | date: 'MMMM yyyy' }}
+        </span>
+      }
+      @if (userStore.profile()?.emailVerified) {
+        <p-tag
+          severity="success"
+          value="Verified"
+          i18n-value="@@account.verified"
+          [rounded]="true"
+          class="text-xs"
         />
       }
-
-      <div class="min-w-0">
-        <div class="flex min-w-0 flex-wrap items-baseline gap-x-2">
-          <h1
-            class="truncate text-2xl font-semibold tracking-[-0.025em] text-surface-950 dark:text-surface-50"
-            data-testid="account-page-display-name"
-          >
-            @if (userStore.displayName(); as name) {
-              {{ name }}
-            } @else {
-              <ng-container i18n="@@account.defaultName">Your account</ng-container>
-            }
-          </h1>
-          @if (userStore.profile()?.username; as username) {
-            <span class="truncate text-base text-surface-500 dark:text-surface-400"
-              >&#64;{{ username }}</span
-            >
-          }
-        </div>
-
-        <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@account.page.subtitle">
-          Your personal account
-        </p>
-
-        <div
-          class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-surface-500 dark:text-surface-400"
-        >
-          @if (userStore.profile()?.email; as email) {
-            <span class="inline-flex items-center gap-1.5">
-              <i class="pi pi-envelope text-xs" aria-hidden="true"></i>
-              {{ email }}
-            </span>
-          }
-          @if (userStore.profile()?.createdAt; as createdAt) {
-            <span class="inline-flex items-center gap-1.5" i18n="@@account.page.memberSince">
-              <i class="pi pi-calendar text-xs" aria-hidden="true"></i>
-              Member since {{ createdAt | date: 'MMMM yyyy' }}
-            </span>
-          }
-          @if (userStore.profile()?.emailVerified) {
-            <p-tag
-              severity="success"
-              value="Verified"
-              i18n-value="@@account.verified"
-              [rounded]="true"
-              class="text-xs"
-            />
-          }
-        </div>
-      </div>
     </div>
-  </header>
+  </app-page-header>
 
   <p-divider class="my-0" />
 

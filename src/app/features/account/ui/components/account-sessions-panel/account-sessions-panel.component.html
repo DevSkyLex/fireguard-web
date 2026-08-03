@@ -65,8 +65,8 @@
   [modal]="true"
   [visible]="selectedSession() !== null"
   (visibleChange)="!$event && selectedSession.set(null)"
-  [style]="{ width: '42rem' }"
-  [breakpoints]="{ '640px': '90vw' }"
+  [style]="{ width: dialogWidth }"
+  [breakpoints]="dialogBreakpoints"
 >
   @if (selectedSession(); as session) {
     <dl class="grid gap-4 md:grid-cols-2">

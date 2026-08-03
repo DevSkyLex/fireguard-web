@@ -10,6 +10,7 @@ import { MenuModule, type MenuPassThroughOptions } from 'primeng/menu';
 import { TagModule } from 'primeng/tag';
 import { map } from 'rxjs';
 import { NotificationStore, UserStore } from '@features/account/state';
+import { PageHeader } from '@shared/page-header';
 import { AccountMfaPanel } from '../../components/account-mfa-panel/account-mfa-panel.component';
 import { AccountNotificationsPanel } from '../../components/account-notifications-panel/account-notifications-panel.component';
 import { AccountProfilePanel } from '../../components/account-profile-panel/account-profile-panel.component';
@@ -43,6 +44,7 @@ import { type AccountNavItem, type AccountTab } from './models';
     DividerModule,
     MenuModule,
     TagModule,
+    PageHeader,
     AccountProfilePanel,
     AccountSettingsPanel,
     AccountMfaPanel,
@@ -112,6 +114,21 @@ export class AccountPage {
    * @type {UserStore}
    */
   protected readonly userStore: UserStore = inject<UserStore>(UserStore);
+
+  /**
+   * Property defaultDisplayName
+   * @readonly
+   *
+   * @description
+   * Fallback `app-page-header` title shown until the profile has loaded a
+   * display name.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {string}
+   */
+  protected readonly defaultDisplayName: string = $localize`:@@account.defaultName:Your account`;
 
   /**
    * Property activeTab

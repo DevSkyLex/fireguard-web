@@ -17,6 +17,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_MD } from '@shared/overlay-size';
 
 /**
  * Component OrganizationDeleteDialog
@@ -58,6 +59,11 @@ export class OrganizationDeleteDialog {
   protected readonly canConfirm: Signal<boolean> = computed(
     () => this.typedSlug().trim() === this.organizationSlug() && this.organizationSlug().length > 0,
   );
+
+  /** Canonical `p-dialog` width for this single-column confirmation prompt. */
+  protected readonly dialogWidth: string = DIALOG_WIDTH_MD;
+  /** Canonical `p-dialog` responsive breakpoints (DESIGN.md, "Overlays — sizes"). */
+  protected readonly dialogBreakpoints: Record<string, string> = DIALOG_BREAKPOINTS;
   //#endregion
 
   //#region Methods

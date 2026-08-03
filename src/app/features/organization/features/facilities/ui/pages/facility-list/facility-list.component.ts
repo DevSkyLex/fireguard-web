@@ -10,8 +10,6 @@ import {
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
@@ -19,6 +17,7 @@ import { FacilityStore } from '@features/organization/features/facilities/state'
 import { FacilityTable } from '@features/organization/features/facilities/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
 import { OrganizationQuotaStore } from '@features/organization/state';
+import { ErrorBanner } from '@shared/error-state';
 
 /**
  * Component FacilityListPage
@@ -34,7 +33,7 @@ import { OrganizationQuotaStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-facility-list',
-  imports: [RouterModule, ButtonModule, MessageModule, FacilityTable],
+  imports: [RouterModule, ErrorBanner, FacilityTable],
   providers: [FacilityStore],
   templateUrl: './facility-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -143,6 +142,9 @@ export class FacilityListPage {
 
   /** Tooltip explaining why facility creation is disabled. */
   protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
+
+  /** Localized message shown in the load-error banner for the root facility list. */
+  protected readonly rootListErrorMessage: string = $localize`:@@facility.list.errorText:The facilities could not be loaded. Check your connection and try again.`;
 
   /**
    * Property lastLoadOptions

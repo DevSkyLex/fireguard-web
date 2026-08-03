@@ -14,7 +14,6 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
 import { ConfirmationService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { TabsModule } from 'primeng/tabs';
 import { FeedbackService } from '@core/feedback';
@@ -48,6 +47,7 @@ import {
   type OrganizationMemberRoleRemoval,
 } from '@features/organization/ui/tables';
 import { isQuotaExceededError } from '@features/organization/utils';
+import { ErrorBanner } from '@shared/error-state';
 
 /**
  * Page OrganizationMembersPage
@@ -65,7 +65,7 @@ import { isQuotaExceededError } from '@features/organization/utils';
 @Component({
   selector: 'app-organization-members',
   imports: [
-    ButtonModule,
+    ErrorBanner,
     MessageModule,
     TabsModule,
     OrganizationInvitationTable,

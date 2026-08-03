@@ -14,6 +14,7 @@ import type { RequestOptions } from '@core/api';
 import { SessionTable } from '@features/account/ui/tables';
 import type { SessionOutput } from '@features/auth/models';
 import { SessionStore } from '@features/auth/state';
+import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_LG } from '@shared/overlay-size';
 
 /**
  * Component AccountSessionsPanel
@@ -45,6 +46,10 @@ export class AccountSessionsPanel {
   protected readonly selectedSession: WritableSignal<SessionOutput | null> = signal(null);
   /** Last table request replayed after a list-loading error. */
   private lastLoadOptions: RequestOptions = { page: 1, itemsPerPage: 10 };
+  /** Canonical `p-dialog` width for the two-column session detail body. */
+  protected readonly dialogWidth: string = DIALOG_WIDTH_LG;
+  /** Canonical `p-dialog` responsive breakpoints (DESIGN.md, "Overlays — sizes"). */
+  protected readonly dialogBreakpoints: Record<string, string> = DIALOG_BREAKPOINTS;
 
   /** Loads a session page requested by the lazy table. */
   protected load(options: RequestOptions): void {

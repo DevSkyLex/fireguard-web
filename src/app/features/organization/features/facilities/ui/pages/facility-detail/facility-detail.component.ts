@@ -49,6 +49,7 @@ import {
 } from '@features/organization/features/facilities/ui/dataviews';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState } from '@shared/empty-state';
+import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_SM } from '@shared/overlay-size';
 
 /**
  * Component FacilityDetailPage
@@ -287,6 +288,34 @@ export class FacilityDetailPage {
    * @type {WritableSignal<string>}
    */
   protected readonly moveParentId: WritableSignal<string> = signal<string>('');
+
+  /**
+   * Property dialogWidth
+   * @readonly
+   *
+   * @description
+   * Canonical `p-dialog` width for the Move Facility dialog.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  protected readonly dialogWidth: string = DIALOG_WIDTH_SM;
+
+  /**
+   * Property dialogBreakpoints
+   * @readonly
+   *
+   * @description
+   * Canonical `p-dialog` responsive breakpoints (DESIGN.md, "Overlays — sizes").
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Record<string, string>}
+   */
+  protected readonly dialogBreakpoints: Record<string, string> = DIALOG_BREAKPOINTS;
 
   /**
    * Property isMoving

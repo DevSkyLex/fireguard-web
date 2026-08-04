@@ -266,23 +266,23 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">293</context>
+          <context context-type="linenumber">310</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">327</context>
+          <context context-type="linenumber">344</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">347</context>
+          <context context-type="linenumber">364</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">366</context>
+          <context context-type="linenumber">383</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">405</context>
+          <context context-type="linenumber">422</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
@@ -704,11 +704,18 @@
           <context context-type="linenumber">374</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="notifications.loading" datatype="html">
+        <source>Loading notifications…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-list/notification-bell-list.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="notifications.empty" datatype="html">
         <source> No notifications yet </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-list/notification-bell-list.component.html</context>
-          <context context-type="linenumber">30,34</context>
+          <context context-type="linenumber">31,35</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/tables/notification-table/notification-table.component.html</context>
@@ -719,7 +726,7 @@
         <source>Loading more notifications…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-list/notification-bell-list.component.html</context>
-          <context context-type="linenumber">49,50</context>
+          <context context-type="linenumber">50,51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.avatar.error" datatype="html">
@@ -2362,18 +2369,25 @@
           <context context-type="linenumber">292</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="onboarding.plans.loading" datatype="html">
+        <source>Loading plans…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/components/select-plan-step/select-plan-step.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="onboarding.plan.loadError" datatype="html">
         <source>We couldn&apos;t load the plans.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">14,17</context>
+          <context context-type="linenumber">17,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">18</context>
+          <context context-type="linenumber">21</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2388,7 +2402,7 @@
         <source>Billing cadence</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">37,38</context>
+          <context context-type="linenumber">40,41</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2399,7 +2413,7 @@
         <source>Free</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">61,62</context>
+          <context context-type="linenumber">64,65</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2410,7 +2424,7 @@
         <source>Subscribe</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">81,82</context>
+          <context context-type="linenumber">84,85</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2421,14 +2435,14 @@
         <source>Start on Free</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">93,94</context>
+          <context context-type="linenumber">96,97</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.empty" datatype="html">
         <source>No plans are available.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">114,116</context>
+          <context context-type="linenumber">117,119</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2613,6 +2627,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/onboarding-wizard.component.html</context>
           <context context-type="linenumber">279,280</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.loading" datatype="html">
+        <source>Loading your setup…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-wizard/onboarding-wizard.component.html</context>
+          <context context-type="linenumber">291,292</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.equipment.typeLabel" datatype="html">
@@ -3558,18 +3579,25 @@
           <context context-type="linenumber">93,96</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="collab.channels.loading" datatype="html">
+        <source>Loading channels…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/collaboration-channel-nav/collaboration-channel-nav.component.html</context>
+          <context context-type="linenumber">106,108</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="workspace.sidebar.channels.loadFailed" datatype="html">
         <source>Channels could not be loaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/collaboration-channel-nav/collaboration-channel-nav.component.html</context>
-          <context context-type="linenumber">117,120</context>
+          <context context-type="linenumber">120,123</context>
         </context-group>
       </trans-unit>
       <trans-unit id="common.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/collaboration-channel-nav/collaboration-channel-nav.component.html</context>
-          <context context-type="linenumber">125,126</context>
+          <context context-type="linenumber">128,129</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/chat/ui/components/chat-message/chat-message.component.html</context>
@@ -3584,7 +3612,7 @@
         <source> No channels yet. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/collaboration-channel-nav/collaboration-channel-nav.component.html</context>
-          <context context-type="linenumber">144,149</context>
+          <context context-type="linenumber">147,152</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.sidebar.directMessages" datatype="html">
@@ -3619,11 +3647,18 @@
           <context context-type="linenumber">75,82</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="collab.direct.loading" datatype="html">
+        <source>Loading conversations…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/collaboration-direct-nav/collaboration-direct-nav.component.html</context>
+          <context context-type="linenumber">86,88</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="workspace.sidebar.directMessages.empty" datatype="html">
         <source> No direct messages yet. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/collaboration-direct-nav/collaboration-direct-nav.component.html</context>
-          <context context-type="linenumber">121,127</context>
+          <context context-type="linenumber">124,130</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.direct.unknownMember" datatype="html">
@@ -11124,11 +11159,18 @@
           <context context-type="linenumber">6,8</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.trendFilter.reset" datatype="html">
+        <source>Reset filters</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/trend-filter-drawer/trend-filter-drawer.component.html</context>
+          <context context-type="linenumber">33,35</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="org.trendFilter.apply" datatype="html">
         <source>Apply</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/trend-filter-drawer/trend-filter-drawer.component.html</context>
-          <context context-type="linenumber">41,42</context>
+          <context context-type="linenumber">43,44</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.trendFilter.dateRange" datatype="html">
@@ -11699,21 +11741,28 @@
         <source>Organizations</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail/organization-rail.component.html</context>
-          <context context-type="linenumber">4,7</context>
+          <context context-type="linenumber">4,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.rail.loading" datatype="html">
+        <source>Loading organizations…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail/organization-rail.component.html</context>
+          <context context-type="linenumber">8,10</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.rail.addOrganization.aria" datatype="html">
         <source>Add organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail/organization-rail.component.html</context>
-          <context context-type="linenumber">43,44</context>
+          <context context-type="linenumber">46,47</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.rail.addOrganization.tooltip" datatype="html">
         <source>Add organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail/organization-rail.component.html</context>
-          <context context-type="linenumber">45,47</context>
+          <context context-type="linenumber">48,50</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.usage.loading" datatype="html">
@@ -12545,43 +12594,43 @@
         <source>The members could not be loaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">123</context>
+          <context context-type="linenumber">140</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.mutationError" datatype="html">
         <source>The operation could not be completed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">125</context>
+          <context context-type="linenumber">142</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeRoleHeader" datatype="html">
         <source>Remove role</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">288</context>
+          <context context-type="linenumber">305</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeRoleMessage" datatype="html">
         <source>Remove this role from the member?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">289</context>
+          <context context-type="linenumber">306</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.remove" datatype="html">
         <source>Remove</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">291</context>
+          <context context-type="linenumber">308</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">325</context>
+          <context context-type="linenumber">342</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">345</context>
+          <context context-type="linenumber">362</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/tables/organization-member-table/organization-member-table.component.ts</context>
@@ -12592,49 +12641,49 @@
         <source>Remove members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">322</context>
+          <context context-type="linenumber">339</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.bulkRemoveMessage" datatype="html">
         <source>Remove the selected members from the organization?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">323</context>
+          <context context-type="linenumber">340</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeHeader" datatype="html">
         <source>Remove member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">342</context>
+          <context context-type="linenumber">359</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeMessage" datatype="html">
         <source>Remove this member from the organization?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">343</context>
+          <context context-type="linenumber">360</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.revokeHeader" datatype="html">
         <source>Revoke invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">361</context>
+          <context context-type="linenumber">378</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.revokeMessage" datatype="html">
         <source>Revoke the invitation sent to <x id="email" equiv-text="invitation.email"/>?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">362</context>
+          <context context-type="linenumber">379</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.revoke" datatype="html">
         <source>Revoke</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">364</context>
+          <context context-type="linenumber">381</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/tables/organization-invitation-table/organization-invitation-table.component.ts</context>
@@ -12645,49 +12694,49 @@
         <source>Generate a new link</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">400</context>
+          <context context-type="linenumber">417</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.copyRegenerateMessage" datatype="html">
         <source>A new invitation link will be generated, the previous one will stop working, and the invitation email will be sent again. Continue?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">401</context>
+          <context context-type="linenumber">418</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.copyRegenerateConfirm" datatype="html">
         <source>Generate &amp; copy</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">403</context>
+          <context context-type="linenumber">420</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.linkCopiedDetail" datatype="html">
         <source>The invitation link is on your clipboard.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">427</context>
+          <context context-type="linenumber">444</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.linkCopiedSummary" datatype="html">
         <source>Link copied</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">428</context>
+          <context context-type="linenumber">445</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.linkCopyErrorDetail" datatype="html">
         <source>The link could not be copied. Please copy it manually.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">439</context>
+          <context context-type="linenumber">456</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.linkCopyErrorSummary" datatype="html">
         <source>Copy failed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">440</context>
+          <context context-type="linenumber">457</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.overview.pageTitle" datatype="html">

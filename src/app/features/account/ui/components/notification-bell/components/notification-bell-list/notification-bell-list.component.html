@@ -1,9 +1,10 @@
 <div class="max-h-80 overflow-y-auto">
   <!-- Loading skeletons -->
   @if (loading()) {
-    <ul class="flex flex-col divide-y divide-surface-100 dark:divide-surface-800">
+    <ul role="status" class="flex flex-col divide-y divide-surface-100 dark:divide-surface-800">
+      <li class="sr-only" i18n="@@notifications.loading">Loading notifications…</li>
       @for (item of skeletonItems; track item) {
-        <li class="flex gap-3 px-4 py-3">
+        <li class="flex gap-3 px-4 py-3" aria-hidden="true">
           <p-skeleton shape="circle" size="1.75rem" class="shrink-0" />
           <div class="flex flex-1 flex-col gap-1.5">
             <p-skeleton width="65%" height="0.875rem" />

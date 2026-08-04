@@ -7299,6 +7299,34 @@
         <source>Loading more notifications…</source>
         <target>Cargando más notificaciones…</target>
       </trans-unit>
+      <trans-unit id="org.trendFilter.reset" datatype="html">
+        <source>Reset filters</source>
+        <target>Restablecer los filtros</target>
+      </trans-unit>
+      <trans-unit id="notifications.loading" datatype="html">
+        <source>Loading notifications…</source>
+        <target>Cargando las notificaciones…</target>
+      </trans-unit>
+      <trans-unit id="collab.channels.loading" datatype="html">
+        <source>Loading channels…</source>
+        <target>Cargando los canales…</target>
+      </trans-unit>
+      <trans-unit id="collab.direct.loading" datatype="html">
+        <source>Loading conversations…</source>
+        <target>Cargando las conversaciones…</target>
+      </trans-unit>
+      <trans-unit id="org.rail.loading" datatype="html">
+        <source>Loading organizations…</source>
+        <target>Cargando las organizaciones…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.loading" datatype="html">
+        <source>Loading your setup…</source>
+        <target>Cargando tu configuración…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plans.loading" datatype="html">
+        <source>Loading plans…</source>
+        <target>Cargando los planes…</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

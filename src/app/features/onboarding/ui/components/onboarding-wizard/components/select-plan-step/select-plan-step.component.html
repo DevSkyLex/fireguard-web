@@ -1,10 +1,13 @@
 <div class="flex flex-col gap-6">
   @if (isLoadingCatalog()) {
     <!-- Loading -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      @for (i of [0, 1, 2]; track i) {
-        <p-skeleton height="14rem" borderRadius="0.75rem" />
-      }
+    <div role="status">
+      <span class="sr-only" i18n="@@onboarding.plans.loading">Loading plans…</span>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-hidden="true">
+        @for (i of [0, 1, 2]; track i) {
+          <p-skeleton height="14rem" borderRadius="0.75rem" />
+        }
+      </div>
     </div>
   } @else if (catalogError()) {
     <!-- Error -->

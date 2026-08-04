@@ -4,8 +4,11 @@
   aria-label="Organizations"
 >
   @if (loading()) {
+    <div role="status">
+      <span class="sr-only" i18n="@@org.rail.loading">Loading organizations…</span>
+    </div>
     @for (placeholder of [1, 2, 3]; track $index) {
-      <p-skeleton size="38px" borderRadius="12px" />
+      <p-skeleton size="38px" borderRadius="12px" aria-hidden="true" />
     }
   } @else {
     @for (tile of tiles(); track tile.id) {

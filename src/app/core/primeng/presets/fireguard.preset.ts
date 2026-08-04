@@ -147,13 +147,15 @@ export const FireguardTheme: Preset = definePreset(Aura, {
     skeleton: {
       css: `
 /*
- * PrimeNG's skeleton shimmer (the ::after sweep) ships with no
+ * PrimeNG's skeleton shimmer (the ::after sweep) and the .p-icon-spin
+ * keyframes (every p-button [loading] spinner) ship with no
  * prefers-reduced-motion guard. Every hand-rolled loop in the app is
  * guarded (motion-reduce:animate-none); this closes the same gap once for
- * all ~200 p-skeleton call sites instead of per-call-site classes.
+ * all call sites instead of per-call-site classes.
  */
 @media (prefers-reduced-motion: reduce) {
-  .p-skeleton::after {
+  .p-skeleton::after,
+  .p-icon-spin {
     animation: none;
   }
 }
@@ -292,6 +294,19 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       summary: {
         fontWeight: '650',
       },
+      css: `
+/*
+ * PrimeNG's toast enter/leave keyframes (scale + translate) ship with no
+ * prefers-reduced-motion guard — same vendor gap as the skeleton shimmer
+ * below. Opacity still fades; only the movement is stilled.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .p-toast-message-enter-active,
+  .p-toast-message-leave-active {
+    animation: none;
+  }
+}
+`,
     },
 
     /*

@@ -1,8 +1,10 @@
+@let inspection = this.inspection();
+
 <section
   class="rounded-md border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
   <header
-    class="flex items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+    class="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
     <i
       class="pi pi-info-circle text-sm text-surface-500 dark:text-surface-400"
@@ -14,70 +16,232 @@
     >
       Inspection information
     </h2>
+
+    @if (editable()) {
+      <span i18n="@@common.clickToEdit" class="text-xs text-surface-500 dark:text-surface-400">
+        click a field to change it
+      </span>
+    }
   </header>
-  <div class="grid gap-3 border-b border-surface-200 p-4 sm:grid-cols-3 dark:border-surface-800">
-    <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-800">
-      <p i18n="@@inspection.info.result" class="text-xs text-surface-500 dark:text-surface-400">
-        Result
-      </p>
-      <p-tag
-        class="mt-2 inline-flex"
-        [severity]="resultDescriptor(inspection().result).severity"
-        [icon]="resultDescriptor(inspection().result).icon"
-        [value]="resultDescriptor(inspection().result).label"
-      />
+
+  <div class="flex flex-col divide-y divide-surface-100 px-4 py-2 dark:divide-surface-800">
+    <div class="py-2">
+      <app-inplace-field
+        label="Result"
+        i18n-label="@@inspection.info.result"
+        [display]="resultLabel(inspection.result)"
+        [editable]="editable()"
+        [pending]="saving()"
+        [error]="fieldError('result')"
+        (opened)="seedResult()"
+        (saved)="save('result')"
+        (cancelled)="clearError()"
+      >
+        <p-select
+          editor
+          inputId="inspection-result"
+          [options]="resultOptions"
+          [formControl]="resultControl"
+          optionLabel="label"
+          optionValue="value"
+          i18n-placeholder="@@inspection.form.resultPlaceholder"
+          placeholder="Select result"
+          i18n-aria-label="@@inspection.info.result"
+          aria-label="Result"
+          class="w-full"
+        >
+          <ng-template pTemplate="item" let-option>
+            <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
+          </ng-template>
+
+          <ng-template pTemplate="selectedItem" let-option>
+            @if (option) {
+              <p-tag [severity]="option.severity" [icon]="option.icon" [value]="option.label" />
+            }
+          </ng-template>
+        </p-select>
+      </app-inplace-field>
     </div>
-    <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-800">
-      <p i18n="@@inspection.info.performed" class="text-xs text-surface-500 dark:text-surface-400">
-        Performed
-      </p>
-      <p class="mt-2 text-sm font-medium text-surface-950 tabular-nums dark:text-surface-50">
-        {{ inspection().performedAt | date: 'mediumDate' }}
-      </p>
+
+    <div class="py-2">
+      <app-inplace-field
+        label="Performed"
+        i18n-label="@@inspection.info.performed"
+        [display]="inspection.performedAt | date: 'medium'"
+        [editable]="editable()"
+        [pending]="saving()"
+        [error]="fieldError('performedAt')"
+        (opened)="seedPerformedAt()"
+        (saved)="save('performedAt')"
+        (cancelled)="clearError()"
+      >
+        <p-datepicker
+          editor
+          inputId="inspection-performedAt"
+          [formControl]="performedAtControl"
+          [showTime]="true"
+          [showIcon]="true"
+          dateFormat="yy-mm-dd"
+          i18n-placeholder="@@inspection.form.performedAtPlaceholder"
+          placeholder="Select date and time"
+          i18n-ariaLabel="@@inspection.info.performed"
+          ariaLabel="Performed"
+          class="w-full"
+        />
+      </app-inplace-field>
     </div>
-    <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-800">
-      <p i18n="@@inspection.info.nc" class="text-xs text-surface-500 dark:text-surface-400">
-        Non-conformities
-      </p>
-      <p class="mt-2 text-xl font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-        {{ inspection().nonConformitiesCount }}
-      </p>
+
+    <div class="flex flex-col gap-1 py-2">
+      <span
+        i18n="@@inspection.info.nc"
+        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+        >Non-conformities</span
+      >
+      <span class="px-2 text-sm text-surface-900 dark:text-surface-100">{{
+        inspection.nonConformitiesCount
+      }}</span>
+    </div>
+
+    <!--
+      Equipment, facility and checklist are read-only on purpose: this page
+      carries none of their option lists, and opening a picker with nothing
+      to pick from would be worse than a plain value (ARCHITECTURE.md §10.5).
+    -->
+    <div class="py-2">
+      <app-inplace-field
+        label="Equipment"
+        i18n-label="@@inspection.info.equipment"
+        [display]="relationLabel(equipmentOptions(), inspection.equipmentId)"
+        [emptyLabel]="noneLabel"
+        [editable]="editable()"
+        [pending]="saving()"
+        [error]="fieldError('equipmentId')"
+        (opened)="seedRelation('equipmentId', inspection.equipmentId)"
+        (saved)="save('equipmentId')"
+        (cancelled)="clearError()"
+      >
+        <p-select
+          editor
+          [options]="[...equipmentOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [formControl]="equipmentControl"
+          [filter]="true"
+          [showClear]="false"
+          i18n-placeholder="@@inspection.info.equipment"
+          placeholder="Equipment"
+          styleClass="w-full"
+        />
+      </app-inplace-field>
+    </div>
+
+    <div class="py-2">
+      <app-inplace-field
+        label="Facility"
+        i18n-label="@@inspection.info.facility"
+        [display]="relationLabel(facilityOptions(), inspection.facilityId)"
+        [emptyLabel]="noneLabel"
+        [editable]="editable()"
+        [pending]="saving()"
+        [error]="fieldError('facilityId')"
+        (opened)="seedRelation('facilityId', inspection.facilityId)"
+        (saved)="save('facilityId')"
+        (cancelled)="clearError()"
+      >
+        <p-select
+          editor
+          [options]="[...facilityOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [formControl]="facilityControl"
+          [filter]="true"
+          [showClear]="true"
+          i18n-placeholder="@@inspection.info.facility"
+          placeholder="Facility"
+          styleClass="w-full"
+        />
+      </app-inplace-field>
+    </div>
+
+    <div class="py-2">
+      <app-inplace-field
+        label="Checklist"
+        i18n-label="@@inspection.info.checklist"
+        [display]="relationLabel(checklistOptions(), inspection.checklistId)"
+        [emptyLabel]="noneLabel"
+        [editable]="editable()"
+        [pending]="saving()"
+        [error]="fieldError('checklistId')"
+        (opened)="seedRelation('checklistId', inspection.checklistId)"
+        (saved)="save('checklistId')"
+        (cancelled)="clearError()"
+      >
+        <p-select
+          editor
+          [options]="[...checklistOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [formControl]="checklistControl"
+          [filter]="true"
+          [showClear]="true"
+          i18n-placeholder="@@inspection.info.checklist"
+          placeholder="Checklist"
+          styleClass="w-full"
+        />
+      </app-inplace-field>
+    </div>
+
+    <div class="py-2">
+      <app-inplace-field
+        label="Notes"
+        i18n-label="@@inspection.info.notes"
+        [display]="inspection.notes"
+        [emptyLabel]="noNotesLabel"
+        [editable]="editable()"
+        [pending]="saving()"
+        [error]="fieldError('notes')"
+        (opened)="seed('notes', inspection.notes)"
+        (saved)="save('notes')"
+        (cancelled)="clearError()"
+      >
+        <textarea
+          editor
+          pTextarea
+          rows="3"
+          [autoResize]="true"
+          [formControl]="notesControl"
+          i18n-aria-label="@@inspection.info.notes"
+          aria-label="Notes"
+          class="w-full resize-none text-sm"
+        ></textarea>
+      </app-inplace-field>
+    </div>
+
+    <div class="py-2">
+      <app-inplace-field
+        label="Signature"
+        i18n-label="@@inspection.info.signature"
+        [display]="inspection.signature"
+        [editable]="editable()"
+        [pending]="saving()"
+        [error]="fieldError('signature')"
+        (opened)="seed('signature', inspection.signature)"
+        (saved)="save('signature')"
+        (cancelled)="clearError()"
+      >
+        <input
+          editor
+          pInputText
+          pSize="small"
+          type="text"
+          [formControl]="signatureControl"
+          i18n-aria-label="@@inspection.info.signature"
+          aria-label="Signature"
+          i18n-placeholder="@@inspection.form.signaturePlaceholder"
+          placeholder="Inspector signature"
+          class="w-full"
+        />
+      </app-inplace-field>
     </div>
   </div>
-  <dl
-    class="grid divide-y divide-surface-100 px-4 py-2 sm:grid-cols-2 sm:divide-y-0 dark:divide-surface-800"
-  >
-    <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt i18n="@@inspection.info.equipment" class="text-xs text-surface-500 dark:text-surface-400">
-        Equipment
-      </dt>
-      <dd class="mt-1 font-mono text-xs break-all text-surface-950 dark:text-surface-50">
-        {{ inspection().equipmentId }}
-      </dd>
-    </div>
-    <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt i18n="@@inspection.info.facility" class="text-xs text-surface-500 dark:text-surface-400">
-        Facility
-      </dt>
-      <dd class="mt-1 font-mono text-xs break-all text-surface-950 dark:text-surface-50">
-        {{ inspection().facilityId || noneLabel }}
-      </dd>
-    </div>
-    <div class="py-3 sm:pr-4">
-      <dt i18n="@@inspection.info.checklist" class="text-xs text-surface-500 dark:text-surface-400">
-        Checklist
-      </dt>
-      <dd class="mt-1 font-mono text-xs break-all text-surface-950 dark:text-surface-50">
-        {{ inspection().checklistId || noneLabel }}
-      </dd>
-    </div>
-    <div class="py-3 sm:pl-4">
-      <dt i18n="@@inspection.info.notes" class="text-xs text-surface-500 dark:text-surface-400">
-        Notes
-      </dt>
-      <dd class="mt-1 text-sm whitespace-pre-line text-surface-950 dark:text-surface-50">
-        {{ inspection().notes || noNotesLabel }}
-      </dd>
-    </div>
-  </dl>
 </section>

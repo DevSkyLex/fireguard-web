@@ -17,6 +17,7 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
+import type { StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   DETAIL_TAB_LIST_PT,
@@ -28,6 +29,7 @@ import type {
   EquipmentAttachmentOutput,
   EquipmentOutput,
   EquipmentTagOutput,
+  UpdateEquipmentInput,
 } from '@features/organization/features/equipments/models';
 import {
   ActiveEquipmentStore,
@@ -142,6 +144,26 @@ export class EquipmentDetailPage {
   );
 
   /**
+   * Property updateErrorMessage
+   * @readonly
+   *
+   * @description
+   * Human message for a failed in-place save, shown under the field that
+   * produced it.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly updateErrorMessage: Signal<string | null> = computed<string | null>(() => {
+    const error: StoreError | null = this.store.updateError();
+    if (!error) return null;
+
+    return error.message ?? $localize`:@@equipment.info.saveFailed:This change could not be saved.`;
+  });
+
+  /**
    * Initializes supporting equipment detail collections.
    */
   public constructor() {
@@ -165,9 +187,24 @@ export class EquipmentDetailPage {
     });
   }
 
-  /** Navigates to the active equipment edit page. */
-  protected onEdit(): void {
-    this.router.navigate(['edit'], { relativeTo: this.route });
+  /**
+   * Method onFieldChanged
+   * @method onFieldChanged
+   *
+   * @description
+   * Persists one property confirmed in place. The panel owns the draft and
+   * the cancel path; the page owns the call (ARCHITECTURE.md §10.5).
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {UpdateEquipmentInput} patch - Patch for the changed property.
+   * @returns {void}
+   */
+  protected onFieldChanged(patch: UpdateEquipmentInput): void {
+    this.run((organizationId, equipmentId) =>
+      this.store.update({ organizationId, equipmentId, input: patch }),
+    );
   }
 
   /**

@@ -35,15 +35,15 @@ export const EQUIPMENT_ROUTES: Routes = [
     },
     children: [
       {
+        /**
+         * The record is the edit surface now (ARCHITECTURE.md §10.5): every
+         * writable property opens where it is displayed, so a separate edit
+         * page has nothing left to offer. The route stays as a redirect —
+         * installed applications and bookmarks still resolve.
+         */
         path: 'edit',
-        canActivate: [
-          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_WRITE] }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/equipment-edit/equipment-edit.component').then(
-            (m) => m.EquipmentEditPage,
-          ),
-        title: $localize`:@@route.equipment.edit:Edit Equipment`,
+        redirectTo: '',
+        pathMatch: 'full',
       },
       {
         path: '',

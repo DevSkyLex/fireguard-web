@@ -694,24 +694,47 @@ async function equipmentDetailRun(page: Page): Promise<void> {
   await expect(page.locator('#equipment-detail')).toBeVisible({ timeout: 15_000 });
 }
 
-/** The equipment edit page — `EquipmentForm` needs no reference data of its own (section 10.4). */
-async function equipmentEditRun(page: Page): Promise<void> {
+/**
+ * `/edit` now redirects onto the record itself, which is the edit surface: the
+ * capture proves the legacy URL still resolves rather than 404s.
+ */
+async function equipmentEditRedirectRun(page: Page): Promise<void> {
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
   await api.mockEquipmentDetail(ORGANIZATION.id, EQUIPMENT);
+  await api.mockInterventionPlanningOptions(ORGANIZATION.id);
+  await mockEmptyCollection(
+    page,
+    new RegExp(
+      `/api/organizations/${ORGANIZATION.id}/equipment/${EQUIPMENT.id}/attachments(\\?.*)?$`,
+    ),
+  );
+  await mockEmptyCollection(
+    page,
+    new RegExp(
+      `/api/organizations/${ORGANIZATION.id}/equipment/${EQUIPMENT.id}/maintenance-logs(\\?.*)?$`,
+    ),
+  );
   await page.goto(`/organizations/${ORGANIZATION.id}/equipments/${EQUIPMENT.id}/edit`);
-  await expect(page.locator('#equipment-edit')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('#equipment-detail')).toBeVisible({ timeout: 15_000 });
 }
 
-/** The inspection edit page — reads the same equipment/facility/checklist reference data as inspection create. */
-async function inspectionEditRun(page: Page): Promise<void> {
+/**
+ * `/edit` now redirects onto the record itself, which is the edit surface: the
+ * capture proves the legacy URL still resolves rather than 404s.
+ */
+async function inspectionEditRedirectRun(page: Page): Promise<void> {
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
   await api.mockInspectionDetail(ORGANIZATION.id, INSPECTION);
-  await api.mockInterventionPlanningOptions(ORGANIZATION.id);
-  await mockInspectionCreateReferenceData(page);
+  await mockEmptyCollection(
+    page,
+    new RegExp(
+      `/api/organizations/${ORGANIZATION.id}/inspections/${INSPECTION.id}/non-conformities(\\?.*)?$`,
+    ),
+  );
   await page.goto(`/organizations/${ORGANIZATION.id}/inspections/${INSPECTION.id}/edit`);
-  await expect(page.locator('#inspection-edit')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('#inspection-detail')).toBeVisible({ timeout: 15_000 });
 }
 
 /** The inspection detail page — Overview tab, with an empty non-conformity collection. */
@@ -1305,9 +1328,9 @@ const SCENARIOS: readonly Scenario[] = [
   },
   {
     area: 'equipments',
-    name: 'edit',
-    slug: 'equipments-edit',
-    run: equipmentEditRun,
+    name: 'edit redirect',
+    slug: 'equipments-edit-redirect',
+    run: equipmentEditRedirectRun,
   },
 
   // ── inspections (list, create, detail, edit) ─────────────────────────────
@@ -1335,9 +1358,9 @@ const SCENARIOS: readonly Scenario[] = [
   },
   {
     area: 'inspections',
-    name: 'edit',
-    slug: 'inspections-edit',
-    run: inspectionEditRun,
+    name: 'edit redirect',
+    slug: 'inspections-edit-redirect',
+    run: inspectionEditRedirectRun,
   },
 
   // ── interventions (workspace shell, authenticated) ───────────────────────

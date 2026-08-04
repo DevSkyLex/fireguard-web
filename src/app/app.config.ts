@@ -26,11 +26,6 @@ import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
-// Imported by file rather than through the feature barrels on purpose: those
-// barrels also expose the shell contributions, which reach the UI components and
-// from there the offline/sync graph. Pulling that in here would put the whole of
-// messaging and field work in the initial bundle for every visitor, including the
-// ones who only ever see a login screen.
 import { provideCollaborationFeature } from '@features/organization/features/collaboration/collaboration.feature';
 import { provideInterventionsFeature } from '@features/organization/features/interventions/interventions.feature';
 
@@ -62,19 +57,11 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       APP_ROUTES,
       withComponentInputBinding(),
-      // Route params reach every descendant, not only children of a
-      // component-less or empty-path parent (Angular's `emptyOnly` default).
-      // Organization pages sit several levels below `:organizationId`, and
-      // under `emptyOnly` any component in between hid the parameter from
-      // guards reading `route.paramMap.get('organizationId')` — they then
-      // bounced to `/`. Widening this only ever adds params; no route in the
-      // app redefines an inherited one.
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
     ),
     provideClientHydration(
       withEventReplay(),
       withHttpTransferCacheOptions({
-        // Authenticated API responses are hydrated explicitly per feature.
         includeRequestsWithAuthHeaders: false,
       }),
     ),
@@ -87,19 +74,11 @@ export const appConfig: ApplicationConfig = {
         maintenanceInterceptor,
       ]),
     ),
-    /**
-     * Enables Angular service-worker only in production builds.
-     *
-     * Registration waits until the app is stable (or 30s max) to avoid
-     * competing with initial route hydration.
-     */
     provideServiceWorker('ngsw-worker.js', {
       enabled: environment.production,
       registrationStrategy: 'registerWhenStable:30000',
     }),
-    /** Intervention feature bootstrap (PWA update guard + offline safety). */
     provideInterventionsFeature(),
-    /** Messaging outbox replay, so queued messages leave without a navigation. */
     provideCollaborationFeature(),
     provideEnv(environment),
     provideMaintenanceMode(),
@@ -119,18 +98,6 @@ export const appConfig: ApplicationConfig = {
           },
         },
       },
-      /*
-       * Live-region semantics for every `p-message` in the app, set once here
-       * rather than at 177 call sites. 78 of them already declared
-       * `role="alert"` by hand and every one of those is a `severity="error"`
-       * message, so this generalizes the convention the codebase had already
-       * settled on and closes the 99 that were silent — a failed list load or a
-       * saved-password confirmation announced nothing to a screen reader.
-       *
-       * An error interrupts (`alert`/`assertive`); anything else waits for a
-       * pause (`status`/`polite`). Initial content of a live region is not
-       * announced on render, so static hints stay quiet.
-       */
       pt: {
         message: {
           host: ({ instance }): Record<string, string> => {

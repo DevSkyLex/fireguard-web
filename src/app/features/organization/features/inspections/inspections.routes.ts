@@ -35,15 +35,15 @@ export const INSPECTION_ROUTES: Routes = [
     },
     children: [
       {
+        /**
+         * The record is the edit surface now (ARCHITECTURE.md §10.5): every
+         * writable property opens where it is displayed, so a separate edit
+         * page has nothing left to offer. The route stays as a redirect —
+         * installed applications and bookmarks still resolve.
+         */
         path: 'edit',
-        canActivate: [
-          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INSPECTION_WRITE] }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/inspection-edit/inspection-edit.component').then(
-            (m) => m.InspectionEditPage,
-          ),
-        title: $localize`:@@route.inspection.edit:Edit Inspection`,
+        redirectTo: '',
+        pathMatch: 'full',
       },
       {
         path: '',

@@ -26,9 +26,24 @@ This subfeature does not own top-level organization context or inspection workfl
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/equipments/create`
 - `/organizations/:organizationId/equipments/:equipmentId`
-- `/organizations/:organizationId/equipments/:equipmentId/edit`
 
 Equipment detail routes resolve active equipment context before rendering.
+
+**The record is the edit surface.** Every property `UpdateEquipmentInput`
+accepts (`type`, `subType`, `brand`, `model`, `serialNumber`, `locationLabel`)
+opens where it is displayed, through `@shared/inplace-field`
+(`EquipmentInformationPanel`); the panel owns the draft and the cancel path,
+the page owns the call (ARCHITECTURE.md §10.5). `type` reuses the same
+`EQUIPMENT_TYPE_OPTIONS` catalog as the create form; `subType` is free text —
+it has no backend enum or option set of its own, unlike `type`.
+`/:equipmentId/edit` is retired and **redirects onto the record**, so
+installed applications and bookmarks still resolve.
+
+The lifecycle status band (equipment-detail header) names the single relevant
+forward transition for the current status — commission, resume service, or
+move to maintenance — as the primary action, with Decommission as the
+secondary; both read `EquipmentOutput.status` and `facilityId` only, no
+per-status template branching.
 
 ## State and Data Access
 

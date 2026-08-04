@@ -44,6 +44,17 @@ Primary service:
 
 ## Cross-Feature Dependencies
 
+- **The record is the edit surface.** Result, performed date, notes and
+  signature open where they are displayed, through `@shared/inplace-field`;
+  the panel owns the draft and the cancel path, the page owns the call and
+  the draft-only edit gate (ARCHITECTURE.md §10.5, and the "only a draft can
+  be edited" invariant below).
+- Equipment, facility and checklist stay read-only in the panel:
+  `UpdateInspectionInput` accepts all three, but the detail page carries none
+  of their option lists, and opening a picker with nothing to pick from would
+  be worse than a plain value.
+- `/:inspectionId/edit` is retired and **redirects onto the record**, so
+  installed applications and bookmarks still resolve.
 - Depends on organization route context from the parent feature.
 - May compose facility, equipment, and checklist data as supporting inputs for inspection workflows.
 - Must not absorb ownership of those sibling subfeatures just because the create flow depends on them.

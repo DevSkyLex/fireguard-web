@@ -20,6 +20,26 @@ import { PageHeader } from '@shared/page-header';
 import { type TagDescriptor } from '@shared/tag';
 
 /**
+ * The band's single named forward transition for the equipment's current
+ * status. Absent (`null`) once the equipment is decommissioned — a terminal
+ * status has no forward action left to name.
+ */
+interface LifecycleAction {
+  /** Button label, e.g. `"Commission"`. */
+  readonly label: string;
+  /** PrimeIcons class shown on the button. */
+  readonly icon: string;
+  /** `warn` for the maintenance transition; unset for the default/primary look. */
+  readonly severity: 'warn' | undefined;
+  /** Whether the transition is currently blocked. */
+  readonly disabled: boolean;
+  /** Reason the transition is blocked, surfaced next to the button so the gate never dead-ends silently; null while enabled. */
+  readonly disabledReason: string | null;
+  /** Invokes the transition's output. */
+  readonly run: () => void;
+}
+
+/**
  * Header presenting equipment identity, status and lifecycle actions.
  */
 @Component({
@@ -39,8 +59,6 @@ export class EquipmentDetailHeader {
   public readonly canManage: InputSignal<boolean> = input(false);
   /** Whether a lifecycle transition is pending. */
   public readonly lifecycleLoading: InputSignal<boolean> = input(false);
-  /** Emits an equipment edit request. */
-  public readonly edit: OutputEmitterRef<void> = output();
   /** Emits an equipment commission request. */
   public readonly commission: OutputEmitterRef<void> = output();
   /** Emits an equipment maintenance request. */
@@ -61,4 +79,85 @@ export class EquipmentDetailHeader {
   protected statusDescriptor(status: string): TagDescriptor {
     return resolveEquipmentTag('status', status);
   }
+
+  /**
+   * Property lifecycleAction
+   * @readonly
+   *
+   * @description
+   * The lifecycle band's primary, named next action — the single relevant
+   * forward transition for the equipment's current status: commission an
+   * in-stock item, resume service after maintenance, or move an operational
+   * one into maintenance. Replaces the previous menu of independently-gated
+   * buttons (ARBITRAGES.md C5) with one line that always names what happens
+   * next instead of listing every concurrent possibility.
+   *
+   * Exhaustive over {@link EquipmentOutput.status}'s four literals with no
+   * `default` branch on purpose: a status added to the union later fails the
+   * build here rather than silently falling through.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<LifecycleAction | null>}
+   */
+  protected readonly lifecycleAction: Signal<LifecycleAction | null> = computed(
+    (): LifecycleAction | null => {
+      const equipment: EquipmentOutput = this.equipment();
+
+      switch (equipment.status) {
+        case 'under_maintenance':
+          return {
+            label: $localize`:@@equipment.resumeService:Resume service`,
+            icon: 'pi pi-check',
+            severity: undefined,
+            disabled: false,
+            disabledReason: null,
+            run: (): void => this.commission.emit(),
+          };
+        case 'operational':
+          return {
+            label: $localize`:@@equipment.maintenance:Maintenance`,
+            icon: 'pi pi-wrench',
+            severity: 'warn',
+            disabled: false,
+            disabledReason: null,
+            run: (): void => this.maintenance.emit(),
+          };
+        case 'in_stock': {
+          const disabled: boolean = !equipment.facilityId;
+
+          return {
+            label: $localize`:@@equipment.commission:Commission`,
+            icon: 'pi pi-check',
+            severity: undefined,
+            disabled,
+            disabledReason: disabled
+              ? $localize`:@@equipment.commissionBlocked:Assign a facility before commissioning`
+              : null,
+            run: (): void => this.commission.emit(),
+          };
+        }
+        case 'decommissioned':
+          return null;
+      }
+    },
+  );
+
+  /**
+   * Property canDecommission
+   * @readonly
+   *
+   * @description
+   * Whether the band's secondary action — Decommission — applies. Available
+   * from every non-terminal status; absent once already decommissioned.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canDecommission: Signal<boolean> = computed(
+    (): boolean => this.equipment().status !== 'decommissioned',
+  );
 }

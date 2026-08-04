@@ -37,8 +37,6 @@ export class InspectionDetailHeader {
   public readonly canManage: InputSignal<boolean> = input(false);
   /** Whether an inspection mutation is pending. */
   public readonly loading: InputSignal<boolean> = input(false);
-  /** Emits an inspection edit request. */
-  public readonly edit: OutputEmitterRef<void> = output();
   /** Emits an inspection submission request. */
   public readonly submitInspection: OutputEmitterRef<void> = output();
   /** Emits an inspection close request. */

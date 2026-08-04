@@ -7678,6 +7678,22 @@
         <source>Edit <x id="field" equiv-text="this.label()"/></source>
         <target>Modifier <x id="field" equiv-text="this.label()"/></target>
       </trans-unit>
+      <trans-unit id="equipment.commissionBlocked" datatype="html">
+        <source>Assign a facility before commissioning</source>
+        <target>Affectez un site avant la mise en service</target>
+      </trans-unit>
+      <trans-unit id="equipment.info.saveFailed" datatype="html">
+        <source>This change could not be saved.</source>
+        <target>Cette modification n’a pas pu être enregistrée.</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.saveFailed" datatype="html">
+        <source>This change could not be saved.</source>
+        <target>Cette modification n’a pas pu être enregistrée.</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.signature" datatype="html">
+        <source>Signature</source>
+        <target>Signature</target>
+      </trans-unit>
       <trans-unit id="route.statistics" datatype="html">
         <source>Statistics</source>
         <target>Statistiques</target>

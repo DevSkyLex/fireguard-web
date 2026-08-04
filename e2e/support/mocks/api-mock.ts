@@ -161,6 +161,18 @@ export class ApiMock {
     await this.page.route(/\/api\/notifications(\?.*)?$/, async (route) => {
       await fulfillJson(route, 200, hydraCollection([]));
     });
+    // The collaboration sidebar loads on every workspace-shell route; without
+    // these, the channel section renders its error state and the DM store
+    // surfaces a raw-HTTP error toast that races into screenshots.
+    await this.page.route(/\/api\/channels(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/direct-conversations(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(`${API_BASE_URL}/api/presence`, async (route) => {
+      await fulfillJson(route, 200, {});
+    });
     await this.page.route(`${API_BASE_URL}/api/onboarding/organization`, async (route) => {
       await fulfillJson(route, 200, onboarding);
     });

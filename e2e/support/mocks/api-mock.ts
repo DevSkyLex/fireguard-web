@@ -17,10 +17,14 @@ import {
   type OrganizationOutputFixture,
   type UserProfileOutputFixture,
 } from '../fixtures/api-fixtures';
+import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
+import type { FacilityOutputFixture } from '../fixtures/facility-fixtures';
+import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
 import {
   interventionActivityOutput,
   interventionOutput,
   interventionWorkItemOutput,
+  type InterventionChangeOutputFixture,
   type InterventionOutputFixture,
   type InterventionWorkItemOutputFixture,
 } from '../fixtures/intervention-fixtures';
@@ -427,6 +431,90 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/organizations/{organizationId}/facilities/{facility.id}` —
+   * the resource loaded by `facilityResolver` for the facility detail/edit routes.
+   */
+  public async mockFacilityDetail(
+    organizationId: string,
+    facility: FacilityOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${facility.id}`,
+      async (route) => {
+        await fulfillJson(route, 200, facility);
+      },
+    );
+  }
+
+  /**
+   * Mocks the facility-scoped equipment and inspection previews the detail
+   * page's Overview tab reads (`FacilityOverviewStore`). Both `EquipmentService.list`
+   * and `InspectionService.list` route a `facilityId` filter to these
+   * facility-scoped collection endpoints rather than the organization-wide ones.
+   */
+  public async mockFacilityOverview(
+    organizationId: string,
+    facilityId: string,
+    options: {
+      equipment?: ReadonlyArray<EquipmentOutputFixture>;
+      inspections?: ReadonlyArray<InspectionOutputFixture>;
+    } = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/facilities/${facilityId}/equipment(\\?.*)?$`,
+      ),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(options.equipment ?? []));
+      },
+    );
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/facilities/${facilityId}/inspections(\\?.*)?$`,
+      ),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(options.inspections ?? []));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment/{equipment.id}` —
+   * the resource loaded by `equipmentResolver` for the equipment detail/edit routes.
+   */
+  public async mockEquipmentDetail(
+    organizationId: string,
+    equipment: EquipmentOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/equipment/${equipment.id}`,
+      async (route) => {
+        await fulfillJson(route, 200, equipment);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/inspections/{inspection.id}` —
+   * the resource loaded by `inspectionResolver` for the inspection detail/edit routes.
+   */
+  public async mockInspectionDetail(
+    organizationId: string,
+    inspection: InspectionOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/inspections/${inspection.id}`,
+      async (route) => {
+        await fulfillJson(route, 200, inspection);
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/interventions/{id}` — consumed by the title resolver, the
    * active-intervention store, and the workspace `forkJoin`. Served repeatably.
    */
@@ -459,20 +547,26 @@ export class ApiMock {
 
   /**
    * Mocks the four workspace collection reads (`work-items`, `changes`,
-   * `issues`, `activities`) as empty collections, enough for the detail page to
-   * render its execute-phase workspace without any 404s.
+   * `issues`, `activities`) — `workItems` and `changes` default to empty,
+   * enough for the detail page to render its execute-phase workspace without
+   * any 404s; pass either to populate the checklist or the review phase's
+   * proposed-changes diff list.
    */
   public async mockInterventionWorkspace(
     interventionId: string,
-    options: { workItems?: ReadonlyArray<InterventionWorkItemOutputFixture> } = {},
+    options: {
+      workItems?: ReadonlyArray<InterventionWorkItemOutputFixture>;
+      changes?: ReadonlyArray<InterventionChangeOutputFixture>;
+    } = {},
   ): Promise<void> {
     await this.installSafetyNet();
     const workItems = options.workItems ?? [];
+    const changes = options.changes ?? [];
     await this.page.route(/\/api\/intervention-work-items(\?.*)?$/, async (route) => {
       await fulfillJson(route, 200, hydraCollection(workItems));
     });
     await this.page.route(/\/api\/intervention-changes(\?.*)?$/, async (route) => {
-      await fulfillJson(route, 200, hydraCollection([]));
+      await fulfillJson(route, 200, hydraCollection(changes));
     });
     await this.page.route(
       `${API_BASE_URL}/api/interventions/${interventionId}/issues`,

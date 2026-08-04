@@ -3,7 +3,23 @@ import {
   organizationOutput,
   type OrganizationOutputFixture,
 } from '../support/fixtures/api-fixtures';
-import { interventionOutput } from '../support/fixtures/intervention-fixtures';
+import {
+  equipmentOutput,
+  type EquipmentOutputFixture,
+} from '../support/fixtures/equipment-fixtures';
+import { facilityOutput } from '../support/fixtures/facility-fixtures';
+import {
+  inspectionOutput,
+  type InspectionOutputFixture,
+} from '../support/fixtures/inspection-fixtures';
+import {
+  interventionChangeOutput,
+  interventionOutput,
+  interventionWorkItemOutput,
+  type InterventionChangeOutputFixture,
+  type InterventionOutputFixture,
+  type InterventionWorkItemOutputFixture,
+} from '../support/fixtures/intervention-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
 import { AccountPage } from '../support/pages/account.page';
 import { ErrorPage } from '../support/pages/error.page';
@@ -42,7 +58,8 @@ import { RegisterPage } from '../support/pages/register.page';
  *
  * Filter a run by area with `--grep`, e.g. `--grep "^auth:"` or
  * `--grep "^organization:"`. Areas: auth, onboarding, misc, account,
- * organization, facilities, equipments, inspections, interventions, workspace.
+ * organization, facilities, equipments, inspections, interventions, workspace,
+ * overlays.
  */
 
 //#region Fixtures
@@ -95,6 +112,166 @@ const INTERVENTIONS = [
     plannedStartAt: PLANNED_START_AT,
   }),
 ];
+
+/** The one facility the detail/edit page scenarios deep-link into. */
+const FACILITY = facilityOutput();
+
+/** The one equipment the detail/edit page scenarios deep-link into. */
+const EQUIPMENT = equipmentOutput();
+
+/** The one inspection the detail/edit page scenarios deep-link into. */
+const INSPECTION = inspectionOutput();
+
+/** Facility-scoped equipment populating the facility detail page's Overview tab. */
+const FACILITY_EQUIPMENT: readonly EquipmentOutputFixture[] = [
+  equipmentOutput({ id: 'e2e-fac-equip-1' }),
+  equipmentOutput({
+    id: 'e2e-fac-equip-2',
+    type: 'smoke_detector',
+    subType: null,
+    brand: 'Bosch',
+    model: 'Avenar 4000',
+    serialNumber: 'SN-2024-088',
+    locationLabel: 'Server room',
+    status: 'under_maintenance',
+  }),
+];
+
+/** Facility-scoped inspections populating the facility detail page's Overview tab. */
+const FACILITY_INSPECTIONS: readonly InspectionOutputFixture[] = [
+  inspectionOutput({ id: 'e2e-fac-insp-1' }),
+  inspectionOutput({
+    id: 'e2e-fac-insp-2',
+    equipmentId: 'e2e-fac-equip-2',
+    performedAt: '2026-07-10T14:00:00+00:00',
+    result: 'fail',
+    status: 'submitted',
+    notes: 'Detector failed self-test, replacement ordered.',
+  }),
+];
+
+/**
+ * Distinct intervention fixtures for the `interventions: workspace <phase>`
+ * scenarios — one per lifecycle phase, each populated with what makes that
+ * phase legible: work items with progress in `in_progress`, a review note in
+ * `changes_requested`, a bumped revision once `published`.
+ */
+const INTERVENTION_DRAFT = interventionOutput({
+  id: 'i-phase-draft',
+  name: 'Q3 fire safety walkthrough',
+  description: 'Full walkthrough of the north campus ahead of the Q3 compliance audit.',
+  status: 'draft',
+  allowedTransitions: ['planned', 'abandoned'],
+  plannedStartAt: null,
+  dueAt: null,
+  revision: 0,
+  facilitiesCount: 1,
+});
+
+const INTERVENTION_PLANNED = interventionOutput({
+  id: 'i-phase-planned',
+  name: 'Warehouse sprinkler inspection',
+  description: 'Scheduled inspection of the warehouse sprinkler network.',
+  status: 'planned',
+  allowedTransitions: ['in_progress', 'abandoned'],
+  priority: 'high',
+  plannedStartAt: '2026-08-20T09:00:00+00:00',
+  dueAt: '2026-08-25T17:00:00+00:00',
+  facilitiesCount: 1,
+  equipmentCount: 4,
+});
+
+/** Mixed-progress checklist for the `in_progress` workspace scenario. */
+const INTERVENTION_IN_PROGRESS_WORK_ITEMS: readonly InterventionWorkItemOutputFixture[] = [
+  interventionWorkItemOutput({
+    id: 'e2e-wi-1',
+    action: 'inspect',
+    targetSummary: 'Fire extinguisher — Corridor A',
+    status: 'completed',
+  }),
+  interventionWorkItemOutput({
+    id: 'e2e-wi-2',
+    action: 'inspect',
+    targetSummary: 'Smoke detector — Server room',
+    status: 'completed',
+  }),
+  interventionWorkItemOutput({
+    id: 'e2e-wi-3',
+    action: 'inspect',
+    targetSummary: 'Fire door — East wing',
+    status: 'planned',
+  }),
+];
+
+const INTERVENTION_IN_PROGRESS = interventionOutput({
+  id: 'i-phase-progress',
+  name: 'North Building annual inspection',
+  description: 'Annual fire-safety inspection of the North Building.',
+  status: 'in_progress',
+  plannedStartAt: '2026-08-01T09:00:00+00:00',
+  dueAt: '2026-08-10T17:00:00+00:00',
+  revision: 1,
+  facilitiesCount: 1,
+  equipmentCount: 3,
+  inspectionsCount: 2,
+  workItemsCount: INTERVENTION_IN_PROGRESS_WORK_ITEMS.length,
+  completedWorkItemsCount: 2,
+});
+
+/** One proposed change awaiting publication, for the `submitted` workspace scenario. */
+const INTERVENTION_SUBMITTED_CHANGES: readonly InterventionChangeOutputFixture[] = [
+  interventionChangeOutput({
+    id: 'e2e-chg-1',
+    resource: 'equipment/e2e-fac-equip-1',
+    patch: { status: 'operational' },
+  }),
+];
+
+const INTERVENTION_SUBMITTED = interventionOutput({
+  id: 'i-phase-submitted',
+  name: 'Workshop compliance review',
+  description: 'Submitted for review after completing the workshop checklist.',
+  status: 'submitted',
+  allowedTransitions: ['published', 'changes_requested'],
+  priority: 'high',
+  plannedStartAt: '2026-07-28T09:00:00+00:00',
+  dueAt: '2026-08-12T17:00:00+00:00',
+  revision: 2,
+  facilitiesCount: 1,
+  equipmentCount: 5,
+  inspectionsCount: 3,
+  proposedChangesCount: INTERVENTION_SUBMITTED_CHANGES.length,
+});
+
+const INTERVENTION_CHANGES_REQUESTED = interventionOutput({
+  id: 'i-phase-changes',
+  name: 'East wing evacuation route check',
+  description: 'Reviewer sent this back for additional evidence.',
+  status: 'changes_requested',
+  allowedTransitions: ['in_progress', 'abandoned'],
+  reviewNote:
+    'The fire door inspection photo is missing — please add evidence before resubmitting.',
+  plannedStartAt: '2026-07-20T09:00:00+00:00',
+  dueAt: '2026-08-15T17:00:00+00:00',
+  revision: 2,
+  facilitiesCount: 1,
+  equipmentCount: 2,
+  inspectionsCount: 1,
+});
+
+const INTERVENTION_PUBLISHED = interventionOutput({
+  id: 'i-phase-published',
+  name: 'South Facility Q2 inspection',
+  description: 'Published after the Q2 compliance cycle.',
+  status: 'published',
+  allowedTransitions: [],
+  plannedStartAt: '2026-06-01T09:00:00+00:00',
+  dueAt: '2026-06-10T17:00:00+00:00',
+  revision: 4,
+  facilitiesCount: 1,
+  equipmentCount: 6,
+  inspectionsCount: 4,
+});
 //#endregion
 
 //#region Spec-local mocks (channels, conversations, saved — not yet in ApiMock)
@@ -286,6 +463,29 @@ async function mockSavedMessages(page: Page, rows: readonly MessageRow[]): Promi
 }
 
 /**
+ * Mocks the one channel `overlays: assistant-panel` and `overlays:
+ * channel-info-panel` deep-link into — the same shape as
+ * `channelConversationRun`, kept as its own function rather than shared with
+ * it so that scenario's mocks stay exactly as they are.
+ */
+async function mockChannelWorkspaceForOverlay(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await mockChannelsList(page, [{ id: 'c1', name: 'North Building' }]);
+  await mockSingleChannel(page, 'c1', 'North Building');
+  await mockThreadMessages(page, 'c1', [
+    {
+      id: 'm1',
+      author: 'member-1',
+      authorDisplayName: 'Amelie Rousseau',
+      body: '<p>Extinguisher checked, all good.</p>',
+      createdAt: '2026-07-20T09:00:00+00:00',
+    },
+  ]);
+  await mockDirectConversationsList(page, []);
+}
+
+/**
  * Mocks an empty Hydra collection at the given pattern — the same shape
  * `hydraCollection([])` already produces elsewhere in the suite, reused here
  * for the facilities/equipments/inspections reference-data endpoints that
@@ -379,6 +579,145 @@ function interventionsViewRun(view: 'list' | 'board' | 'calendar'): Scenario['ru
   };
 }
 
+/** The facility detail page, its Overview tab populated with a small equipment/inspection preview. */
+async function facilityDetailRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockFacilityDetail(ORGANIZATION.id, FACILITY);
+  await api.mockFacilityOverview(ORGANIZATION.id, FACILITY.id, {
+    equipment: FACILITY_EQUIPMENT,
+    inspections: FACILITY_INSPECTIONS,
+  });
+  await page.goto(`/organizations/${ORGANIZATION.id}/facilities/${FACILITY.id}`);
+  await expect(page.locator('#facility-detail')).toBeVisible({ timeout: 15_000 });
+}
+
+/** The facility edit page — `FacilityForm` needs no reference data of its own (section 10.4). */
+async function facilityEditRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockFacilityDetail(ORGANIZATION.id, FACILITY);
+  await page.goto(`/organizations/${ORGANIZATION.id}/facilities/${FACILITY.id}/edit`);
+  await expect(page.locator('#facility-edit')).toBeVisible({ timeout: 15_000 });
+}
+
+/**
+ * The equipment detail page. Its Overview tab needs only the equipment itself;
+ * the attachments/maintenance-log tables load unconditionally in the
+ * constructor (empty is enough since only Overview is captured), and the
+ * assignment panel's facility options reuse `mockInterventionPlanningOptions`.
+ */
+async function equipmentDetailRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockEquipmentDetail(ORGANIZATION.id, EQUIPMENT);
+  await api.mockInterventionPlanningOptions(ORGANIZATION.id);
+  await mockEmptyCollection(
+    page,
+    new RegExp(
+      `/api/organizations/${ORGANIZATION.id}/equipment/${EQUIPMENT.id}/attachments(\\?.*)?$`,
+    ),
+  );
+  await mockEmptyCollection(
+    page,
+    new RegExp(
+      `/api/organizations/${ORGANIZATION.id}/equipment/${EQUIPMENT.id}/maintenance-logs(\\?.*)?$`,
+    ),
+  );
+  await page.goto(`/organizations/${ORGANIZATION.id}/equipments/${EQUIPMENT.id}`);
+  await expect(page.locator('#equipment-detail')).toBeVisible({ timeout: 15_000 });
+}
+
+/** The equipment edit page — `EquipmentForm` needs no reference data of its own (section 10.4). */
+async function equipmentEditRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockEquipmentDetail(ORGANIZATION.id, EQUIPMENT);
+  await page.goto(`/organizations/${ORGANIZATION.id}/equipments/${EQUIPMENT.id}/edit`);
+  await expect(page.locator('#equipment-edit')).toBeVisible({ timeout: 15_000 });
+}
+
+/** The inspection edit page — reads the same equipment/facility/checklist reference data as inspection create. */
+async function inspectionEditRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockInspectionDetail(ORGANIZATION.id, INSPECTION);
+  await api.mockInterventionPlanningOptions(ORGANIZATION.id);
+  await mockInspectionCreateReferenceData(page);
+  await page.goto(`/organizations/${ORGANIZATION.id}/inspections/${INSPECTION.id}/edit`);
+  await expect(page.locator('#inspection-edit')).toBeVisible({ timeout: 15_000 });
+}
+
+/** The inspection detail page — Overview tab, with an empty non-conformity collection. */
+async function inspectionDetailRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockInspectionDetail(ORGANIZATION.id, INSPECTION);
+  await mockEmptyCollection(
+    page,
+    new RegExp(
+      `/api/organizations/${ORGANIZATION.id}/inspections/${INSPECTION.id}/non-conformities(\\?.*)?$`,
+    ),
+  );
+  await page.goto(`/organizations/${ORGANIZATION.id}/inspections/${INSPECTION.id}`);
+  await expect(page.locator('#inspection-detail')).toBeVisible({ timeout: 15_000 });
+}
+
+/**
+ * The facility create page driven into a mocked quota 409 so the actionable
+ * upgrade dialog is the captured subject.
+ */
+async function quotaDialogRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await page.route(
+    new RegExp(`/api/organizations/${ORGANIZATION.id}/facilities$`),
+    async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({
+          '@id': '/api/errors/409',
+          '@type': 'Error',
+          status: 409,
+          type: '/errors/409',
+          title: 'Conflict',
+          detail: 'Facility quota exceeded for the current plan.',
+        }),
+      });
+    },
+  );
+  await page.goto(`/organizations/${ORGANIZATION.id}/facilities/create`);
+  await expect(page.locator('#facility-create')).toBeVisible({ timeout: 15_000 });
+  await page.locator('#type').click();
+  await page.getByRole('option').first().click();
+  await page.locator('#name').fill('Quota Capped Site');
+  await page.getByRole('button', { name: 'Create Facility' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Plan limit reached', { timeout: 15_000 });
+}
+
+/** The intervention workspace at a given lifecycle phase, mirroring the `interventions: detail` scenario's setup. */
+function interventionWorkspaceRun(
+  intervention: InterventionOutputFixture,
+  options: {
+    workItems?: ReadonlyArray<InterventionWorkItemOutputFixture>;
+    changes?: ReadonlyArray<InterventionChangeOutputFixture>;
+  } = {},
+): Scenario['run'] {
+  return async (page: Page): Promise<void> => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+    await api.mockInterventionDetail(intervention);
+    await api.mockInterventionWorkspace(intervention.id, options);
+    await api.mockInterventionPlanningOptions(ORGANIZATION.id);
+    await new InterventionDetailPage(page).goto(ORGANIZATION.id, intervention.id);
+  };
+}
+
 async function channelConversationRun(page: Page): Promise<void> {
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
@@ -439,6 +778,68 @@ async function savedMessagesRun(page: Page): Promise<void> {
   ]);
   await page.goto(`/organizations/${ORGANIZATION.id}/saved`);
   await expect(page.getByTestId('saved-messages')).toBeVisible({ timeout: 15_000 });
+}
+
+/** Interventions list → "New intervention" → the guided creation drawer. */
+async function interventionCreateDrawerRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockInterventionPlanningOptions(ORGANIZATION.id);
+  await api.mockInterventionList(INTERVENTIONS);
+  await new InterventionsPage(page).goto(ORGANIZATION.id);
+  await page.getByRole('button', { name: 'New intervention' }).click();
+  await expect(page.getByText('Create a field intervention')).toBeVisible({ timeout: 15_000 });
+}
+
+/** A draft workspace → "Edit planning" → the planning-details edit drawer. */
+async function interventionEditDrawerRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockInterventionDetail(INTERVENTION_DRAFT);
+  await api.mockInterventionWorkspace(INTERVENTION_DRAFT.id);
+  await api.mockInterventionPlanningOptions(ORGANIZATION.id);
+  await new InterventionDetailPage(page).goto(ORGANIZATION.id, INTERVENTION_DRAFT.id);
+  await page.getByRole('button', { name: 'Edit planning' }).click();
+  await expect(page.getByText('Edit details', { exact: true })).toBeVisible({ timeout: 15_000 });
+}
+
+/** Any workspace page → the header bell → the notification popover (empty state). */
+async function notificationBellRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await page.goto(`/organizations/${ORGANIZATION.id}/members`);
+  await expect(page.locator('#organization-members')).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Notifications' }).click();
+  await expect(page.getByText('No notifications yet')).toBeVisible({ timeout: 15_000 });
+}
+
+/** A channel route → the header's assistant toggle → the assistant panel. */
+async function assistantPanelRun(page: Page): Promise<void> {
+  await mockChannelWorkspaceForOverlay(page);
+  await page.goto(`/organizations/${ORGANIZATION.id}/channels/c1`);
+  await expect(page.getByTestId('channel-conversation')).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId('assistant-toggle').click();
+  await expect(page.getByTestId('assistant-intro')).toBeVisible({ timeout: 15_000 });
+}
+
+/**
+ * A channel route → the header's info toggle → the channel info panel.
+ *
+ * The panel is already showing by default on desktop (`panelVisible` defaults
+ * open) but hidden by default on mobile (the shell force-closes it below the
+ * `lg` breakpoint), so the toggle is only clicked when it is not already the
+ * panel on screen — clicking an already-open toggle would close it instead.
+ */
+async function channelInfoPanelRun(page: Page): Promise<void> {
+  await mockChannelWorkspaceForOverlay(page);
+  await page.goto(`/organizations/${ORGANIZATION.id}/channels/c1`);
+  await expect(page.getByTestId('channel-conversation')).toBeVisible({ timeout: 15_000 });
+  const toggle = page.getByTestId('channel-info-toggle');
+  await expect(toggle).toBeVisible({ timeout: 15_000 });
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+    await toggle.click();
+  }
+  await expect(page.locator('#workspace-panel')).toBeVisible({ timeout: 15_000 });
 }
 
 const SCENARIOS: readonly Scenario[] = [
@@ -689,7 +1090,7 @@ const SCENARIOS: readonly Scenario[] = [
     },
   },
 
-  // ── facilities (list + create only — detail/edit skipped, see report) ───
+  // ── facilities (list, create, detail, edit) ──────────────────────────────
   {
     area: 'facilities',
     name: 'list',
@@ -702,8 +1103,20 @@ const SCENARIOS: readonly Scenario[] = [
     slug: 'facilities-create',
     run: referenceDataPageRun('facilities/create', '#facility-create'),
   },
+  {
+    area: 'facilities',
+    name: 'detail',
+    slug: 'facilities-detail',
+    run: facilityDetailRun,
+  },
+  {
+    area: 'facilities',
+    name: 'edit',
+    slug: 'facilities-edit',
+    run: facilityEditRun,
+  },
 
-  // ── equipments (list + create only — detail/edit skipped, see report) ───
+  // ── equipments (list, create, detail, edit) ──────────────────────────────
   {
     area: 'equipments',
     name: 'list',
@@ -716,8 +1129,20 @@ const SCENARIOS: readonly Scenario[] = [
     slug: 'equipments-create',
     run: referenceDataPageRun('equipments/create', '#equipment-create'),
   },
+  {
+    area: 'equipments',
+    name: 'detail',
+    slug: 'equipments-detail',
+    run: equipmentDetailRun,
+  },
+  {
+    area: 'equipments',
+    name: 'edit',
+    slug: 'equipments-edit',
+    run: equipmentEditRun,
+  },
 
-  // ── inspections (list + create only — detail/edit skipped, see report) ──
+  // ── inspections (list, create, detail, edit) ─────────────────────────────
   {
     area: 'inspections',
     name: 'list',
@@ -733,6 +1158,18 @@ const SCENARIOS: readonly Scenario[] = [
       '#inspection-create',
       mockInspectionCreateReferenceData,
     ),
+  },
+  {
+    area: 'inspections',
+    name: 'detail',
+    slug: 'inspections-detail',
+    run: inspectionDetailRun,
+  },
+  {
+    area: 'inspections',
+    name: 'edit',
+    slug: 'inspections-edit',
+    run: inspectionEditRun,
   },
 
   // ── interventions (workspace shell, authenticated) ───────────────────────
@@ -767,6 +1204,46 @@ const SCENARIOS: readonly Scenario[] = [
       await new InterventionDetailPage(page).goto(ORGANIZATION.id, INTERVENTION.id);
     },
   },
+  {
+    area: 'interventions',
+    name: 'workspace draft',
+    slug: 'interventions-workspace-draft',
+    run: interventionWorkspaceRun(INTERVENTION_DRAFT),
+  },
+  {
+    area: 'interventions',
+    name: 'workspace planned',
+    slug: 'interventions-workspace-planned',
+    run: interventionWorkspaceRun(INTERVENTION_PLANNED),
+  },
+  {
+    area: 'interventions',
+    name: 'workspace in_progress',
+    slug: 'interventions-workspace-in-progress',
+    run: interventionWorkspaceRun(INTERVENTION_IN_PROGRESS, {
+      workItems: INTERVENTION_IN_PROGRESS_WORK_ITEMS,
+    }),
+  },
+  {
+    area: 'interventions',
+    name: 'workspace submitted',
+    slug: 'interventions-workspace-submitted',
+    run: interventionWorkspaceRun(INTERVENTION_SUBMITTED, {
+      changes: INTERVENTION_SUBMITTED_CHANGES,
+    }),
+  },
+  {
+    area: 'interventions',
+    name: 'workspace published',
+    slug: 'interventions-workspace-published',
+    run: interventionWorkspaceRun(INTERVENTION_PUBLISHED),
+  },
+  {
+    area: 'interventions',
+    name: 'workspace changes-requested',
+    slug: 'interventions-workspace-changes-requested',
+    run: interventionWorkspaceRun(INTERVENTION_CHANGES_REQUESTED),
+  },
 
   // ── workspace collaboration (workspace shell, authenticated) ─────────────
   {
@@ -786,6 +1263,44 @@ const SCENARIOS: readonly Scenario[] = [
     name: 'saved messages',
     slug: 'workspace-saved',
     run: savedMessagesRun,
+  },
+
+  // ── overlays (dialogs, drawers, popovers and panels — clicked open) ──────
+  {
+    area: 'overlays',
+    name: 'intervention-create-drawer',
+    slug: 'overlays-intervention-create-drawer',
+    run: interventionCreateDrawerRun,
+  },
+  {
+    area: 'overlays',
+    name: 'intervention-edit-drawer',
+    slug: 'overlays-intervention-edit-drawer',
+    run: interventionEditDrawerRun,
+  },
+  {
+    area: 'overlays',
+    name: 'notification-bell',
+    slug: 'overlays-notification-bell',
+    run: notificationBellRun,
+  },
+  {
+    area: 'overlays',
+    name: 'assistant-panel',
+    slug: 'overlays-assistant-panel',
+    run: assistantPanelRun,
+  },
+  {
+    area: 'overlays',
+    name: 'channel-info-panel',
+    slug: 'overlays-channel-info-panel',
+    run: channelInfoPanelRun,
+  },
+  {
+    area: 'overlays',
+    name: 'quota-dialog',
+    slug: 'overlays-quota-dialog',
+    run: quotaDialogRun,
   },
 ];
 //#endregion

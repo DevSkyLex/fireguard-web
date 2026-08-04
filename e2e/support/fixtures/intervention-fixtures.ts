@@ -165,6 +165,40 @@ export function interventionActivityOutput(
   };
 }
 
+export interface InterventionChangeOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly intervention: string;
+  readonly workItem: string | null;
+  readonly resource: string;
+  readonly patch: Record<string, unknown>;
+  readonly status: string;
+  readonly revision: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+/** A proposed change awaiting publication, rendered in the review phase's diff list. */
+export function interventionChangeOutput(
+  overrides: Partial<InterventionChangeOutputFixture> = {},
+): InterventionChangeOutputFixture {
+  return {
+    '@id': '/api/intervention-changes/e2e-change-1',
+    '@type': 'InterventionChange',
+    id: 'e2e-change-1',
+    intervention: `/api/interventions/${E2E_INTERVENTION_ID}`,
+    workItem: null,
+    resource: 'equipment/e2e-equipment-1',
+    patch: { status: 'operational' },
+    status: 'proposed',
+    revision: 0,
+    createdAt: '2026-07-01T00:00:00+00:00',
+    updatedAt: '2026-07-01T00:00:00+00:00',
+    ...overrides,
+  };
+}
+
 /**
  * One persisted outbox operation record, matching
  * `InterventionOutboxOperationFor` — used to seed IndexedDB directly for the

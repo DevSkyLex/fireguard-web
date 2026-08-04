@@ -188,8 +188,12 @@ export class FacilityCreatePage {
         operation.error &&
         isQuotaExceededError(operation.error)
       ) {
-        this.quotaStore.reload();
-        this.quotaDialogVisible.set(true);
+        // untracked — reload() reads quota state synchronously; tracked here,
+        // every pending patch would re-trigger this effect (infinite loop).
+        untracked((): void => {
+          this.quotaStore.reload();
+          this.quotaDialogVisible.set(true);
+        });
       }
     });
   }

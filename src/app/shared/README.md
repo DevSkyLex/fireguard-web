@@ -39,6 +39,7 @@ A concept with **no UI** creates no `ui/` and stays flat — `initials`,
 | `chat/`                         | conversation surface: thread, message row, body, reactions, attachments, actions |
 | `empty-state/` · `error-state/` | icon + title + description placeholders; `error-state` also ships `error-banner` |
 | `infinite-scroll/`              | infinite-scroll attribute directive                                              |
+| `inplace-field/`                | read-and-write-in-place property shell around `p-inplace` (§10.5)                |
 | `initials/`                     | `deriveInitials` pure helper                                                     |
 | `logo/`                         | brand mark                                                                       |
 | `match-fields/`                 | cross-field equality validator + error key                                       |

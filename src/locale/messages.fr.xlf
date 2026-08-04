@@ -7646,6 +7646,38 @@
         <source>Everything</source>
         <target>Tout à plat</target>
       </trans-unit>
+      <trans-unit id="common.clickToEdit" datatype="html">
+        <source> click a field to change it </source>
+        <target> cliquez un champ pour le modifier </target>
+      </trans-unit>
+      <trans-unit id="common.notProvided" datatype="html">
+        <source>Not provided</source>
+        <target>Non renseigné</target>
+      </trans-unit>
+      <trans-unit id="facility.info.name" datatype="html">
+        <source>Name</source>
+        <target>Nom</target>
+      </trans-unit>
+      <trans-unit id="facility.info.coordinates" datatype="html">
+        <source>Coordinates</source>
+        <target>Coordonnées</target>
+      </trans-unit>
+      <trans-unit id="facility.info.latitude" datatype="html">
+        <source>Latitude</source>
+        <target>Latitude</target>
+      </trans-unit>
+      <trans-unit id="facility.info.longitude" datatype="html">
+        <source>Longitude</source>
+        <target>Longitude</target>
+      </trans-unit>
+      <trans-unit id="facility.info.saveFailed" datatype="html">
+        <source>This change could not be saved.</source>
+        <target>Cette modification n’a pas pu être enregistrée.</target>
+      </trans-unit>
+      <trans-unit id="common.editField" datatype="html">
+        <source>Edit <x id="field" equiv-text="this.label()"/></source>
+        <target>Modifier <x id="field" equiv-text="this.label()"/></target>
+      </trans-unit>
       <trans-unit id="route.statistics" datatype="html">
         <source>Statistics</source>
         <target>Statistiques</target>

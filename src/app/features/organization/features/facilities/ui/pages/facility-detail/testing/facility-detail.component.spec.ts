@@ -100,6 +100,9 @@ describe('FacilityDetailPage', () => {
     loadedParentIds: signal<readonly string[]>([]),
     loadingParentIds: signal<readonly string[]>([]),
     deleteCallState: signal<{ status: string }>({ status: 'idle' }),
+    isUpdating: signal<boolean>(false),
+    updateError: signal<null>(null),
+    update: vi.fn(),
     ensureParentOptionsLoaded: vi.fn(),
     ensureChildFacilitiesLoaded: vi.fn(),
     ensureFacilityDescendantsLoaded: vi.fn(),
@@ -500,18 +503,19 @@ describe('FacilityDetailPage', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['..', '..'], expect.anything());
   });
 
-  it('should navigate to the edit page when onEdit is called', () => {
+  it('should persist a property confirmed in place instead of routing to a form', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.detectChanges();
 
-    const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    fixture.componentInstance['onFieldChanged']({ address: '12 rue des Forges' });
 
-    fixture.componentInstance['onEdit']();
-
-    expect(navigateSpy).toHaveBeenCalledWith(['edit'], expect.anything());
+    expect(mockFacilityStore.update).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: MOCK_FACILITY.id,
+      input: { address: '12 rue des Forges' },
+    });
   });
 
   it('should gate header management actions on the FACILITIES_WRITE permission', () => {

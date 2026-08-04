@@ -38,15 +38,15 @@ export const FACILITY_ROUTES: Routes = [
     },
     children: [
       {
+        /**
+         * The record is the edit surface now (ARCHITECTURE.md §10.5): every
+         * writable property opens where it is displayed, so a separate edit
+         * page has nothing left to offer. The route stays as a redirect —
+         * installed applications and bookmarks still resolve.
+         */
         path: 'edit',
-        canActivate: [
-          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE] }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/facility-edit/facility-edit.component').then(
-            (m) => m.FacilityEditPage,
-          ),
-        title: $localize`:@@route.facility.edit:Edit Facility`,
+        redirectTo: '',
+        pathMatch: 'full',
       },
       {
         path: '',

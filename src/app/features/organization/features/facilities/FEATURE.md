@@ -96,6 +96,13 @@ Primary service:
 
 ## Cross-Feature Dependencies
 
+- **The record is the edit surface.** Every writable property of a site opens
+  where it is displayed, through `@shared/inplace-field`; the panel owns the
+  draft and the cancel path, the page owns the call (ARCHITECTURE.md §10.5).
+  `type` and the parent stay read-only because `UpdateFacilityInput` accepts
+  neither — the parent moves through its own action.
+- `/:facilityId/edit` is retired and **redirects onto the record**, so installed
+  applications and bookmarks still resolve.
 - Depends on organization route context from the parent organization feature.
 - The parent feature consumes this subfeature's `state` barrel (`FacilityTreeStore`)
   and its `ui/components` barrel (`AssetEquipmentTab`, `AssetInspectionTab`)

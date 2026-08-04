@@ -60,20 +60,6 @@ export class FacilityDetailHeader {
 
   //#region Outputs
   /**
-   * Property edit
-   * @readonly
-   *
-   * @description
-   * Emitted when the user requests editing the facility.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<void>}
-   */
-  public readonly edit: OutputEmitterRef<void> = output<void>();
-
-  /**
    * Property move
    * @readonly
    *

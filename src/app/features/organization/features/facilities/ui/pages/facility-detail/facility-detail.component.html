@@ -19,7 +19,6 @@
         [facility]="facility"
         [canManage]="canManage()"
         [deleting]="isDeleting()"
-        (edit)="onEdit()"
         (move)="onOpenMoveDialog()"
         (delete)="onConfirmDelete()"
       />
@@ -73,7 +72,13 @@
               </div>
 
               <aside class="flex min-h-0 flex-col gap-6 xl:col-span-4">
-                <app-facility-information-panel [facility]="facility" />
+                <app-facility-information-panel
+                  [facility]="facility"
+                  [editable]="canManage()"
+                  [saving]="store.isUpdating()"
+                  [saveError]="updateErrorMessage()"
+                  (changed)="onFieldChanged($event)"
+                />
                 <app-facility-installations-panel
                   [facility]="facility"
                   (navigate)="onNavigateToFacility($event)"

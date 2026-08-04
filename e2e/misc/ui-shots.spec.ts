@@ -654,13 +654,17 @@ async function facilityDetailRun(page: Page): Promise<void> {
   await expect(page.locator('#facility-detail')).toBeVisible({ timeout: 15_000 });
 }
 
-/** The facility edit page — `FacilityForm` needs no reference data of its own (section 10.4). */
-async function facilityEditRun(page: Page): Promise<void> {
+/**
+ * `/edit` now redirects onto the record itself, which is the edit surface: the
+ * capture proves the legacy URL still resolves rather than 404s.
+ */
+async function facilityEditRedirectRun(page: Page): Promise<void> {
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
   await api.mockFacilityDetail(ORGANIZATION.id, FACILITY);
+  await api.mockFacilityOverview(ORGANIZATION.id, FACILITY.id, { equipments: [], inspections: [] });
   await page.goto(`/organizations/${ORGANIZATION.id}/facilities/${FACILITY.id}/edit`);
-  await expect(page.locator('#facility-edit')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('#facility-detail')).toBeVisible({ timeout: 15_000 });
 }
 
 /**
@@ -1275,9 +1279,9 @@ const SCENARIOS: readonly Scenario[] = [
   },
   {
     area: 'facilities',
-    name: 'edit',
-    slug: 'facilities-edit',
-    run: facilityEditRun,
+    name: 'edit redirect',
+    slug: 'facilities-edit-redirect',
+    run: facilityEditRedirectRun,
   },
 
   // ── equipments (list, create, detail, edit) ──────────────────────────────

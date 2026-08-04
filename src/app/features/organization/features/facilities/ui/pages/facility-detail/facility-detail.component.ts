@@ -18,6 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
+import type { StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   DETAIL_TAB_LIST_PT,
@@ -27,6 +28,7 @@ import {
 import type {
   FacilityOutput,
   MoveFacilityInput,
+  UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
 import {
   ActiveFacilityStore,
@@ -452,21 +454,47 @@ export class FacilityDetailPage {
   }
   //#endregion
 
-  //#region Methods
   /**
-   * Method onEdit
-   * @method onEdit
+   * Property updateErrorMessage
+   * @readonly
    *
    * @description
-   * Navigates to the facility edit page relative to the current route.
+   * Human message for a failed in-place save, shown under the field that
+   * produced it.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
+   * @type {Signal<string | null>}
+   */
+  protected readonly updateErrorMessage: Signal<string | null> = computed<string | null>(() => {
+    const error: StoreError | null = this.store.updateError();
+    if (!error) return null;
+
+    return error.message ?? $localize`:@@facility.info.saveFailed:This change could not be saved.`;
+  });
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method onFieldChanged
+   * @method onFieldChanged
+   *
+   * @description
+   * Persists one property confirmed in place. The panel owns the draft and the
+   * cancel path; the page owns the call (ARCHITECTURE.md §10.5).
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {UpdateFacilityInput} patch - Patch for the changed property.
    * @returns {void}
    */
-  protected onEdit(): void {
-    this.router.navigate(['edit'], { relativeTo: this.route });
+  protected onFieldChanged(patch: UpdateFacilityInput): void {
+    const facilityId: string | undefined = this.facility()?.id;
+    if (!facilityId) return;
+
+    this.store.update({ organizationId: this.organizationId(), facilityId, input: patch });
   }
 
   /**

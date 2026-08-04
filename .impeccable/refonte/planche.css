@@ -619,22 +619,43 @@ table.matrix tr:last-child td {
   border-radius: 4px;
 }
 
+/* Paires claires = celles du preset (fond -100, texte -700), AA garanties. */
 .mock .m-chip--green {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.mock .m-chip--blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.mock .m-chip--amber {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.mock .m-chip--red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+[data-theme='dark'] .mock .m-chip--green {
   background: var(--m-green-soft);
   color: var(--m-green);
 }
 
-.mock .m-chip--blue {
+[data-theme='dark'] .mock .m-chip--blue {
   background: var(--m-blue-soft);
   color: var(--m-blue);
 }
 
-.mock .m-chip--amber {
+[data-theme='dark'] .mock .m-chip--amber {
   background: var(--m-amber-soft);
   color: var(--m-amber);
 }
 
-.mock .m-chip--red {
+[data-theme='dark'] .mock .m-chip--red {
   background: var(--m-red-soft);
   color: var(--m-red);
 }

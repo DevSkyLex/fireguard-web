@@ -359,7 +359,7 @@ Width `min(25rem, calc(100vw - 2rem))`, 12px radius (`border.radius.xl`, the lar
 
 ### Overlays — sizes
 
-Dialog widths come from `shared/overlay-size`, three steps and nothing else: **S `28rem`** (confirmations), **M `32rem`** (single-column forms), **L `42rem`** (rich or two-column bodies) — historical 30rem and 36rem migrate to M and L. Every dialog also takes the one canonical `breakpoints` object (`≤ 640px → 92vw`) so no dialog ever exceeds a phone. Drawers are `!w-full sm:!w-[34rem]`.
+Dialog widths come from `shared/overlay-size`, three steps and nothing else: **S `28rem`** (confirmations), **M `32rem`** (single-column forms), **L `42rem`** (rich or two-column bodies) — historical 30rem and 36rem migrate to M and L. Every dialog also takes the one canonical `breakpoints` object (`≤ 640px → 92vw`) so no dialog ever exceeds a phone. Drawers are `!w-full sm:!w-[34rem]`, with one sanctioned wide tier: a drawer hosting a guided **two-column form** (the intervention create/edit drawers) may take `md:!w-[45rem] xl:!w-[60rem]` — the exception is the two-column body, not taste.
 
 ### Loading
 

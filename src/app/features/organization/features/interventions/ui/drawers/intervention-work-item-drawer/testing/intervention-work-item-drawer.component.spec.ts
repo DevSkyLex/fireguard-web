@@ -1,13 +1,12 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { DrawerPassThroughOptions } from 'primeng/drawer';
 import { InterventionWorkItemDrawer } from '../intervention-work-item-drawer.component';
 
 type InterventionWorkItemDrawerHarness = {
   readonly visible: () => boolean;
   readonly loading: () => boolean;
   readonly disabled: () => boolean;
-  readonly drawerPt: DrawerPassThroughOptions;
+  readonly drawerStyleClass: string;
 };
 
 describe('InterventionWorkItemDrawer', () => {
@@ -45,9 +44,8 @@ describe('InterventionWorkItemDrawer', () => {
 
   it('should size the panel as a compact right-side drawer', () => {
     const component = createComponent();
-    const rootClass = (component.drawerPt.root as { class: string }).class;
 
-    expect(rootClass).toContain('!w-full');
-    expect(rootClass).toContain('sm:!w-[34rem]');
+    expect(component.drawerStyleClass).toContain('!w-full');
+    expect(component.drawerStyleClass).toContain('sm:!w-[34rem]');
   });
 });

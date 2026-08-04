@@ -50,7 +50,7 @@
             [cdkDragDisabled]="dragDisabled()"
             [cdkDragStartDelay]="dragStartDelay"
             data-testid="board-card"
-            class="cursor-grab rounded-lg border border-surface-200 bg-surface-0 shadow-sm transition-[transform,border-color,box-shadow] duration-150 hover:-translate-y-px hover:border-surface-300 active:translate-y-0 active:cursor-grabbing motion-reduce:transition-none motion-reduce:hover:transform-none dark:border-surface-800 dark:bg-surface-900 dark:shadow-none dark:hover:border-surface-600"
+            class="cursor-grab rounded-md border border-surface-200 bg-surface-0 transition-colors duration-150 hover:bg-surface-50 active:cursor-grabbing dark:border-surface-800 dark:bg-surface-900 dark:hover:bg-white/5 [&.cdk-drag-preview]:shadow-md"
           >
             @if (cardTemplate(); as template) {
               <ng-container *ngTemplateOutlet="template; context: { $implicit: item }" />

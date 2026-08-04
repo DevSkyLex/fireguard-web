@@ -1,12 +1,12 @@
 <section
-  class="rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  class="rounded-md border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
   <header
     class="flex flex-wrap items-center gap-2 border-b border-surface-100 px-4 py-3 dark:border-surface-800"
   >
     <h2
       i18n="@@intervention.guide.title"
-      class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+      class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
     >
       Prepare the intervention
     </h2>
@@ -28,7 +28,7 @@
         <li class="shrink-0 md:shrink">
           <button
             type="button"
-            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-900"
+            class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:hover:bg-white/5"
             [class.bg-surface-100]="activeStep() === step.id"
             [class.dark:bg-surface-800]="activeStep() === step.id"
             [attr.aria-current]="activeStep() === step.id ? 'step' : null"
@@ -36,7 +36,7 @@
           >
             @if (completion()[step.id]) {
               <span
-                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
+                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-600 dark:bg-green-400/10 dark:text-green-400"
               >
                 <i class="pi pi-check text-xs" aria-hidden="true"></i>
               </span>
@@ -80,7 +80,7 @@
         @case ('context') {
           <h3
             i18n="@@intervention.guide.contextTitle"
-            class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+            class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
           >
             What is this intervention about?
           </h3>
@@ -124,7 +124,7 @@
         @case ('scope') {
           <h3
             i18n="@@intervention.guide.scopeTitle"
-            class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+            class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
           >
             Where does the work happen?
           </h3>
@@ -171,7 +171,7 @@
             </div>
             @if (workItems().length > 0) {
               <ul
-                class="divide-y divide-surface-100 rounded-lg border border-surface-200 dark:divide-surface-800 dark:border-surface-800"
+                class="divide-y divide-surface-100 rounded-md border border-surface-200 dark:divide-surface-800 dark:border-surface-800"
               >
                 @for (item of workItems(); track item.id) {
                   <li class="flex items-center gap-2 px-3 py-2 text-sm">
@@ -206,7 +206,7 @@
         @case ('team') {
           <h3
             i18n="@@intervention.guide.teamTitle"
-            class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+            class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
           >
             Who is involved?
           </h3>
@@ -280,7 +280,7 @@
         @case ('schedule') {
           <h3
             i18n="@@intervention.guide.scheduleTitle"
-            class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+            class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
           >
             When does it happen?
           </h3>

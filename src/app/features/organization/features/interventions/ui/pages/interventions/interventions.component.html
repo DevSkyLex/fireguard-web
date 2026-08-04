@@ -3,47 +3,39 @@
   one capped at `max-w-7xl` and centred, which left it visibly narrower than
   Facilities or Equipment on the same screen — and the cap cost most where it
   helped least, squeezing the Board and Calendar views that actually want the
-  room. The scroll model (`min-h-0 flex-1 overflow-y-auto`) is this page's own
-  and stays: it owns an internally scrolling column, unlike its siblings.
+  room. No page-level scroller: the workspace shell already scrolls the
+  outlet, and each view owns its own internal scroll region below the pinned
+  header (the List section container, the Board's per-column scroll, the
+  Calendar's own bounded viewport) — a second `overflow-y-auto` here only
+  nested a redundant scrollbar around them.
 -->
-<div
-  id="interventions"
-  class="flex min-h-0 w-full flex-1 flex-col gap-6 overflow-y-auto p-3 sm:p-6 md:p-7 lg:p-8"
->
+<div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
   <header class="flex flex-wrap items-center gap-2.5">
-    <!--
-      29px buttons + 2px padding + 2px border = the 35px `size="small"` control
-      height, so the segmented toggle lines up with the search field and the
-      primary action beside it instead of sitting a few pixels proud.
-    -->
-    <div
-      role="tablist"
+    <p-selectbutton
+      id="interventions-view-toggle"
+      data-testid="interventions-view-toggle"
       aria-label="Interventions view"
       i18n-aria-label="@@intervention.list.viewTabs"
-      class="inline-flex shrink-0 gap-0.5 rounded-md border border-surface-200 bg-surface-100 p-0.5 dark:border-surface-800 dark:bg-surface-900"
+      class="shrink-0"
+      [options]="viewOptions"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="view()"
+      (ngModelChange)="selectView($event)"
+      [allowEmpty]="false"
+      size="small"
     >
-      @for (option of viewOptions; track option.value) {
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="view() === option.value"
-          class="inline-flex h-[29px] cursor-pointer items-center gap-1.5 rounded px-3 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none"
-          [class]="
-            view() === option.value
-              ? 'bg-surface-0 text-surface-950 dark:bg-surface-800 dark:text-surface-50'
-              : 'text-surface-600 hover:text-surface-950 dark:text-surface-400 dark:hover:text-surface-50'
-          "
-          (click)="selectView(option.value)"
-        >
+      <ng-template #item let-option>
+        <span class="inline-flex items-center gap-1.5">
           <i
             class="text-xs"
-            [class]="option.icon + (view() === option.value ? ' text-primary' : '')"
+            [class]="option.icon + (option.value === view() ? ' text-primary' : '')"
             aria-hidden="true"
           ></i>
           <span>{{ option.label }}</span>
-        </button>
-      }
-    </div>
+        </span>
+      </ng-template>
+    </p-selectbutton>
 
     <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-96 sm:min-w-60">
       <p-inputicon class="pi pi-search" />
@@ -60,8 +52,8 @@
       />
     </p-iconfield>
 
-    <div class="ml-auto flex flex-wrap items-center justify-end gap-3">
-      <p class="hidden text-sm text-surface-600 tabular-nums lg:block dark:text-surface-400">
+    <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto">
+      <p class="hidden text-sm text-surface-500 tabular-nums lg:block dark:text-surface-400">
         <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
           =1 {1 intervention}
           other {{{ loadedCount() }} interventions}
@@ -75,30 +67,17 @@
         severity="primary"
         (onClick)="openCreate()"
         size="small"
+        class="w-full max-sm:min-h-11 sm:w-auto"
       />
     </div>
   </header>
 
   @if (view() !== 'calendar' && store.listError()) {
-    <p-message severity="error" class="block">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <span class="flex items-center gap-2">
-          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-          <span i18n="@@intervention.list.errorText"
-            >The interventions could not be loaded. Check your connection and try again.</span
-          >
-        </span>
-        <p-button
-          i18n-label="@@intervention.list.retry"
-          label="Retry"
-          icon="pi pi-refresh"
-          severity="danger"
-          [text]="true"
-          size="small"
-          (onClick)="retry()"
-        />
-      </div>
-    </p-message>
+    <app-error-banner
+      [message]="listErrorMessage"
+      [retrying]="store.isLoadingInterventions()"
+      (retried)="retry()"
+    />
   } @else if (view() !== 'calendar' && store.isListCapped()) {
     <p-message severity="info" class="block">
       <span i18n="@@intervention.list.cappedNotice"
@@ -108,25 +87,11 @@
   }
 
   @if (view() === 'calendar' && calendarStore.loadError()) {
-    <p-message severity="error" class="block">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <span class="flex items-center gap-2">
-          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-          <span i18n="@@intervention.calendar.errorText"
-            >The calendar could not be loaded. Check your connection and try again.</span
-          >
-        </span>
-        <p-button
-          i18n-label="@@intervention.calendar.retry"
-          label="Retry"
-          icon="pi pi-refresh"
-          severity="danger"
-          [text]="true"
-          size="small"
-          (onClick)="retryCalendar()"
-        />
-      </div>
-    </p-message>
+    <app-error-banner
+      [message]="calendarErrorMessage"
+      [retrying]="calendarStore.loading()"
+      (retried)="retryCalendar()"
+    />
   }
 
   @if (view() === 'calendar') {
@@ -158,7 +123,7 @@
               >
               @for (row of [1, 2, 3]; track row) {
                 <div
-                  class="flex flex-col gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-800"
+                  class="flex flex-col gap-3 rounded-md border border-surface-200 p-4 dark:border-surface-800"
                 >
                   <p-skeleton width="40%" height="1rem" />
                   <p-skeleton width="100%" height="2rem" />
@@ -252,7 +217,7 @@
               <div
                 role="button"
                 tabindex="0"
-                class="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 transition-colors duration-150 outline-none hover:bg-surface-100 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset motion-reduce:transition-none dark:hover:bg-surface-800"
+                class="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 transition-colors duration-150 outline-none hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-white/5"
                 (click)="onView(vm.intervention)"
                 (keydown.enter)="onView(vm.intervention)"
                 (keydown.space)="$event.preventDefault(); onView(vm.intervention)"
@@ -391,7 +356,7 @@
         <div
           role="button"
           tabindex="0"
-          class="flex cursor-pointer flex-col gap-2 rounded-lg p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          class="flex cursor-pointer flex-col gap-2 rounded-md p-3 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
           (click)="onView(vm.intervention)"
           (keydown.enter)="onView(vm.intervention)"
           (keydown.space)="onView(vm.intervention); $event.preventDefault()"

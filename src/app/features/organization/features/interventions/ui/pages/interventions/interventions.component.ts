@@ -13,7 +13,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
@@ -23,6 +23,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PanelModule, type PanelPassThroughOptions } from 'primeng/panel';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -75,6 +76,7 @@ import {
   type BoardItemDropped,
 } from '@shared/board';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorBanner } from '@shared/error-state';
 import { deriveInitials } from '@shared/initials';
 import { tagSeverityDotClass } from '@shared/tag-severity';
 
@@ -142,7 +144,7 @@ interface InterventionListItemViewModel {
  * guided-creation drawer; every collection surface it composes stays
  * presentational.
  *
- * @version 5.3.0
+ * @version 5.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -157,6 +159,8 @@ interface InterventionListItemViewModel {
     ButtonModule,
     DatePipe,
     EmptyState,
+    ErrorBanner,
+    FormsModule,
     IconFieldModule,
     InputIconModule,
     InputTextModule,
@@ -168,6 +172,7 @@ interface InterventionListItemViewModel {
     MessageModule,
     PanelModule,
     ReactiveFormsModule,
+    SelectButtonModule,
     SkeletonModule,
     TooltipModule,
   ],
@@ -371,6 +376,36 @@ export class InterventionsPage {
       icon: 'pi pi-calendar',
     },
   ];
+
+  /**
+   * Property listErrorMessage
+   * @readonly
+   *
+   * @description
+   * Failure message rendered by the List/Board error banner when the shared
+   * {@link InterventionStoreType} load fails.
+   *
+   * @access protected
+   * @since 5.5.0
+   *
+   * @type {string}
+   */
+  protected readonly listErrorMessage: string = $localize`:@@intervention.list.errorText:The interventions could not be loaded. Check your connection and try again.`;
+
+  /**
+   * Property calendarErrorMessage
+   * @readonly
+   *
+   * @description
+   * Failure message rendered by the Calendar view's error banner when the
+   * windowed {@link InterventionCalendarStoreType} load fails.
+   *
+   * @access protected
+   * @since 5.5.0
+   *
+   * @type {string}
+   */
+  protected readonly calendarErrorMessage: string = $localize`:@@intervention.calendar.errorText:The calendar could not be loaded. Check your connection and try again.`;
 
   /**
    * Property showAbandonedLabel

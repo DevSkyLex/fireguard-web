@@ -1934,7 +1934,7 @@ export class InterventionDetailPage {
       items.push({
         label: $localize`:@@intervention.delete.action:Delete intervention`,
         icon: 'pi pi-trash',
-        styleClass: 'text-red-500',
+        styleClass: 'text-red-600 dark:text-red-400',
         command: (): void => this.confirmDeleteIntervention(),
       });
     }

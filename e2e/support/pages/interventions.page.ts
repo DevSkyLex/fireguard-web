@@ -26,7 +26,9 @@ export class InterventionsPage {
   public constructor(page: Page) {
     this.page = page;
     this.root = page.locator('#interventions');
-    this.viewTabs = page.getByRole('tablist', { name: 'Interventions view' });
+    // The view toggle is a `p-selectbutton` (role `group` of toggle buttons),
+    // located by its stable testid rather than the retired tablist role.
+    this.viewTabs = page.getByTestId('interventions-view-toggle');
     this.board = page.locator('[data-testid="board"]');
     this.boardColumns = page.locator('[data-testid="board-column"]');
     this.calendar = page.locator('app-calendar');
@@ -43,7 +45,7 @@ export class InterventionsPage {
 
   /** Switches the page between its List / Board / Calendar views. */
   public async selectView(name: 'List' | 'Board' | 'Calendar'): Promise<void> {
-    await this.viewTabs.getByRole('tab', { name }).click();
+    await this.viewTabs.getByRole('button', { name }).click();
   }
 
   /** The cards currently sitting in one board lane. */

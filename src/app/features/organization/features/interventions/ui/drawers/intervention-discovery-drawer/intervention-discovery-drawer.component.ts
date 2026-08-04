@@ -7,13 +7,13 @@ import {
   viewChild,
 } from '@angular/core';
 import type { InputSignal, OutputEmitterRef, Signal } from '@angular/core';
-import { DrawerModule, type DrawerPassThroughOptions } from 'primeng/drawer';
-import { INTERVENTION_DRAWER_PT } from '@features/organization/features/interventions/constants';
+import { DrawerModule } from 'primeng/drawer';
 import type { SelectOption } from '@features/organization/features/interventions/models';
 import {
   InterventionDiscoveryForm,
   type InterventionDiscoveryFormValues,
 } from '@features/organization/features/interventions/ui/forms';
+import { DRAWER_STYLE_CLASS } from '@shared/overlay-size';
 
 /**
  * Component InterventionDiscoveryDrawer
@@ -151,19 +151,19 @@ export class InterventionDiscoveryDrawer {
 
   //#region Properties
   /**
-   * Property drawerPt
+   * Property drawerStyleClass
    * @readonly
    *
    * @description
-   * PrimeNG drawer pass-through options sizing the right panel responsively:
-   * full width on mobile, compact on larger viewports.
+   * Canonical `p-drawer` width (DESIGN.md, "Overlays — sizes"): full width on
+   * mobile, a fixed comfortable width above.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {DrawerPassThroughOptions}
+   * @type {string}
    */
-  protected readonly drawerPt: DrawerPassThroughOptions = INTERVENTION_DRAWER_PT;
+  protected readonly drawerStyleClass: string = DRAWER_STYLE_CLASS;
   //#endregion
 
   //#region Dismissal guard

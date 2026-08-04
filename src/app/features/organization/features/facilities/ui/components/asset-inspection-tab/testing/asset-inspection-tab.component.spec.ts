@@ -9,7 +9,7 @@ import { InspectionStore } from '@features/organization/features/inspections/sta
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { installMatchMediaMock } from '@shared/testing';
-import { FacilityInspectionTab } from '../facility-inspection-tab.component';
+import { AssetInspectionTab } from '../asset-inspection-tab.component';
 
 const MOCK_ORG: OrganizationOutput = {
   id: 'org-1',
@@ -43,7 +43,7 @@ const MOCK_INSPECTION: InspectionOutput = {
   updatedAt: '2025-01-01',
 } as unknown as InspectionOutput;
 
-describe('FacilityInspectionTab', () => {
+describe('AssetInspectionTab', () => {
   const mockInspectionStore = {
     isLoadingInspections: signal<boolean>(false),
     isEmpty: signal<boolean>(true),
@@ -72,7 +72,7 @@ describe('FacilityInspectionTab', () => {
     mockConfirmationService.confirm.mockReset();
 
     TestBed.configureTestingModule({
-      imports: [FacilityInspectionTab],
+      imports: [AssetInspectionTab],
       providers: [
         provideRouter([]),
         {
@@ -82,20 +82,20 @@ describe('FacilityInspectionTab', () => {
         { provide: ConfirmationService, useValue: mockConfirmationService },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
       ],
-    }).overrideComponent(FacilityInspectionTab, {
+    }).overrideComponent(AssetInspectionTab, {
       set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
     });
   });
 
   it('should create', () => {
-    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    const fixture = TestBed.createComponent(AssetInspectionTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
 
   it('should load inspections on the browser when facility id is available', () => {
-    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    const fixture = TestBed.createComponent(AssetInspectionTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
 
@@ -107,7 +107,7 @@ describe('FacilityInspectionTab', () => {
 
   it('should show skeletons while loading', () => {
     mockInspectionStore.isLoadingInspections.set(true);
-    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    const fixture = TestBed.createComponent(AssetInspectionTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     const skeletons = fixture.debugElement.queryAll(By.css('p-skeleton'));
@@ -116,7 +116,7 @@ describe('FacilityInspectionTab', () => {
 
   it('should show empty state when no inspections', () => {
     mockInspectionStore.isEmpty.set(true);
-    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    const fixture = TestBed.createComponent(AssetInspectionTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('No inspections');
@@ -125,7 +125,7 @@ describe('FacilityInspectionTab', () => {
   it('should render inspection rows when list is populated', () => {
     mockInspectionStore.isEmpty.set(false);
     mockInspectionStore.inspections.set([MOCK_INSPECTION]);
-    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    const fixture = TestBed.createComponent(AssetInspectionTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Jean Dupont');
@@ -134,7 +134,7 @@ describe('FacilityInspectionTab', () => {
   it('should not show empty state when inspections are populated', () => {
     mockInspectionStore.isEmpty.set(false);
     mockInspectionStore.inspections.set([MOCK_INSPECTION]);
-    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    const fixture = TestBed.createComponent(AssetInspectionTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('No inspections');
@@ -144,7 +144,7 @@ describe('FacilityInspectionTab', () => {
     TestBed.resetTestingModule();
 
     TestBed.configureTestingModule({
-      imports: [FacilityInspectionTab],
+      imports: [AssetInspectionTab],
       providers: [
         provideRouter([]),
         { provide: PLATFORM_ID, useValue: 'server' },
@@ -155,11 +155,11 @@ describe('FacilityInspectionTab', () => {
         { provide: ConfirmationService, useValue: mockConfirmationService },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
       ],
-    }).overrideComponent(FacilityInspectionTab, {
+    }).overrideComponent(AssetInspectionTab, {
       set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
     });
 
-    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    const fixture = TestBed.createComponent(AssetInspectionTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
 
@@ -167,7 +167,7 @@ describe('FacilityInspectionTab', () => {
   });
 
   it('should confirm before cancelling a draft inspection', () => {
-    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    const fixture = TestBed.createComponent(AssetInspectionTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     const draft = { ...MOCK_INSPECTION, status: 'draft' as const };

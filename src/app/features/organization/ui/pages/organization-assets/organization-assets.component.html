@@ -17,7 +17,59 @@
     </div>
   </app-page-header>
 
-  @if (tree.hasRootsError()) {
+  <p-selectbutton
+    data-testid="assets-axis"
+    class="shrink-0"
+    i18n-aria-label="@@org.assets.axisLabel"
+    aria-label="How to browse the estate"
+    [options]="axisOptions"
+    optionLabel="label"
+    optionValue="value"
+    [ngModel]="axis()"
+    (ngModelChange)="axis.set($event)"
+    [allowEmpty]="false"
+    size="small"
+    styleClass="max-sm:[&_.p-togglebutton]:min-h-11"
+  >
+    <ng-template #item let-option>
+      <span class="inline-flex items-center gap-1.5">
+        <i class="text-xs" [class]="option.icon" aria-hidden="true"></i>
+        <span>{{ option.label }}</span>
+      </span>
+    </ng-template>
+  </p-selectbutton>
+
+  @if (axis() === 'flat') {
+    <!--
+      The whole estate, unscoped: the same panes the hierarchy axis shows for
+      one site, with their own search and filters covering every site at once.
+      This is the answer to "which equipment carries serial SN-2024-014" — a
+      question the tree cannot be asked.
+    -->
+    <p-tabs value="equipment" class="flex min-h-0 flex-1 flex-col">
+      <p-tablist>
+        @if (canReadEquipment()) {
+          <p-tab value="equipment" i18n="@@org.assets.tabEquipment">Equipment</p-tab>
+        }
+        @if (canReadInspections()) {
+          <p-tab value="inspections" i18n="@@org.assets.tabInspections">Inspections</p-tab>
+        }
+      </p-tablist>
+
+      <p-tabpanels class="min-h-0 flex-1">
+        @if (canReadEquipment()) {
+          <p-tabpanel value="equipment">
+            <app-asset-equipment-tab />
+          </p-tabpanel>
+        }
+        @if (canReadInspections()) {
+          <p-tabpanel value="inspections">
+            <app-asset-inspection-tab />
+          </p-tabpanel>
+        }
+      </p-tabpanels>
+    </p-tabs>
+  } @else if (tree.hasRootsError()) {
     <app-error-state
       icon="pi-exclamation-triangle"
       title="Couldn't load the site hierarchy"
@@ -84,7 +136,9 @@
           i18n-ariaLabel="@@org.assets.treeLabel"
           ariaLabel="Site hierarchy"
           [pt]="treePt"
+          [trackBy]="trackNode"
           (onNodeExpand)="onNodeExpand($event)"
+          (onNodeCollapse)="onNodeCollapse($event)"
           (onNodeSelect)="onNodeSelect($event)"
         />
       </section>
@@ -122,12 +176,12 @@
             <p-tabpanels class="min-h-0 flex-1">
               @if (canReadEquipment()) {
                 <p-tabpanel value="equipment">
-                  <app-facility-equipment-tab [facilityId]="facility.id" />
+                  <app-asset-equipment-tab [facilityId]="facility.id" />
                 </p-tabpanel>
               }
               @if (canReadInspections()) {
                 <p-tabpanel value="inspections">
-                  <app-facility-inspection-tab [facilityId]="facility.id" />
+                  <app-asset-inspection-tab [facilityId]="facility.id" />
                 </p-tabpanel>
               }
             </p-tabpanels>

@@ -13,11 +13,15 @@
     [loading]="store.isLoadingEquipment()"
     [empty]="store.isEmpty()"
     [initialPage]="page()"
-    [createDisabled]="atEquipmentLimit()"
-    [createDisabledTooltip]="quotaLimitTooltip"
     (load)="onLoad($event)"
     (pageChange)="onPageChange($event)"
     (add)="onAdd()"
     (view)="onView($event.id)"
+  />
+
+  <app-organization-quota-upgrade-dialog
+    [(visible)]="quotaDialogVisible"
+    [resource]="quotaResource"
+    [subscriptionLink]="quotaSubscriptionLink()"
   />
 </div>

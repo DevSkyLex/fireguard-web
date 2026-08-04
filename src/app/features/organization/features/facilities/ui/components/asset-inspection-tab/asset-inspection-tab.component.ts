@@ -22,27 +22,27 @@ import { InspectionStore } from '@features/organization/features/inspections/sta
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
- * Component FacilityInspectionTab
- * @class FacilityInspectionTab
+ * Component AssetInspectionTab
+ * @class AssetInspectionTab
  *
  * @description
  * Tab content component that displays inspections associated
  * with a facility. Provides its own {@link InspectionStore}
  * instance and loads inspections filtered by the given
- * `facilityId`.
+ * `facilityId`, or across the whole organization when none is given.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-facility-inspection-tab',
+  selector: 'app-asset-inspection-tab',
   imports: [FacilityInspectionTable],
   providers: [InspectionStore],
-  templateUrl: './facility-inspection-tab.component.html',
+  templateUrl: './asset-inspection-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FacilityInspectionTab {
+export class AssetInspectionTab {
   //#region Inputs
   /**
    * Input facilityId
@@ -56,7 +56,7 @@ export class FacilityInspectionTab {
    *
    * @type {InputSignal<string>}
    */
-  public readonly facilityId: InputSignal<string> = input.required<string>();
+  public readonly facilityId: InputSignal<string | undefined> = input<string>();
   //#endregion
 
   //#region Properties
@@ -105,20 +105,41 @@ export class FacilityInspectionTab {
 
   //#region Methods
   protected onAdd(): void {
-    this.router.navigate(['..', '..', 'inspections', 'create'], {
-      relativeTo: this.route,
-      queryParams: { facilityId: this.facilityId() },
+    const facilityId: string | undefined = this.facilityId();
+
+    void this.router.navigate(this.inspectionPath('create'), {
+      queryParams: facilityId ? { facilityId } : undefined,
     });
   }
 
   protected onView(inspection: InspectionOutput): void {
-    this.router.navigate(['..', '..', 'inspections', inspection.id], { relativeTo: this.route });
+    void this.router.navigate(this.inspectionPath(inspection.id));
   }
 
   protected onEdit(inspection: InspectionOutput): void {
-    this.router.navigate(['..', '..', 'inspections', inspection.id, 'edit'], {
-      relativeTo: this.route,
-    });
+    void this.router.navigate(this.inspectionPath(inspection.id, 'edit'));
+  }
+
+  /**
+   * Method inspectionPath
+   *
+   * @description
+   * Absolute path into the inspections subfeature.
+   *
+   * Absolute on purpose: this pane is hosted both by the facility record, two
+   * segments deep, and by the assets explorer, one — a relative `../..` meant
+   * the right destination from one host and a dead URL from the other.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @param {...string} segments - Segments below `inspections`.
+   * @returns {readonly string[]} Router commands.
+   */
+  private inspectionPath(...segments: readonly string[]): readonly string[] {
+    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
+
+    return ['/organizations', organizationId ?? '', 'inspections', ...segments];
   }
 
   protected onCancel(inspection: InspectionOutput): void {
@@ -146,7 +167,7 @@ export class FacilityInspectionTab {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
-    const facilityId: string = this.facilityId();
+    const facilityId: string | undefined = this.facilityId();
     const result: InspectionResult | undefined =
       typeof options.params?.['result'] === 'string'
         ? (options.params['result'] as InspectionResult)
@@ -156,21 +177,18 @@ export class FacilityInspectionTab {
         ? (options.params['status'] as InspectionStatus)
         : undefined;
 
-    if (organizationId && facilityId) {
-      const listOptions: InspectionListOptions = {
-        page: options.page,
-        itemsPerPage: options.itemsPerPage,
-        facilityId,
-        params: this.getPassthroughParams(options),
-        ...(result ? { result } : {}),
-        ...(status ? { status } : {}),
-      };
+    if (!organizationId) return;
 
-      this.store.load({
-        organizationId,
-        options: listOptions,
-      });
-    }
+    const listOptions: InspectionListOptions = {
+      page: options.page,
+      itemsPerPage: options.itemsPerPage,
+      params: this.getPassthroughParams(options),
+      ...(facilityId ? { facilityId } : {}),
+      ...(result ? { result } : {}),
+      ...(status ? { status } : {}),
+    };
+
+    this.store.load({ organizationId, options: listOptions });
   }
 
   protected onPageChange(page: number): void {

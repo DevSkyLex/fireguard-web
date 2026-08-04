@@ -9,12 +9,15 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import type { TreeNode } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { TabsModule } from 'primeng/tabs';
 import {
   TreeModule,
+  type TreeNodeCollapseEvent,
   type TreeNodeExpandEvent,
   type TreeNodeSelectEvent,
   type TreePassThroughOptions,
@@ -26,14 +29,25 @@ import {
   type FacilityTreeStoreType,
 } from '@features/organization/features/facilities/state';
 import {
-  FacilityEquipmentTab,
-  FacilityInspectionTab,
+  AssetEquipmentTab,
+  AssetInspectionTab,
 } from '@features/organization/features/facilities/ui/components';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { PageHeader } from '@shared/page-header';
+
+/**
+ * Type AssetExplorerAxis
+ *
+ * @description
+ * The two ways into the estate: down the site hierarchy, or flat across the
+ * whole organization.
+ *
+ * @since 1.1.0
+ */
+type AssetExplorerAxis = 'hierarchy' | 'flat';
 
 /**
  * Component OrganizationAssetsPage
@@ -61,13 +75,15 @@ import { PageHeader } from '@shared/page-header';
   templateUrl: './organization-assets.component.html',
   imports: [
     ButtonModule,
+    FormsModule,
+    SelectButtonModule,
     TabsModule,
     TreeModule,
     PageHeader,
     EmptyState,
     ErrorState,
-    FacilityEquipmentTab,
-    FacilityInspectionTab,
+    AssetEquipmentTab,
+    AssetInspectionTab,
   ],
   providers: [FacilityTreeStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -148,6 +164,53 @@ export class OrganizationAssetsPage {
     signal<FacilityOutput | null>(null);
 
   /**
+   * Property axis
+   * @readonly
+   *
+   * @description
+   * Which of the two ways into the estate is open: down the site hierarchy, or
+   * flat across the whole organization.
+   *
+   * Two first-level axes rather than a tree with a search box tucked inside it.
+   * Merging the two former navigation entries put a real risk on the table —
+   * the operator who knows a serial number and not a site — and the answer is
+   * that searching everything is not a fallback, it is the other half of the
+   * destination.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<AssetExplorerAxis>}
+   */
+  protected readonly axis: WritableSignal<AssetExplorerAxis> =
+    signal<AssetExplorerAxis>('hierarchy');
+
+  /**
+   * Property axisOptions
+   * @readonly
+   *
+   * @description
+   * The two axes, as the segmented control renders them.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {{ label: string; value: AssetExplorerAxis; icon: string }[]}
+   */
+  protected readonly axisOptions: { label: string; value: AssetExplorerAxis; icon: string }[] = [
+    {
+      label: $localize`:@@org.assets.axisHierarchy:By site`,
+      value: 'hierarchy',
+      icon: 'pi pi-sitemap',
+    },
+    {
+      label: $localize`:@@org.assets.axisFlat:Everything`,
+      value: 'flat',
+      icon: 'pi pi-list',
+    },
+  ];
+
+  /**
    * Property organizationId
    * @readonly
    *
@@ -196,42 +259,93 @@ export class OrganizationAssetsPage {
   );
 
   /**
+   * Property expandedKeys
+   * @readonly
+   *
+   * @description
+   * Identifiers of the branches the operator has opened.
+   *
+   * Expansion is tracked here rather than left on the node objects, because the
+   * tree is rebuilt whenever a branch resolves and would otherwise forget which
+   * branches were open.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
+  private readonly expandedKeys: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
+    new Set<string>(),
+  );
+
+  /**
    * Property nodes
    * @readonly
    *
    * @description
-   * The hierarchy as PrimeNG's tree wants it.
+   * The hierarchy as PrimeNG's tree wants it, rebuilt whenever a branch
+   * resolves or a node opens.
    *
-   * Deliberately a writable signal patched in place rather than a `computed`
-   * that rebuilds. PrimeNG mutates `node.expanded` on the very object instance
-   * it holds; a computed that returns fresh objects on every branch load threw
-   * that away, so the first expansion of any branch fetched its children and
-   * then rendered collapsed anyway — and, because the row's DOM was recreated,
-   * dropped keyboard focus to the document body. Keeping node identity stable
-   * fixes both.
+   * Rebuilding matters: PrimeNG renders each row through an `OnPush`
+   * component that receives its node by reference, so attaching children to an
+   * existing node object never marks that row dirty and the branch stays
+   * visually empty however many times it is clicked. New objects are what make
+   * the children appear — and `expanded`, replayed from
+   * {@link expandedKeys}, is what keeps the branch open across the rebuild.
+   *
+   * `leaf` stays false until a fetched branch proves otherwise: the collection
+   * carries no child count, so the arrow has to be offered before the answer is
+   * known, and an empty branch simply opens onto nothing.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.2.0
    *
-   * @type {WritableSignal<TreeNode<FacilityOutput>[]>}
+   * @type {Signal<TreeNode<FacilityOutput>[]>}
    */
-  protected readonly nodes: WritableSignal<TreeNode<FacilityOutput>[]> = signal<
+  protected readonly nodes: Signal<TreeNode<FacilityOutput>[]> = computed<
     TreeNode<FacilityOutput>[]
-  >([]);
+  >(() => {
+    const childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>> =
+      this.tree.childrenByParent();
+    const expanded: ReadonlySet<string> = this.expandedKeys();
+
+    const toNode = (facility: FacilityOutput): TreeNode<FacilityOutput> => {
+      const children: readonly FacilityOutput[] | undefined = childrenByParent[facility.id];
+
+      return {
+        key: facility.id,
+        label: facility.name,
+        data: facility,
+        icon: 'pi pi-map-marker',
+        leaf: children ? children.length === 0 : false,
+        expanded: expanded.has(facility.id),
+        children: children?.map(toNode),
+      };
+    };
+
+    return this.tree.roots().map(toNode);
+  });
 
   /**
-   * Property nodesById
+   * Property trackNode
+   * @readonly
    *
    * @description
-   * Every node currently in the tree, so a resolved branch can be attached to
-   * its parent without walking the hierarchy.
+   * Identifies a tree row by its site rather than by object identity.
    *
-   * @access private
-   * @since 1.0.0
+   * PrimeNG tracks nodes by reference by default, and this page rebuilds every
+   * node whenever a branch resolves — which is what makes the children appear
+   * at all. Without a key, that rebuild reads as "every row changed": Angular
+   * destroys and recreates the whole subtree, taking the focused row with it
+   * and dropping keyboard focus to the document body.
    *
-   * @type {Map<string, TreeNode<FacilityOutput>>}
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {(index: number, node: TreeNode<FacilityOutput>) => string}
    */
-  private readonly nodesById = new Map<string, TreeNode<FacilityOutput>>();
+  protected readonly trackNode = (_index: number, node: TreeNode<FacilityOutput>): string =>
+    node.key ?? '';
 
   /**
    * Property treePt
@@ -267,7 +381,10 @@ export class OrganizationAssetsPage {
    */
   protected readonly isEmpty: Signal<boolean> = computed<boolean>(
     () =>
-      !this.tree.isLoadingRoots() && !this.tree.hasRootsError() && this.tree.roots().length === 0,
+      this.axis() === 'hierarchy' &&
+      !this.tree.isLoadingRoots() &&
+      !this.tree.hasRootsError() &&
+      this.tree.roots().length === 0,
   );
   //#endregion
 
@@ -290,27 +407,9 @@ export class OrganizationAssetsPage {
 
       untracked((): void => {
         this.selected.set(null);
-        this.nodesById.clear();
-        this.nodes.set([]);
+        this.expandedKeys.set(new Set<string>());
         this.tree.loadRoots(organizationId);
       });
-    });
-
-    effect((): void => {
-      const roots: readonly FacilityOutput[] = this.tree.roots();
-
-      untracked((): void => {
-        if (this.nodes().length === 0 && roots.length > 0) {
-          this.nodes.set(roots.map((facility) => this.nodeFor(facility)));
-        }
-      });
-    });
-
-    effect((): void => {
-      const childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>> =
-        this.tree.childrenByParent();
-
-      untracked((): void => this.attachBranches(childrenByParent));
     });
   }
   //#endregion
@@ -331,77 +430,35 @@ export class OrganizationAssetsPage {
   protected onNodeExpand(event: TreeNodeExpandEvent): void {
     const facility: FacilityOutput | undefined = event.node.data;
     const organizationId: string | undefined = this.organizationId();
-
     if (!facility || !organizationId) return;
+
+    this.expandedKeys.set(new Set<string>([...this.expandedKeys(), facility.id]));
+
     if (this.tree.hasLoadedChildren(facility.id)) return;
 
     this.tree.loadChildren({ organizationId, facilityId: facility.id });
   }
 
   /**
-   * Method nodeFor
+   * Method onNodeCollapse
    *
    * @description
-   * Builds one tree node and registers it, so a branch resolving later can be
-   * attached to the same object PrimeNG is holding.
+   * Forgets a branch's expansion, keeping its already-fetched children: closing
+   * a node is a navigation gesture, not a reason to ask the server again.
    *
-   * `expanded` starts explicitly `false` rather than absent: the tree only
-   * renders `aria-expanded` on a node whose state it knows, and a branch the
-   * operator has not opened yet must still announce that it can be.
+   * @access protected
+   * @since 1.2.0
    *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {FacilityOutput} facility - Site the node stands for.
-   * @returns {TreeNode<FacilityOutput>} The registered node.
-   */
-  private nodeFor(facility: FacilityOutput): TreeNode<FacilityOutput> {
-    const node: TreeNode<FacilityOutput> = {
-      key: facility.id,
-      label: facility.name,
-      data: facility,
-      icon: 'pi pi-map-marker',
-      // No child count on the collection, so the arrow is offered until a
-      // fetched branch proves the node is a leaf.
-      leaf: false,
-      expanded: false,
-    };
-
-    this.nodesById.set(facility.id, node);
-
-    return node;
-  }
-
-  /**
-   * Method attachBranches
-   *
-   * @description
-   * Hangs every resolved branch off the node that asked for it, mutating that
-   * node rather than replacing it. A new array reference is then published so
-   * change detection runs while every node keeps its identity — and with it its
-   * expansion state and its focused DOM row.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {Readonly<Record<string, readonly FacilityOutput[]>>} childrenByParent - Branches fetched so far.
+   * @param {TreeNodeCollapseEvent} event - Collapse emitted by the tree.
    * @returns {void}
    */
-  private attachBranches(
-    childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>>,
-  ): void {
-    let attached = false;
+  protected onNodeCollapse(event: TreeNodeCollapseEvent): void {
+    const facility: FacilityOutput | undefined = event.node.data;
+    if (!facility) return;
 
-    for (const [parentId, children] of Object.entries(childrenByParent)) {
-      const parent: TreeNode<FacilityOutput> | undefined = this.nodesById.get(parentId);
-      if (!parent || parent.children) continue;
-
-      parent.children = children.map((facility) => this.nodeFor(facility));
-      parent.leaf = children.length === 0;
-      attached = true;
-    }
-
-    if (attached) this.nodes.set([...this.nodes()]);
+    const next = new Set<string>(this.expandedKeys());
+    next.delete(facility.id);
+    this.expandedKeys.set(next);
   }
 
   /**

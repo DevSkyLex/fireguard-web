@@ -7641,6 +7641,18 @@
         <source>Choose a site on the left to see the equipment and inspections it holds.</source>
         <target>Elige un sitio a la izquierda para ver los equipos y las inspecciones que contiene.</target>
       </trans-unit>
+      <trans-unit id="org.assets.axisLabel" datatype="html">
+        <source>How to browse the estate</source>
+        <target>Cómo recorrer el patrimonio</target>
+      </trans-unit>
+      <trans-unit id="org.assets.axisHierarchy" datatype="html">
+        <source>By site</source>
+        <target>Por sitio</target>
+      </trans-unit>
+      <trans-unit id="org.assets.axisFlat" datatype="html">
+        <source>Everything</source>
+        <target>Todo</target>
+      </trans-unit>
       <trans-unit id="route.statistics" datatype="html">
         <source>Statistics</source>
         <target>Estadísticas</target>

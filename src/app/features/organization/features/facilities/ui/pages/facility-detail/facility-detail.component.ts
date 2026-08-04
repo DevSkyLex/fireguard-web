@@ -35,9 +35,9 @@ import {
 } from '@features/organization/features/facilities/state';
 import {
   FacilityDetailHeader,
-  FacilityEquipmentTab,
+  AssetEquipmentTab,
   FacilityInformationPanel,
-  FacilityInspectionTab,
+  AssetInspectionTab,
   FacilityInstallationsPanel,
 } from '@features/organization/features/facilities/ui/components';
 import {
@@ -69,11 +69,11 @@ import { EmptyState } from '@shared/empty-state';
     SkeletonModule,
     TabsModule,
     FacilityDetailHeader,
-    FacilityEquipmentTab,
+    AssetEquipmentTab,
     FacilityEquipmentDataview,
     FacilityInformationPanel,
     FacilityInspectionDataview,
-    FacilityInspectionTab,
+    AssetInspectionTab,
     FacilityInstallationsPanel,
     FacilityMoveDialog,
     EmptyState,

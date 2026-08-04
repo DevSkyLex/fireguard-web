@@ -13,8 +13,6 @@
     [loading]="store.isLoadingRootFacilities()"
     [empty]="store.isRootEmpty()"
     [initialPage]="page()"
-    [createDisabled]="atFacilityLimit()"
-    [createDisabledTooltip]="quotaLimitTooltip"
     (load)="onLoad($event)"
     (pageChange)="onPageChange($event)"
     (view)="onView($event)"
@@ -23,5 +21,11 @@
     (archive)="onArchive($event)"
     (restore)="onRestore($event)"
     (bulkArchive)="onBulkArchive($event)"
+  />
+
+  <app-organization-quota-upgrade-dialog
+    [(visible)]="quotaDialogVisible"
+    [resource]="quotaResource"
+    [subscriptionLink]="quotaSubscriptionLink()"
   />
 </div>

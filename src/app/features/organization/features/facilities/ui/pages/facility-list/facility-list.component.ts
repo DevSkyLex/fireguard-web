@@ -4,19 +4,24 @@ import {
   computed,
   inject,
   input,
+  numberAttribute,
+  signal,
   type InputSignal,
   type InputSignalWithTransform,
-  numberAttribute,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import type { RequestOptions } from '@core/api';
-import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { FacilityTable } from '@features/organization/features/facilities/ui/tables';
-import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
+import {
+  ORGANIZATION_QUOTA_RESOURCE,
+  type OrganizationQuotaResource,
+} from '@features/organization/models';
 import { OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/dialogs';
 import { ErrorBanner } from '@shared/error-state';
 
 /**
@@ -33,7 +38,7 @@ import { ErrorBanner } from '@shared/error-state';
  */
 @Component({
   selector: 'app-facility-list',
-  imports: [RouterModule, ErrorBanner, FacilityTable],
+  imports: [ErrorBanner, FacilityTable, OrganizationQuotaUpgradeDialog, RouterModule],
   providers: [FacilityStore],
   templateUrl: './facility-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -140,8 +145,55 @@ export class FacilityListPage {
     this.quotaStore.isAtLimit(ORGANIZATION_QUOTA_RESOURCE.FACILITIES),
   );
 
-  /** Tooltip explaining why facility creation is disabled. */
-  protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
+  /**
+   * Property quotaDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the plan-limit dialog is open. The list used to disable its create
+   * control and explain the cap in a tooltip, with no way forward from there.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly quotaDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property quotaResource
+   * @readonly
+   *
+   * @description
+   * Resource the dialog names.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {OrganizationQuotaResource}
+   */
+  protected readonly quotaResource: OrganizationQuotaResource =
+    ORGANIZATION_QUOTA_RESOURCE.FACILITIES;
+
+  /**
+   * Property quotaSubscriptionLink
+   * @readonly
+   *
+   * @description
+   * Where the dialog sends an operator who wants a larger plan.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly quotaSubscriptionLink: Signal<readonly string[]> = computed<readonly string[]>(
+    () => {
+      const organizationId: string | null = this.organizationId();
+
+      return organizationId ? ['/organizations', organizationId, 'settings'] : ['/organizations'];
+    },
+  );
 
   /** Localized message shown in the load-error banner for the root facility list. */
   protected readonly rootListErrorMessage: string = $localize`:@@facility.list.errorText:The facilities could not be loaded. Check your connection and try again.`;
@@ -213,7 +265,17 @@ export class FacilityListPage {
    * @returns {void}
    */
   public onAdd(): void {
-    this.router.navigate(['create'], { relativeTo: this.route });
+    // At the cap the control stops being a dead end and becomes the way out:
+    // the same upgrade dialog the create page shows on a 409, reached before
+    // the operator fills a form that cannot be submitted.
+    if (this.atFacilityLimit()) {
+      this.quotaStore.reload();
+      this.quotaDialogVisible.set(true);
+
+      return;
+    }
+
+    void this.router.navigate(['create'], { relativeTo: this.route });
   }
 
   /**

@@ -15,8 +15,8 @@ import {
   FacilityStore,
 } from '@features/organization/features/facilities/state';
 import {
-  FacilityEquipmentTab,
-  FacilityInspectionTab,
+  AssetEquipmentTab,
+  AssetInspectionTab,
 } from '@features/organization/features/facilities/ui/components';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import { InspectionStore } from '@features/organization/features/inspections/state';
@@ -188,10 +188,10 @@ describe('FacilityDetailPage', () => {
           ],
         },
       })
-      .overrideComponent(FacilityEquipmentTab, {
+      .overrideComponent(AssetEquipmentTab, {
         set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
       })
-      .overrideComponent(FacilityInspectionTab, {
+      .overrideComponent(AssetInspectionTab, {
         set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
       });
   });
@@ -409,7 +409,7 @@ describe('FacilityDetailPage', () => {
     fixture.componentInstance['activeTab'].set(1);
     fixture.detectChanges();
 
-    const equipmentTab = fixture.debugElement.query(By.css('app-facility-equipment-tab'));
+    const equipmentTab = fixture.debugElement.query(By.css('app-asset-equipment-tab'));
     expect(equipmentTab).toBeTruthy();
   });
 
@@ -422,7 +422,7 @@ describe('FacilityDetailPage', () => {
     fixture.componentInstance['activeTab'].set(2);
     fixture.detectChanges();
 
-    const inspectionTab = fixture.debugElement.query(By.css('app-facility-inspection-tab'));
+    const inspectionTab = fixture.debugElement.query(By.css('app-asset-inspection-tab'));
     expect(inspectionTab).toBeTruthy();
   });
 
@@ -544,10 +544,10 @@ describe('FacilityDetailPage', () => {
           ],
         },
       })
-      .overrideComponent(FacilityEquipmentTab, {
+      .overrideComponent(AssetEquipmentTab, {
         set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
       })
-      .overrideComponent(FacilityInspectionTab, {
+      .overrideComponent(AssetInspectionTab, {
         set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
       });
 
@@ -588,10 +588,10 @@ describe('FacilityDetailPage', () => {
           ],
         },
       })
-      .overrideComponent(FacilityEquipmentTab, {
+      .overrideComponent(AssetEquipmentTab, {
         set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
       })
-      .overrideComponent(FacilityInspectionTab, {
+      .overrideComponent(AssetInspectionTab, {
         set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
       });
 

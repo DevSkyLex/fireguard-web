@@ -41,9 +41,11 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId` — the "Today" landing page; the landing guard
   redirects a member who can read neither interventions nor the dashboard to their
   first permitted destination
-- `/organizations/:organizationId/assets` — the estate explorer: the site
-  hierarchy on the left, the selected site's equipment and inspections on the
-  right. **It is the single navigation entry for the estate**, replacing the
+- `/organizations/:organizationId/assets` — the estate explorer, on two
+  first-level axes: **by site** (the hierarchy on the left, the selected site's
+  equipment and inspections on the right) and **everything** (the same panes
+  unscoped, so an operator holding a serial number and no site can still find
+  it). **It is the single navigation entry for the estate**, replacing the
   former "Facilities" and "Equipments" pair; both route trees below stay mounted
   so records, creation forms and deep links keep resolving
 - `/organizations/:organizationId/facilities`

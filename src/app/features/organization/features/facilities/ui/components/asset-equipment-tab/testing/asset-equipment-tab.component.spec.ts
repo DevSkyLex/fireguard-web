@@ -8,7 +8,7 @@ import { EquipmentStore } from '@features/organization/features/equipments/state
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { installMatchMediaMock } from '@shared/testing';
-import { FacilityEquipmentTab } from '../facility-equipment-tab.component';
+import { AssetEquipmentTab } from '../asset-equipment-tab.component';
 
 const MOCK_ORG: OrganizationOutput = {
   id: 'org-1',
@@ -35,7 +35,7 @@ const MOCK_EQUIPMENT: EquipmentOutput = {
   updatedAt: '2025-01-01',
 } as unknown as EquipmentOutput;
 
-describe('FacilityEquipmentTab', () => {
+describe('AssetEquipmentTab', () => {
   const mockEquipmentStore = {
     isLoadingEquipment: signal<boolean>(false),
     isEmpty: signal<boolean>(true),
@@ -58,7 +58,7 @@ describe('FacilityEquipmentTab', () => {
     mockEquipmentStore.load.mockReset();
 
     TestBed.configureTestingModule({
-      imports: [FacilityEquipmentTab],
+      imports: [AssetEquipmentTab],
       providers: [
         provideRouter([]),
         {
@@ -67,20 +67,20 @@ describe('FacilityEquipmentTab', () => {
         },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
       ],
-    }).overrideComponent(FacilityEquipmentTab, {
+    }).overrideComponent(AssetEquipmentTab, {
       set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
     });
   });
 
   it('should create', () => {
-    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    const fixture = TestBed.createComponent(AssetEquipmentTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
 
   it('should load equipment on the browser when facility id is available', () => {
-    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    const fixture = TestBed.createComponent(AssetEquipmentTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
 
@@ -92,7 +92,7 @@ describe('FacilityEquipmentTab', () => {
 
   it('should show skeletons while loading', () => {
     mockEquipmentStore.isLoadingEquipment.set(true);
-    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    const fixture = TestBed.createComponent(AssetEquipmentTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     const skeletons = fixture.debugElement.queryAll(By.css('p-skeleton'));
@@ -101,7 +101,7 @@ describe('FacilityEquipmentTab', () => {
 
   it('should show empty state when no equipment', () => {
     mockEquipmentStore.isEmpty.set(true);
-    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    const fixture = TestBed.createComponent(AssetEquipmentTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('No equipment');
@@ -110,7 +110,7 @@ describe('FacilityEquipmentTab', () => {
   it('should render equipment rows when list is populated', () => {
     mockEquipmentStore.isEmpty.set(false);
     mockEquipmentStore.equipmentList.set([MOCK_EQUIPMENT]);
-    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    const fixture = TestBed.createComponent(AssetEquipmentTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Fire Extinguisher');
@@ -119,7 +119,7 @@ describe('FacilityEquipmentTab', () => {
   it('should not show empty state when equipment list is populated', () => {
     mockEquipmentStore.isEmpty.set(false);
     mockEquipmentStore.equipmentList.set([MOCK_EQUIPMENT]);
-    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    const fixture = TestBed.createComponent(AssetEquipmentTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('No equipment');
@@ -129,7 +129,7 @@ describe('FacilityEquipmentTab', () => {
     TestBed.resetTestingModule();
 
     TestBed.configureTestingModule({
-      imports: [FacilityEquipmentTab],
+      imports: [AssetEquipmentTab],
       providers: [
         provideRouter([]),
         { provide: PLATFORM_ID, useValue: 'server' },
@@ -139,11 +139,11 @@ describe('FacilityEquipmentTab', () => {
         },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
       ],
-    }).overrideComponent(FacilityEquipmentTab, {
+    }).overrideComponent(AssetEquipmentTab, {
       set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
     });
 
-    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    const fixture = TestBed.createComponent(AssetEquipmentTab);
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
 

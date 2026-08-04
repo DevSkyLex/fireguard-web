@@ -98,10 +98,20 @@ Primary service:
 
 - Depends on organization route context from the parent organization feature.
 - The parent feature consumes this subfeature's `state` barrel (`FacilityTreeStore`)
-  and its `ui/components` barrel (`FacilityEquipmentTab`, `FacilityInspectionTab`)
+  and its `ui/components` barrel (`AssetEquipmentTab`, `AssetInspectionTab`)
   for the assets explorer at `/organizations/:organizationId/assets`
   (ARCHITECTURE.md §4). Read-only — the parent browses the hierarchy, this
   subfeature keeps ownership of sites and of those panes.
+- Consumes the sibling `equipments` and `inspections` subfeatures for the
+  `AssetEquipmentTab` / `AssetInspectionTab` panes (their stores, models and
+  tables). Those panes take an **optional** `facilityId`: given, they show one
+  site's contents; omitted, the whole organization's. That is what lets the same
+  pane serve the facility record and both axes of the assets explorer instead of
+  a second copy of the same orchestration.
+- Both panes navigate by **absolute** path. They are hosted at two different
+  depths — the facility record two segments down, the assets explorer one — and
+  a relative `../..` meant the right destination from one host and a dead URL
+  from the other.
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
 
 ## Deletion

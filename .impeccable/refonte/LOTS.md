@@ -207,3 +207,49 @@ place. `expanded: false` est désormais posé explicitement à la création, pou
 **Cibles tactiles.** `p-tree` livre une ligne de 36 px et une bascule de 28 px —
 sous le plancher de 44 px que le reste de l'application tient. Relevées par `[pt]`
 sous `sm`.
+
+## Journal du lot 6, second temps — le mode « tout à plat »
+
+**Un seul composant pour les deux portées.** Les panneaux de contenu ont une
+entrée `facilityId` désormais **optionnelle** : présente, ils montrent un site ;
+absente, toute l'organisation. La fiche de site et les deux axes de l'explorateur
+partagent donc la même orchestration au lieu d'en tenir deux copies. Renommés
+`asset-equipment-tab` / `asset-inspection-tab`, parce qu'ils ne sont plus
+« ceux d'un site ».
+
+**La sortie de quota est le dialogue, pas une bannière.** La maquette montrait une
+bannière énonçant le plafond. La règle produit dit que le libellé de quota vient
+de l'API et n'est jamais réécrit — or le magasin de quota n'expose que `used` et
+`limit`, pas la phrase. Composer « Votre plan autorise 150 équipements » aurait
+été exactement la réécriture interdite. Le bouton de création cesse donc d'être
+désactivé et ouvre le dialogue que les pages de création montrent déjà sur un 409.
+L'infobulle qui expliquait le blocage disparaît avec lui : elle ne s'affichait que
+sur un contrôle désactivé, et le dialogue explique mieux.
+
+**Défaut corrigé au passage — introduit par le commit précédent.** Ces panneaux
+naviguaient en relatif (`['..','..','equipments', id]`), ce qui visait juste
+depuis la fiche de site et produisait une URL morte depuis l'explorateur. Passé
+en absolu.
+
+**Le dépliage de l'arbre, troisième version.** Les deux premières ont échoué en
+sens inverse l'une de l'autre :
+
+1. reconstruire les nœuds jetait l'`expanded` que PrimeNG mute sur l'objet — la
+   branche se refermait, il fallait un second clic ;
+2. les muter en place pour garder leur identité empêchait Angular de marquer la
+   ligne `OnPush` comme sale — les enfants n'apparaissaient **jamais**.
+
+La bonne réponse tient les deux bouts : **reconstruire** (références neuves, donc
+`OnPush` voit le changement) et **rejouer** l'état déplié depuis un ensemble
+d'identifiants tenu par la page. Reste que reconstruire fait perdre l'identité
+DOM ; `[trackBy]` par clé de site la rend, et avec elle le focus clavier. Vérifié
+sur chromium, firefox et webkit.
+
+**Réserve honnête.** Au tout premier dépliage d'une branche — celui qui déclenche
+la requête — le focus atterrit sur le nœud frère suivant plutôt que sur l'enfant
+révélé. C'est une hypothèse de `p-tree` : son `onArrowRight` programme un
+`onArrowDown` à 1 ms, délai qui perd sa course contre n'importe quel aller-retour
+réseau. Sur une branche déjà en cache, il atterrit juste. Le focus ne quitte
+jamais l'arbre et la navigation clavier reste utilisable ; corriger cela
+demanderait de réimplémenter la gestion clavier de PrimeNG, ce qui ne vaut pas
+son prix.

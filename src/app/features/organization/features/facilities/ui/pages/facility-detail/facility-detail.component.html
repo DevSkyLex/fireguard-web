@@ -85,13 +85,13 @@
 
         <p-tabpanel [value]="1">
           @if (activeTab() === 1 && facility(); as facility) {
-            <app-facility-equipment-tab [facilityId]="facility.id" />
+            <app-asset-equipment-tab [facilityId]="facility.id" />
           }
         </p-tabpanel>
 
         <p-tabpanel [value]="2">
           @if (activeTab() === 2 && facility(); as facility) {
-            <app-facility-inspection-tab [facilityId]="facility.id" />
+            <app-asset-inspection-tab [facilityId]="facility.id" />
           }
         </p-tabpanel>
       </p-tabpanels>

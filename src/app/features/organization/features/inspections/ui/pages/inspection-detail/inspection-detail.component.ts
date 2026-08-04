@@ -8,6 +8,7 @@ import {
   type InputSignal,
   type Signal,
   signal,
+  untracked,
   type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -140,13 +141,20 @@ export class InspectionDetailPage {
 
   /** Initializes the active inspection non-conformity collection. */
   public constructor() {
-    this.run((organizationId, inspectionId) =>
-      this.store.loadNonConformities({
-        organizationId,
-        inspectionId,
-        options: { itemsPerPage: 30 },
-      }),
-    );
+    // An effect, not a constructor call: the routed input is only bound after
+    // construction, and reading it here would throw NG0950. The store call is
+    // untracked so its pending patches cannot re-trigger the effect.
+    effect(() => {
+      this.run((organizationId, inspectionId) =>
+        untracked((): void => {
+          this.store.loadNonConformities({
+            organizationId,
+            inspectionId,
+            options: { itemsPerPage: 30 },
+          });
+        }),
+      );
+    });
 
     // Leave the detail page only once the cancellation has actually succeeded
     // (the store is page-scoped, so its call state starts idle). Navigating

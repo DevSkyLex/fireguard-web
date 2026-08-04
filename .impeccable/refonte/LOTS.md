@@ -1,0 +1,57 @@
+# Ordonnancement des lots d'implémentation — UI-v2
+
+> Découpage proposé pour la Phase 4, dérivé du registre `ARBITRAGES.md` et de la
+> ronde de cohérence. **À valider avant la première ligne de code.**
+>
+> Mécanique par lot (éprouvée au chantier précédent) : craft-floor chargé avant
+> édition · agents spécialisés · i18n fr+es dans le même lot · hooks e2e migrés
+> avec leurs objets de page · gate `format → lint → tests ciblés → build` ·
+> captures avant/après · une ronde d'inspection, un batch de corrections, au plus
+> une confirmation · commit au type conventionnel du contenu avec le marqueur
+> `UI-v2 lot N`.
+
+## Principes d'ordonnancement
+
+1. **Les fondations d'abord** : ce qui change le shell et les primitives partagées
+   bloque tout le reste ; le faire en premier évite de retoucher chaque famille.
+2. **Un petit lot de validation ensuite** : F9 est le périmètre le plus sûr du
+   produit ; il éprouve les fondations sans risquer un écran critique.
+3. **Les familles ensuite, par risque croissant**, en groupant celles qui
+   partagent une primitive.
+4. **Le workspace en dernier** : le plus gros template de l'application, et le
+   bénéficiaire de toutes les primitives construites avant lui.
+5. **Une route déplacée garde sa redirection** dans le même lot (applications
+   installées, favoris), et son `FEATURE.md` est mis à jour dans le même change.
+
+## Les onze lots
+
+| # | Lot | Contenu | Dépend de | Risque |
+| --- | --- | --- | --- | --- |
+| **1** | **Fondations du shell** | Shell à trois colonnes : rail supprimé, en-tête d'organisation commutable en popover, menu utilisateur dans l'en-tête · trois groupes de navigation visibles · repli de barre latérale câblé · barre de commande basse mobile généralisée (infrastructure) · réparations de parcours (sous-chemin d'organisation préservé, assistant tolérant à une panne, refus de permission nommé) · toast fermable au clavier et hors de la barre mobile | — | **Élevé** — touche les trois mises en page et tous les objets de page e2e |
+| **2** | **Primitives et normes** | Champ éditable en place (primitive partagée) · requête nommée sur les interventions (primitive partagée) · levée de la limite empêchant le workspace d'héberger une contribution de panneau · amendement ARCHITECTURE.md §10.5 · DESIGN.md : JetBrains Mono, cinq gabarits, convention d'action primaire | 1 | Moyen — surtout du code neuf |
+| **3** | **F9 — pages focalisées** | 404 avec sorties contextuelles · 403 nommant la permission manquante · 500 distinguant réseau et panne · maintenance relue · invitation en accueil deux volets · en-tête focalisé portant la marque | 1 | **Faible** — éprouve les fondations sur un périmètre sûr |
+| **4** | **F1 — Aujourd'hui + Statistiques** | Quatre files de travail · page Statistiques accueillant inventaire et tendances · nouvelle entrée de navigation · libellé « Aujourd'hui » | 1, 2 | Moyen — nouvelle route, nouvelle entrée de nav |
+| **5** | **F4 — vues de travail** | Vues nommées et mémorisées (cookie, 5 max) · surface de filtres · tri exposé · comportement unifié des trois rendus · calendrier replanifiant par dépôt | 2, 4 | Moyen-élevé — l'écran le plus utilisé du poste bureau |
+| **6** | **F2 — Patrimoine** | Explorateur : arborescence des sites (`p-treeTable`), contenu du nœud en onglets, mode « tout à plat » · deux entrées de navigation fusionnées · dialogue de quota monté sur les listes | 1, 2 | **Élevé** — fusion d'entrées, composant d'arbre nouveau |
+| **7** | **F3 — fiches éditables** | Édition en place des trois fiches · trois routes `/edit` retirées avec redirection · bande d'état nommant sa prochaine action (équipement, inspection) · « introuvable » remplaçant la page entière | 2, 6 | Moyen — suppression de routes |
+| **8** | **F6 — Équipe et réglages** | Membres + Rôles fusionnés en « Équipe » (3 onglets) · permissions lues par personne · réglages en sections ancrées · compte aligné sur le même gabarit · centre de notifications unifié | 1, 2 | Moyen-élevé — fusion d'entrées, deux pages refondues |
+| **9** | **F8 — activation** | Assistant en liste d'activation · reprise explicite · étapes facultatives annoncées · vitrine montrant le produit au travail · progression dédoublée supprimée | 1 | Moyen |
+| **10** | **F7 — collaboration en panneau** | Fil ouvert dans le panneau contextuel · sélecteur Fil · Infos · Assistant · favoris en file de lecture · bande d'identité unifiée · erreur des messages directs en ligne | 2 | Moyen-élevé — dépend de la levée de limite du lot 2 |
+| **11** | **F5 — workspace guidé** | Commande en sujet de page · une surface de travail par phase · rail dissous en surface « Détails » · cérémonie de publication et état « inscrit au registre » · sections hors phase démontées | 2, 10 | **Le plus élevé** — 1 372 lignes de template, six phases, six tiroirs |
+
+## Clôture du chantier (après le lot 11)
+
+1. `fg-a11y-auditor` et `fg-architecture-reviewer` en lecture seule, corrections
+   en un batch.
+2. Recapture complète du jeu de références et planche-contact avant/après.
+3. **Re-score `/impeccable critique`** — référence 24/40, cible ≥ 32.
+4. `/impeccable doctor` et passage final sur DESIGN.md.
+5. `npm run quality` complet et suite Playwright complète.
+
+## Ce qui reste hors périmètre, et le restera
+
+- Le déverrouillage de l'application avant la fin de l'activation (règle serveur).
+- Lier un fil de discussion à un objet métier (évolution d'API).
+- Une vraie pagination au-delà du plafond de 500 interventions (contrat backend).
+- Toute donnée fabriquée : clients, métriques d'usage, témoignages, conformité à
+  une norme nationale (contrainte RNCP et PRODUCT.md).

@@ -22,86 +22,94 @@
         (move)="onOpenMoveDialog()"
         (delete)="onConfirmDelete()"
       />
-    } @else {
-      <div class="flex flex-1 items-center justify-center p-4 sm:p-7">
-        <app-empty-state
-          icon="pi-compass"
-          i18n-title="@@facility.detail.notFoundTitle"
-          title="Facility not found"
-          i18n-description="@@facility.detail.notFound"
-          description="This facility could not be found or is unavailable offline."
-        >
-          <p-button
-            i18n-label="@@facility.detail.backToList"
-            label="Back to facilities"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [outlined]="true"
-            (onClick)="navigateBack()"
-          />
-        </app-empty-state>
-      </div>
     }
   </section>
 
-  <!-- Workspace -->
-  <section class="flex min-h-0 flex-1 flex-col">
-    <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
-      <p-tablist [pt]="tabListPt">
-        <p-tab [value]="0">
-          <i class="pi pi-chart-line mr-2 text-sm" aria-hidden="true"></i>
-          <span i18n="@@facility.tab.overview" class="text-sm">Overview</span>
-        </p-tab>
-        <p-tab [value]="1">
-          <i class="pi pi-wrench mr-2 text-sm" aria-hidden="true"></i>
-          <span i18n="@@facility.tab.equipments" class="text-sm">Equipments</span>
-        </p-tab>
-        <p-tab [value]="2">
-          <i class="pi pi-clipboard mr-2 text-sm" aria-hidden="true"></i>
-          <span i18n="@@facility.tab.inspections" class="text-sm">Inspections</span>
-        </p-tab>
-      </p-tablist>
+  <!--
+    A missing record replaces the whole page, tabs included. The empty state
+    used to sit inside the header section alone, so a facility that could not be
+    found still rendered three empty tab panels underneath it.
+  -->
+  @if (facility()) {
+    <!-- Workspace -->
+    <section class="flex min-h-0 flex-1 flex-col">
+      <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
+        <p-tablist [pt]="tabListPt">
+          <p-tab [value]="0">
+            <i class="pi pi-chart-line mr-2 text-sm" aria-hidden="true"></i>
+            <span i18n="@@facility.tab.overview" class="text-sm">Overview</span>
+          </p-tab>
+          <p-tab [value]="1">
+            <i class="pi pi-wrench mr-2 text-sm" aria-hidden="true"></i>
+            <span i18n="@@facility.tab.equipments" class="text-sm">Equipments</span>
+          </p-tab>
+          <p-tab [value]="2">
+            <i class="pi pi-clipboard mr-2 text-sm" aria-hidden="true"></i>
+            <span i18n="@@facility.tab.inspections" class="text-sm">Inspections</span>
+          </p-tab>
+        </p-tablist>
 
-      <p-tabpanels [pt]="tabPanelsPt">
-        <p-tabpanel [value]="0">
-          @if (facility(); as facility) {
-            <div class="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-12">
-              <div class="flex min-h-0 flex-col gap-6 xl:col-span-8">
-                <app-facility-inspection-dataview />
-                <app-facility-equipment-dataview />
+        <p-tabpanels [pt]="tabPanelsPt">
+          <p-tabpanel [value]="0">
+            @if (facility(); as facility) {
+              <div class="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-12">
+                <div class="flex min-h-0 flex-col gap-6 xl:col-span-8">
+                  <app-facility-inspection-dataview />
+                  <app-facility-equipment-dataview />
+                </div>
+
+                <aside class="flex min-h-0 flex-col gap-6 xl:col-span-4">
+                  <app-facility-information-panel
+                    [facility]="facility"
+                    [editable]="canManage()"
+                    [saving]="store.isUpdating()"
+                    [saveError]="updateErrorMessage()"
+                    (changed)="onFieldChanged($event)"
+                  />
+                  <app-facility-installations-panel
+                    [facility]="facility"
+                    (navigate)="onNavigateToFacility($event)"
+                  />
+                </aside>
               </div>
+            }
+          </p-tabpanel>
 
-              <aside class="flex min-h-0 flex-col gap-6 xl:col-span-4">
-                <app-facility-information-panel
-                  [facility]="facility"
-                  [editable]="canManage()"
-                  [saving]="store.isUpdating()"
-                  [saveError]="updateErrorMessage()"
-                  (changed)="onFieldChanged($event)"
-                />
-                <app-facility-installations-panel
-                  [facility]="facility"
-                  (navigate)="onNavigateToFacility($event)"
-                />
-              </aside>
-            </div>
-          }
-        </p-tabpanel>
+          <p-tabpanel [value]="1">
+            @if (activeTab() === 1 && facility(); as facility) {
+              <app-asset-equipment-tab [facilityId]="facility.id" />
+            }
+          </p-tabpanel>
 
-        <p-tabpanel [value]="1">
-          @if (activeTab() === 1 && facility(); as facility) {
-            <app-asset-equipment-tab [facilityId]="facility.id" />
-          }
-        </p-tabpanel>
-
-        <p-tabpanel [value]="2">
-          @if (activeTab() === 2 && facility(); as facility) {
-            <app-asset-inspection-tab [facilityId]="facility.id" />
-          }
-        </p-tabpanel>
-      </p-tabpanels>
-    </p-tabs>
-  </section>
+          <p-tabpanel [value]="2">
+            @if (activeTab() === 2 && facility(); as facility) {
+              <app-asset-inspection-tab [facilityId]="facility.id" />
+            }
+          </p-tabpanel>
+        </p-tabpanels>
+      </p-tabs>
+    </section>
+  } @else if (!isLoading()) {
+    <div class="flex flex-1 items-center justify-center p-4 sm:p-7">
+      <app-empty-state
+        icon="pi-compass"
+        i18n-title="@@facility.detail.notFoundTitle"
+        title="Facility not found"
+        i18n-description="@@facility.detail.notFound"
+        description="This facility could not be found or is unavailable offline."
+      >
+        <p-button
+          i18n-label="@@facility.detail.backToList"
+          label="Back to facilities"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="max-sm:min-h-11"
+          (onClick)="navigateBack()"
+        />
+      </app-empty-state>
+    </div>
+  }
 </div>
 
 <!-- Move Dialog -->

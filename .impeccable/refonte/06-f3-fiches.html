@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F3 — Fiches et formulaires (sites, équipements, inspections)</title>
+<link rel="stylesheet" href="planche.css" />
+<style>
+  .u { display: flex; align-items: center; gap: 8px; }
+  .u-col { display: flex; flex-direction: column; }
+  .u-between { justify-content: space-between; }
+  .u-wrap { flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; align-items: start; }
+  .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .kpi .cell { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 16px; font-size: 14px; }
+  .kpi .cell strong { display: block; color: var(--ink-strong); }
+  .mock { font-size: 12px; }
+  .mock .sh-top { display: flex; align-items: center; gap: 8px; min-height: 34px; border-bottom: 1px solid var(--m-border); padding: 6px 12px; color: var(--m-text-muted); }
+  .mock .pane { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .mock .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--m-border); }
+  .mock .tabs > span { padding: 7px 11px; color: var(--m-text-muted); border-bottom: 2px solid transparent; }
+  .mock .tabs > span.on { color: var(--m-primary); border-bottom-color: var(--m-primary); font-weight: 600; }
+  .mock .dl { display: grid; grid-template-columns: 92px 1fr; gap: 7px 10px; }
+  .mock .dl dt { color: var(--m-text-muted); margin: 0; }
+  .mock .dl dd { margin: 0; color: var(--m-text); }
+  .mock .edit-field { border: 1px dashed var(--m-border-strong); border-radius: 4px; padding: 2px 6px; margin: -3px -6px; }
+  .mock .edit-live { border: 1px solid var(--m-primary); background: var(--m-bg); border-radius: 4px; padding: 3px 6px; margin: -4px -6px; }
+  .mock .avatar-sq { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--m-primary-soft); color: #4338ca; display: inline-flex; align-items: center; justify-content: center; font-weight: 650; flex: none; }
+  [data-theme="dark"] .mock .avatar-sq { color: var(--m-primary); }
+  .mock .field { border: 1px solid var(--m-border); border-radius: var(--radius-md); padding: 6px 9px; color: var(--m-text-muted); }
+  .mock .lbl { color: var(--m-text-muted); font-size: 0.92em; }
+</style>
+</head>
+<body>
+<div class="planche">
+
+  <header class="masthead">
+    <div class="u-col" style="gap:6px">
+      <h1>F3 — Fiches et formulaires</h1>
+      <p class="muted" style="margin:0">
+        Livraison 2 · gestion · cadre B « Un seul rail ». Neuf pages : la fiche, la création et
+        l'édition, pour chacune des trois entités du patrimoine.
+      </p>
+    </div>
+    <button class="theme-toggle" type="button" onclick="const d = document.documentElement.dataset.theme !== 'dark'; document.documentElement.dataset.theme = d ? 'dark' : ''; for (const i of document.images) i.src = d ? i.src.replace('--light--', '--dark--') : i.src.replace('--dark--', '--light--');">
+      Basculer clair / sombre
+    </button>
+  </header>
+
+  <!-- ═════ 1. DIAGNOSTIC ═════ -->
+  <h2>1 · Neuf pages presque identiques, et leurs écarts</h2>
+  <p>
+    Les trois entités partagent un squelette strict, ce qui est une vraie réussite. Les écarts sont
+    donc d'autant plus visibles, et deux d'entre eux sont des défauts, pas des variations.
+  </p>
+  <div class="kpi">
+    <div class="cell"><strong>L'édition n'a pas d'état « introuvable »</strong>entité absente : la page de détail affiche un empty-state, la page d'édition affiche un cadre vide</div>
+    <div class="cell"><strong>« Introuvable » ne masque que l'en-tête</strong>les onglets restent rendus en dessous, vides, sur les trois fiches</div>
+    <div class="cell"><strong>Une fiche sur trois n'a pas de grille</strong>site et équipement sont en 12 colonnes, l'inspection est en pleine largeur</div>
+    <div class="cell"><strong>Deux régimes de titre</strong>les fiches utilisent le composant d'en-tête, les six pages de formulaire le réécrivent à la main</div>
+    <div class="cell"><strong>Un en-tête de formulaire vide à droite</strong><code>justify-between</code> sans rien à opposer, sur les six pages</div>
+    <div class="cell"><strong>Deux dialogues déclarés hors de la racine</strong>déplacement de site et détail de non-conformité</div>
+  </div>
+
+  <!-- ═════ 2. LES DEUX PISTES ═════ -->
+  <h2>2 · Les deux pistes</h2>
+  <div class="pair">
+    <section class="option">
+      <div class="option-head"><span class="tag tag--a">Piste A</span><strong>Un gabarit de fiche, un gabarit de formulaire</strong><span class="tag tag--effort">M</span></div>
+      <p class="rationale">
+        Les neuf pages restent neuf pages. On aligne les écarts et on répare les deux défauts, en
+        appliquant les gabarits « fiche » et « formulaire » gelés à l'arbitrage n°1.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>« Introuvable » remplace toute la page</strong>, onglets compris, avec un retour vers la collection — et l'édition reçoit enfin cette branche.</span></li>
+        <li><span class="pin">2</span><span><strong>Une bande d'identité identique</strong> sur les trois fiches : vignette, nom en <code>h1</code>, tags, ligne de méta, actions à droite.</span></li>
+        <li><span class="pin">3</span><span><strong>La fiche d'inspection adopte la grille de ses jumelles</strong> (contenu large, colonne latérale de contexte).</span></li>
+        <li><span class="pin">4</span><span><strong>Les six formulaires passent au gabarit canonique</strong> : en-tête de page réel, panneau à <code>max-w-3xl</code>, actions dans le formulaire, overlays déclarés dans la racine.</span></li>
+      </ul>
+    </section>
+
+    <section class="option">
+      <div class="option-head"><span class="tag tag--b">Piste B</span><strong>La fiche est la surface d'édition</strong><span class="tag tag--reco">★ recommandée</span><span class="tag tag--effort">L</span></div>
+      <p class="rationale">
+        Prolongement direct de l'arbitrage pris sur le workspace : les propriétés s'éditent là où
+        elles s'affichent. Une entité n'a plus une page pour la lire et une autre pour l'écrire.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>Les trois routes <code>/edit</code> disparaissent</strong> (conservées en redirection). Trois pages en moins, et les deux défauts ci-dessus disparaissent avec elles au lieu d'être réparés.</span></li>
+        <li><span class="pin">2</span><span><strong>Les champs s'éditent en place</strong>, exactement comme la description d'intervention le fait déjà : un clic ouvre le champ, échappement annule, la validation s'affiche sous le champ.</span></li>
+        <li><span class="pin">3</span><span><strong>La création reste une page</strong> et devient la même surface, en mode création : on remplit la fiche que l'on va lire ensuite.</span></li>
+        <li><span class="pin">4</span><span><strong>Le cycle de vie de l'équipement devient une ligne d'état</strong> qui nomme sa prochaine action (mettre en service, passer en maintenance, retirer), au lieu d'un menu de quatre actions concurrentes — le même geste que <code>commandAction</code> dans le workspace.</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <h3>Challengers écartés</h3>
+  <ul>
+    <li><strong>Édition en tiroir depuis la liste</strong> : contredit l'arbitrage déjà pris (les propriétés vivent en page) et le §10.5, qui réserve l'overlay aux surfaces secondaires.</li>
+    <li><strong>Création en plusieurs étapes</strong> : justifiée pour la seule inspection, qui charge trois jeux d'options. Conservée comme variante locale, pas comme règle.</li>
+    <li><strong>Une route paramétrée pour les trois fiches</strong> : mutualise du code, mais mélange trois cycles de vie distincts (un site n'a pas de statut opérationnel, une inspection a un résultat).</li>
+    <li><strong>Fiche en lecture seule et tiroir d'édition</strong> : c'est exactement la piste A.</li>
+  </ul>
+
+  <!-- ═════ 3. ÉCRAN CLÉ ═════ -->
+  <h2>3 · Écran clé — la fiche d'un site</h2>
+  <figure class="shot" style="margin-bottom:22px">
+    <div class="frame"><div class="frame-bar">Avant · /facilities/:id</div>
+      <img src="../../e2e/artifacts/ui-pass/refonte/actuel/facilities-detail--light--desktop.png" alt="Fiche site, état actuel" />
+    </div>
+    <figcaption>La bande d'identité est enveloppée dans une carte bordée ; les actions sont à droite ; les onglets suivent. La structure est saine : ce sont ses écarts entre entités qui coûtent.</figcaption>
+  </figure>
+
+  <div class="pair">
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste A · fiche alignée</div>
+        <div class="mock"><div class="u-col">
+          <div class="sh-top">⌂ › Acme › Sites › Site Nord<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+          <div class="pane">
+            <div class="u" style="gap:12px">
+              <span class="avatar-sq">SN</span>
+              <div class="u-col grow" style="gap:3px">
+                <div class="u"><span class="m-h1" style="font-size:1.42em">Site Nord</span><span class="m-chip m-chip--neutral">Entrepôt</span></div>
+                <span class="m-sub">12 rue des Forges, Lyon · <span class="mono">FAC-014</span> · 6 équipements</span>
+              </div>
+              <span class="m-btn m-btn--secondary">Déplacer</span>
+              <span class="m-btn m-btn--secondary">Modifier</span>
+              <span class="m-btn m-btn--ghost">⋯</span>
+            </div>
+            <div class="tabs"><span class="on">Aperçu</span><span>Équipements</span><span>Inspections</span></div>
+            <div class="u" style="gap:10px;align-items:stretch">
+              <div class="m-panel grow">
+                <span class="m-card-title">Informations</span>
+                <dl class="dl" style="margin-top:8px">
+                  <dt>Type</dt><dd>Entrepôt</dd>
+                  <dt>Code</dt><dd class="mono">FAC-014</dd>
+                  <dt>Adresse</dt><dd>12 rue des Forges, 69003 Lyon</dd>
+                  <dt>Site parent</dt><dd>Campus Rhône</dd>
+                </dl>
+              </div>
+              <div class="m-panel" style="width:150px">
+                <span class="m-label">Contexte</span>
+                <div class="u-col" style="gap:6px;margin-top:8px">
+                  <span>6 équipements</span><span>3 inspections</span><span class="m-ok">Aucune non-conformité</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>app-page-header</span><span>p-tabs (DETAIL_TABS_PT)</span><span>grille 12 colonnes comme les jumelles</span><span>« introuvable » remplace tout</span></div>
+    </figure>
+
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · la fiche s'édite</div>
+        <div class="mock"><div class="u-col">
+          <div class="sh-top">⌂ › Acme › Sites › Site Nord<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+          <div class="pane">
+            <div class="u" style="gap:12px">
+              <span class="avatar-sq">SN</span>
+              <div class="u-col grow" style="gap:3px">
+                <div class="u"><span class="m-h1 edit-field" style="font-size:1.42em">Site Nord</span><span class="m-chip m-chip--neutral">Entrepôt</span></div>
+                <span class="m-sub">12 rue des Forges, Lyon · <span class="mono">FAC-014</span> · 6 équipements</span>
+              </div>
+              <span class="m-btn m-btn--secondary">Déplacer</span>
+              <span class="m-btn m-btn--ghost">⋯</span>
+            </div>
+            <div class="tabs"><span class="on">Aperçu</span><span>Équipements</span><span>Inspections</span></div>
+            <div class="u" style="gap:10px;align-items:stretch">
+              <div class="m-panel grow">
+                <div class="u u-between"><span class="m-card-title">Informations</span><span class="m-sub">cliquez un champ pour le modifier</span></div>
+                <dl class="dl" style="margin-top:8px">
+                  <dt>Type</dt><dd class="edit-field">Entrepôt</dd>
+                  <dt>Code</dt><dd class="mono edit-field">FAC-014</dd>
+                  <dt>Adresse</dt>
+                  <dd class="edit-live">12 rue des Forges, 69003 Lyon<div class="u" style="gap:6px;margin-top:6px"><span class="m-btn m-btn--primary" style="padding:4px 9px">Enregistrer</span><span class="m-btn m-btn--ghost" style="padding:4px 9px">Annuler</span></div></dd>
+                  <dt>Site parent</dt><dd class="edit-field">Campus Rhône</dd>
+                </dl>
+              </div>
+              <div class="m-panel" style="width:150px">
+                <span class="m-label">Contexte</span>
+                <div class="u-col" style="gap:6px;margin-top:8px">
+                  <span>6 équipements</span><span>3 inspections</span><span class="m-ok">Aucune non-conformité</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>même motif que la description d'intervention</span><span>plus de bouton « Modifier »</span><span>/edit → redirection</span><span>validation sous le champ</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 4. LE CYCLE DE VIE ═════ -->
+  <h2>4 · Écran clé — le cycle de vie de l'équipement</h2>
+  <div class="pair">
+    <figure class="shot">
+      <div class="frame"><div class="frame-bar">Avant · /equipments/:id</div>
+        <img src="../../e2e/artifacts/ui-pass/refonte/actuel/equipments-detail--light--desktop.png" alt="Fiche équipement, état actuel" />
+      </div>
+      <figcaption>Le statut est un tag ; les transitions permises sont des boutons dans l'en-tête, à égalité avec « Modifier ». Rien ne dit laquelle est la suite attendue.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · l'état nomme sa suite</div>
+        <div class="mock"><div class="u-col">
+          <div class="sh-top">⌂ › Acme › Équipements › Extincteur A-12<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+          <div class="pane">
+            <div class="u" style="gap:12px">
+              <span class="avatar-sq">EX</span>
+              <div class="u-col grow" style="gap:3px">
+                <div class="u"><span class="m-h1 edit-field" style="font-size:1.42em">Extincteur A-12</span></div>
+                <span class="m-sub">Site Nord · Couloir A · <span class="mono">SN-2024-014</span></span>
+              </div>
+              <span class="m-btn m-btn--ghost">⋯</span>
+            </div>
+            <div class="m-panel" style="border-color:var(--m-amber);background:var(--m-amber-soft)">
+              <div class="u"><span class="m-chip m-chip--amber">En maintenance</span><span class="m-sub grow">Depuis le 2 août, 3 jours</span></div>
+              <div class="u" style="margin-top:8px;gap:8px"><span class="m-btn m-btn--primary">Remettre en service</span><span class="m-btn m-btn--secondary">Retirer du parc</span></div>
+            </div>
+            <div class="tabs"><span class="on">Aperçu</span><span>Pièces jointes</span><span>Journal de maintenance</span></div>
+            <div class="m-panel">
+              <span class="m-card-title">Informations</span>
+              <dl class="dl" style="margin-top:8px">
+                <dt>Type</dt><dd class="edit-field">Extincteur</dd>
+                <dt>Marque</dt><dd class="edit-field">Desautel</dd>
+                <dt>Emplacement</dt><dd class="edit-field">Couloir A</dd>
+              </dl>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>bande d'état = registre intervention-tag</span><span>une action nommée, une secondaire</span><span>transitions restantes dans ⋯</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 5. CRÉATION ═════ -->
+  <h2>5 · La création, et l'état « introuvable » que les deux pistes réparent</h2>
+  <div class="pair">
+    <figure>
+      <div class="frame"><div class="frame-bar">Création · gabarit formulaire canonique (A et B)</div>
+        <div class="mock"><div class="u-col" style="min-height:280px">
+          <div class="sh-top">⌂ › Acme › Sites › Nouveau<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+          <div class="pane" style="align-items:center">
+            <div class="u-col" style="width:300px;gap:10px">
+              <div class="u-col" style="gap:3px">
+                <span class="m-h1" style="font-size:1.42em">Nouveau site</span>
+                <span class="m-sub">Il sera rattaché à Acme Sécurité.</span>
+              </div>
+              <div class="m-panel">
+                <div class="u-col" style="gap:9px">
+                  <div class="u-col" style="gap:3px"><span class="lbl">Type</span><span class="field">Sélectionner un type…</span></div>
+                  <div class="u-col" style="gap:3px"><span class="lbl">Nom</span><span class="field">Bâtiment principal</span></div>
+                  <div class="u-col" style="gap:3px"><span class="lbl">Adresse</span><span class="field">Optionnelle</span></div>
+                  <div class="u" style="justify-content:flex-end;gap:8px;margin-top:4px"><span class="m-btn m-btn--ghost">Annuler</span><span class="m-btn m-btn--primary">Créer le site</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>app-page-header (fin du header recopié)</span><span>max-w-3xl + panneau canonique</span><span>dialogue de quota monté</span></div>
+    </figure>
+    <figure>
+      <div class="frame"><div class="frame-bar">Introuvable · la page entière, onglets compris</div>
+        <div class="mock"><div class="u-col" style="min-height:280px">
+          <div class="sh-top">⌂ › Acme › Sites<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+          <div class="pane" style="align-items:center;justify-content:center;flex:1">
+            <div class="u-col" style="align-items:center;text-align:center;gap:8px;max-width:260px">
+              <span class="avatar-sq" style="width:44px;height:44px;background:var(--m-bg-subtle);color:var(--m-text-muted)">⌸</span>
+              <span class="m-card-title">Ce site est introuvable</span>
+              <span class="m-sub">Il a peut-être été supprimé ou déplacé dans une autre organisation.</span>
+              <span class="m-btn m-btn--secondary" style="margin-top:4px">Retour aux sites</span>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>shared/empty-state</span><span>aucun onglet vide rendu dessous</span><span>même branche sur les 3 fiches, et en édition</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 6. MATRICE ═════ -->
+  <h2>6 · Matrice de couverture — 13 écrans et états de la famille</h2>
+  <table class="matrix">
+    <thead><tr><th>Écran / état</th><th>Piste A</th><th>Piste B</th><th>Effort</th><th>API</th></tr></thead>
+    <tbody>
+      <tr><td><strong>fiche site</strong></td><td>maquette HF §3</td><td>maquette HF §3</td><td>M / L</td><td>—</td></tr>
+      <tr><td><strong>fiche équipement</strong></td><td>même bande d'identité ; onglets inchangés</td><td>maquette HF §4 (bande d'état nommant sa suite) + édition en place</td><td>S / L</td><td>—</td></tr>
+      <tr><td><strong>fiche inspection</strong></td><td>adopte la grille 12 colonnes de ses jumelles</td><td>édition en place ; le résultat et le statut deviennent une bande d'état comme l'équipement</td><td>M / L</td><td>—</td></tr>
+      <tr><td><strong>création site</strong></td><td>maquette HF §5</td><td>identique (la création reste une page)</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>création équipement</strong></td><td>gabarit §5</td><td>identique</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>création inspection</strong></td><td>gabarit §5 ; trois jeux d'options chargés en parallèle, un seul squelette</td><td>identique, avec la variante multi-étapes en option locale</td><td>M / M</td><td>—</td></tr>
+      <tr><td><strong>édition site</strong></td><td>gabarit formulaire + branche « introuvable » ajoutée</td><td><strong>route retirée</strong> (redirection vers la fiche)</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>édition équipement</strong></td><td>idem</td><td><strong>route retirée</strong></td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>édition inspection</strong></td><td>idem</td><td><strong>route retirée</strong></td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>état « introuvable »</strong></td><td>maquette HF §5 — remplace la page entière, sur fiche et édition</td><td>maquette HF §5 — une seule occurrence, la fiche</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>dialogue de déplacement (site)</strong></td><td>déclaré dans la racine, tailles canoniques</td><td>inchangé (déplacer est une action, pas une propriété)</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>dialogue de non-conformité (inspection)</strong></td><td>déclaré dans la racine, tailles canoniques</td><td>inchangé</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>impasse de quota</strong></td><td colspan="2">le dialogue d'aide est monté sur la création <em>et</em> sur la liste (réglé en F2)</td><td>S</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p class="muted" style="margin-top:10px">
+    Aucun nouvel endpoint : l'édition en place écrit par le même appel que les pages d'édition
+    actuelles. Les trois routes <code>/edit</code> retirées conservent une redirection, conformément
+    à la règle du chantier (applications installées, favoris).
+  </p>
+
+  <!-- ═════ 7. ARBITRAGE ═════ -->
+  <h2>7 · Questions d'arbitrage — F3</h2>
+  <table class="matrix">
+    <thead><tr><th style="width:44px">#</th><th>Question</th><th>Options</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Q1</strong></td><td><strong>Les fiches et leurs formulaires</strong> (primaire)</td><td><span class="tag tag--a">A</span> Un gabarit de fiche, un de formulaire · <span class="tag tag--b">B</span> La fiche est la surface d'édition <span class="tag tag--reco">★</span> · B avec réserves</td></tr>
+      <tr><td><strong>Q2</strong></td><td>Si B — le cycle de vie de l'équipement et de l'inspection devient une bande d'état qui nomme sa prochaine action</td><td>Oui <span class="tag tag--reco">★</span> (même geste que le workspace) · Non, garder les transitions en boutons d'en-tête</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">
+    <strong>Recommandations ★ adoptées par défaut</strong> : « introuvable » remplace la page entière ·
+    l'édition reçoit cette branche (ou disparaît) · bande d'identité identique sur les trois fiches ·
+    la fiche d'inspection adopte la grille de ses jumelles · les six formulaires passent à l'en-tête
+    de page canonique · les deux dialogues rentrent dans la racine de leur page.
+  </p>
+
+  <footer class="disclaimer">
+    Maquettes à fidélité structurelle, non contractuelles au pixel · captures « avant » du jeu
+    <code>refonte/actuel</code> · la piste B prolonge l'arbitrage déjà pris sur les propriétés du
+    workspace et suppose le même amendement d'ARCHITECTURE.md §10.5.
+  </footer>
+</div>
+</body>
+</html>

@@ -167,3 +167,43 @@ correction par les jetons du preset a été retirée : après l'avoir appliquée
 `--p-button-secondary-focus-ring-color` valait bien `#818cf8` et l'anneau restait
 transparent — la cause est ailleurs, probablement l'ordre des couches CSS
 (`@layer theme, base, primeng`). À traiter dans son propre lot ou à la clôture a11y.
+
+## Journal du lot 6 — écarts au plan, décidés au contact du code
+
+**Où vit l'explorateur.** Il compose l'arborescence des sites et les onglets de
+contenu d'un site — tout appartient à la sous-feature `facilities`. Mais il
+remplace deux entrées de navigation dont l'une est `equipments`, une autre
+sous-feature. Le placer dans `facilities` en ferait un consommateur latéral de
+`equipments` ; le placer dans une nouvelle sous-feature doublerait le problème.
+Il est donc dans la **feature parente** `organization`, qui a le droit documenté
+de composer ses enfants par leurs API publiques (§8.4) — exactement le chemin
+déjà emprunté par « Aujourd'hui » vers `interventions`.
+
+**Deux entrées deviennent une, sans casser une seule URL.** L'entrée « Assets »
+pointe sur `/assets` ; `/facilities/**` et `/equipments/**` restent montées. Fiches,
+formulaires de création et liens profonds continuent de résoudre — la fusion
+concerne la navigation, pas le routage.
+
+**`p-tree` plutôt que `p-treeTable`.** La planche mentionnait le second ; le
+panneau gauche n'a qu'une colonne — un nom et un chevron. `p-tree` porte déjà
+`role="tree"`, le `tabindex` glissant, les flèches et `aria-level`. Un treetable
+aurait apporté un appareil de colonnes pour rien.
+
+**Ce qui reste du lot** : le mode « tout à plat » (deuxième axe de premier niveau,
+recherche transverse par numéro de série) et la sortie d'impasse de quota montée
+sur les listes. Les deux sont des ajouts à cette page, pas des reprises.
+
+**Défaut trouvé et corrigé — le mien, et il vidait la page de son sens.** Les
+nœuds de l'arbre étaient produits par un `computed` qui reconstruisait des objets
+neufs à chaque branche chargée. Or PrimeNG mute `node.expanded` sur l'instance
+qu'il détient : le recalcul jetait cet état, si bien que **déplier une branche
+chargeait ses enfants puis se refermait aussitôt**, et qu'un second clic était
+nécessaire pour les voir. Au clavier c'était pire — le focus retombait sur
+`<body>`, sans recours. Corrigé en gardant l'identité des nœuds : un signal
+inscriptible et un index par identifiant, dont les branches sont rattachées en
+place. `expanded: false` est désormais posé explicitement à la création, pour que
+`aria-expanded` existe avant la première interaction.
+
+**Cibles tactiles.** `p-tree` livre une ligne de 36 px et une bascule de 28 px —
+sous le plancher de 44 px que le reste de l'application tient. Relevées par `[pt]`
+sous `sm`.

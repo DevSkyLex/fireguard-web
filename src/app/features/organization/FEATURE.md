@@ -41,6 +41,11 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId` — the "Today" landing page; the landing guard
   redirects a member who can read neither interventions nor the dashboard to their
   first permitted destination
+- `/organizations/:organizationId/assets` — the estate explorer: the site
+  hierarchy on the left, the selected site's equipment and inspections on the
+  right. **It is the single navigation entry for the estate**, replacing the
+  former "Facilities" and "Equipments" pair; both route trees below stay mounted
+  so records, creation forms and deep links keep resolving
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
@@ -75,6 +80,7 @@ Primary stores:
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
 - `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped separately by both the landing page — which reads only its alert feed — and the statistics page, each fetching its own copy of the aggregate `/dashboard` payload)
+- `FacilityTreeStore` (owned by the facilities subfeature, component-scoped to the assets explorer; the site hierarchy, loaded one branch at a time)
 - `OrganizationTodayStore` (component-scoped to the landing page; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
@@ -154,6 +160,10 @@ store never calls the API without the permission — the request would be a guar
   its `models`, `utils` and `data-access` concern barrels. Read-only — the parent lists
   and counts interventions and reads the local outbox, but owns no intervention state
   and takes no workflow decision.
+- Consumes the nested `features/facilities` public API for the assets explorer
+  (ARCHITECTURE.md §4): its `state` barrel for `FacilityTreeStore`, and its
+  `ui/components` barrel for the equipment and inspection tab panes the facility
+  record already uses. Read-only — the parent browses, the subfeature owns.
 - May expose organization context to shell composition through ports.
 - May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
 - May expose onboarding-approved setup workflows through `organization/setup`.

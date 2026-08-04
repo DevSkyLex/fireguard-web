@@ -53,7 +53,7 @@ This subfeature is responsible for:
 
   **Each render groups by what it is**: the list by the view's grouping (status,
   deadline window, site or responsible), the board by workflow status — its
-  drag-and-drop *is* a status transition — and the calendar by date. A view's
+  drag-and-drop _is_ a status transition — and the calendar by date. A view's
   grouping therefore applies to the list render only, by design.
 
   **One behaviour across the three renders** is an invariant: "Show abandoned"

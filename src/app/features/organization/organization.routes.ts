@@ -37,6 +37,28 @@ const ORGANIZATION_SCOPED_ROUTES: Routes = [
       import('./features/interventions/interventions.routes').then((m) => m.INTERVENTION_ROUTES),
   },
   {
+    /**
+     * The estate, browsed by site. It replaces the two "Facilities" and
+     * "Equipments" navigation entries with one destination; both route trees
+     * stay mounted below, because a record, a creation form and every deep link
+     * into them must keep resolving.
+     */
+    path: 'assets',
+    canActivate: [
+      organizationPermissionGuard({
+        permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
+      }),
+    ],
+    loadComponent: () =>
+      import('./ui/pages/organization-assets/organization-assets.component').then(
+        (m) => m.OrganizationAssetsPage,
+      ),
+    title: $localize`:@@route.assets:Assets`,
+    data: {
+      breadcrumb: 'Assets',
+    },
+  },
+  {
     path: 'facilities',
     data: {
       breadcrumb: 'Facilities',

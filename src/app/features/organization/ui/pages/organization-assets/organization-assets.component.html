@@ -1,0 +1,147 @@
+<div id="organization-assets" class="flex h-full min-h-0 flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <app-page-header
+    title="Assets"
+    i18n-title="@@route.assets"
+    subtitle="Browse the estate by site, and see what each one holds."
+    i18n-subtitle="@@org.assets.subtitle"
+  >
+    <div actions>
+      <p-button
+        label="New site"
+        i18n-label="@@org.assets.newFacility"
+        icon="pi pi-plus"
+        size="small"
+        styleClass="max-sm:min-h-11"
+        (onClick)="createFacility()"
+      />
+    </div>
+  </app-page-header>
+
+  @if (tree.hasRootsError()) {
+    <app-error-state
+      icon="pi-exclamation-triangle"
+      title="Couldn't load the site hierarchy"
+      i18n-title="@@org.assets.errorTitle"
+      description="The estate couldn't be fetched. Check your connection and try again."
+      i18n-description="@@org.assets.errorDescription"
+    >
+      <p-button
+        label="Retry"
+        i18n-label="@@org.assets.retry"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        styleClass="max-sm:min-h-11"
+        (onClick)="retryRoots()"
+      />
+    </app-error-state>
+  } @else if (isEmpty()) {
+    <app-empty-state
+      icon="pi-map"
+      title="No site yet"
+      i18n-title="@@org.assets.emptyTitle"
+      description="Register your first site to start building the estate — equipment and inspections hang off it."
+      i18n-description="@@org.assets.emptyDescription"
+    >
+      <p-button
+        label="New site"
+        i18n-label="@@org.assets.newFacility"
+        icon="pi pi-plus"
+        size="small"
+        styleClass="max-sm:min-h-11"
+        (onClick)="createFacility()"
+      />
+    </app-empty-state>
+  } @else {
+    <!--
+      Two panes side by side from `lg` up, stacked below it: on a phone the tree
+      is a way in, not a permanent companion, so it sits above what it opens
+      rather than stealing half the width.
+    -->
+    <div class="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-12">
+      <section
+        class="flex min-h-0 flex-col rounded-md border border-surface-200 bg-surface-0 lg:col-span-4 xl:col-span-3 dark:border-surface-800 dark:bg-surface-900"
+      >
+        <h2
+          class="border-b border-surface-200 px-4 py-3 text-base font-semibold text-surface-900 dark:border-surface-800 dark:text-surface-0"
+          i18n="@@org.assets.hierarchy"
+        >
+          Sites
+        </h2>
+
+        <!--
+          `pt` raises the row and its toggle to the 44px touch floor the rest of
+          the app holds: PrimeNG ships a 36px row and a 28px toggle, which are
+          fine with a mouse and too small for a thumb.
+        -->
+        <p-tree
+          class="min-h-0 flex-1 overflow-y-auto"
+          [value]="nodes()"
+          [loading]="tree.isLoadingRoots()"
+          loadingMode="icon"
+          selectionMode="single"
+          i18n-ariaLabel="@@org.assets.treeLabel"
+          ariaLabel="Site hierarchy"
+          [pt]="treePt"
+          (onNodeExpand)="onNodeExpand($event)"
+          (onNodeSelect)="onNodeSelect($event)"
+        />
+      </section>
+
+      <section class="flex min-h-0 flex-col gap-4 lg:col-span-8 xl:col-span-9">
+        @if (selected(); as facility) {
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="text-lg font-semibold text-surface-950 dark:text-surface-0">
+              {{ facility.name }}
+            </h2>
+
+            <p-button
+              label="Open record"
+              i18n-label="@@org.assets.openRecord"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              styleClass="ml-auto max-sm:min-h-11"
+              (onClick)="openFacility()"
+            />
+          </div>
+
+          <p-tabs value="equipment" class="flex min-h-0 flex-1 flex-col">
+            <p-tablist>
+              @if (canReadEquipment()) {
+                <p-tab value="equipment" i18n="@@org.assets.tabEquipment">Equipment</p-tab>
+              }
+              @if (canReadInspections()) {
+                <p-tab value="inspections" i18n="@@org.assets.tabInspections">Inspections</p-tab>
+              }
+            </p-tablist>
+
+            <p-tabpanels class="min-h-0 flex-1">
+              @if (canReadEquipment()) {
+                <p-tabpanel value="equipment">
+                  <app-facility-equipment-tab [facilityId]="facility.id" />
+                </p-tabpanel>
+              }
+              @if (canReadInspections()) {
+                <p-tabpanel value="inspections">
+                  <app-facility-inspection-tab [facilityId]="facility.id" />
+                </p-tabpanel>
+              }
+            </p-tabpanels>
+          </p-tabs>
+        } @else {
+          <app-empty-state
+            icon="pi-sitemap"
+            title="Pick a site"
+            i18n-title="@@org.assets.pickTitle"
+            description="Choose a site on the left to see the equipment and inspections it holds."
+            i18n-description="@@org.assets.pickDescription"
+          />
+        }
+      </section>
+    </div>
+  }
+</div>

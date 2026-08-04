@@ -85,6 +85,10 @@ Primary stores:
 
 - `FacilityStore`
 - `ActiveFacilityStore`
+- `FacilityTreeStore` — the site hierarchy for the parent feature's assets
+  explorer. Roots once, then one branch per expansion, each fetched exactly
+  once; collapsing and re-expanding is a navigation gesture, not a reason to
+  ask the server again.
 
 Primary service:
 
@@ -93,6 +97,11 @@ Primary service:
 ## Cross-Feature Dependencies
 
 - Depends on organization route context from the parent organization feature.
+- The parent feature consumes this subfeature's `state` barrel (`FacilityTreeStore`)
+  and its `ui/components` barrel (`FacilityEquipmentTab`, `FacilityInspectionTab`)
+  for the assets explorer at `/organizations/:organizationId/assets`
+  (ARCHITECTURE.md §4). Read-only — the parent browses the hierarchy, this
+  subfeature keeps ownership of sites and of those panes.
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
 
 ## Deletion

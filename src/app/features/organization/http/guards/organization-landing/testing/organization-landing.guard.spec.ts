@@ -87,11 +87,9 @@ describe('organizationLandingGuard', () => {
     );
 
     expect(result).toBe(dashboardUrlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith([
-      '/organizations',
-      'org-1',
-      'facilities',
-    ]);
+    // The estate is reached through the merged "Assets" explorer, which is now
+    // the only entry gated on the facilities permission alone.
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/organizations', 'org-1', 'assets']);
   });
 
   it('should resolve the organization id from a parent route', async () => {

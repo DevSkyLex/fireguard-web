@@ -193,20 +193,20 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
   },
   {
-    id: 'facilities',
-    label: $localize`:@@route.facilities:Facilities`,
-    icon: 'pi pi-map',
-    path: 'facilities',
+    /**
+     * One destination for the estate, replacing the separate "Facilities" and
+     * "Equipments" entries. Sites, equipment and inspections are one business
+     * chain, and two menu entries presented them as two independent catalogues.
+     *
+     * Gated on the facilities permission because the explorer opens on the site
+     * hierarchy; the equipment pane inside it is gated separately.
+     */
+    id: 'assets',
+    label: $localize`:@@route.assets:Assets`,
+    icon: 'pi pi-sitemap',
+    path: 'assets',
     group: 'assets',
     permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
-  },
-  {
-    id: 'equipments',
-    label: $localize`:@@route.equipments:Equipments`,
-    icon: 'pi pi-box',
-    path: 'equipments',
-    group: 'assets',
-    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
   },
   {
     id: 'statistics',

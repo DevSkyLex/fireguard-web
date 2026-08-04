@@ -48,9 +48,13 @@ test.describe('Workspace sidebar', () => {
     await expect(operations.getByRole('link', { name: 'Interventions' })).toBeVisible();
     await expect(operations.getByRole('link', { name: 'Inspections' })).toBeVisible();
 
+    // "Assets" replaces the earlier "Facilities" + "Equipments" pair: sites,
+    // equipment and inspections are one chain browsed from one destination.
     const assets = nav.locator('ul[aria-labelledby="workspace-nav-group-assets"]');
-    await expect(assets.getByRole('link', { name: 'Facilities' })).toBeVisible();
-    await expect(assets.getByRole('link', { name: 'Equipments' })).toBeVisible();
+    await expect(assets.getByRole('link', { name: 'Assets' })).toBeVisible();
+    await expect(assets.getByRole('link', { name: 'Statistics' })).toBeVisible();
+    await expect(assets.getByRole('link', { name: 'Facilities' })).toHaveCount(0);
+    await expect(assets.getByRole('link', { name: 'Equipments' })).toHaveCount(0);
 
     // "Team" replaces the earlier "Roles" label.
     const administration = nav.locator('ul[aria-labelledby="workspace-nav-group-administration"]');

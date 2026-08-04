@@ -7581,6 +7581,66 @@
         <source>Field work you have already captured stays on this device and syncs on its own once you are back in range.</source>
         <target>El trabajo de campo ya registrado permanece en este dispositivo y se sincronizará solo cuando vuelvas a tener cobertura.</target>
       </trans-unit>
+      <trans-unit id="route.assets" datatype="html">
+        <source>Assets</source>
+        <target>Patrimonio</target>
+      </trans-unit>
+      <trans-unit id="org.assets.subtitle" datatype="html">
+        <source>Browse the estate by site, and see what each one holds.</source>
+        <target>Recorre el patrimonio por sitio y mira lo que contiene cada uno.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.newFacility" datatype="html">
+        <source>New site</source>
+        <target>Nuevo sitio</target>
+      </trans-unit>
+      <trans-unit id="org.assets.errorTitle" datatype="html">
+        <source>Couldn't load the site hierarchy</source>
+        <target>No se pudo cargar la jerarquía de sitios</target>
+      </trans-unit>
+      <trans-unit id="org.assets.errorDescription" datatype="html">
+        <source>The estate couldn't be fetched. Check your connection and try again.</source>
+        <target>No se pudo obtener el patrimonio. Comprueba tu conexión e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.assets.emptyTitle" datatype="html">
+        <source>No site yet</source>
+        <target>Ningún sitio todavía</target>
+      </trans-unit>
+      <trans-unit id="org.assets.emptyDescription" datatype="html">
+        <source>Register your first site to start building the estate — equipment and inspections hang off it.</source>
+        <target>Registra tu primer sitio para empezar el patrimonio: los equipos y las inspecciones dependen de él.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.hierarchy" datatype="html">
+        <source> Sites </source>
+        <target> Sitios </target>
+      </trans-unit>
+      <trans-unit id="org.assets.treeLabel" datatype="html">
+        <source>Site hierarchy</source>
+        <target>Jerarquía de sitios</target>
+      </trans-unit>
+      <trans-unit id="org.assets.openRecord" datatype="html">
+        <source>Open record</source>
+        <target>Abrir la ficha</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tabEquipment" datatype="html">
+        <source>Equipment</source>
+        <target>Equipos</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tabInspections" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="org.assets.pickTitle" datatype="html">
+        <source>Pick a site</source>
+        <target>Elige un sitio</target>
+      </trans-unit>
+      <trans-unit id="org.assets.pickDescription" datatype="html">
+        <source>Choose a site on the left to see the equipment and inspections it holds.</source>
+        <target>Elige un sitio a la izquierda para ver los equipos y las inspecciones que contiene.</target>
+      </trans-unit>
       <trans-unit id="route.statistics" datatype="html">
         <source>Statistics</source>
         <target>Estadísticas</target>

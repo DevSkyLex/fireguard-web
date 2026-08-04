@@ -2,10 +2,12 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   type InputSignal,
+  type Signal,
   PLATFORM_ID,
   signal,
   untracked,
@@ -20,7 +22,7 @@ import {
 } from '@features/organization/features/facilities/ui/forms';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
 import { OrganizationQuotaStore } from '@features/organization/state';
-import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/dialogs/organization-quota-upgrade-dialog';
+import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/dialogs';
 import { isQuotaExceededError } from '@features/organization/utils';
 
 /**
@@ -59,6 +61,23 @@ export class FacilityCreatePage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property quotaSubscriptionLink
+   * @readonly
+   *
+   * @description
+   * Router link to the organization's settings page, passed to the quota
+   * upgrade dialog (which is purely presentational per ARCHITECTURE.md §10.5).
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly quotaSubscriptionLink: Signal<readonly string[]> = computed<readonly string[]>(
+    () => ['/organizations', this.organizationId(), 'settings'],
+  );
 
   //#region Properties
   /**

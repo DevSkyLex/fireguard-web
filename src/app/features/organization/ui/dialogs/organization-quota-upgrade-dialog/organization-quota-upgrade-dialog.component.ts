@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
   input,
   model,
   type InputSignal,
@@ -15,7 +14,6 @@ import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { ORGANIZATION_QUOTA_RESOURCE_LABELS } from '@features/organization/constants';
 import type { OrganizationQuotaResource } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_MD } from '@shared/overlay-size';
 
 /**
@@ -26,9 +24,9 @@ import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_MD } from '@shared/overlay-size';
  * Organization-owned dialog shown when a create action is rejected because the
  * current plan's quota for a resource has been reached (HTTP 409). It explains
  * which limit was hit and offers a "View plans" call to action that deep-links
- * to the settings Subscription tab. The subscription link is derived from the
- * active organization context, so consuming pages only toggle `visible` and pass
- * the at-limit `resource`.
+ * to the settings Subscription tab. Purely presentational (ARCHITECTURE.md
+ * §10.5): the consuming page passes the resolved `subscriptionLink` alongside
+ * `visible` and the at-limit `resource`.
  *
  * @version 1.0.0
  *
@@ -42,10 +40,6 @@ import { DIALOG_BREAKPOINTS, DIALOG_WIDTH_MD } from '@shared/overlay-size';
 })
 export class OrganizationQuotaUpgradeDialog {
   //#region Properties
-  /** Active organization context, used to build the subscription deep link. */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
-
   /** Two-way dialog visibility. */
   public readonly visible: ModelSignal<boolean> = model<boolean>(false);
 
@@ -53,18 +47,15 @@ export class OrganizationQuotaUpgradeDialog {
   public readonly resource: InputSignal<OrganizationQuotaResource | null> =
     input<OrganizationQuotaResource | null>(null);
 
+  /** Router link to the organization's settings page, resolved by the page. */
+  public readonly subscriptionLink: InputSignal<readonly string[] | null> = input<
+    readonly string[] | null
+  >(null);
+
   /** Human-readable label of the at-limit resource (falls back to "resources"). */
   protected readonly resourceLabel: Signal<string> = computed<string>(() => {
     const resource: OrganizationQuotaResource | null = this.resource();
     return resource === null ? 'resources' : ORGANIZATION_QUOTA_RESOURCE_LABELS[resource];
-  });
-
-  /** Router link to the active organization's settings page. */
-  protected readonly subscriptionLink: Signal<readonly string[] | null> = computed<
-    readonly string[] | null
-  >(() => {
-    const organizationId: string | null = this.activeOrganizationStore.selectedOrganizationId();
-    return organizationId === null ? null : ['/organizations', organizationId, 'settings'];
   });
 
   /** Query params selecting the Subscription tab on the settings page. */

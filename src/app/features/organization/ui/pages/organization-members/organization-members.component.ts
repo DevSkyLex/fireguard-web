@@ -40,7 +40,7 @@ import {
   organizationMembersStoreEvents,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
-import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/dialogs/organization-quota-upgrade-dialog';
+import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/dialogs';
 import {
   OrganizationInviteDrawer,
   OrganizationRoleAssignmentDrawer,
@@ -100,6 +100,23 @@ export class OrganizationMembersPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property quotaSubscriptionLink
+   * @readonly
+   *
+   * @description
+   * Router link to the organization's settings page, passed to the quota
+   * upgrade dialog (which is purely presentational per ARCHITECTURE.md §10.5).
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly quotaSubscriptionLink: Signal<readonly string[]> = computed<readonly string[]>(
+    () => ['/organizations', this.organizationId(), 'settings'],
+  );
 
   /** PrimeNG confirmation service for destructive member operations. */
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);

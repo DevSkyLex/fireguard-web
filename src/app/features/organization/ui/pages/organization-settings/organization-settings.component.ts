@@ -28,13 +28,13 @@ import {
   OrganizationPlanSelector,
   OrganizationUsagePanel,
 } from '@features/organization/ui/components';
+import { OrganizationDeleteDialog } from '@features/organization/ui/dialogs';
 import {
   OrganizationGeneralForm,
   OrganizationNotificationsForm,
   OrganizationRegionalForm,
 } from '@features/organization/ui/forms';
 import { PageHeader } from '@shared/page-header';
-import { OrganizationDeleteDialog } from '../../dialogs/organization-delete-dialog';
 import { DEFAULT_ORGANIZATION_SETTINGS_TAB, ORGANIZATION_SETTINGS_TABS } from './constants';
 import type { OrganizationSettingsTab } from './models';
 

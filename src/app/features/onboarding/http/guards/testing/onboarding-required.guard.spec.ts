@@ -7,7 +7,7 @@ import { onboardingRequiredGuard } from '../onboarding-required.guard';
 
 describe('onboardingRequiredGuard', () => {
   let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };
-  let mockStore: { ensureLoaded: ReturnType<typeof vi.fn> };
+  let mockStore: { ensureLoaded: ReturnType<typeof vi.fn>; loadError: ReturnType<typeof vi.fn> };
   const onboardingUrlTree = {} as UrlTree;
   const route = {} as unknown as Parameters<typeof onboardingRequiredGuard>[0];
   const state = {} as unknown as Parameters<typeof onboardingRequiredGuard>[1];
@@ -24,7 +24,7 @@ describe('onboardingRequiredGuard', () => {
 
   beforeEach(() => {
     mockRouter = { createUrlTree: vi.fn().mockReturnValue(onboardingUrlTree) };
-    mockStore = { ensureLoaded: vi.fn() };
+    mockStore = { ensureLoaded: vi.fn(), loadError: vi.fn().mockReturnValue(null) };
 
     TestBed.configureTestingModule({
       providers: [
@@ -49,5 +49,13 @@ describe('onboardingRequiredGuard', () => {
     mockStore.ensureLoaded.mockReturnValue(of(null));
     await expect(runGuard()).resolves.toBe(onboardingUrlTree);
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/onboarding']);
+  });
+
+  it('should let the navigation through when the record is unknown because the load failed', async () => {
+    mockStore.ensureLoaded.mockReturnValue(of(null));
+    mockStore.loadError.mockReturnValue({ message: 'Service unavailable' });
+
+    await expect(runGuard()).resolves.toBe(true);
+    expect(mockRouter.createUrlTree).not.toHaveBeenCalled();
   });
 });

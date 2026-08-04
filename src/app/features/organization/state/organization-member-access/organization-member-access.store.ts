@@ -1,5 +1,4 @@
 import { computed, effect, inject, untracked } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -10,7 +9,18 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { combineLatest, filter, first, map, of, pipe, switchMap, tap, type Observable } from 'rxjs';
+import {
+  catchError,
+  filter,
+  finalize,
+  map,
+  of,
+  pipe,
+  shareReplay,
+  switchMap,
+  tap,
+  type Observable,
+} from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -74,11 +84,16 @@ export const OrganizationMemberAccessStore = signalStore(
       organizationMemberService = inject<OrganizationMemberService>(OrganizationMemberService),
       activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
     ) => {
-      const currentOrganizationId$: Observable<string | null> = toObservable(
-        store.currentOrganizationId,
-      );
-      const accessCallState$: Observable<CallState<CurrentOrganizationMemberProfileOutput>> =
-        toObservable(store.accessCallState);
+      /**
+       * The access request currently in flight, if any. Two guards resolve the
+       * same organization on a single navigation — the parent `:organizationId`
+       * gate and the child route's own — so without this they would each fire
+       * their own `/me`.
+       */
+      let pendingAccess: {
+        readonly organizationId: string;
+        readonly request$: Observable<boolean>;
+      } | null = null;
 
       return {
         /**
@@ -133,9 +148,18 @@ export const OrganizationMemberAccessStore = signalStore(
          * Method ensureAccessResolved
          *
          * @description
-         * Ensures the target organization's access payload is either already
-         * resolved or gets loaded once through the shared store, then waits until
-         * the store reaches a success or error state for that organization.
+         * Ensures the target organization's access payload is resolved, loading
+         * it when the store holds another organization's.
+         *
+         * **The wait is driven by the request, not by watching store signals.**
+         * It used to subscribe to `toObservable(currentOrganizationId)` and
+         * `toObservable(accessCallState)` and wait for the pair to settle. Those
+         * bridges emit from an effect, and effects do not run while the router is
+         * blocked on a guard — so switching organization from inside the running
+         * application waited on an emission that never came, the navigation was
+         * cancelled, and the member silently stayed where they were. A full page
+         * load worked, which is why the bug survived: every deep link resolved
+         * during bootstrap, when effects still run.
          *
          * @param {string} organizationId - Organization identifier to resolve.
          *
@@ -150,22 +174,46 @@ export const OrganizationMemberAccessStore = signalStore(
             return of(true);
           }
 
-          if (
-            currentOrganizationId !== organizationId ||
-            (accessCallState.status !== 'pending' && accessCallState.status !== 'success')
-          ) {
-            this.loadAccess(organizationId);
+          if (pendingAccess?.organizationId === organizationId) {
+            return pendingAccess.request$;
           }
 
-          return combineLatest([currentOrganizationId$, accessCallState$]).pipe(
-            first(
-              ([loadedOrganizationId, loadedAccessCallState]) =>
-                loadedOrganizationId === organizationId &&
-                (loadedAccessCallState.status === 'success' ||
-                  loadedAccessCallState.status === 'error'),
-            ),
-            map(([, loadedAccessCallState]) => loadedAccessCallState.status === 'success'),
-          );
+          patchState(store, {
+            currentOrganizationId: organizationId,
+            profile: null,
+            accessCallState: pendingCallState(),
+          });
+
+          const request$: Observable<boolean> = organizationMemberService
+            .getCurrentProfile(organizationId)
+            .pipe(
+              map((profile: CurrentOrganizationMemberProfileOutput): boolean => {
+                patchState(store, {
+                  currentOrganizationId: organizationId,
+                  profile,
+                  accessCallState: successCallState(profile),
+                });
+
+                return true;
+              }),
+              catchError((error: unknown): Observable<boolean> => {
+                patchState(store, {
+                  currentOrganizationId: organizationId,
+                  profile: null,
+                  accessCallState: errorCallState(toStoreError(error)),
+                });
+
+                return of(false);
+              }),
+              finalize((): void => {
+                if (pendingAccess?.organizationId === organizationId) pendingAccess = null;
+              }),
+              shareReplay({ bufferSize: 1, refCount: false }),
+            );
+
+          pendingAccess = { organizationId, request$ };
+
+          return request$;
         },
 
         /**

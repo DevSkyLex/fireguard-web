@@ -764,7 +764,15 @@ export const OnboardingStore = signalStore(
             }
           }),
           map((response: OnboardingOutput): OnboardingOutput | null => response),
-          catchError((): Observable<OnboardingOutput | null> => of(null)),
+          // The failure is recorded, not just swallowed: `null` alone cannot
+          // tell "this account has no onboarding record" from "the endpoint is
+          // down", and the shell guard needs that difference to avoid locking a
+          // member out of an app they have already activated.
+          catchError((error: unknown): Observable<OnboardingOutput | null> => {
+            patchState(store, { loadCallState: errorCallState(toStoreError(error)) });
+
+            return of(null);
+          }),
         );
       },
     }),

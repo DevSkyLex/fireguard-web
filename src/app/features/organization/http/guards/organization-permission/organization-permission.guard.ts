@@ -7,7 +7,10 @@ import {
   Router,
   type UrlTree,
 } from '@angular/router';
+import { map } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { OrganizationMemberAccessStore } from '@features/organization/state';
 import type { OrganizationPermissionGuardOptions } from './models';
 
 /**
@@ -67,6 +70,31 @@ export function organizationPermissionGuard(
       inject<OrganizationPermissionService>(OrganizationPermissionService);
 
     /**
+     * Constant feedback
+     * @const feedback
+     *
+     * @description
+     * App-wide feedback surface, used to say why a navigation was refused.
+     *
+     * @var {FeedbackService}
+     */
+    const feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
+
+    /**
+     * Constant memberAccessStore
+     * @const memberAccessStore
+     *
+     * @description
+     * Shared organization access store, awaited so the permission read below
+     * cannot land on another organization's payload.
+     *
+     * @var {OrganizationMemberAccessStore}
+     */
+    const memberAccessStore: OrganizationMemberAccessStore = inject<OrganizationMemberAccessStore>(
+      OrganizationMemberAccessStore,
+    );
+
+    /**
      * Constant organizationId
      * @const organizationId
      *
@@ -91,13 +119,36 @@ export function organizationPermissionGuard(
         : (options.redirectTo ?? defaultRedirect);
     const redirectUrlTree: UrlTree = router.createUrlTree([...redirectTo]);
 
-    // Check if the user has the required permissions for the organization.
-    const allowed: boolean = organizationPermissionService.canAccessOrganization(
-      organizationId,
-      options.permissions,
-      options.match ?? 'all',
-    );
+    // Wait for the target organization's access payload instead of assuming the
+    // parent guard already loaded it. `canAccessOrganization` answers `false`
+    // both for "denied" and for "not resolved yet", and the parent does not
+    // reliably finish first when a navigation keeps the same leaf route node —
+    // switching organization while staying on the same section, precisely. Read
+    // too early, an allowed member was bounced out of the section they had just
+    // opened. Resolved payloads return synchronously, so the cost is nil.
+    return memberAccessStore.ensureAccessResolved(organizationId).pipe(
+      map((): GuardResult => {
+        const allowed: boolean = organizationPermissionService.canAccessOrganization(
+          organizationId,
+          options.permissions,
+          options.match ?? 'all',
+        );
 
-    return allowed ? true : redirectUrlTree;
+        if (allowed) return true;
+
+        // Name the refusal. Redirecting in silence left the member on a page
+        // they had not asked for, with nothing to explain the jump —
+        // indistinguishable from a broken link. The permission itself is the
+        // useful part: it is what they have to ask an administrator for.
+        feedback.warn(
+          $localize`:@@org.permission.deniedDetail:You need the ${options.permissions.join(
+            ', ',
+          )}:permissions: permission to open that page.`,
+          $localize`:@@org.permission.deniedSummary:Access denied`,
+        );
+
+        return redirectUrlTree;
+      }),
+    );
   };
 }

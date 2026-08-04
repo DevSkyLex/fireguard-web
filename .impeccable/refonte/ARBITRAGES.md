@@ -100,9 +100,15 @@ ne remettent aucune décision en cause ; ils désignent du travail à mutualiser
 | Document | Amendement | Motif |
 | --- | --- | --- |
 | `ARCHITECTURE.md` §10.5 | L'édition d'une ressource peut vivre en **surface de page** plutôt qu'en overlay ; l'overlay reste réservé aux surfaces secondaires et aux confirmations | Décisions B8 et C3 |
-| `DESIGN.md` | Déclarer **JetBrains Mono** dans le bloc typographique | La fonte est utilisée par le produit (codes `FG-142`, révisions) et déclarée dans PRODUCT.md, mais absente de DESIGN.md |
 | `DESIGN.md` | Consigner les **cinq gabarits de page** et la règle « une seule convention d'action primaire » | Arbitrage A5 |
 | `FEATURE.md` concernés | Mise à jour des routes, ports et invariants dans le lot qui les modifie | Règle §14.2 |
+
+> **Correction (lot 2).** Une version antérieure de ce registre annonçait un
+> troisième amendement : déclarer JetBrains Mono dans DESIGN.md. C'était faux.
+> La fonte y est bien déclarée, à la fois dans le rôle typographique `mono` du
+> front-matter et dans la prose. Le signal venait du détecteur de design, dont
+> le sidecar ne lit pas ce rôle ; c'est un faux positif que j'avais propagé sans
+> le vérifier. Aucun amendement n'est dû de ce côté.
 
 ## Défauts trouvés et corrigés pendant la phase de conception
 

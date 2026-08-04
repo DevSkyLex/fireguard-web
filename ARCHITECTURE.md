@@ -1030,11 +1030,44 @@ They must not:
 - own navigation, submission, or option-loading orchestration — that stays with the parent page,
 - embed heavy form logic inline; keep it in a `ui/forms/` component they compose.
 
-Choosing between the three surfaces:
+Choosing between the four surfaces:
 
 - **dialog** — short confirmations, pickers, and compact single-purpose forms,
 - **drawer** — forms tall enough to scroll inside a dialog, and contextual side panels that should keep the page context visible,
-- **routed page** — the feature's primary or multi-step workflows; an overlay is for secondary, self-contained surfaces, never the core workflow.
+- **routed page** — the feature's primary or multi-step workflows; an overlay is for secondary, self-contained surfaces, never the core workflow,
+- **in-place on the page** — editing a property of the resource the page already displays.
+
+#### In-place editing is a page surface, not an overlay
+
+When a page displays a resource, editing one of its properties belongs **on that
+page**, next to the value being changed — not in a dialog or drawer that hides
+the very thing being edited, and not on a separate `/edit` route that duplicates
+the read surface.
+
+The rule follows from the two above rather than contradicting them: a property
+edit is neither a secondary self-contained surface (dialog, drawer) nor a
+workflow of its own (routed page). It is the page doing its job.
+
+Apply it when:
+
+- the page already renders the value, and
+- the edit is a single property or a small coherent group, and
+- the result is visible on the same screen once saved.
+
+Keep the overlay when the edit opens a genuinely different task: creating a new
+resource, a multi-step form, a destructive confirmation, or a picker over a
+collection the page does not show.
+
+Consequences a reviewer must enforce:
+
+- an in-place field owns its draft state, its cancel path (escape reverts), its
+  pending state, and its validation message; it does not leave the page,
+- the page keeps the orchestration — the field emits its new value, the page
+  calls the store,
+- a feature that adopts in-place editing **retires its `/edit` route**, keeping a
+  redirect so installed applications and bookmarks still resolve (section 12.1),
+- PrimeNG's `p-inplace` owns the display/edit toggle and its close affordance;
+  the save, cancel, pending and error contract is composed around it.
 
 ### 10.6 `data-access/`
 

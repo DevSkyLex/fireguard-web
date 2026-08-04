@@ -233,7 +233,9 @@ Two adjacent roles are **not** headings and keep their own established inks — 
 
 ## Layout
 
-The app is a persistent shell, not a series of pages: a workspace layout composed of an icon rail, a secondary navigation column, the routed content area, and optional right-hand panel and header-action slots that features contribute into. Two other shells exist — a split layout (form beside a full-bleed showcase panel) for auth and onboarding, and a focused layout for errors and maintenance.
+The app is a persistent shell, not a series of pages: a workspace layout of **three columns** — a navigation sidebar, the routed content area, and an optional right-hand panel — plus header-action slots that features contribute into. Two other shells exist — a split layout (form beside a full-bleed showcase panel) for auth and onboarding, and a focused layout for errors and maintenance.
+
+**The organization lives at the top of the sidebar, the member at the right of the header.** There is no separate icon rail: a 60px column that only appears above `lg` meant the two things it carried — switching organization and reaching the account menu — did not exist on a phone at all. The sidebar header is the organization switcher (a popover when the member belongs to several, a plain label when they belong to one, so nothing suggests a choice that is not there); the account menu is the last tool of the header cluster. Switching organization keeps the current section when that section exists in the target, and only the first path segment travels — anything deeper names an entity of the organization being left.
 
 **Page padding** follows one convention, and routed pages own their own edges: `p-3 sm:p-6 md:p-7 lg:p-8`. The `xl:p-10` step is not free air — it is tied to width: **a page widens to `xl:p-10` iff it is a `mx-auto max-w-7xl` surface** (dashboard, settings, account). Collection pages (`h-full` table surfaces) never take it. The single documented exception is the intervention detail workspace, which runs full-bleed and manages its own edges.
 
@@ -252,6 +254,18 @@ The app is a persistent shell, not a series of pages: a workspace layout compose
 **The Rhythm-Not-Boxes Rule.** Hierarchy comes from varying surface levels — borderless section headers, one carded work surface, a tinted secondary aside, divider-separated lists. Wrapping every section in an identical bordered card is the house anti-pattern.
 
 **The 44px Floor.** Below `sm`, every interactive control is at least 44px tall (`min-h-11` or equivalent padding) — the field scene is a gloved thumb on a cold phone. A control under 44px justifies itself; the default does not.
+
+**The Five Page Archetypes.** Every routed page is one of five shapes. The archetype fixes the width, the zone order, and where the primary action sits; the feature decides only what fills the zones. A page that fits none of the five is a design question, not a new archetype.
+
+| Archetype        | Width                                     | Zones, in order                                                                                                                 | Primary action               |
+| ---------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Collection**   | full content width                        | page header (title · count) → state banners → toolbar (search and filters **only**) → table or view                             | page header                  |
+| **Wide reading** | `mx-auto max-w-7xl`, `xl:p-10`            | page header → rhythmed sections                                                                                                 | page header, when it has one |
+| **Record**       | full content width                        | identity band (avatar · title · tags · meta · actions) → tabs → content; "not found" replaces **the whole page**, tabs included | identity band, right         |
+| **Form**         | inner `mx-auto max-w-3xl` panel           | page header → form panel; an edit form carries a "not found" branch like the record it edits                                    | inside the form (submit)     |
+| **Workspace**    | full-bleed (the one documented exception) | rule-separated bands; visible title; command in the shell header, mirrored into the mobile thumb bar                            | shell header and thumb bar   |
+
+**One Convention For The Primary Action.** A page's primary action lives in its **page header** — not in the toolbar of the table below it, not floating beside a card. The three exceptions are archetypal, not local: a record's actions sit in its identity band, a form's submit sits in the form, and the workspace's command sits in the shell header because it must mirror into the thumb bar. A table toolbar carries search and filters, and nothing else.
 
 ## Elevation & Depth
 

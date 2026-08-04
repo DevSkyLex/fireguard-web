@@ -28,7 +28,7 @@
 | # | Lot | Contenu | Dépend de | Risque |
 | --- | --- | --- | --- | --- |
 | **1** | **Fondations du shell** | Shell à trois colonnes : rail supprimé, en-tête d'organisation commutable en popover, menu utilisateur dans l'en-tête · trois groupes de navigation visibles · repli de barre latérale câblé · barre de commande basse mobile généralisée (infrastructure) · réparations de parcours (sous-chemin d'organisation préservé, assistant tolérant à une panne, refus de permission nommé) · toast fermable au clavier et hors de la barre mobile | — | **Élevé** — touche les trois mises en page et tous les objets de page e2e |
-| **2** | **Primitives et normes** | Champ éditable en place (primitive partagée) · requête nommée sur les interventions (primitive partagée) · levée de la limite empêchant le workspace d'héberger une contribution de panneau · amendement ARCHITECTURE.md §10.5 · DESIGN.md : JetBrains Mono, cinq gabarits, convention d'action primaire | 1 | Moyen — surtout du code neuf |
+| **2** | **Normes** | Amendement ARCHITECTURE.md §10.5 (l'édition en place est une surface de page) · DESIGN.md : shell à trois colonnes, cinq gabarits de page, convention d'action primaire unique | 1 | Faible — documentaire |
 | **3** | **F9 — pages focalisées** | 404 avec sorties contextuelles · 403 nommant la permission manquante · 500 distinguant réseau et panne · maintenance relue · invitation en accueil deux volets · en-tête focalisé portant la marque | 1 | **Faible** — éprouve les fondations sur un périmètre sûr |
 | **4** | **F1 — Aujourd'hui + Statistiques** | Quatre files de travail · page Statistiques accueillant inventaire et tendances · nouvelle entrée de navigation · libellé « Aujourd'hui » | 1, 2 | Moyen — nouvelle route, nouvelle entrée de nav |
 | **5** | **F4 — vues de travail** | Vues nommées et mémorisées (cookie, 5 max) · surface de filtres · tri exposé · comportement unifié des trois rendus · calendrier replanifiant par dépôt | 2, 4 | Moyen-élevé — l'écran le plus utilisé du poste bureau |
@@ -38,6 +38,22 @@
 | **9** | **F8 — activation** | Assistant en liste d'activation · reprise explicite · étapes facultatives annoncées · vitrine montrant le produit au travail · progression dédoublée supprimée | 1 | Moyen |
 | **10** | **F7 — collaboration en panneau** | Fil ouvert dans le panneau contextuel · sélecteur Fil · Infos · Assistant · favoris en file de lecture · bande d'identité unifiée · erreur des messages directs en ligne | 2 | Moyen-élevé — dépend de la levée de limite du lot 2 |
 | **11** | **F5 — workspace guidé** | Commande en sujet de page · une surface de travail par phase · rail dissous en surface « Détails » · cérémonie de publication et état « inscrit au registre » · sections hors phase démontées | 2, 10 | **Le plus élevé** — 1 372 lignes de template, six phases, six tiroirs |
+
+## Re-cadrage du lot 2, décidé au contact du code
+
+La ronde de cohérence avait placé trois primitives partagées dans le lot 2. À
+l'ouverture des fichiers, les trois se sont révélées prématurées — chacune pour
+une raison différente, et chacune vérifiée plutôt que supposée.
+
+| Primitive | Ce que le code a montré | Où elle va |
+| --- | --- | --- |
+| **Champ éditable en place** | PrimeNG **ship `p-inplace`**, qui porte déjà la bascule affichage/édition et sa fermeture. Le complément à écrire (sauvegarde, annulation, état d'attente, message de validation) est réel, mais il n'existe **qu'un seul** consommateur aujourd'hui — la description d'intervention. La règle de trois (ARCHITECTURE.md §2.9) interdit d'extraire avant le troisième usage. | **Lot 7 (F3)**, où trois fiches l'adoptent d'un coup et où la forme se valide sur des usages réels |
+| **Requête nommée sur les interventions** | Ses deux consommateurs (les files d'« Aujourd'hui », les vues de F4) **n'existent pas encore**. Deux consommateurs futurs ne sont pas deux usages : concevoir la forme à l'aveugle, c'est exactement l'abstraction spéculative que §2.9 proscrit. | **Lot 4 (F1)**, où le premier consommateur naît ; le lot 5 la reprendra |
+| **Levée de la limite du panneau** | Le panneau contextuel vit dans le shell, qui est **ancêtre** de la route : déplacer le magasin vers l'injecteur de route ne le rend pas atteignable. Le vrai correctif est de faire rendre la contribution avec l'injecteur du composant routé — un mécanisme de slot qu'aucun consommateur ne peut valider tant que F7 n'existe pas. | **Lot 10 (F7)**, conçu contre son cas d'usage |
+
+Le lot 2 livre donc ce qu'il peut livrer honnêtement : les deux documents
+normatifs, qui déverrouillent la revue de tous les lots suivants. Le travail
+n'est pas perdu, il est déplacé là où il peut être conçu contre un besoin réel.
 
 ## Clôture du chantier (après le lot 11)
 

@@ -113,6 +113,30 @@ describe('FacilityService', () => {
       req.flush(mockCollection([]));
     });
 
+    it('should forward the passthrough params bag the table emits', () => {
+      service
+        .list(orgId, {
+          rootsOnly: true,
+          params: { search: 'nord', type: 'building', 'order[name]': 'asc' },
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === facilityBaseUrl);
+      expect(req.request.params.get('search')).toBe('nord');
+      expect(req.request.params.get('type')).toBe('building');
+      expect(req.request.params.get('order[name]')).toBe('asc');
+      expect(req.request.params.get('rootsOnly')).toBe('true');
+      req.flush(mockCollection([]));
+    });
+
+    it('should let a typed filter win over the same key in the params bag', () => {
+      service.list(orgId, { status: 'archived', params: { status: 'active' } }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === facilityBaseUrl);
+      expect(req.request.params.get('status')).toBe('archived');
+      req.flush(mockCollection([]));
+    });
+
     it('should request only root facilities when rootsOnly is set', () => {
       service.list(orgId, { rootsOnly: true }).subscribe();
 

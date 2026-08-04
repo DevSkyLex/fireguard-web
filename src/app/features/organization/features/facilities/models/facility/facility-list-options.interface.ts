@@ -1,4 +1,4 @@
-import type { PaginationOptions } from '@core/api/models';
+import type { PaginationOptions, RequestOptions } from '@core/api/models';
 import type { FacilityStatus } from './facility-output.interface';
 
 /**
@@ -85,6 +85,19 @@ export interface FacilityListFilter {
    * @type {Readonly<Record<string, FacilityOrderDirection>>}
    */
   readonly order?: Readonly<Record<string, FacilityOrderDirection>>;
+
+  /**
+   * Property params
+   * @readonly
+   *
+   * @description
+   * Additional API query parameters forwarded as-is, the way the sibling
+   * inspection contract does. The facility table emits its search, column
+   * filters and sort through this bag; without it they never reach the wire.
+   *
+   * @type {RequestOptions['params']}
+   */
+  readonly params?: RequestOptions['params'];
   //#endregion
 }
 

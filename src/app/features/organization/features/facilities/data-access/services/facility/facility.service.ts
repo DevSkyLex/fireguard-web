@@ -113,7 +113,10 @@ export class FacilityService extends HydraApiService {
     organizationId: string,
     options?: FacilityListOptions,
   ): Observable<HydraCollection<FacilityOutput>> {
-    const params: NonNullable<RequestOptions['params']> = {};
+    // Seeded from the passthrough bag first so the typed filters below win on
+    // a key collision. The table emits search, column filters and sort through
+    // `params`; rebuilding the bag from scratch dropped them before the wire.
+    const params: NonNullable<RequestOptions['params']> = { ...options?.params };
 
     if (options?.rootsOnly) params['rootsOnly'] = true;
     if (options?.includeArchived) params['includeArchived'] = true;

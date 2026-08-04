@@ -7381,6 +7381,18 @@
         <source>Field work you have already captured stays on this device and syncs on its own once you are back in range.</source>
         <target>El trabajo de campo ya registrado permanece en este dispositivo y se sincronizará solo cuando vuelvas a tener cobertura.</target>
       </trans-unit>
+      <trans-unit id="route.statistics" datatype="html">
+        <source>Statistics</source>
+        <target>Estadísticas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.pageTitle" datatype="html">
+        <source>Statistics</source>
+        <target>Estadísticas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.pageSubtitle" datatype="html">
+        <source>Track facility, member, equipment, and inspection trends across your organization.</source>
+        <target>Consulta las tendencias de instalaciones, miembros, equipos e inspecciones de tu organización.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -1,0 +1,505 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  viewChild,
+  type Signal,
+} from '@angular/core';
+import { PrimeIcons } from 'primeng/api';
+import type { MenuItem } from 'primeng/api';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
+import { Menu, MenuModule } from 'primeng/menu';
+import {
+  getDashboardTrendPointValue,
+  sumDashboardTrendValues,
+} from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
+import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import {
+  AssetGrowthTrendStore,
+  countDefinedDashboardFilters,
+  getDashboardBaseActiveFilterCount,
+} from '@features/organization/state/organization-dashboard';
+import {
+  DECIMAL_FMT,
+  TREND_CARD_PT,
+  WHOLE_NUMBER_FMT,
+} from '@features/organization/ui/components/organization-statistics-panel/constants';
+import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-statistics-panel/models';
+import { buildDashboardComparison } from '@features/organization/ui/components/organization-statistics-panel/utils';
+import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
+import { TrendMetricStrip } from '../trend-metric-strip';
+import { AssetGrowthChart, AssetGrowthFilters, AssetGrowthToolbar } from './components';
+
+/**
+ * Component AssetGrowthTrend
+ * @class AssetGrowthTrend
+ *
+ * @description
+ * Standalone dashboard card that displays equipment and facilities
+ * created over time as a combined grouped bar chart.
+ *
+ * Delegates fetching of both trend datasets to its local
+ * {@link AssetGrowthTrendStore} (`rxMethod` + `forkJoin`), which aligns them
+ * onto a shared time axis, and exposes four KPI tiles
+ * (Equipment Added, Facilities Added, Combined Growth, Equipment/Facility
+ * ratio) above the chart.
+ *
+ * Supports granularity selection, optional date-range filtering,
+ * optional previous-period comparison overlay, and per-dimension
+ * type/status/facility-type filters.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+@Component({
+  selector: 'app-asset-growth-trend',
+  templateUrl: './asset-growth-trend.component.html',
+  imports: [
+    MenuModule,
+    TrendFilterDrawer,
+    AssetGrowthToolbar,
+    AssetGrowthChart,
+    AssetGrowthFilters,
+    CardModule,
+    TrendMetricStrip,
+  ],
+  providers: [AssetGrowthTrendStore],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AssetGrowthTrend {
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Pass-through shared by every dashboard trend card.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = TREND_CARD_PT;
+
+  /**
+   * Property activeOrganizationStore
+   * @readonly
+   *
+   * @description
+   * Root store used to read the active organization identifier.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActiveOrganizationStore}
+   */
+  private readonly activeOrganizationStore: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+
+  /**
+   * Property dashboardStore
+   * @readonly
+   *
+   * @description
+   * Local store responsible for fetching and transforming the trend data,
+   * exposing the summary metrics and chart data, and holding the component's
+   * UI state (selected granularity, filters, etc.).
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {AssetGrowthTrendStore}
+   */
+  private readonly dashboardStore: AssetGrowthTrendStore =
+    inject<AssetGrowthTrendStore>(AssetGrowthTrendStore);
+
+  /**
+   * Property isLoading
+   * @readonly
+   *
+   * @description
+   * `true` while the trend query is in-flight.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isQueryLoading(),
+  );
+
+  /**
+   * Property isFilterDrawerVisible
+   * @readonly
+   *
+   * @description
+   * Controlled visibility state for the trend filter drawer.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isFilterDrawerVisible(),
+  );
+
+  /**
+   * Property filtersAvailable
+   * @readonly
+   *
+   * @description
+   * Indicates whether this card exposes any dimension-specific filters.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly filtersAvailable: Signal<boolean> = computed<boolean>(
+    () => this.dashboardStore.canReadEquipment() || this.dashboardStore.canReadFacilities(),
+  );
+
+  /**
+   * Property activeFilterCount
+   * @readonly
+   *
+   * @description
+   * Number of currently applied filters reflected on the Filters button.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly activeFilterCount: Signal<number> = computed<number>(() => {
+    const canReadEquipment = this.dashboardStore.canReadEquipment();
+    const canReadFacilities = this.dashboardStore.canReadFacilities();
+
+    return (
+      getDashboardBaseActiveFilterCount(
+        this.dashboardStore.selectedDateRange(),
+        this.dashboardStore.compareEnabled(),
+      ) +
+      countDefinedDashboardFilters([
+        canReadEquipment ? this.dashboardStore.selectedEquipmentType() : null,
+        canReadEquipment ? this.dashboardStore.selectedEquipmentStatus() : null,
+        canReadFacilities ? this.dashboardStore.selectedFacilityType() : null,
+      ])
+    );
+  });
+
+  /**
+   * Property cardTitle
+   * @readonly
+   *
+   * @description
+   * Dynamic card title derived from the visible resource dimensions.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly cardTitle: Signal<string> = computed<string>(() => {
+    if (this.dashboardStore.canReadEquipment() && this.dashboardStore.canReadFacilities()) {
+      return $localize`:@@org.trend.assetGrowth.titleBoth:Asset Growth Momentum`;
+    }
+
+    if (this.dashboardStore.canReadEquipment()) {
+      return $localize`:@@org.trend.assetGrowth.titleEquip:Equipment Growth Momentum`;
+    }
+
+    if (this.dashboardStore.canReadFacilities()) {
+      return $localize`:@@org.trend.assetGrowth.titleFac:Facility Growth Momentum`;
+    }
+
+    return $localize`:@@org.trend.assetGrowth.titleBoth:Asset Growth Momentum`;
+  });
+
+  /** Localized title for the asset-growth filter drawer. */
+  protected readonly filterDrawerTitle: Signal<string> = computed<string>(
+    () => $localize`:@@org.trend.assetGrowth.filterTitle:Asset Growth Filters`,
+  );
+
+  /**
+   * Property cardDescription
+   * @readonly
+   *
+   * @description
+   * Dynamic card description aligned with the visible resource dimensions.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly cardDescription: Signal<string> = computed<string>(() => {
+    if (this.dashboardStore.canReadEquipment() && this.dashboardStore.canReadFacilities()) {
+      return $localize`:@@org.trend.assetGrowth.descBoth:Equipment and facilities created over time`;
+    }
+
+    if (this.dashboardStore.canReadEquipment()) {
+      return $localize`:@@org.trend.assetGrowth.descEquip:Equipment created over time`;
+    }
+
+    if (this.dashboardStore.canReadFacilities()) {
+      return $localize`:@@org.trend.assetGrowth.descFac:Facilities created over time`;
+    }
+
+    return $localize`:@@org.trend.assetGrowth.descBoth:Equipment and facilities created over time`;
+  });
+
+  /**
+   * Property summaryMetrics
+   * @readonly
+   *
+   * @description
+   * Four KPI tiles fed to {@link TrendCard}: total equipment created, total
+   * facilities created, and the previous-period totals for both when compare
+   * mode is enabled. Returns an empty array until data is available so the
+   * card shows skeletons instead of zero values.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly DashboardSummaryMetric[]>}
+   */
+  protected readonly summaryMetrics: Signal<readonly DashboardSummaryMetric[]> = computed(() => {
+    const canReadEquipment = this.dashboardStore.canReadEquipment();
+    const canReadFacilities = this.dashboardStore.canReadFacilities();
+
+    if (!canReadEquipment && !canReadFacilities) {
+      return [];
+    }
+
+    const growth = this.dashboardStore.queryData();
+    const compareEnabled = this.dashboardStore.compareEnabled();
+    const equipmentSeries = growth?.equipment?.series ?? [];
+    const facilitySeries = growth?.facilities?.series ?? [];
+    const equipmentTotal = sumDashboardTrendValues(
+      equipmentSeries.map((p) => getDashboardTrendPointValue(p)),
+    );
+    const facilityTotal = sumDashboardTrendValues(
+      facilitySeries.map((p) => getDashboardTrendPointValue(p)),
+    );
+    const previousEquipmentTotal = sumDashboardTrendValues(
+      (growth?.equipment?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
+    );
+    const previousFacilityTotal = sumDashboardTrendValues(
+      (growth?.facilities?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
+    );
+    const assetsPerFacility =
+      facilityTotal > 0 ? Number((equipmentTotal / facilityTotal).toFixed(1)) : 0;
+
+    const metrics: DashboardSummaryMetric[] = [];
+
+    if (canReadEquipment) {
+      metrics.push({
+        label: $localize`:@@dash.metric.equipmentAdded:Equipment Added`,
+        value: WHOLE_NUMBER_FMT.format(equipmentTotal),
+        icon: 'pi pi-shield',
+        comparison: buildDashboardComparison(
+          equipmentTotal,
+          previousEquipmentTotal,
+          compareEnabled,
+        ),
+      });
+    }
+
+    if (canReadFacilities) {
+      metrics.push({
+        label: $localize`:@@dash.metric.facilitiesAdded:Facilities Added`,
+        value: WHOLE_NUMBER_FMT.format(facilityTotal),
+        icon: 'pi pi-building',
+        comparison: buildDashboardComparison(facilityTotal, previousFacilityTotal, compareEnabled),
+      });
+    }
+
+    if (canReadEquipment && canReadFacilities) {
+      metrics.push(
+        {
+          label: $localize`:@@dash.metric.combinedGrowth:Combined Growth`,
+          value: WHOLE_NUMBER_FMT.format(equipmentTotal + facilityTotal),
+          icon: 'pi pi-arrow-up-right',
+          comparison: buildDashboardComparison(
+            equipmentTotal + facilityTotal,
+            previousEquipmentTotal + previousFacilityTotal,
+            compareEnabled,
+          ),
+        },
+        {
+          label: $localize`:@@dash.metric.equipPerFacility:Equipment / Facility`,
+          value: `${DECIMAL_FMT.format(assetsPerFacility)}x`,
+          icon: 'pi pi-percentage',
+          comparison: null,
+        },
+      );
+    }
+
+    return metrics;
+  });
+
+  /**
+   * Property menu
+   * @readonly
+   *
+   * @description
+   * Reference to the PrimeNG popup Menu used by the ellipsis button.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<Menu>}
+   */
+  private readonly menu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
+
+  /**
+   * Property menuItems
+   * @readonly
+   *
+   * @description
+   * Navigation links shown inside the ellipsis popup menu.
+   * Derived from the active organization identifier.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>(() => {
+    const canReadEquipment = this.dashboardStore.canReadEquipment();
+    const canReadFacilities = this.dashboardStore.canReadFacilities();
+
+    /**
+     * Constant organization
+     * @const organization
+     *
+     * @description
+     * Currently active organization, used to construct
+     * router links for the menu items.
+     *
+     * @type {OrganizationOutput | null}
+     */
+    const organization: OrganizationOutput | null =
+      this.activeOrganizationStore.selectedOrganization();
+
+    /**
+     * Constant organizationId
+     * @const organizationId
+     *
+     * @description
+     * Identifier of the currently active organization, used to construct
+     * router links for the menu items. If no organization is active, links
+     * will be disabled by setting them to null.
+     *
+     * @type {string | null}
+     */
+    const organizationId: string | null = organization ? organization.id : null;
+
+    const items: MenuItem[] = [];
+
+    if (canReadEquipment) {
+      items.push({
+        label: $localize`:@@dash.viewAll.equipment:View all equipment`,
+        icon: PrimeIcons.SHIELD,
+        routerLink: organizationId ? ['/organizations', organizationId, 'equipments'] : null,
+      });
+    }
+
+    if (canReadFacilities) {
+      items.push({
+        label: $localize`:@@dash.viewAll.facilities:View all facilities`,
+        icon: PrimeIcons.BUILDING,
+        routerLink: organizationId ? ['/organizations', organizationId, 'facilities'] : null,
+      });
+    }
+
+    return items;
+  });
+
+  /**
+   * Method onMenuToggle
+   *
+   * @description
+   * Toggles the ellipsis popup menu open or closed.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {MouseEvent} event - The click event from the ellipsis button.
+   * @returns {void}
+   */
+  protected onMenuToggle(event: MouseEvent): void {
+    const menu: Menu = this.menu();
+    menu.toggle(event);
+  }
+
+  /**
+   * Method onFilterToggle
+   *
+   * @description
+   * Opens the draft filter drawer.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected onFilterToggle(): void {
+    if (!this.filtersAvailable()) {
+      return;
+    }
+
+    this.dashboardStore.openFilters();
+  }
+
+  /**
+   * Method onCancelFilters
+   *
+   * @description
+   * Restores the draft filter state from the applied values and closes the drawer.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected onCancelFilters(): void {
+    this.dashboardStore.cancelDraftFilters();
+  }
+
+  /**
+   * Method onResetFilters
+   *
+   * @description
+   * Resets the draft filter state to its initial defaults.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected onResetFilters(): void {
+    this.dashboardStore.resetDraftFilters();
+  }
+
+  /**
+   * Method onApplyFilters
+   *
+   * @description
+   * Applies the current draft filters and closes the drawer.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected onApplyFilters(): void {
+    this.dashboardStore.applyDraftFilters();
+  }
+}

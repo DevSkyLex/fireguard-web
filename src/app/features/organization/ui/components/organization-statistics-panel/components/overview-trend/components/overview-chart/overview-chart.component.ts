@@ -1,0 +1,324 @@
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import type { ChartData, ChartOptions } from 'chart.js';
+import { ButtonModule } from 'primeng/button';
+import { ChartModule } from 'primeng/chart';
+import { SkeletonModule } from 'primeng/skeleton';
+import { THEME_PORT, type ThemePort } from '@core/theme';
+import { buildDifferenceSeries } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
+import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
+import {
+  buildChartTooltipStyle,
+  resolveChartColor,
+  withChartAlpha,
+} from '@features/organization/ui/components/organization-statistics-panel/utils';
+import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
+
+/**
+ * Component OverviewChart
+ * @class OverviewChart
+ *
+ * @description
+ * Chart section for the overview trend card.
+ * Reads aligned trend data from {@link OrganizationDashboardOverviewTrendStore}
+ * to build a four-dataset line chart (Inspections, NC Opened, NC Resolved,
+ * Net Pressure). The Net Pressure series is derived locally via
+ * {@link buildDifferenceSeries}. Renders a loading skeleton until data is
+ * available for the first time; shows on every reload including filter changes.
+ *
+ * @version 2.0.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+@Component({
+  selector: 'app-overview-chart',
+  templateUrl: './overview-chart.component.html',
+  imports: [ChartModule, SkeletonModule, ButtonModule, EmptyState, ErrorState],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class OverviewChart {
+  //#region Properties
+  /**
+   * Property reduceMotion
+   * @readonly
+   *
+   * @description
+   * Whether the visitor asked for reduced motion, read once at construction.
+   *
+   * Chart.js animates in JavaScript, so no CSS media query can reach it — the
+   * preference has to be read here and folded into the chart options.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {boolean}
+   */
+  private readonly reduceMotion: boolean =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * Component-scoped store used to read aligned trend data when computing
+   * chart datasets.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {OrganizationDashboardOverviewTrendStore}
+   */
+  private readonly store: OrganizationDashboardOverviewTrendStore =
+    inject<OrganizationDashboardOverviewTrendStore>(OrganizationDashboardOverviewTrendStore);
+
+  /**
+   * Property themePort
+   * @readonly
+   *
+   * @description
+   * Neutral theme contract, read to resolve the current light/dark appearance
+   * so the canvas tooltip can be styled to match the app in both themes and
+   * recompute when the user switches theme.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {ThemePort}
+   */
+  private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * `true` only during the initial load before any data has arrived.
+   * Shown during every load, including filter-driven reloads.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly loading: Signal<boolean> = computed<boolean>(() =>
+    this.store.isQueryLoading(),
+  );
+
+  /**
+   * Property hasError
+   * @readonly
+   *
+   * @description
+   * `true` when the underlying trend query failed, so the card can offer a
+   * retry instead of rendering a blank canvas.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasError: Signal<boolean> = computed<boolean>(() =>
+    this.store.queryHasError(),
+  );
+
+  /**
+   * Property hasData
+   * @readonly
+   *
+   * @description
+   * `true` when the computed chart payload has at least one time bucket to
+   * plot; `false` for an empty (zero-row) result so the card can show an
+   * empty state instead of a blank chart.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasData: Signal<boolean> = computed<boolean>(
+    () => (this.data().labels?.length ?? 0) > 0,
+  );
+
+  /**
+   * Property data
+   * @readonly
+   *
+   * @description
+   * Fully computed line chart payload. Derives the Net Pressure series
+   * locally as the difference between NC Opened and NC Resolved. Colours are
+   * resolved live through the chart palette (`utils/chart-palette`): Inspections
+   * takes the `info` status tone, NC Opened/Resolved mirror the same `danger`/
+   * `success` tones the non-conformity status registry already uses for
+   * `open`/`done`, and Net Pressure — the one synthesized headline metric —
+   * takes the app's actual theme-aware indigo accent. Recalculates reactively
+   * on every store change and on every theme switch, so the point-hover ring
+   * (matched to the card surface) never goes stale after a toggle.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<ChartData<'line'>>}
+   */
+  protected readonly data: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() => {
+    const aligned = this.store.alignedTrendData();
+    const [inspectionData = [], openedData = [], resolvedData = []] = aligned.datasets;
+    const netPressureData = buildDifferenceSeries(openedData, resolvedData);
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+    const pointHoverBorderColor = resolveChartColor(isDark ? 'surface-900' : 'surface-0');
+    const inspectionColor = resolveChartColor('blue-500');
+    const openedColor = resolveChartColor('red-500');
+    const resolvedColor = resolveChartColor('green-500');
+    const netPressureColor = resolveChartColor('primary');
+
+    return {
+      labels: [...aligned.labels],
+      datasets: [
+        {
+          label: 'Inspections',
+          data: inspectionData,
+          borderColor: inspectionColor,
+          backgroundColor: withChartAlpha(inspectionColor, 0.08),
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBorderWidth: 2,
+          pointHoverBorderColor,
+          pointHoverBackgroundColor: inspectionColor,
+          fill: false,
+        },
+        {
+          label: 'NC Opened',
+          data: openedData,
+          borderColor: openedColor,
+          backgroundColor: withChartAlpha(openedColor, 0.08),
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBorderWidth: 2,
+          pointHoverBorderColor,
+          pointHoverBackgroundColor: openedColor,
+          fill: false,
+        },
+        {
+          label: 'NC Resolved',
+          data: resolvedData,
+          borderColor: resolvedColor,
+          backgroundColor: withChartAlpha(resolvedColor, 0.08),
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBorderWidth: 2,
+          pointHoverBorderColor,
+          pointHoverBackgroundColor: resolvedColor,
+          fill: false,
+        },
+        {
+          label: 'Net Pressure',
+          data: netPressureData,
+          borderColor: netPressureColor,
+          backgroundColor: withChartAlpha(netPressureColor, 0.08),
+          borderWidth: 2,
+          borderDash: [5, 4],
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBorderWidth: 2,
+          pointHoverBorderColor,
+          pointHoverBackgroundColor: netPressureColor,
+          fill: false,
+        },
+      ],
+    };
+  });
+
+  /**
+   * Property options
+   * @readonly
+   *
+   * @description
+   * Theme-aware Chart.js configuration for the multi-series line chart.
+   * Recomputes when the user switches theme so the canvas tooltip stays styled
+   * to the app in both light and dark. The legend is always visible (four
+   * permanent series).
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<ChartOptions<'line'>>}
+   */
+  protected readonly options: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(() => {
+    const isDark = this.themePort.resolvedTheme() === 'dark';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: this.reduceMotion ? 0 : 400 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 16,
+          },
+        },
+        tooltip: {
+          ...buildChartTooltipStyle(isDark),
+          callbacks: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+          },
+        },
+      },
+      scales: {
+        x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
+        y: {
+          border: { display: false },
+          beginAtZero: false,
+          grid: {
+            color: resolveChartColor(isDark ? 'surface-800' : 'surface-200'),
+            drawTicks: false,
+          },
+          ticks: {
+            precision: 0,
+            maxTicksLimit: 5,
+            color: resolveChartColor(isDark ? 'surface-400' : 'surface-500'),
+            font: { size: 11 },
+            padding: 8,
+          },
+        },
+      },
+    };
+  });
+
+  //#endregion
+
+  //#region Methods
+
+  /**
+   * Method retry
+   *
+   * @description
+   * Re-runs the trend query with the current filter params after a load
+   * failure, delegating to the store's reactive `load` method.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @returns {void}
+   */
+  protected retry(): void {
+    this.store.load(this.store.loadParams());
+  }
+
+  //#endregion
+}

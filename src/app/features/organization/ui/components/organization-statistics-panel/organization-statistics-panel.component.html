@@ -1,0 +1,134 @@
+<div id="organization-statistics-panel" class="flex flex-col gap-6">
+  @if (showActivitySection()) {
+    <div class="flex flex-col gap-6">
+      <!--
+        Heading and rule, no standfirst — matches the dashboard's own section
+        headings: a lead sentence restating the heading pushed the first real
+        metric further down every load.
+      -->
+      <section
+        class="flex flex-row items-center gap-2.5 border-b border-surface-200 pb-3 dark:border-surface-800"
+      >
+        <i
+          class="pi pi-chart-line text-base text-surface-500 dark:text-surface-400"
+          aria-hidden="true"
+        ></i>
+        <h2
+          i18n="@@org.dash.activity"
+          class="text-lg font-semibold tracking-[-0.015em] text-surface-900 dark:text-surface-0"
+        >
+          Activity
+        </h2>
+      </section>
+
+      <section class="flex flex-col gap-6">
+        @if (hasActivityMetrics()) {
+          <app-dashboard-metric-strip>
+            @if (canReadFacilities()) {
+              <app-dashboard-metric-cell
+                i18n-title="@@org.dash.facilities"
+                title="Facilities"
+                icon="pi pi-building"
+                [value]="store.facilityCount()"
+                [loading]="store.isQueryLoading()"
+                [comparison]="store.facilitiesComparison()"
+                [points]="store.facilitiesSparkline()"
+              />
+            }
+
+            @if (canReadMembers()) {
+              <app-dashboard-metric-cell
+                i18n-title="@@org.dash.members"
+                title="Members"
+                icon="pi pi-users"
+                [value]="store.memberCount()"
+                [loading]="store.isQueryLoading()"
+                [comparison]="store.membersComparison()"
+                [points]="store.membersSparkline()"
+              />
+            }
+
+            @if (canReadEquipment()) {
+              <app-dashboard-metric-cell
+                i18n-title="@@org.dash.equipment"
+                title="Equipment"
+                icon="pi pi-shield"
+                [value]="store.equipmentCount()"
+                [loading]="store.isQueryLoading()"
+                [comparison]="store.equipmentComparison()"
+                [points]="store.equipmentSparkline()"
+              />
+            }
+
+            @if (canReadInspections()) {
+              <app-dashboard-metric-cell
+                i18n-title="@@org.dash.inspections"
+                title="Inspections"
+                icon="pi pi-check-square"
+                [value]="store.inspectionCount()"
+                [loading]="store.isQueryLoading()"
+                [comparison]="store.inspectionsComparison()"
+                [points]="store.inspectionsSparkline()"
+              />
+            }
+          </app-dashboard-metric-strip>
+        }
+
+        @if (hasActivityInsights()) {
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <app-overview-trend class="lg:col-span-7" />
+            <app-inspection-quality-trend class="lg:col-span-5" />
+            <app-non-conformities-opened-trend class="lg:col-span-6" />
+            <app-non-conformities-resolved-trend class="lg:col-span-6" />
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (showResourcesSection()) {
+    <div class="flex flex-col gap-6">
+      <section
+        class="flex flex-row items-center gap-2.5 border-b border-surface-200 pb-3 dark:border-surface-800"
+      >
+        <i
+          class="pi pi-building text-base text-surface-500 dark:text-surface-400"
+          aria-hidden="true"
+        ></i>
+        <h2
+          i18n="@@org.dash.resources"
+          class="text-lg font-semibold tracking-[-0.015em] text-surface-900 dark:text-surface-0"
+        >
+          Resources
+        </h2>
+      </section>
+
+      <section class="flex flex-col gap-6">
+        @defer (on viewport) {
+          <div class="grid grid-cols-1 gap-6">
+            <app-asset-growth-trend />
+          </div>
+        } @placeholder {
+          <div class="grid grid-cols-1 gap-6">
+            <div role="status">
+              <span class="sr-only" i18n="@@org.dash.resourcesLoading"
+                >Loading resource trends</span
+              >
+              <p-skeleton width="100%" height="16rem" />
+            </div>
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (!showActivitySection() && !showResourcesSection()) {
+    <app-empty-state
+      icon="pi-lock"
+      i18n-title="@@org.dash.noAccessTitle"
+      title="Nothing to show"
+      i18n-description="@@org.dash.noAccessDesc"
+      description="You do not have permission to view dashboard metrics for this organization. Contact an administrator if you need access."
+    />
+  }
+</div>

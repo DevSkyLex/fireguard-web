@@ -1,0 +1,38 @@
+import { PrimeIcons } from 'primeng/api';
+import type { InspectionStatusOption } from '@features/organization/ui/components/organization-statistics-panel/models';
+
+/**
+ * Constant INSPECTION_STATUS_OPTIONS
+ * @const INSPECTION_STATUS_OPTIONS
+ *
+ * @description
+ * Defines the available inspection status options for filtering and display
+ * in the organization dashboard. Each option includes a label for display,
+ * a corresponding value for internal use, an icon for visual representation,
+ * and a color for status indication.
+ *
+ * @type {readonly InspectionStatusOption[]}
+ */
+export const INSPECTION_STATUS_OPTIONS: readonly InspectionStatusOption[] = [
+  {
+    label: $localize`:@@inspectionStatus.draft:Draft`,
+    value: 'draft',
+    icon: PrimeIcons.FILE_EDIT,
+    severity: 'info',
+    color: '#3b82f6',
+  },
+  {
+    label: $localize`:@@inspectionStatus.submitted:Submitted`,
+    value: 'submitted',
+    icon: PrimeIcons.SEND,
+    severity: 'warn',
+    color: '#f59e0b',
+  },
+  {
+    label: $localize`:@@inspectionStatus.closed:Closed`,
+    value: 'closed',
+    icon: PrimeIcons.LOCK,
+    severity: 'secondary',
+    color: '#a3a3a3',
+  },
+];

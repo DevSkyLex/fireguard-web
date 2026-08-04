@@ -1,0 +1,17 @@
+<div
+  id="organization-statistics"
+  class="mx-auto flex w-full max-w-7xl flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8 xl:p-10"
+>
+  <!--
+    Both shells (dashboard + workspace) render only a breadcrumb, not a
+    visible title band, so the page owns its own heading.
+  -->
+  <app-page-header
+    title="Statistics"
+    i18n-title="@@org.statistics.pageTitle"
+    subtitle="Track facility, member, equipment, and inspection trends across your organization."
+    i18n-subtitle="@@org.statistics.pageSubtitle"
+  />
+
+  <app-organization-statistics-panel />
+</div>

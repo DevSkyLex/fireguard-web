@@ -8,6 +8,8 @@ export { resolveInterventionTag } from './intervention-tag/intervention-tag.util
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';
+export type { InterventionQueue } from './intervention-queue/intervention-queue.interface';
+export type { InterventionQueueKey } from './intervention-queue/intervention-queue-key.type';
 export type { InterventionOutput } from './intervention/intervention-output.interface';
 export type { InterventionPriority } from './intervention/intervention-priority.type';
 export type { InterventionStatus } from './intervention/intervention-status.type';

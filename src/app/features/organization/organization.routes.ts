@@ -61,6 +61,22 @@ const ORGANIZATION_SCOPED_ROUTES: Routes = [
       import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
   },
   {
+    path: 'statistics',
+    canActivate: [
+      organizationPermissionGuard({
+        permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
+      }),
+    ],
+    loadComponent: () =>
+      import('./ui/pages/organization-statistics/organization-statistics.component').then(
+        (m) => m.OrganizationStatisticsPage,
+      ),
+    title: $localize`:@@route.statistics:Statistics`,
+    data: {
+      breadcrumb: 'Statistics',
+    },
+  },
+  {
     path: 'members',
     canActivate: [
       organizationPermissionGuard({

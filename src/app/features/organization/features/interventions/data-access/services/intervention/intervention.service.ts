@@ -19,6 +19,7 @@ import type {
   InterventionActivityOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
+  InterventionListOptions,
   InterventionOutput,
   InterventionStatus,
   InterventionTypeOutput,
@@ -110,19 +111,7 @@ export class InterventionService extends HydraApiService {
    */
   public list(
     organizationId: string,
-    options?: PaginationOptions & {
-      name?: string;
-      responsible?: string;
-      participant?: string;
-      type?: string;
-      status?: string;
-      site?: string;
-      dueAtAfter?: string;
-      dueAtBefore?: string;
-      plannedStartAtAfter?: string;
-      plannedStartAtBefore?: string;
-      order?: Readonly<Record<string, 'asc' | 'desc'>>;
-    },
+    options?: InterventionListOptions,
   ): Observable<HydraCollection<InterventionOutput>> {
     const params: Record<string, string> = { organization: `/api/organizations/${organizationId}` };
     for (const [key, value] of Object.entries(options ?? {})) {
@@ -168,18 +157,7 @@ export class InterventionService extends HydraApiService {
    */
   public listAll(
     organizationId: string,
-    options?: Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
-      name?: string;
-      responsible?: string;
-      participant?: string;
-      type?: string;
-      status?: string;
-      site?: string;
-      dueAtAfter?: string;
-      dueAtBefore?: string;
-      plannedStartAtAfter?: string;
-      plannedStartAtBefore?: string;
-    },
+    options?: Omit<InterventionListOptions, 'page' | 'itemsPerPage'>,
   ): Observable<readonly InterventionOutput[]> {
     return this.collectPages((page) =>
       this.list(organizationId, { ...options, page, itemsPerPage: WORKSPACE_PAGE_SIZE }),

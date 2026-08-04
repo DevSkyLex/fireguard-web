@@ -10,9 +10,11 @@ This feature is responsible for:
 - organization member, invitation, role, and settings (general & branding) data,
 - organization subscription plan selection and plan-driven resource quotas (usage meters),
 - organization billing (Stripe-hosted Checkout / customer Portal and invoice history),
-- the organization overview dashboard: an attention panel naming the work waiting on the
+- the organization dashboard: an attention panel naming the work waiting on the
   operator (overdue / sent back / awaiting review interventions, plus the backend alert feed),
-  then recent interventions, then KPI cards and trend charts,
+  then recent interventions,
+- the organization statistics page: facility, member, equipment, and inspection KPI cards
+  and trend charts (overview, inspection quality, non-conformities opened/resolved, asset growth),
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures: facilities, equipments, inspections, interventions,
@@ -39,6 +41,7 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
+- `/organizations/:organizationId/statistics` (activity KPIs and trend charts; gated by `organization.dashboard.read`)
 - `/organizations/:organizationId/checklists`
 - `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
 - `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)
@@ -68,7 +71,7 @@ Primary stores:
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
-- `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`)
+- `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped separately by both the dashboard work queue and the statistics page, each fetching its own copy of the aggregate `/dashboard` payload)
 - `OrganizationAttentionStore` (component-scoped to the dashboard; the exact intervention counts — awaiting review, sent back for changes, overdue — behind the overview's attention panel)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)

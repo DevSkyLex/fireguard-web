@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { SkeletonModule } from 'primeng/skeleton';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   ORGANIZATION_PERMISSION,
@@ -9,19 +8,8 @@ import {
 } from '@features/organization/models';
 import { OrganizationAttentionStore } from '@features/organization/state/organization-attention';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
-import { EmptyState } from '@shared/empty-state';
 import type { TagSeverity } from '@shared/tag-severity';
-import {
-  AssetGrowthTrend,
-  DashboardAttentionPanel,
-  DashboardMetricCell,
-  DashboardMetricStrip,
-  DashboardRecentInterventions,
-  InspectionQualityTrend,
-  NonConformitiesResolvedTrend,
-  NonConformitiesOpenedTrend,
-  OverviewTrend,
-} from './components';
+import { DashboardAttentionPanel, DashboardRecentInterventions } from './components';
 import type { DashboardAttentionRow } from './models/dashboard';
 
 /**
@@ -40,31 +28,19 @@ const SEVERITY_ORDER: readonly TagSeverity[] = ['danger', 'warn', 'info'];
  * @class OrganizationDashboard
  *
  * @description
- * Smart dashboard component for the organization overview page.
- * Delegates data fetching and KPI derivation to `OrganizationDashboardStore`.
- * Child trend components handle their own independent data requests
- * and are mounted below the summary row.
+ * Work-queue surface of the organization: the attention panel naming what
+ * waits on the operator, then the most recently updated interventions.
+ * Facility/member/equipment/inspection KPIs and trend charts live on the
+ * dedicated Statistics page ({@link OrganizationStatisticsPanel}) instead.
  *
- * @version 1.1.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-dashboard',
   templateUrl: './organization-dashboard.component.html',
-  imports: [
-    DashboardAttentionPanel,
-    DashboardMetricStrip,
-    DashboardMetricCell,
-    DashboardRecentInterventions,
-    OverviewTrend,
-    InspectionQualityTrend,
-    NonConformitiesOpenedTrend,
-    NonConformitiesResolvedTrend,
-    AssetGrowthTrend,
-    SkeletonModule,
-    EmptyState,
-  ],
+  imports: [DashboardAttentionPanel, DashboardRecentInterventions],
   providers: [DashboardStore, OrganizationAttentionStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -76,8 +52,8 @@ export class OrganizationDashboard {
    * @readonly
    *
    * @description
-   * Component-scoped store that owns the aggregate `/dashboard` fetch,
-   * KPI derivation and comparison delta computation.
+   * Component-scoped store that owns the aggregate `/dashboard` fetch. Used
+   * here for the backend alert feed and the recently updated interventions.
    *
    * @access protected
    * @since 1.1.0
@@ -153,29 +129,12 @@ export class OrganizationDashboard {
   );
 
   /**
-   * Property canReadFacilities
-   * @readonly
-   *
-   * @description
-   * Indicates whether facilities metrics and resource trends can be rendered.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly canReadFacilities: Signal<boolean> = computed<boolean>(
-    () =>
-      this.canReadDashboard() ||
-      this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ),
-  );
-
-  /**
    * Property canReadMembers
    * @readonly
    *
    * @description
-   * Indicates whether member metrics can be rendered.
+   * Indicates whether an `expired_invitations` alert row may link to the
+   * members page.
    *
    * @access protected
    * @since 1.2.0
@@ -193,7 +152,8 @@ export class OrganizationDashboard {
    * @readonly
    *
    * @description
-   * Indicates whether equipment metrics and resource trends can be rendered.
+   * Indicates whether an `equipment_under_maintenance` alert row may link to
+   * the equipments page.
    *
    * @access protected
    * @since 1.2.0
@@ -211,7 +171,8 @@ export class OrganizationDashboard {
    * @readonly
    *
    * @description
-   * Indicates whether inspection metrics and inspection-driven trends can be rendered.
+   * Indicates whether a non-conformity alert row may link to the
+   * inspections page.
    *
    * @access protected
    * @since 1.2.0
@@ -241,75 +202,6 @@ export class OrganizationDashboard {
    */
   protected readonly canReadRecentInterventions: Signal<boolean> = computed<boolean>(() =>
     this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
-  );
-
-  /**
-   * Property hasActivityMetrics
-   * @readonly
-   *
-   * @description
-   * Indicates whether at least one activity KPI card can be rendered.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly hasActivityMetrics: Signal<boolean> = computed<boolean>(
-    () =>
-      this.canReadFacilities() ||
-      this.canReadMembers() ||
-      this.canReadEquipment() ||
-      this.canReadInspections(),
-  );
-
-  /**
-   * Property hasActivityInsights
-   * @readonly
-   *
-   * @description
-   * Indicates whether at least one activity trend card can be rendered.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly hasActivityInsights: Signal<boolean> = computed<boolean>(() =>
-    this.canReadInspections(),
-  );
-
-  /**
-   * Property showActivitySection
-   * @readonly
-   *
-   * @description
-   * Indicates whether the activity section contains at least one visible block.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly showActivitySection: Signal<boolean> = computed<boolean>(
-    () =>
-      this.hasActivityMetrics() || this.hasActivityInsights() || this.canReadRecentInterventions(),
-  );
-
-  /**
-   * Property showResourcesSection
-   * @readonly
-   *
-   * @description
-   * Indicates whether the resource section contains at least one visible block.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly showResourcesSection: Signal<boolean> = computed<boolean>(
-    () => this.canReadFacilities() || this.canReadEquipment(),
   );
 
   /**

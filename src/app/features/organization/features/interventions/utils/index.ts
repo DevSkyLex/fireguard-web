@@ -1,4 +1,5 @@
 export { interventionLifecycleProgress } from './intervention-progress/intervention-progress.utils';
+export { buildInterventionQueueRequests } from './intervention-queue-requests/intervention-queue-requests.utils';
 export {
   allowedTransitions,
   canTransitionIntervention,

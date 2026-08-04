@@ -199,6 +199,15 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
   },
   {
+    id: 'statistics',
+    label: $localize`:@@route.statistics:Statistics`,
+    icon: 'pi pi-chart-bar',
+    path: 'statistics',
+    group: 'assets',
+    permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
+    match: 'all',
+  },
+  {
     id: 'inspections',
     label: $localize`:@@route.inspections:Inspections`,
     icon: 'pi pi-clipboard',

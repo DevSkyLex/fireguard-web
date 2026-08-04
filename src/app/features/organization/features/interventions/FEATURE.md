@@ -42,12 +42,27 @@ This subfeature is responsible for:
   `InterventionListPreferencesService`; filters deliberately are not, being
   questions asked now rather than reading preferences.
 
+  **Work views** sit above that toolbar: five shipped questions (All, Mine,
+  Overdue, To review, Drafts) then up to five the operator saves. A view carries
+  its narrowing, its ordering, its **grouping** and its render, so selecting one
+  applies all four; the active view is marked when the toolbar has changed it
+  since. Views and the open view id live in the same cookie as the rest, through
+  `InterventionListPreferencesService`. The built-in "Mine" stores the `@me`
+  sentinel in `responsible`, resolved to the current member at query time so a
+  stored view never hard-codes whoever created it.
+
+  **Each render groups by what it is**: the list by the view's grouping (status,
+  deadline window, site or responsible), the board by workflow status — its
+  drag-and-drop *is* a status transition — and the calendar by date. A view's
+  grouping therefore applies to the list render only, by design.
+
   **One behaviour across the three renders** is an invariant: "Show abandoned"
   applies to List, Board and Calendar alike (it used to exist on the Board
   alone), and the non-date filters are forwarded to the calendar's own bounded
   query — its visible window remains its only date filter. The metric strip is
   gone from this page (`InterventionSummaryStore` is unused here, kept for a
   future dashboard).
+
 - `/organizations/:organizationId/interventions/:interventionId`
 
 ## State and Data Access

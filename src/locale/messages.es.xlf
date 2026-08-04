@@ -4922,6 +4922,74 @@
         <source>Review</source>
         <target>Revisión</target>
       </trans-unit>
+      <trans-unit id="intervention.view.barLabel" datatype="html">
+        <source>Work views</source>
+        <target>Vistas de trabajo</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.all" datatype="html">
+        <source>All</source>
+        <target>Todas</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.mine" datatype="html">
+        <source>Mine</source>
+        <target>Mías</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>Vencidas</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.review" datatype="html">
+        <source>To review</source>
+        <target>Por revisar</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.drafts" datatype="html">
+        <source>Drafts</source>
+        <target>Borradores</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.modified" datatype="html">
+        <source>edited</source>
+        <target>editada</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.save" datatype="html">
+        <source>Save this view</source>
+        <target>Guardar esta vista</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.delete" datatype="html">
+        <source>Delete this view</source>
+        <target>Eliminar esta vista</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.saveFull" datatype="html">
+        <source>Delete a saved view to make room for another</source>
+        <target>Elimina una vista guardada para añadir otra</target>
+      </trans-unit>
+      <trans-unit id="intervention.group.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>Vencidas</target>
+      </trans-unit>
+      <trans-unit id="intervention.group.today" datatype="html">
+        <source>Due today</source>
+        <target>Vencen hoy</target>
+      </trans-unit>
+      <trans-unit id="intervention.group.week" datatype="html">
+        <source>This week</source>
+        <target>Esta semana</target>
+      </trans-unit>
+      <trans-unit id="intervention.group.later" datatype="html">
+        <source>Later</source>
+        <target>Más adelante</target>
+      </trans-unit>
+      <trans-unit id="intervention.group.noDeadline" datatype="html">
+        <source>No deadline</source>
+        <target>Sin vencimiento</target>
+      </trans-unit>
+      <trans-unit id="intervention.group.noSite" datatype="html">
+        <source>No site</source>
+        <target>Sin sitio</target>
+      </trans-unit>
+      <trans-unit id="intervention.group.unassigned" datatype="html">
+        <source>Unassigned</source>
+        <target>Sin responsable</target>
+      </trans-unit>
       <trans-unit id="subStatus.active" datatype="html">
         <source>Active</source>
         <target>Activa</target>

@@ -10,6 +10,11 @@ export type { InterventionIssueSeverity } from './intervention/intervention-issu
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';
 export type { InterventionCalendarFilters } from './intervention-view/intervention-calendar-filters.interface';
 export type {
+  InterventionGrouping,
+  InterventionRender,
+  InterventionView,
+} from './intervention-view/intervention-view.interface';
+export type {
   InterventionDueWindow,
   InterventionListFilters,
 } from './intervention-view/intervention-list-filters.interface';

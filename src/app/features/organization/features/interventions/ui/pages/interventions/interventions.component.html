@@ -24,6 +24,17 @@
     </div>
   </app-page-header>
 
+  <app-intervention-view-bar
+    [views]="views()"
+    [activeViewId]="activeViewId()"
+    [modified]="isViewModified()"
+    [canSave]="canSaveView()"
+    [saveHint]="saveViewHint()"
+    (selected)="selectWorkView($event)"
+    (saved)="saveCurrentView()"
+    (deleted)="deleteWorkView($event)"
+  />
+
   <div class="flex flex-wrap items-center gap-2.5">
     <p-selectbutton
       id="interventions-view-toggle"
@@ -383,12 +394,18 @@
         <p-panel
           [toggleable]="true"
           [collapsed]="isGroupCollapsed(group.id)"
-          [pt]="groupPanelPt(group.id, boardColumnLabel(group.id))"
+          [pt]="groupPanelPt(group.id, group.label)"
           (collapsedChange)="onGroupCollapsedChange(group.id, $event)"
         >
           <ng-template #header>
             <div class="flex items-center gap-2">
-              <app-intervention-tag kind="status" [value]="group.id" />
+              @if (group.isStatus) {
+                <app-intervention-tag kind="status" [value]="group.id" />
+              } @else {
+                <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">{{
+                  group.label
+                }}</span>
+              }
               <span
                 class="text-xs font-semibold text-surface-500 tabular-nums dark:text-surface-400"
                 >{{ group.items.length }}</span
@@ -401,7 +418,7 @@
               <div
                 role="button"
                 tabindex="0"
-                class="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 transition-colors duration-150 outline-none hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-white/5"
+                class="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 transition-colors duration-150 hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-white/5"
                 (click)="onView(vm.intervention)"
                 (keydown.enter)="onView(vm.intervention)"
                 (keydown.space)="$event.preventDefault(); onView(vm.intervention)"
@@ -528,7 +545,7 @@
         <div
           role="button"
           tabindex="0"
-          class="flex cursor-pointer flex-col gap-2 rounded-md p-3 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+          class="flex cursor-pointer flex-col gap-2 rounded-md p-3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
           (click)="onView(vm.intervention)"
           (keydown.enter)="onView(vm.intervention)"
           (keydown.space)="onView(vm.intervention); $event.preventDefault()"

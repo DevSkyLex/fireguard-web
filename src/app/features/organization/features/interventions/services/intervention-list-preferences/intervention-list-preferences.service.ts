@@ -1,8 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { CookieService } from '@core/cookie';
+import { MAX_CUSTOM_VIEWS } from '@features/organization/features/interventions/constants';
 import type {
   InterventionListSort,
   InterventionSortField,
+  InterventionView,
 } from '@features/organization/features/interventions/models';
 
 /**
@@ -42,6 +44,37 @@ interface PersistedPreferences {
   readonly collapsedGroups?: readonly string[];
   readonly sortField?: string;
   readonly sortDirection?: string;
+  readonly viewId?: string;
+  readonly customViews?: readonly InterventionView[];
+}
+
+/**
+ * Function isUsableView
+ *
+ * @description
+ * Whether a decoded cookie entry carries enough to be used as a view. Only the
+ * fields the page reads without a fallback are required; anything else is
+ * allowed to be missing and defaulted downstream.
+ *
+ * @param {unknown} value - Candidate entry.
+ *
+ * @returns {boolean} Whether the entry can be trusted.
+ *
+ * @since 1.1.0
+ */
+function isUsableView(value: unknown): value is InterventionView {
+  if (typeof value !== 'object' || value === null) return false;
+
+  const candidate = value as Partial<InterventionView>;
+
+  return (
+    typeof candidate.id === 'string' &&
+    candidate.id.length > 0 &&
+    typeof candidate.label === 'string' &&
+    candidate.label.length > 0 &&
+    typeof candidate.filters === 'object' &&
+    candidate.filters !== null
+  );
 }
 
 /**
@@ -167,13 +200,102 @@ export class InterventionListPreferencesService {
     collapsedGroups: ReadonlySet<string>,
     sort: InterventionListSort,
   ): void {
-    const payload: PersistedPreferences = {
+    const stored: PersistedPreferences = this.read();
+
+    this.persist({
+      ...stored,
       showAbandoned,
       collapsedGroups: [...collapsedGroups].slice(0, MAX_COLLAPSED_GROUPS),
       sortField: sort.field,
       sortDirection: sort.direction,
-    };
+    });
+  }
 
+  /**
+   * Method readViewId
+   *
+   * @description
+   * Identifier of the view the operator left open, or null when none was
+   * stored. The caller decides what an unknown id means — a view may have been
+   * deleted since.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @returns {string | null} The remembered view id.
+   */
+  public readViewId(): string | null {
+    const stored: string | undefined = this.read().viewId;
+
+    return typeof stored === 'string' && stored ? stored : null;
+  }
+
+  /**
+   * Method writeViewId
+   *
+   * @description
+   * Remembers the open view, so the next session starts on the same question.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} viewId - Identifier of the selected view.
+   * @returns {void}
+   */
+  public writeViewId(viewId: string): void {
+    this.persist({ ...this.read(), viewId });
+  }
+
+  /**
+   * Method readCustomViews
+   *
+   * @description
+   * The views this operator saved. Every entry is validated: a cookie is
+   * user-editable and survives deployments, so a malformed view is dropped
+   * rather than propagated into a query.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @returns {readonly InterventionView[]} The restored views, capped.
+   */
+  public readCustomViews(): readonly InterventionView[] {
+    const stored: readonly InterventionView[] | undefined = this.read().customViews;
+    if (!Array.isArray(stored)) return [];
+
+    return stored.filter((view) => isUsableView(view)).slice(0, MAX_CUSTOM_VIEWS);
+  }
+
+  /**
+   * Method writeCustomViews
+   *
+   * @description
+   * Replaces the saved views. The cap is enforced here as well as at the call
+   * site: the cookie is the thing that must never grow unbounded.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {readonly InterventionView[]} views - Views to persist.
+   * @returns {void}
+   */
+  public writeCustomViews(views: readonly InterventionView[]): void {
+    this.persist({ ...this.read(), customViews: views.slice(0, MAX_CUSTOM_VIEWS) });
+  }
+
+  /**
+   * Method persist
+   *
+   * @description
+   * Writes the whole record in one cookie, so it is never left half-updated.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @param {PersistedPreferences} payload - Full record to store.
+   * @returns {void}
+   */
+  private persist(payload: PersistedPreferences): void {
     this.cookies.setCookie<string>({
       name: PREFERENCES_COOKIE_NAME,
       value: JSON.stringify(payload),

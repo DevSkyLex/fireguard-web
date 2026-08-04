@@ -118,3 +118,52 @@ le monde, et la barre latérale marquait le lien d'accueil actif sur **toutes** 
 routes imbriquées (`[exact]` comparé au même ancien identifiant). Le mode de
 correspondance de l'entrée est passé à `any` : lire les interventions **ou** le tableau
 de bord suffit à mériter l'accueil.
+
+## Journal du lot 5 — écarts au plan, décidés au contact du code
+
+Livré en deux commits : la **surface de travail** (en-tête canonique, filtres,
+tri, comportement unifié, persistance), puis les **vues de travail**.
+
+**Le rendu reste un contrôle, et devient aussi une propriété de vue.** L'arbitrage
+B4 dit « le rendu devient une propriété de la vue, plus un contrôle concurrent »,
+la reco ★ dit « sélecteur de rendu conservé en `p-selectbutton` ». Les deux tiennent :
+sélectionner une vue impose son rendu via `?view=`, et le sélecteur reste là pour
+changer d'avis — ce qui marque alors la vue comme modifiée. Le paramètre d'URL
+garde son nom `?view=` malgré l'ambiguïté du mot, pour ne pas casser les favoris
+et l'application installée.
+
+**Le groupement ne s'applique qu'à la liste.** La maquette montre des sections
+« En retard / Cette semaine », donc un groupement par échéance. L'étendre au Board
+signifierait des colonnes par site ou par responsable — or déposer une carte entre
+deux colonnes du Board **est** une transition de statut, gardée par la politique de
+workflow et le RBAC. Un Board groupé par site n'aurait aucune sémantique de dépôt.
+Chaque rendu groupe donc par ce qu'il est : la liste par la vue, le Board par
+statut, le calendrier par date.
+
+**Cinq vues, nommées automatiquement.** Le plafond de l'arbitrage B5 porte sur les
+vues personnalisées. Il n'y a pas de dialogue de nommage : la vue prend le nom de
+ce qu'elle restreint (le statut, le type, la fenêtre d'échéance, le site, le
+responsable, la recherche, à défaut le tri). Une vue est bon marché à supprimer et
+à réenregistrer ; un dialogue de plus sur ce chemin ne valait pas son coût.
+
+**Ce qui reste du lot** : la replanification par dépôt dans le calendrier. Le
+composant `shared/calendar` n'expose aucune primitive de glisser-déposer — ni sur
+le mois, ni sur la semaine, ni sur l'agenda — et WCAG impose une alternative
+clavier à tout geste de dépôt. C'est un morceau à part entière, pas une finition.
+
+**Défaut trouvé et corrigé, plus large que le lot.** Le focus clavier n'était
+visible sur aucun des contrôles concernés : `outline-none` de Tailwind v4 pose
+`--tw-outline-style: none` **sans condition**, et la règle `focus-visible:outline-2`
+réutilise cette variable (`outline-style: var(--tw-outline-style)`). Le suppresseur
+gagnait donc toujours, y compris au focus. Vérifié dans la feuille compilée puis
+corrigé aux trois endroits concernés (barre de vues, ligne de liste, carte de
+Board) en retirant `outline-none`, redondant dès lors que la règle est portée par
+`:focus-visible`.
+
+**Défaut trouvé et NON corrigé, hors périmètre.** Les boutons PrimeNG ont eux aussi
+un anneau de focus invisible, pour une raison différente : `outline-color` résout à
+`rgba(0,0,0,0)`. Mesuré au clavier réel dans les deux thèmes. Une tentative de
+correction par les jetons du preset a été retirée : après l'avoir appliquée,
+`--p-button-secondary-focus-ring-color` valait bien `#818cf8` et l'anneau restait
+transparent — la cause est ailleurs, probablement l'ordre des couches CSS
+(`@layer theme, base, primeng`). À traiter dans son propre lot ou à la clôture a11y.

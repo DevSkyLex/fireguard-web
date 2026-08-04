@@ -34,12 +34,18 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   COMPACT_AVATAR_PT,
+  CURRENT_MEMBER_SENTINEL,
+  INTERVENTION_BUILTIN_VIEWS,
+  MAX_CUSTOM_VIEWS,
   MEMBER_AVATAR_MAX,
 } from '@features/organization/features/interventions/constants';
 import {
   resolveInterventionTag,
   type InterventionCalendarFilters,
   type InterventionDueWindow,
+  type InterventionGrouping,
+  type InterventionRender,
+  type InterventionView,
   type InterventionListFilters,
   type InterventionListOptions,
   type InterventionListSort,
@@ -70,6 +76,7 @@ import {
   InterventionLabelChip,
   InterventionPriorityIcon,
   InterventionTag,
+  InterventionViewBar,
 } from '@features/organization/features/interventions/ui/components';
 import { InterventionCreateDrawer } from '@features/organization/features/interventions/ui/drawers';
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
@@ -92,13 +99,14 @@ import { ErrorBanner } from '@shared/error-state';
 import { deriveInitials } from '@shared/initials';
 import { PageHeader } from '@shared/page-header';
 import { tagSeverityDotClass } from '@shared/tag-severity';
+import type { InterventionListGroup, InterventionListItemViewModel } from './models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_SORT_OPTIONS,
   INTERVENTION_STATUS_FILTER_OPTIONS,
   INTERVENTION_TYPE_FILTER_OPTIONS,
 } from './options';
-import { buildInterventionListOptions, countActiveFilters } from './utils';
+import { buildInterventionListOptions, countActiveFilters, groupInterventions } from './utils';
 
 /**
  * Default hour (local) pre-filled as the planned start when an intervention is
@@ -111,43 +119,6 @@ const DEFAULT_PLANNED_HOUR = 9;
  * intervention is flagged as due soon on its board card.
  */
 const DUE_SOON_WINDOW_MS = 48 * 60 * 60 * 1000;
-
-/**
- * View toggle for the interventions index page, mirrored in the `?view=`
- * query param (default `list`).
- */
-type InterventionListView = 'list' | 'board' | 'calendar';
-
-/**
- * Lifecycle order the list view groups statuses in — the most actionable
- * statuses first, terminal statuses last.
- */
-const LIST_STATUS_ORDER: readonly InterventionStatus[] = [
-  'in_progress',
-  'submitted',
-  'changes_requested',
-  'planned',
-  'draft',
-  'published',
-  'abandoned',
-];
-
-/**
- * Interface InterventionListItemViewModel
- *
- * @description
- * Presentation view model wrapping one {@link InterventionOutput} for the
- * list row / board card templates: whether the intervention is overdue or due
- * soon, the resolved site display name and the resolved avatar-stack people.
- * Every other rendered field reads straight off the wrapped `intervention`.
- */
-interface InterventionListItemViewModel {
-  readonly intervention: InterventionOutput;
-  readonly isOverdue: boolean;
-  readonly isDueSoon: boolean;
-  readonly siteName: string | null;
-  readonly people: readonly MemberAvatar[];
-}
 
 /**
  * Component InterventionsPage
@@ -189,6 +160,7 @@ interface InterventionListItemViewModel {
     InterventionLabelChip,
     InterventionPriorityIcon,
     InterventionTag,
+    InterventionViewBar,
     MessageModule,
     PageHeader,
     PanelModule,
@@ -362,13 +334,13 @@ export class InterventionsPage {
    * @access public
    * @since 5.0.0
    *
-   * @type {InputSignalWithTransform<InterventionListView, unknown>}
+   * @type {InputSignalWithTransform<InterventionRender, unknown>}
    */
-  public readonly view: InputSignalWithTransform<InterventionListView, unknown> = input<
-    InterventionListView,
+  public readonly view: InputSignalWithTransform<InterventionRender, unknown> = input<
+    InterventionRender,
     unknown
   >('list', {
-    transform: (value: unknown): InterventionListView =>
+    transform: (value: unknown): InterventionRender =>
       value === 'board' || value === 'calendar' ? value : 'list',
   });
 
@@ -424,9 +396,9 @@ export class InterventionsPage {
    * @access protected
    * @since 5.0.0
    *
-   * @type {{ label: string; value: InterventionListView; icon: string }[]}
+   * @type {{ label: string; value: InterventionRender; icon: string }[]}
    */
-  protected readonly viewOptions: { label: string; value: InterventionListView; icon: string }[] = [
+  protected readonly viewOptions: { label: string; value: InterventionRender; icon: string }[] = [
     { label: $localize`:@@intervention.list.viewList:List`, value: 'list', icon: 'pi pi-bars' },
     {
       label: $localize`:@@intervention.list.viewBoard:Board`,
@@ -613,6 +585,174 @@ export class InterventionsPage {
    *
    * @type {SelectOption<InterventionStatus>[]}
    */
+  /**
+   * Property customViews
+   * @readonly
+   *
+   * @description
+   * The views this operator saved, restored from the cookie.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {WritableSignal<readonly InterventionView[]>}
+   */
+  protected readonly customViews: WritableSignal<readonly InterventionView[]> = signal<
+    readonly InterventionView[]
+  >(this.preferences.readCustomViews());
+
+  /**
+   * Property activeViewId
+   * @readonly
+   *
+   * @description
+   * The view currently open. Restored from the cookie, falling back to "All"
+   * when the stored id names a view that no longer exists.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly activeViewId: WritableSignal<string> = signal<string>('all');
+
+  /**
+   * Property grouping
+   * @readonly
+   *
+   * @description
+   * How the list render sections its rows — a property of the active view, not
+   * a separate control.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {WritableSignal<InterventionGrouping>}
+   */
+  protected readonly grouping: WritableSignal<InterventionGrouping> =
+    signal<InterventionGrouping>('status');
+
+  /**
+   * Property views
+   * @readonly
+   *
+   * @description
+   * Every view on offer: the five the product ships, then the saved ones.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<readonly InterventionView[]>}
+   */
+  protected readonly views: Signal<readonly InterventionView[]> = computed<
+    readonly InterventionView[]
+  >(() => [...INTERVENTION_BUILTIN_VIEWS, ...this.customViews()]);
+
+  /**
+   * Property activeView
+   * @readonly
+   *
+   * @description
+   * The open view, falling back to the first built-in so the bar always has a
+   * selection.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<InterventionView>}
+   */
+  protected readonly activeView: Signal<InterventionView> = computed<InterventionView>(() => {
+    const id: string = this.activeViewId();
+
+    return this.views().find((view) => view.id === id) ?? INTERVENTION_BUILTIN_VIEWS[0];
+  });
+
+  /**
+   * Property isViewModified
+   * @readonly
+   *
+   * @description
+   * Whether the toolbar has been used since the view was opened. Compared by
+   * value, so re-selecting the same option does not count as an edit.
+   *
+   * The marker matters: without it "All" could silently mean something other
+   * than all.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isViewModified: Signal<boolean> = computed<boolean>(() => {
+    const view: InterventionView = this.activeView();
+    const sort: InterventionListSort = this.sortOrder();
+
+    return (
+      JSON.stringify(this.filters()) !== JSON.stringify(view.filters) ||
+      sort.field !== view.sort.field ||
+      sort.direction !== view.sort.direction ||
+      this.grouping() !== view.grouping
+    );
+  });
+
+  /**
+   * Property canSaveView
+   * @readonly
+   *
+   * @description
+   * Whether another view may be saved. The cap keeps the bar scannable and the
+   * cookie small.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canSaveView: Signal<boolean> = computed<boolean>(
+    () => this.customViews().length < MAX_CUSTOM_VIEWS,
+  );
+
+  /**
+   * Property saveViewHint
+   * @readonly
+   *
+   * @description
+   * Says why saving is unavailable, rather than leaving a dead control.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly saveViewHint: Signal<string> = computed<string>(() =>
+    this.canSaveView()
+      ? ''
+      : $localize`:@@intervention.view.saveFull:Delete a saved view to make room for another`,
+  );
+
+  /**
+   * Property effectiveFilters
+   * @readonly
+   *
+   * @description
+   * The narrowing as the API should receive it, with the `@me` sentinel
+   * resolved to the current member. A built-in view stores the sentinel so
+   * "Mine" means the same thing to everyone; without a resolved member the
+   * filter is dropped rather than sent as a literal.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<InterventionListFilters>}
+   */
+  protected readonly effectiveFilters: Signal<InterventionListFilters> =
+    computed<InterventionListFilters>(() => {
+      const active: InterventionListFilters = this.filters();
+      if (active.responsible !== CURRENT_MEMBER_SENTINEL) return active;
+
+      return { ...active, responsible: this.currentMemberIri() };
+    });
+
   protected readonly statusOptions: SelectOption<InterventionStatus>[] =
     INTERVENTION_STATUS_FILTER_OPTIONS;
 
@@ -922,7 +1062,7 @@ export class InterventionsPage {
    */
   protected readonly calendarFilters: Signal<InterventionCalendarFilters> =
     computed<InterventionCalendarFilters>(() => {
-      const active: InterventionListFilters = this.filters();
+      const active: InterventionListFilters = this.effectiveFilters();
       const narrowing: {
         -readonly [Key in keyof InterventionCalendarFilters]: InterventionCalendarFilters[Key];
       } = {};
@@ -1058,16 +1198,14 @@ export class InterventionsPage {
    *
    * @type {Signal<readonly BoardColumn<InterventionListItemViewModel>[]>}
    */
-  protected readonly listGroups: Signal<readonly BoardColumn<InterventionListItemViewModel>[]> =
-    computed(() => {
-      const items: readonly InterventionListItemViewModel[] = this.visibleItems();
-      return LIST_STATUS_ORDER.map(
-        (status): BoardColumn<InterventionListItemViewModel> => ({
-          id: status,
-          items: items.filter((item) => item.intervention.status === status),
-        }),
-      ).filter((group) => group.items.length > 0);
-    });
+  protected readonly listGroups: Signal<readonly InterventionListGroup[]> = computed(() =>
+    groupInterventions(
+      this.visibleItems(),
+      this.grouping(),
+      new Date(),
+      (iri) => this.memberDisplayMap().get(iri ?? '')?.label ?? null,
+    ),
+  );
 
   /**
    * Property boardColumns
@@ -1271,6 +1409,21 @@ export class InterventionsPage {
    * @since 2.0.0
    */
   public constructor() {
+    // Restore the view the operator left open before anything reads the
+    // filters, so the first request is already the right question.
+    const restored: string | null = this.preferences.readViewId();
+    const view: InterventionView | undefined = restored
+      ? [...INTERVENTION_BUILTIN_VIEWS, ...this.customViews()].find(
+          (candidate) => candidate.id === restored,
+        )
+      : undefined;
+
+    if (view) {
+      this.activeViewId.set(view.id);
+      this.filters.set(view.filters);
+      this.grouping.set(view.grouping);
+    }
+
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((value: string): void => this.navigateQuery({ q: value.trim() || null }));
@@ -1285,7 +1438,7 @@ export class InterventionsPage {
     effect(() => {
       const organizationId: string = this.organizationId();
       const options: InterventionListOptions = buildInterventionListOptions(
-        this.filters(),
+        this.effectiveFilters(),
         this.sortOrder(),
         this.q().trim(),
         new Date(),
@@ -1356,10 +1509,170 @@ export class InterventionsPage {
    * @access protected
    * @since 5.3.0
    *
-   * @param {InterventionListView} view - View tab activated.
+   * @param {InterventionRender} view - View tab activated.
    * @returns {void}
    */
-  protected selectView(view: InterventionListView): void {
+  /**
+   * Method selectWorkView
+   * @method selectWorkView
+   *
+   * @description
+   * Opens a named view: its narrowing, ordering and sectioning replace the
+   * live ones, and its render becomes the route's `?view=` so a deep link
+   * still describes what is on screen.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @param {string} viewId - Identifier of the chosen view.
+   * @returns {void}
+   */
+  protected selectWorkView(viewId: string): void {
+    const view: InterventionView | undefined = this.views().find(
+      (candidate) => candidate.id === viewId,
+    );
+    if (!view) return;
+
+    this.activeViewId.set(view.id);
+    this.filters.set(view.filters);
+    this.sortOrder.set(view.sort);
+    this.grouping.set(view.grouping);
+    this.preferences.writeViewId(view.id);
+    this.persistPreferences();
+
+    if (view.render !== this.view()) {
+      this.navigateQuery({ view: view.render === 'list' ? null : view.render });
+    }
+  }
+
+  /**
+   * Method saveCurrentView
+   * @method saveCurrentView
+   *
+   * @description
+   * Saves the current narrowing, ordering, sectioning and render as a new view,
+   * named after the question it answers so far — the operator renames nothing
+   * because there is no dialog to rename in: a view is cheap to delete and save
+   * again.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @returns {void}
+   */
+  protected saveCurrentView(): void {
+    if (!this.canSaveView()) return;
+
+    const view: InterventionView = {
+      id: `custom-${this.nextCustomViewSuffix()}`,
+      label: this.describeCurrentNarrowing(),
+      builtin: false,
+      filters: this.filters(),
+      sort: this.sortOrder(),
+      grouping: this.grouping(),
+      render: this.view(),
+    };
+
+    const next: readonly InterventionView[] = [...this.customViews(), view];
+    this.customViews.set(next);
+    this.preferences.writeCustomViews(next);
+
+    this.activeViewId.set(view.id);
+    this.preferences.writeViewId(view.id);
+  }
+
+  /**
+   * Method deleteWorkView
+   * @method deleteWorkView
+   *
+   * @description
+   * Drops a saved view and falls back to "All" when it was the open one.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @param {string} viewId - Identifier of the view to drop.
+   * @returns {void}
+   */
+  protected deleteWorkView(viewId: string): void {
+    const next: readonly InterventionView[] = this.customViews().filter(
+      (view) => view.id !== viewId,
+    );
+
+    this.customViews.set(next);
+    this.preferences.writeCustomViews(next);
+
+    if (this.activeViewId() === viewId) this.selectWorkView('all');
+  }
+
+  /**
+   * Method nextCustomViewSuffix
+   * @method nextCustomViewSuffix
+   *
+   * @description
+   * A per-operator identifier suffix that cannot collide with a live view.
+   * Deliberately not a timestamp or a random value: both would make the page
+   * impossible to render deterministically during SSR.
+   *
+   * @access private
+   * @since 6.1.0
+   *
+   * @returns {number} The next free suffix.
+   */
+  private nextCustomViewSuffix(): number {
+    const used = new Set<string>(this.customViews().map((view) => view.id));
+
+    let suffix = 1;
+    while (used.has(`custom-${suffix}`)) suffix += 1;
+
+    return suffix;
+  }
+
+  /**
+   * Method describeCurrentNarrowing
+   * @method describeCurrentNarrowing
+   *
+   * @description
+   * Names a saved view after what it actually narrows: the first filter that is
+   * set, or the search term, or the ordering when nothing is filtered at all.
+   *
+   * @access private
+   * @since 6.1.0
+   *
+   * @returns {string} The view label.
+   */
+  private describeCurrentNarrowing(): string {
+    const active: InterventionListFilters = this.filters();
+
+    if (active.status) return resolveInterventionTag('status', active.status).label;
+    if (active.type) return resolveInterventionTag('type', active.type).label;
+
+    if (active.dueWindow) {
+      const option = this.dueWindowOptions.find(
+        (candidate) => candidate.value === active.dueWindow,
+      );
+      if (option) return option.label;
+    }
+
+    if (active.site) {
+      const site = this.planningOptions
+        .sites()
+        .find((candidate) => candidate.value === active.site);
+      if (site) return site.label;
+    }
+
+    if (active.responsible) {
+      const member = this.memberDisplayMap().get(active.responsible);
+      if (member) return member.label;
+    }
+
+    const search: string = this.searchControl.value.trim();
+    if (search) return search;
+
+    return this.sortLabel();
+  }
+
+  protected selectView(view: InterventionRender): void {
     this.navigateQuery({ view: view === 'list' ? null : view });
   }
 

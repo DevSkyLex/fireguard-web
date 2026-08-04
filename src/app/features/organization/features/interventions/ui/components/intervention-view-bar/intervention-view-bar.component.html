@@ -1,0 +1,74 @@
+<!--
+  Horizontally scrollable rather than wrapping: on a phone the bar must stay one
+  line so the rows below start at a predictable height, and a view pushed off
+  the edge is reachable by swiping. `-mx-*` + `px-*` lets the scroll region run
+  edge to edge while the first and last chips keep their inset.
+-->
+<div
+  class="-mx-3 flex items-center gap-1 overflow-x-auto px-3 pb-1 sm:-mx-6 sm:px-6 md:-mx-7 md:px-7 lg:-mx-8 lg:px-8"
+  role="tablist"
+  i18n-aria-label="@@intervention.view.barLabel"
+  aria-label="Work views"
+>
+  @for (view of views(); track view.id) {
+    @let isActive = view.id === activeViewId();
+
+    <div class="flex shrink-0 items-center">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="isActive"
+        class="flex min-h-11 items-center gap-1.5 rounded-md px-3 text-sm transition-colors duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none sm:min-h-9"
+        [class]="
+          isActive
+            ? 'bg-surface-100 font-semibold text-surface-950 dark:bg-surface-800 dark:text-surface-0'
+            : 'text-surface-600 hover:bg-surface-50 dark:text-surface-400 dark:hover:bg-surface-800'
+        "
+        (click)="selected.emit(view.id)"
+      >
+        <span>{{ view.label }}</span>
+
+        @if (isActive && modified()) {
+          <span
+            class="size-1.5 shrink-0 rounded-full bg-primary"
+            [attr.aria-label]="modifiedLabel"
+            [pTooltip]="modifiedLabel"
+            tooltipPosition="bottom"
+          ></span>
+        }
+      </button>
+
+      @if (!view.builtin && view.id === activeViewId()) {
+        <p-button
+          [text]="true"
+          severity="secondary"
+          size="small"
+          icon="pi pi-times"
+          [ariaLabel]="deleteLabel"
+          [pTooltip]="deleteLabel"
+          tooltipPosition="bottom"
+          styleClass="max-sm:min-h-11"
+          (onClick)="deleted.emit(view.id)"
+        />
+      }
+    </div>
+  }
+
+  <span
+    class="shrink-0"
+    [pTooltip]="canSave() ? saveLabel : saveHint()"
+    tooltipPosition="bottom"
+    [attr.aria-disabled]="!canSave()"
+  >
+    <p-button
+      [text]="true"
+      severity="secondary"
+      size="small"
+      icon="pi pi-plus"
+      [ariaLabel]="saveLabel"
+      [disabled]="!canSave()"
+      styleClass="max-sm:min-h-11"
+      (onClick)="saved.emit()"
+    />
+  </span>
+</div>

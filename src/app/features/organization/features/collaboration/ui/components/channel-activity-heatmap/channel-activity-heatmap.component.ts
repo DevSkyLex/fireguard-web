@@ -17,15 +17,16 @@ import { buildActivityCells } from '@features/organization/features/collaboratio
  * Tailwind class per intensity step.
  *
  * Written out as complete literals because Tailwind has no safelist here — a
- * computed `'bg-emerald-' + n` would produce nothing. The ramp is the design's
- * emerald scale; step 0 is a neutral surface, not a faint green, so a silent
- * day never reads as activity.
+ * computed `'bg-green-' + n` would produce nothing. The ramp is the success
+ * tone (DESIGN.md, "Charts": the activity heatmap's intensity ramp uses
+ * `green-*` steps); step 0 is a neutral surface, not a faint green, so a
+ * silent day never reads as activity.
  */
 const LEVEL_CLASS: Readonly<Record<ActivityLevel, string>> = {
   0: 'bg-surface-100 dark:bg-surface-800',
-  1: 'bg-emerald-100 dark:bg-emerald-950',
-  2: 'bg-emerald-300 dark:bg-emerald-800',
-  3: 'bg-emerald-500 dark:bg-emerald-500',
+  1: 'bg-green-100 dark:bg-green-950',
+  2: 'bg-green-300 dark:bg-green-800',
+  3: 'bg-green-500 dark:bg-green-500',
 };
 
 /**

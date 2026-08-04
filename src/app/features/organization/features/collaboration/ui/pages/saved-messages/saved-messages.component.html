@@ -3,14 +3,16 @@
   composer, because a bookmark list is not somewhere you post.
 -->
 <section
-  class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3.5 py-4 md:gap-5 md:px-6 md:py-[22px]"
+  class="flex min-h-0 flex-1 flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8"
   [attr.aria-busy]="store.isLoading()"
   data-testid="saved-messages"
 >
   @if (store.loadError()) {
-    <p class="text-sm text-red-600 dark:text-red-400" i18n="@@workspace.saved.loadFailed">
-      Saved messages could not be loaded.
-    </p>
+    <app-error-banner
+      [message]="loadErrorMessage"
+      [retrying]="store.isLoading()"
+      (retried)="retryLoad()"
+    />
   }
 
   @for (message of chatMessages(); track message.id) {
@@ -57,7 +59,7 @@
   @if (store.hasMore()) {
     <button
       type="button"
-      class="mx-auto cursor-pointer rounded-md px-3 py-1 text-sm text-surface-500 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
+      class="mx-auto cursor-pointer rounded-md px-3 py-1 text-sm text-surface-500 hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
       data-testid="saved-messages-load-more"
       (click)="loadMore()"
     >

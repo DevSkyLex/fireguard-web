@@ -21,7 +21,7 @@
             class="grid size-6 place-items-center rounded-full text-xs font-semibold tabular-nums"
             [class]="
               day.isToday
-                ? 'bg-primary-500 text-white'
+                ? 'bg-primary text-primary-contrast'
                 : day.inMonth
                   ? 'text-surface-700 dark:text-surface-200'
                   : 'text-surface-400 dark:text-surface-600'
@@ -31,7 +31,7 @@
           </span>
           <button
             type="button"
-            class="grid size-5 cursor-pointer place-items-center rounded text-surface-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-100 hover:text-surface-700 focus-visible:opacity-100 motion-reduce:transition-none max-sm:opacity-100 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+            class="grid size-5 cursor-pointer place-items-center rounded-md text-surface-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-50 hover:text-surface-700 focus-visible:opacity-100 motion-reduce:transition-none max-sm:opacity-100 dark:hover:bg-white/5 dark:hover:text-surface-200"
             aria-label="Create on {{ day.date | date: 'longDate' }}"
             i18n-aria-label="@@calendar.createOn"
             (click)="dayCreate.emit(day.date)"
@@ -58,7 +58,7 @@
           @if (overflowCount(day) > 0) {
             <button
               type="button"
-              class="cursor-pointer self-start rounded px-1.5 py-0.5 text-left text-xs font-semibold text-surface-500 transition-colors duration-150 hover:bg-surface-100 hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-50"
+              class="cursor-pointer self-start rounded-md px-1.5 py-0.5 text-left text-xs font-semibold text-surface-500 transition-colors duration-150 hover:bg-surface-50 hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:text-surface-400 dark:hover:bg-white/5 dark:hover:text-surface-50"
               (click)="daySelect.emit(day.date)"
               i18n="@@calendar.moreEvents"
             >

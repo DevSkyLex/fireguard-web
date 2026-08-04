@@ -10,6 +10,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { SkeletonModule } from 'primeng/skeleton';
 import { isCallSuccess } from '@core/request-state';
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { DirectConversationsStore } from '@features/organization/features/collaboration/state';
@@ -49,7 +50,7 @@ import type { DirectNavRow } from './models';
  */
 @Component({
   selector: 'app-collaboration-direct-nav',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, SkeletonModule],
   templateUrl: './collaboration-direct-nav.component.html',
   host: { class: 'flex flex-col px-2 pb-4' },
   changeDetection: ChangeDetectionStrategy.OnPush,

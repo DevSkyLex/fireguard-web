@@ -22,7 +22,7 @@
       <p-inputicon>
         <button
           type="button"
-          class="grid size-5 cursor-pointer place-content-center rounded-sm text-surface-500 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:text-surface-100"
+          class="grid size-5 cursor-pointer place-content-center rounded-md text-surface-500 hover:bg-surface-50 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5 dark:hover:text-surface-100"
           i18n-aria-label="@@workspace.sidebar.search.clear"
           aria-label="Clear search"
           data-testid="channel-nav-search-clear"
@@ -51,7 +51,7 @@
 @if (favorites().length > 0) {
   <button
     type="button"
-    class="flex cursor-pointer items-center justify-between px-2.5 pt-4 pb-1 text-xs font-semibold tracking-wide text-surface-500 uppercase hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:text-surface-100"
+    class="flex cursor-pointer items-center justify-between rounded-md px-2.5 pt-4 pb-1 text-xs font-semibold tracking-wide text-surface-500 uppercase hover:bg-surface-50 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5 dark:hover:text-surface-100"
     [attr.aria-expanded]="favoritesExpanded()"
     aria-controls="workspace-favorites"
     data-testid="channel-nav-favorites-toggle"
@@ -84,7 +84,7 @@
 
 <button
   type="button"
-  class="flex cursor-pointer items-center justify-between px-2.5 pt-4 pb-1 text-xs font-semibold tracking-wide text-surface-500 uppercase hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:text-surface-100"
+  class="flex cursor-pointer items-center justify-between rounded-md px-2.5 pt-4 pb-1 text-xs font-semibold tracking-wide text-surface-500 uppercase hover:bg-surface-50 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5 dark:hover:text-surface-100"
   [attr.aria-expanded]="channelsExpanded()"
   aria-controls="workspace-channels"
   data-testid="channel-nav-channels-toggle"
@@ -103,9 +103,9 @@
   <ul id="workspace-channels" class="flex flex-col gap-px">
     @if (store.isLoading() && channelRows().length === 0) {
       @for (placeholder of [1, 2, 3]; track $index) {
-        <li
-          class="h-8 animate-pulse rounded-md bg-surface-100 motion-reduce:animate-none dark:bg-surface-800"
-        ></li>
+        <li>
+          <p-skeleton width="100%" height="2rem" borderRadius="6px" />
+        </li>
       }
     } @else if (store.loadError() && channelRows().length === 0) {
       <li
@@ -116,7 +116,7 @@
         <span i18n="@@workspace.sidebar.channels.loadFailed">Channels could not be loaded.</span>
         <button
           type="button"
-          class="cursor-pointer rounded-sm font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          class="cursor-pointer rounded-md font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           data-testid="channel-nav-retry"
           (click)="reload()"
         >

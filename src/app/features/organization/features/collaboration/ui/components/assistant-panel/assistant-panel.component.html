@@ -9,7 +9,7 @@
     </span>
     <span class="min-w-0">
       <span
-        class="block truncate text-[15px] leading-tight font-semibold text-surface-950 dark:text-surface-50"
+        class="block truncate text-[15px] leading-tight font-semibold text-surface-900 dark:text-surface-0"
         i18n="@@workspace.assistant.title"
       >
         Assistant
@@ -29,30 +29,30 @@
 
   <div class="flex shrink-0 items-center gap-0.5">
     @if (store.messages().length > 0) {
-      <button
-        type="button"
-        class="grid size-8 cursor-pointer place-content-center rounded-md text-surface-500 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
-        i18n-aria-label="@@workspace.assistant.new"
-        aria-label="New conversation"
+      <p-button
+        [text]="true"
+        severity="secondary"
+        size="small"
+        icon="pi pi-pencil"
+        i18n-ariaLabel="@@workspace.assistant.new"
+        ariaLabel="New conversation"
         i18n-pTooltip="@@workspace.assistant.new"
         pTooltip="New conversation"
         tooltipPosition="bottom"
         data-testid="assistant-new-thread"
-        (click)="store.startNewThread()"
-      >
-        <i class="pi pi-pencil text-sm" aria-hidden="true"></i>
-      </button>
+        (onClick)="store.startNewThread()"
+      />
     }
-    <button
-      type="button"
-      class="grid size-8 cursor-pointer place-content-center rounded-md text-surface-500 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
-      i18n-aria-label="@@workspace.assistant.close"
-      aria-label="Close assistant"
+    <p-button
+      [text]="true"
+      severity="secondary"
+      size="small"
+      icon="pi pi-times"
+      i18n-ariaLabel="@@workspace.assistant.close"
+      ariaLabel="Close assistant"
       data-testid="assistant-panel-close"
-      (click)="close()"
-    >
-      <i class="pi pi-times text-sm" aria-hidden="true"></i>
-    </button>
+      (onClick)="close()"
+    />
   </div>
 </div>
 
@@ -193,7 +193,7 @@
     @for (suggestion of suggestions; track suggestion) {
       <button
         type="button"
-        class="cursor-pointer rounded-full border border-surface-200 bg-surface-0 px-3 py-1.5 text-xs text-surface-900 transition-colors hover:border-surface-300 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:bg-surface-900 dark:text-surface-100 dark:hover:border-surface-700 dark:hover:bg-white/5"
+        class="cursor-pointer rounded-full border border-surface-200 bg-surface-0 px-3 py-1.5 text-xs text-surface-900 transition-colors hover:border-surface-300 hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:bg-surface-900 dark:text-surface-100 dark:hover:border-surface-700 dark:hover:bg-white/5"
         data-testid="assistant-suggestion"
         (click)="ask(suggestion)"
       >

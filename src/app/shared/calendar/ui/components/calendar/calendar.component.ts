@@ -1,4 +1,3 @@
-import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -125,7 +124,6 @@ const VIEW_LABELS: Readonly<Record<CalendarView, string>> = {
     CalendarWeek,
     EmptyState,
     FormsModule,
-    NgTemplateOutlet,
     SelectButtonModule,
   ],
   templateUrl: './calendar.component.html',

@@ -11,6 +11,7 @@ import type { MessageOutput } from '@features/organization/features/collaboratio
 import { MessageComposer } from '@features/organization/features/collaboration/ui/components';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { ChatMessage, ChatThread, type ChatMessageItem } from '@shared/chat';
+import { DRAWER_STYLE_CLASS } from '@shared/overlay-size';
 
 /**
  * Component MessageThreadDrawer
@@ -45,6 +46,23 @@ import { ChatMessage, ChatThread, type ChatMessageItem } from '@shared/chat';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MessageThreadDrawer {
+  //#region Properties
+  /**
+   * Property drawerStyleClass
+   * @readonly
+   *
+   * @description
+   * The one canonical drawer width step (`shared/overlay-size`): full width
+   * on mobile, a fixed 34rem panel from `sm` up.
+   *
+   * @access protected
+   * @since 1.5.0
+   *
+   * @type {string}
+   */
+  protected readonly drawerStyleClass: string = DRAWER_STYLE_CLASS;
+  //#endregion
+
   //#region Inputs
   /**
    * Property visible

@@ -19,7 +19,7 @@
       @for (emoji of quickReactions(); track emoji) {
         <button
           type="button"
-          class="grid size-9 cursor-pointer place-content-center rounded text-sm hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:size-7 dark:hover:bg-white/5"
+          class="grid size-9 cursor-pointer place-content-center rounded-md text-sm hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:size-7 dark:hover:bg-white/5"
           [attr.aria-label]="emoji"
           (click)="reacted.emit(emoji)"
         >

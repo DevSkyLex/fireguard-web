@@ -20,14 +20,16 @@
             <span
               class="grid size-7 place-items-center rounded-full text-sm font-semibold tabular-nums"
               [class]="
-                day.isToday ? 'bg-primary-500 text-white' : 'text-surface-800 dark:text-surface-100'
+                day.isToday
+                  ? 'bg-primary text-primary-contrast'
+                  : 'text-surface-800 dark:text-surface-100'
               "
             >
               {{ day.date.getDate() }}
             </span>
             <button
               type="button"
-              class="mt-0.5 grid size-5 cursor-pointer place-items-center rounded text-surface-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-100 hover:text-surface-700 focus-visible:opacity-100 motion-reduce:transition-none max-sm:opacity-100 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+              class="mt-0.5 grid size-5 cursor-pointer place-items-center rounded-md text-surface-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-50 hover:text-surface-700 focus-visible:opacity-100 motion-reduce:transition-none max-sm:opacity-100 dark:hover:bg-white/5 dark:hover:text-surface-200"
               aria-label="Create on {{ day.date | date: 'longDate' }}"
               i18n-aria-label="@@calendar.createOn"
               (click)="dayCreate.emit(day.date)"
@@ -55,7 +57,7 @@
             @for (event of day.allDayEvents; track event.id) {
               <button
                 type="button"
-                class="w-full cursor-pointer rounded text-left transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-surface-800"
+                class="w-full cursor-pointer rounded-md text-left transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-white/5"
                 [attr.aria-label]="openLabel(event.title)"
                 (click)="eventClick.emit(event)"
               >
@@ -99,7 +101,7 @@
             class="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
             role="button"
             tabindex="0"
-            [attr.aria-label]="'Create on ' + (day.date | date: 'longDate')"
+            [attr.aria-label]="createOnLabel(day.date | date: 'longDate')"
             (click)="dayCreate.emit(day.date)"
             (keydown.enter)="dayCreate.emit(day.date)"
             (keydown.space)="$event.preventDefault(); dayCreate.emit(day.date)"

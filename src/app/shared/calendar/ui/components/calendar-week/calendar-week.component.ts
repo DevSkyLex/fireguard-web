@@ -49,6 +49,21 @@ export class CalendarWeek {
     return $localize`:@@calendar.openEvent:Open ${title}:title:`;
   }
 
+  /**
+   * Builds the localized "Create on <date>" accessibility label for the
+   * day-column create affordance.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string | null} date - The column's day, already formatted by the
+   * `date` pipe.
+   * @returns {string} Localized aria-label.
+   */
+  protected createOnLabel(date: string | null): string {
+    return $localize`:@@shared.calendar.createOn:Create on ${date}:INTERPOLATION:`;
+  }
+
   //#region Inputs
   /**
    * Property weekDays

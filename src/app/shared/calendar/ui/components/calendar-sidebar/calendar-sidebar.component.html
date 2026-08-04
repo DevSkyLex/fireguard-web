@@ -8,7 +8,7 @@
       <div class="flex items-center gap-0.5">
         <button
           type="button"
-          class="grid size-7 cursor-pointer place-items-center rounded text-surface-500 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:text-surface-400 dark:hover:bg-surface-800"
+          class="grid size-7 cursor-pointer place-items-center rounded-md text-surface-500 transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:text-surface-400 dark:hover:bg-white/5"
           aria-label="Previous month"
           i18n-aria-label="@@calendar.prevMonth"
           (click)="previousMonth()"
@@ -17,7 +17,7 @@
         </button>
         <button
           type="button"
-          class="grid size-7 cursor-pointer place-items-center rounded text-surface-500 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:text-surface-400 dark:hover:bg-surface-800"
+          class="grid size-7 cursor-pointer place-items-center rounded-md text-surface-500 transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:text-surface-400 dark:hover:bg-white/5"
           aria-label="Next month"
           i18n-aria-label="@@calendar.nextMonth"
           (click)="nextMonth()"
@@ -39,12 +39,12 @@
           class="mx-auto grid size-7 cursor-pointer place-items-center rounded-full text-xs tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none"
           [class]="
             isFocused(day.date)
-              ? 'bg-primary-500 font-semibold text-white'
+              ? 'bg-primary font-semibold text-primary-contrast'
               : day.isToday
                 ? 'font-semibold text-primary-600 ring-1 ring-primary-300 dark:text-primary-400 dark:ring-primary-700'
                 : day.inMonth
-                  ? 'text-surface-700 hover:bg-surface-100 dark:text-surface-200 dark:hover:bg-surface-800'
-                  : 'text-surface-300 hover:bg-surface-100 dark:text-surface-600 dark:hover:bg-surface-800'
+                  ? 'text-surface-700 hover:bg-surface-50 dark:text-surface-200 dark:hover:bg-white/5'
+                  : 'text-surface-300 hover:bg-surface-50 dark:text-surface-600 dark:hover:bg-white/5'
           "
           [attr.aria-label]="day.date | date: 'fullDate'"
           (click)="focusedDateChange.emit(day.date)"
@@ -73,11 +73,11 @@
               type="button"
               role="checkbox"
               [attr.aria-checked]="category.active"
-              class="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-surface-800"
+              class="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none dark:hover:bg-white/5"
               (click)="toggle(group, category)"
             >
               <span
-                class="grid size-4 shrink-0 place-items-center rounded transition-colors motion-reduce:transition-none"
+                class="grid size-4 shrink-0 place-items-center rounded-md transition-colors motion-reduce:transition-none"
                 [class]="
                   category.active
                     ? dotClass(category.tone)

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AvatarModule } from 'primeng/avatar';
+import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs';
 import { TagModule } from 'primeng/tag';
 import type {
@@ -62,6 +63,7 @@ import { formatFileSize } from './utils';
   selector: 'app-channel-info-panel',
   imports: [
     AvatarModule,
+    ButtonModule,
     ChannelActivityHeatmap,
     DatePipe,
     EmptyState,

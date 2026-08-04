@@ -367,7 +367,7 @@ Dialog widths come from `shared/overlay-size`, three steps and nothing else: **S
 
 ### Counters
 
-A count pill (tab counts, list totals, unread counts) is one literal span, not a component: `rounded-full bg-surface-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-surface-600 dark:bg-surface-800 dark:text-surface-300`. Status pills go through `@shared/tag` + `@shared/tag-severity`; `p-badge` stays unused (it is an overlay-positioning component the preset does not theme).
+A count pill (tab counts, list totals, unread counts) is one literal span, not a component: `rounded-full bg-surface-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-surface-600 dark:bg-surface-800 dark:text-surface-300`. **Exception — navigation rails:** inside a nav column, counts stay bare per the Navigation spec (`min-w-[18px] shrink-0 text-center text-xs font-semibold text-surface-600 tabular-nums dark:text-surface-400`, the `app-nav-row` shape) — a pill in a 32px row reads as a button. Status pills go through `@shared/tag` + `@shared/tag-severity`; `p-badge` stays unused (it is an overlay-positioning component the preset does not theme).
 
 ### Charts
 

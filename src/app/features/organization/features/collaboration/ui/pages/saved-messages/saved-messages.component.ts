@@ -15,6 +15,7 @@ import type { MessageOutput } from '@features/organization/features/collaboratio
 import { SavedMessagesStore } from '@features/organization/features/collaboration/state';
 import { ChatMessage, type ChatMessageItem } from '@shared/chat';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorBanner } from '@shared/error-state';
 
 /**
  * Component SavedMessagesPage
@@ -38,7 +39,7 @@ import { EmptyState } from '@shared/empty-state';
  */
 @Component({
   selector: 'app-saved-messages',
-  imports: [ChatMessage, EmptyState, SkeletonModule],
+  imports: [ChatMessage, EmptyState, ErrorBanner, SkeletonModule],
   providers: [SavedMessagesStore],
   templateUrl: './saved-messages.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -76,6 +77,20 @@ export class SavedMessagesPage {
    * @type {InstanceType<typeof SavedMessagesStore>}
    */
   protected readonly store: InstanceType<typeof SavedMessagesStore> = inject(SavedMessagesStore);
+
+  /**
+   * Property loadErrorMessage
+   * @readonly
+   *
+   * @description
+   * What the error banner says when the list failed to load.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {string}
+   */
+  protected readonly loadErrorMessage: string = $localize`:@@workspace.saved.loadFailed:Saved messages could not be loaded.`;
 
   /**
    * Property feedback
@@ -146,6 +161,25 @@ export class SavedMessagesPage {
   //#endregion
 
   //#region Methods
+  /**
+   * Method retryLoad
+   * @method retryLoad
+   *
+   * @description
+   * Re-requests whichever page last failed to load.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @return {void}
+   */
+  protected retryLoad(): void {
+    this.store.load({
+      organization: `/api/organizations/${this.organizationId()}`,
+      page: this.store.loadedPage(),
+    });
+  }
+
   /**
    * Method loadMore
    * @method loadMore

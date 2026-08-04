@@ -12,6 +12,7 @@ import {
   viewChild,
   type WritableSignal,
 } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import type { AssistantMessageOutput } from '@features/organization/features/collaboration/models';
 import {
@@ -49,7 +50,7 @@ import { ASSISTANT_MAX_QUESTION_LENGTH, ASSISTANT_SUGGESTIONS } from './constant
  */
 @Component({
   selector: 'app-assistant-panel',
-  imports: [TextFieldModule, TooltipModule],
+  imports: [ButtonModule, TextFieldModule, TooltipModule],
   templateUrl: './assistant-panel.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,

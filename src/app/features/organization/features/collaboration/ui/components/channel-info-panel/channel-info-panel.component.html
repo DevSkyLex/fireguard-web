@@ -6,18 +6,18 @@
 <div
   class="flex h-13 shrink-0 items-center gap-1.5 border-b border-surface-200 pr-2 pl-3.5 lg:hidden dark:border-surface-800"
 >
-  <button
-    type="button"
-    class="grid size-8 cursor-pointer place-content-center rounded-md text-surface-500 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5"
-    i18n-aria-label="@@common.back"
-    aria-label="Back"
+  <p-button
+    [text]="true"
+    severity="secondary"
+    size="small"
+    icon="pi pi-arrow-left"
+    i18n-ariaLabel="@@common.back"
+    ariaLabel="Back"
     data-testid="channel-info-panel-close"
-    (click)="shell.setPanelVisible(false)"
-  >
-    <i class="pi pi-arrow-left text-sm" aria-hidden="true"></i>
-  </button>
+    (onClick)="shell.setPanelVisible(false)"
+  />
   <span
-    class="text-[15px] font-semibold text-surface-950 dark:text-surface-50"
+    class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
     i18n="@@workspace.panel.title"
   >
     Details
@@ -50,7 +50,7 @@
     <p-tabpanel value="info">
       @if (store.channel(); as channel) {
         <h4
-          class="mt-1 mb-2.5 text-[15px] font-semibold text-surface-950 dark:text-surface-50"
+          class="mt-1 mb-2.5 text-[15px] font-semibold text-surface-900 dark:text-surface-0"
           i18n="@@workspace.panel.mainInfo"
         >
           Main info
@@ -133,7 +133,7 @@
         @if (store.children(); as children) {
           @if (children.length > 0) {
             <h4
-              class="mt-5 mb-2.5 text-[15px] font-semibold text-surface-950 dark:text-surface-50"
+              class="mt-5 mb-2.5 text-[15px] font-semibold text-surface-900 dark:text-surface-0"
               i18n="@@workspace.panel.linkedThreads"
             >
               Linked threads
@@ -142,7 +142,7 @@
               @for (child of children; track child.id) {
                 <li>
                   <a
-                    class="-mx-1.5 flex h-8.5 items-center gap-2.5 rounded-md px-1.5 text-sm text-surface-900 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-100 dark:hover:bg-white/5"
+                    class="-mx-1.5 flex h-8.5 items-center gap-2.5 rounded-md px-1.5 text-sm text-surface-900 hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-100 dark:hover:bg-white/5"
                     [routerLink]="[childLinkBase(), child.id]"
                   >
                     <i
@@ -163,7 +163,7 @@
         }
 
         <h4
-          class="mt-5 mb-2.5 text-[15px] font-semibold text-surface-950 dark:text-surface-50"
+          class="mt-5 mb-2.5 text-[15px] font-semibold text-surface-900 dark:text-surface-0"
           i18n="@@workspace.panel.activity"
         >
           Thread activity
@@ -172,7 +172,7 @@
 
         <div class="mt-5.5 mb-2.5 flex items-baseline gap-2">
           <h4
-            class="text-[15px] font-semibold text-surface-950 dark:text-surface-50"
+            class="text-[15px] font-semibold text-surface-900 dark:text-surface-0"
             i18n="@@common.members"
           >
             Members
@@ -244,7 +244,7 @@
               </span>
               @if (participant.source === 'team') {
                 <span
-                  class="shrink-0 rounded-sm bg-surface-100 px-1.5 py-0.5 text-xs font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                  class="shrink-0 rounded-md bg-surface-100 px-1.5 py-0.5 text-xs font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                   i18n="@@workspace.panel.members.viaTeam"
                 >
                   Team
@@ -341,7 +341,7 @@
         @for (link of store.links(); track link.id) {
           <li>
             <a
-              class="flex items-center gap-2.5 rounded-md px-1.5 py-2 hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-white/5"
+              class="flex items-center gap-2.5 rounded-md px-1.5 py-2 hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-white/5"
               [href]="link.url"
               target="_blank"
               rel="noopener noreferrer"

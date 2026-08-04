@@ -7284,6 +7284,10 @@
         <source>Retry</source>
         <target>Réessayer</target>
       </trans-unit>
+      <trans-unit id="shared.calendar.createOn" datatype="html">
+        <source>Create on <x id="INTERPOLATION" equiv-text="{{ day.date | date: &apos;longDate&apos; }}"/></source>
+        <target>Créer le <x id="INTERPOLATION"/></target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

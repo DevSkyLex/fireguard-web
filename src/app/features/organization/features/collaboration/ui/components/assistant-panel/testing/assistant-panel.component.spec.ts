@@ -162,7 +162,7 @@ describe('AssistantPanel', () => {
     restored = false;
 
     const fixture = createFixture();
-    testId(fixture, 'assistant-panel-close')?.click();
+    testId(fixture, 'assistant-panel-close')?.querySelector('button')?.click();
 
     // `closePanel()` reported `false`, so that is what the shell is told.
     expect(closed).toEqual([true, false]);

@@ -96,7 +96,10 @@
             aria-live="polite"
           >
             <span class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
-              <i class="pi pi-spin pi-spinner text-xl" aria-hidden="true"></i>
+              <span
+                class="inline-block size-3 rounded-full border-2 border-primary-200 border-t-primary motion-safe:animate-spin motion-reduce:animate-none dark:border-primary-900 dark:border-t-primary"
+                aria-hidden="true"
+              ></span>
               <span i18n="@@calendar.loading">Loading calendar…</span>
             </span>
           </div>

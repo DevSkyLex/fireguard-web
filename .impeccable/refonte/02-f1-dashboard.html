@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F1 — Tableau de bord, la page d'atterrissage</title>
+<link rel="stylesheet" href="planche.css" />
+<style>
+  .u { display: flex; align-items: center; gap: 8px; }
+  .u-col { display: flex; flex-direction: column; }
+  .u-between { justify-content: space-between; }
+  .u-wrap { flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; align-items: start; }
+  .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .kpi .cell { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 16px; font-size: 14px; }
+  .kpi .cell strong { display: block; color: var(--ink-strong); }
+  .mock { font-size: 12px; }
+  .mock .sh { display: flex; min-height: 430px; }
+  .mock .sh-side { width: 148px; border-right: 1px solid var(--m-border); display: flex; flex-direction: column; }
+  .mock .sh-side-h { display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 6px 10px; border-bottom: 1px solid var(--m-border); font-weight: 600; color: var(--m-text-strong); }
+  .mock .sh-grp { font-size: 0.83em; font-weight: 600; color: var(--m-text-muted); padding: 9px 10px 2px; }
+  .mock .sh-lnk { display: flex; align-items: center; gap: 7px; min-height: 24px; padding: 0 10px; color: var(--m-text-muted); }
+  .mock .sh-lnk.on { color: var(--m-primary); font-weight: 600; background: var(--m-primary-soft); }
+  .mock .sh-lnk .dot { width: 10px; height: 10px; border-radius: 4px; background: currentColor; opacity: .55; flex: none; }
+  .mock .sh-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .mock .sh-top { display: flex; align-items: center; gap: 8px; min-height: 34px; border-bottom: 1px solid var(--m-border); padding: 6px 12px; color: var(--m-text-muted); }
+  .mock .pane { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .mock .metric { flex: 1; min-width: 0; }
+  .mock .metric .n { font-size: 1.71em; font-weight: 700; color: var(--m-text-strong); line-height: 1.1; }
+  .mock .metric .n--quiet { font-size: 1.07em; font-weight: 600; }
+  .mock .spark { height: 16px; background: linear-gradient(to top right, transparent 46%, var(--m-primary) 47%, var(--m-primary) 53%, transparent 54%); opacity: .5; }
+  .mock .chart { height: 54px; background: repeating-linear-gradient(90deg, var(--m-primary-soft) 0 8px, transparent 8px 16px); border-radius: 4px; }
+  .mock .queue-h { display: flex; align-items: center; gap: 7px; }
+  .mock .field { border: 1px solid var(--m-border); border-radius: var(--radius-md); padding: 5px 9px; color: var(--m-text-muted); }
+  .src { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
+  .src th { text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-muted); padding: 10px 14px 8px; border-bottom: 1px solid var(--line); background: var(--paper); }
+  .src td { padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .src tr:last-child td { border-bottom: 0; }
+  .src code { font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="planche">
+
+  <header class="masthead">
+    <div class="u-col" style="gap:6px">
+      <h1>F1 — Le tableau de bord</h1>
+      <p class="muted" style="margin:0">
+        Livraison 1 · cœur métier · cadre B « Un seul rail ». La page d'atterrissage : le premier
+        écran après chaque connexion, et le seul que la chaîne de redirections choisit à la place
+        de l'utilisateur.
+      </p>
+    </div>
+    <button class="theme-toggle" type="button" onclick="const d = document.documentElement.dataset.theme !== 'dark'; document.documentElement.dataset.theme = d ? 'dark' : ''; for (const i of document.images) i.src = d ? i.src.replace('--light--', '--dark--') : i.src.replace('--dark--', '--light--');">
+      Basculer clair / sombre
+    </button>
+  </header>
+
+  <!-- ═════ 1. DIAGNOSTIC ═════ -->
+  <h2>1 · Ce que la page dit aujourd'hui</h2>
+  <div class="m-panel" style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius-xl);padding:18px 20px;margin-bottom:16px">
+    <div style="font-size:18px;font-weight:600;color:var(--ink-strong);letter-spacing:-0.015em">
+      Elle compte l'inventaire ; elle ne nomme jamais le travail.
+    </div>
+    <p style="margin:8px 0 0;max-width:80ch">
+      Le panneau d'attention (ajouté par la passe précédente) est la bonne idée, mais il ne rend que
+      des <em>compteurs</em>. En dessous, quatre décomptes de patrimoine puis cinq courbes.
+      La page n'offre pas une seule action. Le principe produit numéro deux, « la prochaine action est
+      toujours nommée », est contredit à l'endroit exact où il compterait le plus.
+    </p>
+  </div>
+  <div class="kpi">
+    <div class="cell"><strong>0 action sur toute la page</strong>aucun bouton : la seule sortie est de cliquer une ligne</div>
+    <div class="cell"><strong>Jusqu'à 8 chargements simultanés</strong>attention, récentes, 4 métriques, 5 tendances, chacun son état</div>
+    <div class="cell"><strong>Le patron « métrique héroïque »</strong>nombre en 28 px gras au-dessus d'une étiquette de 12 px : anti-référence explicite de PRODUCT.md</div>
+    <div class="cell"><strong>Deux bandeaux d'un mot</strong>« Activity » et « Resources » séparent sans rien expliquer</div>
+    <div class="cell"><strong>Le panneau d'attention plafonne à 7 lignes</strong>et ne montre jamais de quelle intervention il parle</div>
+    <div class="cell"><strong>Rien sur le hors-ligne</strong>alors que le produit en fait un état de première classe</div>
+  </div>
+
+  <!-- ═════ 2. LES DEUX PISTES ═════ -->
+  <h2>2 · Les deux pistes</h2>
+  <div class="pair">
+    <section class="option">
+      <div class="option-head"><span class="tag tag--a">Piste A</span><strong>L'attention d'abord</strong><span class="tag tag--effort">M</span></div>
+      <p class="rationale">
+        On garde le tableau de bord et son inventaire, mais on inverse le poids : ce qui appelle une
+        décision passe devant, ce qui décrit le patrimoine passe derrière.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>Le panneau d'attention devient la première et la plus grande surface</strong>, et ses lignes portent l'action (ouvrir la file concernée), pas seulement un compte.</span></li>
+        <li><span class="pin">2</span><span><strong>Les métriques sont dé-héroïsées</strong> : nombre au pas du titre de carte, chiffres à chasse fixe, étiquette lisible en premier. Fin du patron anti-référencé.</span></li>
+        <li><span class="pin">3</span><span><strong>Les cinq tendances passent sous un seul état de chargement</strong> et une seule section nommée, au lieu de cinq cartes qui arrivent en ordre dispersé.</span></li>
+        <li><span class="pin">4</span><span><strong>La page gagne une action</strong> : « Nouvelle intervention » dans l'en-tête, conformément à la règle des gabarits.</span></li>
+      </ul>
+    </section>
+
+    <section class="option">
+      <div class="option-head"><span class="tag tag--b">Piste B</span><strong>« Aujourd'hui »</strong><span class="tag tag--reco">★ recommandée</span><span class="tag tag--effort">L</span></div>
+      <p class="rationale">
+        L'atterrissage répond à une seule question : <strong>qu'est-ce qui a besoin de moi ?</strong>
+        Quatre files nommées, avec de vraies interventions dedans, pas des compteurs. L'inventaire et
+        les courbes déménagent sur une page « Statistiques », où on les consulte quand on les cherche.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>Quatre files</strong> : <em>En retard · Renvoyées · À relire · Non synchronisées</em>, trois à cinq lignes chacune, avec le nom de l'intervention, son site et son échéance.</span></li>
+        <li><span class="pin">2</span><span><strong>Chaque file est une porte</strong> vers la vue correspondante de F4 : les files d'ici et les vues de là-bas sont la même chose vue à deux échelles.</span></li>
+        <li><span class="pin">3</span><span><strong>Le hors-ligne obtient enfin une place</strong> dans l'atterrissage : ce qui attend d'être synchronisé est du travail en attente, pas une notification technique.</span></li>
+        <li><span class="pin">4</span><span><strong>Quand tout est à jour, la page le dit</strong> et propose la suite, au lieu d'afficher quatre files vides.</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <h3>Challengers écartés</h3>
+  <ul>
+    <li><strong>Atterrissage par rôle</strong> (le planificateur voit la file de revue, l'agent voit sa journée) : plus juste encore, mais suppose une notion de rôle d'affichage que le produit n'a pas ; récupérable plus tard, l'ordre des files suffit pour l'instant.</li>
+    <li><strong>Supprimer la page</strong> et atterrir directement sur Interventions : le moins cher et pas absurde, mais on perd l'inventaire et le hors-ligne dans une seule vue. Conservé comme option « faire moins » si Q1 rejette les deux pistes.</li>
+    <li><strong>Tableau de bord pédagogique au premier lancement</strong> (il enseigne la chaîne site → équipement → inspection → intervention) : ce travail appartient à l'onboarding, famille F8.</li>
+    <li><strong>Fusionner attention et récentes</strong> en un seul flux chronologique : le récent n'est pas de l'urgent ; les mélanger dilue exactement ce qu'on veut faire ressortir.</li>
+  </ul>
+
+  <!-- ═════ 3. FAISABILITÉ ═════ -->
+  <h2>3 · D'où viennent les données de « Aujourd'hui »</h2>
+  <p>
+    La piste B ne demande <strong>aucun nouvel endpoint</strong>. Le magasin d'attention émet déjà,
+    à chaque affichage du tableau de bord, quatre requêtes <code>GET /api/interventions</code> en
+    parallèle — mais avec <code>itemsPerPage=1</code>, dont il ne lit que <code>totalItems</code>.
+    Les files demandent la même requête avec une vraie page.
+  </p>
+  <table class="src">
+    <thead><tr><th style="width:24%">File</th><th>Source exacte</th><th style="width:22%">Statut</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>En retard</strong></td>
+        <td><code>status=planned&amp;dueAtBefore=&lt;maintenant&gt;</code> et <code>status=in_progress&amp;dueAtBefore=&lt;maintenant&gt;</code>, additionnées</td>
+        <td>Déjà émises (comptage seul) — passer <code>itemsPerPage</code> de 1 à 5</td>
+      </tr>
+      <tr>
+        <td><strong>Renvoyées</strong></td>
+        <td><code>status=changes_requested</code></td>
+        <td>Déjà émise (comptage seul)</td>
+      </tr>
+      <tr>
+        <td><strong>À relire</strong></td>
+        <td><code>status=submitted</code></td>
+        <td>Déjà émise (comptage seul)</td>
+      </tr>
+      <tr>
+        <td><strong>Les miennes</strong> (ordre secondaire)</td>
+        <td><code>responsible=&lt;IRI du membre courant&gt;</code></td>
+        <td>Paramètre accepté ; l'IRI est déjà construite dans la page Interventions</td>
+      </tr>
+      <tr>
+        <td><strong>Non synchronisées</strong></td>
+        <td>Compteurs locaux <code>pendingCount</code> et <code>blockedOperations</code> (signaux existants) ; la liste par intervention croise <code>listInterventionIdsWithOutbox()</code> et le cache local</td>
+        <td>Compteurs immédiats ; la liste demande d'exposer en signal une API <code>Promise</code> déjà écrite — travail front, zéro API</td>
+      </tr>
+      <tr>
+        <td><em>Statistiques</em> (page déplacée)</td>
+        <td><code>GET /dashboard</code> et ses cinq <code>…/trends/*</code></td>
+        <td>Inchangés, simplement déménagés</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted" style="margin-top:10px">
+    Une seule contrainte à respecter : <code>status</code> est mono-valeur côté serveur, donc une file
+    qui croise deux statuts émet deux requêtes. C'est exactement ce que le magasin d'attention fait
+    aujourd'hui, sans que personne s'en plaigne.
+  </p>
+
+  <!-- ═════ 4. ÉCRAN CLÉ ═════ -->
+  <h2>4 · Écran clé — l'atterrissage, bureau</h2>
+  <figure class="shot" style="margin-bottom:22px">
+    <div class="frame"><div class="frame-bar">Avant · /organizations/:id</div>
+      <img src="../../e2e/artifacts/ui-pass/refonte/actuel/organization-dashboard--light--desktop.png" alt="Tableau de bord, état actuel" />
+    </div>
+    <figcaption>
+      L'ordre de lecture actuel : titre, panneau d'attention, bandeau « Activity », interventions
+      récentes, quatre métriques, quatre graphiques, bandeau « Resources », un graphique de plus.
+    </figcaption>
+  </figure>
+
+  <div class="pair">
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste A · l'attention d'abord</div>
+        <div class="mock"><div class="sh">
+          <div class="sh-side">
+            <div class="sh-side-h"><span class="m-avatar m-round" style="width:18px;height:18px">A</span>Acme ▾</div>
+            <div class="sh-grp">OPERATIONS</div>
+            <div class="sh-lnk on"><span class="dot"></span>Dashboard</div>
+            <div class="sh-lnk"><span class="dot"></span>Interventions</div>
+            <div class="sh-lnk"><span class="dot"></span>Inspections</div>
+            <div class="sh-grp">ASSETS</div>
+            <div class="sh-lnk"><span class="dot"></span>Facilities</div>
+            <div class="sh-lnk"><span class="dot"></span>Equipments</div>
+          </div>
+          <div class="sh-main">
+            <div class="sh-top">⌂ › Acme<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+            <div class="pane">
+              <div class="u u-between">
+                <div class="u-col" style="gap:2px">
+                  <span class="m-h1" style="font-size:1.42em">Vue d'ensemble</span>
+                  <span class="m-sub">Ce qui appelle une décision chez Acme Sécurité.</span>
+                </div>
+                <span class="m-btn m-btn--primary">＋ Nouvelle intervention</span>
+              </div>
+              <div class="m-panel m-panel--rows" style="border-color:var(--m-primary)">
+                <div class="m-row" style="background:var(--m-primary-soft)"><span class="m-card-title grow">Demande votre attention</span><span class="m-count">4</span></div>
+                <div class="m-row"><span class="m-chip m-chip--red">En retard</span><span class="grow">Interventions dépassées</span><span class="m-count">2</span><span class="m-sub">›</span></div>
+                <div class="m-row"><span class="m-chip m-chip--blue">À relire</span><span class="grow">Soumises pour revue</span><span class="m-count">1</span><span class="m-sub">›</span></div>
+                <div class="m-row"><span class="m-chip m-chip--amber">Non-conformités</span><span class="grow">Critiques ouvertes</span><span class="m-count">1</span><span class="m-sub">›</span></div>
+              </div>
+              <div class="u" style="gap:8px;align-items:stretch">
+                <div class="m-panel metric"><span class="m-label">Sites</span><div class="n n--quiet">12</div><div class="spark"></div></div>
+                <div class="m-panel metric"><span class="m-label">Membres</span><div class="n n--quiet">8</div><div class="spark"></div></div>
+                <div class="m-panel metric"><span class="m-label">Équipements</span><div class="n n--quiet">146</div><div class="spark"></div></div>
+                <div class="m-panel metric"><span class="m-label">Inspections</span><div class="n n--quiet">37</div><div class="spark"></div></div>
+              </div>
+              <div class="u u-between"><span class="m-card-title">Tendances sur 3 mois</span><span class="m-sub">un seul chargement ⌄</span></div>
+              <div class="u" style="gap:8px"><div class="m-panel grow"><span class="m-label">Inspections</span><div class="chart"></div></div><div class="m-panel grow"><span class="m-label">Non-conformités</span><div class="chart"></div></div></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>panneau d'attention promu</span><span>métriques au pas du titre de carte</span><span>tendances sous un état unique</span><span>action dans l'en-tête</span></div>
+    </figure>
+
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · « Aujourd'hui »</div>
+        <div class="mock"><div class="sh">
+          <div class="sh-side">
+            <div class="sh-side-h"><span class="m-avatar m-round" style="width:18px;height:18px">A</span>Acme ▾</div>
+            <div class="sh-grp">OPERATIONS</div>
+            <div class="sh-lnk on"><span class="dot"></span>Today <span class="m-count" style="margin-left:auto">4</span></div>
+            <div class="sh-lnk"><span class="dot"></span>Interventions</div>
+            <div class="sh-lnk"><span class="dot"></span>Inspections</div>
+            <div class="sh-grp">ASSETS</div>
+            <div class="sh-lnk"><span class="dot"></span>Facilities</div>
+            <div class="sh-lnk"><span class="dot"></span>Equipments</div>
+            <div class="sh-lnk"><span class="dot"></span>Statistiques</div>
+          </div>
+          <div class="sh-main">
+            <div class="sh-top">⌂ › Acme<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+            <div class="pane">
+              <div class="u u-between">
+                <div class="u-col" style="gap:2px">
+                  <span class="m-h1" style="font-size:1.42em">Aujourd'hui</span>
+                  <span class="m-sub">Quatre choses attendent une décision de votre part.</span>
+                </div>
+                <span class="m-btn m-btn--primary">＋ Nouvelle intervention</span>
+              </div>
+
+              <div class="queue-h"><span class="m-chip m-chip--red">En retard</span><span class="m-count">2</span><span class="m-sub" style="margin-left:auto">Tout voir ›</span></div>
+              <div class="m-panel m-panel--rows">
+                <div class="m-row"><span class="mono m-sub">FG-142</span><span class="grow">Alarm panel check</span><span class="m-sub">Site Nord</span><span style="color:var(--m-red)">3 j</span><span class="m-avatar">AR</span></div>
+                <div class="m-row"><span class="mono m-sub">FG-138</span><span class="grow">Extinguisher sweep</span><span class="m-sub">Workshop</span><span style="color:var(--m-red)">1 j</span><span class="m-avatar">BL</span></div>
+              </div>
+
+              <div class="queue-h"><span class="m-chip m-chip--blue">À relire</span><span class="m-count">1</span><span class="m-sub" style="margin-left:auto">Tout voir ›</span></div>
+              <div class="m-panel m-panel--rows">
+                <div class="m-row"><span class="mono m-sub">FG-149</span><span class="grow">Workshop compliance sweep</span><span class="m-sub">Soumise par Amelie</span><span class="m-avatar">AR</span></div>
+              </div>
+
+              <div class="queue-h"><span class="m-chip m-chip--amber">Non synchronisé</span><span class="m-count">1</span><span class="m-sub" style="margin-left:auto">Réessayer ›</span></div>
+              <div class="m-panel m-panel--rows">
+                <div class="m-row"><span class="mono m-sub">FG-151</span><span class="grow">Sprinkler audit</span><span class="m-sub">6 modifications en attente</span></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>files = requêtes déjà émises, page réelle</span><span>chaque file ouvre la vue F4 correspondante</span><span>inventaire et courbes → page Statistiques</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 5. ÉTATS ═════ -->
+  <h2>5 · Les deux états que la piste B doit soigner</h2>
+  <div class="pair">
+    <figure>
+      <div class="frame"><div class="frame-bar">Rien à traiter — la bonne nouvelle se dit</div>
+        <div class="mock"><div class="u-col" style="min-height:230px">
+          <div class="sh-top">⌂ › Acme<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+          <div class="pane">
+            <div class="u-col" style="gap:2px"><span class="m-h1" style="font-size:1.42em">Aujourd'hui</span></div>
+            <div class="m-panel" style="border-color:#15803d;background:var(--m-green-soft);text-align:center;padding:20px">
+              <div class="m-card-title m-ok">Rien ne bloque.</div>
+              <p class="m-sub" style="margin:5px 0 10px">Aucune intervention en retard, aucune en attente de relecture, tout est synchronisé.</p>
+              <span class="m-btn m-btn--secondary">Voir les interventions planifiées (3)</span>
+            </div>
+            <div class="u" style="gap:8px"><div class="m-panel grow"><span class="m-label">Prochaine échéance</span><div class="m-sub" style="margin-top:4px">FG-153 · 18 août · Depot</div></div></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>shared/empty-state</span><span>la page ne montre pas 4 files vides</span></div>
+    </figure>
+    <figure>
+      <div class="frame frame--mobile"><div class="frame-bar">Téléphone — l'agent de terrain</div>
+        <div class="mock"><div class="u-col" style="min-height:400px">
+          <div class="sh-top">☰ &nbsp;Aujourd'hui<span style="margin-left:auto">◍ 🔔</span></div>
+          <div class="pane">
+            <span class="m-sub">Trois choses vous attendent.</span>
+            <div class="queue-h"><span class="m-chip m-chip--red">En retard</span><span class="m-count">2</span></div>
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="u-col grow" style="gap:2px"><span class="mono m-sub">FG-142</span><span>Alarm panel check</span><span class="m-sub">Site Nord · 3 j de retard</span></span></div>
+              <div class="m-row"><span class="u-col grow" style="gap:2px"><span class="mono m-sub">FG-138</span><span>Extinguisher sweep</span><span class="m-sub">Workshop · 1 j de retard</span></span></div>
+            </div>
+            <div class="queue-h"><span class="m-chip m-chip--amber">Non synchronisé</span><span class="m-count">1</span></div>
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="u-col grow" style="gap:2px"><span class="mono m-sub">FG-151</span><span>Sprinkler audit</span><span class="m-sub">6 modifications en attente</span></span></div>
+            </div>
+          </div>
+          <div class="u" style="border-top:1px solid var(--m-border);padding:8px 12px;gap:8px">
+            <span class="m-btn m-btn--primary" style="flex:1;justify-content:center">Reprendre FG-142</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>même page, même ordre</span><span>barre basse : reprendre la plus urgente</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 6. MATRICE ═════ -->
+  <h2>6 · Matrice de couverture — 6 écrans et états de la famille</h2>
+  <table class="matrix">
+    <thead><tr><th>Écran / état</th><th>Piste A</th><th>Piste B</th><th>Effort</th><th>API</th></tr></thead>
+    <tbody>
+      <tr><td><strong>atterrissage — bureau</strong></td><td>maquette HF §4</td><td>maquette HF §4</td><td>M / L</td><td>—</td></tr>
+      <tr><td><strong>atterrissage — téléphone</strong></td><td>même page, colonnes empilées, métriques en deux colonnes</td><td>maquette HF §5</td><td>S / M</td><td>—</td></tr>
+      <tr><td><strong>état « rien à traiter »</strong></td><td>panneau d'attention vide masqué (comportement actuel)</td><td>maquette HF §5 : la page énonce la bonne nouvelle et propose la suite</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>état de chargement</strong></td><td>un squelette par section au lieu de huit</td><td>un squelette par file, les files arrivent indépendamment</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>état d'erreur</strong></td><td>bandeau de reprise par section (existant)</td><td>une file en erreur n'empêche pas les autres ; reprise par file</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>page Statistiques</strong></td><td>n'existe pas : tendances et inventaire restent ici</td><td>nouvelle route accueillant les 4 métriques et les 5 tendances, sans changement de leurs appels — <span class="flag">entrée de nav à ratifier en Phase 3</span></td><td>— / M</td><td>—</td></tr>
+      <tr><td><strong>accès partiel (permissions)</strong></td><td>sections masquées une à une (existant)</td><td>files masquées une à une ; si aucune n'est permise, empty-state existant</td><td>S / S</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═════ 7. ARBITRAGE ═════ -->
+  <h2>7 · Questions d'arbitrage — F1</h2>
+  <table class="matrix">
+    <thead><tr><th style="width:44px">#</th><th>Question</th><th>Options</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Q1</strong></td><td><strong>La page d'atterrissage</strong> (primaire)</td><td><span class="tag tag--a">A</span> L'attention d'abord · <span class="tag tag--b">B</span> « Aujourd'hui » <span class="tag tag--reco">★</span> · B avec réserves</td></tr>
+      <tr><td><strong>Q2</strong></td><td>Si B — que deviennent l'inventaire et les cinq courbes ?</td><td>Page « Statistiques » dans le groupe Assets <span class="tag tag--reco">★</span> · Repliés en bas de « Aujourd'hui » · Supprimés</td></tr>
+      <tr><td><strong>Q3</strong></td><td>Le libellé de l'entrée de navigation</td><td>« Aujourd'hui » <span class="tag tag--reco">★</span> · « Vue d'ensemble » (actuel) · « Ma journée »</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">
+    <strong>Recommandations ★ adoptées par défaut</strong> : fin du patron « métrique héroïque » ·
+    la page porte au moins une action · un seul état de chargement pour les tendances · les deux
+    bandeaux d'un mot disparaissent · le hors-ligne apparaît dans l'atterrissage.
+  </p>
+
+  <footer class="disclaimer">
+    Maquettes à fidélité structurelle, non contractuelles au pixel · les sources de données citées ont
+    été relevées dans <code>organization-attention.store.ts</code>, <code>intervention.service.ts</code>
+    et <code>intervention-offline/</code> · captures « avant » du jeu <code>refonte/actuel</code>.
+  </footer>
+</div>
+</body>
+</html>

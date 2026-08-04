@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F4 — Interventions, le poste bureau</title>
+<link rel="stylesheet" href="planche.css" />
+<style>
+  .u { display: flex; align-items: center; gap: 8px; }
+  .u-col { display: flex; flex-direction: column; }
+  .u-between { justify-content: space-between; }
+  .u-wrap { flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; align-items: start; }
+  .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .kpi .cell { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 16px; font-size: 14px; }
+  .kpi .cell strong { display: block; color: var(--ink-strong); }
+  .mock { font-size: 12px; }
+  .mock .sh { display: flex; min-height: 400px; }
+  .mock .sh-side { width: 150px; border-right: 1px solid var(--m-border); display: flex; flex-direction: column; }
+  .mock .sh-side-h { display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 6px 10px; border-bottom: 1px solid var(--m-border); font-weight: 600; color: var(--m-text-strong); }
+  .mock .sh-grp { font-size: 0.83em; font-weight: 600; color: var(--m-text-muted); padding: 9px 10px 2px; }
+  .mock .sh-lnk { display: flex; align-items: center; gap: 7px; min-height: 24px; padding: 0 10px; color: var(--m-text-muted); }
+  .mock .sh-lnk.on { color: var(--m-primary); font-weight: 600; background: var(--m-primary-soft); }
+  .mock .sh-lnk .dot { width: 10px; height: 10px; border-radius: 4px; background: currentColor; opacity: .55; flex: none; }
+  .mock .sh-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .mock .sh-top { display: flex; align-items: center; gap: 8px; min-height: 34px; border-bottom: 1px solid var(--m-border); padding: 6px 12px; color: var(--m-text-muted); }
+  .mock .pane { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .mock .seg { display: inline-flex; border: 1px solid var(--m-border); border-radius: var(--radius-md); overflow: hidden; }
+  .mock .seg > span { padding: 5px 9px; color: var(--m-text-muted); border-right: 1px solid var(--m-border); }
+  .mock .seg > span:last-child { border-right: 0; }
+  .mock .seg > span.on { background: var(--m-primary-soft); color: #4338ca; font-weight: 600; }
+  [data-theme="dark"] .mock .seg > span.on { color: var(--m-primary); }
+  .mock .field { border: 1px solid var(--m-border); border-radius: var(--radius-md); padding: 5px 9px; color: var(--m-text-muted); }
+  .mock .vtab { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--m-border); color: var(--m-text-muted); }
+  .mock .vtab.on { background: var(--m-primary); border-color: var(--m-primary); color: var(--m-primary-contrast); font-weight: 600; }
+  .mock .vtab.add { border-style: dashed; }
+  .mock table.tbl { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+  .mock table.tbl th { text-align: left; color: var(--m-text-muted); font-weight: 600; padding: 5px 8px; border-bottom: 1px solid var(--m-border); }
+  .mock table.tbl td { padding: 7px 8px; border-bottom: 1px solid var(--m-border); }
+  .mock .grp-h { display: flex; align-items: center; gap: 7px; padding: 7px 10px; background: var(--m-bg-subtle); border: 1px solid var(--m-border); border-radius: var(--radius-md); }
+  .mock .col { flex: 1; min-width: 0; border: 1px solid var(--m-border); border-radius: var(--radius-md); padding: 8px; display: flex; flex-direction: column; gap: 6px; background: var(--m-bg-subtle); }
+  .mock .card { background: var(--m-bg); border: 1px solid var(--m-border); border-radius: var(--radius-md); padding: 8px; }
+</style>
+</head>
+<body>
+<div class="planche">
+
+  <header class="masthead">
+    <div class="u-col" style="gap:6px">
+      <h1>F4 — Interventions, le poste bureau</h1>
+      <p class="muted" style="margin:0">
+        Livraison 1 · cœur métier · cadre B « Un seul rail ». Une route, trois vues, un jeu de données.
+        C'est l'écran où le planificateur passe sa journée.
+      </p>
+    </div>
+    <button class="theme-toggle" type="button" onclick="const d = document.documentElement.dataset.theme !== 'dark'; document.documentElement.dataset.theme = d ? 'dark' : ''; for (const i of document.images) i.src = d ? i.src.replace('--light--', '--dark--') : i.src.replace('--dark--', '--light--');">
+      Basculer clair / sombre
+    </button>
+  </header>
+
+  <!-- ═════ 1. DIAGNOSTIC ═════ -->
+  <h2>1 · Le constat qui commande cette famille</h2>
+  <div class="m-panel" style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius-xl);padding:18px 20px;margin-bottom:16px">
+    <div style="font-size:18px;font-weight:600;color:var(--ink-strong);letter-spacing:-0.015em">
+      L'API accepte dix filtres. L'interface en envoie un.
+    </div>
+    <p style="margin:8px 0 0;max-width:80ch">
+      <code>GET /api/interventions</code> accepte <code>name</code>, <code>status</code>, <code>type</code>,
+      <code>site</code>, <code>responsible</code>, <code>participant</code>, <code>dueAtAfter</code>,
+      <code>dueAtBefore</code>, <code>plannedStartAtAfter</code>, <code>plannedStartAtBefore</code>, plus le tri.
+      La page n'envoie jamais que <code>name</code> (la recherche texte). Les trois listes d'entités
+      voisines (sites, équipements, inspections) ont toutes une surface de filtres ; l'écran le plus
+      travaillé du produit n'en a aucune.
+    </p>
+  </div>
+  <div class="kpi">
+    <div class="cell"><strong>Aucun titre visible</strong>« Interventions » n'existe que dans le fil d'Ariane</div>
+    <div class="cell"><strong>Tri figé</strong><code>order[createdAt]=desc</code> imposé par le store, sans contrôle dans l'interface</div>
+    <div class="cell"><strong>3 régimes de défilement</strong>Liste défile seule, Board défile par colonne, Calendrier est borné</div>
+    <div class="cell"><strong>« Show abandoned » n'existe qu'en Board</strong>même jeu de données, trois comportements</div>
+    <div class="cell"><strong>Le compteur disparaît sous <code>lg</code></strong>« 4 interventions » est masqué au moment où l'on en a le plus besoin</div>
+    <div class="cell"><strong>Rien n'est mémorisé</strong>repli des groupes et abandonnées repartent de zéro à chaque montage</div>
+  </div>
+
+  <!-- ═════ 2. LES DEUX PISTES ═════ -->
+  <h2>2 · Les deux pistes</h2>
+  <div class="pair">
+    <section class="option">
+      <div class="option-head"><span class="tag tag--a">Piste A</span><strong>Une barre, trois vues</strong><span class="tag tag--effort">M</span></div>
+      <p class="rationale">
+        La structure ne bouge pas : un sélecteur de vue, une recherche, trois rendus du même jeu.
+        On lui donne ce qui lui manque et on aligne son comportement sur le reste de l'application.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>En-tête de page canonique</strong> : <code>h1</code> « Interventions », compteur toujours visible, et « Nouvelle intervention » comme action primaire à sa place (règle des gabarits).</span></li>
+        <li><span class="pin">2</span><span><strong>Une vraie surface de filtres</strong>, dans le <code>p-popover</code> déjà utilisé par les trois listes voisines : statut, type, site, responsable, fenêtre d'échéance. Dix paramètres d'API cessent d'être morts.</span></li>
+        <li><span class="pin">3</span><span><strong>Un seul comportement pour trois vues</strong> : « Afficher les abandonnées » partout, un régime de défilement unique, compteur visible à toutes les largeurs.</span></li>
+        <li><span class="pin">4</span><span><strong>Un tri exposé</strong> (échéance, création, priorité) : le paramètre existe déjà côté serveur.</span></li>
+      </ul>
+    </section>
+
+    <section class="option">
+      <div class="option-head"><span class="tag tag--b">Piste B</span><strong>Les vues de travail</strong><span class="tag tag--reco">★ recommandée</span><span class="tag tag--effort">L</span></div>
+      <p class="rationale">
+        La liste cesse d'être un catalogue que l'on refiltre chaque matin pour devenir un poste de
+        travail : des vues nommées, mémorisées, qui portent le filtre, le groupement et le rendu.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>Une rangée de vues nommées</strong> remplace le sélecteur nu : <em>Toutes · Les miennes · En retard · À relire · Brouillons</em>, puis celles que l'utilisateur crée. Chaque vue est une combinaison de paramètres réels de l'API.</span></li>
+        <li><span class="pin">2</span><span><strong>Le rendu devient une propriété de la vue</strong> (liste, tableau, calendrier), plus un contrôle concurrent : on choisit ce qu'on regarde, puis comment.</span></li>
+        <li><span class="pin">3</span><span><strong>Le calendrier devient une surface de planification</strong> : glisser une intervention change ses dates, par le même appel que le tiroir d'édition.</span></li>
+        <li><span class="pin">4</span><span><strong>Ce qui était oublié est mémorisé</strong> : vue courante, repli des groupes, abandonnées visibles.</span></li>
+      </ul>
+      <p class="rationale" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+        <strong>Deux contraintes honnêtes.</strong> <span class="flag--warn flag">Mono-statut</span>
+        <code>status</code> est mono-valeur côté serveur : une vue qui croise plusieurs statuts émet
+        soit plusieurs requêtes (ce que le panneau d'attention fait déjà), soit un filtrage client
+        sous le plafond de 500. <span class="flag">Persistance</span> l'application n'utilise que des
+        <em>cookies</em> (aucun <code>localStorage</code> nulle part) : suffisant pour une poignée de
+        vues, sinon un petit schéma IndexedDB via le service abstrait existant. À trancher en Q3.
+      </p>
+    </section>
+  </div>
+
+  <h3>Challengers écartés</h3>
+  <ul>
+    <li><strong>Sélecteur de groupement</strong> (par statut / site / responsable) à la place du sélecteur de vue : peu coûteux et puissant, récupéré comme <em>propriété</em> d'une vue dans B.</li>
+    <li><strong>Liste + panneau d'aperçu</strong> (maître-détail) : entre en concurrence directe avec le workspace, qui est déjà la surface de détail. Réservé à F2, où les entités n'ont pas de workspace.</li>
+    <li><strong>Board par défaut</strong> : le poste bureau balaie et compare ; la liste est plus dense à surface égale.</li>
+    <li><strong>Section « mon travail » épinglée au-dessus de la liste</strong> : une version allégée de B, sans mémorisation ; conservée comme repli si Q3 rejette la persistance.</li>
+  </ul>
+
+  <!-- ═════ 3. ÉCRAN CLÉ — LISTE BUREAU ═════ -->
+  <h2>3 · Écran clé — la liste, bureau</h2>
+  <figure class="shot" style="margin-bottom:22px">
+    <div class="frame"><div class="frame-bar">Avant · /interventions?view=list</div>
+      <img src="../../e2e/artifacts/ui-pass/refonte/actuel/interventions-list--light--desktop.png" alt="Liste des interventions, état actuel" />
+    </div>
+    <figcaption>
+      Le sélecteur de vue, la recherche, le compteur et l'action tiennent sur une ligne — mais la page
+      n'a pas de titre, pas de filtre, pas de tri, et les lignes n'affichent ni échéance ni responsable
+      tant que la largeur ne le permet pas.
+    </figcaption>
+  </figure>
+
+  <div class="pair">
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste A · liste réglée</div>
+        <div class="mock"><div class="sh">
+          <div class="sh-side">
+            <div class="sh-side-h"><span class="m-avatar m-round" style="width:18px;height:18px">A</span>Acme ▾</div>
+            <div class="sh-grp">OPERATIONS</div>
+            <div class="sh-lnk"><span class="dot"></span>Today</div>
+            <div class="sh-lnk on"><span class="dot"></span>Interventions</div>
+            <div class="sh-lnk"><span class="dot"></span>Inspections</div>
+            <div class="sh-grp">ASSETS</div>
+            <div class="sh-lnk"><span class="dot"></span>Facilities</div>
+            <div class="sh-lnk"><span class="dot"></span>Equipments</div>
+          </div>
+          <div class="sh-main">
+            <div class="sh-top">⌂ › Acme › Interventions<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+            <div class="pane">
+              <div class="u u-between">
+                <div class="u-col" style="gap:2px">
+                  <span class="m-h1" style="font-size:1.42em">Interventions</span>
+                  <span class="m-sub">18 interventions · 2 en retard</span>
+                </div>
+                <span class="m-btn m-btn--primary">＋ Nouvelle intervention</span>
+              </div>
+              <div class="u u-wrap" style="gap:8px">
+                <span class="seg"><span class="on">Liste</span><span>Tableau</span><span>Calendrier</span></span>
+                <span class="field grow">⌕ Rechercher…</span>
+                <span class="field">Filtres <span class="m-count">2</span></span>
+                <span class="field">Tri : Échéance ↑</span>
+              </div>
+              <div class="grp-h"><span class="m-chip m-chip--blue">In progress</span><span class="m-count">1</span><span style="margin-left:auto" class="m-sub">⌃</span></div>
+              <table class="tbl">
+                <thead><tr><th></th><th>Intervention</th><th>Site</th><th>Échéance</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td>▮</td><td><span class="mono m-sub">FG-142</span> Alarm panel check</td><td>Site Nord</td><td style="color:var(--m-red)">En retard</td><td><span class="m-avatar">AR</span></td></tr>
+                </tbody>
+              </table>
+              <div class="grp-h"><span class="m-chip m-chip--neutral">Planned</span><span class="m-count">2</span><span style="margin-left:auto" class="m-sub">⌃</span></div>
+              <table class="tbl">
+                <tbody>
+                  <tr><td>▮</td><td><span class="mono m-sub">FG-149</span> Sprinkler audit</td><td>Workshop</td><td>12 août</td><td><span class="m-avatar">BL</span></td></tr>
+                  <tr><td>▮</td><td><span class="mono m-sub">FG-151</span> Extinguisher sweep</td><td>Depot</td><td>18 août</td><td><span class="m-avatar">VF</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>app-page-header</span><span>p-selectbutton (vue)</span><span>p-popover (filtres)</span><span>p-panel (groupes)</span><span>p-table</span></div>
+    </figure>
+
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · vues de travail</div>
+        <div class="mock"><div class="sh">
+          <div class="sh-side">
+            <div class="sh-side-h"><span class="m-avatar m-round" style="width:18px;height:18px">A</span>Acme ▾</div>
+            <div class="sh-grp">OPERATIONS</div>
+            <div class="sh-lnk"><span class="dot"></span>Today</div>
+            <div class="sh-lnk on"><span class="dot"></span>Interventions</div>
+            <div class="sh-lnk"><span class="dot"></span>Inspections</div>
+            <div class="sh-grp">ASSETS</div>
+            <div class="sh-lnk"><span class="dot"></span>Facilities</div>
+            <div class="sh-lnk"><span class="dot"></span>Equipments</div>
+          </div>
+          <div class="sh-main">
+            <div class="sh-top">⌂ › Acme › Interventions<span style="margin-left:auto">◍ 🔔 ◐</span></div>
+            <div class="pane">
+              <div class="u u-between">
+                <div class="u-col" style="gap:2px">
+                  <span class="m-h1" style="font-size:1.42em">Interventions</span>
+                  <span class="m-sub">Vue « Les miennes » · 6 interventions · 2 en retard</span>
+                </div>
+                <span class="m-btn m-btn--primary">＋ Nouvelle intervention</span>
+              </div>
+              <div class="u u-wrap" style="gap:6px">
+                <span class="vtab">Toutes</span>
+                <span class="vtab on">Les miennes</span>
+                <span class="vtab">En retard <span class="m-count" style="background:rgba(255,255,255,.25);border:0;color:inherit">2</span></span>
+                <span class="vtab">À relire</span>
+                <span class="vtab">Brouillons</span>
+                <span class="vtab add">＋</span>
+              </div>
+              <div class="u u-wrap" style="gap:8px">
+                <span class="field grow">⌕ Rechercher dans cette vue…</span>
+                <span class="seg"><span class="on">Liste</span><span>Tableau</span><span>Calendrier</span></span>
+                <span class="field">⋯</span>
+              </div>
+              <div class="grp-h"><span class="m-chip m-chip--red">En retard</span><span class="m-count">2</span><span style="margin-left:auto" class="m-sub">⌃</span></div>
+              <table class="tbl">
+                <tbody>
+                  <tr><td>▮</td><td><span class="mono m-sub">FG-142</span> Alarm panel check</td><td>Site Nord</td><td style="color:var(--m-red)">3 j de retard</td><td><span class="m-avatar">VF</span></td></tr>
+                  <tr><td>▮</td><td><span class="mono m-sub">FG-138</span> Extinguisher sweep</td><td>Workshop</td><td style="color:var(--m-red)">1 j de retard</td><td><span class="m-avatar">VF</span></td></tr>
+                </tbody>
+              </table>
+              <div class="grp-h"><span class="m-chip m-chip--blue">Cette semaine</span><span class="m-count">3</span><span style="margin-left:auto" class="m-sub">⌃</span></div>
+              <table class="tbl">
+                <tbody>
+                  <tr><td>▮</td><td><span class="mono m-sub">FG-149</span> Sprinkler audit</td><td>Workshop</td><td>12 août</td><td><span class="m-avatar">VF</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>vues = combinaisons de params existants</span><span>groupement = propriété de la vue</span><span>persistance cookie ou IndexedDB (Q3)</span><span>p-table · p-panel · p-popover</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 4. CALENDRIER ═════ -->
+  <h2>4 · Écran clé — le calendrier comme surface de planification</h2>
+  <div class="pair">
+    <figure class="shot">
+      <div class="frame"><div class="frame-bar">Avant · ?view=calendar</div>
+        <img src="../../e2e/artifacts/ui-pass/refonte/actuel/interventions-calendar--light--desktop.png" alt="Vue calendrier, état actuel" />
+      </div>
+      <figcaption>Le calendrier affiche et ouvre la création sur un jour cliqué. Il ne replanifie rien : déplacer une intervention passe par le tiroir d'édition.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · replanification directe</div>
+        <div class="mock"><div class="u-col" style="min-height:340px">
+          <div class="sh-top">⌂ › Acme › Interventions <span class="m-sub" style="margin-left:auto">Vue « Planification »</span></div>
+          <div class="pane">
+            <div class="u u-wrap" style="gap:6px">
+              <span class="vtab">Toutes</span><span class="vtab">Les miennes</span><span class="vtab on">Planification</span>
+              <span class="seg" style="margin-left:auto"><span>Liste</span><span>Tableau</span><span class="on">Calendrier</span></span>
+            </div>
+            <div class="u" style="gap:8px;align-items:stretch">
+              <div class="col"><span class="m-label">LUN 10</span><div class="card" style="border-color:var(--m-red)"><span class="mono m-sub">FG-142</span><div>Alarm panel check</div><span class="m-chip m-chip--red" style="margin-top:5px">En retard</span></div></div>
+              <div class="col"><span class="m-label">MAR 11</span></div>
+              <div class="col" style="outline:2px dashed var(--m-primary);outline-offset:-2px"><span class="m-label" style="color:var(--m-primary)">MER 12 — déposer ici</span><div class="card" style="border-color:var(--m-primary);box-shadow:0 2px 6px rgba(79,70,229,.18)"><span class="mono m-sub">FG-149</span><div>Sprinkler audit</div></div></div>
+              <div class="col"><span class="m-label">JEU 13</span><div class="card"><span class="mono m-sub">FG-151</span><div>Extinguisher sweep</div></div></div>
+            </div>
+            <span class="m-sub">Déposer écrit <code>plannedStartAt</code> et <code>dueAt</code> par le même appel que le tiroir d'édition. Refus expliqué si la transition n'est pas permise.</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>shared/calendar existant</span><span>PATCH planning déjà exposé</span><span>disabledReason réutilisé au refus</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 5. MOBILE ═════ -->
+  <h2>5 · L'écran sur téléphone</h2>
+  <div class="pair">
+    <figure class="shot">
+      <div class="frame frame--mobile"><div class="frame-bar">Avant · liste, 375 px</div>
+        <img src="../../e2e/artifacts/ui-pass/refonte/actuel/interventions-list--light--mobile.png" alt="Liste des interventions sur téléphone, état actuel" />
+      </div>
+      <figcaption>Six contrôles passent à la ligne ; le compteur disparaît ; l'action primaire descend sous la recherche.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame frame--mobile"><div class="frame-bar">Piste B · liste, 375 px</div>
+        <div class="mock"><div class="u-col" style="min-height:420px">
+          <div class="sh-top">☰ &nbsp;Interventions<span style="margin-left:auto">◍ 🔔</span></div>
+          <div class="pane">
+            <div class="u u-wrap" style="gap:6px">
+              <span class="vtab on">Les miennes</span><span class="vtab">En retard</span><span class="vtab">À relire</span><span class="vtab">⋯</span>
+            </div>
+            <span class="field">⌕ Rechercher dans cette vue…</span>
+            <div class="grp-h"><span class="m-chip m-chip--red">En retard</span><span class="m-count">2</span></div>
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="u-col grow" style="gap:2px"><span class="mono m-sub">FG-142</span><span>Alarm panel check</span></span><span class="m-avatar">VF</span></div>
+              <div class="m-row"><span class="u-col grow" style="gap:2px"><span class="mono m-sub">FG-138</span><span>Extinguisher sweep</span></span><span class="m-avatar">VF</span></div>
+            </div>
+            <div class="grp-h"><span class="m-chip m-chip--blue">Cette semaine</span><span class="m-count">3</span></div>
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="u-col grow" style="gap:2px"><span class="mono m-sub">FG-149</span><span>Sprinkler audit</span></span><span class="m-avatar">VF</span></div>
+            </div>
+          </div>
+          <div class="u" style="border-top:1px solid var(--m-border);padding:8px 12px;gap:8px">
+            <span class="m-btn m-btn--secondary" style="flex:1;justify-content:center">Filtrer</span>
+            <span class="m-btn m-btn--primary" style="flex:2;justify-content:center">＋ Nouvelle intervention</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>barre basse : pattern généralisé du cadre B</span><span>vues défilables horizontalement</span><span>lignes à 44 px minimum</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 6. MATRICE ═════ -->
+  <h2>6 · Matrice de couverture — 9 écrans et états de la famille</h2>
+  <table class="matrix">
+    <thead><tr><th>Écran / état</th><th>Piste A</th><th>Piste B</th><th>Effort</th><th>API</th></tr></thead>
+    <tbody>
+      <tr><td><strong>liste — vue Liste</strong></td><td>maquette HF §3</td><td>maquette HF §3</td><td>M / L</td><td>—</td></tr>
+      <tr><td><strong>liste — vue Tableau (board)</strong></td><td>même barre, colonnes inchangées ; « abandonnées » aligné sur les autres vues</td><td>rendu d'une vue ; les colonnes suivent le groupement de la vue (statut par défaut)</td><td>S / M</td><td>—</td></tr>
+      <tr><td><strong>liste — vue Calendrier</strong></td><td>capture annotée ; bornage du défilement aligné</td><td>maquette HF §4 (replanification par dépôt)</td><td>S / L</td><td>—</td></tr>
+      <tr><td><strong>liste — téléphone</strong></td><td>barre réordonnée, compteur conservé</td><td>maquette HF §5</td><td>S / M</td><td>—</td></tr>
+      <tr><td><strong>surface de filtres</strong></td><td><code>p-popover</code> identique aux trois listes voisines, 6 champs</td><td>même popover, mais son résultat peut être enregistré comme vue</td><td>M / M</td><td>—</td></tr>
+      <tr><td><strong>état « liste plafonnée » (500)</strong></td><td>bandeau conservé, formulé une fois</td><td>le plafond devient une propriété de vue : une vue étroite ne le rencontre plus</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>état vide — recherche</strong></td><td>« Aucun résultat » + effacer la recherche (existant)</td><td>« Aucun résultat dans cette vue » + basculer vers Toutes</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>état vide — aucune intervention</strong></td><td>empty-state avec création (existant)</td><td>inchangé</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>tiroir de création</strong></td><td>inchangé (3 déclencheurs conservés)</td><td>inchangé ; pré-rempli par la vue courante quand elle porte un site ou un responsable</td><td>S / M</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p class="muted" style="margin-top:10px">
+    Aucun nouvel endpoint : les vues nommées sont des combinaisons de paramètres que
+    <code>InterventionService.list()</code> transmet déjà, et le glisser-déposer du calendrier
+    réutilise l'appel de mise à jour du tiroir de planification.
+  </p>
+
+  <!-- ═════ 7. ARBITRAGE ═════ -->
+  <h2>7 · Questions d'arbitrage — F4</h2>
+  <table class="matrix">
+    <thead><tr><th style="width:44px">#</th><th>Question</th><th>Options</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Q1</strong></td><td><strong>La structure de l'écran</strong> (primaire)</td><td><span class="tag tag--a">A</span> Une barre, trois vues · <span class="tag tag--b">B</span> Vues de travail <span class="tag tag--reco">★</span> · B avec réserves</td></tr>
+      <tr><td><strong>Q2</strong></td><td>Le sélecteur de rendu (Liste / Tableau / Calendrier)</td><td>Rester en <code>p-selectbutton</code> <span class="tag tag--reco">★</span> (c'est un rendu, pas une navigation) · Passer en <code>p-tabs</code> comme le reste de l'app</td></tr>
+      <tr><td><strong>Q3</strong></td><td>Si B — où mémoriser les vues ?</td><td>Cookie, 5 vues maximum <span class="tag tag--reco">★</span> (mécanisme déjà utilisé partout) · Schéma IndexedDB dédié (illimité, plus de code) · Ne rien mémoriser : vues prédéfinies seulement</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">
+    <strong>Recommandations ★ adoptées par défaut</strong> : <code>h1</code> et compteur visibles à
+    toutes les largeurs · action primaire dans l'en-tête de page · surface de filtres identique aux
+    trois listes voisines · tri exposé · « afficher les abandonnées » disponible dans les trois vues ·
+    un seul régime de défilement.
+  </p>
+
+  <footer class="disclaimer">
+    Maquettes à fidélité structurelle, non contractuelles au pixel · les paramètres d'API cités ont été
+    relevés dans <code>InterventionService.list()</code> et <code>intervention.store.ts</code> ·
+    captures « avant » du jeu <code>refonte/actuel</code>.
+  </footer>
+</div>
+</body>
+</html>

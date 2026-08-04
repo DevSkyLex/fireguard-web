@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F5 — Workspace d'intervention (terrain &amp; revue)</title>
+<link rel="stylesheet" href="planche.css" />
+<style>
+  .u { display: flex; align-items: center; gap: 8px; }
+  .u-col { display: flex; flex-direction: column; }
+  .u-between { justify-content: space-between; }
+  .grow { flex: 1; min-width: 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 24px; align-items: start; }
+  .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .kpi .cell { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 16px; font-size: 14px; }
+  .kpi .cell strong { display: block; color: var(--ink-strong); }
+  .mock { font-size: 12px; }
+  .mock .sh-top { display: flex; align-items: center; gap: 8px; min-height: 34px; border-bottom: 1px solid var(--m-border); padding: 6px 12px; color: var(--m-text-muted); }
+  .mock .pane { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .mock .m-bar { height: 6px; border-radius: 999px; background: var(--m-bg-subtle); overflow: hidden; }
+  .mock .m-bar > i { display: block; height: 100%; background: var(--m-primary); }
+  .mock .box { border: 1px solid var(--m-border); border-radius: var(--radius-md); }
+  .mock .cbx { width: 16px; height: 16px; border: 1.5px solid var(--m-border-strong); border-radius: 4px; flex: none; }
+  .mock .cbx.on { border-color: var(--m-green); background: var(--m-green-soft); }
+  .mock .stepper { display: flex; align-items: center; gap: 6px; color: var(--m-text-muted); }
+  .mock .stepper .n { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--m-border-strong); flex: none; }
+  .mock .stepper .n.done { border-color: var(--m-green); background: var(--m-green-soft); }
+  .mock .stepper .n.now { border-color: var(--m-primary); background: var(--m-primary); }
+  .mock .stepper .ln { width: 14px; height: 1px; background: var(--m-border-strong); }
+  .mock .rail { width: 150px; border-left: 1px solid var(--m-border); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .mock .dl { display: grid; grid-template-columns: 54px 1fr; gap: 5px 8px; }
+  .mock .dl dt { color: var(--m-text-muted); margin: 0; }
+  .mock .dl dd { margin: 0; color: var(--m-text); }
+  .mock .hero { border: 1px solid var(--m-primary); background: var(--m-primary-soft); border-radius: var(--radius-md); padding: 12px; }
+  .mock .locked { background: var(--m-bg-subtle); }
+  .mock .mono { font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+<div class="planche">
+
+  <header class="masthead">
+    <div class="u-col" style="gap:6px">
+      <h1>F5 — Workspace d'intervention</h1>
+      <p class="muted" style="margin:0">
+        Livraison 1 · cœur métier · construit sur le <strong>cadre B « Un seul rail »</strong> gelé à l'arbitrage n°1.
+        Sept écrans (six phases + les six tiroirs). La pièce que la critique désigne comme la plus coûteuse : charge cognitive 5 échecs sur 8.
+      </p>
+    </div>
+    <button class="theme-toggle" type="button" onclick="const d = document.documentElement.dataset.theme !== 'dark'; document.documentElement.dataset.theme = d ? 'dark' : ''; for (const i of document.images) i.src = d ? i.src.replace('--light--', '--dark--') : i.src.replace('--dark--', '--light--');">
+      Basculer clair / sombre
+    </button>
+  </header>
+
+  <!-- ═════════ 1. DIAGNOSTIC ═════════ -->
+  <h2>1 · Ce que l'écran fait aujourd'hui</h2>
+  <div class="kpi">
+    <div class="cell"><strong>Aucun titre visible</strong>le nom de l'intervention n'existe que dans un fil d'Ariane tronqué : « Workshop compl… »</div>
+    <div class="cell"><strong>5 leviers de phase sur 12 sections</strong>identité, stepper, Linked, Activity, changements et toutes les propriétés restent montés à chaque phase</div>
+    <div class="cell"><strong>La raison disparaît entre <code>lg</code> et <code>xl</code></strong>barre mobile déjà masquée, texte du header pas encore affiché</div>
+    <div class="cell"><strong>Le rail tombe sous la colonne</strong>sous <code>xl</code>, le bloc Publication se retrouve à des milliers de pixels du bouton Publier</div>
+    <div class="cell"><strong>Le blocage est énoncé 3 fois</strong>en revue : bandeau, section du rail, raison du bouton, tous dérivés du même compteur</div>
+    <div class="cell"><strong>Publier n'a pas de fin</strong>rien ne dit, après coup, ce qui a été inscrit au registre</div>
+  </div>
+  <p class="muted" style="margin-top:12px">
+    Ce qui marche et ne doit pas bouger : <code>commandAction</code> et son <code>disabledReason</code> en langage métier,
+    le registre <code>intervention-tag</code>, le vocabulaire hors-ligne à trois états, la promesse atomique énoncée dans l'interface,
+    la case de 44 px pensée pour des gants.
+  </p>
+
+  <!-- ═════════ 2. LES DEUX PISTES ═════════ -->
+  <h2>2 · Les deux pistes</h2>
+  <div class="pair">
+    <section class="option">
+      <div class="option-head">
+        <span class="tag tag--a">Piste A</span><strong>La phase gouverne, pour de vrai</strong><span class="tag tag--effort">M</span>
+      </div>
+      <p class="rationale">
+        Le flux vertical, le rail et le stepper sont conservés. On rend effectif le principe déjà
+        présent en brouillon : ce qui n'appartient pas à la phase quitte la page.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>Un <code>h1</code> visible</strong> : le nom de l'intervention, avec son code <code class="mono">FG-142</code>. Le fil d'Ariane cesse de faire office de titre.</span></li>
+        <li><span class="pin">2</span><span><strong>Démonter plutôt que replier</strong> : en exécution, ni récapitulatif de publication ni bloc Readiness ; en revue, la checklist devient une ligne de résumé dépliable.</span></li>
+        <li><span class="pin">3</span><span><strong>Une porte, un endroit</strong> : le bouton du guide de planification et la commande de l'en-tête fusionnent ; le blocage de publication n'est énoncé qu'au point d'action.</span></li>
+        <li><span class="pin">4</span><span><strong>La raison suit la commande</strong> à toutes les largeurs, et sous <code>xl</code> le bloc Publication est répliqué au-dessus de la barre de commande.</span></li>
+      </ul>
+    </section>
+
+    <section class="option">
+      <div class="option-head">
+        <span class="tag tag--b">Piste B</span><strong>Le poste de travail guidé</strong>
+        <span class="tag tag--reco">★ recommandée</span><span class="tag tag--effort">L</span>
+      </div>
+      <p class="rationale">
+        Conçue depuis la scène réelle : un agent debout devant une porte coupe-feu, gants aux mains,
+        téléphone froid. La page cesse d'être un dossier que l'on parcourt pour devenir un poste de
+        travail qui énonce l'étape en cours.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>La commande devient le sujet de la page</strong>, pas son en-tête. Premier bloc : quoi faire maintenant, pourquoi c'est bloqué le cas échéant, et le contrôle. Même <code>commandAction</code>, autre place.</span></li>
+        <li><span class="pin">2</span><span><strong>Une seule surface de travail par phase</strong> (guide, checklist, revue), tout le reste en lignes dépliables : Détails et planification · Liens · Activité. Le rail de 21 rem disparaît ; ses propriétés deviennent la surface « Détails ». Desktop et mobile partagent enfin la même architecture.</span></li>
+        <li><span class="pin">3</span><span><strong>La publication devient un moment inscrit</strong> : le récapitulatif <em>est</em> la surface de confirmation, puis la page bascule visiblement en lecture seule et énonce ce qui a été écrit au registre, révision en chiffres à chasse fixe.</span></li>
+        <li><span class="pin">4</span><span><strong>Effet de bord réglé</strong> : six crayons deviennent un seul « Modifier » sur la surface Détails, parce qu'il n'existe plus qu'un seul endroit où les propriétés vivent.</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <h3>Challengers écartés (dérivation sur 6 structures)</h3>
+  <ul>
+    <li><strong>Phases en routes</strong> (<code>/plan</code>, <code>/execute</code>, <code>/review</code>) : casse le modèle hors-ligne à workspace unique et ajoute un coût de navigation avec des gants.</li>
+    <li><strong>Checklist plein écran</strong> (le travail est la page, le reste en feuille) : le plus proche de la scène terrain, mais perd le contexte que le produit promet de porter. Récupéré comme comportement d'exécution dans B.</li>
+    <li><strong>Journal comme colonne vertébrale</strong> : l'agent n'a pas besoin de l'historique pendant qu'il travaille.</li>
+    <li><strong>Deux volets bureau / une colonne terrain</strong> : c'est l'existant ; la piste A le règle à moindre coût.</li>
+  </ul>
+
+  <!-- ═════════ 3. ÉCRAN CLÉ 1 ═════════ -->
+  <h2>3 · Écran clé — exécution, téléphone 375 px</h2>
+  <p class="muted">La scène qui décide du produit : une main, des gants, souvent hors ligne.</p>
+  <div class="pair">
+    <figure class="shot">
+      <div class="frame frame--mobile"><div class="frame-bar">Avant · in_progress</div>
+        <img src="../../e2e/artifacts/ui-pass/refonte/actuel/interventions-workspace-in-progress--light--mobile.png" alt="Workspace en exécution, état actuel" />
+      </div>
+      <figcaption>
+        Le titre est absent. La checklist arrive en premier (acquis), mais identité, stepper et
+        journal restent montés dessous, et la barre basse porte la commande sans jamais dire pourquoi
+        elle est ouverte ou fermée.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="frame frame--mobile"><div class="frame-bar">Piste A · exécution</div>
+        <div class="mock"><div class="u-col" style="min-height:520px">
+          <div class="sh-top">‹ &nbsp;<span class="mono">FG-142</span><span class="m-chip m-chip--blue" style="margin-left:auto">In progress</span></div>
+          <div class="pane grow">
+            <div class="u-col" style="gap:3px">
+              <span class="m-h1" style="font-size:1.25em">Alarm panel check</span>
+              <span class="m-sub" style="font-size:0.92em">Site Nord · Bâtiment C</span>
+            </div>
+            <div class="stepper"><span class="n done"></span><span class="ln"></span><span class="n now"></span><span class="ln"></span><span class="n"></span><span class="ln"></span><span class="n"></span><span style="margin-left:auto">Due Aug 10</span></div>
+            <div class="u u-between" style="margin-top:2px"><span class="m-card-title" style="font-size:1.08em">Work items</span><span class="m-count">4/6</span></div>
+            <div class="m-bar"><i style="width:66%"></i></div>
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="cbx"></span><span class="grow">Replace backup battery</span><span class="m-sub">⋮</span></div>
+              <div class="m-row"><span class="cbx"></span><span class="grow">Photograph panel QR</span><span class="m-sub">⋮</span></div>
+              <div class="m-row"><span class="cbx on"></span><span class="grow m-sub" style="text-decoration:line-through">Test siren circuit</span></div>
+            </div>
+            <span class="m-sub" style="font-size:0.92em">Contexte et journal restent en dessous ; publication et readiness sont <strong>démontés</strong> à cette phase.</span>
+          </div>
+          <div class="u-col" style="border-top:1px solid var(--m-border);padding:8px 12px;gap:6px">
+            <span class="m-sub" style="font-size:0.92em;text-align:center">Complete 2 remaining items first.</span>
+            <span class="m-btn m-btn--primary" style="justify-content:center;opacity:.55">Submit for review</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>h1 + code mono</span><span>sections hors phase démontées</span><span>disabledReason sous la commande</span><span>p-checkbox 44px conservée</span></div>
+    </figure>
+
+    <figure>
+      <div class="frame frame--mobile"><div class="frame-bar">Piste B · exécution</div>
+        <div class="mock"><div class="u-col" style="min-height:520px">
+          <div class="sh-top">‹ &nbsp;<span class="mono">FG-142</span><span class="m-chip m-chip--blue" style="margin-left:auto">In progress</span><span class="m-ok">◍</span></div>
+          <div class="pane grow">
+            <div class="hero">
+              <span class="m-label" style="color:var(--m-primary)">MAINTENANT</span>
+              <div class="m-card-title" style="font-size:1.17em;margin-top:3px">Terminer 2 éléments restants</div>
+              <span class="m-sub" style="font-size:0.92em">Ensuite : soumettre pour revue.</span>
+            </div>
+            <div class="u u-between"><span class="m-card-title" style="font-size:1.08em">Alarm panel check</span><span class="m-count">4/6</span></div>
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="cbx"></span><span class="grow">Replace backup battery</span><span class="m-sub">⋮</span></div>
+              <div class="m-row"><span class="cbx"></span><span class="grow">Photograph panel QR</span><span class="m-sub">⋮</span></div>
+              <div class="m-row m-sub"><span class="grow">⌄ 4 terminés</span></div>
+            </div>
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="grow">Détails et planification</span><span class="m-sub">Site Nord · Aug 10 ›</span></div>
+              <div class="m-row"><span class="grow">Liens</span><span class="m-sub">1 site · 5 équip. ›</span></div>
+              <div class="m-row"><span class="grow">Activité</span><span class="m-count">7</span></div>
+            </div>
+          </div>
+          <div class="u" style="border-top:1px solid var(--m-border);padding:8px 12px;gap:8px">
+            <span class="m-btn m-btn--secondary" style="flex:1;justify-content:center">⌸ Scanner</span>
+            <span class="m-btn m-btn--primary" style="flex:2;justify-content:center">Saisir le relevé</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>hero = commandAction + disabledReason</span><span>1 surface de travail + 3 lignes</span><span>rail dissous dans « Détails »</span><span>barre basse : pattern du cadre B</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════════ 4. ÉCRAN CLÉ 2 ═════════ -->
+  <h2>4 · Écran clé — revue et publication, bureau</h2>
+  <p class="muted">
+    Le moment le plus lourd de conséquences du produit. La promesse atomique est déjà écrite dans
+    l'interface ; il lui manque une place et une fin.
+  </p>
+
+  <figure class="shot" style="margin-bottom:24px">
+    <div class="frame"><div class="frame-bar">Avant · submitted, 1280 px</div>
+      <img src="../../e2e/artifacts/ui-pass/refonte/actuel/interventions-workspace-submitted--light--desktop.png" alt="Workspace en revue, état actuel" />
+    </div>
+    <figcaption>
+      Le nom de l'intervention est illisible (fil d'Ariane tronqué). « Publish intervention » est en
+      haut à droite du shell ; le récapitulatif qu'il applique est au milieu de la colonne ; la
+      Readiness qui l'autorise est dans le rail. Trois endroits pour une seule décision.
+    </figcaption>
+  </figure>
+
+  <div class="pair">
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste A · revue</div>
+        <div class="mock"><div class="u-col">
+          <div class="sh-top">⌂ › Acme › Interventions › <span class="mono">FG-1</span><span style="margin-left:auto" class="u"><span class="m-btn m-btn--secondary" style="padding:5px 9px">Request changes</span><span class="m-btn m-btn--primary" style="padding:5px 9px">Publish intervention</span></span></div>
+          <div class="u" style="align-items:stretch">
+            <div class="pane grow">
+              <div class="m-panel" style="border-color:var(--m-green);background:var(--m-green-soft);padding:8px 12px">✓ Execution complete — no blocking issues remain.</div>
+              <div class="u-col" style="gap:4px">
+                <div class="u"><span class="m-h1" style="font-size:1.42em">Workshop compliance sweep</span><span class="mono m-sub">FG-1</span></div>
+                <div class="u" style="gap:5px"><span class="m-chip m-chip--blue">Submitted</span><span class="m-chip m-chip--amber">High</span><span class="m-chip m-chip--neutral">Site setup</span></div>
+              </div>
+              <div class="stepper"><span class="n done"></span><span class="ln"></span><span class="n done"></span><span class="ln"></span><span class="n now"></span><span class="ln"></span><span class="n"></span><span style="margin-left:auto">Due Aug 12</span></div>
+              <div class="m-panel m-panel--rows"><div class="m-row"><span class="grow">Work items</span><span class="m-chip m-chip--green">6/6 done</span><span class="m-sub">⌄</span></div></div>
+              <div class="u-col" style="gap:5px">
+                <div class="u"><span class="m-card-title" style="font-size:1.08em">Proposed changes</span><span class="m-count">1/1</span></div>
+                <div class="m-panel" style="padding:8px 12px"><span class="mono" style="font-size:0.92em">equipment/e2e-fac-equip-1</span> <span class="m-sub">Status → operational</span></div>
+              </div>
+              <div class="m-panel" style="border-color:var(--m-primary)">
+                <span class="m-card-title" style="font-size:1.08em">Publication summary</span>
+                <p class="m-sub" style="font-size:0.92em;margin:4px 0 8px">Publishing applies every pending change in one atomic operation.</p>
+                <div class="u" style="gap:14px"><span>Changes <b>1</b></span><span>Inspections <b>3</b></span><span>Revision <b class="mono">v2</b></span></div>
+              </div>
+              <div class="m-panel m-panel--rows"><div class="m-row"><span class="grow">Activity</span><span class="m-count">7</span></div></div>
+            </div>
+            <div class="rail">
+              <span class="m-label">Properties</span>
+              <dl class="dl"><dt>Status</dt><dd>Submitted</dd><dt>Due</dt><dd>Aug 12</dd><dt>Site</dt><dd>Site Nord</dd><dt>Revision</dt><dd class="mono">v2</dd></dl>
+              <span class="m-btn m-btn--secondary" style="justify-content:center;font-size:0.92em;padding:5px 8px">Edit planning</span>
+              <hr class="m-divider" />
+              <span class="m-label">Linked</span>
+              <div class="m-sub">1 site · 5 équip. · 3 insp.</div>
+              <hr class="m-divider" />
+              <span class="m-label">Readiness</span>
+              <div class="m-sub" class="m-ok">✓ 3/3 — ready</div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>h1 visible</span><span>checklist en ligne de résumé</span><span>Publication adjacent à la commande</span><span>blocage énoncé une seule fois</span></div>
+    </figure>
+
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · revue, la cérémonie</div>
+        <div class="mock"><div class="u-col">
+          <div class="sh-top">⌂ › Acme › Interventions › <span class="mono">FG-1</span><span style="margin-left:auto" class="m-sub">◍ Up to date</span></div>
+          <div class="pane">
+            <div class="u-col" style="gap:4px">
+              <div class="u"><span class="m-h1" style="font-size:1.42em">Workshop compliance sweep</span><span class="mono m-sub">FG-1</span></div>
+              <div class="u" style="gap:5px"><span class="m-chip m-chip--blue">Submitted</span><span class="m-chip m-chip--amber">High</span><span class="m-sub">Soumise par Amelie · il y a 2 h</span></div>
+            </div>
+
+            <div class="hero">
+              <span class="m-label" style="color:var(--m-primary)">REVUE ET PUBLICATION</span>
+              <div class="m-card-title" style="font-size:1.17em;margin:4px 0 2px">Prête à publier</div>
+              <p class="m-sub" style="font-size:0.92em;margin:0 0 8px">La publication écrira, en une seule opération atomique :</p>
+              <div class="m-panel" style="background:var(--m-bg);padding:0" >
+                <div class="m-row" style="min-height:30px"><span class="grow">3 inspections enregistrées</span><span class="m-sub">▸</span></div>
+                <div class="m-row" style="min-height:30px"><span class="grow">1 changement d'équipement appliqué</span><span class="m-sub">▸</span></div>
+                <div class="m-row" style="min-height:30px;border-bottom:0"><span class="grow">Révision <span class="mono">v2</span> → <span class="mono">v3</span></span></div>
+              </div>
+              <p class="m-sub" style="font-size:0.92em;margin:8px 0 10px">Tout réussit, ou aucun enregistrement n'est modifié.</p>
+              <div class="u" style="gap:8px">
+                <span class="m-btn m-btn--secondary" style="flex:1;justify-content:center">Demander des modifications</span>
+                <span class="m-btn m-btn--primary" style="flex:1;justify-content:center">Publier l'intervention</span>
+              </div>
+            </div>
+
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="grow">Éléments de travail</span><span class="m-chip m-chip--green">6/6</span><span class="m-sub">⌄</span></div>
+              <div class="m-row"><span class="grow">Changements proposés</span><span class="m-count">1</span><span class="m-sub">⌄</span></div>
+              <div class="m-row"><span class="grow">Détails et planification</span><span class="m-sub">Site Nord · Aug 12 ›</span></div>
+              <div class="m-row"><span class="grow">Activité</span><span class="m-count">7</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>le récapitulatif EST la confirmation</span><span>rail dissous</span><span>une décision, un endroit</span><span>p-dialog de confirmation supprimé</span></div>
+    </figure>
+  </div>
+
+  <h3>Et après ? L'état publié, que la piste B fait exister</h3>
+  <div class="pair">
+    <figure class="shot">
+      <div class="frame"><div class="frame-bar">Avant · published</div>
+        <img src="../../e2e/artifacts/ui-pass/refonte/actuel/interventions-workspace-published--light--desktop.png" alt="Workspace publié, état actuel" />
+      </div>
+      <figcaption>Aujourd'hui, publier ne change presque rien à l'écran : mêmes surfaces, mêmes affordances, un tag de statut de plus.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · inscrit au registre</div>
+        <div class="mock"><div class="u-col">
+          <div class="sh-top">⌂ › Acme › Interventions › <span class="mono">FG-1</span></div>
+          <div class="pane">
+            <div class="m-panel" style="border-color:var(--m-green);background:var(--m-green-soft)">
+              <div class="u"><span class="m-ok">✓</span><span class="m-card-title" style="font-size:1.08em">Inscrit au registre</span></div>
+              <p class="m-sub" style="font-size:0.92em;margin:5px 0 8px">12 août 2026, 19:04 · révision <span class="mono" style="color:var(--m-text)">v3</span> · par Valentin Fortin</p>
+              <div class="u" style="gap:14px"><span>3 inspections</span><span>1 changement appliqué</span><span>1 site · 5 équipements</span></div>
+            </div>
+            <div class="u-col" style="gap:4px">
+              <div class="u"><span class="m-h1" style="font-size:1.42em">Workshop compliance sweep</span><span class="mono m-sub">FG-1</span></div>
+              <div class="u" style="gap:5px"><span class="m-chip m-chip--green">Published</span><span class="m-sub">Ce dossier est en lecture seule.</span></div>
+            </div>
+            <div class="m-panel m-panel--rows locked">
+              <div class="m-row"><span class="grow">Éléments de travail</span><span class="m-chip m-chip--green">6/6</span><span class="m-sub">⌄</span></div>
+              <div class="m-row"><span class="grow">Changements appliqués</span><span class="m-count">1</span><span class="m-sub">⌄</span></div>
+              <div class="m-row"><span class="grow">Détails et planification</span><span class="m-sub">›</span></div>
+              <div class="m-row"><span class="grow">Activité</span><span class="m-count">9</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>bandeau d'inscription</span><span>surfaces verrouillées visuellement</span><span>révision en chasse fixe</span><span>zéro contrôle d'édition</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════════ 5. BROUILLON ═════════ -->
+  <h2>5 · Écran clé — brouillon, le guide de planification</h2>
+  <div class="pair">
+    <figure class="shot">
+      <div class="frame"><div class="frame-bar">Avant · draft</div>
+        <img src="../../e2e/artifacts/ui-pass/refonte/actuel/interventions-workspace-draft--light--desktop.png" alt="Workspace en brouillon, état actuel" />
+      </div>
+      <figcaption>Le guide est bien pensé, mais sa porte existe deux fois : le bouton de son pied de page et la commande de l'en-tête disent la même chose, avec deux libellés.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · brouillon</div>
+        <div class="mock"><div class="u-col">
+          <div class="sh-top">⌂ › Acme › Interventions › <span class="mono">FG-4</span></div>
+          <div class="pane">
+            <div class="u-col" style="gap:4px">
+              <div class="u"><span class="m-h1" style="font-size:1.42em">Draft walkthrough</span><span class="mono m-sub">FG-4</span></div>
+              <div class="u" style="gap:5px"><span class="m-chip m-chip--neutral">Draft</span><span class="m-sub">Créée il y a 10 min</span></div>
+            </div>
+            <div class="hero">
+              <span class="m-label" style="color:var(--m-primary)">MAINTENANT</span>
+              <div class="m-card-title" style="font-size:1.17em;margin:3px 0 2px">Étape 3 sur 4 — assigner un responsable</div>
+              <span class="m-sub" style="font-size:0.92em">Il restera à fixer les dates.</span>
+              <div class="m-panel" style="background:var(--m-bg);margin-top:8px">
+                <div class="stepper" style="margin-bottom:8px"><span class="n done"></span><span class="ln"></span><span class="n done"></span><span class="ln"></span><span class="n now"></span><span class="ln"></span><span class="n"></span><span class="m-sub" style="margin-left:8px">Contexte · Périmètre · Équipe · Dates</span></div>
+                <div class="m-line" style="height:26px;border-radius:var(--radius-md);background:var(--m-bg-subtle)"></div>
+                <div class="u" style="justify-content:flex-end;gap:8px;margin-top:10px"><span class="m-btn m-btn--ghost">Retour</span><span class="m-btn m-btn--primary">Continuer</span></div>
+              </div>
+            </div>
+            <div class="m-panel m-panel--rows">
+              <div class="m-row"><span class="grow">Détails et planification</span><span class="m-sub">›</span></div>
+              <div class="m-row"><span class="grow">Liens</span><span class="m-sub">Aucun ›</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>une seule porte : le pied du guide</span><span>l'étape en cours nommée dans le hero</span><span>checklist absente tant que non planifiée</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════════ 6. MATRICE ═════════ -->
+  <h2>6 · Matrice de couverture — 12 écrans de la famille</h2>
+  <table class="matrix">
+    <thead><tr><th>Écran</th><th>Piste A</th><th>Piste B</th><th>Effort</th><th>API</th></tr></thead>
+    <tbody>
+      <tr><td><strong>workspace draft</strong></td><td>capture annotée §5</td><td>maquette HF §5</td><td>M / L</td><td>—</td></tr>
+      <tr><td><strong>workspace planned</strong></td><td>hérite : contexte en tête, checklist montée vide, guide démonté</td><td>hero « Démarrer l'exécution » ; surface de travail = checklist ; le reste en lignes</td><td>S / M</td><td>—</td></tr>
+      <tr><td><strong>workspace in_progress</strong></td><td>maquette HF §3</td><td>maquette HF §3</td><td>M / L</td><td>—</td></tr>
+      <tr><td><strong>workspace submitted</strong></td><td>maquette HF §4</td><td>maquette HF §4</td><td>M / L</td><td>—</td></tr>
+      <tr><td><strong>workspace changes_requested</strong></td><td>bandeau de note de revue conservé en tête ; checklist rouverte</td><td>hero = « Traiter la demande de modifications » citant la note ; la note devient la première ligne de la surface de travail</td><td>S / M</td><td>—</td></tr>
+      <tr><td><strong>workspace published</strong></td><td>tag de statut + contrôles retirés (état actuel, corrigé)</td><td>maquette HF §4 (bandeau d'inscription, surfaces verrouillées)</td><td>S / M</td><td>—</td></tr>
+      <tr><td><strong>drawer edit planning</strong></td><td>inchangé, un seul déclencheur</td><td>devient la surface « Détails et planification » (page, pas overlay) — <span class="flag">gate §10.5 : décision Phase 3</span></td><td>S / L</td><td>—</td></tr>
+      <tr><td><strong>drawer work item</strong></td><td>inchangé</td><td>inchangé, ouvert depuis la surface de travail</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>drawer skip</strong></td><td>inchangé</td><td>inchangé</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>drawer discovery</strong></td><td>inchangé</td><td>inchangé</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>drawer request changes</strong></td><td>inchangé</td><td>déclenché depuis la surface de revue, pas depuis l'en-tête du shell</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>barre de commande mobile</strong></td><td>raison ajoutée à toutes les largeurs</td><td>miroir du hero ; généralisée par le cadre B</td><td>S / M</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p class="muted" style="margin-top:10px">
+    Aucune piste de cette famille n'exige de nouvel endpoint : <code>commandAction</code>,
+    <code>disabledReason</code>, le récapitulatif de publication, la révision et les compteurs de
+    liens existent déjà côté client. La piste B redistribue, elle n'invente pas de données.
+  </p>
+
+  <!-- ═════════ 7. ARBITRAGE ═════════ -->
+  <h2>7 · Questions d'arbitrage — F5</h2>
+  <table class="matrix">
+    <thead><tr><th style="width:44px">#</th><th>Question</th><th>Options</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Q1</strong></td><td><strong>La structure du workspace</strong> (primaire)</td><td><span class="tag tag--a">A</span> La phase gouverne · <span class="tag tag--b">B</span> Poste de travail guidé <span class="tag tag--reco">★</span> · B avec réserves</td></tr>
+      <tr><td><strong>Q2</strong></td><td>La cérémonie de publication (récapitulatif = confirmation, puis état « inscrit au registre » en lecture seule)</td><td>Oui, dans les deux pistes <span class="tag tag--reco">★</span> · Seulement si B · Garder la boîte de confirmation actuelle</td></tr>
+      <tr><td><strong>Q3</strong></td><td>Si B — les propriétés deviennent une surface de page plutôt qu'un tiroir</td><td>Oui <span class="tag tag--reco">★</span> (amendement §10.5 à acter en Phase 3) · Non, garder le tiroir « Edit planning »</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">
+    <strong>Recommandations ★ adoptées par défaut</strong> (« reco » les accepte toutes) : <code>h1</code>
+    visible portant le nom et le code en chasse fixe · sections hors phase démontées et non repliées ·
+    <code>disabledReason</code> rendu à toutes les largeurs · une seule énonciation du blocage · une
+    seule porte par phase · la case de 44 px et le vocabulaire hors-ligne restent intacts.
+  </p>
+
+  <footer class="disclaimer">
+    Maquettes à fidélité structurelle, non contractuelles au pixel · captures « avant » issues du jeu
+    <code>refonte/actuel</code>, régénérables par
+    <code>UI_SHOTS_DIR=refonte/actuel npx playwright test e2e/misc/ui-shots.spec.ts --project=chromium --workers=4</code>
+    · le thème sombre est produit par les variables et bascule aussi les captures.
+  </footer>
+</div>
+</body>
+</html>

@@ -34,19 +34,21 @@
   .mock .sh-tile.on { outline: 2px solid var(--m-primary); outline-offset: 1px; }
   .mock .sh-side { width: 168px; border-right: 1px solid var(--m-border); background: var(--m-bg); display: flex; flex-direction: column; }
   .mock .sh-side-h { display: flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 10px; border-bottom: 1px solid var(--m-border); font-weight: 600; color: var(--m-text-strong); }
-  .mock .sh-grp { font-size: 10px; font-weight: 600; color: var(--m-text-muted); padding: 10px 10px 2px; }
+  .mock .sh-grp { font-size: 0.83em; font-weight: 600; color: var(--m-text-muted); padding: 10px 10px 2px; }
   .mock .sh-lnk { display: flex; align-items: center; gap: 7px; min-height: 24px; padding: 0 10px; color: var(--m-text-muted); }
   .mock .sh-lnk.on { color: var(--m-primary); font-weight: 600; background: var(--m-primary-soft); }
   .mock .sh-lnk .dot { width: 10px; height: 10px; border-radius: 4px; background: currentColor; opacity: 0.55; flex: none; }
   .mock .sh-main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--m-bg); }
-  .mock .sh-top { display: flex; align-items: center; gap: 8px; min-height: 34px; border-bottom: 1px solid var(--m-border); padding: 0 12px; color: var(--m-text-muted); }
+  .mock .sh-top { display: flex; align-items: center; gap: 8px; min-height: 34px; border-bottom: 1px solid var(--m-border); padding: 6px 12px; color: var(--m-text-muted); }
   .mock .sh-body { flex: 1; padding: 14px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
   .mock .m-bar { height: 7px; border-radius: 999px; background: var(--m-bg-subtle); overflow: hidden; }
   .mock .m-bar > i { display: block; height: 100%; width: 62%; background: var(--m-primary); }
   .mock .m-line { height: 9px; border-radius: 4px; background: var(--m-bg-subtle); }
-  .mock table.m-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .mock table.m-tbl { width: 100%; border-collapse: collapse; font-size: 0.92em; }
   .mock table.m-tbl th { text-align: left; color: var(--m-text-muted); font-weight: 600; padding: 5px 8px; border-bottom: 1px solid var(--m-border); }
   .mock table.m-tbl td { padding: 6px 8px; border-bottom: 1px solid var(--m-border); color: var(--m-text); }
+  .mock .cbx { width: 16px; height: 16px; border: 1.5px solid var(--m-border-strong); border-radius: 4px; flex: none; }
+  .mock .cbx.on { border-color: var(--m-green); background: var(--m-green-soft); }
   .note-f { font-size: 12px; color: var(--indigo); background: var(--indigo-soft); border-radius: 4px; padding: 2px 7px; display: inline-block; }
 </style>
 </head>
@@ -282,13 +284,13 @@
             <div class="sh-body">
               <div class="u u-between">
                 <div class="u-col" style="gap:3px">
-                  <span class="m-h1" style="font-size:17px">Overview</span>
-                  <span class="m-sub" style="font-size:11px">What needs your attention across Acme Sécurité.</span>
+                  <span class="m-h1" style="font-size:1.42em">Overview</span>
+                  <span class="m-sub" style="font-size:0.92em">What needs your attention across Acme Sécurité.</span>
                 </div>
-                <span class="m-btn m-btn--secondary" style="font-size:11px;padding:6px 10px">View interventions</span>
+                <span class="m-btn m-btn--secondary" style="font-size:0.92em;padding:6px 10px">View interventions</span>
               </div>
               <div class="m-panel" style="padding:10px 12px">
-                <div class="u u-between"><span class="m-card-title" style="font-size:12px">Needs attention</span><span class="m-count">4</span></div>
+                <div class="u u-between"><span class="m-card-title" style="font-size:1em">Needs attention</span><span class="m-count">4</span></div>
                 <div class="u" style="margin-top:8px;gap:6px"><span class="m-chip m-chip--red">2 overdue</span><span class="m-chip m-chip--amber">1 blocked</span><span class="m-chip m-chip--blue">1 to review</span></div>
               </div>
               <div class="u" style="gap:12px;align-items:stretch">
@@ -306,7 +308,7 @@
       <div class="frame"><div class="frame-bar">Cadre B — « Un seul rail » ; l'atterrissage devient la file de travail</div>
         <div class="mock"><div class="sh">
           <div class="sh-side">
-            <div class="sh-side-h"><span class="m-avatar" style="width:18px;height:18px;font-size:9px;border-radius:4px">A</span>Acme ▾ <span style="margin-left:auto;color:var(--m-text-muted)">‹</span></div>
+            <div class="sh-side-h"><span class="m-avatar" class="m-round" style="width:18px;height:18px;font-size:0.75em">A</span>Acme ▾ <span style="margin-left:auto;color:var(--m-text-muted)">‹</span></div>
             <div class="sh-grp">OPERATIONS</div>
             <div class="sh-lnk on"><span class="dot"></span>Today <span class="m-count" style="margin-left:auto">4</span></div>
             <div class="sh-lnk"><span class="dot"></span>Interventions</div>
@@ -320,12 +322,12 @@
             <div class="sh-lnk"><span class="dot"></span>Settings</div>
           </div>
           <div class="sh-main">
-            <div class="sh-top">⌂ › Acme <span style="margin-left:auto">◌ ◌ 🔔 ◐ <span class="m-avatar" style="width:18px;height:18px;font-size:9px">VF</span></span></div>
+            <div class="sh-top">⌂ › Acme <span style="margin-left:auto">◌ ◌ 🔔 ◐ <span class="m-avatar" style="width:18px;height:18px;font-size:0.75em">VF</span></span></div>
             <div class="sh-body">
               <div class="u u-between">
                 <div class="u-col" style="gap:3px">
-                  <span class="m-h1" style="font-size:17px">Today</span>
-                  <span class="m-sub" style="font-size:11px">4 items need you. Inventory moved to Statistics.</span>
+                  <span class="m-h1" style="font-size:1.42em">Today</span>
+                  <span class="m-sub" style="font-size:0.92em">4 items need you. Inventory moved to Statistics.</span>
                 </div>
                 <span class="note-f">contenu : décision F1</span>
               </div>
@@ -370,10 +372,10 @@
             <div class="sh-body">
               <div class="u u-between">
                 <div class="u-col" style="gap:3px">
-                  <span class="m-h1" style="font-size:17px">Interventions</span>
-                  <span class="m-sub" style="font-size:11px">18 interventions · 2 overdue</span>
+                  <span class="m-h1" style="font-size:1.42em">Interventions</span>
+                  <span class="m-sub" style="font-size:0.92em">18 interventions · 2 overdue</span>
                 </div>
-                <span class="m-btn m-btn--primary" style="font-size:11px;padding:6px 10px">＋ New intervention</span>
+                <span class="m-btn m-btn--primary" style="font-size:0.92em;padding:6px 10px">＋ New intervention</span>
               </div>
               <div class="u u-wrap" style="gap:8px">
                 <span class="m-chip m-chip--neutral" style="padding:5px 9px"><b style="color:var(--m-primary)">List</b> · Board · Calendar</span>
@@ -400,21 +402,21 @@
       <div class="frame"><div class="frame-bar">Cadre B — même écran, +60px : la colonne Site respire, le compteur reste</div>
         <div class="mock"><div class="sh">
           <div class="sh-side">
-            <div class="sh-side-h"><span class="m-avatar" style="width:18px;height:18px;font-size:9px;border-radius:4px">A</span>Acme ▾</div>
+            <div class="sh-side-h"><span class="m-avatar" class="m-round" style="width:18px;height:18px;font-size:0.75em">A</span>Acme ▾</div>
             <div class="sh-grp">OPERATIONS</div>
             <div class="sh-lnk"><span class="dot"></span>Today</div>
             <div class="sh-lnk on"><span class="dot"></span>Interventions</div>
             <div class="sh-lnk"><span class="dot"></span>Inspections</div>
           </div>
           <div class="sh-main">
-            <div class="sh-top">⌂ › Acme › Interventions <span style="margin-left:auto">◌ 🔔 ◐ <span class="m-avatar" style="width:18px;height:18px;font-size:9px">VF</span></span></div>
+            <div class="sh-top">⌂ › Acme › Interventions <span style="margin-left:auto">◌ 🔔 ◐ <span class="m-avatar" style="width:18px;height:18px;font-size:0.75em">VF</span></span></div>
             <div class="sh-body">
               <div class="u u-between">
                 <div class="u-col" style="gap:3px">
-                  <span class="m-h1" style="font-size:17px">Interventions</span>
-                  <span class="m-sub" style="font-size:11px">18 interventions · 2 overdue · saved views <span class="note-f">F4</span></span>
+                  <span class="m-h1" style="font-size:1.42em">Interventions</span>
+                  <span class="m-sub" style="font-size:0.92em">18 interventions · 2 overdue · saved views <span class="note-f">F4</span></span>
                 </div>
-                <span class="m-btn m-btn--primary" style="font-size:11px;padding:6px 10px">＋ New intervention</span>
+                <span class="m-btn m-btn--primary" style="font-size:0.92em;padding:6px 10px">＋ New intervention</span>
               </div>
               <div class="u u-wrap" style="gap:8px">
                 <span class="m-chip m-chip--neutral" style="padding:5px 9px"><b style="color:var(--m-primary)">List</b> · Board · Calendar</span>
@@ -452,18 +454,18 @@
         <div class="mock"><div class="u-col" style="min-height:430px">
           <div class="sh-top">‹ FG-142 <span class="m-chip m-chip--blue" style="margin-left:auto">In progress</span></div>
           <div class="u-col grow" style="padding:12px;gap:10px">
-            <span class="m-h1" style="font-size:15px">Alarm panel check — Site Nord</span>
+            <span class="m-h1" style="font-size:1.25em">Alarm panel check — Site Nord</span>
             <div class="m-bar"><i style="width:66%"></i></div>
-            <span class="m-sub" style="font-size:11px">Work items · 4 of 6 done</span>
+            <span class="m-sub" style="font-size:0.92em">Work items · 4 of 6 done</span>
             <div class="m-panel" style="padding:0">
-              <div class="m-row"><span style="width:16px;height:16px;border:1.5px solid var(--m-green);border-radius:4px;background:var(--m-green-soft)"></span><span class="grow">Test siren circuit</span></div>
-              <div class="m-row"><span style="width:16px;height:16px;border:1.5px solid var(--m-border-strong);border-radius:4px"></span><span class="grow">Replace backup battery</span></div>
-              <div class="m-row" style="border-bottom:0"><span style="width:16px;height:16px;border:1.5px solid var(--m-border-strong);border-radius:4px"></span><span class="grow">Photograph panel QR</span></div>
+              <div class="m-row"><span class="cbx on"></span><span class="grow">Test siren circuit</span></div>
+              <div class="m-row"><span class="cbx"></span><span class="grow">Replace backup battery</span></div>
+              <div class="m-row" style="border-bottom:0"><span class="cbx"></span><span class="grow">Photograph panel QR</span></div>
             </div>
-            <span class="m-sub" style="font-size:11px">Context, changes and activity move behind the phase — not just collapsed.</span>
+            <span class="m-sub" style="font-size:0.92em">Context, changes and activity move behind the phase — not just collapsed.</span>
           </div>
           <div style="border-top:1px solid var(--m-border);padding:8px 12px" class="u-col">
-            <span class="m-sub" style="font-size:10px;text-align:center">Complete 2 remaining items first.</span>
+            <span class="m-sub" style="font-size:0.83em;text-align:center">Complete 2 remaining items first.</span>
             <span class="m-btn m-btn--primary" style="opacity:.55;justify-content:center;margin-top:6px">Submit for review</span>
           </div>
         </div></div>
@@ -478,13 +480,13 @@
           <div class="u-col grow" style="padding:12px;gap:10px">
             <div class="m-panel" style="border-color:var(--m-primary);background:var(--m-primary-soft)">
               <span class="m-label" style="color:var(--m-primary)">Next</span>
-              <div class="m-card-title" style="font-size:13px;margin-top:4px">Complete 2 remaining items</div>
-              <span class="m-sub" style="font-size:11px">Then submit for review.</span>
+              <div class="m-card-title" style="font-size:1.08em;margin-top:4px">Complete 2 remaining items</div>
+              <span class="m-sub" style="font-size:0.92em">Then submit for review.</span>
             </div>
             <div class="m-panel" style="padding:0">
               <div class="m-row"><span class="grow"><b>Work items</b></span><span class="m-count">4/6</span></div>
-              <div class="m-row"><span style="width:16px;height:16px;border:1.5px solid var(--m-border-strong);border-radius:4px"></span><span class="grow">Replace backup battery</span></div>
-              <div class="m-row" style="border-bottom:0"><span style="width:16px;height:16px;border:1.5px solid var(--m-border-strong);border-radius:4px"></span><span class="grow">Photograph panel QR</span></div>
+              <div class="m-row"><span class="cbx"></span><span class="grow">Replace backup battery</span></div>
+              <div class="m-row" style="border-bottom:0"><span class="cbx"></span><span class="grow">Photograph panel QR</span></div>
             </div>
             <div class="m-row" style="border:1px solid var(--m-border);border-radius:var(--radius-md)"><span class="grow">Details &amp; planning</span><span style="color:var(--m-text-muted)">▸</span></div>
             <div class="m-row" style="border:1px solid var(--m-border);border-radius:var(--radius-md)"><span class="grow">Activity</span><span class="m-count">7</span></div>

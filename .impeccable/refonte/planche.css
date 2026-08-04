@@ -279,6 +279,26 @@ hr {
   font-family: var(--font-mono);
 }
 
+/* Renvoi de note dans le corps d'une planche (contrainte, dépendance, gate). */
+.flag {
+  font-size: 12px;
+  color: var(--indigo);
+  background: var(--indigo-soft);
+  border-radius: 4px;
+  padding: 2px 7px;
+  display: inline-block;
+}
+
+/* amber-700 : le pas -600 ne passe pas AA sur le fond ambré pâle. */
+.flag--warn {
+  color: #b45309;
+  background: var(--amber-soft);
+}
+
+[data-theme='dark'] .flag--warn {
+  color: var(--amber);
+}
+
 /* ───────────────────────── Grilles de comparaison ──────────────────── */
 
 .duo {
@@ -525,16 +545,22 @@ table.matrix tr:last-child td {
 /* surface, indigo rationné, rôles typo de DESIGN.md. Les classes m-*     */
 /* sont le vocabulaire minimal ; chaque maquette compose au besoin.       */
 
+/*
+ * Les maquettes sont des miniatures : une seule taille littérale (la base,
+ * 12px = le pas Label du système), tout le reste en `em` pour conserver les
+ * RAPPORTS de l'échelle typographique de DESIGN.md (14 corps · 15 titre de
+ * carte · 18 titre · 24 titre de page) à l'échelle réduite du cadre.
+ */
 .mock {
   background: var(--m-bg);
   color: var(--m-text);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
 .mock .m-h1 {
-  font-size: 24px;
+  font-size: 1.71em;
   font-weight: 600;
   letter-spacing: -0.025em;
   color: var(--m-text-strong);
@@ -542,7 +568,7 @@ table.matrix tr:last-child td {
 }
 
 .mock .m-h2 {
-  font-size: 18px;
+  font-size: 1.29em;
   font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--m-text-strong);
@@ -550,28 +576,53 @@ table.matrix tr:last-child td {
 }
 
 .mock .m-card-title {
-  font-size: 15px;
+  font-size: 1.07em;
   font-weight: 600;
   color: var(--m-text-strong);
   margin: 0;
 }
 
 .mock .m-sub {
-  font-size: 14px;
+  font-size: 0.92em;
   color: var(--m-text-muted);
 }
 
 .mock .m-label {
-  font-size: 12px;
+  font-size: 0.86em;
   font-weight: 600;
   color: var(--m-text-muted);
+}
+
+/* Vert « succès » lisible sur fond clair (green-700, 4.5:1 sur blanc). */
+.mock .m-ok {
+  color: #15803d;
+}
+
+[data-theme='dark'] .mock .m-ok {
+  color: var(--m-green);
 }
 
 .mock .m-panel {
   background: var(--m-bg);
   border: 1px solid var(--m-border);
   border-radius: var(--radius-md);
-  padding: 20px;
+  padding: 14px;
+}
+
+/* Panneau dont le corps est une pile de .m-row : le rembourrage vient des
+   lignes, pas du conteneur. */
+.mock .m-panel--rows {
+  padding: 0;
+  overflow: hidden;
+}
+
+.mock .m-panel--rows > .m-row:last-child {
+  border-bottom: 0;
+}
+
+/* Rayon local aux maquettes, sur l'échelle du système. */
+.mock .m-round {
+  border-radius: var(--radius-md);
 }
 
 [data-theme='dark'] .mock .m-panel {
@@ -583,7 +634,7 @@ table.matrix tr:last-child td {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  font-size: 14px;
+  font-size: 1em;
   font-weight: 550;
   line-height: 1;
   padding: 9px 14px;
@@ -612,7 +663,7 @@ table.matrix tr:last-child td {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: 0.86em;
   font-weight: 600;
   line-height: 1;
   padding: 4px 8px;
@@ -672,7 +723,7 @@ table.matrix tr:last-child td {
   background: var(--m-bg-subtle);
   border: 1px solid var(--m-border);
   padding: 2px 8px;
-  font-size: 12px;
+  font-size: 0.86em;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--m-text-muted);
@@ -689,7 +740,7 @@ table.matrix tr:last-child td {
   align-items: center;
   gap: 10px;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--m-border);
 }
 
@@ -698,17 +749,33 @@ table.matrix tr:last-child td {
 }
 
 .mock .m-avatar {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--m-primary-soft);
-  color: var(--m-primary);
-  font-size: 12px;
+  color: #4338ca;
+  font-size: 0.8em;
   font-weight: 650;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: none;
+}
+
+[data-theme='dark'] .mock .m-avatar {
+  color: var(--m-primary);
+}
+
+/* Texte atténué posé sur le fond indigo pâle du hero : le gris standard n'y
+   passe pas AA (4.2:1), un cran plus foncé oui. */
+.mock .hero .m-sub,
+.mock .m-panel--accent .m-sub {
+  color: #525252;
+}
+
+[data-theme='dark'] .mock .hero .m-sub,
+[data-theme='dark'] .mock .m-panel--accent .m-sub {
+  color: var(--m-text-muted);
 }
 
 .mock .m-skeleton {

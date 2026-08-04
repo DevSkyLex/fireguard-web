@@ -2,6 +2,7 @@ import type { Routes } from '@angular/router';
 import { withAccountMenu, withNotificationBell } from '@features/account';
 import { withAuthShowcase } from '@features/auth';
 import { authGuard } from '@features/auth/http/guards';
+import { notFoundRedirectGuard } from '@features/error/http/guards';
 import { provideMainFeature } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { onboardingGuard, onboardingRequiredGuard } from '@features/onboarding/http/guards';
@@ -134,7 +135,13 @@ export const APP_ROUTES: Routes = [
     ],
   },
   {
+    /**
+     * Unmatched URLs go through a guard rather than a plain `redirectTo`, so
+     * the address that failed survives as a query parameter and the not-found
+     * page can offer a way back into the workspace it was reaching for.
+     */
     path: '**',
-    redirectTo: 'error/404',
+    canActivate: [notFoundRedirectGuard],
+    children: [],
   },
 ];

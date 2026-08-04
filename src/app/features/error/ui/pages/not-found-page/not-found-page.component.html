@@ -5,5 +5,34 @@
   description="The page you're looking for doesn't exist or may have moved."
   i18n-description="@@error.404.description"
 >
-  <p-button label="Back to home" i18n-label="@@error.backHome" icon="pi pi-home" routerLink="/" />
+  @if (collectionLink(); as link) {
+    <p-button
+      [label]="collectionLabel() ?? ''"
+      icon="pi pi-arrow-left"
+      [routerLink]="link"
+      styleClass="max-sm:min-h-11"
+    />
+  }
+
+  @if (organizationLink(); as link) {
+    <p-button
+      label="Back to the organization"
+      i18n-label="@@error.backOrganization"
+      icon="pi pi-building"
+      [routerLink]="link"
+      severity="secondary"
+      [outlined]="true"
+      styleClass="max-sm:min-h-11"
+    />
+  }
+
+  <p-button
+    label="Back to home"
+    i18n-label="@@error.backHome"
+    icon="pi pi-home"
+    routerLink="/"
+    [severity]="organizationLink() ? 'secondary' : 'primary'"
+    [outlined]="!!organizationLink()"
+    styleClass="max-sm:min-h-11"
+  />
 </app-error-content>

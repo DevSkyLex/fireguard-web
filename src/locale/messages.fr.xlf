@@ -1404,12 +1404,12 @@
         <target>Erreur serveur</target>
       </trans-unit>
       <trans-unit id="error.403.title" datatype="html">
-        <source>Access denied</source>
-        <target>Accès refusé</target>
+        <source>No workspace you can open</source>
+        <target>Aucun espace ne vous est ouvert</target>
       </trans-unit>
       <trans-unit id="error.403.description" datatype="html">
-        <source>You don&apos;t have permission to access this resource.</source>
-        <target>Vous n'avez pas l'autorisation d'accéder à cette ressource.</target>
+        <source>Your account exists, but none of its organizations are open to you right now. An administrator can grant you access, or you can start your own organization.</source>
+        <target>Votre compte existe, mais aucune de ses organisations ne vous est ouverte pour l'instant. Un administrateur peut vous donner accès, ou vous pouvez créer votre propre organisation.</target>
       </trans-unit>
       <trans-unit id="error.backHome" datatype="html">
         <source>Back to home</source>
@@ -1444,8 +1444,8 @@
         <target> En maintenance </target>
       </trans-unit>
       <trans-unit id="maintenance.description" datatype="html">
-        <source> We&apos;re performing scheduled maintenance to improve your experience.<x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br /&gt;"/> Please check back in a few moments. </source>
-        <target> Nous effectuons une maintenance planifiée pour améliorer votre expérience.<x id="LINE_BREAK" ctype="lb"/> Veuillez revenir dans quelques instants. </target>
+        <source> We&apos;re performing scheduled maintenance to improve your experience. Please check back in a few moments. </source>
+        <target> Nous effectuons une maintenance planifiée pour améliorer votre expérience. Veuillez revenir dans quelques instants. </target>
       </trans-unit>
       <trans-unit id="onboarding.step.org.label" datatype="html">
         <source>Create organization</source>
@@ -7349,6 +7349,30 @@
         <target>Il vous faut la permission <x id="permissions" equiv-text="options.permissions.join(
         &apos;, &apos;,
       )"/> pour ouvrir cette page.</target>
+      </trans-unit>
+      <trans-unit id="error.403.createOrganization" datatype="html">
+        <source>Create an organization</source>
+        <target>Créer une organisation</target>
+      </trans-unit>
+      <trans-unit id="error.403.signOut" datatype="html">
+        <source>Sign out</source>
+        <target>Se déconnecter</target>
+      </trans-unit>
+      <trans-unit id="error.backOrganization" datatype="html">
+        <source>Back to the organization</source>
+        <target>Retour à l'organisation</target>
+      </trans-unit>
+      <trans-unit id="error.offline.code" datatype="html">
+        <source>offline</source>
+        <target>hors ligne</target>
+      </trans-unit>
+      <trans-unit id="error.offline.title" datatype="html">
+        <source>You&apos;re not connected</source>
+        <target>Vous n’êtes pas connecté</target>
+      </trans-unit>
+      <trans-unit id="error.offline.description" datatype="html">
+        <source>Field work you have already captured stays on this device and syncs on its own once you are back in range.</source>
+        <target>Le travail de terrain déjà saisi reste sur cet appareil et se synchronisera tout seul dès que vous serez de nouveau à portée.</target>
       </trans-unit>
     </body>
   </file>

@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { organizationOutput } from '../support/fixtures/api-fixtures';
+import { ApiMock } from '../support/mocks/api-mock';
 import { ErrorPage } from '../support/pages/error.page';
+
+const ORGANIZATION = organizationOutput();
 
 /**
  * Static error pages — `/error/404`, `/error/403`, `/error/500`
@@ -28,9 +32,24 @@ test.describe('Error pages', () => {
     await expect(errorPage.code).toHaveText('500');
   });
 
-  test('redirects an unknown top-level route to 404', async ({ page }) => {
+  test('redirects an unknown top-level route to 404, carrying the address that failed', async ({
+    page,
+  }) => {
     await page.goto('/this-route-does-not-exist');
 
-    await expect(page).toHaveURL('/error/404');
+    await expect(page).toHaveURL('/error/404?from=%2Fthis-route-does-not-exist');
+  });
+
+  test('offers the collection an unknown workspace address was reaching for', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+
+    await page.goto(`/organizations/${ORGANIZATION.id}/interventions/nope/deeper`);
+
+    const content = page.locator('#error-content');
+    await expect(content).toBeVisible();
+    // The way back a member actually wants, not just "home".
+    await expect(content.getByRole('button', { name: 'Interventions' })).toBeVisible();
+    await expect(content.getByRole('button', { name: 'Back to the organization' })).toBeVisible();
   });
 });

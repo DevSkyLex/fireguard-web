@@ -1407,12 +1407,12 @@
         <target>Error del servidor</target>
       </trans-unit>
       <trans-unit id="error.403.title" datatype="html">
-        <source>Access denied</source>
-        <target>Acceso denegado</target>
+        <source>No workspace you can open</source>
+        <target>Ningún espacio disponible para ti</target>
       </trans-unit>
       <trans-unit id="error.403.description" datatype="html">
-        <source>You don&apos;t have permission to access this resource.</source>
-        <target>No tienes permiso para acceder a este recurso.</target>
+        <source>Your account exists, but none of its organizations are open to you right now. An administrator can grant you access, or you can start your own organization.</source>
+        <target>Tu cuenta existe, pero por ahora ninguna de sus organizaciones está abierta para ti. Un administrador puede darte acceso, o puedes crear tu propia organización.</target>
       </trans-unit>
       <trans-unit id="error.backHome" datatype="html">
         <source>Back to home</source>
@@ -1447,8 +1447,8 @@
         <target>En mantenimiento</target>
       </trans-unit>
       <trans-unit id="maintenance.description" datatype="html">
-        <source> We&apos;re performing scheduled maintenance to improve your experience.<x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br /&gt;"/> Please check back in a few moments. </source>
-        <target>Estamos realizando un mantenimiento programado para mejorar tu experiencia.<x id="LINE_BREAK" ctype="lb"/> Vuelve a intentarlo en unos momentos.</target>
+        <source> We&apos;re performing scheduled maintenance to improve your experience. Please check back in a few moments. </source>
+        <target> Estamos realizando un mantenimiento programado para mejorar tu experiencia. Vuelve a intentarlo en unos momentos. </target>
       </trans-unit>
       <trans-unit id="onboarding.step.org.label" datatype="html">
         <source>Create organization</source>
@@ -7356,6 +7356,30 @@
         <target>Necesitas el permiso <x id="permissions" equiv-text="options.permissions.join(
         &apos;, &apos;,
       )"/> para abrir esa página.</target>
+      </trans-unit>
+      <trans-unit id="error.403.createOrganization" datatype="html">
+        <source>Create an organization</source>
+        <target>Crear una organización</target>
+      </trans-unit>
+      <trans-unit id="error.403.signOut" datatype="html">
+        <source>Sign out</source>
+        <target>Cerrar sesión</target>
+      </trans-unit>
+      <trans-unit id="error.backOrganization" datatype="html">
+        <source>Back to the organization</source>
+        <target>Volver a la organización</target>
+      </trans-unit>
+      <trans-unit id="error.offline.code" datatype="html">
+        <source>offline</source>
+        <target>sin conexión</target>
+      </trans-unit>
+      <trans-unit id="error.offline.title" datatype="html">
+        <source>You&apos;re not connected</source>
+        <target>No tienes conexión</target>
+      </trans-unit>
+      <trans-unit id="error.offline.description" datatype="html">
+        <source>Field work you have already captured stays on this device and syncs on its own once you are back in range.</source>
+        <target>El trabajo de campo ya registrado permanece en este dispositivo y se sincronizará solo cuando vuelvas a tener cobertura.</target>
       </trans-unit>
     </body>
   </file>

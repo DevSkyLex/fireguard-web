@@ -1,14 +1,9 @@
-<app-error-content
-  code="500"
-  title="Something went wrong"
-  i18n-title="@@error.500.title"
-  description="An unexpected error occurred on our end. Please try again in a moment."
-  i18n-description="@@error.500.description"
->
+<app-error-content [code]="code()" [title]="title()" [description]="description()">
   <p-button
     label="Try again"
     i18n-label="@@common.tryAgain"
     icon="pi pi-refresh"
+    styleClass="max-sm:min-h-11"
     (onClick)="refresh()"
   />
   <p-button
@@ -18,5 +13,6 @@
     routerLink="/"
     severity="secondary"
     [outlined]="true"
+    styleClass="max-sm:min-h-11"
   />
 </app-error-content>

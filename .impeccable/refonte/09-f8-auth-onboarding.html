@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F8 — Authentification et onboarding</title>
+<link rel="stylesheet" href="planche.css" />
+<style>
+  .u { display: flex; align-items: center; gap: 8px; }
+  .u-col { display: flex; flex-direction: column; }
+  .u-between { justify-content: space-between; }
+  .grow { flex: 1; min-width: 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; align-items: start; }
+  .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .kpi .cell { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 16px; font-size: 14px; }
+  .kpi .cell strong { display: block; color: var(--ink-strong); }
+  .mock { font-size: 12px; }
+  .mock .split { display: flex; min-height: 340px; }
+  .mock .show { width: 46%; background: #0a0a0a; color: #fafafa; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .mock .show .brand { display: flex; align-items: center; gap: 7px; font-weight: 650; }
+  .mock .show .sq { width: 16px; height: 16px; background: #818cf8; border-radius: 4px; }
+  .mock .show .proof { border: 1px solid #262626; border-radius: var(--radius-md); background: #171717; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .mock .show .line { height: 7px; border-radius: 4px; background: #262626; }
+  .mock .form { flex: 1; padding: 16px; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+  .mock .field { border: 1px solid var(--m-border); border-radius: var(--radius-md); padding: 7px 9px; color: var(--m-text-muted); }
+  .mock .lbl { color: var(--m-text-muted); font-size: 0.92em; }
+  .mock .step { display: flex; align-items: center; gap: 8px; padding: 7px 0; }
+  .mock .step .bullet { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--m-border-strong); flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75em; }
+  .mock .step .bullet.done { border-color: #15803d; background: #dcfce7; color: #15803d; }
+  .mock .step .bullet.now { border-color: var(--m-primary); background: var(--m-primary); color: var(--m-primary-contrast); }
+</style>
+</head>
+<body>
+<div class="planche">
+
+  <header class="masthead">
+    <div class="u-col" style="gap:6px">
+      <h1>F8 — Authentification et onboarding</h1>
+      <p class="muted" style="margin:0">
+        Livraison 3 · périphérie. Huit pages d'authentification et un assistant de mise en route :
+        la seule zone du produit au registre « convaincre » plutôt qu'« opérer ».
+      </p>
+    </div>
+    <button class="theme-toggle" type="button" onclick="const d = document.documentElement.dataset.theme !== 'dark'; document.documentElement.dataset.theme = d ? 'dark' : ''; for (const i of document.images) i.src = d ? i.src.replace('--light--', '--dark--') : i.src.replace('--dark--', '--light--');">
+      Basculer clair / sombre
+    </button>
+  </header>
+
+  <!-- ═════ 1. DIAGNOSTIC ═════ -->
+  <h2>1 · Ce que ces écrans font aujourd'hui</h2>
+  <p>
+    Les huit pages d'authentification partagent un squelette strict et le respectent : c'est la zone
+    la plus régulière du produit. Ce qui coince est ailleurs.
+  </p>
+  <div class="kpi">
+    <div class="cell"><strong>Le panneau de gauche ne prouve rien</strong>deux halos flous et une grille de points : la critique le désigne comme du remplissage interchangeable</div>
+    <div class="cell"><strong>Deux rendus de progression</strong>la vitrine porte la timeline au-delà de <code>xl</code>, un stepper interne prend le relais en dessous</div>
+    <div class="cell"><strong>Un tunnel, pas une mise en route</strong>tant que l'assistant n'est pas terminé, aucune route de l'application n'est atteignable</div>
+    <div class="cell"><strong>Une panne d'API enferme l'utilisateur</strong>état inconnu ⇒ redirection vers l'assistant, y compris quand l'endpoint échoue <span class="flag">réglé par les recos du cadre</span></div>
+    <div class="cell"><strong>Cinq étapes, une seule sortie</strong>« Passer » n'existe que là où l'API le tolère, sans que l'écran dise lesquelles</div>
+    <div class="cell"><strong>Rien ne relie l'invitation à l'inscription</strong>l'invité arrive par une page hors coquille, puis repart vers un formulaire qui ignore d'où il vient</div>
+  </div>
+
+  <!-- ═════ 2. LES DEUX PISTES ═════ -->
+  <h2>2 · Les deux pistes</h2>
+  <div class="pair">
+    <section class="option">
+      <div class="option-head"><span class="tag tag--a">Piste A</span><strong>La vitrine prouve, le tunnel se règle</strong><span class="tag tag--effort">M</span></div>
+      <p class="rationale">
+        Les huit pages et l'assistant gardent leur structure. On remplace la décoration par de la
+        preuve, et on répare les deux comportements qui piègent l'utilisateur.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>Le panneau de gauche montre le produit au travail</strong> : une vraie surface de l'application plutôt que des halos. Le produit existe et fonctionne — c'est la seule preuve dont il dispose, et il n'a pas le droit d'en inventer une autre.</span></li>
+        <li><span class="pin">2</span><span><strong>Une seule progression</strong> : la vitrine porte la timeline quand elle est visible, l'écran ne la double plus.</span></li>
+        <li><span class="pin">3</span><span><strong>L'assistant devient tolérant</strong> : un état inconnu ouvre l'application avec un bandeau de reprise, au lieu d'enfermer.</span></li>
+        <li><span class="pin">4</span><span><strong>L'invitation traverse l'inscription</strong> : l'organisation d'où vient l'invité reste visible pendant qu'il crée son compte.</span></li>
+      </ul>
+    </section>
+
+    <section class="option">
+      <div class="option-head"><span class="tag tag--b">Piste B</span><strong>Une activation, pas un tunnel</strong><span class="tag tag--reco">★ recommandée</span><span class="tag tag--effort">L</span></div>
+      <p class="rationale">
+        L'assistant cesse d'être un couloir en cinq portes pour devenir une liste d'activation :
+        on voit tout ce qu'il y a à faire, on en fait ce qu'on veut, on revient quand on veut.
+      </p>
+      <ul class="legend">
+        <li><span class="pin">1</span><span><strong>Les cinq étapes deviennent une liste visible d'emblée</strong>, chacune avec son état (faite, à faire, facultative) et son gain annoncé. Plus de découverte porte après porte.</span></li>
+        <li><span class="pin">2</span><span><strong>L'étape en cours est nommée</strong>, comme partout ailleurs dans le produit : la mise en route emprunte le même geste que le workspace.</span></li>
+        <li><span class="pin">3</span><span><strong>La reprise est explicite</strong> : « vous en étiez à la troisième étape », avec la possibilité d'en traiter une autre d'abord quand l'API le permet.</span></li>
+        <li><span class="pin">4</span><span><strong>La vitrine devient la preuve</strong> : elle montre ce que chaque étape débloque, avec une vraie capture du produit.</span></li>
+      </ul>
+      <p class="rationale" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+        <strong>Ce qui reste hors périmètre.</strong> <span class="flag--warn flag">nécessite API</span>
+        Déverrouiller l'application <em>avant</em> la fin de l'activation est un changement de règle
+        serveur, pas une question d'interface : l'organisation elle-même naît de la première étape.
+        La piste B redessine la liste, la reprise et la lisibilité, pas la contrainte.
+      </p>
+    </section>
+  </div>
+
+  <h3>Challengers écartés</h3>
+  <ul>
+    <li><strong>Une page d'authentification unique à états</strong> (connexion, inscription et réinitialisation dans une même surface qui se transforme) : moins de routes, mais casse les liens profonds, les gardes et la continuité des catalogues de traduction.</li>
+    <li><strong>Connexion sans mot de passe</strong> (lien magique) : changement d'API et de politique de sécurité, hors périmètre d'un chantier front.</li>
+    <li><strong>Assistant rejouable depuis les réglages</strong> : bonne idée, mais elle appartient à l'administration (F6) une fois l'activation terminée.</li>
+    <li><strong>Vitrine animée</strong> : PRODUCT.md proscrit la chorégraphie qui retarde la tâche, et l'écran d'entrée est déjà le plus lent du parcours.</li>
+  </ul>
+
+  <!-- ═════ 3. ÉCRAN CLÉ ═════ -->
+  <h2>3 · Écran clé — l'entrée dans le produit</h2>
+  <div class="pair">
+    <figure class="shot">
+      <div class="frame"><div class="frame-bar">Avant · /auth/login</div>
+        <img src="../../e2e/artifacts/ui-pass/refonte/actuel/auth-login--light--desktop.png" alt="Page de connexion, état actuel" />
+      </div>
+      <figcaption>Le formulaire est net et régulier. Le panneau de gauche affiche une composition abstraite qui pourrait appartenir à n'importe quel produit.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><div class="frame-bar">A et B · la vitrine montre le produit</div>
+        <div class="mock"><div class="split">
+          <div class="show">
+            <div class="brand"><span class="sq"></span>Fireguard</div>
+            <div style="font-size:1.25em;font-weight:600;line-height:1.3">Une intervention publiée en entier, ou pas du tout.</div>
+            <div class="proof">
+              <div class="u" style="font-size:0.86em;color:#a3a3a3"><span class="mono">FG-142</span><span style="margin-left:auto">v2 → v3</span></div>
+              <div class="line" style="width:80%"></div>
+              <div class="line" style="width:60%"></div>
+              <div class="u" style="gap:6px;font-size:0.86em"><span style="color:#4ade80">✓ 3 inspections</span><span style="color:#4ade80">✓ 1 changement</span></div>
+            </div>
+            <div style="font-size:0.92em;color:#a3a3a3">Le terrain travaille hors ligne. La publication écrit tout en une opération.</div>
+            <div style="flex:1"></div>
+            <div style="font-size:0.86em;color:#a3a3a3">Plateforme de sécurité incendie · multi-marché</div>
+          </div>
+          <div class="form">
+            <div class="u-col" style="gap:3px">
+              <span class="m-h1" style="font-size:1.42em">Content de vous revoir</span>
+              <span class="m-sub">Connectez-vous pour reprendre votre travail.</span>
+            </div>
+            <div class="u-col" style="gap:3px"><span class="lbl">E-mail</span><span class="field">vous@exemple.fr</span></div>
+            <div class="u-col" style="gap:3px"><span class="lbl">Mot de passe</span><span class="field">••••••••</span></div>
+            <span class="m-sub" style="text-align:right">Mot de passe oublié ?</span>
+            <span class="m-btn m-btn--primary" style="justify-content:center">Se connecter</span>
+            <span class="m-sub" style="text-align:center">Pas de compte ? <span style="color:var(--m-primary);font-weight:600">Créer un compte</span></span>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>squelette de formulaire inchangé</span><span>la vitrine montre une surface réelle, jamais une donnée inventée</span><span>aucun sur-titre en capitales (banni)</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 4. ONBOARDING ═════ -->
+  <h2>4 · Écran clé — la mise en route</h2>
+  <div class="pair">
+    <figure class="shot">
+      <div class="frame"><div class="frame-bar">Avant · /onboarding</div>
+        <img src="../../e2e/artifacts/ui-pass/refonte/actuel/onboarding-welcome--light--desktop.png" alt="Assistant de mise en route, état actuel" />
+      </div>
+      <figcaption>L'accueil annonce cinq minutes et une reprise possible. Les étapes se découvrent ensuite une par une ; on ne sait pas, en entrant, ce qui nous attend.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><div class="frame-bar">Piste B · la liste d'activation</div>
+        <div class="mock"><div class="split">
+          <div class="show">
+            <div class="brand"><span class="sq"></span>Fireguard</div>
+            <div style="font-size:1.25em;font-weight:600;line-height:1.3">Trois étapes sur cinq, et votre premier chantier est prêt.</div>
+            <div class="proof">
+              <div class="line" style="width:70%"></div>
+              <div class="line" style="width:45%"></div>
+            </div>
+            <div style="flex:1"></div>
+            <div style="font-size:0.86em;color:#a3a3a3">Votre progression est enregistrée à chaque étape.</div>
+          </div>
+          <div class="form" style="justify-content:flex-start">
+            <div class="u-col" style="gap:3px">
+              <span class="m-h1" style="font-size:1.42em">Mettons votre espace en route</span>
+              <span class="m-sub">Vous en étiez à l'équipe. Reprenez là, ou faites autre chose d'abord.</span>
+            </div>
+            <div class="m-panel m-panel--rows" style="margin-top:4px">
+              <div class="m-row"><span class="bullet done" style="width:18px;height:18px;border-radius:50%;border:1.5px solid #15803d;background:#dcfce7;color:#15803d;display:inline-flex;align-items:center;justify-content:center;font-size:0.75em">✓</span><span class="grow">Créer l'organisation</span><span class="m-sub">Acme Sécurité</span></div>
+              <div class="m-row"><span class="bullet done" style="width:18px;height:18px;border-radius:50%;border:1.5px solid #15803d;background:#dcfce7;color:#15803d;display:inline-flex;align-items:center;justify-content:center;font-size:0.75em">✓</span><span class="grow">Choisir un forfait</span><span class="m-sub">Gratuit</span></div>
+              <div class="m-row m-panel--accent" style="background:var(--m-primary-soft)"><span class="bullet now" style="width:18px;height:18px;border-radius:50%;background:var(--m-primary);color:var(--m-primary-contrast);display:inline-flex;align-items:center;justify-content:center;font-size:0.75em">3</span><span class="grow"><b>Inviter l'équipe</b><div class="m-sub">Vos techniciens recevront un lien.</div></span><span class="m-chip m-chip--neutral">Facultatif</span></div>
+              <div class="m-row"><span class="bullet">4</span><span class="grow">Ajouter un premier site</span></div>
+              <div class="m-row"><span class="bullet">5</span><span class="grow">Ajouter un premier équipement</span></div>
+            </div>
+            <div class="u" style="gap:8px;margin-top:4px"><span class="m-btn m-btn--ghost">Passer cette étape</span><span class="m-btn m-btn--primary grow" style="justify-content:center">Inviter l'équipe</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="map"><span>les 5 étapes visibles d'emblée</span><span>l'étape en cours nommée</span><span>« facultatif » affiché là où l'API le tolère</span><span>vitrine = progression, pas décoration</span></div>
+    </figure>
+  </div>
+
+  <!-- ═════ 5. MATRICE ═════ -->
+  <h2>5 · Matrice de couverture — 11 écrans et états de la famille</h2>
+  <table class="matrix">
+    <thead><tr><th>Écran / état</th><th>Piste A</th><th>Piste B</th><th>Effort</th><th>API</th></tr></thead>
+    <tbody>
+      <tr><td><strong>connexion</strong></td><td>maquette HF §3</td><td>identique (le formulaire ne change pas)</td><td>M / M</td><td>—</td></tr>
+      <tr><td><strong>inscription</strong></td><td>même vitrine ; l'organisation invitante reste visible quand on vient d'une invitation</td><td>identique</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>vérification d'e-mail</strong></td><td>inchangée (formulaire OTP partagé, déjà régulier)</td><td>identique</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>vérification MFA</strong></td><td>inchangée</td><td>identique</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>mot de passe oublié</strong></td><td>inchangée</td><td>identique</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>vérification de réinitialisation</strong></td><td>inchangée</td><td>identique</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>nouveau mot de passe</strong></td><td>inchangée</td><td>identique</td><td>S / S</td><td>—</td></tr>
+      <tr><td><strong>onboarding — accueil</strong></td><td>inchangé ; une seule progression</td><td>maquette HF §4 : remplacé par la liste d'activation</td><td>S / L</td><td>—</td></tr>
+      <tr><td><strong>onboarding — étapes (×5)</strong></td><td>en-tête d'étape conservé, progression dédoublée supprimée</td><td>chaque étape s'ouvre depuis la liste et y revient ; les facultatives sont annoncées</td><td>M / L</td><td>—</td></tr>
+      <tr><td><strong>onboarding — bloqué / erreur</strong></td><td colspan="2">un état inconnu ouvre l'application avec un bandeau de reprise, au lieu d'enfermer dans l'assistant</td><td>S</td><td>—</td></tr>
+      <tr><td><strong>onboarding — terminé</strong></td><td>inchangé</td><td>la liste se referme sur un récapitulatif de ce qui a été créé</td><td>S / S</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═════ 6. ARBITRAGE ═════ -->
+  <h2>6 · Questions d'arbitrage — F8</h2>
+  <table class="matrix">
+    <thead><tr><th style="width:44px">#</th><th>Question</th><th>Options</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Q1</strong></td><td><strong>L'entrée dans le produit</strong> (primaire)</td><td><span class="tag tag--a">A</span> La vitrine prouve, le tunnel se règle · <span class="tag tag--b">B</span> Une activation, pas un tunnel <span class="tag tag--reco">★</span> · B avec réserves</td></tr>
+      <tr><td><strong>Q2</strong></td><td>La vitrine d'authentification montre une capture réelle du produit</td><td>Oui <span class="tag tag--reco">★</span> — c'est la seule preuve dont le produit dispose · Non, garder une composition abstraite mais resserrée</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">
+    <strong>Recommandations ★ adoptées par défaut</strong> : une seule progression pendant la mise en
+    route · l'assistant tolère une panne d'API au lieu d'enfermer · l'organisation invitante reste
+    visible pendant l'inscription · aucun sur-titre en capitales · aucune donnée inventée dans la
+    vitrine (contrainte RNCP : ni client, ni métrique, ni témoignage).
+  </p>
+
+  <footer class="disclaimer">
+    Maquettes à fidélité structurelle, non contractuelles au pixel · captures « avant » du jeu
+    <code>refonte/actuel</code> · le déverrouillage de l'application avant la fin de l'activation
+    relève du serveur et reste hors périmètre.
+  </footer>
+</div>
+</body>
+</html>

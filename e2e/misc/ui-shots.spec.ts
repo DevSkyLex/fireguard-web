@@ -4,6 +4,14 @@ import {
   type OrganizationOutputFixture,
 } from '../support/fixtures/api-fixtures';
 import {
+  dashboardEquipmentCreatedTrend,
+  dashboardFacilitiesCreatedTrend,
+  dashboardInspectionsTrend,
+  dashboardNonConformitiesOpenedTrend,
+  dashboardNonConformitiesResolvedTrend,
+  dashboardOutput,
+} from '../support/fixtures/dashboard-fixtures';
+import {
   equipmentOutput,
   type EquipmentOutputFixture,
 } from '../support/fixtures/equipment-fixtures';
@@ -20,6 +28,14 @@ import {
   type InterventionOutputFixture,
   type InterventionWorkItemOutputFixture,
 } from '../support/fixtures/intervention-fixtures';
+import { accountNotifications } from '../support/fixtures/notification-fixtures';
+import {
+  organizationPermissionCatalog,
+  organizationTeamInvitations,
+  organizationTeamMembers,
+  organizationTeamRoles,
+} from '../support/fixtures/organization-team-fixtures';
+import { accountSessions, accountTrustedDevices } from '../support/fixtures/security-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
 import { AccountPage } from '../support/pages/account.page';
 import { ErrorPage } from '../support/pages/error.page';
@@ -543,6 +559,35 @@ function organizationPermissionPageRun(segment: string, readySelector: string): 
 }
 
 /**
+ * The dedicated members page: org access plus a populated member directory,
+ * pending invitations, and the role catalog the member table's role chips
+ * and assignment drawer resolve against (`OrganizationMembersStore.load`
+ * fetches all three whenever the active member can view them).
+ */
+async function organizationMembersRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockOrganizationMembers(ORGANIZATION.id, organizationTeamMembers());
+  await api.mockOrganizationInvitations(ORGANIZATION.id, organizationTeamInvitations());
+  await api.mockOrganizationRoles(ORGANIZATION.id, organizationTeamRoles());
+  await page.goto(`/organizations/${ORGANIZATION.id}/members`);
+  await expect(page.locator('#organization-members')).toBeVisible({ timeout: 15_000 });
+}
+
+/**
+ * The roles & permissions page: org access plus the role catalog and the
+ * assignable permission catalog `OrganizationTeamPage`'s matrix is built from.
+ */
+async function organizationTeamRun(page: Page): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  await api.mockOrganizationRoles(ORGANIZATION.id, organizationTeamRoles());
+  await api.mockOrganizationPermissions(ORGANIZATION.id, organizationPermissionCatalog());
+  await page.goto(`/organizations/${ORGANIZATION.id}/team`);
+  await expect(page.locator('#organization-team')).toBeVisible({ timeout: 15_000 });
+}
+
+/**
  * A facilities/equipments/inspections list or create page: org access plus
  * the reference-data collections those pages read (facilities, equipment,
  * equipment-types via the reused `mockInterventionPlanningOptions`, and any
@@ -803,14 +848,77 @@ async function interventionEditDrawerRun(page: Page): Promise<void> {
   await expect(page.getByText('Edit details', { exact: true })).toBeVisible({ timeout: 15_000 });
 }
 
-/** Any workspace page → the header bell → the notification popover (empty state). */
+/**
+ * Waits for `count` real painted frames by chaining `requestAnimationFrame`
+ * entirely inside the page, so it tracks actual browser paint completion
+ * rather than the test runner's wall clock. A plain `page.waitForTimeout`
+ * only guarantees elapsed time in the Node process — under parallel workers
+ * the browser tab itself can be CPU-starved and simply not get scheduled to
+ * paint during that window, which a fixed timeout cannot detect. General
+ * defensive settle for an overlay's own open transition; it does not address
+ * the mobile-only artifact documented on {@link notificationBellRun}, which
+ * is unrelated to paint timing.
+ */
+async function waitForPaintedFrames(page: Page, count: number): Promise<void> {
+  await page.evaluate(
+    (frameCount) =>
+      new Promise<void>((resolve) => {
+        let remaining = frameCount;
+        const tick = (): void => {
+          remaining -= 1;
+          if (remaining <= 0) {
+            resolve();
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+    count,
+  );
+}
+
+/** Any workspace page → the header bell → the notification popover, populated. */
 async function notificationBellRun(page: Page): Promise<void> {
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+  // Registered AFTER mockAuthenticatedSession so it wins over the empty
+  // `/api/notifications` collection that session bootstrap installs
+  // (Playwright matches routes last-registered-first) — the shared baseline
+  // itself must stay untouched, or every other authenticated capture would
+  // suddenly show populated notifications too.
+  await api.mockNotifications(accountNotifications());
   await page.goto(`/organizations/${ORGANIZATION.id}/members`);
   await expect(page.locator('#organization-members')).toBeVisible({ timeout: 15_000 });
-  await page.getByRole('button', { name: 'Notifications' }).click();
-  await expect(page.getByText('No notifications yet')).toBeVisible({ timeout: 15_000 });
+  // `exact: true` matters here: Playwright's `name` option is a substring
+  // match by default, and once unread notifications exist the account menu
+  // trigger's own accessible name ("Open account menu, unread notifications")
+  // also contains "notifications" — an unscoped, non-exact query would
+  // resolve to both buttons. The bell's accessible name is the literal
+  // string "Notifications" (`ariaLabel="Notifications"`), so exact matching
+  // disambiguates regardless of where either button sits in the header.
+  await page.getByRole('button', { name: 'Notifications', exact: true }).click();
+  await expect(page.getByText('Organization settings updated')).toBeVisible({ timeout: 15_000 });
+  // General settle for the popover's own open transition (harmless, does not
+  // resolve the issue below).
+  await waitForPaintedFrames(page, 5);
+  // KNOWN LIMITATION, not fixable from this spec: on the mobile viewport, the
+  // final harness screenshot (`fullPage: true`, shared by every scenario)
+  // double-exposes this popover with the page underneath it. Root-caused via
+  // a throwaway diagnostic spec (removed after use): the artifact is
+  // deterministic and tied to `fullPage: true` itself, not to timing — a
+  // `fullPage: false` capture of the exact same state, at any wait duration
+  // (including a fresh page with no prior shot), is always clean, and other
+  // `overlays:*` mobile captures whose surface is `position: fixed`
+  // (quota-dialog, intervention-create-drawer) are also always clean. This
+  // popover is `position: absolute` (PrimeNG Popover's `appendTo="body"`
+  // default) and tall enough on mobile to approach the viewport height,
+  // which appears to be what triggers it. No wait strategy changes this
+  // outcome, and fixing it would mean either changing the shared
+  // `fullPage: true` call every one of the 208 scenarios relies on, or the
+  // popover's own positioning strategy in `src/app` — both out of bounds for
+  // an e2e-only change. The desktop captures of this same scenario, and the
+  // notification data itself, are unaffected and correct.
 }
 
 /** A channel route → the header's assistant toggle → the assistant panel. */
@@ -1022,6 +1130,13 @@ const SCENARIOS: readonly Scenario[] = [
     run: async (page) => {
       const api = new ApiMock(page);
       await api.mockAuthenticatedSession();
+      // The MFA panel needs no mock: it reads `totpEnabled` off the `/api/me`
+      // profile already stubbed by `mockAuthenticatedSession` (omitted there,
+      // so it resolves to disabled) and never fetches on its own. Sessions and
+      // trusted devices, in contrast, each lazy-load on mount and 404 without
+      // an explicit mock.
+      await api.mockSessions(accountSessions());
+      await api.mockTrustedDevices(accountTrustedDevices());
       await new AccountPage(page).goto('security');
     },
   },
@@ -1032,6 +1147,11 @@ const SCENARIOS: readonly Scenario[] = [
     run: async (page) => {
       const api = new ApiMock(page);
       await api.mockAuthenticatedSession();
+      // Same populated list the notification-bell capture uses, viewed
+      // through the account page's paginated table instead of the popover.
+      // `total` is set above the fixture's row count so the paginator shows
+      // more than the single trivial page the raw array would otherwise imply.
+      await api.mockNotifications(accountNotifications(), { total: 18 });
       await new AccountPage(page).goto('notifications');
     },
   },
@@ -1044,6 +1164,21 @@ const SCENARIOS: readonly Scenario[] = [
     run: async (page) => {
       const api = new ApiMock(page);
       await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+      // Populates the dashboard body for the "before" reference capture:
+      // the aggregate payload (metrics, alerts, recent interventions), its
+      // five trend-card series, and the interventions collection the
+      // attention panel counts from (only `totalItems` — i.e. array length
+      // — is read, the same collection serves all four status/due-date
+      // query variants, per `OrganizationAttentionStore`).
+      await api.mockOrganizationDashboard(ORGANIZATION.id, dashboardOutput());
+      await api.mockOrganizationDashboardTrends(ORGANIZATION.id, {
+        inspections: dashboardInspectionsTrend(),
+        nonConformitiesOpened: dashboardNonConformitiesOpenedTrend(),
+        nonConformitiesResolved: dashboardNonConformitiesResolvedTrend(),
+        equipmentCreated: dashboardEquipmentCreatedTrend(),
+        facilitiesCreated: dashboardFacilitiesCreatedTrend(),
+      });
+      await api.mockInterventionList(INTERVENTIONS);
       const overview = new OrganizationOverviewPage(page);
       await overview.goto(ORGANIZATION.id);
       // Below the desktop breakpoint the shell URL-shape-matches the bare
@@ -1064,13 +1199,13 @@ const SCENARIOS: readonly Scenario[] = [
     area: 'organization',
     name: 'members',
     slug: 'organization-members',
-    run: organizationPermissionPageRun('members', '#organization-members'),
+    run: organizationMembersRun,
   },
   {
     area: 'organization',
     name: 'team',
     slug: 'organization-team',
-    run: organizationPermissionPageRun('team', '#organization-team'),
+    run: organizationTeamRun,
   },
   {
     area: 'organization',

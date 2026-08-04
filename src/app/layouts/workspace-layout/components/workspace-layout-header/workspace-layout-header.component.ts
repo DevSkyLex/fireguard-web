@@ -64,6 +64,25 @@ export class WorkspaceLayoutHeader {
     inject<WorkspaceShellService>(WorkspaceShellService);
 
   /**
+   * Property sidebarToggleLabel
+   * @readonly
+   *
+   * @description
+   * Accessible name of the desktop sidebar toggle, naming the action rather
+   * than the state so a screen-reader user hears what the press will do.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly sidebarToggleLabel: Signal<string> = computed((): string =>
+    this.shell.sidebarCollapsed()
+      ? $localize`:@@workspace.header.sidebar.show:Show sidebar`
+      : $localize`:@@workspace.header.sidebar.hide:Hide sidebar`,
+  );
+
+  /**
    * Property breadcrumbService
    * @readonly
    *

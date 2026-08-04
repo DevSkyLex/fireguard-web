@@ -8,9 +8,10 @@ const ORGANIZATION_ID = 'e2e-org-1';
  * Workspace shell — the application shell for every authenticated route
  * (`WorkspaceLayout`, `src/app/layouts/workspace-layout`).
  *
- * Structural smoke coverage for the four-column shell: this suite asserts the
- * frame, the responsive behavior and the absence of a shell-level scroller,
- * not the content any hosted route renders inside it.
+ * Structural smoke coverage for the shell (sidebar, main column, and the
+ * optional contextual panel): this suite asserts the frame, the responsive
+ * behavior and the absence of a shell-level scroller, not the content any
+ * hosted route renders inside it.
  */
 test.describe('Workspace shell', () => {
   test('renders the shell for an authenticated member', async ({ page }) => {
@@ -47,7 +48,7 @@ test.describe('Workspace shell', () => {
     expect(scrolls).toBe(false);
   });
 
-  test('shows the rail beside the sidebar on desktop', async ({ page }) => {
+  test('shows the sidebar beside the main column on desktop', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -55,17 +56,14 @@ test.describe('Workspace shell', () => {
     const workspace = new WorkspacePage(page);
     await workspace.goto(ORGANIZATION_ID);
 
-    await expect(workspace.rail).toBeVisible();
+    // The shell has no separate organization rail: the sidebar (which now
+    // opens with the organization switcher, see `workspace-switcher.spec.ts`)
+    // and the main column show side by side at this breakpoint.
     await expect(workspace.sidebar).toBeVisible();
-
-    const railWidth = await workspace.rail.evaluate(
-      (element: HTMLElement) => element.getBoundingClientRect().width,
-    );
-
-    expect(railWidth).toBe(60);
+    await expect(workspace.main).toBeVisible();
   });
 
-  test('hides the rail and shows a single pane below the desktop breakpoint', async ({ page }) => {
+  test('shows a single pane below the desktop breakpoint', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await page.setViewportSize({ width: 900, height: 900 });
@@ -73,14 +71,13 @@ test.describe('Workspace shell', () => {
     const workspace = new WorkspacePage(page);
     await workspace.goto(ORGANIZATION_ID);
 
-    // Mobile opens on the `list` pane: the sidebar is visible, the main column
-    // is not, and the rail is gone entirely.
-    await expect(workspace.rail).toBeHidden();
+    // Mobile opens on the `list` pane: the sidebar is visible, the main
+    // column is not.
     await expect(workspace.sidebar).toBeVisible();
     await expect(workspace.main).toBeHidden();
   });
 
-  test('bypasses the rail and the sidebar with a skip link', async ({ page, browserName }) => {
+  test('bypasses the sidebar with a skip link', async ({ page, browserName }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
 

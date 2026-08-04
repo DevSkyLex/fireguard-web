@@ -22,7 +22,6 @@ import { BreadcrumbService } from '@core/breadcrumb';
 import {
   WorkspaceLayoutHeader,
   WorkspaceLayoutPanelOutlet,
-  WorkspaceLayoutRail,
   WorkspaceLayoutSecondaryNav,
 } from './components';
 import { WorkspaceShellService } from './services';
@@ -33,7 +32,7 @@ import { WorkspaceShellService } from './services';
  *
  * @description
  * Collaboration shell: a four-column, full-bleed frame made of the
- * organization rail, the channel sidebar, the routed main column, and a
+ * the channel sidebar, the routed main column, and a
  * mono-active contextual panel.
  *
  * This is the shell for every authenticated route. It never scrolls itself —
@@ -44,8 +43,8 @@ import { WorkspaceShellService } from './services';
  * component level, so hosted routes get the trail the header renders.
  *
  * Responsive behavior:
- * - Desktop (≥1024px): rail, sidebar, main column and panel side by side
- * - Mobile (<1024px): rail hidden, a single pane showing either the sidebar
+ * - Desktop (≥1024px): sidebar, main column and panel side by side
+ * - Mobile (<1024px): a single pane showing either the sidebar
  *   (`list`) or the main column (`main`), with the panel as a full overlay
  *
  * The breakpoint lives in CSS (`lg:`, which is 1024px because `rem` in media
@@ -67,7 +66,6 @@ import { WorkspaceShellService } from './services';
   imports: [
     RouterOutlet,
     WorkspaceLayoutHeader,
-    WorkspaceLayoutRail,
     WorkspaceLayoutSecondaryNav,
     WorkspaceLayoutPanelOutlet,
   ],
@@ -210,7 +208,7 @@ export class WorkspaceLayout {
    * @method skipToContent
    *
    * @description
-   * Moves focus to the main column, bypassing the rail and the whole channel
+   * Moves focus to the main column, bypassing the whole channel
    * sidebar.
    *
    * The anchor's own default is suppressed: `<base href="/">` makes a bare
@@ -238,7 +236,7 @@ export class WorkspaceLayout {
    * @description
    * Decides which of the two stacked mobile panes is shown.
    *
-   * Arriving — a deep link, or switching organization from the rail — the pane
+   * Arriving — a deep link, or switching organization — the pane
    * follows the URL: a destination below the organization opens the main
    * column, the bare organization URL leaves the member on the list they need
    * to choose from.

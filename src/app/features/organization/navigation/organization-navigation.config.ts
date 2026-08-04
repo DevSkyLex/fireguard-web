@@ -25,12 +25,7 @@ export type OrganizationNavigationMatch = 'all' | 'any';
  *
  * @since 1.1.0
  */
-export type OrganizationNavigationGroupId =
-  | 'overview'
-  | 'field-work'
-  | 'assets'
-  | 'compliance'
-  | 'administration';
+export type OrganizationNavigationGroupId = 'operations' | 'assets' | 'administration';
 
 /**
  * Interface OrganizationNavigationGroup
@@ -171,7 +166,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     label: $localize`:@@org.nav.dashboard:Dashboard`,
     icon: 'pi pi-chart-bar',
     path: '',
-    group: 'overview',
+    group: 'operations',
     permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
   },
   /**
@@ -184,7 +179,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     label: $localize`:@@route.interventions:Interventions`,
     icon: 'pi pi-compass',
     path: 'interventions',
-    group: 'field-work',
+    group: 'operations',
     permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
   },
   {
@@ -208,7 +203,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     label: $localize`:@@route.inspections:Inspections`,
     icon: 'pi pi-clipboard',
     path: 'inspections',
-    group: 'compliance',
+    group: 'operations',
     permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
   },
   {
@@ -222,7 +217,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'team',
-    label: $localize`:@@route.team:Roles`,
+    label: $localize`:@@route.team:Team`,
     icon: 'pi pi-id-card',
     path: 'team',
     group: 'administration',
@@ -249,10 +244,8 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
  * @since 1.1.0
  */
 export const ORGANIZATION_NAVIGATION_GROUPS: ReadonlyArray<OrganizationNavigationGroup> = [
-  { id: 'overview', label: $localize`:@@org.navGroup.overview:Overview` },
-  { id: 'field-work', label: $localize`:@@org.navGroup.fieldWork:Field work` },
+  { id: 'operations', label: $localize`:@@org.navGroup.operations:Operations` },
   { id: 'assets', label: $localize`:@@org.navGroup.assets:Assets` },
-  { id: 'compliance', label: $localize`:@@org.navGroup.compliance:Compliance` },
   { id: 'administration', label: $localize`:@@org.navGroup.administration:Administration` },
 ];
 

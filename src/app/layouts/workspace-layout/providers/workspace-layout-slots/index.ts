@@ -3,7 +3,6 @@ export {
   type WorkspaceLayoutConversationHeaderSlotFeature,
   type WorkspaceLayoutPageHeaderSlotFeature,
   type WorkspaceLayoutPanelSlotFeature,
-  type WorkspaceLayoutRailSlotFeature,
   type WorkspaceLayoutSecondaryNavSlotFeature,
   type WorkspaceLayoutSlotFeature,
   type WorkspaceLayoutSlotsConfig,

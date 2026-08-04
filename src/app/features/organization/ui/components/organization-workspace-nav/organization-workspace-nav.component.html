@@ -1,13 +1,9 @@
 <!--
-  Workspace header: organization name + settings shortcut. No bottom border —
-  the prototype's sidebar header carries none.
+  Workspace header: the organization switcher doubles as the sidebar's title,
+  plus the settings shortcut. No bottom border — the sidebar header carries none.
 -->
-<div class="flex h-14 shrink-0 items-center justify-between gap-2 pr-3 pl-4">
-  <span
-    class="min-w-0 truncate text-base font-semibold tracking-tight text-surface-950 dark:text-surface-50"
-  >
-    {{ organizationContext.selectedOrganization()?.name }}
-  </span>
+<div class="flex min-h-14 shrink-0 items-center gap-1 py-1.5 pr-3 pl-2">
+  <app-organization-switcher class="min-w-0 flex-1" />
 
   @if (settingsLink(); as link) {
     <a
@@ -23,25 +19,37 @@
 </div>
 
 <!--
-  A single flat destination list, matching the prototype's business nav. The
-  grouping still drives RBAC filtering upstream; only the section headings are
-  gone. No scroller here — the sidebar's one scroller lives in the slot host.
+  One titled group per navigation section. The grouping already drove RBAC
+  filtering; rendering it restores the reading structure the flat list dropped —
+  three sections instead of eight peers, so a destination is found by area
+  rather than scanned for. No scroller here: the sidebar's one scroller lives in
+  the slot host.
 -->
 <nav
-  class="flex flex-col px-2 pb-1"
+  class="flex flex-col gap-3 px-2 pb-1"
   i18n-aria-label="@@workspace.sidebar.nav.aria"
   aria-label="Organization"
 >
-  <ul class="flex flex-col gap-px">
-    @for (item of destinations(); track item.id) {
-      <li>
-        <app-nav-row
-          [icon]="item.icon ?? null"
-          [label]="item.label ?? ''"
-          [routerLink]="item.routerLink"
-          [exact]="item.id === 'dashboard'"
-        />
-      </li>
-    }
-  </ul>
+  @for (section of sections(); track section.id) {
+    <div class="flex flex-col gap-px">
+      <h2
+        class="px-2 pt-1 pb-1 text-xs font-semibold text-surface-500 dark:text-surface-400"
+        [id]="'workspace-nav-group-' + section.id"
+      >
+        {{ section.label }}
+      </h2>
+      <ul class="flex flex-col gap-px" [attr.aria-labelledby]="'workspace-nav-group-' + section.id">
+        @for (item of section.items; track item.id) {
+          <li>
+            <app-nav-row
+              [icon]="item.icon ?? null"
+              [label]="item.label ?? ''"
+              [routerLink]="item.routerLink"
+              [exact]="item.id === 'dashboard'"
+            />
+          </li>
+        }
+      </ul>
+    </div>
+  }
 </nav>

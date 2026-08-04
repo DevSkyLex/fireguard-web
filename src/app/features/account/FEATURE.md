@@ -30,8 +30,8 @@ This feature does not own authentication, session restoration, or auth transport
   **Notifications**. The active section is driven by the `tab` query parameter
   (`?tab=profile|security|notifications`).
 
-Account navigation is exposed through the **rail seat menu** (`AccountRailMenu`),
-contributed to the workspace rail's footer region.
+Account navigation is exposed through the **seat menu** (`AccountMenu`),
+contributed last to the workspace header's tool cluster.
 
 ## State and Data Access
 

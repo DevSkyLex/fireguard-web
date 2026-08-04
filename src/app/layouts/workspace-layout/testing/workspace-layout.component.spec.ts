@@ -3,19 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { PANEL_SLOT, type PanelContribution } from '@layouts/workspace-layout/slots/panel';
-import { RAIL_SLOT, type RailContribution } from '@layouts/workspace-layout/slots/rail';
 import {
   SECONDARY_NAV_SLOT,
   type SecondaryNavContribution,
 } from '@layouts/workspace-layout/slots/secondary-nav';
 import { WorkspaceShellService } from '../services';
 import { WorkspaceLayout } from '../workspace-layout.component';
-
-@Component({ template: '<div data-testid="rail-lead-stub"></div>' })
-class RailLeadStub {}
-
-@Component({ template: '<div data-testid="rail-footer-stub"></div>' })
-class RailFooterStub {}
 
 @Component({ template: '<div data-testid="nav-section-stub"></div>' })
 class NavSectionStub {}
@@ -45,21 +38,6 @@ describe('WorkspaceLayout', () => {
       imports: [WorkspaceLayout],
       providers: [
         provideRouter([]),
-        {
-          provide: RAIL_SLOT,
-          useValue: { id: 'orgs', order: 10, component: RailLeadStub } satisfies RailContribution,
-          multi: true,
-        },
-        {
-          provide: RAIL_SLOT,
-          useValue: {
-            id: 'seat',
-            order: 10,
-            region: 'footer',
-            component: RailFooterStub,
-          } satisfies RailContribution,
-          multi: true,
-        },
         {
           provide: SECONDARY_NAV_SLOT,
           useValue: {
@@ -91,7 +69,7 @@ describe('WorkspaceLayout', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the four columns', () => {
+  it('should render the three columns', () => {
     const fixture = TestBed.createComponent(WorkspaceLayout);
     const shell = fixture.debugElement.injector.get(WorkspaceShellService);
     // No viewport exists under TestBed, so the shell reads as mobile on the
@@ -101,7 +79,6 @@ describe('WorkspaceLayout', () => {
     shell.setPanelVisible(true);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.query(By.css('app-workspace-layout-rail'))).toBeTruthy();
     expect(fixture.debugElement.query(By.css('app-workspace-layout-secondary-nav'))).toBeTruthy();
     expect(fixture.debugElement.query(By.css('router-outlet'))).toBeTruthy();
     expect(fixture.debugElement.query(By.css('app-workspace-layout-panel-outlet'))).toBeTruthy();
@@ -116,14 +93,6 @@ describe('WorkspaceLayout', () => {
 
     expect(shell.classList).toContain('overflow-hidden');
     expect(shell.classList).toContain('h-dvh');
-  });
-
-  it('should render rail contributions in both regions', () => {
-    const fixture = TestBed.createComponent(WorkspaceLayout);
-    fixture.detectChanges();
-
-    expect(fixture.debugElement.query(By.css('[data-testid="rail-lead-stub"]'))).toBeTruthy();
-    expect(fixture.debugElement.query(By.css('[data-testid="rail-footer-stub"]'))).toBeTruthy();
   });
 
   it('should render contributed sidebar sections', () => {

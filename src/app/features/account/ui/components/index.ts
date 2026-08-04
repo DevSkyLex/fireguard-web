@@ -1,2 +1,2 @@
 export { NotificationBell } from './notification-bell';
-export { AccountRailMenu } from './account-rail-menu';
+export { AccountMenu } from './account-menu';

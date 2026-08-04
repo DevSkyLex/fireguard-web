@@ -1,16 +1,12 @@
 import type { Routes } from '@angular/router';
-import { withAccountRailMenu, withNotificationBell } from '@features/account';
+import { withAccountMenu, withNotificationBell } from '@features/account';
 import { withAuthShowcase } from '@features/auth';
 import { authGuard } from '@features/auth/http/guards';
 import { provideMainFeature } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { onboardingGuard, onboardingRequiredGuard } from '@features/onboarding/http/guards';
 import { withOnboardingShowcase } from '@features/onboarding/providers';
-import {
-  provideOrganizationFeature,
-  withOrganizationRail,
-  withOrganizationWorkspaceNav,
-} from '@features/organization';
+import { provideOrganizationFeature, withOrganizationWorkspaceNav } from '@features/organization';
 import {
   provideCollaborationAssistant,
   withCollaborationAssistantPanel,
@@ -85,7 +81,6 @@ export const APP_ROUTES: Routes = [
       provideOrganizationFeature(),
       provideCollaborationAssistant(),
       provideWorkspaceLayoutSlots({
-        rail: [withOrganizationRail(), withAccountRailMenu()],
         secondaryNav: [
           withOrganizationWorkspaceNav(),
           withCollaborationChannelNav(),
@@ -98,6 +93,7 @@ export const APP_ROUTES: Routes = [
           withCollaborationInfoToggle(),
           withNotificationBell(),
           withThemeSwitcher(),
+          withAccountMenu(),
         ],
         pageHeader: [withInterventionHeaderActions()],
         panel: [withCollaborationAssistantPanel(), withCollaborationInfoPanel()],

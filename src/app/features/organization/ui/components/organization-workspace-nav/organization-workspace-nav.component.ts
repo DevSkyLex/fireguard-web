@@ -14,6 +14,7 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
 import { NavRow } from '@shared/nav-row';
+import { OrganizationSwitcher } from '../organization-switcher';
 
 /**
  * Component OrganizationWorkspaceNav
@@ -40,7 +41,7 @@ import { NavRow } from '@shared/nav-row';
  */
 @Component({
   selector: 'app-organization-workspace-nav',
-  imports: [NavRow, RouterLink],
+  imports: [NavRow, OrganizationSwitcher, RouterLink],
   templateUrl: './organization-workspace-nav.component.html',
   host: { class: 'flex flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,32 +84,16 @@ export class OrganizationWorkspaceNav {
    * @readonly
    *
    * @description
-   * Permission-filtered navigation groups, empty ones dropped.
+   * Permission-filtered navigation groups, empty ones dropped, rendered as
+   * titled sections. The grouping already drove RBAC filtering; showing it is
+   * what turns eight peer destinations into three readable areas.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.2.0
    *
    * @type {Signal<readonly MenuItem[]>}
    */
-  protected readonly destinations: Signal<readonly MenuItem[]> = computed((): readonly MenuItem[] =>
-    this.sections().flatMap((section: MenuItem): MenuItem[] => section.items ?? []),
-  );
-
-  /**
-   * Property sections
-   * @readonly
-   *
-   * @description
-   * Permission-filtered navigation groups, still built per group so RBAC and
-   * the audit-log append are unchanged, then flattened for display by
-   * {@link destinations}. The prototype's business nav is a single flat list.
-   *
-   * @access private
-   * @since 1.1.0
-   *
-   * @type {Signal<readonly MenuItem[]>}
-   */
-  private readonly sections: Signal<readonly MenuItem[]> = computed((): readonly MenuItem[] => {
+  protected readonly sections: Signal<readonly MenuItem[]> = computed((): readonly MenuItem[] => {
     const organization = this.organizationContext.selectedOrganization();
 
     if (!organization) return [];

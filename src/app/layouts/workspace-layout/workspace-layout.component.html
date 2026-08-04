@@ -3,7 +3,7 @@
   class="relative flex h-dvh w-full overflow-hidden bg-surface-0 text-surface-900 dark:bg-surface-950 dark:text-surface-100"
 >
   <!--
-    The bypass block. Every route in this shell puts the rail and the entire
+    The bypass block. Every route in this shell puts the entire
     channel sidebar ahead of the routed column in the tab order, so reaching a
     conversation from the keyboard meant tabbing past several dozen controls —
     on every single navigation.
@@ -23,16 +23,12 @@
   >
     Skip to content
   </a>
-  <!-- Organization rail: desktop only (60px). -->
-  <app-workspace-layout-rail
-    class="hidden w-[60px] flex-none flex-col items-center gap-2 border-r border-surface-200 bg-surface-50 py-3 lg:flex dark:border-surface-800 dark:bg-surface-900"
-  />
-
   <!--
     Channel sidebar (266px). On mobile it becomes the full-viewport `list` pane;
     on desktop it can be collapsed out of view.
   -->
   <aside
+    id="workspace-sidebar"
     class="flex min-h-0 flex-col border-surface-200 bg-surface-0 max-lg:absolute max-lg:inset-0 max-lg:z-30 lg:w-[266px] lg:flex-none lg:border-r dark:border-surface-800 dark:bg-surface-950"
     i18n-aria-label="@@workspace.sidebar.aria"
     aria-label="Workspace sidebar"

@@ -4923,8 +4923,8 @@
         <target>Miembros</target>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
-        <source>Roles</source>
-        <target>Roles</target>
+        <source>Team</source>
+        <target>Equipo</target>
       </trans-unit>
       <trans-unit id="route.settings" datatype="html">
         <source>Settings</source>
@@ -7326,6 +7326,36 @@
       <trans-unit id="onboarding.plans.loading" datatype="html">
         <source>Loading plans…</source>
         <target>Cargando los planes…</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.trigger.aria" datatype="html">
+        <source>Switch organization</source>
+        <target>Cambiar de organización</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.heading" datatype="html">
+        <source>Your organizations</source>
+        <target>Tus organizaciones</target>
+      </trans-unit>
+      <trans-unit id="org.navGroup.operations" datatype="html">
+        <source>Operations</source>
+        <target>Operaciones</target>
+      </trans-unit>
+      <trans-unit id="workspace.header.sidebar.show" datatype="html">
+        <source>Show sidebar</source>
+        <target>Mostrar la barra lateral</target>
+      </trans-unit>
+      <trans-unit id="workspace.header.sidebar.hide" datatype="html">
+        <source>Hide sidebar</source>
+        <target>Ocultar la barra lateral</target>
+      </trans-unit>
+      <trans-unit id="org.permission.deniedSummary" datatype="html">
+        <source>Access denied</source>
+        <target>Acceso denegado</target>
+      </trans-unit>
+      <trans-unit id="org.permission.deniedDetail" datatype="html">
+        <source>null</source>
+        <target>Necesitas el permiso <x id="permissions" equiv-text="options.permissions.join(
+        &apos;, &apos;,
+      )"/> para abrir esa página.</target>
       </trans-unit>
     </body>
   </file>

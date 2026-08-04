@@ -2,8 +2,13 @@
 
 ## Purpose
 
-`workspace-layout` is **the** application shell: a four-column, full-bleed frame composed of an
-organization rail, a channel sidebar, a main column, and a mono-active right panel.
+`workspace-layout` is **the** application shell: a three-column, full-bleed frame composed of a
+channel sidebar, a main column, and a mono-active right panel.
+
+The 60px organization rail it opened with is gone. It was desktop-only, so switching organization
+and reaching the account menu were both impossible on a phone; the organization now lives in the
+sidebar header (`app-organization-switcher`) and the account menu in the header tool cluster,
+both of which exist at every width.
 
 Every authenticated route is served here — organization pages, conversations and the account
 pages alike — at its canonical URL (`/`, `/organizations/:organizationId/…`, `/account`). The
@@ -52,7 +57,6 @@ an arbitrary `min-[1024px]:` variant.
 | Column             | Desktop                                                  | Mobile                                      |
 | ------------------ | -------------------------------------------------------- | ------------------------------------------- |
 | root               | `flex`, `h-dvh`, `w-full`, `overflow-hidden`, `relative` | same                                        |
-| rail               | `w-[60px]`, tinted, right border, centred column         | hidden                                      |
 | channel sidebar    | `w-[266px]`, right border                                | `absolute inset-0 z-30` — the `'list'` pane |
 | main column        | `flex-1 min-w-0 overflow-hidden`                         | `absolute inset-0 z-20` — the `'main'` pane |
 | info panel         | `w-[330px]`, left border                                 | `absolute inset-0 z-[46]`                   |
@@ -73,12 +77,11 @@ The layout knows no feature. It exposes extension points; each feature contribut
 
 **Additive** — `{ id: string; order: number; component: Type<unknown> }`:
 
-| Slot                         | Renders                                             | Notes                                                                                        |
-| ---------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `RAIL_SLOT`                  | the 60px rail                                       | adds `region: 'lead' \| 'footer'` so org tiles and the user menu can be placed independently |
-| `SECONDARY_NAV_SLOT`         | sections of the channel sidebar, stacked by `order` | each feature pushes its own section rather than one monolithic sidebar                       |
-| `CONVERSATION_HEADER_SLOT`   | the tool cluster at the right of the 56px header    |                                                                                              |
-| `WORKSPACE_PAGE_HEADER_SLOT` | contextual page actions                             | where `withInterventionHeaderActions()` lands                                                |
+| Slot                         | Renders                                             | Notes                                                                  |
+| ---------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------- |
+| `SECONDARY_NAV_SLOT`         | sections of the channel sidebar, stacked by `order` | each feature pushes its own section rather than one monolithic sidebar |
+| `CONVERSATION_HEADER_SLOT`   | the tool cluster at the right of the 56px header    |                                                                        |
+| `WORKSPACE_PAGE_HEADER_SLOT` | contextual page actions                             | where `withInterventionHeaderActions()` lands                          |
 
 **Mono-active** — `{ id; priority: number; component; active: Signal<boolean> }`, copied from
 `ShowcaseContribution` in `split-layout`:

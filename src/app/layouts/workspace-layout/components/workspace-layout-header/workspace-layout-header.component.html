@@ -1,6 +1,10 @@
 <!--
-  Mobile only: the four columns collapse to one pane, so the main column needs
-  a way back to the channel list.
+  One position, two jobs, split by breakpoint: below `lg` the three columns
+  collapse to a single pane and the main column needs a way back to the list;
+  at `lg` and above the sidebar is a real column, and this collapses it.
+
+  The collapse itself was written, tested and persisted to a cookie long ago —
+  it simply had no control anywhere in the app.
 -->
 <p-button
   class="-ml-1 lg:hidden"
@@ -12,6 +16,19 @@
   ariaLabel="Back to navigation"
   data-testid="workspace-header-back"
   (onClick)="shell.showList()"
+/>
+
+<p-button
+  class="-ml-1 max-lg:hidden"
+  [icon]="shell.sidebarCollapsed() ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'"
+  severity="secondary"
+  size="small"
+  [text]="true"
+  [ariaLabel]="sidebarToggleLabel()"
+  [attr.aria-expanded]="!shell.sidebarCollapsed()"
+  aria-controls="workspace-sidebar"
+  data-testid="workspace-header-sidebar-toggle"
+  (onClick)="shell.toggleSidebarCollapsed()"
 />
 
 <!--

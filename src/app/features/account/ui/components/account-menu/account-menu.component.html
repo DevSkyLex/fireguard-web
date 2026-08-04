@@ -1,5 +1,5 @@
 @if (userIdentityPort.isLoading()) {
-  <p-skeleton shape="circle" size="2.25rem" aria-busy="true" />
+  <p-skeleton shape="circle" size="2rem" aria-busy="true" />
 } @else {
   <button
     #trigger
@@ -10,14 +10,14 @@
     aria-haspopup="dialog"
     i18n-pTooltip="@@workspace.rail.account.tooltip"
     pTooltip="Account"
-    tooltipPosition="right"
-    data-testid="account-rail-menu-trigger"
+    tooltipPosition="bottom"
+    data-testid="account-menu-trigger"
     (click)="toggle($event)"
   >
     <p-avatar
       class="contents"
       aria-hidden="true"
-      styleClass="!size-9 !text-sm !font-semibold"
+      styleClass="!size-8 !text-xs !font-semibold"
       shape="circle"
       [image]="userIdentityPort.avatarUrlSmall() ?? undefined"
       [label]="userIdentityPort.avatarUrlSmall() ? undefined : (userIdentityPort.initials() ?? '')"
@@ -30,9 +30,9 @@
         the trigger's own accessible name instead.
       -->
       <span
-        class="absolute -end-0.5 -top-0.5 size-2.5 rounded-full bg-primary ring-2 ring-surface-50 dark:ring-surface-900"
+        class="absolute -end-0.5 -top-0.5 size-2.5 rounded-full bg-primary ring-2 ring-surface-0 dark:ring-surface-950"
         aria-hidden="true"
-        data-testid="account-rail-menu-unread"
+        data-testid="account-menu-unread"
       ></span>
     }
   </button>
@@ -66,7 +66,7 @@
         autofocus
         routerLink="/account"
         [queryParams]="{ tab: 'profile' }"
-        data-testid="account-rail-menu-profile"
+        data-testid="account-menu-profile"
         (click)="close()"
       >
         <i class="pi pi-user w-4 shrink-0 text-center text-xs" aria-hidden="true"></i>
@@ -77,7 +77,7 @@
         class="flex min-h-8 items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium text-surface-600 transition-colors hover:bg-surface-50 hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-white/5 dark:hover:text-surface-50"
         routerLink="/account"
         [queryParams]="{ tab: 'notifications' }"
-        data-testid="account-rail-menu-notifications"
+        data-testid="account-menu-notifications"
         (click)="close()"
       >
         <i class="pi pi-bell w-4 shrink-0 text-center text-xs" aria-hidden="true"></i>
@@ -97,7 +97,7 @@
         type="button"
         class="flex min-h-8 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-surface-600 transition-colors hover:bg-surface-50 hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-default disabled:opacity-60 dark:text-surface-400 dark:hover:bg-white/5 dark:hover:text-surface-50"
         [disabled]="authLogoutPort.isLoggingOut()"
-        data-testid="account-rail-menu-logout"
+        data-testid="account-menu-logout"
         (click)="onLogout()"
       >
         <i class="pi pi-sign-out w-4 shrink-0 text-center text-xs" aria-hidden="true"></i>

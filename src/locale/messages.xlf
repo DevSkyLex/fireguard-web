@@ -6,7 +6,7 @@
         <source>Accept Invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">55</context>
+          <context context-type="linenumber">51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.account" datatype="html">
@@ -43,6 +43,71 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/models/mfa-method-tag/mfa-method-tag.util.ts</context>
           <context context-type="linenumber">29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="workspace.rail.account.tooltip" datatype="html">
+        <source>Account</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
+          <context context-type="linenumber">13,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.nav.profile" datatype="html">
+        <source>Your profile</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
+          <context context-type="linenumber">73,77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.notifications" datatype="html">
+        <source>Notifications</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
+          <context context-type="linenumber">84,85</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-header/notification-bell-header.component.html</context>
+          <context context-type="linenumber">9,13</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-trigger/notification-bell-trigger.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
+          <context context-type="linenumber">188</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/tables/notification-table/notification-table.component.html</context>
+          <context context-type="linenumber">10,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.userProfile.loggingOut" datatype="html">
+        <source>Logging out...</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
+          <context context-type="linenumber">106,108</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.userProfile.logout" datatype="html">
+        <source>Logout</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
+          <context context-type="linenumber">108,110</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="workspace.rail.account.ariaUnread" datatype="html">
+        <source>Open account menu, unread notifications</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.ts</context>
+          <context context-type="linenumber">225</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="workspace.rail.account.aria" datatype="html">
+        <source>Open account menu</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.ts</context>
+          <context context-type="linenumber">226</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.mfa.title" datatype="html">
@@ -266,23 +331,23 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">310</context>
+          <context context-type="linenumber">314</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">344</context>
+          <context context-type="linenumber">348</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">364</context>
+          <context context-type="linenumber">368</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">383</context>
+          <context context-type="linenumber">387</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">422</context>
+          <context context-type="linenumber">426</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
@@ -396,71 +461,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/components/account-notifications-panel/account-notifications-panel.component.ts</context>
           <context context-type="linenumber">91</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="workspace.rail.account.tooltip" datatype="html">
-        <source>Account</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-rail-menu/account-rail-menu.component.html</context>
-          <context context-type="linenumber">13,14</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="account.nav.profile" datatype="html">
-        <source>Your profile</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-rail-menu/account-rail-menu.component.html</context>
-          <context context-type="linenumber">73,77</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="common.notifications" datatype="html">
-        <source>Notifications</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-rail-menu/account-rail-menu.component.html</context>
-          <context context-type="linenumber">84,85</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-header/notification-bell-header.component.html</context>
-          <context context-type="linenumber">9,13</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-trigger/notification-bell-trigger.component.html</context>
-          <context context-type="linenumber">7,8</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
-          <context context-type="linenumber">188</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/tables/notification-table/notification-table.component.html</context>
-          <context context-type="linenumber">10,12</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="auth.userProfile.loggingOut" datatype="html">
-        <source>Logging out...</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-rail-menu/account-rail-menu.component.html</context>
-          <context context-type="linenumber">106,108</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="auth.userProfile.logout" datatype="html">
-        <source>Logout</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-rail-menu/account-rail-menu.component.html</context>
-          <context context-type="linenumber">108,110</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="workspace.rail.account.ariaUnread" datatype="html">
-        <source>Open account menu, unread notifications</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-rail-menu/account-rail-menu.component.ts</context>
-          <context context-type="linenumber">225</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="workspace.rail.account.aria" datatype="html">
-        <source>Open account menu</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-rail-menu/account-rail-menu.component.ts</context>
-          <context context-type="linenumber">226</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.sessions.dialogTitle" datatype="html">
@@ -4225,7 +4225,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">200</context>
+          <context context-type="linenumber">195</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentStatus.inStock" datatype="html">
@@ -4445,7 +4445,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-detail-header/facility-detail-header.component.html</context>
-          <context context-type="linenumber">61</context>
+          <context context-type="linenumber">67</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/tables/facility-equipment-table/facility-equipment-table.component.ts</context>
@@ -4869,7 +4869,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-detail-header/facility-detail-header.component.html</context>
-          <context context-type="linenumber">70</context>
+          <context context-type="linenumber">76</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail/facility-detail.component.ts</context>
@@ -5321,7 +5321,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">192</context>
+          <context context-type="linenumber">187</context>
         </context-group>
       </trans-unit>
       <trans-unit id="status.active" datatype="html">
@@ -5419,14 +5419,14 @@
         <source>Updated <x id="INTERPOLATION" equiv-text="{{ facility.updatedAt | date: &apos;mediumDate&apos; }}"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-detail-header/facility-detail-header.component.html</context>
-          <context context-type="linenumber">43,45</context>
+          <context context-type="linenumber">49,51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.header.move" datatype="html">
         <source>Move</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-detail-header/facility-detail-header.component.html</context>
-          <context context-type="linenumber">52</context>
+          <context context-type="linenumber">58</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-move-dialog/facility-move-dialog.component.html</context>
@@ -6283,7 +6283,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">208</context>
+          <context context-type="linenumber">203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspectionStatus.draft" datatype="html">
@@ -6619,7 +6619,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail/inspection-detail.component.ts</context>
-          <context context-type="linenumber">123</context>
+          <context context-type="linenumber">124</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.form.equipment" datatype="html">
@@ -6976,7 +6976,7 @@
         <source>Cancel inspection</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail/inspection-detail.component.ts</context>
-          <context context-type="linenumber">184</context>
+          <context context-type="linenumber">192</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-list/inspection-list.component.ts</context>
@@ -6987,14 +6987,14 @@
         <source>Cancel this draft inspection? This action cannot be undone.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail/inspection-detail.component.ts</context>
-          <context context-type="linenumber">185</context>
+          <context context-type="linenumber">193</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.cancel.accept" datatype="html">
         <source>Cancel inspection</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail/inspection-detail.component.ts</context>
-          <context context-type="linenumber">188</context>
+          <context context-type="linenumber">196</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-list/inspection-list.component.ts</context>
@@ -7005,7 +7005,7 @@
         <source>Keep draft</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail/inspection-detail.component.ts</context>
-          <context context-type="linenumber">192</context>
+          <context context-type="linenumber">200</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-list/inspection-list.component.ts</context>
@@ -7281,7 +7281,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">184</context>
+          <context context-type="linenumber">179</context>
         </context-group>
       </trans-unit>
       <trans-unit id="interventionPriority.low" datatype="html">
@@ -10010,6 +10010,22 @@
           <context context-type="linenumber">1398</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.permission.deniedDetail" datatype="html">
+        <source>You need the <x id="permissions" equiv-text="options.permissions.join(
+        &apos;, &apos;,
+      )"/> permission to open that page.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/http/guards/organization-permission/organization-permission.guard.ts</context>
+          <context context-type="linenumber">120,122</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.permission.deniedSummary" datatype="html">
+        <source>Access denied</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/http/guards/organization-permission/organization-permission.guard.ts</context>
+          <context context-type="linenumber">123</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="subStatus.active" datatype="html">
         <source>Active</source>
         <context-group purpose="location">
@@ -10119,14 +10135,14 @@
         <source>Dashboard</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">171</context>
+          <context context-type="linenumber">166</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.members" datatype="html">
         <source>Members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">216</context>
+          <context context-type="linenumber">211</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
@@ -10134,10 +10150,10 @@
         </context-group>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
-        <source>Roles</source>
+        <source>Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">225</context>
+          <context context-type="linenumber">220</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
@@ -10148,46 +10164,32 @@
         <source>Settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">234</context>
+          <context context-type="linenumber">229</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
           <context context-type="linenumber">108</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.navGroup.overview" datatype="html">
-        <source>Overview</source>
+      <trans-unit id="org.navGroup.operations" datatype="html">
+        <source>Operations</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">252</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.navGroup.fieldWork" datatype="html">
-        <source>Field work</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">253</context>
+          <context context-type="linenumber">247</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.assets" datatype="html">
         <source>Assets</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">254</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.navGroup.compliance" datatype="html">
-        <source>Compliance</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">255</context>
+          <context context-type="linenumber">248</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.administration" datatype="html">
         <source>Administration</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">256</context>
+          <context context-type="linenumber">249</context>
         </context-group>
       </trans-unit>
       <trans-unit id="dash.granularity.daily" datatype="html">
@@ -11737,32 +11739,32 @@
           <context context-type="linenumber">553</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="workspace.rail.organizations.aria" datatype="html">
-        <source>Organizations</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail/organization-rail.component.html</context>
-          <context context-type="linenumber">4,8</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.rail.loading" datatype="html">
+      <trans-unit id="org.switcher.loading" datatype="html">
         <source>Loading organizations…</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail/organization-rail.component.html</context>
-          <context context-type="linenumber">8,10</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.switcher.trigger.aria" datatype="html">
+        <source>Switch organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.html</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.switcher.heading" datatype="html">
+        <source> Your organizations </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.html</context>
+          <context context-type="linenumber">67,70</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.rail.addOrganization.aria" datatype="html">
         <source>Add organization</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail/organization-rail.component.html</context>
-          <context context-type="linenumber">46,47</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="workspace.rail.addOrganization.tooltip" datatype="html">
-        <source>Add organization</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail/organization-rail.component.html</context>
-          <context context-type="linenumber">48,50</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.html</context>
+          <context context-type="linenumber">114,118</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.usage.loading" datatype="html">
@@ -11797,14 +11799,14 @@
         <source>Organization settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-workspace-nav/organization-workspace-nav.component.html</context>
-          <context context-type="linenumber">17,19</context>
+          <context context-type="linenumber">13,15</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.sidebar.nav.aria" datatype="html">
         <source>Organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-workspace-nav/organization-workspace-nav.component.html</context>
-          <context context-type="linenumber">33,36</context>
+          <context context-type="linenumber">31,33</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.deleteDialog.message" datatype="html">
@@ -12608,29 +12610,29 @@
         <source>Remove role</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">305</context>
+          <context context-type="linenumber">309</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeRoleMessage" datatype="html">
         <source>Remove this role from the member?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">306</context>
+          <context context-type="linenumber">310</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.remove" datatype="html">
         <source>Remove</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">308</context>
+          <context context-type="linenumber">312</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">342</context>
+          <context context-type="linenumber">346</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">362</context>
+          <context context-type="linenumber">366</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/tables/organization-member-table/organization-member-table.component.ts</context>
@@ -12641,49 +12643,49 @@
         <source>Remove members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">339</context>
+          <context context-type="linenumber">343</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.bulkRemoveMessage" datatype="html">
         <source>Remove the selected members from the organization?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">340</context>
+          <context context-type="linenumber">344</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeHeader" datatype="html">
         <source>Remove member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">359</context>
+          <context context-type="linenumber">363</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeMessage" datatype="html">
         <source>Remove this member from the organization?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">360</context>
+          <context context-type="linenumber">364</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.revokeHeader" datatype="html">
         <source>Revoke invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">378</context>
+          <context context-type="linenumber">382</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.revokeMessage" datatype="html">
         <source>Revoke the invitation sent to <x id="email" equiv-text="invitation.email"/>?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">379</context>
+          <context context-type="linenumber">383</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.revoke" datatype="html">
         <source>Revoke</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">381</context>
+          <context context-type="linenumber">385</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/tables/organization-invitation-table/organization-invitation-table.component.ts</context>
@@ -12694,49 +12696,49 @@
         <source>Generate a new link</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">417</context>
+          <context context-type="linenumber">421</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.copyRegenerateMessage" datatype="html">
         <source>A new invitation link will be generated, the previous one will stop working, and the invitation email will be sent again. Continue?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">418</context>
+          <context context-type="linenumber">422</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.copyRegenerateConfirm" datatype="html">
         <source>Generate &amp; copy</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">420</context>
+          <context context-type="linenumber">424</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.linkCopiedDetail" datatype="html">
         <source>The invitation link is on your clipboard.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">444</context>
+          <context context-type="linenumber">448</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.linkCopiedSummary" datatype="html">
         <source>Link copied</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">445</context>
+          <context context-type="linenumber">449</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.linkCopyErrorDetail" datatype="html">
         <source>The link could not be copied. Please copy it manually.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">456</context>
+          <context context-type="linenumber">460</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.linkCopyErrorSummary" datatype="html">
         <source>Copy failed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members/organization-members.component.ts</context>
-          <context context-type="linenumber">457</context>
+          <context context-type="linenumber">461</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.overview.pageTitle" datatype="html">
@@ -13381,28 +13383,42 @@
         <source>Back to navigation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/workspace-layout/components/workspace-layout-header/workspace-layout-header.component.html</context>
-          <context context-type="linenumber">12,14</context>
+          <context context-type="linenumber">16,18</context>
         </context-group>
       </trans-unit>
       <trans-unit id="layout.breadcrumb.home" datatype="html">
         <source>Navigate to dashboard home</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/workspace-layout/components/workspace-layout-header/workspace-layout-header.component.html</context>
-          <context context-type="linenumber">53,56</context>
+          <context context-type="linenumber">70,73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="workspace.header.sidebar.show" datatype="html">
+        <source>Show sidebar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/workspace-layout/components/workspace-layout-header/workspace-layout-header.component.ts</context>
+          <context context-type="linenumber">81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="workspace.header.sidebar.hide" datatype="html">
+        <source>Hide sidebar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/workspace-layout/components/workspace-layout-header/workspace-layout-header.component.ts</context>
+          <context context-type="linenumber">82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.skipToContent" datatype="html">
         <source> Skip to content </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/workspace-layout/workspace-layout.component.html</context>
-          <context context-type="linenumber">24,26</context>
+          <context context-type="linenumber">24,27</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.sidebar.aria" datatype="html">
         <source>Workspace sidebar</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/workspace-layout/workspace-layout.component.html</context>
-          <context context-type="linenumber">38,39</context>
+          <context context-type="linenumber">34,35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="board.column.empty" datatype="html">

@@ -25,8 +25,8 @@ import {
 } from '../../../ports';
 
 /**
- * Component AccountRailMenu
- * @class AccountRailMenu
+ * Component AccountMenu
+ * @class AccountMenu
  *
  * @description
  * Seat avatar pinned to the foot of the workspace rail, opening the member's
@@ -39,18 +39,18 @@ import {
  *
  * @example
  * ```html
- * <app-account-rail-menu />
+ * <app-account-menu />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-account-rail-menu',
+  selector: 'app-account-menu',
   imports: [AvatarModule, PopoverModule, RouterLink, SkeletonModule, TooltipModule],
-  templateUrl: './account-rail-menu.component.html',
+  templateUrl: './account-menu.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountRailMenu {
+export class AccountMenu {
   //#region Properties
   /**
    * Property userIdentityPort

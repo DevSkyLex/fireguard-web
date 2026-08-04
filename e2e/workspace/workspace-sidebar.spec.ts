@@ -28,7 +28,7 @@ test.describe('Workspace sidebar', () => {
     );
   });
 
-  test('renders destinations as a single flat list', async ({ page }) => {
+  test('renders destinations as three titled groups', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession({ organizations: [organization] });
 
@@ -37,13 +37,27 @@ test.describe('Workspace sidebar', () => {
 
     const nav = workspace.sidebar.getByRole('navigation', { name: 'Organization' });
 
-    await expect(nav.getByRole('link', { name: 'Dashboard' })).toBeVisible();
-    await expect(nav.getByRole('link', { name: 'Interventions' })).toBeVisible();
+    // The grouping used to drive RBAC filtering only, with every destination
+    // rendered as one flat list. It now also structures the sidebar into
+    // three readable, titled sections instead of eight flat peers.
+    const headings = nav.getByRole('heading');
+    await expect(headings).toHaveText(['Operations', 'Assets', 'Administration']);
 
-    // The prototype's business nav is flat: the group headings that used to
-    // sit above the destinations (e.g. "Field work") are gone. The grouping
-    // still drives RBAC upstream; only the visual headings were dropped.
-    await expect(nav.getByRole('heading', { name: 'Field work' })).toHaveCount(0);
+    const operations = nav.locator('ul[aria-labelledby="workspace-nav-group-operations"]');
+    await expect(operations.getByRole('link', { name: 'Dashboard' })).toBeVisible();
+    await expect(operations.getByRole('link', { name: 'Interventions' })).toBeVisible();
+    await expect(operations.getByRole('link', { name: 'Inspections' })).toBeVisible();
+
+    const assets = nav.locator('ul[aria-labelledby="workspace-nav-group-assets"]');
+    await expect(assets.getByRole('link', { name: 'Facilities' })).toBeVisible();
+    await expect(assets.getByRole('link', { name: 'Equipments' })).toBeVisible();
+
+    // "Team" replaces the earlier "Roles" label.
+    const administration = nav.locator('ul[aria-labelledby="workspace-nav-group-administration"]');
+    await expect(administration.getByRole('link', { name: 'Members' })).toBeVisible();
+    await expect(administration.getByRole('link', { name: 'Team' })).toBeVisible();
+    await expect(administration.getByRole('link', { name: 'Roles' })).toHaveCount(0);
+    await expect(administration.getByRole('link', { name: 'Settings' })).toBeVisible();
   });
 
   test('navigates within the shell and marks the open destination', async ({ page }) => {

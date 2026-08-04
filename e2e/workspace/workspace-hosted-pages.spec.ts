@@ -23,7 +23,6 @@ test.describe('Workspace hosted pages', () => {
 
     await expect(page.locator('app-account-page')).toBeVisible();
     // The shell chrome is still there — this is a hosted page, not a takeover.
-    await expect(workspace.rail).toBeVisible();
     await expect(workspace.sidebar).toBeVisible();
   });
 

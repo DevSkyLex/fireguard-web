@@ -1,1 +1,1 @@
-export { withNotificationBell } from './conversation-header.provider';
+export { withAccountMenu, withNotificationBell } from './conversation-header.provider';

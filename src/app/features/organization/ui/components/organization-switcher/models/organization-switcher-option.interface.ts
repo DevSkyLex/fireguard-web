@@ -1,18 +1,20 @@
 /**
- * Interface OrganizationRailTile
- * @interface OrganizationRailTile
+ * Interface OrganizationSwitcherOption
+ * @interface OrganizationSwitcherOption
  *
  * @description
- * View model for one organization tile in the workspace rail.
+ * One organization offered by the sidebar switcher, carrying what the row needs
+ * to render without reaching back into the store.
  *
- * @since 1.0.0
+ * @version 1.0.0
+ * @since 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export interface OrganizationRailTile {
+export interface OrganizationSwitcherOption {
   /** Organization identifier, used to build the workspace route. */
   readonly id: string;
-  /** Organization name, announced as the tile's accessible label and tooltip. */
+  /** Organization name, shown as the row label and the trigger's title. */
   readonly name: string;
   /** Up to two uppercase initials, shown when no logo is available. */
   readonly initials: string;

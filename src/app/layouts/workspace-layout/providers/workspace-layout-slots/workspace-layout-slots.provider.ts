@@ -10,7 +10,6 @@ import {
 } from '../../slots/conversation-header';
 import { WORKSPACE_PAGE_HEADER_SLOT, type PageHeaderContribution } from '../../slots/page-header';
 import { PANEL_SLOT, type PanelContribution } from '../../slots/panel';
-import { RAIL_SLOT, type RailContribution } from '../../slots/rail';
 import { SECONDARY_NAV_SLOT, type SecondaryNavContribution } from '../../slots/secondary-nav';
 
 /**
@@ -25,8 +24,6 @@ import { SECONDARY_NAV_SLOT, type SecondaryNavContribution } from '../../slots/s
 export interface WorkspaceLayoutSlotFeature<TContribution> {
   useFactory: () => TContribution;
 }
-
-export type WorkspaceLayoutRailSlotFeature = WorkspaceLayoutSlotFeature<RailContribution>;
 
 export type WorkspaceLayoutSecondaryNavSlotFeature =
   WorkspaceLayoutSlotFeature<SecondaryNavContribution>;
@@ -49,7 +46,6 @@ export type WorkspaceLayoutPanelSlotFeature = WorkspaceLayoutSlotFeature<PanelCo
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface WorkspaceLayoutSlotsConfig {
-  readonly rail?: WorkspaceLayoutRailSlotFeature[];
   readonly secondaryNav?: WorkspaceLayoutSecondaryNavSlotFeature[];
   readonly conversationHeader?: WorkspaceLayoutConversationHeaderSlotFeature[];
   readonly pageHeader?: WorkspaceLayoutPageHeaderSlotFeature[];
@@ -72,7 +68,6 @@ export function provideWorkspaceLayoutSlots(
   config: WorkspaceLayoutSlotsConfig,
 ): EnvironmentProviders {
   return makeEnvironmentProviders([
-    ...provideSlotContributions(RAIL_SLOT, config.rail),
     ...provideSlotContributions(SECONDARY_NAV_SLOT, config.secondaryNav),
     ...provideSlotContributions(CONVERSATION_HEADER_SLOT, config.conversationHeader),
     ...provideSlotContributions(WORKSPACE_PAGE_HEADER_SLOT, config.pageHeader),

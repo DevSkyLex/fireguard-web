@@ -17,6 +17,10 @@ import {
   type OrganizationOutputFixture,
   type UserProfileOutputFixture,
 } from '../fixtures/api-fixtures';
+import type {
+  DashboardOutputFixture,
+  DashboardTrendOutputFixture,
+} from '../fixtures/dashboard-fixtures';
 import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
 import type { FacilityOutputFixture } from '../fixtures/facility-fixtures';
 import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
@@ -28,6 +32,17 @@ import {
   type InterventionOutputFixture,
   type InterventionWorkItemOutputFixture,
 } from '../fixtures/intervention-fixtures';
+import type { NotificationOutputFixture } from '../fixtures/notification-fixtures';
+import type {
+  OrganizationInvitationOutputFixture,
+  OrganizationMemberOutputFixture,
+  OrganizationPermissionOutputFixture,
+  OrganizationRoleOutputFixture,
+} from '../fixtures/organization-team-fixtures';
+import type {
+  SessionOutputFixture,
+  TrustedDeviceOutputFixture,
+} from '../fixtures/security-fixtures';
 
 /**
  * Backend origin the app is configured to call in the `e2e` build
@@ -443,6 +458,136 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/organizations/{organizationId}/dashboard` — the
+   * aggregate payload behind the dashboard's KPI strip, attention alerts,
+   * and recent-interventions table (`DashboardStore`). The regex stops at
+   * `dashboard` so it does not also swallow the `/dashboard/trends/*` reads
+   * mocked separately by {@link mockOrganizationDashboardTrends}.
+   */
+  public async mockOrganizationDashboard(
+    organizationId: string,
+    dashboard: DashboardOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/dashboard(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, dashboard);
+      },
+    );
+  }
+
+  /**
+   * Mocks the five `GET /api/organizations/{organizationId}/dashboard/trends/*`
+   * endpoints behind the dashboard's trend cards. Five URLs cover all five
+   * cards: the Overview card reads `inspections` + both non-conformities
+   * series, the Inspection Quality card reuses `inspections` +
+   * `non-conformities-opened`, and Asset Growth reads the two `*-created`
+   * series — so mocking these five is enough regardless of which card fires.
+   */
+  public async mockOrganizationDashboardTrends(
+    organizationId: string,
+    trends: {
+      inspections: DashboardTrendOutputFixture;
+      nonConformitiesOpened: DashboardTrendOutputFixture;
+      nonConformitiesResolved: DashboardTrendOutputFixture;
+      equipmentCreated: DashboardTrendOutputFixture;
+      facilitiesCreated: DashboardTrendOutputFixture;
+    },
+  ): Promise<void> {
+    await this.installSafetyNet();
+    const routesBySlug: ReadonlyArray<readonly [string, DashboardTrendOutputFixture]> = [
+      ['inspections', trends.inspections],
+      ['non-conformities-opened', trends.nonConformitiesOpened],
+      ['non-conformities-resolved', trends.nonConformitiesResolved],
+      ['equipment-created', trends.equipmentCreated],
+      ['facilities-created', trends.facilitiesCreated],
+    ];
+
+    await Promise.all(
+      routesBySlug.map(([slug, trend]) =>
+        this.page.route(
+          new RegExp(`/api/organizations/${organizationId}/dashboard/trends/${slug}(\\?.*)?$`),
+          async (route) => {
+            await fulfillJson(route, 200, trend);
+          },
+        ),
+      ),
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/members` — the member
+   * directory read by both the dedicated members page (`OrganizationMembersStore`)
+   * and the roles page's member-role chip resolution.
+   */
+  public async mockOrganizationMembers(
+    organizationId: string,
+    members: ReadonlyArray<OrganizationMemberOutputFixture>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/members(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(members));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/invitations` — the pending
+   * (and past) invitations read by the members page's "Pending invitations" tab.
+   */
+  public async mockOrganizationInvitations(
+    organizationId: string,
+    invitations: ReadonlyArray<OrganizationInvitationOutputFixture>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/invitations(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(invitations));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/roles` — the role
+   * definitions read by the roles page's role-card list and the members
+   * page's role chips / assignment drawer.
+   */
+  public async mockOrganizationRoles(
+    organizationId: string,
+    roles: ReadonlyArray<OrganizationRoleOutputFixture>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/roles(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(roles));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/permissions` — the
+   * assignable permission catalog the roles page's matrix is built from
+   * (only loaded for a member who can manage roles).
+   */
+  public async mockOrganizationPermissions(
+    organizationId: string,
+    permissions: ReadonlyArray<OrganizationPermissionOutputFixture>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/permissions(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(permissions));
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/facilities/{facility.id}` —
    * the resource loaded by `facilityResolver` for the facility detail/edit routes.
    */
@@ -747,6 +892,46 @@ export class ApiMock {
         200,
         interventionOutput({ id: interventionId, revision: currentRevision }),
       );
+    });
+  }
+
+  /**
+   * Mocks `GET /api/notifications` with a populated collection, overriding
+   * the empty one every `mock*Session*` call installs. Register this call
+   * AFTER `mockAuthenticatedSession`/`mockSessionData` in a scenario: Playwright
+   * matches routes last-registered-first, so this specific mock wins over the
+   * session bootstrap's empty default without that shared baseline having to
+   * change (which would populate every other authenticated capture too).
+   */
+  public async mockNotifications(
+    notifications: ReadonlyArray<NotificationOutputFixture>,
+    options: { total?: number } = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/notifications(\?.*)?$/, async (route) => {
+      await fulfillJson(
+        route,
+        200,
+        hydraCollection(notifications, { totalItems: options.total ?? notifications.length }),
+      );
+    });
+  }
+
+  /** Mocks `GET /api/sessions` — the account security tab's active-sessions table. */
+  public async mockSessions(sessions: ReadonlyArray<SessionOutputFixture>): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/sessions(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(sessions));
+    });
+  }
+
+  /** Mocks `GET /api/trusted-devices` — the account security tab's trusted-devices table. */
+  public async mockTrustedDevices(
+    devices: ReadonlyArray<TrustedDeviceOutputFixture>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/trusted-devices(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(devices));
     });
   }
 }

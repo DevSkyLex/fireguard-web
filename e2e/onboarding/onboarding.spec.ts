@@ -32,6 +32,6 @@ test.describe('Onboarding', () => {
     await page.goto('/onboarding');
 
     await expect(page).toHaveURL(/\/organizations\/e2e-org-1$/);
-    await expect(page.locator('#organization-overview')).toBeVisible();
+    await expect(page.locator('#organization-today')).toBeVisible();
   });
 });

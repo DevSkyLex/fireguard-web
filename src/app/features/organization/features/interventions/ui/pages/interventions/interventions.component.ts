@@ -10,6 +10,7 @@ import {
   type InputSignalWithTransform,
   signal,
   type Signal,
+  untracked,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -349,6 +350,29 @@ export class InterventionsPage {
   public readonly q: InputSignalWithTransform<string, unknown> = input<string, unknown>('', {
     transform: (value: unknown): string => (typeof value === 'string' ? value : ''),
   });
+
+  /**
+   * Input create
+   * @readonly
+   *
+   * @description
+   * Request to open the creation drawer on arrival, bound from the `?create=1`
+   * query param via `withComponentInputBinding`. It lets another surface — the
+   * landing page's primary action — offer "New intervention" and have it mean
+   * it, instead of dropping the operator on the list to look for the button.
+   *
+   * The param is consumed once and cleared, so a reload or a back navigation
+   * does not reopen the drawer.
+   *
+   * @access public
+   * @since 6.0.0
+   *
+   * @type {InputSignalWithTransform<boolean, unknown>}
+   */
+  public readonly create: InputSignalWithTransform<boolean, unknown> = input<boolean, unknown>(
+    false,
+    { transform: (value: unknown): boolean => value === '1' || value === 'true' },
+  );
 
   /**
    * Property viewOptions
@@ -913,6 +937,15 @@ export class InterventionsPage {
     });
 
     effect(() => {
+      if (!this.create()) return;
+
+      untracked((): void => {
+        this.openCreate();
+        this.navigateQuery({ create: null });
+      });
+    });
+
+    effect(() => {
       const created: InterventionOutput | null = this.store.createdIntervention();
       if (!created) return;
 
@@ -1109,8 +1142,8 @@ export class InterventionsPage {
   }
 
   /**
-   * Method create
-   * @method create
+   * Method submitCreate
+   * @method submitCreate
    *
    * @description
    * Routes the validated draft through {@link InterventionStoreType.create}.
@@ -1124,7 +1157,7 @@ export class InterventionsPage {
    * @param {InterventionCreateFormValues} values - Validated draft values.
    * @returns {void}
    */
-  protected create(values: InterventionCreateFormValues): void {
+  protected submitCreate(values: InterventionCreateFormValues): void {
     const organizationId: string = this.organizationId();
 
     this.store.create({

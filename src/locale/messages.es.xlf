@@ -4914,9 +4914,9 @@
         <source>Inactive</source>
         <target>Inactiva</target>
       </trans-unit>
-      <trans-unit id="org.nav.dashboard" datatype="html">
-        <source>Dashboard</source>
-        <target>Panel</target>
+      <trans-unit id="route.today" datatype="html">
+        <source>Today</source>
+        <target>Hoy</target>
       </trans-unit>
       <trans-unit id="route.members" datatype="html">
         <source>Members</source>
@@ -7167,25 +7167,97 @@
         <source>All facility types</source>
         <target>Todos los tipos de instalación</target>
       </trans-unit>
-      <trans-unit id="org.dash.attention.title" datatype="html">
-        <source> Needs your attention </source>
-        <target>Requiere tu atención</target>
+      <trans-unit id="org.today.pageTitle" datatype="html">
+        <source>Today</source>
+        <target>Hoy</target>
       </trans-unit>
-      <trans-unit id="org.dash.attention.errorTitle" datatype="html">
-        <source>Couldn&apos;t load what needs your attention</source>
-        <target>No se pudo cargar lo que requiere tu atención</target>
+      <trans-unit id="org.today.newIntervention" datatype="html">
+        <source>New intervention</source>
+        <target>Nueva intervención</target>
       </trans-unit>
-      <trans-unit id="org.dash.attention.retry" datatype="html">
+      <trans-unit id="org.today.subtitleOne" datatype="html">
+        <source>One thing needs a decision from you.</source>
+        <target>Un elemento requiere una decisión tuya.</target>
+      </trans-unit>
+      <trans-unit id="org.today.subtitleMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> things need a decision from you.</source>
+        <target><x id="count" equiv-text="count"/> elementos requieren una decisión tuya.</target>
+      </trans-unit>
+      <trans-unit id="org.today.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>Vencidas</target>
+      </trans-unit>
+      <trans-unit id="org.today.overdueBy" datatype="html">
+        <source><x id="days" equiv-text="days"/> days late</source>
+        <target><x id="days" equiv-text="days"/> días de retraso</target>
+      </trans-unit>
+      <trans-unit id="org.today.changesRequested" datatype="html">
+        <source>Sent back to you</source>
+        <target>Devueltas a ti</target>
+      </trans-unit>
+      <trans-unit id="org.today.awaitingReview" datatype="html">
+        <source>Awaiting your review</source>
+        <target>En espera de tu revisión</target>
+      </trans-unit>
+      <trans-unit id="org.today.unsynced" datatype="html">
+        <source>Waiting to sync</source>
+        <target>Pendientes de sincronizar</target>
+      </trans-unit>
+      <trans-unit id="org.today.pendingChanges" datatype="html">
+        <source><x id="count" equiv-text="entry.pendingCount"/> changes waiting to sync</source>
+        <target><x id="count" equiv-text="entry.pendingCount"/> cambios pendientes de sincronizar</target>
+      </trans-unit>
+      <trans-unit id="org.today.seeAll" datatype="html">
+        <source>See all</source>
+        <target>Ver todo</target>
+      </trans-unit>
+      <trans-unit id="org.today.errorTitle" datatype="html">
+        <source>Couldn&apos;t load your work queues</source>
+        <target>No se pudieron cargar tus colas de trabajo</target>
+      </trans-unit>
+      <trans-unit id="org.today.errorDescription" datatype="html">
+        <source>The interventions waiting on you couldn&apos;t be fetched. Anything saved on this device is still listed below.</source>
+        <target>No se pudieron recuperar las intervenciones pendientes de ti. Lo que está guardado en este dispositivo sigue apareciendo abajo.</target>
+      </trans-unit>
+      <trans-unit id="org.today.retry" datatype="html">
         <source>Retry</source>
         <target>Reintentar</target>
       </trans-unit>
-      <trans-unit id="org.dash.attention.loading" datatype="html">
-        <source>Loading what needs your attention</source>
-        <target>Cargando lo que requiere tu atención</target>
+      <trans-unit id="org.today.allClearTitle" datatype="html">
+        <source>Nothing is blocking</source>
+        <target>No hay bloqueos</target>
       </trans-unit>
-      <trans-unit id="org.dash.attention.allClear" datatype="html">
-        <source>Nothing is waiting on you right now.</source>
-        <target>Nada está pendiente de ti por ahora.</target>
+      <trans-unit id="org.today.allClearDescription" datatype="html">
+        <source>No intervention is overdue, none is waiting for review, and everything on this device is synced.</source>
+        <target>Ninguna intervención está vencida, ninguna espera revisión y todo está sincronizado en este dispositivo.</target>
+      </trans-unit>
+      <trans-unit id="org.today.nextDue" datatype="html">
+        <source>Next due</source>
+        <target>Próximo vencimiento</target>
+      </trans-unit>
+      <trans-unit id="org.today.upcomingOne" datatype="html">
+        <source>See the one planned intervention</source>
+        <target>Ver la intervención planificada</target>
+      </trans-unit>
+      <trans-unit id="org.today.upcomingMany" datatype="html">
+        <source>See the <x id="count" equiv-text="total"/> planned interventions</source>
+        <target>Ver las <x id="count" equiv-text="total"/> intervenciones planificadas</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.title" datatype="html">
+        <source> Also waiting </source>
+        <target>También en espera</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.errorTitle" datatype="html">
+        <source>Couldn&apos;t load the rest of what&apos;s waiting</source>
+        <target>No se pudo cargar el resto de lo que está en espera</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.loading" datatype="html">
+        <source>Loading what else is waiting</source>
+        <target>Cargando los demás elementos en espera</target>
       </trans-unit>
       <trans-unit id="org.trendFilter.inspectionQualityInspectionStatus" datatype="html">
         <source> Inspection status </source>
@@ -7251,18 +7323,6 @@
         <source>All severities</source>
         <target>Todas las gravedades</target>
       </trans-unit>
-      <trans-unit id="org.dash.attention.overdue" datatype="html">
-        <source>Interventions past their due date</source>
-        <target>Intervenciones con la fecha límite vencida</target>
-      </trans-unit>
-      <trans-unit id="org.dash.attention.changesRequested" datatype="html">
-        <source>Interventions sent back for changes</source>
-        <target>Intervenciones devueltas para cambios</target>
-      </trans-unit>
-      <trans-unit id="org.dash.attention.awaitingReview" datatype="html">
-        <source>Interventions awaiting review</source>
-        <target>Intervenciones en espera de revisión</target>
-      </trans-unit>
       <trans-unit id="org.dash.attention.criticalNonConformities" datatype="html">
         <source>Critical non-conformities still open</source>
         <target>No conformidades críticas aún abiertas</target>
@@ -7278,10 +7338,6 @@
       <trans-unit id="org.dash.attention.equipmentUnderMaintenance" datatype="html">
         <source>Equipment currently under maintenance</source>
         <target>Equipos actualmente en mantenimiento</target>
-      </trans-unit>
-      <trans-unit id="org.overview.pageTitle" datatype="html">
-        <source> Overview </source>
-        <target>Resumen</target>
       </trans-unit>
       <trans-unit id="org.team.pageTitle" datatype="html">
         <source> Roles </source>

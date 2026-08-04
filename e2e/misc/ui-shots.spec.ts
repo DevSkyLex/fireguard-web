@@ -47,7 +47,7 @@ import { MaintenancePage } from '../support/pages/maintenance.page';
 import { MfaVerifyPage } from '../support/pages/mfa-verify.page';
 import { NewPasswordPage } from '../support/pages/new-password.page';
 import { OnboardingPage } from '../support/pages/onboarding.page';
-import { OrganizationOverviewPage } from '../support/pages/organization-overview.page';
+import { OrganizationTodayPage } from '../support/pages/organization-today.page';
 import { PasswordResetVerifyPage } from '../support/pages/password-reset-verify.page';
 import { RegisterVerifyPage } from '../support/pages/register-verify.page';
 import { RegisterPage } from '../support/pages/register.page';
@@ -101,6 +101,21 @@ const PLANNED_START_AT = new Date(
   0,
 ).toISOString();
 
+/**
+ * Three days behind, so the landing page's overdue queue actually renders its
+ * "N days late" note. Relative to `NOW` for the same reason `PLANNED_START_AT`
+ * is: a fixed date would drift further past with every passing day and the
+ * capture would never read the same twice.
+ */
+const DUE_AT_LATE = new Date(
+  NOW.getFullYear(),
+  NOW.getMonth(),
+  NOW.getDate() - 3,
+  12,
+  0,
+  0,
+).toISOString();
+
 /** A handful of interventions spanning distinct board lanes for the list/board/calendar shots. */
 const INTERVENTIONS = [
   interventionOutput({
@@ -114,12 +129,14 @@ const INTERVENTIONS = [
     name: 'Planned audit',
     status: 'planned',
     plannedStartAt: PLANNED_START_AT,
+    dueAt: DUE_AT_LATE,
   }),
   interventionOutput({
     id: 'i-progress',
     name: 'Ongoing check',
     status: 'in_progress',
     plannedStartAt: PLANNED_START_AT,
+    dueAt: DUE_AT_LATE,
   }),
   interventionOutput({
     id: 'i-submitted',
@@ -1164,12 +1181,43 @@ const SCENARIOS: readonly Scenario[] = [
     run: async (page) => {
       const api = new ApiMock(page);
       await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
-      // Populates the dashboard body for the "before" reference capture:
-      // the aggregate payload (metrics, alerts, recent interventions), its
-      // five trend-card series, and the interventions collection the
-      // attention panel counts from (only `totalItems` — i.e. array length
-      // — is read, the same collection serves all four status/due-date
-      // query variants, per `OrganizationAttentionStore`).
+      // Populates the landing page: the aggregate payload feeds the alert
+      // strip (its metrics and trends now belong to the Statistics page), and
+      // the interventions collection feeds the work queues — one mock serves
+      // every status/due-date query variant, per `OrganizationTodayStore`.
+      await api.mockOrganizationDashboard(ORGANIZATION.id, dashboardOutput());
+      await api.mockInterventionList(INTERVENTIONS);
+      const today = new OrganizationTodayPage(page);
+      await today.goto(ORGANIZATION.id);
+      // Below the desktop breakpoint the shell URL-shape-matches the bare
+      // organization root to "still on the list pane" and keeps `main`
+      // hidden (see `workspace-channels.spec.ts`'s "opens the overview pane
+      // from the sidebar even though its path is empty"); tap the sidebar's
+      // own Today link to switch pane, exactly as a mobile member would.
+      if (!(await today.root.isVisible())) {
+        await page
+          .locator('app-organization-workspace-nav')
+          .getByRole('link', { name: 'Today' })
+          .click();
+      }
+      await expect(today.root).toBeVisible({ timeout: 15_000 });
+    },
+  },
+  {
+    area: 'organization',
+    name: 'members',
+    slug: 'organization-members',
+    run: organizationMembersRun,
+  },
+  {
+    area: 'organization',
+    name: 'statistics',
+    slug: 'organization-statistics',
+    run: async (page) => {
+      const api = new ApiMock(page);
+      await api.mockAuthenticatedSession({ organizations: [ORGANIZATION] });
+      // The inventory counts and the five trend series that used to sit on the
+      // landing page and now own their own destination.
       await api.mockOrganizationDashboard(ORGANIZATION.id, dashboardOutput());
       await api.mockOrganizationDashboardTrends(ORGANIZATION.id, {
         inspections: dashboardInspectionsTrend(),
@@ -1178,28 +1226,9 @@ const SCENARIOS: readonly Scenario[] = [
         equipmentCreated: dashboardEquipmentCreatedTrend(),
         facilitiesCreated: dashboardFacilitiesCreatedTrend(),
       });
-      await api.mockInterventionList(INTERVENTIONS);
-      const overview = new OrganizationOverviewPage(page);
-      await overview.goto(ORGANIZATION.id);
-      // Below the desktop breakpoint the shell URL-shape-matches the bare
-      // organization root to "still on the list pane" and keeps `main`
-      // hidden (see `workspace-channels.spec.ts`'s "opens the overview pane
-      // from the sidebar even though its path is empty"); tap the sidebar's
-      // own Dashboard link to switch pane, exactly as a mobile member would.
-      if (!(await overview.root.isVisible())) {
-        await page
-          .locator('app-organization-workspace-nav')
-          .getByRole('link', { name: 'Dashboard' })
-          .click();
-      }
-      await expect(overview.root).toBeVisible({ timeout: 15_000 });
+      await page.goto(`/organizations/${ORGANIZATION.id}/statistics`);
+      await expect(page.locator('#organization-statistics')).toBeVisible({ timeout: 15_000 });
     },
-  },
-  {
-    area: 'organization',
-    name: 'members',
-    slug: 'organization-members',
-    run: organizationMembersRun,
   },
   {
     area: 'organization',

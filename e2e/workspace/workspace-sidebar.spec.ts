@@ -44,7 +44,7 @@ test.describe('Workspace sidebar', () => {
     await expect(headings).toHaveText(['Operations', 'Assets', 'Administration']);
 
     const operations = nav.locator('ul[aria-labelledby="workspace-nav-group-operations"]');
-    await expect(operations.getByRole('link', { name: 'Dashboard' })).toBeVisible();
+    await expect(operations.getByRole('link', { name: 'Today' })).toBeVisible();
     await expect(operations.getByRole('link', { name: 'Interventions' })).toBeVisible();
     await expect(operations.getByRole('link', { name: 'Inspections' })).toBeVisible();
 

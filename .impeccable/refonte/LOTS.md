@@ -71,3 +71,50 @@ n'est pas perdu, il est déplacé là où il peut être conçu contre un besoin 
 - Une vraie pagination au-delà du plafond de 500 interventions (contrat backend).
 - Toute donnée fabriquée : clients, métriques d'usage, témoignages, conformité à
   une norme nationale (contrainte RNCP et PRODUCT.md).
+
+## Journal du lot 4 — écarts au plan, décidés au contact du code
+
+Le lot est livré en deux temps, séparés par un commit : la page **Statistiques**
+d'abord (les appels existants simplement déménagés), puis **Aujourd'hui**.
+
+**Ce qui a été livré au-delà de la lettre de l'arbitrage B1.** La quatrième file,
+« non synchronisées », ne pouvait pas venir du même magasin que les trois autres :
+elle se lit dans IndexedDB, pas dans la collection. Le magasin porte donc **deux
+`CallState` indépendants** plutôt qu'un `withQueryState` — une panne réseau ne doit
+pas effacer le travail local, qui est justement ce qu'on regarde quand le réseau
+manque. Une cinquième requête, « à venir », alimente le seul état « rien ne
+bloque » : elle donne le compte des interventions planifiées et la prochaine
+échéance, que la planche demandait sans dire d'où elles venaient.
+
+**Ce qui a été conservé contre la maquette.** Le flux d'alertes du backend
+(non-conformités critiques, invitations expirées, matériel en maintenance) n'apparaît
+pas dans la maquette de la piste B, qui ne montre que des interventions. Il est
+pourtant du travail en attente, et l'API n'en donne que des compteurs — donc pas de
+file possible. Il est rendu en bandeau « Aussi en attente » sous les files, une forme
+distincte pour une donnée de nature distincte. Le supprimer aurait perdu de
+l'information au nom d'une maquette.
+
+**Ce qui est reporté au lot 5, faute de destination.** La planche promet que chaque
+file soit « une porte vers la vue correspondante de F4 ». La liste des interventions
+n'a **aucun filtre par statut** aujourd'hui — c'est précisément ce que les vues de
+travail du lot 5 introduisent. Les quatre boutons « Tout voir » ouvrent donc la liste
+non filtrée, plutôt que de porter un paramètre d'URL que rien ne lit. Le lot 5 les
+branchera sur leur vue.
+
+**Ce qui a été ajouté chez le voisin.** L'action primaire « Nouvelle intervention »
+devait ouvrir la création, pas désigner l'endroit où elle se trouve. La liste des
+interventions accepte donc `?create=1`, consommé une fois puis effacé de l'URL. C'est
+un ajout de six lignes dans une page de F4, enregistré dans les deux `FEATURE.md`.
+
+**Réorganisation d'ownership au passage.** L'ancien composant `organization-dashboard`
+injectait trois magasins, résolvait les permissions et pilotait la navigation — du
+travail de page vivant dans un composant (§10.1). La page reprend l'orchestration ; ses
+enfants ne font plus que rendre.
+
+**Défauts trouvés et corrigés.** Le renommage de l'entrée de navigation
+`dashboard` → `today` a cassé deux choses que les tests ont attrapées : le garde
+d'atterrissage cherchait l'entrée par son ancien identifiant et redirigeait donc tout
+le monde, et la barre latérale marquait le lien d'accueil actif sur **toutes** les
+routes imbriquées (`[exact]` comparé au même ancien identifiant). Le mode de
+correspondance de l'entrée est passé à `any` : lire les interventions **ou** le tableau
+de bord suffit à mériter l'accueil.

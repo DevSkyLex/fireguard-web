@@ -107,8 +107,8 @@ describe('organizationLandingGuard', () => {
     expect(result).toBe(true);
     expect(mockPermissionService.canAccessOrganization).toHaveBeenCalledWith(
       'org-1',
-      [ORGANIZATION_PERMISSION.DASHBOARD_READ],
-      'all',
+      [ORGANIZATION_PERMISSION.INTERVENTIONS_READ, ORGANIZATION_PERMISSION.DASHBOARD_READ],
+      'any',
     );
   });
 

@@ -33,7 +33,7 @@ test.describe('Login', () => {
     await loginPage.login('e2e.user@fireguard.test', 'Sup3rSecret!');
 
     await expect(page).toHaveURL(/\/organizations\/e2e-org-1$/);
-    await expect(page.locator('#organization-overview')).toBeVisible();
+    await expect(page.locator('#organization-today')).toBeVisible();
     expect(api.loginCallCount).toBe(1);
   });
 

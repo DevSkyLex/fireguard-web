@@ -251,7 +251,7 @@ test.describe('Workspace channels', () => {
     // the list while the page renders into a hidden column.
     await page
       .locator('app-organization-workspace-nav')
-      .getByRole('link', { name: 'Dashboard' })
+      .getByRole('link', { name: 'Today' })
       .click();
 
     await expect(page).toHaveURL(`/organizations/${ORGANIZATION.id}`);

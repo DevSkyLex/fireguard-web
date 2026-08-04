@@ -29,8 +29,11 @@ This subfeature is responsible for:
   and RBAC capability) with a "Show abandoned" toggle for a 6th read-only
   column; Calendar reuses the existing bounded-window calendar. A header
   search box debounces into `?q=` and reloads the store with a server-side
-  `name` filter. The metric strip is gone from this page (`InterventionSummaryStore`
-  is unused here, kept for a future dashboard).
+  `name` filter. `?create=1` opens the guided creation drawer on arrival and is
+  consumed once, so the parent feature's landing page can offer "New
+  intervention" as a primary action that actually starts the work. The metric
+  strip is gone from this page (`InterventionSummaryStore` is unused here, kept
+  for a future dashboard).
 - `/organizations/:organizationId/interventions/:interventionId`
 
 ## State and Data Access
@@ -93,21 +96,37 @@ drags the IndexedDB/offline graph into every consumer's initial bundle. It publi
 
 - `provideInterventionsFeature` — bootstrap providers.
 - `withInterventionHeaderActions`, `withInterventionSyncChip` — workspace shell contributions.
-- `InterventionService` — the transport service, consumed by the parent feature's dashboard
-  attention panel (`OrganizationAttentionStore`) to count interventions awaiting review, sent
-  back for changes, or past their due date. Exported from its implementation path rather than
-  through `./data-access`, because that barrel also carries the offline services.
+- `InterventionService` — the transport service, consumed by the parent feature's landing page
+  (`OrganizationTodayStore`) to list the interventions each work queue holds. Exported from its
+  implementation path rather than through `./data-access`, because that barrel also carries the
+  offline services.
 
-Nothing else is published. Internal code imports deep paths directly.
+Nothing else is published from the root barrel. The parent feature additionally consumes three
+concern-level barrels, which are public surfaces in their own right (ARCHITECTURE.md §13.2):
+
+- `models` — `InterventionOutput`, the queue types, the status/priority unions.
+- `utils` — `buildInterventionQueueRequests`, the catalogue mapping a named question to the
+  collection queries answering it.
+- `data-access` — `InterventionOfflineService`, for the "waiting to sync" queue. This one does
+  pull the offline graph in, deliberately: the landing page must list local work, and the
+  workspace shell already mounts the sync chip, which injects the same service.
+- `ui/components` — `InterventionTag`, `InterventionPriorityIcon`, so a queue row renders status
+  and priority through this feature's own registry rather than a copied map.
+
+Internal code imports deep paths directly.
 
 ## Cross-Feature Dependencies
 
 - Depends on organization route context and permissions from the parent `features/organization`
   feature (`organizationPermissionGuard` from `@features/organization/http/guards`,
   `ORGANIZATION_PERMISSION` from `@features/organization/models`).
-- The parent feature consumes `InterventionService` through this feature's public API for the
-  dashboard attention panel (ARCHITECTURE.md §4). The counts are read-only `totalItems` probes
-  (`itemsPerPage=1`); no intervention state or workflow decision leaves this boundary.
+- The parent feature consumes this feature's public API for its landing page's work queues
+  (ARCHITECTURE.md §4): the root barrel's `InterventionService` plus the `models`, `utils`,
+  `data-access` and `ui/components` concern barrels listed above. Read-only — the parent lists
+  and counts interventions and reads the local outbox, but owns no intervention state and takes
+  no workflow decision.
+- `?create=1` on the index route is part of that contract: it is how the parent's landing page
+  starts an intervention without duplicating the creation drawer.
 - May reference facility, equipment, and inspection ids as linked counts on the workspace properties
   rail, but must not absorb ownership of those sibling organization subfeatures.
 

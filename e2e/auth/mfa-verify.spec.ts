@@ -34,7 +34,7 @@ test.describe('MFA verification', () => {
     await mfaPage.verify('123456');
 
     await expect(page).toHaveURL(/\/organizations\/e2e-org-1$/);
-    await expect(page.locator('#organization-overview')).toBeVisible();
+    await expect(page.locator('#organization-today')).toBeVisible();
   });
 
   test('shows an error and stays on the page for an invalid code', async ({ page }) => {

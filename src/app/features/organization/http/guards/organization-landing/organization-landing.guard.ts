@@ -47,8 +47,8 @@ function findRouteParam(route: ActivatedRouteSnapshot, name: string): string | n
  * Guard organizationLandingGuard
  *
  * @description
- * Allows the organization dashboard when available. Otherwise, redirects the
- * member to the first canonical organization destination they are permitted
+ * Allows the organization's landing page when available. Otherwise, redirects
+ * the member to the first canonical organization destination they are permitted
  * to access.
  *
  * **Waits for the target organization's access payload rather than assuming an
@@ -88,18 +88,18 @@ export const organizationLandingGuard: CanActivateFn = (
           item.match ?? 'all',
         );
 
-      const dashboard: OrganizationNavigationItem | undefined = ORGANIZATION_NAVIGATION_ITEMS.find(
-        (item: OrganizationNavigationItem): boolean => item.id === 'dashboard',
+      const landing: OrganizationNavigationItem | undefined = ORGANIZATION_NAVIGATION_ITEMS.find(
+        (item: OrganizationNavigationItem): boolean => item.id === 'today',
       );
 
-      if (dashboard && isAccessible(dashboard)) {
+      if (landing && isAccessible(landing)) {
         return true;
       }
 
       const destination: OrganizationNavigationItem | undefined =
         ORGANIZATION_NAVIGATION_ITEMS.find(
           (candidate: OrganizationNavigationItem): boolean =>
-            candidate.id !== 'dashboard' && isAccessible(candidate),
+            candidate.id !== 'today' && isAccessible(candidate),
         );
 
       // No permitted destination in this organization: let the

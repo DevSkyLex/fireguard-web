@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { organizationOutput } from '../support/fixtures/api-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
-import { OrganizationOverviewPage } from '../support/pages/organization-overview.page';
+import { OrganizationTodayPage } from '../support/pages/organization-today.page';
 
 /**
  * Authenticated root landing — `/`.
@@ -26,7 +26,7 @@ test.describe('Dashboard home', () => {
     // Fresh browser context: no last-organization cookie exists yet, so
     // `organizationGuard` falls back to the first organization of the list.
     await expect(page).toHaveURL(`/organizations/${organization.id}`);
-    await expect(new OrganizationOverviewPage(page).root).toBeVisible();
+    await expect(new OrganizationTodayPage(page).root).toBeVisible();
   });
 
   test('returns the user to the last organization they worked in', async ({ page }) => {
@@ -48,9 +48,9 @@ test.describe('Dashboard home', () => {
 
     // Working in the SECOND organization persists it as the default workspace
     // (the active-organization store writes the last-organization cookie).
-    const overviewPage = new OrganizationOverviewPage(page);
-    await overviewPage.goto(secondOrganization.id);
-    await expect(overviewPage.root).toBeVisible();
+    const todayPage = new OrganizationTodayPage(page);
+    await todayPage.goto(secondOrganization.id);
+    await expect(todayPage.root).toBeVisible();
 
     // A later visit to the root lands back on that organization, not the first.
     await page.goto('/');

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { organizationOutput } from '../support/fixtures/api-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
-import { OrganizationOverviewPage } from '../support/pages/organization-overview.page';
+import { OrganizationTodayPage } from '../support/pages/organization-today.page';
 
 /**
  * Organization detail access control — `/organizations/:organizationId/*`
@@ -23,11 +23,11 @@ test.describe('Organization access control', () => {
     await api.mockOrganizationDetail(organization);
     await api.mockOrganizationAccess(organization.id);
 
-    const overviewPage = new OrganizationOverviewPage(page);
-    await overviewPage.goto(organization.id);
+    const todayPage = new OrganizationTodayPage(page);
+    await todayPage.goto(organization.id);
 
     await expect(page).toHaveURL(`/organizations/${organization.id}`);
-    await expect(overviewPage.root).toBeVisible();
+    await expect(todayPage.root).toBeVisible();
   });
 
   test('redirects to the forbidden page when the only organization is inaccessible', async ({

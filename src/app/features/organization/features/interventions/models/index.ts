@@ -10,6 +10,7 @@ export type { InterventionIssueSeverity } from './intervention/intervention-issu
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';
 export type { InterventionQueue } from './intervention-queue/intervention-queue.interface';
 export type { InterventionQueueKey } from './intervention-queue/intervention-queue-key.type';
+export type { InterventionUnsyncedEntry } from './intervention-queue/intervention-unsynced-entry.interface';
 export type { InterventionOutput } from './intervention/intervention-output.interface';
 export type { InterventionPriority } from './intervention/intervention-priority.type';
 export type { InterventionStatus } from './intervention/intervention-status.type';

@@ -49,5 +49,10 @@ export function buildInterventionQueueRequests(
       // Without a member there is no "mine": answering with the whole
       // collection would be worse than answering with nothing.
       return memberIri ? [{ responsible: memberIri, order: { dueAt: 'asc' } }] : [];
+
+    case 'upcoming':
+      // The mirror of `overdue`: still planned, not yet due. It answers "what
+      // comes next" when nothing is waiting, so the nearest deadline is first.
+      return [{ status: 'planned', dueAtAfter: now, order: { dueAt: 'asc' } }];
   }
 }

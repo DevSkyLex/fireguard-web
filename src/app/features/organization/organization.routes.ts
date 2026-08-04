@@ -130,8 +130,8 @@ const ORGANIZATION_SCOPED_ROUTES: Routes = [
     path: '',
     canActivate: [organizationLandingGuard],
     loadComponent: () =>
-      import('./ui/pages/organization-overview/organization-overview.component').then(
-        (m) => m.OrganizationOverviewPage,
+      import('./ui/pages/organization-today/organization-today.component').then(
+        (m) => m.OrganizationTodayPage,
       ),
     title: organizationTitleResolver,
     data: {

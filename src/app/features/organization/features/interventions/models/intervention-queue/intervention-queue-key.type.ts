@@ -10,12 +10,18 @@
  * - `overdue` — planned or in progress, past the due date,
  * - `awaitingReview` — submitted, waiting for a reviewer,
  * - `changesRequested` — sent back by a reviewer,
- * - `mine` — the current member is the responsible agent.
+ * - `mine` — the current member is the responsible agent,
+ * - `upcoming` — planned and still ahead, nearest due date first.
  *
  * Unsynced work is deliberately absent: it is answered from the local outbox,
  * not from the collection.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export type InterventionQueueKey = 'overdue' | 'awaitingReview' | 'changesRequested' | 'mine';
+export type InterventionQueueKey =
+  | 'overdue'
+  | 'awaitingReview'
+  | 'changesRequested'
+  | 'mine'
+  | 'upcoming';

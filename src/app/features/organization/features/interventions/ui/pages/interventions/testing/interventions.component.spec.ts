@@ -27,7 +27,7 @@ type InterventionsPageHarness = {
   onItemDropped(event: { item: ItemViewModel; fromColumnId: string; toColumnId: string }): void;
   openCreate(): void;
   openCreateOnDay(day: Date): void;
-  create(values: InterventionCreateFormValues): void;
+  submitCreate(values: InterventionCreateFormValues): void;
   items(): readonly ItemViewModel[];
   listGroups(): readonly { id: string; items: readonly ItemViewModel[] }[];
   boardColumns(): readonly { id: string; items: readonly ItemViewModel[] }[];
@@ -286,7 +286,7 @@ describe('InterventionsPage', () => {
   });
 
   it('should route creation through the store with the trimmed name', () => {
-    build().create({
+    build().submitCreate({
       name: '  Roof check  ',
       type: 'inspection_campaign',
       priority: 'normal',

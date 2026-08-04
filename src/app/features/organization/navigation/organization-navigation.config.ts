@@ -162,12 +162,22 @@ export interface OrganizationNavigationItem {
  */
 export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigationItem> = [
   {
-    id: 'dashboard',
-    label: $localize`:@@org.nav.dashboard:Dashboard`,
-    icon: 'pi pi-chart-bar',
+    /**
+     * The organization's home. It shows work queues to whoever can read
+     * interventions and the alert strip to whoever can read the dashboard, so
+     * either permission earns the entry — the landing route itself is guarded
+     * by membership, not by a permission.
+     */
+    id: 'today',
+    label: $localize`:@@route.today:Today`,
+    icon: 'pi pi-inbox',
     path: '',
     group: 'operations',
-    permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
+    permissions: [
+      ORGANIZATION_PERMISSION.INTERVENTIONS_READ,
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+    ],
+    match: 'any',
   },
   /**
    * Intervention workspace entry for field preparation and publication flows.

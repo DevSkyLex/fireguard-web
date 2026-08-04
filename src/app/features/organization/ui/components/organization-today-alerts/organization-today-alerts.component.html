@@ -1,0 +1,101 @@
+@if (visible()) {
+  <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
+    <ng-template pTemplate="header">
+      <h2
+        i18n="@@org.today.alerts.title"
+        class="text-base font-semibold text-surface-900 dark:text-surface-0"
+      >
+        Also waiting
+      </h2>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      @if (hasError()) {
+        <div class="px-4 py-6">
+          <app-error-state
+            [dense]="true"
+            icon="pi-exclamation-triangle"
+            i18n-title="@@org.today.alerts.errorTitle"
+            title="Couldn't load the rest of what's waiting"
+          >
+            <p-button
+              i18n-label="@@org.today.alerts.retry"
+              label="Retry"
+              icon="pi pi-refresh"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (onClick)="retried.emit()"
+            />
+          </app-error-state>
+        </div>
+      } @else if (loading()) {
+        <div role="status">
+          <span class="sr-only" i18n="@@org.today.alerts.loading"
+            >Loading what else is waiting</span
+          >
+          @for (row of skeletonRows; track row) {
+            <div
+              class="flex min-h-11 items-center gap-3 border-t border-surface-200 px-4 py-2.5 first:border-t-0 dark:border-surface-800"
+            >
+              <p-skeleton width="1rem" height="1rem" borderRadius="999px" />
+              <p-skeleton width="12rem" height="0.875rem" />
+            </div>
+          }
+        </div>
+      } @else {
+        <ul>
+          @for (row of rows(); track row.id) {
+            <li class="border-t border-surface-200 first:border-t-0 dark:border-surface-800">
+              @if (row.navigable) {
+                <button
+                  type="button"
+                  class="flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
+                  (click)="selected.emit(row.id)"
+                >
+                  <i
+                    class="w-4 shrink-0 text-center text-sm"
+                    [class]="row.icon + ' ' + iconClass(row.severity)"
+                    aria-hidden="true"
+                  ></i>
+                  <span
+                    class="min-w-0 flex-1 truncate text-sm text-surface-900 dark:text-surface-0"
+                  >
+                    {{ row.label }}
+                  </span>
+                  <span
+                    class="shrink-0 text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-0"
+                  >
+                    {{ row.count }}
+                  </span>
+                  <i
+                    class="pi pi-chevron-right shrink-0 text-xs text-surface-400 dark:text-surface-500"
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              } @else {
+                <div class="flex min-h-11 w-full items-center gap-3 px-4 py-2.5">
+                  <i
+                    class="w-4 shrink-0 text-center text-sm"
+                    [class]="row.icon + ' ' + iconClass(row.severity)"
+                    aria-hidden="true"
+                  ></i>
+                  <span
+                    class="min-w-0 flex-1 truncate text-sm text-surface-900 dark:text-surface-0"
+                  >
+                    {{ row.label }}
+                  </span>
+                  <span
+                    class="shrink-0 text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-0"
+                  >
+                    {{ row.count }}
+                  </span>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </ng-template>
+  </p-card>
+}

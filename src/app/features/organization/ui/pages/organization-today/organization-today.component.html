@@ -1,0 +1,127 @@
+<div id="organization-today" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <app-page-header title="Today" i18n-title="@@org.today.pageTitle" [subtitle]="subtitle()">
+    @if (canCreateInterventions()) {
+      <div actions>
+        <p-button
+          label="New intervention"
+          i18n-label="@@org.today.newIntervention"
+          icon="pi pi-plus"
+          size="small"
+          styleClass="max-sm:min-h-11"
+          (onClick)="createIntervention()"
+        />
+      </div>
+    }
+  </app-page-header>
+
+  @if (hasQueueError()) {
+    <app-error-state
+      icon="pi-exclamation-triangle"
+      title="Couldn't load your work queues"
+      i18n-title="@@org.today.errorTitle"
+      description="The interventions waiting on you couldn't be fetched. Anything saved on this device is still listed below."
+      i18n-description="@@org.today.errorDescription"
+    >
+      <p-button
+        label="Retry"
+        i18n-label="@@org.today.retry"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        styleClass="max-sm:min-h-11"
+        (onClick)="retryQueues()"
+      />
+    </app-error-state>
+  }
+
+  @if (isAllClear()) {
+    <app-empty-state
+      icon="pi-check-circle"
+      title="Nothing is blocking"
+      i18n-title="@@org.today.allClearTitle"
+      description="No intervention is overdue, none is waiting for review, and everything on this device is synced."
+      i18n-description="@@org.today.allClearDescription"
+    >
+      @if (store.upcoming().total > 0) {
+        <p-button
+          [label]="upcomingLabel()"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          icon="pi pi-calendar"
+          styleClass="max-sm:min-h-11"
+          (onClick)="openInterventions()"
+        />
+      }
+    </app-empty-state>
+
+    @if (nextUpcoming(); as next) {
+      <p class="text-center text-sm text-surface-500 dark:text-surface-400">
+        <span i18n="@@org.today.nextDue">Next due</span>
+        <span class="ml-2 font-mono text-xs">FG-{{ next.number }}</span>
+        <span class="ml-2">{{ next.name }}</span>
+      </p>
+    }
+  } @else {
+    <div class="flex flex-col gap-6">
+      @if (canReadInterventions()) {
+        <app-organization-today-queue
+          label="Overdue"
+          i18n-label="@@org.today.overdue"
+          [total]="store.overdue().total"
+          [interventions]="store.overdue().items"
+          [notes]="overdueNotes()"
+          [loading]="store.isLoading()"
+          actionLabel="See all"
+          i18n-actionLabel="@@org.today.seeAll"
+          (opened)="openIntervention($event)"
+          (actioned)="openInterventions()"
+        />
+
+        <app-organization-today-queue
+          label="Sent back to you"
+          i18n-label="@@org.today.changesRequested"
+          [total]="store.changesRequested().total"
+          [interventions]="store.changesRequested().items"
+          [loading]="store.isLoading()"
+          actionLabel="See all"
+          i18n-actionLabel="@@org.today.seeAll"
+          (opened)="openIntervention($event)"
+          (actioned)="openInterventions()"
+        />
+
+        <app-organization-today-queue
+          label="Awaiting your review"
+          i18n-label="@@org.today.awaitingReview"
+          [total]="store.awaitingReview().total"
+          [interventions]="store.awaitingReview().items"
+          [loading]="store.isLoading()"
+          actionLabel="See all"
+          i18n-actionLabel="@@org.today.seeAll"
+          (opened)="openIntervention($event)"
+          (actioned)="openInterventions()"
+        />
+
+        <app-organization-today-queue
+          label="Waiting to sync"
+          i18n-label="@@org.today.unsynced"
+          [total]="unsynced().length"
+          [interventions]="unsynced()"
+          [notes]="unsyncedNotes()"
+          (opened)="openIntervention($event)"
+        />
+      }
+
+      @if (canReadDashboard()) {
+        <app-organization-today-alerts
+          [rows]="alertRows()"
+          [loading]="dashboard.isQueryLoading()"
+          [hasError]="dashboard.queryHasError()"
+          (selected)="openAlert($event)"
+          (retried)="retryAlerts()"
+        />
+      }
+    </div>
+  }
+</div>

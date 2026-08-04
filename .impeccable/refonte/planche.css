@@ -1,0 +1,709 @@
+/*
+ * planche.css — socle commun des planches de refonte (chantier UI-v2).
+ *
+ * Deux couches strictement séparées :
+ *   1. le CHROME de la planche (le document de décision : titres, prose,
+ *      annotations, matrices) — style documentaire neutre ;
+ *   2. les TOKENS de maquette (.mock) — la reproduction du monde « Field
+ *      Register » de DESIGN.md : rampe surface, indigo rationné, rôles typo.
+ *
+ * Le thème sombre est produit par les variables sous [data-theme="dark"]
+ * (posé sur <html> par le toggle de chaque planche) — jamais une seconde
+ * maquette. Fidélité structurelle, non contractuelle au pixel.
+ */
+
+/* ─────────────────────────── Reset minimal ─────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ─────────────────────── Variables — chrome planche ─────────────────── */
+
+:root {
+  /* Rampe neutre (Tailwind neutral, celle du preset). */
+  --n-0: #ffffff;
+  --n-50: #fafafa;
+  --n-100: #f5f5f5;
+  --n-200: #e5e5e5;
+  --n-300: #d4d4d4;
+  --n-400: #a3a3a3;
+  --n-500: #737373;
+  --n-600: #525252;
+  --n-700: #404040;
+  --n-800: #262626;
+  --n-900: #171717;
+  --n-950: #0a0a0a;
+
+  /* Accent (indigo — rationné : pistes B, recommandations, liens). */
+  --indigo: #4f46e5;
+  --indigo-soft: #eef2ff; /* indigo-50 */
+
+  /* Sévérités (vocabulaire 4 tons de l'app, pour drapeaux et étiquettes). */
+  --green: #16a34a;
+  --blue: #2563eb;
+  --amber: #d97706;
+  --red: #dc2626;
+  --amber-soft: #fffbeb;
+
+  /* Chrome documentaire. */
+  --paper: var(--n-50);
+  --card: var(--n-0);
+  --ink: var(--n-900);
+  --ink-strong: var(--n-950);
+  --ink-muted: var(--n-500);
+  --line: var(--n-200);
+
+  /* Tokens de maquette (thème clair). */
+  --m-bg: #ffffff;
+  --m-bg-subtle: #fafafa;
+  --m-bg-hover: #f5f5f5;
+  --m-border: #e5e5e5;
+  --m-border-strong: #d4d4d4;
+  --m-text: #171717;
+  --m-text-strong: #0a0a0a;
+  --m-text-muted: #737373;
+  --m-text-faint: #a3a3a3;
+  --m-primary: #4f46e5;
+  --m-primary-contrast: #ffffff;
+  --m-primary-soft: #eef2ff;
+  --m-green: #16a34a;
+  --m-green-soft: #f0fdf4;
+  --m-blue: #2563eb;
+  --m-blue-soft: #eff6ff;
+  --m-amber: #d97706;
+  --m-amber-soft: #fffbeb;
+  --m-red: #dc2626;
+  --m-red-soft: #fef2f2;
+
+  --radius-md: 6px;
+  --radius-xl: 12px;
+
+  --font-ui:
+    'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+  --font-mono:
+    'JetBrains Mono', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+}
+
+[data-theme='dark'] {
+  --paper: var(--n-950);
+  --card: var(--n-900);
+  --ink: var(--n-100);
+  --ink-strong: var(--n-0);
+  --ink-muted: var(--n-400);
+  --line: var(--n-800);
+  --indigo: #818cf8;
+  --indigo-soft: rgba(129, 140, 248, 0.14);
+  --amber-soft: rgba(217, 119, 6, 0.16);
+
+  /* Tokens de maquette (thème sombre — accent éclairci, cf. preset). */
+  --m-bg: #171717;
+  --m-bg-subtle: #262626;
+  --m-bg-hover: rgba(255, 255, 255, 0.05);
+  --m-border: #262626;
+  --m-border-strong: #404040;
+  --m-text: #f5f5f5;
+  --m-text-strong: #ffffff;
+  --m-text-muted: #a3a3a3;
+  --m-text-faint: #737373;
+  --m-primary: #818cf8;
+  --m-primary-contrast: #0a0a0a;
+  --m-primary-soft: rgba(129, 140, 248, 0.14);
+  --m-green: #4ade80;
+  --m-green-soft: rgba(34, 197, 94, 0.16);
+  --m-blue: #60a5fa;
+  --m-blue-soft: rgba(59, 130, 246, 0.16);
+  --m-amber: #fbbf24;
+  --m-amber-soft: rgba(217, 119, 6, 0.16);
+  --m-red: #f87171;
+  --m-red-soft: rgba(220, 38, 38, 0.16);
+}
+
+/* ─────────────────────────── Chrome — document ─────────────────────── */
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.planche {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 32px 96px;
+}
+
+.planche header.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 40px;
+}
+
+.planche h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--ink-strong);
+  margin: 0;
+}
+
+.planche h2 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ink-strong);
+  margin: 64px 0 12px;
+}
+
+.planche h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-strong);
+  margin: 36px 0 8px;
+}
+
+.planche p,
+.planche li {
+  max-width: 72ch;
+}
+
+.planche a {
+  color: var(--indigo);
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+code,
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 48px 0;
+}
+
+/* Bascule de thème (bouton posé par chaque planche). */
+.theme-toggle {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  border-color: var(--ink-muted);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+}
+
+/* ───────────────────── Étiquettes de piste & drapeaux ──────────────── */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.tag--a {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.tag--b {
+  background: var(--indigo);
+  color: #fff;
+}
+
+[data-theme='dark'] .tag--b {
+  color: #0a0a0a;
+}
+
+.tag--reco {
+  background: var(--indigo-soft);
+  color: var(--indigo);
+}
+
+.tag--api {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.tag--effort {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+}
+
+/* ───────────────────────── Grilles de comparaison ──────────────────── */
+
+.duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 28px;
+  align-items: start;
+}
+
+.stack {
+  display: grid;
+  gap: 28px;
+}
+
+.option {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+}
+
+.option > .option-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.option > .option-head strong {
+  font-size: 15px;
+  color: var(--ink-strong);
+}
+
+.option .rationale {
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin: 4px 0 16px;
+}
+
+/* ─────────────────────────── Cadres d'écran ────────────────────────── */
+
+.frame {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--m-bg);
+}
+
+.frame > .frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.frame > .frame-bar::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--n-300);
+  box-shadow:
+    14px 0 0 var(--n-300),
+    28px 0 0 var(--n-300);
+  margin-right: 24px;
+  flex: none;
+}
+
+.frame--mobile {
+  width: 375px;
+  max-width: 100%;
+  margin-inline: auto;
+  border-radius: var(--radius-xl);
+}
+
+.frame--mobile > .frame-bar::before {
+  display: none;
+}
+
+.frame .viewport {
+  overflow: auto;
+}
+
+/* Capture de l'existant (image) — même cadre, marquée. */
+.shot figcaption,
+.caption {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-top: 8px;
+}
+
+figure {
+  margin: 0;
+}
+
+/* ───────────────────────── Annotations épinglées ───────────────────── */
+
+.pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--indigo);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+  flex: none;
+}
+
+[data-theme='dark'] .pin {
+  color: #0a0a0a;
+}
+
+.pin--abs {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px var(--card);
+}
+
+.shot-annotated {
+  position: relative;
+}
+
+.legend {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.legend li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.legend .pin {
+  transform: translateY(3px);
+}
+
+/* ─────────────────────────── Wireframes (satellites B) ─────────────── */
+
+.wire {
+  border: 1.5px dashed var(--m-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--m-bg-subtle);
+  color: var(--m-text-muted);
+  font-size: 12px;
+  font-weight: 550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px;
+  min-height: 44px;
+}
+
+.wire--tall {
+  min-height: 120px;
+}
+
+.wire-grid {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: var(--m-bg);
+  border: 1px solid var(--m-border);
+  border-radius: var(--radius-md);
+}
+
+/* ───────────────────── Matrice de couverture & tables ──────────────── */
+
+table.matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+table.matrix th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+table.matrix td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+table.matrix tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ───────────────── Pied de maquette : mapping composants ───────────── */
+
+.map {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.map span::before {
+  content: '· ';
+  color: var(--line);
+}
+
+.disclaimer {
+  font-size: 12px;
+  color: var(--ink-muted);
+  border-top: 1px solid var(--line);
+  margin-top: 40px;
+  padding-top: 12px;
+}
+
+/* ══════════════════════ TOKENS DE MAQUETTE (.mock) ═══════════════════ */
+/* Tout ce qui est DANS un .mock reproduit le monde de l'app : rampe      */
+/* surface, indigo rationné, rôles typo de DESIGN.md. Les classes m-*     */
+/* sont le vocabulaire minimal ; chaque maquette compose au besoin.       */
+
+.mock {
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mock .m-h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--m-text-strong);
+  margin: 0;
+}
+
+.mock .m-h2 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--m-text-strong);
+  margin: 0;
+}
+
+.mock .m-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--m-text-strong);
+  margin: 0;
+}
+
+.mock .m-sub {
+  font-size: 14px;
+  color: var(--m-text-muted);
+}
+
+.mock .m-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--m-text-muted);
+}
+
+.mock .m-panel {
+  background: var(--m-bg);
+  border: 1px solid var(--m-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+[data-theme='dark'] .mock .m-panel {
+  background: var(--n-900);
+}
+
+.mock .m-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1;
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.mock .m-btn--primary {
+  background: var(--m-primary);
+  color: var(--m-primary-contrast);
+}
+
+.mock .m-btn--secondary {
+  background: transparent;
+  color: var(--m-text);
+  border-color: var(--m-border-strong);
+}
+
+.mock .m-btn--ghost {
+  background: transparent;
+  color: var(--m-text-muted);
+}
+
+.mock .m-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.mock .m-chip--green {
+  background: var(--m-green-soft);
+  color: var(--m-green);
+}
+
+.mock .m-chip--blue {
+  background: var(--m-blue-soft);
+  color: var(--m-blue);
+}
+
+.mock .m-chip--amber {
+  background: var(--m-amber-soft);
+  color: var(--m-amber);
+}
+
+.mock .m-chip--red {
+  background: var(--m-red-soft);
+  color: var(--m-red);
+}
+
+.mock .m-chip--neutral {
+  background: var(--m-bg-subtle);
+  color: var(--m-text-muted);
+  border: 1px solid var(--m-border);
+}
+
+.mock .m-count {
+  display: inline-block;
+  border-radius: 999px;
+  background: var(--m-bg-subtle);
+  border: 1px solid var(--m-border);
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--m-text-muted);
+}
+
+.mock .m-divider {
+  border: 0;
+  border-top: 1px solid var(--m-border);
+  margin: 0;
+}
+
+.mock .m-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--m-border);
+}
+
+.mock .m-row:hover {
+  background: var(--m-bg-hover);
+}
+
+.mock .m-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--m-primary-soft);
+  color: var(--m-primary);
+  font-size: 12px;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.mock .m-skeleton {
+  background: var(--m-bg-subtle);
+  border-radius: var(--radius-md);
+  min-height: 12px;
+}
+
+/* ─────────────────────────── Impression ────────────────────────────── */
+
+@media print {
+  .theme-toggle {
+    display: none;
+  }
+
+  .planche {
+    padding: 0;
+  }
+}

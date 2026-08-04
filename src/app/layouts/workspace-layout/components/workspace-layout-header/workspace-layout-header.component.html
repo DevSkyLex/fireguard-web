@@ -34,6 +34,11 @@
   heading, and stands down if so. `hidden` rather than a visual class: the
   point is to leave the accessibility tree, not just the screen. Done in CSS so
   it costs no shell/page coupling and survives SSR unchanged.
+
+  Since the uniformization pass, the usual supplier of that page-owned `h1` is
+  the shared `app-page-header` primitive (its scaffold nests the `h1` inside a
+  `div`, which this selector matches); collection pages that let their table
+  name the page still rely on this fallback.
 -->
 @if (items().at(-1); as current) {
   <h1 class="sr-only [main:has(div_h1)_&]:hidden">{{ current.label }}</h1>

@@ -7295,6 +7295,10 @@
         <source>Create on <x id="INTERPOLATION" equiv-text="{{ day.date | date: &apos;longDate&apos; }}"/></source>
         <target>Crear el <x id="INTERPOLATION"/></target>
       </trans-unit>
+      <trans-unit id="notifications.loadingMore" datatype="html">
+        <source>Loading more notifications…</source>
+        <target>Cargando más notificaciones…</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

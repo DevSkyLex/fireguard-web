@@ -16,6 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule, type SelectButtonChangeEvent } from 'primeng/selectbutton';
+import { SkeletonModule } from 'primeng/skeleton';
 import { forkJoin } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { OnboardingStore } from '@features/onboarding/state';
@@ -26,6 +27,8 @@ import type {
   PlanOutput,
   PlanPricingOutput,
 } from '@features/organization/models';
+import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
@@ -61,7 +64,7 @@ interface IntervalOption {
  */
 @Component({
   selector: 'app-select-plan-step',
-  imports: [ButtonModule, SelectButtonModule, FormsModule],
+  imports: [ButtonModule, EmptyState, ErrorState, FormsModule, SelectButtonModule, SkeletonModule],
   templateUrl: './select-plan-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

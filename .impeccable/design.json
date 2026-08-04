@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-04T01:31:40.803Z",
+  "generatedAt": "2026-08-04T01:37:51.743Z",
   "title": "Design System: FireGuard",
   "extensions": {
     "colorMeta": {
@@ -348,7 +348,7 @@
       },
       {
         "name": "The Heading Ink Rule",
-        "body": "The light/dark ink pair of every heading role is fixed — there is exactly one per role, and the four historical pairings collapse onto them: - page h1 (Headline): text-surface-950 dark:text-surface-0, - section h2 (Title) and card titles (Card Title): text-surface-900 dark:text-surface-0, - subtitles and descriptions: text-surface-500 dark:text-surface-400. dark:text-surface-50 and dark:text-surface-100 on a heading are drift: dark-mode strongest text is pure white (see Colors). The full canonical strings live in the Canonical Class Strings section.",
+        "body": "The light/dark ink pair of every heading role is fixed — there is exactly one per role, and the four historical pairings collapse onto them: - page h1 (Headline): text-surface-950 dark:text-surface-0, - section h2 (Title) and card titles (Card Title): text-surface-900 dark:text-surface-0, - subtitles and descriptions: text-surface-500 dark:text-surface-400. dark:text-surface-50 and dark:text-surface-100 on a heading are drift: dark-mode strongest text is pure white (see Colors). The full canonical strings live in the Canonical Class Strings section. Two adjacent roles are not headings and keep their own established inks — do not sweep them onto this rule: a form field <label> writes text-sm font-medium text-surface-900 dark:text-surface-50, and a table row's primary cell text writes font-semibold text-surface-950 dark:text-surface-50. Both are used consistently across every form and table in the app; their near-white (not pure-white) dark ink is what visually separates labels and row text from the headings above them.",
         "section": "design-system"
       },
       {
@@ -373,7 +373,7 @@
       },
       {
         "name": "The 6px Default Rule",
-        "body": "Unless the element is a pill, an avatar, or a large container, its radius is 6px. Do not introduce new radius values. The scale now has no outlier: the toast's 10px — the one value the system had to carve an exception for — moved onto the 12px large-container step it always belonged on. In utilities that means rounded-md: bare rounded and rounded-sm (both 4px) are drift, and rounded-border — the tailwindcss-primeui plugin utility mapping to var(--p-content-border-radius) — renders the same 6px but sits outside the project vocabulary; write rounded-md.",
+        "body": "Unless the element is a pill, an avatar, or a large container, its radius is 6px. Do not introduce new radius values. The scale now has no outlier: the toast's 10px — the one value the system had to carve an exception for — moved onto the 12px large-container step it always belonged on. In utilities that means rounded-md: bare rounded and rounded-sm (both 4px) are drift, and rounded-border — the tailwindcss-primeui plugin utility mapping to var(--p-content-border-radius) — renders the same 6px but sits outside the project vocabulary; write rounded-md. One proportional exception: a micro-element under 20px (the activity heatmap's 16px cells, the inline mention chip) keeps rounded-sm — 6px on a 16px box reads as a circle, not a corner.",
         "section": "design-system"
       },
       {

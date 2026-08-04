@@ -22,9 +22,7 @@
   }
 
   @if (errorMessage(); as message) {
-    <p class="text-sm text-red-600 dark:text-red-400" data-testid="chat-thread-error">
-      {{ message }}
-    </p>
+    <app-error-banner [message]="message" [retryable]="false" data-testid="chat-thread-error" />
   }
 
   @for (entry of entries(); track entry.kind === 'day' ? entry.day : entry.message.id) {

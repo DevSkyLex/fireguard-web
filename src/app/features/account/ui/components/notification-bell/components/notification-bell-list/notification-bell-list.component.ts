@@ -8,7 +8,6 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { NotificationOutput } from '@features/account/models';
 import { InfiniteScrollDirective } from '@shared/infinite-scroll';
@@ -30,7 +29,7 @@ import { NotificationBellItem } from '../notification-bell-item/notification-bel
  */
 @Component({
   selector: 'app-notification-bell-list',
-  imports: [SkeletonModule, ProgressSpinnerModule, InfiniteScrollDirective, NotificationBellItem],
+  imports: [SkeletonModule, InfiniteScrollDirective, NotificationBellItem],
   templateUrl: './notification-bell-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -144,6 +143,21 @@ export class NotificationBellList {
    * @type {readonly number[]}
    */
   protected readonly skeletonItems: readonly number[] = [1, 2, 3, 4, 5] as const;
+
+  /**
+   * Property loadingMoreSkeletonItems
+   * @readonly
+   *
+   * @description
+   * Static array used to repeat skeleton rows while an additional page of
+   * notifications is being fetched, mirroring the shape of a loaded row.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {readonly number[]}
+   */
+  protected readonly loadingMoreSkeletonItems: readonly number[] = [1, 2, 3] as const;
   //#endregion
 
   //#region Computed

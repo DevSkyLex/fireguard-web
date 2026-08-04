@@ -16,6 +16,14 @@ describe('Toast', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('renders the deck host with the CSS scoping class instead of ::ng-deep', () => {
+    const fixture = TestBed.createComponent(Toast);
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement;
+    expect(host.querySelector('p-toast.app-toast-deck')).toBeTruthy();
+  });
+
   it('renders a success message with a green status dot, the title and an a11y label', () => {
     const fixture = TestBed.createComponent(Toast);
     fixture.detectChanges();

@@ -7,6 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { Router, type UrlTree } from '@angular/router';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import type { OrganizationOutput } from '@features/organization/models';
 import {
@@ -40,7 +41,7 @@ import type { OrganizationRailTile } from './models';
  */
 @Component({
   selector: 'app-organization-rail',
-  imports: [TooltipModule],
+  imports: [SkeletonModule, TooltipModule],
   // `OrganizationStore` is component-scoped by design (no `providedIn: 'root'`),
   // so each consumer owns an instance tied to its own lifecycle — the
   // organization switcher does the same.

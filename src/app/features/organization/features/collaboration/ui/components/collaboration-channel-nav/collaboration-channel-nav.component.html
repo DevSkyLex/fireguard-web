@@ -109,14 +109,16 @@
       }
     } @else if (store.loadError() && channelRows().length === 0) {
       <li
-        class="flex flex-col items-start gap-1 px-2.5 py-2 text-sm text-red-600 dark:text-red-400"
+        class="flex flex-col items-start gap-1 px-2.5 py-2 text-sm"
         role="alert"
         data-testid="channel-nav-error"
       >
-        <span i18n="@@workspace.sidebar.channels.loadFailed">Channels could not be loaded.</span>
+        <span class="text-red-600 dark:text-red-400" i18n="@@workspace.sidebar.channels.loadFailed"
+          >Channels could not be loaded.</span
+        >
         <button
           type="button"
-          class="cursor-pointer rounded-md font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          class="cursor-pointer rounded-md font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           data-testid="channel-nav-retry"
           (click)="reload()"
         >

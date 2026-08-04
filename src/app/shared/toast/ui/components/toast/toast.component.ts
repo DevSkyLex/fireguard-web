@@ -4,6 +4,7 @@ import {
   Component,
   DestroyRef,
   PLATFORM_ID,
+  ViewEncapsulation,
   inject,
   signal,
   type WritableSignal,
@@ -47,6 +48,16 @@ const SEVERITY_TO_TAG: Readonly<Record<string, TagSeverity>> = {
  * Mounted once in the app shell. It is driven entirely by `MessageService`
  * (through the core `FeedbackService`); it owns no business state.
  *
+ * Uses `ViewEncapsulation.None`: the stacked-deck CSS (`toast.component.css`)
+ * must reach into `p-toast`/`p-toastitem`'s own internal DOM, which PrimeNG
+ * renders with `ViewEncapsulation.None` and therefore carries no Angular
+ * content-scoping attribute of its own. Angular's default emulated
+ * encapsulation cannot match unattributed descendant markup, and the
+ * `::ng-deep` combinator that used to bridge that gap is deprecated. With
+ * encapsulation off, the stylesheet is global CSS, so every selector is
+ * explicitly scoped under the `.app-toast-deck` marker class (set on
+ * `<p-toast>` in the template) instead of relying on Angular's scoping.
+ *
  * @example ```html
  * <app-toast />
  * ```
@@ -59,6 +70,7 @@ const SEVERITY_TO_TAG: Readonly<Record<string, TagSeverity>> = {
   imports: [NgClass, ToastModule],
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.css',
+  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Toast {

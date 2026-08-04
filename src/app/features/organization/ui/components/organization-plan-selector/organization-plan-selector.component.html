@@ -75,7 +75,7 @@
       <div class="flex w-full flex-col gap-2.5 sm:w-auto sm:items-end sm:text-right">
         @if (currentPriceLabel(); as price) {
           <p
-            class="text-2xl leading-none font-semibold tracking-[-0.03em] text-surface-950 tabular-nums dark:text-surface-0"
+            class="text-2xl leading-none font-semibold text-surface-950 tabular-nums dark:text-surface-0"
           >
             {{ price }}
             @if (currentPriceSuffix(); as suffix) {
@@ -123,7 +123,7 @@
       @for (option of intervalOptions; track option.value) {
         <button
           type="button"
-          class="inline-flex h-[30px] items-center gap-1.5 rounded px-3 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          class="inline-flex h-[30px] items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           [class]="
             interval() === option.value
               ? 'bg-surface-0 text-surface-950 dark:bg-surface-800 dark:text-surface-50'
@@ -201,9 +201,7 @@
           </div>
 
           <!-- Price -->
-          <p
-            class="text-2xl font-semibold tracking-[-0.03em] text-surface-950 tabular-nums dark:text-surface-0"
-          >
+          <p class="text-2xl font-semibold text-surface-950 tabular-nums dark:text-surface-0">
             @if (priceLabel(plan); as price) {
               {{ price }}
             } @else if (isPaidPlan(plan)) {

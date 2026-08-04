@@ -3,23 +3,16 @@
     <!-- Loading -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       @for (i of [0, 1, 2]; track i) {
-        <div
-          class="h-56 animate-pulse rounded-xl bg-surface-100 motion-reduce:animate-none dark:bg-surface-900"
-        ></div>
+        <p-skeleton height="14rem" borderRadius="0.75rem" />
       }
     </div>
   } @else if (catalogError()) {
     <!-- Error -->
-    <div
-      class="flex flex-col items-center gap-4 rounded-md border border-surface-200 p-10 text-center dark:border-surface-800"
+    <app-error-state
+      [dense]="true"
+      i18n-title="@@onboarding.plan.loadError"
+      title="We couldn't load the plans."
     >
-      <i
-        class="pi pi-exclamation-triangle text-2xl text-surface-500 dark:text-surface-400"
-        aria-hidden="true"
-      ></i>
-      <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@onboarding.plan.loadError">
-        We couldn't load the plans.
-      </p>
       <p-button
         label="Retry"
         i18n-label="@@org.team.retry"
@@ -29,7 +22,7 @@
         size="small"
         (onClick)="retryLoad()"
       />
-    </div>
+    </app-error-state>
   } @else {
     <!-- Cadence toggle -->
     <div class="flex justify-end">
@@ -113,10 +106,14 @@
         </article>
       } @empty {
         <div
-          class="col-span-full rounded-md border border-surface-200 p-10 text-center text-sm text-surface-500 dark:border-surface-800 dark:text-surface-400"
-          i18n="@@org.plan.empty"
+          class="col-span-full rounded-md border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
         >
-          No plans are available.
+          <app-empty-state
+            icon="pi-box"
+            i18n-title="@@org.plan.empty"
+            title="No plans are available."
+            [dense]="true"
+          />
         </div>
       }
     </div>

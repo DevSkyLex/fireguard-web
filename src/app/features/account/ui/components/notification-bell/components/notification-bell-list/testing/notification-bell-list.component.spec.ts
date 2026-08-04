@@ -97,18 +97,20 @@ describe('NotificationBellList', () => {
     expect(host.querySelector('app-notification-bell-item')).toBeNull();
   });
 
-  it('should show the loading-more spinner when loadingMore is true', () => {
+  it('should show the loading-more skeleton rows when loadingMore is true', () => {
     const fixture = createFixture({ notifications: [notification()], loadingMore: true });
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(host.querySelector('p-progressspinner')).toBeTruthy();
+    const status = host.querySelector('[role="status"]');
+    expect(status).toBeTruthy();
+    expect(status?.querySelectorAll('p-skeleton').length).toBeGreaterThan(0);
   });
 
-  it('should not show the loading-more spinner when loadingMore is false', () => {
+  it('should not show the loading-more skeleton rows when loadingMore is false', () => {
     const fixture = createFixture({ notifications: [notification()], loadingMore: false });
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(host.querySelector('p-progressspinner')).toBeNull();
+    expect(host.querySelector('[role="status"]')).toBeNull();
   });
 
   it('should render multiple notification rows in order', () => {

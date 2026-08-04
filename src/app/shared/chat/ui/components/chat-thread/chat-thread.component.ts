@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorBanner } from '@shared/error-state';
 import type {
   ChatEntry,
   ChatMessageContext,
@@ -70,7 +71,7 @@ const DEFAULT_SKELETON_ROWS: readonly number[] = [1, 2, 3, 4, 5, 6];
  */
 @Component({
   selector: 'app-chat-thread',
-  imports: [ChatMessage, DatePipe, EmptyState, SkeletonModule],
+  imports: [ChatMessage, DatePipe, EmptyState, ErrorBanner, SkeletonModule],
   templateUrl: './chat-thread.component.html',
   host: {
     class:

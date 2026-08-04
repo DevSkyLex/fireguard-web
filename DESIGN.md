@@ -229,6 +229,8 @@ The root stays at 16px so every rem-based utility resolves to its nominal value;
 
 `dark:text-surface-50` and `dark:text-surface-100` on a heading are drift: dark-mode strongest text is pure white (see Colors). The full canonical strings live in the Canonical Class Strings section.
 
+Two adjacent roles are **not** headings and keep their own established inks — do not sweep them onto this rule: a form field `<label>` writes `text-sm font-medium text-surface-900 dark:text-surface-50`, and a table row's primary cell text writes `font-semibold text-surface-950 dark:text-surface-50`. Both are used consistently across every form and table in the app; their near-white (not pure-white) dark ink is what visually separates labels and row text from the headings above them.
+
 ## Layout
 
 The app is a persistent shell, not a series of pages: a workspace layout composed of an icon rail, a secondary navigation column, the routed content area, and optional right-hand panel and header-action slots that features contribute into. Two other shells exist — a split layout (form beside a full-bleed showcase panel) for auth and onboarding, and a focused layout for errors and maintenance.
@@ -274,7 +276,7 @@ Borders are the system's structural line: 1px, `surface-200` in light and `surfa
 
 ### Named Rules
 
-**The 6px Default Rule.** Unless the element is a pill, an avatar, or a large container, its radius is 6px. Do not introduce new radius values. The scale now has **no outlier**: the toast's 10px — the one value the system had to carve an exception for — moved onto the 12px large-container step it always belonged on. In utilities that means `rounded-md`: bare `rounded` and `rounded-sm` (both 4px) are drift, and `rounded-border` — the tailwindcss-primeui plugin utility mapping to `var(--p-content-border-radius)` — renders the same 6px but sits outside the project vocabulary; write `rounded-md`.
+**The 6px Default Rule.** Unless the element is a pill, an avatar, or a large container, its radius is 6px. Do not introduce new radius values. The scale now has **no outlier**: the toast's 10px — the one value the system had to carve an exception for — moved onto the 12px large-container step it always belonged on. In utilities that means `rounded-md`: bare `rounded` and `rounded-sm` (both 4px) are drift, and `rounded-border` — the tailwindcss-primeui plugin utility mapping to `var(--p-content-border-radius)` — renders the same 6px but sits outside the project vocabulary; write `rounded-md`. One proportional exception: a **micro-element under 20px** (the activity heatmap's 16px cells, the inline mention chip) keeps `rounded-sm` — 6px on a 16px box reads as a circle, not a corner.
 
 ## Components
 

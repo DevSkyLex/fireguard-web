@@ -16,7 +16,7 @@ import type { AvatarPassThroughOptions } from 'primeng/avatar';
 export const COMPACT_AVATAR_PT: AvatarPassThroughOptions = {
   root: {
     class:
-      'size-5 text-[0.625rem] font-medium ring-2 ring-surface-0 bg-surface-100 text-surface-600 dark:ring-surface-950 dark:bg-surface-800 dark:text-surface-300',
+      'size-6 text-xs font-medium ring-2 ring-surface-0 bg-surface-100 text-surface-600 dark:ring-surface-950 dark:bg-surface-800 dark:text-surface-300',
   },
 };
 

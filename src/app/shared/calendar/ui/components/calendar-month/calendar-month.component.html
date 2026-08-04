@@ -44,7 +44,7 @@
           @for (event of visibleEvents(day); track event.id) {
             <button
               type="button"
-              class="w-full cursor-pointer overflow-hidden rounded border border-transparent text-left transition-colors duration-150 hover:border-current/40 focus-visible:border-current/60 motion-reduce:transition-none"
+              class="w-full cursor-pointer overflow-hidden rounded-md border border-transparent text-left transition-colors duration-150 hover:border-current/40 focus-visible:border-current/60 motion-reduce:transition-none"
               [class]="chipClass(event)"
               [attr.aria-label]="openLabel(event.title)"
               (click)="eventClick.emit(event)"

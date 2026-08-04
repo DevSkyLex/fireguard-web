@@ -9,10 +9,37 @@
  * these resting transforms on the host.
  *
  * Position: bottom-center on every viewport (desktop and mobile alike).
+ *
+ * SCOPING — why this file has no `:host` and no `::ng-deep`:
+ *
+ * `p-toast` and `p-toastitem` are PrimeNG components declared with
+ * `ViewEncapsulation.None` (see `node_modules/primeng/fesm2022/primeng-toast.mjs`):
+ * their own templates render with no Angular content-scoping attribute at all.
+ * Angular's default *emulated* encapsulation can only match elements created by
+ * THIS component's own template — it appends this component's scoping
+ * attribute to the tail of every selector, and an attribute PrimeNG's markup
+ * never carries can never match. `::ng-deep` used to be the escape hatch (it
+ * stripped that trailing attribute requirement), but it is a deprecated
+ * Angular API.
+ *
+ * `Toast` (this component) instead runs with `ViewEncapsulation.None` itself
+ * (see `toast.component.ts`), so this stylesheet is emitted as plain,
+ * unscoped global CSS with no attribute-based scoping at all — the same
+ * regime `p-toast`/`p-toastitem` already render under, which is exactly why a
+ * plain descendant/child selector can now reach their DOM directly. Because
+ * nothing is scoped by Angular any more, every selector below is scoped BY
+ * HAND instead, anchored on `.app-toast-deck` — a marker class this
+ * component sets directly on `<p-toast>` in `toast.component.html`
+ * (`<p-toast class="app-toast-deck" …>`). `p-toast` renders in place (it is
+ * not a CDK overlay / portal — verified in the PrimeNG source: it never
+ * appends to `document.body` and never re-parents its root element), so the
+ * marker class travels with it and every rule below stays scoped to this one
+ * toast outlet instead of leaking to any other `.p-toast` that might ever
+ * exist on the page.
  */
 
 /* Container: fixed bottom-center, deck of overlapping items. */
-:host ::ng-deep .p-toast.p-toast-bottom-center {
+.app-toast-deck.p-toast-bottom-center {
   bottom: 1.5rem;
   left: 50%;
   width: 20rem;
@@ -32,12 +59,12 @@
  * otherwise be covered by the overlay the toast renders into.
  */
 @media (max-width: 1023.98px) {
-  :host ::ng-deep .p-toast.p-toast-bottom-center {
+  .app-toast-deck.p-toast-bottom-center {
     bottom: 6rem;
   }
 }
 
-:host ::ng-deep .p-toast.p-toast-bottom-center > p-toastitem {
+.app-toast-deck.p-toast-bottom-center > p-toastitem {
   grid-area: 1 / 1;
   align-self: end;
   justify-self: stretch;
@@ -53,7 +80,7 @@
  * the only visible surface must be our own card, so the success/error/etc.
  * background, border and shadow are stripped (severity is carried by the dot).
  */
-:host ::ng-deep .p-toast .p-toast-message {
+.app-toast-deck .p-toast-message {
   margin: 0;
   padding: 0;
   background: transparent;
@@ -62,19 +89,19 @@
 }
 
 /* Collapsed deck: newest in front, older ones receding upward + scaled down. */
-:host ::ng-deep .p-toast-bottom-center > p-toastitem:nth-last-child(1) {
+.app-toast-deck.p-toast-bottom-center > p-toastitem:nth-last-child(1) {
   transform: translateY(0) scale(1);
   z-index: 40;
 }
-:host ::ng-deep .p-toast-bottom-center > p-toastitem:nth-last-child(2) {
+.app-toast-deck.p-toast-bottom-center > p-toastitem:nth-last-child(2) {
   transform: translateY(-0.85rem) scale(0.95);
   z-index: 30;
 }
-:host ::ng-deep .p-toast-bottom-center > p-toastitem:nth-last-child(3) {
+.app-toast-deck.p-toast-bottom-center > p-toastitem:nth-last-child(3) {
   transform: translateY(-1.65rem) scale(0.9);
   z-index: 20;
 }
-:host ::ng-deep .p-toast-bottom-center > p-toastitem:nth-last-child(n + 4) {
+.app-toast-deck.p-toast-bottom-center > p-toastitem:nth-last-child(n + 4) {
   transform: translateY(-2.3rem) scale(0.86);
   opacity: 0;
   pointer-events: none;
@@ -82,25 +109,25 @@
 }
 
 /* Hover fans the deck out into a readable, full-size vertical column. */
-:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem {
+.app-toast-deck.p-toast-bottom-center:hover > p-toastitem {
   opacity: 1;
   pointer-events: auto;
 }
-:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem:nth-last-child(1) {
+.app-toast-deck.p-toast-bottom-center:hover > p-toastitem:nth-last-child(1) {
   transform: translateY(0) scale(1);
 }
-:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem:nth-last-child(2) {
+.app-toast-deck.p-toast-bottom-center:hover > p-toastitem:nth-last-child(2) {
   transform: translateY(-4.75rem) scale(1);
 }
-:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem:nth-last-child(3) {
+.app-toast-deck.p-toast-bottom-center:hover > p-toastitem:nth-last-child(3) {
   transform: translateY(-9.5rem) scale(1);
 }
-:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem:nth-last-child(n + 4) {
+.app-toast-deck.p-toast-bottom-center:hover > p-toastitem:nth-last-child(n + 4) {
   transform: translateY(-14.25rem) scale(1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :host ::ng-deep .p-toast.p-toast-bottom-center > p-toastitem {
+  .app-toast-deck.p-toast-bottom-center > p-toastitem {
     transition: none;
   }
 }

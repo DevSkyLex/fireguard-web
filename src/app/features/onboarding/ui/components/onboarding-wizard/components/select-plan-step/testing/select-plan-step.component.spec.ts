@@ -193,7 +193,7 @@ describe('SelectPlanStep', () => {
     fixture.detectChanges();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(host.querySelector('.animate-pulse')).toBeTruthy();
+    expect(host.querySelector('p-skeleton')).toBeTruthy();
   });
 
   it('renders the plan cards once the catalog loads', () => {

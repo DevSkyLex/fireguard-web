@@ -144,6 +144,21 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         },
       },
     },
+    skeleton: {
+      css: `
+/*
+ * PrimeNG's skeleton shimmer (the ::after sweep) ships with no
+ * prefers-reduced-motion guard. Every hand-rolled loop in the app is
+ * guarded (motion-reduce:animate-none); this closes the same gap once for
+ * all ~200 p-skeleton call sites instead of per-call-site classes.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .p-skeleton::after {
+    animation: none;
+  }
+}
+`,
+    },
     card: {
       colorScheme: {
         light: {

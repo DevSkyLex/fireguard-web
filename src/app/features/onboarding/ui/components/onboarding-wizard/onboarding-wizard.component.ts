@@ -12,6 +12,7 @@ import {
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import type { MessagePassThroughOptions } from 'primeng/types/message';
 import { ONBOARDING_STEP_PRESENTATION } from '@features/onboarding/constants';
@@ -60,7 +61,7 @@ type WizardPhase = 'loading' | 'welcome' | 'steps' | 'completion';
  */
 @Component({
   selector: 'app-onboarding-wizard',
-  imports: [NgComponentOutlet, MessageModule, ButtonModule, TagModule],
+  imports: [NgComponentOutlet, MessageModule, ButtonModule, SkeletonModule, TagModule],
   templateUrl: './onboarding-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

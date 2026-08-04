@@ -45,9 +45,19 @@
 
     <!-- Loading more indicator -->
     @if (loadingMore()) {
-      <div class="flex justify-center py-3">
-        <p-progressSpinner [style]="{ width: '1.5rem', height: '1.5rem' }" strokeWidth="4" />
-      </div>
+      <ul class="flex flex-col divide-y divide-surface-100 dark:divide-surface-800" role="status">
+        <span class="sr-only" i18n="@@notifications.loadingMore">Loading more notifications…</span>
+        @for (item of loadingMoreSkeletonItems; track item) {
+          <li class="flex gap-3 px-4 py-3" aria-hidden="true">
+            <p-skeleton shape="circle" size="1.75rem" class="shrink-0" />
+            <div class="flex flex-1 flex-col gap-1.5">
+              <p-skeleton width="65%" height="0.875rem" />
+              <p-skeleton width="100%" height="0.75rem" />
+              <p-skeleton width="40%" height="0.75rem" />
+            </div>
+          </li>
+        }
+      </ul>
     }
 
     <!-- Infinite scroll sentinel -->

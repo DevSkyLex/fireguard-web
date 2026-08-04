@@ -6,6 +6,7 @@ export {
   type InterventionDiscoveryResourcePlan,
   type InterventionFieldDiscovery,
 } from './intervention-field-execution';
+export { InterventionListPreferencesService } from './intervention-list-preferences';
 export { InterventionOfflineLifecycleService } from './intervention-offline-lifecycle';
 export { InterventionPhotoCompressorService } from './intervention-photo-compressor';
 export { InterventionPwaUpdateService } from './intervention-pwa-update';

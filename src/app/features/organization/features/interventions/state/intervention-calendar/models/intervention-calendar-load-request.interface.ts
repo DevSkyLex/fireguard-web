@@ -1,3 +1,4 @@
+import type { InterventionCalendarFilters } from '@features/organization/features/interventions/models';
 import type { InterventionCalendarWindow } from './intervention-calendar-window.interface';
 
 /**
@@ -16,4 +17,10 @@ export interface InterventionCalendarLoadRequest {
 
   /** Inclusive date window to fetch interventions for. */
   readonly window: InterventionCalendarWindow;
+
+  /**
+   * Non-date narrowing applied to the window, so the calendar shows the same
+   * subset the list and board show.
+   */
+  readonly filters?: InterventionCalendarFilters;
 }

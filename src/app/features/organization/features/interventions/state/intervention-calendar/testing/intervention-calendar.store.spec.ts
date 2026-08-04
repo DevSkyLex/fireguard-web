@@ -44,10 +44,24 @@ describe('InterventionCalendarStore', () => {
     store.load({ organizationId: 'org-1', window: WINDOW });
     await flush();
 
-    expect(service.listCalendarWindow).toHaveBeenCalledWith('org-1', WINDOW.after, WINDOW.before);
+    expect(service.listCalendarWindow).toHaveBeenCalledWith(
+      'org-1',
+      WINDOW.after,
+      WINDOW.before,
+      undefined,
+    );
     expect(store.interventions().map((intervention) => intervention.id)).toEqual(['a', 'b']);
     expect(store.currentMemberIri()).toBe('/api/organizations/org-1/members/m1');
     expect(store.loading()).toBe(false);
+  });
+
+  it('should forward the non-date narrowing so the calendar shows the same subset as the list', async () => {
+    store.load({ organizationId: 'org-1', window: WINDOW, filters: { status: 'planned' } });
+    await flush();
+
+    expect(service.listCalendarWindow).toHaveBeenCalledWith('org-1', WINDOW.after, WINDOW.before, {
+      status: 'planned',
+    });
   });
 
   it('should reuse the resolved member IRI across window refetches of the same org', async () => {

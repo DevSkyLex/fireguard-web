@@ -4750,9 +4750,85 @@
         <source>Search interventions...</source>
         <target>Buscar intervenciones...</target>
       </trans-unit>
-      <trans-unit id="intervention.list.count" datatype="html">
-        <source>{VAR_PLURAL, plural, =1 {1 intervention} other {<x id="INTERPOLATION"/> interventions}}</source>
-        <target>{VAR_PLURAL, plural, =1 {1 intervención} other {<x id="INTERPOLATION"/> intervenciones}}</target>
+      <trans-unit id="intervention.list.countOne" datatype="html">
+        <source>1 intervention</source>
+        <target>1 intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.countMany" datatype="html">
+        <source><x id="count" equiv-text="total"/> interventions</source>
+        <target><x id="count" equiv-text="total"/> intervenciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.countOverdueOne" datatype="html">
+        <source><x id="counted" equiv-text="counted"/> · 1 overdue</source>
+        <target><x id="counted" equiv-text="counted"/> · 1 vencida</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.countOverdueMany" datatype="html">
+        <source><x id="counted" equiv-text="counted"/> · <x id="overdue" equiv-text="overdue"/> overdue</source>
+        <target><x id="counted" equiv-text="counted"/> · <x id="overdue" equiv-text="overdue"/> vencidas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterAny" datatype="html">
+        <source>Any</source>
+        <target>Cualquiera</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterType" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterSite" datatype="html">
+        <source>Site</source>
+        <target>Sitio</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterResponsible" datatype="html">
+        <source>Responsible</source>
+        <target>Responsable</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterDue" datatype="html">
+        <source>Deadline</source>
+        <target>Fecha límite</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.dueOverdue" datatype="html">
+        <source>Already overdue</source>
+        <target>Ya vencidas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.dueToday" datatype="html">
+        <source>Due today</source>
+        <target>Vencen hoy</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.dueWeek" datatype="html">
+        <source>Due within 7 days</source>
+        <target>Vencen en 7 días</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.dueMonth" datatype="html">
+        <source>Due within 30 days</source>
+        <target>Vencen en 30 días</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortDueAt" datatype="html">
+        <source>Due date</source>
+        <target>Fecha límite</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortCreatedAt" datatype="html">
+        <source>Creation date</source>
+        <target>Fecha de creación</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortPriority" datatype="html">
+        <source>Priority</source>
+        <target>Prioridad</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortAscending" datatype="html">
+        <source>Ascending</source>
+        <target>Ascendente</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortDescending" datatype="html">
+        <source>Descending</source>
+        <target>Descendente</target>
       </trans-unit>
       <trans-unit id="intervention.list.newButton" datatype="html">
         <source>New intervention</source>

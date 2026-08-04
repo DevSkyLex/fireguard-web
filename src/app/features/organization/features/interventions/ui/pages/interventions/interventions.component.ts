@@ -11,6 +11,7 @@ import {
   signal,
   type Signal,
   untracked,
+  viewChild,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,6 +25,8 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PanelModule, type PanelPassThroughOptions } from 'primeng/panel';
+import { Popover, PopoverModule } from 'primeng/popover';
+import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
@@ -35,12 +38,20 @@ import {
 } from '@features/organization/features/interventions/constants';
 import {
   resolveInterventionTag,
+  type InterventionCalendarFilters,
+  type InterventionDueWindow,
+  type InterventionListFilters,
+  type InterventionListOptions,
+  type InterventionListSort,
   type InterventionOutput,
+  type InterventionSortField,
   type InterventionStatus,
+  type InterventionType,
   type MemberAvatar,
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
+import { InterventionListPreferencesService } from '@features/organization/features/interventions/services';
 import {
   InterventionStore,
   type InterventionStoreType,
@@ -79,7 +90,15 @@ import {
 import { EmptyState } from '@shared/empty-state';
 import { ErrorBanner } from '@shared/error-state';
 import { deriveInitials } from '@shared/initials';
+import { PageHeader } from '@shared/page-header';
 import { tagSeverityDotClass } from '@shared/tag-severity';
+import {
+  INTERVENTION_DUE_WINDOW_OPTIONS,
+  INTERVENTION_SORT_OPTIONS,
+  INTERVENTION_STATUS_FILTER_OPTIONS,
+  INTERVENTION_TYPE_FILTER_OPTIONS,
+} from './options';
+import { buildInterventionListOptions, countActiveFilters } from './utils';
 
 /**
  * Default hour (local) pre-filled as the planned start when an intervention is
@@ -171,9 +190,12 @@ interface InterventionListItemViewModel {
     InterventionPriorityIcon,
     InterventionTag,
     MessageModule,
+    PageHeader,
     PanelModule,
+    PopoverModule,
     ReactiveFormsModule,
     SelectButtonModule,
+    SelectModule,
     SkeletonModule,
     TooltipModule,
   ],
@@ -311,6 +333,23 @@ export class InterventionsPage {
    */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
+
+  /**
+   * Property preferences
+   * @readonly
+   *
+   * @description
+   * Feature service remembering how the operator left the list: sort order,
+   * folded sections, and whether abandoned work was showing. Declared before
+   * the signals it seeds, because field initializers run in order.
+   *
+   * @access private
+   * @since 6.0.0
+   *
+   * @type {InterventionListPreferencesService}
+   */
+  private readonly preferences: InterventionListPreferencesService =
+    inject<InterventionListPreferencesService>(InterventionListPreferencesService);
 
   /**
    * Input view
@@ -460,6 +499,34 @@ export class InterventionsPage {
   protected readonly hideAbandonedLabel: string = $localize`:@@intervention.board.hideAbandoned:Hide abandoned`;
 
   /**
+   * Property sortAscendingLabel
+   * @readonly
+   *
+   * @description
+   * Label of the direction toggle while the ordering runs ascending.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {string}
+   */
+  protected readonly sortAscendingLabel: string = $localize`:@@intervention.list.sortAscending:Ascending`;
+
+  /**
+   * Property sortDescendingLabel
+   * @readonly
+   *
+   * @description
+   * Label of the direction toggle while the ordering runs descending.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {string}
+   */
+  protected readonly sortDescendingLabel: string = $localize`:@@intervention.list.sortDescending:Descending`;
+
+  /**
    * Property searchControl
    * @readonly
    *
@@ -488,7 +555,139 @@ export class InterventionsPage {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly showAbandoned: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly showAbandoned: WritableSignal<boolean> = signal<boolean>(
+    this.preferences.readShowAbandoned(),
+  );
+
+  /**
+   * Property filters
+   * @readonly
+   *
+   * @description
+   * The narrowing in force. Every field maps to a query parameter the API
+   * already accepted and the page never sent.
+   *
+   * Not persisted: a filter is a question asked now, unlike the sort order and
+   * the fold state, which are how the operator likes to read the list.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {WritableSignal<InterventionListFilters>}
+   */
+  protected readonly filters: WritableSignal<InterventionListFilters> =
+    signal<InterventionListFilters>({
+      status: null,
+      type: null,
+      site: null,
+      responsible: null,
+      dueWindow: null,
+    });
+
+  /**
+   * Property sortOrder
+   * @readonly
+   *
+   * @description
+   * The ordering in force, restored from the last session. The page used to
+   * hard-code `createdAt` descending with no control over it.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {WritableSignal<InterventionListSort>}
+   */
+  protected readonly sortOrder: WritableSignal<InterventionListSort> = signal<InterventionListSort>(
+    this.preferences.readSort(),
+  );
+
+  /**
+   * Property statusOptions
+   * @readonly
+   *
+   * @description
+   * Status choices for the filter surface, labelled from the tag registry.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {SelectOption<InterventionStatus>[]}
+   */
+  protected readonly statusOptions: SelectOption<InterventionStatus>[] =
+    INTERVENTION_STATUS_FILTER_OPTIONS;
+
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Workflow-type choices for the filter surface.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {SelectOption<InterventionType>[]}
+   */
+  protected readonly typeOptions: SelectOption<InterventionType>[] =
+    INTERVENTION_TYPE_FILTER_OPTIONS;
+
+  /**
+   * Property dueWindowOptions
+   * @readonly
+   *
+   * @description
+   * Named due-date windows for the filter surface.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {SelectOption<InterventionDueWindow>[]}
+   */
+  protected readonly dueWindowOptions: SelectOption<InterventionDueWindow>[] =
+    INTERVENTION_DUE_WINDOW_OPTIONS;
+
+  /**
+   * Property sortOptions
+   * @readonly
+   *
+   * @description
+   * Orderings offered by the sort control.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {SelectOption<InterventionSortField>[]}
+   */
+  protected readonly sortOptions: SelectOption<InterventionSortField>[] = INTERVENTION_SORT_OPTIONS;
+
+  /**
+   * Property filterPopover
+   * @readonly
+   *
+   * @description
+   * The filter surface, anchored to the toolbar's "Filters" button — the same
+   * shape the three neighbouring collection pages already use.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<Popover>}
+   */
+  protected readonly filterPopover: Signal<Popover> = viewChild.required<Popover>('filterPopover');
+
+  /**
+   * Property sortPopover
+   * @readonly
+   *
+   * @description
+   * The ordering surface, anchored to the toolbar's sort button.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<Popover>}
+   */
+  protected readonly sortPopover: Signal<Popover> = viewChild.required<Popover>('sortPopover');
 
   /**
    * Property createDrawerVisible
@@ -672,6 +871,181 @@ export class InterventionsPage {
   );
 
   /**
+   * Property visibleItems
+   * @readonly
+   *
+   * @description
+   * The rows every render draws from, with abandoned work included only when
+   * the operator asked for it.
+   *
+   * One gate for three renders: "Show abandoned" used to exist on the Board
+   * alone, so the same dataset read three different ways depending on which
+   * tab was open.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<readonly InterventionListItemViewModel[]>}
+   */
+  protected readonly visibleItems: Signal<readonly InterventionListItemViewModel[]> = computed(() =>
+    this.showAbandoned()
+      ? this.items()
+      : this.items().filter((item) => item.intervention.status !== 'abandoned'),
+  );
+
+  /**
+   * Property overdueCount
+   * @readonly
+   *
+   * @description
+   * How many of the loaded interventions are past their due date, for the
+   * page subtitle.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<number>}
+   */
+  /**
+   * Property calendarFilters
+   * @readonly
+   *
+   * @description
+   * The narrowing the calendar can honour. The due-date window is left out on
+   * purpose: the calendar's visible month already is its date filter, and a
+   * second bound would fight it.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<InterventionCalendarFilters>}
+   */
+  protected readonly calendarFilters: Signal<InterventionCalendarFilters> =
+    computed<InterventionCalendarFilters>(() => {
+      const active: InterventionListFilters = this.filters();
+      const narrowing: {
+        -readonly [Key in keyof InterventionCalendarFilters]: InterventionCalendarFilters[Key];
+      } = {};
+
+      if (active.status) narrowing.status = active.status;
+      if (active.type) narrowing.type = active.type;
+      if (active.site) narrowing.site = active.site;
+      if (active.responsible) narrowing.responsible = active.responsible;
+
+      return narrowing;
+    });
+
+  /**
+   * Property calendarInterventions
+   * @readonly
+   *
+   * @description
+   * What the calendar draws, with abandoned work included only when the
+   * operator asked for it — the same gate the list and board apply.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<readonly InterventionOutput[]>}
+   */
+  protected readonly calendarInterventions: Signal<readonly InterventionOutput[]> = computed<
+    readonly InterventionOutput[]
+  >(() =>
+    this.showAbandoned()
+      ? this.calendarStore.interventions()
+      : this.calendarStore
+          .interventions()
+          .filter((intervention) => intervention.status !== 'abandoned'),
+  );
+
+  protected readonly overdueCount: Signal<number> = computed<number>(
+    () => this.visibleItems().filter((item) => item.isOverdue).length,
+  );
+
+  /**
+   * Property subtitle
+   * @readonly
+   *
+   * @description
+   * Sizes the list in one sentence, and says how much of it is late. Replaces
+   * the bare count that was hidden below `lg` — the width at which it was
+   * needed most.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly subtitle: Signal<string> = computed<string>(() => {
+    const total: number = this.loadedCount();
+    const overdue: number = this.overdueCount();
+
+    const counted: string =
+      total === 1
+        ? $localize`:@@intervention.list.countOne:1 intervention`
+        : $localize`:@@intervention.list.countMany:${total}:count: interventions`;
+
+    if (overdue === 0) return counted;
+
+    return overdue === 1
+      ? $localize`:@@intervention.list.countOverdueOne:${counted}:counted: · 1 overdue`
+      : $localize`:@@intervention.list.countOverdueMany:${counted}:counted: · ${overdue}:overdue: overdue`;
+  });
+
+  /**
+   * Property activeFilterCount
+   * @readonly
+   *
+   * @description
+   * How many narrowings are in force, for the badge on the filters button.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly activeFilterCount: Signal<number> = computed<number>(() =>
+    countActiveFilters(this.filters()),
+  );
+
+  /**
+   * Property filterBadge
+   * @readonly
+   *
+   * @description
+   * The badge value PrimeNG renders on the filters button — empty when nothing
+   * is filtered, since `p-button` draws a dot for any non-empty string.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly filterBadge: Signal<string> = computed<string>(() => {
+    const count: number = this.activeFilterCount();
+
+    return count > 0 ? String(count) : '';
+  });
+
+  /**
+   * Property sortLabel
+   * @readonly
+   *
+   * @description
+   * Label of the active ordering, shown on the sort control.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly sortLabel: Signal<string> = computed<string>(() => {
+    const field: InterventionSortField = this.sortOrder().field;
+
+    return this.sortOptions.find((option) => option.value === field)?.label ?? field;
+  });
+
+  /**
    * Property listGroups
    * @readonly
    *
@@ -686,7 +1060,7 @@ export class InterventionsPage {
    */
   protected readonly listGroups: Signal<readonly BoardColumn<InterventionListItemViewModel>[]> =
     computed(() => {
-      const items: readonly InterventionListItemViewModel[] = this.items();
+      const items: readonly InterventionListItemViewModel[] = this.visibleItems();
       return LIST_STATUS_ORDER.map(
         (status): BoardColumn<InterventionListItemViewModel> => ({
           id: status,
@@ -711,7 +1085,7 @@ export class InterventionsPage {
    */
   protected readonly boardColumns: Signal<readonly BoardColumn<InterventionListItemViewModel>[]> =
     computed(() => {
-      const items: readonly InterventionListItemViewModel[] = this.items();
+      const items: readonly InterventionListItemViewModel[] = this.visibleItems();
       const byStatus = (status: InterventionStatus): InterventionListItemViewModel[] =>
         items.filter((item) => item.intervention.status === status);
 
@@ -821,7 +1195,7 @@ export class InterventionsPage {
    */
   private readonly collapsedGroups: WritableSignal<ReadonlySet<string>> = signal<
     ReadonlySet<string>
-  >(new Set<string>(['published', 'abandoned']));
+  >(this.preferences.readCollapsedGroups());
 
   /**
    * Property lastCalendarWindowKey
@@ -910,9 +1284,14 @@ export class InterventionsPage {
 
     effect(() => {
       const organizationId: string = this.organizationId();
-      const name: string = this.q().trim();
+      const options: InterventionListOptions = buildInterventionListOptions(
+        this.filters(),
+        this.sortOrder(),
+        this.q().trim(),
+        new Date(),
+      );
 
-      this.store.load({ organizationId, options: name ? { name } : undefined });
+      this.store.load({ organizationId, options });
     });
 
     effect(() => {
@@ -929,11 +1308,16 @@ export class InterventionsPage {
       const focused: Date = this.calendarFocusedDate();
       if (!isCalendarActive) return;
 
-      const key = `${organizationId ?? ''}:${focused.getFullYear()}-${focused.getMonth()}`;
+      const filters: InterventionCalendarFilters = this.calendarFilters();
+      const key = `${organizationId ?? ''}:${focused.getFullYear()}-${focused.getMonth()}:${JSON.stringify(filters)}`;
       if (key === this.lastCalendarWindowKey) return;
 
       this.lastCalendarWindowKey = key;
-      this.calendarStore.load({ organizationId, window: this.calendarWindowFor(focused) });
+      this.calendarStore.load({
+        organizationId,
+        window: this.calendarWindowFor(focused),
+        filters,
+      });
     });
 
     effect(() => {
@@ -1443,6 +1827,159 @@ export class InterventionsPage {
       next.delete(groupId);
     }
     this.collapsedGroups.set(next);
+    this.persistPreferences();
+  }
+
+  /**
+   * Method toggleAbandoned
+   * @method toggleAbandoned
+   *
+   * @description
+   * Shows or hides abandoned interventions, in every render rather than the
+   * board alone, and remembers the choice.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @returns {void}
+   */
+  protected toggleAbandoned(): void {
+    this.showAbandoned.set(!this.showAbandoned());
+    this.persistPreferences();
+  }
+
+  /**
+   * Method selectSortField
+   * @method selectSortField
+   *
+   * @description
+   * Reorders the collection on another field, keeping the current direction.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {InterventionSortField} field - Field to order by.
+   * @returns {void}
+   */
+  protected selectSortField(field: InterventionSortField): void {
+    this.sortOrder.set({ field, direction: this.sortOrder().direction });
+    this.persistPreferences();
+  }
+
+  /**
+   * Method toggleSortDirection
+   * @method toggleSortDirection
+   *
+   * @description
+   * Flips the ordering between ascending and descending.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @returns {void}
+   */
+  protected toggleSortDirection(): void {
+    const current: InterventionListSort = this.sortOrder();
+    this.sortOrder.set({
+      field: current.field,
+      direction: current.direction === 'asc' ? 'desc' : 'asc',
+    });
+    this.persistPreferences();
+  }
+
+  /**
+   * Method applyFilter
+   * @method applyFilter
+   *
+   * @description
+   * Replaces one narrowing. An `undefined` value — what `p-select` emits when
+   * its clear affordance is used — resets that field.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {Key} key - Field to change.
+   * @param {InterventionListFilters[Key] | undefined} value - New value, or undefined to clear.
+   * @returns {void}
+   */
+  protected applyFilter<Key extends keyof InterventionListFilters>(
+    key: Key,
+    value: InterventionListFilters[Key] | undefined,
+  ): void {
+    this.filters.set({ ...this.filters(), [key]: value ?? null });
+  }
+
+  /**
+   * Method toggleFilterPopover
+   * @method toggleFilterPopover
+   *
+   * @description
+   * Opens or closes the filter surface, anchored to its toolbar button.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {Event} event - Click that anchors the popover.
+   * @returns {void}
+   */
+  protected toggleFilterPopover(event: Event): void {
+    this.filterPopover().toggle(event);
+  }
+
+  /**
+   * Method toggleSortPopover
+   * @method toggleSortPopover
+   *
+   * @description
+   * Opens or closes the ordering surface, anchored to its toolbar button.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {Event} event - Click that anchors the popover.
+   * @returns {void}
+   */
+  protected toggleSortPopover(event: Event): void {
+    this.sortPopover().toggle(event);
+  }
+
+  /**
+   * Method clearFilters
+   * @method clearFilters
+   *
+   * @description
+   * Drops every narrowing at once. The search box is deliberately left alone:
+   * it is visible, so clearing it silently would be a surprise.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @returns {void}
+   */
+  protected clearFilters(): void {
+    this.filters.set({
+      status: null,
+      type: null,
+      site: null,
+      responsible: null,
+      dueWindow: null,
+    });
+  }
+
+  /**
+   * Method persistPreferences
+   * @method persistPreferences
+   *
+   * @description
+   * Writes the whole remembered shape after any of its parts changes.
+   *
+   * @access private
+   * @since 6.0.0
+   *
+   * @returns {void}
+   */
+  private persistPreferences(): void {
+    this.preferences.write(this.showAbandoned(), this.collapsedGroups(), this.sortOrder());
   }
 
   /**

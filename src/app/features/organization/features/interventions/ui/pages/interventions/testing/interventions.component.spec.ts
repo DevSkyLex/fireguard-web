@@ -193,10 +193,13 @@ describe('InterventionsPage', () => {
     expect(build().view()).toBe('list');
   });
 
-  it('should load interventions for the active organization with no search filter', () => {
+  it('should load interventions ordered by the default sort and nothing else', () => {
     build();
 
-    expect(store.load).toHaveBeenCalledWith({ organizationId: 'org-1', options: undefined });
+    expect(store.load).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      options: { order: { dueAt: 'asc' } },
+    });
   });
 
   it('should reload with a name filter when the ?q= input changes', () => {
@@ -209,7 +212,7 @@ describe('InterventionsPage', () => {
 
     expect(store.load).toHaveBeenLastCalledWith({
       organizationId: 'org-1',
-      options: { name: 'roof' },
+      options: { order: { dueAt: 'asc' }, name: 'roof' },
     });
   });
 

@@ -115,7 +115,7 @@ export const InterventionCalendarStore = signalStore(
       load: rxMethod<InterventionCalendarLoadRequest>(
         pipe(
           tap(() => patchState(store, { loadCallState: pendingCallState() })),
-          switchMap(({ organizationId, window }) => {
+          switchMap(({ organizationId, window, filters }) => {
             if (!organizationId) {
               patchState(store, {
                 interventions: [],
@@ -134,36 +134,41 @@ export const InterventionCalendarStore = signalStore(
                   catchError(() => of<string | null>(null)),
                 );
 
-            return service.listCalendarWindow(organizationId, window.after, window.before).pipe(
-              switchMap((interventions) =>
-                memberIri$.pipe(
-                  map(
-                    (currentMemberIri): CalendarLoadResult => ({ interventions, currentMemberIri }),
+            return service
+              .listCalendarWindow(organizationId, window.after, window.before, filters)
+              .pipe(
+                switchMap((interventions) =>
+                  memberIri$.pipe(
+                    map(
+                      (currentMemberIri): CalendarLoadResult => ({
+                        interventions,
+                        currentMemberIri,
+                      }),
+                    ),
                   ),
                 ),
-              ),
-              tapResponse({
-                next: ({ interventions, currentMemberIri }: CalendarLoadResult) =>
-                  patchState(store, {
-                    interventions,
-                    currentMemberIri,
-                    loadCallState: successCallState(null),
-                  }),
-                error: (error: unknown) => {
-                  const storeError = toStoreError(error);
-                  patchState(store, {
-                    interventions: [],
-                    currentMemberIri: null,
-                    loadCallState: errorCallState(storeError),
-                  });
-                  dispatcher.dispatch(
-                    interventionCalendarStoreEvents.loadFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load the calendar'),
-                    ),
-                  );
-                },
-              }),
-            );
+                tapResponse({
+                  next: ({ interventions, currentMemberIri }: CalendarLoadResult) =>
+                    patchState(store, {
+                      interventions,
+                      currentMemberIri,
+                      loadCallState: successCallState(null),
+                    }),
+                  error: (error: unknown) => {
+                    const storeError = toStoreError(error);
+                    patchState(store, {
+                      interventions: [],
+                      currentMemberIri: null,
+                      loadCallState: errorCallState(storeError),
+                    });
+                    dispatcher.dispatch(
+                      interventionCalendarStoreEvents.loadFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load the calendar'),
+                      ),
+                    );
+                  },
+                }),
+              );
           }),
         ),
       ),

@@ -31,9 +31,23 @@ This subfeature is responsible for:
   search box debounces into `?q=` and reloads the store with a server-side
   `name` filter. `?create=1` opens the guided creation drawer on arrival and is
   consumed once, so the parent feature's landing page can offer "New
-  intervention" as a primary action that actually starts the work. The metric
-  strip is gone from this page (`InterventionSummaryStore` is unused here, kept
-  for a future dashboard).
+  intervention" as a primary action that actually starts the work.
+
+  A toolbar sits under the canonical page header: render selector, search, a
+  filter popover (status, type, site, responsible, deadline window), a sort
+  popover (due date / creation / priority, either direction) and the
+  "Show abandoned" toggle. **Every one of those narrowings reaches the wire** —
+  the ten query parameters the API accepts used to be dead. Sort, fold state and
+  the abandoned toggle are remembered in a cookie by
+  `InterventionListPreferencesService`; filters deliberately are not, being
+  questions asked now rather than reading preferences.
+
+  **One behaviour across the three renders** is an invariant: "Show abandoned"
+  applies to List, Board and Calendar alike (it used to exist on the Board
+  alone), and the non-date filters are forwarded to the calendar's own bounded
+  query — its visible window remains its only date filter. The metric strip is
+  gone from this page (`InterventionSummaryStore` is unused here, kept for a
+  future dashboard).
 - `/organizations/:organizationId/interventions/:interventionId`
 
 ## State and Data Access

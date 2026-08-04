@@ -8,6 +8,15 @@ export { resolveInterventionTag } from './intervention-tag/intervention-tag.util
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';
+export type { InterventionCalendarFilters } from './intervention-view/intervention-calendar-filters.interface';
+export type {
+  InterventionDueWindow,
+  InterventionListFilters,
+} from './intervention-view/intervention-list-filters.interface';
+export type {
+  InterventionListSort,
+  InterventionSortField,
+} from './intervention-view/intervention-list-sort.interface';
 export type { InterventionQueue } from './intervention-queue/intervention-queue.interface';
 export type { InterventionQueueKey } from './intervention-queue/intervention-queue-key.type';
 export type { InterventionUnsyncedEntry } from './intervention-queue/intervention-unsynced-entry.interface';

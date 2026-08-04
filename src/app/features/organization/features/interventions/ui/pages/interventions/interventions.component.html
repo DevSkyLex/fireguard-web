@@ -10,7 +10,21 @@
   nested a redundant scrollbar around them.
 -->
 <div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <header class="flex flex-wrap items-center gap-2.5">
+  <app-page-header title="Interventions" i18n-title="@@route.interventions" [subtitle]="subtitle()">
+    <div actions>
+      <p-button
+        i18n-label="@@intervention.list.newButton"
+        label="New intervention"
+        icon="pi pi-plus"
+        severity="primary"
+        (onClick)="openCreate()"
+        size="small"
+        styleClass="max-sm:min-h-11"
+      />
+    </div>
+  </app-page-header>
+
+  <div class="flex flex-wrap items-center gap-2.5">
     <p-selectbutton
       id="interventions-view-toggle"
       data-testid="interventions-view-toggle"
@@ -37,7 +51,7 @@
       </ng-template>
     </p-selectbutton>
 
-    <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-96 sm:min-w-60">
+    <p-iconfield class="w-full min-w-60 flex-1 sm:w-auto sm:max-w-96">
       <p-inputicon class="pi pi-search" />
       <input
         i18n-aria-label="@@intervention.list.searchPlaceholder"
@@ -52,25 +66,195 @@
       />
     </p-iconfield>
 
-    <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto">
-      <p class="hidden text-sm text-surface-500 tabular-nums lg:block dark:text-surface-400">
-        <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
-          =1 {1 intervention}
-          other {{{ loadedCount() }} interventions}
-        }</ng-container>
-      </p>
+    <p-button
+      data-testid="interventions-filters"
+      i18n-label="@@intervention.list.filtersButton"
+      label="Filters"
+      icon="pi pi-filter"
+      severity="secondary"
+      [outlined]="true"
+      [badge]="filterBadge()"
+      (onClick)="toggleFilterPopover($event)"
+      size="small"
+      styleClass="max-sm:min-h-11"
+    />
+
+    <p-button
+      data-testid="interventions-sort"
+      [label]="sortLabel()"
+      [icon]="sortOrder().direction === 'asc' ? 'pi pi-sort-amount-up' : 'pi pi-sort-amount-down'"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="toggleSortPopover($event)"
+      size="small"
+      styleClass="max-sm:min-h-11"
+    />
+
+    <p-button
+      [text]="true"
+      severity="secondary"
+      size="small"
+      styleClass="max-sm:min-h-11"
+      [icon]="showAbandoned() ? 'pi pi-eye-slash' : 'pi pi-eye'"
+      [label]="showAbandoned() ? hideAbandonedLabel : showAbandonedLabel"
+      (onClick)="toggleAbandoned()"
+    />
+  </div>
+
+  <p-popover #filterPopover>
+    <div class="flex w-72 flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="intervention-filter-status"
+          i18n="@@intervention.list.filterStatus"
+          class="text-sm font-medium"
+          >Status</label
+        >
+        <p-select
+          inputId="intervention-filter-status"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="filters().status"
+          (ngModelChange)="applyFilter('status', $event)"
+          [showClear]="true"
+          i18n-placeholder="@@intervention.list.filterAny"
+          placeholder="Any"
+          size="small"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="intervention-filter-type"
+          i18n="@@intervention.list.filterType"
+          class="text-sm font-medium"
+          >Type</label
+        >
+        <p-select
+          inputId="intervention-filter-type"
+          [options]="typeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="filters().type"
+          (ngModelChange)="applyFilter('type', $event)"
+          [showClear]="true"
+          i18n-placeholder="@@intervention.list.filterAny"
+          placeholder="Any"
+          size="small"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="intervention-filter-site"
+          i18n="@@intervention.list.filterSite"
+          class="text-sm font-medium"
+          >Site</label
+        >
+        <p-select
+          inputId="intervention-filter-site"
+          [options]="[...planningOptions.sites()]"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="filters().site"
+          (ngModelChange)="applyFilter('site', $event)"
+          [showClear]="true"
+          [filter]="true"
+          i18n-placeholder="@@intervention.list.filterAny"
+          placeholder="Any"
+          size="small"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="intervention-filter-responsible"
+          i18n="@@intervention.list.filterResponsible"
+          class="text-sm font-medium"
+          >Responsible</label
+        >
+        <p-select
+          inputId="intervention-filter-responsible"
+          [options]="[...planningOptions.members()]"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="filters().responsible"
+          (ngModelChange)="applyFilter('responsible', $event)"
+          [showClear]="true"
+          [filter]="true"
+          i18n-placeholder="@@intervention.list.filterAny"
+          placeholder="Any"
+          size="small"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="intervention-filter-due"
+          i18n="@@intervention.list.filterDue"
+          class="text-sm font-medium"
+          >Deadline</label
+        >
+        <p-select
+          inputId="intervention-filter-due"
+          [options]="dueWindowOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="filters().dueWindow"
+          (ngModelChange)="applyFilter('dueWindow', $event)"
+          [showClear]="true"
+          i18n-placeholder="@@intervention.list.filterAny"
+          placeholder="Any"
+          size="small"
+          styleClass="w-full"
+        />
+      </div>
 
       <p-button
-        i18n-label="@@intervention.list.newButton"
-        label="New intervention"
-        icon="pi pi-plus"
-        severity="primary"
-        (onClick)="openCreate()"
+        i18n-label="@@common.clearFilters"
+        label="Clear filters"
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        [text]="true"
         size="small"
-        class="w-full max-sm:min-h-11 sm:w-auto"
+        [disabled]="activeFilterCount() === 0"
+        (onClick)="clearFilters()"
       />
     </div>
-  </header>
+  </p-popover>
+
+  <p-popover #sortPopover>
+    <div class="flex w-60 flex-col gap-1">
+      @for (option of sortOptions; track option.value) {
+        <p-button
+          [label]="option.label"
+          [text]="true"
+          severity="secondary"
+          size="small"
+          styleClass="w-full justify-start"
+          [icon]="option.value === sortOrder().field ? 'pi pi-check' : 'pi pi-fw'"
+          (onClick)="selectSortField(option.value)"
+        />
+      }
+
+      <hr class="my-1 border-surface-200 dark:border-surface-800" />
+
+      <p-button
+        [label]="sortOrder().direction === 'asc' ? sortAscendingLabel : sortDescendingLabel"
+        [text]="true"
+        severity="secondary"
+        size="small"
+        styleClass="w-full justify-start"
+        [icon]="sortOrder().direction === 'asc' ? 'pi pi-sort-amount-up' : 'pi pi-sort-amount-down'"
+        (onClick)="toggleSortDirection()"
+      />
+    </div>
+  </p-popover>
 
   @if (view() !== 'calendar' && store.listError()) {
     <app-error-banner
@@ -98,7 +282,7 @@
     <div class="flex h-[38rem] min-h-0 flex-1 flex-col">
       <app-intervention-calendar
         class="flex min-h-0 flex-1 flex-col"
-        [interventions]="calendarStore.interventions()"
+        [interventions]="calendarInterventions()"
         [loading]="calendarStore.loading()"
         [currentMemberIri]="currentMemberIri()"
         (selectIntervention)="onView($event)"
@@ -314,17 +498,6 @@
       }
     </div>
   } @else {
-    <div class="flex items-center justify-end">
-      <p-button
-        [text]="true"
-        severity="secondary"
-        size="small"
-        [icon]="showAbandoned() ? 'pi pi-eye-slash' : 'pi pi-eye'"
-        [label]="showAbandoned() ? hideAbandonedLabel : showAbandonedLabel"
-        (onClick)="showAbandoned.set(!showAbandoned())"
-      />
-    </div>
-
     <app-board
       class="min-h-0 flex-1"
       [columns]="boardColumns()"

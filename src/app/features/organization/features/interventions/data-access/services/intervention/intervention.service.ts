@@ -19,6 +19,7 @@ import type {
   InterventionActivityOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
+  InterventionCalendarFilters,
   InterventionListOptions,
   InterventionOutput,
   InterventionStatus,
@@ -179,12 +180,17 @@ export class InterventionService extends HydraApiService {
    * intervention whose anchor lands outside the visible cells) is harmless since
    * the calendar grid only renders anchors inside its cells.
    *
+   * `filters` narrows both queries the same way the list and board are narrowed,
+   * so switching render does not silently widen the result. It deliberately
+   * carries no date bound: the window already is the calendar's date filter.
+   *
    * @access public
-   * @since 1.1.0
+   * @since 1.2.0
    *
    * @param {string} organizationId - Active organization identifier.
    * @param {Date} after - Inclusive lower window bound.
    * @param {Date} before - Inclusive upper window bound.
+   * @param {InterventionCalendarFilters} [filters] - Non-date narrowing to apply to both queries.
    *
    * @return {Observable<readonly InterventionOutput[]>} Interventions inside the window, de-duped by id.
    */
@@ -192,16 +198,18 @@ export class InterventionService extends HydraApiService {
     organizationId: string,
     after: Date,
     before: Date,
+    filters?: InterventionCalendarFilters,
   ): Observable<readonly InterventionOutput[]> {
     const afterIso: string = toSecondsUtc(after);
     const beforeIso: string = toSecondsUtc(before);
 
     return forkJoin([
       this.listAll(organizationId, {
+        ...filters,
         plannedStartAtAfter: afterIso,
         plannedStartAtBefore: beforeIso,
       }),
-      this.listAll(organizationId, { dueAtAfter: afterIso, dueAtBefore: beforeIso }),
+      this.listAll(organizationId, { ...filters, dueAtAfter: afterIso, dueAtBefore: beforeIso }),
     ]).pipe(
       map(([byPlannedStart, byDueDate]): readonly InterventionOutput[] => {
         const merged = new Map<string, InterventionOutput>();

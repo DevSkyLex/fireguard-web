@@ -101,7 +101,7 @@ export const ChannelPanelStore = signalStore(
        * The routed channel, recomputed on every completed navigation. Seeded
        * with the current route so a direct page load is not missed.
        */
-      _route: toSignal<ChannelRouteContext | null>(
+      routeContext: toSignal<ChannelRouteContext | null>(
         router.events.pipe(
           filter((event): event is NavigationEnd => event instanceof NavigationEnd),
           map((): ChannelRouteContext | null => readChannelRoute(router.routerState.root)),
@@ -114,9 +114,9 @@ export const ChannelPanelStore = signalStore(
 
   withComputed((store) => ({
     /** Routed channel id, or `null` when the URL is not a conversation. */
-    channelId: computed((): string | null => store._route()?.channelId ?? null),
+    channelId: computed((): string | null => store.routeContext()?.channelId ?? null),
     /** Routed organization id, or `null`. */
-    organizationId: computed((): string | null => store._route()?.organizationId ?? null),
+    organizationId: computed((): string | null => store.routeContext()?.organizationId ?? null),
 
     channel: computed((): ChannelOutput | null => store.channelCallState().data ?? null),
     participants: computed(
@@ -380,7 +380,7 @@ export const ChannelPanelStore = signalStore(
 
   withHooks((store) => ({
     onInit(): void {
-      const route: Signal<ChannelRouteContext | null> = store._route;
+      const route: Signal<ChannelRouteContext | null> = store.routeContext;
 
       // Navigation is the only trigger: the panel has no owner to call it.
       rxMethod<ChannelRouteContext | null>(

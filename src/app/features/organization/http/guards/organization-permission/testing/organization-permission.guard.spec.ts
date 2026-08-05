@@ -7,6 +7,29 @@ import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { organizationPermissionGuard } from '../organization-permission.guard';
 
+async function resolveGuardResult(result: MaybeAsync<GuardResult>): Promise<GuardResult> {
+  if (result instanceof Promise) {
+    return result;
+  }
+
+  if (isObservable(result)) {
+    return firstValueFrom(result);
+  }
+
+  return result;
+}
+
+function createRouteWithOrganizationId(
+  organizationId: string | null,
+): Parameters<ReturnType<typeof organizationPermissionGuard>>[0] {
+  return {
+    paramMap: {
+      get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
+    },
+    pathFromRoot: [{ url: [] }],
+  } as unknown as Parameters<ReturnType<typeof organizationPermissionGuard>>[0];
+}
+
 describe('organizationPermissionGuard', () => {
   const redirectUrlTree = {} as UrlTree;
 
@@ -17,29 +40,6 @@ describe('organizationPermissionGuard', () => {
   let mockOrganizationPermissionService: {
     canAccessOrganization: ReturnType<typeof vi.fn>;
   };
-
-  async function resolveGuardResult(result: MaybeAsync<GuardResult>): Promise<GuardResult> {
-    if (result instanceof Promise) {
-      return result;
-    }
-
-    if (isObservable(result)) {
-      return firstValueFrom(result);
-    }
-
-    return result;
-  }
-
-  function createRouteWithOrganizationId(
-    organizationId: string | null,
-  ): Parameters<ReturnType<typeof organizationPermissionGuard>>[0] {
-    return {
-      paramMap: {
-        get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
-      },
-      pathFromRoot: [{ url: [] }],
-    } as unknown as Parameters<ReturnType<typeof organizationPermissionGuard>>[0];
-  }
 
   beforeEach(() => {
     mockRouter = {

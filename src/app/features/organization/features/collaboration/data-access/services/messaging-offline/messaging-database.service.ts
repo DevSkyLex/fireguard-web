@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { IndexedDbService, type IndexedDbSchema } from '@core/indexed-db';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import {
@@ -22,7 +22,7 @@ import {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MessagingDatabaseService extends IndexedDbService {
   //#region Properties
   /**

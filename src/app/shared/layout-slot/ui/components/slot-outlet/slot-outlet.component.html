@@ -1,0 +1,3 @@
+@for (contribution of ordered(); track contribution.id) {
+  <ng-container *ngComponentOutlet="contribution.component" />
+}

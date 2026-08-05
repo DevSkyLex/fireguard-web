@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID } from '@angular/core';
+import { Service, PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { IndexedDbSchema, IndexedEntry } from '@core/indexed-db/models';
 import { IndexedDbService } from '../indexed-db.service';
@@ -18,7 +18,7 @@ const SCHEMA: IndexedDbSchema = {
  * binding is the part worth proving, since getting it wrong leaks one user's
  * records to the next.
  */
-@Injectable()
+@Service({ autoProvided: false })
 class InMemoryDatabase extends IndexedDbService {
   public override readonly browser: boolean = true;
 
@@ -92,7 +92,7 @@ class InMemoryDatabase extends IndexedDbService {
 }
 
 /** Same database, but on the server. */
-@Injectable()
+@Service({ autoProvided: false })
 class ServerDatabase extends IndexedDbService {
   protected readonly schema: IndexedDbSchema = SCHEMA;
 }

@@ -1,11 +1,4 @@
-import {
-  Injectable,
-  inject,
-  signal,
-  computed,
-  type WritableSignal,
-  type Signal,
-} from '@angular/core';
+import { Service, inject, signal, computed, type WritableSignal, type Signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import { type EnvironmentConfig } from '@core/config/environment/environment-config.interface';
@@ -29,7 +22,7 @@ import { type EnvironmentConfig } from '@core/config/environment/environment-con
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TitleService {
   //#region Properties
   /**

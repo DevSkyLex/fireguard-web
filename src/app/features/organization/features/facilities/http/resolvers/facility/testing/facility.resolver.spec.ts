@@ -10,6 +10,34 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
 import { ActiveFacilityStore } from '@features/organization/features/facilities/state';
 import { facilityResolver } from '../facility.resolver';
 
+async function resolveMaybeAsync<T>(result: MaybeAsync<T>): Promise<T> {
+  if (result instanceof Promise) {
+    return result;
+  }
+
+  if (isObservable(result)) {
+    return firstValueFrom(result);
+  }
+
+  return result;
+}
+
+function createRoute(
+  organizationId: string | null,
+  facilityId: string | null,
+): ActivatedRouteSnapshot {
+  return {
+    parent: {
+      paramMap: {
+        get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
+      },
+    },
+    paramMap: {
+      get: (key: string): string | null => (key === 'facilityId' ? facilityId : null),
+    },
+  } as unknown as ActivatedRouteSnapshot;
+}
+
 describe('facilityResolver', () => {
   const parsedRootUrl = { root: true } as const;
   const parsedOrganizationUrl = { organization: true } as const;
@@ -36,34 +64,6 @@ describe('facilityResolver', () => {
   let mockActiveFacilityStore: {
     resolveFacility: ReturnType<typeof vi.fn>;
   };
-
-  async function resolveMaybeAsync<T>(result: MaybeAsync<T>): Promise<T> {
-    if (result instanceof Promise) {
-      return result;
-    }
-
-    if (isObservable(result)) {
-      return firstValueFrom(result);
-    }
-
-    return result;
-  }
-
-  function createRoute(
-    organizationId: string | null,
-    facilityId: string | null,
-  ): ActivatedRouteSnapshot {
-    return {
-      parent: {
-        paramMap: {
-          get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
-        },
-      },
-      paramMap: {
-        get: (key: string): string | null => (key === 'facilityId' ? facilityId : null),
-      },
-    } as unknown as ActivatedRouteSnapshot;
-  }
 
   beforeEach(() => {
     mockRouter = {

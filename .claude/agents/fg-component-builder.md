@@ -11,16 +11,16 @@ You create Angular components. Your one rule: **decide placement before you type
 
 Answer in this order; the first "yes" wins.
 
-| Question                                                  | Answer | Lands in                                                                                                                 |
-| --------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Is it the route entry for a URL?                          | yes    | `features/<f>/ui/pages/<name>/` — class ends in **`Page`**, **no `index.ts`** (§13.2 lists `ui/pages/` as internal-only) |
-| Does it render a `p-table` grid of an entity collection?  | yes    | `features/<f>/ui/tables/<name>/`                                                                                         |
-| Does it render a `p-dataview` list/grid browsing surface? | yes    | `features/<f>/ui/dataviews/<name>/`                                                                                      |
-| Is it a typed form?                                       | yes    | `features/<f>/ui/forms/<name>/` (+ `validators/` for validators private to the form)                                     |
-| Is it a modal / centered overlay?                         | yes    | `features/<f>/ui/dialogs/<name>/`                                                                                        |
-| Is it a side-anchored overlay panel?                      | yes    | `features/<f>/ui/drawers/<name>/`                                                                                        |
-| Does it know a business concept?                          | yes    | `features/<f>/ui/components/<name>/`                                                                                     |
-| Is it generic by design **and** earns its place (below)?  | yes    | `shared/<concept>/ui/components/<name>/`                                                                                 |
+| Question                                                  | Answer | Lands in                                                                                                           |
+| --------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| Is it the route entry for a URL?                          | yes    | `features/<f>/ui/pages/<name>-page/<name>-page.component.ts` — class ends in **`Page`**, **no `index.ts`** (§13.2) |
+| Does it render a `p-table` grid of an entity collection?  | yes    | `features/<f>/ui/tables/<name>/`                                                                                   |
+| Does it render a `p-dataview` list/grid browsing surface? | yes    | `features/<f>/ui/dataviews/<name>/`                                                                                |
+| Is it a typed form?                                       | yes    | `features/<f>/ui/forms/<name>/` — **Signal Forms** (§10.4), `validators/` for rules private to the form            |
+| Is it a modal / centered overlay?                         | yes    | `features/<f>/ui/dialogs/<name>/`                                                                                  |
+| Is it a side-anchored overlay panel?                      | yes    | `features/<f>/ui/drawers/<name>/`                                                                                  |
+| Does it know a business concept?                          | yes    | `features/<f>/ui/components/<name>/`                                                                               |
+| Is it generic by design **and** earns its place (below)?  | yes    | `shared/<concept>/ui/components/<name>/`                                                                           |
 
 **Domain-agnostic is necessary but not sufficient** (§2.7). A generic component whose consumers all sit inside one feature subtree belongs to that subtree, not to `shared`. And §6.4: a component is _not_ domain-agnostic if it imports a feature model or type, injects a feature service or store, hard-codes a business status, or needs feature route context to make sense.
 
@@ -44,9 +44,7 @@ Choosing between dialog, drawer, and page (§10.5): **dialog** for short confirm
 ```ts
 @Component({
   selector: 'app-<folder-name>', // §9.4: app- + FOLDER name, never the class name
-  imports: [
-    /* only what the template uses */
-  ],
+  imports: [/* only what the template uses */],
   templateUrl: './<name>.component.html',
   host: { class: 'block' }, // optional, Tailwind only
   changeDetection: ChangeDetectionStrategy.OnPush, // §1.1 — on EVERY component

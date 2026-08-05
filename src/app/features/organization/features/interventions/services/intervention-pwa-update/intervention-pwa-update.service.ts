@@ -1,11 +1,4 @@
-import {
-  computed,
-  Injectable,
-  inject,
-  signal,
-  type Signal,
-  type WritableSignal,
-} from '@angular/core';
+import { computed, Service, inject, signal, type Signal, type WritableSignal } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { filter } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
@@ -27,7 +20,7 @@ import { InterventionOfflineService } from '@features/organization/features/inte
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionPwaUpdateService {
   //#region Properties
   /**

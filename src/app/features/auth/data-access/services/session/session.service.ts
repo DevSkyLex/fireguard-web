@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { type Observable, catchError } from 'rxjs';
 import { HydraApiService, type PaginationOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
@@ -34,7 +34,7 @@ import type { SessionOutput } from '@features/auth/models';
  * });
  * ```
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SessionService extends HydraApiService {
   //#region Constants
   /**

@@ -139,12 +139,10 @@ export const InterventionCalendarStore = signalStore(
               .pipe(
                 switchMap((interventions) =>
                   memberIri$.pipe(
-                    map(
-                      (currentMemberIri): CalendarLoadResult => ({
-                        interventions,
-                        currentMemberIri,
-                      }),
-                    ),
+                    map((currentMemberIri): CalendarLoadResult => ({
+                      interventions,
+                      currentMemberIri,
+                    })),
                   ),
                 ),
                 tapResponse({

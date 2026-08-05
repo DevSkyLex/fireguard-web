@@ -1,4 +1,4 @@
-import { effect, inject, Injectable, signal, type WritableSignal } from '@angular/core';
+import { effect, inject, Service, signal, type WritableSignal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
@@ -24,7 +24,7 @@ import { InterventionDatabaseService } from './intervention-database.service';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionOutboxRepository {
   //#region Properties
   /**

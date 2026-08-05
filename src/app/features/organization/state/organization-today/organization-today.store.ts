@@ -234,12 +234,10 @@ export const OrganizationTodayStore = signalStore(
           known.map(async (intervention) => (await offline.listOutbox(intervention.id)).length),
         );
 
-        return known.map(
-          (intervention, index): InterventionUnsyncedEntry => ({
-            intervention,
-            pendingCount: counts[index] ?? 0,
-          }),
-        );
+        return known.map((intervention, index): InterventionUnsyncedEntry => ({
+          intervention,
+          pendingCount: counts[index] ?? 0,
+        }));
       };
 
       return {

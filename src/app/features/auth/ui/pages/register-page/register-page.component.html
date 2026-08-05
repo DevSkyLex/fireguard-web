@@ -1,0 +1,22 @@
+<div id="register-page" class="flex w-full max-w-md flex-col gap-6">
+  <header class="flex flex-col gap-1.5">
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground" i18n="@@auth.register.title">
+      Create your account
+    </h1>
+    <p class="text-sm text-muted-foreground" i18n="@@auth.register.subtitle">
+      We will email you a code to confirm the address.
+    </p>
+  </header>
+
+  <app-register-form [pending]="registerStore.isRegistering()" (submitted)="register($event)" />
+
+  <p class="text-center text-sm text-muted-foreground">
+    <span i18n="@@auth.register.haveAccount">Already have an account?</span>
+    <a
+      class="ml-1 font-medium text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      routerLink="/auth/login"
+      i18n="@@auth.register.signIn"
+      >Sign in</a
+    >
+  </p>
+</div>

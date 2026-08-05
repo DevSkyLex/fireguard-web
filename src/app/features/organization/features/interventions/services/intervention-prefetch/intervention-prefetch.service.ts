@@ -1,4 +1,4 @@
-import { effect, inject, Injectable, signal, type WritableSignal } from '@angular/core';
+import { effect, inject, Service, signal, type WritableSignal } from '@angular/core';
 import { catchError, EMPTY, forkJoin, from, map, mergeMap, type Observable, switchMap } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { OrganizationMemberService } from '@features/organization/data-access';
@@ -23,7 +23,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionPrefetchService {
   /**
    * Property organization

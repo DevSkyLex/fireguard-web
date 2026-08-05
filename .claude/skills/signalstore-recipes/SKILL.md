@@ -111,9 +111,7 @@ Note `pendingCallState(previous)` and `errorCallState(error, previous)` carry th
 export const TrendStore = signalStore(
   withQueryState<TrendResource>(),
   withState<TrendFilterState>(INITIAL_FILTER_STATE),
-  withComputed((store) => ({
-    /* … */
-  })),
+  withComputed((store) => ({/* … */})),
   withMethods((store, service = inject(FeatureService)) => ({
     load: rxMethod<Params | undefined>(
       pipe(

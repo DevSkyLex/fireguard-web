@@ -10,7 +10,7 @@ description: The HydraApiService contract for FireGuard Web — what a transport
 ## The contract
 
 ```ts
-@Injectable({ providedIn: 'root' })
+@Service()
 export class OrganizationMemberService extends HydraApiService {
   public list(
     organizationId: string,
@@ -19,7 +19,7 @@ export class OrganizationMemberService extends HydraApiService {
 }
 ```
 
-`HydraApiService` (`@core/api`) is `abstract` and its transport methods are `protected`. Subclasses expose intent-revealing public methods on top:
+`HydraApiService` (`@core/api`) is `abstract` and its transport methods are `protected`. Subclasses expose intent-revealing public methods on top. The decorator is **`@Service()`**, never `@Injectable` and never with `providedIn` (§10.14); the abstract base itself carries `@Service({ autoProvided: false })`, since an abstract class is never provided.
 
 `getCollection<T>()` → `Observable<HydraCollection<T>>` · `getOne<T>()` · `post<TInput, TOutput>()` · `put` · `patch` · `delete()` · plus `buildUrl(path, id?)`, `buildParams(options?)`, `buildHeaders()` for lower-level assembly. It sets `withCredentials: true` and `Content-Type: application/ld+json` automatically.
 

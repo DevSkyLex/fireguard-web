@@ -1,0 +1,46 @@
+<div id="split-layout" class="flex min-h-dvh bg-background text-foreground">
+  <!--
+    Branded panel, half the viewport from `lg` up. It is dropped entirely rather
+    than rendered empty when no contribution claims it, so a route that dresses
+    the shell with nothing still gets a usable full-width form column instead of
+    a blank half screen.
+  -->
+  @if (showcase(); as contribution) {
+    <aside
+      id="split-layout-showcase"
+      class="hidden bg-muted text-foreground lg:grid lg:w-1/2 lg:shrink-0"
+    >
+      <ng-container *ngComponentOutlet="contribution.component" />
+    </aside>
+  }
+
+  <div class="relative flex min-h-dvh flex-1 flex-col">
+    <!--
+      The header floats over the column instead of taking a row of its own, so
+      the form stays centred on the full viewport height rather than on what is
+      left below the chrome.
+    -->
+    @if (header.length > 0) {
+      <header
+        class="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-4 px-6 py-5 sm:px-8"
+      >
+        <app-slot-outlet [contributions]="header" />
+      </header>
+    }
+
+    <!--
+      Owns the breathing room around the routed page: `py-16` keeps a short form
+      clear of the floating header. Pages own their own max-width and nothing
+      else.
+    -->
+    <main id="split-layout-content" class="flex flex-1 flex-col justify-center px-6 py-16 sm:px-8">
+      <router-outlet />
+    </main>
+
+    @if (footer.length > 0) {
+      <footer class="flex shrink-0 items-center justify-between gap-4 px-6 py-5 sm:px-8">
+        <app-slot-outlet [contributions]="footer" />
+      </footer>
+    }
+  </div>
+</div>

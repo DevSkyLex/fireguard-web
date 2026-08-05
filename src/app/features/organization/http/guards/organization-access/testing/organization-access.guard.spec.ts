@@ -6,6 +6,28 @@ import { LAST_ORGANIZATION_COOKIE_NAME } from '@features/organization/constants'
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { organizationAccessGuard } from '../organization-access.guard';
 
+async function resolveGuardResult(result: MaybeAsync<GuardResult>): Promise<GuardResult> {
+  if (result instanceof Promise) {
+    return result;
+  }
+
+  if (isObservable(result)) {
+    return firstValueFrom(result);
+  }
+
+  return result;
+}
+
+function createRouteWithOrganizationId(
+  organizationId: string | null,
+): Parameters<typeof organizationAccessGuard>[0] {
+  return {
+    paramMap: {
+      get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
+    },
+  } as unknown as Parameters<typeof organizationAccessGuard>[0];
+}
+
 describe('organizationAccessGuard', () => {
   const redirectUrlTree = {} as UrlTree;
 
@@ -19,28 +41,6 @@ describe('organizationAccessGuard', () => {
     getCookie: ReturnType<typeof vi.fn>;
     deleteCookie: ReturnType<typeof vi.fn>;
   };
-
-  async function resolveGuardResult(result: MaybeAsync<GuardResult>): Promise<GuardResult> {
-    if (result instanceof Promise) {
-      return result;
-    }
-
-    if (isObservable(result)) {
-      return firstValueFrom(result);
-    }
-
-    return result;
-  }
-
-  function createRouteWithOrganizationId(
-    organizationId: string | null,
-  ): Parameters<typeof organizationAccessGuard>[0] {
-    return {
-      paramMap: {
-        get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
-      },
-    } as unknown as Parameters<typeof organizationAccessGuard>[0];
-  }
 
   beforeEach(() => {
     mockRouter = {

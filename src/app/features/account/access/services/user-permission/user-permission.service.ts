@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, type Signal } from '@angular/core';
+import { computed, inject, Service, type Signal } from '@angular/core';
 import type { StoreError } from '@core/request-state';
 import type { AccountPermissionName } from '@features/account/models';
 import { UserStore } from '@features/account/state';
@@ -19,7 +19,7 @@ import { UserStore } from '@features/account/state';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class UserPermissionService {
   //#region Properties
   /**

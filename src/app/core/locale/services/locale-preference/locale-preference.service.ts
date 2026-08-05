@@ -1,5 +1,5 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, LOCALE_ID, PLATFORM_ID } from '@angular/core';
+import { inject, Service, LOCALE_ID, PLATFORM_ID } from '@angular/core';
 import { CookieService } from '@core/cookie';
 import {
   DEFAULT_LOCALE_SUBPATH,
@@ -26,7 +26,7 @@ import { isSupportedLocale, stripLocaleFromPathname } from '../../utils';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LocalePreferenceService {
   //#region Properties
   /**

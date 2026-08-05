@@ -6,6 +6,14 @@ import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { organizationTitleResolver } from '../organization-title.resolver';
 
+/** Route snapshot naming the organization being navigated to. */
+const route = (organizationId: string): ActivatedRouteSnapshot =>
+  ({
+    paramMap: {
+      get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
+    },
+  }) as unknown as ActivatedRouteSnapshot;
+
 describe('organizationTitleResolver', () => {
   const organization: OrganizationOutput = {
     '@id': '/api/organizations/org-1',
@@ -23,14 +31,6 @@ describe('organizationTitleResolver', () => {
   };
 
   const organizationEntity = signal<OrganizationOutput | null>(organization);
-
-  /** Route snapshot naming the organization being navigated to. */
-  const route = (organizationId: string): ActivatedRouteSnapshot =>
-    ({
-      paramMap: {
-        get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
-      },
-    }) as unknown as ActivatedRouteSnapshot;
 
   beforeEach(() => {
     organizationEntity.set(organization);

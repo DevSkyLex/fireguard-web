@@ -1,0 +1,24 @@
+<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
+  <div class="flex flex-col gap-1.5">
+    <label hlmFieldLabel for="email-request-address" i18n="@@auth.email.label">Email address</label>
+    <input
+      hlmInput
+      id="email-request-address"
+      type="email"
+      autocomplete="email"
+      inputmode="email"
+      placeholder="you@company.com"
+      i18n-placeholder="@@auth.email.placeholder"
+      class="w-full"
+      [formField]="requestForm.email"
+      [attr.aria-invalid]="requestForm.email().touched() && requestForm.email().invalid()"
+    />
+    @if (requestForm.email().touched() && requestForm.email().invalid()) {
+      <hlm-field-error>{{ requestForm.email().errors()[0].message }}</hlm-field-error>
+    }
+  </div>
+
+  <button hlmBtn type="submit" class="w-full max-sm:min-h-11" [disabled]="pending()">
+    {{ submitLabel() }}
+  </button>
+</form>

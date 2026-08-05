@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { computed, Injectable, type Signal } from '@angular/core';
+import { computed, Service, type Signal } from '@angular/core';
 import { online as createOnlineSignal } from '@signality/core';
 import { isApiError } from '@core/api/utils';
 
@@ -28,7 +28,7 @@ import { isApiError } from '@core/api/utils';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ConnectivityService {
   //#region Properties
   /**

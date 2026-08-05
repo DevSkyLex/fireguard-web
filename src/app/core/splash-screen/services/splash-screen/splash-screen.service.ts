@@ -2,7 +2,7 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   DestroyRef,
   inject,
-  Injectable,
+  Service,
   PLATFORM_ID,
   signal,
   computed,
@@ -41,7 +41,7 @@ import type { SplashScreenPhase } from '../../ports';
  * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SplashScreenService {
   //#region Constants
   /**

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import {
   EMPTY,
   expand,
@@ -84,7 +84,7 @@ const isPublicationRunning = (publication: PublicationOutput): boolean =>
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionService extends HydraApiService {
   /**
    * Method list

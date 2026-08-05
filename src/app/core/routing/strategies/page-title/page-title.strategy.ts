@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { TitleStrategy, RouterStateSnapshot } from '@angular/router';
 import { TitleService } from '@core/title';
 
@@ -14,7 +14,7 @@ import { TitleService } from '@core/title';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable()
+@Service({ autoProvided: false })
 export class PageTitleStrategy extends TitleStrategy {
   //#region Properties
   /**

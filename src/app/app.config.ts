@@ -1,4 +1,4 @@
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   type ApplicationConfig,
   provideBrowserGlobalErrorListeners,
@@ -8,6 +8,7 @@ import {
   provideClientHydration,
   withEventReplay,
   withHttpTransferCacheOptions,
+  withNoIncrementalHydration,
 } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -23,6 +24,7 @@ import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
+import { provideOrganizationFeature } from '@features/organization';
 import { provideCollaborationFeature } from '@features/organization/features/collaboration/collaboration.feature';
 import { provideInterventionsFeature } from '@features/organization/features/interventions/interventions.feature';
 import { provideSpartanHlm } from '@shared/ui/utils';
@@ -62,9 +64,9 @@ export const appConfig: ApplicationConfig = {
       withHttpTransferCacheOptions({
         includeRequestsWithAuthHeaders: false,
       }),
+      withNoIncrementalHydration(),
     ),
     provideHttpClient(
-      withFetch(),
       withInterceptors([
         ssrCookieForwardInterceptor,
         authInterceptor,
@@ -76,6 +78,7 @@ export const appConfig: ApplicationConfig = {
       enabled: environment.production,
       registrationStrategy: 'registerWhenStable:30000',
     }),
+    provideOrganizationFeature(),
     provideInterventionsFeature(),
     provideCollaborationFeature(),
     provideEnv(environment),

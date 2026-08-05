@@ -19,6 +19,26 @@ function createCollection(
   };
 }
 
+async function resolveGuardResult(result: MaybeAsync<GuardResult>): Promise<GuardResult> {
+  if (result instanceof Promise) {
+    return result;
+  }
+
+  if (isObservable(result)) {
+    return firstValueFrom(result);
+  }
+
+  return result;
+}
+
+function createRouteWithExcluded(excluded: string | null): Parameters<typeof organizationGuard>[0] {
+  return {
+    queryParamMap: {
+      get: (key: string): string | null => (key === 'excluded' ? excluded : null),
+    },
+  } as unknown as Parameters<typeof organizationGuard>[0];
+}
+
 describe('organizationGuard', () => {
   const redirectUrlTree = {} as UrlTree;
 
@@ -40,28 +60,6 @@ describe('organizationGuard', () => {
     getCookie: ReturnType<typeof vi.fn>;
     deleteCookie: ReturnType<typeof vi.fn>;
   };
-
-  async function resolveGuardResult(result: MaybeAsync<GuardResult>): Promise<GuardResult> {
-    if (result instanceof Promise) {
-      return result;
-    }
-
-    if (isObservable(result)) {
-      return firstValueFrom(result);
-    }
-
-    return result;
-  }
-
-  function createRouteWithExcluded(
-    excluded: string | null,
-  ): Parameters<typeof organizationGuard>[0] {
-    return {
-      queryParamMap: {
-        get: (key: string): string | null => (key === 'excluded' ? excluded : null),
-      },
-    } as unknown as Parameters<typeof organizationGuard>[0];
-  }
 
   beforeEach(() => {
     mockRouter = {

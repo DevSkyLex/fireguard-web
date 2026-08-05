@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
@@ -37,7 +37,7 @@ import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/mode
  * });
  * ```
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TrustedDeviceService extends HydraApiService {
   //#region Constants
   /**

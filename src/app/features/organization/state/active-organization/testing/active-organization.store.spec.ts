@@ -9,7 +9,7 @@ import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization.store';
 
-const _flushEffects = async (): Promise<void> => {
+const flushEffects = async (): Promise<void> => {
   const testBedWithFlush = TestBed as typeof TestBed & {
     flushEffects?: () => void;
   };
@@ -45,7 +45,7 @@ function routerStub(organizationId: string | null, events: Subject<unknown>) {
 }
 
 describe('ActiveOrganizationStore', () => {
-  let _store: ActiveOrganizationStore;
+  let store: ActiveOrganizationStore;
   let events: Subject<unknown>;
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockOrganizationService: {
@@ -58,7 +58,7 @@ describe('ActiveOrganizationStore', () => {
   };
   let router: ReturnType<typeof routerStub>;
 
-  const _organization: OrganizationOutput = {
+  const organization: OrganizationOutput = {
     '@id': '/api/organizations/org-1',
     '@type': 'Organization',
     id: 'org-1',
@@ -112,64 +112,64 @@ describe('ActiveOrganizationStore', () => {
   });
 
   it('should create', () => {
-    _store = createStore(null);
+    store = createStore(null);
 
-    expect(_store).toBeTruthy();
-    expect(_store.selectedOrganization()).toBeNull();
-    expect(_store.isLoadingOrganization()).toBe(false);
+    expect(store).toBeTruthy();
+    expect(store.selectedOrganization()).toBeNull();
+    expect(store.isLoadingOrganization()).toBe(false);
   });
 
   it('should read the active organization identifier from the URL', () => {
-    _store = createStore('org-1');
+    store = createStore('org-1');
 
-    expect(_store.selectedOrganizationId()).toBe('org-1');
+    expect(store.selectedOrganizationId()).toBe('org-1');
   });
 
   it('should expose the cached organization once the URL names it', () => {
-    _store = createStore('org-1');
+    store = createStore('org-1');
 
-    _store.setOrganization(_organization);
+    store.setOrganization(organization);
 
-    expect(_store.selectedOrganization()).toEqual(_organization);
-    expect(_store.getCallState().status).toBe('success');
+    expect(store.selectedOrganization()).toEqual(organization);
+    expect(store.getCallState().status).toBe('success');
   });
 
   it('should hide a cached organization the URL no longer names', () => {
-    _store = createStore('org-1');
-    _store.setOrganization(_organization);
+    store = createStore('org-1');
+    store.setOrganization(organization);
 
     navigateTo('org-2');
 
     // The entity is still cached, but exposing it here would show the previous
     // organization's name in the rail until the new one resolves.
-    expect(_store.selectedOrganizationId()).toBe('org-2');
-    expect(_store.selectedOrganization()).toBeNull();
+    expect(store.selectedOrganizationId()).toBe('org-2');
+    expect(store.selectedOrganization()).toBeNull();
   });
 
   it('should drop the context when navigation leaves the organization scope', () => {
-    _store = createStore('org-1');
-    _store.setOrganization(_organization);
+    store = createStore('org-1');
+    store.setOrganization(organization);
 
     navigateTo(null);
 
-    expect(_store.selectedOrganizationId()).toBeNull();
-    expect(_store.selectedOrganization()).toBeNull();
+    expect(store.selectedOrganizationId()).toBeNull();
+    expect(store.selectedOrganization()).toBeNull();
   });
 
   it('should resolve organization successfully', async () => {
-    _store = createStore('org-1');
-    mockOrganizationService.get.mockReturnValue(of(_organization));
+    store = createStore('org-1');
+    mockOrganizationService.get.mockReturnValue(of(organization));
 
-    _store.resolveOrganization('org-1').subscribe();
-    await _flushEffects();
+    store.resolveOrganization('org-1').subscribe();
+    await flushEffects();
 
     expect(mockOrganizationService.get).toHaveBeenCalledWith('org-1');
-    expect(_store.selectedOrganization()).toEqual(_organization);
-    expect(_store.getCallState().status).toBe('success');
+    expect(store.selectedOrganization()).toEqual(organization);
+    expect(store.getCallState().status).toBe('success');
   });
 
   it('should dispatch failure when organization resolve fails', async () => {
-    _store = createStore('missing-org');
+    store = createStore('missing-org');
     const error: ApiError = {
       '@id': '',
       '@type': 'Error',
@@ -180,22 +180,22 @@ describe('ActiveOrganizationStore', () => {
     };
     mockOrganizationService.get.mockReturnValue(throwError(() => error));
 
-    _store.resolveOrganization('missing-org').subscribe({ error: () => undefined });
-    await _flushEffects();
+    store.resolveOrganization('missing-org').subscribe({ error: () => undefined });
+    await flushEffects();
 
-    expect(_store.getCallState().status).toBe('error');
+    expect(store.getCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
   it('should persist the routed organization id as the last-organization cookie', async () => {
-    _store = createStore('org-1');
-    await _flushEffects();
+    store = createStore('org-1');
+    await flushEffects();
 
     expect(mockCookieService.setCookie).toHaveBeenCalledTimes(1);
     expect(mockCookieService.setCookie).toHaveBeenCalledWith(
       expect.objectContaining({
         name: LAST_ORGANIZATION_COOKIE_NAME,
-        value: _organization.id,
+        value: organization.id,
         path: '/',
         sameSite: 'Lax',
       }),
@@ -208,15 +208,15 @@ describe('ActiveOrganizationStore', () => {
   });
 
   it('should keep the last-organization cookie untouched when leaving the scope', async () => {
-    _store = createStore('org-1');
-    await _flushEffects();
+    store = createStore('org-1');
+    await flushEffects();
 
     expect(mockCookieService.setCookie).toHaveBeenCalledTimes(1);
 
     navigateTo(null);
-    await _flushEffects();
+    await flushEffects();
 
-    expect(_store.selectedOrganization()).toBeNull();
+    expect(store.selectedOrganization()).toBeNull();
     expect(mockCookieService.deleteCookie).not.toHaveBeenCalled();
     expect(mockCookieService.setCookie).toHaveBeenCalledTimes(1);
   });

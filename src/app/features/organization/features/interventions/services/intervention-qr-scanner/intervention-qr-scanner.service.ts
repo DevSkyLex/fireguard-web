@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import type { BarcodeDetectorConstructor } from './models';
 
 /**
@@ -15,7 +15,7 @@ import type { BarcodeDetectorConstructor } from './models';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionQrScannerService {
   //#region Methods
   /**

@@ -66,6 +66,14 @@ Primary services:
 - `ACCOUNT_PERMISSION`, `ACCOUNT_PERMISSION_NAMES`, `AccountPermissionName`
 - `UserPermissionService`
 - `accountPermissionGuard`
+- `withAccountMenu()`
+
+`AccountMenu` (`ui/components/account-menu/`) is account-owned even though it only ever renders
+inside a layout: it reads user identity, and rendering location does not transfer ownership
+(`ARCHITECTURE.md` §2.7). A shell contributes it to its sidebar-footer slot through
+`withAccountMenu()` — the shell renders the component without importing it, and never learns that
+a user profile exists. The menu consumes `AUTH_LOGOUT_PORT` for sign-out rather than reaching into
+auth state.
 
 These contracts are intended for shell consumers such as layouts and shared shell widgets,
 plus approved external workflows that need to bootstrap or clear the authenticated user profile.

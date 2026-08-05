@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { IndexedDbService, type IndexedDbSchema } from '@core/indexed-db';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import {
@@ -32,7 +32,7 @@ const INTERVENTION_RETIRED_STORE_NAMES: readonly string[] = ['snapshots'];
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionDatabaseService extends IndexedDbService {
   //#region Properties
   /**

@@ -2,7 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   DestroyRef,
   inject,
-  Injectable,
+  Service,
   PLATFORM_ID,
   signal,
   type Signal,
@@ -45,7 +45,7 @@ import { chunkMemberIds } from './utils';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MemberPresenceService {
   //#region Properties
   /**

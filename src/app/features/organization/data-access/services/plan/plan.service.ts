@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
@@ -16,9 +16,7 @@ import type { PlanOutput } from '@features/organization/models';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class PlanService extends HydraApiService {
   //#region Constants
   /**

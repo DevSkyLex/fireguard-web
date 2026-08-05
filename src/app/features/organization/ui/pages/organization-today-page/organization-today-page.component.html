@@ -1,0 +1,110 @@
+<div id="organization-today" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <header class="flex flex-wrap items-start justify-between gap-3">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <h1 class="text-xl font-semibold tracking-tight text-foreground" i18n="@@org.today.pageTitle">
+        Today
+      </h1>
+      @if (organizationName(); as name) {
+        <p class="truncate text-sm text-muted-foreground">{{ name }}</p>
+      }
+    </div>
+
+    @if (canCreateInterventions()) {
+      <button hlmBtn size="sm" class="shrink-0 gap-2 max-sm:min-h-11" (click)="openInterventions()">
+        <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
+        <span i18n="@@org.today.newIntervention">New intervention</span>
+      </button>
+    }
+  </header>
+
+  @if (store.hasError()) {
+    <app-error-state
+      icon="lucideTriangleAlert"
+      title="Couldn't load your work queues"
+      i18n-title="@@org.today.errorTitle"
+      description="The interventions waiting on you couldn't be fetched. Anything saved on this device is still listed below."
+      i18n-description="@@org.today.errorDescription"
+    >
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        class="gap-2 max-sm:min-h-11"
+        (click)="retryQueues()"
+      >
+        <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+        <span i18n="@@org.today.retry">Retry</span>
+      </button>
+    </app-error-state>
+  }
+
+  @if (store.isAllClear()) {
+    <app-empty-state
+      icon="lucideCircleCheck"
+      title="Nothing is blocking"
+      i18n-title="@@org.today.allClearTitle"
+      description="No intervention is overdue, none is waiting for review, and everything on this device is synced."
+      i18n-description="@@org.today.allClearDescription"
+    >
+      @if (nextUpcoming(); as next) {
+        <p class="text-sm text-muted-foreground">
+          <span i18n="@@org.today.nextDue">Next due</span>
+          <span class="ml-2 font-mono text-xs">FG-{{ next.number }}</span>
+          <span class="ml-2">{{ next.name }}</span>
+        </p>
+      }
+    </app-empty-state>
+  } @else if (canReadInterventions()) {
+    <div class="flex flex-col gap-6">
+      <app-organization-today-queue
+        label="Overdue"
+        i18n-label="@@org.today.overdue"
+        [total]="store.overdue().total"
+        [interventions]="store.overdue().items"
+        [notes]="overdueNotes()"
+        [loading]="store.isLoading()"
+        actionLabel="See all"
+        i18n-actionLabel="@@org.today.seeAll"
+        (opened)="openIntervention($event)"
+        (actioned)="openInterventions()"
+      />
+
+      <app-organization-today-queue
+        label="Sent back to you"
+        i18n-label="@@org.today.changesRequested"
+        [total]="store.changesRequested().total"
+        [interventions]="store.changesRequested().items"
+        [loading]="store.isLoading()"
+        actionLabel="See all"
+        i18n-actionLabel="@@org.today.seeAll"
+        (opened)="openIntervention($event)"
+        (actioned)="openInterventions()"
+      />
+
+      <app-organization-today-queue
+        label="Awaiting your review"
+        i18n-label="@@org.today.awaitingReview"
+        [total]="store.awaitingReview().total"
+        [interventions]="store.awaitingReview().items"
+        [loading]="store.isLoading()"
+        actionLabel="See all"
+        i18n-actionLabel="@@org.today.seeAll"
+        (opened)="openIntervention($event)"
+        (actioned)="openInterventions()"
+      />
+
+      <!--
+        No loading state: the local queue comes from IndexedDB, which resolves
+        before a skeleton would be worth showing.
+      -->
+      <app-organization-today-queue
+        label="Waiting to sync"
+        i18n-label="@@org.today.unsynced"
+        [total]="unsynced().length"
+        [interventions]="unsynced()"
+        [notes]="unsyncedNotes()"
+        (opened)="openIntervention($event)"
+      />
+    </div>
+  }
+</div>

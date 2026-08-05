@@ -33,6 +33,28 @@ This feature does not own user profile presentation or notification UX. Those be
 
 Route access is enforced by auth-owned guards such as `guestGuard`, `mfaGuard`, `registerVerifyGuard`, `passwordResetVerifyGuard`, and `passwordResetNewGuard`.
 
+All seven screens are mounted. Each page owns orchestration only: it maps form values onto the
+transport DTO, calls the store, and reacts to the resulting state. Every form is a **Signal Forms**
+component under `ui/forms/` (`ARCHITECTURE.md` §10.4) that owns its own model and rules and emits
+`submitted` — no page builds a form, and no form calls a store.
+
+`ui/forms/otp-form/` is shared by the three verification screens (registration, MFA, password
+reset). Its `showResend` input exists because a TOTP challenge has no delivery to repeat.
+
+**Backend submit failures surface as toasts, not as inline banners.** No auth page renders its
+store's error signal: the stores already dispatch their failures as `StoreFailureEventPayload`
+events, `provideFeedback()` forwards them to the app-wide queue, and `@shared/toast` renders it.
+Adding a banner would duplicate a message the user is already being shown. Field-level errors are
+the opposite case and stay in the form, next to the input that has to change.
+
+## Password policy
+
+`validators/password/password.validator.ts` is the single expression of the API's password rules,
+applied by both surfaces that write a password (registration and reset). `applyPasswordConfirmation`
+is the cross-field rule replacing the classic `matchFields` validator: a schema rule reading its
+sibling through `valueOf`, reporting on the confirmation field. Changing the policy means changing
+this file and nothing else.
+
 ## State and Data Access
 
 Primary stores:

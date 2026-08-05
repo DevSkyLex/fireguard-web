@@ -1,0 +1,29 @@
+<!--
+  Three rows, the middle one taking the slack. The shell itself never scrolls:
+  the content row owns the scroller, so the header and footer stay put on a
+  page taller than the viewport.
+-->
+<div id="focused-layout" class="grid h-dvh grid-rows-[auto_1fr_auto] bg-background text-foreground">
+  @if (header.length > 0) {
+    <header class="flex items-center justify-between gap-4 px-6 py-5 sm:px-8">
+      <app-slot-outlet [contributions]="header" />
+    </header>
+  }
+
+  <!--
+    `justify-center` centres a short page; a tall one pushes past it and the
+    row scrolls instead of clipping.
+  -->
+  <main
+    id="focused-layout-content"
+    class="flex flex-col justify-center overflow-y-auto px-6 py-10 sm:px-8"
+  >
+    <router-outlet />
+  </main>
+
+  @if (footer.length > 0) {
+    <footer class="flex items-center justify-between gap-4 px-6 py-5 sm:px-8">
+      <app-slot-outlet [contributions]="footer" />
+    </footer>
+  }
+</div>

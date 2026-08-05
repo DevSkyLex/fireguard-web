@@ -32,6 +32,12 @@ This feature does not own generic shell composition or account-level user identi
 
 ## Routes
 
+> **Currently mounted:** `/organizations` and `/organizations/:organizationId` (the landing page)
+> only. The remaining destinations below are the feature's contract and are already listed by the
+> sidebar navigation behind their permissions; each is remounted in `organization.routes.ts` as its
+> page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
+> deviation.
+
 - `/organizations` — redirect-only: `organizationGuard` forwards to the default
   workspace (the last organization persisted in the `last-organization` cookie
   when still accessible, else the first accessible organization, else
@@ -136,13 +142,29 @@ organization; the backend siblinghood is not what decides placement here, owners
 - `MemberDirectoryPort`
 - `organization/setup`
 - `OrganizationSetupService`
+- `withOrganizationSwitcher()`
+- `withOrganizationNav()`
 
 These contracts are the stable boundaries for approved consumers:
 
 - layouts consume active organization context through `ORGANIZATION_CONTEXT_PORT`,
 - approved sibling features consume current organization member roles and permissions through `ORGANIZATION_MEMBER_ACCESS_PORT`,
 - approved sibling features resolve a bare member id to a name and an avatar through `MEMBER_DIRECTORY_PORT`,
-- onboarding consumes organization-owned setup workflows through `organization/setup`.
+- onboarding consumes organization-owned setup workflows through `organization/setup`,
+- a shell contributes the organization switcher to its sidebar-header slot through
+  `withOrganizationSwitcher()`, and the organization navigation to its sidebar-nav slot through
+  `withOrganizationNav()`. Both are slot contribution factories — the shell renders the
+  component without importing it, and never learns that an organization exists.
+
+`navigation/` is the single source for what the sidebar lists and, once it returns, what the
+landing guard falls back to: `ORGANIZATION_NAVIGATION_ITEMS` carries each destination's required
+permissions, and `buildOrganizationNavigation()` resolves the sections the active member may
+actually reach. Route visibility and fallback behaviour cannot diverge because both read this list.
+
+`OrganizationSwitcher` (`ui/components/organization-switcher/`) is feature-owned even though it
+only ever renders inside a layout: it reads organization state, and rendering location does not
+transfer ownership (`ARCHITECTURE.md` §2.7). It provides `OrganizationStore` itself, because that
+store is not root-provided.
 
 `MEMBER_DIRECTORY_PORT` exists because member IRIs are not dereferenceable: messaging hands out
 `/api/organizations/{orgId}/members/{memberId}` with no GET route behind it. Reading the directory

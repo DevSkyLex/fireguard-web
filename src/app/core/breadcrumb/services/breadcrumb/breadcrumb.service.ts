@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Signal } from '@angular/core';
+import { computed, inject, Service, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -16,7 +16,7 @@ import type { BreadcrumbItem } from '../../models';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable()
+@Service({ autoProvided: false })
 export class BreadcrumbService {
   //#region Properties
   /**

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
 import type {
@@ -20,9 +20,7 @@ import type {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class OnboardingService extends HydraApiService {
   //#region Properties
   /**

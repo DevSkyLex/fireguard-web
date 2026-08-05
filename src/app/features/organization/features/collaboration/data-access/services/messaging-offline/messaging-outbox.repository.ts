@@ -1,4 +1,4 @@
-import { inject, Injectable, signal, type Signal, type WritableSignal } from '@angular/core';
+import { inject, Service, signal, type Signal, type WritableSignal } from '@angular/core';
 import type {
   MessagingOutboxOperation,
   MessagingOutboxPayloadMap,
@@ -29,7 +29,7 @@ const OUTBOX_STORE = 'outbox';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MessagingOutboxRepository {
   //#region Properties
   /**

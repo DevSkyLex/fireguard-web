@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, PLATFORM_ID, REQUEST } from '@angular/core';
+import { inject, Service, PLATFORM_ID, REQUEST } from '@angular/core';
 import type { CookieOptions } from '../../models';
 
 /**
@@ -14,7 +14,7 @@ import type { CookieOptions } from '../../models';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CookieService {
   //#region Properties
   /**

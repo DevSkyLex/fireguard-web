@@ -83,6 +83,11 @@ const INITIAL_STATE: AssistantState = {
   visibleBeforeOpen: null,
 };
 
+/** Cookie holding the remembered thread of one organization. */
+function cookieName(organization: string): string {
+  return `${ASSISTANT_THREAD_COOKIE_PREFIX}${organization}`;
+}
+
 /**
  * Constant AssistantStore
  * @const AssistantStore
@@ -162,11 +167,6 @@ export const AssistantStore = signalStore(
       /** Bare id of the organization the panel is scoped to, from the URL. */
       function organizationId(): string | null {
         return organizationContext.selectedOrganizationId();
-      }
-
-      /** Cookie holding the remembered thread of one organization. */
-      function cookieName(organization: string): string {
-        return `${ASSISTANT_THREAD_COOKIE_PREFIX}${organization}`;
       }
 
       /** Remembers, or forgets, the thread of the active organization. */

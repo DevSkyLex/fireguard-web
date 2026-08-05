@@ -118,9 +118,8 @@ export const organizationGuard: CanActivateFn = (
 
   // Validate the saved organization is still accessible before redirecting to it
   return organizationService.get(savedId).pipe(
-    map(
-      (organization: OrganizationOutput): UrlTree =>
-        router.createUrlTree(['/organizations', organization.id]),
+    map((organization: OrganizationOutput): UrlTree =>
+      router.createUrlTree(['/organizations', organization.id]),
     ),
     catchError(() => {
       // Stale preference (organization deleted or membership revoked): forget it

@@ -2,7 +2,7 @@ import {
   DestroyRef,
   effect,
   inject,
-  Injectable,
+  Service,
   signal,
   type Signal,
   type WritableSignal,
@@ -35,7 +35,7 @@ import { MESSAGING_RETRY_BASE_DELAY_MS, MESSAGING_RETRY_MAX_DELAY_MS } from './c
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MessagingSyncCoordinatorService {
   //#region Properties
   /**

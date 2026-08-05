@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import type {
   CreateInterventionWorkItemInput,
   InterventionActivityOutput,
@@ -20,7 +20,7 @@ import type { InterventionWorkItemOptimisticResult } from './models';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionWorkspaceOptimisticService {
   /**
    * Method transition

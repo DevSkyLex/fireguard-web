@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ToastDeck } from '@shared/toast';
 
 /**
  * Component App
@@ -21,8 +22,8 @@ import { RouterOutlet } from '@angular/router';
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  template: `<router-outlet/>`,
+  imports: [RouterOutlet, ToastDeck],
+  template: `<router-outlet /> <app-toast-deck />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {}

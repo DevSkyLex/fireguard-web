@@ -1,4 +1,4 @@
-import { inject, Injectable, type Signal } from '@angular/core';
+import { inject, Service, type Signal } from '@angular/core';
 import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
@@ -30,7 +30,7 @@ import type { InterventionWorkspaceSnapshot } from './models';
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionOfflineService {
   //#region Properties
   /**

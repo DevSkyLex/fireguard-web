@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { ConnectivityService } from '@core/connectivity';
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
@@ -20,7 +20,7 @@ import type { InterventionDiscoveryResourcePlan, InterventionFieldDiscovery } fr
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionFieldExecutionService {
   /**
    * Property connectivity

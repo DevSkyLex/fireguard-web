@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { inject, Service, PLATFORM_ID } from '@angular/core';
 import { PHOTO_JPEG_QUALITY, PHOTO_MAX_DIMENSION } from './constants';
 
 /**
@@ -15,7 +15,7 @@ import { PHOTO_JPEG_QUALITY, PHOTO_MAX_DIMENSION } from './constants';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionPhotoCompressorService {
   //#region Properties
   /**

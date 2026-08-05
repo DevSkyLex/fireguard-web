@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams, type HttpErrorResponse } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { type Observable, catchError, map, throwError } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { EnvironmentConfig } from '@core/config/environment/environment-config.interface';
@@ -30,7 +30,7 @@ export type { ApiRequestOptions, PaginationOptions, RequestOptions } from '../..
  *
  * @example
  * ```typescript
- * @Injectable({ providedIn: 'root' })
+ * @Service()
  * export class UserService extends HydraApiService {
  *   list(): Observable<HydraCollection<User>> {
  *     return this.getCollection<User>('/api/users');
@@ -42,7 +42,7 @@ export type { ApiRequestOptions, PaginationOptions, RequestOptions } from '../..
  * }
  * ```
  */
-@Injectable()
+@Service({ autoProvided: false })
 export abstract class HydraApiService {
   //#region Properties
   /**

@@ -31,9 +31,8 @@ export const onboardingGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
   return onboardingStore
     .ensureLoaded()
     .pipe(
-      map(
-        (onboarding: OnboardingOutput | null): GuardResult =>
-          onboarding?.state === 'completed' ? router.createUrlTree(['/']) : true,
+      map((onboarding: OnboardingOutput | null): GuardResult =>
+        onboarding?.state === 'completed' ? router.createUrlTree(['/']) : true,
       ),
     );
 };

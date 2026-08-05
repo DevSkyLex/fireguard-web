@@ -3,7 +3,7 @@ import {
   computed,
   effect,
   inject,
-  Injectable,
+  Service,
   PLATFORM_ID,
   signal,
   type Signal,
@@ -26,7 +26,7 @@ import { isThemeMode } from '../../utils';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ThemeService {
   //#region Properties
   /**

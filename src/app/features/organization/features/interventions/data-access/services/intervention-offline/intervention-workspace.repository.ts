@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
@@ -23,7 +23,7 @@ import type {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionWorkspaceRepository {
   //#region Properties
   /**

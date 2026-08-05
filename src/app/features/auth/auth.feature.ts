@@ -119,8 +119,6 @@ export function provideAuthFeature(): EnvironmentProviders {
       deps: [AuthStore],
     },
     {
-      // Core-owned boot readiness contract: auth resolves first-load readiness,
-      // so it provides the implementation core infrastructure consumes.
       provide: BOOT_READINESS_PORT,
       useFactory: (authStore: AuthStore) => ({
         initialized: authStore.initialized,

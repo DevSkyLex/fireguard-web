@@ -11,6 +11,26 @@ import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { organizationResolver } from '../organization.resolver';
 
+async function resolveMaybeAsync<T>(result: MaybeAsync<T>): Promise<T> {
+  if (result instanceof Promise) {
+    return result;
+  }
+
+  if (isObservable(result)) {
+    return firstValueFrom(result);
+  }
+
+  return result;
+}
+
+function createRoute(organizationId: string | null): ActivatedRouteSnapshot {
+  return {
+    paramMap: {
+      get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
+    },
+  } as unknown as ActivatedRouteSnapshot;
+}
+
 describe('organizationResolver', () => {
   const parsedRootUrl = { root: true } as const;
   const organization: OrganizationOutput = {
@@ -38,26 +58,6 @@ describe('organizationResolver', () => {
   let mockOrganizationService: {
     list: ReturnType<typeof vi.fn>;
   };
-
-  async function resolveMaybeAsync<T>(result: MaybeAsync<T>): Promise<T> {
-    if (result instanceof Promise) {
-      return result;
-    }
-
-    if (isObservable(result)) {
-      return firstValueFrom(result);
-    }
-
-    return result;
-  }
-
-  function createRoute(organizationId: string | null): ActivatedRouteSnapshot {
-    return {
-      paramMap: {
-        get: (key: string): string | null => (key === 'organizationId' ? organizationId : null),
-      },
-    } as unknown as ActivatedRouteSnapshot;
-  }
 
   beforeEach(() => {
     mockRouter = {

@@ -31,7 +31,7 @@ data-access/
 ```
 
 ```ts
-@Injectable({ providedIn: 'root' })
+@Service()
 export class OrganizationMemberService extends HydraApiService {
   public list(organizationId: string, options?: RequestOptions): Observable<HydraCollection<OrganizationMemberOutput>> { … }
 }
@@ -45,7 +45,7 @@ The contract (§11.3) — every line here is a hard rule:
 - **never subscribes, never `catch`es, never `map`s to a view model.** The error propagates untouched to the store, which normalizes it with `toStoreError` inside `tapResponse` (§11.6). A `catchError` here silently breaks that chain,
 - collections return `HydraCollection<T>` = `{ member: T[]; totalItems: number; view?: HydraView }` — **unprefixed** API Platform 4 keys; never reintroduce `hydra:` prefixes (§11.7),
 - base content type is `application/ld+json`; override only when the endpoint demands it (file uploads → `multipart/form-data`),
-- `@Injectable({ providedIn: 'root' })` — universal for transport services here. §16's warning about `providedIn: 'root'` targets using it _as a substitute for deciding ownership_; a root-provided service still belongs to its feature (§2.6).
+- **`@Service()`**, never `@Injectable` (§10.14) — it is the Angular 22 form for a root singleton wired through `inject()`, which every service here is. Do not pass `providedIn`: `@Service` has no such option. The abstract base `HydraApiService` alone carries `@Service({ autoProvided: false })`. §16's warning about `providedIn: 'root'` targets SignalStore scoping used _as a substitute for deciding ownership_; a root-provided service still belongs to its feature (§2.6).
 
 Method names are bare verbs (§9.6): `list`, `listAll`, `create`, `add`, `update`, `remove`, `removeMany` — no `on`/`handle`/`do` noise, no `getAllOrganizationMembers` when the class already says which entity.
 

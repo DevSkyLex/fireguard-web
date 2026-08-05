@@ -5,6 +5,9 @@ import { ChannelService } from '@features/organization/features/collaboration/da
 import type { ChannelOutput } from '@features/organization/features/collaboration/models';
 import { channelTitleResolver } from '../channel-title.resolver';
 
+const routeWith = (channelId: string | null): ActivatedRouteSnapshot =>
+  ({ paramMap: { get: (): string | null => channelId } }) as unknown as ActivatedRouteSnapshot;
+
 describe('channelTitleResolver', () => {
   const channel: ChannelOutput = {
     '@id': '/api/channels/genid-1',
@@ -22,9 +25,6 @@ describe('channelTitleResolver', () => {
   };
 
   const get = vi.fn<(channelId: string) => Observable<ChannelOutput>>();
-
-  const routeWith = (channelId: string | null): ActivatedRouteSnapshot =>
-    ({ paramMap: { get: (): string | null => channelId } }) as unknown as ActivatedRouteSnapshot;
 
   beforeEach(() => {
     get.mockReset();

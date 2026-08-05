@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
@@ -19,7 +19,7 @@ import type {
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionPublicationService {
   //#region Properties
   /**

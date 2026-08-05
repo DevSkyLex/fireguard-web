@@ -14,6 +14,16 @@ const collection: HydraCollection<InterventionOutput> = {
   member: [intervention],
 };
 
+const pageOf = (page: number, totalItems: number): HydraCollection<InterventionOutput> => ({
+  '@id': '/api/interventions',
+  '@type': 'Collection',
+  totalItems,
+  member: Array.from(
+    { length: 100 },
+    (_, index) => ({ id: `i-${(page - 1) * 100 + index}` }) as InterventionOutput,
+  ),
+});
+
 describe('InterventionStore', () => {
   let store: InstanceType<typeof InterventionStore>;
   let mockInterventionService: {
@@ -58,15 +68,6 @@ describe('InterventionStore', () => {
   });
 
   it('should accumulate up to 500 interventions across 100-item pages and flag the cap', () => {
-    const pageOf = (page: number, totalItems: number): HydraCollection<InterventionOutput> => ({
-      '@id': '/api/interventions',
-      '@type': 'Collection',
-      totalItems,
-      member: Array.from(
-        { length: 100 },
-        (_, index) => ({ id: `i-${(page - 1) * 100 + index}` }) as InterventionOutput,
-      ),
-    });
     mockInterventionService.list.mockImplementation(
       (_organizationId: string, options: { page: number }) => of(pageOf(options.page, 650)),
     );

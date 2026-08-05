@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { CookieService } from '@core/cookie';
 import { MAX_CUSTOM_VIEWS } from '@features/organization/features/interventions/constants';
 import type {
@@ -99,7 +99,7 @@ function isUsableView(value: unknown): value is InterventionView {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionListPreferencesService {
   //#region Properties
   /**

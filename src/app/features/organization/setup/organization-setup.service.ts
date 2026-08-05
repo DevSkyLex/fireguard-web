@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { forkJoin, map, of } from 'rxjs';
 import {
@@ -32,9 +32,7 @@ import type {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class OrganizationSetupService {
   /**
    * Property organizationService

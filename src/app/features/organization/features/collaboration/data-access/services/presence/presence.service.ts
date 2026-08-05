@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
@@ -32,7 +32,7 @@ export const PRESENCE_BATCH_SIZE = 100;
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PresenceService extends HydraApiService {
   //#region Properties
   /**

@@ -31,13 +31,15 @@ This file is intentionally opinionated. It defines ownership, dependency, and na
 
 ### 1.1 The stack
 
-The application is an **Angular 21** SPA with SSR and hydration:
+The application is an **Angular 22** SPA with SSR and hydration:
 
 - standalone components with the signals API (`input()`, `output()`, `computed()`, `signal()`, `linkedSignal()`), `ChangeDetectionStrategy.OnPush` on every component,
 - **NgRx SignalStore** (`@ngrx/signals`, plus `@ngrx/signals/events` for typed store events) for feature state,
+- **Signal Forms** (`@angular/forms/signals`) for every form — `form()`, schema rules, and the `FormField` directive. The classic `ReactiveFormsModule` / `FormBuilder` / `FormGroup` APIs are not used (section 10.4),
 - **spartan/ui** — `@spartan-ng/brain` headless primitives plus **helm** components generated into `src/app/shared/ui/` by `@spartan-ng/cli`, styled with **Tailwind v4** utilities and the semantic theme tokens in `src/styles.css`,
+- injectables declared with `@Service` rather than `@Injectable` (section 10.14),
 - Hydra/JSON-LD API access through `HydraApiService` (section 11),
-- strict TypeScript (`strict`, `strictTemplates`, no `any`, no non-null assertions),
+- strict TypeScript 6 (`strict`, `strictTemplates`, no `any`, no non-null assertions), with the `nullishCoalescingNotNullable` and `optionalChainNotNullable` template diagnostics raised to errors,
 - tooling: `oxlint` / `oxfmt`, unit tests via `ng test` (vitest runner), Playwright e2e under `e2e/`.
 
 Do not introduce new dependencies or architectural patterns unless the task requires it and no existing pattern fits.
@@ -490,7 +492,7 @@ layouts/<name>-layout/
   <name>-layout.component.ts
   <name>-layout.component.html
   components/             # optional layout-local shell pieces (header, sidebar, rail)
-  slots/                  # optional slot definitions (<slot>.slot.ts + contribution interface)
+  slots/                  # optional slot tokens (<slot>.slot.ts), one per published extension point
   providers/              # optional layout providers (slot registries)
   services/               # optional layout-local shell services (services/<name>/ + testing/)
   directives/             # optional
@@ -508,7 +510,7 @@ Allowed in a layout:
 
 - the layout component,
 - layout-local directives and shell components,
-- slot definitions and their contribution interfaces, so features can contribute shell widgets without the layout importing them,
+- slot tokens, so features can contribute shell widgets without the layout importing them,
 - layout-local services for shell behavior,
 - shell navigation and shell state wiring,
 - imports of feature-owned shell widgets through public APIs.
@@ -520,6 +522,16 @@ Not allowed in a layout:
 - entity business rules,
 - hidden data-loading workflows,
 - feature-specific route trees.
+
+The **slot mechanism itself is shared**, not re-declared per layout: `@shared/layout-slot` owns
+the two contribution contracts (`SlotContribution` for an additive slot, `ExclusiveSlotContribution`
+for a mono-active one), the `provideSlotContributions()` binding helper, the pure resolution
+functions, and the `SlotOutlet` renderer. A layout's `slots/` therefore holds only its tokens —
+one `<slot>.slot.ts` per published extension point, typed with a shared contract — and its
+`providers/` exposes a single `provide<Name>LayoutSlots(config)` grouping them by region.
+
+Declare a layout-owned contribution interface only when a slot genuinely carries extra metadata,
+and then by extending the shared contract rather than replacing it.
 
 Important:
 
@@ -576,6 +588,8 @@ features/<feature>/
     <concept>/
   utils/                  # optional — pure functions shared across the feature
     index.ts
+  validators/             # optional — Signal Forms rule sets shared by several of the feature's forms
+    index.ts
   constants/              # optional — fixed runtime values shared across the feature
     index.ts
   options/                # optional — UI option sets shared across the feature
@@ -604,6 +618,7 @@ A feature may contain:
 - `state/` for stores and store-local state types,
 - `models/` for feature contracts and reusable feature types,
 - `utils/`, `constants/`, and `options/` for pure functions, fixed runtime values, and UI option sets shared across the feature (section 10.13), created only when a unit outgrows a single component (section 2.8),
+- `validators/` for Signal Forms rule sets shared by several of the feature's forms (section 10.4); a rule private to one form stays in that form's own `validators/`,
 - `providers/` for slot contributions (`with<Thing>()` factories) and port bindings,
 - nested `features/` only when the child is a real ownership boundary.
 
@@ -712,7 +727,7 @@ shared/
 
 A concept that renders something gives **every component, directive, and pipe its own folder** under `<concept>/ui/<kind>/`, with an `index.ts` and a `testing/` — the canonical UI folder template (section 10.2) applied inside the concept. `models/`, `utils/`, `constants/`, and `options/` stay siblings of `ui/` at the concept root, so a shared concept reads like a feature. Nested subcomponents are not nested under their parent: they are sibling folders under `ui/components/`, and their own barrel keeps them addressable.
 
-A concept with **no UI** creates no `ui/` and stays flat (a validator, a util, a type, or a constants file plus their barrel — like `core/boot-readiness`): `initials`, `match-fields`, `table-card-shell`, `tag`, `tag-severity`. Illustrative concepts in this codebase: `tag`, `tag-severity`, `empty-state`, `error-state`, `board`, `calendar`, `chat`, `infinite-scroll`, `match-fields`, `initials`, `nav-row`, `table-card-shell`, `toast`, `splash-screen`, `theme-switcher`, `logo`.
+A concept with **no UI** creates no `ui/` and stays flat (a validator, a util, a type, or a constants file plus their barrel — like `core/boot-readiness`): `initials`, `match-fields`, `table-card-shell`, `tag`, `tag-severity`. Illustrative concepts in this codebase: `layout-slot` (the slot mechanism the layouts are built on — section 8.2), `tag`, `tag-severity`, `empty-state`, `error-state`, `board`, `calendar`, `chat`, `infinite-scroll`, `match-fields`, `initials`, `nav-row`, `table-card-shell`, `toast`, `splash-screen`, `theme-switcher`, `logo`.
 
 **`shared/ui/` is vendored spartan code, and two rules do not apply inside it.** The helm components under `src/app/shared/ui/<name>/` are generated by `@spartan-ng/cli`, not authored here. They are yours to edit, but their _shape_ is the generator's: their barrels use `export *` (banned everywhere else by §13.3) and they do not follow §9 naming (`Hlm*` classes, `src/lib/` nesting, no `.component.ts` suffix, `hlm-` selectors). Both are sanctioned deviations — do not "fix" them, and do not treat a re-generation as drift. Everything else in `shared/` follows the concept-first layout below.
 
@@ -793,7 +808,7 @@ One declaration per file. The file name states the concept, the suffix states th
 | `.config.ts`      | feature navigation configuration                                                                                            | `organization-navigation.config.ts`                                   |
 | `.slot.ts`        | layout slot definitions                                                                                                     | `rail.slot.ts`                                                        |
 | `.adapter.ts`     | pure data adapters in `data-access/adapters/`                                                                               | `organization-dashboard-trend.adapter.ts`                             |
-| `.validator.ts`   | form validators                                                                                                             | `match-fields.validator.ts`                                           |
+| `.validator.ts`   | form validators — under Signal Forms, a reusable rule set applied to a path (section 10.4)                                  | `password.validator.ts`, `match-fields.validator.ts`                  |
 | `.strategy.ts`    | core routing strategies                                                                                                     | `page-title.strategy.ts`                                              |
 | `.mock.ts`        | shared test doubles inside `testing/` folders                                                                               | `match-media.mock.ts`                                                 |
 | `.spec.ts`        | unit specs, named after the subject file                                                                                    | `organization-members.store.spec.ts`                                  |
@@ -813,7 +828,7 @@ Suffixes that must **not** be introduced:
 
 **Components carry no `Component` suffix** (`addTypeToClassName: false` in `angular.json`). The class name states the semantic role, and the role suffix is meaningful:
 
-- route pages always end in `Page`: `LoginPage`, `FacilityDetailPage`, `OrganizationMembersPage`,
+- route pages always end in `Page`: `LoginPage`, `FacilityDetailPage`, `OrganizationMembersPage`. The **folder and file carry the suffix too** — `ui/pages/login-page/login-page.component.ts` — so a page is identifiable as one from its path alone, not only from its class,
 - other roles use their own suffix: `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Drawer`, `…Panel`, `…Card`, `…Chart`, `…Layout`, `…Stepper`, `…Toolbar`,
 - a generic widget may be a bare noun when no role suffix applies: `Board`, `Calendar`.
 
@@ -904,7 +919,7 @@ The following minority patterns exist in the codebase, are **not** the target, a
 
 - two form component specs sit flat next to their subject instead of in `testing/` (`inspection-form`, `non-conformity-form`),
 - two account state slices use `<name>-state.model.ts` for store state instead of `state.interface.ts`,
-- five features (`auth`, `account`, `error`, `maintenance`, `onboarding` — roughly a third of all pages) name page folders with a `-page` suffix (`ui/pages/login-page/`); the target is the bare screen name (`ui/pages/organization-members/`) — do not rename existing folders wholesale, and do not add the suffix to new pages,
+- page folders that carry no `-page` suffix (`ui/pages/organization-members/`) are the minority now: the suffix is the target (section 9.2) — do not rename existing folders wholesale, but every new page takes it,
 - one state aggregate uses bare `utils/constants.ts` and `models/types.ts` file names without a concept prefix,
 - a store file occasionally differs from its slice folder name (`state/organization-list/organization.store.ts`); the target is a matching pair.
 
@@ -1003,13 +1018,39 @@ They must not:
 
 `ui/forms/` contains typed forms for the owning feature.
 
-Local structure: the canonical UI folder template (section 10.2), plus a `validators/` bucket for validators private to the form group. `models/` here typically holds local form value/data models (`login-form-values.model.ts`) and derived field-state types.
+**Signal Forms is the form standard.** Every form is built with `@angular/forms/signals` — `form()` over a `signal()` model, rules declared in a schema, and the `FormField` directive binding a field to its control. `ReactiveFormsModule`, `FormBuilder`, `FormGroup`, `FormControl`, and `ValidatorFn` must not appear in new code; `@angular/forms` classic APIs are not imported.
 
-They may manage internal form state.
+The shape:
 
-They must not own navigation or direct API access.
+```typescript
+protected readonly model: WritableSignal<LoginFormValues> = signal({ email: '', password: '' });
 
-Cross-feature reusable validators belong in their own `shared/<concept>/` folder (for example `shared/match-fields/`); promote a form-local validator only when it is truly domain-agnostic and reused.
+protected readonly loginForm: FieldTree<LoginFormValues> = form(this.model, (path) => {
+  required(path.email);
+  email(path.email);
+  required(path.password);
+  minLength(path.password, PASSWORD_MIN_LENGTH);
+});
+```
+
+```html
+<input [formField]="loginForm.email" /> @if (loginForm.email().touched() &&
+loginForm.email().invalid()) { … }
+```
+
+Consequences that follow from the model, and that a reviewer must enforce:
+
+- **Validation lives in the schema, not in the template and not in a `ValidatorFn`.** A rule is `required`, `email`, `minLength`, `maxLength`, `pattern`, or a custom `validate(path.x, ({ value }) => …)` returning an error object or `null`.
+- **A cross-field rule is a schema rule too**, declared on the confirming path and reading its sibling through `valueOf` — not a `ValidatorFn` attached to a group. The mechanism changed; the concept did not, so such a rule is still a **validator** and still takes `.validator.ts` (section 9.2).
+- **Reusable rule sets live in `validators/`**, as functions applying rules to a path (`applyPasswordRules(path.password)`) or as `schema()` objects composed with `apply()`, `applyEach()`, or `applyWhen()`. Placement follows usage locality (section 2.8): private to one form → that form's own `validators/`; shared by several forms of one feature → the feature-level `validators/`; shared across features and domain-agnostic → its own `shared/<concept>/` folder.
+- **Field state is read through the field, not mirrored into component signals**: `field().value()`, `.valid()`, `.invalid()`, `.touched()`, `.disabled()`, `.errors()`. Do not duplicate these into a parallel `signal()`.
+- **Server-side errors are routed back to fields** by the submission action returning `{ kind, message, fieldTree: path.x }`, so an API constraint violation lands on the field that caused it rather than in a page-level banner.
+- **A whole-request failure is a toast, not a banner.** When the API rejects the submission itself — bad credentials, an expired challenge, a conflict — the owning store dispatches it as a `StoreFailureEventPayload`, `provideFeedback()` forwards it to the app-wide queue, and `@shared/toast` renders it. A page must not also render its store's error signal: that shows the same message twice. Field-level messages are the opposite case and belong in the form.
+- Local structure: the canonical UI folder template (section 10.2), including its `validators/` bucket for rules private to that form. `models/` holds the form's value model (`login-form-values.model.ts`).
+
+A form component may own its model, its schema, and its submission state. It must not own navigation or direct API access: it emits `submitted` with the form value and the page calls the store (section 2.5).
+
+Specs follow the same split the Angular guide draws: schema behaviour is tested in isolation with `form(model, schema, { injector })` and asserted through `errors()` / `valid()`; only DOM binding and user interaction need a rendered component (section 14.1).
 
 ### 10.5 `ui/dialogs/` and `ui/drawers/`
 
@@ -1613,9 +1654,7 @@ export const FeatureStore = signalStore(
 export const TrendStore = signalStore(
   withQueryState<TrendResource>(), // 1. async query state
   withState<TrendFilterState>(INITIAL_FILTER_STATE), // 2. local filter/UI state
-  withComputed((store) => ({
-    /* 3. derived signals */
-  })),
+  withComputed((store) => ({/* 3. derived signals */})),
   withMethods((store, service = inject(FeatureService)) => ({
     // 4. actions
     load: rxMethod<Params | undefined>(
@@ -1633,9 +1672,7 @@ export const TrendStore = signalStore(
       ),
     ),
   })),
-  withHooks((store) => ({
-    /* 5. lifecycle wiring */
-  })),
+  withHooks((store) => ({/* 5. lifecycle wiring */})),
 );
 ```
 
@@ -1852,6 +1889,27 @@ features/<feature>/
 
 A unit stays where it is until a consumer in a higher scope actually appears; only then is it lifted, and only as far as the shared scope requires. Outside code never reaches into a unit's local folder — it imports the lifted unit through the public barrel (section 13.4).
 
+### 10.14 Service declaration — `@Service`
+
+Every injectable class in `src/app` is declared with **`@Service`**, not `@Injectable`. The decorator was introduced in Angular 22 as the ergonomic form for a root singleton whose dependencies come from `inject()`, which is what every service in this codebase already is.
+
+Two forms, and only two:
+
+| Form                                | Use for                                                                           |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `@Service()`                        | a concrete service — auto-provided as a root singleton                            |
+| `@Service({ autoProvided: false })` | an abstract base, or a class deliberately provided by hand in a `providers:` list |
+
+`@Service()` replaces `@Injectable({ providedIn: 'root' })` exactly; `@Service({ autoProvided: false })` replaces a bare `@Injectable()`. Do not pass `providedIn` — `@Service` has no such option, and root is the only scope it grants.
+
+`@Injectable` is **not** deprecated and stays available for the three cases `@Service` cannot express: constructor-based dependency injection, the advanced provider keys (`useClass`, `useValue`, `useExisting`, `useFactory`) declared **on the decorator**, and non-root scopes such as `providedIn: 'platform'`. None occurs in this codebase today; introducing one is a documented exception, recorded in the owning `FEATURE.md`.
+
+Two things this rule does not touch:
+
+- **SignalStore scoping.** `signalStore({ providedIn: 'root' }, …)` is store configuration, not a decorator. It keeps its own form and its own deliberate-scoping rule (section 10.11).
+- **Port binding.** `{ provide: PORT_TOKEN, useExisting: ConcreteService }` in a provider function is unaffected — that is an injector-level alias, independent of how the concrete class is declared (section 5.5).
+- **Vendored spartan code** under `shared/ui/` is generator output and is left as generated (section 8.5).
+
 ## 11. HTTP Transport Architecture
 
 This section documents the precise layering of HTTP concerns in the application and defines the contract each layer must fulfill.
@@ -1898,6 +1956,7 @@ Each interceptor has a single responsibility.
 Rules:
 
 - all feature API services must extend `HydraApiService`,
+- concrete services are declared with `@Service()`, and `HydraApiService` itself with `@Service({ autoProvided: false })` because an abstract base is never provided (section 10.14),
 - services must not inject `HttpClient` directly,
 - services return `Observable<T>`. They never subscribe internally, never `catch`, never transform to view models,
 - errors propagate without interception to the store layer, which handles them via `tapResponse`,
@@ -2210,6 +2269,8 @@ The following patterns are approved for new work.
 - a core-owned contract is bound in the `core/` provider that owns the concrete implementation,
 - a shared component that needs infrastructure injects an owner-published contract, never a concrete `core/` service,
 - global HTTP concerns remain in `core/http/interceptors`,
+- an injectable class is declared `@Service()`, or `@Service({ autoProvided: false })` when it is an abstract base or provided by hand (section 10.14),
+- a form is built with `form()` over a `signal()` model, its rules declared in a schema and its fields bound with `FormField` (section 10.4),
 - a feature owns its own `data-access`, `state`, `models`, optional `http`, optional `ports`, optional `providers`, and optional `utils` / `constants` / `options` folders,
 - a model stays type-only; pure functions live in `utils/`, fixed values in `constants/`, and UI option sets in `options/`, each placed at the lowest scope that covers all its consumers (sections 2.8 and 10.13),
 - files, classes, selectors, tokens, and routes follow the naming conventions of section 9,
@@ -2243,6 +2304,9 @@ The following patterns must not be introduced in new code.
 - using ad-hoc `isLoading: boolean` flags instead of the `CallState` lifecycle,
 - passing a raw `HttpErrorResponse` or `unknown` to `errorCallState` without calling `toStoreError` first,
 - injecting `HttpClient` directly in a feature service instead of extending `HydraApiService`,
+- declaring a new injectable with `@Injectable` when `@Service` expresses the same thing, or passing `providedIn` to `@Service` (section 10.14),
+- building a form with `ReactiveFormsModule`, `FormBuilder`, `FormGroup`, `FormControl`, or a `ValidatorFn` instead of Signal Forms (section 10.4),
+- mirroring Signal Forms field state (`valid()`, `touched()`, `errors()`) into parallel component signals instead of reading it from the field,
 - importing a feature implementation file instead of a documented feature or concern public API,
 - importing another feature's adapters as a reuse shortcut,
 - scattering the same dynamic key-probing logic (e.g. `point['count'] ?? point['total'] ?? 0`) across multiple stores without a shared adapter function,

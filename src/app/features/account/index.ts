@@ -20,4 +20,5 @@ export type {
   AccountPermissionGuardOptions,
   AccountPermissionGuardRedirect,
 } from './http/guards';
+export { withAccountMenu } from './providers';
 export { provideAccountFeature } from './account.feature';

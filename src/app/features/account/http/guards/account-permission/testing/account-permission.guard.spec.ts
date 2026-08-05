@@ -5,6 +5,18 @@ import { UserPermissionService } from '@features/account/access';
 import { ACCOUNT_PERMISSION } from '@features/account/models';
 import { accountPermissionGuard } from '../account-permission.guard';
 
+async function resolveGuardResult(result: MaybeAsync<GuardResult>): Promise<GuardResult> {
+  if (result instanceof Promise) {
+    return result;
+  }
+
+  if (isObservable(result)) {
+    return firstValueFrom(result);
+  }
+
+  return result;
+}
+
 describe('accountPermissionGuard', () => {
   const redirectUrlTree = {} as UrlTree;
 
@@ -14,18 +26,6 @@ describe('accountPermissionGuard', () => {
   let mockUserPermissionService: {
     canAccessGlobalPermissions: ReturnType<typeof vi.fn>;
   };
-
-  async function resolveGuardResult(result: MaybeAsync<GuardResult>): Promise<GuardResult> {
-    if (result instanceof Promise) {
-      return result;
-    }
-
-    if (isObservable(result)) {
-      return firstValueFrom(result);
-    }
-
-    return result;
-  }
 
   beforeEach(() => {
     mockRouter = {

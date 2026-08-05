@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { Dispatcher } from '@ngrx/signals/events';
 import { firstValueFrom } from 'rxjs';
 import { isApiError } from '@core/api/utils';
@@ -52,7 +52,7 @@ export interface MessagingReplayResult {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MessagingSyncService {
   //#region Properties
   /**

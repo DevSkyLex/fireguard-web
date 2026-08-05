@@ -1,4 +1,4 @@
-import { Injectable, signal, type Signal, type WritableSignal } from '@angular/core';
+import { Service, signal, type Signal, type WritableSignal } from '@angular/core';
 import {
   type FeedbackEventPayload,
   type FeedbackSeverity,
@@ -47,7 +47,7 @@ const FEEDBACK_LIFE_MS: Readonly<Record<FeedbackSeverity, number>> = {
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FeedbackService {
   //#region Properties
   /**

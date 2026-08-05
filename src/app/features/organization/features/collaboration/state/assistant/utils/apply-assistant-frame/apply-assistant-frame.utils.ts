@@ -32,18 +32,17 @@ export function applyAssistantFrame(
   messages: readonly AssistantMessageOutput[],
   frame: AssistantFrame,
 ): readonly AssistantMessageOutput[] {
-  return messages.map(
-    (message: AssistantMessageOutput): AssistantMessageOutput =>
-      message.id === frame.messageId
-        ? {
-            ...message,
-            body: frame.body,
-            status: frame.status,
-            // Frames send explicit nulls where the HTTP contract omits the key;
-            // normalizing here keeps one shape in state.
-            errorCode: frame.errorCode ?? undefined,
-            tokenCount: frame.tokenCount ?? undefined,
-          }
-        : message,
+  return messages.map((message: AssistantMessageOutput): AssistantMessageOutput =>
+    message.id === frame.messageId
+      ? {
+          ...message,
+          body: frame.body,
+          status: frame.status,
+          // Frames send explicit nulls where the HTTP contract omits the key;
+          // normalizing here keeps one shape in state.
+          errorCode: frame.errorCode ?? undefined,
+          tokenCount: frame.tokenCount ?? undefined,
+        }
+      : message,
   );
 }

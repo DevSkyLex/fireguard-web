@@ -1,0 +1,106 @@
+@if (isLoading()) {
+  <ul hlmSidebarMenu>
+    <li hlmSidebarMenuItem>
+      <div class="flex h-12 items-center gap-2 p-2">
+        <hlm-skeleton class="size-8 shrink-0 rounded-lg" />
+        <div class="grid flex-1 gap-1.5">
+          <hlm-skeleton class="h-3.5 w-24" />
+          <hlm-skeleton class="h-3 w-28" />
+        </div>
+      </div>
+    </li>
+  </ul>
+} @else if (displayName()) {
+  <ul hlmSidebarMenu>
+    <li hlmSidebarMenuItem>
+      <!--
+        `hlmSidebarMenuButton` rather than a bare button: it carries the
+        `group-data-[collapsible=icon]` classes, which is what keeps the row from
+        clipping when the column narrows to the icon rail.
+      -->
+      <button
+        hlmSidebarMenuButton
+        size="lg"
+        id="account-menu-trigger"
+        [hlmDropdownMenuTrigger]="menu"
+        [side]="menuSide()"
+        align="end"
+      >
+        <hlm-avatar class="size-8 shrink-0 rounded-lg">
+          @if (avatarUrl(); as pictureUrl) {
+            <img hlmAvatarImage [src]="pictureUrl" [alt]="displayName()" />
+          }
+          <span
+            hlmAvatarFallback
+            class="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
+            >{{ initials() }}</span
+          >
+        </hlm-avatar>
+
+        <div class="grid flex-1 text-left text-sm leading-tight">
+          <span class="truncate font-medium">{{ displayName() }}</span>
+          @if (email(); as address) {
+            <span class="truncate text-xs text-muted-foreground">{{ address }}</span>
+          }
+        </div>
+
+        <!--
+          The paired chevrons are the affordance: without them the row reads as a
+          caption rather than as a control. Decorative — the button's own label
+          already names the action for assistive technology.
+        -->
+        <ng-icon name="lucideChevronsUpDown" class="ml-auto text-base" aria-hidden="true" />
+      </button>
+    </li>
+  </ul>
+
+  <ng-template #menu>
+    <hlm-dropdown-menu class="min-w-56 rounded-lg">
+      <!--
+        The identity is repeated inside the menu because on the icon rail — and
+        on the mobile sheet — the trigger shows an avatar and nothing else, so
+        the menu is the only place the name and the address are legible.
+      -->
+      <hlm-dropdown-menu-label>
+        <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+          <hlm-avatar class="size-8 shrink-0 rounded-lg">
+            @if (avatarUrl(); as pictureUrl) {
+              <img hlmAvatarImage [src]="pictureUrl" [alt]="displayName()" />
+            }
+            <span
+              hlmAvatarFallback
+              class="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
+              >{{ initials() }}</span
+            >
+          </hlm-avatar>
+          <div class="grid flex-1 leading-tight">
+            <span class="truncate font-medium">{{ displayName() }}</span>
+            @if (email(); as address) {
+              <span class="truncate text-xs text-muted-foreground">{{ address }}</span>
+            }
+          </div>
+        </div>
+      </hlm-dropdown-menu-label>
+
+      <hlm-dropdown-menu-separator />
+
+      <hlm-dropdown-menu-group>
+        <button hlmDropdownMenuItem class="gap-2" (click)="openProfile()">
+          <ng-icon name="lucideUserRound" class="text-sm" aria-hidden="true" />
+          <span i18n="@@account.menu.profile">Account</span>
+        </button>
+        <button hlmDropdownMenuItem class="gap-2" (click)="openNotifications()">
+          <ng-icon name="lucideBell" class="text-sm" aria-hidden="true" />
+          <span i18n="@@account.menu.notifications">Notifications</span>
+        </button>
+      </hlm-dropdown-menu-group>
+
+      <hlm-dropdown-menu-separator />
+
+      <button hlmDropdownMenuItem class="gap-2" (click)="logout()">
+        <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
+        <span i18n="@@account.menu.logout">Log out</span>
+      </button>
+    </hlm-dropdown-menu>
+  </ng-template>
+}

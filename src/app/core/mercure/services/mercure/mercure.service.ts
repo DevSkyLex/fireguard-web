@@ -2,7 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   ErrorHandler,
   inject,
-  Injectable,
+  Service,
   PLATFORM_ID,
   signal,
   type Signal,
@@ -75,7 +75,7 @@ interface TopicConnection {
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MercureService {
   //#region Properties
   /**

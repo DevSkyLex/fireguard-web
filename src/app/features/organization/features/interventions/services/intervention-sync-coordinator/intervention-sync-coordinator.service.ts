@@ -1,7 +1,7 @@
 import {
   effect,
   inject,
-  Injectable,
+  Service,
   signal,
   untracked,
   type Signal,
@@ -27,7 +27,7 @@ import { InterventionSyncService } from '../intervention-sync';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class InterventionSyncCoordinatorService {
   /**
    * Property syncingState

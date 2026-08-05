@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, type Signal } from '@angular/core';
+import { computed, inject, Service, type Signal } from '@angular/core';
 import type { StoreError } from '@core/request-state';
 import type { OrganizationPermissionName } from '@features/organization/models';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
@@ -20,7 +20,7 @@ import { OrganizationMemberAccessStore } from '@features/organization/state';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class OrganizationPermissionService {
   //#region Properties
   /**

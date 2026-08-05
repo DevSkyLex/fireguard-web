@@ -11,6 +11,9 @@ const flushEffects = async (): Promise<void> => {
   await Promise.resolve();
 };
 
+const stepWith = (key: string, status: string): OnboardingStepOutput =>
+  ({ key, status }) as unknown as OnboardingStepOutput;
+
 describe('OnboardingStore', () => {
   let store: OnboardingStore;
   let transferState: TransferState;
@@ -162,9 +165,6 @@ describe('OnboardingStore', () => {
   });
 
   it('should compute progress from completed and skipped steps', () => {
-    const stepWith = (key: string, status: string): OnboardingStepOutput =>
-      ({ key, status }) as unknown as OnboardingStepOutput;
-
     mockOnboardingService.start.mockReturnValue(
       of({
         ...onboarding,

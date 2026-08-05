@@ -5,15 +5,15 @@ import type { OnboardingOutput } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
 import { onboardingGuard } from '../onboarding.guard';
 
+const onboardingWith = (s: OnboardingOutput['state']): OnboardingOutput =>
+  ({ state: s }) as OnboardingOutput;
+
 describe('onboardingGuard', () => {
   let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };
   let mockStore: { ensureLoaded: ReturnType<typeof vi.fn> };
   const dashboardUrlTree = {} as UrlTree;
   const route = {} as unknown as Parameters<typeof onboardingGuard>[0];
   const state = {} as unknown as Parameters<typeof onboardingGuard>[1];
-
-  const onboardingWith = (s: OnboardingOutput['state']): OnboardingOutput =>
-    ({ state: s }) as OnboardingOutput;
 
   async function runGuard(): Promise<boolean | UrlTree> {
     const result = TestBed.runInInjectionContext(() => onboardingGuard(route, state));

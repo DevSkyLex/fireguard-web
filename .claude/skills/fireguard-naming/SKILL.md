@@ -17,7 +17,7 @@ The type separator is a **dot**: `auth.guard.ts`, never `auth-guard.ts`. One dec
 
 | You are creating         | File                                                       | Class                                                                           | Selector               |
 | ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------- |
-| route page               | `<name>.component.ts` in `ui/pages/<name>/`                | `<Name>Page` — **always** `Page`                                                | `app-<folder-name>`    |
+| route page               | `<name>-page.component.ts` in `ui/pages/<name>-page/`      | `<Name>Page` — **always** `Page`                                                | `app-<folder-name>`    |
 | presentational component | `<name>.component.ts`                                      | `<Name>` + role suffix, **no `Component`**                                      | `app-<folder-name>`    |
 | directive                | `<name>.directive.ts`                                      | `<Name>Directive` — **keeps** the suffix                                        | `[appCamelCase]`       |
 | pipe                     | `<name>.pipe.ts`                                           | `<Name>Pipe`                                                                    | `name: 'appCamelCase'` |

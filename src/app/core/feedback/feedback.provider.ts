@@ -11,7 +11,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
 import { filter, map } from 'rxjs';
 import { isFeedbackEventPayload } from '@core/request-state';
-import { FEEDBACK_PORT } from './ports';
 import { FeedbackService } from './services/feedback/feedback.service';
 
 /**
@@ -43,9 +42,6 @@ import { FeedbackService } from './services/feedback/feedback.service';
  */
 export function provideFeedback(): EnvironmentProviders {
   return makeEnvironmentProviders([
-    // Bound with `useExisting` so shared presentation reads the very queue the
-    // listener below fills, rather than a second instance of it (§5.5).
-    { provide: FEEDBACK_PORT, useExisting: FeedbackService },
     provideAppInitializer(() => {
       if (!isPlatformBrowser(inject<object>(PLATFORM_ID))) return;
 

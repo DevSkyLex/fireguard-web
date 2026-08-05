@@ -43,7 +43,8 @@ reset). Its `showResend` input exists because a TOTP challenge has no delivery t
 
 **Backend submit failures surface as toasts, not as inline banners.** No auth page renders its
 store's error signal: the stores already dispatch their failures as `StoreFailureEventPayload`
-events, `provideFeedback()` forwards them to the app-wide queue, and `@shared/toast` renders it.
+events, `provideFeedback()` forwards them to the app-wide queue, and the app shell drains it into
+spartan's `hlm-toaster`.
 Adding a banner would duplicate a message the user is already being shown. Field-level errors are
 the opposite case and stay in the form, next to the input that has to change.
 

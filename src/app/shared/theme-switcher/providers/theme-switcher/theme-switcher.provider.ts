@@ -1,5 +1,5 @@
 import type { AdditiveSlotFeature } from '@shared/layout-slot';
-import { ThemeSwitcher } from './ui/components/theme-switcher';
+import { ThemeSwitcher } from '../../ui/components/theme-switcher';
 
 /**
  * Function withThemeSwitcher

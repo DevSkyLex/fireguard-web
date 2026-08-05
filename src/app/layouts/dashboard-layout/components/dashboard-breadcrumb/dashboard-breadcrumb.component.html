@@ -1,0 +1,33 @@
+<nav hlmBreadcrumb class="min-w-0">
+  <ol hlmBreadcrumbList class="flex-nowrap">
+    <li hlmBreadcrumbItem>
+      <a
+        hlmBreadcrumbLink
+        [routerLink]="home().routerLink"
+        i18n-aria-label="@@dashboard.breadcrumb.home"
+        aria-label="Workspace home"
+      >
+        <ng-icon name="lucideHouse" class="text-sm" aria-hidden="true" />
+      </a>
+    </li>
+
+    @for (item of items(); track $index) {
+      <li hlmBreadcrumbSeparator></li>
+
+      <!--
+        `min-w-0` on the item is what lets the label inside it ellipsise: a flex
+        item defaults to `min-width: auto`, which refuses to shrink below its
+        content and would push the tool cluster off the card instead.
+      -->
+      <li hlmBreadcrumbItem class="min-w-0">
+        @if (item.current || !item.routerLink) {
+          <span hlmBreadcrumbPage class="block truncate">{{ item.label }}</span>
+        } @else {
+          <a hlmBreadcrumbLink class="block truncate" [routerLink]="item.routerLink">{{
+            item.label
+          }}</a>
+        }
+      </li>
+    }
+  </ol>
+</nav>

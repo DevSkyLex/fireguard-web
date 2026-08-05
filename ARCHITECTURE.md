@@ -720,12 +720,18 @@ shared/
     options/                 # optional static UI option sets
     constants/               # optional local fixed runtime values
     utils/                   # optional pure helpers local to the concept
+    providers/               # optional slot-contribution factories, one folder per contribution
     testing/                 # specs of the flat, non-UI files
   testing/                   # cross-cutting test doubles (match-media.mock.ts) — the one sanctioned grouping
   README.md                  # inventories the concepts and their entry points
 ```
 
 A concept that renders something gives **every component, directive, and pipe its own folder** under `<concept>/ui/<kind>/`, with an `index.ts` and a `testing/` — the canonical UI folder template (section 10.2) applied inside the concept. `models/`, `utils/`, `constants/`, and `options/` stay siblings of `ui/` at the concept root, so a shared concept reads like a feature. Nested subcomponents are not nested under their parent: they are sibling folders under `ui/components/`, and their own barrel keeps them addressable.
+
+A concept that a shell renders through a slot carries its own `providers/`, one folder per
+contribution (`providers/<name>/<name>.provider.ts` + `index.ts`), exactly as a feature does — the
+factory belongs with the thing it contributes, not with the layout that happens to host it. Only a
+contribution that must import a layout stays on the layout side (section 8.2).
 
 A concept with **no UI** creates no `ui/` and stays flat (a validator, a util, a type, or a constants file plus their barrel — like `core/boot-readiness`): `initials`, `match-fields`, `table-card-shell`, `tag`, `tag-severity`. Illustrative concepts in this codebase: `layout-slot` (the slot mechanism the layouts are built on — section 8.2), `tag`, `tag-severity`, `empty-state`, `error-state`, `board`, `calendar`, `chat`, `infinite-scroll`, `match-fields`, `initials`, `nav-row`, `table-card-shell`, `toast`, `splash-screen`, `theme-switcher`, `logo`.
 
@@ -858,7 +864,7 @@ No other prefix is permitted.
 
 - the route file lives at the feature root, named after the feature folder: `<feature>.routes.ts`,
 - the exported const is `SCREAMING_SNAKE` of the domain name + `_ROUTES`, typed `Routes`: `APP_ROUTES`, `AUTH_ROUTES`, `ORGANIZATION_ROUTES`; an entity sub-feature keeps the plural folder (`facilities/facilities.routes.ts`) but names the const after the domain concept (`FACILITY_ROUTES`),
-- private intermediate consts are allowed and documented (`ORGANIZATION_SCOPED_ROUTES`),
+- **a route file declares one const.** Children are written inline in the tree they belong to, so the whole shape of a URL is readable in one place; a private intermediate const splits that shape across two declarations for no gain. A nested subtree that has outgrown its parent gets its own `<child>.routes.ts` and a `loadChildren`, which is the split that earns its keep,
 - URL paths are lowercase kebab-case, plural for entity collections: `organizations`, `interventions`, `facilities`, `settings`,
 - route params are `camelCase` id names: `:organizationId`, `:interventionId`, `:channelId`,
 - lazy loading is the default: `loadChildren: () => import('./x.routes').then((m) => m.X_ROUTES)` for subtrees, `loadComponent` for leaf pages,

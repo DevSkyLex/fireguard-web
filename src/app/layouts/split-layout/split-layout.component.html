@@ -34,19 +34,22 @@
 
     <!--
       Owns the breathing room around the routed page: `py-16` keeps a short form
-      clear of the floating header. Pages own their own max-width and nothing
-      else.
-
-      `justify-center` centres on the block axis, `items-center` on the inline
-      one — without the second, a page capped at `max-w-sm` sat against the left
-      edge of a half-viewport column. The shell centres; the page only says how
-      wide it wants to be.
+      clear of the floating header.
     -->
-    <main
-      id="split-layout-content"
-      class="flex flex-1 flex-col items-center justify-center px-6 py-16 sm:px-8"
-    >
-      <router-outlet />
+    <main id="split-layout-content" class="flex flex-1 flex-col justify-center px-6 py-16 sm:px-8">
+      <!--
+        The content box, and the only thing that caps a form's width. Pages fill
+        it edge to edge and declare no width of their own — which is what keeps
+        sign-in and registration the same size instead of jumping between
+        `max-w-sm` and `max-w-md` as the user moves from one to the other.
+
+        Bounded rather than free: an email field stretched across an ultrawide
+        screen is harder to read, not easier. `mx-auto` centres it on the inline
+        axis, `justify-center` above on the block axis.
+      -->
+      <div class="mx-auto flex w-full max-w-md flex-col">
+        <router-outlet />
+      </div>
     </main>
 
     @if (footer.length > 0) {

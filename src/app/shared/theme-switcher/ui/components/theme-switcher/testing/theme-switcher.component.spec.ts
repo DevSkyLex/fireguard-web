@@ -43,16 +43,33 @@ describe('ThemeSwitcher', () => {
     expect(trigger().getAttribute('aria-label')).toContain('Dark');
   });
 
-  it('should show the appearance actually rendered, whatever produced it', async () => {
+  it('should show the selected mode, giving system a glyph of its own', async () => {
     // `name` is an Angular input, not a DOM attribute, so the assertion is on
-    // the glyph itself: it must change when the resolved appearance does, while
-    // the mode stays `system`.
-    const sun: string = trigger().innerHTML;
+    // the glyph itself: each mode must render a distinct one, or `system` is
+    // indistinguishable from an explicit choice.
+    const system: string = trigger().innerHTML;
+
+    theme.set('light');
+    await fixture.whenStable();
+    const light: string = trigger().innerHTML;
+
+    theme.set('dark');
+    await fixture.whenStable();
+
+    expect(system).not.toBe(light);
+    expect(trigger().innerHTML).not.toBe(light);
+    expect(trigger().innerHTML).not.toBe(system);
+  });
+
+  it('should not let the resolved appearance change the trigger under system', async () => {
+    // The appearance is already visible on every pixel of the page; borrowing
+    // its glyph would hide the mode without adding anything.
+    const before: string = trigger().innerHTML;
 
     resolvedTheme.set('dark');
     await fixture.whenStable();
 
-    expect(trigger().innerHTML).not.toBe(sun);
+    expect(trigger().innerHTML).toBe(before);
     expect(theme()).toBe('system');
   });
 

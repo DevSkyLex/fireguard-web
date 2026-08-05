@@ -1,5 +1,9 @@
 export { DashboardLayout } from './dashboard-layout.component';
-export { provideDashboardLayoutSlots, type DashboardLayoutSlotsConfig } from './providers';
+export {
+  provideDashboardLayoutSlots,
+  withDashboardBreadcrumb,
+  type DashboardLayoutSlotsConfig,
+} from './providers';
 export {
   DASHBOARD_HEADER_ACTIONS_SLOT,
   DASHBOARD_HEADER_SLOT,

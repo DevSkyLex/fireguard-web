@@ -1,3 +1,4 @@
+export { withDashboardBreadcrumb } from './dashboard-breadcrumb';
 export {
   provideDashboardLayoutSlots,
   type DashboardLayoutSlotsConfig,

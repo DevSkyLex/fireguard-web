@@ -22,13 +22,15 @@ import type { ThemeOption } from './models';
  * application with it. A two-state toggle cannot express that, which is why
  * this is a menu and not a switch.
  *
- * The trigger shows the *resolved* appearance, because that is what the user
- * sees on screen; the menu shows which of the three is actually selected.
+ * The trigger shows the selected **mode**, not the appearance it resolves to:
+ * the appearance is already the most visible thing on screen, so showing it
+ * again would say nothing while hiding the one state the user cannot otherwise
+ * see — that the choice is delegated to the system.
  *
  * Generic by design: it injects the theme port published by `core/theme`, never
  * the concrete service (`ARCHITECTURE.md` §8.5).
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -95,21 +97,43 @@ export class ThemeSwitcher {
   );
 
   /**
+   * Property current
+   * @readonly
+   *
+   * @description
+   * The option matching the selected mode, or `undefined` before the port has
+   * resolved one.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {Signal<ThemeOption | undefined>}
+   */
+  private readonly current: Signal<ThemeOption | undefined> = computed(
+    (): ThemeOption | undefined =>
+      this.options.find((option: ThemeOption): boolean => option.mode === this.selected()),
+  );
+
+  /**
    * Property triggerIcon
    * @readonly
    *
    * @description
-   * The glyph on the trigger: the appearance currently rendered, not the mode
-   * that produced it. Under `system` the button therefore shows a sun or a
-   * moon, which is what the screen actually looks like.
+   * The glyph on the trigger: the selected **mode**, so `system` shows a
+   * monitor rather than borrowing a sun or a moon.
+   *
+   * It deliberately does not show the resolved appearance. That is already the
+   * most visible thing on screen — the whole interface is light or dark — so a
+   * sun on an obviously light page says nothing, while leaving `system`
+   * indistinguishable from an explicit choice.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @type {Signal<string>}
    */
-  protected readonly triggerIcon: Signal<string> = computed((): string =>
-    this.themePort.resolvedTheme() === 'dark' ? 'lucideMoon' : 'lucideSun',
+  protected readonly triggerIcon: Signal<string> = computed(
+    (): string => this.current()?.icon ?? 'lucideMonitor',
   );
 
   /**
@@ -117,21 +141,16 @@ export class ThemeSwitcher {
    * @readonly
    *
    * @description
-   * Accessible name of the trigger, naming the selected mode so a screen reader
-   * is not left with an icon whose meaning depends on the OS.
+   * Accessible name of the trigger, naming the selected mode.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<string>}
    */
-  protected readonly triggerLabel: Signal<string> = computed((): string => {
-    const current: ThemeOption | undefined = this.options.find(
-      (option: ThemeOption): boolean => option.mode === this.selected(),
-    );
-
-    return $localize`:@@theme.trigger:Appearance: ${current?.label ?? ''}:mode:`;
-  });
+  protected readonly triggerLabel: Signal<string> = computed(
+    (): string => $localize`:@@theme.trigger:Appearance: ${this.current()?.label ?? ''}:mode:`,
+  );
   //#endregion
 
   //#region Methods

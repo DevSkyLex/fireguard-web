@@ -2,7 +2,11 @@ import type { Routes } from '@angular/router';
 import { withAccountMenu } from '@features/account';
 import { notFoundRedirectGuard } from '@features/error';
 import { withOrganizationNav, withOrganizationSwitcher } from '@features/organization';
-import { DashboardLayout, provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
+import {
+  DashboardLayout,
+  provideDashboardLayoutSlots,
+  withDashboardBreadcrumb,
+} from '@layouts/dashboard-layout';
 import { FocusedLayout, provideFocusedLayoutSlots } from '@layouts/focused-layout';
 import {
   provideSplitLayoutSlots,
@@ -53,6 +57,8 @@ export const APP_ROUTES: Routes = [
         sidebarHeader: [withOrganizationSwitcher()],
         sidebarNav: [withOrganizationNav()],
         sidebarFooter: [withAccountMenu()],
+        header: [withDashboardBreadcrumb()],
+        headerActions: [withThemeSwitcher()],
       }),
     ],
     children: [

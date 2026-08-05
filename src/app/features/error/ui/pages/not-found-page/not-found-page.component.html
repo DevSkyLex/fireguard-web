@@ -1,0 +1,38 @@
+<div id="not-found-page" class="flex w-full max-w-md flex-col items-center gap-6 text-center">
+  <div class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+    <ng-icon name="lucideCompass" class="text-2xl" aria-hidden="true" />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <p class="font-mono text-sm text-muted-foreground">404</p>
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground" i18n="@@error.notFound.title">
+      That page is not here
+    </h1>
+    <p class="text-sm text-pretty text-muted-foreground" i18n="@@error.notFound.description">
+      The link may be out of date, or the record it pointed to may have been removed.
+    </p>
+  </div>
+
+  <!--
+    The address is shown so a stale bookmark can be recognised — and broken out
+    of the sentence, because a URL wrapped mid-word inside prose is unreadable.
+  -->
+  @if (attemptedUrl(); as attempted) {
+    <p
+      class="max-w-full truncate rounded-md bg-muted px-3 py-2 font-mono text-xs text-muted-foreground"
+      [title]="attempted"
+    >
+      {{ attempted }}
+    </p>
+  }
+
+  <div class="flex flex-wrap items-center justify-center gap-3">
+    <button hlmBtn variant="outline" size="sm" class="gap-2 max-sm:min-h-11" (click)="goBack()">
+      <ng-icon name="lucideArrowLeft" class="text-sm" aria-hidden="true" />
+      <span i18n="@@error.notFound.back">Go back</span>
+    </button>
+    <a hlmBtn size="sm" class="max-sm:min-h-11" routerLink="/" i18n="@@error.notFound.home">
+      Go to my workspace
+    </a>
+  </div>
+</div>

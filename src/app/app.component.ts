@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, effect, EffectRef, inject, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  EffectRef,
+  inject,
+  untracked,
+} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { toast } from '@spartan-ng/brain/sonner';
 import { FeedbackService, type FeedbackMessage } from '@core/feedback';

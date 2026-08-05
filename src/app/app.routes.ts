@@ -1,14 +1,15 @@
 import type { Routes } from '@angular/router';
 import { withAccountMenu } from '@features/account';
+import { notFoundRedirectGuard } from '@features/error';
 import { withOrganizationNav, withOrganizationSwitcher } from '@features/organization';
 import { DashboardLayout, provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { FocusedLayout, provideFocusedLayoutSlots } from '@layouts/focused-layout';
-import { provideSplitLayoutSlots, SplitLayout } from '@layouts/split-layout';
 import {
-  PlaceholderForm,
-  withPlaceholderShowcase,
-  withPlaceholderTools,
-} from './layout-placeholder';
+  provideSplitLayoutSlots,
+  SplitLayout,
+  withSplitLayoutShowcase,
+} from '@layouts/split-layout';
+import { withThemeSwitcher } from '@shared/theme-switcher';
 
 /**
  * Constant APP_ROUTES
@@ -16,14 +17,13 @@ import {
  * @description
  * Application root routes configuration: each shell on the URL it will keep.
  *
- * The dashboard shell is wired to real features — the organization switcher and
- * navigation, and the account menu — and mounts the organization route tree.
- * The split shell mounts the whole authentication workflow.
+ * Every shell is now wired to real features — the authentication workflow on
+ * the split shell, the error pages on the focused one, and the organization
+ * tree on the dashboard, whose sidebar is filled by feature slot contributions.
  *
- * Only `error` still carries **scaffolding** from `layout-placeholder.ts`: that
- * feature owns no `ui/` yet, and a shell route with no matching child cannot
- * activate at all. The split shell's showcase and the two header tool clusters
- * are scaffolding for the same reason. Replace each as its pages land.
+ * The trailing wildcard sends an unmatched address through
+ * `notFoundRedirectGuard` rather than a bare `redirectTo`, so the not-found page
+ * receives the URL that failed and can name it (section 9.5).
  *
  * @since 1.0.0
  */
@@ -33,8 +33,8 @@ export const APP_ROUTES: Routes = [
     component: SplitLayout,
     providers: [
       provideSplitLayoutSlots({
-        showcase: [withPlaceholderShowcase()],
-        header: [withPlaceholderTools()],
+        showcase: [withSplitLayoutShowcase()],
+        header: [withThemeSwitcher()],
       }),
     ],
     loadChildren: () => import('@features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
@@ -42,8 +42,8 @@ export const APP_ROUTES: Routes = [
   {
     path: 'error',
     component: FocusedLayout,
-    providers: [provideFocusedLayoutSlots({ header: [withPlaceholderTools()] })],
-    children: [{ path: '**', component: PlaceholderForm }],
+    providers: [provideFocusedLayoutSlots({ header: [withThemeSwitcher()] })],
+    loadChildren: () => import('@features/error/error.routes').then((m) => m.ERROR_ROUTES),
   },
   {
     path: '',
@@ -64,4 +64,5 @@ export const APP_ROUTES: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'organizations' },
     ],
   },
+  { path: '**', canActivate: [notFoundRedirectGuard], children: [] },
 ];

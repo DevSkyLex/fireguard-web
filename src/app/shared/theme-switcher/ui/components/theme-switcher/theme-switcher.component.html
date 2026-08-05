@@ -1,0 +1,33 @@
+<button
+  hlmBtn
+  variant="ghost"
+  size="icon-sm"
+  id="theme-switcher-trigger"
+  [attr.aria-label]="triggerLabel()"
+  [hlmDropdownMenuTrigger]="menu"
+  align="end"
+>
+  <ng-icon [name]="triggerIcon()" />
+</button>
+
+<ng-template #menu>
+  <hlm-dropdown-menu class="min-w-40">
+    @for (option of options; track option.mode) {
+      <button
+        hlmDropdownMenuItem
+        class="gap-2"
+        [attr.aria-current]="option.mode === selected() ? 'true' : null"
+        (click)="select(option.mode)"
+      >
+        <ng-icon [name]="option.icon" class="text-sm" aria-hidden="true" />
+        <span>{{ option.label }}</span>
+        <!--
+          The selected mode is marked with a glyph, not with colour alone.
+        -->
+        @if (option.mode === selected()) {
+          <ng-icon name="lucideCheck" class="ml-auto text-sm" aria-hidden="true" />
+        }
+      </button>
+    }
+  </hlm-dropdown-menu>
+</ng-template>

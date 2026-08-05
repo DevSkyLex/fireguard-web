@@ -12,15 +12,4 @@ import { type Routes } from '@angular/router';
  *
  * @since 1.0.0
  */
-export const ACCOUNT_ROUTES: Routes = [
-  {
-    path: '',
-    pathMatch: 'full',
-    loadComponent: () =>
-      import('./ui/pages/account-page/account-page.component').then((m) => m.AccountPage),
-    title: $localize`:@@route.account:Account`,
-    data: {
-      breadcrumb: $localize`:@@route.account:Account`,
-    },
-  },
-];
+export const ACCOUNT_ROUTES: Routes = [];

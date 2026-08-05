@@ -50,7 +50,7 @@ export type {
 } from './message';
 export type { ActivityCell, ActivityLevel, ChannelPanelTab } from './channel-panel';
 export type { MessagingLinkOutput } from './link';
-export type { MentionQuery, QuillEditor } from './composer';
+export type { MentionQuery } from './composer';
 export type {
   ListPresenceQuery,
   PingPresenceInput,

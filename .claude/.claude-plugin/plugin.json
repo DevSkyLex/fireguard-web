@@ -1,8 +1,0 @@
-{
-  "name": "fireguard-web",
-  "description": "FireGuard Web (Angular 21) tooling — 6 unit builders, 6 specialists, 12 commands, 7 skills, and the architecture guard hooks. Loadable from the monorepo root with --plugin-dir.",
-  "version": "1.0.0",
-  "author": {
-    "name": "Valentin FORTIN"
-  }
-}

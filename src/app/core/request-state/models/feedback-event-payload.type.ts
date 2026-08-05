@@ -3,9 +3,8 @@
  * @typedef FeedbackSeverity
  *
  * @description
- * Severity of a user-facing feedback message. Mirrors the PrimeNG toast
- * severities so a `FeedbackEventPayload` can be forwarded to the toast layer
- * without translation.
+ * Severity of a user-facing feedback message, forwarded to whatever presentation
+ * layer consumes the feedback queue.
  *
  * @since 1.0.0
  */

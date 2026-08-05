@@ -1,1 +1,0 @@
-export { FireguardTheme } from './presets';

@@ -197,7 +197,7 @@ next/previous within the cached list ordering (ignored while typing or while
 a drawer is open). The phase action and Request changes are mirrored into a
 mobile thumb-zone bar (rendered when either exists, so a reviewer without
 publish rights still reaches Request changes on mobile). Every drawer guards
-accidental dismissal: PrimeNG's open-time Escape listener is disabled and
+accidental dismissal: the overlay’s open-time Escape listener is disabled and
 replaced by a dirty-aware document handler, and the backdrop is
 non-dismissible while the composed form reports unsaved edits (`dirty`
 signal on every form). The
@@ -252,7 +252,7 @@ delete); a **proposed changes** section
 raw JSON) headed by a pending/total counter and the atomic-application note;
 while submitted, a tinted **publication summary** aside recapping the atomic
 contract (pending changes, inspections recorded, revision); and the activity
-section (a PrimeNG `p-timeline` + this feature's own
+section (a timeline + this feature's own
 `ui/forms/comment-composer` — interventions-owned (§6.5, strongest ownership):
 it expresses this feature's activity-comment workflow, and collaboration
 deliberately uses a plain textarea instead — fed by the
@@ -281,14 +281,14 @@ status is never conveyed by colour alone (icon + label always present).
     `intervention-tag-kind.type.ts`.
   - `intervention-tag.util.ts` — per-enum descriptor registry and
     `resolveInterventionTag(kind, value)` (graceful fallback for unknown values).
-    The descriptor's `severity` maps straight onto PrimeNG's `p-tag` severity
-    scale, so no colour mapping is needed at the render site.
+    The descriptor's `severity` is the render site's severity scale, so no
+    colour mapping is needed there.
 - `ui/components/intervention-tag/` — `<app-intervention-tag kind value />`:
   the **table/panel badge**. A thin wrapper that resolves the descriptor and
-  forwards it to PrimeNG's `p-tag`.
+  forwards it to the badge control.
 - `ui/components/intervention-option/` — `<app-intervention-option kind value />`:
-  the **`p-select` option content** (used in `#item` / `#selectedItem`), also a
-  `p-tag`, matching the dashboard trend-card filter selects.
+  the **select option content**, also a badge, matching the dashboard
+  trend-card filter selects.
 
 To add a new enum value: extend the relevant descriptor map only — both the
 badge and the select option follow automatically.
@@ -296,7 +296,7 @@ badge and the select option follow automatically.
 ## Conventions (apply to all work in this feature)
 
 - **Tech**: Angular 21 standalone components, signals (`input()`, `computed()`,
-  `signal()`), `ChangeDetectionStrategy.OnPush`; PrimeNG for controls; Tailwind
+  `signal()`), `ChangeDetectionStrategy.OnPush`; Tailwind
   utilities for styling. **Never edit `src/styles.css`** — style with Tailwind
   classes / component `[pt]`; literal class strings only (Tailwind scans them).
 - **Architecture**: keep the `models/` (interfaces, types and the small pure

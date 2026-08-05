@@ -12,8 +12,8 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
  *   prevent duplicate authenticated requests after hydration.
  *
  * - All other routes (`**`) use `RenderMode.Client`: the dashboard shell and
- *   feature pages require authentication tokens, depend on PrimeNG overlay
- *   components (menus, popovers) that need `document`/`window`, and use
+ *   feature pages require authentication tokens, depend on overlay components
+ *   that need `document`/`window`, and use
  *   authenticated HTTP calls that are intentionally excluded from the HTTP
  *   Transfer Cache (`withHttpTransferCacheOptions({ includeRequestsWithAuthHeaders: false })`).
  *   Server-rendering these routes would cause double HTTP requests and hydration
@@ -22,10 +22,6 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
 export const serverRoutes: ServerRoute[] = [
   {
     path: 'auth/**',
-    renderMode: RenderMode.Server,
-  },
-  {
-    path: 'onboarding/**',
     renderMode: RenderMode.Server,
   },
   {

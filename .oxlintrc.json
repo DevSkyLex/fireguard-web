@@ -13,7 +13,8 @@
     "tmp/**",
     ".claude/skills/**",
     ".github/skills/**",
-    ".github/hooks/**"
+    ".github/hooks/**",
+    "src/app/shared/ui/**"
   ],
   "categories": {
     "correctness": "error",
@@ -31,7 +32,12 @@
     "no-debugger": "error",
     "sort-keys": "off",
     "no-unused-vars": "error",
-    "typescript/no-extraneous-class": ["error", { "allowWithDecorator": true }],
+    "typescript/no-extraneous-class": [
+      "error",
+      {
+        "allowWithDecorator": true
+      }
+    ],
     "typescript/no-floating-promises": "error",
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",

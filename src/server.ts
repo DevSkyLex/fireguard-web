@@ -37,8 +37,8 @@ const angularApp = new AngularNodeAppEngine();
  * is the one browsers honour, the legacy header covers the rest. Framing an
  * identity provider is how consent and session UI get hijacked, so both say no.
  *
- * Deliberately no `script-src`/`style-src` policy here: Angular's hydration and
- * PrimeNG's runtime styling need a nonce pipeline to work under a strict CSP, and
+ * Deliberately no `script-src`/`style-src` policy here: Angular's hydration needs
+ * a nonce pipeline to work under a strict CSP, and
  * a half-configured policy either breaks the app or lulls you into thinking it is
  * protected. That belongs in its own change, verified in a browser.
  */

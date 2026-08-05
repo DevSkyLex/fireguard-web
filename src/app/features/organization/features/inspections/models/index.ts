@@ -22,6 +22,3 @@ export type {
 } from './non-conformity/non-conformity-list-options.interface';
 export type { AddNonConformityInput } from './non-conformity/add-non-conformity-input.interface';
 export type { UpdateNonConformityStatusInput } from './non-conformity/update-non-conformity-status-input.interface';
-export type { InspectionTagDescriptor } from './inspection-tag/inspection-tag-descriptor.interface';
-export type { InspectionTagKind } from './inspection-tag/inspection-tag-kind.type';
-export { resolveInspectionTag, inspectionTagOptions } from './inspection-tag/inspection-tag.util';

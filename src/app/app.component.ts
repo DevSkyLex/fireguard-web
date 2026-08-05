@@ -1,18 +1,16 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { SplashScreen } from '@shared/splash-screen';
-import { Toast } from '@shared/toast';
 
 /**
  * Component App
  * @class App
  *
  * @description
- * Root application component for the FireGuard
- * SSO web application.
+ * Root application component. Reduced to a bare routing outlet: the interface
+ * layer has been removed, so the shell owns no splash screen, toast deck or
+ * confirmation host until a new one is built.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @example
@@ -23,12 +21,8 @@ import { Toast } from '@shared/toast';
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ConfirmDialogModule, SplashScreen, Toast],
-  template: `
-    <app-splash-screen />
-    <p-confirmdialog />
-    <app-toast />
-    <router-outlet />
-  `,
+  imports: [RouterOutlet],
+  template: `<router-outlet/>`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {}

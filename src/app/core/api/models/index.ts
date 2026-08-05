@@ -14,6 +14,3 @@ export type { ApiError } from './api-error.interface';
 export type { ConstraintViolation, Violation } from './constraint-violation.interface';
 export type { OptionOutput } from './option-output.interface';
 export type { ServerFieldErrors } from './server-field-errors.type';
-export type { TableFilterParamMapping } from './table-filter-param-mapping.type';
-export type { TableFilterParamResolver } from './table-filter-param-resolver.type';
-export type { TableFilterParamValue } from './table-filter-param-value.type';

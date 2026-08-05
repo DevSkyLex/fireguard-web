@@ -4,5 +4,3 @@ export { activeInterventionStoreEvents } from './active-intervention';
 export { InterventionStore } from './intervention';
 export type { InterventionStoreType, InterventionState } from './intervention';
 export { interventionStoreEvents } from './intervention';
-export { InterventionHeaderStore, interventionHeaderEvents } from './intervention-header';
-export type { InterventionHeaderState, InterventionHeaderStoreType } from './intervention-header';

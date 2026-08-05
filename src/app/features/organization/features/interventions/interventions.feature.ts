@@ -45,7 +45,6 @@ export function provideInterventionsFeature(): EnvironmentProviders {
 
       const injector: EnvironmentInjector = inject(EnvironmentInjector);
 
-      // Deliberately not awaited: draining an outbox must not hold up first paint.
       void import('./services').then((services) => {
         runInInjectionContext(injector, () => {
           inject(services.InterventionOfflineLifecycleService).start();

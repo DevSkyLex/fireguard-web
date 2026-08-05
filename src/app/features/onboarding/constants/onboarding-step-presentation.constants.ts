@@ -6,7 +6,7 @@ import type { OnboardingStepKey, OnboardingStepPresentation } from '@features/on
  *
  * @description
  * Exhaustive, localized presentation metadata for every {@link OnboardingStepKey}:
- * a PrimeIcons name, a short title, a compact rail subtitle, and the longer
+ * an icon name, a short title, a compact rail subtitle, and the longer
  * content-heading description. Shared by the wizard rail, the wizard content
  * heading, and the shell setup checklist so every surface renders identical step
  * copy. A typed `Record` fails the build if a step key is added to the domain

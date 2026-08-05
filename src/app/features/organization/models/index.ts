@@ -94,7 +94,3 @@ export type { PlanPricingOutput } from './billing/plan-pricing-output.interface'
 export type { CheckoutSessionInput } from './billing/checkout-session-input.interface';
 export type { CheckoutSessionOutput } from './billing/checkout-session-output.interface';
 export type { PortalSessionOutput } from './billing/portal-session-output.interface';
-export { resolveSubscriptionStatusTag } from './billing-tag/subscription-status-tag.util';
-export type { InvitationTagDescriptor } from './invitation-tag/invitation-tag-descriptor.interface';
-export type { InvitationTagKind } from './invitation-tag/invitation-tag-kind.type';
-export { resolveInvitationTag } from './invitation-tag/invitation-tag.util';

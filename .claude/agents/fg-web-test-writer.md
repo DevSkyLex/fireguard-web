@@ -26,7 +26,7 @@ Use this agent to author or repair `*.spec.ts` and run them. Hand off everything
 - **Browser / Playwright e2e, visual, responsive, dark-mode driving** → root **fg-e2e-runner**. If proving the behavior needs a real DOM in a browser, it is not your job.
 - **Restructuring the code under test, moving files, fixing ownership** → **fg-architecture-reviewer** (review) or the matching builder (**fg-feature-builder**, **fg-component-builder**, **fg-service-builder**, **fg-utils-builder**). Write specs against the code as it is; if it is mis-placed, flag it and defer — do not refactor to make a test pass.
 - **Building the store / service itself** → **fg-signal-store** / contract owners. You test what exists; you do not add production `patchState` logic.
-- **PrimeNG markup correctness** → **fg-primeng-ui**; **static WCAG assertions** → **fg-a11y-auditor**.
+- **spartan/ui markup correctness** → **fg-spartan-ui**; **static WCAG assertions** → **fg-a11y-auditor**.
 
 ## Rules tied to the architecture
 

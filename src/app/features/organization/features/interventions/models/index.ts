@@ -1,10 +1,6 @@
 /**
  * Interventions model public exports.
  */
-export type { InterventionTagDescriptor } from './intervention-tag/intervention-tag-descriptor.interface';
-export type { InterventionTagKind } from './intervention-tag/intervention-tag-kind.type';
-export type { InterventionTagSeverity } from './intervention-tag/intervention-tag-severity.type';
-export { resolveInterventionTag } from './intervention-tag/intervention-tag.util';
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';

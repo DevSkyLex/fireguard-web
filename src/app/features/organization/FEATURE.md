@@ -112,7 +112,7 @@ limit quantities.
 - Enforcement is **strict and backend-owned**: each create flow (member add/invite, facility,
   equipment, inspection) asserts the quota before persisting and returns **HTTP 409** when the cap
   is reached. There is no frontend route gating.
-- The settings **Usage** tab (`OrganizationUsagePanel`) renders PrimeNG `MeterGroup` bars
+- The settings **Usage** tab (`OrganizationUsagePanel`) renders meter bars
   (used / limit per resource, with percentages and unlimited rows), driven by
   `OrganizationQuotaStore`.
 - Plan cards consume `PlanOutput.quotas`: a backend-built list of `{ resource, label, limit, summary }`

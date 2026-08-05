@@ -69,7 +69,6 @@ area:styles:
   - changed-files:
       - any-glob-to-any-file:
           - 'src/styles.css'
-          - 'src/app/core/primeng/**'
           - 'src/app/core/theme/**'
           - '.postcssrc.json'
 

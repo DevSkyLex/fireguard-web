@@ -10,7 +10,7 @@ Require it to check the templates and component styling for:
 - **status conveyed by colour alone** — every severity colour needs a paired label or icon (`PRODUCT.md`),
 - **visible focus** — `outline-none` without a `focus-visible:` replacement,
 - **keyboard reachability** — `(click)` on a `<div>` or `<span>` instead of a real button; roving tabindex where a composite widget needs one,
-- **ARIA** — missing roles and labels, icon-only buttons with no accessible name, and ARIA that duplicates or fights what PrimeNG already provides,
+- **ARIA** — missing roles and labels, icon-only buttons with no accessible name, and ARIA that duplicates or fights what the component already provides,
 - **form labels** — every input associated with a label,
 - **touch targets and thumb reach** — field agents work one-handed on a phone,
 - **dark-mode intent** — light-only classes with no `dark:` counterpart,

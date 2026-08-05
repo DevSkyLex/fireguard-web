@@ -16,6 +16,6 @@ Require it to check, per file:
 - **Barrels (§13.2/§13.3)** — explicit named re-exports, never `export *`; the narrowest public surface; no deep imports into another area's private files; a feature root barrel that does not mirror the internal tree.
 - **`FEATURE.md` currency (§14.2)** — was it updated in the same change that moved a route, published or retired a public API, added a cross-feature dependency, or changed an invariant?
 
-It is **read-only**: findings, not edits. It should defer store internals to **fg-signal-store**, markup to **fg-primeng-ui**, a11y to **fg-a11y-auditor**, backend↔frontend drift to the root **fg-contract-sync**, and browser proof to **fg-e2e-runner**.
+It is **read-only**: findings, not edits. It should defer store internals to **fg-signal-store**, markup to **fg-spartan-ui**, a11y to **fg-a11y-auditor**, backend↔frontend drift to the root **fg-contract-sync**, and browser proof to **fg-e2e-runner**.
 
 Ask for findings ranked worst-first, each citing the section it violates, plus a clear conforms / changes-required verdict.

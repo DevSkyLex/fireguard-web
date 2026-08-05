@@ -1,7 +1,7 @@
 # FireGuard Web — Claude Code tooling
 
 This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspace root to
-activate it: 12 agents, 12 commands, 7 skills, 8 rules, 4 MCP servers, and 2 hooks.
+activate it: 12 agents, 12 commands, 8 skills, 8 rules, 4 MCP servers, and 2 hooks.
 
 > **This directory is also a plugin.** From the monorepo root,
 > `claude --plugin-dir ./fireguard-sso-web/.claude` loads the 12 agents and the commands
@@ -33,7 +33,7 @@ Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\firegu
 
 | Agent                      | Does                                                            | Writes?       |
 | -------------------------- | --------------------------------------------------------------- | ------------- |
-| `fg-primeng-ui`            | rich PrimeNG markup, Tailwind + `[pt]`, dark-mode parity        | yes           |
+| `fg-spartan-ui`            | spartan/ui surfaces, Tailwind + theme tokens, dark-mode parity  | yes           |
 | `fg-signal-store`          | SignalStore slices: CallState, rxMethod, events, scoping        | yes           |
 | `fg-web-test-writer`       | unit and integration specs at the right boundary                | yes           |
 | `fg-e2e-runner`            | Playwright suite, browser reproduction, visual proof            | yes           |
@@ -47,7 +47,7 @@ spec suite has taken a specialist's job; each one is told to hand those off by n
 
 | Builders        | Specialists       | Gate          |
 | --------------- | ----------------- | ------------- |
-| `/fg-component` | `/fg-primeng`     | `/fg-quality` |
+| `/fg-component` | `/fg-spartan`     | `/fg-quality` |
 | `/fg-directive` | `/fg-store`       |               |
 | `/fg-pipe`      | `/fg-arch-review` |               |
 | `/fg-feature`   | `/fg-a11y`        |               |
@@ -68,7 +68,7 @@ that restated its rules would become a second source of truth that drifts.
 | --------------------- | ------------------------------------------------------------------------------------------- |
 | `fireguard-naming`    | which suffix, folder, class name, selector — plus the 5 transitional deviations not to copy |
 | `signalstore-recipes` | CallState vs withQueryState vs withEntities, templates, events, scoping, TransferState      |
-| `primeng-styling`     | Tailwind + `[pt]`, preset-first, dark mode, and whether a shared wrapper earns its place    |
+| `spartan-ui`          | the catalog-first rule, where helm lives, adding a component, theme tokens, dark mode       |
 | `hydra-data-access`   | the `HydraApiService` contract, the envelope, DTOs, the error flow, adapters                |
 | `web-testing`         | the `--include` trap, the boundary each unit owns, the standard harnesses                   |
 | `e2e-playwright`      | `ApiMock`, page objects, port 4273, the `id`/`data-testid` hooks                            |
@@ -105,17 +105,11 @@ opens a matching file.
 | Server       | Command                        | Tools | Note                                                                                                                                                  |
 | ------------ | ------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `angular`    | `npx ng mcp --read-only`       | 6     | uses the **local** CLI (21.2.19) — always version-matched, no download. `--read-only` drops `build`/`test`/`run_target`, already covered by `npm run` |
-| `primeng`    | `npx -y @primeng/mcp@22`       | 8     | see the skew note below                                                                                                                               |
+| `spartan`    | `npx -y @spartan-ng/mcp`       | —     | the component catalog, APIs, and blocks — ask it before writing markup                                                                                |
 | `playwright` | `npx -y @playwright/mcp`       | 24    | the heaviest; scoped to `fg-e2e-runner` via its `tools:` list                                                                                         |
 | `context7`   | `npx -y @upstash/context7-mcp` | 2     | NgRx, Tailwind, CDK — what the other two do not cover                                                                                                 |
 
-**40 tools total**, well under the ~80 ceiling where models start ignoring tools.
-
-> **PrimeNG version skew — know this.** The MCP serves **PrimeNG 22** docs; this project runs
-> **PrimeNG 21.1.9**. Pinning the MCP to its matching v21 line is **not** an option: `@primeng/mcp@21.1.9`
-> crashes on startup against the current MCP SDK (`get_migration_guide expected a Zod schema`).
-> So: the MCP is authoritative for _usage semantics_, and `node_modules/primeng` on disk is
-> authoritative for _what exists here_. Grep the installed package before trusting an unfamiliar prop.
+**32 tools total**, well under the ~80 ceiling where models start ignoring tools.
 
 ## Hooks
 

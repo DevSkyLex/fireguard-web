@@ -11,13 +11,10 @@ import {
 } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { providePrimeNG } from 'primeng/config';
 import { APP_ROUTES } from '@app/app.routes';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { provideFeedback } from '@core/feedback';
 import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-forward';
-import { FireguardTheme } from '@core/primeng';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
 import { provideSplashScreen } from '@core/splash-screen';
 import { provideTheme } from '@core/theme';
@@ -28,6 +25,7 @@ import { maintenanceInterceptor } from '@features/maintenance/http/interceptors'
 import { provideMaintenanceMode } from '@features/maintenance/state';
 import { provideCollaborationFeature } from '@features/organization/features/collaboration/collaboration.feature';
 import { provideInterventionsFeature } from '@features/organization/features/interventions/interventions.feature';
+import { provideSpartanHlm } from '@shared/ui/utils';
 
 /**
  * Configuration appConfig
@@ -85,35 +83,8 @@ export const appConfig: ApplicationConfig = {
     provideAuthFeature(),
     provideAccountFeature(),
     provideTheme(),
+    provideSpartanHlm(),
     provideSplashScreen(),
-    providePrimeNG({
-      theme: {
-        preset: FireguardTheme,
-        options: {
-          darkMode: 'selector',
-          darkModeSelector: '[data-theme="dark"]',
-          cssLayer: {
-            name: 'primeng',
-            order: 'theme, base, primeng',
-          },
-        },
-      },
-      pt: {
-        message: {
-          host: ({ instance }): Record<string, string> => {
-            const severity: string | undefined = (instance as { severity?: string }).severity;
-            const interrupts: boolean = severity === 'error';
-
-            return {
-              role: interrupts ? 'alert' : 'status',
-              'aria-live': interrupts ? 'assertive' : 'polite',
-            };
-          },
-        },
-      },
-    }),
-    MessageService,
-    ConfirmationService,
     provideFeedback(),
     providePageTitleStrategy(),
   ],

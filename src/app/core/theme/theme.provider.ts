@@ -36,7 +36,6 @@ export function provideTheme(): EnvironmentProviders {
       useExisting: ThemeService,
     },
     provideAppInitializer(() => {
-      // Inject ThemeService to trigger initialization
       inject<ThemeService>(ThemeService);
     }),
   ]);

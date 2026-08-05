@@ -21,5 +21,3 @@ export type {
   AccountPermissionGuardRedirect,
 } from './http/guards';
 export { provideAccountFeature } from './account.feature';
-export { withAccountMenu, withNotificationBell } from './providers';
-export { AccountMenu, NotificationBell } from './ui/components';

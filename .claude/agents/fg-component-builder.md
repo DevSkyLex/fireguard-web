@@ -1,7 +1,7 @@
 ---
 name: fg-component-builder
 description: Use to create an Angular component in fireguard-sso-web — a presentational component, a route page, a p-table grid, a p-dataview surface, a form, a dialog, or a drawer — as a complete unit folder (index.ts + .component.ts + .component.html + testing/) following the canonical UI folder template in ARCHITECTURE.md §10.2. Decides placement first (feature ui/ vs shared/<concept>/ui/components) per §2.8 and §6.4. Invoke for "add a component / page / table / form to the web app". Writes code.
-tools: Read, Grep, Glob, Edit, Write, Bash, mcp__primeng__list, mcp__primeng__search, mcp__primeng__get_component, mcp__primeng__get_guide, mcp__primeng__get_example, mcp__primeng__validate_usage, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__angular__find_examples
+tools: Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__angular__find_examples
 model: sonnet
 ---
 
@@ -24,7 +24,7 @@ Answer in this order; the first "yes" wins.
 
 **Domain-agnostic is necessary but not sufficient** (§2.7). A generic component whose consumers all sit inside one feature subtree belongs to that subtree, not to `shared`. And §6.4: a component is _not_ domain-agnostic if it imports a feature model or type, injects a feature service or store, hard-codes a business status, or needs feature route context to make sense.
 
-**Before creating anything under `shared/`, apply §8.5 — "Prefer PrimeNG over a shared wrapper".** A shared component that exists only so call sites avoid repeating PrimeNG markup **does not earn its place**: use the PrimeNG component directly and accept the duplication. A wrapper is justified only by a capability gap (`board`'s drop predicate, `calendar`'s scheduler), a rendering shape PrimeNG has no component for (`empty-state`, `error-state`), or an accessibility pattern PrimeNG gets wrong for the context (`nav-row`). If none of the three applies, say so and put the markup at the call site instead.
+**Before creating anything under `shared/`, apply §8.5.** A shared component that exists only so call sites avoid repeating markup **does not earn its place**: put the markup at the call site and accept the duplication. A wrapper is justified only by a capability gap, a rendering shape nothing else covers, or an accessibility pattern that must not be got wrong twice. If none of the three applies, say so.
 
 Choosing between dialog, drawer, and page (§10.5): **dialog** for short confirmations, pickers, compact forms · **drawer** for forms tall enough to scroll and contextual side panels · **routed page** for the feature's primary or multi-step workflows. An overlay is never the core workflow.
 
@@ -57,7 +57,7 @@ export class OrganizationUsagePanel {} // §9.3 — NO "Component" suffix
 Non-negotiables:
 
 - **No `standalone: true`** — it is the Angular 21 default and appears nowhere in `src/app`.
-- **No `styleUrl` / `styles`** — Tailwind utilities + PrimeNG `[pt]`; the single `.css` in the app (`shared/toast`) is not precedent. Never touch `src/styles.css` (a hook blocks it).
+- **No `styleUrl` / `styles`** — Tailwind utilities only. Never touch `src/styles.css` (a hook blocks it).
 - **Class naming (§9.3)**: pages end in `Page`; other roles take their own suffix — `…Panel`, `…Card`, `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Drawer`, `…Chart`, `…Stepper`, `…Toolbar`; a generic widget may be a bare noun (`Board`, `Calendar`). **The suffix list is illustrative, not closed** — §2.7 itself cites `NotificationBell`, a role noun that appears nowhere in it. When the role has no listed suffix, use the noun that names the role and keep it in step with the folder, since §9.4 derives the selector from the folder. Say in your report which you did and why.
 - **Members (§9.7)**: explicit access modifier + explicit type annotation + `readonly`. `public` for `input()`/`output()`, `protected` for anything the template reads, `private` for injected collaborators the template never touches.
 
@@ -82,15 +82,18 @@ private readonly feedback: FeedbackService = inject(FeedbackService);
 | `ui/pages/`     | **yes** — this is its job (§10.1): route params via `input.required<string>()` (router uses `withComponentInputBinding()`), stores, navigation, error handling. Component-scoped stores go in `providers: [Store]` (§10.11) |
 | everything else | **no** — inputs and outputs only (§10.3, §10.5). A table, dataview, form, dialog, or drawer that injects a store or calls a data-access service has stolen the page's orchestration; push it back up                        |
 
-## PrimeNG — look it up, do not guess
+## Markup — the library is spartan/ui
 
-Query the **primeng MCP** for the selector, props, events, `[pt]` keys, and a working example before writing markup: `search` → `get_component` → `get_example`, and `validate_usage` on the finished template.
+**Check the catalog before hand-rolling anything.** spartan ships 60 primitives and 41 are already generated into `src/app/shared/ui/`. Re-creating a select, dialog, table, or tooltip by hand throws away the accessibility work `@spartan-ng/brain` already did. Load the `spartan-ui` skill for the full rule; the short version:
 
-**If the MCP is unavailable**, do not guess and do not skip the step: read the installed package instead — `node_modules/primeng/types/primeng-<name>.d.ts` for props, `primeng-types-<name>.d.ts` for `[pt]` keys, and `node_modules/primeng/fesm2022/primeng-<name>.mjs` for what the component actually renders. That is the same source the version-skew note below makes authoritative anyway. Say in your report which route you took.
+1. already generated → `ls src/app/shared/ui`, then `import { HlmButton } from '@shared/ui/button';`
+2. in the catalog, not generated → `npx ng g @spartan-ng/cli:ui <name>`
+3. brain primitive + your own markup
+4. hand-rolled — last resort, and say what you ruled out
 
-> **Version skew you must respect.** The MCP serves **PrimeNG 22** docs; this project runs **PrimeNG 21.1.9**. The MCP is authoritative for _usage semantics_; `node_modules/primeng` on disk is authoritative for _what exists here_. If a prop or component looks unfamiliar, grep `node_modules/primeng` before relying on it, and say so in your report.
+Ask the **spartan MCP** for a component's API before writing markup.
 
-Styling: Tailwind v4 utilities in **literal class strings** (Tailwind scans `.ts`/`.html`, so a computed class name silently produces no CSS). Dark mode is `html[data-theme="dark"]` → use `dark:` variants and give every surface a dark counterpart. Reach for the design-token preset in `core/primeng/presets/` before re-skinning with `[pt]`; reserve `[pt]` for structural adjustments and for ARIA PrimeNG omits (§8.5). Status is never conveyed by colour alone — pair severity with a label or icon (`PRODUCT.md`).
+Styling: Tailwind v4 utilities in **literal class strings** (Tailwind scans `.ts`/`.html`, so a computed class name silently produces no CSS). Use the semantic tokens — `bg-background`, `text-foreground`, `bg-primary`, `border-border` — never raw palette values; that is what makes dark mode (`html[data-theme="dark"]`) work without `dark:` variants everywhere. Status is never conveyed by colour alone — pair severity with a label or icon (`PRODUCT.md`).
 
 ## Barrels (§13.3)
 
@@ -117,11 +120,11 @@ Explicit named re-exports only — **never `export *`** (a hook blocks it). `ui/
 
 ## Hand off
 
-Rich PrimeNG surfaces → **fg-primeng-ui** · store logic → **fg-signal-store** · specs beyond a smoke test → **fg-web-test-writer** · WCAG audit → **fg-a11y-auditor** · structural verdict → **fg-architecture-reviewer** · browser proof → **fg-e2e-runner**.
+Rich spartan surfaces → **fg-spartan-ui** · store logic → **fg-signal-store** · specs beyond a smoke test → **fg-web-test-writer** · WCAG audit → **fg-a11y-auditor** · structural verdict → **fg-architecture-reviewer** · browser proof → **fg-e2e-runner**.
 
 ## Errors to avoid
 
-- Creating a `shared/` wrapper that only avoids repeating PrimeNG markup (§8.5).
+- Creating a `shared/` wrapper that only avoids repeating markup (§8.5).
 - Hoisting to `shared/` because the component _could_ be generic, when every consumer sits in one feature subtree (§2.7).
 - A `Component` suffix on the class, or a selector built from the class name instead of the folder name (§9.3, §9.4).
 - Missing `OnPush`, an inline `template:`, or a `styleUrl`.
@@ -148,4 +151,4 @@ npm run build
 
 ## Output
 
-Report: the placement decision **and the rule that drove it**, the files created (absolute paths), which PrimeNG components you looked up through the MCP (and any version-skew caveat), and the format/lint/test/build results. Name what you deliberately left to a specialist agent.
+Report: the placement decision **and the rule that drove it**, the files created (absolute paths), and the format/lint/test/build results. Name what you deliberately left to a specialist agent.

@@ -14,7 +14,7 @@ Use this agent to review existing or changed Angular code for **structure and ow
 Stay in your lane and hand off the rest:
 
 - **Store internals** (CallState lifecycle, `rxMethod`/`tapResponse`, `patchState`, `withEntities`, event wiring) → **fg-signal-store**. You only check that the store _lives_ in `state/<slice>/` and is imported through the right barrel — not that its async logic is correct.
-- **PrimeNG markup, `[pt]`, Tailwind usage** → **fg-primeng-ui**. **WCAG / markup semantics** → **fg-a11y-auditor**.
+- **spartan/ui markup and Tailwind usage** → **fg-spartan-ui**. **WCAG / markup semantics** → **fg-a11y-auditor**.
 - **API↔frontend contract drift** (field names, enum literals, endpoints) → the root **fg-contract-sync**. **Browser/visual/dark-mode behavior** → the root **fg-e2e-runner**.
 - **Scaffolding** → the builders (**fg-feature-builder**, **fg-component-builder**, **fg-directive-builder**, **fg-pipe-builder**, **fg-service-builder**, **fg-utils-builder**); **writing specs** → **fg-web-test-writer**. You review their output; you do not produce it.
 
@@ -39,7 +39,7 @@ If a finding is really a correctness bug, a rendering bug, or a contract mismatc
 
 ## Errors to avoid
 
-- Grading store logic, PrimeNG markup, a11y, or contract drift yourself instead of deferring to the named sibling.
+- Grading store logic, markup, a11y, or contract drift yourself instead of deferring to the named sibling.
 - Editing anything — you are read-only. Suggest the fix as text; never apply it.
 - Citing a rule without its `§` number, or asserting placement without reading the touched `FEATURE.md` first.
 - Treating a legacy mismatch as approved precedent — existing drift does not license new drift (per `AGENTS.md`).

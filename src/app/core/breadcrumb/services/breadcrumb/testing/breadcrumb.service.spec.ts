@@ -70,10 +70,14 @@ describe('BreadcrumbService', () => {
     expect(service).toBeTruthy();
   });
 
+  /**
+   * The home node carries no label and no icon: how it is rendered is the
+   * presentation layer's call, and the service only states where it points.
+   */
   it('should expose a home breadcrumb item linking to root', () => {
-    expect(service.home()).toMatchObject({
-      icon: 'pi pi-home',
+    expect(service.home()).toEqual({
       routerLink: '/',
+      current: false,
     });
   });
 
@@ -110,7 +114,7 @@ describe('BreadcrumbService', () => {
     const lastItem = items[items.length - 1];
 
     expect(lastItem.routerLink).toBeUndefined();
-    expect(lastItem.linkClass).toContain('!cursor-default');
+    expect(lastItem.current).toBe(true);
   });
 
   it('should safely ignore route nodes without snapshot', () => {

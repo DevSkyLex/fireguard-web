@@ -1,11 +1,4 @@
 import type { Routes } from '@angular/router';
-import {
-  guestGuard,
-  mfaGuard,
-  passwordResetNewGuard,
-  passwordResetVerifyGuard,
-  registerVerifyGuard,
-} from '@features/auth/http/guards';
 
 /**
  * Constant AUTH_ROUTES
@@ -15,83 +8,4 @@ import {
  *
  * @since 1.0.0
  */
-export const AUTH_ROUTES: Routes = [
-  {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full',
-  },
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./ui/pages/login-page/login-page.component').then((m) => m.LoginPage),
-    canActivate: [guestGuard],
-    title: $localize`:@@route.auth.login:Sign In`,
-  },
-  {
-    path: 'register',
-    loadComponent: () =>
-      import('./ui/pages/register-page/register-page.component').then((m) => m.RegisterPage),
-    canActivate: [guestGuard],
-    title: $localize`:@@route.auth.register:Create Account`,
-  },
-  {
-    path: 'register/verify',
-    loadComponent: () =>
-      import('./ui/pages/register-verify-page/register-verify-page.component').then(
-        (m) => m.RegisterVerifyPage,
-      ),
-    canActivate: [registerVerifyGuard],
-    title: $localize`:@@route.auth.registerVerify:Verify Email`,
-  },
-  {
-    path: 'mfa-verify',
-    loadComponent: () =>
-      import('./ui/pages/mfa-verification-page/mfa-verification-page.component').then(
-        (m) => m.MfaVerificationPage,
-      ),
-    canActivate: [mfaGuard],
-    title: $localize`:@@route.auth.mfa:Verify Identity`,
-  },
-  {
-    path: 'mfa',
-    redirectTo: 'mfa-verify',
-    pathMatch: 'full',
-  },
-  {
-    path: 'password-reset',
-    children: [
-      {
-        path: '',
-        redirectTo: 'forgot',
-        pathMatch: 'full',
-      },
-      {
-        path: 'forgot',
-        loadComponent: () =>
-          import('./ui/pages/forgot-password-page/forgot-password-page.component').then(
-            (m) => m.ForgotPasswordPage,
-          ),
-        title: $localize`:@@route.auth.forgotPassword:Forgot Password`,
-      },
-      {
-        path: 'verify',
-        loadComponent: () =>
-          import('./ui/pages/password-reset-verify-page/password-reset-verify-page.component').then(
-            (m) => m.PasswordResetVerifyPage,
-          ),
-        canActivate: [passwordResetVerifyGuard],
-        title: $localize`:@@route.auth.verifyCode:Verify Code`,
-      },
-      {
-        path: 'new',
-        loadComponent: () =>
-          import('./ui/pages/new-password-page/new-password-page.component').then(
-            (m) => m.NewPasswordPage,
-          ),
-        canActivate: [passwordResetNewGuard],
-        title: $localize`:@@route.auth.newPassword:Set New Password`,
-      },
-    ],
-  },
-];
+export const AUTH_ROUTES: Routes = [];

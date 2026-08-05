@@ -1,8 +1,8 @@
 import { computed, inject, Injectable, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
-import type { MenuItem } from 'primeng/api';
 import { filter, map, startWith } from 'rxjs';
+import type { BreadcrumbItem } from '../../models';
 
 /**
  * Service BreadcrumbService
@@ -46,11 +46,11 @@ export class BreadcrumbService {
    * @access public
    * @since 2.0.0
    *
-   * @type {Signal<MenuItem>}
+   * @type {Signal<BreadcrumbItem>}
    */
-  public readonly home: Signal<MenuItem> = computed<MenuItem>(() => ({
-    icon: 'pi pi-home',
+  public readonly home: Signal<BreadcrumbItem> = computed<BreadcrumbItem>(() => ({
     routerLink: '/',
+    current: false,
   }));
 
   /**
@@ -63,13 +63,13 @@ export class BreadcrumbService {
    * @access public
    * @since 1.0.0
    *
-   * @type {Signal<MenuItem[]>}
+   * @type {Signal<BreadcrumbItem[]>}
    */
-  public readonly items: Signal<MenuItem[]> = toSignal(
+  public readonly items: Signal<BreadcrumbItem[]> = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       startWith(null),
-      map((): MenuItem[] => this.buildBreadcrumbs(this.router.routerState.root)),
+      map((): BreadcrumbItem[] => this.buildBreadcrumbs(this.router.routerState.root)),
     ),
     { initialValue: [] },
   );
@@ -88,12 +88,12 @@ export class BreadcrumbService {
    *
    * @param {ActivatedRoute} route - Root activated route.
    *
-   * @returns {MenuItem[]} Generated breadcrumb items.
+   * @returns {BreadcrumbItem[]} Generated breadcrumb items.
    */
-  private buildBreadcrumbs(route: ActivatedRoute | null | undefined): MenuItem[] {
+  private buildBreadcrumbs(route: ActivatedRoute | null | undefined): BreadcrumbItem[] {
     if (!route) return [];
 
-    const items: MenuItem[] = [];
+    const trail: { label: string; routerLink: string }[] = [];
     let currentRoute: ActivatedRoute | null = route;
     let currentUrl: string = '';
 
@@ -105,7 +105,7 @@ export class BreadcrumbService {
       if (path) currentUrl = `${currentUrl}/${path}`;
 
       if (label) {
-        items.push({
+        trail.push({
           label: label,
           routerLink: currentUrl || '/',
         });
@@ -114,14 +114,17 @@ export class BreadcrumbService {
       currentRoute = currentRoute.firstChild;
     }
 
-    // Last item = current page: non-clickable + darker text
-    if (items.length > 0) {
-      const lastItem: MenuItem = items[items.length - 1];
-      delete lastItem.routerLink;
-      lastItem.linkClass = 'text-surface-900 dark:text-surface-0 font-medium !cursor-default';
-    }
+    // The last node is the current page: it carries no link, and says so as
+    // data rather than as a styling hint.
+    const lastIndex: number = trail.length - 1;
 
-    return items;
+    return trail.map((node, index): BreadcrumbItem => {
+      const isCurrent: boolean = index === lastIndex;
+
+      return isCurrent
+        ? { label: node.label, current: true }
+        : { label: node.label, routerLink: node.routerLink, current: false };
+    });
   }
 
   /**

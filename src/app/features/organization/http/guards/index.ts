@@ -1,5 +1,4 @@
 export { organizationAccessGuard } from './organization-access';
-export { organizationLandingGuard } from './organization-landing';
 export { organizationPermissionGuard } from './organization-permission';
 export type {
   OrganizationPermissionGuardMatch,

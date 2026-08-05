@@ -15,7 +15,7 @@ Hand off, do not duplicate:
 
 - **Transport / `HydraApiService` methods** → `fg-service-builder`; **new feature scaffolding** → `fg-feature-builder`. You _call_ the service; you never build one or touch `HttpParams`/`HttpHeaders`.
 - **Any spec** (`.spec.ts`, `testing/`) → `fg-web-test-writer`.
-- **Components, dataviews, forms, `[pt]` styling** → `fg-primeng-ui`.
+- **Components, data surfaces, forms, styling** → `fg-spartan-ui`.
 - **Read-only structure/ownership judgment** → `fg-architecture-reviewer`.
 - **API↔frontend field/enum drift** → `fg-contract-sync`. **Browser/SSR runtime proof** → `fg-e2e-runner`.
 

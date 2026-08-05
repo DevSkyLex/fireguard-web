@@ -12,7 +12,7 @@ It is the home for:
 - the interceptor pipeline (`http/interceptors`),
 - app-wide routing primitives (`routing/strategies`, `routing/guards`),
 - shared async store infrastructure (`request-state`),
-- appearance mode (`theme` — dark/light/system) and PrimeNG library setup (`primeng` — design-token preset),
+- appearance mode (`theme` — dark/light/system),
 - shell-level concerns (`splash-screen`, `breadcrumb`, `connectivity`,
   `cookie`, `mercure`, `title`, `locale`),
 - neutral contracts (ports) backing shared UI.
@@ -31,7 +31,7 @@ behind a single `index.ts` barrel — the same shape as a feature. `locale/` and
 
 ```text
 core/
-  api/            theme/         primeng/         splash-screen/
+  api/            theme/         feedback/        splash-screen/
   breadcrumb/     connectivity/  cookie/          mercure/
   title/          request-state/ boot-readiness/  locale/
   indexed-db/

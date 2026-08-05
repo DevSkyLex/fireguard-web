@@ -9,7 +9,6 @@ export {
   passwordResetNewGuard,
   passwordResetVerifyGuard,
 } from './http/guards';
-export { withAuthShowcase } from './providers';
 export { authStoreEvents } from './state';
 // Published because account owns its own change-password form but not the policy:
 // auth is the single authority mirroring the API's password constraints.

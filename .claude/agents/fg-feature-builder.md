@@ -75,7 +75,7 @@ It must document purpose and ownership, route entry points, main stores and serv
 
 ## Hand off — you emit skeletons, not finished work
 
-Complex store logic (aggregates, `withEntities`, cross-store events) → **fg-signal-store** · the real transport service → **fg-service-builder** · populated PrimeNG surfaces → **fg-primeng-ui** or **fg-component-builder** · specs → **fg-web-test-writer** · pure helpers → **fg-utils-builder** · structural verdict → **fg-architecture-reviewer** · backend↔frontend drift → root **fg-contract-sync**.
+Complex store logic (aggregates, `withEntities`, cross-store events) → **fg-signal-store** · the real transport service → **fg-service-builder** · populated UI surfaces → **fg-spartan-ui** or **fg-component-builder** · specs → **fg-web-test-writer** · pure helpers → **fg-utils-builder** · structural verdict → **fg-architecture-reviewer** · backend↔frontend drift → root **fg-contract-sync**.
 
 ## Errors to avoid
 

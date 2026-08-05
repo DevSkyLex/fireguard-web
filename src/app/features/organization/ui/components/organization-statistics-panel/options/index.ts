@@ -1,8 +1,0 @@
-export { EQUIPMENT_STATUS_OPTIONS, EQUIPMENT_TYPE_OPTIONS } from './equipment';
-export { FACILITY_TYPE_OPTIONS } from './facility';
-export {
-  INSPECTION_RESULT_OPTIONS,
-  INSPECTION_STATUS_OPTIONS,
-  INSPECTOR_TYPE_OPTIONS,
-} from './inspection';
-export { NON_CONFORMITY_SEVERITY_OPTIONS, NON_CONFORMITY_STATUS_OPTIONS } from './non-conformity';

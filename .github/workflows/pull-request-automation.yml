@@ -41,7 +41,7 @@ jobs:
               { name: 'area:shared', color: 'c5def5', description: 'Shared, domain-agnostic primitives' },
               { name: 'area:layout', color: 'bfd4f2', description: 'Layout and shell composition changes' },
               { name: 'area:i18n', color: '006b75', description: 'Translation catalog changes' },
-              { name: 'area:styles', color: 'f7c6c7', description: 'Theming, PrimeNG presets, or Tailwind setup' },
+              { name: 'area:styles', color: 'f7c6c7', description: 'Theming, design tokens, or Tailwind setup' },
               { name: 'area:tests', color: 'fef2c0', description: 'Unit, integration, or end-to-end test changes' },
               { name: 'area:docs', color: '0075ca', description: 'Documentation changes' },
               { name: 'area:config', color: 'e99695', description: 'Build, tooling, or environment configuration changes' },

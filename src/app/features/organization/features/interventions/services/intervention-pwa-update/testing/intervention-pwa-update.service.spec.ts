@@ -1,16 +1,16 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { SwUpdate, type VersionEvent } from '@angular/service-worker';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionPwaUpdateService } from '../intervention-pwa-update.service';
 
 describe('InterventionPwaUpdateService', () => {
   let service: InterventionPwaUpdateService;
   let versionUpdates: Subject<VersionEvent>;
-  let messages: { add: ReturnType<typeof vi.fn> };
-  let confirmation: { confirm: ReturnType<typeof vi.fn> };
+  let feedback: { info: ReturnType<typeof vi.fn> };
+  let activateUpdate: ReturnType<typeof vi.fn>;
   let hasPendingChanges: WritableSignal<boolean>;
 
   function emitVersionReady(): void {
@@ -23,8 +23,8 @@ describe('InterventionPwaUpdateService', () => {
 
   beforeEach(() => {
     versionUpdates = new Subject<VersionEvent>();
-    messages = { add: vi.fn() };
-    confirmation = { confirm: vi.fn() };
+    feedback = { info: vi.fn() };
+    activateUpdate = vi.fn().mockResolvedValue(true);
     hasPendingChanges = signal(true);
 
     TestBed.configureTestingModule({
@@ -35,11 +35,10 @@ describe('InterventionPwaUpdateService', () => {
           useValue: {
             isEnabled: true,
             versionUpdates: versionUpdates.asObservable(),
-            activateUpdate: vi.fn().mockResolvedValue(true),
+            activateUpdate,
           },
         },
-        { provide: ConfirmationService, useValue: confirmation },
-        { provide: MessageService, useValue: messages },
+        { provide: FeedbackService, useValue: feedback },
         {
           provide: InterventionOfflineService,
           // `hasUnsyncedChanges` stays true throughout to prove the service
@@ -58,29 +57,27 @@ describe('InterventionPwaUpdateService', () => {
 
     emitVersionReady();
 
-    expect(messages.add).toHaveBeenCalledTimes(1);
-    expect(confirmation.confirm).not.toHaveBeenCalled();
+    expect(feedback.info).toHaveBeenCalledTimes(1);
   });
 
-  it('should defer with an informational toast while pending changes remain', () => {
+  it('should defer with an informational message while pending changes remain', () => {
     service.start();
 
     emitVersionReady();
 
-    expect(messages.add).toHaveBeenCalledTimes(1);
-    expect(messages.add.mock.calls[0][0]).toMatchObject({ severity: 'info' });
-    expect(confirmation.confirm).not.toHaveBeenCalled();
+    expect(service.updateReady()).toBe(true);
+    expect(service.canApplyUpdate()).toBe(false);
+    expect(feedback.info).toHaveBeenCalledTimes(1);
   });
 
-  it('should prompt to reload immediately when nothing is pending', () => {
+  it('should be immediately applicable when nothing is pending', () => {
     hasPendingChanges.set(false);
     service.start();
 
     emitVersionReady();
-    TestBed.tick();
 
-    expect(messages.add).not.toHaveBeenCalled();
-    expect(confirmation.confirm).toHaveBeenCalledTimes(1);
+    expect(service.canApplyUpdate()).toBe(true);
+    expect(feedback.info).not.toHaveBeenCalled();
   });
 
   it('should not deadlock on conflict/failed changes that can never sync on their own', () => {
@@ -91,19 +88,27 @@ describe('InterventionPwaUpdateService', () => {
     service.start();
 
     emitVersionReady();
-    TestBed.tick();
 
-    expect(confirmation.confirm).toHaveBeenCalledTimes(1);
+    expect(service.canApplyUpdate()).toBe(true);
   });
 
-  it('should re-propose a deferred update once pending changes clear', () => {
+  it('should become applicable once pending changes clear', () => {
     service.start();
     emitVersionReady();
-    expect(confirmation.confirm).not.toHaveBeenCalled();
+    expect(service.canApplyUpdate()).toBe(false);
 
     hasPendingChanges.set(false);
-    TestBed.tick();
 
-    expect(confirmation.confirm).toHaveBeenCalledTimes(1);
+    expect(service.canApplyUpdate()).toBe(true);
+  });
+
+  it('should refuse to activate while changes are still pending', async () => {
+    service.start();
+    emitVersionReady();
+
+    await service.applyUpdate();
+
+    expect(activateUpdate).not.toHaveBeenCalled();
+    expect(service.updateReady()).toBe(true);
   });
 });

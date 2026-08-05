@@ -13,7 +13,7 @@
  *  1. Secrets: any `.env*` (except the committed `.env.example`/`.env.dist`).
  *  2. Generated trees: `node_modules/`, `dist/`, `.angular/`, `test-results/`,
  *     `playwright-report/` — build outputs, edit the source instead.
- *  3. `src/styles.css` — style via Tailwind utilities + PrimeNG `[pt]` (CLAUDE.md rule 3).
+ *  3. `src/styles.css` — style via Tailwind utilities (CLAUDE.md rule 3).
  *  4. Runtime code inside a `models/` folder — `models/` is type-only (ARCHITECTURE.md
  *     §10.10), with the sanctioned `<concept>-tag/` registry-resolver exception.
  *  5. `export * from` inside a barrel — a barrel is a public surface and takes explicit
@@ -77,13 +77,30 @@ for (const [seg, what] of GENERATED) {
   }
 }
 
-// 3. Global stylesheet.
+// 3. Global stylesheet — component rules only.
+//
+// The blanket ban is gone: spartan/ui keeps its theme in `src/styles.css` (the
+// Tailwind layer order, the brain preset import, and the light/dark CSS custom
+// properties `ng g @spartan-ng/cli:ui-theme` writes). Banning the file outright
+// would ban the library's own installation.
+//
+// What the ban actually protected still holds, so it is now enforced narrowly:
+// component styling belongs in Tailwind utility classes at the call site, never
+// in a global selector. Theme tokens and at-rules stay allowed.
 if (/(^|\/)src\/styles\.css$/.test(filePath)) {
-  deny(
-    'src/styles.css is off-limits. Style via Tailwind utility classes and PrimeNG [pt] ' +
-      'bindings; theme-wide changes belong in the preset under src/app/core/primeng/presets/ ' +
-      '(CLAUDE.md rule 3, ARCHITECTURE.md §8.5).',
-  );
+  const body = String(payload?.tool_input?.content ?? payload?.tool_input?.new_string ?? '');
+  // A declaration block opened by an element, class, id, or attribute selector.
+  // `:root`, `@layer`, `@import`, `@theme`, `@custom-variant`, `@media` and the
+  // `html`/`body` element rules the reset needs are all deliberately allowed.
+  const componentRule = /^[ \t]*(?!html\b|body\b|:root\b|\*)[.#[a-zA-Z][^\n{}@]*\{/m;
+
+  if (componentRule.test(body)) {
+    deny(
+      'src/styles.css takes the spartan/ui theme (layers, the brain preset import, and ' +
+        'the light/dark custom properties) — not component rules. Style components with ' +
+        'Tailwind utility classes at the call site (CLAUDE.md rule 3, ARCHITECTURE.md §8.5).',
+    );
+  }
 }
 
 // 4. models/ is type-only.

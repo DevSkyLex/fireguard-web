@@ -15,4 +15,4 @@ Require it to:
 6. Write a short `FEATURE.md` with the canonical headings, including an explicit "Public API: none" with the reason when that is the case.
 7. Run `npm run format && npm run lint && npm run build`.
 
-It emits **skeletons**. Complex state → **fg-signal-store**, the real transport service → **fg-service-builder**, populated UI → **fg-component-builder** / **fg-primeng-ui**, specs → **fg-web-test-writer**. Require it to name each handoff.
+It emits **skeletons**. Complex state → **fg-signal-store**, the real transport service → **fg-service-builder**, populated UI → **fg-spartan-ui** / **fg-component-builder**, specs → **fg-web-test-writer**. Require it to name each handoff.

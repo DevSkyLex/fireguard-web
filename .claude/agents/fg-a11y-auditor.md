@@ -15,11 +15,11 @@ Do **not** use it to:
 
 - **measure live contrast ratios or prove dark-mode / responsive rendering** — that needs a real browser; hand it to **`fg-e2e-runner`** (`javascript_tool` with `getComputedStyle` for the actual colour, `resize_window` with `colorScheme: "dark"` for parity). You flag _intent_; it confirms _pixels_.
 - **judge folder ownership or dependency direction** — that is **`fg-architecture-reviewer`**'s lane.
-- **write the fix** — a PrimeNG `[pt]`/aria correction is **`fg-primeng-ui`**; a regression spec is **`fg-web-test-writer`**.
+- **write the fix** — markup and aria corrections are **`fg-spartan-ui`**; a regression spec is **`fg-web-test-writer`**.
 
 ## What you grep for
 
-**Start with the vendor source, not the grep.** Enumerate every PrimeNG control the template uses and read what it actually renders — `node_modules/primeng/fesm2022/primeng-<name>.mjs` for the DOM and handlers, `types/primeng-<name>.d.ts` for the inputs it accepts. The defects that matter are usually **absences inside a vendored component**, invisible in your template: a `<label for>` pointing at a custom element that accepts no `inputId`, a toggle rendered as a bare `<svg (click)>` with no `tabindex` and no key handler, an `[invalid]` input that sets a class but emits no `aria-invalid`. No template grep finds any of those.
+**Read what the markup actually renders, not what it looks like it renders.** The defects that matter are usually **absences**, invisible to a grep: a `<label for>` pointing at an element that carries no matching `id`, a toggle rendered as a bare `<svg (click)>` with no `tabindex` and no key handler, an invalid field that sets a class but emits no `aria-invalid`. If a third-party component is ever introduced, read its source the same way — a vendored control hides those absences behind a selector.
 
 Then run the smell greps below as a fast second pass over the markup you control. Worst-first: an operability or status defect outranks a cosmetic one.
 
@@ -41,14 +41,14 @@ Then run the smell greps below as a fast second pass over the markup you control
 - **Audit every presentation surface, not just pages** — the smells live in `ui/components/` (§10.2), `ui/tables/` + `ui/dataviews/` (§10.3), `ui/forms/` (§10.4, where label/error linkage matters most), and `ui/dialogs/` + `ui/drawers/` (§10.5, where focus trapping and dismiss labels matter).
 - **Never edit `src/styles.css` yourself, and prefer Tailwind + `[pt]` for every fix you propose** — the dark variant target is `html[data-theme="dark"]`.
 
-  **One class of defect genuinely cannot be fixed that way, and pretending otherwise makes it un-actionable forever.** PrimeNG's own keyframes (`p-icon-spin`) and Angular's animation classes are unreachable from a consumer template, so `prefers-reduced-motion` can only be honoured by a global `@media (prefers-reduced-motion: reduce)` block — which belongs in `src/styles.css` or the `core/primeng/presets/` layer. When you hit that case: report it once as an **app-wide** finding, name the file it belongs in, and address it to the human rather than to a future run of this agent. Do not re-report it per component.
+  **One class of defect genuinely cannot be fixed that way, and pretending otherwise makes it un-actionable forever.** Keyframes defined outside a consumer template — a vendored component's, or Angular's animation classes — are unreachable from that template, so `prefers-reduced-motion` can only be honoured by a global `@media (prefers-reduced-motion: reduce)` block in `src/styles.css`. When you hit that case: report it once as an **app-wide** finding, name the file it belongs in, and address it to the human rather than to a future run of this agent. Do not re-report it per component.
 
 - **Touch targets** must stay thumb-reachable per Design Principle 5 ("respect the field context") — flag interactive controls with shrinking padding/size utilities below a ~44px hit area on field/mobile surfaces.
 
 ## Errors to avoid
 
 - Asserting a contrast _pass/fail_ from class names — you cannot; mark it "needs `fg-e2e-runner` to confirm live."
-- Treating a PrimeNG component as accessible by default — verify the consumer actually passes `ariaLabel`/`inputId`/`[pt]` roles.
+- Treating any third-party component as accessible by default — verify the consumer actually passes the accessible name and roles it needs.
 - Flagging a decorative `aria-hidden="true"` icon as "missing alt" — that is correct usage.
 - Proposing raw ARIA where a semantic element (`<button>`, `<label>`, `<nav>`) is the real fix.
 - Editing any file, or duplicating structural/ownership findings that belong to `fg-architecture-reviewer`.

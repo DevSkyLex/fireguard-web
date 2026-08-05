@@ -37,7 +37,7 @@ reintroduced, a generic, domain-agnostic map primitive would live as its own
 ## Facility Listing (Roots-Only DataView)
 
 The facility list page presents the organization's **root** facilities as a
-flat, paginated PrimeNG `p-dataview` with a list/grid layout toggle:
+flat, paginated dataview with a list/grid layout toggle:
 
 - root facilities are loaded and paginated on init via
   `FacilityStore.loadRootFacilities`, which requests
@@ -61,7 +61,7 @@ archive / restore flows.
 ## Facility Hierarchy (Detail Overview)
 
 The facility detail page's **Overview** tab renders the descendant hierarchy
-with a PrimeNG `p-organization-chart` (`FacilityHierarchyChart`). Loading is
+with an organization chart (`FacilityHierarchyChart`). Loading is
 based on the backend descendants endpoint:
 
 - all descendants are auto-loaded once the facility resolves (only when

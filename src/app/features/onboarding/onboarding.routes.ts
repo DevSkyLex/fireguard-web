@@ -11,13 +11,4 @@ import type { Routes } from '@angular/router';
  *
  * @type {Routes}
  */
-export const ONBOARDING_ROUTES: Routes = [
-  {
-    path: '',
-    loadComponent: () =>
-      import('./ui/pages/onboarding-page/onboarding-page.component').then(
-        (module) => module.OnboardingPage,
-      ),
-    title: $localize`:@@route.onboarding:Organization Setup`,
-  },
-];
+export const ONBOARDING_ROUTES: Routes = [];

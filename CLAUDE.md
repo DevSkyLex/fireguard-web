@@ -14,10 +14,11 @@
    and the touched feature's `FEATURE.md` (parent + nested) before editing it.
 2. **Match the existing stack.** Angular 21 standalone + signals
    (`input()`, `computed()`, `signal()`, `linkedSignal()`),
-   `ChangeDetectionStrategy.OnPush`, NgRx SignalStore, PrimeNG controls,
+   `ChangeDetectionStrategy.OnPush`, NgRx SignalStore, spartan/ui components,
    Tailwind v4 utilities, SSR/hydration. Do **not** introduce new dependencies
    or patterns unless the task requires it and no existing pattern fits.
-3. **Style with Tailwind + PrimeNG `[pt]` only.** Never edit `src/styles.css`.
+3. **Style with Tailwind utilities and the spartan theme tokens.** `src/styles.css`
+   takes theme tokens only — never a component rule.
    Use literal class strings (Tailwind scans `.ts`/`.html`). The dark variant is
    `html[data-theme="dark"]`.
 4. **Strict TypeScript.** Explicit types, `readonly` members, no `any`, no
@@ -104,12 +105,12 @@ Open **`fireguard-sso-web/`** as the workspace root to activate it. Full guide i
 - `fg-utils-builder` — pure helpers, constants, option sets per §10.13.
 
 **Specialists — they enrich or judge**, called after a builder or on existing code:
-`fg-primeng-ui` (rich PrimeNG markup) · `fg-signal-store` (§10.11) · `fg-web-test-writer`
+`fg-spartan-ui` (spartan/ui surfaces) · `fg-signal-store` (§10.11) · `fg-web-test-writer`
 (specs) · `fg-e2e-runner` (Playwright, browser proof) · `fg-architecture-reviewer` and
 `fg-a11y-auditor` (both **read-only**).
 
 **Commands:** `/fg-component` `/fg-directive` `/fg-pipe` `/fg-feature` `/fg-service`
-`/fg-util` · `/fg-primeng` `/fg-store` `/fg-arch-review` `/fg-a11y` `/fg-e2e` ·
+`/fg-util` · `/fg-spartan` `/fg-store` `/fg-arch-review` `/fg-a11y` `/fg-e2e` ·
 `/fg-quality` (the gate).
 
 **Rules** (`.claude/rules/`) are **path-scoped**: 8 files that load automatically when you open a
@@ -119,18 +120,12 @@ kind of file. They exist to cut what this file `@`-imports: `ARCHITECTURE.md` al
 loaded in full at every session start.
 
 **Skills** carry the operational detail agents load on demand — `fireguard-naming`,
-`signalstore-recipes`, `primeng-styling`, `hydra-data-access`, `web-testing`,
+`signalstore-recipes`, `spartan-ui`, `hydra-data-access`, `web-testing`,
 `e2e-playwright`, `feature-md`. They cite `ARCHITECTURE.md` by section rather than
 restating it, so there is no second source of truth.
 
-**MCP servers** (`.mcp.json`): `angular` (the **local** CLI, `--read-only`) · `primeng`
-· `playwright` · `context7`. 40 tools total.
-
-> **PrimeNG version skew.** `@primeng/mcp` serves **PrimeNG 22** docs; this project runs
-> **PrimeNG 21.1.9**. Pinning the MCP to its v21 line is not possible — it crashes on
-> startup against the current MCP SDK. So the MCP is authoritative for _usage semantics_,
-> and `node_modules/primeng` on disk is authoritative for _what exists here_. Grep the
-> installed package before trusting an unfamiliar prop.
+**MCP servers** (`.mcp.json`): `angular` (the **local** CLI, `--read-only`) · `spartan`
+· `playwright` · `context7`.
 
 Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\fireguard\.claude\`):
 `/fg-contract-check`, `/fg-map`, `/fg-api-*`, `/fg-migrate`, `/fg-security-review`, plus

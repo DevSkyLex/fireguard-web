@@ -98,7 +98,7 @@ moves the read pointer backwards.
 
 ## Composer and message bodies
 
-`MessageComposer` is a PrimeNG (Quill) editor, like `CommentComposer` on the intervention side.
+`MessageComposer` is a rich-text editor, like `CommentComposer` on the intervention side.
 `POST /messages` stores rich text sanitized against `messaging.message` in the API's
 `config/packages/html_sanitizer.yaml`, and the editor's `getSemanticHTML()` output maps onto that
 allow-list directly — `<strong> <em> <u> <s> <ul>/<ol>/<li> <blockquote> <pre> <a href>`.
@@ -301,7 +301,7 @@ Four of these look like they could be simplified. They cannot.
 - **A dot cannot carry its own label.** `aria-label` on a bare `<span>` has no role to attach to and
   most screen readers drop it, so the presence dot and the unread badge were colour-only in practice
   despite looking labelled. The state now lives in `sr-only` text or in the trigger's own name.
-- **Avatars are `aria-hidden`.** PrimeNG's `p-avatar` renders an `<img>` with no `alt` attribute at
+- **Avatars are `aria-hidden`.** The avatar rendered an `<img>` with no `alt` attribute at
   all, so an image avatar was announced as its URL. The author's name is adjacent text in every
   call site.
 

@@ -1,7 +1,14 @@
-import { effect, Injectable, inject, signal, type WritableSignal } from '@angular/core';
+import {
+  computed,
+  Injectable,
+  inject,
+  signal,
+  type Signal,
+  type WritableSignal,
+} from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { filter } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 
 /**
@@ -38,33 +45,19 @@ export class InterventionPwaUpdateService {
   private readonly updates: SwUpdate = inject<SwUpdate>(SwUpdate);
 
   /**
-   * Property confirmation
+   * Property feedback
    * @readonly
    *
    * @description
-   * PrimeNG confirmation service used to prompt the reload dialog.
+   * App-wide feedback queue used to tell the user an update is waiting on the
+   * outbox.
    *
    * @access private
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {ConfirmationService}
+   * @type {FeedbackService}
    */
-  private readonly confirmation: ConfirmationService =
-    inject<ConfirmationService>(ConfirmationService);
-
-  /**
-   * Property messages
-   * @readonly
-   *
-   * @description
-   * PrimeNG message service used for user-facing toasts.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messages: MessageService = inject<MessageService>(MessageService);
+  private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
 
   /**
    * Property offline
@@ -94,7 +87,40 @@ export class InterventionPwaUpdateService {
    *
    * @type {WritableSignal<boolean>}
    */
-  private readonly updateReady: WritableSignal<boolean> = signal<boolean>(false);
+  private readonly pendingVersion: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property updateReady
+   * @readonly
+   *
+   * @description
+   * Whether a new application version is waiting to be applied.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly updateReady: Signal<boolean> = this.pendingVersion.asReadonly();
+
+  /**
+   * Property canApplyUpdate
+   * @readonly
+   *
+   * @description
+   * Whether the waiting version may be applied right now, which requires the
+   * intervention outbox to be free of pending operations. This is the offline
+   * safety rule of this service: a reload while field changes are queued would
+   * lose them.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly canApplyUpdate: Signal<boolean> = computed<boolean>(
+    () => this.pendingVersion() && !this.offline.hasPendingChanges(),
+  );
 
   /**
    * Property started
@@ -110,26 +136,6 @@ export class InterventionPwaUpdateService {
   private started: boolean = false;
   //#endregion
 
-  //#region Constructor
-  /**
-   * Constructor
-   * @constructor
-   *
-   * @description
-   * Reproposes a deferred update as soon as the intervention outbox becomes clean.
-   *
-   * @access public
-   * @since 1.0.0
-   */
-  public constructor() {
-    effect(() => {
-      if (this.updateReady() && !this.offline.hasPendingChanges()) {
-        this.promptUpdate();
-      }
-    });
-  }
-  //#endregion
-
   //#region Methods
   /**
    * Method start
@@ -138,9 +144,10 @@ export class InterventionPwaUpdateService {
    * @description
    * Starts service-worker update monitoring.
    *
-   * On `VERSION_READY`, prompts reload only when the intervention offline outbox
-   * has no pending operations; otherwise informs the user that the update will
-   * install automatically once queued field changes finish synchronizing.
+   * On `VERSION_READY`, raises {@link updateReady}. When the intervention
+   * offline outbox still holds pending operations, it also queues an
+   * informational message: the update stays available but must wait for the
+   * queued field changes to synchronize, which {@link canApplyUpdate} tracks.
    *
    * @access public
    * @since 1.0.0
@@ -153,38 +160,39 @@ export class InterventionPwaUpdateService {
     this.updates.versionUpdates
       .pipe(filter((event) => event.type === 'VERSION_READY'))
       .subscribe(() => {
-        this.updateReady.set(true);
+        this.pendingVersion.set(true);
         if (this.offline.hasPendingChanges()) {
-          this.messages.add({
-            severity: 'info',
-            summary: $localize`:@@intervention.pwa.waitingSummary:Update waiting`,
-            detail: $localize`:@@intervention.pwa.waitingDetail:Field changes are still syncing. The update will install automatically once they are saved.`,
-          });
+          this.feedback.info(
+            $localize`:@@intervention.pwa.waitingDetail:Field changes are still syncing. The update will install once they are saved.`,
+            $localize`:@@intervention.pwa.waitingSummary:Update waiting`,
+          );
         }
       });
   }
 
   /**
-   * Method promptUpdate
-   * @method promptUpdate
+   * Method applyUpdate
+   * @method applyUpdate
    *
    * @description
-   * Displays the update confirmation once for the waiting version.
+   * Activates the waiting version and reloads the page.
    *
-   * @access private
-   * @since 1.0.0
+   * Applying is left to the caller rather than triggered automatically: a
+   * reload the user did not ask for interrupts field work, so the decision
+   * belongs to whoever can ask them. Refuses while
+   * {@link canApplyUpdate} is false.
    *
-   * @return {void} Result of the prompt update operation.
+   * @access public
+   * @since 2.0.0
+   *
+   * @return {Promise<void>} Resolves once the new version has been activated.
    */
-  private promptUpdate(): void {
-    this.updateReady.set(false);
-    this.confirmation.confirm({
-      header: $localize`:@@intervention.pwa.updateHeader:Application update`,
-      message: $localize`:@@intervention.pwa.updateMessage:A new version is ready. Reload now?`,
-      accept: () => {
-        void this.updates.activateUpdate().then(() => location.reload());
-      },
-    });
+  public async applyUpdate(): Promise<void> {
+    if (!this.canApplyUpdate()) return;
+
+    this.pendingVersion.set(false);
+    await this.updates.activateUpdate();
+    location.reload();
   }
   //#endregion
 }

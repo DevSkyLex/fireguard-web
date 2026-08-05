@@ -4,9 +4,9 @@
       "command": "npx",
       "args": ["ng", "mcp", "--read-only"]
     },
-    "primeng": {
+    "spartan": {
       "command": "npx",
-      "args": ["-y", "@primeng/mcp@22"]
+      "args": ["-y", "@spartan-ng/mcp"]
     },
     "playwright": {
       "command": "npx",

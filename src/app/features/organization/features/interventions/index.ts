@@ -12,7 +12,6 @@
  * nothing needs them from here.
  */
 export { provideInterventionsFeature } from './interventions.feature';
-export { withInterventionHeaderActions, withInterventionSyncChip } from './providers';
 
 /**
  * The transport service, for the parent feature's dashboard attention panel

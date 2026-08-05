@@ -11,7 +11,7 @@
 export interface InterventionCommandAction {
   /** Button label (e.g. `"Plan intervention"`). */
   readonly label: string;
-  /** PrimeIcons class shown on the button. */
+  /** Icon name shown on the button, resolved by the presentation layer. */
   readonly icon: string;
   /** Whether the action is currently disabled (not yet ready). */
   readonly disabled: boolean;

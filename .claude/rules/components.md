@@ -17,4 +17,9 @@ paths:
 - Tailwind classes must be **literal strings**; a computed class name produces no CSS. Dark mode is `html[data-theme="dark"]` — pair every surface colour with a `dark:` counterpart.
 - Never branch on an enum in a template. Resolve it through the feature's `models/<concept>-tag/` registry (§10.10).
 
-Details: the `fireguard-naming` and `primeng-styling` skills.
+- **The component library is spartan/ui.** Check `src/app/shared/ui` before hand-rolling anything;
+  add a missing primitive with `npx ng g @spartan-ng/cli:ui <name>`. Import through `@shared/ui/<name>`.
+- Style with the **semantic tokens** (`bg-background`, `text-foreground`, `bg-primary`, `border-border`),
+  not raw palette values — that is what makes `html[data-theme="dark"]` work.
+
+Details: the `fireguard-naming` and `spartan-ui` skills.

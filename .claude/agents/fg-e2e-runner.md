@@ -79,7 +79,7 @@ Diagnose by reading source and editing the real component. DOM edits through
   reach) for any UI change — PRODUCT.md treats offline/field context as first-class.
 - Status is never color-only; check for the paired label/icon (WCAG 2.1 AA).
 - Respect `prefers-reduced-motion`.
-- Don't edit `src/styles.css`; styling is Tailwind + PrimeNG `[pt]`.
+- Don't edit `src/styles.css` beyond the spartan theme tokens; component styling is Tailwind utilities at the call site.
 
 ## Errors to avoid
 

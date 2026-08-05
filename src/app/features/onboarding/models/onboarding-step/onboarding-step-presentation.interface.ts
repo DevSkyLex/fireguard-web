@@ -16,7 +16,7 @@ export interface OnboardingStepPresentation {
    * @readonly
    *
    * @description
-   * PrimeIcons class (without the leading `pi pi-`) representing the step.
+   * Icon name representing the step, resolved by the presentation layer.
    *
    * @type {string}
    */

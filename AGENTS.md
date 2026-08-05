@@ -16,7 +16,7 @@ commands, skills, MCP servers, hooks — is documented in
 
 ## Project Context
 
-- This is an Angular 21 application using strict TypeScript, SSR/hydration, PrimeNG, NgRx SignalStore, and Hydra-style API services.
+- This is an Angular 21 application using strict TypeScript, SSR/hydration, NgRx SignalStore, and Hydra-style API services. Its component library is spartan/ui (`@spartan-ng/brain` plus helm components generated into `src/app/shared/ui/`).
 - Use the npm scripts in [package.json](package.json): `npm run lint`, `npm run test:ci`, `npm run build`, `npm run quality`, `npm run format`, and `npm run format:check`.
 - Do not add dependencies or new architectural patterns unless the task explicitly requires it and the existing codebase has no suitable pattern.
 

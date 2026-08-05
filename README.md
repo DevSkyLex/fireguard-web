@@ -15,8 +15,8 @@ OAuth2/OIDC) as its backend.
   `signal()`, `linkedSignal()`), `ChangeDetectionStrategy.OnPush`
 - **NgRx SignalStore** — `patchState`, `rxMethod` + `tapResponse`, typed
   `CallState` async lifecycle (`@core/request-state`)
-- **PrimeNG** — UI components, styled with Tailwind v4 utilities and PrimeNG
-  `[pt]` passthrough (never `src/styles.css`)
+- **spartan/ui** — headless `@spartan-ng/brain` primitives plus helm components
+  generated into `src/app/shared/ui/`, styled with Tailwind and theme tokens
 - **Tailwind CSS v4**
 - **SSR / hydration** via `@angular/ssr` and Express
 - **Strict TypeScript**, `oxlint` + `oxfmt` for lint/format, `vitest`/`ng test`

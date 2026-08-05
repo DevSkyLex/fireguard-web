@@ -1,5 +1,4 @@
-import { Injectable, inject } from '@angular/core';
-import { MessageService } from 'primeng/api';
+import { Injectable, signal, type Signal, type WritableSignal } from '@angular/core';
 import {
   type FeedbackEventPayload,
   type FeedbackSeverity,
@@ -8,6 +7,7 @@ import {
   successFeedback,
   warnFeedback,
 } from '@core/request-state';
+import type { FeedbackMessage } from '../../models';
 
 /**
  * Constant FEEDBACK_LIFE_MS
@@ -30,35 +30,68 @@ const FEEDBACK_LIFE_MS: Readonly<Record<FeedbackSeverity, number>> = {
  * @class FeedbackService
  *
  * @description
- * App-wide facade over PrimeNG's `MessageService` for user-facing feedback
- * toasts. It centralizes the toast shape (severity, life, the `createdAt`
- * timestamp used for the relative time label) so callers never assemble a
- * `MessageService.add({...})` object by hand.
+ * App-wide queue of user-facing feedback messages. It owns the message shape
+ * (severity, suggested life, the `createdAt` timestamp used for a relative time
+ * label) and exposes it as a signal, so any presentation layer can render the
+ * queue without the producers knowing what that layer is.
  *
  * Stores remain the single trigger: they dispatch `FeedbackEventPayload`
  * events, the app-wide feedback listener (see `provideFeedback`) forwards them
  * to {@link show}. The convenience methods exist for the rare imperative case
  * (e.g. shell services without a store).
  *
- * @version 1.0.0
+ * The queue holds no timer. Auto-dismiss is a presentation decision, and a
+ * `setTimeout` here would behave differently under SSR; {@link FeedbackMessage}
+ * carries `lifeMs` so the consumer can honour it.
+ *
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
   //#region Properties
   /**
+   * Property queue
+   * @readonly
+   *
+   * @description
+   * Backing store of the pending messages, oldest first.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<readonly FeedbackMessage[]>}
+   */
+  private readonly queue: WritableSignal<readonly FeedbackMessage[]> = signal<
+    readonly FeedbackMessage[]
+  >([]);
+
+  /**
+   * Property nextId
+   *
+   * @description
+   * Monotonic counter behind {@link FeedbackMessage.id}.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {number}
+   */
+  private nextId: number = 0;
+
+  /**
    * Property messages
    * @readonly
    *
    * @description
-   * PrimeNG message service backing the application toast outlet.
+   * Pending messages, oldest first, for the presentation layer to render.
    *
-   * @access private
-   * @since 1.0.0
+   * @access public
+   * @since 2.0.0
    *
-   * @type {MessageService}
+   * @type {Signal<readonly FeedbackMessage[]>}
    */
-  private readonly messages: MessageService = inject<MessageService>(MessageService);
+  public readonly messages: Signal<readonly FeedbackMessage[]> = this.queue.asReadonly();
   //#endregion
 
   //#region Methods
@@ -67,9 +100,9 @@ export class FeedbackService {
    * @method show
    *
    * @description
-   * Renders a toast from a `FeedbackEventPayload`. When the payload carries a
-   * `summary`, it becomes the bold title and `message` the secondary detail;
-   * otherwise `message` is shown as the single bold line.
+   * Queues a message from a `FeedbackEventPayload`. When the payload carries a
+   * `summary`, it becomes the primary line and `message` the secondary detail;
+   * otherwise `message` is the single line.
    *
    * @access public
    * @since 1.0.0
@@ -79,13 +112,34 @@ export class FeedbackService {
    * @return {void}
    */
   public show(payload: FeedbackEventPayload): void {
-    this.messages.add({
+    const message: FeedbackMessage = {
+      id: this.nextId++,
       severity: payload.severity,
       summary: payload.summary ?? payload.message,
       detail: payload.summary ? payload.message : undefined,
-      life: FEEDBACK_LIFE_MS[payload.severity],
-      data: { createdAt: payload.timestamp, severity: payload.severity },
-    });
+      lifeMs: FEEDBACK_LIFE_MS[payload.severity],
+      createdAt: payload.timestamp,
+    };
+
+    this.queue.update((queued) => [...queued, message]);
+  }
+
+  /**
+   * Method dismiss
+   * @method dismiss
+   *
+   * @description
+   * Removes one message from the queue, by id.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {number} id Identifier of the message to remove.
+   *
+   * @return {void}
+   */
+  public dismiss(id: number): void {
+    this.queue.update((queued) => queued.filter((message) => message.id !== id));
   }
 
   /**
@@ -169,7 +223,7 @@ export class FeedbackService {
    * @method clear
    *
    * @description
-   * Dismisses all currently visible toasts.
+   * Empties the queue.
    *
    * @access public
    * @since 1.0.0
@@ -177,7 +231,7 @@ export class FeedbackService {
    * @return {void}
    */
   public clear(): void {
-    this.messages.clear();
+    this.queue.set([]);
   }
   //#endregion
 }

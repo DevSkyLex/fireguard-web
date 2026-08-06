@@ -75,12 +75,11 @@ const INITIAL_THREAD_STATE = {
   askCallState: idleCallState(),
   generatingMessageId: null,
   generationStalled: false,
-} satisfies Omit<AssistantState, 'panelOpen' | 'visibleBeforeOpen'>;
+} satisfies Omit<AssistantState, 'panelOpen'>;
 
 const INITIAL_STATE: AssistantState = {
   ...INITIAL_THREAD_STATE,
   panelOpen: false,
-  visibleBeforeOpen: null,
 };
 
 /** Cookie holding the remembered thread of one organization. */
@@ -540,35 +539,28 @@ export const AssistantStore = signalStore(
         },
 
         /**
-         * Claims the right-hand slot, remembering what the shell was showing.
+         * Claims the shell's contextual column.
          *
-         * The shell renders no panel at all while its `panelVisible` flag is
-         * false, so the caller has to force it true — and pass the value it had
-         * so {@link closePanel} can hand it back.
-         *
-         * @param {boolean} currentVisible - The shell's `panelVisible` before opening.
+         * Nothing has to be handed back on close: the slot is mono-active and
+         * resolves on this flag alone, so releasing it is enough for whatever
+         * ranks below to take over.
          */
-        openPanel(currentVisible: boolean): void {
-          patchState(store, {
-            panelOpen: true,
-            // A second open without a close must not overwrite the original.
-            visibleBeforeOpen: store.visibleBeforeOpen() ?? currentVisible,
-          });
+        openPanel(): void {
+          patchState(store, { panelOpen: true });
         },
 
         /**
-         * Releases the slot and reports the visibility the shell should return
-         * to — `true` when nothing was recorded, since the assistant is not
-         * entitled to hide whatever was there before it.
-         *
-         * @return {boolean} What to pass back to the shell.
+         * Releases the column.
          */
-        closePanel(): boolean {
-          const restore: boolean = store.visibleBeforeOpen() ?? true;
+        closePanel(): void {
+          patchState(store, { panelOpen: false });
+        },
 
-          patchState(store, { panelOpen: false, visibleBeforeOpen: null });
-
-          return restore;
+        /**
+         * Opens or releases the column, which is what the header control does.
+         */
+        togglePanel(): void {
+          patchState(store, { panelOpen: !store.panelOpen() });
         },
 
         loadThread,

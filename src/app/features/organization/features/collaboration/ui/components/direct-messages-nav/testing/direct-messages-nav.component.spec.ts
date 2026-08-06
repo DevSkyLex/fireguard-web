@@ -1,8 +1,12 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { Dispatcher } from '@ngrx/signals/events';
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
-import { DirectConversationsStore } from '@features/organization/features/collaboration/state';
+import {
+  DirectConversationsStore,
+  directConversationsStoreEvents,
+} from '@features/organization/features/collaboration/state';
 import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
@@ -75,7 +79,10 @@ describe('DirectMessagesNav', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([
-          { path: 'organizations/:organizationId/messages', children: [] },
+          {
+            path: 'organizations/:organizationId/messages',
+            children: [{ path: ':conversationId', children: [] }],
+          },
           { path: 'organizations/:organizationId/today', children: [] },
         ]),
         {
@@ -193,5 +200,14 @@ describe('DirectMessagesNav', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="direct-messages-nav-new"]'),
     ).toBeNull();
+  });
+
+  it('should route to a conversation just opened from the picker', async () => {
+    TestBed.inject(Dispatcher).dispatch(
+      directConversationsStoreEvents.opened(conversation({ id: 'dc-2' })),
+    );
+    await fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/organizations/org-1/messages/dc-2');
   });
 });

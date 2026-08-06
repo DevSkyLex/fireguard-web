@@ -9,15 +9,18 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePenLine } from '@ng-icons/lucide';
+import { Events } from '@ngrx/signals/events';
 import type {
   ConversationOutput,
   DirectConversationView,
 } from '@features/organization/features/collaboration/models';
 import {
   DirectConversationsStore,
+  directConversationsStoreEvents,
   type DirectConversationsStoreType,
 } from '@features/organization/features/collaboration/state';
 import {
@@ -34,9 +37,9 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
+import { HlmButton } from '@shared/ui/button';
 import {
   HlmSidebarGroup,
-  HlmSidebarGroupAction,
   HlmSidebarGroupContent,
   HlmSidebarGroupLabel,
   HlmSidebarMenu,
@@ -88,8 +91,8 @@ import { NewDirectMessageDialog } from '../../dialogs/new-direct-message-dialog'
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarImage,
+    HlmButton,
     HlmSidebarGroup,
-    HlmSidebarGroupAction,
     HlmSidebarGroupContent,
     HlmSidebarGroupLabel,
     HlmSidebarMenu,
@@ -116,6 +119,10 @@ export class DirectMessagesNav {
 
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  private readonly router: Router = inject(Router);
+
+  private readonly events: Events = inject(Events);
 
   /** Stands in wherever a member cannot be named. Never a raw id. */
   private readonly unknownLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
@@ -328,7 +335,9 @@ export class DirectMessagesNav {
    * Primes the conversation list and the member directory for whichever
    * organization is open, so the column is populated before the reader asks
    * for it and a deep link into a conversation resolves its counterpart
-   * without the page having to ask a second time.
+   * without the page having to ask a second time. Also routes to a
+   * conversation the picker just opened — `store.open` only creates or finds
+   * it, and the store cannot navigate itself (`ARCHITECTURE.md` §10.11).
    *
    * @access public
    * @since 2.0.0
@@ -344,6 +353,13 @@ export class DirectMessagesNav {
         this.directory.ensureLoaded(organizationId);
       });
     });
+
+    this.events
+      .on(directConversationsStoreEvents.opened)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }: { payload: ConversationOutput }): void => {
+        this.router.navigate([this.messagesRouteBase(), payload.id]);
+      });
   }
   //#endregion
 

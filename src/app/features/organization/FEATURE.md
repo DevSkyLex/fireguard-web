@@ -173,6 +173,11 @@ utilities. The shell completes its route with `ORGANIZATION_CONTEXT_PORT.selecte
 and withholds it entirely from a member without `organization.messaging.read`; the permission
 constant still comes from this feature's public API, so the gate cannot drift from the guard.
 
+**The assistant is in neither list.** It is not a destination — it has no URL and opens over the
+current page — so it is a single control in the header's action cluster, published by the
+`collaboration` subfeature, which carries its own sheet rather than claiming a shell panel. A
+navigation row would promise an address that does not exist.
+
 `OrganizationSwitcher` (`ui/components/organization-switcher/`) is feature-owned even though it
 only ever renders inside a layout: it reads organization state, and rendering location does not
 transfer ownership (`ARCHITECTURE.md` §2.7). It provides `OrganizationStore` itself, because that

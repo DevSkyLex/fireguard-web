@@ -59,7 +59,7 @@
         <app-slot-outlet [contributions]="header" />
       </div>
 
-      <div class="flex shrink-0 items-center gap-2">
+      <div class="flex shrink-0 items-center gap-1">
         <app-slot-outlet [contributions]="headerActions" />
       </div>
     </header>
@@ -72,7 +72,7 @@
   @if (panel(); as contribution) {
     <aside
       id="dashboard-panel"
-      class="my-2 me-2 hidden w-[22rem] shrink-0 flex-col overflow-y-auto rounded-xl border bg-background shadow-sm lg:flex"
+      class="fixed inset-y-2 right-2 z-30 flex w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-xl bg-background shadow-lg lg:static lg:inset-auto lg:z-auto lg:my-2 lg:me-2 lg:max-w-none lg:shadow-sm"
       i18n-aria-label="@@dashboard.panel.aria"
       aria-label="Contextual panel"
     >

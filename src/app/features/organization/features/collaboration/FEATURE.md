@@ -10,8 +10,9 @@ belongs to.
 Owns the organization's conversational surface: direct conversations, channels, subject threads,
 messages and their reactions, pins, saves and attachments, plus presence and the AI assistant.
 
-**Only direct conversations have a UI today.** The data layer covers all of it — stores, transport,
-offline outbox, presence, assistant — and each remaining surface is a page plus a route away.
+**Direct conversations and the assistant have a UI today.** The data layer covers all of it —
+stores, transport, offline outbox, presence — and each remaining surface is a page plus a route
+away.
 
 Backed end-to-end by the API's `Messaging` and `Assistant` modules — nothing here is mocked. Those
 modules reach `Organization` exactly like `Intervention` and `Facility` do: through its inbound
@@ -68,14 +69,8 @@ inherited and it would otherwise render "Messages / Messages". The counterpart's
 there either — resolving it needs the whole conversation list _plus_ the member directory, more than
 a title resolver can ask for — so it lives in the conversation's own header.
 
-**Messaging is listed by the shell's bottom block, not by the organization navigation.** Direct
-conversations are scoped to one organization on the API — `organization` is required on every call —
-but they follow the reader rather than the workspace, so the row sits under Support with the other
-utilities. `DASHBOARD_GLOBAL_NAV_ITEMS` carries the entry, marked `organizationScoped`, and the
-shell completes the route with `ORGANIZATION_CONTEXT_PORT.selectedOrganizationId()`.
-
-Channels, saved messages and the assistant are **not mounted**. Their stores, services and models
-are complete and specced; only their pages are absent. Mounting one is a UI change plus its route.
+Channels and saved messages are **not mounted**. Their stores, services and models are complete and
+specced; only their pages are absent. Mounting one is a UI change plus its route.
 
 ## Offline
 
@@ -181,9 +176,32 @@ cannot fan out its own signal. This needs backend work before any UI is worth de
 
 ## Assistant
 
-`AssistantStore` is provided by the **shell route**, not root: it reads the organization through
-`ORGANIZATION_CONTEXT_PORT` (a route binding) and both slot contributions resolve from that same
-environment injector. Root would throw `NG0201` on the port.
+**The assistant is summoned from the header, not navigated to.** It has no route and never will:
+it opens over whatever page is showing. So its control lives in the shell's header-actions slot
+(`withAssistantToggle()`) — nothing in a navigation list, which would promise an address that does
+not exist.
+
+**The panel is a sheet at every width, and claims no shell slot.** `AssistantToggle` owns both the
+trigger and the right-anchored `hlm-sheet` that carries `AssistantPanel`, so the assistant never
+competes with the routed page for width and inherits spartan's backdrop, focus trap and Escape
+dismissal instead of reimplementing them. The trigger and the surface sit in one component because
+both read the single `panelOpen` signal, which is what keeps `aria-expanded` honest. There is no
+`withAssistantPanel()`: the assistant does not contribute to `DASHBOARD_PANEL_SLOT`, which stays
+available for a genuinely page-owned panel.
+
+`AssistantStore` is provided by the **dashboard route** (`provideCollaborationAssistant()`), not
+root. Root would work — `ORGANIZATION_CONTEXT_PORT` is bound at root by
+`provideOrganizationFeature()` in `app.config.ts` — but route scoping keeps the store out of the
+auth and error shells, which have no organization and no use for it. The header contribution
+resolves from that one environment injector, which is what makes the trigger and the panel's own
+close button agree on a single answer.
+
+Its `onInit` calls `resume()`, so a remembered thread is read on the first signed-in page rather
+than on panel open. Without a thread cookie that is a no-op; with one it is a single GET, which is
+the price of the panel opening on its transcript instead of on a spinner.
+
+The panel covers the page rather than taking a column, so it owns a keyboard exit: Escape closes
+it, unless a question is half-written — throwing that away is not what anyone means by Escape.
 
 Four behaviours exist because of gaps in the API, and each will look wrong to anyone who assumes
 otherwise:
@@ -336,13 +354,13 @@ it mirrors and never replaces the server's own check.
 `@shared/chat` no longer exists, and it is not coming back: **spartan owns the chat vocabulary.**
 The components under `ui/` are compositions of vendored primitives, not new design:
 
-| Surface             | Built from                                                                                                                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `MessageRow`        | `hlmMessage` (`align`), `hlmMessageAvatar`, `hlmMessageContent`, `hlmMessageHeader`, `hlmMessageFooter`, `hlmBubble` / `hlmBubbleContent`                                                              |
-| `MessageReactions`  | host is `hlmBubbleReactions`; chips are `hlmToggle`; picker is `popover`                                                                                                                               |
-| `MessageThread`     | date rules are `hlmMarker` / `hlmMarkerContent`                                                                                                                                                        |
-| `MessageComposer`   | card is `input-group` (`hlmInputGroupTextarea` + a `block-end` `hlmInputGroupAddon` + `hlmInputGroupButton`), hint is `hlmKbd`, read-only notice is `hlmAlert`, mention rows are `hlmItem`             |
-| `DirectMessagesNav` | rows are `hlmSidebarMenuButton` (icon-rail tooltip, `hlmAvatar` leading element), unread count is `hlmSidebarMenuBadge`, "New message" is `hlmSidebarGroupAction`, loading is `hlmSidebarMenuSkeleton` |
+| Surface             | Built from                                                                                                                                                                                                                                      |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MessageRow`        | `hlmMessage` (`align`), `hlmMessageAvatar`, `hlmMessageContent`, `hlmMessageHeader`, `hlmMessageFooter`, `hlmBubble` / `hlmBubbleContent`                                                                                                       |
+| `MessageReactions`  | host is `hlmBubbleReactions`; chips are `hlmToggle`; picker is `popover`                                                                                                                                                                        |
+| `MessageThread`     | date rules are `hlmMarker` / `hlmMarkerContent`                                                                                                                                                                                                 |
+| `MessageComposer`   | card is `input-group` (`hlmInputGroupTextarea` + a `block-end` `hlmInputGroupAddon` + `hlmInputGroupButton`), hint is `hlmKbd`, read-only notice is `hlmAlert`, mention rows are `hlmItem`                                                      |
+| `DirectMessagesNav` | rows are `hlmSidebarMenuButton` (icon-rail tooltip, `hlmAvatar` leading element), unread count is `hlmSidebarMenuBadge`, "New message" is `hlmBtn` (`ghost`/`icon-sm`, matching the header's icon buttons), loading is `hlmSidebarMenuSkeleton` |
 
 Anything missing is generated with `npx ng g @spartan-ng/cli:ui <name>` before it is written by
 hand — that is the rule, and the first pass at this feature broke it. **The CLI reformats

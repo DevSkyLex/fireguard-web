@@ -3,6 +3,8 @@ import { withAccountMenu } from '@features/account';
 import { authGuard } from '@features/auth';
 import { notFoundRedirectGuard } from '@features/error';
 import {
+  provideCollaborationAssistant,
+  withAssistantToggle,
   withDirectMessagesNav,
   withOrganizationNav,
   withOrganizationSwitcher,
@@ -66,12 +68,13 @@ export const APP_ROUTES: Routes = [
     path: '',
     component: DashboardLayout,
     providers: [
+      provideCollaborationAssistant(),
       provideDashboardLayoutSlots({
         sidebarHeader: [withOrganizationSwitcher()],
         sidebarNav: [withOrganizationNav(), withDirectMessagesNav(), withDashboardGlobalNav()],
         sidebarFooter: [withAccountMenu()],
         header: [withDashboardBreadcrumb()],
-        headerActions: [withThemeSwitcher()],
+        headerActions: [withAssistantToggle(), withThemeSwitcher()],
       }),
     ],
     children: [

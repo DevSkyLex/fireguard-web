@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLifeBuoy, lucideMessageSquare, lucideSparkles } from '@ng-icons/lucide';
+import { lucideLifeBuoy } from '@ng-icons/lucide';
 import {
   ORGANIZATION_CONTEXT_PORT,
   OrganizationPermissionService,
@@ -60,7 +60,7 @@ import type { DashboardGlobalNavRow } from './models';
     HlmSidebarMenuButton,
     HlmSidebarMenuItem,
   ],
-  providers: [provideIcons({ lucideLifeBuoy, lucideMessageSquare, lucideSparkles })],
+  providers: [provideIcons({ lucideLifeBuoy })],
   templateUrl: './dashboard-global-nav.component.html',
   host: { class: 'mt-auto' },
   changeDetection: ChangeDetectionStrategy.OnPush,

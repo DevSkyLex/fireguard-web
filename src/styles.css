@@ -7,16 +7,16 @@
 @import '@spartan-ng/brain/hlm-tailwind-preset.css';
 
 /* Self-hosted brand fonts (offline-safe, cached by the service worker). */
-@import '@fontsource-variable/inter/index.css';
-@import '@fontsource-variable/jetbrains-mono/index.css';
+@import '@fontsource-variable/geist/index.css';
+@import '@fontsource-variable/geist-mono/index.css';
 
 @theme {
   --font-sans:
-    'Inter Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Geist Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
     'Segoe UI Symbol', 'Noto Color Emoji';
   --font-mono:
-    'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    'Liberation Mono', 'Courier New', monospace;
+    'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
 }
 
 @custom-variant dark (&:where(html[data-theme="dark"], html[data-theme="dark"] *));

@@ -4,8 +4,11 @@
 
     @if (canStartConversation()) {
       <button
-        hlmSidebarGroupAction
+        hlmBtn
+        variant="ghost"
+        size="icon-sm"
         type="button"
+        class="absolute end-3 top-2.5 group-data-[collapsible=icon]:hidden"
         data-testid="direct-messages-nav-new"
         i18n-aria-label="@@messages.nav.new"
         aria-label="New message"

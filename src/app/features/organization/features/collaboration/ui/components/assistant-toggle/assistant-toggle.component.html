@@ -1,0 +1,33 @@
+@if (store.isAvailable()) {
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="icon-sm"
+    data-testid="assistant-toggle"
+    aria-controls="assistant-sheet"
+    i18n-aria-label="@@workspace.assistant.toggle.aria"
+    aria-label="Assistant"
+    [attr.aria-expanded]="store.panelOpen()"
+    (click)="store.togglePanel()"
+  >
+    <ng-icon name="lucideSparkles" class="text-base" aria-hidden="true" />
+  </button>
+
+  <hlm-sheet
+    side="right"
+    [state]="store.panelOpen() ? 'open' : 'closed'"
+    (stateChanged)="onSheetStateChanged($event)"
+  >
+    <hlm-sheet-content
+      *hlmSheetPortal="let ctx"
+      id="assistant-sheet"
+      class="gap-0 overflow-hidden bg-background p-0 text-foreground sm:max-w-xl!"
+      [showCloseButton]="false"
+      i18n-aria-label="@@workspace.assistant.aria"
+      aria-label="Assistant"
+    >
+      <app-assistant-panel />
+    </hlm-sheet-content>
+  </hlm-sheet>
+}

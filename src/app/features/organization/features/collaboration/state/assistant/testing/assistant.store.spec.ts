@@ -281,21 +281,32 @@ describe('AssistantStore', () => {
     expect(store.loadError()).toBeNull();
   });
 
-  it('restores the shell visibility that was in effect before it opened', () => {
+  it('claims and releases the contextual column', () => {
     const store: AssistantStoreType = createStore();
 
-    store.openPanel(false);
-    // A second open must not overwrite what was recorded the first time.
-    store.openPanel(true);
+    store.openPanel();
+    store.openPanel(); // A second open is not a toggle.
 
     expect(store.panelOpen()).toBe(true);
-    expect(store.closePanel()).toBe(false);
+
+    store.closePanel();
+
+    expect(store.panelOpen()).toBe(false);
+  });
+
+  it('opens and closes the column from a single control', () => {
+    const store: AssistantStoreType = createStore();
+
+    store.togglePanel();
+    expect(store.panelOpen()).toBe(true);
+
+    store.togglePanel();
     expect(store.panelOpen()).toBe(false);
   });
 
   it('drops the transcript but keeps the panel open when the organization changes', () => {
     const store: AssistantStoreType = createStore();
-    store.openPanel(true);
+    store.openPanel();
     store.ask('first');
 
     organization.set('org-2');

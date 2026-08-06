@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBell,
-  lucideChevronsUpDown,
+  lucideEllipsisVertical,
   lucideLogOut,
   lucideShieldCheck,
   lucideUserRound,
@@ -33,8 +33,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  *
  * @description
  * The sidebar footer: who is signed in, and the menu onto their own account.
- * The paired chevrons mark it as a control rather than a caption, mirroring the
- * organization switcher at the other end of the column.
+ * The trailing ellipsis marks it as a control rather than a caption.
  *
  * It is the **only** way into the account: the account is not a destination of
  * the sidebar's navigation, which lists the work rather than the reader, so the
@@ -74,7 +73,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   providers: [
     provideIcons({
       lucideBell,
-      lucideChevronsUpDown,
+      lucideEllipsisVertical,
       lucideLogOut,
       lucideShieldCheck,
       lucideUserRound,

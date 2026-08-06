@@ -996,6 +996,10 @@
         <source> Assistant </source>
         <target>Asistente</target>
       </trans-unit>
+      <trans-unit id="workspace.assistant.aria" datatype="html">
+        <source>Assistant</source>
+        <target>Asistente</target>
+      </trans-unit>
       <trans-unit id="workspace.assistant.subtitle" datatype="html">
         <source> Answers about this organization </source>
         <target>Responde sobre esta organización</target>
@@ -6910,6 +6914,18 @@
       <trans-unit id="layout.sidebar.closeAria" datatype="html">
         <source>Close navigation menu</source>
         <target>Cerrar el menú de navegación</target>
+      </trans-unit>
+      <trans-unit id="dashboard.skipToContent" datatype="html">
+        <source> Skip to content </source>
+        <target>Ir al contenido</target>
+      </trans-unit>
+      <trans-unit id="dashboard.toggleSidebar" datatype="html">
+        <source>Toggle sidebar</source>
+        <target>Mostrar u ocultar la barra lateral</target>
+      </trans-unit>
+      <trans-unit id="dashboard.panel.aria" datatype="html">
+        <source>Contextual panel</source>
+        <target>Panel contextual</target>
       </trans-unit>
       <trans-unit id="workspace.header.back.aria" datatype="html">
         <source>Back to navigation</source>

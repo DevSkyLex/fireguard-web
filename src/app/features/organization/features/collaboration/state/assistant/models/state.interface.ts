@@ -45,19 +45,11 @@ export interface AssistantState {
   /** Whether the generation has been waiting long enough to look stuck. */
   readonly generationStalled: boolean;
   /**
-   * Whether the panel is claiming the workspace's mono-active right slot.
+   * Whether the panel is claiming the shell's mono-active contextual column.
    *
    * Held here rather than in the shell because the slot contract is a signal
    * per contribution, and both the header toggle and the panel's own close
    * button have to agree on one answer.
    */
   readonly panelOpen: boolean;
-  /**
-   * Panel visibility as it was before the assistant took the slot, or `null`.
-   *
-   * The shell renders *no* panel while `panelVisible` is false, so opening the
-   * assistant has to force it true. Remembering the previous value is what
-   * stops that from silently — and permanently — hiding the info panel.
-   */
-  readonly visibleBeforeOpen: boolean | null;
 }

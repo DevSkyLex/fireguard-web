@@ -63,6 +63,7 @@ describe('NotificationStore', () => {
     list: ReturnType<typeof vi.fn>;
     listTypes: ReturnType<typeof vi.fn>;
     markAsRead: ReturnType<typeof vi.fn>;
+    markAllAsRead: ReturnType<typeof vi.fn>;
     getSubscription: ReturnType<typeof vi.fn>;
   };
   let mockMercureService: { subscribe: ReturnType<typeof vi.fn> };
@@ -73,6 +74,7 @@ describe('NotificationStore', () => {
       list: vi.fn(),
       listTypes: vi.fn(),
       markAsRead: vi.fn(),
+      markAllAsRead: vi.fn(),
       getSubscription: vi.fn(),
     };
     mockMercureService = {
@@ -415,6 +417,63 @@ describe('NotificationStore', () => {
     });
   });
 
+  describe('markAllAsRead', () => {
+    it('should mark every loaded notification read without refetching', async () => {
+      mockNotificationService.list.mockReturnValue(
+        of({ member: [notification], totalItems: 1, view: undefined }),
+      );
+      store.load();
+      await Promise.resolve();
+      expect(store.notifications()[0].isRead).toBe(false);
+
+      mockNotificationService.markAllAsRead.mockReturnValue(
+        of({ '@id': '', '@type': 'Notification', count: 1 }),
+      );
+      mockNotificationService.list.mockClear();
+
+      store.markAllAsRead();
+      await Promise.resolve();
+
+      expect(store.notifications()[0].isRead).toBe(true);
+      expect(store.unreadCount()).toBe(0);
+      expect(mockNotificationService.list).not.toHaveBeenCalled();
+    });
+
+    it('should leave an already-read notification untouched', async () => {
+      const read: NotificationOutput = {
+        ...notification,
+        isRead: true,
+        readAt: '2026-04-15T11:00:00Z',
+      };
+      mockNotificationService.list.mockReturnValue(
+        of({ member: [read], totalItems: 1, view: undefined }),
+      );
+      store.load();
+      await Promise.resolve();
+
+      mockNotificationService.markAllAsRead.mockReturnValue(
+        of({ '@id': '', '@type': 'Notification', count: 0 }),
+      );
+
+      store.markAllAsRead();
+      await Promise.resolve();
+
+      expect(store.notifications()[0].readAt).toBe('2026-04-15T11:00:00Z');
+    });
+
+    it('should set error call state and dispatch markAllAsReadFailed on failure', async () => {
+      mockNotificationService.markAllAsRead.mockReturnValue(throwError(() => new Error('boom')));
+
+      store.markAllAsRead();
+      await Promise.resolve();
+
+      expect(store.markAllAsReadCallState().status).toBe('error');
+      expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: '[Notification Store] markAllAsReadFailed' }),
+      );
+    });
+  });
+
   describe('markAsRead', () => {
     it('should set error call state and dispatch markAsReadFailed on failure', async () => {
       mockNotificationService.markAsRead.mockReturnValue(throwError(() => new Error('boom')));
@@ -580,6 +639,7 @@ describe('NotificationStore', () => {
         list: vi.fn(),
         listTypes: vi.fn(),
         markAsRead: vi.fn(),
+        markAllAsRead: vi.fn(),
         getSubscription: vi.fn(),
       };
       mockMercureService = { subscribe: vi.fn() };

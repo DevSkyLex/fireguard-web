@@ -27,15 +27,6 @@
     Skip to content
   </a>
 
-  <!--
-    `variant="inset"` is the shell's look: the sidebar keeps the page canvas and
-    the main column floats above it as a rounded card.
-
-    `collapsible="icon"` is its contract with the navigation — collapsed, the
-    column narrows to an icon rail instead of disappearing. A nav contribution
-    must therefore build its rows on `hlmSidebarMenuButton`, which carries the
-    icon-collapse classes; hand-rolled rows will clip.
-  -->
   <hlm-sidebar variant="inset" collapsible="icon">
     @if (sidebarHeader.length > 0) {
       <hlm-sidebar-header>
@@ -55,71 +46,29 @@
   </hlm-sidebar>
 
   <main #main hlmSidebarInset id="dashboard-main" tabindex="-1" class="min-w-0 outline-none">
-    <!--
-      No bottom border: the inset card's own edge already separates the shell
-      from the canvas, and a rule inside it reads as a second frame.
-    -->
     <header class="flex h-16 shrink-0 items-center gap-2 px-4">
       <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
 
-      <!--
-        The rule takes its height from this box, not from a class of its own.
-        `hlm-separator` carries `data-vertical:self-stretch`, and `align-self:
-        stretch` on an item that already has a definite height resolves to
-        flex-start — which left the rule sitting 6px above the trigger's centre
-        line. Stretching inside a 16px box that `items-center` centres puts it
-        back on the line without overriding a spartan class.
-      -->
       <div class="mr-2 flex h-4 items-center">
         <hlm-separator orientation="vertical" />
       </div>
 
-      <!--
-        Takes the slack so the tool cluster stays pinned right, and clips rather
-        than pushing it off the card. `min-w-0` reaches through the outlet
-        because its host is `display: contents`: the contribution, not the
-        outlet, is the flex item here, and a flex item defaults to
-        `min-width: auto` — without this a long breadcrumb overflowed the header
-        by 429px instead of ellipsising.
-      -->
       <div
         class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden [&>app-slot-outlet>*]:min-w-0"
       >
         <app-slot-outlet [contributions]="header" />
       </div>
 
-      <!--
-        No `overflow-hidden` here: these contributions open menus and popovers,
-        and clipping the cluster would clip any that is not portalled.
-      -->
       <div class="flex shrink-0 items-center gap-2">
         <app-slot-outlet [contributions]="headerActions" />
       </div>
     </header>
 
-    <!--
-      Scrolls the routed page. The gutter is the page's own: a form wants
-      breathing room where a table wants full-bleed rows, and the shell cannot
-      know which it is hosting. A page that fills the box exactly and scrolls its
-      own body simply leaves this container with nothing to scroll.
-
-      `rounded-b-xl` matches the card: this box ends exactly on the card's bottom
-      edge, and `overflow-y-auto` clips to its own border box — so without it a
-      full-bleed row squared off the two bottom corners. The clip lives here
-      rather than on the card so the header's menus and popovers stay unclipped.
-    -->
     <div class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-b-xl">
       <router-outlet />
     </div>
   </main>
 
-  <!--
-    Contextual column, desktop only for now: below `lg` it would have to become
-    an overlay with its own open state, and no contribution exists yet to say
-    what should summon it. It repeats the inset card's chrome so the two read as
-    one surface, and takes no start margin — the main column's own `me-2`
-    already provides the gutter between them.
-  -->
   @if (panel(); as contribution) {
     <aside
       id="dashboard-panel"

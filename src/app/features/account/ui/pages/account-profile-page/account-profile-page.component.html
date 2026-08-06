@@ -1,0 +1,166 @@
+<div id="account-profile" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <header class="flex min-w-0 flex-col gap-0.5">
+    <h1 class="text-xl font-semibold tracking-tight text-foreground" i18n="@@account.profile.title">
+      Your account
+    </h1>
+    <p class="text-sm text-muted-foreground" i18n="@@account.profile.subtitle">
+      Your identity, your picture and your language.
+    </p>
+  </header>
+
+  <div class="flex max-w-2xl flex-col gap-6">
+    @if (hasProfileError()) {
+      <app-error-state
+        icon="lucideTriangleAlert"
+        title="Couldn't load your account"
+        i18n-title="@@account.profile.errorTitle"
+        description="Your details can't be shown or edited until we know who you are."
+        i18n-description="@@account.profile.errorDescription"
+      >
+        <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retryProfile()">
+          <span i18n="@@account.profile.retry">Retry</span>
+        </button>
+      </app-error-state>
+    } @else if (!profileReady()) {
+      <div class="flex flex-col gap-6" aria-hidden="true">
+        <div class="flex items-center gap-3">
+          <hlm-skeleton class="size-14 shrink-0 rounded-full" />
+          <div class="flex flex-col gap-2">
+            <hlm-skeleton class="h-4 w-32" />
+            <hlm-skeleton class="h-3 w-40" />
+          </div>
+        </div>
+        <div class="flex flex-col gap-3">
+          <hlm-skeleton class="h-4 w-24" />
+          <hlm-skeleton class="h-4 w-48" />
+          <hlm-skeleton class="h-4 w-32" />
+        </div>
+      </div>
+    } @else {
+      <section class="flex flex-col gap-4">
+        <app-identity-summary
+          [name]="displayName()"
+          [initials]="userStore.initials() ?? ''"
+          [avatarUrl]="userStore.avatarUrlMedium()"
+          [secondary]="userStore.profile()?.email ?? null"
+        />
+
+        <app-account-avatar-picker
+          [pending]="editStore.isUploadingAvatar()"
+          (selected)="uploadAvatar($event)"
+        />
+      </section>
+
+      <section class="flex flex-col gap-3 border-t border-border pt-5">
+        <header class="flex items-center justify-between gap-2">
+          <h3
+            class="text-sm font-semibold tracking-tight text-foreground"
+            i18n="@@account.profile.detailsTitle"
+          >
+            Details
+          </h3>
+
+          @if (!editing()) {
+            <button
+              hlmBtn
+              type="button"
+              size="sm"
+              variant="outline"
+              data-testid="account-profile-edit"
+              class="max-sm:min-h-11"
+              (click)="startEditing()"
+            >
+              <span i18n="@@account.profile.edit">Edit</span>
+            </button>
+          }
+        </header>
+
+        @if (editing()) {
+          <app-account-profile-form
+            [profile]="formValues()"
+            [pending]="editStore.isSaving()"
+            (submitted)="save($event)"
+            (cancelled)="cancelEditing()"
+          />
+        } @else {
+          <dl class="flex flex-col gap-3 text-sm">
+            <div class="flex flex-col gap-0.5">
+              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.firstNameLabel">
+                First name
+              </dt>
+              <dd class="text-foreground">
+                {{ userStore.profile()?.firstName || '—' }}
+              </dd>
+            </div>
+
+            <div class="flex flex-col gap-0.5">
+              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.lastNameLabel">
+                Last name
+              </dt>
+              <dd class="text-foreground">
+                {{ userStore.profile()?.lastName || '—' }}
+              </dd>
+            </div>
+
+            <div class="flex flex-col gap-0.5">
+              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.localeLabel">
+                Interface language
+              </dt>
+              <dd class="text-foreground">{{ localeLabel() }}</dd>
+            </div>
+          </dl>
+        }
+      </section>
+
+      <section class="flex flex-col gap-3 border-t border-border pt-5">
+        <h3
+          class="text-sm font-semibold tracking-tight text-foreground"
+          i18n="@@account.profile.accountTitle"
+        >
+          Account
+        </h3>
+
+        <dl class="flex flex-col gap-3 text-sm">
+          <div class="flex flex-col gap-0.5">
+            <dt class="text-xs text-muted-foreground" i18n="@@account.profile.emailLabel">Email</dt>
+            <dd class="flex flex-wrap items-center gap-2">
+              <span class="break-all text-foreground">{{ userStore.profile()?.email }}</span>
+              @if (!emailVerified()) {
+                <span hlmBadge variant="secondary" i18n="@@account.profile.emailUnverified"
+                  >Not confirmed</span
+                >
+              }
+            </dd>
+          </div>
+
+          @if (memberSince(); as since) {
+            <div class="flex flex-col gap-0.5">
+              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.memberSinceLabel">
+                Member since
+              </dt>
+              <dd class="text-foreground">{{ since }}</dd>
+            </div>
+          }
+
+          @if (lastSignIn(); as lastSeen) {
+            <div class="flex flex-col gap-0.5">
+              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.lastSignInLabel">
+                Last sign-in
+              </dt>
+              <dd class="text-foreground">{{ lastSeen }}</dd>
+            </div>
+          }
+
+          @if (roles().length > 0) {
+            <div class="flex flex-col gap-0.5">
+              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.rolesLabel">
+                Roles
+              </dt>
+              <dd class="text-foreground">{{ roles().join(', ') }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+  </div>
+</div>

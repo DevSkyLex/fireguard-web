@@ -1,6 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import {
@@ -10,7 +11,9 @@ import {
   isCallSuccess,
   pendingCallState,
   successCallState,
+  successFeedback,
   toStoreError,
+  toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
 import { TotpService } from '@features/account/data-access';
@@ -20,6 +23,7 @@ import type {
   SetupTotpOutput,
 } from '@features/account/models';
 import { UserStore } from '../user';
+import { accountTotpEnrollmentStoreEvents } from './events';
 import type { AccountTotpEnrollmentState } from './models';
 
 /**
@@ -158,6 +162,7 @@ export const AccountTotpEnrollmentStore = signalStore(
       store,
       totpService = inject<TotpService>(TotpService),
       userStore = inject<UserStore>(UserStore),
+      dispatcher = inject<Dispatcher>(Dispatcher),
     ) => ({
       /**
        * Method setup
@@ -177,8 +182,18 @@ export const AccountTotpEnrollmentStore = signalStore(
               tapResponse({
                 next: (result: SetupTotpOutput) =>
                   patchState(store, { setupCallState: successCallState(result) }),
-                error: (error: unknown) =>
-                  patchState(store, { setupCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { setupCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    accountTotpEnrollmentStoreEvents.setupFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@account.mfa.setupError:A new authenticator key could not be generated.`,
+                      ),
+                    ),
+                  );
+                },
               }),
             ),
           ),
@@ -206,9 +221,26 @@ export const AccountTotpEnrollmentStore = signalStore(
                 next: (result: ConfirmTotpOutput) => {
                   patchState(store, { confirmCallState: successCallState(result) });
                   userStore.reload();
+                  dispatcher.dispatch(
+                    accountTotpEnrollmentStoreEvents.confirmSucceeded(
+                      successFeedback(
+                        $localize`:@@account.mfa.enabled:Two-factor authentication is now on.`,
+                      ),
+                    ),
+                  );
                 },
-                error: (error: unknown) =>
-                  patchState(store, { confirmCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { confirmCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    accountTotpEnrollmentStoreEvents.confirmFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@account.mfa.confirmError:That code did not match. Check your authenticator app and try again.`,
+                      ),
+                    ),
+                  );
+                },
               }),
             ),
           ),
@@ -236,9 +268,26 @@ export const AccountTotpEnrollmentStore = signalStore(
                 next: (result: DisableTotpOutput) => {
                   patchState(store, { disableCallState: successCallState(result) });
                   userStore.reload();
+                  dispatcher.dispatch(
+                    accountTotpEnrollmentStoreEvents.disableSucceeded(
+                      successFeedback(
+                        $localize`:@@account.mfa.disabled:Two-factor authentication is now off.`,
+                      ),
+                    ),
+                  );
                 },
-                error: (error: unknown) =>
-                  patchState(store, { disableCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { disableCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    accountTotpEnrollmentStoreEvents.disableFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@account.mfa.disableError:That code did not match, so two-factor authentication is still on.`,
+                      ),
+                    ),
+                  );
+                },
               }),
             ),
           ),

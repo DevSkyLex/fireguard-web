@@ -1,0 +1,56 @@
+<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
+  <div class="flex flex-col gap-1.5">
+    <brn-input-otp
+      hlmInputOtp
+      class="justify-start"
+      autocomplete="one-time-code"
+      [inputId]="inputId()"
+      [length]="length"
+      [formField]="codeForm.code"
+      (completed)="autoSubmit()"
+    >
+      <hlm-input-otp-group>
+        <hlm-input-otp-slot index="0" />
+        <hlm-input-otp-slot index="1" />
+        <hlm-input-otp-slot index="2" />
+      </hlm-input-otp-group>
+      <hlm-input-otp-separator />
+      <hlm-input-otp-group>
+        <hlm-input-otp-slot index="3" />
+        <hlm-input-otp-slot index="4" />
+        <hlm-input-otp-slot index="5" />
+      </hlm-input-otp-group>
+    </brn-input-otp>
+
+    @if (codeForm.code().touched() && codeForm.code().invalid()) {
+      <hlm-field-error>{{ codeForm.code().errors()[0].message }}</hlm-field-error>
+    }
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    <button
+      hlmBtn
+      type="submit"
+      [variant]="destructive() ? 'destructive' : 'default'"
+      class="max-sm:min-h-11"
+      [disabled]="pending()"
+    >
+      @if (pending()) {
+        <span i18n="@@account.otp.submitting">Checking…</span>
+      } @else {
+        <span>{{ submitLabel() }}</span>
+      }
+    </button>
+
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      class="max-sm:min-h-11"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+    >
+      <span i18n="@@account.otp.cancel">Cancel</span>
+    </button>
+  </div>
+</form>

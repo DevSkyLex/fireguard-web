@@ -1,5 +1,6 @@
 import type { CallState } from '@core/request-state';
 import type {
+  MarkAllNotificationsAsReadOutput,
   NotificationFilter,
   NotificationOutput,
   NotificationTypeOutput,
@@ -90,6 +91,20 @@ export interface NotificationStoreState {
    * @type {CallState<NotificationOutput>}
    */
   readonly markAsReadCallState: CallState<NotificationOutput>;
+
+  /**
+   * Property markAllAsReadCallState
+   *
+   * @description
+   * Request state of the bulk "mark everything read" action, kept separate from
+   * {@link markAsReadCallState} so clearing the whole feed does not make a
+   * single row look busy.
+   *
+   * @since 1.3.0
+   *
+   * @type {CallState<MarkAllNotificationsAsReadOutput>}
+   */
+  readonly markAllAsReadCallState: CallState<MarkAllNotificationsAsReadOutput>;
   //#endregion
 
   //#region Mercure

@@ -1,6 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, tap } from 'rxjs';
 import {
@@ -8,7 +9,9 @@ import {
   idleCallState,
   pendingCallState,
   successCallState,
+  successFeedback,
   toStoreError,
+  toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
 import { UserProfileService } from '@features/account/data-access';
@@ -16,6 +19,7 @@ import type {
   ConfirmPasswordChangeOutput,
   RequestPasswordChangeOutput,
 } from '@features/account/models';
+import { accountPasswordChangeStoreEvents } from './events';
 import type { AccountPasswordChangeState } from './models';
 
 /**
@@ -121,89 +125,122 @@ export const AccountPasswordChangeStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((store, userProfileService = inject<UserProfileService>(UserProfileService)) => ({
-    /**
-     * Method request
-     *
-     * @description
-     * Verifies the current password and sends the one-time code by email.
-     * Moves the workflow to the verify step on success.
-     *
-     * @since 1.0.0
-     *
-     * @param {string} currentPassword - Current password to verify.
-     */
-    request: rxMethod<string>(
-      pipe(
-        tap((): void => patchState(store, { requestCallState: pendingCallState() })),
-        exhaustMap((currentPassword: string) =>
-          userProfileService.requestPasswordChange({ currentPassword }).pipe(
-            tapResponse({
-              next: (challenge: RequestPasswordChangeOutput) => {
-                patchState(store, {
-                  step: 'verify',
-                  challenge,
-                  requestCallState: successCallState(challenge),
-                });
-              },
-              error: (error: unknown) =>
-                patchState(store, { requestCallState: errorCallState(toStoreError(error)) }),
-            }),
+  withMethods(
+    (
+      store,
+      userProfileService = inject<UserProfileService>(UserProfileService),
+      dispatcher = inject<Dispatcher>(Dispatcher),
+    ) => ({
+      /**
+       * Method request
+       *
+       * @description
+       * Verifies the current password and sends the one-time code by email.
+       * Moves the workflow to the verify step on success.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} currentPassword - Current password to verify.
+       */
+      request: rxMethod<string>(
+        pipe(
+          tap((): void => patchState(store, { requestCallState: pendingCallState() })),
+          exhaustMap((currentPassword: string) =>
+            userProfileService.requestPasswordChange({ currentPassword }).pipe(
+              tapResponse({
+                next: (challenge: RequestPasswordChangeOutput) => {
+                  patchState(store, {
+                    step: 'verify',
+                    challenge,
+                    requestCallState: successCallState(challenge),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { requestCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    accountPasswordChangeStoreEvents.requestFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@account.password.requestError:Your current password could not be verified.`,
+                      ),
+                    ),
+                  );
+                },
+              }),
+            ),
           ),
         ),
       ),
-    ),
 
-    /**
-     * Method confirm
-     *
-     * @description
-     * Confirms the password change with the one-time code and the new
-     * password. Moves the workflow to the success step when done.
-     *
-     * @since 1.0.0
-     *
-     * @param {{ code: string; newPassword: string }} input - OTP code and new password.
-     */
-    confirm: rxMethod<{ code: string; newPassword: string }>(
-      pipe(
-        tap((): void => patchState(store, { confirmCallState: pendingCallState() })),
-        exhaustMap(({ code, newPassword }) =>
-          userProfileService
-            .confirmPasswordChange({
-              token: store.challenge()?.challengeToken ?? '',
-              code,
-              newPassword,
-            })
-            .pipe(
-              tapResponse({
-                next: (result: ConfirmPasswordChangeOutput) => {
-                  patchState(store, {
-                    step: 'success',
-                    confirmCallState: successCallState(result),
-                  });
-                },
-                error: (error: unknown) =>
-                  patchState(store, { confirmCallState: errorCallState(toStoreError(error)) }),
-              }),
-            ),
+      /**
+       * Method confirm
+       *
+       * @description
+       * Confirms the password change with the one-time code and the new
+       * password. Moves the workflow to the success step when done.
+       *
+       * @since 1.0.0
+       *
+       * @param {{ code: string; newPassword: string }} input - OTP code and new password.
+       */
+      confirm: rxMethod<{ code: string; newPassword: string }>(
+        pipe(
+          tap((): void => patchState(store, { confirmCallState: pendingCallState() })),
+          exhaustMap(({ code, newPassword }) =>
+            userProfileService
+              .confirmPasswordChange({
+                token: store.challenge()?.challengeToken ?? '',
+                code,
+                newPassword,
+              })
+              .pipe(
+                tapResponse({
+                  next: (result: ConfirmPasswordChangeOutput) => {
+                    patchState(store, {
+                      step: 'success',
+                      confirmCallState: successCallState(result),
+                    });
+                    dispatcher.dispatch(
+                      accountPasswordChangeStoreEvents.confirmSucceeded(
+                        successFeedback(
+                          $localize`:@@account.password.changed:Your password has been changed. Every other session was signed out.`,
+                        ),
+                      ),
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { confirmCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      accountPasswordChangeStoreEvents.confirmFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@account.password.confirmError:Your password could not be changed.`,
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+          ),
         ),
       ),
-    ),
 
-    /**
-     * Method restart
-     *
-     * @description
-     * Resets the workflow back to the request step, clearing any pending
-     * challenge and errors.
-     *
-     * @since 1.0.0
-     */
-    restart(): void {
-      patchState(store, INITIAL_STATE);
-    },
-  })),
+      /**
+       * Method restart
+       *
+       * @description
+       * Resets the workflow back to the request step, clearing any pending
+       * challenge and errors.
+       *
+       * @since 1.0.0
+       */
+      restart(): void {
+        patchState(store, INITIAL_STATE);
+      },
+    }),
+  ),
   //#endregion
 );
 

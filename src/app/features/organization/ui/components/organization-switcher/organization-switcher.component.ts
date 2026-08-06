@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideChevronsUpDown, lucidePlus } from '@ng-icons/lucide';
+import { lucideBuilding2, lucideCheck, lucideChevronsUpDown, lucidePlus } from '@ng-icons/lucide';
 import type { OrganizationOutput } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -38,9 +38,15 @@ import type { OrganizationSwitcherOption } from './models';
  * @class OrganizationSwitcher
  *
  * @description
- * The sidebar header: the organization currently open, and a menu to switch to
- * another or create one. The paired chevrons are the affordance — without them
- * the row reads as a title rather than as a control.
+ * The sidebar header: the organization currently selected, and a menu to switch
+ * to another or create one. The paired chevrons are the affordance — without
+ * them the row reads as a title rather than as a control.
+ *
+ * "None selected" is a state of its own, not an empty trigger: it says so, and
+ * says whether that is because the reader has to choose one or because they
+ * have none yet. It is also the ordinary state of every global page — the URL
+ * is what selects an organization, and those name none — which is why picking
+ * one simply navigates to `/organizations/:organizationId`.
  *
  * Feature-owned rather than layout-owned because it reads organization state;
  * the shell only lends it a slot (`ARCHITECTURE.md` §2.7). It is contributed
@@ -72,7 +78,10 @@ import type { OrganizationSwitcherOption } from './models';
     HlmSidebarMenuItem,
     HlmSkeleton,
   ],
-  providers: [OrganizationStore, provideIcons({ lucideCheck, lucideChevronsUpDown, lucidePlus })],
+  providers: [
+    OrganizationStore,
+    provideIcons({ lucideBuilding2, lucideCheck, lucideChevronsUpDown, lucidePlus }),
+  ],
   templateUrl: './organization-switcher.component.html',
   host: { class: 'block min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -167,10 +176,11 @@ export class OrganizationSwitcher implements OnInit {
    * @readonly
    *
    * @description
-   * The organization currently open, or `null` before the route resolves.
+   * The organization currently selected, or `null` when none is — which is the
+   * ordinary state of every global page, since only the URL selects one.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @type {Signal<OrganizationSwitcherOption | null>}
    */
@@ -188,15 +198,33 @@ export class OrganizationSwitcher implements OnInit {
    * @readonly
    *
    * @description
-   * Whether the trigger has nothing to show yet.
+   * Whether the trigger has nothing to show *yet*, as opposed to nothing to
+   * show at all — the difference between a skeleton and the empty state.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @type {Signal<boolean>}
    */
   protected readonly isLoading: Signal<boolean> = computed(
     (): boolean => this.active() === null && this.organizationContext.isLoadingOrganization(),
+  );
+
+  /**
+   * Property hasOrganizations
+   * @readonly
+   *
+   * @description
+   * Whether the reader belongs to any organization at all, which decides
+   * whether "none selected" means "pick one" or "create your first".
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasOrganizations: Signal<boolean> = computed(
+    (): boolean => this.options().length > 0,
   );
 
   /**
@@ -245,7 +273,8 @@ export class OrganizationSwitcher implements OnInit {
    * @method select
    *
    * @description
-   * Switches the workspace to another organization, landing on its root.
+   * Selects an organization by navigating to its main page — the URL is what
+   * makes an organization active, so nothing else here has to be set.
    *
    * The previous shell carried the current section across when every
    * organization had it, which needs the feature's navigation catalog — removed
@@ -253,7 +282,7 @@ export class OrganizationSwitcher implements OnInit {
    * a hard-coded list.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @param {OrganizationSwitcherOption} option - Organization the member picked.
    *

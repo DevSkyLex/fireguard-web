@@ -1,0 +1,88 @@
+<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div class="flex flex-col gap-1.5">
+      <label hlmFieldLabel for="account-first-name" i18n="@@account.profile.firstNameLabel"
+        >First name</label
+      >
+      <input
+        hlmInput
+        id="account-first-name"
+        type="text"
+        autocomplete="given-name"
+        placeholder="Ada"
+        i18n-placeholder="@@account.profile.firstNamePlaceholder"
+        class="w-full"
+        [formField]="profileForm.firstName"
+        [attr.aria-invalid]="profileForm.firstName().touched() && profileForm.firstName().invalid()"
+      />
+      @if (profileForm.firstName().touched() && profileForm.firstName().invalid()) {
+        <hlm-field-error>{{ profileForm.firstName().errors()[0].message }}</hlm-field-error>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label hlmFieldLabel for="account-last-name" i18n="@@account.profile.lastNameLabel"
+        >Last name</label
+      >
+      <input
+        hlmInput
+        id="account-last-name"
+        type="text"
+        autocomplete="family-name"
+        placeholder="Lovelace"
+        i18n-placeholder="@@account.profile.lastNamePlaceholder"
+        class="w-full"
+        [formField]="profileForm.lastName"
+        [attr.aria-invalid]="profileForm.lastName().touched() && profileForm.lastName().invalid()"
+      />
+      @if (profileForm.lastName().touched() && profileForm.lastName().invalid()) {
+        <hlm-field-error>{{ profileForm.lastName().errors()[0].message }}</hlm-field-error>
+      }
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label hlmFieldLabel for="account-locale" i18n="@@account.profile.localeLabel"
+      >Interface language</label
+    >
+    <hlm-select id="account-locale" [itemToString]="localeLabel" [formField]="profileForm.locale">
+      <hlm-select-trigger class="w-full sm:w-72">
+        <hlm-select-value
+          placeholder="Choose a language"
+          i18n-placeholder="@@account.profile.localePlaceholder"
+        />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
+        <hlm-select-group>
+          @for (option of localeOptions; track option.value) {
+            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+    <p class="text-xs text-muted-foreground" i18n="@@account.profile.localeHint">
+      Applies the next time this page loads.
+    </p>
+  </div>
+
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      data-testid="account-profile-cancel"
+      class="max-sm:min-h-11"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+    >
+      <span i18n="@@account.profile.cancel">Cancel</span>
+    </button>
+    <button hlmBtn type="submit" class="max-sm:min-h-11" [disabled]="pending()">
+      @if (pending()) {
+        <span i18n="@@account.profile.submitting">Saving…</span>
+      } @else {
+        <span i18n="@@account.profile.submit">Save changes</span>
+      }
+    </button>
+  </div>
+</form>

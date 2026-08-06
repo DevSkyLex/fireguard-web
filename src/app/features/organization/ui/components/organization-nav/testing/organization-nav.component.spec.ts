@@ -21,6 +21,17 @@ describe('OrganizationNav', () => {
   }
 
   /**
+   * The rendered rows, in order, whether or not they lead anywhere.
+   */
+  function rows(): readonly string[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '[data-slot="sidebar-menu-button"]',
+      ) as NodeListOf<HTMLElement>,
+    ).map((row: HTMLElement): string => row.textContent?.trim() ?? '');
+  }
+
+  /**
    * The rendered section headings, in order.
    */
   function sections(): readonly string[] {
@@ -55,14 +66,24 @@ describe('OrganizationNav', () => {
     await fixture.whenStable();
   });
 
-  it('should render nothing while no organization is routed', async () => {
+  it('should render nothing before any organization has been selected', async () => {
     selectedOrganizationId.set(null);
     permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
     await fixture.whenStable();
 
-    // Otherwise the column would advertise links pointing at
-    // `/organizations/null`.
+    expect(rows()).toEqual([]); // Nothing to name yet, so no block at all.
+  });
+
+  it('should keep its rows but make them inert once the URL selects none', async () => {
+    permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
+    await fixture.whenStable();
+
+    selectedOrganizationId.set(null); // `/account` is served by the same shell.
+    await fixture.whenStable();
+
+    expect(rows()).toEqual(['Today', 'Interventions']);
     expect(routes()).toEqual([]);
+    expect(fixture.nativeElement.querySelectorAll('[aria-disabled="true"]').length).toBe(2);
   });
 
   it('should render nothing for a member granted nothing', () => {

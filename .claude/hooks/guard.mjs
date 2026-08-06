@@ -132,4 +132,31 @@ if (isBarrel && /^\s*export\s+\*\s+from\s/m.test(written)) {
   );
 }
 
+// 6. Documentation lives in a doc block, not loose in the code.
+// Only the two mechanically unambiguous halves are enforced here: a multi-line `//`
+// block (which always wanted to be a JSDoc block) and prose in a template. A single
+// trailing `//` on the statement it concerns is allowed, and judging a lone comment
+// line is left to review (.claude/rules/comments.md, ARCHITECTURE.md §14.4).
+const isVendoredSpartan = /(^|\/)src\/app\/shared\/ui\//.test(filePath);
+if (/(^|\/)src\/app\/.*\.ts$/.test(filePath) && !isVendoredSpartan) {
+  if (/^[ \t]*\/\/(?!#).*\r?\n[ \t]*\/\/(?!#)/m.test(written)) {
+    deny(
+      `${filePath} has a multi-line "//" comment block. Two or more comment lines in a ` +
+        'row mean the text wanted to be a doc block: move it into the @description of ' +
+        'the declaration it explains, or into the owning FEATURE.md when it is a design ' +
+        'decision. A single trailing "//" on a statement that would otherwise read as a ' +
+        'mistake is the only inline form allowed (.claude/rules/comments.md).',
+    );
+  }
+}
+if (/(^|\/)src\/app\/.*\.html$/.test(filePath) && !isVendoredSpartan) {
+  if (/<!--(?!\s*(prettier|oxfmt)-ignore)/.test(written)) {
+    deny(
+      `${filePath} has an HTML comment. Templates carry no rationale — a layout, an ` +
+        "accessibility choice, or a CSS workaround is explained in the component's " +
+        '@description, not beside the element (.claude/rules/comments.md).',
+    );
+  }
+}
+
 process.exit(0);

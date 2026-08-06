@@ -42,6 +42,12 @@ The application is an **Angular 22** SPA with SSR and hydration:
 - strict TypeScript 6 (`strict`, `strictTemplates`, no `any`, no non-null assertions), with the `nullishCoalescingNotNullable` and `optionalChainNotNullable` template diagnostics raised to errors,
 - tooling: `oxlint` / `oxfmt`, unit tests via `ng test` (vitest runner), Playwright e2e under `e2e/`.
 
+The only non-Angular runtime dependencies are `rxjs`, `luxon`, `express` (the SSR host), the
+styling helpers `clsx` / `tailwind-merge` / `class-variance-authority` that spartan generates
+against, and **`qrcode`**, imported dynamically and browser-only by a single component (the
+account TOTP panel — see `features/account/FEATURE.md`). Adding another is a documented decision,
+recorded in the owning `FEATURE.md` and here in the same change (section 14.3).
+
 Do not introduce new dependencies or architectural patterns unless the task requires it and no existing pattern fits.
 
 ### 1.2 Scope
@@ -2259,6 +2265,17 @@ Document:
 - reasons for approved exceptions.
 
 Avoid comments that merely restate obvious types or code.
+
+**Documentation lives in the JSDoc block of a declaration, and nowhere else.** Free-floating `//`
+prose between statements, any comment inside an object or array literal (route definitions,
+provider arrays, `imports:`, option sets), and `<!-- -->` rationale in a template are all the same
+mistake: a doc block that got lost. Attach the explanation to the thing it explains, where a reader
+looking that thing up will find it.
+
+The single exception is one line, on the statement it concerns, when that statement would otherwise
+read as a mistake — a browser quirk, an ordering constraint, a deliberate-looking-wrong line — and
+the reason cannot live on a declaration. Two lines means it wanted to be a doc block.
+`//#region` markers are structure, not comments.
 
 **Keep `@description` blocks concise.** The mandated JSDoc tags stay (see `CLAUDE.md`), but the prose is one or two sentences on purpose and any non-obvious behavior — not a line-by-line narration of the implementation. A `@description` that re-derives the whole method body, lists every branch, or restates what the signature and `@param`/`@returns`/`@type` tags already convey is noise: it rots when the code changes and buries the one caveat a reader actually needs. Say what and why, briefly; let the code say how.
 

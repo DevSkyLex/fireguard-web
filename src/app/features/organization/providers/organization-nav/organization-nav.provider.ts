@@ -6,9 +6,10 @@ import { OrganizationNav } from '../../ui/components';
  * @function withOrganizationNav
  *
  * @description
- * Contributes {@link OrganizationNav} to a shell's sidebar-nav slot. The shell
- * stays ignorant of the organization domain: it renders whatever the slot holds
- * (`ARCHITECTURE.md` §2.4, §8.2).
+ * Contributes {@link OrganizationNav} to the top of a shell's sidebar-nav slot:
+ * it is the half of the column that only exists while an organization is
+ * selected. The shell stays ignorant of the organization domain: it renders
+ * whatever the slot holds (`ARCHITECTURE.md` §2.4, §8.2).
  *
  * @access public
  * @since 1.0.0

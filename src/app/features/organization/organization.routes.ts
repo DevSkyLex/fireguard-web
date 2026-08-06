@@ -10,8 +10,10 @@ import { organizationResolver, organizationTitleResolver } from './http/resolver
  *
  * `/organizations` is redirect-only: `organizationGuard` forwards to the
  * default workspace — the last organization persisted in the cookie when it is
- * still accessible, else the first accessible one, else onboarding. There is no
- * organization list page; switching happens through the sidebar switcher.
+ * still accessible, else the first accessible one, else onboarding. Its empty
+ * `children` exists only to make the path matchable, since the guard always
+ * redirects and no component is ever constructed. There is no organization list
+ * page; switching happens through the sidebar switcher.
  *
  * `/organizations/:organizationId` resolves organization context before any
  * child renders, so a page never has to reason about a half-known workspace.
@@ -27,8 +29,6 @@ export const ORGANIZATION_ROUTES: Routes = [
   {
     path: '',
     canActivate: [organizationGuard],
-    // The guard always redirects; the component is never constructed. Angular
-    // still requires a terminal route here for the path to be matchable.
     children: [],
   },
   {
@@ -47,6 +47,15 @@ export const ORGANIZATION_ROUTES: Routes = [
           ),
         title: $localize`:@@route.today:Today`,
         data: { breadcrumb: false },
+      },
+      {
+        path: 'members/:memberId',
+        loadComponent: () =>
+          import('./ui/pages/organization-member-profile-page/organization-member-profile-page.component').then(
+            (m) => m.OrganizationMemberProfilePage,
+          ),
+        title: $localize`:@@route.memberProfile:Profile`,
+        data: { breadcrumb: $localize`:@@route.memberProfile:Profile` },
       },
     ],
   },

@@ -1,0 +1,1 @@
+export { accountPasswordChangeStoreEvents } from './events';

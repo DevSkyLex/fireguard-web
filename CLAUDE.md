@@ -30,6 +30,11 @@
    `@description` short — one or two sentences on purpose and any non-obvious
    behavior. Do not over-detail: never narrate the implementation line-by-line or
    restate what the signature and types already say.
+   **Documentation goes in the doc block and nowhere else** — no `//` prose
+   between statements, none inside object or array literals (routes, providers,
+   `imports:`), no `<!-- -->` rationale in templates. One inline line is allowed
+   only where a statement would otherwise read as a mistake. See
+   `.claude/rules/comments.md`.
 6. **Keep `models/` type-only.** Runtime values go to sibling `utils/`,
    `constants/`, `options/`. See `ARCHITECTURE.md` §10.10 for the two cohesion
    exceptions (presentation registry, const-enum catalog).

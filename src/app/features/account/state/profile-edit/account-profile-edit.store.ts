@@ -1,6 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, tap } from 'rxjs';
 import {
@@ -8,7 +9,9 @@ import {
   idleCallState,
   pendingCallState,
   successCallState,
+  successFeedback,
   toStoreError,
+  toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
 import { UserProfileService } from '@features/account/data-access';
@@ -18,6 +21,7 @@ import type {
   UserProfileOutput,
 } from '@features/account/models';
 import { UserStore } from '../user';
+import { accountProfileEditStoreEvents } from './events';
 import type { AccountProfileEditState } from './models';
 
 /**
@@ -113,6 +117,7 @@ export const AccountProfileEditStore = signalStore(
       store,
       userProfileService = inject<UserProfileService>(UserProfileService),
       userStore = inject<UserStore>(UserStore),
+      dispatcher = inject<Dispatcher>(Dispatcher),
     ) => ({
       /**
        * Method save
@@ -134,9 +139,26 @@ export const AccountProfileEditStore = signalStore(
                 next: (profile: UserProfileOutput) => {
                   patchState(store, { saveCallState: successCallState(profile) });
                   userStore.setProfile(profile);
+                  dispatcher.dispatch(
+                    accountProfileEditStoreEvents.saveSucceeded(
+                      successFeedback(
+                        $localize`:@@account.profile.saved:Your profile has been updated.`,
+                      ),
+                    ),
+                  );
                 },
-                error: (error: unknown) =>
-                  patchState(store, { saveCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { saveCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    accountProfileEditStoreEvents.saveFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@account.profile.saveError:Your profile could not be updated.`,
+                      ),
+                    ),
+                  );
+                },
               }),
             ),
           ),
@@ -174,9 +196,27 @@ export const AccountProfileEditStore = signalStore(
                   } else {
                     userStore.reload();
                   }
+
+                  dispatcher.dispatch(
+                    accountProfileEditStoreEvents.avatarUploadSucceeded(
+                      successFeedback(
+                        $localize`:@@account.avatar.uploaded:Your picture has been updated.`,
+                      ),
+                    ),
+                  );
                 },
-                error: (error: unknown) =>
-                  patchState(store, { avatarCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { avatarCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    accountProfileEditStoreEvents.avatarUploadFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@account.avatar.uploadError:Your picture could not be uploaded.`,
+                      ),
+                    ),
+                  );
+                },
               }),
             ),
           ),

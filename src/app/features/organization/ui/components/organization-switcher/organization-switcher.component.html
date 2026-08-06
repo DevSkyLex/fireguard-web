@@ -10,14 +10,9 @@
       </div>
     </li>
   </ul>
-} @else if (active(); as organization) {
+} @else {
   <ul hlmSidebarMenu>
     <li hlmSidebarMenuItem>
-      <!--
-        `hlmSidebarMenuButton` rather than a bare button: it carries the
-        `group-data-[collapsible=icon]` classes, which is what keeps the row from
-        clipping when the column narrows to the icon rail.
-      -->
       <button
         hlmSidebarMenuButton
         size="lg"
@@ -26,29 +21,50 @@
         [side]="menuSide()"
         align="start"
       >
-        <hlm-avatar class="size-8 shrink-0 rounded-lg">
-          @if (organization.logoUrl; as logoUrl) {
-            <img hlmAvatarImage [src]="logoUrl" [alt]="organization.name" />
-          }
-          <span
-            hlmAvatarFallback
-            class="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
-            >{{ organization.initials }}</span
+        @if (active(); as organization) {
+          <hlm-avatar class="size-8 shrink-0 rounded-lg">
+            @if (organization.logoUrl; as logoUrl) {
+              <img hlmAvatarImage [src]="logoUrl" [alt]="organization.name" />
+            }
+            <span
+              hlmAvatarFallback
+              class="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
+              >{{ organization.initials }}</span
+            >
+          </hlm-avatar>
+
+          <div class="grid flex-1 text-left text-sm leading-tight">
+            <span class="truncate font-medium">{{ organization.name }}</span>
+            @if (organization.planName; as planName) {
+              <span class="truncate text-xs text-muted-foreground">{{ planName }}</span>
+            }
+          </div>
+        } @else {
+          <div
+            class="flex size-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-sidebar-border"
           >
-        </hlm-avatar>
+            <ng-icon
+              name="lucideBuilding2"
+              class="text-sm text-muted-foreground"
+              aria-hidden="true"
+            />
+          </div>
 
-        <div class="grid flex-1 text-left text-sm leading-tight">
-          <span class="truncate font-medium">{{ organization.name }}</span>
-          @if (organization.planName; as planName) {
-            <span class="truncate text-xs text-muted-foreground">{{ planName }}</span>
-          }
-        </div>
-
-        <!--
-          The paired chevrons are the affordance: without them the row reads as a
-          heading rather than as a control. Decorative — the button's own label
-          already names the action for assistive technology.
-        -->
+          <div class="grid flex-1 text-left text-sm leading-tight">
+            <span class="truncate font-medium" i18n="@@org.switcher.noneTitle"
+              >No organization selected</span
+            >
+            @if (hasOrganizations()) {
+              <span class="truncate text-xs text-muted-foreground" i18n="@@org.switcher.noneChoose"
+                >Choose one to start working</span
+              >
+            } @else {
+              <span class="truncate text-xs text-muted-foreground" i18n="@@org.switcher.noneCreate"
+                >Create your first one</span
+              >
+            }
+          </div>
+        }
         <ng-icon name="lucideChevronsUpDown" class="ml-auto text-base" aria-hidden="true" />
       </button>
     </li>
@@ -56,16 +72,14 @@
 
   <ng-template #menu>
     <hlm-dropdown-menu class="min-w-60 rounded-lg">
-      <!--
-        The heading and the rule exist to separate the list from the action, so
-        they only appear once there is a list. A member whose organizations have
-        not loaded — or who belongs to none — would otherwise get a full-bleed
-        rule dividing a title from a single button.
-      -->
-      @if (options().length > 0) {
+      @if (hasOrganizations()) {
         <hlm-dropdown-menu-label i18n="@@org.switcher.heading"
           >Organizations</hlm-dropdown-menu-label
         >
+      } @else {
+        <p class="px-2 py-1.5 text-xs text-muted-foreground" i18n="@@org.switcher.empty">
+          You do not belong to any organization yet.
+        </p>
       }
 
       @for (option of options(); track option.id) {
@@ -84,16 +98,13 @@
             }}</span>
           </hlm-avatar>
           <span class="truncate">{{ option.name }}</span>
-          <!--
-            The open organization is marked with a glyph, not with colour alone.
-          -->
           @if (option.active) {
             <ng-icon name="lucideCheck" class="ml-auto text-sm" aria-hidden="true" />
           }
         </button>
       }
 
-      @if (options().length > 0) {
+      @if (hasOrganizations()) {
         <hlm-dropdown-menu-separator />
       }
 

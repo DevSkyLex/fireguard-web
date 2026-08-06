@@ -5,29 +5,31 @@
       <ul hlmSidebarMenu>
         @for (link of section.links; track link.id) {
           <li hlmSidebarMenuItem>
-            <!--
-              `hlmSidebarMenuButton` rather than a bare anchor: it carries the
-              `group-data-[collapsible=icon]` classes, which is what keeps the
-              row from clipping when the column narrows to the icon rail. The
-              tooltip is what names the destination once only the icon shows.
-
-              `routerLinkActive` drives `data-active`, and the exact match is
-              scoped to the landing entry alone — every other route is a prefix
-              of it, so an inexact match would light up "Today" everywhere.
-            -->
-            <a
-              hlmSidebarMenuButton
-              [routerLink]="link.route"
-              routerLinkActive
-              #active="routerLinkActive"
-              [routerLinkActiveOptions]="{ exact: link.id === 'today' }"
-              [attr.data-active]="active.isActive ? 'true' : null"
-              [attr.aria-current]="active.isActive ? 'page' : null"
-              [tooltip]="link.label"
-            >
-              <ng-icon [name]="link.icon" aria-hidden="true" />
-              <span>{{ link.label }}</span>
-            </a>
+            @if (isSelected()) {
+              <a
+                hlmSidebarMenuButton
+                [routerLink]="link.route"
+                routerLinkActive
+                #active="routerLinkActive"
+                [routerLinkActiveOptions]="{ exact: link.id === 'today' }"
+                [attr.data-active]="active.isActive ? 'true' : null"
+                [attr.aria-current]="active.isActive ? 'page' : null"
+                [tooltip]="link.label"
+              >
+                <ng-icon [name]="link.icon" aria-hidden="true" />
+                <span>{{ link.label }}</span>
+              </a>
+            } @else {
+              <button
+                hlmSidebarMenuButton
+                type="button"
+                aria-disabled="true"
+                [tooltip]="link.label"
+              >
+                <ng-icon [name]="link.icon" aria-hidden="true" />
+                <span>{{ link.label }}</span>
+              </button>
+            }
           </li>
         }
       </ul>

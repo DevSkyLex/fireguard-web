@@ -1,0 +1,37 @@
+<div class="flex flex-col gap-1.5">
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="sm"
+    class="w-fit gap-2 max-sm:min-h-11"
+    [disabled]="pending()"
+    (click)="fileInput.click()"
+  >
+    <ng-icon name="lucideUpload" class="text-sm" aria-hidden="true" />
+    @if (pending()) {
+      <span i18n="@@account.avatar.uploading">Uploading…</span>
+    } @else {
+      <span i18n="@@account.avatar.choose">Change picture</span>
+    }
+  </button>
+
+  <input
+    #fileInput
+    type="file"
+    class="sr-only"
+    tabindex="-1"
+    data-testid="account-avatar-input"
+    [accept]="accept"
+    [disabled]="pending()"
+    (change)="pick($event)"
+  />
+
+  @if (error(); as message) {
+    <p class="text-sm text-destructive" role="alert">{{ message }}</p>
+  } @else {
+    <p class="text-xs text-muted-foreground" i18n="@@account.avatar.hint">
+      JPEG, PNG, WebP or GIF, up to 5 MB.
+    </p>
+  }
+</div>

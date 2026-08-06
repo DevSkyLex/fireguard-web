@@ -1,11 +1,13 @@
 import type { Routes } from '@angular/router';
 import { withAccountMenu } from '@features/account';
+import { authGuard } from '@features/auth';
 import { notFoundRedirectGuard } from '@features/error';
 import { withOrganizationNav, withOrganizationSwitcher } from '@features/organization';
 import {
   DashboardLayout,
   provideDashboardLayoutSlots,
   withDashboardBreadcrumb,
+  withDashboardGlobalNav,
 } from '@layouts/dashboard-layout';
 import { FocusedLayout, provideFocusedLayoutSlots } from '@layouts/focused-layout';
 import {
@@ -21,9 +23,16 @@ import { withThemeSwitcher } from '@shared/theme-switcher';
  * @description
  * Application root routes configuration: each shell on the URL it will keep.
  *
- * Every shell is now wired to real features — the authentication workflow on
- * the split shell, the error pages on the focused one, and the organization
- * tree on the dashboard, whose sidebar is filled by feature slot contributions.
+ * Every shell is wired to real features — the authentication workflow on the
+ * split shell, the error pages on the focused one, and both the account and the
+ * organization tree on the dashboard.
+ *
+ * The dashboard is mounted **once**, for every signed-in destination. Its
+ * sidebar is composed rather than swapped per section: the organization block
+ * fills it while an organization is selected, and the global destinations sit
+ * at the bottom whether or not one is. Two mounts would rebuild the shell — and
+ * lose the sidebar's state with it — every time the reader stepped into their
+ * account.
  *
  * The trailing wildcard sends an unmatched address through
  * `notFoundRedirectGuard` rather than a bare `redirectTo`, so the not-found page
@@ -55,13 +64,19 @@ export const APP_ROUTES: Routes = [
     providers: [
       provideDashboardLayoutSlots({
         sidebarHeader: [withOrganizationSwitcher()],
-        sidebarNav: [withOrganizationNav()],
+        sidebarNav: [withOrganizationNav(), withDashboardGlobalNav()],
         sidebarFooter: [withAccountMenu()],
         header: [withDashboardBreadcrumb()],
         headerActions: [withThemeSwitcher()],
       }),
     ],
     children: [
+      {
+        path: 'account',
+        canActivate: [authGuard],
+        loadChildren: () =>
+          import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
+      },
       {
         path: 'organizations',
         loadChildren: () =>

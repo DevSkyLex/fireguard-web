@@ -53,6 +53,7 @@
     "express": "^5.1.0",
     "luxon": "^3.7.2",
     "ngx-scrollbar": "^19.1.5",
+    "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
     "tailwind-merge": "^3.5.0",
     "tslib": "^2.3.0"
@@ -67,6 +68,7 @@
     "@types/express": "^5.0.1",
     "@types/luxon": "^3.7.3",
     "@types/node": "^24.10.1",
+    "@types/qrcode": "^1.5.6",
     "@vitest/coverage-v8": "^4.1.10",
     "jsdom": "^30.0.1",
     "oxfmt": "^0.62.0",

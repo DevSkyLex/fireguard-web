@@ -60,6 +60,7 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/statistics` (activity KPIs and trend charts; gated by `organization.dashboard.read`)
 - `/organizations/:organizationId/checklists`
 - `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
+- `/organizations/:organizationId/members/:memberId` — another member's profile, read-only
 - `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)
 - `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, danger zone; gated by `organization.settings.write`)
 - `/organizations/invitations/accept` — public invitation landing page; the
@@ -152,8 +153,8 @@ These contracts are the stable boundaries for approved consumers:
 - approved sibling features resolve a bare member id to a name and an avatar through `MEMBER_DIRECTORY_PORT`,
 - onboarding consumes organization-owned setup workflows through `organization/setup`,
 - a shell contributes the organization switcher to its sidebar-header slot through
-  `withOrganizationSwitcher()`, and the organization navigation to its sidebar-nav slot through
-  `withOrganizationNav()`. Both are slot contribution factories — the shell renders the
+  `withOrganizationSwitcher()`, and the organization navigation to the top of its sidebar-nav slot
+  through `withOrganizationNav()`. Both are slot contribution factories — the shell renders the
   component without importing it, and never learns that an organization exists.
 
 `navigation/` is the single source for what the sidebar lists and, once it returns, what the
@@ -165,6 +166,28 @@ actually reach. Route visibility and fallback behaviour cannot diverge because b
 only ever renders inside a layout: it reads organization state, and rendering location does not
 transfer ownership (`ARCHITECTURE.md` §2.7). It provides `OrganizationStore` itself, because that
 store is not root-provided.
+
+**Nothing selects an organization but the URL, and both shell widgets say so.** The dashboard
+shell serves global pages too — `/account` first among them — and those name no organization.
+There the switcher shows its "no organization selected" state, and `OrganizationNav` keeps its rows
+standing but inert: they name where the reader can go without pretending to lead there, and the
+switcher is the one control that gets them back. The alternative — a remembered workspace outliving
+the address — was rejected: it would be a second answer to "which organization", free to disagree
+with the address bar, and every store keyed on the context would follow it off the tree.
+
+Because the rows outlive the selection, they are kept by the component rather than recomputed from
+an empty permission set (`OrganizationNav.sections`, a `linkedSignal`). Before a first organization
+has ever been opened there is nothing to keep, and the block is simply absent.
+
+**Another member's profile is organization-owned, and thin by force rather than by choice.** There
+is no `GET /api/users/{id}` and no single-member endpoint at all; the only route to another person
+is this organization's member list. So `/organizations/:organizationId/members/:memberId` renders name, picture, roles and
+whether the membership is active — and nothing else, because nothing else reaches the client. It
+carries no edit control for the same reason: there is no endpoint one could call. Widening it means
+widening `MemberDirectoryEntry` first, and the backend before that.
+
+The route sits under `:organizationId` because that is the truth of it: a person is visible to you
+_as a member of an organization you can read_, never in the abstract.
 
 `MEMBER_DIRECTORY_PORT` exists because member IRIs are not dereferenceable: messaging hands out
 `/api/organizations/{orgId}/members/{memberId}` with no GET route behind it. Reading the directory

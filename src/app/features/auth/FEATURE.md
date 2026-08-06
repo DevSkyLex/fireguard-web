@@ -51,7 +51,8 @@ the opposite case and stay in the form, next to the input that has to change.
 ## Password policy
 
 `validators/password/password.validator.ts` is the single expression of the API's password rules,
-applied by both surfaces that write a password (registration and reset). `applyPasswordConfirmation`
+applied by every surface that writes a password — registration and reset here, and the account
+change-password form through the published rule set below. `applyPasswordConfirmation`
 is the cross-field rule replacing the classic `matchFields` validator: a schema rule reading its
 sibling through `valueOf`, reporting on the confirmation field. Changing the policy means changing
 this file and nothing else.
@@ -79,9 +80,17 @@ Primary services:
 
 - `AUTH_SESSION_PORT`
 - `AuthSessionPort`
+- `PASSWORD_MIN_LENGTH`, `PASSWORD_MAX_LENGTH`, `PASSWORD_PATTERN`
+- `applyPasswordRules`, `applyPasswordConfirmation`
 
-This contract is the stable boundary consumed by auth-owned infrastructure such as HTTP interceptors.
+`AUTH_SESSION_PORT` is the stable boundary consumed by auth-owned infrastructure such as HTTP interceptors.
 It exposes the access token, initialization state, authenticated-session validity, and session clearing.
+
+The password policy is published as a **rule set**, not only as constants: `features/account`'s
+change-password form owns the form but not the policy, and handing it the four numbers rather than
+the four rules would let two expressions of one API constraint drift apart. A consumer applies
+`applyPasswordRules(path)` to its own field; the messages come from here, so a policy change reaches
+every surface at once.
 
 ## Cross-Feature Dependencies
 

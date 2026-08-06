@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBell, lucideChevronsUpDown, lucideLogOut, lucideUserRound } from '@ng-icons/lucide';
+import {
+  lucideBell,
+  lucideChevronsUpDown,
+  lucideLogOut,
+  lucideShieldCheck,
+  lucideUserRound,
+} from '@ng-icons/lucide';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
@@ -29,6 +35,10 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * The sidebar footer: who is signed in, and the menu onto their own account.
  * The paired chevrons mark it as a control rather than a caption, mirroring the
  * organization switcher at the other end of the column.
+ *
+ * It is the **only** way into the account: the account is not a destination of
+ * the sidebar's navigation, which lists the work rather than the reader, so the
+ * menu carries all three of its sections.
  *
  * Account-owned rather than layout-owned because it reads user identity; the
  * shell only lends it a slot (`ARCHITECTURE.md` §2.7). It is contributed
@@ -61,7 +71,15 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
     HlmSidebarMenuItem,
     HlmSkeleton,
   ],
-  providers: [provideIcons({ lucideBell, lucideChevronsUpDown, lucideLogOut, lucideUserRound })],
+  providers: [
+    provideIcons({
+      lucideBell,
+      lucideChevronsUpDown,
+      lucideLogOut,
+      lucideShieldCheck,
+      lucideUserRound,
+    }),
+  ],
   templateUrl: './account-menu.component.html',
   host: { class: 'block min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,10 +120,12 @@ export class AccountMenu {
    * @readonly
    *
    * @description
-   * Used to reach the account pages from the menu.
+   * Opens an account section in the shell's contextual column. Navigating the
+   * `panel` outlet leaves the page beside it activated, so the reader keeps
+   * their work, and the URL carries the section.
    *
    * @access private
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @type {Router}
    */
@@ -147,7 +167,9 @@ export class AccountMenu {
    * @readonly
    *
    * @description
-   * Secondary line of the row.
+   * Secondary line of the row. Falls back to an empty string through `??`
+   * because API Platform omits null fields, so a missing email arrives
+   * `undefined` rather than null.
    *
    * @access protected
    * @since 1.0.0
@@ -155,8 +177,6 @@ export class AccountMenu {
    * @type {Signal<string>}
    */
   protected readonly email: Signal<string> = computed(
-    // API Platform omits null fields, so this arrives `undefined` rather than
-    // null — a `=== null` guard would let it through.
     (): string => this.identity.profile()?.email ?? '',
   );
 
@@ -228,35 +248,51 @@ export class AccountMenu {
 
   //#region Methods
   /**
-   * Method openProfile
-   * @method openProfile
+   * Method goToProfile
+   * @method goToProfile
    *
    * @description
-   * Opens the account profile page.
+   * Opens the account workspace on the profile.
    *
    * @access protected
    * @since 1.0.0
    *
    * @returns {void}
    */
-  protected openProfile(): void {
-    void this.router.navigate(['/account']);
+  protected goToProfile(): void {
+    this.goToSection('profile');
   }
 
   /**
-   * Method openNotifications
-   * @method openNotifications
+   * Method goToSecurity
+   * @method goToSecurity
    *
    * @description
-   * Opens the account notification preferences.
+   * Opens the account workspace on the security settings.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected goToSecurity(): void {
+    this.goToSection('security');
+  }
+
+  /**
+   * Method goToNotifications
+   * @method goToNotifications
+   *
+   * @description
+   * Opens the account workspace on the notification feed.
    *
    * @access protected
    * @since 1.0.0
    *
    * @returns {void}
    */
-  protected openNotifications(): void {
-    void this.router.navigate(['/account/notifications']);
+  protected goToNotifications(): void {
+    this.goToSection('notifications');
   }
 
   /**
@@ -274,6 +310,25 @@ export class AccountMenu {
    */
   protected logout(): void {
     this.logoutPort.logout();
+  }
+
+  /**
+   * Method goToSection
+   * @method goToSection
+   *
+   * @description
+   * Navigates to a section of the account, which is a page of the same shell:
+   * the sidebar does not change, only the content column does.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @param {string} section - The account section to open.
+   *
+   * @returns {void}
+   */
+  private goToSection(section: string): void {
+    void this.router.navigate(['/account', section]);
   }
   //#endregion
 }

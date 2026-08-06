@@ -15,6 +15,7 @@ describe('AccountMenu', () => {
   let navigate: MockInstance;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     profile = signal<ShellUserProfile | null>({
       sub: 'user-1',
       name: 'Ada Lovelace',
@@ -83,16 +84,16 @@ describe('AccountMenu', () => {
     expect(fixture.nativeElement.querySelector('hlm-skeleton')).toBeNull();
   });
 
-  it('should open the account page', () => {
-    fixture.componentInstance['openProfile']();
+  it('should open the account workspace on the profile', () => {
+    fixture.componentInstance['goToProfile']();
 
-    expect(navigate).toHaveBeenCalledWith(['/account']);
+    expect(navigate).toHaveBeenCalledWith(['/account', 'profile']);
   });
 
-  it('should open the notification preferences', () => {
-    fixture.componentInstance['openNotifications']();
+  it('should open the account workspace on the notifications', () => {
+    fixture.componentInstance['goToNotifications']();
 
-    expect(navigate).toHaveBeenCalledWith(['/account/notifications']);
+    expect(navigate).toHaveBeenCalledWith(['/account', 'notifications']);
   });
 
   it('should end the session through the auth port', () => {

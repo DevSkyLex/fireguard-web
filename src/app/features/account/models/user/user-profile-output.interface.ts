@@ -1,4 +1,5 @@
 import type { AvatarUrls, HydraItem } from '@core/api/models';
+import type { UserLocale } from './user-locale.type';
 
 /**
  * Interface UserProfileOutput
@@ -35,6 +36,9 @@ export interface UserProfileOutput extends HydraItem {
 
   /** Account status returned by the backend. */
   readonly status: string | null;
+
+  /** Interface language preference; `'system'` follows the browser. */
+  readonly locale: UserLocale;
 
   /** Whether the email address has been verified. */
   readonly emailVerified: boolean;

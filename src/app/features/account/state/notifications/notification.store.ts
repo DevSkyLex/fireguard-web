@@ -46,6 +46,7 @@ import {
 } from '@core/request-state';
 import { NotificationService } from '@features/account/data-access';
 import type {
+  MarkAllNotificationsAsReadOutput,
   NotificationFilter,
   NotificationListOptions,
   NotificationOutput,
@@ -84,6 +85,7 @@ const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
   itemsPerPage: 20,
   listCallState: idleCallState(),
   markAsReadCallState: idleCallState(),
+  markAllAsReadCallState: idleCallState(),
   mercureConnected: false,
   types: [],
   typesLoaded: false,
@@ -162,6 +164,20 @@ export const NotificationStore = signalStore(
      * @returns {boolean}
      */
     isMarkingAsRead: computed<boolean>(() => store.markAsReadCallState().status === 'pending'),
+
+    /**
+     * Computed isMarkingAllAsRead
+     *
+     * @description
+     * Returns true while the bulk mark-as-read is in flight.
+     *
+     * @since 1.3.0
+     *
+     * @returns {boolean}
+     */
+    isMarkingAllAsRead: computed<boolean>(
+      () => store.markAllAsReadCallState().status === 'pending',
+    ),
 
     /**
      * Computed listError
@@ -679,6 +695,58 @@ export const NotificationStore = signalStore(
                         toStoreFailureEventPayload(
                           storeError,
                           'Failed to mark notification as read',
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method markAllAsRead
+         *
+         * @description
+         * Marks every unread notification as read in one call, then reflects it
+         * on the rows already loaded rather than refetching: the endpoint has
+         * just told us the outcome, so a second request would only re-read what
+         * we already know. Rows already read are reused untouched, keeping the
+         * authoritative `readAt` the backend gave them.
+         *
+         * @since 1.3.0
+         */
+        markAllAsRead: rxMethod<void>(
+          pipe(
+            tap(() => patchState(store, { markAllAsReadCallState: pendingCallState() })),
+            exhaustMap(() =>
+              notificationService.markAllAsRead().pipe(
+                tapResponse({
+                  next: (result: MarkAllNotificationsAsReadOutput) => {
+                    const readAt: string = new Date().toISOString();
+
+                    const marked: NotificationOutput[] = [];
+                    for (const notification of store.notificationEntities()) {
+                      marked.push(
+                        notification.isRead
+                          ? notification
+                          : { ...notification, isRead: true, readAt },
+                      );
+                    }
+
+                    patchState(store, setAllEntities(marked, { collection: 'notification' }), {
+                      markAllAsReadCallState: successCallState(result),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { markAllAsReadCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      notificationStoreEvents.markAllAsReadFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          'Failed to mark every notification as read',
                         ),
                       ),
                     );

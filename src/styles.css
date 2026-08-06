@@ -25,24 +25,6 @@ router-outlet {
   display: none;
 }
 
-/*
- * Root stays at the 16px default so every rem-based Tailwind utility resolves to
- * its nominal value, which is what the design system prescribes: its spacing and
- * radius scales ARE Tailwind's defaults at a 16px root.
- *
- * Body text is 14px per `DESIGN.md`. Setting it here rather than on `html` keeps
- * `rem` honest: shrinking the root instead scaled spacing, radii and every type
- * step down by 12.5%, which is how the codebase accumulated hand-written
- * `text-[15px]`/`[13px]` overrides.
- */
-html {
-  font-size: 16px;
-}
-
-body {
-  font-size: 0.875rem;
-}
-
 :root {
   color-scheme: light;
 

@@ -2,6 +2,7 @@ export { DashboardLayout } from './dashboard-layout.component';
 export {
   provideDashboardLayoutSlots,
   withDashboardBreadcrumb,
+  withDashboardGlobalNav,
   type DashboardLayoutSlotsConfig,
 } from './providers';
 export {

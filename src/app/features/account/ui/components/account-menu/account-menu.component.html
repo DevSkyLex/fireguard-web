@@ -13,11 +13,6 @@
 } @else if (displayName()) {
   <ul hlmSidebarMenu>
     <li hlmSidebarMenuItem>
-      <!--
-        `hlmSidebarMenuButton` rather than a bare button: it carries the
-        `group-data-[collapsible=icon]` classes, which is what keeps the row from
-        clipping when the column narrows to the icon rail.
-      -->
       <button
         hlmSidebarMenuButton
         size="lg"
@@ -44,11 +39,6 @@
           }
         </div>
 
-        <!--
-          The paired chevrons are the affordance: without them the row reads as a
-          caption rather than as a control. Decorative — the button's own label
-          already names the action for assistive technology.
-        -->
         <ng-icon name="lucideChevronsUpDown" class="ml-auto text-base" aria-hidden="true" />
       </button>
     </li>
@@ -56,11 +46,6 @@
 
   <ng-template #menu>
     <hlm-dropdown-menu class="min-w-56 rounded-lg">
-      <!--
-        The identity is repeated inside the menu because on the icon rail — and
-        on the mobile sheet — the trigger shows an avatar and nothing else, so
-        the menu is the only place the name and the address are legible.
-      -->
       <hlm-dropdown-menu-label>
         <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
           <hlm-avatar class="size-8 shrink-0 rounded-lg">
@@ -85,11 +70,15 @@
       <hlm-dropdown-menu-separator />
 
       <hlm-dropdown-menu-group>
-        <button hlmDropdownMenuItem class="gap-2" (click)="openProfile()">
+        <button hlmDropdownMenuItem class="gap-2" (click)="goToProfile()">
           <ng-icon name="lucideUserRound" class="text-sm" aria-hidden="true" />
           <span i18n="@@account.menu.profile">Account</span>
         </button>
-        <button hlmDropdownMenuItem class="gap-2" (click)="openNotifications()">
+        <button hlmDropdownMenuItem class="gap-2" (click)="goToSecurity()">
+          <ng-icon name="lucideShieldCheck" class="text-sm" aria-hidden="true" />
+          <span i18n="@@account.menu.security">Security</span>
+        </button>
+        <button hlmDropdownMenuItem class="gap-2" (click)="goToNotifications()">
           <ng-icon name="lucideBell" class="text-sm" aria-hidden="true" />
           <span i18n="@@account.menu.notifications">Notifications</span>
         </button>

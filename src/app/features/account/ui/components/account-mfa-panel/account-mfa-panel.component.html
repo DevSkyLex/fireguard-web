@@ -1,0 +1,137 @@
+<section id="account-mfa" class="flex flex-col gap-4 rounded-lg border border-border p-4 sm:p-6">
+  <header class="flex flex-wrap items-start justify-between gap-3">
+    <div class="flex min-w-0 flex-col gap-1">
+      <div class="flex flex-wrap items-center gap-2">
+        <h2
+          class="text-base font-semibold tracking-tight text-foreground"
+          i18n="@@account.mfa.title"
+        >
+          Authenticator app
+        </h2>
+        @if (totpEnabled()) {
+          <span hlmBadge variant="default" class="gap-1">
+            <ng-icon name="lucideShieldCheck" class="text-xs" aria-hidden="true" />
+            <span i18n="@@account.mfa.on">On</span>
+          </span>
+        } @else {
+          <span hlmBadge variant="secondary" i18n="@@account.mfa.off">Off</span>
+        }
+      </div>
+      <p class="text-sm text-muted-foreground" i18n="@@account.mfa.description">
+        Ask for a code from your phone whenever you sign in.
+      </p>
+    </div>
+
+    @if (!totpEnabled() && !isPending()) {
+      <button
+        hlmBtn
+        size="sm"
+        data-testid="account-mfa-setup"
+        class="shrink-0 gap-2 max-sm:min-h-11"
+        [disabled]="isSettingUp()"
+        (click)="setupRequested.emit()"
+      >
+        <ng-icon name="lucideSmartphone" class="text-sm" aria-hidden="true" />
+        @if (isSettingUp()) {
+          <span i18n="@@account.mfa.settingUp">Preparing…</span>
+        } @else {
+          <span i18n="@@account.mfa.setup">Set up</span>
+        }
+      </button>
+    }
+
+    @if (totpEnabled() && !disarming()) {
+      <button
+        hlmBtn
+        size="sm"
+        variant="outline"
+        data-testid="account-mfa-disable"
+        class="shrink-0 max-sm:min-h-11"
+        (click)="startDisarming()"
+      >
+        <span i18n="@@account.mfa.disable">Turn off</span>
+      </button>
+    }
+  </header>
+
+  @if (isPending()) {
+    <div class="flex flex-col gap-4 border-t border-border pt-4">
+      <ol class="flex flex-col gap-4 text-sm text-foreground">
+        <li class="flex flex-col gap-3">
+          <span i18n="@@account.mfa.step1">
+            1. Scan this with your authenticator app, or type the key in by hand.
+          </span>
+
+          <div class="flex flex-wrap items-start gap-4">
+            @if (qrDataUrl(); as qr) {
+              <img
+                [src]="qr"
+                alt=""
+                width="200"
+                height="200"
+                class="rounded-md border border-border bg-white p-2"
+              />
+            }
+
+            <div class="flex min-w-0 flex-col gap-2">
+              <span class="text-xs text-muted-foreground" i18n="@@account.mfa.secretLabel"
+                >Setup key</span
+              >
+              <div class="flex flex-wrap items-center gap-2">
+                <code
+                  data-testid="account-mfa-secret"
+                  class="rounded-md bg-muted px-2 py-1 font-mono text-sm tracking-wider break-all text-foreground"
+                  >{{ groupedSecret() }}</code
+                >
+                <button
+                  hlmBtn
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  class="gap-1.5 max-sm:min-h-11"
+                  (click)="copySecret()"
+                >
+                  @if (copied()) {
+                    <ng-icon name="lucideCheck" class="text-sm" aria-hidden="true" />
+                    <span i18n="@@account.mfa.copied">Copied</span>
+                  } @else {
+                    <ng-icon name="lucideCopy" class="text-sm" aria-hidden="true" />
+                    <span i18n="@@account.mfa.copy">Copy</span>
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        <li class="flex flex-col gap-3">
+          <span i18n="@@account.mfa.step2">2. Enter the six digits it shows.</span>
+          <app-account-otp-code-form
+            inputId="account-mfa-confirm-code"
+            [submitLabel]="confirmLabel"
+            [pending]="isConfirming()"
+            (submitted)="confirmed.emit($event)"
+            (cancelled)="cancelled.emit()"
+          />
+        </li>
+      </ol>
+    </div>
+  }
+
+  @if (totpEnabled() && disarming()) {
+    <div class="flex flex-col gap-3 border-t border-border pt-4">
+      <p class="text-sm text-foreground" i18n="@@account.mfa.disableHint">
+        Enter a current code from your app to confirm it is you.
+      </p>
+      <app-account-otp-code-form
+        #disableForm
+        inputId="account-mfa-disable-code"
+        [destructive]="true"
+        [submitLabel]="disableLabel"
+        [pending]="isDisabling()"
+        (submitted)="disabled.emit($event)"
+        (cancelled)="stopDisarming()"
+      />
+    </div>
+  }
+</section>

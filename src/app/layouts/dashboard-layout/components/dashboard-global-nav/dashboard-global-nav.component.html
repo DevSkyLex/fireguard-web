@@ -1,0 +1,37 @@
+<div hlmSidebarGroup>
+  <div hlmSidebarGroupContent>
+    <ul hlmSidebarMenu>
+      @for (item of items; track item.id) {
+        <li hlmSidebarMenuItem>
+          @if (item.route; as route) {
+            <a
+              hlmSidebarMenuButton
+              [id]="'global-nav-' + item.id"
+              [routerLink]="route"
+              routerLinkActive
+              #active="routerLinkActive"
+              [attr.data-active]="active.isActive ? 'true' : null"
+              [attr.aria-current]="active.isActive ? 'page' : null"
+              [tooltip]="item.label"
+            >
+              <ng-icon [name]="item.icon" aria-hidden="true" />
+              <span>{{ item.label }}</span>
+            </a>
+          } @else {
+            <button
+              hlmSidebarMenuButton
+              type="button"
+              aria-disabled="true"
+              [id]="'global-nav-' + item.id"
+              [tooltip]="item.label"
+            >
+              <ng-icon [name]="item.icon" aria-hidden="true" />
+              <span>{{ item.label }}</span>
+            </button>
+            <span hlmSidebarMenuBadge class="text-muted-foreground">{{ soonLabel }}</span>
+          }
+        </li>
+      }
+    </ul>
+  </div>
+</div>

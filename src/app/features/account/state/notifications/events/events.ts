@@ -32,5 +32,15 @@ export const notificationStoreEvents = eventGroup({
      * Dispatched when the mark-as-read API call fails.
      */
     markAsReadFailed: type<StoreFailureEventPayload>(),
+
+    /**
+     * Event markAllAsReadFailed
+     *
+     * @description
+     * Dispatched when the bulk mark-as-read API call fails. There is no
+     * matching success event: the whole list visibly stops being unread, which
+     * says it better than a toast would.
+     */
+    markAllAsReadFailed: type<StoreFailureEventPayload>(),
   },
 });

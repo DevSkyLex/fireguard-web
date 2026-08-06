@@ -1,0 +1,66 @@
+<div id="organization-member-profile" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <div class="flex max-w-2xl flex-col gap-6">
+    @if (!directory.isAvailable()) {
+      <app-empty-state
+        icon="lucideLock"
+        title="You can't view members here"
+        i18n-title="@@org.memberProfile.forbiddenTitle"
+        description="Seeing who someone is requires permission to read this organization's members."
+        i18n-description="@@org.memberProfile.forbiddenDescription"
+      />
+    } @else if (member(); as person) {
+      <app-identity-summary
+        [name]="person.displayName"
+        [avatarUrl]="person.avatarUrl ?? null"
+        [secondary]="roles().length > 0 ? roles().join(', ') : null"
+      />
+
+      <dl class="flex flex-col gap-3 border-t border-border pt-5 text-sm">
+        <div class="flex flex-col gap-0.5">
+          <dt class="text-xs text-muted-foreground" i18n="@@org.memberProfile.rolesLabel">
+            Roles in this organization
+          </dt>
+          <dd class="text-foreground">
+            @if (roles().length > 0) {
+              {{ roles().join(', ') }}
+            } @else {
+              <span class="text-muted-foreground" i18n="@@org.memberProfile.noRoles">None</span>
+            }
+          </dd>
+        </div>
+
+        <div class="flex flex-col gap-0.5">
+          <dt class="text-xs text-muted-foreground" i18n="@@org.memberProfile.statusLabel">
+            Membership
+          </dt>
+          <dd>
+            @if (person.isActive) {
+              <span hlmBadge variant="secondary" i18n="@@org.memberProfile.active">Active</span>
+            } @else {
+              <span hlmBadge variant="outline" i18n="@@org.memberProfile.inactive">Inactive</span>
+            }
+          </dd>
+        </div>
+      </dl>
+    } @else if (isMissing()) {
+      <app-empty-state
+        icon="lucideUserRound"
+        title="We don't know who that is"
+        i18n-title="@@org.memberProfile.missingTitle"
+        description="This person is not a member of the organization you have open."
+        i18n-description="@@org.memberProfile.missingDescription"
+      />
+    } @else {
+      <div class="flex flex-col gap-4" aria-hidden="true">
+        <div class="flex items-center gap-3">
+          <hlm-skeleton class="size-14 shrink-0 rounded-full" />
+          <div class="flex flex-col gap-2">
+            <hlm-skeleton class="h-4 w-32" />
+            <hlm-skeleton class="h-3 w-24" />
+          </div>
+        </div>
+        <hlm-skeleton class="h-4 w-40" />
+      </div>
+    }
+  </div>
+</div>

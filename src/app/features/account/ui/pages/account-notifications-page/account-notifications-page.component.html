@@ -1,0 +1,40 @@
+<div id="account-notifications" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <header class="flex min-w-0 flex-col gap-0.5">
+    <h1
+      class="text-xl font-semibold tracking-tight text-foreground"
+      i18n="@@account.notifications.title"
+    >
+      Notifications
+    </h1>
+  </header>
+
+  <div class="flex max-w-3xl flex-col gap-4">
+    @if (store.unreadCount(); as unread) {
+      <p class="text-sm text-muted-foreground">
+        <span i18n="@@account.notifications.unreadCount">Unread</span>
+        <span class="ml-1 font-medium text-foreground">{{ unread }}</span>
+      </p>
+    } @else {
+      <p class="text-sm text-muted-foreground" i18n="@@account.notifications.allRead">
+        You are all caught up.
+      </p>
+    }
+
+    <app-account-notification-list
+      [notifications]="store.notifications()"
+      [categories]="categories()"
+      [activeCategory]="activeCategory()"
+      [loading]="store.isLoading()"
+      [loadingMore]="store.isLoadingMore()"
+      [hasMore]="store.hasMore()"
+      [hasError]="store.listError() !== null"
+      [unreadCount]="store.unreadCount()"
+      [markingAll]="store.isMarkingAllAsRead()"
+      (categorySelected)="filterByCategory($event)"
+      (markedAsRead)="store.markAsRead($event)"
+      (allMarkedAsRead)="store.markAllAsRead()"
+      (loadMoreRequested)="store.loadMore()"
+      (retried)="store.load()"
+    />
+  </div>
+</div>

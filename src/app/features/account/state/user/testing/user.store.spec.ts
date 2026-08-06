@@ -27,6 +27,7 @@ describe('UserStore', () => {
     lastName: 'Doe',
     avatarUrl: 'https://example.com/avatar.png',
     status: 'active',
+    locale: 'system',
     emailVerified: true,
     totpEnabled: false,
     tenantId: 'tenant-1',

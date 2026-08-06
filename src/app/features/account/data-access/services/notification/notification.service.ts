@@ -5,6 +5,7 @@ import { HydraApiService } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
+  MarkAllNotificationsAsReadOutput,
   NotificationListOptions,
   NotificationOutput,
   NotificationTypeOutput,
@@ -67,7 +68,7 @@ export class NotificationService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {NotificationListOptions} [options] - Optional filter and pagination parameters.
+   * @param {NotificationListOptions} [options] - Optional filter and pagination parameters. `type` takes precedence over `category` when both are set.
    *
    * @return {Observable<HydraCollection<NotificationOutput>>} An observable emitting the notifications collection.
    */
@@ -75,7 +76,6 @@ export class NotificationService extends HydraApiService {
     const params: Record<string, string | number | boolean> = {};
     if (options?.unreadOnly !== undefined) params['unreadOnly'] = options.unreadOnly;
     if (options?.limit !== undefined) params['limit'] = options.limit;
-    // type takes precedence over category when both are set
     if (options?.type) {
       params['type'] = options.type;
     } else if (options?.category) {
@@ -143,6 +143,27 @@ export class NotificationService extends HydraApiService {
   public markAsRead(id: string): Observable<NotificationOutput> {
     return this.patch<void, NotificationOutput>(
       `${NotificationService.BASE_PATH}/${id}/read`,
+      undefined,
+    );
+  }
+
+  /**
+   * Method markAllAsRead
+   * @method markAllAsRead
+   *
+   * @description
+   * Marks every unread notification of the authenticated user as read. The
+   * endpoint is idempotent and takes no body; it answers with how many rows it
+   * actually changed.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @return {Observable<MarkAllNotificationsAsReadOutput>} An observable emitting the number marked.
+   */
+  public markAllAsRead(): Observable<MarkAllNotificationsAsReadOutput> {
+    return this.patch<void, MarkAllNotificationsAsReadOutput>(
+      `${NotificationService.BASE_PATH}/read-all`,
       undefined,
     );
   }

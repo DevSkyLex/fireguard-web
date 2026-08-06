@@ -38,6 +38,7 @@ interface StoreStub {
 }
 
 describe('OrganizationSwitcher', () => {
+  let routedId: WritableSignal<string | null>;
   let selected: WritableSignal<OrganizationOutput | null>;
   let loadingContext: WritableSignal<boolean>;
   let store: StoreStub;
@@ -45,7 +46,7 @@ describe('OrganizationSwitcher', () => {
 
   async function render(): Promise<ComponentFixture<OrganizationSwitcher>> {
     const context: OrganizationContextPort = {
-      selectedOrganizationId: signal<string | null>('org-1'),
+      selectedOrganizationId: routedId,
       selectedOrganization: selected,
       isLoadingOrganization: loadingContext,
     };
@@ -69,6 +70,7 @@ describe('OrganizationSwitcher', () => {
 
   beforeEach(() => {
     loadCalls = 0;
+    routedId = signal<string | null>('org-1');
     selected = signal<OrganizationOutput | null>(organization('org-1', 'Acme Inc', 'Enterprise'));
     loadingContext = signal<boolean>(false);
     store = {
@@ -113,6 +115,31 @@ describe('OrganizationSwitcher', () => {
 
     expect(fixture.nativeElement.querySelector('hlm-skeleton')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('#organization-switcher-trigger')).toBeNull();
+  });
+
+  it('says so explicitly on a page that selects no organization', async () => {
+    routedId.set(null);
+    selected.set(null);
+
+    const fixture = await render();
+    const trigger: HTMLElement | null = fixture.nativeElement.querySelector(
+      '#organization-switcher-trigger',
+    );
+
+    expect(trigger?.textContent).toContain('No organization selected');
+    expect(trigger?.textContent).toContain('Choose one to start working');
+  });
+
+  it('offers to create a first organization when the reader belongs to none', async () => {
+    routedId.set(null);
+    selected.set(null);
+    store.organizations.set([]);
+
+    const fixture = await render();
+
+    expect(
+      fixture.nativeElement.querySelector('#organization-switcher-trigger')?.textContent,
+    ).toContain('Create your first one');
   });
 
   it('loads the organization list once when nothing has fetched it', async () => {
@@ -166,5 +193,17 @@ describe('OrganizationSwitcher', () => {
     navigate.mockClear();
     component.select({ id: 'org-1', active: true });
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('marks nothing active on a page that selects no organization', async () => {
+    routedId.set(null);
+    selected.set(null);
+
+    const fixture = await render();
+    (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(document.querySelector('[aria-current="true"]')).toBeNull();
   });
 });

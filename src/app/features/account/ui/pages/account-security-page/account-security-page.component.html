@@ -1,0 +1,77 @@
+<div id="account-security" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <header class="flex min-w-0 flex-col gap-0.5">
+    <h1
+      class="text-xl font-semibold tracking-tight text-foreground"
+      i18n="@@account.security.title"
+    >
+      Security
+    </h1>
+    <p class="text-sm text-muted-foreground" i18n="@@account.security.subtitle">
+      How you prove it is you.
+    </p>
+  </header>
+
+  <div class="flex max-w-2xl flex-col gap-6">
+    @if (hasProfileError()) {
+      <app-error-state
+        icon="lucideTriangleAlert"
+        title="Couldn't load your account"
+        i18n-title="@@account.security.errorTitle"
+        description="Your security settings can't be shown until we know who you are."
+        i18n-description="@@account.security.errorDescription"
+      >
+        <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retryProfile()">
+          <span i18n="@@account.security.retry">Retry</span>
+        </button>
+      </app-error-state>
+    } @else if (!profileReady()) {
+      <div class="flex flex-col gap-4" aria-hidden="true">
+        @for (placeholder of [1, 2]; track placeholder) {
+          <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
+            <hlm-skeleton class="h-5 w-36" />
+            <hlm-skeleton class="h-4 w-48" />
+            <hlm-skeleton class="h-9 w-24" />
+          </div>
+        }
+      </div>
+    } @else {
+      <app-account-mfa-panel
+        [totpEnabled]="totpEnabled()"
+        [setupResult]="totpStore.setupResult()"
+        [isSettingUp]="totpStore.isSettingUp()"
+        [isConfirming]="totpStore.isConfirming()"
+        [isDisabling]="totpStore.isDisabling()"
+        (setupRequested)="totpStore.setup()"
+        (confirmed)="confirmTotp($event)"
+        (disabled)="disableTotp($event)"
+        (cancelled)="totpStore.cancelSetup()"
+      />
+
+      <section
+        id="account-password"
+        class="flex flex-col gap-4 rounded-lg border border-border p-4"
+      >
+        <header class="flex min-w-0 flex-col gap-1">
+          <h3
+            class="text-base font-semibold tracking-tight text-foreground"
+            i18n="@@account.password.title"
+          >
+            Password
+          </h3>
+          <p class="text-sm text-muted-foreground" i18n="@@account.password.description">
+            Changing it takes two steps, so a stolen session cannot lock you out.
+          </p>
+        </header>
+
+        <app-account-password-form
+          [step]="passwordStore.step()"
+          [pending]="isChangingPassword()"
+          [maskedRecipient]="passwordStore.maskedRecipient()"
+          (requested)="requestPasswordChange($event)"
+          (confirmed)="confirmPasswordChange($event)"
+          (restarted)="passwordStore.restart()"
+        />
+      </section>
+    }
+  </div>
+</div>

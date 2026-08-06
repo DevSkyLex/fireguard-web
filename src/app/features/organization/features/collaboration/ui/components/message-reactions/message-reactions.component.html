@@ -1,0 +1,59 @@
+@if (hasAny()) {
+  <div class="flex flex-wrap items-center gap-0.5" data-testid="message-reactions">
+    @for (reaction of reactions(); track reaction.emoji) {
+      <button
+        hlmToggle
+        variant="outline"
+        size="sm"
+        class="h-6 min-w-0 gap-1 rounded-full px-1.5 text-xs"
+        data-testid="message-reaction-chip"
+        [state]="reaction.reactedByMe ? 'on' : 'off'"
+        [aria-label]="labelFor(reaction)"
+        [disabled]="!canReact()"
+        (stateChange)="toggle(reaction.emoji)"
+      >
+        <span aria-hidden="true">{{ reaction.emoji }}</span>
+        <span class="tabular-nums" aria-hidden="true">{{ reaction.count }}</span>
+      </button>
+    }
+
+    @if (canReact()) {
+      <hlm-popover #picker="brnPopover" sideOffset="6">
+        <button
+          hlmBtn
+          hlmPopoverTrigger
+          variant="ghost"
+          size="icon"
+          type="button"
+          class="size-6 rounded-full text-muted-foreground"
+          data-testid="message-reactions-open"
+          i18n-aria-label="@@messages.reactions.pick"
+          aria-label="Add a reaction"
+        >
+          <ng-icon name="lucideSmilePlus" class="text-xs" aria-hidden="true" />
+        </button>
+
+        <hlm-popover-content
+          *hlmPopoverPortal
+          class="w-auto flex-row items-center gap-0.5 rounded-full p-1"
+          role="group"
+          data-testid="message-reactions-picker"
+          i18n-aria-label="@@messages.reactions.pickerLabel"
+          aria-label="Pick a reaction"
+        >
+          @for (emoji of quickReactions; track emoji) {
+            <button
+              type="button"
+              class="inline-flex size-7 items-center justify-center rounded-full text-sm transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              data-testid="message-reactions-option"
+              [attr.aria-label]="emoji"
+              (click)="toggle(emoji); picker.close()"
+            >
+              <span aria-hidden="true">{{ emoji }}</span>
+            </button>
+          }
+        </hlm-popover-content>
+      </hlm-popover>
+    }
+  </div>
+}

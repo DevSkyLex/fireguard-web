@@ -18,10 +18,14 @@ import { organizationResolver, organizationTitleResolver } from './http/resolver
  * `/organizations/:organizationId` resolves organization context before any
  * child renders, so a page never has to reason about a half-known workspace.
  *
- * Only the landing page is mounted today; the remaining destinations named in
- * `FEATURE.md` return under `:organizationId` one at a time as their pages are
- * rebuilt, and the sidebar navigation already lists them behind their
- * permissions.
+ * The landing page, the direct messages and a member's profile are mounted
+ * today; the remaining destinations named in `FEATURE.md` return under
+ * `:organizationId` one at a time as their pages are rebuilt, and the sidebar
+ * navigation already lists them behind their permissions.
+ *
+ * `messages` loads the collaboration subfeature's route file directly rather
+ * than its barrel, which also exports the offline sync coordinator and would
+ * pull it into this lazy chunk.
  *
  * @since 1.0.0
  */
@@ -47,6 +51,13 @@ export const ORGANIZATION_ROUTES: Routes = [
           ),
         title: $localize`:@@route.today:Today`,
         data: { breadcrumb: false },
+      },
+      {
+        path: 'messages',
+        loadChildren: () =>
+          import('./features/collaboration/collaboration.routes').then(
+            (m) => m.COLLABORATION_ROUTES,
+          ),
       },
       {
         path: 'members/:memberId',

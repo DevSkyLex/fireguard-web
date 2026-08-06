@@ -1,0 +1,77 @@
+<div
+  #scroller
+  class="flex min-h-0 flex-1 [scrollbar-gutter:stable_both-edges] flex-col overflow-y-auto px-3.5 md:px-6"
+  data-testid="message-thread"
+  (scroll)="onScroll()"
+>
+  <div class="mx-auto flex w-full max-w-3xl flex-1 flex-col">
+    @if (errorMessage(); as message) {
+      <div class="my-auto py-6">
+        <app-error-state
+          icon="lucideMessageSquare"
+          title="Couldn't load this conversation"
+          i18n-title="@@messages.thread.errorTitle"
+          [description]="message"
+        />
+      </div>
+    } @else if (loading() && entries().length === 0) {
+      <div class="flex flex-1 flex-col justify-end gap-3 py-6" aria-hidden="true">
+        <hlm-skeleton class="h-10 w-2/3 rounded-2xl" />
+        <hlm-skeleton class="h-10 w-1/2 self-end rounded-2xl" />
+        <hlm-skeleton class="h-16 w-3/5 rounded-2xl" />
+      </div>
+    } @else if (entries().length === 0) {
+      <div class="my-auto">
+        <app-empty-state
+          icon="lucideMessageSquare"
+          title="No messages yet"
+          i18n-title="@@messages.thread.emptyTitle"
+          description="Say hello to start the conversation."
+          i18n-description="@@messages.thread.emptyDescription"
+        />
+      </div>
+    } @else {
+      <div class="flex flex-1 flex-col gap-4 pt-4 pb-2">
+        @if (hasMore()) {
+          <div class="flex justify-center pb-2">
+            <button
+              hlmBtn
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="message-thread-load-more"
+              [disabled]="loading()"
+              (click)="loadMore.emit()"
+            >
+              <span i18n="@@messages.thread.loadOlder">Load earlier messages</span>
+            </button>
+          </div>
+        }
+
+        @for (group of renderGroups(); track trackGroup(group)) {
+          @if (group.kind === 'day') {
+            <div hlmMarker variant="separator" class="py-3 text-[11px] font-medium">
+              <span hlmMarkerContent>{{ formatDay(group.at) }}</span>
+            </div>
+          } @else {
+            <div hlmMessageGroup>
+              @for (entry of group.entries; track entry.message.id) {
+                <app-message-row
+                  [message]="entry.message"
+                  [continuation]="entry.continuation"
+                  [canReact]="canReact()"
+                  (retried)="retried.emit($event)"
+                  (reactionToggled)="reactionToggled.emit($event)"
+                />
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <div class="sticky bottom-0 z-10 bg-background pt-2 pb-3">
+      <ng-content />
+    </div>
+  </div>
+</div>

@@ -47,6 +47,7 @@ import type { ActiveOrganizationState } from './models';
  */
 const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
   routedOrganizationId: null,
+  rememberedOrganizationId: null,
   organizationEntity: null,
   getCallState: idleCallState(),
 } as const;
@@ -64,10 +65,12 @@ const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
  * answering "which organization are we looking at right now?". All list
  * management and CRUD live in the component-scoped {@link OrganizationStore}.
  *
- * The answer comes from the **URL**, not from whatever was last fetched: the
- * store mirrors `:organizationId` on every navigation and only exposes the
- * cached entity while it matches. Nothing can set an active organization the
- * URL does not name.
+ * The URL wins whenever it names one: the store mirrors `:organizationId` on
+ * every navigation and only exposes the cached entity while it matches. A
+ * global page — the account, and every other route outside `/organizations` —
+ * names none, and there the last organization worked in stands in, so the
+ * workspace stays open instead of emptying out. Nothing else sets it: the
+ * fallback is a memory of a previous URL, not a second way to choose.
  *
  * Provided at the root level (`providedIn: 'root'`) so that any service or
  * component can read `selectedOrganization` without providing anything.
@@ -86,34 +89,38 @@ export const ActiveOrganizationStore = signalStore(
      * Property selectedOrganizationId
      *
      * @description
-     * Identity of the active organization, straight from the URL. Effects that
-     * only depend on *which* organization is active — not on its mutable
-     * metadata such as name or logo — should track this instead of
-     * {@link selectedOrganization}, so refreshing the active organization
-     * object (e.g. after a logo upload) does not re-trigger organization-scoped
-     * reloads.
+     * Identity of the active organization: the routed one, or the one last
+     * worked in on a page that routes none. Effects that only depend on
+     * *which* organization is active — not on its mutable metadata such as
+     * name or logo — should track this instead of {@link selectedOrganization},
+     * so refreshing the active organization object (e.g. after a logo upload)
+     * does not re-trigger organization-scoped reloads.
      *
      * @type {string | null}
      */
-    selectedOrganizationId: computed<string | null>(() => store.routedOrganizationId()),
+    selectedOrganizationId: computed<string | null>(
+      () => store.routedOrganizationId() ?? store.rememberedOrganizationId(),
+    ),
 
     /**
      * Property selectedOrganization
      *
      * @description
-     * The active organization resource, or `null` while the URL names an
-     * organization whose entity is not loaded yet.
+     * The active organization resource, or `null` while the active identifier
+     * designates an organization whose entity is not loaded yet.
      *
-     * Gated on the routed identifier on purpose: without it, switching
-     * organization would leave the rail, the navigation and the page header
-     * showing the previous organization's name until the fetch resolved.
+     * Gated on that identifier on purpose: without it, switching organization
+     * would leave the rail, the navigation and the page header showing the
+     * previous organization's name until the fetch resolved.
      *
      * @type {OrganizationOutput | null}
      */
     selectedOrganization: computed<OrganizationOutput | null>(() => {
       const entity: OrganizationOutput | null = store.organizationEntity();
+      const activeId: string | null =
+        store.routedOrganizationId() ?? store.rememberedOrganizationId();
 
-      return entity !== null && entity.id === store.routedOrganizationId() ? entity : null;
+      return entity !== null && entity.id === activeId ? entity : null;
     }),
 
     /**
@@ -242,19 +249,29 @@ export const ActiveOrganizationStore = signalStore(
 
     return {
       onInit(): void {
+        patchState(store, {
+          rememberedOrganizationId: cookieService.getCookie<string>(LAST_ORGANIZATION_COOKIE_NAME),
+        });
+
         /**
-         * Persist the active organization as the user's default workspace.
+         * Remember the routed organization as the user's default workspace,
+         * in state and in the cookie that survives the session.
          *
-         * Tracks {@link selectedOrganizationId} (value equality) so metadata
-         * refreshes do not rewrite the cookie, and never deletes it on
-         * deselection — leaving an organization-scoped page must not forget
-         * the preference. Stale identifiers are invalidated by
+         * Tracks {@link routedOrganizationId} rather than the active
+         * identifier, which already includes what is being written and would
+         * feed the effect its own output; nothing is forgotten on
+         * deselection, because leaving an organization-scoped page must not
+         * close the workspace. Stale identifiers are invalidated by
          * `organizationGuard` when the organization is no longer accessible.
          */
         effect((): void => {
-          const organizationId: string | null = store.selectedOrganizationId();
+          const organizationId: string | null = store.routedOrganizationId();
 
-          if (organizationId !== null && isPlatformBrowser(platformId)) {
+          if (organizationId === null) return;
+
+          patchState(store, { rememberedOrganizationId: organizationId });
+
+          if (isPlatformBrowser(platformId)) {
             cookieService.setCookie<string>({
               name: LAST_ORGANIZATION_COOKIE_NAME,
               value: organizationId,

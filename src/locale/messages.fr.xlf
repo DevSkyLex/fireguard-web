@@ -7706,6 +7706,22 @@
         <source>Track facility, member, equipment, and inspection trends across your organization.</source>
         <target>Suivez les tendances des établissements, des membres, des équipements et des inspections de votre organisation.</target>
       </trans-unit>
+      <trans-unit id="messages.nav.title" datatype="html">
+        <source>Direct messages</source>
+        <target>Messages directs</target>
+      </trans-unit>
+      <trans-unit id="messages.nav.new" datatype="html">
+        <source>New message</source>
+        <target>Nouveau message</target>
+      </trans-unit>
+      <trans-unit id="messages.nav.retry" datatype="html">
+        <source>Couldn't load — retry</source>
+        <target>Échec du chargement — réessayer</target>
+      </trans-unit>
+      <trans-unit id="messages.nav.empty" datatype="html">
+        <source>No conversations yet.</source>
+        <target>Aucune conversation pour le moment.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

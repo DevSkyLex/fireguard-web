@@ -1,7 +1,12 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLifeBuoy, lucideMessageSquare, lucideSparkles } from '@ng-icons/lucide';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  OrganizationPermissionService,
+  type OrganizationContextPort,
+} from '@features/organization';
 import {
   HlmSidebarGroup,
   HlmSidebarGroupContent,
@@ -11,7 +16,7 @@ import {
   HlmSidebarMenuItem,
 } from '@shared/ui/sidebar';
 import { DASHBOARD_GLOBAL_NAV_ITEMS } from './constants';
-import type { DashboardGlobalNavItem } from './models';
+import type { DashboardGlobalNavRow } from './models';
 
 /**
  * Component DashboardGlobalNav
@@ -67,14 +72,85 @@ export class DashboardGlobalNav {
    * @readonly
    *
    * @description
-   * The destinations to render, in catalog order.
+   * The destinations to render, in catalog order, with an organization-scoped
+   * route completed by the open organization and a permission-gated row
+   * dropped when the member could not reach it.
+   *
+   * A row that names a permission is withheld until the grants have arrived
+   * rather than shown and taken away, which would move the rows under the
+   * pointer on every page load.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {readonly DashboardGlobalNavItem[]}
+   * @type {Signal<readonly DashboardGlobalNavRow[]>}
    */
-  protected readonly items: readonly DashboardGlobalNavItem[] = DASHBOARD_GLOBAL_NAV_ITEMS;
+  protected readonly items: Signal<readonly DashboardGlobalNavRow[]> = computed(
+    (): readonly DashboardGlobalNavRow[] => {
+      const organizationId: string | null = this.organizationContext.selectedOrganizationId();
+      const rows: DashboardGlobalNavRow[] = [];
+
+      for (const item of DASHBOARD_GLOBAL_NAV_ITEMS) {
+        const isGranted: boolean =
+          item.permissions === undefined ||
+          this.permissionService.hasAnyPermission(item.permissions);
+
+        if (!isGranted) continue;
+
+        if (item.organizationScoped !== true) {
+          rows.push({ id: item.id, label: item.label, icon: item.icon, resolvedRoute: item.route });
+          continue;
+        }
+
+        if (item.route === null || organizationId === null) continue;
+
+        rows.push({
+          id: item.id,
+          label: item.label,
+          icon: item.icon,
+          resolvedRoute: `/organizations/${organizationId}/${item.route}`,
+        });
+      }
+
+      return rows;
+    },
+  );
+
+  /**
+   * Property organizationContext
+   * @readonly
+   *
+   * @description
+   * The organization an organization-scoped row points into, read through the
+   * published port rather than the owning store (`ARCHITECTURE.md` §4).
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {OrganizationContextPort}
+   */
+  private readonly organizationContext: OrganizationContextPort =
+    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  /**
+   * Property permissionService
+   * @readonly
+   *
+   * @description
+   * The reader's grants in that organization, which decide whether a gated row
+   * is listed at all.
+   *
+   * The feature's own helper rather than a set built here, because a grant is
+   * not always the leaf permission: an owner holds `organization.*`, and a
+   * plain membership test would drop every gated row from their column.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {OrganizationPermissionService}
+   */
+  private readonly permissionService: OrganizationPermissionService =
+    inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
    * Property soonLabel

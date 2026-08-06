@@ -264,13 +264,13 @@ export const OrganizationMemberAccessStore = signalStore(
         let previousOrganizationId: string | null = null;
 
         /**
-         * Follow the routed organization: load its access payload, and drop it
-         * once the URL leaves the organization scope.
+         * Follow the open organization: load its access payload, and drop it
+         * once there is no organization at all.
          *
-         * One effect covers both directions because the identifier is
-         * URL-derived — leaving `/organizations/:id` turns it `null`, which is
-         * exactly the signal the previous `NavigationEnd` subscription had to
-         * recompute for itself.
+         * One effect covers both directions. Stepping into a global page no
+         * longer clears anything — the context keeps naming the workspace last
+         * worked in — so the payload survives `/account` instead of being
+         * thrown away and refetched on the way back.
          *
          * Clearing on the transition rather than on the value matters at boot:
          * `organizationAccessGuard` calls `ensureAccessResolved()` while the

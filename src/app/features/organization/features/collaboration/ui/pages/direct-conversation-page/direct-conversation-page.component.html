@@ -1,0 +1,56 @@
+<header
+  class="flex h-12 shrink-0 items-center gap-2.5 border-b px-3 md:px-4"
+  data-testid="direct-conversation-header"
+>
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="icon"
+    class="size-8 shrink-0 md:hidden"
+    data-testid="direct-conversation-back"
+    i18n-aria-label="@@messages.conversation.back"
+    aria-label="Back to conversations"
+    (click)="sidebar.setOpenMobile(true)"
+  >
+    <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
+  </button>
+
+  <hlm-avatar class="size-8 shrink-0">
+    @if (counterpartAvatarUrl(); as avatarUrl) {
+      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+    }
+    <span hlmAvatarFallback class="text-[11px]">
+      {{ isCounterpartResolved() ? counterpartName().charAt(0) : '?' }}
+    </span>
+  </hlm-avatar>
+
+  <span
+    class="min-w-0 truncate text-sm font-semibold"
+    data-testid="direct-conversation-name"
+    [class.text-foreground]="isCounterpartResolved()"
+    [class.text-muted-foreground]="!isCounterpartResolved()"
+  >
+    {{ counterpartName() }}
+  </span>
+</header>
+
+<app-message-thread
+  [messages]="messages()"
+  [loading]="thread.isLoading()"
+  [hasMore]="thread.hasMore()"
+  [errorMessage]="loadErrorMessage()"
+  [canReact]="canWrite()"
+  (loadMore)="thread.loadOlder()"
+  (retried)="thread.retryFailed($event)"
+  (reactionToggled)="toggleReaction($event)"
+  (caughtUp)="markRead()"
+>
+  <app-message-composer
+    [pending]="thread.isPosting()"
+    [readOnly]="!canWrite()"
+    [placeholder]="composerPlaceholder()"
+    [members]="mentionCandidates()"
+    (sent)="send($event)"
+  />
+</app-message-thread>

@@ -1,0 +1,5 @@
+export {
+  MESSAGE_PAGE_SIZE,
+  MESSAGE_REALTIME_COALESCE_MS,
+  MESSAGE_SUBSCRIPTION_REFRESH_MS,
+} from './message-thread.constants';

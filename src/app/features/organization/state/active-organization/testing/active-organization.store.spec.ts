@@ -146,14 +146,32 @@ describe('ActiveOrganizationStore', () => {
     expect(store.selectedOrganization()).toBeNull();
   });
 
-  it('should drop the context when navigation leaves the organization scope', () => {
+  it('should keep the context when navigation leaves the organization scope', async () => {
     store = createStore('org-1');
     store.setOrganization(organization);
+    await flushEffects();
 
     navigateTo(null);
+    await flushEffects();
 
-    expect(store.selectedOrganizationId()).toBeNull();
-    expect(store.selectedOrganization()).toBeNull();
+    expect(store.selectedOrganizationId()).toBe('org-1');
+    expect(store.selectedOrganization()).toEqual(organization);
+  });
+
+  it('should open on the remembered organization before any navigation names one', () => {
+    mockCookieService.getCookie.mockReturnValue('org-9');
+
+    store = createStore(null);
+
+    expect(store.selectedOrganizationId()).toBe('org-9');
+  });
+
+  it('should let the URL outrank the remembered organization', () => {
+    mockCookieService.getCookie.mockReturnValue('org-9');
+
+    store = createStore('org-1');
+
+    expect(store.selectedOrganizationId()).toBe('org-1');
   });
 
   it('should resolve organization successfully', async () => {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
+import { HlmEmptyImports } from '@shared/ui/empty';
 
 /**
  * Component EmptyState
@@ -7,8 +8,10 @@ import { NgIcon } from '@ng-icons/core';
  *
  * @description
  * The nothing-here surface: a glyph, a heading, a sentence, and whatever the
- * caller projects as the way out. Generic by design — it names no domain and
- * takes only scalars (`ARCHITECTURE.md` §6.4).
+ * caller projects as the way out. A thin composition of spartan's vendored
+ * `empty` primitive (`@shared/ui/empty`) — do not fork it back to bespoke
+ * markup. Generic by design — it names no domain and takes only scalars
+ * (`ARCHITECTURE.md` §6.4).
  *
  * The icon is a name, not a component: the caller registers it with
  * `provideIcons()` so this concept pulls in no icon set of its own.
@@ -26,7 +29,7 @@ import { NgIcon } from '@ng-icons/core';
  */
 @Component({
   selector: 'app-empty-state',
-  imports: [NgIcon],
+  imports: [NgIcon, ...HlmEmptyImports],
   templateUrl: './empty-state.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

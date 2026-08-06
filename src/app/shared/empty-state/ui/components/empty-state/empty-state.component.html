@@ -1,18 +1,17 @@
-<div class="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
-  @if (icon(); as iconName) {
-    <div
-      class="flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground"
-    >
-      <ng-icon [name]="iconName" class="text-xl" aria-hidden="true" />
-    </div>
-  }
-
-  <div class="flex flex-col gap-1">
-    <p class="text-sm font-semibold text-foreground">{{ title() }}</p>
+<div hlmEmpty>
+  <div hlmEmptyHeader>
+    @if (icon(); as iconName) {
+      <div hlmEmptyMedia variant="icon">
+        <ng-icon [name]="iconName" aria-hidden="true" />
+      </div>
+    }
+    <p hlmEmptyTitle>{{ title() }}</p>
     @if (description(); as text) {
-      <p class="max-w-prose text-sm text-muted-foreground">{{ text }}</p>
+      <p hlmEmptyDescription>{{ text }}</p>
     }
   </div>
 
-  <ng-content />
+  <div hlmEmptyContent>
+    <ng-content />
+  </div>
 </div>

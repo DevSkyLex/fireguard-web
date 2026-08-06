@@ -7713,6 +7713,22 @@
         <source>Track facility, member, equipment, and inspection trends across your organization.</source>
         <target>Consulta las tendencias de instalaciones, miembros, equipos e inspecciones de tu organización.</target>
       </trans-unit>
+      <trans-unit id="messages.nav.title" datatype="html">
+        <source>Direct messages</source>
+        <target>Mensajes directos</target>
+      </trans-unit>
+      <trans-unit id="messages.nav.new" datatype="html">
+        <source>New message</source>
+        <target>Nuevo mensaje</target>
+      </trans-unit>
+      <trans-unit id="messages.nav.retry" datatype="html">
+        <source>Couldn't load — retry</source>
+        <target>No se pudo cargar — reintentar</target>
+      </trans-unit>
+      <trans-unit id="messages.nav.empty" datatype="html">
+        <source>No conversations yet.</source>
+        <target>Aún no hay conversaciones.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -7,8 +7,11 @@ belongs to.
 
 ## Purpose
 
-Owns the organization's conversational surface: channels, direct conversations, subject threads,
+Owns the organization's conversational surface: direct conversations, channels, subject threads,
 messages and their reactions, pins, saves and attachments, plus presence and the AI assistant.
+
+**Only direct conversations have a UI today.** The data layer covers all of it — stores, transport,
+offline outbox, presence, assistant — and each remaining surface is a page plus a route away.
 
 Backed end-to-end by the API's `Messaging` and `Assistant` modules — nothing here is mocked. Those
 modules reach `Organization` exactly like `Intervention` and `Facility` do: through its inbound
@@ -17,45 +20,62 @@ and its published domain types.
 
 ## Entry Points
 
-- Routes: `collaboration.routes.ts`
+- Routes: `collaboration.routes.ts`, mounted at `/organizations/:organizationId/messages`
 - Public API: `index.ts`
-- Shell contribution: `collaboration.feature.ts`
+- Bootstrap: `collaboration.feature.ts` (`provideCollaborationFeature()`), wired from `app.config.ts`
 
-Mounted inside the workspace shell under `/organizations/:organizationId` (`channels/:channelId`,
-`direct/:conversationId`, `saved`). The feature contributes to the shell rather than owning the
-frame:
+`organization.routes.ts` loads the route file **directly**, not through `index.ts`: the barrel also
+exports `MessagingSyncCoordinatorService`, which would then travel in this feature's lazy chunk.
 
-| Slot                       | Contribution                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
-| `SECONDARY_NAV_SLOT`       | `withCollaborationChannelNav()` — favorites and channel sections                                 |
-| `CONVERSATION_HEADER_SLOT` | `withCollaborationInfoToggle()`, `withCollaborationAssistantToggle()`, `withMessagingSyncChip()` |
-| `PANEL_SLOT`               | `withCollaborationAssistantPanel()` (priority 90), `withCollaborationInfoPanel()` (priority 10)  |
-
-The panel is instantiated by the layout, so it receives no routed input. `ChannelPanelStore` is the
-bridge: root-provided, it reads the routed channel off the router and republishes it, and the
-contribution's `active` signal is `channelId() !== null` — which is what keeps the panel off the
-intervention route, where the page owns its own aside.
-
-Because that store lives in the **root** injector it cannot see `MEMBER_DIRECTORY_PORT`, which the
-shell route provides. Member names are therefore resolved by `ChannelInfoPanel`, not by the
-store. Moving that lookup back into the store throws `NG0201`.
+The feature owns its pages, and it contributes one shell widget: `DirectMessagesNav`, the
+conversation list, goes through `providers/direct-messages-nav` (`withDirectMessagesNav()`) into the
+dashboard layout's `sidebarNav` slot, below `withOrganizationNav()`. `organization/providers/index.ts`
+re-exports it from this feature's `providers/` folder directly — **not** through this feature's root
+`index.ts`, for the same reason `organization.routes.ts` loads `collaboration.routes.ts` directly:
+the root barrel also exports `MessagingSyncCoordinatorService`, and `app.routes.ts` wires
+`withDirectMessagesNav()` into the eagerly-loaded shell providers, where that service must not travel.
+A channel nav, a conversation-header strip and a contextual panel were designed for
+`layouts/workspace-layout` once; neither that layout nor those slots exist, and a future contribution
+for those still goes through `@shared/layout-slot` and the dashboard layout's own slot tokens.
 
 ## Routes
 
-Its own routes, gated by `organization.messaging.read`:
+Gated by `organization.messaging.read`, on the parent only — the guard re-runs on an organization
+switch, and guarding just the child would leave the list open to a member without messaging access.
 
-| Path                  | Surface                                                         |
-| --------------------- | --------------------------------------------------------------- |
-| `channels/:channelId` | the conversation column — a channel id _is_ its conversation id |
-| `saved`               | the member's bookmarks across the organization                  |
+| Path                       | Surface                                         |
+| -------------------------- | ----------------------------------------------- |
+| `messages`                 | an empty-state placeholder, list in the sidebar |
+| `messages/:conversationId` | that direct conversation, list in the sidebar   |
 
-A message's secondary actions (reply, copy, mark as read, pin/unpin, delete) sit behind one overflow
-trigger on the row rather than on its action bar; only the quick reactions and the bookmark stay
-one tap away.
+**The conversation list lives in the dashboard sidebar (`DirectMessagesNav`), not in these routes.**
+It is contributed to the shell's `sidebarNav` slot and stands on every signed-in page, the way a
+mail client keeps its mailboxes: conversations follow the reader, not the page. It is gated on an
+open organization and on `organization.messaging.read` — **honouring a namespace wildcard**, since
+an owner holds `organization.*` and not the leaf grant — and it is the one owner of priming the
+conversation list and the member directory, being the only thing on screen for the whole surface.
 
-Inbox and Drafts are deliberately absent. Nothing honest backs them yet: the channel list provider
-hard-codes `unreadCount: 0`, so an inbox derived from it would always be empty, and drafts have no
-persistence before the offline layer lands. Ship them with their data, not before.
+The cost is deliberate: the list is fetched on the first signed-in page rather than on arrival at
+`/messages`. That is what buys an unread count visible from anywhere, and it is one paged request
+per organization, deduplicated by `ensureLoaded`.
+
+On a phone the conversation header's back control **opens the sidebar sheet** rather than
+navigating up. Going up leads to `messages`, which now holds only a placeholder — the
+conversations are in the sheet, so that is where "back to conversations" has to go.
+
+The child suppresses its breadcrumb (`data: { breadcrumb: false }`) because parent route data is
+inherited and it would otherwise render "Messages / Messages". The counterpart's name cannot go
+there either — resolving it needs the whole conversation list _plus_ the member directory, more than
+a title resolver can ask for — so it lives in the conversation's own header.
+
+**Messaging is listed by the shell's bottom block, not by the organization navigation.** Direct
+conversations are scoped to one organization on the API — `organization` is required on every call —
+but they follow the reader rather than the workspace, so the row sits under Support with the other
+utilities. `DASHBOARD_GLOBAL_NAV_ITEMS` carries the entry, marked `organizationScoped`, and the
+shell completes the route with `ORGANIZATION_CONTEXT_PORT.selectedOrganizationId()`.
+
+Channels, saved messages and the assistant are **not mounted**. Their stores, services and models
+are complete and specced; only their pages are absent. Mounting one is a UI change plus its route.
 
 ## Offline
 
@@ -82,14 +102,13 @@ Operations replay **sequentially per conversation**, and the first temporary fai
 conversation only — other conversations keep draining. There is no attempt limit: a queued message
 that stops being retried is a message silently lost.
 
-The offline surface is `MessagingSyncChip`, contributed to `CONVERSATION_HEADER_SLOT` — the only
-shell slot that exists. A full-width banner would need a new layout slot. It renders **nothing**
-while everything is fine: a permanent indicator that usually reads "fine" trains people to stop
-reading it.
+**There is no queue-wide offline indicator.** The chip that used to carry it was a shell
+contribution, and its slot went with the layout. What survives is per-message and is the part that
+matters: a failed send does not vanish, it becomes a durable outbox row rendered in the thread as
+"Not sent" with a retry beside it.
 
-`MessageComposer` still clears its draft on send, and that is now safe: a failed send does not
-vanish, it becomes a durable outbox row rendered in the thread as "Not sent" with a retry. The text
-is preserved as a message, which is more useful than a restored draft.
+`MessageComposer` clears itself on send for the same reason — the text is preserved as a message,
+which is more useful than a restored draft.
 
 **Only replay-safe work may be queued.** Sending qualifies because the client mints the message id;
 reactions, pins and saves qualify because the server swallows duplicates. Marking a conversation
@@ -98,57 +117,46 @@ moves the read pointer backwards.
 
 ## Composer and message bodies
 
-`MessageComposer` is a rich-text editor, like `CommentComposer` on the intervention side.
-`POST /messages` stores rich text sanitized against `messaging.message` in the API's
-`config/packages/html_sanitizer.yaml`, and the editor's `getSemanticHTML()` output maps onto that
-allow-list directly — `<strong> <em> <u> <s> <ul>/<ol>/<li> <blockquote> <pre> <a href>`.
+`MessageComposer` is a **plain textarea** built with Signal Forms. The rich-text editor it replaces
+was 904 lines of Quill integration, and both Quill and PrimeNG left with the UI strip. Enter sends,
+Shift+Enter starts a line, and a composition in progress is left alone — an IME uses Enter to accept
+a candidate, and intercepting it would send half a word.
 
-Four things about that editor are not obvious and are easy to undo by accident:
+Two consequences of plain text that are easy to undo by accident:
 
-- **The toolbar may only offer marks that survive the round trip.** The allow-list keeps no
-  attribute but `a[href]`, so alignment, indentation, colour and syntax language — everything Quill
-  expresses through a `class` or a `data-` attribute — are dropped on the way in. Adding such a
-  button gives the member a control that silently does nothing. What is offered has been checked
-  against the stored result, including the code block, which arrives as
-  `<pre data-language="plain">` and keeps its `<pre>`.
-- **`getSemanticHTML()` encodes every space as `&nbsp;`**, not just runs of them.
-  `normalizeEditorHtml` undoes it before anything else touches the body. Left alone it breaks two
-  things at once: a stored message never wraps, and a mention label of more than one word stops
-  matching its entry and is never substituted for its marker.
-- **Enter is taken from the editor in the capture phase**, by a listener on the composer's own host.
-  Quill installs its own `keydown` handler on the editor root and bails on `event.defaultPrevented`,
-  so running first is all it takes — but a template `(keydown)` bubbles, and by then the line break
-  is already in. The same listener is what drives the mention list.
-- **The 4000-character ceiling is measured on the serialized HTML**, because that is what the domain
-  validates, and a contenteditable has no `maxlength` to lean on. `canSend` and the counter both
-  read the body that will actually be posted.
+- **The 4000-character ceiling is the domain's, not the DTO's.** `PostMessageInput` advertises
+  40 000 and `MessageBody` rejects anything over 4 000, so a longer body passes validation and is
+  refused by the handler with a `422`. `MESSAGE_BODY_MAX_LENGTH` is the number that matters.
+- **Rendered bodies still need `whitespace-pre-wrap`.** A body is bound as HTML — the API stores it
+  that way and sanitized it server-side — so real newlines would otherwise collapse.
 
 **Mentions are text, not a field.** The author writes `@{memberUuid}` inline, the server parses it
-into `mentions[]` and leaves the marker in the body — **escaped**. Symfony's sanitizer rewrites
-every `@` in a text node to `&#64;`, so a body read back from the API always reads
-`&#64;{memberUuid}`; `renderMessageBodyHtml` matches both spellings, and only the escaped one ever
-occurs in practice. The composer therefore shows `@Name` and keeps
-a label → id map, substituting markers back on send (`applyMentionMarkers`). Labels are substituted
-longest-first, and a name already used for someone else in the same draft gets a short id suffix —
-without that, two members sharing a display name would silently mention the wrong one.
+into `mentions[]` and leaves the marker in the body — **escaped**: Symfony's sanitizer rewrites every
+`@` in a text node to `&#64;`, so a body read back always reads `&#64;{memberUuid}`.
+`renderMessageBodyHtml` matches both spellings.
 
-Candidates come from `MEMBER_DIRECTORY_PORT`, resolved by the **page** and passed in: the composer
-is presentational, and the port is route-provided behind `organization.members.read`. Without that
-permission the list is simply empty — a working composer with no suggestions, never an error.
+The composer therefore shows names and keeps the pairing: `findMentionQuery` reports the `@…` the
+caret sits in, the picked label goes into the draft as `@Name`, and `applyMentionMarkers` rewrites
+labels back into markers **on send**. The draft has to stay something a human can read and edit,
+which is why the id never appears in front of the author. Two consequences a reviewer must keep:
 
-`ChatMessageBody` (`@shared/chat`) renders the body in **one** binding, and takes HTML that is
-**already rendered**: `MessageRow` applies `renderMessageBodyHtml` before handing it over, because
-the marker form is this API's — the sanitizer rewrites every `@` — and a generic chat primitive
-must not inherit one backend's serialization. An earlier version tokenized the body at each marker
-and bound the runs separately, which was safe only while bodies were plain text: a mention inside
-formatting splits its `<strong>` across two bindings and the parser auto-closes each half.
-`renderMessageBodyHtml` substitutes the chip in place instead. The rich-text skin is a set of
-descendant rules on that element, for the same reason the chip's class is applied there — the
-stored HTML carries no classes of its own.
+- **The list takes Enter before the composer does.** With a suggestion highlighted, Enter means
+  "that one"; sending instead posts a half-typed name.
+- **The map records what was picked, not what the draft still says.** A mention the author has
+  since deleted or retyped finds no match on send and is simply dropped.
 
-The pages pass one `mentionNames` map for the whole thread, the directory underneath and the
-messages' own names on top. The messages' names are authoritative, but the optimistic row of a
-message just sent carries none, and its chips would read "member" until the server echoed back.
+**Only the conversation's two participants can be mentioned.** The directory holds the whole
+organization, but a mention creates an inbox item — offering a third party would notify someone
+about a conversation they cannot open. A counterpart the directory has not resolved is not offered
+either: a mention must carry a real member id, and the neutral label the header falls back to is not
+one.
+
+**`renderMessageBodyHtml` runs on the page, not in the row.** `MessageRow` takes HTML that is
+already rendered, so the marker form — this API's, not chat's in general — stops at the page
+boundary. An earlier version tokenized the body at each marker and bound the runs separately, which
+was safe only while bodies were plain text: a mention inside formatting splits its `<strong>` across
+two bindings and the parser auto-closes each half. Substituting the chip in place keeps the document
+well-formed whatever surrounds it.
 
 ## Presence
 
@@ -211,16 +219,16 @@ slices use plain `CallState` fields.
 
 ## Cross-Feature Dependencies
 
-- Consumes the parent feature's `ORGANIZATION_CONTEXT_PORT` (bound by the shell route) wherever a
-  root-provided unit needs the active organization as a parameter — for example presence pinging
-  and the assistant store. The port is kept rather than replaced by a direct store import even
-  though nesting would now allow one: the slot contributions below are instantiated by
-  `workspace-layout`, and `ARCHITECTURE.md` §4 forbids a layout from injecting a feature store.
-- Consumes `MEMBER_DIRECTORY_PORT` (provided by the shell route) to resolve member ids to
-  names/avatars; a root-provided store cannot see it, which is why member-name resolution lives in
-  `ChannelInfoPanel` rather than in `ChannelPanelStore`.
-- Contributes to `workspace-layout` shell slots (`SECONDARY_NAV_SLOT`, `CONVERSATION_HEADER_SLOT`,
-  `PANEL_SLOT`) instead of owning the shell frame.
+- Consumes the parent feature's `ORGANIZATION_CONTEXT_PORT` wherever a unit needs the active
+  organization as a parameter — `DirectMessagesNav`, presence pinging, the assistant store.
+- Consumes `MEMBER_DIRECTORY_PORT` to resolve member ids to names and avatars. It is bound in
+  `organization.feature.ts`, so a root-provided store can see it; earlier notes here claiming
+  otherwise described a route-scoped binding that no longer exists.
+- Consumes `ORGANIZATION_MEMBER_ACCESS_PORT` for the acting member's profile and permissions: to
+  decide which messages are the reader's own, and to gate the composer on `messaging.write`, which
+  `messaging.read` does not imply.
+- Consumes `@features/organization/models` for `ORGANIZATION_PERMISSION` and `MemberDirectoryEntry`,
+  and `@features/organization/http/guards` for `organizationPermissionGuard`.
 
 ## Invariants reviewers must preserve
 
@@ -246,9 +254,15 @@ These come from the backend contract and are easy to get wrong:
 - **Mercure frames are invalidation signals, not data.** A frame carries six fields where
   `MessageOutput` needs twelve, there is no `GET /api/messages/{id}` to hydrate one,
   `message.created` doubles as the threaded-reply event, and frames emit explicit `null`s where REST
-  omits the key. `MessageThreadStore.connect()` therefore coalesces frames and re-reads page 1,
-  upserting so paged-in history survives. The limit is real and unavoidable: a change to a message
-  that has fallen off page 1 is not picked up.
+  omits the key. `MessageThreadStore.connect()` therefore coalesces frames and re-reads the newest
+  page, upserting so paged-in history survives. The limit is real and unavoidable: a change to a
+  message outside the loaded window is not picked up.
+- **The subscriber token must be re-minted.** The hub issues it with a 900 s lifetime and
+  `MercureService` never renews one: on expiry the socket closes, every reconnection retries with
+  the same dead token, and the conversation goes quiet with no visible symptom. `connect()` re-mints
+  on a `timer(0, …)`, and the inner `switchMap` reopening the socket is required rather than
+  incidental — the token travels in the `EventSource` URL, so a fresh one only takes effect on
+  reopen.
 - **Reconnecting is when to refetch.** The hub replays nothing — no transport is configured and
   publishers set no update ids — so `Last-Event-ID` resume does not exist here. The store watches
   `MercureService.status()` and catches up when a topic returns to `connected`.
@@ -279,9 +293,19 @@ These come from the backend contract and are easy to get wrong:
   The Files tab lists metadata only.
 - **`MessagingLinkOutput.label` is never populated** and `ConversationAttachmentOutput.revision` is
   always `1` on the list — the factory behind it never assigns the real value.
-- **Page 1 replaces, later pages append.** Message and bookmark lists arrive oldest-first, so
-  history is a _further_ page. A page-1 read is a fresh load or a conversation switch and must reset
-  the collection — appending it would leave the previous conversation's rows on screen.
+- **The newest messages are on the _last_ page.** `listByConversation` orders `createdAt ASC` from a
+  plain offset, so page 1 is the oldest 50. A thread therefore opens on the last page, reads history
+  by walking page numbers **down**, and refreshes the last page rather than the first. Re-reading
+  page 1 — which is what the store did before this surface existed — means a new message is never
+  picked up in any conversation longer than one page. `withEntities` keeps insertion order, so the
+  thread renders `sortedMessages`, not the raw collection.
+- **`MessageThreadStore` must be `reset()` between conversations.** It is component-scoped, but the
+  router reuses the page when only `:conversationId` changes, so `providers: [MessageThreadStore]`
+  runs once. Without the reset the previous thread's messages render under the new header for a full
+  round trip and its unsent rows keep a Retry that targets the wrong conversation.
+- **A send outlives the route change that started it.** `mergeMap` is deliberate, so both handlers
+  check the thread is still on the conversation the message was written in. The outbox queue is
+  outside that check: the message was written and is owed a delivery wherever the reader has gone.
 - **`itemsPerPage` is clamped server-side to 1..100** and pagination must be driven from
   `totalItems`, never from `member.length`.
 - Collections use `member` / `totalItems`, matching `ARCHITECTURE.md` §11.7 and
@@ -289,69 +313,107 @@ These come from the backend contract and are easy to get wrong:
 
 ## Accessibility decisions worth keeping
 
-Four of these look like they could be simplified. They cannot.
+These look like they could be simplified. They cannot.
 
 - **The assistant transcript is not a live region.** A reply arrives as ~20 Mercure frames, each
   carrying the whole accumulated answer rather than a delta, so `aria-live` on the container makes a
   screen reader restart the paragraph twenty times. A sibling `role="status"` line announces the
   _state_ — loading, answering, ready, failed — and the transcript stays silently readable.
-- **A status region has to exist before it fires.** `message-row`'s "Not sent" line is mounted
-  unconditionally and hidden with a class, because a `role="status"` inserted at the same instant as
-  its text is a region the screen reader has never seen, and the announcement is lost.
 - **A dot cannot carry its own label.** `aria-label` on a bare `<span>` has no role to attach to and
   most screen readers drop it, so the presence dot and the unread badge were colour-only in practice
   despite looking labelled. The state now lives in `sr-only` text or in the trigger's own name.
-- **Avatars are `aria-hidden`.** The avatar rendered an `<img>` with no `alt` attribute at
-  all, so an image avatar was announced as its URL. The author's name is adjacent text in every
-  call site.
+- **An avatar image carries `alt=""`.** Without it a picture avatar is announced as its URL, and a
+  real `alt` would repeat a name the row already prints. The author's name is adjacent text at every
+  call site, so the image is decorative by construction.
 
-`@shared/chat`'s `ChatMessage` takes `canReact` / `canPin` / `canSave` / `canReply` / `canCopy` /
-`canMarkRead` for the same class of reason: the saved-messages page can only unsave and copy, so
-leaving the rest mounted put focusable controls per row in the tab order that silently did nothing.
+When per-message actions return, each control must be answerable per row rather than per surface:
+the API lets the author or a holder of `organization.messaging.manage` delete, so a control offered
+to someone the server will refuse is worse than no control at all. Whatever the row ends up taking,
+it mirrors and never replaces the server's own check.
 
-`canDelete` is answered **twice**, and both answers must be yes. The view-model's `canDelete` says
-whether the _reader_ may delete this message — the API allows the author or a holder of
-`organization.messaging.manage`, and only the consumer can decide that, which the pages feed in
-through the adapter's `actingMember` and `canModerate` options. The `canDelete` **input** is the
-surface's veto over that: the reply panel's root message is deletable in principle but has nowhere
-to send the event, so it turns the input off. The input never grants; it only withholds. Both
-mirror, and neither replaces, the server's own check.
+## The conversation surface is spartan, assembled here
 
-## The conversation surface comes from `@shared/chat`
+`@shared/chat` no longer exists, and it is not coming back: **spartan owns the chat vocabulary.**
+The components under `ui/` are compositions of vendored primitives, not new design:
 
-`ChatThread` owns the scroller, the date rules, the empty/loading/error states and the "load older"
-affordance; `ChatMessage` owns a row. This feature supplies data and receives events — including
-`loadMore`, because how many pages there are is this feature's arithmetic, not the thread's.
-`data-access/adapters/chat-message.adapter.ts` is the whole boundary: it projects `MessageOutput`
-onto `ChatMessageItem`, and everything the chat concept must not know stops there — the mention
-marker form, the author IRI, and the fact that delivery state is tracked as id lists rather than
-per message.
+| Surface             | Built from                                                                                                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MessageRow`        | `hlmMessage` (`align`), `hlmMessageAvatar`, `hlmMessageContent`, `hlmMessageHeader`, `hlmMessageFooter`, `hlmBubble` / `hlmBubbleContent`                                                              |
+| `MessageReactions`  | host is `hlmBubbleReactions`; chips are `hlmToggle`; picker is `popover`                                                                                                                               |
+| `MessageThread`     | date rules are `hlmMarker` / `hlmMarkerContent`                                                                                                                                                        |
+| `MessageComposer`   | card is `input-group` (`hlmInputGroupTextarea` + a `block-end` `hlmInputGroupAddon` + `hlmInputGroupButton`), hint is `hlmKbd`, read-only notice is `hlmAlert`, mention rows are `hlmItem`             |
+| `DirectMessagesNav` | rows are `hlmSidebarMenuButton` (icon-rail tooltip, `hlmAvatar` leading element), unread count is `hlmSidebarMenuBadge`, "New message" is `hlmSidebarGroupAction`, loading is `hlmSidebarMenuSkeleton` |
 
-Both conversation pages are now the same three things: a thread, a composer, and (for a direct
-conversation) a counterpart header. **Every label is passed in**, because the two name themselves
-differently — `@@workspace.thread.aria` "Conversation" against `@@workspace.direct.thread.aria`
-"Direct conversation" — and a shared concept can own neither string.
+Anything missing is generated with `npx ng g @spartan-ng/cli:ui <name>` before it is written by
+hand — that is the rule, and the first pass at this feature broke it. **The CLI reformats
+`tsconfig.json`** (every array expanded to multi-line) on each run: revert it and re-add only the
+new `@shared/ui/<name>` path entry.
 
-Three consequences worth keeping:
+**Both scrollers are native `overflow-y-auto`, deliberately.** Spartan's `scroll-area` was generated
+during this work and then **removed again**, along with the `ngx-scrollbar` dependency it drags in —
+a runtime dependency `ARCHITECTURE.md` §1.1 does not list. The thread's scroller could not have used
+it anyway: scroll position there is driven imperatively through `scrollTop` on the element. Styling
+one pane's scrollbar and not the one beside it would have cost a documented dependency exception to
+buy an inconsistency. Re-generating `scroll-area` reinstates the dependency; that is a decision, not
+a detail.
 
-- **Reference cards reach a row through a template, not a field.** Their four types are this
-  domain's, so `<ng-template appChatMessageExtra let-message>` renders them from `message.data`,
-  which is the message itself round-tripped untouched.
-- **Body rendering is memoized in two stages.** Turning mention markers into chips is a regex over
-  every body; sending a message touches the store's in-flight ids. Folded into one computed, every
-  send would re-render the mentions of the whole loaded thread — hence `baseMessages` (the regex)
-  and `chatMessages` (delivery state only) in both conversation pages.
+**`DirectMessagesNav` has no name filter.** Its predecessor, `DirectConversationList`, filtered the
+already-loaded rows client-side over `counterpartName`; the sidebar rail is narrower than that pane
+ever was, and a search field belongs beside a scrollable list, not an icon-collapsible one. The list
+is still capped at one page — the API pages direct conversations and nothing here asks for another
+page — so a name that has not been loaded will not be found either way. Revisit both when paging
+arrives.
+
+**One deviation, and it is mechanical rather than visual.** The mention list is a local positioned
+overlay: `autocomplete` and `command` bind a combobox to an input's whole value, not to a caret
+position inside a multiline draft, and `popover` would pull focus out of the textarea the author is
+still typing in. Its rows are `hlmItem` and its surface mirrors `hlm-popover-content` token for
+token.
+
+Four decisions in that surface are load-bearing, because spartan covers none of them:
+
+- **The thread owns the only scroller on the page.** The dashboard shell wraps a routed page in an
+  `overflow-y-auto` box of its own, so every level between the two declares `min-h-0` and the page
+  host declares `overflow-hidden`. One omission and the whole page scrolls, taking the composer with
+  it.
 - **The composer is projected into the thread, not placed beside it.** It becomes the scroller's
   sticky footer, which is what lets the scrollbar run to the bottom of the pane instead of stopping
   short of the composer — and, because the two then share one content box, what makes them line up
   at every width with no compensation for the scrollbar's gutter.
+- **Scroll position is managed in TypeScript because nothing in CSS covers it.** The thread opens at
+  the newest message, follows new ones only while the member is already within 64 px of the bottom,
+  and holds its place when older history lands above. `overflow-anchor` cannot substitute — Safari
+  does not implement it.
+- **The read marker moves on `caughtUp`, not on scroll.** The thread reports arriving at the newest
+  message; the page moves the marker, and only while the tab is visible. Gating on the event rather
+  than the scroll handler is what keeps a Mercure burst from becoming one `PATCH` per frame.
 
-## Threaded replies live in their own store and their own panel
+**Reactions live inside the bubble, in spartan's own slot.** `hlmBubbleReactions` floats the cluster
+over the bubble's corner and drops its padding once it holds buttons (`has-[button]:p-0`) — it is
+built for an interactive cluster, not a passive badge. The component carries it as a host directive
+and hides itself rather than rendering an empty pill.
+
+**Reactions are a toggle the store resolves.** A chip reports only which emoji was pressed;
+`MessageThreadStore.toggleReaction` decides whether that adds or withdraws, because it holds the
+tally the chip was drawn from — asking the row would mean answering the same question twice and
+letting the two disagree. The picker offers a short fixed set rather than an emoji keyboard: the API
+stores whatever string it is sent, so a wider choice fragments the tallies without adding meaning.
+A chip carries a full accessible name (`react with 👍, 3 so far`); neither the emoji nor the count
+reads as a control on its own, and colour alone never says whether the reader is part of a tally.
+
+Reacting is gated on `messaging.write`, not on being able to read the conversation. Without it the
+existing tallies still render, disabled, and the picker is absent.
+
+Reference cards, pins, saved messages and threaded replies are **not rendered**. Every one is
+supported by the stores already; each is a UI-only change.
+
+## Threaded replies live in their own store (their panel is not built)
 
 `GET /conversations/{id}/messages` **excludes replies** (`parentMessage IS NULL` in the repository),
 so a reply is not a row `MessageThreadStore` will ever hand back. It is a second collection, read
 from its parent — which is why `MessageRepliesStore` exists beside the thread rather than inside it,
-and why `MessageThreadDrawer` is a panel over the conversation rather than an inline expansion.
+and why its surface, when it returns, is a panel over the conversation rather than an inline
+expansion.
 
 Threading is single-level: the API refuses a reply to a reply, so nothing recurses.
 
@@ -365,10 +427,10 @@ Two consequences:
   page 1, and a parent the member scrolled back to is not on it. There is no
   `GET /api/messages/{id}` to refetch one message with.
 
-Known gaps, deliberately not fixed here because both need a new shell region rather than a finition
-edit: `MessagingSyncChip` lives in `CONVERSATION_HEADER_SLOT`, which is inside `<main>`, so it is
-invisible while a phone is on the channel-list pane; and a failed send is only retryable from inside
-the channel it belongs to, so "2 not sent" is a dead end once the member has navigated away.
+Known gap, deliberately not fixed here: a failed send is only retryable from inside the conversation
+it belongs to, so a member who navigates away has no way back to it short of reopening that
+conversation. The outbox keeps draining regardless, so nothing is lost — only the retry control is
+out of reach.
 
 ## Permissions
 
@@ -380,7 +442,12 @@ the panel nor its toggle renders.
 
 - See "Invariants reviewers must preserve" above for the full backend-contract list; those are the
   invariants that matter most for this feature and must not regress silently.
-- Collaboration contributes to the workspace shell through published slots; it must not take over
-  shell composition or route ownership from `layouts/workspace-layout`.
+- Collaboration owns its own pages under `/organizations/:organizationId/messages`; it must not take
+  over shell composition, and a shell contribution goes through `@shared/layout-slot` rather than a
+  layout import.
+- **No member id ever reaches the screen as a name.** Only the list endpoint reports a counterpart,
+  and the directory needs `organization.members.read`, which messaging does not imply. Every
+  unresolved case — deep link, conversation past the first page of the list, missing permission —
+  renders the same neutral label.
 - Only replay-safe operations (message send, reactions, pins, saves) may be queued in the offline
   outbox; read-state mutations (conversation read markers) must never be queued.

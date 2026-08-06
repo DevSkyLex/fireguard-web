@@ -2,7 +2,11 @@ import type { Routes } from '@angular/router';
 import { withAccountMenu } from '@features/account';
 import { authGuard } from '@features/auth';
 import { notFoundRedirectGuard } from '@features/error';
-import { withOrganizationNav, withOrganizationSwitcher } from '@features/organization';
+import {
+  withDirectMessagesNav,
+  withOrganizationNav,
+  withOrganizationSwitcher,
+} from '@features/organization';
 import {
   DashboardLayout,
   provideDashboardLayoutSlots,
@@ -64,7 +68,7 @@ export const APP_ROUTES: Routes = [
     providers: [
       provideDashboardLayoutSlots({
         sidebarHeader: [withOrganizationSwitcher()],
-        sidebarNav: [withOrganizationNav(), withDashboardGlobalNav()],
+        sidebarNav: [withOrganizationNav(), withDirectMessagesNav(), withDashboardGlobalNav()],
         sidebarFooter: [withAccountMenu()],
         header: [withDashboardBreadcrumb()],
         headerActions: [withThemeSwitcher()],

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBuilding2, lucideCheck, lucideChevronsUpDown, lucidePlus } from '@ng-icons/lucide';
+import { lucideCheck, lucideChevronsUpDown, lucidePlus } from '@ng-icons/lucide';
 import type { OrganizationOutput } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -42,11 +42,11 @@ import type { OrganizationSwitcherOption } from './models';
  * to another or create one. The paired chevrons are the affordance — without
  * them the row reads as a title rather than as a control.
  *
- * "None selected" is a state of its own, not an empty trigger: it says so, and
- * says whether that is because the reader has to choose one or because they
- * have none yet. It is also the ordinary state of every global page — the URL
- * is what selects an organization, and those name none — which is why picking
- * one simply navigates to `/organizations/:organizationId`.
+ * There is no "none selected" state: the workspace last worked in stays open
+ * on the account and every other global page, so the trigger always has an
+ * organization to name once the list has arrived. Picking another simply
+ * navigates to `/organizations/:organizationId` — the URL is still what
+ * chooses; it is only the memory of it that outlives the route.
  *
  * Feature-owned rather than layout-owned because it reads organization state;
  * the shell only lends it a slot (`ARCHITECTURE.md` §2.7). It is contributed
@@ -78,10 +78,7 @@ import type { OrganizationSwitcherOption } from './models';
     HlmSidebarMenuItem,
     HlmSkeleton,
   ],
-  providers: [
-    OrganizationStore,
-    provideIcons({ lucideBuilding2, lucideCheck, lucideChevronsUpDown, lucidePlus }),
-  ],
+  providers: [OrganizationStore, provideIcons({ lucideCheck, lucideChevronsUpDown, lucidePlus })],
   templateUrl: './organization-switcher.component.html',
   host: { class: 'block min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -176,11 +173,16 @@ export class OrganizationSwitcher implements OnInit {
    * @readonly
    *
    * @description
-   * The organization currently selected, or `null` when none is — which is the
-   * ordinary state of every global page, since only the URL selects one.
+   * The organization currently open, taken from the resolved resource and
+   * falling back to the matching row of the list — which is what a global page
+   * reached directly has, since nothing resolved the resource there.
+   *
+   * `null` means the trigger has nothing to show *yet*, and the header renders
+   * a skeleton: a signed-in reader always has a workspace, the landing guard
+   * having sent anyone without one to onboarding.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 3.0.0
    *
    * @type {Signal<OrganizationSwitcherOption | null>}
    */
@@ -189,42 +191,12 @@ export class OrganizationSwitcher implements OnInit {
       const organization: OrganizationOutput | null =
         this.organizationContext.selectedOrganization();
 
-      return organization ? this.toOption(organization, true) : null;
+      if (organization) return this.toOption(organization, true);
+
+      return (
+        this.options().find((option: OrganizationSwitcherOption): boolean => option.active) ?? null
+      );
     },
-  );
-
-  /**
-   * Property isLoading
-   * @readonly
-   *
-   * @description
-   * Whether the trigger has nothing to show *yet*, as opposed to nothing to
-   * show at all — the difference between a skeleton and the empty state.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly isLoading: Signal<boolean> = computed(
-    (): boolean => this.active() === null && this.organizationContext.isLoadingOrganization(),
-  );
-
-  /**
-   * Property hasOrganizations
-   * @readonly
-   *
-   * @description
-   * Whether the reader belongs to any organization at all, which decides
-   * whether "none selected" means "pick one" or "create your first".
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly hasOrganizations: Signal<boolean> = computed(
-    (): boolean => this.options().length > 0,
   );
 
   /**

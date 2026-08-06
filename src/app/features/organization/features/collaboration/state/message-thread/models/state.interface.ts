@@ -18,10 +18,18 @@ export interface MessageThreadState {
   /** Server-reported total. Paging must be driven from this, not the row count. */
   readonly total: number;
   /**
-   * Highest page fetched so far. Messages come back oldest-first, so scrolling
-   * back through history means asking for the *next* page, not the previous.
+   * Lowest page fetched so far, or `0` before the first load.
+   *
+   * The API returns messages oldest-first, so the *last* page holds the newest
+   * ones and a thread opens there. Reading history therefore walks page numbers
+   * **down** from that page, and this marks how far down it has gone.
    */
-  readonly loadedPage: number;
+  readonly oldestLoadedPage: number;
+  /**
+   * Highest page fetched so far, or `0` before the first load. This is the
+   * newest end of the conversation, and the page a background refresh re-reads.
+   */
+  readonly newestLoadedPage: number;
   /** `GET /conversations/{id}/messages`. */
   readonly listCallState: CallState;
   /** Posting and editing. */

@@ -10,7 +10,12 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import { setAllEntities, updateEntity, withEntities } from '@ngrx/signals/entities';
+import {
+  removeAllEntities,
+  setAllEntities,
+  updateEntity,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, EMPTY, type Observable, pipe, switchMap, tap } from 'rxjs';
@@ -91,15 +96,27 @@ export const DirectConversationsStore = signalStore(
   withMethods((store, service = inject(ConversationService), dispatcher = inject(Dispatcher)) => ({
     /**
      * Loads the member's direct conversations for an organization.
+     *
+     * A load for a *different* organization empties the collection first. The
+     * store is root-provided and the rows only land in the response handler, so
+     * without that the switcher would leave the previous organization's
+     * conversations — and the member names behind `counterpartFor` — on screen
+     * for the length of a round trip.
      */
     load: rxMethod<ListDirectConversationsQuery>(
       pipe(
-        tap((query: ListDirectConversationsQuery) =>
+        tap((query: ListDirectConversationsQuery) => {
+          if (store.organizationId() !== query.organization) {
+            patchState(store, removeAllEntities({ collection: 'directConversation' }), {
+              total: 0,
+            });
+          }
+
           patchState(store, {
             organizationId: query.organization,
             listCallState: pendingCallState(),
-          }),
-        ),
+          });
+        }),
         switchMap((query: ListDirectConversationsQuery) =>
           service.listDirectConversations(query).pipe(
             tapResponse({

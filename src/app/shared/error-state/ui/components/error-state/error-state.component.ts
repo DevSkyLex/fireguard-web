@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
+import { HlmEmptyImports } from '@shared/ui/empty';
 
 /**
  * Component ErrorState
@@ -7,9 +8,11 @@ import { NgIcon } from '@ng-icons/core';
  *
  * @description
  * The something-broke surface: a glyph, a heading, a sentence, and whatever the
- * caller projects as the retry. Distinct from {@link EmptyState} because it
- * carries `role="alert"` and a destructive tone — an empty list and a failed
- * one must not read the same. Generic by design (`ARCHITECTURE.md` §6.4).
+ * caller projects as the retry. A composition of spartan's vendored `empty`
+ * primitive (`@shared/ui/empty`), re-tinted destructive at the call site — do
+ * not fork it back to bespoke markup. Distinct from {@link EmptyState} because
+ * it carries `role="alert"` and a destructive tone — an empty list and a
+ * failed one must not read the same. Generic by design (`ARCHITECTURE.md` §6.4).
  *
  * The icon is a name, not a component: the caller registers it with
  * `provideIcons()` so this concept pulls in no icon set of its own.
@@ -27,7 +30,7 @@ import { NgIcon } from '@ng-icons/core';
  */
 @Component({
   selector: 'app-error-state',
-  imports: [NgIcon],
+  imports: [NgIcon, ...HlmEmptyImports],
   templateUrl: './error-state.component.html',
   host: { role: 'alert' },
   changeDetection: ChangeDetectionStrategy.OnPush,

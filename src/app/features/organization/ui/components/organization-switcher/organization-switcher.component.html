@@ -1,16 +1,4 @@
-@if (isLoading()) {
-  <ul hlmSidebarMenu>
-    <li hlmSidebarMenuItem>
-      <div class="flex h-12 items-center gap-2 p-2">
-        <hlm-skeleton class="size-8 shrink-0 rounded-lg" />
-        <div class="grid flex-1 gap-1.5">
-          <hlm-skeleton class="h-3.5 w-24" />
-          <hlm-skeleton class="h-3 w-16" />
-        </div>
-      </div>
-    </li>
-  </ul>
-} @else {
+@if (active(); as organization) {
   <ul hlmSidebarMenu>
     <li hlmSidebarMenuItem>
       <button
@@ -21,50 +9,24 @@
         [side]="menuSide()"
         align="start"
       >
-        @if (active(); as organization) {
-          <hlm-avatar class="size-8 shrink-0 rounded-lg">
-            @if (organization.logoUrl; as logoUrl) {
-              <img hlmAvatarImage [src]="logoUrl" [alt]="organization.name" />
-            }
-            <span
-              hlmAvatarFallback
-              class="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
-              >{{ organization.initials }}</span
-            >
-          </hlm-avatar>
-
-          <div class="grid flex-1 text-left text-sm leading-tight">
-            <span class="truncate font-medium">{{ organization.name }}</span>
-            @if (organization.planName; as planName) {
-              <span class="truncate text-xs text-muted-foreground">{{ planName }}</span>
-            }
-          </div>
-        } @else {
-          <div
-            class="flex size-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-sidebar-border"
+        <hlm-avatar class="size-8 shrink-0 rounded-lg">
+          @if (organization.logoUrl; as logoUrl) {
+            <img hlmAvatarImage [src]="logoUrl" [alt]="organization.name" />
+          }
+          <span
+            hlmAvatarFallback
+            class="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
+            >{{ organization.initials }}</span
           >
-            <ng-icon
-              name="lucideBuilding2"
-              class="text-sm text-muted-foreground"
-              aria-hidden="true"
-            />
-          </div>
+        </hlm-avatar>
 
-          <div class="grid flex-1 text-left text-sm leading-tight">
-            <span class="truncate font-medium" i18n="@@org.switcher.noneTitle"
-              >No organization selected</span
-            >
-            @if (hasOrganizations()) {
-              <span class="truncate text-xs text-muted-foreground" i18n="@@org.switcher.noneChoose"
-                >Choose one to start working</span
-              >
-            } @else {
-              <span class="truncate text-xs text-muted-foreground" i18n="@@org.switcher.noneCreate"
-                >Create your first one</span
-              >
-            }
-          </div>
-        }
+        <div class="grid flex-1 text-left text-sm leading-tight">
+          <span class="truncate font-medium">{{ organization.name }}</span>
+          @if (organization.planName; as planName) {
+            <span class="truncate text-xs text-muted-foreground">{{ planName }}</span>
+          }
+        </div>
+
         <ng-icon name="lucideChevronsUpDown" class="ml-auto text-base" aria-hidden="true" />
       </button>
     </li>
@@ -72,15 +34,7 @@
 
   <ng-template #menu>
     <hlm-dropdown-menu class="min-w-60 rounded-lg">
-      @if (hasOrganizations()) {
-        <hlm-dropdown-menu-label i18n="@@org.switcher.heading"
-          >Organizations</hlm-dropdown-menu-label
-        >
-      } @else {
-        <p class="px-2 py-1.5 text-xs text-muted-foreground" i18n="@@org.switcher.empty">
-          You do not belong to any organization yet.
-        </p>
-      }
+      <hlm-dropdown-menu-label i18n="@@org.switcher.heading">Organizations</hlm-dropdown-menu-label>
 
       @for (option of options(); track option.id) {
         <button
@@ -104,9 +58,7 @@
         </button>
       }
 
-      @if (hasOrganizations()) {
-        <hlm-dropdown-menu-separator />
-      }
+      <hlm-dropdown-menu-separator />
 
       <button hlmDropdownMenuItem class="gap-2" (click)="createOrganization()">
         <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
@@ -114,4 +66,16 @@
       </button>
     </hlm-dropdown-menu>
   </ng-template>
+} @else {
+  <ul hlmSidebarMenu>
+    <li hlmSidebarMenuItem>
+      <div class="flex h-12 items-center gap-2 p-2">
+        <hlm-skeleton class="size-8 shrink-0 rounded-lg" />
+        <div class="grid flex-1 gap-1.5">
+          <hlm-skeleton class="h-3.5 w-24" />
+          <hlm-skeleton class="h-3 w-16" />
+        </div>
+      </div>
+    </li>
+  </ul>
 }

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { isCallError, isCallSuccess } from '@core/request-state';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
@@ -159,5 +159,33 @@ describe('DirectConversationsStore', () => {
 
     store.ensureLoaded('/api/organizations/org-2');
     expect(service.listDirectConversations).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not serve one organization the rows of another', () => {
+    service.listDirectConversations.mockReturnValueOnce(of(collection([conversation()])));
+
+    const store = createStore();
+    store.load(query);
+    expect(store.rows()).toHaveLength(1);
+
+    service.listDirectConversations.mockReturnValueOnce(new Subject());
+    store.load({ organization: '/api/organizations/org-2' });
+
+    // The store is root-provided, so nothing else clears the previous workspace.
+    expect(store.rows()).toHaveLength(0);
+    expect(store.total()).toBe(0);
+    expect(store.counterpartFor('dc-1')).toBeUndefined();
+  });
+
+  it('should keep the list on screen while the same organization reloads', () => {
+    service.listDirectConversations.mockReturnValueOnce(of(collection([conversation()])));
+
+    const store = createStore();
+    store.load(query);
+
+    service.listDirectConversations.mockReturnValueOnce(new Subject());
+    store.load(query);
+
+    expect(store.rows()).toHaveLength(1);
   });
 });

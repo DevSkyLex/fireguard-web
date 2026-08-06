@@ -1,0 +1,111 @@
+@if (readOnly()) {
+  <div hlmAlert data-testid="message-composer-read-only">
+    <p hlmAlertDescription i18n="@@messages.composer.readOnly">
+      You can read this conversation but not write in it.
+    </p>
+  </div>
+} @else {
+  <form class="relative flex flex-col gap-1.5" novalidate (submit)="submit($event)">
+    @if (mentionCandidates().length > 0) {
+      <ul
+        class="absolute bottom-full left-0 z-20 mb-1 w-full max-w-sm overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+        id="message-composer-mentions"
+        role="listbox"
+        data-testid="message-composer-mentions"
+        i18n-aria-label="@@messages.composer.mentionsLabel"
+        aria-label="Members you can mention"
+      >
+        @for (member of mentionCandidates(); track member.memberId; let index = $index) {
+          <li
+            role="option"
+            [attr.aria-selected]="index === activeMention()"
+            [id]="'mention-option-' + member.memberId"
+          >
+            <button
+              hlmItem
+              size="xs"
+              type="button"
+              class="w-full text-start"
+              data-testid="message-composer-mention"
+              [class.bg-accent]="index === activeMention()"
+              (mousedown)="$event.preventDefault(); acceptMention(member)"
+            >
+              <div hlmItemMedia variant="image">
+                <hlm-avatar>
+                  @if (member.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback class="text-[10px]">
+                    {{ member.displayName.charAt(0) }}
+                  </span>
+                </hlm-avatar>
+              </div>
+              <div hlmItemContent>
+                <span hlmItemTitle class="truncate font-normal">{{ member.displayName }}</span>
+              </div>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <div hlmInputGroup class="rounded-2xl">
+      <textarea
+        hlmInputGroupTextarea
+        #field
+        rows="1"
+        data-testid="message-composer-input"
+        class="max-h-40 min-h-9"
+        i18n-aria-label="@@messages.composer.label"
+        aria-label="Message"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls="message-composer-mentions"
+        [placeholder]="placeholder()"
+        [formField]="composerForm.body"
+        [attr.aria-expanded]="mentionCandidates().length > 0"
+        [attr.aria-activedescendant]="activeMentionId()"
+        (keydown)="onKeydown($event)"
+        (input)="onFieldChanged()"
+        (keyup)="onFieldChanged()"
+        (click)="onFieldChanged()"
+      ></textarea>
+
+      <div hlmInputGroupAddon align="block-end" class="justify-between">
+        @if (remaining() !== null) {
+          <span
+            class="text-[11px] tabular-nums"
+            data-testid="message-composer-counter"
+            [class.text-muted-foreground]="(remaining() ?? 0) >= 0"
+            [class.text-destructive]="(remaining() ?? 0) < 0"
+          >
+            {{ remaining() }}
+          </span>
+        } @else {
+          <span class="hidden items-center gap-1 text-[11px] text-muted-foreground sm:inline-flex">
+            <kbd hlmKbd>Enter</kbd>
+            <span i18n="@@messages.composer.enterHint">to send</span>
+          </span>
+        }
+
+        <button
+          hlmInputGroupButton
+          size="icon-sm"
+          variant="default"
+          type="submit"
+          class="shrink-0 rounded-full"
+          data-testid="message-composer-send"
+          i18n-aria-label="@@messages.composer.send"
+          aria-label="Send message"
+          [disabled]="!canSend()"
+        >
+          <ng-icon name="lucideArrowUp" class="text-base" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+
+    @if (composerForm.body().touched() && composerForm.body().invalid()) {
+      <hlm-field-error>{{ composerForm.body().errors()[0].message }}</hlm-field-error>
+    }
+  </form>
+}

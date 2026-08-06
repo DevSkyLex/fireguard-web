@@ -14,7 +14,23 @@ import type { MessageOutput } from '@features/organization/features/collaboratio
 import { MessagingSyncCoordinatorService } from '@features/organization/features/collaboration/services';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import { messageRepliesStoreEvents } from '../../message-replies';
+import { MESSAGE_PAGE_SIZE } from '../constants';
 import { MessageThreadStore, type MessageThreadStoreType } from '../message-thread.store';
+
+/** What every read of a page asks for, now that the page size is explicit. */
+function pageOf(page: number): { page: number; itemsPerPage: number } {
+  return { page, itemsPerPage: MESSAGE_PAGE_SIZE };
+}
+
+/**
+ * Connects and lets the subscription be minted: the token is re-minted on a
+ * `timer(0, …)`, so nothing is subscribed until the scheduler has run once.
+ * Only valid under fake timers.
+ */
+function connectRealtime(store: MessageThreadStoreType): void {
+  store.connect('conversation-1');
+  vi.advanceTimersByTime(1);
+}
 
 function message(overrides: Partial<MessageOutput> = {}): MessageOutput {
   return {
@@ -151,15 +167,33 @@ describe('MessageThreadStore', () => {
     expect(store.hasMore()).toBe(false);
   });
 
-  it('should drive hasMore from the server total, not the row count', () => {
-    const page = collection([message()]);
-    service.list.mockReturnValue(of({ ...page, totalItems: 40 }));
+  it('should open on the newest page, not the first', () => {
+    service.list.mockReturnValueOnce(
+      of({ ...collection([message({ id: 'oldest' })]), totalItems: 120 }),
+    );
+    service.list.mockReturnValueOnce(
+      of({ ...collection([message({ id: 'newest' })]), totalItems: 120 }),
+    );
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
 
-    expect(store.total()).toBe(40);
+    // 120 messages at 50 a page put the newest ones on page 3.
+    expect(service.list).toHaveBeenNthCalledWith(1, 'conversation-1', pageOf(1));
+    expect(service.list).toHaveBeenNthCalledWith(2, 'conversation-1', pageOf(3));
+    expect(store.messageEntities().map((row) => row.id)).toEqual(['newest']);
     expect(store.hasMore()).toBe(true);
+  });
+
+  it('should open a conversation that fits one page in a single request', () => {
+    service.list.mockReturnValue(of({ ...collection([message()]), totalItems: 12 }));
+
+    const store = createStore();
+    store.load('conversation-1');
+
+    expect(service.list).toHaveBeenCalledTimes(1);
+    expect(store.total()).toBe(12);
+    expect(store.hasMore()).toBe(false);
   });
 
   it('should replace the collection when another conversation is opened', () => {
@@ -169,24 +203,68 @@ describe('MessageThreadStore', () => {
     );
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
-    store.load({ conversationId: 'conversation-2' });
+    store.load('conversation-1');
+    store.load('conversation-2');
 
-    // Page 1 is a fresh read: the previous conversation must not linger.
+    // Opening is a fresh read: the previous conversation must not linger.
     expect(store.messageEntities().map((row) => row.id)).toEqual(['message-2']);
   });
 
-  it('should append when older history is paged in', () => {
-    service.list.mockReturnValueOnce(of({ ...collection([message()]), totalItems: 2 }));
+  it('should page older history in below the loaded window', () => {
     service.list.mockReturnValueOnce(
-      of({ ...collection([message({ id: 'message-2' })]), totalItems: 2 }),
+      of({ ...collection([message({ id: 'probe' })]), totalItems: 120 }),
+    );
+    service.list.mockReturnValueOnce(
+      of({
+        ...collection([message({ id: 'newest', createdAt: '2026-03-01T00:00:00+00:00' })]),
+        totalItems: 120,
+      }),
     );
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
-    store.load({ conversationId: 'conversation-1', page: 2 });
+    store.load('conversation-1');
 
-    expect(store.messageEntities().map((row) => row.id)).toEqual(['message-1', 'message-2']);
+    service.list.mockReturnValueOnce(
+      of({
+        ...collection([message({ id: 'older', createdAt: '2026-02-01T00:00:00+00:00' })]),
+        totalItems: 120,
+      }),
+    );
+    store.loadOlder();
+
+    expect(service.list).toHaveBeenLastCalledWith('conversation-1', pageOf(2));
+    // Insertion order is not chronological once history lands behind the newest page.
+    expect(store.sortedMessages().map((row) => row.id)).toEqual(['older', 'newest']);
+  });
+
+  it('should stop paging older history at the first page', () => {
+    service.list.mockReturnValue(of({ ...collection([message()]), totalItems: 12 }));
+
+    const store = createStore();
+    store.load('conversation-1');
+    service.list.mockClear();
+    store.loadOlder();
+
+    expect(service.list).not.toHaveBeenCalled();
+  });
+
+  it('should empty the thread so another conversation can be opened into it', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    service.postMessageWithClientId.mockReturnValue(throwError(() => new Error('offline')));
+
+    const store = createStore();
+    store.load('conversation-1');
+    store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+
+    expect(store.failedMessageIds()).toHaveLength(1);
+
+    store.reset();
+
+    // The router reuses the page component, so nothing else clears these.
+    expect(store.messageEntities()).toHaveLength(0);
+    expect(store.failedMessageIds()).toEqual([]);
+    expect(store.conversationId()).toBeNull();
+    expect(store.total()).toBe(0);
   });
 
   it('should keep replyCount and references when a reaction lands', () => {
@@ -204,7 +282,7 @@ describe('MessageThreadStore', () => {
     );
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.react({ messageId: 'message-1', input: { emoji: '👍' } });
 
     const updated = store.messageEntityMap()['message-1'];
@@ -231,7 +309,7 @@ describe('MessageThreadStore', () => {
     service.removeReaction.mockReturnValue(of(undefined));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
 
     store.removeReaction({ messageId: 'message-1', emoji: '👍' });
     expect(store.messageEntityMap()['message-1'].reactions).toEqual([
@@ -251,7 +329,7 @@ describe('MessageThreadStore', () => {
     service.list.mockReturnValue(of(collection([message()])));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.markRead({ conversationId: 'conversation-1' });
 
     expect(conversations.markRead).toHaveBeenCalledWith('conversation-1', undefined);
@@ -261,7 +339,7 @@ describe('MessageThreadStore', () => {
     service.list.mockReturnValue(of(collection([message()])));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.markRead({ conversationId: 'conversation-1', lastReadMessageId: 'message-1' });
 
     expect(conversations.markRead).toHaveBeenCalledWith('conversation-1', {
@@ -275,7 +353,7 @@ describe('MessageThreadStore', () => {
     service.save.mockReturnValue(of(message({ isSaved: true })));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
 
     // The bookmark button is a toggle; before this it only ever saved, so a
     // second press re-saved an already-saved message.
@@ -287,6 +365,37 @@ describe('MessageThreadStore', () => {
     expect(service.save).toHaveBeenCalledWith('message-1');
   });
 
+  it('should withdraw a reaction the reader is part of, and add one they are not', () => {
+    service.list.mockReturnValue(
+      of(collection([message({ reactions: [{ emoji: '👍', count: 2, reactedByMe: true }] })])),
+    );
+    service.removeReaction.mockReturnValue(of(undefined));
+    service.addReaction.mockReturnValue(
+      of(message({ reactions: [{ emoji: '🎉', count: 1, reactedByMe: true }] })),
+    );
+
+    const store = createStore();
+    store.load('conversation-1');
+
+    // A chip is a toggle, and only the store knows which way it points.
+    store.toggleReaction('message-1', '👍');
+    expect(service.removeReaction).toHaveBeenCalledWith('message-1', '👍');
+
+    store.toggleReaction('message-1', '🎉');
+    expect(service.addReaction).toHaveBeenCalledWith('message-1', { emoji: '🎉' });
+  });
+
+  it('should add a reaction to a message it does not hold rather than throwing', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    service.addReaction.mockReturnValue(of(message()));
+
+    const store = createStore();
+    store.load('conversation-1');
+    store.toggleReaction('absent', '👍');
+
+    expect(service.addReaction).toHaveBeenCalledWith('absent', { emoji: '👍' });
+  });
+
   it('should unpin a pinned message and clear both pin fields', () => {
     service.list.mockReturnValue(
       of(collection([message({ pinnedAt: '2026-01-02T00:00:00+00:00', pinnedBy: 'member-2' })])),
@@ -294,7 +403,7 @@ describe('MessageThreadStore', () => {
     service.unpin.mockReturnValue(of(undefined));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.togglePin('message-1');
 
     expect(service.unpin).toHaveBeenCalledWith('message-1');
@@ -307,7 +416,7 @@ describe('MessageThreadStore', () => {
     service.list.mockReturnValue(of(collection([message()])));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
 
     TestBed.inject(Dispatcher).dispatch(messageRepliesStoreEvents.posted('message-1'));
 
@@ -321,7 +430,7 @@ describe('MessageThreadStore', () => {
     service.save.mockReturnValue(of(message({ isSaved: true, replyCount: 0, references: [] })));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.save('message-1');
 
     const updated = store.messageEntityMap()['message-1'];
@@ -336,7 +445,7 @@ describe('MessageThreadStore', () => {
     service.remove.mockReturnValue(of(undefined));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.remove('message-1');
 
     const tombstone = store.messageEntityMap()['message-1'];
@@ -361,7 +470,7 @@ describe('MessageThreadStore', () => {
       service.postMessageWithClientId.mockReturnValue(new Subject());
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
+      store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
 
       const optimistic = store.messageEntities()[0];
@@ -379,7 +488,7 @@ describe('MessageThreadStore', () => {
       );
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
+      store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
 
       // The id was ours, so there is no row to swap and no duplicate to
@@ -405,7 +514,7 @@ describe('MessageThreadStore', () => {
       );
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
+      store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
 
       // 409 means the message is already stored — queueing it again would be
@@ -421,7 +530,7 @@ describe('MessageThreadStore', () => {
       service.postMessageWithClientId.mockReturnValue(throwError(() => new Error('offline')));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
+      store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
 
       const clientId: string = sentClientId();
@@ -440,7 +549,7 @@ describe('MessageThreadStore', () => {
       service.postMessageWithClientId.mockReturnValue(new Subject());
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
+      store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'First.' } });
       store.send({ conversationId: 'conversation-1', input: { body: 'Second.' } });
 
@@ -448,6 +557,49 @@ describe('MessageThreadStore', () => {
       // first after its composer had already cleared.
       expect(service.postMessageWithClientId).toHaveBeenCalledTimes(2);
       expect(store.pendingMessageIds()).toHaveLength(2);
+    });
+
+    it('should not land a confirmation in the conversation opened after it', () => {
+      const inFlight = new Subject<MessageOutput>();
+      service.list.mockReturnValue(of(collection([])));
+      service.postMessageWithClientId.mockReturnValue(inFlight);
+
+      const store = createStore();
+      store.load('conversation-1');
+      store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+
+      store.reset();
+      store.load('conversation-2');
+
+      inFlight.next(message({ id: 'confirmed' }));
+      inFlight.complete();
+
+      // `mergeMap` lets a send outlive the route change that started it.
+      expect(store.messageEntityMap()['confirmed']).toBeUndefined();
+    });
+
+    it('should still queue a failed message after the reader has moved on', () => {
+      const inFlight = new Subject<MessageOutput>();
+      service.list.mockReturnValue(of(collection([])));
+      service.postMessageWithClientId.mockReturnValue(inFlight);
+
+      const store = createStore();
+      store.load('conversation-1');
+      store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+
+      const clientId: string = sentClientId();
+
+      store.reset();
+      store.load('conversation-2');
+      inFlight.error(new Error('offline'));
+
+      // The message was written and is owed a delivery wherever the reader went.
+      expect(outbox.queue).toHaveBeenCalledWith('conversation-1', 'message.send', {
+        conversationId: 'conversation-1',
+        clientId,
+        input: { body: 'Bien reçu.' },
+      });
+      expect(store.failedMessageIds()).toEqual([]);
     });
   });
 
@@ -463,7 +615,7 @@ describe('MessageThreadStore', () => {
     );
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
 
     expect(store.pinnedMessages().map((m: MessageOutput) => m.id)).toEqual([
       'message-2',
@@ -476,7 +628,7 @@ describe('MessageThreadStore', () => {
     service.edit.mockReturnValue(of(message({ body: 'Edited text.' })));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.edit({ messageId: 'message-1', input: { body: 'Edited text.' } });
 
     expect(store.messageEntityMap()['message-1'].body).toBe('Edited text.');
@@ -488,7 +640,7 @@ describe('MessageThreadStore', () => {
     service.edit.mockReturnValue(throwError(() => new Error('rejected')));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.edit({ messageId: 'message-1', input: { body: 'Edited text.' } });
 
     expect(store.postError()).not.toBeNull();
@@ -499,7 +651,7 @@ describe('MessageThreadStore', () => {
     service.remove.mockReturnValue(throwError(() => new Error('rejected')));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.remove('message-1');
 
     expect(store.postError()).not.toBeNull();
@@ -511,7 +663,7 @@ describe('MessageThreadStore', () => {
     service.save.mockReturnValue(throwError(() => new Error('rejected')));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.save('message-1');
 
     expect(store.messageEntityMap()['message-1'].isSaved).toBe(false);
@@ -522,7 +674,7 @@ describe('MessageThreadStore', () => {
     service.pin.mockReturnValue(of(message({ pinnedAt: '2026-02-01T00:00:00+00:00' })));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.pin('message-1');
 
     expect(store.messageEntityMap()['message-1'].pinnedAt).toBe('2026-02-01T00:00:00+00:00');
@@ -534,7 +686,7 @@ describe('MessageThreadStore', () => {
     service.pin.mockReturnValue(throwError(() => new Error('rejected')));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.pin('message-1');
 
     expect(store.messageEntityMap()['message-1'].pinnedAt).toBeUndefined();
@@ -545,7 +697,7 @@ describe('MessageThreadStore', () => {
     service.postMessageWithClientId.mockReturnValue(throwError(() => new Error('offline')));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
 
     const clientId: string = service.postMessageWithClientId.mock.calls[0][1] as string;
@@ -564,7 +716,7 @@ describe('MessageThreadStore', () => {
     service.list.mockReturnValue(of(collection([])));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     outbox.listForConversation.mockResolvedValue([]);
 
     await store.retryFailed('missing-client-id');
@@ -584,7 +736,7 @@ describe('MessageThreadStore', () => {
     service.addReaction.mockReturnValue(throwError(() => new Error('rate limited')));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
     store.react({ messageId: 'message-1', input: { emoji: '👍' } });
 
     // A failed reaction must not make the composer look broken.
@@ -593,13 +745,16 @@ describe('MessageThreadStore', () => {
   });
 
   it('should record a load failure without dropping fetched messages', () => {
-    service.list.mockReturnValueOnce(of(collection([message()])));
+    service.list.mockReturnValueOnce(
+      of({ ...collection([message({ id: 'probe' })]), totalItems: 120 }),
+    );
+    service.list.mockReturnValueOnce(of({ ...collection([message()]), totalItems: 120 }));
 
     const store = createStore();
-    store.load({ conversationId: 'conversation-1' });
+    store.load('conversation-1');
 
     service.list.mockReturnValueOnce(throwError(() => new Error('offline')));
-    store.load({ conversationId: 'conversation-1', page: 2 });
+    store.loadOlder();
 
     expect(store.loadError()).not.toBeNull();
     expect(store.messageEntities()).toHaveLength(1);
@@ -619,7 +774,7 @@ describe('MessageThreadStore', () => {
       service.list.mockReturnValue(of(collection([message()])));
 
       const store = createStore();
-      store.connect('conversation-1');
+      connectRealtime(store);
 
       expect(conversations.getSubscription).toHaveBeenCalledWith('conversation-1');
       expect(mercure.subscribe).toHaveBeenCalledWith('topic-1', 'token-1');
@@ -629,8 +784,8 @@ describe('MessageThreadStore', () => {
       service.list.mockReturnValue(of(collection([message()])));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
-      store.connect('conversation-1');
+      store.load('conversation-1');
+      connectRealtime(store);
       service.list.mockClear();
 
       realtime.next({ type: 'message.created', messageId: 'message-2' });
@@ -638,15 +793,15 @@ describe('MessageThreadStore', () => {
 
       // The frame is a signal, not data: it carries six fields where the
       // store needs twelve, so the page is re-read instead.
-      expect(service.list).toHaveBeenCalledWith('conversation-1', { page: 1 });
+      expect(service.list).toHaveBeenCalledWith('conversation-1', pageOf(1));
     });
 
     it('should coalesce a burst of frames into one refetch', () => {
       service.list.mockReturnValue(of(collection([message()])));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
-      store.connect('conversation-1');
+      store.load('conversation-1');
+      connectRealtime(store);
       service.list.mockClear();
 
       realtime.next({ type: 'message.created' });
@@ -658,23 +813,26 @@ describe('MessageThreadStore', () => {
     });
 
     it('should fold new messages in without dropping paged-in history', () => {
-      service.list.mockReturnValueOnce(of({ ...collection([message()]), totalItems: 2 }));
+      service.list.mockReturnValueOnce(
+        of({ ...collection([message({ id: 'probe' })]), totalItems: 120 }),
+      );
+      service.list.mockReturnValueOnce(of({ ...collection([message()]), totalItems: 120 }));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
+      store.load('conversation-1');
 
       service.list.mockReturnValueOnce(
-        of({ ...collection([message({ id: 'message-0' })]), totalItems: 2 }),
+        of({ ...collection([message({ id: 'message-0' })]), totalItems: 120 }),
       );
-      store.load({ conversationId: 'conversation-1', page: 2 });
+      store.loadOlder();
 
       service.list.mockReturnValue(
         of({
           ...collection([message(), message({ id: 'message-2' })]),
-          totalItems: 3,
+          totalItems: 121,
         }),
       );
-      store.connect('conversation-1');
+      connectRealtime(store);
       realtime.next({ type: 'message.created' });
       vi.advanceTimersByTime(500);
 
@@ -685,15 +843,54 @@ describe('MessageThreadStore', () => {
           .map((row) => row.id)
           .toSorted(),
       ).toEqual(['message-0', 'message-1', 'message-2']);
-      expect(store.total()).toBe(3);
+      expect(store.total()).toBe(121);
+    });
+
+    it('should follow the boundary when a message opens a new newest page', () => {
+      service.list.mockReturnValueOnce(
+        of({ ...collection([message({ id: 'probe' })]), totalItems: 100 }),
+      );
+      service.list.mockReturnValueOnce(of({ ...collection([message()]), totalItems: 100 }));
+
+      const store = createStore();
+      store.load('conversation-1');
+      connectRealtime(store);
+      service.list.mockClear();
+
+      service.list.mockReturnValueOnce(of({ ...collection([message()]), totalItems: 101 }));
+      service.list.mockReturnValueOnce(
+        of({ ...collection([message({ id: 'message-2' })]), totalItems: 101 }),
+      );
+
+      realtime.next({ type: 'message.created' });
+      vi.advanceTimersByTime(500);
+
+      // The 101st message opened page 3, which did not exist when the thread did.
+      expect(service.list).toHaveBeenLastCalledWith('conversation-1', pageOf(3));
+      expect(store.messageEntityMap()['message-2']).toBeDefined();
+    });
+
+    it('should re-mint the subscription token before the hub expires it', () => {
+      service.list.mockReturnValue(of(collection([message()])));
+
+      const store = createStore();
+      connectRealtime(store);
+
+      expect(conversations.getSubscription).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(600_000);
+
+      // A fresh token only takes effect on reopen: it travels in the socket URL.
+      expect(conversations.getSubscription).toHaveBeenCalledTimes(2);
+      expect(mercure.subscribe).toHaveBeenCalledTimes(2);
     });
 
     it('should refetch silently, without flashing a loading state', () => {
       service.list.mockReturnValue(of(collection([message()])));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
-      store.connect('conversation-1');
+      store.load('conversation-1');
+      connectRealtime(store);
 
       realtime.next({ type: 'message.created' });
       vi.advanceTimersByTime(500);
@@ -708,8 +905,8 @@ describe('MessageThreadStore', () => {
       service.list.mockReturnValueOnce(of(collection([message()])));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
-      store.connect('conversation-1');
+      store.load('conversation-1');
+      connectRealtime(store);
 
       service.list.mockReturnValue(throwError(() => new Error('offline')));
       realtime.next({ type: 'message.created' });
@@ -723,8 +920,8 @@ describe('MessageThreadStore', () => {
       service.list.mockReturnValue(of(collection([message()])));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
-      store.connect('conversation-1');
+      store.load('conversation-1');
+      connectRealtime(store);
       setStatus('connected');
       service.list.mockClear();
 
@@ -734,15 +931,15 @@ describe('MessageThreadStore', () => {
 
       // The hub replays nothing, so anything published during the gap is only
       // recoverable by re-reading.
-      expect(service.list).toHaveBeenCalledWith('conversation-1', { page: 1 });
+      expect(service.list).toHaveBeenCalledWith('conversation-1', pageOf(1));
     });
 
     it('should not refetch while the connection merely stays up', () => {
       service.list.mockReturnValue(of(collection([message()])));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
-      store.connect('conversation-1');
+      store.load('conversation-1');
+      connectRealtime(store);
       setStatus('connected');
       service.list.mockClear();
 
@@ -757,8 +954,8 @@ describe('MessageThreadStore', () => {
       conversations.getSubscription.mockReturnValue(throwError(() => new Error('no topic')));
 
       const store = createStore();
-      store.load({ conversationId: 'conversation-1' });
-      store.connect('conversation-1');
+      store.load('conversation-1');
+      connectRealtime(store);
 
       // Realtime is an enhancement; losing it must not surface as a thread
       // error.

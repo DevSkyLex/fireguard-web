@@ -10,7 +10,8 @@ import type { OrganizationOutput } from '@features/organization/models';
  * external consumers such as layouts and approved sibling features.
  *
  * Read-only by design: the context is derived from `:organizationId` in the
- * URL, so there is nothing for a consumer to set. A write method here would be
+ * URL, falling back to the organization last worked in on a route that names
+ * none. There is nothing for a consumer to set — a write method here would be
  * a second source of truth, free to drift from the address bar.
  *
  * Concrete implementation: `ActiveOrganizationStore` in
@@ -27,8 +28,9 @@ export interface OrganizationContextPort {
    * @readonly
    *
    * @description
-   * Identifier of the organization the URL currently designates, or `null`
-   * outside an organization-scoped route.
+   * Identifier of the organization currently open: the one the URL names, or
+   * the one last worked in on a route that names none. `null` only before a
+   * first organization has ever been opened.
    *
    * Prefer it over `selectedOrganization()?.id` for anything that only needs
    * to know *which* organization is open — building a link, keying a request:
@@ -47,7 +49,7 @@ export interface OrganizationContextPort {
    *
    * @description
    * Signal of the currently selected organization resource. Null when no
-   * organization is routed, or while its resource is still loading.
+   * organization is open, or while its resource is still loading.
    *
    * @since 1.0.0
    *

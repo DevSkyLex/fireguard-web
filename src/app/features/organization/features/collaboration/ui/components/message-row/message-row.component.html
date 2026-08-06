@@ -1,0 +1,77 @@
+@let entry = message();
+
+<div
+  hlmMessage
+  [align]="entry.isOwn ? 'end' : 'start'"
+  data-testid="message-row"
+  [class.pb-4]="entry.reactions.length > 0"
+>
+  @if (!entry.isOwn) {
+    <div hlmMessageAvatar [class.invisible]="continuation()">
+      @if (!continuation()) {
+        <hlm-avatar>
+          @if (entry.authorAvatarUrl; as avatarUrl) {
+            <img hlmAvatarImage [src]="avatarUrl" alt="" />
+          }
+          <span hlmAvatarFallback class="text-[11px]">{{ initials() }}</span>
+        </hlm-avatar>
+      }
+    </div>
+  }
+
+  <div hlmMessageContent>
+    @if (!continuation()) {
+      <div hlmMessageHeader class="justify-between gap-2">
+        @if (!entry.isOwn) {
+          <span class="min-w-0 flex-1 truncate">{{ entry.authorName }}</span>
+        }
+        <span class="shrink-0">{{ time() }}</span>
+      </div>
+    }
+
+    <div hlmBubble [variant]="bubbleVariant()" [class.opacity-60]="entry.status === 'pending'">
+      <div hlmBubbleContent [class.border-dashed]="entry.isDeleted">
+        @if (entry.isDeleted) {
+          <span class="italic">{{ deletedLabel }}</span>
+        } @else {
+          <div
+            class="break-words whitespace-pre-wrap [&_a]:underline"
+            [innerHTML]="entry.bodyHtml"
+          ></div>
+        }
+      </div>
+
+      @if (!entry.isDeleted) {
+        <app-message-reactions
+          [reactions]="entry.reactions"
+          [canReact]="canReact()"
+          [align]="entry.isOwn ? 'start' : 'end'"
+          (toggled)="reactionToggled.emit({ messageId: entry.id, emoji: $event })"
+        />
+      }
+    </div>
+
+    @if (entry.status === 'failed') {
+      <div hlmMessageFooter class="gap-1.5 text-destructive">
+        <ng-icon name="lucideTriangleAlert" class="text-xs" aria-hidden="true" />
+        <span i18n="@@messages.row.failed">Not sent</span>
+        <button
+          hlmBtn
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="h-6 gap-1 px-1.5 text-[11px]"
+          data-testid="message-row-retry"
+          (click)="retried.emit(entry.id)"
+        >
+          <ng-icon name="lucideRotateCw" class="text-xs" aria-hidden="true" />
+          <span i18n="@@messages.row.retry">Retry</span>
+        </button>
+      </div>
+    } @else if (entry.status === 'pending') {
+      <div hlmMessageFooter i18n="@@messages.row.sending">Sending…</div>
+    } @else if (entry.editedAt) {
+      <div hlmMessageFooter i18n="@@messages.row.edited">Edited</div>
+    }
+  </div>
+</div>

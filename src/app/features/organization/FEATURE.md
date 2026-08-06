@@ -32,11 +32,11 @@ This feature does not own generic shell composition or account-level user identi
 
 ## Routes
 
-> **Currently mounted:** `/organizations` and `/organizations/:organizationId` (the landing page)
-> only. The remaining destinations below are the feature's contract and are already listed by the
-> sidebar navigation behind their permissions; each is remounted in `organization.routes.ts` as its
-> page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
-> deviation.
+> **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing page),
+> `messages` and `members/:memberId`. The remaining destinations below are the feature's contract and
+> are already listed by the sidebar navigation behind their permissions; each is remounted in
+> `organization.routes.ts` as its page is rebuilt. A listed destination whose route is absent is a
+> rebuild in progress, not a deviation.
 
 - `/organizations` — redirect-only: `organizationGuard` forwards to the default
   workspace (the last organization persisted in the `last-organization` cookie
@@ -54,6 +54,9 @@ This feature does not own generic shell composition or account-level user identi
   it). **It is the single navigation entry for the estate**, replacing the
   former "Facilities" and "Equipments" pair; both route trees below stay mounted
   so records, creation forms and deep links keep resolving
+- `/organizations/:organizationId/messages` — the direct-messages workspace, owned by the
+  `collaboration` subfeature, gated by `organization.messaging.read`. `messages/:conversationId`
+  opens one. Reached from the shell's bottom navigation, not from the organization sections
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
@@ -162,22 +165,34 @@ landing guard falls back to: `ORGANIZATION_NAVIGATION_ITEMS` carries each destin
 permissions, and `buildOrganizationNavigation()` resolves the sections the active member may
 actually reach. Route visibility and fallback behaviour cannot diverge because both read this list.
 
+**Messaging is the one destination listed by the shell's bottom block rather than here.** Direct
+conversations are scoped to one organization on the API — `organization` is required on every call,
+the permissions are `organization.messaging.*`, and the Mercure topic is per organization — but
+they follow the reader rather than the workspace, so the row sits under Support with the other
+utilities. The shell completes its route with `ORGANIZATION_CONTEXT_PORT.selectedOrganizationId()`
+and withholds it entirely from a member without `organization.messaging.read`; the permission
+constant still comes from this feature's public API, so the gate cannot drift from the guard.
+
 `OrganizationSwitcher` (`ui/components/organization-switcher/`) is feature-owned even though it
 only ever renders inside a layout: it reads organization state, and rendering location does not
 transfer ownership (`ARCHITECTURE.md` §2.7). It provides `OrganizationStore` itself, because that
 store is not root-provided.
 
-**Nothing selects an organization but the URL, and both shell widgets say so.** The dashboard
-shell serves global pages too — `/account` first among them — and those name no organization.
-There the switcher shows its "no organization selected" state, and `OrganizationNav` keeps its rows
-standing but inert: they name where the reader can go without pretending to lead there, and the
-switcher is the one control that gets them back. The alternative — a remembered workspace outliving
-the address — was rejected: it would be a second answer to "which organization", free to disagree
-with the address bar, and every store keyed on the context would follow it off the tree.
+**The URL chooses the organization; the workspace outlives the route.** The dashboard shell serves
+global pages too — `/account` first among them — and those name no organization of their own.
+`ActiveOrganizationStore` therefore keeps a `rememberedOrganizationId`, seeded from the
+`last-organization` cookie and rewritten on every organization-scoped navigation, and
+`selectedOrganizationId` reads `routed ?? remembered`. Stepping into the account no longer empties
+the column: the switcher still names the workspace and every row still leads into it.
 
-Because the rows outlive the selection, they are kept by the component rather than recomputed from
-an empty permission set (`OrganizationNav.sections`, a `linkedSignal`). Before a first organization
-has ever been opened there is nothing to keep, and the block is simply absent.
+The invariant this preserves is that the fallback is a **memory of a previous URL, never a second
+way to choose**. `:organizationId` always outranks it, the port stays read-only, and picking another
+organization is still a navigation. A stale identifier is invalidated by `organizationGuard`, which
+already validates the cookie before redirecting to it.
+
+`selectedOrganizationId` is consequently non-null on every signed-in page once a first organization
+has been opened. `OrganizationSwitcher` has no "none selected" state left — it renders a skeleton
+until the list arrives — and `OrganizationNav` renders no inert row.
 
 **Another member's profile is organization-owned, and thin by force rather than by choice.** There
 is no `GET /api/users/{id}` and no single-member endpoint at all; the only route to another person

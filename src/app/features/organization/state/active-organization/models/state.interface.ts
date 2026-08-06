@@ -22,15 +22,31 @@ export interface ActiveOrganizationState {
    *
    * @description
    * Identifier the URL currently designates, read from the activated route
-   * tree on every navigation. This — not the cached entity — is what makes an
-   * organization "active": the URL is the source of truth, so the context can
-   * never lag behind it while a fetch is in flight.
+   * tree on every navigation, and `null` on a route that names none. It
+   * outranks {@link rememberedOrganizationId}, so the context can never lag
+   * behind the address bar while a fetch is in flight.
    *
    * @since 1.1.0
    *
    * @type {string | null}
    */
   readonly routedOrganizationId: string | null;
+
+  /**
+   * Property rememberedOrganizationId
+   * @readonly
+   *
+   * @description
+   * The organization last worked in, seeded from the `last-organization`
+   * cookie and refreshed on every organization-scoped navigation. It is what
+   * keeps a workspace open across the account and the other global pages,
+   * which name no organization of their own.
+   *
+   * @since 2.0.0
+   *
+   * @type {string | null}
+   */
+  readonly rememberedOrganizationId: string | null;
 
   /**
    * Property organizationEntity

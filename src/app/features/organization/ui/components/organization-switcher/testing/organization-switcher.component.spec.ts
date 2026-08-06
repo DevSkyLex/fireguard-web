@@ -107,9 +107,11 @@ describe('OrganizationSwitcher', () => {
     expect(fixture.nativeElement.querySelector('#organization-switcher-trigger img')).toBeNull();
   });
 
-  it('shows a skeleton instead of an empty row while the context loads', async () => {
+  it('shows a skeleton instead of an empty row while nothing is known yet', async () => {
+    routedId.set(null);
     selected.set(null);
     loadingContext.set(true);
+    store.organizations.set([]);
 
     const fixture = await render();
 
@@ -117,8 +119,7 @@ describe('OrganizationSwitcher', () => {
     expect(fixture.nativeElement.querySelector('#organization-switcher-trigger')).toBeNull();
   });
 
-  it('says so explicitly on a page that selects no organization', async () => {
-    routedId.set(null);
+  it('names the remembered organization from the list when its resource has not resolved', async () => {
     selected.set(null);
 
     const fixture = await render();
@@ -126,20 +127,7 @@ describe('OrganizationSwitcher', () => {
       '#organization-switcher-trigger',
     );
 
-    expect(trigger?.textContent).toContain('No organization selected');
-    expect(trigger?.textContent).toContain('Choose one to start working');
-  });
-
-  it('offers to create a first organization when the reader belongs to none', async () => {
-    routedId.set(null);
-    selected.set(null);
-    store.organizations.set([]);
-
-    const fixture = await render();
-
-    expect(
-      fixture.nativeElement.querySelector('#organization-switcher-trigger')?.textContent,
-    ).toContain('Create your first one');
+    expect(trigger?.textContent).toContain('Acme Inc');
   });
 
   it('loads the organization list once when nothing has fetched it', async () => {
@@ -156,7 +144,7 @@ describe('OrganizationSwitcher', () => {
     expect(loadCalls).toBe(0);
   });
 
-  it('separates the list from the create action only when there is a list', async () => {
+  it('separates the list from the create action', async () => {
     const withList = await render();
     (withList.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
     withList.detectChanges();
@@ -164,19 +152,6 @@ describe('OrganizationSwitcher', () => {
 
     expect(document.querySelector('hlm-dropdown-menu-separator')).not.toBeNull();
     expect(document.querySelector('hlm-dropdown-menu-label')).not.toBeNull();
-  });
-
-  it('drops the heading and the rule when no organization is listed', async () => {
-    store.organizations.set([]);
-
-    const empty = await render();
-    (empty.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
-    empty.detectChanges();
-    await empty.whenStable();
-
-    // A full-bleed rule dividing a title from a single button is noise.
-    expect(document.querySelector('hlm-dropdown-menu-separator')).toBeNull();
-    expect(document.querySelector('hlm-dropdown-menu-label')).toBeNull();
   });
 
   it('navigates to the picked organization and ignores the active one', async () => {
@@ -195,15 +170,12 @@ describe('OrganizationSwitcher', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('marks nothing active on a page that selects no organization', async () => {
-    routedId.set(null);
-    selected.set(null);
-
+  it('marks the open organization in the menu', async () => {
     const fixture = await render();
     (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(document.querySelector('[aria-current="true"]')).toBeNull();
+    expect(document.querySelectorAll('[aria-current="true"]').length).toBe(1);
   });
 });

@@ -12,6 +12,7 @@ import {
 } from '@ngrx/signals';
 import {
   addEntities,
+  removeAllEntities,
   setAllEntities,
   updateEntity,
   upsertEntities,
@@ -20,7 +21,22 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, debounceTime, EMPTY, mergeMap, pipe, switchMap, tap } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  debounceTime,
+  EMPTY,
+  exhaustMap,
+  map,
+  mergeMap,
+  type Observable,
+  of,
+  pipe,
+  filter as rxFilter,
+  switchMap,
+  tap,
+  timer,
+} from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService, type MercureConnectionStatus } from '@core/mercure';
 import {
@@ -42,6 +58,7 @@ import type {
   AddReactionInput,
   EditMessageInput,
   MessageOutput,
+  MessageReactionOutput,
   PostMessageInput,
 } from '@features/organization/features/collaboration/models';
 import {
@@ -54,13 +71,19 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
 import { messageRepliesStoreEvents } from '../message-replies';
+import {
+  MESSAGE_PAGE_SIZE,
+  MESSAGE_REALTIME_COALESCE_MS,
+  MESSAGE_SUBSCRIPTION_REFRESH_MS,
+} from './constants';
 import { messageThreadStoreEvents } from './events';
 import type { MessageThreadState } from './models';
 
 const INITIAL_STATE: MessageThreadState = {
   conversationId: null,
   total: 0,
-  loadedPage: 0,
+  oldestLoadedPage: 0,
+  newestLoadedPage: 0,
   listCallState: idleCallState(),
   postCallState: idleCallState(),
   interactionCallState: idleCallState(),
@@ -70,16 +93,36 @@ const INITIAL_STATE: MessageThreadState = {
 };
 
 /**
- * How long bursts of realtime frames are coalesced before the thread refetches.
+ * One fetched page, carrying the page number its rows came from.
  *
- * A lively channel emits one frame per message, reaction and pin; refetching
- * per frame would turn a conversation into a request storm for no visible gain.
+ * The number cannot be recovered from the response — Hydra's `view` is not
+ * emitted by this endpoint — and every write to the loaded-window bounds needs
+ * it, so it travels alongside the collection.
  */
-const REALTIME_COALESCE_MS = 300;
+interface LoadedMessagePage {
+  readonly page: number;
+  readonly collection: HydraCollection<MessageOutput>;
+}
 
 /** Removes one id from a list without mutating it. */
 function without(ids: readonly string[], id: string): readonly string[] {
   return ids.filter((candidate: string): boolean => candidate !== id);
+}
+
+/**
+ * The page holding the newest messages.
+ *
+ * The API returns messages oldest-first from a plain offset, so the newest ones
+ * are on the last page rather than the first. An empty conversation still has a
+ * page 1.
+ */
+function newestPageOf(totalItems: number): number {
+  return Math.max(1, Math.ceil(totalItems / MESSAGE_PAGE_SIZE));
+}
+
+/** Oldest-first ordering, which is how a conversation reads. */
+function byCreatedAt(first: MessageOutput, second: MessageOutput): number {
+  return first.createdAt.localeCompare(second.createdAt);
 }
 
 /**
@@ -130,8 +173,15 @@ function optimisticMessage(
  * @description
  * One conversation's message thread.
  *
- * Component-scoped: opening another conversation should start from a clean
- * thread rather than inherit the previous one's pages.
+ * Component-scoped, but the router reuses the page component when only the
+ * conversation id changes, so a fresh instance is not guaranteed: the caller
+ * must {@link reset} before loading another conversation.
+ *
+ * **The API pages oldest-first from a plain offset**, so the newest messages
+ * are on the *last* page. A thread therefore opens on that page and reads
+ * history by walking page numbers down, and a background refresh re-reads the
+ * newest page rather than the first — re-reading page 1 would never see a new
+ * message in any conversation longer than one page.
  *
  * Three contract hazards are absorbed here.
  *
@@ -160,12 +210,27 @@ export const MessageThreadStore = signalStore(
     loadError: computed(() => store.listCallState().error),
     postError: computed(() => store.postCallState().error),
 
-    /** Whether older messages remain unfetched. */
-    hasMore: computed((): boolean => store.messageEntities().length < store.total()),
+    /** Whether older messages remain unfetched — that is, pages below the loaded window. */
+    hasMore: computed((): boolean => store.oldestLoadedPage() > 1),
+
+    /**
+     * The thread in reading order.
+     *
+     * `withEntities` keeps insertion order, and history is paged in *after* the
+     * newest messages, so the collection's own order is not chronological.
+     * An optimistic row carries a local timestamp of now and sorts last, which
+     * is where the sender expects to see it.
+     */
+    sortedMessages: computed((): readonly MessageOutput[] =>
+      store.messageEntities().toSorted(byCreatedAt),
+    ),
 
     /** Messages that survived redaction, for surfaces that hide tombstones. */
     visibleMessages: computed((): readonly MessageOutput[] =>
-      store.messageEntities().filter((message: MessageOutput): boolean => !message.isDeleted),
+      store
+        .messageEntities()
+        .filter((message: MessageOutput): boolean => !message.isDeleted)
+        .toSorted(byCreatedAt),
     ),
 
     /** Pinned messages, most recently pinned first. */
@@ -190,36 +255,45 @@ export const MessageThreadStore = signalStore(
       userIdentity = inject<UserIdentityPort>(USER_IDENTITY_PORT),
     ) => ({
       /**
-       * Loads one page of a conversation's messages.
+       * Opens a conversation on its newest messages.
        *
-       * Switching conversation resets the collection; paging within the same one
-       * appends, because messages arrive oldest-first and history is fetched by
-       * asking for further pages.
+       * Costs one request for a conversation that fits in a page, which is most
+       * of them. A longer one costs two: the first read is also the only way to
+       * learn `totalItems`, and the newest page cannot be named without it.
        */
-      load: rxMethod<{ readonly conversationId: string; readonly page?: number }>(
+      load: rxMethod<string>(
         pipe(
-          tap(({ conversationId, page }) =>
-            patchState(store, {
-              conversationId,
-              loadedPage: page ?? 1,
-              listCallState: pendingCallState(),
-            }),
+          tap((conversationId: string) =>
+            patchState(store, { conversationId, listCallState: pendingCallState() }),
           ),
-          switchMap(({ conversationId, page }) =>
-            service.list(conversationId, { page: page ?? 1 }).pipe(
+          switchMap((conversationId: string) =>
+            service.list(conversationId, { page: 1, itemsPerPage: MESSAGE_PAGE_SIZE }).pipe(
+              switchMap((probe: HydraCollection<MessageOutput>): Observable<LoadedMessagePage> => {
+                const newestPage: number = newestPageOf(probe.totalItems);
+
+                return newestPage === 1
+                  ? of({ page: 1, collection: probe })
+                  : service
+                      .list(conversationId, { page: newestPage, itemsPerPage: MESSAGE_PAGE_SIZE })
+                      .pipe(
+                        map((collection: HydraCollection<MessageOutput>): LoadedMessagePage => ({
+                          page: newestPage,
+                          collection,
+                        })),
+                      );
+              }),
               tapResponse({
-                next: (collection: HydraCollection<MessageOutput>): void => {
-                  const rows: MessageOutput[] = [...collection.member];
-                  // Page 1 is either a first load or a conversation switch, so it
-                  // replaces; any further page is history and appends.
+                next: ({ page, collection }: LoadedMessagePage): void =>
                   patchState(
                     store,
-                    (page ?? 1) === 1
-                      ? setAllEntities(rows, { collection: 'message' })
-                      : addEntities(rows, { collection: 'message' }),
-                    { total: collection.totalItems, listCallState: successCallState(null) },
-                  );
-                },
+                    setAllEntities([...collection.member], { collection: 'message' }),
+                    {
+                      total: collection.totalItems,
+                      oldestLoadedPage: page,
+                      newestLoadedPage: page,
+                      listCallState: successCallState(null),
+                    },
+                  ),
                 error: (error: unknown): void => {
                   const storeError = toStoreError(error);
                   patchState(store, { listCallState: errorCallState(storeError) });
@@ -236,7 +310,76 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
-       * Posts a message. The response is complete, so it is merged whole.
+       * Pages in the history immediately before the loaded window.
+       *
+       * `exhaustMap` because a scroller can ask twice for the same page before
+       * the first answer lands, and the second request would fetch rows the
+       * first is already bringing.
+       */
+      loadOlder: rxMethod<void>(
+        pipe(
+          map((): number => store.oldestLoadedPage() - 1),
+          rxFilter((page: number): boolean => page >= 1 && store.conversationId() !== null),
+          tap(() => patchState(store, { listCallState: pendingCallState() })),
+          exhaustMap((page: number) =>
+            service
+              .list(store.conversationId() ?? '', { page, itemsPerPage: MESSAGE_PAGE_SIZE })
+              .pipe(
+                tapResponse({
+                  next: (collection: HydraCollection<MessageOutput>): void =>
+                    patchState(
+                      store,
+                      addEntities([...collection.member], { collection: 'message' }),
+                      {
+                        total: collection.totalItems,
+                        oldestLoadedPage: page,
+                        listCallState: successCallState(null),
+                      },
+                    ),
+                  error: (error: unknown): void => {
+                    const storeError = toStoreError(error);
+                    patchState(store, { listCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      messageThreadStoreEvents.loadFailed(
+                        toStoreFailureEventPayload(storeError, 'Messages could not be loaded.'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+          ),
+        ),
+      ),
+
+      /**
+       * Empties the thread so another conversation can be opened into it.
+       *
+       * Required rather than optional: the router reuses the page component
+       * across a conversation-id change, so this instance outlives the
+       * conversation it was built for. Without it the previous thread's
+       * messages render under the new header until the first page lands, and
+       * its unsent rows keep a Retry control that would target the wrong
+       * conversation.
+       */
+      reset(): void {
+        patchState(store, removeAllEntities({ collection: 'message' }), INITIAL_STATE);
+      },
+
+      /**
+       * Posts a message under a client-minted id.
+       *
+       * The id being ours is what makes the rest safe: the confirmation lands
+       * on the optimistic row rather than beside it, the Mercure echo of our
+       * own message upserts onto it too, a `409` means the message is already
+       * stored and is therefore success, and a failure can be queued for replay
+       * without risking a duplicate.
+       *
+       * Both handlers check the thread is still on the conversation the message
+       * was written in. `mergeMap` deliberately lets a send outlive the route
+       * change that started it, so without that check a message sent in one
+       * conversation lands in whichever one the reader opened next. The outbox
+       * queue is outside that check: the message was written and is owed a
+       * delivery wherever the reader has gone.
        */
       send: rxMethod<{ readonly conversationId: string; readonly input: PostMessageInput }>(
         pipe(
@@ -268,38 +411,38 @@ export const MessageThreadStore = signalStore(
             return service.postMessageWithClientId(conversationId, clientId, input).pipe(
               tapResponse({
                 next: (message: MessageOutput): void => {
-                  // The id was ours, so the confirmed message lands on the very
-                  // same row — nothing to swap, and the Mercure echo of our own
-                  // message upserts onto it too rather than duplicating.
+                  dispatcher.dispatch(messageThreadStoreEvents.posted(message));
+
+                  if (store.conversationId() !== conversationId) return;
+
                   patchState(store, upsertEntity(message, { collection: 'message' }), {
                     postCallState: successCallState(null),
                     pendingMessageIds: without(store.pendingMessageIds(), clientId),
                   });
-                  dispatcher.dispatch(messageThreadStoreEvents.posted(message));
                 },
                 error: (error: unknown): void => {
                   const storeError = toStoreError(error);
+                  const isCurrent: boolean = store.conversationId() === conversationId;
 
-                  // A replayed client id means the message is already stored —
-                  // that is success, not failure. `code` is where
-                  // `toStoreError` puts the HTTP status.
                   if (storeError.code === 409) {
-                    patchState(store, {
-                      postCallState: successCallState(null),
-                      pendingMessageIds: without(store.pendingMessageIds(), clientId),
-                    });
+                    if (isCurrent) {
+                      patchState(store, {
+                        postCallState: successCallState(null),
+                        pendingMessageIds: without(store.pendingMessageIds(), clientId),
+                      });
+                    }
 
                     return;
                   }
 
-                  patchState(store, {
-                    postCallState: errorCallState(storeError),
-                    pendingMessageIds: without(store.pendingMessageIds(), clientId),
-                    failedMessageIds: [...store.failedMessageIds(), clientId],
-                  });
+                  if (isCurrent) {
+                    patchState(store, {
+                      postCallState: errorCallState(storeError),
+                      pendingMessageIds: without(store.pendingMessageIds(), clientId),
+                      failedMessageIds: [...store.failedMessageIds(), clientId],
+                    });
+                  }
 
-                  // Durable: the message survives a reload and is replayed on
-                  // reconnection. Safe to replay because the id is ours.
                   void outbox
                     .queue(conversationId, 'message.send', { conversationId, clientId, input })
                     .catch(() => undefined);
@@ -672,8 +815,15 @@ export const MessageThreadStore = signalStore(
       dispatcher = inject(Dispatcher),
     ) => {
       /**
-       * Re-reads the most recent page and folds it into what is already
-       * loaded.
+       * Re-reads the newest page and folds it into what is already loaded.
+       *
+       * The newest page, not the first: messages page oldest-first, so a new
+       * message lands at the *end* of the collection and re-reading page 1
+       * would never see it in any conversation longer than one page.
+       *
+       * A message can also arrive that pushes the conversation onto a page that
+       * did not exist when the thread opened, which the fresh `totalItems`
+       * reveals — hence the second read, taken only when the boundary moved.
        *
        * Deliberately silent: it never touches `listCallState`, because a
        * background refresh that flashes a spinner over a conversation someone
@@ -682,7 +832,7 @@ export const MessageThreadStore = signalStore(
        *
        * It upserts rather than replaces, so history the member scrolled back
        * through survives. The limit is honest and worth knowing: a change to a
-       * message that has fallen off page 1 is not picked up, and cannot be —
+       * message outside the loaded window is not picked up, and cannot be —
        * there is no `GET /api/messages/{id}` to refetch a single message with.
        */
       const refresh = rxMethod<void>(
@@ -692,16 +842,33 @@ export const MessageThreadStore = signalStore(
 
             if (conversationId === null) return EMPTY;
 
-            return service.list(conversationId, { page: 1 }).pipe(
-              tapResponse({
-                next: (collection: HydraCollection<MessageOutput>): void =>
-                  patchState(
-                    store,
-                    upsertEntities([...collection.member], { collection: 'message' }),
-                    { total: collection.totalItems },
-                  ),
-                error: (): void => undefined,
+            const page: number = Math.max(1, store.newestLoadedPage());
+
+            return service.list(conversationId, { page, itemsPerPage: MESSAGE_PAGE_SIZE }).pipe(
+              switchMap((collection: HydraCollection<MessageOutput>) => {
+                patchState(
+                  store,
+                  upsertEntities([...collection.member], { collection: 'message' }),
+                  { total: collection.totalItems },
+                );
+
+                const newestPage: number = newestPageOf(collection.totalItems);
+
+                if (newestPage <= page) return EMPTY;
+
+                return service
+                  .list(conversationId, { page: newestPage, itemsPerPage: MESSAGE_PAGE_SIZE })
+                  .pipe(
+                    tap((tail: HydraCollection<MessageOutput>): void =>
+                      patchState(
+                        store,
+                        upsertEntities([...tail.member], { collection: 'message' }),
+                        { total: tail.totalItems, newestLoadedPage: newestPage },
+                      ),
+                    ),
+                  );
               }),
+              catchError(() => EMPTY),
             );
           }),
         ),
@@ -725,6 +892,30 @@ export const MessageThreadStore = signalStore(
           }
 
           store.save(messageId);
+        },
+
+        /**
+         * Adds or withdraws the acting member's reaction with one emoji.
+         *
+         * The direction lives here for the same reason as {@link toggleSave}:
+         * the store holds the tally, so a surface handed only an emoji would
+         * have to look the row up again to answer a question already answered.
+         */
+        toggleReaction(messageId: string, emoji: string): void {
+          const message: MessageOutput | undefined = store.messageEntityMap()[messageId];
+          const reacted: boolean =
+            message?.reactions.some(
+              (reaction: MessageReactionOutput): boolean =>
+                reaction.emoji === emoji && reaction.reactedByMe,
+            ) ?? false;
+
+          if (reacted) {
+            store.removeReaction({ messageId, emoji });
+
+            return;
+          }
+
+          store.react({ messageId, input: { emoji } });
         },
 
         /**
@@ -788,15 +979,27 @@ export const MessageThreadStore = signalStore(
          *
          * Bursts are coalesced, and a reconnection triggers the same catch-up
          * because the hub replays nothing — see the reconnect effect below.
+         *
+         * The subscriber token expires after 15 minutes and `MercureService`
+         * never re-mints one, so a long-open conversation would go quiet with
+         * no visible symptom: every reconnection retries with the same dead
+         * token. `timer(0, …)` re-mints ahead of that, and the inner
+         * `switchMap` reopening the socket is required rather than incidental —
+         * the token travels in the `EventSource` URL, so a fresh one only takes
+         * effect on reopen. A failed re-mint skips its tick and leaves the
+         * live socket alone.
          */
         connect: rxMethod<string>(
           pipe(
             switchMap((conversationId: string) =>
-              conversations.getSubscription(conversationId).pipe(
+              timer(0, MESSAGE_SUBSCRIPTION_REFRESH_MS).pipe(
+                concatMap(() =>
+                  conversations.getSubscription(conversationId).pipe(catchError(() => EMPTY)),
+                ),
                 tap((subscription) => patchState(store, { realtimeTopic: subscription.topic })),
                 switchMap((subscription) =>
                   mercure.subscribe<unknown>(subscription.topic, subscription.token).pipe(
-                    debounceTime(REALTIME_COALESCE_MS),
+                    debounceTime(MESSAGE_REALTIME_COALESCE_MS),
                     tap(() => refresh()),
                   ),
                 ),

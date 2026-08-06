@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  linkedSignal,
-  type Signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -14,6 +7,7 @@ import {
   lucideCompass,
   lucideIdCard,
   lucideInbox,
+  lucideMessageSquare,
   lucideNetwork,
   lucideSettings,
   lucideUsers,
@@ -35,8 +29,6 @@ import {
   HlmSidebarMenuButton,
   HlmSidebarMenuItem,
 } from '@shared/ui/sidebar';
-import type { OrganizationNavSource } from './models';
-
 /**
  * Component OrganizationNav
  * @class OrganizationNav
@@ -47,10 +39,9 @@ import type { OrganizationNavSource } from './models';
  * items are all denied are dropped rather than rendered empty, so the column
  * never advertises a route that would bounce.
  *
- * On a page that selects no organization — the account, and every other global
- * one — the rows stay in place but go inert. Nothing is being hidden and
- * nothing lies about where it leads: there is simply no organization to lead
- * into until the switcher names one.
+ * The rows keep working on a page that routes no organization — the account,
+ * and every other global one — because the context still names the workspace
+ * last worked in. Leaving an organization page is not leaving the organization.
  *
  * Rows are built on `hlmSidebarMenuButton`, which carries the classes that keep
  * them from clipping once the column narrows to the icon rail; the tooltip is
@@ -90,6 +81,7 @@ import type { OrganizationNavSource } from './models';
       lucideCompass,
       lucideIdCard,
       lucideInbox,
+      lucideMessageSquare,
       lucideNetwork,
       lucideSettings,
       lucideUsers,
@@ -131,61 +123,31 @@ export class OrganizationNav {
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
-   * Property isSelected
-   * @readonly
-   *
-   * @description
-   * Whether an organization is selected — which is exactly whether the URL
-   * names one. Nothing else selects an organization, so a global page such as
-   * the account has none, and the destinations below are shown but inert.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly isSelected: Signal<boolean> = computed(
-    (): boolean => this.organizationContext.selectedOrganizationId() !== null,
-  );
-
-  /**
    * Property sections
    * @readonly
    *
    * @description
-   * The navigation to render, with routes already prefixed by the selected
-   * organization.
-   *
-   * It keeps its last value while no organization is selected, so stepping into
-   * the account leaves the column standing instead of emptying it — the rows go
-   * inert (`isSelected`), they do not vanish. There is nothing to keep before a
-   * first organization has been opened, and then the block is simply absent.
+   * The navigation to render, with routes already prefixed by the organization
+   * currently open — which the context keeps naming on the account and the
+   * other global pages, so the column stays usable there rather than going
+   * inert. It is empty only before a first organization has ever been opened.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 3.0.0
    *
    * @type {Signal<ReadonlyArray<OrganizationNavigationSection>>}
    */
-  protected readonly sections: Signal<ReadonlyArray<OrganizationNavigationSection>> = linkedSignal<
-    OrganizationNavSource,
-    ReadonlyArray<OrganizationNavigationSection>
-  >({
-    source: (): OrganizationNavSource => ({
-      organizationId: this.organizationContext.selectedOrganizationId(),
-      permissions: this.permissionService.permissions(),
-    }),
-    computation: (
-      source: OrganizationNavSource,
-      previous:
-        | {
-            readonly source: OrganizationNavSource;
-            readonly value: ReadonlyArray<OrganizationNavigationSection>;
-          }
-        | undefined,
-    ): ReadonlyArray<OrganizationNavigationSection> =>
-      source.organizationId === null
-        ? (previous?.value ?? [])
-        : buildOrganizationNavigation(source.organizationId, new Set<string>(source.permissions)),
-  });
+  protected readonly sections: Signal<ReadonlyArray<OrganizationNavigationSection>> = computed(
+    (): ReadonlyArray<OrganizationNavigationSection> => {
+      const organizationId: string | null = this.organizationContext.selectedOrganizationId();
+
+      if (organizationId === null) return [];
+
+      return buildOrganizationNavigation(
+        organizationId,
+        new Set<string>(this.permissionService.permissions()),
+      );
+    },
+  );
   //#endregion
 }

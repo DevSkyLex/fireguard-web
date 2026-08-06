@@ -9,6 +9,15 @@ export type {
   AssistantThreadOutput,
 } from './assistant';
 export type { ConversationAttachmentOutput } from './attachment';
+export type { DirectConversationView } from './direct-conversation-view';
+export type {
+  MessageDayEntry,
+  MessageReactionToggle,
+  MessageRowEntry,
+  MessageSendStatus,
+  MessageThreadEntry,
+  MessageView,
+} from './message-view';
 export type {
   AddChannelParticipantInput,
   BindChannelTeamInput,

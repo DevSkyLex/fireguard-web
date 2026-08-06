@@ -1,0 +1,5 @@
+export {
+  MENTION_SUGGESTION_LIMIT,
+  MESSAGE_BODY_MAX_LENGTH,
+  MESSAGE_COUNTER_THRESHOLD,
+} from './message-body.constants';

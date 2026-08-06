@@ -1,0 +1,17 @@
+<div id="direct-messages" class="flex min-h-0 min-w-0 flex-1 flex-col">
+  @if (!hasOpenConversation()) {
+    <div class="m-auto">
+      <app-empty-state
+        title="No conversation open"
+        i18n-title="@@messages.page.noneOpenTitle"
+        description="Pick a conversation in the sidebar, or start a new one."
+        i18n-description="@@messages.page.noneOpenDescription"
+      />
+    </div>
+  }
+
+  <router-outlet
+    (activate)="hasOpenConversation.set(true)"
+    (deactivate)="hasOpenConversation.set(false)"
+  />
+</div>

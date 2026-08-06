@@ -5,31 +5,19 @@
       <ul hlmSidebarMenu>
         @for (link of section.links; track link.id) {
           <li hlmSidebarMenuItem>
-            @if (isSelected()) {
-              <a
-                hlmSidebarMenuButton
-                [routerLink]="link.route"
-                routerLinkActive
-                #active="routerLinkActive"
-                [routerLinkActiveOptions]="{ exact: link.id === 'today' }"
-                [attr.data-active]="active.isActive ? 'true' : null"
-                [attr.aria-current]="active.isActive ? 'page' : null"
-                [tooltip]="link.label"
-              >
-                <ng-icon [name]="link.icon" aria-hidden="true" />
-                <span>{{ link.label }}</span>
-              </a>
-            } @else {
-              <button
-                hlmSidebarMenuButton
-                type="button"
-                aria-disabled="true"
-                [tooltip]="link.label"
-              >
-                <ng-icon [name]="link.icon" aria-hidden="true" />
-                <span>{{ link.label }}</span>
-              </button>
-            }
+            <a
+              hlmSidebarMenuButton
+              [routerLink]="link.route"
+              routerLinkActive
+              #active="routerLinkActive"
+              [routerLinkActiveOptions]="{ exact: link.id === 'today' }"
+              [attr.data-active]="active.isActive ? 'true' : null"
+              [attr.aria-current]="active.isActive ? 'page' : null"
+              [tooltip]="link.label"
+            >
+              <ng-icon [name]="link.icon" aria-hidden="true" />
+              <span>{{ link.label }}</span>
+            </a>
           </li>
         }
       </ul>

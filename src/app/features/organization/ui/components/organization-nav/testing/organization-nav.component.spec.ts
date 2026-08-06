@@ -74,16 +74,12 @@ describe('OrganizationNav', () => {
     expect(rows()).toEqual([]); // Nothing to name yet, so no block at all.
   });
 
-  it('should keep its rows but make them inert once the URL selects none', async () => {
+  it('should never render an inert row', async () => {
     permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
     await fixture.whenStable();
 
-    selectedOrganizationId.set(null); // `/account` is served by the same shell.
-    await fixture.whenStable();
-
     expect(rows()).toEqual(['Today', 'Interventions']);
-    expect(routes()).toEqual([]);
-    expect(fixture.nativeElement.querySelectorAll('[aria-disabled="true"]').length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('[aria-disabled="true"]').length).toBe(0);
   });
 
   it('should render nothing for a member granted nothing', () => {

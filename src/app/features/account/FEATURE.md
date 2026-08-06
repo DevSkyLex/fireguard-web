@@ -42,10 +42,10 @@ screen reads or writes the signed-in user.
 nothing else — the same sidebar, the same header, the same collapse state, no shell rebuild. It is
 never a panel, a secondary column, or a surface layered over another page.
 
-`/account` names no organization, and nothing else selects one, so the shell shows exactly that:
-the switcher displays its "no organization selected" state and the organization rows go inert
-(`features/organization/FEATURE.md`). The account asks for no ambient organization — no identifier
-to invent, no second answer to "which organization".
+`/account` names no organization, but the shell keeps the one last worked in, so the switcher still
+names a workspace and the organization rows still lead into it
+(`features/organization/FEATURE.md`). The account itself asks for no ambient organization: it reads
+none, and nothing on the page changes with the one the sidebar happens to show.
 
 **The account is not a destination of the sidebar's navigation.** That column lists the work; the
 reader reaches their own account through the seat menu pinned at its foot (`AccountMenu`), which

@@ -4355,6 +4355,10 @@
         <source>Save</source>
         <target>Enregistrer</target>
       </trans-unit>
+      <trans-unit id="common.saving" datatype="html">
+        <source>Saving…</source>
+        <target>Enregistrement…</target>
+      </trans-unit>
       <trans-unit id="intervention.prop.due" datatype="html">
         <source>Due</source>
         <target>Échéance</target>
@@ -4378,6 +4382,46 @@
       <trans-unit id="intervention.wit.rowActions" datatype="html">
         <source>Work item actions</source>
         <target>Actions sur l'élément de travail</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.tableCaption" datatype="html">
+        <source> The intervention's work items. </source>
+        <target> Les éléments de travail de l'intervention. </target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.columnItem" datatype="html">
+        <source>Item</source>
+        <target>Élément</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.columnTarget" datatype="html">
+        <source>Target</source>
+        <target>Cible</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.columnAssignee" datatype="html">
+        <source>Assignee</source>
+        <target>Assigné</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.columnState" datatype="html">
+        <source>State</source>
+        <target>État</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.columnSource" datatype="html">
+        <source>Source</source>
+        <target>Origine</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.sourcePlanned" datatype="html">
+        <source>Planned</source>
+        <target>Planifié</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.sourceDiscovered" datatype="html">
+        <source>Discovered</source>
+        <target>Découvert</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.columnActions" datatype="html">
+        <source>Actions</source>
+        <target>Actions</target>
       </trans-unit>
       <trans-unit id="intervention.wit.emptyTitle" datatype="html">
         <source> No work items yet </source>
@@ -4442,6 +4486,30 @@
       <trans-unit id="intervention.detail.statusMenu" datatype="html">
         <source>Change status</source>
         <target>Changer le statut</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.tabOverview" datatype="html">
+        <source>Overview</source>
+        <target>Aperçu</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.tabFieldWork" datatype="html">
+        <source>Field work</source>
+        <target>Travail terrain</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.tabsAriaLabel" datatype="html">
+        <source>Intervention workspace sections</source>
+        <target>Sections de l'espace de travail de l'intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.gettingStarted.title" datatype="html">
+        <source>Getting started</source>
+        <target>Pour commencer</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.publicationLockedTitle" datatype="html">
+        <source>Not ready for publication yet</source>
+        <target>Pas encore prête pour la publication</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.publicationLockedDescription" datatype="html">
+        <source>Submit this intervention for review before it can be published.</source>
+        <target>Soumettez cette intervention pour relecture avant de pouvoir la publier.</target>
       </trans-unit>
       <trans-unit id="intervention.prop.priority" datatype="html">
         <source> Priority </source>
@@ -7966,6 +8034,278 @@
         <source>Overdue</source>
         <target>En retard</target>
       </trans-unit>
-    </body>
+          <trans-unit id="intervention.notice.folded" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ foldedCount() }}"/> more</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ foldedCount() }}"/> de plus</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterLabelPlaceholder" datatype="html">
+        <source>Search a label</source>
+        <target>Rechercher un libellé</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoLabel" datatype="html">
+        <source> No label matches. </source>
+        <target> Aucun libellé ne correspond. </target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.changes" datatype="html">
+        <source> Pending changes </source>
+        <target> Modifications en attente </target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.inspections" datatype="html">
+        <source> Inspections recorded </source>
+        <target> Inspections enregistrées </target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.revision" datatype="html">
+        <source>Revision</source>
+        <target>Révision</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.atomic" datatype="html">
+        <source> Either everything succeeds, or no record is modified. </source>
+        <target> Soit tout réussit, soit aucun enregistrement n'est modifié. </target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.showAll" datatype="html">
+        <source>Show all</source>
+        <target>Tout voir</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.next" datatype="html">
+        <source>Next</source>
+        <target>Suivant</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.doneSr" datatype="html">
+        <source>done</source>
+        <target>fait</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.next" datatype="html">
+        <source> Next </source>
+        <target> Suivant </target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.skip" datatype="html">
+        <source>Skip</source>
+        <target>Ignorer</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.emptyDescReadOnly" datatype="html">
+        <source>A planner has not listed the field work yet.</source>
+        <target>Aucun planificateur n'a encore listé le travail terrain.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.reopen" datatype="html">
+        <source>Reopen <x id="item" equiv-text="this.labelOf(item)"/></source>
+        <target>Rouvrir <x id="item" equiv-text="this.labelOf(item)"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.complete" datatype="html">
+        <source>Complete <x id="item" equiv-text="this.labelOf(item)"/></source>
+        <target>Terminer <x id="item" equiv-text="this.labelOf(item)"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.rc.noteLabel" datatype="html">
+        <source>Note</source>
+        <target>Note</target>
+      </trans-unit>
+      <trans-unit id="intervention.rc.noteLength" datatype="html">
+        <source>The note is too long.</source>
+        <target>La note est trop longue.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.skipPlaceholder" datatype="html">
+        <source>Why is this item being skipped?</source>
+        <target>Pourquoi cet élément est-il ignoré ?</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.site" datatype="html">
+        <source>Choose a site</source>
+        <target>Choisir un site</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.responsible" datatype="html">
+        <source>Assign a responsible agent</source>
+        <target>Assigner un responsable</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.schedule" datatype="html">
+        <source>Set a due date</source>
+        <target>Définir une échéance</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.scope" datatype="html">
+        <source>Prepare the field work</source>
+        <target>Préparer le travail terrain</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.resolveWork" datatype="html">
+        <source>Resolve every work item</source>
+        <target>Résoudre tous les éléments de travail</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.readyToPlan" datatype="html">
+        <source>Ready to plan</source>
+        <target>Prêt à planifier</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.readyToSubmit" datatype="html">
+        <source>Ready to submit</source>
+        <target>Prêt à soumettre</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.plan" datatype="html">
+        <source>Plan intervention</source>
+        <target>Planifier l'intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.submit" datatype="html">
+        <source>Submit for review</source>
+        <target>Soumettre pour revue</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.publish" datatype="html">
+        <source>Publish intervention</source>
+        <target>Publier l'intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.notice.unsynced" datatype="html">
+        <source>Some changes are waiting to sync</source>
+        <target>Des modifications attendent la synchronisation</target>
+      </trans-unit>
+      <trans-unit id="intervention.notice.readyToPublish" datatype="html">
+        <source>Ready to publish</source>
+        <target>Prêt à publier</target>
+      </trans-unit>
+      <trans-unit id="intervention.notice.published" datatype="html">
+        <source>This intervention is published</source>
+        <target>Cette intervention est publiée</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.skipHeader" datatype="html">
+        <source>Skip work item</source>
+        <target>Ignorer l'élément de travail</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.skipMessage" datatype="html">
+        <source>Say why this item is being skipped. The reason stays on the record.</source>
+        <target>Indiquez pourquoi cet élément est ignoré. La raison reste au dossier.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.requestFailed" datatype="html">
+        <source>The publication request could not be completed.</source>
+        <target>La demande de publication n'a pas pu aboutir.</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.fieldSaved" datatype="html">
+        <source>Change saved</source>
+        <target>Modification enregistrée</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.actionLabel" datatype="html">
+        <source>Action</source>
+        <target>Action</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.actionRequired" datatype="html">
+        <source>Choose what kind of work this item records.</source>
+        <target>Choisissez le type de travail que cet élément enregistre.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.targetEmpty" datatype="html">
+        <source>No target matches.</source>
+        <target>Aucune cible ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="intervention.actionBox.published" datatype="html">
+        <source> Published and locked at revision v<x id="INTERPOLATION" equiv-text="{{ revision() }}"/> </source>
+        <target> Publiée et verrouillée à la révision v<x id="INTERPOLATION" equiv-text="{{ revision() }}"/> </target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.title" datatype="html">
+        <source> Activity </source>
+        <target> Activité </target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.empty" datatype="html">
+        <source> No activity recorded yet. </source>
+        <target> Aucune activité enregistrée pour l'instant. </target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.statusChangedLine" datatype="html">
+        <source>changed status</source>
+        <target>a changé le statut</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.createdBy" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ actorNameOf(activity) }}"/> created this intervention</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ actorNameOf(activity) }}"/> a créé cette intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.createdByLine" datatype="html">
+        <source>created this intervention</source>
+        <target>a créé cette intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.createdNoActor" datatype="html">
+        <source>Intervention created</source>
+        <target>Intervention créée</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.generic" datatype="html">
+        <source>Activity recorded</source>
+        <target>Activité enregistrée</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.title" datatype="html">
+        <source> Proposed changes </source>
+        <target> Changements proposés </target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.caption" datatype="html">
+        <source> Applied automatically when this intervention is published. </source>
+        <target> Appliqués automatiquement lors de la publication de cette intervention. </target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.resourceEquipment" datatype="html">
+        <source>Equipment</source>
+        <target>Équipement</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.resourceFacility" datatype="html">
+        <source>Facility</source>
+        <target>Site</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.resourceInspection" datatype="html">
+        <source>Inspection</source>
+        <target>Inspection</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.resourceOther" datatype="html">
+        <source>Linked resource</source>
+        <target>Ressource liée</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.noValue" datatype="html">
+        <source>—</source>
+        <target>—</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.label" datatype="html">
+        <source>Comment</source>
+        <target>Commentaire</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.placeholder" datatype="html">
+        <source>Add a comment…</source>
+        <target>Ajouter un commentaire…</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.submit" datatype="html">
+        <source>Comment</source>
+        <target>Commenter</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.required" datatype="html">
+        <source>Write a comment first.</source>
+        <target>Écrivez d'abord un commentaire.</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.tooLong" datatype="html">
+        <source>This comment is too long.</source>
+        <target>Ce commentaire est trop long.</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.detailsTitle" datatype="html">
+        <source>Details</source>
+        <target>Détails</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.workItemsSummarySkipped" datatype="html">
+        <source><x id="done" equiv-text="done"/> / <x id="total" equiv-text="total"/> · <x id="skipped" equiv-text="skipped"/> skipped</source>
+        <target><x id="done" equiv-text="done"/> / <x id="total" equiv-text="total"/> · <x id="skipped" equiv-text="skipped"/> ignoré(s)</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.workItemsSummary" datatype="html">
+        <source><x id="done" equiv-text="done"/> / <x id="total" equiv-text="total"/></source>
+        <target><x id="done" equiv-text="done"/> / <x id="total" equiv-text="total"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaUpdated" datatype="html">
+        <source>Updated <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target>Mise à jour <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaStatusChangedNoActor" datatype="html">
+        <source>Status changed <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target>Statut modifié <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaStatusChanged" datatype="html">
+        <source><x id="actor" equiv-text="actorName"/> changed the status <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target><x id="actor" equiv-text="actorName"/> a changé le statut <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaCreatedNoActor" datatype="html">
+        <source>Created <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target>Créée <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaCreated" datatype="html">
+        <source><x id="actor" equiv-text="actorName"/> created this intervention <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target><x id="actor" equiv-text="actorName"/> a créé cette intervention <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaCommentedNoActor" datatype="html">
+        <source>Commented <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target>Commentée <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaCommented" datatype="html">
+        <source><x id="actor" equiv-text="actorName"/> commented <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target><x id="actor" equiv-text="actorName"/> a commenté <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+</body>
   </file>
 </xliff>

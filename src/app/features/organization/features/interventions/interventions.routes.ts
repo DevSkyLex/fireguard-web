@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { interventionTitleResolver } from './http/resolvers';
 import { InterventionStore } from './state';
 
 /**
@@ -22,11 +23,17 @@ import { InterventionStore } from './state';
  * params change, and guarding each child would leave the next one added
  * unprotected by omission.
  *
- * The detail child is Phase 2 and is not mounted yet, so a row currently links
- * to a path the global fallback catches. The index suppresses its breadcrumb
- * because the shell already names the section.
+ * The parent carries the section breadcrumb so the detail page reads
+ * `Org › Interventions › <name>` with a way back; the index suppresses its own
+ * to avoid repeating that crumb.
  *
- * @since 2.0.0
+ * `interventionTitleResolver` is registered as `title` only. `BreadcrumbService`
+ * falls through to `snapshot.title` when `title` is a `ResolveFn`, so one
+ * invocation serves both the document title and the crumb — registering it
+ * twice would run it twice, concurrently, with neither able to use the other's
+ * cache.
+ *
+ * @since 2.1.0
  *
  * @type {Routes}
  */
@@ -39,6 +46,7 @@ export const INTERVENTION_ROUTES: Routes = [
         permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
       }),
     ],
+    data: { breadcrumb: $localize`:@@route.interventions:Interventions` },
     children: [
       {
         path: '',
@@ -49,6 +57,14 @@ export const INTERVENTION_ROUTES: Routes = [
           ),
         title: $localize`:@@route.interventions:Interventions`,
         data: { breadcrumb: false },
+      },
+      {
+        path: ':interventionId',
+        loadComponent: () =>
+          import('./ui/pages/intervention-detail/intervention-detail.component').then(
+            (m) => m.InterventionDetailPage,
+          ),
+        title: interventionTitleResolver,
       },
     ],
   },

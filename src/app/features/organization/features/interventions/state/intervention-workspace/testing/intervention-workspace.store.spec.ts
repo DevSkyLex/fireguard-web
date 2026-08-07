@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import {
   InterventionOfflineService,
   InterventionService,
@@ -664,5 +664,41 @@ describe('InterventionWorkspaceStore call state', () => {
     expect(store.mutationCallState().status).toBe('idle');
     expect(store.loadCallState().status).toBe('idle');
     expect(store.error()).toBeNull();
+  });
+
+  it('blanks the workspace on load, so entry never shows the previous intervention', () => {
+    const pendingGet = new Subject<InterventionOutput>();
+    mockService['get'].mockReturnValue(pendingGet);
+
+    store.load('intervention-1');
+
+    expect(store.intervention()).toBeNull();
+    expect(store.workItems()).toEqual([]);
+  });
+
+  it('keeps the workspace on screen while reload is in flight', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    const pendingGet = new Subject<InterventionOutput>();
+    mockService['get'].mockReturnValue(pendingGet);
+    store.reload('intervention-1');
+
+    expect(store.loading()).toBe(true);
+    expect(store.intervention()).not.toBeNull();
+    expect(store.workItems()).toHaveLength(1);
+  });
+
+  it('keeps the workspace on screen when a reload fails', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    mockService['get'].mockReturnValue(throwError(() => new Error('Http failure response')));
+    store.reload('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    expect(store.loadCallState().status).toBe('error');
+    expect(store.intervention()).not.toBeNull();
+    expect(store.error()).toBe('The intervention workspace could not be loaded.');
   });
 });

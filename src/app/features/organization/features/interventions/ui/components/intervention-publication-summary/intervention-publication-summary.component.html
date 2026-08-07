@@ -1,0 +1,24 @@
+<div class="flex flex-col gap-3">
+  <dl class="flex flex-col gap-1.5 text-sm">
+    <div class="flex items-baseline justify-between gap-3">
+      <dt class="text-muted-foreground" i18n="@@intervention.publication.changes">
+        Pending changes
+      </dt>
+      <dd class="font-medium text-foreground tabular-nums">{{ pendingChanges() }}</dd>
+    </div>
+    <div class="flex items-baseline justify-between gap-3">
+      <dt class="text-muted-foreground" i18n="@@intervention.publication.inspections">
+        Inspections recorded
+      </dt>
+      <dd class="font-medium text-foreground tabular-nums">{{ inspections() }}</dd>
+    </div>
+    <div class="flex items-baseline justify-between gap-3">
+      <dt class="text-muted-foreground" i18n="@@intervention.publication.revision">Revision</dt>
+      <dd class="font-mono text-xs text-foreground tabular-nums">v{{ revision() }}</dd>
+    </div>
+  </dl>
+
+  <p class="text-xs text-muted-foreground" i18n="@@intervention.publication.atomic">
+    Either everything succeeds, or no record is modified.
+  </p>
+</div>

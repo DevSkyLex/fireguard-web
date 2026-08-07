@@ -1,0 +1,104 @@
+<div class="flex flex-col gap-3" data-testid="intervention-activity-thread">
+  <h2
+    class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+    i18n="@@intervention.activity.title"
+  >
+    Activity
+  </h2>
+
+  @if (loading() && activities().length === 0) {
+    <ul class="flex flex-col gap-3" aria-hidden="true">
+      @for (row of skeletonRows; track row) {
+        <li class="flex items-center gap-3">
+          <hlm-skeleton class="size-8 shrink-0 rounded-full" />
+          <hlm-skeleton class="h-10 w-full" />
+        </li>
+      }
+    </ul>
+  } @else if (isEmpty()) {
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.activity.empty">
+      No activity recorded yet.
+    </p>
+  } @else {
+    <ol class="flex flex-col">
+      @for (activity of activities(); track activity.id; let last = $last) {
+        <li
+          [class]="
+            last ? 'relative' : activity.kind === 'system' ? 'relative pb-1.5' : 'relative pb-6'
+          "
+        >
+          @if (activity.kind === 'system') {
+            <div hlmMarker class="min-h-11 items-stretch gap-3 text-xs">
+              <span class="flex w-6 shrink-0 items-start justify-center">
+                <span hlmMarkerIcon>
+                  <ng-icon
+                    [name]="systemEventIconOf(activity)"
+                    [class]="systemEventIconClassOf(activity)"
+                    aria-hidden="true"
+                  />
+                </span>
+              </span>
+              <span hlmMarkerContent class="flex flex-wrap items-start gap-2">
+                @if (activity.event === 'status_changed' && statusChangeOf(activity); as change) {
+                  <span class="font-medium text-foreground">{{ actorNameOf(activity) }}</span>
+                  <span i18n="@@intervention.activity.statusChangedLine">changed status</span>
+                  <app-intervention-tag kind="status" [value]="change.from" />
+                  <ng-icon name="lucideArrowRight" aria-hidden="true" />
+                  <app-intervention-tag kind="status" [value]="change.to" />
+                } @else if (activity.event === 'created') {
+                  @if (activity.actor !== null) {
+                    <span class="font-medium text-foreground">{{ actorNameOf(activity) }}</span>
+                    <span i18n="@@intervention.activity.createdByLine"
+                      >created this intervention</span
+                    >
+                  } @else {
+                    <span i18n="@@intervention.activity.createdNoActor">Intervention created</span>
+                  }
+                } @else {
+                  <span i18n="@@intervention.activity.generic">Activity recorded</span>
+                }
+                <span aria-hidden="true">·</span>
+                <time [attr.datetime]="activity.createdAt">{{ relativeTimeOf(activity) }}</time>
+              </span>
+            </div>
+          } @else {
+            <div hlmMessage class="gap-3">
+              <span class="flex w-6 shrink-0 items-start justify-center">
+                <div hlmMessageAvatar class="min-w-0 self-start">
+                  <hlm-avatar size="sm" class="shrink-0">
+                    @if (actorAvatarOf(activity); as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback class="text-[10px]">{{
+                      actorInitialsOf(activity)
+                    }}</span>
+                  </hlm-avatar>
+                </div>
+              </span>
+
+              <div hlmMessageContent class="gap-1.5">
+                <div hlmMessageHeader class="min-h-6 flex-nowrap gap-2 px-0">
+                  <span class="font-medium text-foreground">{{ actorNameOf(activity) }}</span>
+                  <time [attr.datetime]="activity.createdAt">{{ relativeTimeOf(activity) }}</time>
+                </div>
+                <div hlmBubble variant="muted">
+                  <p hlmBubbleContent class="whitespace-pre-line text-foreground">
+                    {{ activity.body }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
+          @if (!last) {
+            <span
+              class="absolute bottom-2 left-3 w-px -translate-x-1/2 bg-muted-foreground/50"
+              [class.top-6]="activity.kind === 'system'"
+              [class.top-8]="activity.kind !== 'system'"
+              aria-hidden="true"
+            ></span>
+          }
+        </li>
+      }
+    </ol>
+  }
+</div>

@@ -1,0 +1,46 @@
+<form (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="intervention-comment-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="intervention-comment-body"
+        class="sr-only"
+        i18n="@@intervention.comment.label"
+        >Comment</label
+      >
+      <textarea
+        hlmTextarea
+        id="intervention-comment-body"
+        rows="2"
+        data-testid="intervention-comment-body"
+        placeholder="Add a comment…"
+        i18n-placeholder="@@intervention.comment.placeholder"
+        [formField]="commentForm.body"
+      ></textarea>
+      @if (commentForm.body().touched() && commentForm.body().invalid()) {
+        <hlm-field-error>{{ commentForm.body().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <div class="flex justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        size="sm"
+        class="max-sm:min-h-11"
+        data-testid="intervention-comment-submit"
+        [disabled]="pending() || disabled()"
+      >
+        <span i18n="@@intervention.comment.submit">Comment</span>
+      </button>
+    </div>
+  </hlm-field-group>
+</form>

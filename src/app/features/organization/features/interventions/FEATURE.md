@@ -19,62 +19,58 @@ This subfeature is responsible for:
 
 ## Routes
 
-- `/organizations/:organizationId/interventions` — index page offering a
-  Linear-style **List / Board / Calendar** browsing experience over one shared
-  dataset, toggled with segmented toolbar view tabs and synced to `?view=`
-  (default `list`, omitted from the URL). List groups interventions into
-  status sections (collapsible `p-panel`s); Board lays them into
-  draft/planned/in_progress/review/published columns (`app-board`,
-  drag-and-drop applies a status `transition`, gated by the workflow policy
-  and RBAC capability) with a "Show abandoned" toggle for a 6th read-only
-  column; Calendar reuses the existing bounded-window calendar. A header
-  search box debounces into `?q=` and reloads the store with a server-side
-  `name` filter. `?create=1` opens the guided creation drawer on arrival and is
-  consumed once, so the parent feature's landing page can offer "New
+- `/organizations/:organizationId/interventions` — the index page: a spartan
+  `hlmTable` of the organization's interventions, grouped and paginated, with a
+  debounced search box synced to `?q=` (a server-side `name` filter), a filter
+  popover (status, type, deadline window), a column menu, row selection and a
+  permission-gated bulk delete. `?create=1` opens the creation sheet on arrival
+  and is consumed once, so the parent feature's landing page can offer "New
   intervention" as a primary action that actually starts the work.
 
-  A toolbar sits under the canonical page header: render selector, search, a
-  filter popover (status, type, site, responsible, deadline window), a sort
-  popover (due date / creation / priority, either direction) and the
-  "Show abandoned" toggle. **Every one of those narrowings reaches the wire** —
-  the ten query parameters the API accepts used to be dead. Sort, fold state and
-  the abandoned toggle are remembered in a cookie by
+  Sort and fold state are remembered in a cookie by
   `InterventionListPreferencesService`; filters deliberately are not, being
-  questions asked now rather than reading preferences.
+  questions asked now rather than stored preferences.
 
-  **Work views** sit above that toolbar: five shipped questions (All, Mine,
-  Overdue, To review, Drafts) then up to five the operator saves. A view carries
-  its narrowing, its ordering, its **grouping** and its render, so selecting one
-  applies all four; the active view is marked when the toolbar has changed it
-  since. Views and the open view id live in the same cookie as the rest, through
-  `InterventionListPreferencesService`. The built-in "Mine" stores the `@me`
-  sentinel in `responsible`, resolved to the current member at query time so a
-  stored view never hard-codes whoever created it.
-
-  **Each render groups by what it is**: the list by the view's grouping (status,
-  deadline window, site or responsible), the board by workflow status — its
-  drag-and-drop _is_ a status transition — and the calendar by date. A view's
-  grouping therefore applies to the list render only, by design.
-
-  **One behaviour across the three renders** is an invariant: "Show abandoned"
-  applies to List, Board and Calendar alike (it used to exist on the Board
-  alone), and the non-date filters are forwarded to the calendar's own bounded
-  query — its visible window remains its only date filter. The metric strip is
-  gone from this page (`InterventionSummaryStore` is unused here, kept for a
-  future dashboard).
-
-- `/organizations/:organizationId/interventions/:interventionId`
+- `/organizations/:organizationId/interventions/:interventionId` — the detail
+  workspace, described below. Mounted as a second child of the same pathless
+  parent, so `InterventionStore` survives list ↔ detail navigation and the
+  detail page's prev/next walks the order the list established, with no second
+  fetch. `interventionTitleResolver` is registered as `title` **only**:
+  `BreadcrumbService` falls through to `snapshot.title` when `title` is a
+  `ResolveFn`, so one invocation serves both the document title and the crumb.
 
 ## State and Data Access
 
 Stores:
 
-- `InterventionWorkspaceStore` additionally owns `delete` (`InterventionService.remove`, the canonical `DELETE /api/interventions/{id}`): only `draft` or `abandoned` interventions may be deleted (permission `INTERVENTIONS_PLAN` for draft, `INTERVENTIONS_EXECUTE` for abandoned — see `canDeleteIntervention` on the detail page), surfaced as a confirm-gated "Delete intervention" entry in the header overflow menu. The 409 for any other status is surfaced verbatim via the inline workspace error banner; success dispatches `deleteSucceeded` (toast) and the page navigates back to the list.
-- `InterventionStore` — component-scoped (provided in `InterventionsPage`); intervention list and creation (normalized entities + request state). `load` accumulates up to 500 interventions across 100-item pages (the backend clamps `itemsPerPage` at 100) and sets `isListCapped` when the organization has more, driving the list page's "refine your search" notice. `transition` applies a single status change optimistically (entity patch → PATCH with `If-Match` → merge fresh output on success, rollback + `transitionFailed` toast event on error); `orderedIds` exposes the current entity order for prev/next navigation. `delete` (`InterventionService.remove`) removes the cached entity and decrements `totalInterventions` on success; it uses `mergeMap` (not `switchMap`) so the list page's bulk selection can delete several interventions concurrently, each keyed by its own request and each dispatching its own `deleteSucceeded` (toast) or `deleteFailed` (toast) event — there is no aggregate "N deleted" outcome.
-- `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations. Async state is held as `loadCallState` (the workspace fetch), `mutationCallState` (shared by every write) and `activityCallState`; `loading`, `saving` and `error` are derived signals over them, and `mutationError` exposes the normalized `StoreError` so a page can hand a 422 to the form that caused it. Also owns the activity timeline (`activities`, `loadActivities`, `addComment`); comment posting is refused outright while offline (not queued to the outbox) and failures dispatch a `commentAddFailed` toast event via `interventionWorkspaceStoreEvents`.
-- `InterventionCalendarStore` — component-scoped (provided in `InterventionsPage`); the interventions inside a bounded date window (the visible month ± one month) plus the current member IRI driving the calendar card's All/Mine scope. Loaded for the active organization and refetched when the visible month changes (fed by the calendar's `focusedDateChange`); the window is fetched as the de-duped union of a `plannedStartAt`-range query and a `dueAt`-range query (the anchor is `plannedStartAt ?? dueAt`), and the member IRI is resolved once per organization and reused across window refetches.
-- `InterventionSummaryStore` — component-scoped (provided in `InterventionsPage`); loads the full organization intervention set once (via `InterventionService.listAll`) and derives the dashboard metric-strip KPIs (in progress, planned, overdue, blocked). Overdue and blocked exclude interventions in a terminal status (`published`, `abandoned`).
-- `InterventionHeaderStore` — root-provided bridge between the detail page and the workspace layout's page-header action slot: the page publishes its header view state (phase action, request-changes, prev/next, overflow) and clears it on destroy; the slot widget renders from it and dispatches `interventionHeaderEvents` back to the page.
+- `InterventionStore` — provided on the pathless parent route in
+  `interventions.routes.ts` (not on the list page), so it survives list ↔ detail
+  navigation. Intervention list and creation (normalized entities + request
+  state). `load` accumulates up to 500 interventions across 100-item pages (the
+  backend clamps `itemsPerPage` at 100) and sets `isListCapped` when the
+  organization has more, driving the list page's "refine your search" notice.
+  `transition` applies a single status change optimistically (entity patch →
+  PATCH with `If-Match` → merge fresh output on success, rollback +
+  `transitionFailed` toast event on error); `orderedIds` exposes the current
+  entity order for the detail page's prev/next. `delete` removes the cached
+  entity and decrements `totalInterventions` on success; it uses `mergeMap` (not
+  `switchMap`) so a bulk selection can delete several concurrently, each keyed by
+  its own request and each dispatching its own `deleteSucceeded` / `deleteFailed`
+  toast event — there is no aggregate "N deleted" outcome. **This is the only
+  delete path wired to the UI** (see Invariants).
+- `InterventionWorkspaceStore` — component-scoped (provided in
+  `InterventionDetailPage`); the active intervention workspace (intervention,
+  work items, changes, issues) with online/offline mutations. Async state is held
+  as `loadCallState` (the workspace fetch), `mutationCallState` (**shared by every
+  write** — see the known limitation below) and `activityCallState`; `loading`,
+  `saving` and `error` are derived over them, and `mutationError` exposes the
+  normalized `StoreError`. `load` blanks the workspace before fetching, which is
+  right on entry and wrong afterwards, so **`reload` exists for a refresh that
+  must not flash the page to a skeleton** — publication uses it. Also owns the
+  activity timeline (`activities`, `loadActivities`, `addComment`), which no
+  surface consumes yet.
+- `InterventionCalendarStore` — the interventions inside a bounded date window.
+  **Currently dormant**: the calendar render is not part of the rebuilt list page.
 
 Data-access (transport boundary — `data-access/`):
 
@@ -124,7 +120,6 @@ The root `index.ts` stays deliberately narrow (see the comment in the file): a w
 drags the IndexedDB/offline graph into every consumer's initial bundle. It publishes:
 
 - `provideInterventionsFeature` — bootstrap providers.
-- `withInterventionHeaderActions`, `withInterventionSyncChip` — workspace shell contributions.
 - `InterventionService` — the transport service, consumed by the parent feature's landing page
   (`OrganizationTodayStore`) to list the interventions each work queue holds. Exported from its
   implementation path rather than through `./data-access`, because that barrel also carries the
@@ -138,9 +133,9 @@ concern-level barrels, which are public surfaces in their own right (ARCHITECTUR
   collection queries answering it.
 - `data-access` — `InterventionOfflineService`, for the "waiting to sync" queue. This one does
   pull the offline graph in, deliberately: the landing page must list local work, and the
-  workspace shell already mounts the sync chip, which injects the same service.
-- `ui/components` — `InterventionTag`, `InterventionPriorityIcon`, so a queue row renders status
-  and priority through this feature's own registry rather than a copied map.
+  detail page injects the same service for its `unsynced` notice.
+- `ui/components` — `InterventionTag`, so a queue row renders an intervention enum through this
+  feature's own registry rather than a copied map.
 
 Internal code imports deep paths directly.
 
@@ -161,149 +156,192 @@ Internal code imports deep paths directly.
 
 ## Detail workspace composition
 
-The detail page (`ui/pages/intervention-detail`) is a **full-bleed,
-divider-based Linear-style workspace** (claude.ai/design "Intervention
-Dashboard" option 2a): the workspace layout's `<main>` is unpadded (every
-other routed page applies the `p-3 sm:p-6 md:p-7 lg:p-8` convention on its own
-root) and this page owns its edges. The page renders **no top bar of its
-own** — the layout breadcrumb handles back navigation and carries the
-intervention name (via `interventionTitleResolver`) as the page h1, and the
-**main actions live in the header's action slot**:
-`ui/components/intervention-header-actions` is contributed to the workspace
-layout's `WORKSPACE_PAGE_HEADER_SLOT` through `withInterventionHeaderActions()`
-(`providers/page-header/`, registered in `app.routes.ts` and exported from the
-feature `index.ts`). The feature also contributes the shell-wide
-offline/sync-status chip: `ui/components/intervention-sync-chip` (connectivity
-state, pending outbox count via `InterventionOfflineService.pendingCount`,
-blocked operations, manual "Sync now") is registered in the workspace layout's
-`CONVERSATION_HEADER_SLOT` through `withInterventionSyncChip()`
-(`providers/conversation-header/`,
-exported from the feature `index.ts`). The page publishes its header view state — prev/next
-chevrons with a `position / total` pill (walking the shared
-`InterventionStore`'s `orderedIds()`, provided at the parent route — see
-`interventions.routes.ts`), a secondary **Request changes** button while the
-intervention is submitted and the user may review, the **single canonical
-forward action** for the current phase (Plan / Submit / Publish), and the
-overflow menu — into the root `state/intervention-header/`
-`InterventionHeaderStore`, clears it on destroy, and reacts to the slot's
-`interventionHeaderEvents` (command / request-changes / prev / next), so
-orchestration never leaves the page. The command action is a **living
-recommended action**: during execution it reads "Record field work" /
-"Complete N remaining items" (revealing the checklist or the discovery
-drawer) until the checklist is resolved, then becomes the phase-exit gate;
-when a gate is disabled, its `disabledReason` renders next to the button
-(header slot and mobile bar) so it never dead-ends silently. `j`/`k` navigate
-next/previous within the cached list ordering (ignored while typing or while
-a drawer is open). The phase action and Request changes are mirrored into a
-mobile thumb-zone bar (rendered when either exists, so a reviewer without
-publish rights still reaches Request changes on mobile). Every drawer guards
-accidental dismissal: the overlay’s open-time Escape listener is disabled and
-replaced by a dirty-aware document handler, and the backdrop is
-non-dismissible while the composed form reports unsaved edits (`dirty`
-signal on every form). The
-page's banner stack surfaces errors, blocked sync operations, the offline
-outbox, the **reviewer's note while status is `changes_requested`** (the only
-place `reviewNote` is shown to the agent), a blockers banner listing the
-blocking issues (review phase only — publication blockers are noise during
-preparation/execution), and review banners (execution-complete when submitted
-with zero blockers; published confirmation).
+The detail page (`ui/pages/intervention-detail`) is **one continuous,
+pull-request-style flow**, not a set of tabs — the intervention model already
+reads like a PR (proposed changes, an activity thread, a single merge/publish
+gate), and the page's DOM finally says so. The section order is **fixed and
+identical across every phase** (WCAG 2.4.3): only what is _open_ changes with
+the phase, never the order things appear in.
 
-**Edit affordances follow the backend's mutability rules** (see
-`Intervention::assertPlanningMutable`): planning fields (site, responsible,
-participants, priority, schedule) are editable in **draft only**
-(`canEditPlanning` gates the rail pencils and the planning drawer), while the
-description and labels stay editable until a terminal status
-(`canEditDetails`). The description is edited **inline** in the identity block
-(expand-in-place editor merge-patching only `description`), never through the
-planning drawer. The body then splits
-into the main column and a tinted right **properties rail** (19rem, divider at
-`xl`, stacking below with a top border on smaller screens). The main column
-opens with an identity line (status/priority tags, `FG-{number}` code, type,
-site, updated date, and the description with its edit affordance) and a
-**stage progress row**: the `ui/components/intervention-phase-stepper` compact
-pipeline (done phases as green checks, the active phase as a tinted pill
-carrying an optional `{done}/{total}` work-item counter, upcoming phases as
-outline circles; hidden when abandoned) with the due date right-aligned.
+1. **Header** — wayfinding only: the intervention `h1`, the reference number,
+   the status tag with its transition menu, and an overflow menu for
+   abandon/delete.
+2. **Meta line** — who acted last and when, plus the revision, derived from
+   the most recent loaded activity entry (`InterventionWorkspaceStore.activities`)
+   and falling back to `updatedAt` while the timeline is empty or still
+   loading.
+3. **Page error alert** — the store's last unattributed failure, unchanged
+   from the tabbed design.
+4. **Details** — a `hlmCollapsible` disclosure. Collapsed, it shows a
+   read-only chip row (site · responsible · planned window · priority ·
+   labels) reusing the exact values the expanded content renders — never a
+   second summary that could drift. Expanded, it holds `app-intervention-about`,
+   `app-intervention-properties-grid` and the "Linked" card, unchanged from
+   the tabbed design. Defaults **open** in `prepare` and **closed** otherwise,
+   via a `linkedSignal` keyed on the phase so a manual toggle sticks until the
+   next phase transition.
+5. **Getting started** — `app-intervention-getting-started`, unchanged,
+   rendered only in `prepare`. Activating a property item now also expands
+   the details disclosure first, so the editor it points at is actually
+   visible.
+6. **Field work** — a second `hlmCollapsible` disclosure, defaulting open in
+   `execute` and closed otherwise. Collapsed, its trigger row carries a
+   summary ("6 / 7 · 1 skipped"). Expanded, it holds the reviewer-note banner
+   (`changes_requested`) and `app-intervention-work-item-table`, an `hlmTable`
+   grid (status toggle · item · row menu), unchanged in behavior.
+7. **Proposed changes** — `app-intervention-change-list`, rendered only when
+   `InterventionWorkspaceStore.changes()` holds at least one `proposed`
+   entry. Read-only — see below.
+8. **Activity thread** — `app-intervention-activity-thread`, always rendered.
+   A system entry (`kind: 'system'`, e.g. `status_changed`) is a thin line on
+   a vertical rule; a comment (`kind: 'comment'`) is a card with the author's
+   avatar. Two visual weights, never one, so a thirty-entry timeline stays
+   scannable.
+9. **Action box** — `app-intervention-action-box`, the single host for the
+   current phase's forward action. Its _content_ changes with the phase (a
+   plan/submit label with its disabled reason; the blockers list, the
+   `app-intervention-publication-summary` recap and the publish button in
+   `review`; a locked terminal state once `published`), but it renders
+   **exactly once**, at a fixed position, regardless of phase.
+10. **Comment composer** — `app-intervention-comment-form`, at the foot of
+    the thread, wired to `InterventionWorkspaceStore.addComment`.
+11. **Prev/next footer** — unchanged.
 
-The workspace applies **progressive disclosure per phase**. While the
-intervention is a **draft**, the main column renders the
-`ui/components/intervention-planning-guide` **guided planning surface** instead
-of the checklist: four steps (context → scope → team → schedule), one at a
-time with a step rail, each step merge-patching only its edited fields through
-the workspace store's `updateDetails` on continue/navigation — selects and
-date pickers additionally **autosave** (600 ms debounce) so the final step's
-plan action, whose enablement reads the persisted intervention, unlocks
-without navigating away; the scope step
-lists work items and delegates add/remove to the page (drawer /
-confirm-delete), and the final step carries the plan action once every step is
-complete. The activity section defaults collapsed during preparation, the
-checklist defaults collapsed during review, the rail's Readiness section is
-hidden while the guide runs (the steps convey it) and the Publication section
-only renders in review. Otherwise the main column stacks flat, divider-
-separated sections: a **single work-item checklist** — the one work-item
-surface, no duplicate table view — whose header pairs the `{done}/{total}`
-counter with a thin completion bar and the phase affordances ("+" to create in
-draft; add-discovery and scan-QR in execution), each row a hover-highlighted
-flat line toggling complete via its circle checkbox (the workspace's next
-recommended item is tinted with the brand accent) with an overflow menu for
-the per-item phase actions (attach evidence photo for equipment, skip,
-delete); a **proposed changes** section
-(`ui/components/intervention-change-diff` — a legible field → value diff, not
-raw JSON) headed by a pending/total counter and the atomic-application note;
-while submitted, a tinted **publication summary** aside recapping the atomic
-contract (pending changes, inspections recorded, revision); and the activity
-section (a timeline + this feature's own
-`ui/forms/comment-composer` — interventions-owned (§6.5, strongest ownership):
-it expresses this feature's activity-comment workflow, and collaboration
-deliberately uses a plain textarea instead — fed by the
-workspace store's `activities`/`loadActivities`/`addComment`). The properties
-rail stacks divider-separated groups: **Properties** — status (with a
-transition menu — selecting `changes_requested` opens
-`ui/drawers/intervention-request-changes-drawer` with a required note),
-priority, assignees, due date, site, labels (a `p-multiselect` of the
-organization's labels, loaded by `InterventionPlanningOptionsStore`) and the
-mono revision — **Linked** (facility/equipment/inspection counts),
-**Readiness** (one phase-scoped `ui/components/intervention-readiness-checklist`
-with a done/total counter) and **Publication**.
+### Read-only proposed changes
+
+`UpdateInterventionChangeInput.status` only ever accepts
+`'proposed' | 'rejected'` — the client can reject a change, never accept one,
+and acceptance is not a client action at all: a proposed change is applied
+automatically **at publication**. `InterventionWorkspaceStore` exposes no
+method to reject a change today (only `InterventionService.updateChange`
+exists, consumed by `intervention-sync.service.ts`), so
+`app-intervention-change-list` is **read-only** in this pass: it lists the
+still-`proposed` changes with a caption explaining what happens next, and
+offers no action. Wiring a reject action is a follow-up that touches the
+store and its offline outbox, not this page.
+
+### Editing
+
+Every property is edited **where it is displayed** (ARCHITECTURE.md §10.5), on
+`@shared/inplace-field`. There is no planning sheet and no planning wizard.
+
+Two commit modes, chosen by the control rather than by taste:
+
+| Mode      | Fields                                | Why                                                                                                                                           |
+| --------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pick`    | priority, site, responsible, schedule | a value picked in one gesture commits on that gesture — a Save button after choosing "Urgent" from four options is a click that means nothing |
+| `confirm` | description, participants, labels     | free text and sets have no single "done" gesture                                                                                              |
+
+`plannedStartAt` and `dueAt` are **one field**: picked together in a range control
+and sent in one patch, which §10.5 admits as "a small coherent group".
+
+**Nothing is dispatched for a value equal to the one already stored** — every
+accepted patch increments `revision`, which publication is pinned to.
+
+**A commit is confirmed, not undoable.** `FeedbackMessage` carries no action, so
+an "Undo" toast would be a new cross-app primitive; instead every successful
+in-place commit shows a success toast, so a mis-click is visible within the
+toast's lifetime rather than discovered at review.
+
+Mutability follows the backend (`Intervention::assertPlanningMutable`): planning
+fields are writable in **draft only** (`canEditPlanning`), description and labels
+until a terminal status (`canEditDetails`). A field that cannot be written renders
+as a **disabled trigger** — no hover, no pencil, out of the tab order.
+
+`name` is deliberately **not** editable here: the gate covering it is documented
+in neither set, and offering an edit the API might refuse is what the read-only
+rule exists to prevent. Resolve it against the backend before opening it.
+
+### Progressive planning, without a wizard
+
+`app-intervention-getting-started` is the whole of what replaced the four-step
+guide, and it is deliberately not a progress-bar-plus-next-item strip: it lists
+every prerequisite **at once** — site, responsible, due date, scope — each a
+direct `hlm-item` row into the in-place editor that satisfies it. A planner
+filling in a draft sees the whole short list up front rather than one item
+revealed at a time, which suits "go progressively, not too many fields at once"
+better than hiding all but the next gap would. It is a table of contents over
+the in-place editors, never a second place to edit — which is why it can guide
+without duplicating a single field.
+
+It renders in `prepare` only. `description`, `labels` and `participants` are
+**not** in the list — putting them there would invent obligations the backend
+does not have. It is empty everywhere else: in `execute` the phase action is
+already the living "Complete N remaining items" pointer to the checklist; in
+`review` nothing left is a gap the operator can click their way to; and an
+**abandoned** intervention falls back to the `prepare` phase, so without an
+explicit guard it would offer to plan something that left the workflow.
+
+### Notices
+
+Each condition renders **once, where it is relevant**, instead of a single
+ranked stack under the header: an unattributed store error (load or write) is
+one alert above the sections with a retry; a reviewer's note sits atop the
+field-work section; blocking compliance issues sit inside the action box's
+`review`-phase content, beside the publish gate; a publication failure is
+inline in the publish confirmation, which stays open so the operator can
+retry; and an unsynced outbox is a small header indicator rather than a
+dismissable banner. A field-level rejection is already shown by the field
+itself (`editState.failed`) and is excluded from the top-of-page alert so it
+never renders twice.
+
+`hlm-alert` has exactly two variants and the theme carries no success or warning
+token, so a notice's kind is conveyed by its **icon and title, never by colour**.
+Every alert paints its own ground (`bg-muted/50`, `bg-destructive/5`) because
+`--card` and `--background` are the _same colour in the light theme_ — a stock
+alert would be white on white, separated by one hairline.
+
+### Offline
+
+The workspace store already queues writes, applies them optimistically and keeps
+an IndexedDB snapshot, so offline behaviour works without any page code. The only
+visible surface here is the header's unsynced indicator. The sync chip, the
+blocked-operation count and Retry/Discard belong to a dedicated offline pass.
+
+### Known limitation
+
+`InterventionWorkspaceStore` has a **single `mutationCallState` for every write**.
+The page attributes it to the one field or row that caused it (`editState.saving`,
+`pendingWorkItemId`), which is an approximation: with two writes in flight the
+spinner lands on the wrong one, and the second's success clears the first's error.
+The real fix is named call states in the store, and it is out of scope for this
+page.
 
 ## Status / enum presentation (badges & select options)
 
 Every intervention enum (`priority`, `status`, `type`, `workItemAction`,
 `workItemStatus`, `issueSeverity`, `changeStatus`, `inspectionResult`) renders
-from a single source of truth so the same value looks identical everywhere and
+from a single source of truth, so the same value looks identical everywhere and
 status is never conveyed by colour alone (icon + label always present).
 
-- `models/intervention-tag/` — the shared vocabulary (plain TS, no Angular),
-  exported through the feature `models/` barrel:
-  - `intervention-tag-descriptor.interface.ts` — `InterventionTagDescriptor`,
-    a domain alias of the app-wide `TagDescriptor` (`label`, `severity`, `icon`).
-  - `intervention-tag-severity.type.ts` (alias of `TagSeverity`) /
-    `intervention-tag-kind.type.ts`.
-  - `intervention-tag.util.ts` — per-enum descriptor registry and
-    `resolveInterventionTag(kind, value)` (graceful fallback for unknown values).
-    The descriptor's `severity` is the render site's severity scale, so no
-    colour mapping is needed there.
-- `ui/components/intervention-tag/` — `<app-intervention-tag kind value />`:
-  the **table/panel badge**. A thin wrapper that resolves the descriptor and
-  forwards it to the badge control.
-- `ui/components/intervention-option/` — `<app-intervention-option kind value />`:
-  the **select option content**, also a badge, matching the dashboard
-  trend-card filter selects.
+- `models/intervention-tag/` — the vocabulary (plain TS, no Angular), exported
+  through the feature `models/` barrel: the descriptor interface, the kind and
+  severity unions, and `resolveInterventionTag(kind, value)` with a graceful
+  fallback for unknown values. This is one of the two sanctioned runtime
+  exceptions inside `models/` (ARCHITECTURE.md §10.10).
+- `ui/components/intervention-tag/` — `<app-intervention-tag kind value />`, the
+  one rendering. An `outline` `hlm-badge` where only the glyph carries the tone;
+  `asOption` drops the badge and renders the same icon and label as a plain row,
+  for use inside a select or combobox item.
+- The severity tints are **literal Tailwind palette pairs** in that component's own
+  `constants/`, because the theme has no `--success` / `--warning` / `--info`
+  token. That file is private to the tag: other surfaces write their own literal
+  pairs rather than reaching into it (§2.8).
 
-To add a new enum value: extend the relevant descriptor map only — both the
-badge and the select option follow automatically.
+To add a new enum value, extend the relevant descriptor map only — every consumer
+follows.
 
 ## Conventions (apply to all work in this feature)
 
-- **Tech**: Angular 21 standalone components, signals (`input()`, `computed()`,
+- **Tech**: Angular 22 standalone components, signals (`input()`, `computed()`,
   `signal()`), `ChangeDetectionStrategy.OnPush`; Tailwind
   utilities for styling. **Never edit `src/styles.css`** — style with Tailwind
-  classes / component `[pt]`; literal class strings only (Tailwind scans them).
+  classes and the spartan theme tokens; literal class strings only (Tailwind scans them).
 - **Architecture**: keep the `models/` (interfaces, types and the small pure
   utils that operate on them) · `data-access/` (HTTP + local IndexedDB
   transport) · `services/` (behavior coordinators) · `state/` (SignalStore) ·
-  `ui/` split. `ui/` holds `pages/`, `forms/`, `tables/`, `dataviews/`,
-  `drawers/`, `components/`; one folder per unit with an `index.ts` barrel. **Shared types/data live in `models/`** —
+  `ui/` split. `ui/` holds `pages/`, `forms/`, `tables/`, `sheets/`,
+  `dialogs/`, `components/`; one folder per unit with an `index.ts` barrel. **Shared types/data live in `models/`** —
   co-located in the unit's own `models/` folder, or in the feature-level
   `models/` when used across components. Do NOT invent sibling layers (e.g. a
   `presentation/` folder). Presentational components stay dumb (inputs/outputs
@@ -319,49 +357,100 @@ badge and the select option follow automatically.
 
 ## Invariants
 
-- **Publication is confirm-gated, and the confirmation is the recap.** The phase command in
-  `review` opens `confirmPublish()`, which states how many pending changes and recorded
-  inspections are about to be written and at which revision, then repeats the atomic contract.
-  It must never call `publishIntervention()` directly: publication is the one step that writes
-  to the compliance record, and every other consequential action here (abandon, delete, discard
-  blocked sync) is already gated.
-- **In `execute`, the work comes before the context.** The identity block and the stage
-  progress row live in an `interventionContext` `ng-template` rendered _after_ the checklist
-  during execution and before it in every other phase. The reorder is in the DOM, not in CSS
-  `order`, so keyboard focus keeps matching the visual sequence (WCAG 2.4.3). Progressive
-  disclosure no longer stops at `draft`.
-- **One page-level notice is open at a time.** `activeNotices` ranks them — error, blocked
-  sync, reviewer note, publication blockers, offline outbox, ready-to-publish, published — and
-  only the first renders; the rest fold behind a counted toggle (`showNotice`,
-  `noticesExpanded`). Seven could co-render before, which put a wall between the operator and
-  the checklist they opened the page to run. Adding a notice means extending the ranking, not
-  appending another always-open banner.
-- **The properties rail has one edit entry, not one per row.** The rail is a read-only
-  summary with a single "Edit planning" control on its (now visible) group heading. It
-  previously carried four pencils — priority, assignees, due date, site — that all called the
-  same `editDrawerVisible.set(true)`, so the affordance advertised four scopes and delivered
-  one. Description and labels keep their own controls because they open genuinely different
-  editors (inline expand-in-place, and the label multiselect).
-- **The publication outcome renders where the action was taken.** `publicationMessage` appears in
-  the mobile command bar as well as the properties rail, because below `xl` the rail stacks under
-  the entire main column — a phone operator would otherwise tap Publish and see nothing change.
+- **Publication is confirm-gated, and the confirmation _is_ the recap.** The phase
+  command in `review` only opens the dialog; `publishIntervention()` is `private`
+  and reachable solely from its accept handler. The dialog's body is the **same
+  `app-intervention-publication-summary` component** the action box renders,
+  fed from the same three signals, so the recap and the dialog cannot drift.
+  Publication is the one step that writes to the compliance record.
+- **The phase's forward action has exactly one address on the page:
+  `app-intervention-action-box`.** It renders once, at a fixed position,
+  regardless of phase — its content changes, its position never does. Nothing
+  else on the page renders `commandAction()`.
+- **Every page-level notice renders once, at the location it concerns, never
+  as a ranked stack.** An unattributed store error is a single alert above the
+  sections; every other condition (reviewer note, blockers, unsynced outbox,
+  publication failure) has exactly one home inside the section, action box or
+  dialog it belongs to. A field-level rejection is excluded from the
+  top-of-page alert (`pageError`) so it is never shown twice.
+- **The section order is fixed across every phase (WCAG 2.4.3).** Only the
+  `detailsExpanded` / `fieldWorkExpanded` disclosures open or close with the
+  phase; the DOM order of header → meta → details → getting-started →
+  field-work → proposed changes → activity thread → action box → comment
+  composer → prev/next never changes.
+- **Proposed changes are read-only.** `UpdateInterventionChangeInput.status`
+  only accepts `'proposed' | 'rejected'`, never `'applied'` — acceptance
+  happens automatically at publication, not through a client action — and
+  `InterventionWorkspaceStore` exposes no reject method yet.
+  `app-intervention-change-list` lists and explains; it does not act.
+- **Every property is edited where it is displayed, and each affordance opens a
+  different editor.** This supersedes the old "one edit entry, not one per row":
+  that rule existed because four pencils all opened the _same_ planning drawer, so
+  the affordance advertised four scopes and delivered one. Under in-place editing
+  each control genuinely edits its own property, which is the condition the old
+  rule was protecting.
+- **Deletion goes through `InterventionStore`, never `InterventionWorkspaceStore`.**
+  Only the list store removes the entity, decrements `totalInterventions` and
+  repairs `orderedIds()` — which the detail page's own prev/next walks. Calling the
+  workspace one leaves a ghost id that nothing repairs, because that store is torn
+  down on navigation. `InterventionWorkspaceStore.delete` is therefore **unreachable
+  from the UI**; it is kept dormant rather than removed, and must not be wired to a
+  surface without revisiting this.
+- **The detail page's delete gate is the split-capability one** (`INTERVENTIONS_PLAN`
+  for a draft, `INTERVENTIONS_EXECUTE` for an abandoned intervention), narrowed first
+  through `isInterventionDeletable`. The list page's row and bulk delete gate on
+  `INTERVENTIONS_WRITE` instead — this feature has no delete-specific permission
+  (the same approved exception as `facilities`). The two are intentionally different
+  gates on the same `DELETE /api/interventions/{id}`, and both now ship: keep them
+  explicit rather than collapsing one into the other.
+- **A row or bulk delete is never offered for a status the API would refuse.**
+  `InterventionTable`, `InterventionsPage` and `InterventionDetailPage` all narrow
+  through the shared `isInterventionDeletable` util (`utils/intervention-deletable/`,
+  statuses `draft`/`abandoned`) rather than duplicating the check, so the surfaces
+  cannot drift. A bulk selection is filtered to its deletable subset before the
+  confirm dialog opens — the count it shows is always what will actually delete,
+  never a promise a 409 would break.
 - Intervention workflows remain organization-scoped.
 - Offline outbox replay belongs to this subfeature, not `core`.
 - Intervention pages orchestrate intervention services and intervention stores.
 - Intervention route pages live under `ui/pages/`.
-- **The list page's row and bulk delete gate on `INTERVENTIONS_WRITE`.** This
-  feature has no delete-specific permission (same approved exception as
-  `facilities`' own delete action), so the write permission covers it. This is
-  a separate gate from the `InterventionWorkspaceStore.delete` split-permission
-  mapping documented above under "State and Data Access" — that path backs the
-  detail page's header-overflow Delete action, which does not exist in the UI
-  yet. Reconcile the two only when that detail-page action ships; until then
-  they are two independent, intentionally different gates on the same
-  underlying `DELETE /api/interventions/{id}` call.
-- **A row or bulk delete is never offered for a status the API would refuse.**
-  `InterventionTable` and `InterventionsPage` both narrow through the shared
-  `isInterventionDeletable` util (`utils/intervention-deletable/`, statuses
-  `draft`/`abandoned`) rather than duplicating the check, so the two surfaces
-  cannot drift apart. A bulk selection is filtered to its deletable subset
-  before the confirm dialog opens — the count it shows is always what will
-  actually delete, never a promise a 409 would break.
+
+### Retired invariants
+
+Rules from earlier detail-page designs that are **retired**, not merely unimplemented:
+
+- _"The publication outcome renders where the action was taken."_ It was justified
+  only by a mobile command bar mirroring `publicationMessage`, and that bar never
+  existed in the tabbed workspace. The publish confirmation now stays open on
+  failure and shows the outcome inline, so the operator sees it exactly where
+  they took the action and can retry without reopening the dialog.
+- _"In `execute`, the work comes before the context."_ It was implemented as an
+  `ng-template` plus two `ngTemplateOutlet`s reordering a single-column DOM, and
+  it only paid for itself alongside a per-phase progressive-disclosure layout
+  that is not rebuilt. The tabbed workspace makes the point structurally instead:
+  Field work is its own tab, so an operator mid-execution never scrolls past
+  planning context to reach it.
+- _"Everything worth saying lives in one ranked notice stack under the header."_
+  Retired in the 2.0 tabbed redesign: seven conditions competing for one slot,
+  folded behind a counted toggle, put a wall between the operator and the
+  content they opened the page for. Each condition now has exactly one
+  contextual home (see `### Notices` above) instead of a shared rank.
+- _"The properties rail is a fixed `19rem` column on the right, and the phase
+  action is a single button pinned to the top-right of the page header."_
+  Retired in the 2.0 tabbed redesign: properties became a responsive card grid
+  inside the Overview tab, and each phase's forward action rendered inside the
+  tab where that work happened.
+- _"The workspace is three focused `hlm-tabs` panels — Overview, Field work,
+  Publication."_ Retired in the 3.0 pull-request-style redesign: the model
+  already reads like a PR (proposed changes, an activity thread, a single
+  merge/publish gate) and tabs were hiding that shape — blockers and proposed
+  changes were invisible unless an operator happened to open the right tab,
+  and `activities`/`changes` sat unused in the store from day one. The page is
+  now one fixed-order flow of disclosures instead, and the phase's forward
+  action moved from "inside whichever tab is showing" to one fixed address,
+  `app-intervention-action-box`.
+- _"A locked empty state fills the Publication tab before the intervention
+  reaches `review`."_ Retired in the 3.0 redesign: `app-intervention-action-box`
+  already communicates the workflow state through its own phase-appropriate
+  content (a plan/submit button, then the recap), so a separate "not ready
+  yet" panel said the same thing a second time.

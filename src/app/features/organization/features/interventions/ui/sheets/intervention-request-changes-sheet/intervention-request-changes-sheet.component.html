@@ -1,0 +1,28 @@
+<hlm-sheet
+  side="right"
+  [state]="sheetState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full overflow-y-auto sm:w-[480px] sm:max-w-none"
+    data-testid="intervention-request-changes-sheet"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@intervention.rcDrawer.header">Request changes</h3>
+      <p hlmSheetDescription i18n="@@intervention.rc.hint">
+        Explain what must change before this intervention can be published. The field agent sees
+        this note when the work returns to execution.
+      </p>
+    </hlm-sheet-header>
+
+    <app-intervention-request-changes-form
+      [pending]="pending()"
+      [disabled]="disabled()"
+      [serverError]="serverError()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>

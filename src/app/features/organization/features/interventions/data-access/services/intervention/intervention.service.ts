@@ -22,11 +22,11 @@ import type {
   InterventionCalendarFilters,
   InterventionListOptions,
   InterventionOutput,
-  InterventionStatus,
   InterventionTypeOutput,
   InterventionWorkItemOutput,
   PublicationOutput,
   UpdateInterventionChangeInput,
+  UpdateInterventionInput,
   UpdateInterventionWorkItemInput,
 } from '@features/organization/features/interventions/models';
 
@@ -380,39 +380,16 @@ export class InterventionService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} interventionId - intervention Id value.
-   * @param {Partial<{
-   * name: string;
-   * status: InterventionStatus;
-   * site: string | null;
-   * responsible: string | null;
-   * participants: readonly string[];
-   * priority: InterventionOutput['priority'];
-   * plannedStartAt: Date | null;
-   * dueAt: Date | null;
-   * reviewNote: string | null;
-   * description: string | null;
-   * labelIds: readonly string[];
-   * }>} input - input value. `labelIds`, when present, replaces the intervention's
-   * whole label set (merge-patch semantics); omit the key to leave labels untouched.
+   * @param {UpdateInterventionInput} input - The subset of fields to patch.
+   * `labelIds`, when present, replaces the intervention's whole label set
+   * (merge-patch semantics); omit the key to leave labels untouched.
    * @param {number} [revision] - revision value.
    *
    * @return {Observable<InterventionOutput>} Result of the update operation.
    */
   public update(
     interventionId: string,
-    input: Partial<{
-      name: string;
-      status: InterventionStatus;
-      site: string | null;
-      responsible: string | null;
-      participants: readonly string[];
-      priority: InterventionOutput['priority'];
-      plannedStartAt: Date | null;
-      dueAt: Date | null;
-      reviewNote: string | null;
-      description: string | null;
-      labelIds: readonly string[];
-    }>,
+    input: UpdateInterventionInput,
     revision?: number,
   ): Observable<InterventionOutput> {
     const body: Record<string, unknown> = { ...input };

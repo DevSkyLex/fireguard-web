@@ -25,6 +25,11 @@ export type { InterventionOutput } from './intervention/intervention-output.inte
 export type { InterventionPriority } from './intervention/intervention-priority.type';
 export type { InterventionStatus } from './intervention/intervention-status.type';
 export type { InterventionType } from './intervention/intervention-type.type';
+export type { UpdateInterventionInput } from './intervention/update-intervention-input.interface';
+export type { InterventionEditState } from './intervention-edit/intervention-edit-state.interface';
+export type { InterventionEditTarget } from './intervention-edit/intervention-edit-target.type';
+export type { InterventionReadinessItem } from './intervention-edit/intervention-readiness-item.interface';
+export type { InterventionReadinessTarget } from './intervention-edit/intervention-readiness-target.type';
 export type { CreateInterventionLabelInput } from './intervention-label/create-intervention-label-input.interface';
 export type { InterventionLabelOutput } from './intervention-label/intervention-label-output.interface';
 export type { InterventionLabelSummary } from './intervention-label/intervention-label-summary.interface';

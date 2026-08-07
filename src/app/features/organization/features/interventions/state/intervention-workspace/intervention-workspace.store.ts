@@ -35,6 +35,8 @@ import {
 } from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,
+  InterventionChangeOutput,
+  InterventionIssueOutput,
   InterventionOutput,
   InterventionTransitionRequest,
   InterventionWorkItemOutput,
@@ -202,6 +204,57 @@ export const InterventionWorkspaceStore = signalStore(
       ),
       dispatcher = inject<Dispatcher>(Dispatcher),
     ) => {
+      const fetchWorkspace = (interventionId: string) =>
+        forkJoin({
+          intervention: service.get(interventionId),
+          workItems: service.listAllWorkItems(interventionId),
+          changes: service.listAllChanges(interventionId),
+          issues: service.listIssues(interventionId),
+        }).pipe(
+          catchError((error: unknown) =>
+            connectivity.isNetworkFailure(error)
+              ? from(offline.getWorkspace(interventionId)).pipe(
+                  map((workspace) => {
+                    if (!workspace) throw new Error('Intervention unavailable offline');
+                    return {
+                      intervention: workspace.intervention,
+                      workItems: workspace.workItems,
+                      changes: workspace.changes,
+                      issues: { member: workspace.issues },
+                    };
+                  }),
+                )
+              : throwError(() => error),
+          ),
+        );
+
+      const applyWorkspace = ({
+        intervention,
+        workItems,
+        changes,
+        issues,
+      }: {
+        intervention: InterventionOutput;
+        workItems: readonly InterventionWorkItemOutput[];
+        changes: readonly InterventionChangeOutput[];
+        issues: { readonly member: readonly InterventionIssueOutput[] };
+      }): void => {
+        patchState(store, {
+          intervention,
+          workItems,
+          changes,
+          issues: issues.member,
+          loadCallState: successCallState(null),
+        });
+        void offline.saveWorkspace(intervention, workItems, changes, issues.member);
+      };
+
+      const loadFailure = (error: unknown) =>
+        workspaceFailure(
+          error,
+          $localize`:@@intervention.workspace.loadFailed:The intervention workspace could not be loaded.`,
+        );
+
       const load = rxMethod<string>(
         pipe(
           tap(() =>
@@ -215,51 +268,49 @@ export const InterventionWorkspaceStore = signalStore(
             }),
           ),
           switchMap((interventionId) =>
-            forkJoin({
-              intervention: service.get(interventionId),
-              workItems: service.listAllWorkItems(interventionId),
-              changes: service.listAllChanges(interventionId),
-              issues: service.listIssues(interventionId),
-            }).pipe(
-              catchError((error: unknown) =>
-                connectivity.isNetworkFailure(error)
-                  ? from(offline.getWorkspace(interventionId)).pipe(
-                      map((workspace) => {
-                        if (!workspace) throw new Error('Intervention unavailable offline');
-                        return {
-                          intervention: workspace.intervention,
-                          workItems: workspace.workItems,
-                          changes: workspace.changes,
-                          issues: { member: workspace.issues },
-                        };
-                      }),
-                    )
-                  : throwError(() => error),
-              ),
+            fetchWorkspace(interventionId).pipe(
               tapResponse({
-                next: ({ intervention, workItems, changes, issues }) => {
-                  patchState(store, {
-                    intervention,
-                    workItems,
-                    changes,
-                    issues: issues.member,
-                    loadCallState: successCallState(null),
-                  });
-                  void offline.saveWorkspace(intervention, workItems, changes, issues.member);
-                },
+                next: applyWorkspace,
                 error: (error: unknown) =>
                   patchState(store, {
                     intervention: null,
                     workItems: [],
                     changes: [],
                     issues: [],
-                    loadCallState: errorCallState(
-                      workspaceFailure(
-                        error,
-                        $localize`:@@intervention.workspace.loadFailed:The intervention workspace could not be loaded.`,
-                      ),
-                    ),
+                    loadCallState: errorCallState(loadFailure(error)),
                   }),
+              }),
+            ),
+          ),
+        ),
+      );
+
+      /**
+       * Method reload
+       * @method reload
+       *
+       * @description
+       * Re-reads the workspace without blanking it first. `load` clears the
+       * intervention, work items, changes and issues before fetching, which is
+       * right on entry and wrong afterwards: refreshing after a publication or
+       * a transition would flash the whole page to a skeleton and back. A
+       * failed reload keeps what is on screen and reports through
+       * `loadCallState`.
+       *
+       * @access public
+       * @since 1.3.0
+       *
+       * @type {RxMethod<string>}
+       */
+      const reload = rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { loadCallState: pendingCallState() })),
+          switchMap((interventionId) =>
+            fetchWorkspace(interventionId).pipe(
+              tapResponse({
+                next: applyWorkspace,
+                error: (error: unknown) =>
+                  patchState(store, { loadCallState: errorCallState(loadFailure(error)) }),
               }),
             ),
           ),
@@ -387,6 +438,7 @@ export const InterventionWorkspaceStore = signalStore(
 
       return {
         load,
+        reload,
         loadActivities,
         addComment,
 

@@ -1,0 +1,74 @@
+<div hlmCard>
+  <div hlmCardContent class="flex flex-col gap-4">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span class="font-mono text-xs text-muted-foreground tabular-nums"
+        >FG-{{ intervention().number }}</span
+      >
+
+      <app-intervention-tag kind="type" [value]="intervention().type" />
+
+      @if (siteLabel(); as site) {
+        <span class="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+          <ng-icon name="lucideMapPin" class="shrink-0" aria-hidden="true" />
+          <span class="truncate">{{ site }}</span>
+        </span>
+      }
+
+      <span class="text-sm text-muted-foreground">
+        <span i18n="@@common.updated">Updated</span>
+        {{ intervention().updatedAt | date: 'mediumDate' }}
+      </span>
+
+      @if (participants().length > 0) {
+        <hlm-avatar-group class="ms-auto">
+          @for (person of participants(); track person.label) {
+            <hlm-avatar size="sm" [title]="person.tooltip ?? person.label">
+              @if (person.image; as avatarUrl) {
+                <img hlmAvatarImage [src]="avatarUrl" alt="" />
+              }
+              <span hlmAvatarFallback class="text-[10px]">{{ person.label }}</span>
+            </hlm-avatar>
+          }
+        </hlm-avatar-group>
+      }
+    </div>
+
+    <app-inplace-field
+      label="Description"
+      i18n-label="@@intervention.pf.description"
+      commit="confirm"
+      class="max-w-prose"
+      data-testid="intervention-description-field"
+      [editable]="canEditDetails()"
+      [editing]="editState().open === 'description'"
+      [pending]="editState().saving === 'description'"
+      [error]="editState().failed === 'description' ? editState().failure : null"
+      [canSave]="canSaveDescription()"
+      (editingChange)="onDescriptionEditing($event)"
+      (saved)="saveDescription()"
+    >
+      @if (intervention().description; as text) {
+        <span fieldValue class="whitespace-pre-line">{{ text }}</span>
+      } @else {
+        <span
+          fieldValue
+          class="text-muted-foreground/70"
+          i18n="@@intervention.detail.noDescription"
+        >
+          No description yet. Add context, scope notes or instructions for this intervention.
+        </span>
+      }
+
+      <textarea
+        fieldEditor
+        hlmTextarea
+        rows="3"
+        class="w-full"
+        data-testid="intervention-description-input"
+        [attr.maxlength]="descriptionMaxLength"
+        [value]="descriptionDraft()"
+        (input)="descriptionDraft.set($any($event.target).value)"
+      ></textarea>
+    </app-inplace-field>
+  </div>
+</div>

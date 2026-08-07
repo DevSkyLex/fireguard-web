@@ -1,0 +1,113 @@
+<form (submit)="submit($event)">
+  <hlm-field-group class="px-4">
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="intervention-work-item-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="intervention-work-item-action" i18n="@@intervention.wif.actionLabel"
+        >Action</label
+      >
+      <hlm-select
+        id="intervention-work-item-action"
+        [itemToString]="actionLabelOf"
+        [formField]="workItemForm.action"
+      >
+        <hlm-select-trigger class="w-full">
+          @if (workItemForm.action().value(); as action) {
+            <app-intervention-tag kind="workItemAction" [value]="action" asOption />
+          } @else {
+            <hlm-select-value />
+          }
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (action of actionValues; track action) {
+              <hlm-select-item [value]="action">
+                <app-intervention-tag kind="workItemAction" [value]="action" asOption />
+              </hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel i18n="@@intervention.wif.target">Target resource</label>
+      <hlm-combobox [formField]="workItemForm.target" [itemToString]="targetLabelOf">
+        <hlm-combobox-input
+          placeholder="Optional site, facility or equipment target"
+          i18n-placeholder="@@intervention.wif.targetPlaceholder"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@intervention.wif.targetEmpty"
+            >No target matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of targetOptions(); track option.value) {
+              <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+      <hlm-field-description i18n="@@intervention.wif.targetHint">
+        Leave empty for site-level work.
+      </hlm-field-description>
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel i18n="@@intervention.wif.assignee">Assignee</label>
+      <hlm-combobox [formField]="workItemForm.assignee" [itemToString]="memberLabelOf">
+        <hlm-combobox-input
+          placeholder="Assign this work item"
+          i18n-placeholder="@@intervention.wif.assigneePlaceholder"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@intervention.list.filterNoMember"
+            >No member matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of memberOptions(); track option.value) {
+              <hlm-combobox-item [value]="option.value">
+                <hlm-avatar size="sm" class="shrink-0">
+                  @if (option.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
+                </hlm-avatar>
+                <span class="truncate">{{ option.displayName }}</span>
+              </hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+      <hlm-field-description i18n="@@intervention.wif.assigneeHint">
+        Unassigned items can be picked up by any field agent.
+      </hlm-field-description>
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button
+        hlmBtn
+        type="submit"
+        data-testid="intervention-work-item-submit"
+        [disabled]="pending() || disabled()"
+      >
+        <span i18n="@@intervention.wif.submit">Add to prepared scope</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="intervention-work-item-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

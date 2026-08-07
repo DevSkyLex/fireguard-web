@@ -71,7 +71,8 @@
       "@shared/ui/marker": ["./src/app/shared/ui/marker/src/index.ts"],
       "@shared/ui/kbd": ["./src/app/shared/ui/kbd/src/index.ts"],
       "@shared/ui/item": ["./src/app/shared/ui/item/src/index.ts"],
-      "@shared/ui/resizable": ["./src/app/shared/ui/resizable/src/index.ts"]
+      "@shared/ui/resizable": ["./src/app/shared/ui/resizable/src/index.ts"],
+      "@shared/ui/collapsible": ["./src/app/shared/ui/collapsible/src/index.ts"]
     }
   },
   "angularCompilerOptions": {

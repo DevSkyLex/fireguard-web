@@ -1,0 +1,80 @@
+<div class="flex w-full flex-col gap-1">
+  <button
+    #trigger
+    type="button"
+    class="group flex min-h-11 w-full rounded-md px-2 py-1 text-start ring-ring outline-none focus-visible:ring-2 enabled:hover:bg-accent/50 disabled:cursor-default sm:min-h-9"
+    [class]="triggerLayout()"
+    [hidden]="editing()"
+    [disabled]="!editable()"
+    [attr.aria-expanded]="editable() ? editing() : null"
+    [attr.aria-controls]="editable() ? editorId : null"
+    (click)="requestOpen()"
+  >
+    <span class="text-xs text-muted-foreground" [class]="labelLayout()">{{ label() }}</span>
+    <span class="flex min-w-0 flex-1 items-center gap-1.5">
+      <span class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 text-sm">
+        <ng-content select="[fieldValue]" />
+      </span>
+      @if (editable()) {
+        <ng-icon
+          name="lucidePencil"
+          class="shrink-0 text-muted-foreground opacity-100 transition-opacity group-focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          aria-hidden="true"
+        />
+      }
+    </span>
+  </button>
+
+  @if (editing()) {
+    <div
+      #editor
+      class="flex flex-col gap-2 rounded-md bg-muted/40 p-2"
+      [id]="editorId"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      (keydown.escape)="onEscape($event)"
+    >
+      <span [id]="labelId" class="text-xs font-medium text-muted-foreground">{{ label() }}</span>
+
+      <ng-content select="[fieldEditor]" />
+
+      @if (commit() === 'confirm') {
+        <div class="flex items-center justify-end gap-2">
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="max-sm:min-h-11"
+            [disabled]="pending()"
+            (click)="requestCancel()"
+            i18n="@@common.cancel"
+          >
+            Cancel
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            size="sm"
+            class="max-sm:min-h-11"
+            [disabled]="pending() || !canSave()"
+            (click)="saved.emit()"
+          >
+            @if (pending()) {
+              <hlm-spinner class="size-3.5" aria-hidden="true" />
+            }
+            <span i18n="@@common.save">Save</span>
+          </button>
+        </div>
+      } @else if (pending()) {
+        <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <hlm-spinner class="size-3.5" aria-hidden="true" />
+          <span i18n="@@common.saving">Saving…</span>
+        </span>
+      }
+
+      @if (error(); as message) {
+        <p class="text-xs text-destructive" role="alert">{{ message }}</p>
+      }
+    </div>
+  }
+</div>

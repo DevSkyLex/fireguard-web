@@ -1,8 +1,8 @@
-import type { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
+  UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
 
 /**
@@ -16,7 +16,7 @@ import type {
  */
 export interface InterventionDetailsUpdateCommand {
   readonly interventionId: string;
-  readonly input: Parameters<InterventionService['update']>[1];
+  readonly input: UpdateInterventionInput;
 }
 
 /**

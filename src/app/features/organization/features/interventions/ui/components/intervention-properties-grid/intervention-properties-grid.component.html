@@ -1,0 +1,351 @@
+<div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-3">
+  <div hlmCard size="sm" data-testid="intervention-field-priority">
+    <div hlmCardContent>
+      <app-inplace-field
+        orientation="vertical"
+        label="Priority"
+        i18n-label="@@intervention.prop.priority"
+        commit="pick"
+        [editable]="canEditPlanning()"
+        [editing]="isEditing('priority')"
+        [pending]="isSaving('priority')"
+        [error]="errorFor('priority')"
+        (editingChange)="onEditing('priority', $event)"
+      >
+        <span fieldValue>
+          <app-intervention-tag kind="priority" [value]="intervention().priority" asOption />
+        </span>
+
+        <hlm-select
+          fieldEditor
+          class="w-full"
+          [value]="intervention().priority"
+          (valueChange)="pickPriority($any($event))"
+        >
+          <hlm-select-trigger class="w-full">
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (priority of priorityValues; track priority) {
+                <hlm-select-item [value]="priority">
+                  <app-intervention-tag kind="priority" [value]="priority" asOption />
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </app-inplace-field>
+    </div>
+  </div>
+
+  <div hlmCard size="sm" data-testid="intervention-field-site">
+    <div hlmCardContent>
+      <app-inplace-field
+        orientation="vertical"
+        label="Site"
+        i18n-label="@@intervention.prop.site"
+        commit="pick"
+        [editable]="canEditPlanning()"
+        [editing]="isEditing('site')"
+        [pending]="isSaving('site')"
+        [error]="errorFor('site')"
+        (editingChange)="onEditing('site', $event)"
+      >
+        @if (siteLabel(); as site) {
+          <span fieldValue class="truncate">{{ site }}</span>
+        } @else {
+          <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.noSite">
+            No site
+          </span>
+        }
+
+        <hlm-combobox
+          fieldEditor
+          class="w-full"
+          [value]="intervention().site"
+          [itemToString]="siteLabelOf"
+          (valueChange)="pickSite($any($event))"
+        >
+          <hlm-combobox-input
+            placeholder="Search a site"
+            i18n-placeholder="@@intervention.cf.sitePlaceholder"
+          />
+          <hlm-combobox-content *hlmComboboxPortal>
+            <hlm-combobox-empty i18n="@@intervention.list.filterNoSite"
+              >No site matches.</hlm-combobox-empty
+            >
+            <div hlmComboboxList>
+              @for (option of siteOptions(); track option.value) {
+                <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+      </app-inplace-field>
+    </div>
+  </div>
+
+  <div hlmCard size="sm" data-testid="intervention-field-responsible">
+    <div hlmCardContent>
+      <app-inplace-field
+        orientation="vertical"
+        label="Responsible"
+        i18n-label="@@intervention.cf.responsible"
+        commit="pick"
+        [editable]="canEditPlanning()"
+        [editing]="isEditing('responsible')"
+        [pending]="isSaving('responsible')"
+        [error]="errorFor('responsible')"
+        (editingChange)="onEditing('responsible', $event)"
+      >
+        @if (responsibleOption(); as member) {
+          <span fieldValue class="flex min-w-0 items-center gap-1.5">
+            <hlm-avatar size="sm" class="shrink-0">
+              @if (member.avatarUrl; as avatarUrl) {
+                <img hlmAvatarImage [src]="avatarUrl" alt="" />
+              }
+              <span hlmAvatarFallback class="text-[10px]">{{ member.initials }}</span>
+            </hlm-avatar>
+            <span class="truncate">{{ member.displayName }}</span>
+          </span>
+        } @else {
+          <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.unassigned">
+            Unassigned
+          </span>
+        }
+
+        <hlm-combobox
+          fieldEditor
+          class="w-full"
+          [value]="intervention().responsible"
+          [itemToString]="memberLabelOf"
+          (valueChange)="pickResponsible($any($event))"
+        >
+          <hlm-combobox-input
+            placeholder="Search a member"
+            i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
+          />
+          <hlm-combobox-content *hlmComboboxPortal>
+            <hlm-combobox-empty i18n="@@intervention.list.filterNoMember">
+              No member matches.
+            </hlm-combobox-empty>
+            <div hlmComboboxList>
+              @for (option of memberOptions(); track option.value) {
+                <hlm-combobox-item [value]="option.value">
+                  <hlm-avatar size="sm" class="shrink-0">
+                    @if (option.avatarUrl; as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
+                  </hlm-avatar>
+                  <span class="flex min-w-0 flex-col">
+                    <span class="truncate">{{ option.displayName }}</span>
+                    <span class="truncate text-xs text-muted-foreground">{{
+                      option.roleLabel
+                    }}</span>
+                  </span>
+                </hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+      </app-inplace-field>
+    </div>
+  </div>
+
+  <div hlmCard size="sm" data-testid="intervention-field-schedule">
+    <div hlmCardContent>
+      <app-inplace-field
+        orientation="vertical"
+        label="Planned window"
+        i18n-label="@@intervention.cf.plannedRange"
+        commit="pick"
+        [editable]="canEditPlanning()"
+        [editing]="isEditing('schedule')"
+        [pending]="isSaving('schedule')"
+        [error]="errorFor('schedule')"
+        (editingChange)="onEditing('schedule', $event)"
+      >
+        @if (scheduleRange(); as range) {
+          <span fieldValue class="tabular-nums">
+            {{ range[0] | date: 'mediumDate' }} – {{ range[1] | date: 'mediumDate' }}
+          </span>
+        } @else {
+          <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.notSet">
+            Not set
+          </span>
+        }
+
+        <hlm-date-range-picker
+          fieldEditor
+          [date]="scheduleRange() ?? undefined"
+          (dateChange)="pickSchedule($event)"
+        >
+          <hlm-date-picker-trigger class="w-full">
+            <span i18n="@@intervention.cf.plannedRangePlaceholder">Select dates</span>
+          </hlm-date-picker-trigger>
+        </hlm-date-range-picker>
+      </app-inplace-field>
+    </div>
+  </div>
+
+  <div hlmCard size="sm" data-testid="intervention-field-participants">
+    <div hlmCardContent>
+      <app-inplace-field
+        orientation="vertical"
+        label="Participants"
+        i18n-label="@@intervention.pf.participants"
+        commit="confirm"
+        [editable]="canEditPlanning()"
+        [editing]="isEditing('participants')"
+        [pending]="isSaving('participants')"
+        [error]="errorFor('participants')"
+        [canSave]="canSaveParticipants()"
+        (editingChange)="onEditing('participants', $event)"
+        (saved)="saveParticipants()"
+      >
+        @if (participantOptions().length > 0) {
+          <span fieldValue>
+            <hlm-avatar-group>
+              @for (member of participantOptions(); track member.value) {
+                <hlm-avatar size="sm" [title]="member.displayName">
+                  @if (member.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback class="text-[10px]">{{ member.initials }}</span>
+                </hlm-avatar>
+              }
+            </hlm-avatar-group>
+          </span>
+        } @else {
+          <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.none"
+            >None</span
+          >
+        }
+
+        <hlm-combobox-multiple
+          fieldEditor
+          class="w-full"
+          [value]="participantsDraft()"
+          [itemToString]="memberLabelOf"
+          (valueChange)="participantsDraft.set($any($event))"
+        >
+          <hlm-combobox-chips>
+            <ng-template hlmComboboxValues let-values>
+              @for (value of values; track value) {
+                <hlm-combobox-chip [value]="value">{{ memberLabelOf(value) }}</hlm-combobox-chip>
+              }
+            </ng-template>
+            <input
+              hlmComboboxChipInput
+              placeholder="Search a member"
+              i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
+            />
+          </hlm-combobox-chips>
+          <hlm-combobox-content *hlmComboboxPortal>
+            <hlm-combobox-empty i18n="@@intervention.list.filterNoMember">
+              No member matches.
+            </hlm-combobox-empty>
+            <div hlmComboboxList>
+              @for (option of memberOptions(); track option.value) {
+                <hlm-combobox-item [value]="option.value">{{
+                  option.displayName
+                }}</hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox-multiple>
+      </app-inplace-field>
+    </div>
+  </div>
+
+  <div hlmCard size="sm" data-testid="intervention-field-labels">
+    <div hlmCardContent>
+      <app-inplace-field
+        orientation="vertical"
+        label="Labels"
+        i18n-label="@@intervention.sidebar.labels"
+        commit="confirm"
+        [editable]="canEditDetails()"
+        [editing]="isEditing('labels')"
+        [pending]="isSaving('labels')"
+        [error]="errorFor('labels')"
+        [canSave]="canSaveLabels()"
+        (editingChange)="onEditing('labels', $event)"
+        (saved)="saveLabels()"
+      >
+        @if (intervention().labels.length > 0) {
+          <span fieldValue class="flex flex-wrap items-center gap-x-2 gap-y-1">
+            @for (label of visibleLabels(); track label.id) {
+              <span class="flex min-w-0 items-center gap-1">
+                <span
+                  class="size-2 shrink-0 rounded-full"
+                  [style.background-color]="label.color"
+                  aria-hidden="true"
+                ></span>
+                <span class="truncate">{{ label.name }}</span>
+              </span>
+            }
+            @if (hiddenLabelCount() > 0) {
+              <span class="text-muted-foreground">+{{ hiddenLabelCount() }}</span>
+            }
+          </span>
+        } @else {
+          <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.none"
+            >None</span
+          >
+        }
+
+        <hlm-combobox-multiple
+          fieldEditor
+          class="w-full"
+          [value]="labelsDraft()"
+          [itemToString]="labelNameOf"
+          (valueChange)="labelsDraft.set($any($event))"
+        >
+          <hlm-combobox-chips>
+            <ng-template hlmComboboxValues let-values>
+              @for (value of values; track value) {
+                <hlm-combobox-chip [value]="value">{{ labelNameOf(value) }}</hlm-combobox-chip>
+              }
+            </ng-template>
+            <input
+              hlmComboboxChipInput
+              placeholder="Search a label"
+              i18n-placeholder="@@intervention.list.filterLabelPlaceholder"
+            />
+          </hlm-combobox-chips>
+          <hlm-combobox-content *hlmComboboxPortal>
+            <hlm-combobox-empty i18n="@@intervention.list.filterNoLabel">
+              No label matches.
+            </hlm-combobox-empty>
+            <div hlmComboboxList>
+              @for (option of labelOptions(); track option.id) {
+                <hlm-combobox-item [value]="option.id">
+                  <span
+                    class="size-2 shrink-0 rounded-full"
+                    [style.background-color]="option.color"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="truncate">{{ option.name }}</span>
+                </hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox-multiple>
+      </app-inplace-field>
+    </div>
+  </div>
+
+  <div hlmCard size="sm" data-testid="intervention-field-revision">
+    <div hlmCardContent class="flex min-h-11 items-center justify-between gap-2 text-sm">
+      <span class="text-xs text-muted-foreground" i18n="@@intervention.sidebar.revision">
+        Revision
+      </span>
+      <span class="font-mono text-xs text-muted-foreground tabular-nums"
+        >v{{ intervention().revision }}</span
+      >
+    </div>
+  </div>
+</div>

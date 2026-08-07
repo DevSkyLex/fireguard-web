@@ -5,3 +5,4 @@ export {
   type InterventionTableColumn,
   type InterventionTransitionRequest,
 } from './intervention-table';
+export { InterventionWorkItemTable } from './intervention-work-item-table';

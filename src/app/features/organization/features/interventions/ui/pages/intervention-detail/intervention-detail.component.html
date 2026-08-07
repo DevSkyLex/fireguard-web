@@ -1,0 +1,503 @@
+<div id="intervention-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
+  @if (store.loading() && !store.intervention()) {
+    <div
+      class="flex flex-col gap-4"
+      role="status"
+      aria-label="Loading intervention"
+      i18n-aria-label="@@intervention.detail.loadingAria"
+    >
+      <hlm-skeleton class="h-8 w-64" />
+      <hlm-skeleton class="h-4 w-40" />
+      <hlm-skeleton class="h-9 w-full max-w-md" />
+      <hlm-skeleton class="h-64 w-full" />
+    </div>
+  } @else if (store.intervention(); as intervention) {
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <h1 class="min-w-0 truncate text-2xl font-semibold tracking-tight">
+        {{ intervention.name }}
+      </h1>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="font-mono text-xs text-muted-foreground tabular-nums"
+          >FG-{{ intervention.number }}</span
+        >
+
+        @if (hasUnsyncedChanges()) {
+          <span
+            hlmBadge
+            variant="outline"
+            class="gap-1"
+            data-testid="intervention-detail-unsynced"
+            title="Some changes are waiting to sync"
+            i18n-title="@@intervention.notice.unsynced"
+          >
+            <ng-icon name="lucideCloudUpload" aria-hidden="true" />
+            <span class="sr-only" i18n="@@intervention.notice.unsynced"
+              >Some changes are waiting to sync</span
+            >
+          </span>
+        }
+
+        <app-intervention-tag kind="status" [value]="intervention.status" />
+
+        @if (transitionTargets().length > 0) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            align="start"
+            class="max-sm:min-h-11"
+            data-testid="intervention-detail-status-menu"
+            [hlmDropdownMenuTrigger]="statusMenu"
+          >
+            <span i18n="@@intervention.detail.statusMenu">Change status</span>
+          </button>
+
+          <ng-template #statusMenu>
+            <hlm-dropdown-menu class="w-52">
+              <hlm-dropdown-menu-label i18n="@@intervention.list.rowMoveTo"
+                >Move to</hlm-dropdown-menu-label
+              >
+              @for (target of transitionTargets(); track target) {
+                <button
+                  hlmDropdownMenuItem
+                  data-testid="intervention-detail-transition"
+                  (click)="onTransitionSelect(target)"
+                >
+                  <app-intervention-tag kind="status" [value]="target" asOption />
+                </button>
+              }
+            </hlm-dropdown-menu>
+          </ng-template>
+        }
+
+        @if (canAbandon() || canDeleteIntervention()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            align="end"
+            class="max-sm:size-11"
+            data-testid="intervention-detail-menu"
+            [hlmDropdownMenuTrigger]="moreMenu"
+          >
+            <ng-icon name="lucideEllipsis" aria-hidden="true" />
+            <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
+          </button>
+
+          <ng-template #moreMenu>
+            <hlm-dropdown-menu class="w-56">
+              @if (canAbandon()) {
+                <button
+                  hlmDropdownMenuItem
+                  data-testid="intervention-detail-abandon"
+                  (click)="requestAbandon()"
+                >
+                  <ng-icon name="lucideBan" aria-hidden="true" />
+                  <span i18n="@@intervention.abandon.action">Abandon intervention</span>
+                </button>
+              }
+              @if (canDeleteIntervention()) {
+                <button
+                  hlmDropdownMenuItem
+                  variant="destructive"
+                  data-testid="intervention-detail-delete"
+                  (click)="requestDeleteIntervention()"
+                >
+                  <ng-icon name="lucideTrash2" aria-hidden="true" />
+                  <span i18n="@@intervention.delete.action">Delete intervention</span>
+                </button>
+              }
+            </hlm-dropdown-menu>
+          </ng-template>
+        }
+      </div>
+    </div>
+
+    <p class="text-sm text-muted-foreground" data-testid="intervention-detail-meta">
+      {{ metaLine() }}
+    </p>
+
+    @if (pageError(); as message) {
+      <div
+        hlmAlert
+        variant="destructive"
+        class="border-destructive/30 bg-destructive/5"
+        role="alert"
+        data-testid="intervention-detail-error"
+      >
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle>{{ message }}</p>
+        <button
+          hlmAlertAction
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-detail-retry"
+          (click)="retryLoad()"
+          i18n="@@common.tryAgain"
+        >
+          Try again
+        </button>
+      </div>
+    }
+
+    <section
+      hlmCollapsible
+      [expanded]="detailsExpanded()"
+      (expandedChange)="detailsExpanded.set($event)"
+      class="flex flex-col gap-3 rounded-lg border border-border p-4"
+      data-testid="intervention-detail-details"
+    >
+      <button
+        hlmCollapsibleTrigger
+        type="button"
+        class="flex items-center gap-2 text-start text-sm font-medium text-foreground"
+        data-testid="intervention-detail-details-toggle"
+      >
+        <ng-icon
+          name="lucideChevronRight"
+          class="shrink-0 transition-transform"
+          [class.rotate-90]="detailsExpanded()"
+          aria-hidden="true"
+        />
+        <span i18n="@@intervention.detail.detailsTitle">Details</span>
+      </button>
+
+      @if (!detailsExpanded()) {
+        <dl
+          class="flex flex-wrap items-center gap-x-4 gap-y-1.5 ps-6 text-sm text-muted-foreground"
+          data-testid="intervention-detail-chips"
+        >
+          <div class="flex items-center gap-1.5">
+            <dt class="sr-only" i18n="@@intervention.prop.site">Site</dt>
+            <dd class="max-w-[12rem] truncate">{{ siteLabel() ?? '—' }}</dd>
+          </div>
+          <span aria-hidden="true">·</span>
+          <div class="flex items-center gap-1.5">
+            <dt class="sr-only" i18n="@@intervention.cf.responsible">Responsible</dt>
+            <dd class="max-w-[10rem] truncate">{{ responsibleLabel() ?? '—' }}</dd>
+          </div>
+          <span aria-hidden="true">·</span>
+          <div class="flex items-center gap-1.5">
+            <dt class="sr-only" i18n="@@intervention.cf.plannedRange">Planned window</dt>
+            <dd class="tabular-nums">{{ scheduleLabel() ?? '—' }}</dd>
+          </div>
+          <span aria-hidden="true">·</span>
+          <div class="flex items-center gap-1.5">
+            <dt class="sr-only" i18n="@@intervention.prop.priority">Priority</dt>
+            <dd>
+              <app-intervention-tag kind="priority" [value]="intervention.priority" asOption />
+            </dd>
+          </div>
+          <span aria-hidden="true">·</span>
+          <div class="flex items-center gap-1.5">
+            <dt class="sr-only" i18n="@@intervention.sidebar.labels">Labels</dt>
+            <dd class="max-w-[14rem] truncate">{{ labelsSummary() ?? '—' }}</dd>
+          </div>
+        </dl>
+      }
+
+      <hlm-collapsible-content class="flex flex-col gap-4 ps-6">
+        <app-intervention-about
+          [intervention]="intervention"
+          [siteLabel]="siteLabel()"
+          [participants]="assignees()"
+          [canEditDetails]="canEditDetails()"
+          [editState]="editState()"
+          (detailsChanged)="onDetailsChanged($event)"
+          (editTargetChanged)="onEditTargetChanged($event)"
+        />
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
+          <div class="flex flex-col gap-2">
+            <h2
+              class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+              i18n="@@intervention.sidebar.title"
+            >
+              Properties
+            </h2>
+            <app-intervention-properties-grid
+              [intervention]="intervention"
+              [siteOptions]="planningOptions.sites()"
+              [memberOptions]="planningOptions.members()"
+              [labelOptions]="planningOptions.labels()"
+              [canEditPlanning]="canEditPlanning()"
+              [canEditDetails]="canEditDetails()"
+              [editState]="editState()"
+              (detailsChanged)="onDetailsChanged($event)"
+              (editTargetChanged)="onEditTargetChanged($event)"
+            />
+          </div>
+
+          <div hlmCard size="sm" data-testid="intervention-detail-linked">
+            <div hlmCardHeader>
+              <h3 hlmCardTitle i18n="@@intervention.sidebar.linked">Linked</h3>
+            </div>
+            <div hlmCardContent>
+              <dl class="flex flex-col gap-2 text-sm">
+                <div class="flex items-center justify-between gap-2">
+                  <dt class="text-muted-foreground" i18n="@@intervention.sidebar.facilities">
+                    Facilities
+                  </dt>
+                  <dd class="tabular-nums">{{ intervention.facilitiesCount }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <dt class="text-muted-foreground" i18n="@@intervention.sidebar.equipment">
+                    Equipment
+                  </dt>
+                  <dd class="tabular-nums">{{ intervention.equipmentCount }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <dt class="text-muted-foreground" i18n="@@intervention.sidebar.inspections">
+                    Inspections
+                  </dt>
+                  <dd class="tabular-nums">{{ intervention.inspectionsCount }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </hlm-collapsible-content>
+    </section>
+
+    @if (readinessItems().length > 0) {
+      <app-intervention-getting-started
+        [items]="readinessItems()"
+        (itemActivated)="onReadinessActivated($event)"
+      />
+    }
+
+    <section
+      #workItemsSection
+      tabindex="-1"
+      class="flex flex-col gap-3 outline-none"
+      data-testid="intervention-detail-field-work"
+    >
+      <h2
+        class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        i18n="@@intervention.detail.checklist"
+      >
+        Work items
+      </h2>
+
+      <div class="flex flex-col gap-4" data-testid="intervention-detail-work-items">
+        @if (intervention.status === 'changes_requested' && intervention.reviewNote) {
+          <div hlmAlert class="bg-muted/50" data-testid="intervention-detail-review-note">
+            <ng-icon name="lucideMessageSquareQuote" aria-hidden="true" />
+            <p hlmAlertTitle i18n="@@intervention.detail.changesRequestedBanner">
+              Changes requested by the reviewer
+            </p>
+            <p hlmAlertDescription>{{ intervention.reviewNote }}</p>
+          </div>
+        }
+
+        <app-intervention-work-item-table
+          [items]="store.workItems()"
+          [nextItemId]="nextWorkItemId()"
+          [pendingItemId]="pendingWorkItemId()"
+          [canToggle]="canExecute() && phase() === 'execute'"
+          [canSkip]="canSkipWorkItem()"
+          [canDelete]="canAddWorkItem()"
+          [canAdd]="canAddWorkItem()"
+          [busy]="store.saving()"
+          (statusChanged)="onWorkItemStatusChanged($event)"
+          (skipRequested)="requestSkipWorkItem($event)"
+          (deleteRequested)="requestDeleteWorkItem($event)"
+          (addRequested)="workItemSheetVisible.set(true)"
+        />
+      </div>
+    </section>
+
+    @if (pendingChangesCount() > 0) {
+      <app-intervention-change-list [changes]="store.changes()" />
+    }
+
+    <app-intervention-activity-thread
+      [activities]="store.activities()"
+      [members]="planningOptions.members()"
+      [loading]="activitiesLoading()"
+    />
+
+    <app-intervention-action-box
+      [action]="commandAction()"
+      [phase]="phase()"
+      [status]="intervention.status"
+      [blockers]="blockerIssues()"
+      [pendingChanges]="pendingChangesCount()"
+      [inspections]="intervention.inspectionsCount"
+      [revision]="intervention.revision"
+      [busy]="store.saving()"
+      (invoked)="invokeCommandAction()"
+    />
+
+    <div class="border-t border-border pt-4">
+      <app-intervention-comment-form
+        [pending]="store.saving()"
+        [serverError]="store.mutationError()"
+        (submitted)="postComment($event)"
+      />
+    </div>
+
+    @if (showPrevNext()) {
+      <div class="flex items-center justify-between gap-2 border-t border-border pt-4">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-detail-prev"
+          [disabled]="prevInterventionId() === null"
+          title="Previous intervention (K)"
+          i18n-title="@@intervention.detail.prevShortcut"
+          aria-label="Previous intervention"
+          i18n-aria-label="@@intervention.detail.prev"
+          (click)="navigatePrev()"
+        >
+          <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+          <span i18n="@@intervention.detail.prev">Previous intervention</span>
+        </button>
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-detail-next"
+          [disabled]="nextInterventionId() === null"
+          title="Next intervention (J)"
+          i18n-title="@@intervention.detail.nextShortcut"
+          aria-label="Next intervention"
+          i18n-aria-label="@@intervention.detail.next"
+          (click)="navigateNext()"
+        >
+          <span i18n="@@intervention.detail.next">Next intervention</span>
+          <ng-icon name="lucideChevronRight" aria-hidden="true" />
+        </button>
+      </div>
+    }
+  } @else {
+    <app-empty-state
+      icon="lucideCompass"
+      class="rounded-md border border-dashed border-border p-10"
+      title="Intervention not found"
+      i18n-title="@@intervention.detail.notFoundTitle"
+      description="Intervention not found or unavailable offline."
+      i18n-description="@@intervention.detail.notFound"
+      data-testid="intervention-detail-not-found"
+    >
+      <button hlmBtn type="button" variant="outline" (click)="navigateToList()">
+        <span i18n="@@intervention.detail.backToList">Back to interventions</span>
+      </button>
+    </app-empty-state>
+  }
+</div>
+
+<app-intervention-work-item-sheet
+  [visible]="workItemSheetVisible()"
+  [pending]="store.saving()"
+  [disabled]="!canAddWorkItem()"
+  [serverError]="store.mutationError()"
+  [targetOptions]="planningOptions.targets()"
+  [memberOptions]="planningOptions.members()"
+  (visibleChange)="workItemSheetVisible.set($event)"
+  (submitted)="createWorkItem($event)"
+/>
+
+<app-intervention-request-changes-sheet
+  [visible]="requestChangesVisible()"
+  [pending]="store.saving()"
+  [disabled]="!canReview()"
+  [serverError]="store.mutationError()"
+  (visibleChange)="requestChangesVisible.set($event)"
+  (submitted)="requestChanges($event)"
+/>
+
+<hlm-alert-dialog
+  [state]="confirmDialogState()"
+  (stateChanged)="onConfirmDialogStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-detail-confirm-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle>{{ confirmTitle() }}</h2>
+      <p hlmAlertDialogDescription>{{ confirmDescription() }}</p>
+    </hlm-alert-dialog-header>
+
+    @if (pendingConfirm()?.kind === 'skipWorkItem') {
+      <textarea
+        hlmTextarea
+        rows="3"
+        class="w-full"
+        data-testid="intervention-detail-skip-reason"
+        placeholder="Why is this item being skipped?"
+        i18n-placeholder="@@intervention.wit.skipPlaceholder"
+        [value]="skipReasonDraft()"
+        (input)="skipReasonDraft.set($any($event.target).value)"
+      ></textarea>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="intervention-detail-confirm-accept"
+        [disabled]="!canAcceptConfirm()"
+        (click)="acceptConfirm()"
+      >
+        {{ confirmActionLabel() }}
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>
+
+<hlm-alert-dialog
+  [state]="publishDialogState()"
+  [disableClose]="publishing()"
+  (stateChanged)="onPublishDialogStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-detail-publish-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@intervention.publish.header">Publish intervention</h2>
+    </hlm-alert-dialog-header>
+
+    @if (store.intervention(); as intervention) {
+      <app-intervention-publication-summary
+        [pendingChanges]="pendingChangesCount()"
+        [inspections]="intervention.inspectionsCount"
+        [revision]="intervention.revision"
+      />
+    }
+
+    @if (publicationError(); as message) {
+      <div
+        hlmAlert
+        variant="destructive"
+        class="border-destructive/30 bg-destructive/5"
+        role="alert"
+        data-testid="intervention-detail-publish-error"
+      >
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle>{{ message }}</p>
+      </div>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel [disabled]="publishing()" i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        data-testid="intervention-detail-publish-confirm"
+        [disabled]="publishing()"
+        (click)="confirmPublish()"
+        i18n="@@intervention.publish.accept"
+      >
+        Publish
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

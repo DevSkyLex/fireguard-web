@@ -1,0 +1,39 @@
+<div hlmCard>
+  <div hlmCardHeader>
+    <h3 hlmCardTitle i18n="@@intervention.gettingStarted.title">Getting started</h3>
+    <p hlmCardDescription i18n="@@intervention.checklist.readyToPlan">Ready to plan</p>
+  </div>
+
+  <div hlmCardContent>
+    <div hlmItemGroup>
+      @for (item of items(); track item.id) {
+        <button
+          hlmItem
+          type="button"
+          [variant]="item.done ? 'muted' : 'outline'"
+          class="min-h-11 text-start"
+          data-testid="intervention-getting-started-item"
+          [disabled]="item.done"
+          [attr.aria-current]="item.id === nextItemId() ? 'step' : null"
+          (click)="itemActivated.emit(item.target)"
+        >
+          <hlm-item-media variant="icon">
+            <ng-icon
+              [name]="item.done ? 'lucideCheck' : 'lucideCircle'"
+              [class]="item.done ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'"
+              aria-hidden="true"
+            />
+          </hlm-item-media>
+          <hlm-item-content>
+            <hlm-item-title
+              [class.line-through]="item.done"
+              [class.text-muted-foreground]="item.done"
+            >
+              {{ item.label }}
+            </hlm-item-title>
+          </hlm-item-content>
+        </button>
+      }
+    </div>
+  </div>
+</div>

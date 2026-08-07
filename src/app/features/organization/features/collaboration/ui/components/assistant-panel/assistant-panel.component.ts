@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  HostListener,
   inject,
   signal,
   viewChild,
@@ -13,7 +12,7 @@ import {
 } from '@angular/core';
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowUp, lucidePenLine, lucideSparkles, lucideX } from '@ng-icons/lucide';
+import { lucideArrowUp } from '@ng-icons/lucide';
 import type { AssistantMessageOutput } from '@features/organization/features/collaboration/models';
 import {
   AssistantStore,
@@ -38,8 +37,9 @@ import type { AssistantQuestionValues } from './models';
  * @class AssistantPanel
  *
  * @description
- * The assistant's contextual column: the thread, its live generation, and the
- * composer that feeds it.
+ * The body of the assistant sheet: the thread, its live generation, and the
+ * composer that feeds it. The sheet's own chrome — header, title, close — is
+ * `AssistantToggle`'s, so this stays stock spartan around it.
  *
  * A feature-owned shell widget rather than a page — it injects its own store
  * because it is the owner of that state and is summoned from the shell rather
@@ -51,7 +51,7 @@ import type { AssistantQuestionValues } from './models';
  * every frame. A sibling `role="status"` line announces the state instead, and
  * the transcript stays silently readable under `aria-busy`.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -80,7 +80,7 @@ import type { AssistantQuestionValues } from './models';
     HlmMessage,
     HlmMessageContent,
   ],
-  providers: [provideIcons({ lucideArrowUp, lucidePenLine, lucideSparkles, lucideX })],
+  providers: [provideIcons({ lucideArrowUp })],
   templateUrl: './assistant-panel.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -377,29 +377,6 @@ export class AssistantPanel {
     this.send();
   }
 
-  /**
-   * Method onEscape
-   * @method onEscape
-   *
-   * @description
-   * Dismisses the panel with Escape — below the desktop breakpoint it covers
-   * the page, and an overlay with no keyboard exit is a trap.
-   *
-   * Bound to the host rather than the document, so it cannot close the panel
-   * from inside an unrelated dialog, and ignored while a question is
-   * half-written, since throwing that away is not what anyone means by Escape.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  @HostListener('keydown.escape')
-  protected onEscape(): void {
-    if (this.model().question.length > 0) return;
-
-    this.store.closePanel();
-  }
   //#endregion
 
   //#region Internals

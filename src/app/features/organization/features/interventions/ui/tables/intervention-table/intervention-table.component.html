@@ -1,0 +1,244 @@
+<div class="max-h-[700px] w-full overflow-auto rounded-md border">
+  <div hlmTableContainer>
+    <table hlmTable>
+      <caption hlmTableCaption class="sr-only" i18n="@@intervention.list.tableCaption">
+        The organization's interventions.
+      </caption>
+
+      <thead hlmTableHeader>
+        <tr hlmTableRow>
+          <th hlmTableHead class="w-10">
+            <hlm-checkbox
+              data-testid="intervention-table-select-all"
+              aria-label="Select all interventions"
+              i18n-aria-label="@@intervention.list.selectAllLabel"
+              [checked]="allSelected()"
+              [indeterminate]="someSelected()"
+              (checkedChange)="toggleAll($event)"
+            />
+          </th>
+          <th hlmTableHead class="w-[100px]" i18n="@@intervention.list.columnReference">Ref.</th>
+          <th hlmTableHead i18n="@@intervention.list.columnIntervention">Intervention</th>
+
+          @if (isVisible(column.STATUS)) {
+            <th hlmTableHead i18n="@@intervention.list.columnStatus">Status</th>
+          }
+
+          @if (isVisible(column.PRIORITY)) {
+            <th hlmTableHead [attr.aria-sort]="ariaSort('priority')">
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="-ms-2 h-8 px-2"
+                data-testid="intervention-table-sort-priority"
+                (click)="sortChanged.emit('priority')"
+              >
+                <span i18n="@@intervention.list.columnPriority">Priority</span>
+                <ng-icon [name]="sortIcon('priority')" aria-hidden="true" />
+              </button>
+            </th>
+          }
+
+          @if (isVisible(column.TYPE)) {
+            <th hlmTableHead i18n="@@intervention.list.columnType">Type</th>
+          }
+
+          @if (isVisible(column.SITE)) {
+            <th hlmTableHead i18n="@@intervention.list.columnSite">Site</th>
+          }
+
+          @if (isVisible(column.DUE)) {
+            <th hlmTableHead class="text-right" [attr.aria-sort]="ariaSort('dueAt')">
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="ms-auto -me-2 h-8 px-2"
+                data-testid="intervention-table-sort-due"
+                (click)="sortChanged.emit('dueAt')"
+              >
+                <span i18n="@@intervention.list.columnDue">Due</span>
+                <ng-icon [name]="sortIcon('dueAt')" aria-hidden="true" />
+              </button>
+            </th>
+          }
+
+          <th hlmTableHead class="w-[52px]">
+            <span class="sr-only" i18n="@@intervention.list.columnActions">Actions</span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @if (loading()) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="size-4" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-14" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-56 max-w-full" /></td>
+              @if (isVisible(column.STATUS)) {
+                <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              }
+              @if (isVisible(column.PRIORITY)) {
+                <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              }
+              @if (isVisible(column.TYPE)) {
+                <td hlmTableCell><hlm-skeleton class="h-4 w-28" /></td>
+              }
+              @if (isVisible(column.SITE)) {
+                <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              }
+              @if (isVisible(column.DUE)) {
+                <td hlmTableCell><hlm-skeleton class="ms-auto h-4 w-20" /></td>
+              }
+              <td hlmTableCell><hlm-skeleton class="ms-auto size-6" /></td>
+            </tr>
+          }
+        } @else {
+          @for (item of items(); track item.intervention.id) {
+            <tr hlmTableRow data-testid="intervention-table-row">
+              <td hlmTableCell>
+                <hlm-checkbox
+                  data-testid="intervention-table-row-select"
+                  [checked]="isSelected(item.intervention.id)"
+                  [aria-label]="selectRowLabel(item.intervention.name)"
+                  (checkedChange)="toggleRow(item.intervention.id, $event)"
+                />
+              </td>
+
+              <td hlmTableCell class="font-medium tabular-nums">
+                FG-{{ item.intervention.number }}
+              </td>
+
+              <td hlmTableCell>
+                <a
+                  class="rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  [routerLink]="[...detailRouteBase(), item.intervention.id]"
+                  >{{ item.intervention.name }}</a
+                >
+              </td>
+
+              @if (isVisible(column.STATUS)) {
+                <td hlmTableCell>
+                  <app-intervention-tag kind="status" [value]="item.intervention.status" />
+                </td>
+              }
+
+              @if (isVisible(column.PRIORITY)) {
+                <td hlmTableCell>
+                  <app-intervention-tag kind="priority" [value]="item.intervention.priority" />
+                </td>
+              }
+
+              @if (isVisible(column.TYPE)) {
+                <td hlmTableCell>
+                  <app-intervention-tag kind="type" [value]="item.intervention.type" />
+                </td>
+              }
+
+              @if (isVisible(column.SITE)) {
+                <td hlmTableCell class="text-muted-foreground">{{ item.siteName }}</td>
+              }
+
+              @if (isVisible(column.DUE)) {
+                <td hlmTableCell class="text-right text-muted-foreground tabular-nums">
+                  <span class="inline-flex items-center justify-end gap-1.5">
+                    @if (item.isOverdue) {
+                      <ng-icon
+                        name="lucideCircleAlert"
+                        class="text-destructive"
+                        i18n-aria-label="@@intervention.list.overdueLabel"
+                        aria-label="Overdue"
+                      />
+                    }
+                    {{ item.intervention.dueAt | date: 'mediumDate' }}
+                  </span>
+                </td>
+              }
+
+              <td hlmTableCell class="text-right">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  align="end"
+                  data-testid="intervention-table-row-menu"
+                  [hlmDropdownMenuTrigger]="rowMenu"
+                >
+                  <ng-icon name="lucideEllipsis" aria-hidden="true" />
+                  <span class="sr-only" i18n="@@intervention.list.rowMenu">Open menu</span>
+                </button>
+
+                <ng-template #rowMenu>
+                  <hlm-dropdown-menu class="w-52">
+                    <a
+                      hlmDropdownMenuItem
+                      [routerLink]="[...detailRouteBase(), item.intervention.id]"
+                    >
+                      <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
+                      <span i18n="@@intervention.list.rowOpen">Open</span>
+                    </a>
+
+                    <button hlmDropdownMenuItem (click)="referenceCopied.emit(item.intervention)">
+                      <ng-icon name="lucideCopy" aria-hidden="true" />
+                      <span i18n="@@intervention.list.rowCopyRef">Copy reference</span>
+                    </button>
+
+                    @if (transitionsFor(item.intervention).length > 0) {
+                      <hlm-dropdown-menu-separator />
+                      <hlm-dropdown-menu-label i18n="@@intervention.list.rowMoveTo"
+                        >Move to</hlm-dropdown-menu-label
+                      >
+                      @for (target of transitionsFor(item.intervention); track target) {
+                        <button
+                          hlmDropdownMenuItem
+                          data-testid="intervention-table-row-transition"
+                          (click)="
+                            transitionRequested.emit({
+                              intervention: item.intervention,
+                              status: target,
+                            })
+                          "
+                        >
+                          {{ statusLabelOf(target) }}
+                        </button>
+                      }
+                    }
+
+                    @if (isRowDeletable(item.intervention)) {
+                      <hlm-dropdown-menu-separator />
+                      <button
+                        hlmDropdownMenuItem
+                        variant="destructive"
+                        data-testid="intervention-table-row-delete"
+                        (click)="deleteRequested.emit(item.intervention)"
+                      >
+                        <ng-icon name="lucideTrash2" aria-hidden="true" />
+                        <span i18n="@@intervention.list.rowDelete">Delete</span>
+                      </button>
+                    }
+                  </hlm-dropdown-menu>
+                </ng-template>
+              </td>
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                [attr.colspan]="columnCount()"
+                i18n="@@intervention.list.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

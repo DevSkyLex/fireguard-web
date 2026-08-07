@@ -1,0 +1,596 @@
+import { DatePipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideArrowDown,
+  lucideArrowUp,
+  lucideChevronsUpDown,
+  lucideCircleAlert,
+  lucideCopy,
+  lucideEllipsis,
+  lucideSquareArrowOutUpRight,
+  lucideTrash2,
+} from '@ng-icons/lucide';
+import {
+  resolveInterventionTag,
+  type InterventionListSort,
+  type InterventionOutput,
+  type InterventionSortField,
+  type InterventionStatus,
+} from '@features/organization/features/interventions/models';
+import { isInterventionDeletable } from '@features/organization/features/interventions/utils';
+import { HlmButton } from '@shared/ui/button';
+import { HlmCheckbox } from '@shared/ui/checkbox';
+import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTableImports } from '@shared/ui/table';
+import { InterventionTag } from '../../components/intervention-tag';
+import type { InterventionListItemViewModel } from '../../pages/interventions/models';
+import {
+  INTERVENTION_TABLE_COLUMN,
+  type InterventionTableColumn,
+  type InterventionTransitionRequest,
+} from './models';
+
+/** Placeholder rows drawn while the first page loads. */
+const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
+
+/**
+ * Component InterventionTable
+ * @class InterventionTable
+ *
+ * @description
+ * The interventions grid, built the way spartan's own dashboard builds one:
+ * `hlmTable` inside a bordered, scrollable shell, sortable heads that are
+ * ghost buttons carrying the direction glyph, and a trailing `…` menu per row.
+ *
+ * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls no
+ * service. Sorting, column visibility and the row commands are all described
+ * through `output()`; the page decides what they mean. The status transitions
+ * a row offers come from that intervention's own `allowedTransitions`, so the
+ * menu can never propose a move the backend would refuse. The leading
+ * checkbox column follows the same rule: a row's Delete entry and its
+ * selectability both gate on `isInterventionDeletable`, the same feature-level
+ * check the page filters a bulk selection through, so the table never offers
+ * a delete the API would refuse with a 409.
+ *
+ * @version 5.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+@Component({
+  selector: 'app-intervention-table',
+  imports: [
+    DatePipe,
+    RouterLink,
+    NgIcon,
+    HlmButton,
+    HlmCheckbox,
+    HlmSkeleton,
+    InterventionTag,
+    ...HlmDropdownMenuImports,
+    ...HlmTableImports,
+  ],
+  providers: [
+    provideIcons({
+      lucideArrowDown,
+      lucideArrowUp,
+      lucideChevronsUpDown,
+      lucideCircleAlert,
+      lucideCopy,
+      lucideEllipsis,
+      lucideSquareArrowOutUpRight,
+      lucideTrash2,
+    }),
+  ],
+  templateUrl: './intervention-table.component.html',
+  host: { class: 'block w-full' },
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class InterventionTable {
+  //#region Inputs
+  /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * The rows to render — already filtered, ordered and paged by the page.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<readonly InterventionListItemViewModel[]>}
+   */
+  public readonly items: InputSignal<readonly InterventionListItemViewModel[]> =
+    input.required<readonly InterventionListItemViewModel[]>();
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether to draw placeholder rows instead of the data.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property sortOrder
+   * @readonly
+   *
+   * @description
+   * The active ordering, deciding what each sortable head announces and which
+   * direction glyph it shows.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {InputSignal<InterventionListSort>}
+   */
+  public readonly sortOrder: InputSignal<InterventionListSort> =
+    input.required<InterventionListSort>();
+
+  /**
+   * Property hiddenColumns
+   * @readonly
+   *
+   * @description
+   * Which optional columns the operator has hidden.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {InputSignal<ReadonlySet<InterventionTableColumn>>}
+   */
+  public readonly hiddenColumns: InputSignal<ReadonlySet<InterventionTableColumn>> = input<
+    ReadonlySet<InterventionTableColumn>
+  >(new Set<InterventionTableColumn>());
+
+  /**
+   * Property canTransition
+   * @readonly
+   *
+   * @description
+   * Whether the row menu may offer status changes. False hides them rather
+   * than showing controls that would be refused.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canTransition: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property canDelete
+   * @readonly
+   *
+   * @description
+   * Whether the row menu may offer deletion. False hides the entry rather
+   * than showing a control that would be refused; the intervention's own
+   * status (`isInterventionDeletable`) narrows it further per row.
+   *
+   * @access public
+   * @since 5.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canDelete: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property selectedIds
+   * @readonly
+   *
+   * @description
+   * Ids of the currently selected rows, owned by the page. Drives the header
+   * checkbox's checked/indeterminate state and each row's own checkbox.
+   *
+   * @access public
+   * @since 5.0.0
+   *
+   * @type {InputSignal<ReadonlySet<string>>}
+   */
+  public readonly selectedIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
+    new Set<string>(),
+  );
+
+  /**
+   * Property detailRouteBase
+   * @readonly
+   *
+   * @description
+   * Path segments the row link appends the intervention id to. Passed in
+   * rather than resolved relatively, so the table navigates the same way
+   * wherever it is rendered.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<readonly string[]>}
+   */
+  public readonly detailRouteBase: InputSignal<readonly string[]> =
+    input.required<readonly string[]>();
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property sortChanged
+   * @readonly
+   *
+   * @description
+   * A sortable head was activated; carries the field. Re-emitting the active
+   * field means "reverse it" — the page owns the direction.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {OutputEmitterRef<InterventionSortField>}
+   */
+  public readonly sortChanged: OutputEmitterRef<InterventionSortField> =
+    output<InterventionSortField>();
+
+  /**
+   * Property transitionRequested
+   * @readonly
+   *
+   * @description
+   * A row menu asked for a status change.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {OutputEmitterRef<InterventionTransitionRequest>}
+   */
+  public readonly transitionRequested: OutputEmitterRef<InterventionTransitionRequest> =
+    output<InterventionTransitionRequest>();
+
+  /**
+   * Property referenceCopied
+   * @readonly
+   *
+   * @description
+   * A row menu asked for its reference to be copied.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {OutputEmitterRef<InterventionOutput>}
+   */
+  public readonly referenceCopied: OutputEmitterRef<InterventionOutput> =
+    output<InterventionOutput>();
+
+  /**
+   * Property deleteRequested
+   * @readonly
+   *
+   * @description
+   * A row menu asked for the intervention to be deleted. The table never
+   * deletes: the page confirms and calls the store.
+   *
+   * @access public
+   * @since 5.0.0
+   *
+   * @type {OutputEmitterRef<InterventionOutput>}
+   */
+  public readonly deleteRequested: OutputEmitterRef<InterventionOutput> =
+    output<InterventionOutput>();
+
+  /**
+   * Property selectionChanged
+   * @readonly
+   *
+   * @description
+   * The selected row ids changed, through the header "select all" or a row's
+   * own checkbox. Carries the full next selection, not a delta.
+   *
+   * @access public
+   * @since 5.0.0
+   *
+   * @type {OutputEmitterRef<ReadonlySet<string>>}
+   */
+  public readonly selectionChanged: OutputEmitterRef<ReadonlySet<string>> =
+    output<ReadonlySet<string>>();
+  //#endregion
+
+  //#region Properties
+  /** Column ids, for the template's visibility checks. */
+  protected readonly column: typeof INTERVENTION_TABLE_COLUMN = INTERVENTION_TABLE_COLUMN;
+
+  /** Placeholder rows for the loading render. */
+  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method isVisible
+   * @method isVisible
+   *
+   * @description
+   * Whether an optional column is shown.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {InterventionTableColumn} id - The column id.
+   *
+   * @returns {boolean} True when it renders.
+   */
+  protected isVisible(id: InterventionTableColumn): boolean {
+    return !this.hiddenColumns().has(id);
+  }
+
+  /**
+   * Method columnCount
+   * @method columnCount
+   *
+   * @description
+   * How many cells a row currently has, so a full-width message can span
+   * them. The fixed columns are the leading checkbox, Ref., Intervention and
+   * the trailing Actions menu.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @returns {number} The rendered column count.
+   */
+  protected columnCount(): number {
+    const optional: number = [
+      this.column.STATUS,
+      this.column.PRIORITY,
+      this.column.TYPE,
+      this.column.SITE,
+      this.column.DUE,
+    ].filter((id: InterventionTableColumn): boolean => this.isVisible(id)).length;
+
+    return optional + 4;
+  }
+
+  /**
+   * Method ariaSort
+   * @method ariaSort
+   *
+   * @description
+   * What a sortable head announces for the active ordering.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {InterventionSortField} field - The head's field.
+   *
+   * @returns {'ascending' | 'descending' | 'none'} The `aria-sort` value.
+   */
+  protected ariaSort(field: InterventionSortField): 'ascending' | 'descending' | 'none' {
+    const active: InterventionListSort = this.sortOrder();
+
+    if (active.field !== field) return 'none';
+
+    return active.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
+  /**
+   * Method sortIcon
+   * @method sortIcon
+   *
+   * @description
+   * The glyph a sortable head shows: a direction when it is the active one, a
+   * neutral pair otherwise.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {InterventionSortField} field - The head's field.
+   *
+   * @returns {string} A registered lucide name.
+   */
+  protected sortIcon(field: InterventionSortField): string {
+    const active: InterventionListSort = this.sortOrder();
+
+    if (active.field !== field) return 'lucideChevronsUpDown';
+
+    return active.direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown';
+  }
+
+  /**
+   * Method transitionsFor
+   * @method transitionsFor
+   *
+   * @description
+   * The status moves a row may offer — the backend's own list, or none when
+   * the member cannot transition.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {InterventionOutput} intervention - The row's intervention.
+   *
+   * @returns {readonly InterventionStatus[]} The offered targets.
+   */
+  protected transitionsFor(intervention: InterventionOutput): readonly InterventionStatus[] {
+    return this.canTransition() ? intervention.allowedTransitions : [];
+  }
+
+  /**
+   * Method statusLabelOf
+   * @method statusLabelOf
+   *
+   * @description
+   * Names a status for a menu entry.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {InterventionStatus} status - The status.
+   *
+   * @returns {string} Its localized label.
+   */
+  protected statusLabelOf(status: InterventionStatus): string {
+    return resolveInterventionTag('status', status).label;
+  }
+
+  /**
+   * Method isRowDeletable
+   * @method isRowDeletable
+   *
+   * @description
+   * Whether a row's menu may offer Delete: the caller must have the
+   * permission (`canDelete`) and the intervention's own status must be one
+   * the API accepts (`isInterventionDeletable`).
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @param {InterventionOutput} intervention - The row's intervention.
+   *
+   * @returns {boolean} True when Delete should render.
+   */
+  protected isRowDeletable(intervention: InterventionOutput): boolean {
+    return this.canDelete() && isInterventionDeletable(intervention);
+  }
+
+  /**
+   * Method isSelected
+   * @method isSelected
+   *
+   * @description
+   * Whether a row's checkbox is currently checked.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @param {string} id - The row's intervention id.
+   *
+   * @returns {boolean} True when selected.
+   */
+  protected isSelected(id: string): boolean {
+    return this.selectedIds().has(id);
+  }
+
+  /**
+   * Method allSelected
+   * @method allSelected
+   *
+   * @description
+   * Whether every currently rendered row is selected, driving the header
+   * checkbox's checked state. Selection is scoped to the rendered rows (the
+   * current page), not the whole filtered set.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @returns {boolean} True when the page is fully selected.
+   */
+  protected allSelected(): boolean {
+    const rows: readonly InterventionListItemViewModel[] = this.items();
+
+    return (
+      rows.length > 0 &&
+      rows.every((item: InterventionListItemViewModel): boolean =>
+        this.selectedIds().has(item.intervention.id),
+      )
+    );
+  }
+
+  /**
+   * Method someSelected
+   * @method someSelected
+   *
+   * @description
+   * Whether some but not all rendered rows are selected, driving the header
+   * checkbox's indeterminate state.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @returns {boolean} True when the page is partially selected.
+   */
+  protected someSelected(): boolean {
+    return (
+      !this.allSelected() &&
+      this.items().some((item: InterventionListItemViewModel): boolean =>
+        this.selectedIds().has(item.intervention.id),
+      )
+    );
+  }
+
+  /**
+   * Method toggleAll
+   * @method toggleAll
+   *
+   * @description
+   * Selects or deselects every currently rendered row, preserving any
+   * selection made on another page.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @param {boolean} checked - The header checkbox's new state.
+   *
+   * @returns {void}
+   */
+  protected toggleAll(checked: boolean): void {
+    const next: Set<string> = new Set(this.selectedIds());
+
+    for (const item of this.items()) {
+      if (checked) next.add(item.intervention.id);
+      else next.delete(item.intervention.id);
+    }
+
+    this.selectionChanged.emit(next);
+  }
+
+  /**
+   * Method toggleRow
+   * @method toggleRow
+   *
+   * @description
+   * Selects or deselects a single row.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @param {string} id - The row's intervention id.
+   * @param {boolean} checked - The row checkbox's new state.
+   *
+   * @returns {void}
+   */
+  protected toggleRow(id: string, checked: boolean): void {
+    const next: Set<string> = new Set(this.selectedIds());
+
+    if (checked) next.add(id);
+    else next.delete(id);
+
+    this.selectionChanged.emit(next);
+  }
+
+  /**
+   * Method selectRowLabel
+   * @method selectRowLabel
+   *
+   * @description
+   * The accessible name for a row's checkbox, naming the intervention rather
+   * than leaving every checkbox on the page announced identically.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @param {string} name - The intervention's name.
+   *
+   * @returns {string} The localized label.
+   */
+  protected selectRowLabel(name: string): string {
+    return $localize`:@@intervention.list.rowSelectLabel:Select ${name}:name:`;
+  }
+  //#endregion
+}

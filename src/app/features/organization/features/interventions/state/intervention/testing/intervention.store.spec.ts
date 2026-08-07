@@ -30,6 +30,7 @@ describe('InterventionStore', () => {
     list: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
   };
   let dispatch: ReturnType<typeof vi.fn>;
 
@@ -38,6 +39,7 @@ describe('InterventionStore', () => {
       list: vi.fn().mockReturnValue(of(collection)),
       create: vi.fn().mockReturnValue(of(intervention)),
       update: vi.fn(),
+      remove: vi.fn(),
     };
     dispatch = vi.fn();
 
@@ -248,6 +250,86 @@ describe('InterventionStore', () => {
       expect(dispatch.mock.calls[0][0]).toMatchObject({
         type: '[Intervention Store] transitionFailed',
       });
+    });
+  });
+
+  describe('delete', () => {
+    const draftIntervention = {
+      id: 'intervention-1',
+      name: 'Site visit',
+      status: 'draft',
+      revision: 1,
+    } as InterventionOutput;
+
+    beforeEach(() => {
+      mockInterventionService.list.mockReturnValue(
+        of({
+          '@id': '/api/interventions',
+          '@type': 'Collection',
+          totalItems: 1,
+          member: [draftIntervention],
+        }),
+      );
+      store.load({ organizationId: 'org-1' });
+    });
+
+    it('should call remove with the id and revision', () => {
+      mockInterventionService.remove.mockReturnValue(of(undefined));
+
+      store.delete({ interventionId: 'intervention-1', revision: 1 });
+
+      expect(mockInterventionService.remove).toHaveBeenCalledWith('intervention-1', 1);
+    });
+
+    it('should drop the entity and decrement the total on success', () => {
+      mockInterventionService.remove.mockReturnValue(of(undefined));
+
+      store.delete({ interventionId: 'intervention-1', revision: 1 });
+
+      expect(store.interventionList()).toEqual([]);
+      expect(store.totalInterventions()).toBe(0);
+      expect(store.deleteCallState().status).toBe('success');
+    });
+
+    it('should dispatch a success feedback event on success', () => {
+      mockInterventionService.remove.mockReturnValue(of(undefined));
+
+      store.delete({ interventionId: 'intervention-1', revision: 1 });
+
+      expect(dispatch).toHaveBeenCalledTimes(1);
+      expect(dispatch.mock.calls[0][0]).toMatchObject({
+        type: '[Intervention Store] deleteSucceeded',
+        payload: { severity: 'success' },
+      });
+    });
+
+    it('should keep the entity and dispatch a failure event on a 409 status conflict', () => {
+      mockInterventionService.remove.mockReturnValue(
+        throwError(() => ({
+          '@type': 'ApiError',
+          status: 409,
+          type: '/errors/conflict',
+          title: 'Conflict',
+        })),
+      );
+
+      store.delete({ interventionId: 'intervention-1', revision: 1 });
+
+      expect(store.interventionList()).toEqual([draftIntervention]);
+      expect(store.deleteCallState().status).toBe('error');
+      expect(dispatch).toHaveBeenCalledTimes(1);
+      expect(dispatch.mock.calls[0][0]).toMatchObject({
+        type: '[Intervention Store] deleteFailed',
+        payload: { severity: 'error' },
+      });
+    });
+
+    it('should not remove the row it was not asked to delete', () => {
+      mockInterventionService.remove.mockReturnValue(of(undefined));
+
+      store.delete({ interventionId: 'does-not-exist', revision: 1 });
+
+      expect(store.interventionList()).toEqual([draftIntervention]);
     });
   });
 });

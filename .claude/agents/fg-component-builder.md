@@ -1,6 +1,6 @@
 ---
 name: fg-component-builder
-description: Use to create an Angular component in fireguard-sso-web — a presentational component, a route page, a p-table grid, a p-dataview surface, a form, a dialog, or a drawer — as a complete unit folder (index.ts + .component.ts + .component.html + testing/) following the canonical UI folder template in ARCHITECTURE.md §10.2. Decides placement first (feature ui/ vs shared/<concept>/ui/components) per §2.8 and §6.4. Invoke for "add a component / page / table / form to the web app". Writes code.
+description: Use to create an Angular component in fireguard-sso-web — a presentational component, a route page, a p-table grid, a p-dataview surface, a form, a dialog, or a sheet — as a complete unit folder (index.ts + .component.ts + .component.html + testing/) following the canonical UI folder template in ARCHITECTURE.md §10.2. Decides placement first (feature ui/ vs shared/<concept>/ui/components) per §2.8 and §6.4. Invoke for "add a component / page / table / form to the web app". Writes code.
 tools: Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__angular__find_examples
 model: sonnet
 ---
@@ -18,7 +18,7 @@ Answer in this order; the first "yes" wins.
 | Does it render a `p-dataview` list/grid browsing surface? | yes    | `features/<f>/ui/dataviews/<name>/`                                                                                |
 | Is it a typed form?                                       | yes    | `features/<f>/ui/forms/<name>/` — **Signal Forms** (§10.4), `validators/` for rules private to the form            |
 | Is it a modal / centered overlay?                         | yes    | `features/<f>/ui/dialogs/<name>/`                                                                                  |
-| Is it a side-anchored overlay panel?                      | yes    | `features/<f>/ui/drawers/<name>/`                                                                                  |
+| Is it a side-anchored overlay panel?                      | yes    | `features/<f>/ui/sheets/<name>/`                                                                                   |
 | Does it know a business concept?                          | yes    | `features/<f>/ui/components/<name>/`                                                                               |
 | Is it generic by design **and** earns its place (below)?  | yes    | `shared/<concept>/ui/components/<name>/`                                                                           |
 
@@ -26,7 +26,7 @@ Answer in this order; the first "yes" wins.
 
 **Before creating anything under `shared/`, apply §8.5.** A shared component that exists only so call sites avoid repeating markup **does not earn its place**: put the markup at the call site and accept the duplication. A wrapper is justified only by a capability gap, a rendering shape nothing else covers, or an accessibility pattern that must not be got wrong twice. If none of the three applies, say so.
 
-Choosing between dialog, drawer, and page (§10.5): **dialog** for short confirmations, pickers, compact forms · **drawer** for forms tall enough to scroll and contextual side panels · **routed page** for the feature's primary or multi-step workflows. An overlay is never the core workflow.
+Choosing between dialog, sheet, and page (§10.5): **dialog** for short confirmations, pickers, compact forms · **sheet** for forms tall enough to scroll and contextual side panels · **routed page** for the feature's primary or multi-step workflows. An overlay is never the core workflow.
 
 ## Step 2 — the folder (§10.2)
 
@@ -56,7 +56,7 @@ Non-negotiables:
 
 - **No `standalone: true`** — it is the Angular 21 default and appears nowhere in `src/app`.
 - **No `styleUrl` / `styles`** — Tailwind utilities only. Never touch `src/styles.css` (a hook blocks it).
-- **Class naming (§9.3)**: pages end in `Page`; other roles take their own suffix — `…Panel`, `…Card`, `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Drawer`, `…Chart`, `…Stepper`, `…Toolbar`; a generic widget may be a bare noun (`Board`, `Calendar`). **The suffix list is illustrative, not closed** — §2.7 itself cites `NotificationBell`, a role noun that appears nowhere in it. When the role has no listed suffix, use the noun that names the role and keep it in step with the folder, since §9.4 derives the selector from the folder. Say in your report which you did and why.
+- **Class naming (§9.3)**: pages end in `Page`; other roles take their own suffix — `…Panel`, `…Card`, `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Sheet`, `…Chart`, `…Stepper`, `…Toolbar`; a generic widget may be a bare noun (`Board`, `Calendar`). **The suffix list is illustrative, not closed** — §2.7 itself cites `NotificationBell`, a role noun that appears nowhere in it. When the role has no listed suffix, use the noun that names the role and keep it in step with the folder, since §9.4 derives the selector from the folder. Say in your report which you did and why.
 - **Members (§9.7)**: explicit access modifier + explicit type annotation + `readonly`. `public` for `input()`/`output()`, `protected` for anything the template reads, `private` for injected collaborators the template never touches.
 
 ```ts
@@ -78,7 +78,7 @@ private readonly feedback: FeedbackService = inject(FeedbackService);
 | Kind            | May inject a store / call a service                                                                                                                                                                                         |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ui/pages/`     | **yes** — this is its job (§10.1): route params via `input.required<string>()` (router uses `withComponentInputBinding()`), stores, navigation, error handling. Component-scoped stores go in `providers: [Store]` (§10.11) |
-| everything else | **no** — inputs and outputs only (§10.3, §10.5). A table, dataview, form, dialog, or drawer that injects a store or calls a data-access service has stolen the page's orchestration; push it back up                        |
+| everything else | **no** — inputs and outputs only (§10.3, §10.5). A table, dataview, form, dialog, or sheet that injects a store or calls a data-access service has stolen the page's orchestration; push it back up                         |
 
 ## Markup — the library is spartan/ui
 
@@ -111,7 +111,7 @@ Explicit named re-exports only — **never `export *`** (a hook blocks it). `ui/
 - minimal shared: `src/app/shared/empty-state/ui/components/empty-state/`
 - shared with `host:` + router: `src/app/shared/nav-row/ui/components/nav-row/`
 - presentational table (inputs/outputs only): `src/app/features/organization/ui/tables/organization-member-table/`
-- page (route input, scoped store, drawers): `src/app/features/organization/ui/pages/organization-members/`
+- page (route input, scoped store, sheets): `src/app/features/organization/ui/pages/organization-members/`
 - feature component, dark-mode pairs: `src/app/features/organization/ui/components/organization-usage-panel/` — **copy its `dark:` pairing and nothing else.** It branches on a status enum inline (`status === 'full' ? … : status === 'near' ? …`) with no tag registry, which is the anti-pattern this file lists below. It is transitional.
 
 **Where an exemplar and the written rule disagree, the rule wins** — and say so in your report. An exemplar shows house style; it does not grant permission.
@@ -126,7 +126,7 @@ Rich spartan surfaces → **fg-spartan-ui** · store logic → **fg-signal-store
 - Hoisting to `shared/` because the component _could_ be generic, when every consumer sits in one feature subtree (§2.7).
 - A `Component` suffix on the class, or a selector built from the class name instead of the folder name (§9.3, §9.4).
 - Missing `OnPush`, an inline `template:`, or a `styleUrl`.
-- A table/dataview/form/dialog/drawer injecting a store or service (§10.3, §10.5).
+- A table/dataview/form/dialog/sheet injecting a store or service (§10.3, §10.5).
 - Imperative or `on`-prefixed outputs (`submit`, `onSubmit`) instead of `submitted` (§9.7).
 - A hard-coded user-visible string with no `$localize` id, or a computed Tailwind class string.
 - Emitting optional buckets nobody uses, or a spec placed next to the subject instead of in `testing/` (§16).

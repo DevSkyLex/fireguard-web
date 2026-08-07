@@ -22,7 +22,7 @@ Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\firegu
 
 | Agent                  | Creates                                                                          |
 | ---------------------- | -------------------------------------------------------------------------------- |
-| `fg-component-builder` | components, pages, tables, dataviews, forms, dialogs, drawers                    |
+| `fg-component-builder` | components, pages, tables, dataviews, forms, dialogs, sheets                     |
 | `fg-directive-builder` | directives — behavioral (SSR-safe) or template-marker with a typed context guard |
 | `fg-pipe-builder`      | pipes — **and** the `ARCHITECTURE.md` edits the first one requires               |
 | `fg-feature-builder`   | a feature or subfeature: routes, concerns, wiring, `FEATURE.md`                  |

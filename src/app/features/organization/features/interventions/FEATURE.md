@@ -70,7 +70,7 @@ This subfeature is responsible for:
 Stores:
 
 - `InterventionWorkspaceStore` additionally owns `delete` (`InterventionService.remove`, the canonical `DELETE /api/interventions/{id}`): only `draft` or `abandoned` interventions may be deleted (permission `INTERVENTIONS_PLAN` for draft, `INTERVENTIONS_EXECUTE` for abandoned — see `canDeleteIntervention` on the detail page), surfaced as a confirm-gated "Delete intervention" entry in the header overflow menu. The 409 for any other status is surfaced verbatim via the inline workspace error banner; success dispatches `deleteSucceeded` (toast) and the page navigates back to the list.
-- `InterventionStore` — component-scoped (provided in `InterventionsPage`); intervention list and creation (normalized entities + request state). `load` accumulates up to 500 interventions across 100-item pages (the backend clamps `itemsPerPage` at 100) and sets `isListCapped` when the organization has more, driving the list page's "refine your search" notice. `transition` applies a single status change optimistically (entity patch → PATCH with `If-Match` → merge fresh output on success, rollback + `transitionFailed` toast event on error); `orderedIds` exposes the current entity order for prev/next navigation.
+- `InterventionStore` — component-scoped (provided in `InterventionsPage`); intervention list and creation (normalized entities + request state). `load` accumulates up to 500 interventions across 100-item pages (the backend clamps `itemsPerPage` at 100) and sets `isListCapped` when the organization has more, driving the list page's "refine your search" notice. `transition` applies a single status change optimistically (entity patch → PATCH with `If-Match` → merge fresh output on success, rollback + `transitionFailed` toast event on error); `orderedIds` exposes the current entity order for prev/next navigation. `delete` (`InterventionService.remove`) removes the cached entity and decrements `totalInterventions` on success; it uses `mergeMap` (not `switchMap`) so the list page's bulk selection can delete several interventions concurrently, each keyed by its own request and each dispatching its own `deleteSucceeded` (toast) or `deleteFailed` (toast) event — there is no aggregate "N deleted" outcome.
 - `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations. Async state is held as `loadCallState` (the workspace fetch), `mutationCallState` (shared by every write) and `activityCallState`; `loading`, `saving` and `error` are derived signals over them, and `mutationError` exposes the normalized `StoreError` so a page can hand a 422 to the form that caused it. Also owns the activity timeline (`activities`, `loadActivities`, `addComment`); comment posting is refused outright while offline (not queued to the outbox) and failures dispatch a `commentAddFailed` toast event via `interventionWorkspaceStoreEvents`.
 - `InterventionCalendarStore` — component-scoped (provided in `InterventionsPage`); the interventions inside a bounded date window (the visible month ± one month) plus the current member IRI driving the calendar card's All/Mine scope. Loaded for the active organization and refetched when the visible month changes (fed by the calendar's `focusedDateChange`); the window is fetched as the de-duped union of a `plannedStartAt`-range query and a `dueAt`-range query (the anchor is `plannedStartAt ?? dueAt`), and the member IRI is resolved once per organization and reused across window refetches.
 - `InterventionSummaryStore` — component-scoped (provided in `InterventionsPage`); loads the full organization intervention set once (via `InterventionService.listAll`) and derives the dashboard metric-strip KPIs (in progress, planned, overdue, blocked). Overdue and blocked exclude interventions in a terminal status (`published`, `abandoned`).
@@ -349,3 +349,19 @@ badge and the select option follow automatically.
 - Offline outbox replay belongs to this subfeature, not `core`.
 - Intervention pages orchestrate intervention services and intervention stores.
 - Intervention route pages live under `ui/pages/`.
+- **The list page's row and bulk delete gate on `INTERVENTIONS_WRITE`.** This
+  feature has no delete-specific permission (same approved exception as
+  `facilities`' own delete action), so the write permission covers it. This is
+  a separate gate from the `InterventionWorkspaceStore.delete` split-permission
+  mapping documented above under "State and Data Access" — that path backs the
+  detail page's header-overflow Delete action, which does not exist in the UI
+  yet. Reconcile the two only when that detail-page action ships; until then
+  they are two independent, intentionally different gates on the same
+  underlying `DELETE /api/interventions/{id}` call.
+- **A row or bulk delete is never offered for a status the API would refuse.**
+  `InterventionTable` and `InterventionsPage` both narrow through the shared
+  `isInterventionDeletable` util (`utils/intervention-deletable/`, statuses
+  `draft`/`abandoned`) rather than duplicating the check, so the two surfaces
+  cannot drift apart. A bulk selection is filtered to its deletable subset
+  before the confirm dialog opens — the count it shows is always what will
+  actually delete, never a promise a 409 would break.

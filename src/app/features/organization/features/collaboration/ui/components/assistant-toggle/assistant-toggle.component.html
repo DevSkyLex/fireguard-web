@@ -19,14 +19,38 @@
     [state]="store.panelOpen() ? 'open' : 'closed'"
     (stateChanged)="onSheetStateChanged($event)"
   >
-    <hlm-sheet-content
-      *hlmSheetPortal="let ctx"
-      id="assistant-sheet"
-      class="gap-0 overflow-hidden bg-background p-0 text-foreground sm:max-w-xl!"
-      [showCloseButton]="false"
-      i18n-aria-label="@@workspace.assistant.aria"
-      aria-label="Assistant"
-    >
+    <hlm-sheet-content *hlmSheetPortal id="assistant-sheet" class="overflow-hidden sm:max-w-xl!">
+      <hlm-sheet-header class="flex-row items-center gap-2.5 pe-12">
+        <span
+          class="grid size-7 shrink-0 place-content-center rounded-md bg-primary/10 text-primary"
+        >
+          <ng-icon name="lucideSparkles" class="text-sm" aria-hidden="true" />
+        </span>
+
+        <div class="min-w-0 flex-1">
+          <h2 hlmSheetTitle class="truncate" i18n="@@workspace.assistant.title">Assistant</h2>
+          <p hlmSheetDescription class="truncate" i18n="@@workspace.assistant.subtitle">
+            Answers about this organization
+          </p>
+        </div>
+
+        @if (store.messages().length > 0) {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            class="shrink-0"
+            data-testid="assistant-new-thread"
+            i18n-aria-label="@@workspace.assistant.new"
+            aria-label="New conversation"
+            (click)="store.startNewThread()"
+          >
+            <ng-icon name="lucidePenLine" class="text-sm" aria-hidden="true" />
+          </button>
+        }
+      </hlm-sheet-header>
+
       <app-assistant-panel />
     </hlm-sheet-content>
   </hlm-sheet>

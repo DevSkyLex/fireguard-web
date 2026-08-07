@@ -30,7 +30,7 @@ Ask the **spartan MCP** for a component's inputs, outputs, and a working example
 
 ## Component rules you must not break
 
-- No `Component` suffix on the class; route pages end in `Page`, other roles take `…Form`, `…Table`, `…Dialog`, `…Drawer`, `…Panel`, `…Card` (§9.3).
+- No `Component` suffix on the class; route pages end in `Page`, other roles take `…Form`, `…Table`, `…Dialog`, `…Sheet`, `…Panel`, `…Card` (§9.3).
 - Selector is `app-` + the **folder** name (§9.4). Helm components keep their generated `hlm-` selectors — do not rename them.
 - `ChangeDetectionStrategy.OnPush` on every component, external `templateUrl`, no `standalone: true`, no `styleUrl`.
 - **Only a page may inject a store or call a service** (§10.3, §10.5). A table, form, dialog, or sheet takes `input()` and emits `output()` — nothing else.

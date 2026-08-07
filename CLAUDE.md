@@ -42,7 +42,7 @@
    to feature → `shared/` → `core/` only when a real second consumer appears.
    Stick to the documented feature concerns (`ARCHITECTURE.md` §8.3:
    `data-access/`, `services/`, `access/`, `setup/`, `navigation/`, `http/`,
-   `ports/`, `ui/{pages,components,tables,dataviews,forms,dialogs,drawers}`,
+   `ports/`, `ui/{pages,components,tables,dataviews,forms,dialogs,sheets}`,
    `state/`, `models/`, `utils/`, `constants/`, `options/`, `providers/`); do
    not invent undocumented sibling layers/folders. Naming (file suffixes,
    classes, selectors, tokens, routes) follows `ARCHITECTURE.md` §9.
@@ -102,7 +102,7 @@ Open **`fireguard-sso-web/`** as the workspace root to activate it. Full guide i
 
 **Builders — they create code.** One per kind of unit; each decides _placement_ first.
 
-- `fg-component-builder` — components, pages, tables, dataviews, forms, dialogs, drawers (§10.2).
+- `fg-component-builder` — components, pages, tables, dataviews, forms, dialogs, sheets (§10.2).
 - `fg-directive-builder` — directives, behavioral or template-marker with a typed context guard.
 - `fg-pipe-builder` — pipes. There are **none** today, so the first one also updates §9.2.
 - `fg-feature-builder` — a feature or subfeature per §8.3/§8.4, plus its `FEATURE.md`.

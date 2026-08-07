@@ -325,6 +325,31 @@ export class OrganizationTodayPage {
 
     void this.router.navigate(['/organizations', organizationId, 'interventions']);
   }
+
+  /**
+   * Method startIntervention
+   * @method startIntervention
+   *
+   * @description
+   * Opens the intervention list with its creation drawer already open.
+   *
+   * `?create=1` is the interventions subfeature's published contract for this:
+   * it lets this page's primary action actually start the work without
+   * duplicating the creation drawer here.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected startIntervention(): void {
+    const organizationId: string | null = this.organizationContext.selectedOrganizationId();
+    if (organizationId === null) return;
+
+    void this.router.navigate(['/organizations', organizationId, 'interventions'], {
+      queryParams: { create: '1' },
+    });
+  }
   //#endregion
 
   //#region Internals

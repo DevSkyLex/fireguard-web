@@ -30,7 +30,9 @@ describe('AssistantToggle', () => {
   let fixture: ComponentFixture<AssistantToggle>;
   let isAvailable: WritableSignal<boolean>;
   let panelOpen: WritableSignal<boolean>;
+  let messages: WritableSignal<readonly unknown[]>;
   let toggleCalls: number;
+  let newThreadCalls: number;
 
   /** The rendered control, or `null` when the widget renders nothing. */
   function control(): HTMLButtonElement | null {
@@ -40,7 +42,9 @@ describe('AssistantToggle', () => {
   beforeEach(async () => {
     isAvailable = signal<boolean>(true);
     panelOpen = signal<boolean>(false);
+    messages = signal<readonly unknown[]>([]);
     toggleCalls = 0;
+    newThreadCalls = 0;
 
     TestBed.configureTestingModule({
       providers: [
@@ -50,6 +54,10 @@ describe('AssistantToggle', () => {
           useValue: {
             isAvailable,
             panelOpen,
+            messages,
+            startNewThread: (): void => {
+              newThreadCalls += 1;
+            },
             togglePanel: (): void => {
               toggleCalls += 1;
               panelOpen.update((open: boolean): boolean => !open);
@@ -108,5 +116,31 @@ describe('AssistantToggle', () => {
 
     expect(panel()).not.toBeNull();
     expect(panel()?.closest('#assistant-sheet')).not.toBeNull();
+  });
+
+  it('should name the sheet through its own header title', async () => {
+    panelOpen.set(true);
+    await fixture.whenStable();
+
+    const title: HTMLElement | null = document.querySelector('[data-slot="sheet-title"]');
+
+    expect(title?.textContent?.trim()).toBe('Assistant');
+    expect(document.querySelector('#assistant-sheet')?.getAttribute('data-slot')).toBe(
+      'sheet-content',
+    );
+  });
+
+  it('should offer a new thread only once the conversation has turns', async () => {
+    panelOpen.set(true);
+    await fixture.whenStable();
+
+    expect(document.querySelector('[data-testid="assistant-new-thread"]')).toBeNull();
+
+    messages.set([{ id: 'm-1' }]);
+    await fixture.whenStable();
+
+    (document.querySelector('[data-testid="assistant-new-thread"]') as HTMLButtonElement).click();
+
+    expect(newThreadCalls).toBe(1);
   });
 });

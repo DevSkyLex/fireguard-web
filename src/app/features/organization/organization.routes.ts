@@ -60,6 +60,13 @@ export const ORGANIZATION_ROUTES: Routes = [
           ),
       },
       {
+        path: 'interventions',
+        loadChildren: () =>
+          import('./features/interventions/interventions.routes').then(
+            (m) => m.INTERVENTION_ROUTES,
+          ),
+      },
+      {
         path: 'members/:memberId',
         loadComponent: () =>
           import('./ui/pages/organization-member-profile-page/organization-member-profile-page.component').then(

@@ -3987,7 +3987,7 @@
         <source>Sync status: everything is synced</source>
         <target>État de synchronisation : tout est synchronisé</target>
       </trans-unit>
-      <trans-unit id="intervention.createDrawer.header" datatype="html">
+      <trans-unit id="intervention.createSheet.header" datatype="html">
         <source>Create a field intervention</source>
         <target>Créer une intervention terrain</target>
       </trans-unit>
@@ -3995,7 +3995,7 @@
         <source>Close create intervention</source>
         <target>Fermer « Créer une intervention terrain »</target>
       </trans-unit>
-      <trans-unit id="intervention.createDrawer.intro" datatype="html">
+      <trans-unit id="intervention.createSheet.intro" datatype="html">
         <source> Choose the operational objective first. The workspace will then guide scope preparation and assignment. </source>
         <target>Choisissez d'abord l'objectif opérationnel. L'espace de travail guidera ensuite la préparation de la portée et l'affectation.</target>
       </trans-unit>
@@ -4111,17 +4111,21 @@
         <source>Add field participants</source>
         <target>Ajouter des participants terrain</target>
       </trans-unit>
-      <trans-unit id="intervention.cf.plannedStart" datatype="html">
-        <source>Planned start</source>
-        <target>Début prévu</target>
+      <trans-unit id="intervention.cf.plannedRange" datatype="html">
+        <source>Planned window</source>
+        <target>Fenêtre planifiée</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.plannedRangeHint" datatype="html">
+        <source>Pick the start and the due date together.</source>
+        <target>Choisissez ensemble la date de début et l'échéance.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.plannedRangePlaceholder" datatype="html">
+        <source>Select dates</source>
+        <target>Sélectionner les dates</target>
       </trans-unit>
       <trans-unit id="intervention.cf.startPlaceholder" datatype="html">
         <source>Select start date and time</source>
         <target>Sélectionner la date et l'heure de début</target>
-      </trans-unit>
-      <trans-unit id="intervention.cf.due" datatype="html">
-        <source>Due</source>
-        <target>Échéance</target>
       </trans-unit>
       <trans-unit id="intervention.cf.duePlaceholder" datatype="html">
         <source>Select due date and time</source>
@@ -4767,7 +4771,67 @@
         <source><x id="counted" equiv-text="counted"/> · <x id="overdue" equiv-text="overdue"/> overdue</source>
         <target><x id="counted" equiv-text="counted"/> · <x id="overdue" equiv-text="overdue"/> en retard</target>
       </trans-unit>
+      <trans-unit id="intervention.list.selectAllLabel" datatype="html">
+        <source>Select all interventions</source>
+        <target>Sélectionner toutes les interventions</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowSelectLabel" datatype="html">
+        <source>Select <x id="name" equiv-text="name"/></source>
+        <target>Sélectionner <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowDelete" datatype="html">
+        <source>Delete</source>
+        <target>Supprimer</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.selectionCountOne" datatype="html">
+        <source>1 selected</source>
+        <target>1 sélectionnée</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.selectionCountMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> selected</source>
+        <target><x id="count" equiv-text="count"/> sélectionnées</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.selectionNonDeletableNote" datatype="html">
+        <source>Some selected interventions can&apos;t be deleted (not draft or abandoned)</source>
+        <target>Certaines interventions sélectionnées ne peuvent pas être supprimées (ni brouillon ni abandonnée)</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.bulkDeleteButton" datatype="html">
+        <source>Delete (<x id="count" equiv-text="this.deletableSelectedIds().length"/>)</source>
+        <target>Supprimer (<x id="count" equiv-text="this.deletableSelectedIds().length"/>)</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.deleteConfirmTitleOne" datatype="html">
+        <source>Delete intervention?</source>
+        <target>Supprimer l'intervention ?</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.deleteConfirmTitleMany" datatype="html">
+        <source>Delete <x id="count" equiv-text="bulkIds.length"/> interventions?</source>
+        <target>Supprimer <x id="count" equiv-text="bulkIds.length"/> interventions ?</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.deleteConfirmDescriptionSingle" datatype="html">
+        <source>This will permanently delete &quot;<x id="name" equiv-text="single.name"/>&quot;. This action cannot be undone.</source>
+        <target>Cette action supprimera définitivement « <x id="name" equiv-text="single.name"/> ». Elle est irréversible.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.deleteConfirmDescriptionOne" datatype="html">
+        <source>This will permanently delete this intervention. This action cannot be undone.</source>
+        <target>Cette action supprimera définitivement cette intervention. Elle est irréversible.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.deleteConfirmDescriptionMany" datatype="html">
+        <source>This will permanently delete <x id="count" equiv-text="bulkIds.length"/> interventions. This action cannot be undone.</source>
+        <target>Cette action supprimera définitivement <x id="count" equiv-text="bulkIds.length"/> interventions. Elle est irréversible.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.deleteConfirmCancel" datatype="html">
+        <source>Cancel</source>
+        <target>Annuler</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.deleteConfirmAction" datatype="html">
+        <source> Delete </source>
+        <target> Supprimer </target>
+      </trans-unit>
       <trans-unit id="intervention.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filtersMenuLabel" datatype="html">
         <source>Filters</source>
         <target>Filtres</target>
       </trans-unit>
@@ -4834,6 +4898,10 @@
       <trans-unit id="intervention.list.newButton" datatype="html">
         <source>New intervention</source>
         <target>Nouvelle intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.moreActionsLabel" datatype="html">
+        <source>More actions</source>
+        <target>Plus d'actions</target>
       </trans-unit>
       <trans-unit id="intervention.list.errorText" datatype="html">
         <source>The interventions could not be loaded. Check your connection and try again.</source>
@@ -7737,6 +7805,166 @@
       <trans-unit id="messages.nav.empty" datatype="html">
         <source>No conversations yet.</source>
         <target>Aucune conversation pour le moment.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.cancel" datatype="html">
+        <source>Cancel</source>
+        <target>Annuler</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.createFailed" datatype="html">
+        <source>The intervention could not be created.</source>
+        <target>L'intervention n'a pas pu être créée.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.submitting" datatype="html">
+        <source>Creating…</source>
+        <target>Création…</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.typeRequired" datatype="html">
+        <source>Choose an objective</source>
+        <target>Choisissez un objectif</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnAssignees" datatype="html">
+        <source> Assignees </source>
+        <target>Affectations</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnDue" datatype="html">
+        <source>Due</source>
+        <target>Échéance</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnEquipment" datatype="html">
+        <source> Equipment </source>
+        <target>Équipements</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnFacilities" datatype="html">
+        <source> Sites </source>
+        <target>Sites</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnIntervention" datatype="html">
+        <source> Intervention </source>
+        <target>Intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnLabels" datatype="html">
+        <source> Labels </source>
+        <target>Étiquettes</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnPriority" datatype="html">
+        <source>Priority</source>
+        <target>Priorité</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnSite" datatype="html">
+        <source> Site </source>
+        <target>Site</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.errorTitle" datatype="html">
+        <source>Couldn&apos;t load the interventions</source>
+        <target>Impossible de charger les interventions</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoMember" datatype="html">
+        <source>No member matches.</source>
+        <target>Aucun membre ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoSite" datatype="html">
+        <source>No site matches.</source>
+        <target>Aucun site ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.hideAbandoned" datatype="html">
+        <source>Hide abandoned</source>
+        <target>Masquer les abandonnées</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.showAbandoned" datatype="html">
+        <source>Show abandoned</source>
+        <target>Afficher les abandonnées</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortLabel" datatype="html">
+        <source>Sort</source>
+        <target>Trier</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.tableCaption" datatype="html">
+        <source> Interventions, grouped into collapsible sections. Sortable columns announce their direction. </source>
+        <target>Interventions, regroupées en sections repliables. Les colonnes triables annoncent leur sens de tri.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.nameLabel" datatype="html">
+        <source>Intervention name</source>
+        <target>Nom de l'intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.priorityLabel" datatype="html">
+        <source>Priority</source>
+        <target>Priorité</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnReference" datatype="html">
+        <source>Ref.</source>
+        <target>Réf.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterAnyStatus" datatype="html">
+        <source>Any status</source>
+        <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.searchEmptyHeading" datatype="html">
+        <source> No matching intervention </source>
+        <target>Aucune intervention correspondante</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnActions" datatype="html">
+        <source>Actions</source>
+        <target>Actions</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnType" datatype="html">
+        <source>Type</source>
+        <target>Type</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnsButton" datatype="html">
+        <source>Columns</source>
+        <target>Colonnes</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnsMenuLabel" datatype="html">
+        <source>Toggle columns</source>
+        <target>Afficher les colonnes</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.noResults" datatype="html">
+        <source> No results. </source>
+        <target>Aucun résultat.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.pageFirst" datatype="html">
+        <source>First page</source>
+        <target>Première page</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.pageLast" datatype="html">
+        <source>Last page</source>
+        <target>Dernière page</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.pageNext" datatype="html">
+        <source>Next page</source>
+        <target>Page suivante</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.pagePrevious" datatype="html">
+        <source>Previous page</source>
+        <target>Page précédente</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowCopyRef" datatype="html">
+        <source>Copy reference</source>
+        <target>Copier la référence</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Ouvrir le menu</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowMoveTo" datatype="html">
+        <source>Move to</source>
+        <target>Déplacer vers</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowOpen" datatype="html">
+        <source>Open</source>
+        <target>Ouvrir</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowsPerPage" datatype="html">
+        <source>Rows per page:</source>
+        <target>Lignes par page :</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.overdueLabel" datatype="html">
+        <source>Overdue</source>
+        <target>En retard</target>
       </trans-unit>
     </body>
   </file>

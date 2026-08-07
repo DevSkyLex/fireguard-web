@@ -585,7 +585,7 @@ features/<feature>/
     dataviews/            # optional — p-dataview list/grid browsing surfaces
     forms/                # optional
     dialogs/              # optional
-    drawers/              # optional
+    sheets/              # optional
   state/
     index.ts              # optional public API
     <slice>/
@@ -630,7 +630,7 @@ A feature may contain:
 
 Notes:
 
-- `ui/` is the only home for `pages/`, `components/`, `tables/`, `dataviews/`, `forms/`, `dialogs/`, and `drawers/`; do not place presentation folders at the feature root or beside `data-access/` and `state/`,
+- `ui/` is the only home for `pages/`, `components/`, `tables/`, `dataviews/`, `forms/`, `dialogs/`, and `sheets/`; do not place presentation folders at the feature root or beside `data-access/` and `state/`,
 - `data-access/` root should stay small: keep the public barrel at the root, put injectable API classes under `data-access/services/`, and reserve `data-access/adapters/` for pure transformations,
 - if a feature owns guards, resolvers, or feature-scoped interceptors, they live under `http/`; do not place them at the feature root,
 - keep empty concern folders absent; the template defines ownership boundaries, not mandatory boilerplate,
@@ -638,7 +638,7 @@ Notes:
 - inside `ports/`, use one folder per published contract and split the interface from the token (`<port-name>.interface.ts` and `<port-name>.token.ts`),
 - create `providers/` when a feature exposes bootstrap helpers, slot contributions, or feature-owned providers; each provider is responsible for binding the feature's ports to their concrete adapters,
 - create `ui/tables/` for `p-table`-based tabular grids of the feature's entity collections (columns, rows, row menus, sorting, pagination) and `ui/dataviews/` for `p-dataview`-based list/grid card browsing surfaces; both are presentational (section 10.3),
-- create `ui/dialogs/` for modal/overlay surfaces and `ui/drawers/` for side-anchored overlay panels; both host their own content but keep heavy form logic in a `ui/forms/` component they compose (section 10.5),
+- create `ui/dialogs/` for modal/overlay surfaces and `ui/sheets/` for side-anchored overlay panels; both host their own content but keep heavy form logic in a `ui/forms/` component they compose (section 10.5),
 - create `features/` only when both URL structure and ownership are nested,
 - keep feature internals colocated instead of centralizing them in `core`.
 
@@ -671,7 +671,7 @@ features/<parent>/features/<child>/
     dataviews/            # optional — p-dataview browsing surfaces
     forms/                # optional
     dialogs/              # optional
-    drawers/              # optional
+    sheets/              # optional
   state/
     index.ts              # optional public API
     <slice>/
@@ -843,7 +843,7 @@ Suffixes that must **not** be introduced:
 **Components carry no `Component` suffix** (`addTypeToClassName: false` in `angular.json`). The class name states the semantic role, and the role suffix is meaningful:
 
 - route pages always end in `Page`: `LoginPage`, `FacilityDetailPage`, `OrganizationMembersPage`. The **folder and file carry the suffix too** — `ui/pages/login-page/login-page.component.ts` — so a page is identifiable as one from its path alone, not only from its class,
-- other roles use their own suffix: `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Drawer`, `…Panel`, `…Card`, `…Chart`, `…Layout`, `…Stepper`, `…Toolbar`,
+- other roles use their own suffix: `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Sheet`, `…Panel`, `…Card`, `…Chart`, `…Layout`, `…Stepper`, `…Toolbar`,
 - a generic widget may be a bare noun when no role suffix applies: `Board`, `Calendar`.
 
 Other symbol families:
@@ -899,7 +899,7 @@ No other prefix is permitted.
 - every member carries an explicit access modifier, an explicit type annotation, and `readonly` where possible: `protected readonly activeTab: WritableSignal<number> = signal(0);`,
 - visibility follows consumption: `public` for `input()`/`output()` bindings, `protected` for anything the template reads (stores, signals, computed), `private` for injected collaborators the template never touches,
 - computed booleans are `is…` / `has…` / `can…`: `isLoading`, `hasInlineMutationError`, `canManageRoles`,
-- overlay visibility signals are `<thing>Visible`: `inviteDrawerVisible`, `quotaDialogVisible`,
+- overlay visibility signals are `<thing>Visible`: `inviteSheetVisible`, `quotaDialogVisible`,
 - outputs are past-tense or noun events: `submitted`, `cancelled`, `confirmed`, `visibleChange`, `pageChange` — never imperative (`submit`) or `on`-prefixed (`onSubmit`),
 - the `_` prefix is reserved for the private-by-convention state of `withQueryState` (`_queryStatus`, `_queryError`, `_queryData`); do not use it for component members,
 - injected collaborators are named after their role, not their type shape: `private readonly feedback: FeedbackService = inject(FeedbackService);`.
@@ -971,7 +971,7 @@ If a component becomes domain-free and reusable across features, move it to its 
 
 #### Canonical UI folder template
 
-The structure below is the default convention for **any** UI artifact folder in the app — feature `ui/components/`, `ui/tables/`, `ui/dataviews/`, `ui/forms/`, `ui/dialogs/`, `ui/drawers/`, `shared/<concept>/ui/<kind>/`, and layout shell components. A shared concept applies it under its own `ui/`, where the admitted kinds are `components/`, `directives/`, and `pipes/` (section 8.5):
+The structure below is the default convention for **any** UI artifact folder in the app — feature `ui/components/`, `ui/tables/`, `ui/dataviews/`, `ui/forms/`, `ui/dialogs/`, `ui/sheets/`, `shared/<concept>/ui/<kind>/`, and layout shell components. A shared concept applies it under its own `ui/`, where the admitted kinds are `components/`, `directives/`, and `pipes/` (section 8.5):
 
 ```text
 ui/<kind>/
@@ -1066,11 +1066,11 @@ A form component may own its model, its schema, and its submission state. It mus
 
 Specs follow the same split the Angular guide draws: schema behaviour is tested in isolation with `form(model, schema, { injector })` and asserted through `errors()` / `valid()`; only DOM binding and user interaction need a rendered component (section 14.1).
 
-### 10.5 `ui/dialogs/` and `ui/drawers/`
+### 10.5 `ui/dialogs/` and `ui/sheets/`
 
 `ui/dialogs/` contains presentational modal and overlay surfaces: creation dialogs, confirmation prompts, pickers, and other dismissable surfaces that host their own content.
 
-`ui/drawers/` contains presentational side-anchored overlay panels: creation and edit forms that benefit from full height, and contextual side panels that keep the underlying page visible.
+`ui/sheets/` contains presentational side-anchored overlay panels: creation and edit forms that benefit from full height, and contextual side panels that keep the underlying page visible.
 
 Both follow the same local structure (the canonical UI folder template, section 10.2), the same responsibilities, and the same constraints; only the shell differs — a centered modal versus a side-anchored panel.
 
@@ -1089,19 +1089,19 @@ They must not:
 Choosing between the four surfaces:
 
 - **dialog** — short confirmations, pickers, and compact single-purpose forms,
-- **drawer** — forms tall enough to scroll inside a dialog, and contextual side panels that should keep the page context visible,
+- **sheet** — forms tall enough to scroll inside a dialog, and contextual side panels that should keep the page context visible,
 - **routed page** — the feature's primary or multi-step workflows; an overlay is for secondary, self-contained surfaces, never the core workflow,
 - **in-place on the page** — editing a property of the resource the page already displays.
 
 #### In-place editing is a page surface, not an overlay
 
 When a page displays a resource, editing one of its properties belongs **on that
-page**, next to the value being changed — not in a dialog or drawer that hides
+page**, next to the value being changed — not in a dialog or sheet that hides
 the very thing being edited, and not on a separate `/edit` route that duplicates
 the read surface.
 
 The rule follows from the two above rather than contradicting them: a property
-edit is neither a secondary self-contained surface (dialog, drawer) nor a
+edit is neither a secondary self-contained surface (dialog, sheet) nor a
 workflow of its own (routed page). It is the page doing its job.
 
 Apply it when:
@@ -2147,7 +2147,7 @@ Standard public API surfaces include:
 - `features/<feature>/http/interceptors/index.ts` when a feature intentionally exposes feature-scoped interceptors,
 - `features/<feature>/ui/components/index.ts` for feature widgets consumed outside their own local folder,
 - `features/<feature>/ui/tables/index.ts` and `features/<feature>/ui/dataviews/index.ts` when a collection surface is consumed outside its own local folder,
-- `features/<feature>/ui/forms/index.ts`, `features/<feature>/ui/dialogs/index.ts`, and `features/<feature>/ui/drawers/index.ts` when those surfaces are reused across multiple pages inside the feature,
+- `features/<feature>/ui/forms/index.ts`, `features/<feature>/ui/dialogs/index.ts`, and `features/<feature>/ui/sheets/index.ts` when those surfaces are reused across multiple pages inside the feature,
 - `features/<feature>/data-access/index.ts` for transport services intentionally consumed outside their own local area,
 - `features/<feature>/services/index.ts` and `features/<feature>/access/index.ts` for behavioral and access-helper services consumed outside their own local area,
 - `features/<feature>/models/index.ts` for feature contracts and reusable feature types intentionally consumed outside one local model slice,

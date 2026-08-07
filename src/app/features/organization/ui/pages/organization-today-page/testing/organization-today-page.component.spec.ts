@@ -120,6 +120,14 @@ describe('OrganizationTodayPage', () => {
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions']);
   });
 
+  it('should start an intervention with the drawer already open', () => {
+    fixture.componentInstance['startIntervention']();
+
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions'], {
+      queryParams: { create: '1' },
+    });
+  });
+
   it('should re-run both queue loads on retry', () => {
     // The local queue loads separately so it survives a network failure; a
     // retry that skipped it would leave the page half-refreshed.

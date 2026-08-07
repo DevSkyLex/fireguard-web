@@ -66,3 +66,13 @@ export type {
   SelectOption,
 } from './intervention-workflow';
 export type { MemberAvatar } from './member-avatar/member-avatar.interface';
+
+/**
+ * The enum presentation registry (`ARCHITECTURE.md` §10.10, exception 1): the
+ * descriptor maps and their resolver are runtime code, and they stay in
+ * `models/` because the descriptor type is meaningless without them.
+ */
+export type { InterventionTagDescriptor } from './intervention-tag/intervention-tag-descriptor.interface';
+export type { InterventionTagKind } from './intervention-tag/intervention-tag-kind.type';
+export type { InterventionTagSeverity } from './intervention-tag/intervention-tag-severity.type';
+export { resolveInterventionTag } from './intervention-tag/intervention-tag.util';

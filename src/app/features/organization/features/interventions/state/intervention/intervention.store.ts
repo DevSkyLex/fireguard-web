@@ -1,7 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
-import { addEntity, setAllEntities, updateEntity, withEntities } from '@ngrx/signals/entities';
+import {
+  addEntity,
+  removeEntity,
+  setAllEntities,
+  updateEntity,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, exhaustMap, expand, mergeMap, pipe, reduce, switchMap, tap } from 'rxjs';
@@ -11,6 +17,7 @@ import {
   isCallError,
   pendingCallState,
   successCallState,
+  successFeedback,
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
@@ -20,6 +27,7 @@ import type { InterventionOutput } from '@features/organization/features/interve
 import { interventionStoreEvents } from './events';
 import type {
   InterventionCreateCommand,
+  InterventionDeleteCommand,
   InterventionListLoadCommand,
   InterventionState,
   InterventionTransitionCommand,
@@ -51,6 +59,34 @@ function transitionFailureMessage(error: StoreError): string {
       return $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`;
     default:
       return $localize`:@@intervention.store.transitionFailed:The intervention status could not be updated.`;
+  }
+}
+
+/**
+ * Function deleteFailureMessage
+ * @function deleteFailureMessage
+ *
+ * @description
+ * Maps a normalized `delete` failure to a user-facing fallback message. A 409
+ * means the intervention's current status refuses deletion (only draft or
+ * abandoned interventions may be deleted); a 403 means the member lacks the
+ * permission.
+ *
+ * @access private
+ * @since 4.1.0
+ *
+ * @param {StoreError} error - Normalized delete error.
+ *
+ * @return {string} Localized fallback message for the failure toast.
+ */
+function deleteFailureMessage(error: StoreError): string {
+  switch (error.code) {
+    case 409:
+      return $localize`:@@intervention.store.deleteConflict:Only draft or abandoned interventions can be deleted.`;
+    case 403:
+      return $localize`:@@intervention.store.deleteForbidden:You do not have permission to delete this intervention.`;
+    default:
+      return $localize`:@@intervention.workspace.deleteFailed:The intervention could not be deleted.`;
   }
 }
 
@@ -103,6 +139,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
   createCallState: idleCallState<InterventionOutput>(),
   transitionCallState: idleCallState<InterventionOutput>(),
   isListCapped: false,
+  deleteCallState: idleCallState(),
 } as const;
 //#endregion
 
@@ -117,7 +154,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
  * to `INTERVENTION_LIST_MAX_ITEMS` interventions across pages so the
  * List/Board/Calendar page never fetches an organization's full history.
  *
- * @version 1.3.0
+ * @version 4.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InterventionStore = signalStore(
@@ -435,6 +472,62 @@ export const InterventionStore = signalStore(
                           storeError,
                           transitionFailureMessage(storeError),
                         ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method delete
+         * @method delete
+         *
+         * @description
+         * Deletes a cached intervention (`InterventionService.remove`). Only
+         * draft or abandoned interventions are accepted by the API — any other
+         * status is refused with a 409, surfaced via `deleteFailed`. Uses
+         * `mergeMap` (not `switchMap`) so a bulk selection can delete several
+         * interventions concurrently, each keyed by its own request; on success
+         * the entity is dropped from the cached collection and the total count
+         * decremented, and `deleteSucceeded` drives a confirmation toast.
+         *
+         * @access public
+         * @since 4.1.0
+         *
+         * @type {RxMethod<InterventionDeleteCommand>}
+         */
+        delete: rxMethod<InterventionDeleteCommand>(
+          pipe(
+            tap(() => patchState(store, { deleteCallState: pendingCallState() })),
+            mergeMap(({ interventionId, revision }) =>
+              interventionService.remove(interventionId, revision).pipe(
+                tapResponse({
+                  next: () => {
+                    patchState(
+                      store,
+                      removeEntity(interventionId, { collection: 'intervention' }),
+                      {
+                        totalInterventions: Math.max(0, store.totalInterventions() - 1),
+                        deleteCallState: successCallState(null),
+                      },
+                    );
+                    dispatcher.dispatch(
+                      interventionStoreEvents.deleteSucceeded(
+                        successFeedback(
+                          $localize`:@@intervention.delete.toast:Intervention deleted`,
+                        ),
+                      ),
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError = toStoreError(error);
+                    patchState(store, { deleteCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      interventionStoreEvents.deleteFailed(
+                        toStoreFailureEventPayload(storeError, deleteFailureMessage(storeError)),
                       ),
                     );
                   },

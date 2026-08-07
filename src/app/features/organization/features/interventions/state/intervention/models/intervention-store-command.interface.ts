@@ -45,3 +45,14 @@ export interface InterventionTransitionCommand {
   readonly status: InterventionStatus;
   readonly revision: number;
 }
+
+/**
+ * Command deleting a single cached intervention entity. Carries the revision
+ * required for the optimistic-concurrency `If-Match` header; the store may
+ * receive several of these in quick succession (bulk selection), each
+ * resolved independently.
+ */
+export interface InterventionDeleteCommand {
+  readonly interventionId: string;
+  readonly revision: number;
+}

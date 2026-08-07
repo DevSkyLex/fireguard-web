@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideSparkles } from '@ng-icons/lucide';
+import { lucidePenLine, lucideSparkles } from '@ng-icons/lucide';
 import {
   AssistantStore,
   type AssistantStoreType,
@@ -27,10 +27,15 @@ import { AssistantPanel } from '../assistant-panel';
  * Control and surface live together because both read the one `panelOpen`
  * signal, which is what keeps the trigger's `aria-expanded` honest.
  *
+ * It owns the sheet chrome — the stock `hlm-sheet-header`, its title and
+ * description, and the close button spartan renders — so the surface reads like
+ * every other sheet in the app; `AssistantPanel` is only its body. The title is
+ * what names the dialog, since brain points `aria-labelledby` at it.
+ *
  * Absent entirely without `organization.assistant.use` — a control that only
  * leads to a refusal is worse than no control.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @example
  * ```html
@@ -42,7 +47,7 @@ import { AssistantPanel } from '../assistant-panel';
 @Component({
   selector: 'app-assistant-toggle',
   imports: [NgIcon, AssistantPanel, HlmButton, HlmSheetImports],
-  providers: [provideIcons({ lucideSparkles })],
+  providers: [provideIcons({ lucidePenLine, lucideSparkles })],
   templateUrl: './assistant-toggle.component.html',
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,

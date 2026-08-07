@@ -38,7 +38,7 @@ The type separator is a **dot**: `auth.guard.ts`, never `auth-guard.ts`. One dec
 
 **The selector uses the FOLDER name, not the class name.** Folder `organization-members/` → `app-organization-members`, even though the class is `OrganizationMembersPage`. `app` is the only permitted prefix.
 
-**Role suffixes for components** (§9.3): `…Page` `…Form` `…Table` `…Dataview` `…Dialog` `…Drawer` `…Panel` `…Card` `…Chart` `…Layout` `…Stepper` `…Toolbar`. A generic widget may be a bare noun (`Board`, `Calendar`).
+**Role suffixes for components** (§9.3): `…Page` `…Form` `…Table` `…Dataview` `…Dialog` `…Sheet` `…Panel` `…Card` `…Chart` `…Layout` `…Stepper` `…Toolbar`. A generic widget may be a bare noun (`Board`, `Calendar`).
 
 ## Banned suffixes (§9.2)
 

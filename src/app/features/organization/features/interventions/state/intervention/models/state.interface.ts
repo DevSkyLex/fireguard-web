@@ -84,5 +84,22 @@ export interface InterventionState {
    * @type {boolean}
    */
   readonly isListCapped: boolean;
+
+  /**
+   * Property deleteCallState
+   * @readonly
+   *
+   * @description
+   * Loading / success / error state for intervention deletion. Shared across
+   * concurrent deletes (single row or bulk selection), each keyed by its own
+   * `mergeMap`'d request; a page reads it only to know whether *a* delete is
+   * in flight, per-row outcome is carried by the dispatched success/failure
+   * events instead.
+   *
+   * @since 4.1.0
+   *
+   * @type {CallState}
+   */
+  readonly deleteCallState: CallState;
   //#endregion
 }

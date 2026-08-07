@@ -1,0 +1,176 @@
+<form (submit)="submit($event)">
+  <hlm-field-group class="px-4">
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="intervention-create-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="intervention-create-name" i18n="@@intervention.cf.nameLabel"
+        >Intervention name</label
+      >
+      <input
+        hlmInput
+        id="intervention-create-name"
+        type="text"
+        data-testid="intervention-create-name"
+        placeholder="Autumn extinguisher round"
+        i18n-placeholder="@@intervention.cf.namePlaceholder"
+        [formField]="createForm.name"
+      />
+      @if (createForm.name().touched() && createForm.name().invalid()) {
+        <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="intervention-create-type" i18n="@@intervention.cf.objective"
+        >Objective</label
+      >
+      <hlm-select
+        id="intervention-create-type"
+        [itemToString]="typeLabelOf"
+        [formField]="createForm.type"
+      >
+        <hlm-select-trigger class="w-full">
+          @if (createForm.type().value(); as type) {
+            <app-intervention-tag kind="type" [value]="type" asOption />
+          } @else {
+            <hlm-select-value />
+          }
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (type of typeValues; track type) {
+              <hlm-select-item [value]="type">
+                <app-intervention-tag kind="type" [value]="type" asOption />
+              </hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+      <hlm-field-description i18n="@@intervention.cf.objectiveHint"
+        >Choose what this intervention prepares. It drives the field
+        workflow.</hlm-field-description
+      >
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="intervention-create-priority" i18n="@@intervention.cf.priorityLabel"
+        >Priority</label
+      >
+      <hlm-select
+        id="intervention-create-priority"
+        [itemToString]="priorityLabelOf"
+        [formField]="createForm.priority"
+      >
+        <hlm-select-trigger class="w-full">
+          @if (createForm.priority().value(); as priority) {
+            <app-intervention-tag kind="priority" [value]="priority" asOption />
+          } @else {
+            <hlm-select-value />
+          }
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (priority of priorityValues; track priority) {
+              <hlm-select-item [value]="priority">
+                <app-intervention-tag kind="priority" [value]="priority" asOption />
+              </hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel i18n="@@intervention.cf.site">Site</label>
+      <hlm-combobox [formField]="createForm.site" [itemToString]="siteLabelOf">
+        <hlm-combobox-input
+          placeholder="Search a site"
+          i18n-placeholder="@@intervention.cf.sitePlaceholder"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@intervention.list.filterNoSite"
+            >No site matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of siteOptions(); track option.value) {
+              <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel i18n="@@intervention.cf.responsible">Responsible</label>
+      <hlm-combobox [formField]="createForm.responsible" [itemToString]="memberLabelOf">
+        <hlm-combobox-input
+          placeholder="Search a member"
+          i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@intervention.list.filterNoMember"
+            >No member matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of memberOptions(); track option.value) {
+              <hlm-combobox-item [value]="option.value">
+                <hlm-avatar size="sm" class="shrink-0">
+                  @if (option.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
+                </hlm-avatar>
+                <span class="flex min-w-0 flex-col">
+                  <span class="truncate">{{ option.displayName }}</span>
+                  <span class="truncate text-xs text-muted-foreground">{{ option.roleLabel }}</span>
+                </span>
+              </hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="intervention-create-planned-range"
+        i18n="@@intervention.cf.plannedRange"
+        >Planned window</label
+      >
+      <hlm-date-range-picker [formField]="createForm.plannedRange">
+        <hlm-date-picker-trigger [buttonId]="'intervention-create-planned-range'" class="w-full">
+          <span i18n="@@intervention.cf.plannedRangePlaceholder">Select dates</span>
+        </hlm-date-picker-trigger>
+      </hlm-date-range-picker>
+      <hlm-field-description i18n="@@intervention.cf.plannedRangeHint"
+        >Pick the start and the due date together.</hlm-field-description
+      >
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="intervention-create-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@intervention.cf.submitting">Creating…</span>
+        } @else {
+          <span i18n="@@intervention.cf.submit">Create intervention</span>
+        }
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="intervention-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@intervention.cf.cancel">Cancel</span>
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

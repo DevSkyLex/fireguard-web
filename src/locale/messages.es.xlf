@@ -4490,17 +4490,9 @@
         <source>Change status</source>
         <target>Cambiar estado</target>
       </trans-unit>
-      <trans-unit id="intervention.detail.tabOverview" datatype="html">
-        <source>Overview</source>
-        <target>Resumen</target>
-      </trans-unit>
       <trans-unit id="intervention.detail.tabFieldWork" datatype="html">
         <source>Field work</source>
         <target>Trabajo de campo</target>
-      </trans-unit>
-      <trans-unit id="intervention.detail.tabsAriaLabel" datatype="html">
-        <source>Intervention workspace sections</source>
-        <target>Secciones del espacio de trabajo de la intervención</target>
       </trans-unit>
       <trans-unit id="intervention.gettingStarted.title" datatype="html">
         <source>Getting started</source>

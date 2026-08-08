@@ -81,7 +81,7 @@ describe('InterventionPropertiesGrid', () => {
     fixture.componentInstance.detailsChanged.subscribe((patch) => patches.push(patch));
   });
 
-  it('should render one card per property', () => {
+  it('should render one row per property', () => {
     expect(byTestId('intervention-field-priority')).not.toBeNull();
     expect(byTestId('intervention-field-site')).not.toBeNull();
     expect(byTestId('intervention-field-responsible')).not.toBeNull();

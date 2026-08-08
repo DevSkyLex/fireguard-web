@@ -5,7 +5,6 @@ import {
   effect,
   inject,
   input,
-  linkedSignal,
   LOCALE_ID,
   signal,
   untracked,
@@ -78,7 +77,6 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
-import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTextareaImports } from '@shared/ui/textarea';
@@ -118,18 +116,24 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * @class InterventionDetailPage
  *
  * @description
- * One intervention, from planning to publication, as a single pull-request
- * style flow rather than three tab panels: header, a collapsible details
- * section, field work, proposed changes, the activity thread and a comment
- * composer, in that fixed order regardless of phase. Only what is *open*
- * changes with the phase — the DOM order never does (WCAG 2.4.3).
+ * One intervention, from planning to publication, laid out as two columns: a
+ * content column of always-visible, always-mounted sections (Overview, Work
+ * items, the conditional Changes list, then Activity) and a second column
+ * stacking the properties card above the action box. At `lg` and up, the
+ * second column is `sticky` so the properties/action-box stack stays in view
+ * while the content column scrolls. Below `lg` (1024px) the two columns stack
+ * in normal document flow — nothing here switches between viewports; there is
+ * no tab state left to drive.
  *
  * Three decisions a reviewer should know about.
  *
- * The phase's forward action (Plan / Submit / Publish) has exactly one
- * address on the page — `app-intervention-action-box` — instead of moving
- * between tab panels. Its content changes with the phase; its position never
- * does.
+ * The phase's forward action (Plan / Submit / Publish) keeps its one address
+ * on the page, `app-intervention-action-box`, **outside the content column**.
+ * So do the blocker and pending-changes counts it reads from the store: an
+ * earlier design tucked proposed changes and blockers inside tab panels with
+ * no outside indicator, and `FEATURE.md` records why that was retired —
+ * nothing that gates publication may be visible only inside a section the
+ * operator has to scroll to.
  *
  * The store has a single `mutationCallState` for every write, so
  * {@link pendingWrite} attributes it to the one field or row that caused it.
@@ -141,7 +145,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * list store removes the entity and repairs `orderedIds()`, which this page's
  * prev/next footer walks.
  *
- * @version 3.0.0
+ * @version 4.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -156,7 +160,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
     ...HlmCardImports,
-    ...HlmCollapsibleImports,
     ...HlmDropdownMenuImports,
     ...HlmTextareaImports,
     InterventionAbout,
@@ -388,25 +391,6 @@ export class InterventionDetailPage {
 
     return 'prepare';
   });
-
-  /**
-   * Property detailsExpanded
-   * @readonly
-   *
-   * @description
-   * Whether the details disclosure is open. Resets to the phase's default
-   * (open in `prepare`, closed otherwise) whenever the phase itself changes,
-   * but a manual toggle within one phase sticks until the next transition —
-   * `linkedSignal` rather than a plain `computed` for exactly that reason.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly detailsExpanded: WritableSignal<boolean> = linkedSignal<boolean>(
-    () => this.phase() === 'prepare',
-  );
 
   /** Whether the member may plan. */
   protected readonly canPlan: Signal<boolean> = computed<boolean>(() =>
@@ -952,9 +936,10 @@ export class InterventionDetailPage {
    * Method onReadinessActivated
    *
    * @description
-   * Sends the operator to the gap they picked — an in-place editor for a
-   * property (inside the details disclosure, expanded first so the field is
-   * actually visible), or the field-work section for missing scope.
+   * Sends the operator to the gap they picked: the work-items section for
+   * missing scope, or straight to the in-place editor for a property. Every
+   * section is always mounted and visible, so reaching either is a scroll,
+   * never a tab switch.
    *
    * @access protected
    * @since 1.0.0
@@ -970,7 +955,6 @@ export class InterventionDetailPage {
       return;
     }
 
-    this.detailsExpanded.set(true);
     this.onEditTargetChanged(target);
   }
 
@@ -1380,13 +1364,12 @@ export class InterventionDetailPage {
    * Method revealFieldWork
    *
    * @description
-   * Sends the operator to the field-work section: opens the add-item sheet
-   * when the scope is still empty, or brings the section into view **and
-   * moves focus into it** otherwise — a scroll that leaves focus on the
-   * trigger that requested it strands a keyboard user (WCAG 2.4.3). The
-   * section is always rendered, so the microtask defers only past the
-   * current change-detection pass rather than past a disclosure's own
-   * open animation.
+   * Sends the operator to the work-items section: opens the add-item sheet
+   * when the scope is still empty, or scrolls to and focuses the section
+   * otherwise. The section is always mounted and visible, so there is no
+   * panel switch to wait on — a plain scroll that leaves focus on the
+   * trigger that requested it would strand a keyboard user (WCAG 2.4.3),
+   * which is why the section itself receives focus.
    *
    * @access private
    * @since 1.0.0
@@ -1400,17 +1383,17 @@ export class InterventionDetailPage {
       return;
     }
 
-    queueMicrotask((): void => this.focusFieldWorkPanel());
+    this.focusFieldWorkPanel();
   }
 
-  /** Scrolls to and focuses the field-work panel, once it is visible. */
+  /** Scrolls to and focuses the field-work section. */
   private focusFieldWorkPanel(): void {
     const section: HTMLElement | undefined = this.workItemsSection()?.nativeElement;
     if (!section) return;
 
     const reduced: boolean =
       globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    section.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    section.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
     section.focus();
   }
 

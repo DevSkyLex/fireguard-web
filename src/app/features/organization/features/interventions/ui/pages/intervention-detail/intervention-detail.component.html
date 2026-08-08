@@ -146,63 +146,8 @@
       </div>
     }
 
-    <section
-      hlmCollapsible
-      [expanded]="detailsExpanded()"
-      (expandedChange)="detailsExpanded.set($event)"
-      class="flex flex-col gap-3 rounded-lg border border-border p-4"
-      data-testid="intervention-detail-details"
-    >
-      <button
-        hlmCollapsibleTrigger
-        type="button"
-        class="flex items-center gap-2 text-start text-sm font-medium text-foreground"
-        data-testid="intervention-detail-details-toggle"
-      >
-        <ng-icon
-          name="lucideChevronRight"
-          class="shrink-0 transition-transform"
-          [class.rotate-90]="detailsExpanded()"
-          aria-hidden="true"
-        />
-        <span i18n="@@intervention.detail.detailsTitle">Details</span>
-      </button>
-
-      @if (!detailsExpanded()) {
-        <dl
-          class="flex flex-wrap items-center gap-x-4 gap-y-1.5 ps-6 text-sm text-muted-foreground"
-          data-testid="intervention-detail-chips"
-        >
-          <div class="flex items-center gap-1.5">
-            <dt class="sr-only" i18n="@@intervention.prop.site">Site</dt>
-            <dd class="max-w-[12rem] truncate">{{ siteLabel() ?? '—' }}</dd>
-          </div>
-          <span aria-hidden="true">·</span>
-          <div class="flex items-center gap-1.5">
-            <dt class="sr-only" i18n="@@intervention.cf.responsible">Responsible</dt>
-            <dd class="max-w-[10rem] truncate">{{ responsibleLabel() ?? '—' }}</dd>
-          </div>
-          <span aria-hidden="true">·</span>
-          <div class="flex items-center gap-1.5">
-            <dt class="sr-only" i18n="@@intervention.cf.plannedRange">Planned window</dt>
-            <dd class="tabular-nums">{{ scheduleLabel() ?? '—' }}</dd>
-          </div>
-          <span aria-hidden="true">·</span>
-          <div class="flex items-center gap-1.5">
-            <dt class="sr-only" i18n="@@intervention.prop.priority">Priority</dt>
-            <dd>
-              <app-intervention-tag kind="priority" [value]="intervention.priority" asOption />
-            </dd>
-          </div>
-          <span aria-hidden="true">·</span>
-          <div class="flex items-center gap-1.5">
-            <dt class="sr-only" i18n="@@intervention.sidebar.labels">Labels</dt>
-            <dd class="max-w-[14rem] truncate">{{ labelsSummary() ?? '—' }}</dd>
-          </div>
-        </dl>
-      }
-
-      <hlm-collapsible-content class="flex flex-col gap-4 ps-6">
+    <div class="gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-6">
+      <div class="flex min-w-0 flex-col gap-4">
         <app-intervention-about
           [intervention]="intervention"
           [siteLabel]="siteLabel()"
@@ -213,14 +158,98 @@
           (editTargetChanged)="onEditTargetChanged($event)"
         />
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
-          <div class="flex flex-col gap-2">
-            <h2
-              class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
-              i18n="@@intervention.sidebar.title"
-            >
-              Properties
-            </h2>
+        @if (readinessItems().length > 0) {
+          <app-intervention-getting-started
+            [items]="readinessItems()"
+            (itemActivated)="onReadinessActivated($event)"
+          />
+        }
+
+        <div hlmCard size="sm" data-testid="intervention-detail-linked">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle i18n="@@intervention.sidebar.linked">Linked</h3>
+          </div>
+          <div hlmCardContent>
+            <dl class="flex flex-col gap-2 text-sm">
+              <div class="flex items-center justify-between gap-2">
+                <dt class="text-muted-foreground" i18n="@@intervention.sidebar.facilities">
+                  Facilities
+                </dt>
+                <dd class="tabular-nums">{{ intervention.facilitiesCount }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <dt class="text-muted-foreground" i18n="@@intervention.sidebar.equipment">
+                  Equipment
+                </dt>
+                <dd class="tabular-nums">{{ intervention.equipmentCount }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <dt class="text-muted-foreground" i18n="@@intervention.sidebar.inspections">
+                  Inspections
+                </dt>
+                <dd class="tabular-nums">{{ intervention.inspectionsCount }}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <div
+          #workItemsSection
+          tabindex="-1"
+          class="flex flex-col gap-4 outline-none"
+          data-testid="intervention-detail-field-work"
+        >
+          @if (intervention.status === 'changes_requested' && intervention.reviewNote) {
+            <div hlmAlert class="bg-muted/50" data-testid="intervention-detail-review-note">
+              <ng-icon name="lucideMessageSquareQuote" aria-hidden="true" />
+              <p hlmAlertTitle i18n="@@intervention.detail.changesRequestedBanner">
+                Changes requested by the reviewer
+              </p>
+              <p hlmAlertDescription>{{ intervention.reviewNote }}</p>
+            </div>
+          }
+
+          <app-intervention-work-item-table
+            [items]="store.workItems()"
+            [nextItemId]="nextWorkItemId()"
+            [pendingItemId]="pendingWorkItemId()"
+            [canToggle]="canExecute() && phase() === 'execute'"
+            [canSkip]="canSkipWorkItem()"
+            [canDelete]="canAddWorkItem()"
+            [canAdd]="canAddWorkItem()"
+            [busy]="store.saving()"
+            (statusChanged)="onWorkItemStatusChanged($event)"
+            (skipRequested)="requestSkipWorkItem($event)"
+            (deleteRequested)="requestDeleteWorkItem($event)"
+            (addRequested)="workItemSheetVisible.set(true)"
+          />
+        </div>
+
+        @if (pendingChangesCount() > 0) {
+          <app-intervention-change-list [changes]="store.changes()" />
+        }
+
+        <app-intervention-activity-thread
+          [activities]="store.activities()"
+          [members]="planningOptions.members()"
+          [loading]="activitiesLoading()"
+        />
+
+        <div class="border-t border-border pt-4">
+          <app-intervention-comment-form
+            [pending]="store.saving()"
+            [serverError]="store.mutationError()"
+            (submitted)="postComment($event)"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4 lg:sticky lg:top-4">
+        <div hlmCard data-testid="intervention-detail-properties-card">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle i18n="@@intervention.sidebar.title">Properties</h3>
+          </div>
+          <div hlmCardContent>
             <app-intervention-properties-grid
               [intervention]="intervention"
               [siteOptions]="planningOptions.sites()"
@@ -233,114 +262,20 @@
               (editTargetChanged)="onEditTargetChanged($event)"
             />
           </div>
-
-          <div hlmCard size="sm" data-testid="intervention-detail-linked">
-            <div hlmCardHeader>
-              <h3 hlmCardTitle i18n="@@intervention.sidebar.linked">Linked</h3>
-            </div>
-            <div hlmCardContent>
-              <dl class="flex flex-col gap-2 text-sm">
-                <div class="flex items-center justify-between gap-2">
-                  <dt class="text-muted-foreground" i18n="@@intervention.sidebar.facilities">
-                    Facilities
-                  </dt>
-                  <dd class="tabular-nums">{{ intervention.facilitiesCount }}</dd>
-                </div>
-                <div class="flex items-center justify-between gap-2">
-                  <dt class="text-muted-foreground" i18n="@@intervention.sidebar.equipment">
-                    Equipment
-                  </dt>
-                  <dd class="tabular-nums">{{ intervention.equipmentCount }}</dd>
-                </div>
-                <div class="flex items-center justify-between gap-2">
-                  <dt class="text-muted-foreground" i18n="@@intervention.sidebar.inspections">
-                    Inspections
-                  </dt>
-                  <dd class="tabular-nums">{{ intervention.inspectionsCount }}</dd>
-                </div>
-              </dl>
-            </div>
-          </div>
         </div>
-      </hlm-collapsible-content>
-    </section>
 
-    @if (readinessItems().length > 0) {
-      <app-intervention-getting-started
-        [items]="readinessItems()"
-        (itemActivated)="onReadinessActivated($event)"
-      />
-    }
-
-    <section
-      #workItemsSection
-      tabindex="-1"
-      class="flex flex-col gap-3 outline-none"
-      data-testid="intervention-detail-field-work"
-    >
-      <h2
-        class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
-        i18n="@@intervention.detail.checklist"
-      >
-        Work items
-      </h2>
-
-      <div class="flex flex-col gap-4" data-testid="intervention-detail-work-items">
-        @if (intervention.status === 'changes_requested' && intervention.reviewNote) {
-          <div hlmAlert class="bg-muted/50" data-testid="intervention-detail-review-note">
-            <ng-icon name="lucideMessageSquareQuote" aria-hidden="true" />
-            <p hlmAlertTitle i18n="@@intervention.detail.changesRequestedBanner">
-              Changes requested by the reviewer
-            </p>
-            <p hlmAlertDescription>{{ intervention.reviewNote }}</p>
-          </div>
-        }
-
-        <app-intervention-work-item-table
-          [items]="store.workItems()"
-          [nextItemId]="nextWorkItemId()"
-          [pendingItemId]="pendingWorkItemId()"
-          [canToggle]="canExecute() && phase() === 'execute'"
-          [canSkip]="canSkipWorkItem()"
-          [canDelete]="canAddWorkItem()"
-          [canAdd]="canAddWorkItem()"
+        <app-intervention-action-box
+          [action]="commandAction()"
+          [phase]="phase()"
+          [status]="intervention.status"
+          [blockers]="blockerIssues()"
+          [pendingChanges]="pendingChangesCount()"
+          [inspections]="intervention.inspectionsCount"
+          [revision]="intervention.revision"
           [busy]="store.saving()"
-          (statusChanged)="onWorkItemStatusChanged($event)"
-          (skipRequested)="requestSkipWorkItem($event)"
-          (deleteRequested)="requestDeleteWorkItem($event)"
-          (addRequested)="workItemSheetVisible.set(true)"
+          (invoked)="invokeCommandAction()"
         />
       </div>
-    </section>
-
-    @if (pendingChangesCount() > 0) {
-      <app-intervention-change-list [changes]="store.changes()" />
-    }
-
-    <app-intervention-activity-thread
-      [activities]="store.activities()"
-      [members]="planningOptions.members()"
-      [loading]="activitiesLoading()"
-    />
-
-    <app-intervention-action-box
-      [action]="commandAction()"
-      [phase]="phase()"
-      [status]="intervention.status"
-      [blockers]="blockerIssues()"
-      [pendingChanges]="pendingChangesCount()"
-      [inspections]="intervention.inspectionsCount"
-      [revision]="intervention.revision"
-      [busy]="store.saving()"
-      (invoked)="invokeCommandAction()"
-    />
-
-    <div class="border-t border-border pt-4">
-      <app-intervention-comment-form
-        [pending]="store.saving()"
-        [serverError]="store.mutationError()"
-        (submitted)="postComment($event)"
-      />
     </div>
 
     @if (showPrevNext()) {

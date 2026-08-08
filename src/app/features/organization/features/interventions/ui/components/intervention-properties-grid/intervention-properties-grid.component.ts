@@ -27,7 +27,6 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { InplaceField } from '@shared/inplace-field';
 import { HlmAvatarImports } from '@shared/ui/avatar';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -57,10 +56,11 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
  *
  * @description
  * The intervention's properties, each edited where it is displayed
- * (`ARCHITECTURE.md` §10.5) — one small card per property in a responsive
- * grid, rather than a single narrow column. A tablet-width viewport gets two
- * or three properties per row instead of one, and the grid reflows to a
- * single column only once the surface truly cannot fit more.
+ * (`ARCHITECTURE.md` §10.5) — a flat list of rows inside the caller's own
+ * `hlmCard`, rather than one card per property: the caller already frames the
+ * whole set, so a card per row would nest a card inside a card for no visual
+ * gain. Rows are separated by whitespace alone, not a rule per row — seven
+ * short fields do not need six lines between them to read as a list.
  *
  * Two commit modes, chosen by the control rather than by taste: a value
  * picked in one gesture commits on that gesture, because a Save button after
@@ -85,7 +85,6 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
     InplaceField,
     InterventionTag,
     ...HlmAvatarImports,
-    ...HlmCardImports,
     ...HlmComboboxImports,
     ...HlmDatePickerImports,
     ...HlmSelectImports,

@@ -156,12 +156,35 @@ Internal code imports deep paths directly.
 
 ## Detail workspace composition
 
-The detail page (`ui/pages/intervention-detail`) is **one continuous,
-pull-request-style flow**, not a set of tabs — the intervention model already
-reads like a PR (proposed changes, an activity thread, a single merge/publish
-gate), and the page's DOM finally says so. The section order is **fixed and
-identical across every phase** (WCAG 2.4.3): only what is _open_ changes with
-the phase, never the order things appear in.
+The detail page (`ui/pages/intervention-detail`) is **no longer tabbed**: it
+is a single continuous flow of always-mounted, always-visible sections in a
+content column, beside a second column holding the properties card and,
+stacked beneath it, the action box. At `lg` and up, the second column is
+`sticky` (`top-4`), so the properties/action-box stack stays in view while
+the content column scrolls past — the natural read for a status panel, which
+is current-state chrome rather than content to scroll away. Below `lg`
+(1024px) the two columns stack in normal document flow, content first — there
+is no viewport-driven switch left to read, because there is nothing left
+that changes shape with the viewport beyond the grid collapsing.
+
+This retires the tab rail the 4.0 redesign introduced (see
+`### Retired invariants`), on direct product feedback within the same design
+pass: with the rail gone, the page reads as one continuous scroll of
+always-visible sections instead of tab panels the user has to click between.
+The two failures earlier tabbed designs were retired for still do not recur:
+
+- **The action box stays outside the content column**, at its one fixed
+  address (`app-intervention-action-box`, second column, beneath the
+  properties card), and reads `blockerIssues()` and `pendingChangesCount()`
+  straight from the store — not from inside the Changes section it also
+  renders. A blocker or a pending change is visible without scrolling to any
+  particular section.
+- **The Changes section renders, with its own pending count, only once
+  `pendingChangesCount() > 0`.** There is no state where changes are pending
+  and nothing outside that section says so.
+- **The properties card is not a section a click reveals.** It is its own
+  column, always mounted, so `site`, `responsible`, the planned window,
+  `priority` and `labels` are never behind a click.
 
 1. **Header** — wayfinding only: the intervention `h1`, the reference number,
    the status tag with its transition menu, and an overflow menu for
@@ -169,43 +192,45 @@ the phase, never the order things appear in.
 2. **Meta line** — who acted last and when, plus the revision, derived from
    the most recent loaded activity entry (`InterventionWorkspaceStore.activities`)
    and falling back to `updatedAt` while the timeline is empty or still
-   loading.
-3. **Page error alert** — the store's last unattributed failure, unchanged
-   from the tabbed design.
-4. **Details** — a `hlmCollapsible` disclosure. Collapsed, it shows a
-   read-only chip row (site · responsible · planned window · priority ·
-   labels) reusing the exact values the expanded content renders — never a
-   second summary that could drift. Expanded, it holds `app-intervention-about`,
-   `app-intervention-properties-grid` and the "Linked" card, unchanged from
-   the tabbed design. Defaults **open** in `prepare` and **closed** otherwise,
-   via a `linkedSignal` keyed on the phase so a manual toggle sticks until the
-   next phase transition.
-5. **Getting started** — `app-intervention-getting-started`, unchanged,
-   rendered only in `prepare`. Activating a property item now also expands
-   the details disclosure first, so the editor it points at is actually
-   visible.
-6. **Field work** — a second `hlmCollapsible` disclosure, defaulting open in
-   `execute` and closed otherwise. Collapsed, its trigger row carries a
-   summary ("6 / 7 · 1 skipped"). Expanded, it holds the reviewer-note banner
-   (`changes_requested`) and `app-intervention-work-item-table`, an `hlmTable`
-   grid (status toggle · item · row menu), unchanged in behavior.
-7. **Proposed changes** — `app-intervention-change-list`, rendered only when
-   `InterventionWorkspaceStore.changes()` holds at least one `proposed`
-   entry. Read-only — see below.
-8. **Activity thread** — `app-intervention-activity-thread`, always rendered.
-   A system entry (`kind: 'system'`, e.g. `status_changed`) is a thin line on
-   a vertical rule; a comment (`kind: 'comment'`) is a card with the author's
-   avatar. Two visual weights, never one, so a thirty-entry timeline stays
-   scannable.
-9. **Action box** — `app-intervention-action-box`, the single host for the
-   current phase's forward action. Its _content_ changes with the phase (a
-   plan/submit label with its disabled reason; the blockers list, the
-   `app-intervention-publication-summary` recap and the publish button in
-   `review`; a locked terminal state once `published`), but it renders
-   **exactly once**, at a fixed position, regardless of phase.
-10. **Comment composer** — `app-intervention-comment-form`, at the foot of
-    the thread, wired to `InterventionWorkspaceStore.addComment`.
-11. **Prev/next footer** — unchanged.
+   loading. Outside every section, so the last-touched summary needs no
+   scroll to see.
+3. **Page error alert** — the store's last unattributed failure.
+4. **Overview** — `app-intervention-about`, `app-intervention-getting-started`
+   (rendered only in `prepare`, while a prerequisite is still missing), and
+   the "Linked" card (facilities / equipment / inspections counts).
+5. **Work items** — the reviewer-note banner (`changes_requested`) and
+   `app-intervention-work-item-table`, an `hlmTable` grid (status toggle ·
+   item · row menu), unchanged in behavior. The table renders its own
+   "Work items" heading with a done-count; the page adds none.
+6. **Changes** — `app-intervention-change-list`, read-only (see below),
+   rendered only when `InterventionWorkspaceStore.changes()` holds at least
+   one `proposed` entry. The list renders its own heading; the page adds none.
+7. **Activity** — `app-intervention-activity-thread` with
+   `app-intervention-comment-form` beneath it, wired to
+   `InterventionWorkspaceStore.addComment`. The thread renders its own
+   "Activity" heading; the page adds none.
+8. **Properties card** (second column, top) — `app-intervention-properties-grid`
+   inside an `hlmCard`, always mounted. Activating a getting-started item for
+   `site`, `responsible` or `schedule` opens its in-place editor directly;
+   there is no disclosure to expand first, because the card is never
+   collapsed.
+9. **Action box** (second column, beneath the properties card) —
+   `app-intervention-action-box`, the single host for the current phase's
+   forward action, outside the content column entirely. Its _content_
+   changes with the phase (a plan/submit label with its disabled reason; the
+   blockers list, the `app-intervention-publication-summary` recap and the
+   publish button in `review`; a locked terminal state once `published`), but
+   it renders **exactly once**, at a fixed position, regardless of phase. The
+   second column as a whole — properties card and action box together — is
+   what stays `sticky` at `lg`, so the pinned status panel never leaves the
+   viewport ahead of the action a reviewer needs.
+10. **Prev/next footer** — unchanged.
+
+Activating the getting-started item for missing scope (`workItems`) scrolls
+to and focuses the work-items section directly
+(`InterventionDetailPage.revealFieldWork()`). The section is always mounted
+and visible, so there is no panel switch to wait on before it can receive
+focus.
 
 ### Read-only proposed changes
 
@@ -276,10 +301,10 @@ explicit guard it would offer to plan something that left the workflow.
 
 Each condition renders **once, where it is relevant**, instead of a single
 ranked stack under the header: an unattributed store error (load or write) is
-one alert above the sections with a retry; a reviewer's note sits atop the
-field-work section; blocking compliance issues sit inside the action box's
-`review`-phase content, beside the publish gate; a publication failure is
-inline in the publish confirmation, which stays open so the operator can
+one alert above the content sections with a retry; a reviewer's note sits
+atop the Work items section; blocking compliance issues sit inside the action
+box's `review`-phase content, beside the publish gate; a publication failure
+is inline in the publish confirmation, which stays open so the operator can
 retry; and an unsynced outbox is a small header indicator rather than a
 dismissable banner. A field-level rejection is already shown by the field
 itself (`editState.failed`) and is excluded from the top-of-page alert so it
@@ -364,20 +389,28 @@ follows.
   fed from the same three signals, so the recap and the dialog cannot drift.
   Publication is the one step that writes to the compliance record.
 - **The phase's forward action has exactly one address on the page:
-  `app-intervention-action-box`.** It renders once, at a fixed position,
-  regardless of phase — its content changes, its position never does. Nothing
-  else on the page renders `commandAction()`.
+  `app-intervention-action-box`, second column beneath the properties card.**
+  It renders once, at a fixed position, regardless of phase — its content
+  changes, its position never does. Nothing else on the page renders
+  `commandAction()`.
+- **Nothing that gates publication readiness is visible only inside a
+  scrollable section.** `app-intervention-action-box` reads `blockerIssues()`
+  and `pendingChangesCount()` directly from the store, not from the Changes
+  section it also renders. This is the structural fix for the exact failure
+  the 2.0 tabbed design was retired for (see `### Retired invariants`): a
+  count that exists only inside a hidden panel is a count an operator can
+  miss.
 - **Every page-level notice renders once, at the location it concerns, never
   as a ranked stack.** An unattributed store error is a single alert above the
   sections; every other condition (reviewer note, blockers, unsynced outbox,
   publication failure) has exactly one home inside the section, action box or
   dialog it belongs to. A field-level rejection is excluded from the
   top-of-page alert (`pageError`) so it is never shown twice.
-- **The section order is fixed across every phase (WCAG 2.4.3).** Only the
-  `detailsExpanded` / `fieldWorkExpanded` disclosures open or close with the
-  phase; the DOM order of header → meta → details → getting-started →
-  field-work → proposed changes → activity thread → action box → comment
-  composer → prev/next never changes.
+- **The page's fixed elements never reorder (WCAG 2.4.3).** Header → meta →
+  error alert → Overview → Work items → Changes → Activity → properties card
+  → action box → prev/next never changes with phase — properties card and
+  action box are the second column's own top-to-bottom order, unaffected by
+  which sections above render conditionally.
 - **Proposed changes are read-only.** `UpdateInterventionChangeInput.status`
   only accepts `'proposed' | 'rejected'`, never `'applied'` — acceptance
   happens automatically at publication, not through a client action — and
@@ -454,3 +487,26 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   already communicates the workflow state through its own phase-appropriate
   content (a plan/submit button, then the recap), so a separate "not ready
   yet" panel said the same thing a second time.
+- _"The page is one continuous, pull-request-style flow, not a set of
+  tabs."_ Retired in the 4.0 three-column redesign: the flow had grown enough
+  content that it stopped reading as a short PR and started reading as a
+  long scroll a field operator had to get past to reach the work-item table.
+  Tabs are back, but not the 2.0 shape that was retired above — this time the
+  action box, its blocker list and its pending-changes count sit outside every
+  tab, and the properties card is a column rather than a tab, so the specific
+  failure the 2.0 design was retired for (a count invisible unless the right
+  tab happened to be open) cannot recur. `detailsExpanded`, the
+  `hlmCollapsible` "Details" section and its collapsed chip-row summary
+  (`intervention-detail-chips`) are gone with it — the properties card is
+  never collapsed, so there is nothing left to summarize.
+- _"The tab rail (Overview / Work items / Changes) sits in its own column,
+  and `InterventionDetailPage.tabOrientation` flips it horizontal below
+  `lg`."_ Retired within the same 4.0 pass, on direct product feedback: with
+  the rail gone the page reads as one continuous scroll of always-visible
+  sections instead of tab panels the operator has to click between. This is a
+  fast iteration inside one design pass, not a multi-release retirement —
+  nothing about the rail shipped long enough to accumulate its own history.
+  The two-column layout, the properties/action-box `sticky` column, and the
+  fixed-order content sections all carry over unchanged; only the rail and
+  its tab-switching machinery (`activeTab`, `onTabActivated`, `tabOrientation`,
+  the `InterventionDetailTabId` type) are gone.

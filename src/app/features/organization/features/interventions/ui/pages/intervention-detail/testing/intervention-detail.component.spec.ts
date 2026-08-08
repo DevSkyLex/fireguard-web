@@ -239,10 +239,17 @@ describe('InterventionDetailPage', () => {
     expect(loadActivities).toHaveBeenCalledWith('intervention-1');
   });
 
-  it('should keep the details section expanded by default while the intervention is still a draft', async () => {
+  it('should show the properties card on arrival', async () => {
     fixture = await createPage();
 
-    expect(root().querySelector('[data-testid="intervention-detail-chips"]')).toBeNull();
+    expect(byTestId('intervention-detail-properties-card')).not.toBeNull();
+  });
+
+  it('should render every section at once, with nothing hidden behind a tab', async () => {
+    fixture = await createPage();
+
+    expect((byTestId('intervention-detail-field-work') as HTMLElement).hidden).toBe(false);
+    expect(byTestId('intervention-detail-properties-card')).not.toBeNull();
   });
 
   it('should show a meta line naming when the intervention was last touched', async () => {
@@ -276,6 +283,17 @@ describe('InterventionDetailPage', () => {
       expect(byTestId('intervention-detail-command').textContent).toContain(
         'Complete 1 remaining item',
       );
+    });
+
+    it('should scroll to and focus the work items section when that action is invoked', async () => {
+      current.set(intervention({ status: 'in_progress' }));
+      workItems.set([workItem()]);
+      fixture = await createPage();
+
+      (byTestId('intervention-detail-command') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(byTestId('intervention-detail-field-work'));
     });
 
     it('should become the submit gate once all the work is resolved', async () => {
@@ -463,7 +481,7 @@ describe('InterventionDetailPage', () => {
       expect(updateDetails).not.toHaveBeenCalled();
     });
 
-    it('should open the editor a getting-started item points at, expanding the details section first', async () => {
+    it('should open the editor a getting-started item points at, on the always-visible properties card', async () => {
       current.set(intervention({ site: null }));
       fixture = await createPage();
 

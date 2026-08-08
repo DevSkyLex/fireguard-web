@@ -4487,17 +4487,9 @@
         <source>Change status</source>
         <target>Changer le statut</target>
       </trans-unit>
-      <trans-unit id="intervention.detail.tabOverview" datatype="html">
-        <source>Overview</source>
-        <target>Aperçu</target>
-      </trans-unit>
       <trans-unit id="intervention.detail.tabFieldWork" datatype="html">
         <source>Field work</source>
         <target>Travail terrain</target>
-      </trans-unit>
-      <trans-unit id="intervention.detail.tabsAriaLabel" datatype="html">
-        <source>Intervention workspace sections</source>
-        <target>Sections de l'espace de travail de l'intervention</target>
       </trans-unit>
       <trans-unit id="intervention.gettingStarted.title" datatype="html">
         <source>Getting started</source>

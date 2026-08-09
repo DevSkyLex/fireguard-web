@@ -1,8 +1,13 @@
 <div class="flex flex-col gap-3" data-testid="calendar">
   <div class="flex flex-wrap items-center justify-between gap-2">
-    <h2 class="text-base font-semibold text-foreground capitalize" data-testid="calendar-month">
-      {{ monthLabel() }}
-    </h2>
+    <div brnCalendarHeader class="min-w-0">
+      <h2
+        class="truncate text-base font-semibold text-foreground capitalize"
+        data-testid="calendar-month"
+      >
+        {{ monthLabel() }}
+      </h2>
+    </div>
 
     <div class="flex items-center gap-1">
       <button
@@ -42,55 +47,90 @@
     </div>
   </div>
 
-  <div class="overflow-hidden rounded-lg border border-border">
-    <div class="grid grid-cols-7 border-b border-border bg-muted/40" aria-hidden="true">
-      @for (weekday of weekdayLabels(); track weekday) {
-        <div class="px-2 py-1.5 text-center text-xs font-medium text-muted-foreground capitalize">
-          {{ weekday }}
-        </div>
-      }
-    </div>
-
-    @for (week of weeks(); track $index) {
-      <div class="grid grid-cols-7 border-b border-border last:border-b-0">
-        @for (cell of week; track cell.iso) {
-          <button
-            hlmBtn
-            type="button"
-            variant="ghost"
-            class="flex h-24 flex-col items-stretch justify-start gap-1 rounded-none border-r border-border p-1.5 text-start font-normal whitespace-normal last:border-r-0 sm:h-28"
-            [class.bg-accent]="cell.iso === selectedDay()"
-            [class.opacity-40]="!cell.inMonth"
-            data-testid="calendar-day"
-            [attr.data-day]="cell.iso"
-            [attr.aria-pressed]="cell.iso === selectedDay()"
-            [attr.aria-current]="cell.isToday ? 'date' : null"
-            [attr.aria-label]="dayLabelOf(cell)"
-            (click)="selectDay(cell)"
+  <div class="rounded-lg border border-border">
+    <table brnCalendarGrid class="w-full table-fixed border-separate border-spacing-0">
+      <thead>
+        <tr>
+          <th
+            *brnCalendarWeekday="let weekday"
+            scope="col"
+            class="border-b border-border px-1 py-1.5 text-center text-xs font-medium text-muted-foreground capitalize"
           >
-            <span
-              class="self-start text-xs"
-              [class.font-semibold]="cell.isToday"
-              [class.text-primary]="cell.isToday"
-              aria-hidden="true"
-              >{{ cell.day }}</span
+            <span aria-hidden="true">{{ shortWeekdayOf(weekday) }}</span>
+            <span class="sr-only">{{ longWeekdayOf(weekday) }}</span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr
+          *brnCalendarWeek="let week"
+          class="[&:last-child>td]:border-b-0 [&:last-child>td:first-child>button]:rounded-es-lg [&:last-child>td:last-child>button]:rounded-ee-lg"
+        >
+          @for (day of week; track day.getTime()) {
+            @let iso = isoOf(day);
+            @let summary = summaryOf(iso);
+
+            <td
+              brnCalendarCell
+              class="border-e border-b border-border p-0 align-top last:border-e-0"
             >
-            @for (event of eventsOf(cell); track event.id) {
-              <span hlmBadge [variant]="event.tone" class="max-w-full truncate text-[10px]">
-                {{ event.label }}
-              </span>
-            }
-            @if (overflowOf(cell) > 0) {
-              <span class="text-[10px] text-muted-foreground" aria-hidden="true"
-                >+{{ overflowOf(cell) }}</span
+              <button
+                brnCalendarCellButton
+                hlmBtn
+                variant="ghost"
+                class="group/day relative flex h-16 w-full flex-col items-stretch justify-start gap-1 rounded-none border-0 p-1 text-start font-normal whitespace-normal focus-visible:z-10 data-[outside=true]:text-muted-foreground data-[selected-single=true]:bg-muted sm:h-24 sm:gap-1.5 sm:p-1.5 md:h-28"
+                data-testid="calendar-day"
+                [date]="day"
+                [attr.data-day]="iso"
+                [attr.aria-current]="iso === todayIso ? 'date' : null"
               >
-            }
-            <span class="sr-only" i18n="@@calendar.dayEventCount"
-              >{{ countOf(cell) }} event(s)</span
-            >
-          </button>
-        }
-      </div>
-    }
+                <span
+                  class="flex size-6 shrink-0 items-center justify-center self-start rounded-full text-xs tabular-nums group-data-[selected-single=true]/day:bg-primary group-data-[selected-single=true]/day:font-semibold group-data-[selected-single=true]/day:text-primary-foreground group-data-[today=true]/day:font-semibold group-data-[today=true]/day:ring-1 group-data-[today=true]/day:ring-muted-foreground"
+                  aria-hidden="true"
+                  >{{ day.getDate() }}</span
+                >
+
+                <span class="sr-only">{{ dayLabelOf(day) }}</span>
+                <span class="sr-only" i18n="@@calendar.dayEventCount">{summary.count, plural,
+                  =0 {No events}
+                  =1 {1 event}
+                  other {{{ summary.count }} events}
+                }</span>
+
+                @if (summary.count > 0) {
+                  <span class="flex items-center gap-1 ps-1 sm:hidden" aria-hidden="true">
+                    @for (dot of summary.dots; track dot) {
+                      <span class="size-1.5 rounded-full bg-muted-foreground"></span>
+                    }
+                  </span>
+
+                  <span
+                    class="hidden min-w-0 flex-col items-start gap-0.5 sm:flex"
+                    aria-hidden="true"
+                  >
+                    @for (event of summary.chips; track event.id) {
+                      <span
+                        hlmBadge
+                        [variant]="event.tone"
+                        class="max-w-full"
+                        [title]="event.label"
+                      >
+                        <span class="truncate">{{ event.label }}</span>
+                      </span>
+                    }
+                    @if (summary.overflow > 0) {
+                      <span class="ps-1 text-xs text-muted-foreground"
+                        >+{{ summary.overflow }}</span
+                      >
+                    }
+                  </span>
+                }
+              </button>
+            </td>
+          }
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>

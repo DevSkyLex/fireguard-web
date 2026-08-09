@@ -7168,6 +7168,14 @@
         <source>Next month</source>
         <target>Mois suivant</target>
       </trans-unit>
+      <trans-unit id="calendar.previousMonth" datatype="html">
+        <source>Previous month</source>
+        <target>Mois précédent</target>
+      </trans-unit>
+      <trans-unit id="calendar.dayEventCount" datatype="html">
+        <source>{VAR_PLURAL, plural, =0 {No events} =1 {1 event} other {<x id="INTERPOLATION"/> events}}</source>
+        <target>{VAR_PLURAL, plural, =0 {Aucun événement} =1 {1 événement} other {<x id="INTERPOLATION"/> événements}}</target>
+      </trans-unit>
       <trans-unit id="calendar.openEventTimed" datatype="html">
         <source>Open <x id="INTERPOLATION" equiv-text="{{ timed.event.title }}"/></source>
         <target>Ouvrir <x id="INTERPOLATION"/></target>

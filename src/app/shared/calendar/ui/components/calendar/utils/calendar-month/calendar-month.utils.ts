@@ -1,32 +1,4 @@
 /**
- * Interface CalendarMonthCell
- * @interface CalendarMonthCell
- *
- * @description
- * One cell of the month grid: the ISO day it stands for, whether it belongs
- * to the anchored month (leading/trailing days fill the weeks), and whether
- * it is today.
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
-export interface CalendarMonthCell {
-  //#region Properties
-  /** The day as `yyyy-MM-dd`, in local time. */
-  readonly iso: string;
-
-  /** Day-of-month number, for the cell's visible label. */
-  readonly day: number;
-
-  /** Whether the day belongs to the anchored month. */
-  readonly inMonth: boolean;
-
-  /** Whether the day is `today`, per the instant passed in. */
-  readonly isToday: boolean;
-  //#endregion
-}
-
-/**
  * Function toIsoDay
  *
  * @description
@@ -48,47 +20,50 @@ export function toIsoDay(date: Date): string {
 }
 
 /**
- * Function buildCalendarMonth
+ * Function startOfMonth
  *
  * @description
- * The full weeks covering the anchor's month, Monday-first: 4 to 6 rows of 7
- * cells, the leading and trailing fillers marked `inMonth: false`. `now` is a
- * parameter rather than read here so the function stays pure and its spec
- * deterministic.
+ * Local midnight on the first of the given date's month — the canonical anchor
+ * the grid and its focus tracking compare against.
  *
- * @param {Date} anchor - Any date inside the month to build.
- * @param {Date} now - Instant "today" is resolved against.
+ * @param {Date} date - Any date inside the month.
  *
- * @returns {readonly (readonly CalendarMonthCell[])[]} The month's weeks.
+ * @returns {Date} The month's first day at local midnight.
  *
  * @since 1.0.0
  */
-export function buildCalendarMonth(
-  anchor: Date,
-  now: Date,
-): readonly (readonly CalendarMonthCell[])[] {
-  const first: Date = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
-  const mondayOffset: number = (first.getDay() + 6) % 7;
-  const start: Date = new Date(first.getFullYear(), first.getMonth(), 1 - mondayOffset);
-  const today: string = toIsoDay(now);
-  const month: number = anchor.getMonth();
+export function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
 
-  const weeks: CalendarMonthCell[][] = [];
-  const cursor: Date = new Date(start);
+/**
+ * Function buildCalendarMonthDays
+ *
+ * @description
+ * The full weeks covering the anchor's month, Monday-first, as a flat run of
+ * local midnights whose length is always a multiple of seven — the shape
+ * `brnCalendarWeek` chunks into rows. Pure: "today" is not resolved here, so
+ * the same anchor always yields the same grid.
+ *
+ * @param {Date} anchor - Any date inside the month to build.
+ *
+ * @returns {Date[]} The month's days plus the leading and trailing fillers.
+ *
+ * @since 1.0.0
+ */
+export function buildCalendarMonthDays(anchor: Date): Date[] {
+  const first: Date = startOfMonth(anchor);
+  const mondayOffset: number = (first.getDay() + 6) % 7;
+  const month: number = first.getMonth();
+
+  const days: Date[] = [];
+  const cursor: Date = new Date(first.getFullYear(), month, 1 - mondayOffset);
   do {
-    const week: CalendarMonthCell[] = [];
     for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
-      const iso: string = toIsoDay(cursor);
-      week.push({
-        iso,
-        day: cursor.getDate(),
-        inMonth: cursor.getMonth() === month,
-        isToday: iso === today,
-      });
+      days.push(new Date(cursor));
       cursor.setDate(cursor.getDate() + 1);
     }
-    weeks.push(week);
   } while (cursor.getMonth() === month);
 
-  return weeks;
+  return days;
 }

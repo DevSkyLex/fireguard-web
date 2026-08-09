@@ -1,0 +1,414 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-09T18:47:09Z",
+  "title": "Design System: FireGuard",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "oklch(0.205 0 0)",
+        "tonalRamp": [
+          "oklch(0.145 0 0)",
+          "oklch(0.205 0 0)",
+          "oklch(0.269 0 0)",
+          "oklch(0.439 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.87 0 0)",
+          "oklch(0.97 0 0)"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.145 0 0)",
+          "oklch(0.205 0 0)",
+          "oklch(0.269 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.922 0 0)",
+          "oklch(0.97 0 0)",
+          "oklch(1 0 0)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Wash",
+        "canonical": "oklch(0.97 0 0)",
+        "tonalRamp": [
+          "oklch(0.205 0 0)",
+          "oklch(0.269 0 0)",
+          "oklch(0.371 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.87 0 0)",
+          "oklch(0.922 0 0)",
+          "oklch(0.97 0 0)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Slate",
+        "canonical": "oklch(0.556 0 0)",
+        "tonalRamp": [
+          "oklch(0.205 0 0)",
+          "oklch(0.269 0 0)",
+          "oklch(0.371 0 0)",
+          "oklch(0.439 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.87 0 0)",
+          "oklch(0.922 0 0)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.922 0 0)",
+        "tonalRamp": [
+          "oklch(0.269 0 0)",
+          "oklch(0.371 0 0)",
+          "oklch(0.439 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.87 0 0)",
+          "oklch(0.922 0 0)",
+          "oklch(0.97 0 0)"
+        ]
+      },
+      "ring": {
+        "role": "neutral",
+        "displayName": "Halo",
+        "canonical": "oklch(0.708 0 0)",
+        "tonalRamp": [
+          "oklch(0.205 0 0)",
+          "oklch(0.269 0 0)",
+          "oklch(0.371 0 0)",
+          "oklch(0.439 0 0)",
+          "oklch(0.556 0 0)",
+          "oklch(0.708 0 0)",
+          "oklch(0.87 0 0)",
+          "oklch(0.922 0 0)"
+        ]
+      },
+      "glyph-neutral": {
+        "role": "tertiary",
+        "displayName": "Neutral Glyph",
+        "canonical": "oklch(55.6% 0 none)",
+        "tonalRamp": [
+          "oklch(20.5% 0 none)",
+          "oklch(26.9% 0 none)",
+          "oklch(37.1% 0 none)",
+          "oklch(43.9% 0 none)",
+          "oklch(55.6% 0 none)",
+          "oklch(70.8% 0 none)",
+          "oklch(87% 0 none)",
+          "oklch(92.2% 0 none)"
+        ]
+      },
+      "glyph-info": {
+        "role": "tertiary",
+        "displayName": "Info Glyph",
+        "canonical": "oklch(62.3% 0.214 259.815)",
+        "tonalRamp": [
+          "oklch(37.9% 0.146 265.522)",
+          "oklch(42.4% 0.199 265.638)",
+          "oklch(48.8% 0.243 264.376)",
+          "oklch(54.6% 0.245 262.881)",
+          "oklch(62.3% 0.214 259.815)",
+          "oklch(70.7% 0.165 254.624)",
+          "oklch(80.9% 0.105 251.813)",
+          "oklch(88.2% 0.059 254.128)"
+        ]
+      },
+      "glyph-success": {
+        "role": "tertiary",
+        "displayName": "Success Glyph",
+        "canonical": "oklch(72.3% 0.219 149.579)",
+        "tonalRamp": [
+          "oklch(39.3% 0.095 152.535)",
+          "oklch(44.8% 0.119 151.328)",
+          "oklch(52.7% 0.154 150.069)",
+          "oklch(62.7% 0.194 149.214)",
+          "oklch(72.3% 0.219 149.579)",
+          "oklch(79.2% 0.209 151.711)",
+          "oklch(87.1% 0.15 154.449)",
+          "oklch(92.5% 0.084 155.995)"
+        ]
+      },
+      "glyph-warning": {
+        "role": "tertiary",
+        "displayName": "Warning Glyph",
+        "canonical": "oklch(76.9% 0.188 70.08)",
+        "tonalRamp": [
+          "oklch(41.4% 0.112 45.904)",
+          "oklch(47.3% 0.137 46.201)",
+          "oklch(55.5% 0.163 48.998)",
+          "oklch(66.6% 0.179 58.318)",
+          "oklch(76.9% 0.188 70.08)",
+          "oklch(82.8% 0.189 84.429)",
+          "oklch(87.9% 0.169 91.605)",
+          "oklch(92.4% 0.12 95.746)"
+        ]
+      },
+      "glyph-danger": {
+        "role": "tertiary",
+        "displayName": "Danger Glyph",
+        "canonical": "oklch(63.7% 0.237 25.331)",
+        "tonalRamp": [
+          "oklch(39.6% 0.141 25.723)",
+          "oklch(44.4% 0.177 26.899)",
+          "oklch(50.5% 0.213 27.518)",
+          "oklch(57.7% 0.245 27.325)",
+          "oklch(63.7% 0.237 25.331)",
+          "oklch(70.4% 0.191 22.216)",
+          "oklch(80.8% 0.114 19.571)",
+          "oklch(88.5% 0.062 18.334)"
+        ]
+      },
+      "destructive": {
+        "role": "secondary",
+        "displayName": "Destructive",
+        "canonical": "oklch(0.577 0.245 27.325)",
+        "tonalRamp": [
+          "oklch(39.6% 0.141 25.723)",
+          "oklch(44.4% 0.177 26.899)",
+          "oklch(50.5% 0.213 27.518)",
+          "oklch(0.577 0.245 27.325)",
+          "oklch(63.7% 0.237 25.331)",
+          "oklch(70.4% 0.191 22.216)",
+          "oklch(80.8% 0.114 19.571)",
+          "oklch(88.5% 0.062 18.334)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The page title, and the only element at this size. Always tracking-tight. One per page."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section and card headings. The step down from headline is deliberately large; there is no 20px rung in normal use."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "The working size. Table cells, form values, descriptions, and nearly everything the operator reads."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Metadata, timestamps, status badge text, helper copy, column headers. Sentence case, never uppercase."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Identifiers where character alignment beats reading rhythm: revision hashes, FG-{number} codes, quantities."
+      }
+    },
+    "shadows": [
+      {
+        "name": "hairline-ring",
+        "value": "0 0 0 1px color-mix(in oklab, var(--foreground) 10%, transparent)",
+        "purpose": "The only in-page depth device. Applied to cards as a ring rather than a border, so it sits outside the box model and never shifts layout."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent)",
+        "purpose": "Focus-visible on every interactive primitive. Thick on purpose: at 32px control height a 1px outline is invisible against a dense table."
+      },
+      {
+        "name": "focus-ring-inline",
+        "value": "0 0 0 2px var(--ring)",
+        "purpose": "The established exception, used on bare inline links inside prose rather than on primitives."
+      },
+      {
+        "name": "overlay",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Reserved for things that genuinely float above the page and will be dismissed: dialog, popover, sheet, toast, the revealed skip link. Never on an in-page surface."
+      }
+    ],
+    "motion": [
+      {
+        "name": "press",
+        "value": "translateY(1px)",
+        "purpose": "The system's one piece of physical feedback, on button :active. Suppressed on menu triggers so a popover anchor does not shift under an opening panel."
+      },
+      {
+        "name": "sidebar-collapse",
+        "value": "200ms linear",
+        "purpose": "Width transition when the navigation rail collapses to icons."
+      },
+      {
+        "name": "state-color",
+        "value": "transition-colors, default duration",
+        "purpose": "The entire motion vocabulary available to a feature template. Hover and state colour shifts only; no page-level or entrance choreography."
+      }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "The single committed action on a screen. A page with two has not decided what it wants the operator to do.",
+      "html": "<button class=\"ds-btn ds-btn-default\">Publish intervention</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; height: 2rem; padding: 0 0.625rem; border: 1px solid transparent; border-radius: var(--radius, 0.625rem); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; user-select: none; outline: none; transition: all 150ms ease; cursor: pointer; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); } .ds-btn-default { background: var(--primary); color: var(--primary-foreground); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The workhorse secondary: page ground with a hairline border, hovering to Wash.",
+      "html": "<button class=\"ds-btn ds-btn-outline\">Cancel</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; height: 2rem; padding: 0 0.625rem; border: 1px solid transparent; border-radius: var(--radius, 0.625rem); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; user-select: none; outline: none; transition: all 150ms ease; cursor: pointer; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); } .ds-btn-outline { background: var(--background); color: var(--foreground); border-color: var(--border); } .ds-btn-outline:hover { background: var(--muted); }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Tinted ground with coloured text, never a solid red fill. A filled red button reads as the page's primary action, which a delete never is.",
+      "html": "<button class=\"ds-btn ds-btn-destructive\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"M3 6h18\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\"/><path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/><path d=\"M10 11v6\"/><path d=\"M14 11v6\"/></svg>Delete</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; height: 2rem; padding: 0 0.625rem; border: 1px solid transparent; border-radius: var(--radius, 0.625rem); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; user-select: none; outline: none; transition: all 150ms ease; cursor: pointer; } .ds-btn:active { transform: translateY(1px); } .ds-btn-destructive { background: color-mix(in oklab, var(--destructive) 10%, transparent); color: var(--destructive); } .ds-btn-destructive:hover { background: color-mix(in oklab, var(--destructive) 20%, transparent); } .ds-btn-destructive:focus-visible { border-color: color-mix(in oklab, var(--destructive) 40%, transparent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent); } .ds-btn-destructive svg { flex-shrink: 0; }"
+    },
+    {
+      "name": "Status Badge — Urgent",
+      "kind": "custom",
+      "refersTo": "badge-status",
+      "description": "The signature component the whole colour system exists to serve. Transparent ground, hairline border, muted label; only the 12px glyph carries tone. The double chevron encodes rank by shape, so the scale survives greyscale.",
+      "html": "<span class=\"ds-badge\"><svg class=\"ds-badge-icon ds-glyph-danger\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"12\" height=\"12\" aria-hidden=\"true\"><path d=\"m17 11-5-5-5 5\"/><path d=\"m17 18-5-5-5 5\"/></svg>Urgent</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; width: fit-content; height: 1.25rem; padding: 0.125rem 0.375rem; border: 1px solid var(--border); border-radius: 1.625rem; background: transparent; color: var(--muted-foreground); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; line-height: 1; white-space: nowrap; overflow: hidden; } .ds-badge-icon { flex-shrink: 0; } .ds-glyph-danger { color: oklch(63.7% 0.237 25.331); }"
+    },
+    {
+      "name": "Status Badge — Published",
+      "kind": "custom",
+      "refersTo": "badge-status",
+      "description": "The positive terminal state. Only the two ends of a workflow enumeration carry colour; every intermediate step renders the same badge with a neutral grey glyph.",
+      "html": "<span class=\"ds-badge\"><svg class=\"ds-badge-icon ds-glyph-success\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"12\" height=\"12\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Published</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; width: fit-content; height: 1.25rem; padding: 0.125rem 0.375rem; border: 1px solid var(--border); border-radius: 1.625rem; background: transparent; color: var(--muted-foreground); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; line-height: 1; white-space: nowrap; overflow: hidden; } .ds-badge-icon { flex-shrink: 0; } .ds-glyph-success { color: oklch(72.3% 0.219 149.579); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Transparent well with a hairline stroke. 16px text below md is not a style choice: it is what stops iOS Safari zooming the viewport on focus.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search interventions\" aria-label=\"Search interventions\" />",
+      "css": ".ds-input { width: 100%; min-width: 0; height: 2rem; padding: 0.25rem 0.625rem; border: 1px solid var(--input); border-radius: var(--radius, 0.625rem); background: transparent; color: var(--foreground); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 1rem; outline: none; transition: color 150ms ease, border-color 150ms ease, box-shadow 150ms ease; } @media (min-width: 768px) { .ds-input { font-size: 0.875rem; } } .ds-input::placeholder { color: var(--muted-foreground); } .ds-input:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); } .ds-input[aria-invalid='true'] { border-color: var(--destructive); box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent); } .ds-input:disabled { opacity: 0.5; cursor: not-allowed; background: color-mix(in oklab, var(--input) 50%, transparent); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A hairline ring rather than a border or a shadow, so it sits outside the box model and never doubles up against an adjacent divider.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-title\">Next recommended action</p><p class=\"ds-card-body\">Assign a responsible agent before planning this intervention.</p></div>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 1rem; padding: 1rem; border-radius: 0.875rem; background: var(--card); color: var(--card-foreground); box-shadow: 0 0 0 1px color-mix(in oklab, var(--foreground) 10%, transparent); overflow: hidden; font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; } .ds-card-title { margin: 0; font-size: 1rem; font-weight: 600; } .ds-card-body { margin: 0; color: var(--muted-foreground); }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "button-ghost",
+      "description": "Ghost-styled rows with no border and no ground at rest, so the navigation column reads as a list rather than a stack of buttons.",
+      "html": "<a class=\"ds-nav-item\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"16\" height=\"16\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg>Interventions</a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; height: 2rem; padding: 0 0.5rem; border-radius: 0.5rem; background: transparent; color: var(--sidebar-foreground); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; text-decoration: none; outline: none; transition: background 150ms ease, color 150ms ease; } .ds-nav-item svg { flex-shrink: 0; } .ds-nav-item:hover { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); } .ds-nav-item[aria-current='page'] { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); font-weight: 600; } .ds-nav-item:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--sidebar-ring) 50%, transparent); }"
+    },
+    {
+      "name": "Empty State",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "A dashed border marks a container with nothing in it yet. Three inputs stand in for a six-element composition, so thirteen call sites cannot get it wrong thirteen different ways.",
+      "html": "<div class=\"ds-empty\"><div class=\"ds-empty-media\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"20\" height=\"20\" aria-hidden=\"true\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/></svg></div><p class=\"ds-empty-title\">No interventions yet</p><p class=\"ds-empty-description\">Interventions you plan will appear here.</p></div>",
+      "css": ".ds-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5rem; padding: 2.5rem; border: 1px dashed var(--border); border-radius: 0.5rem; font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; } .ds-empty-media { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; margin-bottom: 0.25rem; border-radius: 0.5rem; background: var(--muted); color: var(--muted-foreground); } .ds-empty-title { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--foreground); } .ds-empty-description { margin: 0; font-size: 0.875rem; color: var(--muted-foreground); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Control Surface",
+    "overview": "FireGuard is an operator's console. It is dense, unambiguous, and built for someone who already knows what they are doing and needs zero friction between intent and action. Nothing on screen is there to impress: every pixel is either a value to read, a control to press, or the whitespace that keeps the two apart. The interface is the flat panel a professional works against for eight hours, not a page they visit.\n\nThe system is achromatic by decision. Surfaces, text, borders and controls are pure zero-chroma neutral — genuinely neither warm nor cool. Colour is not a decorative resource here; it is a scarce, load-bearing signal, and it is spent in exactly one place: the glyph of a status indicator. That single constraint is what makes a dense table readable. When nothing else is coloured, a red chevron at 12px is impossible to miss.\n\nDensity is the second half of the identity. The largest type in the entire application is 24px, and 86% of sized text is 14px or 12px. Controls are 32px tall. This is deliberate compression: more of the operator's actual work fits in one viewport, and the interface stops competing with the data it carries.",
+    "keyCharacteristics": [
+      "Achromatic neutral palette; chroma confined to status glyphs",
+      "Compressed scale — a hard 24px type ceiling, 32px controls",
+      "Flat in-page surfaces; a hairline ring instead of shadows or borders",
+      "Compact and mechanical controls with a 1px press displacement",
+      "Motion belongs to primitives, never to page composition",
+      "Full dark parity via html[data-theme=\"dark\"]"
+    ],
+    "rules": [
+      {
+        "name": "The Glyph Rule",
+        "body": "Chroma appears on a status icon and nowhere else. The badge around it stays outline — transparent ground, hairline border, muted text — and only the glyph carries tone. Filling the badge instead turns a dense table into a row of coloured pills and destroys the one signal that should stand out.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Ends Rule",
+        "body": "In a workflow enumeration, only the terminal states carry colour: success for the positive end, danger for the destructive one. Every intermediate step is neutral. Colour therefore reads as \"this is finished\", not as a heat map of progress.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tint, Never Fill Rule",
+        "body": "Destructive actions are a 10% destructive ground with destructive text — never a solid red fill. A filled red button reads as the page's primary action, which a delete never is.",
+        "section": "colors"
+      },
+      {
+        "name": "The 24px Ceiling",
+        "body": "Nothing in the application renders larger than 1.5rem. There is no display size and no hero type. A screen that needs more presence earns it through spacing and position, not through scale.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Title Rule",
+        "body": "A page carries exactly one headline. Sections step straight down to title (1rem); a second 24px heading on the same screen means the page is really two pages.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "Labels are sentence case. Uppercase with widened tracking is not part of this system — it appears three times in the entire feature tree and should not spread.",
+        "section": "typography"
+      },
+      {
+        "name": "The Independent Columns Rule",
+        "body": "The page never scrolls. Each column owns its own overflow, so the shell, the content and any side panel keep their positions relative to each other no matter how long the content runs.",
+        "section": "layout"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "In-page depth is a 1px ring at 10% foreground. If a surface needs to separate further, change its tone — do not add a shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Overlay-Only Shadow Rule",
+        "body": "A shadow means \"this is floating above the page and will be dismissed\". Four shadow utilities exist across the entire feature and layout tree; that number should not grow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Dashed-Means-Absent Rule",
+        "body": "A dashed border marks a container with nothing in it yet — an empty collection, an unfilled slot, a drop target. Solid means real content. A dashed border never decorates a populated surface, and its destructive variant (40% opacity) marks a slot whose content failed rather than one that was never filled.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do spend colour only on a status glyph. If a new surface needs to distinguish states, reach for icon, weight, position and tone first.",
+      "Do pair every severity colour with a label and an icon, and give the icon aria-hidden so the label is the accessible name.",
+      "Do keep a page's largest text at 1.5rem, font-semibold, tracking-tight — the canonical page title is one exact class string, and reusing it verbatim is how the ceiling stays intact.",
+      "Do separate in-page surfaces with ring-1 at 10% foreground, or with one tonal step to Wash.",
+      "Do use the 32px control height as the default rhythm; step to 24px or 28px inside dense toolbars rather than shrinking padding on a 32px control.",
+      "Do give every interactive element a visible 3px focus ring; on bare inline links a 2px ring is the established exception.",
+      "Do mark genuinely empty containers with a dashed border.",
+      "Do verify every new surface in both themes — dark is not a filter, it inverts the primary relationship and makes borders translucent."
+    ],
+    "donts": [
+      "Don't reintroduce a chromatic brand accent. The interface is achromatic by decision; indigo lives on the mark and in browser chrome only.",
+      "Don't fill a status badge with its severity colour, and don't colour the label. The ground stays transparent and the text stays muted.",
+      "Don't colour intermediate workflow states. Only the two terminal ends carry tone.",
+      "Don't render a destructive action as a solid red button. Tint the ground and colour the text.",
+      "Don't introduce type above 1.5rem, or a display typeface. There is one family at four sizes.",
+      "Don't set uppercase with widened tracking as a section eyebrow.",
+      "Don't add a shadow to an in-page surface. Shadow means \"floating and dismissable\".",
+      "Don't wrap every section in an identical bordered card. Vary surface levels — borderless headers, carded work surfaces, divider lists — so hierarchy comes from rhythm rather than from boxes.",
+      "Don't add page-level motion. Transitions belong to the primitives; a feature template's motion vocabulary is transition-colors and the button's 1px press.",
+      "Don't let the page scroll as a whole. Columns own their own overflow."
+    ]
+  }
+}

@@ -1,24 +1,40 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  Injector,
   input,
+  linkedSignal,
   LOCALE_ID,
   model,
+  viewChild,
   type InputSignal,
   type ModelSignal,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
+import {
+  BrnCalendarCell,
+  BrnCalendarCellButton,
+  BrnCalendarGrid,
+  BrnCalendarHeader,
+  BrnCalendarWeek,
+  BrnCalendarWeekday,
+  provideBrnCalendar,
+  type BrnCalendarBase,
+} from '@spartan-ng/brain/calendar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import type { CalendarDisplayEvent } from '../../../models/calendar-display-event.interface';
+import type { CalendarDaySummary } from './models/calendar-day-summary.interface';
 import {
-  buildCalendarMonth,
+  buildCalendarMonthDays,
+  startOfMonth,
   toIsoDay,
-  type CalendarMonthCell,
 } from './utils/calendar-month/calendar-month.utils';
 
 /**
@@ -27,24 +43,38 @@ import {
 const MAX_CHIPS_PER_DAY = 2;
 
 /**
+ * How many density dots the compact (phone) layout shows in place of chips.
+ */
+const MAX_DOTS_PER_DAY = 3;
+
+/**
+ * The summary shared by every day that carries no event.
+ */
+const EMPTY_DAY: CalendarDaySummary = { count: 0, chips: [], dots: [], overflow: 0 };
+
+/**
+ * A Sunday, so adding a JavaScript weekday index lands on that weekday.
+ */
+const WEEKDAY_REFERENCE = new Date(2024, 0, 7);
+
+/**
  * Component Calendar
  * @class Calendar
  *
  * @description
- * A generic month calendar of events — the shared widget ARCHITECTURE.md §2.7
- * names as a bare-noun concept: no feature import, generic inputs only.
- * Structure is Tailwind layout (a 7-column CSS grid); every interactive or
- * tonal element is a spartan primitive — `hlmBtn` for the month navigation
- * and the day cells, `hlm-badge` for the event chips.
+ * A generic month calendar of events — a bare-noun shared concept
+ * (ARCHITECTURE.md §2.7): no feature import, generic inputs only. It renders
+ * and selects; it does not interpret. Selecting a day writes the two-way
+ * `selectedDay` model (`yyyy-MM-dd`) and the host decides what that day shows.
  *
- * The calendar renders and selects; it does not interpret. Selecting a day
- * writes the two-way `selectedDay` model (`yyyy-MM-dd`), and the host decides
- * what a selected day shows. Chips are presentation only — one per event,
- * collapsed past two into a "+N" — so the cell button stays the single tab
- * stop per day (WCAG: one predictable target instead of a chip-by-chip
- * gauntlet).
+ * The grid is spartan's headless calendar rather than hand-rolled markup: the
+ * component implements `BrnCalendarBase` and provides itself through
+ * `provideBrnCalendar`, so `brnCalendarGrid`, `brnCalendarWeek` and
+ * `brnCalendarCellButton` supply the WCAG grid pattern — `role="grid"`,
+ * roving `tabindex`, arrow / Home / End / PageUp / PageDown navigation and
+ * `aria-selected` — over this widget's own month model.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -55,12 +85,25 @@ const MAX_CHIPS_PER_DAY = 2;
  */
 @Component({
   selector: 'app-calendar',
-  imports: [NgIcon, HlmBadge, HlmButton],
-  providers: [provideIcons({ lucideChevronLeft, lucideChevronRight })],
+  imports: [
+    NgIcon,
+    HlmBadge,
+    HlmButton,
+    BrnCalendarCell,
+    BrnCalendarCellButton,
+    BrnCalendarGrid,
+    BrnCalendarHeader,
+    BrnCalendarWeek,
+    BrnCalendarWeekday,
+  ],
+  providers: [
+    provideIcons({ lucideChevronLeft, lucideChevronRight }),
+    provideBrnCalendar(Calendar),
+  ],
   templateUrl: './calendar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Calendar {
+export class Calendar implements BrnCalendarBase<Date> {
   //#region Inputs
   /**
    * Property month
@@ -75,7 +118,7 @@ export class Calendar {
   /**
    * Property selectedDay
    * @readonly
-   * @description The selected day as `yyyy-MM-dd`, or null; clicking a day writes it back.
+   * @description The selected day as `yyyy-MM-dd`, or null; picking a day writes it back.
    * @access public
    * @since 1.0.0
    * @type {ModelSignal<string | null>}
@@ -93,110 +136,305 @@ export class Calendar {
   public readonly events: InputSignal<readonly CalendarDisplayEvent[]> = input<
     readonly CalendarDisplayEvent[]
   >([]);
+
+  /**
+   * Property highlightDays
+   * @readonly
+   * @description Days spartan marks with `data-highlighted`; part of the `BrnCalendarBase` contract.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<Date[]>}
+   */
+  public readonly highlightDays: InputSignal<Date[]> = input<Date[]>([]);
   //#endregion
 
   //#region Properties
-  /** The active locale, for the month and weekday labels. */
+  /** The active locale, for the month, weekday and day labels. */
   private readonly locale: string = inject(LOCALE_ID);
 
-  /** The month's weeks, rebuilt when the anchor moves. */
-  protected readonly weeks: Signal<readonly (readonly CalendarMonthCell[])[]> = computed(() =>
-    buildCalendarMonth(this.month(), new Date()),
-  );
+  /** Resolves the deferred focus move after a keyboard navigation. */
+  private readonly injector: Injector = inject(Injector);
+
+  /** The cells spartan registers, so the focused day can be focused for real. */
+  private readonly cells: BrnCalendarCellButton<Date>[] = [];
+
+  /** Today's local day, resolved once so the grid cannot shift mid-session. */
+  protected readonly todayIso: string = toIsoDay(new Date());
 
   /** The header's localized "Month Year" label. */
   protected readonly monthLabel: Signal<string> = computed<string>(() =>
     new Intl.DateTimeFormat(this.locale, { month: 'long', year: 'numeric' }).format(this.month()),
   );
 
-  /** Monday-first localized weekday headers. */
-  protected readonly weekdayLabels: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const format = new Intl.DateTimeFormat(this.locale, { weekday: 'short' });
+  /** What each day of the grid renders, keyed by its ISO day. */
+  private readonly summaries: Signal<ReadonlyMap<string, CalendarDaySummary>> = computed(() => {
+    const grouped = new Map<string, CalendarDisplayEvent[]>();
+    for (const event of this.events()) {
+      const day: string = toIsoDay(new Date(event.date));
+      const bucket: CalendarDisplayEvent[] = grouped.get(day) ?? [];
+      bucket.push(event);
+      grouped.set(day, bucket);
+    }
 
-    // 2024-01-01 is a Monday; seven consecutive days give the localized headers.
-    return Array.from({ length: 7 }, (unused, index) =>
-      format.format(new Date(2024, 0, 1 + index)),
-    );
+    const summaries = new Map<string, CalendarDaySummary>();
+    for (const [day, bucket] of grouped) {
+      summaries.set(day, {
+        count: bucket.length,
+        chips: bucket.slice(0, MAX_CHIPS_PER_DAY),
+        dots: Array.from({ length: Math.min(bucket.length, MAX_DOTS_PER_DAY) }, (unused, i) => i),
+        overflow: Math.max(0, bucket.length - MAX_CHIPS_PER_DAY),
+      });
+    }
+
+    return summaries;
+  });
+  //#endregion
+
+  //#region Spartan calendar contract
+  /**
+   * Property days
+   * @readonly
+   * @description The displayed month's days plus its fillers; `brnCalendarWeek` chunks them into rows.
+   * @access public
+   * @since 2.0.0
+   * @type {Signal<Date[]>}
+   */
+  public readonly days: Signal<Date[]> = computed<Date[]>(() =>
+    buildCalendarMonthDays(this.month()),
+  );
+
+  /**
+   * Property focusedDate
+   *
+   * @description
+   * The grid's roving-focus anchor — the one day reachable by Tab. It follows
+   * the month, keeping the day the user had focused whenever that day still
+   * belongs to the month being shown.
+   *
+   * @readonly
+   * @access public
+   * @since 2.0.0
+   * @type {WritableSignal<Date>}
+   */
+  public readonly focusedDate: WritableSignal<Date> = linkedSignal<number, Date>({
+    source: () => startOfMonth(this.month()).getTime(),
+    computation: (monthTime, previous) => {
+      const focused: Date | undefined = previous?.value;
+
+      return focused !== undefined && startOfMonth(focused).getTime() === monthTime
+        ? focused
+        : new Date(monthTime);
+    },
   });
 
-  /** Events grouped by their local ISO day. */
-  private readonly eventsByDay: Signal<ReadonlyMap<string, readonly CalendarDisplayEvent[]>> =
-    computed(() => {
-      const grouped = new Map<string, CalendarDisplayEvent[]>();
-      for (const event of this.events()) {
-        const day: string = toIsoDay(new Date(event.date));
-        const bucket: CalendarDisplayEvent[] = grouped.get(day) ?? [];
-        bucket.push(event);
-        grouped.set(day, bucket);
-      }
+  /**
+   * Property header
+   * @readonly
+   * @description The month title spartan points the grid's `aria-labelledby` at.
+   * @access public
+   * @since 2.0.0
+   * @type {Signal<BrnCalendarHeader | undefined>}
+   */
+  public readonly header: Signal<BrnCalendarHeader | undefined> = viewChild(BrnCalendarHeader);
 
-      return grouped;
-    });
+  /**
+   * Property disabled
+   * @readonly
+   * @description Never disabled: the widget browses a month, it does not gate picking one.
+   * @access public
+   * @since 2.0.0
+   * @type {Signal<boolean>}
+   */
+  public readonly disabled: Signal<boolean> = computed<boolean>(() => false);
+
+  /**
+   * Method isSelected
+   * @description Whether a day carries the current selection.
+   * @access public
+   * @since 2.0.0
+   * @param {Date} date - The day in question.
+   * @returns {boolean} True when the day is selected.
+   */
+  public isSelected(date: Date): boolean {
+    return toIsoDay(date) === this.selectedDay();
+  }
+
+  /**
+   * Method selectDate
+   * @description Writes the picked day into the two-way model and anchors focus on it.
+   * @access public
+   * @since 2.0.0
+   * @param {Date} date - The picked day.
+   * @returns {void}
+   */
+  public selectDate(date: Date): void {
+    this.selectedDay.set(toIsoDay(date));
+    this.anchorOn(date);
+  }
+
+  /**
+   * Method setFocusedDate
+   * @description Moves the roving anchor and the real DOM focus, after a keyboard navigation.
+   * @access public
+   * @since 2.0.0
+   * @param {Date} date - The day to focus.
+   * @returns {void}
+   */
+  public setFocusedDate(date: Date): void {
+    this.anchorOn(date);
+
+    afterNextRender(
+      {
+        write: (): void => {
+          const iso: string = toIsoDay(date);
+          this.cells.find((cell) => toIsoDay(cell.date()) === iso)?.focus();
+        },
+      },
+      { injector: this.injector },
+    );
+  }
+
+  /**
+   * Method constrainDate
+   * @description No bounds are enforced, so every day stands as given.
+   * @access public
+   * @since 2.0.0
+   * @param {Date} date - The day in question.
+   * @returns {Date} The same day.
+   */
+  public constrainDate(date: Date): Date {
+    return date;
+  }
+
+  /**
+   * Method isDateDisabled
+   * @description No day is ever disabled on a browsing grid.
+   * @access public
+   * @since 2.0.0
+   * @returns {boolean} Always false.
+   */
+  public isDateDisabled(): boolean {
+    return false;
+  }
+
+  /**
+   * Method isStartOfRange
+   * @description The grid selects a single day, so no day starts a range.
+   * @access public
+   * @since 2.0.0
+   * @returns {boolean} Always false.
+   */
+  public isStartOfRange(): boolean {
+    return false;
+  }
+
+  /**
+   * Method isEndOfRange
+   * @description The grid selects a single day, so no day ends a range.
+   * @access public
+   * @since 2.0.0
+   * @returns {boolean} Always false.
+   */
+  public isEndOfRange(): boolean {
+    return false;
+  }
+
+  /**
+   * Method isBetweenRange
+   * @description The grid selects a single day, so no day sits inside a range.
+   * @access public
+   * @since 2.0.0
+   * @returns {boolean} Always false.
+   */
+  public isBetweenRange(): boolean {
+    return false;
+  }
+
+  /**
+   * Method registerCalendarCell
+   * @description Tracks a rendered cell so the focused day can be focused for real.
+   * @access public
+   * @since 2.0.0
+   * @param {BrnCalendarCellButton<Date>} cell - The cell entering the grid.
+   * @returns {void}
+   */
+  public registerCalendarCell(cell: BrnCalendarCellButton<Date>): void {
+    this.cells.push(cell);
+  }
+
+  /**
+   * Method unregisterCalendarCell
+   * @description Drops a cell that has left the grid.
+   * @access public
+   * @since 2.0.0
+   * @param {BrnCalendarCellButton<Date>} cell - The cell leaving the grid.
+   * @returns {void}
+   */
+  public unregisterCalendarCell(cell: BrnCalendarCellButton<Date>): void {
+    const index: number = this.cells.indexOf(cell);
+    if (index !== -1) this.cells.splice(index, 1);
+  }
   //#endregion
 
   //#region Methods
   /**
-   * Method eventsOf
-   * @description The chips shown inside a cell — at most {@link MAX_CHIPS_PER_DAY}.
+   * Method summaryOf
+   * @description What a day cell renders, or the empty summary when nothing falls on it.
    * @access protected
-   * @since 1.0.0
-   * @param {CalendarMonthCell} cell - The cell being rendered.
-   * @returns {readonly CalendarDisplayEvent[]} The visible chips.
+   * @since 2.0.0
+   * @param {string} iso - The cell's `yyyy-MM-dd` day.
+   * @returns {CalendarDaySummary} The day's chips, dots and counts.
    */
-  protected eventsOf(cell: CalendarMonthCell): readonly CalendarDisplayEvent[] {
-    return (this.eventsByDay().get(cell.iso) ?? []).slice(0, MAX_CHIPS_PER_DAY);
+  protected summaryOf(iso: string): CalendarDaySummary {
+    return this.summaries().get(iso) ?? EMPTY_DAY;
   }
 
   /**
-   * Method overflowOf
-   * @description How many of the day's events the cell collapses into "+N".
+   * Method isoOf
+   * @description A grid day as its local `yyyy-MM-dd` key.
    * @access protected
-   * @since 1.0.0
-   * @param {CalendarMonthCell} cell - The cell being rendered.
-   * @returns {number} The hidden-event count, zero when everything fits.
+   * @since 2.0.0
+   * @param {Date} date - The day being rendered.
+   * @returns {string} The ISO day.
    */
-  protected overflowOf(cell: CalendarMonthCell): number {
-    const total: number = this.eventsByDay().get(cell.iso)?.length ?? 0;
-
-    return Math.max(0, total - MAX_CHIPS_PER_DAY);
-  }
-
-  /**
-   * Method countOf
-   * @description The day's total event count, for the cell's accessible label.
-   * @access protected
-   * @since 1.0.0
-   * @param {CalendarMonthCell} cell - The cell being rendered.
-   * @returns {number} The event count.
-   */
-  protected countOf(cell: CalendarMonthCell): number {
-    return this.eventsByDay().get(cell.iso)?.length ?? 0;
+  protected isoOf(date: Date): string {
+    return toIsoDay(date);
   }
 
   /**
    * Method dayLabelOf
-   * @description The cell's full localized date, for its accessible name.
+   * @description A day's full localized date, opening the cell's accessible name.
    * @access protected
    * @since 1.0.0
-   * @param {CalendarMonthCell} cell - The cell being rendered.
+   * @param {Date} date - The day being rendered.
    * @returns {string} A full localized date.
    */
-  protected dayLabelOf(cell: CalendarMonthCell): string {
-    return new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(
-      new Date(`${cell.iso}T00:00:00`),
-    );
+  protected dayLabelOf(date: Date): string {
+    return new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(date);
   }
 
   /**
-   * Method selectDay
-   * @description Writes the picked day into the two-way model.
+   * Method shortWeekdayOf
+   * @description The abbreviated localized name of a weekday index.
    * @access protected
-   * @since 1.0.0
-   * @param {CalendarMonthCell} cell - The picked cell.
-   * @returns {void}
+   * @since 2.0.0
+   * @param {number} weekday - A JavaScript weekday index, Sunday being zero.
+   * @returns {string} The short weekday name.
    */
-  protected selectDay(cell: CalendarMonthCell): void {
-    this.selectedDay.set(cell.iso);
+  protected shortWeekdayOf(weekday: number): string {
+    return this.weekdayName(weekday, 'short');
+  }
+
+  /**
+   * Method longWeekdayOf
+   * @description The full localized name of a weekday index, for the column header.
+   * @access protected
+   * @since 2.0.0
+   * @param {number} weekday - A JavaScript weekday index, Sunday being zero.
+   * @returns {string} The full weekday name.
+   */
+  protected longWeekdayOf(weekday: number): string {
+    return this.weekdayName(weekday, 'long');
   }
 
   /**
@@ -214,15 +452,51 @@ export class Calendar {
 
   /**
    * Method goToday
-   * @description Re-anchors on the current month and selects today.
+   * @description Re-anchors on the current month and selects today, without stealing focus.
    * @access protected
    * @since 1.0.0
    * @returns {void}
    */
   protected goToday(): void {
-    const now: Date = new Date();
-    this.month.set(new Date(now.getFullYear(), now.getMonth(), 1));
-    this.selectedDay.set(toIsoDay(now));
+    this.selectDate(new Date());
+  }
+
+  /**
+   * Method anchorOn
+   *
+   * @description
+   * Points the roving anchor at a day, pulling the displayed month along when
+   * the day sits outside it. The anchor is written first so the month's
+   * `linkedSignal` recomputation keeps it rather than resetting to the first.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @param {Date} date - The day to anchor on.
+   *
+   * @returns {void}
+   */
+  private anchorOn(date: Date): void {
+    this.focusedDate.set(date);
+
+    const target: Date = startOfMonth(date);
+    if (target.getTime() !== startOfMonth(this.month()).getTime()) this.month.set(target);
+  }
+
+  /**
+   * Method weekdayName
+   * @description A weekday index rendered in the active locale at the asked width.
+   * @access private
+   * @since 2.0.0
+   * @param {number} weekday - A JavaScript weekday index, Sunday being zero.
+   * @param {'short' | 'long'} width - How wide the name should be.
+   * @returns {string} The localized weekday name.
+   */
+  private weekdayName(weekday: number, width: 'short' | 'long'): string {
+    const day: Date = new Date(WEEKDAY_REFERENCE);
+    day.setDate(day.getDate() + weekday);
+
+    return new Intl.DateTimeFormat(this.locale, { weekday: width }).format(day);
   }
   //#endregion
 }

@@ -32,6 +32,11 @@ import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
+  CURRENT_MEMBER_SENTINEL,
+  INTERVENTION_BUILTIN_VIEWS,
+  MAX_CUSTOM_VIEWS,
+} from '@features/organization/features/interventions/constants';
+import {
   resolveInterventionTag,
   type InterventionDueWindow,
   type InterventionListFilters,
@@ -41,16 +46,22 @@ import {
   type InterventionSortField,
   type InterventionStatus,
   type InterventionType,
+  type InterventionView,
   type MemberAvatar,
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
+import { InterventionListPreferencesService } from '@features/organization/features/interventions/services/intervention-list-preferences';
 import {
   InterventionStore,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import { isInterventionDeletable } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  OrganizationMemberAccessStore,
+  type OrganizationMemberAccessStoreType,
+} from '@features/organization/state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -62,6 +73,7 @@ import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { InterventionPlanningOptionsStore } from '../../../state/intervention-planning-options';
 import { InterventionTag } from '../../components/intervention-tag';
+import { InterventionViewSaveDialog } from '../../dialogs/intervention-view-save-dialog';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
 import { InterventionCreateSheet } from '../../sheets/intervention-create-sheet';
 import {
@@ -70,6 +82,7 @@ import {
   type InterventionTableColumn,
   type InterventionTransitionRequest,
 } from '../../tables/intervention-table';
+import { InterventionViewSwitcher } from './components/intervention-view-switcher';
 import type { InterventionListItemViewModel } from './models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
@@ -147,6 +160,8 @@ const NO_FILTERS: InterventionListFilters = {
     InterventionCreateSheet,
     InterventionTable,
     InterventionTag,
+    InterventionViewSaveDialog,
+    InterventionViewSwitcher,
     ...HlmAlertDialogImports,
     ...HlmDropdownMenuImports,
     ...HlmEmptyImports,
@@ -237,6 +252,15 @@ export class InterventionsPage {
     OrganizationPermissionService,
   );
 
+  /** Cookie-backed memory of the operator's sort, active view and saved views. */
+  private readonly preferences: InterventionListPreferencesService = inject(
+    InterventionListPreferencesService,
+  );
+
+  /** The signed-in member's profile, for resolving the `@me` view sentinel. */
+  private readonly memberAccess: OrganizationMemberAccessStoreType =
+    inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
+
   private readonly router: Router = inject(Router);
 
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
@@ -270,6 +294,17 @@ export class InterventionsPage {
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
     new Set<string>(),
   );
+
+  /** The operator's saved views, restored from the preferences cookie. */
+  protected readonly customViews: WritableSignal<readonly InterventionView[]> = signal<
+    readonly InterventionView[]
+  >([]);
+
+  /** The applied view's id, or null once the operator narrowed manually. */
+  protected readonly activeViewId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /** Whether the save-view dialog is open. */
+  protected readonly saveViewVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /** The intervention a row's menu asked to delete, pending confirmation. */
   protected readonly pendingDelete: WritableSignal<InterventionOutput | null> =
@@ -331,6 +366,43 @@ export class InterventionsPage {
   protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'interventions'],
   );
+
+  /**
+   * Property views
+   * @readonly
+   *
+   * @description
+   * Every offered view: the five built-ins, then the operator's saved ones.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<readonly InterventionView[]>}
+   */
+  protected readonly views: Signal<readonly InterventionView[]> = computed<
+    readonly InterventionView[]
+  >(() => [...INTERVENTION_BUILTIN_VIEWS, ...this.customViews()]);
+
+  /**
+   * Property currentMemberIri
+   * @readonly
+   *
+   * @description
+   * The signed-in member's IRI, or null before the profile resolves — what the
+   * `@me` view sentinel substitutes to at query time.
+   *
+   * @access private
+   * @since 6.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  private readonly currentMemberIri: Signal<string | null> = computed<string | null>(() => {
+    const memberId: string | undefined = this.memberAccess.profile()?.id;
+
+    return memberId === undefined
+      ? null
+      : `/api/organizations/${this.organizationId()}/members/${memberId}`;
+  });
 
   /**
    * Property canTransition
@@ -408,11 +480,23 @@ export class InterventionsPage {
    *
    * @type {Signal<readonly InterventionListItemViewModel[]>}
    */
-  protected readonly items: Signal<readonly InterventionListItemViewModel[]> = computed(() =>
-    this.store
-      .interventionList()
-      .map((intervention: InterventionOutput) => this.toItemViewModel(intervention)),
-  );
+  protected readonly items: Signal<readonly InterventionListItemViewModel[]> = computed(() => {
+    // The Overdue view means "late AND still actionable", but the server's
+    // status filter is single-valued so it cannot exclude two terminal
+    // statuses; they are dropped client-side, within the loaded page. The
+    // follow-up multi-valued status filter will move this server-side.
+    const loaded: readonly InterventionOutput[] =
+      this.activeViewId() === 'overdue'
+        ? this.store
+            .interventionList()
+            .filter(
+              (intervention: InterventionOutput) =>
+                intervention.status !== 'published' && intervention.status !== 'abandoned',
+            )
+        : this.store.interventionList();
+
+    return loaded.map((intervention: InterventionOutput) => this.toItemViewModel(intervention));
+  });
 
   /**
    * Property pageCount
@@ -660,6 +744,21 @@ export class InterventionsPage {
 
   //#region Constructor
   public constructor() {
+    this.customViews.set(this.preferences.readCustomViews());
+    this.sortOrder.set(this.preferences.readSort());
+
+    const rememberedViewId: string | null = this.preferences.readViewId();
+    if (rememberedViewId !== null) {
+      const remembered: InterventionView | undefined = this.views().find(
+        (candidate: InterventionView): boolean => candidate.id === rememberedViewId,
+      );
+      if (remembered) {
+        this.filters.set(remembered.filters);
+        this.sortOrder.set(remembered.sort);
+        this.activeViewId.set(rememberedViewId);
+      }
+    }
+
     effect((): void => {
       const term: string = this.searchTerm();
       untracked((): void => {
@@ -685,13 +784,20 @@ export class InterventionsPage {
       const search: string = this.searchTerm();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
+      // Tracked on purpose: a view using `@me` must reload once the profile
+      // resolves, since the sentinel substitutes to null until then.
+      const memberIri: string | null = this.currentMemberIri();
 
       untracked((): void => {
         this.selectedIds.set(new Set<string>());
+        const effective: InterventionListFilters =
+          filters.responsible === CURRENT_MEMBER_SENTINEL
+            ? { ...filters, responsible: memberIri }
+            : filters;
         this.store.load({
           organizationId,
           options: {
-            ...buildInterventionListOptions(filters, sort, search, new Date()),
+            ...buildInterventionListOptions(effective, sort, search, new Date()),
             page,
             itemsPerPage: pageSize,
           },
@@ -784,7 +890,111 @@ export class InterventionsPage {
    */
   protected applyFilter(patch: Partial<InterventionListFilters>): void {
     this.page.set(1);
+    this.detachFromView();
     this.filters.update((current: InterventionListFilters) => ({ ...current, ...patch }));
+  }
+
+  /**
+   * Method selectView
+   *
+   * @description
+   * Applies a named view as a preset — its narrowing and ordering replace the
+   * current ones, from the first page — and remembers the choice.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {string} viewId - The picked view's id.
+   *
+   * @returns {void}
+   */
+  protected selectView(viewId: string): void {
+    const view: InterventionView | undefined = this.views().find(
+      (candidate: InterventionView): boolean => candidate.id === viewId,
+    );
+    if (!view) return;
+
+    this.page.set(1);
+    this.filters.set(view.filters);
+    this.sortOrder.set(view.sort);
+    this.activeViewId.set(viewId);
+    this.preferences.writeViewId(viewId);
+  }
+
+  /**
+   * Method removeCustomView
+   *
+   * @description
+   * Deletes one saved view. Removing the active one detaches without touching
+   * the narrowing on screen — the operator loses the shortcut, not the query.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {string} viewId - The custom view's id.
+   *
+   * @returns {void}
+   */
+  protected removeCustomView(viewId: string): void {
+    const next: readonly InterventionView[] = this.customViews().filter(
+      (view: InterventionView): boolean => view.id !== viewId,
+    );
+    this.customViews.set(next);
+    this.preferences.writeCustomViews(next);
+    if (this.activeViewId() === viewId) this.detachFromView();
+  }
+
+  /**
+   * Method saveCurrentView
+   *
+   * @description
+   * Names the current narrowing and ordering as a saved view — capped at
+   * {@link MAX_CUSTOM_VIEWS}, dropping the oldest when full — and makes it the
+   * active one.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {string} label - The name the operator typed.
+   *
+   * @returns {void}
+   */
+  protected saveCurrentView(label: string): void {
+    const view: InterventionView = {
+      id: crypto.randomUUID(),
+      label,
+      builtin: false,
+      filters: this.filters(),
+      sort: this.sortOrder(),
+      grouping: 'status',
+      render: 'list',
+    };
+    const next: readonly InterventionView[] = [...this.customViews(), view].slice(
+      -MAX_CUSTOM_VIEWS,
+    );
+    this.customViews.set(next);
+    this.preferences.writeCustomViews(next);
+    this.activeViewId.set(view.id);
+    this.preferences.writeViewId(view.id);
+  }
+
+  /**
+   * Method detachFromView
+   *
+   * @description
+   * Drops the active-view highlight once the operator narrows manually: the
+   * view is a preset, not a mode, and the cookie forgets it too.
+   *
+   * @access private
+   * @since 6.0.0
+   *
+   * @returns {void}
+   */
+  private detachFromView(): void {
+    if (this.activeViewId() === null) return;
+
+    this.activeViewId.set(null);
+    this.preferences.writeViewId('');
   }
 
   /**
@@ -801,6 +1011,7 @@ export class InterventionsPage {
    */
   protected clearFilters(): void {
     this.page.set(1);
+    this.detachFromView();
     this.filters.set(NO_FILTERS);
   }
 
@@ -821,10 +1032,16 @@ export class InterventionsPage {
    */
   protected applySortField(field: InterventionSortField): void {
     this.page.set(1);
+    this.detachFromView();
     this.sortOrder.update((current: InterventionListSort) =>
       current.field === field
         ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
         : { field, direction: current.direction },
+    );
+    this.preferences.write(
+      this.preferences.readShowAbandoned(),
+      this.preferences.readCollapsedGroups(),
+      this.sortOrder(),
     );
   }
 

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
+import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import { InterventionsPage } from '../interventions.component';
 
@@ -98,6 +99,10 @@ describe('InterventionsPage', () => {
         {
           provide: OrganizationPermissionService,
           useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => true },
+        },
+        {
+          provide: OrganizationMemberAccessStore,
+          useValue: { profile: signal({ id: 'member-1' }) },
         },
         { provide: Router, useValue: { navigate } },
         { provide: ActivatedRoute, useValue: {} },

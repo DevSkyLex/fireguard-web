@@ -5,16 +5,14 @@ import type { InterventionListSort } from './intervention-list-sort.interface';
  * Type InterventionRender
  *
  * @description
- * How a work view draws its interventions. Each render groups by what it is:
- * the list by the view's {@link InterventionGrouping}, the board by workflow
- * status (its drag-and-drop *is* a status transition), the calendar by date.
- *
- * Mirrored in the `?view=` query param, kept under that name so installed
- * applications and bookmarks still resolve.
+ * How a work view draws its interventions: the list groups by the view's
+ * {@link InterventionGrouping}, the calendar by date. The former `board`
+ * literal is retired — no board exists and none is planned; a cookie-stored
+ * view carrying an unknown render is dropped at read time.
  *
  * @since 1.0.0
  */
-export type InterventionRender = 'list' | 'board' | 'calendar';
+export type InterventionRender = 'list' | 'calendar';
 
 /**
  * Type InterventionGrouping

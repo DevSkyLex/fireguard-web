@@ -1,0 +1,39 @@
+<div
+  class="flex flex-wrap items-center gap-1"
+  role="group"
+  i18n-aria-label="@@intervention.views.groupLabel"
+  aria-label="Saved views"
+  data-testid="interventions-view-switcher"
+>
+  @for (view of views(); track view.id) {
+    <div class="flex items-center">
+      <button
+        hlmBtn
+        type="button"
+        size="sm"
+        [variant]="view.id === activeViewId() ? 'secondary' : 'ghost'"
+        [attr.aria-pressed]="view.id === activeViewId()"
+        data-testid="interventions-view"
+        [attr.data-view-id]="view.id"
+        (click)="selected.emit(view.id)"
+      >
+        {{ view.label }}
+      </button>
+      @if (!view.builtin) {
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          class="-ms-1 size-6 text-muted-foreground hover:text-destructive"
+          data-testid="interventions-view-remove"
+          i18n-aria-label="@@intervention.views.remove"
+          aria-label="Delete this view"
+          (click)="removed.emit(view.id)"
+        >
+          <ng-icon name="lucideX" aria-hidden="true" />
+        </button>
+      }
+    </div>
+  }
+</div>

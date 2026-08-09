@@ -5,11 +5,13 @@ import {
   inject,
   input,
   LOCALE_ID,
+  output,
   type InputSignal,
+  type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight } from '@ng-icons/lucide';
+import { lucideArrowRight, lucideCircleAlert } from '@ng-icons/lucide';
 import type {
   InterventionActivityOutput,
   InterventionStatusChangePayload,
@@ -19,8 +21,10 @@ import {
   formatInterventionRelativeTime,
   resolveInterventionActivityActor,
 } from '@features/organization/features/interventions/utils';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBubbleImports } from '@shared/ui/bubble';
+import { HlmButton } from '@shared/ui/button';
 import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmMessageImports } from '@shared/ui/message';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -152,8 +156,12 @@ const SKELETON_ROW_COUNT: number = 3;
     ...HlmMarkerImports,
     ...HlmMessageImports,
     ...HlmBubbleImports,
+    ...HlmAlertImports,
+    HlmButton,
   ],
-  providers: [provideIcons({ lucideArrowRight, ...INTERVENTION_ACTIVITY_EVENT_ICONS })],
+  providers: [
+    provideIcons({ lucideArrowRight, lucideCircleAlert, ...INTERVENTION_ACTIVITY_EVENT_ICONS }),
+  ],
   templateUrl: './intervention-activity-thread.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -162,7 +170,7 @@ export class InterventionActivityThread {
   /**
    * Property activities
    * @readonly
-   * @description The timeline, oldest first — the order the API returns it in.
+   * @description The loaded window of the timeline, oldest first — the order the API returns it in. Not necessarily the whole history; see {@link hasOlder}.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<readonly InterventionActivityOutput[]>}
@@ -192,6 +200,56 @@ export class InterventionActivityThread {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property error
+   * @readonly
+   *
+   * @description
+   * Why the timeline could not be read, or `null`. Without it a failed fetch is
+   * indistinguishable from an intervention nothing has happened to yet.
+   *
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly error: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property hasOlder
+   * @readonly
+   *
+   * @description
+   * Whether entries older than the ones shown exist server-side. The timeline
+   * loads its newest page first, so anything before that is behind this.
+   *
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly hasOlder: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property olderRequested
+   * @readonly
+   * @description The reader asked for the entries above the ones shown.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly olderRequested: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property retryRequested
+   * @readonly
+   * @description The reader asked to read the timeline again after a failure.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly retryRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -220,7 +278,7 @@ export class InterventionActivityThread {
    * @type {Signal<boolean>}
    */
   protected readonly isEmpty: Signal<boolean> = computed<boolean>(
-    () => !this.loading() && this.activities().length === 0,
+    () => !this.loading() && this.error() === null && this.activities().length === 0,
   );
   //#endregion
 

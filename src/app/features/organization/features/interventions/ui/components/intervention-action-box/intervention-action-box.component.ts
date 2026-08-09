@@ -1,19 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCalendarCheck,
-  lucideCircleCheckBig,
-  lucideListChecks,
-  lucideLock,
-  lucideSend,
-} from '@ng-icons/lucide';
+import { lucideCircleCheckBig, lucideLock } from '@ng-icons/lucide';
 import type {
   InterventionCommandAction,
   InterventionIssueOutput,
@@ -21,7 +17,7 @@ import type {
   InterventionStatus,
 } from '@features/organization/features/interventions/models';
 import { HlmAlertImports } from '@shared/ui/alert';
-import { HlmButton } from '@shared/ui/button';
+import { InterventionCommandButton } from '../intervention-command-button';
 import { InterventionPublicationSummary } from '../intervention-publication-summary';
 
 /**
@@ -29,12 +25,17 @@ import { InterventionPublicationSummary } from '../intervention-publication-summ
  * @class InterventionActionBox
  *
  * @description
- * The single host for the current phase's forward action, rendered exactly
- * once regardless of phase — a fixed address on the page instead of a
- * button that used to jump between three tab panels. The box's *content*
- * still changes with the phase (a plan/submit label, the publication recap
- * and its blockers, or a locked terminal state once published); its
- * *position* never does.
+ * The host for the current phase's forward action from `lg` up — a fixed
+ * address in the second column instead of a button that used to jump between
+ * three tab panels. The box's *content* changes with the phase (a plan/submit
+ * label, the publication recap and its blockers, or a locked terminal state
+ * once published); its *position* never does.
+ *
+ * Below `lg` the button itself moves to `InterventionCommandBar`, because the
+ * grid collapses and this column would otherwise land after the whole content
+ * flow. Both render the same `InterventionCommandButton` from the same
+ * `action` signal, so there is one implementation and one address per viewport
+ * — never two live buttons at once.
  *
  * `published` is checked ahead of `phase() === 'review'`: both a submitted
  * intervention still awaiting publication and a published one map to the
@@ -62,16 +63,8 @@ import { InterventionPublicationSummary } from '../intervention-publication-summ
  */
 @Component({
   selector: 'app-intervention-action-box',
-  imports: [NgIcon, HlmButton, InterventionPublicationSummary, ...HlmAlertImports],
-  providers: [
-    provideIcons({
-      lucideCalendarCheck,
-      lucideCircleCheckBig,
-      lucideListChecks,
-      lucideLock,
-      lucideSend,
-    }),
-  ],
+  imports: [NgIcon, InterventionCommandButton, InterventionPublicationSummary, ...HlmAlertImports],
+  providers: [provideIcons({ lucideCircleCheckBig, lucideLock })],
   templateUrl: './intervention-action-box.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -173,5 +166,28 @@ export class InterventionActionBox {
    * @type {OutputEmitterRef<void>}
    */
   public readonly invoked: OutputEmitterRef<void> = output<void>();
+  //#endregion
+
+  //#region Computed
+  /**
+   * Property hasStandaloneContent
+   * @readonly
+   *
+   * @description
+   * Whether this box still says something once its button is taken away — the
+   * terminal published line, or the review phase's blockers and recap.
+   *
+   * Below `lg` the button moves to `InterventionCommandBar`, so a `prepare` or
+   * `execute` box would render as an empty bordered rectangle. When there is
+   * nothing left, the box hides itself rather than leaving that behind.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasStandaloneContent: Signal<boolean> = computed<boolean>(
+    () => this.status() === 'published' || this.phase() === 'review',
+  );
   //#endregion
 }

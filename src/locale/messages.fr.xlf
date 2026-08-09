@@ -4484,8 +4484,16 @@
         <target>Statut</target>
       </trans-unit>
       <trans-unit id="intervention.detail.statusMenu" datatype="html">
-        <source>Change status</source>
-        <target>Changer le statut</target>
+        <source>Move this intervention</source>
+        <target>Déplacer cette intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.statusMenuLabel" datatype="html">
+        <source>Send it to</source>
+        <target>L'envoyer vers</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.commandBarSeeDetails" datatype="html">
+        <source>— see what is blocking</source>
+        <target>— voir ce qui bloque</target>
       </trans-unit>
       <trans-unit id="intervention.detail.tabFieldWork" datatype="html">
         <source>Field work</source>
@@ -4596,8 +4604,36 @@
         <target>Intervention introuvable</target>
       </trans-unit>
       <trans-unit id="intervention.detail.notFound" datatype="html">
-        <source>Intervention not found or unavailable offline.</source>
-        <target>Intervention introuvable ou indisponible hors ligne.</target>
+        <source>This intervention does not exist, or you no longer have access to it.</source>
+        <target>Cette intervention n'existe pas, ou vous n'y avez plus accès.</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.loadFailedTitle" datatype="html">
+        <source>This intervention could not be opened</source>
+        <target>Cette intervention n'a pas pu être ouverte</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.loadOffline" datatype="html">
+        <source>This intervention has not been saved on this device, so it cannot be opened offline. Reconnect and try again.</source>
+        <target>Cette intervention n'a pas été enregistrée sur cet appareil : elle ne peut pas être ouverte hors ligne. Reconnectez-vous puis réessayez.</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.loadOlder" datatype="html">
+        <source> Show earlier activity </source>
+        <target> Afficher l'activité antérieure </target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.stake" datatype="html">
+        <source> This writes the intervention to the compliance record. Once published it is locked and cannot be edited. </source>
+        <target> Cette action inscrit l'intervention au registre de conformité. Une fois publiée, elle est verrouillée et ne peut plus être modifiée. </target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.inProgress" datatype="html">
+        <source> Writing to the compliance record — do not close this window. </source>
+        <target> Inscription au registre de conformité — ne fermez pas cette fenêtre. </target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.pending" datatype="html">
+        <source>Publishing…</source>
+        <target>Publication en cours…</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.succeeded" datatype="html">
+        <source>Published to the compliance record</source>
+        <target>Publiée au registre de conformité</target>
       </trans-unit>
       <trans-unit id="intervention.detail.backToList" datatype="html">
         <source>Back to interventions</source>

@@ -36,8 +36,24 @@ export interface InterventionWorkspaceState {
   /**
    * Activity timeline (comments and system entries) of the active
    * intervention, ordered `createdAt` ascending.
+   *
+   * This holds the **tail** of the timeline, not its head: the API sorts
+   * ascending, so the newest entries are on the last page, and that is the page
+   * loaded first. Older pages are prepended on demand.
    */
   readonly activities: readonly InterventionActivityOutput[];
+
+  /**
+   * How many entries the timeline holds server-side, so a surface can tell
+   * "that is all of it" from "there is more above".
+   */
+  readonly activityTotal: number;
+
+  /**
+   * The lowest timeline page currently loaded, or `null` before the first
+   * fetch. Anything above 1 means older entries exist.
+   */
+  readonly activityOldestPage: number | null;
 
   /**
    * Loading / success / error state for `loadActivities`, kept separate from

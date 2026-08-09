@@ -410,6 +410,14 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     createdAt: '2026-07-01T00:00:00.000Z',
   } as InterventionActivityOutput;
 
+  const newest = {
+    ...comment,
+    '@id': '/api/intervention-activities/activity-9',
+    id: 'activity-9',
+    body: 'Signed off',
+    createdAt: '2026-07-09T00:00:00.000Z',
+  } as InterventionActivityOutput;
+
   beforeEach(() => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     mockService = {
@@ -463,6 +471,67 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     expect(mockService.listActivities).toHaveBeenCalledWith('intervention-1');
     expect(store.activities()).toEqual([comment]);
     expect(store.activityCallState().status).toBe('success');
+  });
+
+  it('reads a single-page timeline in one request', () => {
+    store.loadActivities('intervention-1');
+
+    expect(mockService.listActivities).toHaveBeenCalledTimes(1);
+    expect(store.activityOldestPage()).toBe(1);
+    expect(store.hasOlderActivities()).toBe(false);
+  });
+
+  it('lands on the LAST page, because the API sorts createdAt ascending', () => {
+    // 3 pages of 2: page 1 holds the oldest entries, so stopping there would show
+    // ancient history as the whole record and make metaLine() report it as latest.
+    mockService.listActivities.mockImplementation((_id: string, page?: number) =>
+      of({
+        '@id': '/api/interventions/intervention-1/activities',
+        '@type': 'Collection',
+        totalItems: 5,
+        member: page === 3 ? [newest] : [comment, comment],
+      }),
+    );
+
+    store.loadActivities('intervention-1');
+
+    expect(mockService.listActivities).toHaveBeenNthCalledWith(1, 'intervention-1');
+    expect(mockService.listActivities).toHaveBeenNthCalledWith(2, 'intervention-1', 3);
+    expect(store.activities()).toEqual([newest]);
+    expect(store.activityOldestPage()).toBe(3);
+    expect(store.hasOlderActivities()).toBe(true);
+  });
+
+  it('prepends the page above the oldest one held', () => {
+    // 3 entries over 2 pages of 2: page 1 is full, page 2 is the tail.
+    mockService.listActivities.mockImplementation((_id: string, page?: number) =>
+      of({
+        '@id': '/api/interventions/intervention-1/activities',
+        '@type': 'Collection',
+        totalItems: 3,
+        member: page === 2 ? [newest] : [comment, comment],
+      }),
+    );
+
+    store.loadActivities('intervention-1');
+
+    expect(store.activityOldestPage()).toBe(2);
+
+    store.loadOlderActivities('intervention-1');
+
+    expect(mockService.listActivities).toHaveBeenLastCalledWith('intervention-1', 1);
+    expect(store.activities()).toEqual([comment, comment, newest]);
+    expect(store.activityOldestPage()).toBe(1);
+    expect(store.hasOlderActivities()).toBe(false);
+  });
+
+  it('does not walk back past page 1', () => {
+    store.loadActivities('intervention-1');
+    mockService.listActivities.mockClear();
+
+    store.loadOlderActivities('intervention-1');
+
+    expect(mockService.listActivities).not.toHaveBeenCalled();
   });
 
   it('keeps the in-memory snapshot on a network failure and reports success', () => {

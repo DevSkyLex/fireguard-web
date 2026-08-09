@@ -51,13 +51,13 @@
             data-testid="intervention-detail-status-menu"
             [hlmDropdownMenuTrigger]="statusMenu"
           >
-            <span i18n="@@intervention.detail.statusMenu">Change status</span>
+            <span i18n="@@intervention.detail.statusMenu">Move this intervention</span>
           </button>
 
           <ng-template #statusMenu>
-            <hlm-dropdown-menu class="w-52">
-              <hlm-dropdown-menu-label i18n="@@intervention.list.rowMoveTo"
-                >Move to</hlm-dropdown-menu-label
+            <hlm-dropdown-menu class="w-56">
+              <hlm-dropdown-menu-label i18n="@@intervention.detail.statusMenuLabel"
+                >Send it to</hlm-dropdown-menu-label
               >
               @for (target of transitionTargets(); track target) {
                 <button
@@ -130,23 +130,27 @@
       >
         <ng-icon name="lucideCircleAlert" aria-hidden="true" />
         <p hlmAlertTitle>{{ message }}</p>
-        <button
-          hlmAlertAction
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11"
-          data-testid="intervention-detail-retry"
-          (click)="retryLoad()"
-          i18n="@@common.tryAgain"
-        >
-          Try again
-        </button>
+        @if (store.loadFailed()) {
+          <button
+            hlmAlertAction
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="max-sm:min-h-11"
+            data-testid="intervention-detail-retry"
+            (click)="retryLoad()"
+            i18n="@@common.tryAgain"
+          >
+            Try again
+          </button>
+        }
       </div>
     }
 
-    <div class="gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-6">
+    <div
+      class="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-6"
+    >
       <div class="flex min-w-0 flex-col gap-4">
         <app-intervention-about
           [intervention]="intervention"
@@ -233,6 +237,10 @@
           [activities]="store.activities()"
           [members]="planningOptions.members()"
           [loading]="activitiesLoading()"
+          [error]="activitiesError()"
+          [hasOlder]="store.hasOlderActivities()"
+          (olderRequested)="loadOlderActivities()"
+          (retryRequested)="reloadActivities()"
         />
 
         <div class="border-t border-border pt-4">
@@ -264,17 +272,19 @@
           </div>
         </div>
 
-        <app-intervention-action-box
-          [action]="commandAction()"
-          [phase]="phase()"
-          [status]="intervention.status"
-          [blockers]="blockerIssues()"
-          [pendingChanges]="pendingChangesCount()"
-          [inspections]="intervention.inspectionsCount"
-          [revision]="intervention.revision"
-          [busy]="store.saving()"
-          (invoked)="invokeCommandAction()"
-        />
+        <div #actionBoxSection tabindex="-1" class="outline-none">
+          <app-intervention-action-box
+            [action]="commandAction()"
+            [phase]="phase()"
+            [status]="intervention.status"
+            [blockers]="blockerIssues()"
+            [pendingChanges]="pendingChangesCount()"
+            [inspections]="intervention.inspectionsCount"
+            [revision]="intervention.revision"
+            [busy]="store.saving()"
+            (invoked)="invokeCommandAction()"
+          />
+        </div>
       </div>
     </div>
 
@@ -316,20 +326,66 @@
         </button>
       </div>
     }
+  } @else if (store.loadFailed()) {
+    <app-empty-state
+      icon="lucideCircleAlert"
+      class="rounded-md border border-dashed border-destructive/40 p-10"
+      role="alert"
+      title="This intervention could not be opened"
+      i18n-title="@@intervention.detail.loadFailedTitle"
+      [description]="store.error()"
+      data-testid="intervention-detail-load-failed"
+    >
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="intervention-detail-load-failed-retry"
+        (click)="retryLoad()"
+        i18n="@@common.tryAgain"
+      >
+        Try again
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        (click)="navigateToList()"
+      >
+        <span i18n="@@intervention.detail.backToList">Back to interventions</span>
+      </button>
+    </app-empty-state>
   } @else {
     <app-empty-state
       icon="lucideCompass"
       class="rounded-md border border-dashed border-border p-10"
       title="Intervention not found"
       i18n-title="@@intervention.detail.notFoundTitle"
-      description="Intervention not found or unavailable offline."
+      description="This intervention does not exist, or you no longer have access to it."
       i18n-description="@@intervention.detail.notFound"
       data-testid="intervention-detail-not-found"
     >
-      <button hlmBtn type="button" variant="outline" (click)="navigateToList()">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        (click)="navigateToList()"
+      >
         <span i18n="@@intervention.detail.backToList">Back to interventions</span>
       </button>
     </app-empty-state>
+  }
+
+  @if (store.intervention()) {
+    <app-intervention-command-bar
+      [action]="commandAction()"
+      [blockers]="blockerIssues()"
+      [busy]="store.saving()"
+      (invoked)="invokeCommandAction()"
+      (detailsRequested)="revealActionBox()"
+    />
   }
 </div>
 
@@ -399,6 +455,10 @@
   <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-detail-publish-dialog">
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@intervention.publish.header">Publish intervention</h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.publish.stake">
+        This writes the intervention to the compliance record. Once published it is locked and
+        cannot be edited.
+      </p>
     </hlm-alert-dialog-header>
 
     @if (store.intervention(); as intervention) {
@@ -422,16 +482,33 @@
       </div>
     }
 
+    @if (publishing()) {
+      <p
+        class="flex items-center gap-2 text-sm text-muted-foreground"
+        role="status"
+        data-testid="intervention-detail-publish-progress"
+      >
+        <hlm-spinner class="size-4" aria-hidden="true" />
+        <span i18n="@@intervention.publish.inProgress">
+          Writing to the compliance record — do not close this window.
+        </span>
+      </p>
+    }
+
     <hlm-alert-dialog-footer>
       <button hlmAlertDialogCancel [disabled]="publishing()" i18n="@@common.cancel">Cancel</button>
       <button
         hlmAlertDialogAction
         data-testid="intervention-detail-publish-confirm"
         [disabled]="publishing()"
+        [attr.aria-busy]="publishing() ? 'true' : null"
         (click)="confirmPublish()"
-        i18n="@@intervention.publish.accept"
       >
-        Publish
+        @if (publishing()) {
+          <span i18n="@@intervention.publish.pending">Publishing…</span>
+        } @else {
+          <span i18n="@@intervention.publish.accept">Publish</span>
+        }
       </button>
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>

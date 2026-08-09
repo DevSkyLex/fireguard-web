@@ -1,5 +1,6 @@
 <div
   class="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 p-4"
+  [class.max-lg:hidden]="!hasStandaloneContent()"
   data-testid="intervention-action-box"
 >
   @if (status() === 'published') {
@@ -39,18 +40,12 @@
     </div>
 
     @if (action(); as action) {
-      <div class="flex flex-col items-start gap-0.5 border-t border-border pt-3">
-        <button
-          hlmBtn
-          type="button"
-          class="max-sm:min-h-11"
-          data-testid="intervention-detail-command"
-          [disabled]="action.disabled || action.loading || busy()"
-          (click)="invoked.emit()"
-        >
-          <ng-icon [name]="action.icon" aria-hidden="true" />
-          <span>{{ action.label }}</span>
-        </button>
+      <div class="flex flex-col items-start gap-0.5 border-t border-border pt-3 max-lg:hidden">
+        <app-intervention-command-button
+          [action]="action"
+          [busy]="busy()"
+          (invoked)="invoked.emit()"
+        />
         @if (action.disabledReason; as reason) {
           <p class="text-xs text-muted-foreground">{{ reason }}</p>
         } @else {
@@ -61,19 +56,15 @@
       </div>
     }
   } @else if (action(); as action) {
-    <button
-      hlmBtn
-      type="button"
-      class="max-sm:min-h-11"
-      data-testid="intervention-detail-command"
-      [disabled]="action.disabled || action.loading || busy()"
-      (click)="invoked.emit()"
-    >
-      <ng-icon [name]="action.icon" aria-hidden="true" />
-      <span>{{ action.label }}</span>
-    </button>
-    @if (action.disabledReason; as reason) {
-      <p class="text-xs text-muted-foreground">{{ reason }}</p>
-    }
+    <div class="flex flex-col items-start gap-0.5 max-lg:hidden">
+      <app-intervention-command-button
+        [action]="action"
+        [busy]="busy()"
+        (invoked)="invoked.emit()"
+      />
+      @if (action.disabledReason; as reason) {
+        <p class="text-xs text-muted-foreground">{{ reason }}</p>
+      }
+    </div>
   }
 </div>

@@ -16,6 +16,7 @@
           size="sm"
           class="max-sm:min-h-11"
           data-testid="intervention-work-items-add"
+          [disabled]="busy()"
           (click)="addRequested.emit()"
         >
           <ng-icon name="lucidePlus" aria-hidden="true" />
@@ -64,12 +65,25 @@
                     variant="ghost"
                     class="size-11 shrink-0 rounded-full"
                     data-testid="intervention-work-item-toggle"
-                    [disabled]="!canToggleItem(item) || busy()"
+                    [disabled]="!canToggleItem(item) || isRowPending(item)"
                     [attr.aria-pressed]="item.status === 'completed'"
                     [attr.aria-label]="toggleLabelOf(item)"
+                    [attr.aria-busy]="isRowPending(item) ? 'true' : null"
                     (click)="toggle(item)"
                   >
-                    <ng-icon [name]="iconOf(item)" [class]="iconClassOf(item)" aria-hidden="true" />
+                    @if (isRowPending(item)) {
+                      <hlm-spinner
+                        class="size-4"
+                        data-testid="intervention-work-item-pending"
+                        aria-hidden="true"
+                      />
+                    } @else {
+                      <ng-icon
+                        [name]="iconOf(item)"
+                        [class]="iconClassOf(item)"
+                        aria-hidden="true"
+                      />
+                    }
                   </button>
                 </td>
 
@@ -183,6 +197,7 @@
           size="sm"
           class="max-sm:min-h-11"
           data-testid="intervention-work-items-empty-add"
+          [disabled]="busy()"
           (click)="addRequested.emit()"
         >
           <ng-icon name="lucidePlus" aria-hidden="true" />

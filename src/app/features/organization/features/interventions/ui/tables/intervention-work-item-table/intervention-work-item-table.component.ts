@@ -33,6 +33,7 @@ import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 import {
@@ -72,6 +73,7 @@ import {
     ...HlmAvatarImports,
     ...HlmButtonImports,
     ...HlmDropdownMenuImports,
+    ...HlmSpinnerImports,
     ...HlmTableImports,
   ],
   providers: [
@@ -189,7 +191,15 @@ export class InterventionWorkItemTable {
   /**
    * Property busy
    * @readonly
-   * @description Whether any write is in flight, which locks every toggle.
+   *
+   * @description
+   * Whether any write is in flight. This gates **only** the add affordances,
+   * because the sheet they open is modal and a second one would race the first.
+   * It deliberately does not gate a row: the store queues work-item writes with
+   * `mergeMap` so an operator can tick several items in a row, and locking every
+   * toggle on any write would throw that away. A row's own in-flight write is
+   * {@link pendingItemId}.
+   *
    * @access public
    * @since 1.0.0
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
@@ -427,6 +437,23 @@ export class InterventionWorkItemTable {
    */
   protected canToggleItem(item: InterventionWorkItemOutput): boolean {
     return this.canToggle() && item.status !== 'skipped';
+  }
+
+  /**
+   * Method isRowPending
+   *
+   * @description
+   * Whether this row's own write is in flight. Only this row is locked and only
+   * this row shows a spinner, so ticking one item never blocks the next.
+   *
+   * @access protected
+   * @since 4.1.0
+   *
+   * @param {InterventionWorkItemOutput} item - The item being rendered.
+   * @returns {boolean} True while this row is saving.
+   */
+  protected isRowPending(item: InterventionWorkItemOutput): boolean {
+    return this.pendingItemId() === item.id;
   }
 
   /**

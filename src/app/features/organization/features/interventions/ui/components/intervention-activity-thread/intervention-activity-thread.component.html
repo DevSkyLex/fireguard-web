@@ -15,11 +15,51 @@
         </li>
       }
     </ul>
+  } @else if (error(); as message) {
+    <div
+      hlmAlert
+      variant="destructive"
+      class="border-destructive/30 bg-destructive/5"
+      role="alert"
+      data-testid="intervention-activity-error"
+    >
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <p hlmAlertTitle>{{ message }}</p>
+      <button
+        hlmAlertAction
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="max-sm:min-h-11"
+        data-testid="intervention-activity-retry"
+        (click)="retryRequested.emit()"
+        i18n="@@common.tryAgain"
+      >
+        Try again
+      </button>
+    </div>
   } @else if (isEmpty()) {
     <p class="text-sm text-muted-foreground" i18n="@@intervention.activity.empty">
       No activity recorded yet.
     </p>
   } @else {
+    @if (hasOlder()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="self-start max-sm:min-h-11"
+        data-testid="intervention-activity-load-older"
+        [disabled]="loading()"
+        (click)="olderRequested.emit()"
+        i18n="@@intervention.activity.loadOlder"
+      >
+        Show earlier activity
+      </button>
+    }
+
     <ol class="flex flex-col">
       @for (activity of activities(); track activity.id; let last = $last) {
         <li

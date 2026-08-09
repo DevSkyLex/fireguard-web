@@ -1,0 +1,19 @@
+@if (action(); as action) {
+  <button
+    hlmBtn
+    type="button"
+    class="max-sm:min-h-11"
+    [class.w-full]="block()"
+    data-testid="intervention-detail-command"
+    [disabled]="action.disabled || action.loading || busy()"
+    [attr.aria-busy]="action.loading ? 'true' : null"
+    (click)="invoked.emit()"
+  >
+    @if (action.loading) {
+      <hlm-spinner class="size-4" aria-hidden="true" />
+    } @else {
+      <ng-icon [name]="action.icon" aria-hidden="true" />
+    }
+    <span>{{ action.label }}</span>
+  </button>
+}

@@ -171,11 +171,44 @@ describe('InterventionWorkItemTable', () => {
     expect(changes).toEqual([]);
   });
 
-  it('should lock every toggle while a write is in flight', async () => {
+  it('should lock only the row whose own write is in flight', async () => {
+    fixture.componentRef.setInput('pendingItemId', 'wi-2');
+    await fixture.whenStable();
+
+    // wi-2 is saving; wi-1 and wi-4 stay live so an agent can keep ticking.
+    // (wi-3 is skipped, and disabled for its own reason.)
+    expect(toggles()[1]?.disabled).toBe(true);
+    expect(toggles()[0]?.disabled).toBe(false);
+    expect(toggles()[3]?.disabled).toBe(false);
+  });
+
+  it('should spin on the saving row, and only there', async () => {
+    fixture.componentRef.setInput('pendingItemId', 'wi-2');
+    await fixture.whenStable();
+
+    expect(toggles()[1]?.querySelector('hlm-spinner')).not.toBeNull();
+    expect(toggles()[1]?.getAttribute('aria-busy')).toBe('true');
+    expect(toggles()[0]?.querySelector('hlm-spinner')).toBeNull();
+  });
+
+  it('should not lock any toggle merely because some other write is in flight', async () => {
+    // The store queues these writes with mergeMap precisely so they can overlap;
+    // a table that froze on `busy` would throw that away.
     fixture.componentRef.setInput('busy', true);
     await fixture.whenStable();
 
-    expect(toggles().every((toggle) => toggle.disabled)).toBe(true);
+    expect(toggles()[0]?.disabled).toBe(false);
+    expect(toggles()[1]?.disabled).toBe(false);
+  });
+
+  it('should still hold the add affordance back while a write is in flight', async () => {
+    fixture.componentRef.setInput('canAdd', true);
+    fixture.componentRef.setInput('busy', true);
+    await fixture.whenStable();
+
+    expect((byTestId('intervention-work-items-add') as HTMLButtonElement | null)?.disabled).toBe(
+      true,
+    );
   });
 
   it('should not toggle at all without the permission', async () => {

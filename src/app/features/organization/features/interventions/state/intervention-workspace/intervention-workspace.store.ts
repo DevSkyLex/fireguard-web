@@ -7,10 +7,12 @@ import {
   catchError,
   concatMap,
   EMPTY,
+  filter,
   forkJoin,
   from,
   map,
   mergeMap,
+  of,
   pipe,
   switchMap,
   tap,
@@ -21,6 +23,7 @@ import { ConnectivityService } from '@core/connectivity';
 import {
   errorCallState,
   idleCallState,
+  isCallError,
   isCallPending,
   pendingCallState,
   successCallState,
@@ -72,6 +75,8 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   loadCallState: idleCallState(),
   mutationCallState: idleCallState(),
   activities: [],
+  activityTotal: 0,
+  activityOldestPage: null,
   activityCallState: idleCallState(),
 };
 
@@ -168,6 +173,25 @@ export const InterventionWorkspaceStore = signalStore(
     ),
 
     /**
+     * Whether the last workspace *fetch* failed, as opposed to a write.
+     *
+     * A page needs the distinction to decide what to offer: re-running `load`
+     * is the repair for a failed fetch and the wrong repair for a rejected
+     * patch, which {@link error} alone cannot tell apart.
+     */
+    loadFailed: computed<boolean>(() => isCallError(store.loadCallState())),
+
+    /**
+     * Whether the timeline has entries older than the ones held, so a surface
+     * can offer to walk further back instead of implying it shows everything.
+     */
+    hasOlderActivities: computed<boolean>(() => {
+      const oldest: number | null = store.activityOldestPage();
+
+      return oldest !== null && oldest > 1;
+    }),
+
+    /**
      * Normalized error of the last write.
      *
      * Unlike {@link error}, this keeps the whole payload, so a page can hand a 422
@@ -215,7 +239,7 @@ export const InterventionWorkspaceStore = signalStore(
             connectivity.isNetworkFailure(error)
               ? from(offline.getWorkspace(interventionId)).pipe(
                   map((workspace) => {
-                    if (!workspace) throw new Error('Intervention unavailable offline');
+                    if (!workspace) throw error; // Rethrow the network failure, not a generic Error: `loadFailure` branches on it.
                     return {
                       intervention: workspace.intervention,
                       workItems: workspace.workItems,
@@ -250,10 +274,15 @@ export const InterventionWorkspaceStore = signalStore(
       };
 
       const loadFailure = (error: unknown) =>
-        workspaceFailure(
-          error,
-          $localize`:@@intervention.workspace.loadFailed:The intervention workspace could not be loaded.`,
-        );
+        connectivity.isNetworkFailure(error)
+          ? workspaceFailure(
+              error,
+              $localize`:@@intervention.workspace.loadOffline:This intervention has not been saved on this device, so it cannot be opened offline. Reconnect and try again.`,
+            )
+          : workspaceFailure(
+              error,
+              $localize`:@@intervention.workspace.loadFailed:The intervention workspace could not be loaded.`,
+            );
 
       const load = rxMethod<string>(
         pipe(
@@ -322,11 +351,21 @@ export const InterventionWorkspaceStore = signalStore(
        * @method loadActivities
        *
        * @description
-       * Loads the intervention's activity timeline. On a network failure
-       * while an in-memory snapshot already exists (the tab was opened
-       * before going offline), keeps that snapshot and reports success
-       * instead of surfacing a transient offline error; otherwise the error
-       * is normalized into `activityCallState`.
+       * Loads the **newest** page of the intervention's activity timeline.
+       *
+       * The API sorts `createdAt` ascending, so page 1 holds the oldest entries.
+       * Reading it and stopping there showed a months-old history as the whole
+       * timeline and made the page's "last touched" line report the *first*
+       * event as the latest. So page 1 is read for its shape — `totalItems` and
+       * the server's page size, which the client is not told — and when it is
+       * not the entire timeline the last page is fetched and page 1 discarded.
+       * That is one extra request, and only for an intervention with more than
+       * one page of history.
+       *
+       * On a network failure while an in-memory snapshot already exists (the tab
+       * was opened before going offline), keeps that snapshot and reports
+       * success instead of surfacing a transient offline error; otherwise the
+       * error is normalized into `activityCallState`.
        *
        * ⚠️ Zoneless: this method reads and writes `activityCallState`. Never
        * call it from inside a tracked `effect()` without `untracked()`.
@@ -341,10 +380,23 @@ export const InterventionWorkspaceStore = signalStore(
           tap(() => patchState(store, { activityCallState: pendingCallState() })),
           switchMap((interventionId) =>
             service.listActivities(interventionId).pipe(
+              switchMap((first) => {
+                const pageSize: number = first.member.length;
+                if (pageSize === 0 || pageSize >= first.totalItems)
+                  return of({ page: 1, collection: first });
+
+                const lastPage: number = Math.ceil(first.totalItems / pageSize);
+
+                return service
+                  .listActivities(interventionId, lastPage)
+                  .pipe(map((collection) => ({ page: lastPage, collection })));
+              }),
               tapResponse({
-                next: (response) =>
+                next: ({ page, collection }) =>
                   patchState(store, {
-                    activities: response.member,
+                    activities: collection.member,
+                    activityTotal: collection.totalItems,
+                    activityOldestPage: page,
                     activityCallState: successCallState(null),
                   }),
                 error: (error: unknown) => {
@@ -357,6 +409,51 @@ export const InterventionWorkspaceStore = signalStore(
               }),
             ),
           ),
+        ),
+      );
+
+      /**
+       * Method loadOlderActivities
+       * @method loadOlderActivities
+       *
+       * @description
+       * Prepends the page just above the oldest one currently held, walking the
+       * timeline backwards from the tail {@link loadActivities} landed on. A
+       * no-op once page 1 is loaded.
+       *
+       * ⚠️ Zoneless: this method reads and writes `activityCallState`. Never
+       * call it from inside a tracked `effect()` without `untracked()`.
+       *
+       * @access public
+       * @since 1.4.0
+       *
+       * @type {RxMethod<string>}
+       */
+      const loadOlderActivities = rxMethod<string>(
+        pipe(
+          filter(() => {
+            const oldest: number | null = store.activityOldestPage();
+
+            return oldest !== null && oldest > 1 && !isCallPending(store.activityCallState());
+          }),
+          tap(() => patchState(store, { activityCallState: pendingCallState() })),
+          switchMap((interventionId) => {
+            const target: number = (store.activityOldestPage() ?? 2) - 1;
+
+            return service.listActivities(interventionId, target).pipe(
+              tapResponse({
+                next: (collection) =>
+                  patchState(store, {
+                    activities: [...collection.member, ...store.activities()],
+                    activityTotal: collection.totalItems,
+                    activityOldestPage: target,
+                    activityCallState: successCallState(null),
+                  }),
+                error: (error: unknown) =>
+                  patchState(store, { activityCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
         ),
       );
 
@@ -375,6 +472,7 @@ export const InterventionWorkspaceStore = signalStore(
                 ...store.activities(),
                 optimistic.comment(interventionId, body, clientId),
               ],
+              activityTotal: store.activityTotal() + 1,
               mutationCallState: successCallState(null),
             });
           }),
@@ -413,6 +511,7 @@ export const InterventionWorkspaceStore = signalStore(
               map((activity) => {
                 patchState(store, {
                   activities: [...store.activities(), activity],
+                  activityTotal: store.activityTotal() + 1,
                   mutationCallState: successCallState(null),
                 });
               }),
@@ -440,6 +539,7 @@ export const InterventionWorkspaceStore = signalStore(
         load,
         reload,
         loadActivities,
+        loadOlderActivities,
         addComment,
 
         transition: rxMethod<InterventionTransitionRequest>(

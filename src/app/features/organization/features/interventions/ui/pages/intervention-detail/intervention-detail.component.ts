@@ -79,6 +79,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import {
   InterventionPlanningOptionsStore,
@@ -92,6 +93,7 @@ import { InterventionAbout } from '../../components/intervention-about';
 import { InterventionActionBox } from '../../components/intervention-action-box';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
 import { InterventionChangeList } from '../../components/intervention-change-list';
+import { InterventionCommandBar } from '../../components/intervention-command-bar';
 import { InterventionGettingStarted } from '../../components/intervention-getting-started';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
 import { InterventionPublicationSummary } from '../../components/intervention-publication-summary';
@@ -161,9 +163,11 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     ...HlmAlertImports,
     ...HlmCardImports,
     ...HlmDropdownMenuImports,
+    ...HlmSpinnerImports,
     ...HlmTextareaImports,
     InterventionAbout,
     InterventionActionBox,
+    InterventionCommandBar,
     InterventionActivityThread,
     InterventionChangeList,
     InterventionCommentForm,
@@ -326,6 +330,23 @@ export class InterventionDetailPage {
     viewChild<ElementRef<HTMLElement>>('workItemsSection');
 
   /**
+   * Property actionBoxSection
+   * @readonly
+   *
+   * @description
+   * The action box's wrapper, which the mobile command bar scrolls to when a
+   * blocker is what disables it: the bar carries the reason, the box carries the
+   * list.
+   *
+   * @access private
+   * @since 4.1.0
+   *
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  private readonly actionBoxSection: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('actionBoxSection');
+
+  /**
    * Property editState
    * @readonly
    *
@@ -391,6 +412,36 @@ export class InterventionDetailPage {
 
     return 'prepare';
   });
+
+  /**
+   * Property commandTransitionTarget
+   * @readonly
+   *
+   * @description
+   * The status {@link invokeCommandAction} dispatches for the current phase, or
+   * `null` in `review`, where the forward step is a publication rather than a
+   * status update.
+   *
+   * Both the action box and the status menu read this one signal:
+   * {@link invokeCommandAction} to dispatch it, {@link transitionTargets} to
+   * subtract it. That is what keeps a forward move from having two addresses —
+   * one behind the action box's readiness gate and one beside the status badge
+   * with no gate at all.
+   *
+   * @access private
+   * @since 4.1.0
+   *
+   * @type {Signal<InterventionStatus | null>}
+   */
+  private readonly commandTransitionTarget: Signal<InterventionStatus | null> =
+    computed<InterventionStatus | null>(() => {
+      const phase: InterventionPhase = this.phase();
+
+      if (phase === 'prepare') return 'planned';
+      if (phase === 'execute') return 'submitted';
+
+      return null;
+    });
 
   /** Whether the member may plan. */
   protected readonly canPlan: Signal<boolean> = computed<boolean>(() =>
@@ -484,9 +535,18 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * The statuses the status menu offers. `abandoned` is excluded because it is
-   * destructive and has its own confirmed action, and `submitted` only appears
-   * for the responsible agent who is allowed to use it.
+   * The statuses this menu offers — the moves the action box does **not** own:
+   * starting or reopening field work, and sending an intervention back for
+   * changes. In practice that leaves `in_progress` and `changes_requested`.
+   *
+   * Three exclusions, each for its own reason:
+   *
+   * - {@link commandTransitionTarget}, because the phase's forward move belongs
+   *   to the action box and its readiness gate. Offering it here too made that
+   *   gate advisory: an agent could submit from this menu with work items still
+   *   open, which the action box deliberately refuses.
+   * - `abandoned`, because it is destructive and has its own confirmed action.
+   * - anything the member lacks the capability for.
    *
    * @access protected
    * @since 1.0.0
@@ -499,10 +559,12 @@ export class InterventionDetailPage {
     const intervention: InterventionOutput | null = this.store.intervention();
     if (!intervention) return [];
 
+    const owned: InterventionStatus | null = this.commandTransitionTarget();
+
     return resolveAllowedTransitions(intervention)
       .filter((status) => status !== 'abandoned')
-      .filter((status) => this.hasCapability(capabilityForTransition(intervention.status, status)))
-      .filter((status) => status !== 'submitted' || this.canSubmit());
+      .filter((status) => status !== owned)
+      .filter((status) => this.hasCapability(capabilityForTransition(intervention.status, status)));
   });
 
   /** The blocking compliance issues, which stop publication. */
@@ -526,6 +588,23 @@ export class InterventionDetailPage {
   /** Whether the activity timeline's first fetch is in flight. */
   protected readonly activitiesLoading: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.activityCallState()),
+  );
+
+  /**
+   * Property activitiesError
+   * @readonly
+   *
+   * @description
+   * Why the timeline could not be read, or `null`. Kept separate from
+   * {@link pageError} because it concerns one section and belongs inside it.
+   *
+   * @access protected
+   * @since 4.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly activitiesError: Signal<string | null> = computed<string | null>(
+    () => this.store.activityCallState().error?.message ?? null,
   );
 
   /** Whether everything is in place for publication. */
@@ -575,9 +654,13 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * Who acted last and when, plus the revision — derived from the most
-   * recent loaded activity entry, and falling back to `updatedAt` while the
-   * timeline is still loading or empty.
+   * Who acted last and when, plus the revision — the last entry of the loaded
+   * timeline, falling back to `updatedAt` while it is still loading or empty.
+   *
+   * Taking the *last* entry is only correct because the store loads the
+   * timeline's newest page first (the API sorts ascending). Reading page 1
+   * instead, as it once did, made this line report the oldest event on the
+   * record as the latest thing that happened.
    *
    * @access protected
    * @since 3.0.0
@@ -1006,26 +1089,25 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected invokeCommandAction(): void {
-    if (this.phase() === 'prepare') {
-      this.store.transition({ interventionId: this.interventionId(), status: 'planned' });
+    const target: InterventionStatus | null = this.commandTransitionTarget();
+
+    if (target === null) {
+      this.publicationError.set(null);
+      this.publishConfirmOpen.set(true);
 
       return;
     }
 
-    if (this.phase() === 'execute') {
-      if (this.store.workItems().length === 0 || this.remainingWorkItems() > 0) {
-        this.revealFieldWork();
-
-        return;
-      }
-
-      this.store.transition({ interventionId: this.interventionId(), status: 'submitted' });
+    if (
+      this.phase() === 'execute' &&
+      (this.store.workItems().length === 0 || this.remainingWorkItems() > 0)
+    ) {
+      this.revealFieldWork();
 
       return;
     }
 
-    this.publicationError.set(null);
-    this.publishConfirmOpen.set(true);
+    this.store.transition({ interventionId: this.interventionId(), status: target });
   }
 
   /**
@@ -1257,6 +1339,9 @@ export class InterventionDetailPage {
 
       this.store.reload(this.interventionId());
       this.publishConfirmOpen.set(false);
+      this.feedback.success(
+        $localize`:@@intervention.publication.succeeded:Published to the compliance record`,
+      );
     } catch {
       this.publicationError.set(
         $localize`:@@intervention.publication.requestFailed:The publication request could not be completed.`,
@@ -1275,6 +1360,16 @@ export class InterventionDetailPage {
   protected retryLoad(): void {
     this.store.clearError();
     this.store.load(this.interventionId());
+  }
+
+  /** Walks the timeline one page further back. */
+  protected loadOlderActivities(): void {
+    this.store.loadOlderActivities(this.interventionId());
+  }
+
+  /** Reads the timeline again after a failed fetch. */
+  protected reloadActivities(): void {
+    this.store.loadActivities(this.interventionId());
   }
 
   /** Walks to the previous intervention in the list's order. */
@@ -1386,9 +1481,33 @@ export class InterventionDetailPage {
     this.focusFieldWorkPanel();
   }
 
+  /**
+   * Method revealActionBox
+   *
+   * @description
+   * Sends the operator to the action box, where the blocker list the mobile
+   * command bar can only summarize actually lives.
+   *
+   * @access protected
+   * @since 4.1.0
+   *
+   * @returns {void}
+   */
+  protected revealActionBox(): void {
+    this.scrollToAndFocus(this.actionBoxSection()?.nativeElement);
+  }
+
   /** Scrolls to and focuses the field-work section. */
   private focusFieldWorkPanel(): void {
-    const section: HTMLElement | undefined = this.workItemsSection()?.nativeElement;
+    this.scrollToAndFocus(this.workItemsSection()?.nativeElement);
+  }
+
+  /**
+   * Scrolls a section into view and moves focus into it, so a keyboard user is
+   * not left behind on the trigger that sent them there (WCAG 2.4.3). Honours
+   * `prefers-reduced-motion`.
+   */
+  private scrollToAndFocus(section: HTMLElement | undefined): void {
     if (!section) return;
 
     const reduced: boolean =

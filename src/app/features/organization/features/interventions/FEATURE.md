@@ -66,9 +66,20 @@ Stores:
   `saving` and `error` are derived over them, and `mutationError` exposes the
   normalized `StoreError`. `load` blanks the workspace before fetching, which is
   right on entry and wrong afterwards, so **`reload` exists for a refresh that
-  must not flash the page to a skeleton** — publication uses it. Also owns the
-  activity timeline (`activities`, `loadActivities`, `addComment`), which no
-  surface consumes yet.
+  must not flash the page to a skeleton** — publication uses it. `loadFailed`
+  distinguishes a failed _fetch_ from a failed _write_, which is what lets the
+  detail page offer a retry only where retrying repairs anything.
+
+  Also owns the activity timeline (`activities`, `loadActivities`,
+  `loadOlderActivities`, `addComment`). The API sorts `createdAt` **ascending**,
+  so page 1 holds the oldest entries: `loadActivities` reads page 1 for its shape
+  (`totalItems`, and the server's page size, which the client is never told),
+  then fetches the **last** page and discards page 1 when there is more than one.
+  Without that, the timeline showed a months-old history as the whole record and
+  `metaLine()` reported the first event ever as the latest thing that happened.
+  `activityOldestPage` tracks how far back the loaded window reaches, driving
+  `hasOlderActivities` and letting `loadOlderActivities` prepend page by page.
+
 - `InterventionCalendarStore` — the interventions inside a bounded date window.
   **Currently dormant**: the calendar render is not part of the rebuilt list page.
 
@@ -163,9 +174,15 @@ stacked beneath it, the action box. At `lg` and up, the second column is
 `sticky` (`top-4`), so the properties/action-box stack stays in view while
 the content column scrolls past — the natural read for a status panel, which
 is current-state chrome rather than content to scroll away. Below `lg`
-(1024px) the two columns stack in normal document flow, content first — there
-is no viewport-driven switch left to read, because there is nothing left
-that changes shape with the viewport beyond the grid collapsing.
+(1024px) the two columns stack in normal document flow, content first.
+
+**That collapse is itself a shape change, and it inverts the page's
+priority** — which an earlier revision of this document denied. In normal flow
+the second column renders _after_ the whole content column, so the forward
+action landed roughly three viewports down, below the comment composer, on
+the viewport belonging to the primary persona. The fix is the command bar
+below (`### One address per viewport`), not another reordering of the
+desktop furniture.
 
 This retires the tab rail the 4.0 redesign introduced (see
 `### Retired invariants`), on direct product feedback within the same design
@@ -215,22 +232,73 @@ The two failures earlier tabbed designs were retired for still do not recur:
    there is no disclosure to expand first, because the card is never
    collapsed.
 9. **Action box** (second column, beneath the properties card) —
-   `app-intervention-action-box`, the single host for the current phase's
-   forward action, outside the content column entirely. Its _content_
+   `app-intervention-action-box`, the host for the current phase's forward
+   action from `lg` up, outside the content column entirely. Its _content_
    changes with the phase (a plan/submit label with its disabled reason; the
    blockers list, the `app-intervention-publication-summary` recap and the
    publish button in `review`; a locked terminal state once `published`), but
-   it renders **exactly once**, at a fixed position, regardless of phase. The
-   second column as a whole — properties card and action box together — is
-   what stays `sticky` at `lg`, so the pinned status panel never leaves the
-   viewport ahead of the action a reviewer needs.
-10. **Prev/next footer** — unchanged.
+   its _position_ never does. The second column as a whole — properties card
+   and action box together — is what stays `sticky` at `lg`, so the pinned
+   status panel never leaves the viewport ahead of the action a reviewer needs.
+   Below `lg` the box keeps its blockers and recap and **sheds its button**
+   (`max-lg:hidden`), hiding itself entirely when that leaves it empty
+   (`hasStandaloneContent`).
+10. **Command bar** (below `lg` only) — `app-intervention-command-bar`,
+    `sticky bottom-0` outside the grid, carrying the same forward action plus
+    its disabled reason. See `### One address per viewport`.
+11. **Prev/next footer** — unchanged.
 
 Activating the getting-started item for missing scope (`workItems`) scrolls
 to and focuses the work-items section directly
 (`InterventionDetailPage.revealFieldWork()`). The section is always mounted
 and visible, so there is no panel switch to wait on before it can receive
 focus.
+
+### One address per viewport
+
+The forward action has **one implementation and one live address, and which
+address depends on the viewport** — not one position for all viewports, which
+is what the earlier "renders exactly once" wording promised and what the grid
+collapse quietly broke.
+
+`app-intervention-command-button` is that implementation: the button, its
+spinner and its disabled state, and nothing else. Two hosts render it, and
+exactly one of them is visible at any width:
+
+| Width       | Host                           | Position                            |
+| ----------- | ------------------------------ | ----------------------------------- |
+| `lg` and up | `app-intervention-action-box`  | second column, beneath properties   |
+| below `lg`  | `app-intervention-command-bar` | `sticky bottom-0`, outside the grid |
+
+Both read the same `commandAction()` signal and both emit into the same
+`invokeCommandAction()`, so the two cannot drift and there is never a moment
+with two live buttons. The bar carries only the button and the disabled
+reason; when a **blocker** is the reason, that line becomes a control that
+scrolls to the action box, because the list itself stays there
+(`InterventionDetailPage.revealActionBox()`).
+
+The bar breaks out of the page padding (`-mx-4 md:-mx-6`) and pads for the
+home indicator (`env(safe-area-inset-bottom)`), so on a phone it is a
+full-width thumb target rather than a floating card.
+
+### The forward move has one gate
+
+`transitionTargets()` — the status menu beside the badge — offers only the
+moves the action box does **not** own: starting or reopening field work
+(`in_progress`) and sending an intervention back (`changes_requested`).
+
+It used to offer the forward move too, which made the action box's readiness
+gate advisory: from `in_progress` an operator saw "Complete 3 remaining items"
+(the action box deliberately refusing to offer submit) and, four pixels away,
+"Submitted" — which submitted immediately, three items open, with nothing
+telling the reviewer. From `draft` the menu likewise offered "Planned" without
+the site/responsible/dates check.
+
+`InterventionDetailPage.commandTransitionTarget` is the single source: the
+status `invokeCommandAction()` dispatches for the current phase (`planned` in
+`prepare`, `submitted` in `execute`, `null` in `review`, where the forward step
+is a publication). `invokeCommandAction()` dispatches it; `transitionTargets()`
+subtracts it. Adding a phase means touching one signal, and the menu follows.
 
 ### Read-only proposed changes
 
@@ -300,15 +368,37 @@ explicit guard it would offer to plan something that left the workflow.
 ### Notices
 
 Each condition renders **once, where it is relevant**, instead of a single
-ranked stack under the header: an unattributed store error (load or write) is
-one alert above the content sections with a retry; a reviewer's note sits
-atop the Work items section; blocking compliance issues sit inside the action
-box's `review`-phase content, beside the publish gate; a publication failure
-is inline in the publish confirmation, which stays open so the operator can
-retry; and an unsynced outbox is a small header indicator rather than a
-dismissable banner. A field-level rejection is already shown by the field
-itself (`editState.failed`) and is excluded from the top-of-page alert so it
-never renders twice.
+ranked stack under the header: an unattributed store error is one alert above
+the content sections; a reviewer's note sits atop the Work items section; a
+failed activity fetch is an alert with a retry inside the Activity section;
+blocking compliance issues sit inside the action box's `review`-phase content,
+beside the publish gate; a publication failure is inline in the publish
+confirmation, which stays open so the operator can retry; and an unsynced
+outbox is a small header indicator rather than a dismissable banner. A
+field-level rejection is already shown by the field itself
+(`editState.failed`) and is excluded from the top-of-page alert so it never
+renders twice.
+
+**A failed load is a state, not a banner.** The in-page alert only ever
+appears alongside a rendered intervention, so it cannot report the failure that
+prevented one: `load` sets `intervention: null` **and** `errorCallState`
+together, and an alert nested inside the "we have an intervention" branch is
+unreachable on exactly the path a field agent on a weak connection takes. That
+is why the page has a third branch, `store.loadFailed()`, rendering the store's
+message with **Try again** and a way back — and why the "not found" state is
+now only for a fetch that genuinely returned nothing.
+
+The store owns which message that is: `loadFailure()` reads
+`ConnectivityService.isNetworkFailure(error)` and phrases an unreachable
+network differently from a rejection, so the page shows the reason rather than
+guessing at it. When the offline snapshot is missing, `fetchWorkspace` rethrows
+the **original** network error rather than a generic one, which is what keeps
+that branch reachable.
+
+**Retry is offered only where retrying is the repair.** `retryLoad()` re-runs
+`load`, which fixes a failed fetch and is the wrong answer to a rejected patch,
+so the alert's button is gated on `store.loadFailed()`. A write failure states
+what happened and offers nothing that would silently discard it.
 
 `hlm-alert` has exactly two variants and the theme carries no success or warning
 token, so a notice's kind is conveyed by its **icon and title, never by colour**.
@@ -331,6 +421,16 @@ The page attributes it to the one field or row that caused it (`editState.saving
 spinner lands on the wrong one, and the second's success clears the first's error.
 The real fix is named call states in the store, and it is out of scope for this
 page.
+
+What is **no longer** part of that limitation: the work-item table used to
+resolve it by disabling _every_ toggle whenever any write was in flight
+(`[disabled]="… || busy()"`), throwing away the `mergeMap` the store chose
+precisely so an agent could tick several items quickly — and the
+`pendingItemId` input meant to attribute the spinner to one row was never
+referenced by the template at all. A row now locks and spins on its **own**
+write (`isRowPending`), and `busy` gates only the add affordances, whose sheet
+is modal. The store-level approximation stands; the template no longer amplifies
+it into a frozen checklist.
 
 ## Status / enum presentation (badges & select options)
 
@@ -388,11 +488,32 @@ follows.
   `app-intervention-publication-summary` component** the action box renders,
   fed from the same three signals, so the recap and the dialog cannot drift.
   Publication is the one step that writes to the compliance record.
-- **The phase's forward action has exactly one address on the page:
-  `app-intervention-action-box`, second column beneath the properties card.**
-  It renders once, at a fixed position, regardless of phase — its content
-  changes, its position never does. Nothing else on the page renders
-  `commandAction()`.
+- **The phase's forward action has exactly one _live_ address, and one
+  implementation.** `app-intervention-command-button` is the only markup;
+  `app-intervention-action-box` hosts it at `lg` and up (second column, beneath
+  the properties card) and `app-intervention-command-bar` hosts it below `lg`
+  (`sticky bottom-0`, outside the grid). The two are mutually exclusive by
+  breakpoint, both read `commandAction()` and both emit into
+  `invokeCommandAction()`. Nothing else on the page renders that action. See
+  `### One address per viewport` — the earlier "renders exactly once" wording is
+  retired because the grid collapse made it false on the primary persona's
+  device.
+- **The forward move is gated in exactly one place.** The status menu
+  (`transitionTargets()`) subtracts `commandTransitionTarget()`, so a phase's
+  forward transition can only be taken through the action the readiness gate
+  guards. A second control performing the same transition without the check makes
+  the gate advisory, which is what it did for `draft → planned` and
+  `in_progress → submitted`. See `### The forward move has one gate`.
+- **A work-item row locks and spins on its own write, never on any write.**
+  `isRowPending(item)` compares `pendingItemId`; `busy` gates only the add
+  affordances. The store queues these writes with `mergeMap` specifically so an
+  agent can tick items quickly — a template that disables the whole list undoes a
+  deliberate store decision, silently.
+- **The activity timeline is loaded newest-page-first**, because the API sorts
+  ascending and `metaLine()` reads the last loaded entry as the most recent
+  event. Reading page 1 and stopping made the header report the oldest event on
+  the record. Older pages are prepended on demand
+  (`hasOlderActivities` / `loadOlderActivities`); a partial window always says so.
 - **Nothing that gates publication readiness is visible only inside a
   scrollable section.** `app-intervention-action-box` reads `blockerIssues()`
   and `pendingChangesCount()` directly from the store, not from the Changes
@@ -403,14 +524,24 @@ follows.
 - **Every page-level notice renders once, at the location it concerns, never
   as a ranked stack.** An unattributed store error is a single alert above the
   sections; every other condition (reviewer note, blockers, unsynced outbox,
-  publication failure) has exactly one home inside the section, action box or
-  dialog it belongs to. A field-level rejection is excluded from the
-  top-of-page alert (`pageError`) so it is never shown twice.
+  activity-fetch failure, publication failure) has exactly one home inside the
+  section, action box or dialog it belongs to. A field-level rejection is
+  excluded from the top-of-page alert (`pageError`) so it is never shown twice.
+- **A failed load renders its reason and a retry, not "not found".** The
+  in-page alert cannot report a failure that produced no intervention, so
+  `store.loadFailed()` is its own branch. Never nest the load error inside the
+  branch that requires a loaded intervention — that is the exact regression this
+  invariant exists to prevent.
+- **Publication says what it does, and reports that it is doing it.** The dialog
+  names the compliance record before the recap, swaps its button to a spinner and
+  a `role="status"` line while the write and its poll run, and confirms success —
+  the one irreversible write in the product must not look like a frozen modal.
 - **The page's fixed elements never reorder (WCAG 2.4.3).** Header → meta →
   error alert → Overview → Work items → Changes → Activity → properties card
-  → action box → prev/next never changes with phase — properties card and
-  action box are the second column's own top-to-bottom order, unaffected by
-  which sections above render conditionally.
+  → action box → command bar → prev/next never changes with phase — properties
+  card and action box are the second column's own top-to-bottom order,
+  unaffected by which sections above render conditionally. The command bar's
+  position is fixed too; only its _presence_ follows the breakpoint.
 - **Proposed changes are read-only.** `UpdateInterventionChangeInput.status`
   only accepts `'proposed' | 'rejected'`, never `'applied'` — acceptance
   happens automatically at publication, not through a client action — and

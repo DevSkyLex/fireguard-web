@@ -105,6 +105,8 @@ describe('InterventionDetailPage', () => {
   let activities: WritableSignal<readonly InterventionActivityOutput[]>;
   let saving: WritableSignal<boolean>;
   let loadError: WritableSignal<string | null>;
+  let loadFailed: WritableSignal<boolean>;
+  let hasOlderActivities: WritableSignal<boolean>;
   let blockerCount: WritableSignal<number>;
   let orderedIds: WritableSignal<readonly string[]>;
   let online: WritableSignal<boolean>;
@@ -113,6 +115,7 @@ describe('InterventionDetailPage', () => {
   let load: ReturnType<typeof vi.fn>;
   let reload: ReturnType<typeof vi.fn>;
   let loadActivities: ReturnType<typeof vi.fn>;
+  let loadOlderActivities: ReturnType<typeof vi.fn>;
   let addComment: ReturnType<typeof vi.fn>;
   let transition: ReturnType<typeof vi.fn>;
   let updateDetails: ReturnType<typeof vi.fn>;
@@ -136,6 +139,8 @@ describe('InterventionDetailPage', () => {
     activities = signal<readonly InterventionActivityOutput[]>([]);
     saving = signal(false);
     loadError = signal<string | null>(null);
+    loadFailed = signal(false);
+    hasOlderActivities = signal(false);
     blockerCount = signal(0);
     orderedIds = signal<readonly string[]>([]);
     online = signal(true);
@@ -150,6 +155,7 @@ describe('InterventionDetailPage', () => {
     load = vi.fn();
     reload = vi.fn();
     loadActivities = vi.fn();
+    loadOlderActivities = vi.fn();
     addComment = vi.fn();
     transition = vi.fn();
     updateDetails = vi.fn();
@@ -198,15 +204,20 @@ describe('InterventionDetailPage', () => {
               issues,
               activities,
               activityCallState: signal(idleCallState()),
+              activityTotal: signal(0),
+              activityOldestPage: signal(null),
+              hasOlderActivities,
               loading: signal(false),
               saving,
               error: loadError,
+              loadFailed,
               mutationError: signal(null),
               blockerCount,
               nextWorkItem: signal(null),
               load,
               reload,
               loadActivities,
+              loadOlderActivities,
               addComment,
               transition,
               updateDetails,
@@ -383,8 +394,9 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('notices', () => {
-    it('should surface an unattributed store error with a retry', async () => {
+    it('should offer a retry when the failure was a load, which re-running load repairs', async () => {
       loadError.set('The workspace could not be loaded.');
+      loadFailed.set(true);
       fixture = await createPage();
 
       expect(byTestId('intervention-detail-error').textContent).toContain(
@@ -392,6 +404,38 @@ describe('InterventionDetailPage', () => {
       );
 
       byTestId('intervention-detail-retry').click();
+
+      expect(load).toHaveBeenCalledTimes(2);
+    });
+
+    it('should state a write failure without offering a retry that would discard it', async () => {
+      // `retryLoad` re-runs the fetch. Offering it here would silently throw the
+      // rejected write away, so the alert reports and stops.
+      loadError.set('The site could not be changed.');
+      loadFailed.set(false);
+      fixture = await createPage();
+
+      expect(byTestId('intervention-detail-error').textContent).toContain(
+        'The site could not be changed.',
+      );
+      expect(root().querySelector('[data-testid="intervention-detail-retry"]')).toBeNull();
+    });
+
+    it('should render a failed load as its own state, not as "not found"', async () => {
+      // `load` nulls the intervention *and* errors, so an alert nested inside the
+      // loaded-intervention branch could never appear on this path.
+      current.set(null);
+      loadFailed.set(true);
+      loadError.set('This intervention has not been saved on this device.');
+      fixture = await createPage();
+
+      const failed: HTMLElement = byTestId('intervention-detail-load-failed');
+
+      expect(failed).not.toBeNull();
+      expect(failed.textContent).toContain('This intervention has not been saved on this device.');
+      expect(root().querySelector('[data-testid="intervention-detail-not-found"]')).toBeNull();
+
+      byTestId('intervention-detail-load-failed-retry').click();
 
       expect(load).toHaveBeenCalledTimes(2);
     });
@@ -417,6 +461,12 @@ describe('InterventionDetailPage', () => {
 
   describe('the status menu', () => {
     it('should never offer abandonment, which has its own confirmed action', async () => {
+      current.set(
+        intervention({
+          status: 'changes_requested',
+          allowedTransitions: ['in_progress', 'submitted', 'abandoned'],
+        }),
+      );
       fixture = await createPage();
       byTestId('intervention-detail-status-menu').click();
       await fixture.whenStable();
@@ -426,7 +476,36 @@ describe('InterventionDetailPage', () => {
       );
 
       expect(entries.some((entry) => entry.textContent?.includes('Abandoned'))).toBe(false);
-      expect(entries.some((entry) => entry.textContent?.includes('Planned'))).toBe(true);
+      expect(entries.some((entry) => entry.textContent?.includes('In progress'))).toBe(true);
+    });
+
+    it('should not offer the forward move the action box gates', async () => {
+      // The action box refuses to submit while work items are open. A menu entry
+      // doing it anyway would make that gate advisory.
+      current.set(
+        intervention({
+          status: 'changes_requested',
+          allowedTransitions: ['in_progress', 'submitted', 'abandoned'],
+        }),
+      );
+      fixture = await createPage();
+      byTestId('intervention-detail-status-menu').click();
+      await fixture.whenStable();
+
+      const entries: HTMLElement[] = Array.from(
+        document.querySelectorAll('[data-testid="intervention-detail-transition"]'),
+      );
+
+      expect(entries.some((entry) => entry.textContent?.includes('Submitted'))).toBe(false);
+    });
+
+    it('should hide itself entirely when the action box owns every remaining move', async () => {
+      // A draft can only go to `planned` (the action box's job) or `abandoned`
+      // (the overflow menu's), so there is nothing left for this menu to offer.
+      current.set(intervention({ status: 'draft', allowedTransitions: ['planned', 'abandoned'] }));
+      fixture = await createPage();
+
+      expect(root().querySelector('[data-testid="intervention-detail-status-menu"]')).toBeNull();
     });
 
     it('should drop a target the member lacks the capability for', async () => {

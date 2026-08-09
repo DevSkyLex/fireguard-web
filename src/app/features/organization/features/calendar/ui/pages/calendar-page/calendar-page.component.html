@@ -1,0 +1,76 @@
+<div id="calendar-page" class="flex w-full flex-col gap-4 p-4 md:p-6">
+  <div class="flex min-w-0 flex-col gap-1">
+    <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.calendar">Calendar</h1>
+    <p class="text-sm text-muted-foreground" i18n="@@calendar.subtitle">
+      Every scheduled commitment — events, inspections, interventions and maintenance.
+    </p>
+  </div>
+
+  @if (loadFailed()) {
+    <hlm-empty class="border border-dashed">
+      <hlm-empty-header>
+        <hlm-empty-media variant="icon">
+          <ng-icon name="lucideCircleAlert" />
+        </hlm-empty-media>
+        <div hlmEmptyTitle i18n="@@calendar.errorTitle">Couldn't load the calendar</div>
+        <div hlmEmptyDescription i18n="@@calendar.errorText">
+          The calendar feed could not be loaded. Check your connection and try again.
+        </div>
+      </hlm-empty-header>
+      <hlm-empty-content>
+        <button hlmBtn variant="outline" data-testid="calendar-retry" (click)="reload()">
+          <span i18n="@@common.tryAgain">Try again</span>
+        </button>
+      </hlm-empty-content>
+    </hlm-empty>
+  } @else {
+    <div class="grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div>
+        @if (store.isQueryLoading() && events().length === 0) {
+          <hlm-skeleton class="h-96 w-full" />
+        } @else {
+          <app-calendar [(month)]="month" [(selectedDay)]="selectedDay" [events]="events()" />
+        }
+      </div>
+
+      <div hlmCard class="self-start lg:sticky lg:top-4">
+        <div hlmCardHeader>
+          <h2 hlmCardTitle data-testid="calendar-day-heading">{{ selectedDayLabel() }}</h2>
+        </div>
+        <div hlmCardContent class="flex flex-col gap-2">
+          @if (dayItems().length === 0) {
+            <p class="text-sm text-muted-foreground" i18n="@@calendar.dayEmpty">
+              Nothing scheduled this day.
+            </p>
+          } @else {
+            @for (item of dayItems(); track item.sourceKey + item.id) {
+              @if (interventionLinkOf(item); as link) {
+                <a
+                  hlmItem
+                  size="sm"
+                  class="rounded-md"
+                  data-testid="calendar-day-item"
+                  [routerLink]="link"
+                >
+                  <div hlmItemContent>
+                    <span hlmItemTitle class="line-clamp-1">{{ item.title }}</span>
+                    <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
+                  </div>
+                  <span hlmBadge [variant]="toneOf(item)">{{ sourceLabelOf(item) }}</span>
+                </a>
+              } @else {
+                <div hlmItem size="sm" class="rounded-md" data-testid="calendar-day-item">
+                  <div hlmItemContent>
+                    <span hlmItemTitle class="line-clamp-1">{{ item.title }}</span>
+                    <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
+                  </div>
+                  <span hlmBadge [variant]="toneOf(item)">{{ sourceLabelOf(item) }}</span>
+                </div>
+              }
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

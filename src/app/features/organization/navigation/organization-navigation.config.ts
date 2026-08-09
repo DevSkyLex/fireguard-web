@@ -127,6 +127,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
   },
   {
+    id: 'calendar',
+    label: $localize`:@@route.calendar:Calendar`,
+    icon: 'lucideCalendarDays',
+    path: 'calendar',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.EVENTS_READ],
+  },
+  {
     id: 'inspections',
     label: $localize`:@@route.inspections:Inspections`,
     icon: 'lucideClipboardList',

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCalendarDays,
   lucideChartColumn,
   lucideClipboardList,
   lucideCompass,
@@ -76,6 +77,7 @@ import {
   ],
   providers: [
     provideIcons({
+      lucideCalendarDays,
       lucideChartColumn,
       lucideClipboardList,
       lucideCompass,

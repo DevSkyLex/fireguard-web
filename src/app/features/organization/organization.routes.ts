@@ -67,6 +67,11 @@ export const ORGANIZATION_ROUTES: Routes = [
           ),
       },
       {
+        path: 'calendar',
+        loadChildren: () =>
+          import('./features/calendar/calendar.routes').then((m) => m.CALENDAR_ROUTES),
+      },
+      {
         path: 'members/:memberId',
         loadComponent: () =>
           import('./ui/pages/organization-member-profile-page/organization-member-profile-page.component').then(

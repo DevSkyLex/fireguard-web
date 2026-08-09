@@ -1,0 +1,96 @@
+<div class="flex flex-col gap-3" data-testid="calendar">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-base font-semibold text-foreground capitalize" data-testid="calendar-month">
+      {{ monthLabel() }}
+    </h2>
+
+    <div class="flex items-center gap-1">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="calendar-today"
+        (click)="goToday()"
+      >
+        <span i18n="@@calendar.today">Today</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        data-testid="calendar-prev"
+        i18n-aria-label="@@calendar.previousMonth"
+        aria-label="Previous month"
+        (click)="stepMonth(-1)"
+      >
+        <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        data-testid="calendar-next"
+        i18n-aria-label="@@calendar.nextMonth"
+        aria-label="Next month"
+        (click)="stepMonth(1)"
+      >
+        <ng-icon name="lucideChevronRight" aria-hidden="true" />
+      </button>
+    </div>
+  </div>
+
+  <div class="overflow-hidden rounded-lg border border-border">
+    <div class="grid grid-cols-7 border-b border-border bg-muted/40" aria-hidden="true">
+      @for (weekday of weekdayLabels(); track weekday) {
+        <div class="px-2 py-1.5 text-center text-xs font-medium text-muted-foreground capitalize">
+          {{ weekday }}
+        </div>
+      }
+    </div>
+
+    @for (week of weeks(); track $index) {
+      <div class="grid grid-cols-7 border-b border-border last:border-b-0">
+        @for (cell of week; track cell.iso) {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            class="flex h-24 flex-col items-stretch justify-start gap-1 rounded-none border-r border-border p-1.5 text-start font-normal whitespace-normal last:border-r-0 sm:h-28"
+            [class.bg-accent]="cell.iso === selectedDay()"
+            [class.opacity-40]="!cell.inMonth"
+            data-testid="calendar-day"
+            [attr.data-day]="cell.iso"
+            [attr.aria-pressed]="cell.iso === selectedDay()"
+            [attr.aria-current]="cell.isToday ? 'date' : null"
+            [attr.aria-label]="dayLabelOf(cell)"
+            (click)="selectDay(cell)"
+          >
+            <span
+              class="self-start text-xs"
+              [class.font-semibold]="cell.isToday"
+              [class.text-primary]="cell.isToday"
+              aria-hidden="true"
+              >{{ cell.day }}</span
+            >
+            @for (event of eventsOf(cell); track event.id) {
+              <span hlmBadge [variant]="event.tone" class="max-w-full truncate text-[10px]">
+                {{ event.label }}
+              </span>
+            }
+            @if (overflowOf(cell) > 0) {
+              <span class="text-[10px] text-muted-foreground" aria-hidden="true"
+                >+{{ overflowOf(cell) }}</span
+              >
+            }
+            <span class="sr-only" i18n="@@calendar.dayEventCount"
+              >{{ countOf(cell) }} event(s)</span
+            >
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

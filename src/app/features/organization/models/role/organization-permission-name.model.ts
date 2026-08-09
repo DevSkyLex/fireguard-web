@@ -12,6 +12,8 @@
 export const ORGANIZATION_PERMISSION = {
   READ: 'organization.read',
   DASHBOARD_READ: 'organization.dashboard.read',
+  EVENTS_READ: 'organization.events.read',
+  EVENTS_WRITE: 'organization.events.write',
   MEMBERS_READ: 'organization.members.read',
   MEMBERS_MANAGE: 'organization.members.manage',
   ROLES_READ: 'organization.roles.read',

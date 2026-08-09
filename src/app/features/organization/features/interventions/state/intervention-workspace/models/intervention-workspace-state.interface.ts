@@ -1,6 +1,7 @@
 import type { CallState } from '@core/request-state';
 import type {
   InterventionActivityOutput,
+  InterventionAttachmentOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
@@ -66,6 +67,24 @@ export interface InterventionWorkspaceState {
 
   /** Lifecycle of the intervention deletion (`delete`). */
   readonly deleteCallState: CallState;
+
+  /**
+   * The intervention's attachments — loaded lazily by the detail page's
+   * attachments section, never by the SSR-critical workspace fetch.
+   */
+  readonly attachments: readonly InterventionAttachmentOutput[];
+
+  /** Lifecycle of the lazy attachments fetch (`loadAttachments`). */
+  readonly attachmentsCallState: CallState;
+
+  /**
+   * Lifecycle of the **last** attachment write — upload or delete; per-row
+   * attribution for deletes lives in {@link pendingAttachmentIds}.
+   */
+  readonly attachmentWriteCallState: CallState;
+
+  /** Ids of the attachments with a delete in flight. */
+  readonly pendingAttachmentIds: ReadonlySet<string>;
 
   /** Lifecycle of a comment post (`addComment`). */
   readonly addCommentCallState: CallState;

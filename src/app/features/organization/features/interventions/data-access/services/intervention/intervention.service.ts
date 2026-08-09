@@ -17,6 +17,7 @@ import type {
   CreateInterventionChangeInput,
   CreateInterventionWorkItemInput,
   InterventionActivityOutput,
+  InterventionAttachmentOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionCalendarFilters,
@@ -705,6 +706,87 @@ export class InterventionService extends HydraApiService {
       input,
       { headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` } },
     );
+  }
+
+  /**
+   * Method listAttachments
+   * @method listAttachments
+   *
+   * @description
+   * Lists an intervention's attachments — metadata only, the API exposes no
+   * download URL yet.
+   *
+   * @access public
+   * @since 4.4.0
+   *
+   * @param {string} interventionId - intervention Id value.
+   *
+   * @return {Observable<HydraCollection<InterventionAttachmentOutput>>} The attachments.
+   */
+  public listAttachments(
+    interventionId: string,
+  ): Observable<HydraCollection<InterventionAttachmentOutput>> {
+    return this.getCollection<InterventionAttachmentOutput>(
+      `/api/interventions/${interventionId}/attachments`,
+    );
+  }
+
+  /**
+   * Method uploadAttachment
+   * @method uploadAttachment
+   *
+   * @description
+   * Uploads one file as a multipart request (`file` + optional `label`),
+   * mirroring `EquipmentService.uploadEvidence`'s FormData shape. The
+   * backend enforces 10 MiB and its MIME whitelist; callers pre-check to
+   * fail fast, the server stays authoritative.
+   *
+   * @access public
+   * @since 4.4.0
+   *
+   * @param {string} interventionId - intervention Id value.
+   * @param {Blob} file - file value.
+   * @param {string} fileName - file Name value.
+   * @param {string} [label] - optional operator label.
+   *
+   * @return {Observable<InterventionAttachmentOutput>} The created attachment.
+   */
+  public uploadAttachment(
+    interventionId: string,
+    file: Blob,
+    fileName: string,
+    label?: string,
+  ): Observable<InterventionAttachmentOutput> {
+    const body: FormData = new FormData();
+    body.set('file', file, fileName);
+    if (label) body.set('label', label);
+
+    return this.http.post<InterventionAttachmentOutput>(
+      this.buildUrl(`/api/interventions/${interventionId}/attachments`),
+      body,
+      { withCredentials: true, headers: { Accept: 'application/ld+json' } },
+    );
+  }
+
+  /**
+   * Method removeAttachment
+   * @method removeAttachment
+   *
+   * @description
+   * Deletes one attachment, pinned to its revision.
+   *
+   * @access public
+   * @since 4.4.0
+   *
+   * @param {string} attachmentId - attachment Id value.
+   * @param {number} revision - revision value.
+   *
+   * @return {Observable<void>} Completion of the delete.
+   */
+  public removeAttachment(attachmentId: string, revision: number): Observable<void> {
+    return this.delete(`/api/intervention-attachments/${attachmentId}`, {
+      headers: { 'If-Match': `"revision-${revision}"` },
+    });
   }
 
   /**

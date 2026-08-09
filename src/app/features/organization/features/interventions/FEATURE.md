@@ -440,9 +440,32 @@ alert would be white on white, separated by one hairline.
 ### Offline
 
 The workspace store already queues writes, applies them optimistically and keeps
-an IndexedDB snapshot, so offline behaviour works without any page code. The only
-visible surface here is the header's unsynced indicator. The sync chip, the
-blocked-operation count and Retry/Discard belong to a dedicated offline pass.
+an IndexedDB snapshot. The visible surface is
+`app-intervention-sync-status` — the **one address** for the outbox's state,
+on both the list toolbar and the detail header (it replaced the header's
+one-way unsynced badge): a chip that spins during a replay, shows a cloud when
+operations wait, and turns destructive with a count when operations are
+blocked, opening onto Sync now / Retry blocked / Discard blocked — the discard
+confirm-gated because it is data loss. The chip is presentational; each page
+injects `InterventionSyncCoordinatorService` and wires its signals in.
+
+### Attachments and field capture
+
+`app-intervention-attachments` (between Changes and Activity) lists the
+intervention's files and offers a picker plus a camera capture whose images the
+page shrinks through `InterventionPhotoCompressorService` before upload. Picks
+are pre-checked against the backend's 10 MiB ceiling and MIME whitelist
+(images + PDF); rows delete confirm-gated and lock on their own write via the
+store's `pendingAttachmentIds`. Gating mirrors the backend's
+`mutationPermission`: nothing in `submitted`/`published`/`abandoned`, `.plan`
+while drafting, `.execute` afterwards. **Approved exception:** the API exposes
+no download URL yet, so rows are metadata-only and the caption says so; upload
+is **online-only** (the outbox has no attachment operation) — both are
+documented backend follow-ups. The QR button in the field-work section
+(`scanSupported()` devices, execute phase only) decodes a capture through
+`InterventionFieldExecutionService.scan`, normalizes it via
+`InterventionDiscoveryService.normalizeScannedTarget` and reveals the matching
+work item, or toasts when nothing matches.
 
 ### Write attribution is exact, not approximated
 
@@ -563,7 +586,8 @@ follows.
   a `role="status"` line while the write and its poll run, and confirms success —
   the one irreversible write in the product must not look like a frozen modal.
 - **The page's fixed elements never reorder (WCAG 2.4.3).** Header → meta →
-  error alert → Overview → Work items → Changes → Activity → properties card
+  error alert → Overview → Work items → Changes → Attachments → Activity →
+  properties card
   → action box → command bar → prev/next never changes with phase — properties
   card and action box are the second column's own top-to-bottom order,
   unaffected by which sections above render conditionally. The command bar's

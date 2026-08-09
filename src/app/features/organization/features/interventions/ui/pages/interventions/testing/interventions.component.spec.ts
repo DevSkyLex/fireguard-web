@@ -2,7 +2,9 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import { InterventionsPage } from '../interventions.component';
@@ -98,6 +100,21 @@ describe('InterventionsPage', () => {
         {
           provide: OrganizationPermissionService,
           useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => true },
+        },
+        {
+          provide: InterventionSyncCoordinatorService,
+          useValue: {
+            syncing: signal(false),
+            blockedOperations: signal(0),
+            problem: signal(null),
+            syncAll: vi.fn(),
+            retryBlocked: vi.fn(),
+            discardBlocked: vi.fn(),
+          },
+        },
+        {
+          provide: InterventionOfflineService,
+          useValue: { hasUnsyncedChanges: signal(false) },
         },
         { provide: Router, useValue: { navigate } },
         { provide: ActivatedRoute, useValue: {} },

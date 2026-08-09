@@ -1,0 +1,149 @@
+<div class="flex flex-col gap-3" data-testid="intervention-attachments">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="flex flex-col gap-0.5">
+      <h2
+        class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        i18n="@@intervention.attachments.title"
+      >
+        Attachments
+      </h2>
+      <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.caption">
+        Photos and documents kept with this intervention. Download links are not available yet.
+      </p>
+    </div>
+
+    @if (canManage()) {
+      <div class="flex items-center gap-2">
+        <label
+          hlmBtn
+          variant="outline"
+          size="sm"
+          [class.pointer-events-none]="!canPick()"
+          [class.opacity-50]="!canPick()"
+          data-testid="intervention-attachments-add"
+        >
+          <ng-icon name="lucidePaperclip" aria-hidden="true" />
+          <span i18n="@@intervention.attachments.add">Add files</span>
+          <input
+            type="file"
+            class="sr-only"
+            multiple
+            [accept]="acceptedTypes"
+            [disabled]="!canPick()"
+            (change)="onFilesSelected($event)"
+          />
+        </label>
+        <label
+          hlmBtn
+          variant="outline"
+          size="sm"
+          [class.pointer-events-none]="!canPick()"
+          [class.opacity-50]="!canPick()"
+          data-testid="intervention-attachments-photo"
+        >
+          <ng-icon name="lucideCamera" aria-hidden="true" />
+          <span i18n="@@intervention.attachments.photo">Take a photo</span>
+          <input
+            type="file"
+            class="sr-only"
+            accept="image/*"
+            capture="environment"
+            [disabled]="!canPick()"
+            (change)="onFilesSelected($event)"
+          />
+        </label>
+        @if (uploading()) {
+          <hlm-spinner size="xs" aria-hidden="true" />
+        }
+      </div>
+    }
+  </div>
+
+  @if (!online() && canManage()) {
+    <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.offline">
+      Connect to the network to add files — attachments do not queue offline.
+    </p>
+  }
+
+  @if (pickError(); as message) {
+    <p class="text-xs text-destructive" role="alert" data-testid="intervention-attachments-error">
+      {{ message }}
+    </p>
+  }
+
+  @if (attachments().length === 0) {
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.attachments.empty">
+      No files attached yet.
+    </p>
+  } @else {
+    <ul class="flex flex-col gap-2">
+      @for (attachment of attachments(); track attachment.id) {
+        <li hlmItem size="sm" class="rounded-md" data-testid="intervention-attachment-row">
+          <div hlmItemMedia variant="icon">
+            <ng-icon name="lucideFile" aria-hidden="true" />
+          </div>
+          <div hlmItemContent>
+            <span hlmItemTitle class="line-clamp-1">{{ attachment.fileName }}</span>
+            <span hlmItemDescription>
+              {{ sizeLabelOf(attachment) }}
+              @if (attachment.label) {
+                · {{ attachment.label }}
+              }
+            </span>
+          </div>
+          @if (canManage()) {
+            <div hlmItemActions>
+              @if (isRowPending(attachment)) {
+                <hlm-spinner size="xs" aria-hidden="true" />
+              } @else {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  class="text-muted-foreground hover:text-destructive"
+                  data-testid="intervention-attachment-delete"
+                  i18n-aria-label="@@intervention.attachments.delete"
+                  aria-label="Delete this file"
+                  [disabled]="!online()"
+                  (click)="pendingDelete.set(attachment)"
+                >
+                  <ng-icon name="lucideTrash2" aria-hidden="true" />
+                </button>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<hlm-alert-dialog
+  [state]="pendingDelete() !== null ? 'open' : 'closed'"
+  (stateChanged)="onDeleteDialogStateChanged($event)"
+>
+  <hlm-alert-dialog-content
+    *hlmAlertDialogPortal
+    data-testid="intervention-attachment-delete-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@intervention.attachments.deleteTitle">Delete this file?</h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.attachments.deleteText">
+        {{ pendingDelete()?.fileName }} will be permanently removed from this intervention.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="intervention-attachment-delete-confirm"
+        (click)="confirmDelete()"
+        i18n="@@intervention.attachments.deleteConfirm"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

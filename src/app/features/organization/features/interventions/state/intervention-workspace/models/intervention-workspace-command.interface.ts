@@ -77,6 +77,23 @@ export interface InterventionChangeRejectCommand {
 }
 
 /**
+ * Interface InterventionAttachmentUploadCommand
+ * @interface InterventionAttachmentUploadCommand
+ *
+ * @description
+ * Command used to upload one attachment. The file arrives pre-compressed
+ * when it came from the camera; the page owns that step.
+ *
+ * @since 4.4.0
+ */
+export interface InterventionAttachmentUploadCommand {
+  readonly interventionId: string;
+  readonly file: Blob;
+  readonly fileName: string;
+  readonly label?: string;
+}
+
+/**
  * Interface InterventionWorkItemDeleteCommand
  * @interface InterventionWorkItemDeleteCommand
  *

@@ -25,6 +25,12 @@ import type {
   InterventionOutput,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
+import {
+  InterventionDiscoveryService,
+  InterventionFieldExecutionService,
+  InterventionPhotoCompressorService,
+  InterventionSyncCoordinatorService,
+} from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
@@ -189,6 +195,29 @@ describe('InterventionDetailPage', () => {
           provide: OrganizationMemberAccessStore,
           useValue: { profile: signal({ id: 'member-1' }) },
         },
+        {
+          provide: InterventionSyncCoordinatorService,
+          useValue: {
+            syncing: signal(false),
+            blockedOperations: signal(0),
+            problem: signal(null),
+            syncAll: vi.fn(),
+            retryBlocked: vi.fn(),
+            discardBlocked: vi.fn(),
+          },
+        },
+        {
+          provide: InterventionFieldExecutionService,
+          useValue: { scanSupported: (): boolean => false, scan: vi.fn() },
+        },
+        {
+          provide: InterventionDiscoveryService,
+          useValue: { normalizeScannedTarget: (value: string): string => value },
+        },
+        {
+          provide: InterventionPhotoCompressorService,
+          useValue: { compress: vi.fn((file: File) => Promise.resolve(file)) },
+        },
         { provide: ConnectivityService, useValue: { online } },
         { provide: InterventionOfflineService, useValue: { hasUnsyncedChanges: unsynced } },
         { provide: InterventionPublicationService, useValue: { publish } },
@@ -229,6 +258,13 @@ describe('InterventionDetailPage', () => {
               pendingChangeIds: signal(new Set<string>()),
               deleteCallState: signal(idleCallState()),
               addCommentCallState: signal(idleCallState()),
+              attachments: signal([]),
+              attachmentsCallState: signal(idleCallState()),
+              attachmentWriteCallState: signal(idleCallState()),
+              pendingAttachmentIds: signal(new Set<string>()),
+              loadAttachments: vi.fn(),
+              uploadAttachment: vi.fn(),
+              removeAttachment: vi.fn(),
               blockerCount,
               nextWorkItem: signal(null),
               load,
@@ -469,11 +505,11 @@ describe('InterventionDetailPage', () => {
       );
     });
 
-    it('should indicate unsynced changes without a dismissable banner', async () => {
+    it('should surface unsynced changes through the sync chip, not a dismissable banner', async () => {
       unsynced.set(true);
       fixture = await createPage();
 
-      expect(byTestId('intervention-detail-unsynced')).not.toBeNull();
+      expect(byTestId('intervention-sync-status')).not.toBeNull();
     });
   });
 

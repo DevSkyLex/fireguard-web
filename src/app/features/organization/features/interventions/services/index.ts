@@ -1,6 +1,7 @@
 /**
  * Interventions service public exports.
  */
+export { InterventionDiscoveryService } from './intervention-discovery';
 export {
   InterventionFieldExecutionService,
   type InterventionDiscoveryResourcePlan,

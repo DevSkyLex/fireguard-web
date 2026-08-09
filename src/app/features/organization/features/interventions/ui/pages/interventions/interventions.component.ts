@@ -31,6 +31,7 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import {
   resolveInterventionTag,
   type InterventionDueWindow,
@@ -45,6 +46,7 @@ import {
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
+import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import {
   InterventionStore,
   type InterventionStoreType,
@@ -61,6 +63,7 @@ import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { InterventionPlanningOptionsStore } from '../../../state/intervention-planning-options';
+import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
 import { InterventionCreateSheet } from '../../sheets/intervention-create-sheet';
@@ -145,6 +148,7 @@ const NO_FILTERS: InterventionListFilters = {
     HlmButton,
     HlmLabel,
     InterventionCreateSheet,
+    InterventionSyncStatus,
     InterventionTable,
     InterventionTag,
     ...HlmAlertDialogImports,
@@ -232,6 +236,17 @@ export class InterventionsPage {
 
   /** Site and member choices for the filters and the creation form. */
   protected readonly planningOptions = inject(InterventionPlanningOptionsStore);
+
+  /** The sync coordinator behind the toolbar's sync chip. */
+  protected readonly sync: InterventionSyncCoordinatorService = inject(
+    InterventionSyncCoordinatorService,
+  );
+
+  /** The outbox, read only for the chip's pending indicator. */
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+
+  /** Whether the offline outbox has changes waiting to sync. */
+  protected readonly hasUnsyncedChanges: Signal<boolean> = this.offline.hasUnsyncedChanges;
 
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,

@@ -56,6 +56,7 @@ export type { InterventionOutboxOperation } from './intervention-outbox/interven
 export type { InterventionOutboxPayloadMap } from './intervention-outbox/intervention-outbox-payload-map.interface';
 export type { InterventionOutboxQueueEntry } from './intervention-outbox/intervention-outbox-queue-entry.type';
 export type { InterventionOutboxType } from './intervention-outbox/intervention-outbox-type.type';
+export type { InterventionAttachmentOutput } from './intervention-attachment/intervention-attachment-output.interface';
 export type { PublicationOutput } from './publication/publication-output.interface';
 export type { PublicationStatus } from './publication/publication-status.type';
 export type {

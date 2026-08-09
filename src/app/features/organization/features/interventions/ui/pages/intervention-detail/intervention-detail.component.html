@@ -22,21 +22,14 @@
           >FG-{{ intervention.number }}</span
         >
 
-        @if (hasUnsyncedChanges()) {
-          <span
-            hlmBadge
-            variant="outline"
-            class="gap-1"
-            data-testid="intervention-detail-unsynced"
-            title="Some changes are waiting to sync"
-            i18n-title="@@intervention.notice.unsynced"
-          >
-            <ng-icon name="lucideCloudUpload" aria-hidden="true" />
-            <span class="sr-only" i18n="@@intervention.notice.unsynced"
-              >Some changes are waiting to sync</span
-            >
-          </span>
-        }
+        <app-intervention-sync-status
+          [syncing]="sync.syncing()"
+          [blockedCount]="sync.blockedOperations()"
+          [unsynced]="hasUnsyncedChanges()"
+          (syncRequested)="sync.syncAll()"
+          (retryRequested)="sync.retryBlocked()"
+          (discardRequested)="sync.discardBlocked()"
+        />
 
         <app-intervention-tag kind="status" [value]="intervention.status" />
 
@@ -203,6 +196,22 @@
           class="flex flex-col gap-4 outline-none"
           data-testid="intervention-detail-field-work"
         >
+          @if (canScanWorkItem()) {
+            <div class="flex justify-end">
+              <label hlmBtn variant="outline" size="sm" data-testid="intervention-detail-scan">
+                <ng-icon name="lucideScanLine" aria-hidden="true" />
+                <span i18n="@@intervention.scan.button">Scan a QR code</span>
+                <input
+                  type="file"
+                  class="sr-only"
+                  accept="image/*"
+                  capture="environment"
+                  (change)="onScanFileSelected($event)"
+                />
+              </label>
+            </div>
+          }
+
           @if (intervention.status === 'changes_requested' && intervention.reviewNote) {
             <div hlmAlert class="bg-muted/50" data-testid="intervention-detail-review-note">
               <ng-icon name="lucideMessageSquareQuote" aria-hidden="true" />
@@ -237,6 +246,16 @@
             (rejected)="rejectChange($event)"
           />
         }
+
+        <app-intervention-attachments
+          [attachments]="store.attachments()"
+          [canManage]="canManageAttachments()"
+          [pendingIds]="store.pendingAttachmentIds()"
+          [uploading]="attachmentUploading()"
+          [online]="online()"
+          (filesPicked)="uploadAttachments($event)"
+          (deleteRequested)="removeAttachment($event)"
+        />
 
         <app-intervention-activity-thread
           [activities]="store.activities()"

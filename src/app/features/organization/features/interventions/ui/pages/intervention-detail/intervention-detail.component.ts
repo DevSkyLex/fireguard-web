@@ -26,6 +26,7 @@ import {
   lucideCompass,
   lucideEllipsis,
   lucideMessageSquareQuote,
+  lucideScanLine,
   lucideTrash2,
 } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
@@ -36,6 +37,7 @@ import { isCallPending, type CallState, type StoreError } from '@core/request-st
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
+  InterventionAttachmentOutput,
   InterventionCommandAction,
   InterventionEditState,
   InterventionEditTarget,
@@ -52,6 +54,12 @@ import type {
   PublicationOutput,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
+import {
+  InterventionDiscoveryService,
+  InterventionFieldExecutionService,
+  InterventionPhotoCompressorService,
+  InterventionSyncCoordinatorService,
+} from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import {
   InterventionStore,
@@ -92,11 +100,13 @@ import {
 import { InterventionAbout } from '../../components/intervention-about';
 import { InterventionActionBox } from '../../components/intervention-action-box';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
+import { InterventionAttachments } from '../../components/intervention-attachments';
 import { InterventionChangeList } from '../../components/intervention-change-list';
 import { InterventionCommandBar } from '../../components/intervention-command-bar';
 import { InterventionGettingStarted } from '../../components/intervention-getting-started';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
 import { InterventionPublicationSummary } from '../../components/intervention-publication-summary';
+import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
@@ -169,7 +179,9 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionActionBox,
     InterventionCommandBar,
     InterventionActivityThread,
+    InterventionAttachments,
     InterventionChangeList,
+    InterventionSyncStatus,
     InterventionCommentForm,
     InterventionGettingStarted,
     InterventionPropertiesGrid,
@@ -191,6 +203,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideCompass,
       lucideEllipsis,
       lucideMessageSquareQuote,
+      lucideScanLine,
       lucideTrash2,
     }),
   ],
@@ -276,6 +289,24 @@ export class InterventionDetailPage {
   /** The outbox, read only for the unsynced indicator. */
   private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
 
+  /** The sync coordinator behind the header's sync chip. */
+  protected readonly sync: InterventionSyncCoordinatorService = inject(
+    InterventionSyncCoordinatorService,
+  );
+
+  /** Shrinks camera captures under the backend's 10 MiB attachment ceiling. */
+  private readonly photoCompressor: InterventionPhotoCompressorService = inject(
+    InterventionPhotoCompressorService,
+  );
+
+  /** Field toolbox: QR scan support and decoding. */
+  private readonly fieldExecution: InterventionFieldExecutionService = inject(
+    InterventionFieldExecutionService,
+  );
+
+  /** Normalizes a scanned value to the canonical IRI work items reference. */
+  private readonly discovery: InterventionDiscoveryService = inject(InterventionDiscoveryService);
+
   /** Publishes and polls to a terminal state. */
   private readonly publication: InterventionPublicationService = inject(
     InterventionPublicationService,
@@ -299,6 +330,7 @@ export class InterventionDetailPage {
       untracked((): void => {
         this.store.load(interventionId);
         this.store.loadActivities(interventionId);
+        this.store.loadAttachments(interventionId);
       });
     });
 
@@ -627,6 +659,40 @@ export class InterventionDetailPage {
 
     return (status === 'in_progress' || status === 'changes_requested') && this.canExecute();
   });
+
+  /**
+   * Property canManageAttachments
+   * @readonly
+   *
+   * @description
+   * Whether the attachments section offers upload and delete, mirroring the
+   * backend's `InterventionResourceManager::mutationPermission`: 409 in
+   * `submitted`/`published`/`abandoned`, `.plan` while drafting, `.execute`
+   * afterwards. Like {@link canExecute}, the responsible/participant
+   * membership guard is not approximated — a 403 surfaces inline.
+   *
+   * @access protected
+   * @since 4.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canManageAttachments: Signal<boolean> = computed<boolean>(() => {
+    const status: InterventionStatus | undefined = this.store.intervention()?.status;
+    if (status === undefined) return false;
+    if (status === 'submitted' || status === 'published' || status === 'abandoned') return false;
+
+    return status === 'draft' ? this.canPlan() : this.canExecute();
+  });
+
+  /** Whether an attachment upload is in flight. */
+  protected readonly attachmentUploading: Signal<boolean> = computed<boolean>(() =>
+    isCallPending(this.store.attachmentWriteCallState()),
+  );
+
+  /** Whether the device can decode a QR from a camera capture, shown in the execute phase only. */
+  protected readonly canScanWorkItem: Signal<boolean> = computed<boolean>(
+    () => this.phase() === 'execute' && this.fieldExecution.scanSupported(),
+  );
 
   /** Whether the comment composer's own write is in flight. */
   protected readonly commentPending: Signal<boolean> = computed<boolean>(() =>
@@ -1188,6 +1254,103 @@ export class InterventionDetailPage {
    */
   protected rejectChange(changeId: string): void {
     this.store.rejectChange({ interventionId: this.interventionId(), changeId });
+  }
+
+  /**
+   * Method uploadAttachments
+   *
+   * @description
+   * Uploads the picked files, compressing images first — camera captures are
+   * multi-megabyte and the backend caps at 10 MiB.
+   *
+   * @access protected
+   * @since 4.4.0
+   *
+   * @param {readonly File[]} files - The validated picked files.
+   *
+   * @returns {void}
+   */
+  protected uploadAttachments(files: readonly File[]): void {
+    for (const file of files) {
+      const prepared: Promise<File> = file.type.startsWith('image/')
+        ? this.photoCompressor.compress(file)
+        : Promise.resolve(file);
+      void prepared.then((ready: File): void => {
+        this.store.uploadAttachment({
+          interventionId: this.interventionId(),
+          file: ready,
+          fileName: ready.name,
+        });
+      });
+    }
+  }
+
+  /**
+   * Method removeAttachment
+   *
+   * @description
+   * Deletes one attachment the component already confirmed; the row locks
+   * itself through the store's `pendingAttachmentIds`.
+   *
+   * @access protected
+   * @since 4.4.0
+   *
+   * @param {InterventionAttachmentOutput} attachment - The confirmed target.
+   *
+   * @returns {void}
+   */
+  protected removeAttachment(attachment: InterventionAttachmentOutput): void {
+    this.store.removeAttachment({ attachmentId: attachment.id, revision: attachment.revision });
+  }
+
+  /**
+   * Method onScanFileSelected
+   *
+   * @description
+   * Decodes a captured QR, normalizes it to its canonical IRI and reveals the
+   * matching work item — scroll plus focus, the same landing `revealFieldWork`
+   * gives the phase actions. No match, or an undecodable capture, becomes a
+   * toast rather than a dead click.
+   *
+   * @access protected
+   * @since 4.4.0
+   *
+   * @param {Event} event - The capture input's change event.
+   *
+   * @returns {void}
+   */
+  protected onScanFileSelected(event: Event): void {
+    const inputElement: HTMLInputElement = event.target as HTMLInputElement;
+    const file: File | undefined = inputElement.files?.[0] ?? undefined;
+    inputElement.value = ''; // Re-picking the same file fires no change event otherwise.
+    if (!file) return;
+
+    void this.fieldExecution.scan(file).then((decoded: string | null): void => {
+      if (decoded === null) {
+        this.feedback.error(
+          $localize`:@@intervention.scan.unreadable:No QR code could be read from this capture.`,
+        );
+
+        return;
+      }
+
+      const target: string = this.discovery.normalizeScannedTarget(decoded);
+      const match: InterventionWorkItemOutput | undefined = this.store
+        .workItems()
+        .find((item) => item.target === target || item.target === decoded);
+      if (!match) {
+        this.feedback.error(
+          $localize`:@@intervention.scan.noMatch:No work item of this intervention matches the scanned code.`,
+        );
+
+        return;
+      }
+
+      this.focusFieldWorkPanel();
+      this.feedback.success(
+        $localize`:@@intervention.scan.matched:Found: ${match.target ?? match.id}:target:`,
+      );
+    });
   }
 
   /**

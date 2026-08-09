@@ -1,4 +1,5 @@
 export type {
+  InterventionAttachmentUploadCommand,
   InterventionChangeRejectCommand,
   InterventionCommentAddCommand,
   InterventionDetailsUpdateCommand,

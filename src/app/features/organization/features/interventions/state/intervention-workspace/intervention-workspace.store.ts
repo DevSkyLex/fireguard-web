@@ -48,6 +48,7 @@ import type {
 import { InterventionWorkspaceOptimisticService } from '@features/organization/features/interventions/services/intervention-workspace-optimistic';
 import { interventionWorkspaceStoreEvents } from './events';
 import type {
+  InterventionAttachmentUploadCommand,
   InterventionChangeRejectCommand,
   InterventionCommentAddCommand,
   InterventionDetailsUpdateCommand,
@@ -85,6 +86,10 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   pendingChangeIds: new Set<string>(),
   deleteCallState: idleCallState(),
   addCommentCallState: idleCallState(),
+  attachments: [],
+  attachmentsCallState: idleCallState(),
+  attachmentWriteCallState: idleCallState(),
+  pendingAttachmentIds: new Set<string>(),
   activities: [],
   activityTotal: 0,
   activityOldestPage: null,
@@ -115,6 +120,8 @@ const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
   pendingChangeIds: new Set<string>(),
   deleteCallState: idleCallState(),
   addCommentCallState: idleCallState(),
+  attachmentWriteCallState: idleCallState(),
+  pendingAttachmentIds: new Set<string>(),
 };
 
 /**
@@ -246,7 +253,8 @@ export const InterventionWorkspaceStore = signalStore(
         isCallPending(store.deleteWorkItemsCallState()) ||
         isCallPending(store.rejectChangeCallState()) ||
         isCallPending(store.deleteCallState()) ||
-        isCallPending(store.addCommentCallState()),
+        isCallPending(store.addCommentCallState()) ||
+        isCallPending(store.attachmentWriteCallState()),
     ),
 
     /**
@@ -265,6 +273,7 @@ export const InterventionWorkspaceStore = signalStore(
         store.rejectChangeCallState().error?.message ??
         store.deleteCallState().error?.message ??
         store.addCommentCallState().error?.message ??
+        store.attachmentWriteCallState().error?.message ??
         store.loadCallState().error?.message ??
         null,
     ),
@@ -305,6 +314,7 @@ export const InterventionWorkspaceStore = signalStore(
         store.rejectChangeCallState().error ??
         store.deleteCallState().error ??
         store.addCommentCallState().error ??
+        store.attachmentWriteCallState().error ??
         null,
     ),
 
@@ -401,6 +411,8 @@ export const InterventionWorkspaceStore = signalStore(
               workItems: [],
               changes: [],
               issues: [],
+              attachments: [],
+              attachmentsCallState: idleCallState(),
               loadCallState: pendingCallState(),
               ...IDLE_WRITE_STATES,
             }),
@@ -1266,6 +1278,134 @@ export const InterventionWorkspaceStore = signalStore(
                   });
                   return EMPTY;
                 }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method loadAttachments
+         * @method loadAttachments
+         *
+         * @description
+         * Lazily reads the intervention's attachments — called by the
+         * attachments section on the browser, never by the SSR-critical
+         * workspace fetch.
+         *
+         * ⚠️ Zoneless: reads and writes its own call state — never call it
+         * from a tracked `effect()` without `untracked()`.
+         *
+         * @access public
+         * @since 4.4.0
+         *
+         * @type {RxMethod<string>}
+         */
+        loadAttachments: rxMethod<string>(
+          pipe(
+            tap(() => patchState(store, { attachmentsCallState: pendingCallState() })),
+            switchMap((interventionId) =>
+              service.listAttachments(interventionId).pipe(
+                tapResponse({
+                  next: (collection) =>
+                    patchState(store, {
+                      attachments: collection.member,
+                      attachmentsCallState: successCallState(null),
+                    }),
+                  error: (error: unknown) =>
+                    patchState(store, {
+                      attachmentsCallState: errorCallState(toStoreError(error)),
+                    }),
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method uploadAttachment
+         * @method uploadAttachment
+         *
+         * @description
+         * Uploads one file (online-only in this pass — the outbox has no
+         * attachment operation) and appends the created attachment. Uses
+         * `concatMap`: two picked files upload in order, neither cancelled.
+         *
+         * @access public
+         * @since 4.4.0
+         *
+         * @type {RxMethod<InterventionAttachmentUploadCommand>}
+         */
+        uploadAttachment: rxMethod<InterventionAttachmentUploadCommand>(
+          pipe(
+            tap(() => patchState(store, { attachmentWriteCallState: pendingCallState() })),
+            concatMap(({ interventionId, file, fileName, label }) =>
+              service.uploadAttachment(interventionId, file, fileName, label).pipe(
+                tapResponse({
+                  next: (created) =>
+                    patchState(store, {
+                      attachments: [...store.attachments(), created],
+                      attachmentWriteCallState: successCallState(null),
+                    }),
+                  error: (error: unknown) =>
+                    patchState(store, {
+                      attachmentWriteCallState: errorCallState(
+                        workspaceFailure(
+                          error,
+                          $localize`:@@intervention.workspace.attachmentUploadFailed:The file could not be uploaded.`,
+                        ),
+                      ),
+                    }),
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method removeAttachment
+         * @method removeAttachment
+         *
+         * @description
+         * Deletes one attachment; the row locks itself through
+         * {@link pendingAttachmentIds}.
+         *
+         * @access public
+         * @since 4.4.0
+         *
+         * @type {RxMethod<{ attachmentId: string; revision: number }>}
+         */
+        removeAttachment: rxMethod<{ attachmentId: string; revision: number }>(
+          pipe(
+            mergeMap(({ attachmentId, revision }) => {
+              patchState(store, {
+                attachmentWriteCallState: pendingCallState(),
+                pendingAttachmentIds: withId(store.pendingAttachmentIds(), attachmentId),
+              });
+
+              return service.removeAttachment(attachmentId, revision).pipe(
+                tapResponse({
+                  next: () =>
+                    patchState(store, {
+                      attachments: store
+                        .attachments()
+                        .filter((attachment) => attachment.id !== attachmentId),
+                      attachmentWriteCallState: successCallState(null),
+                    }),
+                  error: (error: unknown) =>
+                    patchState(store, {
+                      attachmentWriteCallState: errorCallState(
+                        workspaceFailure(
+                          error,
+                          $localize`:@@intervention.workspace.attachmentDeleteFailed:The file could not be deleted.`,
+                        ),
+                      ),
+                    }),
+                }),
+                finalize(() =>
+                  patchState(store, {
+                    pendingAttachmentIds: withoutId(store.pendingAttachmentIds(), attachmentId),
+                  }),
+                ),
               );
             }),
           ),

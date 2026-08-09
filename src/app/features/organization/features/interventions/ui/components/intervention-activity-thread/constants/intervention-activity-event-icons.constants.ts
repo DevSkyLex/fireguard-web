@@ -1,4 +1,9 @@
-import { lucideActivity, lucideArrowRightLeft, lucideFlag } from '@ng-icons/lucide';
+import {
+  lucideActivity,
+  lucideArrowRightLeft,
+  lucideCalendarClock,
+  lucideFlag,
+} from '@ng-icons/lucide';
 import type { InterventionActivityEvent } from '@features/organization/features/interventions/models';
 
 /**
@@ -15,6 +20,7 @@ import type { InterventionActivityEvent } from '@features/organization/features/
 export const INTERVENTION_ACTIVITY_EVENT_ICONS: Readonly<Record<string, string>> = {
   lucideActivity,
   lucideArrowRightLeft,
+  lucideCalendarClock,
   lucideFlag,
 };
 
@@ -34,6 +40,7 @@ export const INTERVENTION_ACTIVITY_EVENT_ICON_NAME: Readonly<
 > = {
   created: 'lucideFlag',
   status_changed: 'lucideArrowRightLeft',
+  rescheduled: 'lucideCalendarClock',
 };
 
 /**
@@ -82,6 +89,7 @@ export const INTERVENTION_ACTIVITY_EVENT_ICON_CLASS: Readonly<
 > = {
   created: 'text-[length:--spacing(4)] text-green-600 dark:text-green-400',
   status_changed: 'text-[length:--spacing(4)] text-neutral-500 dark:text-neutral-400',
+  rescheduled: 'text-[length:--spacing(4)] text-amber-600 dark:text-amber-400',
 };
 
 /**

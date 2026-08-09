@@ -483,10 +483,43 @@ export class InterventionDetailPage {
     );
   });
 
-  /** Whether planning fields accept a write — draft only, as the backend enforces. */
-  protected readonly canEditPlanning: Signal<boolean> = computed<boolean>(
+  /**
+   * Property canEditSchedule
+   * @readonly
+   *
+   * @description
+   * Whether dates, priority and participants accept a write — the backend's
+   * replanning matrix keeps them editable through `planned`, `in_progress`
+   * and `changes_requested`; `submitted` is frozen (withdraw first).
+   *
+   * @access protected
+   * @since 4.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canEditSchedule: Signal<boolean> = computed<boolean>(() => {
+    const status: InterventionStatus | undefined = this.store.intervention()?.status;
+
+    return (
+      this.canPlan() &&
+      (status === 'draft' ||
+        status === 'planned' ||
+        status === 'in_progress' ||
+        status === 'changes_requested')
+    );
+  });
+
+  /** Whether the site accepts a write — draft only, as the backend enforces. */
+  protected readonly canEditSite: Signal<boolean> = computed<boolean>(
     () => this.canPlan() && this.store.intervention()?.status === 'draft',
   );
+
+  /** Whether the responsible accepts a handover — draft and planned only. */
+  protected readonly canEditResponsible: Signal<boolean> = computed<boolean>(() => {
+    const status: InterventionStatus | undefined = this.store.intervention()?.status;
+
+    return this.canPlan() && (status === 'draft' || status === 'planned');
+  });
 
   /** Whether description and labels accept a write, which holds until a terminal status. */
   protected readonly canEditDetails: Signal<boolean> = computed<boolean>(() => {
@@ -754,6 +787,11 @@ export class InterventionDetailPage {
       return actorName === undefined
         ? $localize`:@@intervention.detail.metaCreatedNoActor:Created ${when}:when: · revision ${revision}:revision:`
         : $localize`:@@intervention.detail.metaCreated:${actorName}:actor: created this intervention ${when}:when: · revision ${revision}:revision:`;
+
+    if (last.kind === 'system' && last.event === 'rescheduled')
+      return actorName === undefined
+        ? $localize`:@@intervention.detail.metaRescheduledNoActor:Rescheduled ${when}:when: · revision ${revision}:revision:`
+        : $localize`:@@intervention.detail.metaRescheduled:${actorName}:actor: moved the planned window ${when}:when: · revision ${revision}:revision:`;
 
     if (last.kind === 'comment')
       return actorName === undefined

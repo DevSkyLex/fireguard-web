@@ -358,10 +358,19 @@ an "Undo" toast would be a new cross-app primitive; instead every successful
 in-place commit shows a success toast, so a mis-click is visible within the
 toast's lifetime rather than discovered at review.
 
-Mutability follows the backend (`Intervention::assertPlanningMutable`): planning
-fields are writable in **draft only** (`canEditPlanning`), description and labels
-until a terminal status (`canEditDetails`). A field that cannot be written renders
-as a **disabled trigger** — no hover, no pencil, out of the tab order.
+Mutability follows the backend's **replanning matrix** (the former draft-only
+`assertPlanningMutable` is retired): dates, priority and participants stay
+writable through `planned`, `in_progress` and `changes_requested`
+(`canEditSchedule`) — a delayed intervention is rescheduled in place, and the
+backend answers with a `rescheduled` activity the timeline renders (amber
+calendar marker, "moved the planned window to …"); the responsible accepts a
+handover in `draft` and `planned` only (`canEditResponsible`); the site stays
+draft-only (`canEditSite`); description and labels hold until a terminal
+status (`canEditDetails`); `submitted` freezes everything — withdraw first. A
+field that cannot be written renders as a **disabled trigger** — no hover, no
+pencil, out of the tab order. The `plan` permission gates all three planning
+signals; the backend additionally lets a pure planning payload through without
+the responsible/participant guard, so a planner who is neither can reschedule.
 
 `name` is deliberately **not** editable here: the gate covering it is documented
 in neither set, and offering an edit the API might refuse is what the read-only

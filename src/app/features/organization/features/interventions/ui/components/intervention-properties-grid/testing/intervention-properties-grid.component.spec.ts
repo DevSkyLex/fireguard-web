@@ -73,7 +73,9 @@ describe('InterventionPropertiesGrid', () => {
     fixture.componentRef.setInput('intervention', intervention);
     fixture.componentRef.setInput('memberOptions', members);
     fixture.componentRef.setInput('editState', IDLE_EDIT_STATE);
-    fixture.componentRef.setInput('canEditPlanning', true);
+    fixture.componentRef.setInput('canEditSchedule', true);
+    fixture.componentRef.setInput('canEditSite', true);
+    fixture.componentRef.setInput('canEditResponsible', true);
     fixture.componentRef.setInput('canEditDetails', true);
     await fixture.whenStable();
 

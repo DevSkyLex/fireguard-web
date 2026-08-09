@@ -85,6 +85,14 @@
                   <app-intervention-tag kind="status" [value]="change.from" />
                   <ng-icon name="lucideArrowRight" aria-hidden="true" />
                   <app-intervention-tag kind="status" [value]="change.to" />
+                } @else if (activity.event === 'rescheduled' && rescheduleOf(activity); as window) {
+                  <span class="font-medium text-foreground">{{ actorNameOf(activity) }}</span>
+                  <span i18n="@@intervention.activity.rescheduledLine"
+                    >moved the planned window to</span
+                  >
+                  <span class="font-medium text-foreground">{{
+                    rescheduleWindowLabelOf(window)
+                  }}</span>
                 } @else if (activity.event === 'created') {
                   @if (activity.actor !== null) {
                     <span class="font-medium text-foreground">{{ actorNameOf(activity) }}</span>

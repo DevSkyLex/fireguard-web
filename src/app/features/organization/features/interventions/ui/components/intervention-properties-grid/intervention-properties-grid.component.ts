@@ -142,19 +142,57 @@ export class InterventionPropertiesGrid {
   >([]);
 
   /**
-   * Property canEditPlanning
+   * Property canEditSchedule
    * @readonly
    *
    * @description
-   * Whether the planning fields accept a write — the backend allows it in draft
-   * only, so past that the cards render as plain text with no affordance.
+   * Whether the schedule group — priority, planned window, participants —
+   * accepts a write. The backend keeps these editable through `planned`,
+   * `in_progress` and `changes_requested`, so a delayed intervention is
+   * rescheduled in place; past that the cards render as plain text.
    *
    * @access public
-   * @since 1.0.0
+   * @since 4.3.0
    *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
-  public readonly canEditPlanning: InputSignalWithTransform<boolean, BooleanInput> = input<
+  public readonly canEditSchedule: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(false, { transform: booleanAttribute });
+
+  /**
+   * Property canEditSite
+   * @readonly
+   *
+   * @description
+   * Whether the site accepts a write — draft only: it scopes the prepared work
+   * items, so the backend freezes it once planned.
+   *
+   * @access public
+   * @since 4.3.0
+   *
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly canEditSite: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(false, { transform: booleanAttribute });
+
+  /**
+   * Property canEditResponsible
+   * @readonly
+   *
+   * @description
+   * Whether the responsible accepts a handover — draft and planned only: once
+   * field work starts, that identity governs execution rights and is frozen.
+   *
+   * @access public
+   * @since 4.3.0
+   *
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly canEditResponsible: InputSignalWithTransform<boolean, BooleanInput> = input<
     boolean,
     BooleanInput
   >(false, { transform: booleanAttribute });

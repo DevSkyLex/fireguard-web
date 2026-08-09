@@ -349,6 +349,56 @@ export class InterventionActivityThread {
   }
 
   /**
+   * Method rescheduleOf
+   *
+   * @description
+   * Narrows a `rescheduled` entry's loose payload to the new planning window.
+   * Defensive like {@link statusChangeOf}: a malformed payload degrades to
+   * `null` and the row falls back to the generic line.
+   *
+   * @access protected
+   * @since 4.3.0
+   *
+   * @param {InterventionActivityOutput} activity - The entry in question.
+   *
+   * @returns {{ plannedStartAt: string | null; dueAt: string | null } | null} The new window, or null.
+   */
+  protected rescheduleOf(
+    activity: InterventionActivityOutput,
+  ): { readonly plannedStartAt: string | null; readonly dueAt: string | null } | null {
+    const payload: unknown = activity.payload;
+    if (payload === null || typeof payload !== 'object' || !('to' in payload)) return null;
+    const target: unknown = (payload as { readonly to: unknown }).to;
+    if (target === null || typeof target !== 'object') return null;
+    const window = target as { readonly plannedStartAt?: unknown; readonly dueAt?: unknown };
+
+    return {
+      plannedStartAt: typeof window.plannedStartAt === 'string' ? window.plannedStartAt : null,
+      dueAt: typeof window.dueAt === 'string' ? window.dueAt : null,
+    };
+  }
+
+  /**
+   * Method rescheduleWindowLabelOf
+   * @description The new planning window as a localized "start → due" label.
+   * @access protected
+   * @since 4.3.0
+   * @param {{ plannedStartAt: string | null; dueAt: string | null }} window - The new window.
+   * @returns {string} A localized date pair.
+   */
+  protected rescheduleWindowLabelOf(window: {
+    readonly plannedStartAt: string | null;
+    readonly dueAt: string | null;
+  }): string {
+    const label = (iso: string | null): string =>
+      iso === null
+        ? '—'
+        : new Intl.DateTimeFormat(this.locale, { dateStyle: 'medium' }).format(new Date(iso));
+
+    return `${label(window.plannedStartAt)} → ${label(window.dueAt)}`;
+  }
+
+  /**
    * Method relativeTimeOf
    * @description The entry's creation time, as a localized relative label.
    * @access protected

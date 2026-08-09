@@ -73,10 +73,7 @@ function isUsableView(value: unknown): value is InterventionView {
     typeof candidate.label === 'string' &&
     candidate.label.length > 0 &&
     typeof candidate.filters === 'object' &&
-    candidate.filters !== null &&
-    // A cookie may predate the render set of this build (the retired `board`):
-    // a view carrying an unknown render is dropped rather than propagated.
-    (candidate.render === 'list' || candidate.render === 'calendar')
+    candidate.filters !== null
   );
 }
 
@@ -174,15 +171,7 @@ export class InterventionListPreferencesService {
     const stored: PersistedPreferences = this.read();
     const field: string | undefined = stored.sortField;
 
-    if (
-      field !== 'dueAt' &&
-      field !== 'plannedStartAt' &&
-      field !== 'name' &&
-      field !== 'createdAt' &&
-      field !== 'updatedAt' &&
-      field !== 'priority'
-    )
-      return DEFAULT_SORT;
+    if (field !== 'dueAt' && field !== 'createdAt' && field !== 'priority') return DEFAULT_SORT;
 
     return {
       field: field satisfies InterventionSortField,

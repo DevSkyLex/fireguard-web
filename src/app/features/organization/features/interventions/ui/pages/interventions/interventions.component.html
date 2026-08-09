@@ -13,13 +13,6 @@
     </button>
   </div>
 
-  <app-intervention-view-switcher
-    [views]="views()"
-    [activeViewId]="activeViewId()"
-    (selected)="selectView($event)"
-    (removed)="removeCustomView($event)"
-  />
-
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <hlm-input-group class="w-full sm:w-72">
       <hlm-input-group-addon>
@@ -228,17 +221,6 @@
               >
                 <ng-icon name="lucideX" aria-hidden="true" />
                 <span i18n="@@common.clearFilters">Clear filters</span>
-              </button>
-
-              <button
-                hlmBtn
-                type="button"
-                variant="outline"
-                size="sm"
-                data-testid="interventions-save-view"
-                (click)="saveViewVisible.set(true)"
-              >
-                <span i18n="@@intervention.views.saveButton">Save view…</span>
               </button>
             }
           </div>
@@ -469,9 +451,3 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
-
-<app-intervention-view-save-dialog
-  [visible]="saveViewVisible()"
-  (visibleChange)="saveViewVisible.set($event)"
-  (saved)="saveCurrentView($event)"
-/>

@@ -22,32 +22,14 @@ This subfeature is responsible for:
 - `/organizations/:organizationId/interventions` — the index page: a spartan
   `hlmTable` of the organization's interventions, grouped and paginated, with a
   debounced search box synced to `?q=` (a server-side `name` filter), a filter
-  popover (status, type, priority, site, responsible, deadline window), a
-  column menu, row selection and a permission-gated bulk delete. `?create=1`
-  opens the creation sheet on arrival and is consumed once, so the parent
-  feature's landing page can offer "New intervention" as a primary action that
-  actually starts the work.
+  popover (status, type, deadline window), a column menu, row selection and a
+  permission-gated bulk delete. `?create=1` opens the creation sheet on arrival
+  and is consumed once, so the parent feature's landing page can offer "New
+  intervention" as a primary action that actually starts the work.
 
-  A **view bar** above the toolbar offers the five built-in views
-  (`INTERVENTION_BUILTIN_VIEWS`: All / Mine / Overdue / To review / Drafts) and
-  up to five operator-saved ones ("Save view…" in the filter popover, removal
-  on the chip). A view is a **preset**, not a mode: selecting one replaces the
-  narrowing and ordering from page one; any manual filter, sort or clear
-  detaches (`activeViewId` drops to null, in the cookie too). `Mine` carries
-  the `@me` sentinel, substituted with the signed-in member's IRI at query
-  time — the load effect tracks the profile so the list reloads once it
-  resolves. `Overdue` means "late AND still actionable": the server's
-  single-valued status filter cannot exclude two terminal statuses, so
-  `published`/`abandoned` are dropped client-side within the loaded page (the
-  multi-valued status filter follow-up moves this server-side). A view's
-  `grouping` is currently not rendered — the table is flat; the field is kept
-  for the grouped rendering to come. Search (`?q=`) stays orthogonal to views.
-
-  Sort, the active view id and the saved views are remembered in a cookie by
-  `InterventionListPreferencesService` (a stored view with a render this build
-  does not know — the retired `board` — is dropped at read time); filters
-  deliberately are not, being questions asked now rather than stored
-  preferences.
+  Sort and fold state are remembered in a cookie by
+  `InterventionListPreferencesService`; filters deliberately are not, being
+  questions asked now rather than stored preferences.
 
 - `/organizations/:organizationId/interventions/:interventionId` — the detail
   workspace, described below. Mounted as a second child of the same pathless

@@ -18,6 +18,23 @@
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-sm font-medium text-foreground">{{ resourceKindOf(change) }}</span>
             <app-intervention-tag kind="changeStatus" [value]="change.status" asOption />
+            @if (canReject()) {
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="ms-auto text-destructive hover:text-destructive"
+                data-testid="intervention-change-reject"
+                [disabled]="isRowPending(change)"
+                (click)="rejected.emit(change.id)"
+              >
+                @if (isRowPending(change)) {
+                  <hlm-spinner size="xs" aria-hidden="true" />
+                }
+                <span i18n="@@intervention.changes.reject">Reject</span>
+              </button>
+            }
           </div>
 
           <dl class="flex flex-col gap-1 text-sm">

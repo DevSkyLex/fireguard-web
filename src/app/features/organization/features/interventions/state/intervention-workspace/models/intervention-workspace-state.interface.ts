@@ -21,17 +21,54 @@ export interface InterventionWorkspaceState {
   readonly loadCallState: CallState;
 
   /**
-   * Lifecycle shared by every write this workspace performs — transitions,
-   * planning details, work items, comments, deletion.
+   * Lifecycle of a status transition (`transition`).
    *
-   * One field rather than one per command: the workspace surfaces a single busy
-   * state, and its drawers are modal, so two writes never race for the user's
-   * attention. What matters is that a failure now keeps the normalized
-   * `StoreError` — the previous `saving: boolean` + pre-localized `error: string`
-   * pair threw the payload away, so an HTTP 422 could never reach the form that
-   * caused it.
+   * One named field per write concern rather than one shared `mutationCallState`:
+   * the workspace's writes are concurrent (`mergeMap` on work items, `concatMap`
+   * on comments), and a shared field attributed the spinner and the error to
+   * whichever write finished last — the wrong row, half the time. Each field
+   * still keeps the normalized `StoreError`, so an HTTP 422 reaches the form
+   * that caused it.
    */
-  readonly mutationCallState: CallState;
+  readonly transitionCallState: CallState;
+
+  /** Lifecycle of a planning-details update (`updateDetails`). */
+  readonly updateDetailsCallState: CallState;
+
+  /** Lifecycle of a work-item creation (`createWorkItem`). */
+  readonly createWorkItemCallState: CallState;
+
+  /**
+   * Lifecycle of the **last** work-item status write (`setWorkItemStatus`).
+   * With concurrent writes the per-row attribution lives in
+   * {@link pendingWorkItemIds}; this field carries the latest error.
+   */
+  readonly workItemWriteCallState: CallState;
+
+  /**
+   * Ids of the work items with a status write in flight. The set — not the
+   * call state — is what locks and spins a row, so two concurrent writes each
+   * mark their own row.
+   */
+  readonly pendingWorkItemIds: ReadonlySet<string>;
+
+  /** Lifecycle of a batch work-item deletion (`deleteWorkItems`). */
+  readonly deleteWorkItemsCallState: CallState;
+
+  /**
+   * Lifecycle of the **last** proposed-change rejection (`rejectChange`);
+   * per-row attribution lives in {@link pendingChangeIds}.
+   */
+  readonly rejectChangeCallState: CallState;
+
+  /** Ids of the proposed changes with a rejection in flight. */
+  readonly pendingChangeIds: ReadonlySet<string>;
+
+  /** Lifecycle of the intervention deletion (`delete`). */
+  readonly deleteCallState: CallState;
+
+  /** Lifecycle of a comment post (`addComment`). */
+  readonly addCommentCallState: CallState;
 
   /**
    * Activity timeline (comments and system entries) of the active

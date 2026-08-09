@@ -44,6 +44,20 @@ const workItem = {
   updatedAt: '2026-06-12T08:00:00.000Z',
 } as InterventionWorkItemOutput;
 
+const proposedChange = {
+  '@id': '/api/intervention-changes/change-1',
+  '@type': 'InterventionChange',
+  id: 'change-1',
+  intervention: '/api/interventions/intervention-1',
+  workItem: null,
+  resource: '/api/equipment/equipment-1',
+  patch: { locationLabel: 'Rack B-12' },
+  status: 'proposed',
+  revision: 1,
+  createdAt: '2026-06-12T08:00:00.000Z',
+  updatedAt: '2026-06-12T08:00:00.000Z',
+} as InterventionChangeOutput;
+
 describe('InterventionWorkspaceStore offline field work', () => {
   let store: InstanceType<typeof InterventionWorkspaceStore>;
   let mockService: {
@@ -124,6 +138,24 @@ describe('InterventionWorkspaceStore offline field work', () => {
     expect(store.intervention()?.revision).toBe(4);
     expect(store.workItems()[0]?.revision).toBe(2);
     expect(mockOffline.saveWorkspace).toHaveBeenCalled();
+  });
+
+  it('queues a change rejection offline and applies it optimistically', async () => {
+    mockService.listAllChanges.mockReturnValue(of([proposedChange]));
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.changes()).toHaveLength(1));
+
+    store.rejectChange({ interventionId: intervention.id, changeId: proposedChange.id });
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(mockOffline.queue).toHaveBeenCalledWith(intervention.id, 'change.update', {
+      changeId: 'change-1',
+      status: 'rejected',
+      revision: 1,
+    });
+    expect(store.changes()[0]?.status).toBe('rejected');
+    expect(store.pendingChangeIds().size).toBe(0);
+    expect(store.error()).toBeNull();
   });
 
   it('queues and persists planning detail updates while offline', async () => {
@@ -650,6 +682,7 @@ describe('InterventionWorkspaceStore call state', () => {
       update: vi.fn(),
       createWorkItem: vi.fn(),
       updateWorkItem: vi.fn(),
+      updateChange: vi.fn(),
       removeWorkItem: vi.fn().mockReturnValue(of(undefined)),
       remove: vi.fn().mockReturnValue(of(undefined)),
     };
@@ -678,7 +711,11 @@ describe('InterventionWorkspaceStore call state', () => {
 
   it('starts idle and reports neither loading nor saving', () => {
     expect(store.loadCallState().status).toBe('idle');
-    expect(store.mutationCallState().status).toBe('idle');
+    expect(store.updateDetailsCallState().status).toBe('idle');
+    expect(store.workItemWriteCallState().status).toBe('idle');
+    expect(store.rejectChangeCallState().status).toBe('idle');
+    expect(store.pendingWorkItemIds().size).toBe(0);
+    expect(store.pendingChangeIds().size).toBe(0);
     expect(store.loading()).toBe(false);
     expect(store.saving()).toBe(false);
     expect(store.error()).toBeNull();
@@ -701,10 +738,8 @@ describe('InterventionWorkspaceStore call state', () => {
     store.updateDetails({ interventionId: intervention.id, input: {} });
     await vi.waitFor(() => expect(store.saving()).toBe(false));
 
-    expect(store.mutationCallState().status).toBe('error');
-    // The point of the migration: the violations survive, so the edit drawer can
-    // land "This value should be greater than plannedStartAt." on `dueAt`.
-    expect(store.mutationError()?.error).toEqual(violation);
+    expect(store.updateDetailsCallState().status).toBe('error');
+    expect(store.mutationError()?.error).toEqual(violation); // The violations survive, so the edit drawer can land them on `dueAt`.
     expect(store.error()).toBe('dueAt: This value should be greater than plannedStartAt.');
   });
 
@@ -730,9 +765,89 @@ describe('InterventionWorkspaceStore call state', () => {
 
     store.clearError();
 
-    expect(store.mutationCallState().status).toBe('idle');
+    expect(store.updateDetailsCallState().status).toBe('idle');
     expect(store.loadCallState().status).toBe('idle');
     expect(store.error()).toBeNull();
+  });
+
+  it('rejects a proposed change in place and unlocks its row', async () => {
+    mockService['listAllChanges'].mockReturnValue(of([proposedChange]));
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.changes()).toHaveLength(1));
+
+    mockService['updateChange'].mockReturnValue(
+      of({ ...proposedChange, status: 'rejected', revision: 2 }),
+    );
+    store.rejectChange({ interventionId: 'intervention-1', changeId: 'change-1' });
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(mockService['updateChange']).toHaveBeenCalledWith('change-1', { status: 'rejected' }, 1);
+    expect(store.changes()[0]?.status).toBe('rejected');
+    expect(store.changes()[0]?.revision).toBe(2);
+    expect(store.pendingChangeIds().size).toBe(0);
+    expect(store.error()).toBeNull();
+  });
+
+  it('dispatches rejectChangeFailed and keeps the change proposed on a server rejection', async () => {
+    mockService['listAllChanges'].mockReturnValue(of([proposedChange]));
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.changes()).toHaveLength(1));
+
+    const dispatcher = TestBed.inject(Dispatcher);
+    const dispatchSpy = vi.spyOn(dispatcher, 'dispatch');
+    mockService['updateChange'].mockReturnValue(
+      throwError(() => ({
+        '@id': '',
+        '@type': 'Error',
+        status: 403,
+        type: 'about:blank',
+        title: 'Forbidden',
+        detail: 'You are not allowed to review this change.',
+      })),
+    );
+
+    store.rejectChange({ interventionId: 'intervention-1', changeId: 'change-1' });
+    await vi.waitFor(() => expect(store.pendingChangeIds().size).toBe(0));
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: '[Intervention Workspace Store] rejectChangeFailed' }),
+    );
+    expect(store.changes()[0]?.status).toBe('proposed');
+    expect(store.error()).toBeNull();
+  });
+
+  it('ignores a rejection for a change that is no longer proposed', async () => {
+    mockService['listAllChanges'].mockReturnValue(
+      of([{ ...proposedChange, status: 'rejected' as const }]),
+    );
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.changes()).toHaveLength(1));
+
+    store.rejectChange({ interventionId: 'intervention-1', changeId: 'change-1' });
+
+    expect(mockService['updateChange']).not.toHaveBeenCalled();
+    expect(store.pendingChangeIds().size).toBe(0);
+  });
+
+  it('marks each work-item row while its own write is in flight', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    const write = new Subject<InterventionWorkItemOutput>();
+    mockService['updateWorkItem'].mockReturnValue(write);
+
+    store.setWorkItemStatus({
+      interventionId: 'intervention-1',
+      workItemId: workItem.id,
+      status: 'in_progress',
+    });
+    await vi.waitFor(() => expect(store.pendingWorkItemIds().has(workItem.id)).toBe(true));
+    expect(store.saving()).toBe(true);
+
+    write.next({ ...workItem, status: 'in_progress', revision: 2 });
+    write.complete();
+    await vi.waitFor(() => expect(store.pendingWorkItemIds().size).toBe(0));
+    expect(store.saving()).toBe(false);
   });
 
   it('blanks the workspace on load, so entry never shows the previous intervention', () => {

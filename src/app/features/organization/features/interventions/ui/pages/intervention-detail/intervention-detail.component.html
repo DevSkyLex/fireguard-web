@@ -216,7 +216,7 @@
           <app-intervention-work-item-table
             [items]="store.workItems()"
             [nextItemId]="nextWorkItemId()"
-            [pendingItemId]="pendingWorkItemId()"
+            [pendingItemIds]="store.pendingWorkItemIds()"
             [canToggle]="canExecute() && phase() === 'execute'"
             [canSkip]="canSkipWorkItem()"
             [canDelete]="canAddWorkItem()"
@@ -230,7 +230,12 @@
         </div>
 
         @if (pendingChangesCount() > 0) {
-          <app-intervention-change-list [changes]="store.changes()" />
+          <app-intervention-change-list
+            [changes]="store.changes()"
+            [canReject]="canRejectChange()"
+            [pendingChangeIds]="store.pendingChangeIds()"
+            (rejected)="rejectChange($event)"
+          />
         }
 
         <app-intervention-activity-thread
@@ -245,8 +250,8 @@
 
         <div class="border-t border-border pt-4">
           <app-intervention-comment-form
-            [pending]="store.saving()"
-            [serverError]="store.mutationError()"
+            [pending]="commentPending()"
+            [serverError]="commentError()"
             (submitted)="postComment($event)"
           />
         </div>
@@ -391,9 +396,9 @@
 
 <app-intervention-work-item-sheet
   [visible]="workItemSheetVisible()"
-  [pending]="store.saving()"
+  [pending]="workItemCreatePending()"
   [disabled]="!canAddWorkItem()"
-  [serverError]="store.mutationError()"
+  [serverError]="workItemCreateError()"
   [targetOptions]="planningOptions.targets()"
   [memberOptions]="planningOptions.members()"
   (visibleChange)="workItemSheetVisible.set($event)"
@@ -402,9 +407,9 @@
 
 <app-intervention-request-changes-sheet
   [visible]="requestChangesVisible()"
-  [pending]="store.saving()"
+  [pending]="requestChangesPending()"
   [disabled]="!canReview()"
-  [serverError]="store.mutationError()"
+  [serverError]="requestChangesError()"
   (visibleChange)="requestChangesVisible.set($event)"
   (submitted)="requestChanges($event)"
 />

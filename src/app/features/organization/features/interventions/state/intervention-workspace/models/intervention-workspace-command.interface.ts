@@ -61,6 +61,22 @@ export interface InterventionCommentAddCommand {
 }
 
 /**
+ * Interface InterventionChangeRejectCommand
+ * @interface InterventionChangeRejectCommand
+ *
+ * @description
+ * Command used to reject one proposed intervention change. The change's
+ * revision is read from the store at dispatch time, mirroring how work-item
+ * writes resolve theirs.
+ *
+ * @since 4.2.0
+ */
+export interface InterventionChangeRejectCommand {
+  readonly interventionId: string;
+  readonly changeId: string;
+}
+
+/**
  * Interface InterventionWorkItemDeleteCommand
  * @interface InterventionWorkItemDeleteCommand
  *

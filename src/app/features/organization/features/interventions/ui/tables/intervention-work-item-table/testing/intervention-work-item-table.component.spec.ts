@@ -172,7 +172,7 @@ describe('InterventionWorkItemTable', () => {
   });
 
   it('should lock only the row whose own write is in flight', async () => {
-    fixture.componentRef.setInput('pendingItemId', 'wi-2');
+    fixture.componentRef.setInput('pendingItemIds', new Set(['wi-2']));
     await fixture.whenStable();
 
     // wi-2 is saving; wi-1 and wi-4 stay live so an agent can keep ticking.
@@ -183,7 +183,7 @@ describe('InterventionWorkItemTable', () => {
   });
 
   it('should spin on the saving row, and only there', async () => {
-    fixture.componentRef.setInput('pendingItemId', 'wi-2');
+    fixture.componentRef.setInput('pendingItemIds', new Set(['wi-2']));
     await fixture.whenStable();
 
     expect(toggles()[1]?.querySelector('hlm-spinner')).not.toBeNull();

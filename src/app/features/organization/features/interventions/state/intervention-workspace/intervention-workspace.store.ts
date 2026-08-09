@@ -8,6 +8,7 @@ import {
   concatMap,
   EMPTY,
   filter,
+  finalize,
   forkJoin,
   from,
   map,
@@ -47,6 +48,7 @@ import type {
 import { InterventionWorkspaceOptimisticService } from '@features/organization/features/interventions/services/intervention-workspace-optimistic';
 import { interventionWorkspaceStoreEvents } from './events';
 import type {
+  InterventionChangeRejectCommand,
   InterventionCommentAddCommand,
   InterventionDetailsUpdateCommand,
   InterventionWorkItemCreateCommand,
@@ -73,12 +75,88 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   changes: [],
   issues: [],
   loadCallState: idleCallState(),
-  mutationCallState: idleCallState(),
+  transitionCallState: idleCallState(),
+  updateDetailsCallState: idleCallState(),
+  createWorkItemCallState: idleCallState(),
+  workItemWriteCallState: idleCallState(),
+  pendingWorkItemIds: new Set<string>(),
+  deleteWorkItemsCallState: idleCallState(),
+  rejectChangeCallState: idleCallState(),
+  pendingChangeIds: new Set<string>(),
+  deleteCallState: idleCallState(),
+  addCommentCallState: idleCallState(),
   activities: [],
   activityTotal: 0,
   activityOldestPage: null,
   activityCallState: idleCallState(),
 };
+
+/**
+ * Constant IDLE_WRITE_STATES
+ * @const IDLE_WRITE_STATES
+ *
+ * @description
+ * Every write concern reset to idle, with the per-row pending sets emptied.
+ * Applied on workspace entry and by `clearError()`, so a stale failure from a
+ * previous intervention never bleeds into the next one.
+ *
+ * @since 4.2.0
+ *
+ * @type {Partial<InterventionWorkspaceState>}
+ */
+const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
+  transitionCallState: idleCallState(),
+  updateDetailsCallState: idleCallState(),
+  createWorkItemCallState: idleCallState(),
+  workItemWriteCallState: idleCallState(),
+  pendingWorkItemIds: new Set<string>(),
+  deleteWorkItemsCallState: idleCallState(),
+  rejectChangeCallState: idleCallState(),
+  pendingChangeIds: new Set<string>(),
+  deleteCallState: idleCallState(),
+  addCommentCallState: idleCallState(),
+};
+
+/**
+ * Function withId
+ * @function withId
+ *
+ * @description
+ * Returns a new set with `id` added, leaving the source untouched so signal
+ * consumers see a fresh reference.
+ *
+ * @since 4.2.0
+ *
+ * @param {ReadonlySet<string>} ids - Current set.
+ * @param {string} id - Id to add.
+ *
+ * @return {ReadonlySet<string>} New set containing `id`.
+ */
+function withId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  const next = new Set(ids);
+  next.add(id);
+  return next;
+}
+
+/**
+ * Function withoutId
+ * @function withoutId
+ *
+ * @description
+ * Returns a new set with `id` removed, leaving the source untouched.
+ *
+ * @since 4.2.0
+ *
+ * @param {ReadonlySet<string>} ids - Current set.
+ * @param {string} id - Id to remove.
+ *
+ * @return {ReadonlySet<string>} New set without `id`.
+ */
+function withoutId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  const next = new Set(ids);
+  next.delete(id);
+  return next;
+}
 
 /**
  * Function workspaceFailure
@@ -158,8 +236,18 @@ export const InterventionWorkspaceStore = signalStore(
     /** Whether the workspace fetch is in flight. */
     loading: computed<boolean>(() => isCallPending(store.loadCallState())),
 
-    /** Whether any write is in flight. */
-    saving: computed<boolean>(() => isCallPending(store.mutationCallState())),
+    /** Whether any write is in flight, across every named write concern. */
+    saving: computed<boolean>(
+      () =>
+        isCallPending(store.transitionCallState()) ||
+        isCallPending(store.updateDetailsCallState()) ||
+        isCallPending(store.createWorkItemCallState()) ||
+        isCallPending(store.workItemWriteCallState()) ||
+        isCallPending(store.deleteWorkItemsCallState()) ||
+        isCallPending(store.rejectChangeCallState()) ||
+        isCallPending(store.deleteCallState()) ||
+        isCallPending(store.addCommentCallState()),
+    ),
 
     /**
      * Message of the last failure, load or write, for the page banner.
@@ -169,7 +257,16 @@ export const InterventionWorkspaceStore = signalStore(
      */
     error: computed<string | null>(
       () =>
-        store.mutationCallState().error?.message ?? store.loadCallState().error?.message ?? null,
+        store.transitionCallState().error?.message ??
+        store.updateDetailsCallState().error?.message ??
+        store.createWorkItemCallState().error?.message ??
+        store.workItemWriteCallState().error?.message ??
+        store.deleteWorkItemsCallState().error?.message ??
+        store.rejectChangeCallState().error?.message ??
+        store.deleteCallState().error?.message ??
+        store.addCommentCallState().error?.message ??
+        store.loadCallState().error?.message ??
+        null,
     ),
 
     /**
@@ -192,12 +289,24 @@ export const InterventionWorkspaceStore = signalStore(
     }),
 
     /**
-     * Normalized error of the last write.
+     * Normalized error of the last write, first non-null across the named
+     * write concerns.
      *
      * Unlike {@link error}, this keeps the whole payload, so a page can hand a 422
      * to the form that caused it and land each violation on the field it names.
      */
-    mutationError: computed<StoreError | null>(() => store.mutationCallState().error),
+    mutationError: computed<StoreError | null>(
+      () =>
+        store.transitionCallState().error ??
+        store.updateDetailsCallState().error ??
+        store.createWorkItemCallState().error ??
+        store.workItemWriteCallState().error ??
+        store.deleteWorkItemsCallState().error ??
+        store.rejectChangeCallState().error ??
+        store.deleteCallState().error ??
+        store.addCommentCallState().error ??
+        null,
+    ),
 
     progress: computed<number>(() => {
       const total = store.workItems().length;
@@ -293,7 +402,7 @@ export const InterventionWorkspaceStore = signalStore(
               changes: [],
               issues: [],
               loadCallState: pendingCallState(),
-              mutationCallState: idleCallState(),
+              ...IDLE_WRITE_STATES,
             }),
           ),
           switchMap((interventionId) =>
@@ -473,7 +582,7 @@ export const InterventionWorkspaceStore = signalStore(
                 optimistic.comment(interventionId, body, clientId),
               ],
               activityTotal: store.activityTotal() + 1,
-              mutationCallState: successCallState(null),
+              addCommentCallState: successCallState(null),
             });
           }),
         );
@@ -499,7 +608,7 @@ export const InterventionWorkspaceStore = signalStore(
        */
       const addComment = rxMethod<InterventionCommentAddCommand>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() => patchState(store, { addCommentCallState: pendingCallState() })),
           // concatMap (not switchMap): comments are independent and must never
           // cancel a previous in-flight post — a dropped comment is lost work.
           concatMap(({ interventionId, body }) => {
@@ -512,14 +621,14 @@ export const InterventionWorkspaceStore = signalStore(
                 patchState(store, {
                   activities: [...store.activities(), activity],
                   activityTotal: store.activityTotal() + 1,
-                  mutationCallState: successCallState(null),
+                  addCommentCallState: successCallState(null),
                 });
               }),
               catchError((error: unknown) => {
                 if (connectivity.isNetworkFailure(error)) {
                   return queueComment(interventionId, body);
                 }
-                patchState(store, { mutationCallState: successCallState(null) });
+                patchState(store, { addCommentCallState: successCallState(null) });
                 dispatcher.dispatch(
                   interventionWorkspaceStoreEvents.commentAddFailed(
                     toStoreFailureEventPayload(
@@ -544,7 +653,7 @@ export const InterventionWorkspaceStore = signalStore(
 
         transition: rxMethod<InterventionTransitionRequest>(
           pipe(
-            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+            tap(() => patchState(store, { transitionCallState: pendingCallState() })),
             switchMap(({ interventionId, status, reviewNote }) => {
               const intervention = store.intervention();
 
@@ -568,7 +677,7 @@ export const InterventionWorkspaceStore = signalStore(
                     });
                     patchState(store, {
                       intervention: updatedIntervention,
-                      mutationCallState: successCallState(null),
+                      transitionCallState: successCallState(null),
                     });
                     void offline
                       .saveWorkspace(
@@ -594,7 +703,7 @@ export const InterventionWorkspaceStore = signalStore(
                   tap((updatedIntervention) =>
                     patchState(store, {
                       intervention: updatedIntervention,
-                      mutationCallState: successCallState(null),
+                      transitionCallState: successCallState(null),
                     }),
                   ),
                   catchError((error: unknown) => {
@@ -610,7 +719,7 @@ export const InterventionWorkspaceStore = signalStore(
                       // status-specific wording below is friendlier than the API's
                       // `detail`, but the payload underneath still carries the 422
                       // violations a form needs.
-                      mutationCallState: errorCallState({
+                      transitionCallState: errorCallState({
                         ...storeError,
                         message:
                           storeError.code === 412
@@ -630,7 +739,7 @@ export const InterventionWorkspaceStore = signalStore(
         ),
         updateDetails: rxMethod<InterventionDetailsUpdateCommand>(
           pipe(
-            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+            tap(() => patchState(store, { updateDetailsCallState: pendingCallState() })),
             concatMap(({ interventionId, input }) => {
               const intervention = store.intervention();
 
@@ -663,7 +772,7 @@ export const InterventionWorkspaceStore = signalStore(
                     };
                     patchState(store, {
                       intervention: updatedIntervention,
-                      mutationCallState: successCallState(null),
+                      updateDetailsCallState: successCallState(null),
                     });
                     await offline.saveWorkspace(
                       updatedIntervention,
@@ -677,7 +786,7 @@ export const InterventionWorkspaceStore = signalStore(
                   }),
                   catchError((error: unknown) => {
                     patchState(store, {
-                      mutationCallState: errorCallState(
+                      updateDetailsCallState: errorCallState(
                         workspaceFailure(
                           error,
                           $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
@@ -697,7 +806,7 @@ export const InterventionWorkspaceStore = signalStore(
                 tap((updatedIntervention) =>
                   patchState(store, {
                     intervention: updatedIntervention,
-                    mutationCallState: successCallState(null),
+                    updateDetailsCallState: successCallState(null),
                   }),
                 ),
                 catchError((error: unknown) => {
@@ -705,7 +814,7 @@ export const InterventionWorkspaceStore = signalStore(
                     return queueDetails(intervention);
                   }
                   patchState(store, {
-                    mutationCallState: errorCallState(
+                    updateDetailsCallState: errorCallState(
                       workspaceFailure(
                         error,
                         $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
@@ -721,7 +830,7 @@ export const InterventionWorkspaceStore = signalStore(
 
         createWorkItem: rxMethod<InterventionWorkItemCreateCommand>(
           pipe(
-            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+            tap(() => patchState(store, { createWorkItemCallState: pendingCallState() })),
             switchMap(({ interventionId, input }) => {
               if (connectivity.isOffline()) {
                 const clientId = input.clientId ?? crypto.randomUUID();
@@ -739,7 +848,7 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       intervention: updatedIntervention,
                       workItems,
-                      mutationCallState: successCallState(null),
+                      createWorkItemCallState: successCallState(null),
                     });
                     if (updatedIntervention) {
                       void offline
@@ -775,7 +884,7 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       workItems,
                       intervention: updatedIntervention,
-                      mutationCallState: successCallState(null),
+                      createWorkItemCallState: successCallState(null),
                     });
                     if (updatedIntervention) {
                       void offline
@@ -792,7 +901,7 @@ export const InterventionWorkspaceStore = signalStore(
                   },
                   error: (error: unknown) =>
                     patchState(store, {
-                      mutationCallState: errorCallState(
+                      createWorkItemCallState: errorCallState(
                         workspaceFailure(
                           error,
                           $localize`:@@intervention.workspace.workItemCreateFailed:The work item could not be created.`,
@@ -806,11 +915,21 @@ export const InterventionWorkspaceStore = signalStore(
         ),
         setWorkItemStatus: rxMethod<InterventionWorkItemStatusCommand>(
           pipe(
-            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
             // mergeMap (not switchMap): a field agent ticks several checklist
             // items quickly; each toggle is independent and must not cancel the
-            // previous in-flight PATCH.
+            // previous in-flight PATCH. Each write marks its own row in
+            // `pendingWorkItemIds` on entry and unmarks it on settle, so
+            // concurrent toggles each lock the right row.
             mergeMap(({ interventionId, workItemId, status, skipReason }) => {
+              patchState(store, {
+                workItemWriteCallState: pendingCallState(),
+                pendingWorkItemIds: withId(store.pendingWorkItemIds(), workItemId),
+              });
+              const settle = finalize(() =>
+                patchState(store, {
+                  pendingWorkItemIds: withoutId(store.pendingWorkItemIds(), workItemId),
+                }),
+              );
               const item = store.workItems().find((current) => current.id === workItemId);
               const normalizedSkipReason: string | null =
                 status === 'skipped' ? (skipReason ?? item?.skipReason ?? null) : null;
@@ -835,7 +954,7 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       intervention: updatedIntervention,
                       workItems,
-                      mutationCallState: successCallState(null),
+                      workItemWriteCallState: successCallState(null),
                     });
                     if (updatedIntervention) {
                       void offline
@@ -852,6 +971,7 @@ export const InterventionWorkspaceStore = signalStore(
                         .catch(() => undefined);
                     }
                   }),
+                  settle,
                 );
               }
 
@@ -869,7 +989,7 @@ export const InterventionWorkspaceStore = signalStore(
                     // ticks don't each trigger a competing reload.
                     next: () => {
                       if (!item) {
-                        patchState(store, { mutationCallState: successCallState(null) });
+                        patchState(store, { workItemWriteCallState: successCallState(null) });
 
                         return;
                       }
@@ -886,7 +1006,7 @@ export const InterventionWorkspaceStore = signalStore(
                       patchState(store, {
                         intervention: result.intervention,
                         workItems,
-                        mutationCallState: successCallState(null),
+                        workItemWriteCallState: successCallState(null),
                       });
                       if (result.intervention) {
                         void offline
@@ -903,7 +1023,7 @@ export const InterventionWorkspaceStore = signalStore(
                     },
                     error: (error: unknown) =>
                       patchState(store, {
-                        mutationCallState: errorCallState(
+                        workItemWriteCallState: errorCallState(
                           workspaceFailure(
                             error,
                             $localize`:@@intervention.workspace.workItemUpdateFailed:The work item could not be updated.`,
@@ -911,17 +1031,121 @@ export const InterventionWorkspaceStore = signalStore(
                         ),
                       }),
                   }),
+                  settle,
                 );
+            }),
+          ),
+        ),
+
+        /**
+         * Method rejectChange
+         * @method rejectChange
+         *
+         * @description
+         * Rejects one proposed change (`PATCH` to `rejected`), the only status
+         * a client may set — acceptance happens automatically at publication.
+         * The change's row locks through {@link pendingChangeIds} while the
+         * write is in flight. Offline — or on a network failure — the write is
+         * queued as an idempotent `change.update` outbox operation (the replay
+         * path already exists in the sync service) and applied optimistically.
+         * A genuine server rejection dispatches `rejectChangeFailed` for the
+         * app-wide feedback listener and leaves the change untouched.
+         *
+         * ⚠️ Zoneless: reads and writes its own call state — never call it from
+         * a tracked `effect()` without `untracked()`.
+         *
+         * @access public
+         * @since 4.2.0
+         *
+         * @type {RxMethod<InterventionChangeRejectCommand>}
+         */
+        rejectChange: rxMethod<InterventionChangeRejectCommand>(
+          pipe(
+            // mergeMap: rejections of distinct changes are independent writes.
+            mergeMap(({ interventionId, changeId }) => {
+              const change = store.changes().find((current) => current.id === changeId);
+              if (!change || change.status !== 'proposed') return EMPTY;
+
+              patchState(store, {
+                rejectChangeCallState: pendingCallState(),
+                pendingChangeIds: withId(store.pendingChangeIds(), changeId),
+              });
+              const settle = finalize(() =>
+                patchState(store, {
+                  pendingChangeIds: withoutId(store.pendingChangeIds(), changeId),
+                }),
+              );
+
+              const applyRejection = (rejected: InterventionChangeOutput): void => {
+                const changes: readonly InterventionChangeOutput[] = store
+                  .changes()
+                  .map((current) => (current.id === changeId ? rejected : current));
+                patchState(store, {
+                  changes,
+                  rejectChangeCallState: successCallState(null),
+                });
+                const intervention = store.intervention();
+                if (intervention) {
+                  void offline
+                    .saveWorkspace(intervention, store.workItems(), changes, store.issues(), [], {
+                      replace: false,
+                    })
+                    .catch(() => undefined);
+                }
+              };
+
+              const queueRejection = () =>
+                from(
+                  offline.queue(interventionId, 'change.update', {
+                    changeId,
+                    status: 'rejected',
+                    revision: change.revision,
+                  }),
+                ).pipe(
+                  tap(() =>
+                    applyRejection({
+                      ...change,
+                      status: 'rejected',
+                      revision: change.revision + 1,
+                      updatedAt: new Date().toISOString(),
+                    }),
+                  ),
+                  settle,
+                );
+
+              if (connectivity.isOffline()) {
+                return queueRejection();
+              }
+
+              return service.updateChange(changeId, { status: 'rejected' }, change.revision).pipe(
+                tap((rejected) => applyRejection(rejected)),
+                catchError((error: unknown) => {
+                  if (connectivity.isNetworkFailure(error)) {
+                    return queueRejection();
+                  }
+                  patchState(store, { rejectChangeCallState: successCallState(null) });
+                  dispatcher.dispatch(
+                    interventionWorkspaceStoreEvents.rejectChangeFailed(
+                      toStoreFailureEventPayload(
+                        toStoreError(error),
+                        $localize`:@@intervention.workspace.rejectChangeFailed:The proposed change could not be rejected.`,
+                      ),
+                    ),
+                  );
+                  return EMPTY;
+                }),
+                settle,
+              );
             }),
           ),
         ),
 
         deleteWorkItems: rxMethod<InterventionWorkItemDeleteCommand>(
           pipe(
-            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+            tap(() => patchState(store, { deleteWorkItemsCallState: pendingCallState() })),
             switchMap(({ workItems }) => {
               if (workItems.length === 0) {
-                patchState(store, { mutationCallState: successCallState(null) });
+                patchState(store, { deleteWorkItemsCallState: successCallState(null) });
                 return EMPTY;
               }
 
@@ -930,7 +1154,7 @@ export const InterventionWorkspaceStore = signalStore(
               // changes, so surface a clear message instead of silently failing.
               if (connectivity.isOffline()) {
                 patchState(store, {
-                  mutationCallState: errorCallState({
+                  deleteWorkItemsCallState: errorCallState({
                     error: null,
                     message: $localize`:@@intervention.workspace.workItemDeleteOffline:Connect to the network to delete planned work items.`,
                     code: null,
@@ -960,7 +1184,7 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       workItems: remaining,
                       intervention: updatedIntervention,
-                      mutationCallState: successCallState(null),
+                      deleteWorkItemsCallState: successCallState(null),
                     });
                     if (updatedIntervention) {
                       void offline
@@ -977,7 +1201,7 @@ export const InterventionWorkspaceStore = signalStore(
                   },
                   error: (error: unknown) =>
                     patchState(store, {
-                      mutationCallState: errorCallState(
+                      deleteWorkItemsCallState: errorCallState(
                         workspaceFailure(
                           error,
                           $localize`:@@intervention.workspace.workItemDeleteFailed:The work item could not be deleted.`,
@@ -1009,17 +1233,17 @@ export const InterventionWorkspaceStore = signalStore(
          */
         delete: rxMethod<{ interventionId: string }>(
           pipe(
-            tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+            tap(() => patchState(store, { deleteCallState: pendingCallState() })),
             switchMap(({ interventionId }) => {
               const intervention = store.intervention();
               if (!intervention) {
-                patchState(store, { mutationCallState: successCallState(null) });
+                patchState(store, { deleteCallState: successCallState(null) });
                 return EMPTY;
               }
 
               return service.remove(interventionId, intervention.revision).pipe(
                 tap(() => {
-                  patchState(store, { mutationCallState: successCallState(null) });
+                  patchState(store, { deleteCallState: successCallState(null) });
                   dispatcher.dispatch(
                     interventionWorkspaceStoreEvents.deleteSucceeded(
                       successFeedback($localize`:@@intervention.delete.toast:Intervention deleted`),
@@ -1029,7 +1253,7 @@ export const InterventionWorkspaceStore = signalStore(
                 catchError((error: unknown) => {
                   const storeError = toStoreError(error);
                   patchState(store, {
-                    mutationCallState: errorCallState({
+                    deleteCallState: errorCallState({
                       ...storeError,
                       message:
                         storeError.code === 409
@@ -1127,7 +1351,7 @@ export const InterventionWorkspaceStore = signalStore(
         clearError(): void {
           patchState(store, {
             loadCallState: idleCallState(),
-            mutationCallState: idleCallState(),
+            ...IDLE_WRITE_STATES,
           });
         },
       };

@@ -32,7 +32,7 @@ import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
-import { isCallPending } from '@core/request-state';
+import { isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
@@ -137,11 +137,11 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * nothing that gates publication may be visible only inside a section the
  * operator has to scroll to.
  *
- * The store has a single `mutationCallState` for every write, so
- * {@link pendingWrite} attributes it to the one field or row that caused it.
- * That is an approximation: two writes in flight and the spinner lands on the
- * wrong one. The real fix is named call states in the store, and it is out of
- * scope here.
+ * The store exposes one named call state per write concern, so nothing here
+ * approximates attribution anymore: the in-place fields settle on
+ * `updateDetailsCallState`, a work-item row locks through the store's
+ * `pendingWorkItemIds`, a change row through `pendingChangeIds`, and each
+ * overlay binds the call state of the write it actually performs.
  *
  * Deletion goes through `InterventionStore`, not the workspace store. Only the
  * list store removes the entity and repairs `orderedIds()`, which this page's
@@ -311,10 +311,9 @@ export class InterventionDetailPage {
     });
 
     effect((): void => {
-      const saving: boolean = this.store.saving();
-      const failure: string | null = this.store.error();
+      const callState: CallState = this.store.updateDetailsCallState();
 
-      untracked((): void => this.settleWrite(saving, failure));
+      untracked((): void => this.settleDetailsWrite(callState));
     });
 
     this.events
@@ -363,9 +362,6 @@ export class InterventionDetailPage {
    */
   protected readonly editState: WritableSignal<InterventionEditState> =
     signal<InterventionEditState>(IDLE_EDIT_STATE);
-
-  /** Which row's own write is in flight, so the list does not spin as one. */
-  protected readonly pendingWorkItemId: WritableSignal<string | null> = signal<string | null>(null);
 
   /** What the text confirmation is asking about, if anything. */
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
@@ -573,6 +569,61 @@ export class InterventionDetailPage {
           !(intervention.status === 'submitted' && status === 'in_progress') || this.canSubmit(),
       );
   });
+
+  /**
+   * Property canRejectChange
+   * @readonly
+   *
+   * @description
+   * Whether the signed-in member may reject a proposed change, mirroring the
+   * backend's permission mapping: under review (`submitted`) the write requires
+   * `.review` — a pure reviewer CAN reject during review — while during
+   * execution (`in_progress`, `changes_requested`) it requires `.execute`. Like
+   * {@link canExecute}, the responsible/participant membership guard is not
+   * approximated here; a 403 surfaces through the `rejectChangeFailed` toast.
+   *
+   * @access protected
+   * @since 4.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canRejectChange: Signal<boolean> = computed<boolean>(() => {
+    const status: InterventionStatus | undefined = this.store.intervention()?.status;
+    if (status === undefined) return false;
+    if (status === 'submitted') return this.canReview();
+
+    return (status === 'in_progress' || status === 'changes_requested') && this.canExecute();
+  });
+
+  /** Whether the comment composer's own write is in flight. */
+  protected readonly commentPending: Signal<boolean> = computed<boolean>(() =>
+    isCallPending(this.store.addCommentCallState()),
+  );
+
+  /** The comment composer's own write error, if any. */
+  protected readonly commentError: Signal<StoreError | null> = computed<StoreError | null>(
+    () => this.store.addCommentCallState().error,
+  );
+
+  /** Whether the add-work-item sheet's own write is in flight. */
+  protected readonly workItemCreatePending: Signal<boolean> = computed<boolean>(() =>
+    isCallPending(this.store.createWorkItemCallState()),
+  );
+
+  /** The add-work-item sheet's own write error, if any. */
+  protected readonly workItemCreateError: Signal<StoreError | null> = computed<StoreError | null>(
+    () => this.store.createWorkItemCallState().error,
+  );
+
+  /** Whether the request-changes sheet's own transition is in flight. */
+  protected readonly requestChangesPending: Signal<boolean> = computed<boolean>(() =>
+    isCallPending(this.store.transitionCallState()),
+  );
+
+  /** The request-changes sheet's own transition error, if any. */
+  protected readonly requestChangesError: Signal<StoreError | null> = computed<StoreError | null>(
+    () => this.store.transitionCallState().error,
+  );
 
   /** The blocking compliance issues, which stop publication. */
   protected readonly blockerIssues: Signal<readonly InterventionIssueOutput[]> = computed<
@@ -1079,8 +1130,26 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected onWorkItemStatusChanged(change: InterventionWorkItemStatusChange): void {
-    this.pendingWorkItemId.set(change.workItemId);
     this.store.setWorkItemStatus({ interventionId: this.interventionId(), ...change });
+  }
+
+  /**
+   * Method rejectChange
+   *
+   * @description
+   * Rejects one proposed change; the row locks itself through the store's
+   * `pendingChangeIds` and a failure surfaces as the `rejectChangeFailed`
+   * toast.
+   *
+   * @access protected
+   * @since 4.2.0
+   *
+   * @param {string} changeId - The change to reject.
+   *
+   * @returns {void}
+   */
+  protected rejectChange(changeId: string): void {
+    this.store.rejectChange({ interventionId: this.interventionId(), changeId });
   }
 
   /**
@@ -1256,7 +1325,6 @@ export class InterventionDetailPage {
         });
         break;
       default:
-        this.pendingWorkItemId.set(request.workItem.id);
         this.store.setWorkItemStatus({
           interventionId: this.interventionId(),
           workItemId: request.workItem.id,
@@ -1429,29 +1497,28 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Method settleWrite
+   * Method settleDetailsWrite
    *
    * @description
-   * Attributes the store's single shared mutation flag back to whatever caused
-   * it, once it clears. An in-place field keeps its draft on failure and closes
-   * on success; a work-item row simply stops spinning.
+   * Settles the open in-place field once its own write — and only its own:
+   * the store's `updateDetailsCallState` — clears. The field keeps its draft
+   * on failure and closes with a toast on success. Work-item and change rows
+   * settle themselves through the store's pending-id sets.
    *
    * @access private
-   * @since 1.0.0
+   * @since 4.2.0
    *
-   * @param {boolean} saving - Whether a write is still in flight.
-   * @param {string | null} failure - The last write's error, if any.
+   * @param {CallState} callState - The details write's call state.
    *
    * @returns {void}
    */
-  private settleWrite(saving: boolean, failure: string | null): void {
-    if (saving) return;
-
-    this.pendingWorkItemId.set(null);
+  private settleDetailsWrite(callState: CallState): void {
+    if (isCallPending(callState)) return;
 
     const state: InterventionEditState = this.editState();
     if (state.saving === null) return;
 
+    const failure: string | null = callState.error?.message ?? null;
     if (failure === null) {
       this.editState.set(IDLE_EDIT_STATE);
       this.feedback.success($localize`:@@intervention.detail.fieldSaved:Change saved`);

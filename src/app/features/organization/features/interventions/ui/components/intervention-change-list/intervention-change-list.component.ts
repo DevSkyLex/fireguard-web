@@ -3,11 +3,15 @@ import {
   Component,
   computed,
   input,
+  output,
   type InputSignal,
+  type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
 import type { InterventionChangeOutput } from '@features/organization/features/interventions/models';
+import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InterventionTag } from '../intervention-tag';
 import type { InterventionChangePatchLine } from './models';
 import { formatInterventionChangePatch } from './utils';
@@ -21,25 +25,30 @@ import { formatInterventionChangePatch } from './utils';
  * facilities, equipment, or inspections, and that are still waiting on
  * publication.
  *
- * Read-only in this pass: `UpdateInterventionChangeInput.status` only ever
- * accepts `'proposed' | 'rejected'` — the client can reject a change, never
- * accept one, and `InterventionWorkspaceStore` exposes no method to do
- * either yet. Offering a control this surface cannot back would be worse
- * than offering none, so the list only reads and a caption explains what
- * happens next: a pending change is applied automatically at publication.
+ * Rejection is the one control this surface offers, and only when the host
+ * grants it (`canReject`): `UpdateInterventionChangeInput.status` only ever
+ * accepts `'proposed' | 'rejected'` — acceptance is not a client action, a
+ * pending change is applied automatically at publication, and the caption
+ * says so. A row locks and spins on **its own** write through
+ * `pendingChangeIds`, mirroring the work-item table's per-row rule.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
- * <app-intervention-change-list [changes]="store.changes()" />
+ * <app-intervention-change-list
+ *   [changes]="store.changes()"
+ *   [canReject]="canRejectChange()"
+ *   [pendingChangeIds]="store.pendingChangeIds()"
+ *   (rejected)="rejectChange($event)"
+ * />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-change-list',
-  imports: [InterventionTag, ...HlmCardImports],
+  imports: [InterventionTag, HlmButton, ...HlmCardImports, ...HlmSpinnerImports],
   templateUrl: './intervention-change-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -56,6 +65,40 @@ export class InterventionChangeList {
   public readonly changes: InputSignal<readonly InterventionChangeOutput[]> = input<
     readonly InterventionChangeOutput[]
   >([]);
+
+  /**
+   * Property canReject
+   * @readonly
+   * @description Whether the host grants rejecting a proposed change; the backend rules stay with the page.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canReject: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property pendingChangeIds
+   * @readonly
+   * @description Ids of the changes whose rejection is in flight, so each row locks on its own write.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<ReadonlySet<string>>}
+   */
+  public readonly pendingChangeIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
+    new Set<string>(),
+  );
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property rejected
+   * @readonly
+   * @description Emits the id of the change the operator rejected; the page owns the store call.
+   * @access public
+   * @since 2.0.0
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly rejected: OutputEmitterRef<string> = output<string>();
   //#endregion
 
   //#region Properties
@@ -73,6 +116,18 @@ export class InterventionChangeList {
   //#endregion
 
   //#region Methods
+  /**
+   * Method isRowPending
+   * @description Whether this row's own rejection is in flight.
+   * @access protected
+   * @since 2.0.0
+   * @param {InterventionChangeOutput} change - The proposed change.
+   * @returns {boolean} True while the change's write is pending.
+   */
+  protected isRowPending(change: InterventionChangeOutput): boolean {
+    return this.pendingChangeIds().has(change.id);
+  }
+
   /**
    * Method resourceKindOf
    * @description Names the kind of resource a change's IRI points at, for the row's caption.

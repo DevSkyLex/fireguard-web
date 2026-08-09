@@ -57,4 +57,29 @@ describe('InterventionChangeList', () => {
       'Applied automatically when this intervention is published.',
     );
   });
+
+  it('should offer no reject control unless the host grants it', async () => {
+    await create([change()]);
+
+    expect(root().querySelector('[data-testid="intervention-change-reject"]')).toBeNull();
+  });
+
+  it('should emit the rejected change id, and only lock its own row', async () => {
+    const rejectedIds: string[] = [];
+    await create([change(), change({ id: 'change-2' })]);
+    fixture.componentRef.setInput('canReject', true);
+    fixture.componentRef.setInput('pendingChangeIds', new Set(['change-2']));
+    fixture.componentInstance.rejected.subscribe((id: string) => rejectedIds.push(id));
+    await fixture.whenStable();
+
+    const buttons = root().querySelectorAll<HTMLButtonElement>(
+      '[data-testid="intervention-change-reject"]',
+    );
+    expect(buttons.length).toBe(2);
+    expect(buttons[0]?.disabled).toBe(false);
+    expect(buttons[1]?.disabled).toBe(true);
+
+    buttons[0]?.click();
+    expect(rejectedIds).toEqual(['change-1']);
+  });
 });

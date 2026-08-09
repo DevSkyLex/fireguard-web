@@ -11,7 +11,12 @@ import { Events } from '@ngrx/signals/events';
 import { EMPTY } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
-import { idleCallState } from '@core/request-state';
+import {
+  errorCallState,
+  idleCallState,
+  pendingCallState,
+  type CallState,
+} from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
@@ -104,6 +109,7 @@ describe('InterventionDetailPage', () => {
   let issues: WritableSignal<readonly InterventionIssueOutput[]>;
   let activities: WritableSignal<readonly InterventionActivityOutput[]>;
   let saving: WritableSignal<boolean>;
+  let updateDetailsCallState: WritableSignal<CallState>;
   let loadError: WritableSignal<string | null>;
   let loadFailed: WritableSignal<boolean>;
   let hasOlderActivities: WritableSignal<boolean>;
@@ -138,6 +144,7 @@ describe('InterventionDetailPage', () => {
     issues = signal<readonly InterventionIssueOutput[]>([]);
     activities = signal<readonly InterventionActivityOutput[]>([]);
     saving = signal(false);
+    updateDetailsCallState = signal<CallState>(idleCallState());
     loadError = signal<string | null>(null);
     loadFailed = signal(false);
     hasOlderActivities = signal(false);
@@ -212,6 +219,16 @@ describe('InterventionDetailPage', () => {
               error: loadError,
               loadFailed,
               mutationError: signal(null),
+              transitionCallState: signal(idleCallState()),
+              updateDetailsCallState,
+              createWorkItemCallState: signal(idleCallState()),
+              workItemWriteCallState: signal(idleCallState()),
+              pendingWorkItemIds: signal(new Set<string>()),
+              deleteWorkItemsCallState: signal(idleCallState()),
+              rejectChangeCallState: signal(idleCallState()),
+              pendingChangeIds: signal(new Set<string>()),
+              deleteCallState: signal(idleCallState()),
+              addCommentCallState: signal(idleCallState()),
               blockerCount,
               nextWorkItem: signal(null),
               load,
@@ -224,6 +241,7 @@ describe('InterventionDetailPage', () => {
               setWorkItemStatus,
               deleteWorkItems,
               createWorkItem,
+              rejectChange: vi.fn(),
               delete: workspaceDelete,
               clearError: vi.fn(),
             },
@@ -580,10 +598,17 @@ describe('InterventionDetailPage', () => {
       byTestId('intervention-field-priority').querySelector('button')?.click();
       await fixture.whenStable();
       grid().triggerEventHandler('detailsChanged', { priority: 'urgent' });
-      saving.set(true);
+      updateDetailsCallState.set(pendingCallState());
       await fixture.whenStable();
-      loadError.set('The priority could not be saved.');
-      saving.set(false);
+      updateDetailsCallState.set(
+        errorCallState({
+          error: null,
+          message: 'The priority could not be saved.',
+          code: null,
+          retryable: true,
+          timestamp: 0,
+        }),
+      );
       await fixture.whenStable();
 
       expect(

@@ -61,10 +61,13 @@ Stores:
 - `InterventionWorkspaceStore` — component-scoped (provided in
   `InterventionDetailPage`); the active intervention workspace (intervention,
   work items, changes, issues) with online/offline mutations. Async state is held
-  as `loadCallState` (the workspace fetch), `mutationCallState` (**shared by every
-  write** — see the known limitation below) and `activityCallState`; `loading`,
-  `saving` and `error` are derived over them, and `mutationError` exposes the
-  normalized `StoreError`. `load` blanks the workspace before fetching, which is
+  as `loadCallState` (the workspace fetch), `activityCallState`, and **one named
+  call state per write concern** (`transitionCallState`, `updateDetailsCallState`,
+  `createWorkItemCallState`, `workItemWriteCallState`, `deleteWorkItemsCallState`,
+  `rejectChangeCallState`, `deleteCallState`, `addCommentCallState`), plus two
+  per-row pending sets (`pendingWorkItemIds`, `pendingChangeIds`) for the
+  concurrent `mergeMap` writes; `loading`, `saving` and `error` are derived over
+  them, and `mutationError` exposes the first non-null normalized `StoreError`. `load` blanks the workspace before fetching, which is
   right on entry and wrong afterwards, so **`reload` exists for a refresh that
   must not flash the page to a skeleton** — publication uses it. `loadFailed`
   distinguishes a failed _fetch_ from a failed _write_, which is what lets the
@@ -310,18 +313,22 @@ and does not know the member's identity): a non-responsible clicking the
 withdrawal there takes the backend 403, which the optimistic `transition`
 rollback and `transitionFailed` toast already handle.
 
-### Read-only proposed changes
+### Proposed changes: reject is the only client action
 
 `UpdateInterventionChangeInput.status` only ever accepts
 `'proposed' | 'rejected'` — the client can reject a change, never accept one,
 and acceptance is not a client action at all: a proposed change is applied
-automatically **at publication**. `InterventionWorkspaceStore` exposes no
-method to reject a change today (only `InterventionService.updateChange`
-exists, consumed by `intervention-sync.service.ts`), so
-`app-intervention-change-list` is **read-only** in this pass: it lists the
-still-`proposed` changes with a caption explaining what happens next, and
-offers no action. Wiring a reject action is a follow-up that touches the
-store and its offline outbox, not this page.
+automatically **at publication**, and the list's caption says so.
+`InterventionWorkspaceStore.rejectChange` performs the rejection (offline it
+queues the existing `change.update` outbox operation and applies it
+optimistically; a genuine server rejection dispatches the `rejectChangeFailed`
+toast and leaves the change untouched). `app-intervention-change-list` offers a
+per-row Reject button when the page grants `canReject` — `submitted` requires
+`.review` (a pure reviewer CAN reject during review), `in_progress` /
+`changes_requested` require `.execute`, mirroring the backend's permission
+mapping; the responsible/participant membership guard is not approximated and
+surfaces as the toast. A change row locks and spins on **its own** write
+through `pendingChangeIds`, the same rule as work-item rows.
 
 ### Editing
 
@@ -423,24 +430,18 @@ an IndexedDB snapshot, so offline behaviour works without any page code. The onl
 visible surface here is the header's unsynced indicator. The sync chip, the
 blocked-operation count and Retry/Discard belong to a dedicated offline pass.
 
-### Known limitation
+### Write attribution is exact, not approximated
 
-`InterventionWorkspaceStore` has a **single `mutationCallState` for every write**.
-The page attributes it to the one field or row that caused it (`editState.saving`,
-`pendingWorkItemId`), which is an approximation: with two writes in flight the
-spinner lands on the wrong one, and the second's success clears the first's error.
-The real fix is named call states in the store, and it is out of scope for this
-page.
-
-What is **no longer** part of that limitation: the work-item table used to
-resolve it by disabling _every_ toggle whenever any write was in flight
-(`[disabled]="… || busy()"`), throwing away the `mergeMap` the store chose
-precisely so an agent could tick several items quickly — and the
-`pendingItemId` input meant to attribute the spinner to one row was never
-referenced by the template at all. A row now locks and spins on its **own**
-write (`isRowPending`), and `busy` gates only the add affordances, whose sheet
-is modal. The store-level approximation stands; the template no longer amplifies
-it into a frozen checklist.
+The store's former **single `mutationCallState` for every write** — and the
+page-side approximation it forced (`pendingWorkItemId`, a `settleWrite` driven
+by the global `saving`) — is retired. Every write concern has its own named
+call state, the in-place fields settle on `updateDetailsCallState` alone, each
+overlay (comment composer, add-work-item sheet, request-changes sheet) binds
+the call state of the write it actually performs, and per-row attribution for
+the concurrent `mergeMap` writes is the store's own `pendingWorkItemIds` /
+`pendingChangeIds` sets. Two writes in flight now each mark their own row, and
+one write's success can no longer clear another's error. `busy` on the
+work-item table still gates only the add affordances, whose sheet is modal.
 
 ## Status / enum presentation (badges & select options)
 
@@ -514,8 +515,9 @@ follows.
   guards. A second control performing the same transition without the check makes
   the gate advisory, which is what it did for `draft → planned` and
   `in_progress → submitted`. See `### The forward move has one gate`.
-- **A work-item row locks and spins on its own write, never on any write.**
-  `isRowPending(item)` compares `pendingItemId`; `busy` gates only the add
+- **A row locks and spins on its own write, never on any write** — work-item
+  rows and change rows alike. `isRowPending` reads membership in the store's
+  `pendingWorkItemIds` / `pendingChangeIds` sets; `busy` gates only the add
   affordances. The store queues these writes with `mergeMap` specifically so an
   agent can tick items quickly — a template that disables the whole list undoes a
   deliberate store decision, silently.

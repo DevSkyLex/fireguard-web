@@ -121,20 +121,23 @@ export class InterventionWorkItemTable {
   public readonly nextItemId: InputSignal<string | null> = input<string | null>(null);
 
   /**
-   * Property pendingItemId
+   * Property pendingItemIds
    * @readonly
    *
    * @description
-   * Which row's own write is in flight. The store has one mutation flag for
-   * every write, so the page attributes it to a row rather than spinning the
-   * whole list.
+   * Ids of the rows whose own write is in flight, straight from the store's
+   * `pendingWorkItemIds`. A set rather than a single id: writes run through
+   * `mergeMap`, so several rows may legitimately be saving at once and each
+   * must lock only itself.
    *
    * @access public
-   * @since 1.0.0
+   * @since 4.2.0
    *
-   * @type {InputSignal<string | null>}
+   * @type {InputSignal<ReadonlySet<string>>}
    */
-  public readonly pendingItemId: InputSignal<string | null> = input<string | null>(null);
+  public readonly pendingItemIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
+    new Set<string>(),
+  );
 
   /**
    * Property canToggle
@@ -198,7 +201,7 @@ export class InterventionWorkItemTable {
    * It deliberately does not gate a row: the store queues work-item writes with
    * `mergeMap` so an operator can tick several items in a row, and locking every
    * toggle on any write would throw that away. A row's own in-flight write is
-   * {@link pendingItemId}.
+   * {@link pendingItemIds}.
    *
    * @access public
    * @since 1.0.0
@@ -453,7 +456,7 @@ export class InterventionWorkItemTable {
    * @returns {boolean} True while this row is saving.
    */
   protected isRowPending(item: InterventionWorkItemOutput): boolean {
-    return this.pendingItemId() === item.id;
+    return this.pendingItemIds().has(item.id);
   }
 
   /**

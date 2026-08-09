@@ -10,7 +10,9 @@ import type { InterventionStatus } from '@features/organization/features/interve
  * drag-and-drop drops and to build the per-card action menu so the UI never
  * offers a transition the API would reject. `published` is intentionally
  * absent from every list: it is reached through the publication flow
- * (`/api/publications`), not a plain status update.
+ * (`/api/publications`), not a plain status update. `submitted` offers
+ * `in_progress` (withdrawal) — the backend reserves it to the responsible
+ * member and answers 403 for anyone else.
  *
  * @since 1.0.0
  *
@@ -22,7 +24,7 @@ export const INTERVENTION_STATUS_TRANSITIONS: Readonly<
   draft: ['planned', 'abandoned'],
   planned: ['in_progress', 'abandoned'],
   in_progress: ['submitted', 'abandoned'],
-  submitted: ['changes_requested'],
+  submitted: ['changes_requested', 'in_progress'],
   changes_requested: ['in_progress', 'submitted', 'abandoned'],
   published: [],
   abandoned: [],

@@ -300,6 +300,16 @@ status `invokeCommandAction()` dispatches for the current phase (`planned` in
 is a publication). `invokeCommandAction()` dispatches it; `transitionTargets()`
 subtracts it. Adding a phase means touching one signal, and the menu follows.
 
+One identity gate sits on top of the capability filter: **withdrawing a
+submission** (`submitted` → `in_progress`, added to the backend policy and
+mirrored in `INTERVENTION_STATUS_TRANSITIONS`) is reserved server-side to the
+responsible member, so `transitionTargets()` hides it unless `canSubmit()` —
+the same responsible-identity signal that gates submission. The list page's row
+menu deliberately does **not** replicate this gate (the table is presentational
+and does not know the member's identity): a non-responsible clicking the
+withdrawal there takes the backend 403, which the optimistic `transition`
+rollback and `transitionFailed` toast already handle.
+
 ### Read-only proposed changes
 
 `UpdateInterventionChangeInput.status` only ever accepts

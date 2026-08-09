@@ -539,7 +539,7 @@ export class InterventionDetailPage {
    * starting or reopening field work, and sending an intervention back for
    * changes. In practice that leaves `in_progress` and `changes_requested`.
    *
-   * Three exclusions, each for its own reason:
+   * Four exclusions, each for its own reason:
    *
    * - {@link commandTransitionTarget}, because the phase's forward move belongs
    *   to the action box and its readiness gate. Offering it here too made that
@@ -547,6 +547,9 @@ export class InterventionDetailPage {
    *   open, which the action box deliberately refuses.
    * - `abandoned`, because it is destructive and has its own confirmed action.
    * - anything the member lacks the capability for.
+   * - withdrawing a submission (`submitted` → `in_progress`) when the member is
+   *   not the responsible — the backend reserves it to that identity and would
+   *   answer 403 ({@link canSubmit} is the same identity gate).
    *
    * @access protected
    * @since 1.0.0
@@ -564,7 +567,11 @@ export class InterventionDetailPage {
     return resolveAllowedTransitions(intervention)
       .filter((status) => status !== 'abandoned')
       .filter((status) => status !== owned)
-      .filter((status) => this.hasCapability(capabilityForTransition(intervention.status, status)));
+      .filter((status) => this.hasCapability(capabilityForTransition(intervention.status, status)))
+      .filter(
+        (status) =>
+          !(intervention.status === 'submitted' && status === 'in_progress') || this.canSubmit(),
+      );
   });
 
   /** The blocking compliance issues, which stop publication. */

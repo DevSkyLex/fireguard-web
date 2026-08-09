@@ -7,6 +7,7 @@ describe('intervention status transition utils', () => {
       'submitted',
       'abandoned',
     ]);
+    expect(allowedTransitions('submitted')).toEqual(['changes_requested', 'in_progress']);
     expect(allowedTransitions('published')).toEqual([]);
   });
 });

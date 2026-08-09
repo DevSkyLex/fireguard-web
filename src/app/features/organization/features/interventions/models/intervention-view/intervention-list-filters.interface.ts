@@ -1,3 +1,4 @@
+import type { InterventionPriority } from '../intervention/intervention-priority.type';
 import type { InterventionStatus } from '../intervention/intervention-status.type';
 import type { InterventionType } from '../intervention/intervention-type.type';
 
@@ -23,6 +24,9 @@ export interface InterventionListFilters {
 
   /** Single workflow type. */
   readonly type: InterventionType | null;
+
+  /** Single priority. */
+  readonly priority: InterventionPriority | null;
 
   /** IRI of the site the intervention concerns. */
   readonly site: string | null;

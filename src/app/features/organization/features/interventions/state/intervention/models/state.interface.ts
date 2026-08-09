@@ -71,21 +71,6 @@ export interface InterventionState {
   readonly transitionCallState: CallState<InterventionOutput>;
 
   /**
-   * Property isListCapped
-   * @readonly
-   *
-   * @description
-   * True when the last successful `load` found more than the 500-item cap
-   * fetched across up to five 100-item pages, so the page can surface a
-   * "refine your search" notice instead of silently truncating the list.
-   *
-   * @since 1.3.0
-   *
-   * @type {boolean}
-   */
-  readonly isListCapped: boolean;
-
-  /**
    * Property deleteCallState
    * @readonly
    *

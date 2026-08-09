@@ -1,4 +1,5 @@
 import type { PaginationOptions } from '@core/api/models';
+import type { InterventionPriority } from './intervention-priority.type';
 import type { InterventionStatus } from './intervention-status.type';
 import type { InterventionType } from './intervention-type.type';
 
@@ -31,6 +32,13 @@ export type InterventionListOptions = PaginationOptions & {
 
   /** @type {InterventionType} */
   readonly type?: InterventionType;
+
+  /**
+   * Exact priority; the API answers 400 on an unknown value.
+   *
+   * @type {InterventionPriority}
+   */
+  readonly priority?: InterventionPriority;
 
   /**
    * Inclusive lower bound (ISO 8601) applied to `dueAt`.

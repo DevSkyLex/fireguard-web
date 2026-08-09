@@ -81,6 +81,7 @@ export function buildInterventionListOptions(
   if (search) options.name = search;
   if (filters.status) options.status = filters.status;
   if (filters.type) options.type = filters.type;
+  if (filters.priority) options.priority = filters.priority;
   if (filters.site) options.site = filters.site;
   if (filters.responsible) options.responsible = filters.responsible;
 

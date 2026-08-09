@@ -119,6 +119,76 @@
             </hlm-select>
 
             <hlm-select
+              [value]="filters().priority"
+              [itemToString]="priorityLabelOf"
+              (valueChange)="applyFilter({ priority: $event ?? null })"
+            >
+              <hlm-select-trigger class="min-w-36" data-testid="interventions-filter-priority">
+                @if (filters().priority; as priority) {
+                  <app-intervention-tag kind="priority" [value]="priority" asOption />
+                } @else {
+                  <hlm-select-value
+                    placeholder="Priority"
+                    i18n-placeholder="@@intervention.list.filterPriority"
+                  />
+                }
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of priorityOptions; track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <app-intervention-tag kind="priority" [value]="option.value" asOption />
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+
+            <hlm-select
+              [value]="filters().site"
+              [itemToString]="siteLabelOf"
+              (valueChange)="applyFilter({ site: $event ?? null })"
+            >
+              <hlm-select-trigger class="min-w-36" data-testid="interventions-filter-site">
+                <hlm-select-value
+                  placeholder="Site"
+                  i18n-placeholder="@@intervention.list.filterSite"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of planningOptions.sites(); track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <span class="whitespace-nowrap">{{ option.label }}</span>
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+
+            <hlm-select
+              [value]="filters().responsible"
+              [itemToString]="responsibleLabelOf"
+              (valueChange)="applyFilter({ responsible: $event ?? null })"
+            >
+              <hlm-select-trigger class="min-w-36" data-testid="interventions-filter-responsible">
+                <hlm-select-value
+                  placeholder="Responsible"
+                  i18n-placeholder="@@intervention.list.filterResponsible"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of planningOptions.members(); track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <span class="whitespace-nowrap">{{ option.label }}</span>
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+
+            <hlm-select
               [value]="filters().dueWindow"
               [itemToString]="dueWindowLabelOf"
               (valueChange)="applyFilter({ dueWindow: $event ?? null })"
@@ -247,7 +317,7 @@
     </hlm-empty>
   } @else {
     <app-intervention-table
-      [items]="pagedItems()"
+      [items]="items()"
       [loading]="store.isLoadingInterventions() && items().length === 0"
       [sortOrder]="sortOrder()"
       [hiddenColumns]="hiddenColumns()"
@@ -264,7 +334,7 @@
 
     <div class="flex flex-col justify-between sm:flex-row sm:items-center">
       <span class="text-sm text-muted-foreground" data-testid="interventions-row-count">
-        {{ pagedItems().length }} of {{ items().length }} row(s) shown
+        {{ items().length }} of {{ store.totalInterventions() }} row(s) shown
       </span>
 
       <div class="mt-2 flex flex-wrap items-center gap-8 sm:mt-0">
@@ -273,7 +343,7 @@
           <hlm-select
             class="inline-block"
             [value]="pageSize()"
-            (valueChange)="setPageSize($event ?? 10)"
+            (valueChange)="setPageSize($event ?? 30)"
           >
             <hlm-select-trigger class="me-1 inline-flex h-8 w-fit">
               <hlm-select-value />

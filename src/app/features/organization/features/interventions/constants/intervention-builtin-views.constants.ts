@@ -36,6 +36,7 @@ export const MAX_CUSTOM_VIEWS = 5;
 const NO_FILTERS: InterventionListFilters = {
   status: null,
   type: null,
+  priority: null,
   site: null,
   responsible: null,
   dueWindow: null,

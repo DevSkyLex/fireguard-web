@@ -2,13 +2,20 @@
  * Type InterventionSortField
  *
  * @description
- * The fields the collection can be ordered by. All three are already accepted
- * by the API; the page used to hard-code `createdAt` descending with no way to
- * change it.
+ * The fields the collection can be ordered by — the useful subset of the
+ * API's own sort whitelist (`name`, `status`, `type`, `priority`,
+ * `plannedStartAt`, `dueAt`, `createdAt`, `updatedAt`), passed through as
+ * `order[field]` with no mapping.
  *
  * @since 1.0.0
  */
-export type InterventionSortField = 'dueAt' | 'createdAt' | 'priority';
+export type InterventionSortField =
+  | 'name'
+  | 'dueAt'
+  | 'plannedStartAt'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'priority';
 
 /**
  * Interface InterventionListSort

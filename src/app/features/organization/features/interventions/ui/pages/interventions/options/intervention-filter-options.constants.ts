@@ -1,6 +1,7 @@
 import {
   resolveInterventionTag,
   type InterventionDueWindow,
+  type InterventionPriority,
   type InterventionSortField,
   type InterventionStatus,
   type InterventionType,
@@ -42,6 +43,22 @@ export const INTERVENTION_TYPE_FILTER_OPTIONS: SelectOption<InterventionType>[] 
 ).map((type) => ({ value: type, label: resolveInterventionTag('type', type).label }));
 
 /**
+ * Constant INTERVENTION_PRIORITY_FILTER_OPTIONS
+ *
+ * @description
+ * The four priorities, labelled from the tag registry. Single-valued like the
+ * other narrowing selects; the API answers 400 on anything else.
+ *
+ * @since 5.1.0
+ */
+export const INTERVENTION_PRIORITY_FILTER_OPTIONS: SelectOption<InterventionPriority>[] = (
+  ['low', 'normal', 'high', 'urgent'] satisfies readonly InterventionPriority[]
+).map((priority) => ({
+  value: priority,
+  label: resolveInterventionTag('priority', priority).label,
+}));
+
+/**
  * Constant INTERVENTION_DUE_WINDOW_OPTIONS
  *
  * @description
@@ -68,6 +85,9 @@ export const INTERVENTION_DUE_WINDOW_OPTIONS: SelectOption<InterventionDueWindow
  */
 export const INTERVENTION_SORT_OPTIONS: SelectOption<InterventionSortField>[] = [
   { value: 'dueAt', label: $localize`:@@intervention.list.sortDueAt:Due date` },
+  { value: 'plannedStartAt', label: $localize`:@@intervention.list.sortPlannedStartAt:Start date` },
+  { value: 'name', label: $localize`:@@intervention.list.sortName:Name` },
   { value: 'createdAt', label: $localize`:@@intervention.list.sortCreatedAt:Creation date` },
+  { value: 'updatedAt', label: $localize`:@@intervention.list.sortUpdatedAt:Last update` },
   { value: 'priority', label: $localize`:@@intervention.list.sortPriority:Priority` },
 ];

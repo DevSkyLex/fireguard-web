@@ -37,6 +37,7 @@ import {
   type InterventionListFilters,
   type InterventionListSort,
   type InterventionOutput,
+  type InterventionPriority,
   type InterventionSortField,
   type InterventionStatus,
   type InterventionType,
@@ -72,6 +73,7 @@ import {
 import type { InterventionListItemViewModel } from './models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
+  INTERVENTION_PRIORITY_FILTER_OPTIONS,
   INTERVENTION_STATUS_FILTER_OPTIONS,
   INTERVENTION_TYPE_FILTER_OPTIONS,
 } from './options';
@@ -83,8 +85,8 @@ const DUE_SOON_WINDOW_MS: number = 48 * 60 * 60 * 1000;
 /** How long typing settles before the search reaches the wire. */
 const SEARCH_DEBOUNCE_MS: number = 300;
 
-/** The page sizes offered under the table. */
-const PAGE_SIZES: ReadonlyArray<number> = [10, 20, 30, 50];
+/** The page sizes offered under the table — the server default first, its clamp last. */
+const PAGE_SIZES: ReadonlyArray<number> = [30, 60, 100];
 
 /** The ordering a freshly opened list applies. */
 const DEFAULT_SORT: InterventionListSort = { field: 'dueAt', direction: 'asc' };
@@ -93,6 +95,7 @@ const DEFAULT_SORT: InterventionListSort = { field: 'dueAt', direction: 'asc' };
 const NO_FILTERS: InterventionListFilters = {
   status: null,
   type: null,
+  priority: null,
   site: null,
   responsible: null,
   dueWindow: null,
@@ -112,9 +115,13 @@ const NO_FILTERS: InterventionListFilters = {
  * params it round-trips, the ordering, the column visibility and the page
  * window (`ARCHITECTURE.md` §2.5).
  *
- * Paging is client-side over the loaded set on purpose: the store already
- * accumulates its pages up to a cap, so a second server round trip per page
- * would refetch rows it is holding.
+ * Paging, filtering and sorting are server-side end to end: the loaded
+ * entities ARE the current page, the footer derives its page count from the
+ * server's `totalItems`, and any narrowing change restarts from page one —
+ * reset synchronously in the mutators so the load effect fires exactly once
+ * per change. The selection clears on every load: it only ever refers to rows
+ * of the page on screen, so the bulk-delete dialog can never promise rows the
+ * operator no longer sees.
  *
  * `InterventionStore` is **not** provided here — it comes from the pathless
  * parent route, which keeps `orderedIds()` alive across list ↔ detail.
@@ -259,7 +266,7 @@ export class InterventionsPage {
   /** Whether the creation sheet is open. */
   protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Currently selected row ids, carried across pages until cleared. */
+  /** Currently selected row ids, scoped to the loaded page — cleared on every load. */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
     new Set<string>(),
   );
@@ -279,6 +286,10 @@ export class InterventionsPage {
   /** Type choices offered in the filter bar. */
   protected readonly typeOptions: SelectOption<InterventionType>[] =
     INTERVENTION_TYPE_FILTER_OPTIONS;
+
+  /** Priority choices offered in the filter bar. */
+  protected readonly priorityOptions: SelectOption<InterventionPriority>[] =
+    INTERVENTION_PRIORITY_FILTER_OPTIONS;
 
   /** Deadline windows offered in the filter bar. */
   protected readonly dueWindowOptions: SelectOption<InterventionDueWindow>[] =
@@ -408,8 +419,9 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * How many pages the loaded set fills — at least one, so the footer never
-   * reads "Page 1 of 0".
+   * How many pages the whole server-side collection fills — derived from the
+   * server's `totalItems`, not from the loaded rows, which ARE one page. At
+   * least one, so the footer never reads "Page 1 of 0".
    *
    * @access protected
    * @since 4.0.0
@@ -417,27 +429,8 @@ export class InterventionsPage {
    * @type {Signal<number>}
    */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
-    Math.max(1, Math.ceil(this.items().length / this.pageSize())),
+    Math.max(1, Math.ceil(this.store.totalInterventions() / this.pageSize())),
   );
-
-  /**
-   * Property pagedItems
-   * @readonly
-   *
-   * @description
-   * The rows the current page window shows.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @type {Signal<readonly InterventionListItemViewModel[]>}
-   */
-  protected readonly pagedItems: Signal<readonly InterventionListItemViewModel[]> = computed(() => {
-    const size: number = this.pageSize();
-    const start: number = (this.page() - 1) * size;
-
-    return this.items().slice(start, start + size);
-  });
 
   /**
    * Property deletableSelectedIds
@@ -650,6 +643,19 @@ export class InterventionsPage {
       (option: SelectOption<InterventionDueWindow>): boolean => option.value === value,
     )?.label ?? '';
 
+  /** Names a priority on a closed select trigger. */
+  protected readonly priorityLabelOf: (value: InterventionPriority) => string = (
+    value: InterventionPriority,
+  ): string => resolveInterventionTag('priority', value).label;
+
+  /** Names a site IRI on a closed select trigger. */
+  protected readonly siteLabelOf: (value: string) => string = (value: string): string =>
+    this.siteDisplayMap().get(value) ?? '';
+
+  /** Names a member IRI on a closed select trigger. */
+  protected readonly responsibleLabelOf: (value: string) => string = (value: string): string =>
+    this.memberDisplayMap().get(value)?.label ?? '';
+
   //#endregion
 
   //#region Constructor
@@ -665,6 +671,9 @@ export class InterventionsPage {
       .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((term: string): void => {
         if (term !== this.searchTerm()) {
+          // Reset synchronously with the query change so the load effect fires
+          // once, already on the first page of the new result set.
+          this.page.set(1);
           this.navigateQuery({ q: term === '' ? null : term });
         }
       });
@@ -674,12 +683,18 @@ export class InterventionsPage {
       const filters: InterventionListFilters = this.filters();
       const sort: InterventionListSort = this.sortOrder();
       const search: string = this.searchTerm();
+      const page: number = this.page();
+      const pageSize: number = this.pageSize();
 
       untracked((): void => {
-        this.page.set(1);
+        this.selectedIds.set(new Set<string>());
         this.store.load({
           organizationId,
-          options: buildInterventionListOptions(filters, sort, search, new Date()),
+          options: {
+            ...buildInterventionListOptions(filters, sort, search, new Date()),
+            page,
+            itemsPerPage: pageSize,
+          },
         });
       });
     });
@@ -749,6 +764,7 @@ export class InterventionsPage {
    */
   protected clearSearch(): void {
     this.draftSearch.set('');
+    this.page.set(1);
     this.navigateQuery({ q: null });
   }
 
@@ -767,6 +783,7 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected applyFilter(patch: Partial<InterventionListFilters>): void {
+    this.page.set(1);
     this.filters.update((current: InterventionListFilters) => ({ ...current, ...patch }));
   }
 
@@ -783,6 +800,7 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected clearFilters(): void {
+    this.page.set(1);
     this.filters.set(NO_FILTERS);
   }
 
@@ -802,6 +820,7 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected applySortField(field: InterventionSortField): void {
+    this.page.set(1);
     this.sortOrder.update((current: InterventionListSort) =>
       current.field === field
         ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
@@ -1140,12 +1159,16 @@ export class InterventionsPage {
   protected reload(): void {
     this.store.load({
       organizationId: this.organizationId(),
-      options: buildInterventionListOptions(
-        this.filters(),
-        this.sortOrder(),
-        this.searchTerm(),
-        new Date(),
-      ),
+      options: {
+        ...buildInterventionListOptions(
+          this.filters(),
+          this.sortOrder(),
+          this.searchTerm(),
+          new Date(),
+        ),
+        page: this.page(),
+        itemsPerPage: this.pageSize(),
+      },
     });
   }
 

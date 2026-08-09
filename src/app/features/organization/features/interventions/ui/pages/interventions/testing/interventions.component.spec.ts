@@ -89,6 +89,7 @@ describe('InterventionsPage', () => {
             interventionList,
             createdIntervention,
             listError,
+            totalInterventions: signal(0),
             isLoadingInterventions: signal(false),
             isCreating: signal(false),
             createError: signal(null),

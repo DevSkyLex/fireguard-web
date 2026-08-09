@@ -13,6 +13,7 @@ const NOW = new Date('2026-08-04T12:00:00.000Z');
 const NO_FILTERS: InterventionListFilters = {
   status: null,
   type: null,
+  priority: null,
   site: null,
   responsible: null,
   dueWindow: null,
@@ -67,6 +68,7 @@ describe('buildInterventionListOptions', () => {
         {
           status: 'in_progress',
           type: 'inventory',
+          priority: 'urgent',
           site: '/api/facilities/f-1',
           responsible: '/api/organization_members/m-1',
           dueWindow: 'overdue',
@@ -78,6 +80,7 @@ describe('buildInterventionListOptions', () => {
     ).toEqual({
       order: { priority: 'desc' },
       name: 'roof',
+      priority: 'urgent',
       status: 'in_progress',
       type: 'inventory',
       site: '/api/facilities/f-1',

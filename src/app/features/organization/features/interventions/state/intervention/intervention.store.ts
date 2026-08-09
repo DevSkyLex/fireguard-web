@@ -90,37 +90,6 @@ function deleteFailureMessage(error: StoreError): string {
   }
 }
 
-/**
- * Constant INTERVENTION_LIST_PAGE_SIZE
- * @const INTERVENTION_LIST_PAGE_SIZE
- *
- * @description
- * Page size requested per `list` call while accumulating the capped
- * intervention set (see {@link INTERVENTION_LIST_MAX_ITEMS}). Matches the
- * backend's own `itemsPerPage` clamp.
- *
- * @since 1.3.0
- *
- * @type {number}
- */
-const INTERVENTION_LIST_PAGE_SIZE = 100;
-
-/**
- * Constant INTERVENTION_LIST_MAX_ITEMS
- * @const INTERVENTION_LIST_MAX_ITEMS
- *
- * @description
- * Maximum number of interventions `load` accumulates across pages before
- * stopping, so the List/Board/Calendar page never fetches an organization's
- * entire history at once. Reaching the cap sets `isListCapped` so the page can
- * surface a "refine your search" notice.
- *
- * @since 1.3.0
- *
- * @type {number}
- */
-const INTERVENTION_LIST_MAX_ITEMS = 500;
-
 //#region Initial State
 /**
  * Constant INITIAL_INTERVENTION_STATE
@@ -138,7 +107,6 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
   listCallState: idleCallState(),
   createCallState: idleCallState<InterventionOutput>(),
   transitionCallState: idleCallState<InterventionOutput>(),
-  isListCapped: false,
   deleteCallState: idleCallState(),
 } as const;
 //#endregion
@@ -150,9 +118,9 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
  * @description
  * Component-scoped NgRx SignalStore for intervention list and creation workflows.
  * The store owns request state and normalized intervention entities; route pages
- * remain responsible for navigation and UI composition. `load` accumulates up
- * to `INTERVENTION_LIST_MAX_ITEMS` interventions across pages so the
- * List/Board/Calendar page never fetches an organization's full history.
+ * remain responsible for navigation and UI composition. `load` fetches exactly
+ * the server page the caller asked for — pagination, filtering and sorting are
+ * server-side, and the entities ARE the current page.
  *
  * @version 4.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -265,14 +233,11 @@ export const InterventionStore = signalStore(
          * @method load
          *
          * @description
-         * Loads interventions for the active organization, accumulating up to
-         * {@link INTERVENTION_LIST_MAX_ITEMS} across
-         * {@link INTERVENTION_LIST_PAGE_SIZE}-sized pages (the backend clamps
-         * `itemsPerPage` at 100, so a single request can never return the whole
-         * set). Stops fetching as soon as either the cap or the server's
-         * `totalItems` is reached and records whether the cap was hit via
-         * `isListCapped`, so the list/board/calendar page can surface a
-         * "refine your search" notice instead of silently truncating.
+         * Loads exactly one server page of interventions for the active
+         * organization — `page` and `itemsPerPage` travel in the options, and
+         * the entity collection is replaced by that page. `totalInterventions`
+         * carries the server's `totalItems`, which is what the page's paginator
+         * renders; there is no client-side cap or accumulation anymore.
          *
          * @access public
          * @since 1.0.0
@@ -282,54 +247,33 @@ export const InterventionStore = signalStore(
         load: rxMethod<InterventionListLoadCommand>(
           pipe(
             tap(() => patchState(store, { listCallState: pendingCallState() })),
-            switchMap(({ organizationId, options }) => {
-              const fetchPage = (page: number) =>
-                interventionService.list(organizationId, {
-                  // Default to newest-first so the 500-item cap really keeps the
-                  // "most recent" interventions the banner promises; a caller may
-                  // still override the order via options.
-                  order: { createdAt: 'desc' },
-                  ...options,
-                  page,
-                  itemsPerPage: INTERVENTION_LIST_PAGE_SIZE,
-                });
-
-              return fetchPage(1).pipe(
-                expand((collection, pageIndex) => {
-                  const fetchedSoFar = (pageIndex + 1) * INTERVENTION_LIST_PAGE_SIZE;
-                  return fetchedSoFar < collection.totalItems &&
-                    fetchedSoFar < INTERVENTION_LIST_MAX_ITEMS
-                    ? fetchPage(pageIndex + 2)
-                    : EMPTY;
-                }),
-                reduce(
-                  (accumulated, collection) => ({
-                    items: [...accumulated.items, ...collection.member],
-                    totalItems: collection.totalItems,
+            switchMap(({ organizationId, options }) =>
+              interventionService
+                .list(organizationId, { order: { createdAt: 'desc' }, ...options })
+                .pipe(
+                  tapResponse({
+                    next: (collection) => {
+                      patchState(
+                        store,
+                        setAllEntities([...collection.member], { collection: 'intervention' }),
+                        {
+                          totalInterventions: collection.totalItems,
+                          listCallState: successCallState(null),
+                        },
+                      );
+                    },
+                    error: (error: unknown) => {
+                      const storeError = toStoreError(error);
+                      patchState(store, { listCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        interventionStoreEvents.listFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to load interventions'),
+                        ),
+                      );
+                    },
                   }),
-                  { items: [] as InterventionOutput[], totalItems: 0 },
                 ),
-                tapResponse({
-                  next: ({ items, totalItems }) => {
-                    const capped = items.slice(0, INTERVENTION_LIST_MAX_ITEMS);
-                    patchState(store, setAllEntities(capped, { collection: 'intervention' }), {
-                      totalInterventions: totalItems,
-                      isListCapped: totalItems > INTERVENTION_LIST_MAX_ITEMS,
-                      listCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    const storeError = toStoreError(error);
-                    patchState(store, { listCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      interventionStoreEvents.listFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to load interventions'),
-                      ),
-                    );
-                  },
-                }),
-              );
-            }),
+            ),
           ),
         ),
 

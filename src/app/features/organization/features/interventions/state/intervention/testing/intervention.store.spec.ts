@@ -59,37 +59,37 @@ describe('InterventionStore', () => {
 
     expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', {
       order: { createdAt: 'desc' },
-      page: 1,
-      itemsPerPage: 100,
     });
     expect(store.interventionList()).toEqual([intervention]);
     expect(store.totalInterventions()).toBe(1);
     expect(store.isLoadingInterventions()).toBe(false);
     expect(store.isEmpty()).toBe(false);
-    expect(store.isListCapped()).toBe(false);
   });
 
-  it('should accumulate up to 500 interventions across 100-item pages and flag the cap', () => {
+  it('should fetch exactly the requested server page and keep the server total', () => {
     mockInterventionService.list.mockImplementation(
       (_organizationId: string, options: { page: number }) => of(pageOf(options.page, 650)),
     );
 
-    store.load({ organizationId: 'org-1' });
+    store.load({ organizationId: 'org-1', options: { page: 3, itemsPerPage: 30 } });
 
-    expect(mockInterventionService.list).toHaveBeenCalledTimes(5);
-    expect(store.interventionList()).toHaveLength(500);
+    expect(mockInterventionService.list).toHaveBeenCalledTimes(1);
+    expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', {
+      order: { createdAt: 'desc' },
+      page: 3,
+      itemsPerPage: 30,
+    });
     expect(store.totalInterventions()).toBe(650);
-    expect(store.isListCapped()).toBe(true);
   });
 
-  it('should forward the name filter while paginating', () => {
-    store.load({ organizationId: 'org-1', options: { name: 'roof' } });
+  it('should forward the name filter with the page window', () => {
+    store.load({ organizationId: 'org-1', options: { name: 'roof', page: 1, itemsPerPage: 30 } });
 
     expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', {
       order: { createdAt: 'desc' },
       name: 'roof',
       page: 1,
-      itemsPerPage: 100,
+      itemsPerPage: 30,
     });
   });
 

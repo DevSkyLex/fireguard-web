@@ -46,13 +46,18 @@ Stores:
 - `InterventionStore` — provided on the pathless parent route in
   `interventions.routes.ts` (not on the list page), so it survives list ↔ detail
   navigation. Intervention list and creation (normalized entities + request
-  state). `load` accumulates up to 500 interventions across 100-item pages (the
-  backend clamps `itemsPerPage` at 100) and sets `isListCapped` when the
-  organization has more, driving the list page's "refine your search" notice.
+  state). `load` fetches **exactly one server page** — `page`/`itemsPerPage`
+  travel in the options, the entities are replaced by that page, and
+  `totalInterventions` carries the server's `totalItems` for the paginator. The
+  former 500-item accumulation and its `isListCapped` notice are retired:
+  pagination, filtering (including `priority`, `site`, `responsible`) and
+  sorting are server-side end to end.
   `transition` applies a single status change optimistically (entity patch →
   PATCH with `If-Match` → merge fresh output on success, rollback +
   `transitionFailed` toast event on error); `orderedIds` exposes the current
-  entity order for the detail page's prev/next. `delete` removes the cached
+  entity order for the detail page's prev/next — **which therefore walks only
+  the loaded page**: prev/next stops at the page bounds, an accepted trade-off
+  of server paging. `delete` removes the cached
   entity and decrements `totalInterventions` on success; it uses `mergeMap` (not
   `switchMap`) so a bulk selection can delete several concurrently, each keyed by
   its own request and each dispatching its own `deleteSucceeded` / `deleteFailed`

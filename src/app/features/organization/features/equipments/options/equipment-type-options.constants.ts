@@ -5,7 +5,7 @@ import type { EquipmentType } from '@features/organization/features/equipments/m
  * @const EQUIPMENT_TYPE_OPTIONS
  *
  * @description
- * Localized `p-select` options for the fire-safety equipment type picker,
+ * Localized select options for the fire-safety equipment type picker,
  * shared by the create/edit form and the equipment table type filter. The
  * backend `EquipmentType` value object is a closed set, so entering the type
  * as free text guaranteed a 400 — this constrains the choice to valid values

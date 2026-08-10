@@ -113,7 +113,7 @@ moves the read pointer backwards.
 ## Composer and message bodies
 
 `MessageComposer` is a **plain textarea** built with Signal Forms. The rich-text editor it replaces
-was 904 lines of Quill integration, and both Quill and PrimeNG left with the UI strip. Enter sends,
+was 904 lines of Quill integration, and Quill left with the legacy UI strip. Enter sends,
 Shift+Enter starts a line, and a composition in progress is left alone — an IME uses Enter to accept
 a candidate, and intercepting it would send half a word.
 

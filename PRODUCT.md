@@ -84,7 +84,7 @@ Two further mechanisms are equally true and support it, but do not lead:
   standalone manifest (`Fireguard Field Operations`).
 - Interface built on spartan/ui (`@spartan-ng/brain` plus helm components
   vendored into `src/app/shared/ui/`) with Tailwind v4 utilities and semantic
-  theme tokens. PrimeNG has been fully removed.
+  theme tokens — the sole component library in the app.
 - Offline-first field execution: IndexedDB workspace persistence, an outbox
   queue with replay on regained connectivity or visibility, prefetch of the
   member's workspaces, and deferred service-worker updates while the outbox is

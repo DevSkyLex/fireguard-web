@@ -5,18 +5,28 @@
 > paraphrase from memory.
 
 @AGENTS.md
-@ARCHITECTURE.md
-@PRODUCT.md
+
+> **Read on demand, deliberately not `@`-imported.** `ARCHITECTURE.md` (152 KB)
+> is the normative frontend spec and `PRODUCT.md` (11 KB) the product, brand and
+> accessibility frame. Importing them cost ~41 k tokens of context in every
+> session, including the ones that never touch a structural or visual decision.
+> Open `ARCHITECTURE.md` before any structural decision (rule 1 below) and
+> `PRODUCT.md` before any user-facing copy, brand, or visual decision. The
+> path-scoped `.claude/rules/*.md` carry the per-file-kind essentials
+> automatically.
 
 ## TL;DR for every task
 
 1. **Read before writing.** Open `ARCHITECTURE.md` for any structural decision
    and the touched feature's `FEATURE.md` (parent + nested) before editing it.
-2. **Match the existing stack.** Angular 21 standalone + signals
-   (`input()`, `computed()`, `signal()`, `linkedSignal()`),
-   `ChangeDetectionStrategy.OnPush`, NgRx SignalStore, spartan/ui components,
-   Tailwind v4 utilities, SSR/hydration. Do **not** introduce new dependencies
-   or patterns unless the task requires it and no existing pattern fits.
+2. **Match the existing stack.** Read `package.json` for versions — never
+   hard-code them here. What it does not state: standalone components with the
+   signals API (`input()`, `computed()`, `signal()`, `linkedSignal()`),
+   `ChangeDetectionStrategy.OnPush` on **every** component, NgRx SignalStore for
+   feature state, Signal Forms for every form, spartan/ui + Tailwind utilities
+   for presentation, SSR/hydration throughout. Do **not** introduce new
+   dependencies or patterns unless the task requires it and no existing pattern
+   fits.
 3. **Style with Tailwind utilities and the spartan theme tokens.** `src/styles.css`
    takes theme tokens only — never a component rule.
    Use literal class strings (Tailwind scans `.ts`/`.html`). The dark variant is
@@ -97,43 +107,17 @@ If a graphify graph exists (`graphify-out/`), run `graphify update .` and prefer
 
 ## Tooling — this app ships its own `.claude/`
 
-Open **`fireguard-sso-web/`** as the workspace root to activate it. Full guide in
-[.claude/README.md](.claude/README.md).
+Open **`fireguard-sso-web/`** as the workspace root to activate it. The agents,
+commands, and skills it ships are listed in the session automatically; the guide
+to what each one is for is [.claude/README.md](.claude/README.md).
 
-**Builders — they create code.** One per kind of unit; each decides _placement_ first.
+Two things that listing does not tell you:
 
-- `fg-component-builder` — components, pages, tables, dataviews, forms, dialogs, sheets (§10.2).
-- `fg-directive-builder` — directives, behavioral or template-marker with a typed context guard.
-- `fg-pipe-builder` — pipes. There are **none** today, so the first one also updates §9.2.
-- `fg-feature-builder` — a feature or subfeature per §8.3/§8.4, plus its `FEATURE.md`.
-- `fg-service-builder` — transport / behavioral / access services and pure data adapters.
-- `fg-utils-builder` — pure helpers, constants, option sets per §10.13.
-
-**Specialists — they enrich or judge**, called after a builder or on existing code:
-`fg-spartan-ui` (spartan/ui surfaces) · `fg-signal-store` (§10.11) · `fg-web-test-writer`
-(specs) · `fg-e2e-runner` (Playwright, browser proof) · `fg-architecture-reviewer` and
-`fg-a11y-auditor` (both **read-only**).
-
-**Commands:** `/fg-component` `/fg-directive` `/fg-pipe` `/fg-feature` `/fg-service`
-`/fg-util` · `/fg-spartan` `/fg-store` `/fg-arch-review` `/fg-a11y` `/fg-e2e` ·
-`/fg-quality` (the gate).
-
-**Rules** (`.claude/rules/`) are **path-scoped**: 8 files that load automatically when you open a
-matching file — `components`, `directives-pipes`, `state`, `data-access`, `models-utils`,
-`barrels`, `testing`, `e2e`. Each carries the few things that must never be got wrong on that
-kind of file. They exist to cut what this file `@`-imports: `ARCHITECTURE.md` alone is 133 KB,
-loaded in full at every session start.
-
-**Skills** carry the operational detail agents load on demand — `fireguard-naming`,
-`signalstore-recipes`, `spartan-ui`, `hydra-data-access`, `web-testing`,
-`e2e-playwright`, `feature-md`. They cite `ARCHITECTURE.md` by section rather than
-restating it, so there is no second source of truth.
-
-**MCP servers** (`.mcp.json`): `angular` (the **local** CLI, `--read-only`) · `spartan`
-· `playwright` · `context7`.
-
-Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\fireguard\.claude\`):
-`/fg-contract-check`, `/fg-map`, `/fg-api-*`, `/fg-migrate`, `/fg-security-review`, plus
-pure-Bash `/fg-web-quality` and `/fg-e2e` wrappers usable from there. **None of the
-frontend agents, skills, or MCP servers load from the monorepo root** — a `.claude/` is
-read from the workspace root.
+- **Rules** (`.claude/rules/`) are **path-scoped** — each loads only when you open a
+  matching file, and carries the few things that must never be got wrong on that kind
+  of file. They are why `ARCHITECTURE.md` no longer needs to be `@`-imported.
+- Backend and cross-cutting tooling stays at the monorepo root
+  (`G:\Projets\fireguard\.claude\`): `/fg-contract-check`, `/fg-map`, `/fg-api-*`,
+  `/fg-migrate`, `/fg-security-review`, plus pure-Bash `/fg-web-quality` and `/fg-e2e`
+  wrappers usable from there. **None of the frontend agents, skills, or MCP servers load
+  from the monorepo root** — a `.claude/` is read from the workspace root.

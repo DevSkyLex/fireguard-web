@@ -320,27 +320,6 @@ export class InterventionWorkItemTable {
   }
 
   /**
-   * Method rowClassOf
-   *
-   * @description
-   * The extra ground the next item's `hlmTableRow` carries — a border only,
-   * no fill: a persistent `bg-accent/40` wash read as heavier than the plain
-   * rows `InterventionTable` renders, and the "Next" badge plus
-   * `aria-current="step"` already keep the marker off colour alone
-   * (WCAG 1.4.1) without it.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InterventionWorkItemOutput} item - The item being rendered.
-   *
-   * @returns {string} Literal Tailwind classes.
-   */
-  protected rowClassOf(item: InterventionWorkItemOutput): string {
-    return this.isNext(item) ? 'border-primary' : '';
-  }
-
-  /**
    * Method isNext
    * @description Whether this is the item the operator should pick up next.
    * @access protected

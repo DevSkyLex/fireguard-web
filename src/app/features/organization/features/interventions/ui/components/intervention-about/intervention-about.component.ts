@@ -14,18 +14,13 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMapPin } from '@ng-icons/lucide';
 import type {
   InterventionEditState,
   InterventionEditTarget,
   InterventionOutput,
-  MemberAvatar,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
 import { InplaceField } from '@shared/inplace-field';
-import { HlmAvatarImports } from '@shared/ui/avatar';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import { InterventionTag } from '../intervention-tag';
 
@@ -43,18 +38,29 @@ const DESCRIPTION_MAX_LENGTH: number = 2000;
  * @class InterventionAbout
  *
  * @description
- * The Overview tab's opening card: what this intervention is (type, site,
- * when it was last touched, who is on it) and its free-text description,
- * edited right here rather than in a sheet that would hide it
- * (`ARCHITECTURE.md` §10.5).
+ * What this intervention is — status, reference number, type, when it was
+ * last touched — and its free-text description, edited right here rather
+ * than in a sheet that would hide it (`ARCHITECTURE.md` §10.5).
  *
- * Deliberately card-shaped rather than a subtitle line under the page's `h1`
- * — the workspace's header carries only the name and the status, so this is
- * the one place the reference number, type, site and update time actually
- * live.
+ * Row for row, the same shell `InterventionPropertiesGrid` uses: every
+ * property, writable or not, is an `app-inplace-field` — status, reference,
+ * type and updated stay at their default `editable="false"`, which the field
+ * itself renders as a disabled trigger with no pencil, so they line up pixel
+ * for pixel with `Properties`' own left-aligned rows instead of drifting
+ * toward that grid's one outlier (`Revision`, a hand-rolled right-aligned
+ * line). The two components sit side by side in the sidebar column, so
+ * matching the grid's own vocabulary — not a card, no dividers between rows
+ * — reads as one instrument rather than two different surfaces glued
+ * together.
  *
- * The status tag is absent: it lives in the page header, which is also the
- * one place it doubles as a control.
+ * The status tag moved here from the page header, which now carries only the
+ * name and the transition controls (sync indicator, "Move this intervention",
+ * the overflow menu) — a status badge that cannot itself be clicked has no
+ * reason to sit apart from the rest of this intervention's identity.
+ *
+ * Site and participants are deliberately absent: they are `Properties`
+ * fields, and repeating them here would be the same value rendered twice on
+ * one screen.
  *
  * @version 1.0.0
  *
@@ -62,16 +68,7 @@ const DESCRIPTION_MAX_LENGTH: number = 2000;
  */
 @Component({
   selector: 'app-intervention-about',
-  imports: [
-    DatePipe,
-    NgIcon,
-    InplaceField,
-    InterventionTag,
-    ...HlmAvatarImports,
-    ...HlmCardImports,
-    ...HlmTextareaImports,
-  ],
-  providers: [provideIcons({ lucideMapPin })],
+  imports: [DatePipe, InplaceField, InterventionTag, ...HlmTextareaImports],
   templateUrl: './intervention-about.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -80,39 +77,13 @@ export class InterventionAbout {
   /**
    * Property intervention
    * @readonly
-   * @description The loaded intervention this card describes.
+   * @description The loaded intervention this section describes.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<InterventionOutput>}
    */
   public readonly intervention: InputSignal<InterventionOutput> =
     input.required<InterventionOutput>();
-
-  /**
-   * Property siteLabel
-   * @readonly
-   * @description The site's human name, which the page resolves from its IRI.
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<string | null>}
-   */
-  public readonly siteLabel: InputSignal<string | null> = input<string | null>(null);
-
-  /**
-   * Property participants
-   * @readonly
-   *
-   * @description
-   * Everyone on the intervention, responsible first, as an overlapping stack.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<readonly MemberAvatar[]>}
-   */
-  public readonly participants: InputSignal<readonly MemberAvatar[]> = input<
-    readonly MemberAvatar[]
-  >([]);
 
   /**
    * Property canEditDetails

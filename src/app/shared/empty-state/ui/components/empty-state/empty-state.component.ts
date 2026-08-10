@@ -16,7 +16,15 @@ import { HlmEmptyImports } from '@shared/ui/empty';
  * The icon is a name, not a component: the caller registers it with
  * `provideIcons()` so this concept pulls in no icon set of its own.
  *
- * @version 1.0.0
+ * `host: { class: 'block' }` because every caller styles this tag directly
+ * (`class="rounded-md border border-dashed ..."`) expecting a real box —
+ * without it the host falls back to the browser's default `display: inline`
+ * for an unrecognized element, and its border/padding render around whatever
+ * the inline layout algorithm decides rather than around the visible content,
+ * which only becomes obvious once this sits inside a narrower flex ancestor
+ * (a tab panel, in particular) instead of a full-width block column.
+ *
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -30,6 +38,7 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 @Component({
   selector: 'app-empty-state',
   imports: [NgIcon, ...HlmEmptyImports],
+  host: { class: 'block' },
   templateUrl: './empty-state.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

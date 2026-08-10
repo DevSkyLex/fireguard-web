@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import { EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
   FacilityOutput,
@@ -161,6 +161,35 @@ export class FacilityService extends HydraApiService {
         [] as readonly FacilityOutput[],
       ),
     );
+  }
+
+  /**
+   * Method listByIntervention
+   * @method listByIntervention
+   *
+   * @description
+   * Retrieves the facilities linked to one intervention through the
+   * **canonical** collection (`GET /api/facilities?intervention=…`). The
+   * organization-scoped {@link list} endpoint has no `intervention` filter,
+   * so this bypasses it and queries the bare resource directly, the same way
+   * {@link getCanonical} and {@link listTypes} already do.
+   *
+   * @access public
+   * @since 4.5.0
+   *
+   * @param {string} interventionId - The intervention to scope the query to.
+   * @param {PaginationOptions} [options] - Optional pagination.
+   *
+   * @return {Observable<HydraCollection<FacilityOutput>>} An observable emitting the linked facilities.
+   */
+  public listByIntervention(
+    interventionId: string,
+    options?: PaginationOptions,
+  ): Observable<HydraCollection<FacilityOutput>> {
+    return this.getCollection<FacilityOutput>('/api/facilities', {
+      ...options,
+      params: { intervention: `/api/interventions/${interventionId}` },
+    });
   }
 
   /**

@@ -34,6 +34,7 @@ import {
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
+import { InterventionLinkedResourcesStore } from '../../../../state/intervention-linked-resources';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import { InterventionWorkspaceStore } from '../../../../state/intervention-workspace';
 import { InterventionDetailPage } from '../intervention-detail.component';
@@ -228,7 +229,13 @@ describe('InterventionDetailPage', () => {
     });
 
     TestBed.overrideComponent(InterventionDetailPage, {
-      remove: { providers: [InterventionWorkspaceStore, InterventionPlanningOptionsStore] },
+      remove: {
+        providers: [
+          InterventionWorkspaceStore,
+          InterventionPlanningOptionsStore,
+          InterventionLinkedResourcesStore,
+        ],
+      },
       add: {
         providers: [
           {
@@ -292,6 +299,23 @@ describe('InterventionDetailPage', () => {
               loadWorkspaceOptions: vi.fn(),
             },
           },
+          {
+            provide: InterventionLinkedResourcesStore,
+            useValue: {
+              facilities: signal([]),
+              facilitiesLoading: signal(false),
+              facilitiesError: signal(null),
+              equipment: signal([]),
+              equipmentLoading: signal(false),
+              equipmentError: signal(null),
+              inspections: signal([]),
+              inspectionsLoading: signal(false),
+              inspectionsError: signal(null),
+              ensureFacilitiesLoaded: vi.fn(),
+              ensureEquipmentLoaded: vi.fn(),
+              ensureInspectionsLoaded: vi.fn(),
+            },
+          },
         ],
       },
     });
@@ -304,17 +328,23 @@ describe('InterventionDetailPage', () => {
     expect(loadActivities).toHaveBeenCalledWith('intervention-1');
   });
 
-  it('should show the properties card on arrival', async () => {
+  it('should show the properties on arrival, as a labelled group rather than a card', async () => {
     fixture = await createPage();
 
-    expect(byTestId('intervention-detail-properties-card')).not.toBeNull();
+    const properties = byTestId('intervention-detail-properties') as HTMLElement;
+
+    expect(properties).not.toBeNull();
+    expect(properties.tagName).toBe('SECTION');
+    expect(
+      properties.querySelector(`#${properties.getAttribute('aria-labelledby')}`)?.textContent,
+    ).toContain('Properties');
   });
 
   it('should render every section at once, with nothing hidden behind a tab', async () => {
     fixture = await createPage();
 
     expect((byTestId('intervention-detail-field-work') as HTMLElement).hidden).toBe(false);
-    expect(byTestId('intervention-detail-properties-card')).not.toBeNull();
+    expect(byTestId('intervention-detail-properties')).not.toBeNull();
   });
 
   it('should show a meta line naming when the intervention was last touched', async () => {

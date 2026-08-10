@@ -1,0 +1,78 @@
+@if (loading() && items().length === 0) {
+  <div
+    class="flex items-center gap-2 py-6 text-sm text-muted-foreground"
+    role="status"
+    data-testid="intervention-linked-inspections-loading"
+  >
+    <hlm-spinner class="size-4" aria-hidden="true" />
+    <span i18n="@@intervention.linked.loading">Loading…</span>
+  </div>
+} @else if (error(); as message) {
+  <app-empty-state
+    icon="lucideCircleAlert"
+    class="rounded-md border border-dashed border-destructive/30 bg-destructive/5 p-6"
+    role="alert"
+    title="Linked inspections could not be loaded"
+    i18n-title="@@intervention.linked.inspections.errorTitle"
+    [description]="message"
+    data-testid="intervention-linked-inspections-error"
+  />
+} @else if (items().length > 0) {
+  <div hlmTableContainer>
+    <table hlmTable data-testid="intervention-linked-inspections-table">
+      <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.inspections.caption">
+        The inspections linked to this intervention.
+      </caption>
+
+      <thead hlmTableHeader>
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">Performed</th>
+          <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
+          <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
+          <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @for (item of items(); track item.id) {
+          <tr hlmTableRow data-testid="intervention-linked-inspection-row">
+            <td hlmTableCell>
+              {{ item.performedAt | date: 'mediumDate' }}
+            </td>
+            <td hlmTableCell>
+              <app-intervention-tag kind="inspectionResult" [value]="item.result" />
+            </td>
+            <td hlmTableCell>
+              <app-intervention-tag kind="inspectionStatus" [value]="item.status" />
+            </td>
+            <td hlmTableCell>
+              @if (item.inspector; as inspector) {
+                <div class="flex items-center gap-2">
+                  <hlm-avatar size="sm" class="shrink-0">
+                    @if (inspector.avatarUrl; as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback class="text-[10px]">{{
+                      inspectorInitialsOf(item)
+                    }}</span>
+                  </hlm-avatar>
+                  <span class="truncate text-foreground">{{ inspector.displayName }}</span>
+                </div>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <app-empty-state
+    icon="lucideClipboardCheck"
+    class="rounded-md border border-dashed border-border p-6"
+    title="No linked inspections"
+    i18n-title="@@intervention.linked.inspections.emptyTitle"
+    description="No inspection is linked to this intervention yet."
+    i18n-description="@@intervention.linked.inspections.emptyDesc"
+    data-testid="intervention-linked-inspections-empty"
+  />
+}

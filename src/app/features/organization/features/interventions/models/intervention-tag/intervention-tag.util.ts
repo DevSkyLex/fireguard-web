@@ -1,4 +1,9 @@
-import type { InspectionResult } from '@features/organization/features/inspections/models';
+import type { EquipmentStatus } from '@features/organization/features/equipments/models';
+import type { FacilityStatus } from '@features/organization/features/facilities/models';
+import type {
+  InspectionResult,
+  InspectionStatus,
+} from '@features/organization/features/inspections/models';
 import type { InterventionChangeStatus } from '../intervention-change/intervention-change-status.type';
 import type { InterventionWorkItemAction } from '../intervention-work-item/intervention-work-item-action.type';
 import type { InterventionWorkItemStatus } from '../intervention-work-item/intervention-work-item-status.type';
@@ -210,6 +215,68 @@ const INSPECTION_RESULT: Record<InspectionResult, InterventionTagDescriptor> = {
   },
 };
 
+/** Inspection status descriptors. */
+const INSPECTION_STATUS: Record<InspectionStatus, InterventionTagDescriptor> = {
+  draft: {
+    label: $localize`:@@inspectionStatus.draft:Draft`,
+    severity: 'neutral',
+    icon: 'lucideCircleDotDashed',
+  },
+  submitted: {
+    label: $localize`:@@inspectionStatus.submitted:Submitted`,
+    severity: 'neutral',
+    icon: 'lucideSend',
+  },
+  closed: {
+    label: $localize`:@@inspectionStatus.closed:Closed`,
+    severity: 'success',
+    icon: 'lucideCircleCheck',
+  },
+  cancelled: {
+    label: $localize`:@@inspectionStatus.cancelled:Cancelled`,
+    severity: 'danger',
+    icon: 'lucideX',
+  },
+};
+
+/** Facility lifecycle status descriptors. */
+const FACILITY_STATUS: Record<FacilityStatus, InterventionTagDescriptor> = {
+  active: {
+    label: $localize`:@@facilityStatus.active:Active`,
+    severity: 'success',
+    icon: 'lucideCircleCheck',
+  },
+  archived: {
+    label: $localize`:@@facilityStatus.archived:Archived`,
+    severity: 'neutral',
+    icon: 'lucideArchive',
+  },
+};
+
+/** Equipment lifecycle status descriptors. */
+const EQUIPMENT_STATUS: Record<EquipmentStatus, InterventionTagDescriptor> = {
+  in_stock: {
+    label: $localize`:@@equipmentStatus.inStock:In stock`,
+    severity: 'neutral',
+    icon: 'lucidePackage',
+  },
+  operational: {
+    label: $localize`:@@equipmentStatus.operational:Operational`,
+    severity: 'success',
+    icon: 'lucideCircleCheck',
+  },
+  decommissioned: {
+    label: $localize`:@@equipmentStatus.decommissioned:Decommissioned`,
+    severity: 'danger',
+    icon: 'lucideBan',
+  },
+  under_maintenance: {
+    label: $localize`:@@equipmentStatus.underMaintenance:Under maintenance`,
+    severity: 'warning',
+    icon: 'lucideWrench',
+  },
+};
+
 /** Registry indexed by tag kind. */
 const REGISTRY: Record<InterventionTagKind, Record<string, InterventionTagDescriptor>> = {
   priority: PRIORITY,
@@ -220,6 +287,9 @@ const REGISTRY: Record<InterventionTagKind, Record<string, InterventionTagDescri
   issueSeverity: ISSUE_SEVERITY,
   changeStatus: CHANGE_STATUS,
   inspectionResult: INSPECTION_RESULT,
+  inspectionStatus: INSPECTION_STATUS,
+  facilityStatus: FACILITY_STATUS,
+  equipmentStatus: EQUIPMENT_STATUS,
 };
 
 /**

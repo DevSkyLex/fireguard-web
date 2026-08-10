@@ -120,15 +120,4 @@ describe('InterventionAbout', () => {
 
     expect(saveButton?.hasAttribute('disabled')).toBe(true);
   });
-
-  it('should render every assignee as an avatar', async () => {
-    fixture.componentRef.setInput('participants', [
-      { label: 'JD', tooltip: 'Jane Doe' },
-      { label: 'AB', tooltip: 'Alex Brown' },
-    ]);
-    await fixture.whenStable();
-
-    expect(root().textContent).toContain('JD');
-    expect(root().textContent).toContain('AB');
-  });
 });

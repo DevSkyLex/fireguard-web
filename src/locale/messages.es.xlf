@@ -3786,6 +3786,10 @@
         <source>Work items</source>
         <target>Tareas</target>
       </trans-unit>
+      <trans-unit id="intervention.wit.caption" datatype="html">
+        <source> The tasks to complete during this intervention, tracked one by one. </source>
+        <target> Las tareas a completar durante esta intervención, seguidas una por una. </target>
+      </trans-unit>
       <trans-unit id="intervention.wit.addItem" datatype="html">
         <source>Add item</source>
         <target>Añadir elemento</target>
@@ -4434,6 +4438,18 @@
         <source>New item</source>
         <target>Nuevo elemento</target>
       </trans-unit>
+      <trans-unit id="intervention.attachments.emptyTitle" datatype="html">
+        <source>No files attached yet</source>
+        <target>Aún no hay archivos adjuntos</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.emptyDesc" datatype="html">
+        <source>Add photos or documents to keep with this intervention.</source>
+        <target>Agregue fotos o documentos para conservar con esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.emptyDescReadOnly" datatype="html">
+        <source>No one has attached a file to this intervention yet.</source>
+        <target>Nadie ha adjuntado todavía un archivo a esta intervención.</target>
+      </trans-unit>
       <trans-unit id="intervention.review.changesTitle" datatype="html">
         <source> Proposed changes </source>
         <target>Cambios propuestos</target>
@@ -4478,9 +4494,25 @@
         <source> Comments are saved locally and posted when you reconnect. </source>
         <target>Los comentarios se guardan localmente y se publican al reconectarte.</target>
       </trans-unit>
+      <trans-unit id="intervention.detail.aboutTitle" datatype="html">
+        <source>About</source>
+        <target>Acerca de</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.aboutCaption" datatype="html">
+        <source> What this intervention is — status, reference, type and description. </source>
+        <target> Qué es esta intervención — estado, referencia, tipo y descripción. </target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.reference" datatype="html">
+        <source> Reference </source>
+        <target> Referencia </target>
+      </trans-unit>
       <trans-unit id="intervention.sidebar.title" datatype="html">
         <source>Properties</source>
         <target>Propiedades</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.titleCaption" datatype="html">
+        <source> The intervention's core details — priority, site, schedule and team. </source>
+        <target> Los datos clave de la intervención: prioridad, sitio, planificación y equipo. </target>
       </trans-unit>
       <trans-unit id="intervention.prop.status" datatype="html">
         <source> Status </source>
@@ -4565,10 +4597,6 @@
       <trans-unit id="intervention.detail.editLabels" datatype="html">
         <source>Edit labels</source>
         <target>Editar etiquetas</target>
-      </trans-unit>
-      <trans-unit id="intervention.sidebar.linked" datatype="html">
-        <source> Linked </source>
-        <target>Vinculados</target>
       </trans-unit>
       <trans-unit id="intervention.sidebar.facilities" datatype="html">
         <source>Facilities</source>
@@ -8237,6 +8265,10 @@
         <source> Activity </source>
         <target> Actividad </target>
       </trans-unit>
+      <trans-unit id="intervention.activity.caption" datatype="html">
+        <source> System events and comments on this intervention, oldest first. </source>
+        <target> Eventos del sistema y comentarios de esta intervención, del más antiguo al más reciente. </target>
+      </trans-unit>
       <trans-unit id="intervention.activity.empty" datatype="html">
         <source> No activity recorded yet. </source>
         <target> Aún no se ha registrado actividad. </target>
@@ -8348,6 +8380,170 @@
       <trans-unit id="intervention.detail.metaCommented" datatype="html">
         <source><x id="actor" equiv-text="actorName"/> commented <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
         <target><x id="actor" equiv-text="actorName"/> comentó <x id="when" equiv-text="when"/> · revisión <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="inspectionStatus.draft" datatype="html">
+        <source>Draft</source>
+        <target>Borrador</target>
+      </trans-unit>
+      <trans-unit id="inspectionStatus.submitted" datatype="html">
+        <source>Submitted</source>
+        <target>Enviada</target>
+      </trans-unit>
+      <trans-unit id="inspectionStatus.closed" datatype="html">
+        <source>Closed</source>
+        <target>Cerrada</target>
+      </trans-unit>
+      <trans-unit id="inspectionStatus.cancelled" datatype="html">
+        <source>Cancelled</source>
+        <target>Cancelada</target>
+      </trans-unit>
+      <trans-unit id="facilityStatus.active" datatype="html">
+        <source>Active</source>
+        <target>Activo</target>
+      </trans-unit>
+      <trans-unit id="facilityStatus.archived" datatype="html">
+        <source>Archived</source>
+        <target>Archivado</target>
+      </trans-unit>
+      <trans-unit id="equipmentStatus.inStock" datatype="html">
+        <source>In stock</source>
+        <target>En stock</target>
+      </trans-unit>
+      <trans-unit id="equipmentStatus.operational" datatype="html">
+        <source>Operational</source>
+        <target>Operativo</target>
+      </trans-unit>
+      <trans-unit id="equipmentStatus.decommissioned" datatype="html">
+        <source>Decommissioned</source>
+        <target>Retirado de servicio</target>
+      </trans-unit>
+      <trans-unit id="equipmentStatus.underMaintenance" datatype="html">
+        <source>Under maintenance</source>
+        <target>En mantenimiento</target>
+      </trans-unit>
+      <trans-unit id="facilityType.site" datatype="html">
+        <source>Site</source>
+        <target>Sitio</target>
+      </trans-unit>
+      <trans-unit id="facilityType.building" datatype="html">
+        <source>Building</source>
+        <target>Edificio</target>
+      </trans-unit>
+      <trans-unit id="facilityType.floor" datatype="html">
+        <source>Floor</source>
+        <target>Planta</target>
+      </trans-unit>
+      <trans-unit id="facilityType.zone" datatype="html">
+        <source>Zone</source>
+        <target>Zona</target>
+      </trans-unit>
+      <trans-unit id="facilityType.area" datatype="html">
+        <source>Area</source>
+        <target>Área</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.loading" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.tabs.overview" datatype="html">
+        <source>Overview</source>
+        <target>Resumen</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.tabsAriaLabel" datatype="html">
+        <source>Intervention sections</source>
+        <target>Secciones de la intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.errorTitle" datatype="html">
+        <source>Linked facilities could not be loaded</source>
+        <target>No se pudieron cargar las instalaciones vinculadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.caption" datatype="html">
+        <source>The facilities linked to this intervention.</source>
+        <target>Las instalaciones vinculadas a esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.columnName" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.columnType" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.emptyTitle" datatype="html">
+        <source>No linked facilities</source>
+        <target>Sin instalaciones vinculadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.emptyDesc" datatype="html">
+        <source>No facility is linked to this intervention yet.</source>
+        <target>Ninguna instalación está vinculada a esta intervención todavía.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.errorTitle" datatype="html">
+        <source>Linked equipment could not be loaded</source>
+        <target>No se pudo cargar el equipo vinculado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.caption" datatype="html">
+        <source>The equipment linked to this intervention.</source>
+        <target>El equipo vinculado a esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.columnType" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.columnBrandModel" datatype="html">
+        <source>Brand / model</source>
+        <target>Marca / modelo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.columnLocation" datatype="html">
+        <source>Location</source>
+        <target>Ubicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.emptyTitle" datatype="html">
+        <source>No linked equipment</source>
+        <target>Sin equipo vinculado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.emptyDesc" datatype="html">
+        <source>No equipment is linked to this intervention yet.</source>
+        <target>Ningún equipo está vinculado a esta intervención todavía.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.errorTitle" datatype="html">
+        <source>Linked inspections could not be loaded</source>
+        <target>No se pudieron cargar las inspecciones vinculadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.caption" datatype="html">
+        <source>The inspections linked to this intervention.</source>
+        <target>Las inspecciones vinculadas a esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.columnPerformedAt" datatype="html">
+        <source>Performed</source>
+        <target>Realizada</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.columnResult" datatype="html">
+        <source>Result</source>
+        <target>Resultado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.columnInspector" datatype="html">
+        <source>Inspector</source>
+        <target>Inspector</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.emptyTitle" datatype="html">
+        <source>No linked inspections</source>
+        <target>Sin inspecciones vinculadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.emptyDesc" datatype="html">
+        <source>No inspection is linked to this intervention yet.</source>
+        <target>Ninguna inspección está vinculada a esta intervención todavía.</target>
       </trans-unit>
 </body>
   </file>

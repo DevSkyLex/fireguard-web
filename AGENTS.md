@@ -16,8 +16,8 @@ commands, skills, MCP servers, hooks — is documented in
 
 ## Project Context
 
-- This is an Angular 21 application using strict TypeScript, SSR/hydration, NgRx SignalStore, and Hydra-style API services. Its component library is spartan/ui (`@spartan-ng/brain` plus helm components generated into `src/app/shared/ui/`).
-- Use the npm scripts in [package.json](package.json): `npm run lint`, `npm run test:ci`, `npm run build`, `npm run quality`, `npm run format`, and `npm run format:check`.
+- Read [package.json](package.json) for the stack and its versions, and for the npm scripts. Do not restate either here — a hand-maintained copy goes stale.
+- What the manifest does not state, and what this repo therefore requires: standalone components with the signals API, `ChangeDetectionStrategy.OnPush` on every component, NgRx SignalStore for feature state, Signal Forms (not `ReactiveFormsModule`) for every form, spartan/ui + Tailwind utilities for presentation, Hydra-style API access through `HydraApiService`, and SSR/hydration throughout.
 - Do not add dependencies or new architectural patterns unless the task explicitly requires it and the existing codebase has no suitable pattern.
 
 ## Architectural Ownership

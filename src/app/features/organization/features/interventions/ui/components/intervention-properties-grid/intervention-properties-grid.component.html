@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-0.5">
+<div class="flex flex-col gap-1">
   <div data-testid="intervention-field-priority">
     <app-inplace-field
       orientation="horizontal"
@@ -103,7 +103,7 @@
             @if (member.avatarUrl; as avatarUrl) {
               <img hlmAvatarImage [src]="avatarUrl" alt="" />
             }
-            <span hlmAvatarFallback class="text-[10px]">{{ member.initials }}</span>
+            <span hlmAvatarFallback>{{ member.initials }}</span>
           </hlm-avatar>
           <span class="truncate font-medium">{{ member.displayName }}</span>
         </span>
@@ -135,7 +135,7 @@
                   @if (option.avatarUrl; as avatarUrl) {
                     <img hlmAvatarImage [src]="avatarUrl" alt="" />
                   }
-                  <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
+                  <span hlmAvatarFallback>{{ option.initials }}</span>
                 </hlm-avatar>
                 <span class="flex min-w-0 flex-col">
                   <span class="truncate">{{ option.displayName }}</span>
@@ -207,7 +207,7 @@
                 @if (member.avatarUrl; as avatarUrl) {
                   <img hlmAvatarImage [src]="avatarUrl" alt="" />
                 }
-                <span hlmAvatarFallback class="text-[10px]">{{ member.initials }}</span>
+                <span hlmAvatarFallback>{{ member.initials }}</span>
               </hlm-avatar>
             }
           </hlm-avatar-group>

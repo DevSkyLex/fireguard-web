@@ -88,6 +88,18 @@ Stores:
   `activityOldestPage` tracks how far back the loaded window reaches, driving
   `hasOlderActivities` and letting `loadOlderActivities` prepend page by page.
 
+- `InterventionLinkedResourcesStore` — component-scoped (provided in
+  `InterventionDetailPage`); backs three of the detail page's left-rail tabs
+  (Facilities / Equipment / Inspections — the fourth, Overview, reads
+  `InterventionWorkspaceStore` like the rest of the page always has). Three
+  independent named call states (`facilitiesCallState`, `equipmentCallState`,
+  `inspectionsCallState`), each fetched through the owning sibling feature's
+  `listByIntervention` on that tab's first activation — never eagerly with
+  the rest of the workspace — and cached per intervention: a second
+  activation of an already-loaded tab is a no-op, and switching to a
+  different intervention (prev/next) resets all three to idle so the next
+  activation refetches. See `### The rail is not the retired workspace tabs`
+  below.
 - `InterventionCalendarStore` — the interventions inside a bounded date window.
   **Currently dormant**: the calendar render is not part of the rebuilt list page.
 
@@ -172,44 +184,72 @@ Internal code imports deep paths directly.
   starts an intervention without duplicating the creation drawer.
 - May reference facility, equipment, and inspection ids as linked counts on the workspace properties
   rail, but must not absorb ownership of those sibling organization subfeatures.
+- The detail page's "Linked" tabs cross-import `FacilityService`, `EquipmentService` and
+  `InspectionService` straight from each sibling's `data-access` barrel
+  (`@features/organization/features/{facilities,equipments,inspections}/data-access`) — the same
+  established pattern `intervention-sync.service.ts` and
+  `InterventionPlanningOptionsStore` already use for the same three siblings, extended with one
+  read-only method per service (`listByIntervention`). Read-only: this feature lists a sibling's
+  records scoped to one intervention and renders them through its own tables; it creates, edits and
+  deletes nothing on their behalf, and owns no facility/equipment/inspection state beyond the three
+  call states in `InterventionLinkedResourcesStore`.
 
 ## Detail workspace composition
 
-The detail page (`ui/pages/intervention-detail`) is **no longer tabbed**: it
-is a single continuous flow of always-mounted, always-visible sections in a
-content column, beside a second column holding the properties card and,
-stacked beneath it, the action box. At `lg` and up, the second column is
-`sticky` (`top-4`), so the properties/action-box stack stays in view while
-the content column scrolls past — the natural read for a status panel, which
-is current-state chrome rather than content to scroll away. Below `lg`
-(1024px) the two columns stack in normal document flow, content first.
+The detail page (`ui/pages/intervention-detail`) is **tabbed again**, on
+direct instruction after a same-session correction to the 4.5 redesign this
+document originally described (see `### The rail is not the retired
+workspace tabs` for why this is not a reopening of the 3.0/4.0 retirements).
+Three regions, left to right at `lg` and up:
 
-**That collapse is itself a shape change, and it inverts the page's
-priority** — which an earlier revision of this document denied. In normal flow
-the second column renders _after_ the whole content column, so the forward
-action landed roughly three viewports down, below the comment composer, on
-the viewport belonging to the primary persona. The fix is the command bar
-below (`### One address per viewport`), not another reordering of the
-desktop furniture.
+1. **The rail** (`hlm-tabs-list`, `orientation="vertical"`, narrow, `w-fit`)
+   — four triggers: Overview, Facilities, Equipment, Inspections, the last
+   three carrying their live `intervention.*Count`. It is the **first** grid
+   track's own internal flex layout (`<hlm-tabs orientation="vertical">`
+   renders as a flex row when vertical — brain's own mechanism for a
+   side-rail, not a page-level grid track of its own), not a fourth column.
+2. **The active tab's panel**, filling the rest of that same first track
+   (`flex-1` on `[hlmTabsContent]`, from the component). **Overview** holds
+   every section this page rendered before the rail existed — readiness
+   checklist, work items, changes, attachments, activity, comments — moved
+   here unchanged, not rebuilt. **Facilities / Equipment / Inspections**
+   each render one read-only `hlmTable`
+   (`InterventionLinkedFacilitiesTable`/`…EquipmentTable`/`…InspectionsTable`)
+   from `InterventionLinkedResourcesStore`, mounted lazily
+   (`hlmTabsContentLazy`) on first activation and kept mounted after.
+3. **The second grid track — unchanged, and tab-independent.** The
+   properties card and, beneath it, the action box, exactly as before this
+   change: `sticky` (`top-4`) at `lg` and up, in normal document flow below.
+   Nothing here reacts to which of the four tabs is active — see
+   `### The rail is not the retired workspace tabs` for why that is the
+   invariant that matters.
 
-This retires the tab rail the 4.0 redesign introduced (see
-`### Retired invariants`), on direct product feedback within the same design
-pass: with the rail gone, the page reads as one continuous scroll of
-always-visible sections instead of tab panels the user has to click between.
-The two failures earlier tabbed designs were retired for still do not recur:
+The outer grid is therefore still `lg:grid-cols-[minmax(0,1fr)_20rem]`,
+**unchanged** from before this rail existed — the rail-plus-panel split lives
+entirely inside `<hlm-tabs>`'s own flex layout in the first track, not in a
+new grid-template. Below `lg` the container drops to `flex flex-col`: `<hlm-
+tabs>` (rail, then whichever panel is active, in document order) stacks
+above the properties/action-box column, same order as before.
 
-- **The action box stays outside the content column**, at its one fixed
-  address (`app-intervention-action-box`, second column, beneath the
-  properties card), and reads `blockerIssues()` and `pendingChangesCount()`
-  straight from the store — not from inside the Changes section it also
-  renders. A blocker or a pending change is visible without scrolling to any
-  particular section.
-- **The Changes section renders, with its own pending count, only once
-  `pendingChangesCount() > 0`.** There is no state where changes are pending
-  and nothing outside that section says so.
-- **The properties card is not a section a click reveals.** It is its own
-  column, always mounted, so `site`, `responsible`, the planned window,
-  `priority` and `labels` are never behind a click.
+`InterventionDetailPage.linkedTabsOrientation` mirrors a
+`(min-width: 1024px)` media query (`vertical` at `lg` and up, `horizontal`
+below) into `[orientation]` on `<hlm-tabs>`, driving the same signal that
+switches `hlm-tabs`' internal flex axis and keyboard handling. The same
+signal also picks which list component the template renders: `hlm-tabs-list`
+at `vertical`, brain's `hlm-paginated-tabs-list` (previous/next chevrons over
+a horizontally-scrolling row) at `horizontal` — its own overflow pattern for
+a tab row that doesn't fit its container, rather than letting the four
+triggers wrap onto a second line and overlap the content below. The four
+`hlmTabsTrigger` buttons live once, in a shared `#linkedTabTriggers`
+`ng-template` projected into whichever list is active via `ngTemplateOutlet`,
+so the two list shapes never duplicate the trigger markup or its i18n ids.
+`hlm-paginated-tabs-list` only shows its chevrons once the row's `scrollWidth`
+actually exceeds its container — otherwise the four triggers just fit and
+scroll natively. Trade-off, stated plainly: the media query only resolves
+client-side, so the very first paint (SSR and pre-hydration) always renders
+`horizontal`, upgrading to `vertical` once the browser evaluates the query —
+a one-time layout adjustment on desktop loads, accepted rather than adding
+`PLATFORM_ID`/`afterNextRender` machinery for a cosmetic first frame.
 
 1. **Header** — wayfinding only: the intervention `h1`, the reference number,
    the status tag with its transition menu, and an overflow menu for
@@ -220,47 +260,83 @@ The two failures earlier tabbed designs were retired for still do not recur:
    loading. Outside every section, so the last-touched summary needs no
    scroll to see.
 3. **Page error alert** — the store's last unattributed failure.
-4. **Overview** — `app-intervention-about`, `app-intervention-getting-started`
-   (rendered only in `prepare`, while a prerequisite is still missing), and
-   the "Linked" card (facilities / equipment / inspections counts).
-5. **Work items** — the reviewer-note banner (`changes_requested`) and
-   `app-intervention-work-item-table`, an `hlmTable` grid (status toggle ·
-   item · row menu), unchanged in behavior. The table renders its own
-   "Work items" heading with a done-count; the page adds none.
-6. **Changes** — `app-intervention-change-list`, read-only (see below),
-   rendered only when `InterventionWorkspaceStore.changes()` holds at least
-   one `proposed` entry. The list renders its own heading; the page adds none.
-7. **Activity** — `app-intervention-activity-thread` with
-   `app-intervention-comment-form` beneath it, wired to
-   `InterventionWorkspaceStore.addComment`. The thread renders its own
-   "Activity" heading; the page adds none.
-8. **Properties card** (second column, top) — `app-intervention-properties-grid`
-   inside an `hlmCard`, always mounted. Activating a getting-started item for
-   `site`, `responsible` or `schedule` opens its in-place editor directly;
-   there is no disclosure to expand first, because the card is never
-   collapsed.
-9. **Action box** (second column, beneath the properties card) —
+4. **Overview tab** — `app-intervention-getting-started` (rendered only in
+   `prepare`, while a prerequisite is still missing), the work-items block
+   (scan button, review-note banner, `app-intervention-work-item-table`),
+   the conditional `app-intervention-change-list`, `app-intervention-
+attachments`, `app-intervention-activity-thread`, and the comment-form
+   block — the entire former content column, verbatim.
+
+   **The "Linked" stat-cards row (facility/equipment/inspection counts) that
+   used to open this section is retired**, not carried into the Overview
+   tab: with the same three counts now standing, always-visible, on the
+   rail's own triggers, repeating them a second time one scroll below would
+   have been the same numbers shown twice on one screen for no reason. If a
+   future redesign narrows the rail's counts away (an icon-only rail, say),
+   revisit whether Overview needs its own summary back.
+
+5. **Facilities / Equipment / Inspections tabs** — one `hlmTable` each, read
+   for the intervention's own linked records, no pagination, no row actions
+   (see the tables' own component docs for the column sets).
+6. **Properties card** (second grid track, top) — `app-intervention-
+properties-grid` inside an `hlmCard`, always mounted, tab-independent.
+   Activating a getting-started item for `site`, `responsible` or `schedule`
+   opens its in-place editor directly; there is no disclosure to expand
+   first, because the card is never collapsed.
+7. **Action box** (second grid track, beneath the properties card) —
    `app-intervention-action-box`, the host for the current phase's forward
-   action from `lg` up, outside the content column entirely. Its _content_
-   changes with the phase (a plan/submit label with its disabled reason; the
-   blockers list, the `app-intervention-publication-summary` recap and the
-   publish button in `review`; a locked terminal state once `published`), but
-   its _position_ never does. The second column as a whole — properties card
-   and action box together — is what stays `sticky` at `lg`, so the pinned
-   status panel never leaves the viewport ahead of the action a reviewer needs.
-   Below `lg` the box keeps its blockers and recap and **sheds its button**
+   action from `lg` up, tab-independent. Its _content_ changes with the
+   phase (a plan/submit label with its disabled reason; the blockers list,
+   the `app-intervention-publication-summary` recap and the publish button
+   in `review`; a locked terminal state once `published`), but its
+   _position_ never does, and it is visible **regardless of which of the
+   four rail tabs is active**. The second track as a whole — properties card
+   and action box together — is what stays `sticky` at `lg`. Below `lg` the
+   box keeps its blockers and recap and **sheds its button**
    (`max-lg:hidden`), hiding itself entirely when that leaves it empty
    (`hasStandaloneContent`).
-10. **Command bar** (below `lg` only) — `app-intervention-command-bar`,
-    `sticky bottom-0` outside the grid, carrying the same forward action plus
-    its disabled reason. See `### One address per viewport`.
-11. **Prev/next footer** — unchanged.
+8. **Command bar** (below `lg` only) — `app-intervention-command-bar`,
+   `sticky bottom-0` outside the grid, carrying the same forward action plus
+   its disabled reason. See `### One address per viewport`.
+9. **Prev/next footer** — unchanged.
 
-Activating the getting-started item for missing scope (`workItems`) scrolls
-to and focuses the work-items section directly
-(`InterventionDetailPage.revealFieldWork()`). The section is always mounted
-and visible, so there is no panel switch to wait on before it can receive
-focus.
+Activating the getting-started item for missing scope (`workItems`) switches
+the rail to Overview first — `InterventionDetailPage.revealFieldWork()` —
+then scrolls to and focuses the work-items section, deferred one tick when a
+tab switch actually happened (`[hidden]` on the previous panel only clears
+once that binding flushes). The command bar and action box call the same
+method and may fire from any of the other three tabs, which is why the
+switch cannot be skipped the way it could when Overview was the whole page.
+
+### The rail is not the retired workspace tabs
+
+`### Retired invariants` records two prior retirements of a workspace tab
+rail, and a reviewer who remembers that history should read this paragraph
+before flagging the current rail as reopening either one. It narrows the
+same failure mode to the one thing that actually matters, rather than
+claiming the page has no tabs at all — it does, again, on direct
+instruction — so hold it to a sharper bar than "no tabs":
+
+**Nothing that gates publication readiness is visible only inside a tab
+panel.** `blockerIssues()`, `pendingChangesCount()` and the phase's forward
+action all render from `app-intervention-action-box`, in the second grid
+track, which does not belong to `<hlm-tabs>` and does not react to
+`activeLinkedTab`. An operator parked on the Facilities tab still sees every
+blocker and the exact same forward-action button a reviewer on Overview
+does — the specific defect both earlier retirements describe (a count or a
+blocker invisible unless the right tab happened to be open) cannot recur,
+because the thing that must never hide behind a click was never moved
+into a tab to begin with.
+
+What genuinely is now behind a click, honestly stated: Work items, Changes,
+Attachments and Activity — previously part of one continuous always-visible
+flow — only render while Overview is the active tab. That is a real,
+acknowledged narrowing of the 3.0 "one continuous flow" invariant, not a
+distinction to argue away; it is also exactly what this instruction asked
+for. The mitigation is `revealFieldWork()` switching to Overview before it
+scrolls, so nothing the phase action or command bar points at is ever
+unreachable — reachable through one extra click from another tab, same as
+Facilities/Equipment/Inspections are reachable with one click from Overview.
 
 ### One address per viewport
 
@@ -454,9 +530,16 @@ injects `InterventionSyncCoordinatorService` and wires its signals in.
 `app-intervention-attachments` (between Changes and Activity) lists the
 intervention's files and offers a picker plus a camera capture whose images the
 page shrinks through `InterventionPhotoCompressorService` before upload. Picks
-are pre-checked against the backend's 10 MiB ceiling and MIME whitelist
-(images + PDF); rows delete confirm-gated and lock on their own write via the
-store's `pendingAttachmentIds`. Gating mirrors the backend's
+are pre-checked against the backend's 10 MiB ceiling, MIME whitelist
+(images + PDF) and **25-file cardinality cap**
+(`AttachmentConstraints::MAX_ATTACHMENTS_PER_PARENT`); rows delete
+confirm-gated and lock on their own write via the store's
+`pendingAttachmentIds`. The cap surfaces as a `n / 25` badge that appears once
+the list is half full and turns destructive at the ceiling, a hint line, and
+disabled pickers — an enabled button that can only answer 422 is worse than no
+button. A multi-file pick that would overflow the remaining slots is rejected
+**whole**, not partly, so the user is never left guessing which of their files
+landed. Gating mirrors the backend's
 `mutationPermission`: nothing in `submitted`/`published`/`abandoned`, `.plan`
 while drafting, `.execute` afterwards. **Approved exception:** the API exposes
 no download URL yet, so rows are metadata-only and the caption says so; upload
@@ -486,6 +569,14 @@ Every intervention enum (`priority`, `status`, `type`, `workItemAction`,
 `workItemStatus`, `issueSeverity`, `changeStatus`, `inspectionResult`) renders
 from a single source of truth, so the same value looks identical everywhere and
 status is never conveyed by colour alone (icon + label always present).
+
+Three more kinds extend the same registry for the Linked tabs'
+sibling-feature statuses — `inspectionStatus`, `facilityStatus`,
+`equipmentStatus` — cross-importing `InspectionStatus`/`FacilityStatus`/`EquipmentStatus`
+from their owning features' `models` barrels the same way `inspectionResult`
+already did. This is the established pattern, not a new one: extend the
+registry rather than inventing a per-feature tag component when this
+feature already renders another feature's enum.
 
 - `models/intervention-tag/` — the vocabulary (plain TS, no Angular), exported
   through the feature `models/` barrel: the descriptor interface, the kind and
@@ -691,3 +782,25 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   fixed-order content sections all carry over unchanged; only the rail and
   its tab-switching machinery (`activeTab`, `onTabActivated`, `tabOrientation`,
   the `InterventionDetailTabId` type) are gone.
+- _"The page reads as one continuous scroll of always-visible sections
+  instead of tab panels the operator has to click between."_ Retired by this
+  change, on direct instruction, adding a left-hand rail (Overview /
+  Facilities / Equipment / Inspections) so the intervention's own linked
+  facility, equipment and inspection records get a real drill-down table
+  each, beside — not inside — the always-visible flow. This is **not** a
+  reinstatement of the tab rail retired directly above: that rail split the
+  page's _own_ workflow content (Overview / Work items / Changes) three
+  ways, which is exactly what made a blocker or a pending-changes count
+  invisible unless the right tab was open. This rail keeps every one of
+  those under one "Overview" tab, unsplit, and adds three genuinely new
+  lookup tabs for sibling-feature data that never had a home on this page
+  before. The thing the 2.0/4.0 retirements actually protect — the action
+  box, its blockers and its pending-changes count outside every tab — still
+  holds; see `### The rail is not the retired workspace tabs`. What is a
+  real, acknowledged trade-off this time: Work items, Changes, Attachments
+  and Activity are behind the Overview tab, not on screen regardless of
+  scroll position, which the 3.0/4.0 "one continuous flow" language
+  explicitly ruled out. `activeLinkedTab` and `linkedTabsOrientation`
+  replace the retired `activeTab`/`tabOrientation` pair, and
+  `InterventionLinkedResourceTabId` replaces the retired
+  `InterventionDetailTabId`.

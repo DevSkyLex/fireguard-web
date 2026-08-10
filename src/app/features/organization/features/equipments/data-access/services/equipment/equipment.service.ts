@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import { EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection, HydraItem, OptionOutput } from '@core/api/models';
 import type {
   EquipmentOutput,
@@ -147,6 +147,35 @@ export class EquipmentService extends HydraApiService {
         [] as readonly EquipmentOutput[],
       ),
     );
+  }
+
+  /**
+   * Method listByIntervention
+   * @method listByIntervention
+   *
+   * @description
+   * Retrieves the equipment linked to one intervention through the
+   * **canonical** collection (`GET /api/equipment?intervention=…`). The
+   * organization-scoped {@link list} endpoint has no `intervention` filter,
+   * so this bypasses it and queries the bare resource directly, the same way
+   * {@link getCanonical} does.
+   *
+   * @access public
+   * @since 4.5.0
+   *
+   * @param {string} interventionId - The intervention to scope the query to.
+   * @param {PaginationOptions} [options] - Optional pagination.
+   *
+   * @return {Observable<HydraCollection<EquipmentOutput>>} An observable emitting the linked equipment.
+   */
+  public listByIntervention(
+    interventionId: string,
+    options?: PaginationOptions,
+  ): Observable<HydraCollection<EquipmentOutput>> {
+    return this.getCollection<EquipmentOutput>('/api/equipment', {
+      ...options,
+      params: { intervention: `/api/interventions/${interventionId}` },
+    });
   }
 
   /**

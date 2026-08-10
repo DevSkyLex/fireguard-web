@@ -1,8 +1,11 @@
 <div class="flex flex-col gap-3">
   <div class="flex flex-wrap items-center justify-between gap-2">
-    <h2 class="text-sm font-semibold text-foreground" i18n="@@intervention.detail.checklist">
-      Work items
-    </h2>
+    <div class="flex flex-col gap-0.5">
+      <h2 class="text-base font-semibold" i18n="@@intervention.detail.checklist">Work items</h2>
+      <p class="text-xs text-muted-foreground" i18n="@@intervention.wit.caption">
+        The tasks to complete during this intervention, tracked one by one.
+      </p>
+    </div>
 
     <div class="flex items-center gap-3">
       <span class="text-sm text-muted-foreground tabular-nums">
@@ -54,7 +57,6 @@
             @for (item of items(); track item.id) {
               <tr
                 hlmTableRow
-                [class]="rowClassOf(item)"
                 [attr.aria-current]="isNext(item) ? 'step' : null"
                 data-testid="intervention-work-item-row"
               >

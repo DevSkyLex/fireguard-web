@@ -1,4 +1,5 @@
 import {
+  lucideArchive,
   lucideBadgeCheck,
   lucideBan,
   lucideCalendar,
@@ -24,6 +25,7 @@ import {
   lucideSend,
   lucideTag,
   lucideTriangleAlert,
+  lucideWrench,
   lucideX,
 } from '@ng-icons/lucide';
 
@@ -43,6 +45,7 @@ import {
  * @type {Readonly<Record<string, string>>}
  */
 export const INTERVENTION_TAG_ICONS: Readonly<Record<string, string>> = {
+  lucideArchive,
   lucideBadgeCheck,
   lucideBan,
   lucideCalendar,
@@ -68,5 +71,6 @@ export const INTERVENTION_TAG_ICONS: Readonly<Record<string, string>> = {
   lucideSend,
   lucideTag,
   lucideTriangleAlert,
+  lucideWrench,
   lucideX,
 };

@@ -13,10 +13,18 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCamera, lucideFile, lucidePaperclip, lucideTrash2 } from '@ng-icons/lucide';
+import {
+  lucideCamera,
+  lucideFileText,
+  lucideImage,
+  lucidePaperclip,
+  lucideTrash2,
+} from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { InterventionAttachmentOutput } from '@features/organization/features/interventions/models';
+import { EmptyState } from '@shared/empty-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
+import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
@@ -40,6 +48,13 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
 ];
 
 /**
+ * The backend's per-parent cardinality cap
+ * (`AttachmentConstraints::MAX_ATTACHMENTS_PER_PARENT`), mirrored so the
+ * pickers close at the ceiling instead of letting the upload fail with a 422.
+ */
+const MAX_ATTACHMENTS = 25;
+
+/**
  * Component InterventionAttachments
  * @class InterventionAttachments
  *
@@ -48,10 +63,12 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
  * upload date — the API exposes no download URL yet, and this section says
  * so rather than faking a link), a file picker, a camera capture button for
  * field photo evidence, and a confirm-gated per-row delete that locks only
- * its own row. Picks are pre-checked against the backend's 10 MiB ceiling
- * and MIME whitelist so an invalid file fails fast; the server stays
- * authoritative. Presentational — the page owns the store calls and the
- * photo compression.
+ * its own row. Picks are pre-checked against the backend's 10 MiB ceiling,
+ * MIME whitelist and 25-file cardinality cap so an invalid file fails fast;
+ * the server stays authoritative. A `n / 25` counter appears once the list
+ * is half full and the pickers close at the ceiling — the alternative is an
+ * enabled button that can only ever answer 422. Presentational — the page
+ * owns the store calls and the photo compression.
  *
  * @version 1.0.0
  *
@@ -72,8 +89,18 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
  */
 @Component({
   selector: 'app-intervention-attachments',
-  imports: [NgIcon, HlmButton, ...HlmAlertDialogImports, ...HlmItemImports, ...HlmSpinnerImports],
-  providers: [provideIcons({ lucideCamera, lucideFile, lucidePaperclip, lucideTrash2 })],
+  imports: [
+    NgIcon,
+    HlmButton,
+    EmptyState,
+    ...HlmAlertDialogImports,
+    ...HlmBadgeImports,
+    ...HlmItemImports,
+    ...HlmSpinnerImports,
+  ],
+  providers: [
+    provideIcons({ lucideCamera, lucideFileText, lucideImage, lucidePaperclip, lucideTrash2 }),
+  ],
   templateUrl: './intervention-attachments.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -170,19 +197,85 @@ export class InterventionAttachments {
   /** The `accept` attribute, straight from the whitelist. */
   protected readonly acceptedTypes: string = ACCEPTED_MIME_TYPES.join(',');
 
+  /** How many more files this intervention may take, never below zero. */
+  protected readonly remainingSlots: Signal<number> = computed<number>(() =>
+    Math.max(MAX_ATTACHMENTS - this.attachments().length, 0),
+  );
+
+  /** Whether the intervention has reached the backend's attachment ceiling. */
+  protected readonly atCapacity: Signal<boolean> = computed<boolean>(
+    () => this.remainingSlots() === 0,
+  );
+
+  /** The `n / 25` counter text. */
+  protected readonly countLabel: Signal<string> = computed<string>(
+    () => `${this.attachments().length} / ${MAX_ATTACHMENTS}`,
+  );
+
+  /**
+   * Property showCounter
+   * @readonly
+   *
+   * @description
+   * Whether to show the counter at all. Below half the cap it is noise —
+   * nobody with 3 files needs to be told the ceiling is 25 — so it appears
+   * only once the ceiling is close enough to matter.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly showCounter: Signal<boolean> = computed<boolean>(
+    () => this.attachments().length >= MAX_ATTACHMENTS / 2,
+  );
+
   /** Whether the pickers are usable right now. */
   protected readonly canPick: Signal<boolean> = computed<boolean>(
-    () => this.canManage() && this.online() && !this.uploading(),
+    () => this.canManage() && this.online() && !this.uploading() && !this.atCapacity(),
+  );
+
+  /**
+   * Property emptyDescription
+   * @readonly
+   *
+   * @description
+   * What the empty list says, which depends on whether the reader can add a
+   * file — pointing a read-only viewer at a picker they cannot use is worse
+   * than saying nothing.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly emptyDescription: Signal<string> = computed<string>(() =>
+    this.canManage()
+      ? $localize`:@@intervention.attachments.emptyDesc:Add photos or documents to keep with this intervention.`
+      : $localize`:@@intervention.attachments.emptyDescReadOnly:No one has attached a file to this intervention yet.`,
   );
   //#endregion
 
   //#region Methods
   /**
+   * Method pick
+   * @description Opens the given hidden file input to start a pick.
+   * @access protected
+   * @since 1.0.0
+   * @param {HTMLInputElement} fileInput - The hidden file input to open.
+   * @returns {void}
+   */
+  protected pick(fileInput: HTMLInputElement): void {
+    fileInput.click();
+  }
+
+  /**
    * Method onFilesSelected
    *
    * @description
-   * Validates a pick against the backend's size and MIME policy, emits the
-   * valid files and names the first rejection inline.
+   * Validates a pick against the backend's cardinality, size and MIME policy,
+   * emits the valid files and names the first rejection inline. The
+   * cardinality check comes first and rejects the pick whole rather than
+   * partly: accepting only the files that fit would leave the user guessing
+   * which of theirs made it through.
    *
    * @access protected
    * @since 1.0.0
@@ -196,6 +289,16 @@ export class InterventionAttachments {
     const files: readonly File[] = Array.from(inputElement.files ?? []);
     inputElement.value = ''; // Re-picking the same file fires no change event otherwise.
     if (files.length === 0) return;
+
+    if (files.length > this.remainingSlots()) {
+      this.pickError.set(
+        this.atCapacity()
+          ? $localize`:@@intervention.attachments.capacityReached:This intervention already holds the maximum of ${MAX_ATTACHMENTS}:max: files. Delete one to add another.`
+          : $localize`:@@intervention.attachments.capacityExceeded:Only ${this.remainingSlots()}:remaining: more file(s) can be added to this intervention.`,
+      );
+
+      return;
+    }
 
     const oversized: File | undefined = files.find((file) => file.size > MAX_SIZE_BYTES);
     if (oversized) {
@@ -218,6 +321,34 @@ export class InterventionAttachments {
 
     this.pickError.set(null);
     this.filesPicked.emit(files);
+  }
+
+  /**
+   * Method iconOf
+   * @description The registered icon name matching the attachment's declared MIME type.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   * @returns {string} A name registered with `provideIcons`.
+   */
+  protected iconOf(attachment: InterventionAttachmentOutput): string {
+    return attachment.mimeType.startsWith('image/') ? 'lucideImage' : 'lucideFileText';
+  }
+
+  /**
+   * Method extensionOf
+   * @description The attachment's file extension, badge-sized, read from the file name and falling back to the declared MIME subtype.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   * @returns {string} An uppercased extension of at most 4 characters, e.g. "PDF", "JPEG".
+   */
+  protected extensionOf(attachment: InterventionAttachmentOutput): string {
+    const dotIndex: number = attachment.fileName.lastIndexOf('.');
+    const fromName: string = dotIndex > 0 ? attachment.fileName.slice(dotIndex + 1) : '';
+    const extension: string = fromName || (attachment.mimeType.split('/').at(-1) ?? '');
+
+    return extension.slice(0, 4).toUpperCase();
   }
 
   /**

@@ -1,7 +1,9 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
@@ -49,8 +51,6 @@ import type {
   InterventionStatus,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
-  MemberAvatar,
-  MemberSelectOption,
   PublicationOutput,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
@@ -84,11 +84,16 @@ import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmTextareaImports } from '@shared/ui/textarea';
+import {
+  InterventionLinkedResourcesStore,
+  type InterventionLinkedResourcesStoreType,
+} from '../../../state/intervention-linked-resources';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
@@ -112,8 +117,11 @@ import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionRequestChangesSheet } from '../../sheets/intervention-request-changes-sheet';
 import { InterventionWorkItemSheet } from '../../sheets/intervention-work-item-sheet';
+import { InterventionLinkedEquipmentTable } from '../../tables/intervention-linked-equipment-table';
+import { InterventionLinkedFacilitiesTable } from '../../tables/intervention-linked-facilities-table';
+import { InterventionLinkedInspectionsTable } from '../../tables/intervention-linked-inspections-table';
 import { InterventionWorkItemTable } from '../../tables/intervention-work-item-table';
-import type { InterventionConfirmRequest } from './models';
+import type { InterventionConfirmRequest, InterventionLinkedResourceTabId } from './models';
 
 /** The edit state before anything is open. */
 const IDLE_EDIT_STATE: InterventionEditState = {
@@ -165,13 +173,14 @@ const IDLE_EDIT_STATE: InterventionEditState = {
   selector: 'app-intervention-detail',
   imports: [
     NgIcon,
+    NgTemplateOutlet,
     EmptyState,
     HlmBadge,
     HlmButton,
+    HlmSeparator,
     HlmSkeleton,
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
-    ...HlmCardImports,
     ...HlmDropdownMenuImports,
     ...HlmSpinnerImports,
     ...HlmTextareaImports,
@@ -184,16 +193,21 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionSyncStatus,
     InterventionCommentForm,
     InterventionGettingStarted,
+    InterventionLinkedEquipmentTable,
+    InterventionLinkedFacilitiesTable,
+    InterventionLinkedInspectionsTable,
     InterventionPropertiesGrid,
     InterventionPublicationSummary,
     InterventionRequestChangesSheet,
     InterventionTag,
     InterventionWorkItemSheet,
     InterventionWorkItemTable,
+    ...HlmTabsImports,
   ],
   providers: [
     InterventionWorkspaceStore,
     InterventionPlanningOptionsStore,
+    InterventionLinkedResourcesStore,
     provideIcons({
       lucideBan,
       lucideChevronLeft,
@@ -257,6 +271,23 @@ export class InterventionDetailPage {
    */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
+
+  /**
+   * Property linkedResources
+   * @readonly
+   *
+   * @description
+   * The "Linked" tabs' facilities/equipment/inspections, each loaded lazily
+   * on its own tab's first activation rather than with the rest of the
+   * workspace (`AGENTS.md`: secondary UI data behind a tab loads on user
+   * action).
+   *
+   * @access protected
+   * @since 4.5.0
+   * @type {InterventionLinkedResourcesStoreType}
+   */
+  protected readonly linkedResources: InterventionLinkedResourcesStoreType =
+    inject<InterventionLinkedResourcesStoreType>(InterventionLinkedResourcesStore);
 
   /**
    * Property listStore
@@ -323,6 +354,9 @@ export class InterventionDetailPage {
   /** The application's language, used to phrase the meta line and the timeline. */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
+  /** Unregisters the tab-rail orientation media query listener on teardown. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
   constructor() {
     effect((): void => {
       const interventionId: string = this.interventionId();
@@ -333,6 +367,29 @@ export class InterventionDetailPage {
         this.store.loadAttachments(interventionId);
       });
     });
+
+    effect((): void => {
+      const tab: InterventionLinkedResourceTabId = this.activeLinkedTab();
+      const interventionId: string = this.interventionId();
+
+      untracked((): void => {
+        if (tab === 'facilities') this.linkedResources.ensureFacilitiesLoaded(interventionId);
+        else if (tab === 'equipment') this.linkedResources.ensureEquipmentLoaded(interventionId);
+        else if (tab === 'inspections')
+          this.linkedResources.ensureInspectionsLoaded(interventionId);
+      });
+    });
+
+    const desktopQuery: MediaQueryList | undefined = globalThis.matchMedia?.('(min-width: 1024px)');
+    if (desktopQuery) {
+      this.linkedTabsOrientation.set(desktopQuery.matches ? 'vertical' : 'horizontal');
+      const onDesktopQueryChange = (event: MediaQueryListEvent): void =>
+        this.linkedTabsOrientation.set(event.matches ? 'vertical' : 'horizontal');
+      desktopQuery.addEventListener('change', onDesktopQueryChange);
+      this.destroyRef.onDestroy(() =>
+        desktopQuery.removeEventListener('change', onDesktopQueryChange),
+      );
+    }
 
     effect((): void => {
       const organizationId: string = this.organizationId();
@@ -394,6 +451,49 @@ export class InterventionDetailPage {
    */
   protected readonly editState: WritableSignal<InterventionEditState> =
     signal<InterventionEditState>(IDLE_EDIT_STATE);
+
+  /**
+   * Property activeLinkedTab
+   * @readonly
+   *
+   * @description
+   * Which of the left-hand rail's four tabs is showing — `overview` by
+   * default. Page-local UI state, not store-owned: the store only tracks
+   * whether each of the three lookup tabs has ever loaded, not which one is
+   * currently visible.
+   *
+   * @access protected
+   * @since 4.5.0
+   *
+   * @type {WritableSignal<InterventionLinkedResourceTabId>}
+   */
+  protected readonly activeLinkedTab: WritableSignal<InterventionLinkedResourceTabId> =
+    signal<InterventionLinkedResourceTabId>('overview');
+
+  /**
+   * Property linkedTabsOrientation
+   * @readonly
+   *
+   * @description
+   * Whether the rail lays out as a `lg`-and-up side column (`vertical`,
+   * `hlm-tabs-list`) or a horizontally-scrollable row above the tab content
+   * on narrower viewports (`horizontal`, `hlm-paginated-tabs-list` — brain's
+   * own overflow pattern for a tab row that doesn't fit, in place of
+   * wrapping) — driven by a `(min-width: 1024px)` media query so the same
+   * `data-orientation` attribute that already switches `hlm-tabs`' internal
+   * flex axis and keyboard handling drives the responsive collapse, rather
+   * than fighting its variant-scoped classes with an unconditional override.
+   * Starts `horizontal` (server/pre-hydration default) and upgrades once the
+   * browser evaluates the query.
+   *
+   * @access protected
+   * @since 4.5.0
+   *
+   * @type {WritableSignal<'horizontal' | 'vertical'>}
+   */
+  protected readonly linkedTabsOrientation: WritableSignal<'horizontal' | 'vertical'> = signal<
+    'horizontal' | 'vertical'
+  >('horizontal');
 
   /** What the text confirmation is asking about, if anything. */
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
@@ -769,15 +869,6 @@ export class InterventionDetailPage {
     () => this.store.intervention()?.status === 'submitted' && this.store.blockerCount() === 0,
   );
 
-  /** The site's human name, resolved from its IRI. */
-  protected readonly siteLabel: Signal<string | null> = computed<string | null>(() => {
-    const site: string | null = this.store.intervention()?.site ?? null;
-
-    return site === null
-      ? null
-      : (this.planningOptions.sites().find((option) => option.value === site)?.label ?? site);
-  });
-
   /** The responsible agent's display name, resolved from its IRI, for the details chip row. */
   protected readonly responsibleLabel: Signal<string | null> = computed<string | null>(() => {
     const responsible: string | null = this.store.intervention()?.responsible ?? null;
@@ -866,44 +957,6 @@ export class InterventionDetailPage {
 
     return $localize`:@@intervention.detail.metaUpdated:Updated ${when}:when: · revision ${revision}:revision:`;
   });
-
-  /**
-   * Property assignees
-   * @readonly
-   *
-   * @description
-   * Everyone on the intervention as an overlapping stack, responsible first and
-   * never twice.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<readonly MemberAvatar[]>}
-   */
-  protected readonly assignees: Signal<readonly MemberAvatar[]> = computed<readonly MemberAvatar[]>(
-    () => {
-      const intervention: InterventionOutput | null = this.store.intervention();
-      if (!intervention) return [];
-
-      const responsible: string | null = intervention.responsible;
-      const ordered: readonly string[] = [
-        ...(responsible === null ? [] : [responsible]),
-        ...intervention.participants.filter((iri) => iri !== responsible),
-      ];
-
-      return ordered
-        .map((iri) => this.planningOptions.members().find((member) => member.value === iri))
-        .filter((member): member is MemberSelectOption => member !== undefined)
-        .map((member) => ({
-          label: member.initials,
-          image: member.avatarUrl ?? undefined,
-          tooltip:
-            member.value === responsible
-              ? $localize`:@@intervention.sidebar.responsibleTooltip:${member.displayName}:name: (responsible)`
-              : member.displayName,
-        }));
-    },
-  );
 
   /**
    * Property readinessItems
@@ -1648,6 +1701,33 @@ export class InterventionDetailPage {
     this.store.loadActivities(this.interventionId());
   }
 
+  /**
+   * Method onLinkedTabActivated
+   *
+   * @description
+   * Narrows `hlm-tabs`' plain-string `tabActivated` payload to
+   * {@link InterventionLinkedResourceTabId} before writing
+   * {@link activeLinkedTab}, which is what the constructor effect watches to
+   * lazy-load a lookup tab's data on its first activation.
+   *
+   * @access protected
+   * @since 4.5.0
+   *
+   * @param {string} tab - The `hlm-tabs` id that just activated.
+   *
+   * @returns {void}
+   */
+  protected onLinkedTabActivated(tab: string): void {
+    if (
+      tab === 'overview' ||
+      tab === 'facilities' ||
+      tab === 'equipment' ||
+      tab === 'inspections'
+    ) {
+      this.activeLinkedTab.set(tab);
+    }
+  }
+
   /** Walks to the previous intervention in the list's order. */
   protected navigatePrev(): void {
     this.navigateToNeighbour(this.prevInterventionId());
@@ -1736,10 +1816,14 @@ export class InterventionDetailPage {
    * @description
    * Sends the operator to the work-items section: opens the add-item sheet
    * when the scope is still empty, or scrolls to and focuses the section
-   * otherwise. The section is always mounted and visible, so there is no
-   * panel switch to wait on — a plain scroll that leaves focus on the
-   * trigger that requested it would strand a keyboard user (WCAG 2.4.3),
-   * which is why the section itself receives focus.
+   * otherwise. The section lives in the Overview tab, so this switches the
+   * rail there first — the command bar and action box that call this method
+   * sit outside the tabs and may fire from any of the other three. A switch
+   * away from Overview defers the scroll/focus one tick, since `[hidden]`
+   * only clears once the tab's panel binding flushes; a plain scroll that
+   * leaves focus on the trigger that requested it would strand a keyboard
+   * user regardless (WCAG 2.4.3), which is why the section itself receives
+   * focus either way.
    *
    * @access private
    * @since 1.0.0
@@ -1747,13 +1831,17 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   private revealFieldWork(): void {
+    const switchingTab: boolean = this.activeLinkedTab() !== 'overview';
+    this.activeLinkedTab.set('overview');
+
     if (this.store.workItems().length === 0 && this.canAddWorkItem()) {
       this.workItemSheetVisible.set(true);
 
       return;
     }
 
-    this.focusFieldWorkPanel();
+    if (switchingTab) setTimeout((): void => this.focusFieldWorkPanel());
+    else this.focusFieldWorkPanel();
   }
 
   /**

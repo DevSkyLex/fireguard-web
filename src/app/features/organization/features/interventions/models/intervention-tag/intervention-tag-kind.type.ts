@@ -15,4 +15,7 @@ export type InterventionTagKind =
   | 'workItemStatus'
   | 'issueSeverity'
   | 'changeStatus'
-  | 'inspectionResult';
+  | 'inspectionResult'
+  | 'inspectionStatus'
+  | 'facilityStatus'
+  | 'equipmentStatus';

@@ -1,60 +1,78 @@
 <div class="flex flex-col gap-3" data-testid="intervention-attachments">
   <div class="flex flex-wrap items-center justify-between gap-2">
     <div class="flex flex-col gap-0.5">
-      <h2
-        class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
-        i18n="@@intervention.attachments.title"
-      >
-        Attachments
-      </h2>
+      <div class="flex items-center gap-2">
+        <h2 class="text-base font-semibold" i18n="@@intervention.attachments.title">Attachments</h2>
+        @if (showCounter()) {
+          <span
+            hlmBadge
+            [variant]="atCapacity() ? 'destructive' : 'secondary'"
+            data-testid="intervention-attachments-count"
+            >{{ countLabel() }}</span
+          >
+        }
+      </div>
       <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.caption">
         Photos and documents kept with this intervention. Download links are not available yet.
       </p>
     </div>
 
     @if (canManage()) {
-      <div class="flex items-center gap-2">
-        <label
+      <div class="flex flex-wrap items-center gap-2">
+        <button
           hlmBtn
+          type="button"
           variant="outline"
           size="sm"
-          [class.pointer-events-none]="!canPick()"
-          [class.opacity-50]="!canPick()"
+          [disabled]="!canPick()"
+          [attr.aria-busy]="uploading() ? 'true' : null"
           data-testid="intervention-attachments-add"
+          (click)="pick(filesInput)"
         >
-          <ng-icon name="lucidePaperclip" aria-hidden="true" />
+          @if (uploading()) {
+            <hlm-spinner size="xs" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucidePaperclip" aria-hidden="true" />
+          }
           <span i18n="@@intervention.attachments.add">Add files</span>
-          <input
-            type="file"
-            class="sr-only"
-            multiple
-            [accept]="acceptedTypes"
-            [disabled]="!canPick()"
-            (change)="onFilesSelected($event)"
-          />
-        </label>
-        <label
+        </button>
+        <input
+          #filesInput
+          type="file"
+          class="sr-only"
+          tabindex="-1"
+          multiple
+          [accept]="acceptedTypes"
+          [disabled]="!canPick()"
+          (change)="onFilesSelected($event)"
+        />
+        <button
           hlmBtn
+          type="button"
           variant="outline"
           size="sm"
-          [class.pointer-events-none]="!canPick()"
-          [class.opacity-50]="!canPick()"
+          [disabled]="!canPick()"
+          [attr.aria-busy]="uploading() ? 'true' : null"
           data-testid="intervention-attachments-photo"
+          (click)="pick(photoInput)"
         >
-          <ng-icon name="lucideCamera" aria-hidden="true" />
+          @if (uploading()) {
+            <hlm-spinner size="xs" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideCamera" aria-hidden="true" />
+          }
           <span i18n="@@intervention.attachments.photo">Take a photo</span>
-          <input
-            type="file"
-            class="sr-only"
-            accept="image/*"
-            capture="environment"
-            [disabled]="!canPick()"
-            (change)="onFilesSelected($event)"
-          />
-        </label>
-        @if (uploading()) {
-          <hlm-spinner size="xs" aria-hidden="true" />
-        }
+        </button>
+        <input
+          #photoInput
+          type="file"
+          class="sr-only"
+          tabindex="-1"
+          accept="image/*"
+          capture="environment"
+          [disabled]="!canPick()"
+          (change)="onFilesSelected($event)"
+        />
       </div>
     }
   </div>
@@ -65,6 +83,16 @@
     </p>
   }
 
+  @if (atCapacity() && canManage()) {
+    <p
+      class="text-xs text-muted-foreground"
+      data-testid="intervention-attachments-capacity"
+      i18n="@@intervention.attachments.capacityHint"
+    >
+      This intervention holds the maximum number of files. Delete one to add another.
+    </p>
+  }
+
   @if (pickError(); as message) {
     <p class="text-xs text-destructive" role="alert" data-testid="intervention-attachments-error">
       {{ message }}
@@ -72,15 +100,38 @@
   }
 
   @if (attachments().length === 0) {
-    <p class="text-sm text-muted-foreground" i18n="@@intervention.attachments.empty">
-      No files attached yet.
-    </p>
+    <app-empty-state
+      icon="lucidePaperclip"
+      class="rounded-md border border-dashed border-border p-6"
+      title="No files attached yet"
+      i18n-title="@@intervention.attachments.emptyTitle"
+      [description]="emptyDescription()"
+      data-testid="intervention-attachments-empty"
+    />
   } @else {
-    <ul class="flex flex-col gap-2">
+    <ul hlmItemGroup>
       @for (attachment of attachments(); track attachment.id) {
-        <li hlmItem size="sm" class="rounded-md" data-testid="intervention-attachment-row">
-          <div hlmItemMedia variant="icon">
-            <ng-icon name="lucideFile" aria-hidden="true" />
+        <li
+          hlmItem
+          variant="outline"
+          size="sm"
+          class="rounded-md transition-colors hover:bg-muted/50"
+          data-testid="intervention-attachment-row"
+        >
+          <div
+            hlmItemMedia
+            variant="icon"
+            class="relative text-muted-foreground group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center"
+          >
+            <ng-icon [name]="iconOf(attachment)" class="text-3xl" aria-hidden="true" />
+            @if (extensionOf(attachment); as extension) {
+              <span
+                hlmBadge
+                class="absolute -right-1 -bottom-1 h-3.5 min-w-3.5 justify-center rounded-sm px-0.5 py-0 leading-none"
+                aria-hidden="true"
+                >{{ extension }}</span
+              >
+            }
           </div>
           <div hlmItemContent>
             <span hlmItemTitle class="line-clamp-1">{{ attachment.fileName }}</span>

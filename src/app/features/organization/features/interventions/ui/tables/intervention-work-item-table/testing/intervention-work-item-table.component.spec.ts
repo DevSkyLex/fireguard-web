@@ -226,14 +226,6 @@ describe('InterventionWorkItemTable', () => {
     expect(rows()[3]?.textContent).toContain('Next');
   });
 
-  it('should tint only the next row, not colour alone since it also carries aria-current', async () => {
-    fixture.componentRef.setInput('nextItemId', 'wi-4');
-    await fixture.whenStable();
-
-    expect(rows()[3]?.className).toContain('border-primary');
-    expect(rows()[0]?.className).not.toContain('border-primary');
-  });
-
   it('should offer no row menu when nothing is permitted', () => {
     expect(byTestId('intervention-work-item-menu')).toBeNull();
   });

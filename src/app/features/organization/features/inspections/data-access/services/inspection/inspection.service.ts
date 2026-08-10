@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
   InspectionOutput,
@@ -202,6 +202,34 @@ export class InspectionService extends HydraApiService {
       page: options?.page,
       itemsPerPage: options?.itemsPerPage,
       params,
+    });
+  }
+
+  /**
+   * Method listByIntervention
+   * @method listByIntervention
+   *
+   * @description
+   * Retrieves the inspections linked to one intervention through the
+   * **canonical** collection (`GET /api/inspections?intervention=…`). The
+   * organization-scoped {@link list} endpoint has no `intervention` filter,
+   * so this bypasses it and queries the bare resource directly.
+   *
+   * @access public
+   * @since 4.5.0
+   *
+   * @param {string} interventionId - The intervention to scope the query to.
+   * @param {PaginationOptions} [options] - Optional pagination.
+   *
+   * @return {Observable<HydraCollection<InspectionOutput>>} An observable emitting the linked inspections.
+   */
+  public listByIntervention(
+    interventionId: string,
+    options?: PaginationOptions,
+  ): Observable<HydraCollection<InspectionOutput>> {
+    return this.getCollection<InspectionOutput>('/api/inspections', {
+      ...options,
+      params: { intervention: `/api/interventions/${interventionId}` },
     });
   }
 

@@ -1,44 +1,45 @@
-<div hlmCard>
-  <div hlmCardContent class="flex flex-col gap-4">
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <span class="font-mono text-xs text-muted-foreground tabular-nums"
-        >FG-{{ intervention().number }}</span
-      >
-
-      <app-intervention-tag kind="type" [value]="intervention().type" />
-
-      @if (siteLabel(); as site) {
-        <span class="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-          <ng-icon name="lucideMapPin" class="shrink-0" aria-hidden="true" />
-          <span class="truncate">{{ site }}</span>
-        </span>
-      }
-
-      <span class="text-sm text-muted-foreground">
-        <span i18n="@@common.updated">Updated</span>
-        {{ intervention().updatedAt | date: 'mediumDate' }}
+<div class="flex flex-col gap-1">
+  <div data-testid="intervention-about-status">
+    <app-inplace-field label="Status" i18n-label="@@intervention.prop.status" class="w-full">
+      <span fieldValue>
+        <app-intervention-tag kind="status" [value]="intervention().status" asOption />
       </span>
+    </app-inplace-field>
+  </div>
 
-      @if (participants().length > 0) {
-        <hlm-avatar-group class="ms-auto">
-          @for (person of participants(); track person.label) {
-            <hlm-avatar size="sm" [title]="person.tooltip ?? person.label">
-              @if (person.image; as avatarUrl) {
-                <img hlmAvatarImage [src]="avatarUrl" alt="" />
-              }
-              <span hlmAvatarFallback class="text-[10px]">{{ person.label }}</span>
-            </hlm-avatar>
-          }
-        </hlm-avatar-group>
-      }
-    </div>
+  <div data-testid="intervention-about-reference">
+    <app-inplace-field
+      label="Reference"
+      i18n-label="@@intervention.detail.reference"
+      class="w-full"
+    >
+      <span fieldValue class="font-mono tabular-nums">FG-{{ intervention().number }}</span>
+    </app-inplace-field>
+  </div>
 
+  <div data-testid="intervention-about-type">
+    <app-inplace-field label="Type" i18n-label="@@intervention.list.columnType" class="w-full">
+      <span fieldValue>
+        <app-intervention-tag kind="type" [value]="intervention().type" asOption />
+      </span>
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="intervention-about-updated">
+    <app-inplace-field label="Updated" i18n-label="@@common.updated" class="w-full">
+      <span fieldValue class="tabular-nums">{{
+        intervention().updatedAt | date: 'mediumDate'
+      }}</span>
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="intervention-description-field">
     <app-inplace-field
       label="Description"
       i18n-label="@@intervention.pf.description"
       commit="confirm"
-      class="max-w-prose"
-      data-testid="intervention-description-field"
+      orientation="vertical"
+      class="w-full"
       [editable]="canEditDetails()"
       [editing]="editState().open === 'description'"
       [pending]="editState().saving === 'description'"

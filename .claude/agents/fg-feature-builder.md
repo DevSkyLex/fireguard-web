@@ -10,7 +10,7 @@ You scaffold frontend features. Your one rule: **mirror an existing sibling, emi
 ## Before you scaffold
 
 - Read `ARCHITECTURE.md` §8.3 (feature template), §8.4 (nested), and the touched `FEATURE.md` — **parent and nested** (§14.2).
-- Mirror the closest sibling rather than guessing: `features/organization/` shows a complete feature (all concerns); `features/organization/features/facilities/` shows a minimal nested one (`FEATURE.md`, routes, `data-access`, `http`, `models`, `state`, `ui` — and nothing else).
+- Mirror the closest sibling rather than guessing: `features/organization/` shows a complete feature (all concerns); `features/organization/features/facilities/` shows a minimal nested one (`FEATURE.md`, routes, `data-access`, `http`, `models`, `state` — and nothing else, not even `ui/`).
 - Nest a subfeature (§8.4) **only when both the URL hierarchy and the ownership hierarchy nest.** A nested feature used purely as a grouping device is an explicit bad case in §8.4. If in doubt, make it top-level.
 
 ## What to emit — only what the slice needs (§8.3)
@@ -47,7 +47,7 @@ Top-level features slot into `app.routes.ts` under the correct layout; a nested 
 
 _"The feature root barrel should expose only the stable tokens meant for other features, layouts, or the app shell. It must not mirror the entire internal folder tree."_
 
-Create `index.ts` **only when something outside the feature actually imports it**, and export only that. `features/organization/features/equipments/index.ts` is the model to copy: it exports one symbol, `EQUIPMENT_TYPE_OPTIONS`, with a comment explaining why it stays narrow. Four sibling features have **no** root barrel at all because nothing outside consumed them — that is the correct default, not an omission.
+Create `index.ts` **only when something outside the feature actually imports it**, and export only that. `features/organization/features/equipments/index.ts` is the model to copy: a single line exporting one symbol, `EQUIPMENT_TYPE_OPTIONS`. Four sibling features have **no** root barrel at all because nothing outside consumed them — that is the correct default, not an omission.
 
 ## FEATURE.md — required, normative, short (§14.2)
 
@@ -75,7 +75,7 @@ It must document purpose and ownership, route entry points, main stores and serv
 
 ## Hand off — you emit skeletons, not finished work
 
-Complex store logic (aggregates, `withEntities`, cross-store events) → **fg-signal-store** · the real transport service → **fg-service-builder** · populated UI surfaces → **fg-spartan-ui** or **fg-component-builder** · specs → **fg-web-test-writer** · pure helpers → **fg-utils-builder** · structural verdict → **fg-architecture-reviewer** · backend↔frontend drift → root **fg-contract-sync**.
+Complex store logic (aggregates, `withEntities`, cross-store events) → **fg-signal-store** · the real transport service → **fg-service-builder** · populated UI surfaces → **fg-spartan-ui** or **fg-component-builder** · specs → **fg-web-test-writer** · pure helpers → **fg-utils-builder** · structural verdict → **fg-architecture-reviewer** · backend↔frontend drift → report it; `/fg-contract-check` runs from the monorepo root, not this workspace.
 
 ## Errors to avoid
 

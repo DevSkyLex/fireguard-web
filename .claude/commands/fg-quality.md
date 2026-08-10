@@ -1,7 +1,7 @@
 ---
 description: Run the FireGuard Web quality gate — oxfmt, oxlint, targeted or full tests, and the strict Angular build — stopping at the first failure.
 argument-hint: '[optional spec glob, e.g. src/app/features/organization/** — normalized to end in *.spec.ts]'
-allowed-tools: Bash(npm run *), Bash(npx ng test *)
+allowed-tools: Bash(npm run format), Bash(npm run format:*), Bash(npm run lint), Bash(npm run test:ci), Bash(npm run build), Bash(npm run quality), Bash(npx ng test *)
 ---
 
 Run the quality gate, **narrowest first**, and report each step.

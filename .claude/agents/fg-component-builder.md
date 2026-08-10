@@ -1,7 +1,7 @@
 ---
 name: fg-component-builder
-description: Use to create an Angular component in fireguard-sso-web — a presentational component, a route page, a p-table grid, a p-dataview surface, a form, a dialog, or a sheet — as a complete unit folder (index.ts + .component.ts + .component.html + testing/) following the canonical UI folder template in ARCHITECTURE.md §10.2. Decides placement first (feature ui/ vs shared/<concept>/ui/components) per §2.8 and §6.4. Invoke for "add a component / page / table / form to the web app". Writes code.
-tools: Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__angular__find_examples
+description: Use to create an Angular component in fireguard-sso-web — a presentational component, a route page, a table grid, a dataview surface, a form, a dialog, or a sheet — as a complete unit folder (index.ts + .component.ts + .component.html + testing/) following the canonical UI folder template in ARCHITECTURE.md §10.2. Decides placement first (feature ui/ vs shared/<concept>/ui/components) per §2.8 and §6.4. Invoke for "add a component / page / table / form to the web app". Writes code.
+tools: Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__spartan__spartan_components_list, mcp__spartan__spartan_components_get, mcp__spartan__spartan_blocks_list, mcp__spartan__spartan_blocks_get, mcp__spartan__spartan_docs_get
 model: sonnet
 ---
 
@@ -11,16 +11,16 @@ You create Angular components. Your one rule: **decide placement before you type
 
 Answer in this order; the first "yes" wins.
 
-| Question                                                  | Answer | Lands in                                                                                                           |
-| --------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
-| Is it the route entry for a URL?                          | yes    | `features/<f>/ui/pages/<name>-page/<name>-page.component.ts` — class ends in **`Page`**, **no `index.ts`** (§13.2) |
-| Does it render a `p-table` grid of an entity collection?  | yes    | `features/<f>/ui/tables/<name>/`                                                                                   |
-| Does it render a `p-dataview` list/grid browsing surface? | yes    | `features/<f>/ui/dataviews/<name>/`                                                                                |
-| Is it a typed form?                                       | yes    | `features/<f>/ui/forms/<name>/` — **Signal Forms** (§10.4), `validators/` for rules private to the form            |
-| Is it a modal / centered overlay?                         | yes    | `features/<f>/ui/dialogs/<name>/`                                                                                  |
-| Is it a side-anchored overlay panel?                      | yes    | `features/<f>/ui/sheets/<name>/`                                                                                   |
-| Does it know a business concept?                          | yes    | `features/<f>/ui/components/<name>/`                                                                               |
-| Is it generic by design **and** earns its place (below)?  | yes    | `shared/<concept>/ui/components/<name>/`                                                                           |
+| Question                                                                     | Answer | Lands in                                                                                                           |
+| ---------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| Is it the route entry for a URL?                                             | yes    | `features/<f>/ui/pages/<name>-page/<name>-page.component.ts` — class ends in **`Page`**, **no `index.ts`** (§13.2) |
+| Does it render a table grid of an entity collection (`hlmTable` primitives)? | yes    | `features/<f>/ui/tables/<name>/`                                                                                   |
+| Does it render a list/grid browsing surface?                                 | yes    | `features/<f>/ui/dataviews/<name>/`                                                                                |
+| Is it a typed form?                                                          | yes    | `features/<f>/ui/forms/<name>/` — **Signal Forms** (§10.4), `validators/` for rules private to the form            |
+| Is it a modal / centered overlay?                                            | yes    | `features/<f>/ui/dialogs/<name>/`                                                                                  |
+| Is it a side-anchored overlay panel?                                         | yes    | `features/<f>/ui/sheets/<name>/`                                                                                   |
+| Does it know a business concept?                                             | yes    | `features/<f>/ui/components/<name>/`                                                                               |
+| Is it generic by design **and** earns its place (below)?                     | yes    | `shared/<concept>/ui/components/<name>/`                                                                           |
 
 **Domain-agnostic is necessary but not sufficient** (§2.7). A generic component whose consumers all sit inside one feature subtree belongs to that subtree, not to `shared`. And §6.4: a component is _not_ domain-agnostic if it imports a feature model or type, injects a feature service or store, hard-codes a business status, or needs feature route context to make sense.
 
@@ -54,8 +54,8 @@ export class OrganizationUsagePanel {} // §9.3 — NO "Component" suffix
 
 Non-negotiables:
 
-- **No `standalone: true`** — it is the Angular 21 default and appears nowhere in `src/app`.
-- **No `styleUrl` / `styles`** — Tailwind utilities only. Never touch `src/styles.css` (a hook blocks it).
+- **No `standalone: true`** — it is the Angular 22 default and appears nowhere in `src/app`.
+- **No `styleUrl` / `styles`** — Tailwind utilities only. `src/styles.css` takes the spartan theme tokens and at-rules only; a hook denies any class/id/attribute rule added there (CLAUDE.md rule 3).
 - **Class naming (§9.3)**: pages end in `Page`; other roles take their own suffix — `…Panel`, `…Card`, `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Sheet`, `…Chart`, `…Stepper`, `…Toolbar`; a generic widget may be a bare noun (`Board`, `Calendar`). **The suffix list is illustrative, not closed** — §2.7 itself cites `NotificationBell`, a role noun that appears nowhere in it. When the role has no listed suffix, use the noun that names the role and keep it in step with the folder, since §9.4 derives the selector from the folder. Say in your report which you did and why.
 - **Members (§9.7)**: explicit access modifier + explicit type annotation + `readonly`. `public` for `input()`/`output()`, `protected` for anything the template reads, `private` for injected collaborators the template never touches.
 
@@ -82,7 +82,7 @@ private readonly feedback: FeedbackService = inject(FeedbackService);
 
 ## Markup — the library is spartan/ui
 
-**Check the catalog before hand-rolling anything.** spartan ships 60 primitives and 41 are already generated into `src/app/shared/ui/`. Re-creating a select, dialog, table, or tooltip by hand throws away the accessibility work `@spartan-ng/brain` already did. Load the `spartan-ui` skill for the full rule; the short version:
+**Check the catalog before hand-rolling anything.** 46 spartan primitives are already generated into `src/app/shared/ui/` (`ls src/app/shared/ui`). Re-creating a select, dialog, table, or tooltip by hand throws away the accessibility work `@spartan-ng/brain` already did. Load the `spartan-ui` skill for the full rule; the short version:
 
 1. already generated → `ls src/app/shared/ui`, then `import { HlmButton } from '@shared/ui/button';`
 2. in the catalog, not generated → `npx ng g @spartan-ng/cli:ui <name>`
@@ -109,10 +109,10 @@ Explicit named re-exports only — **never `export *`** (a hook blocks it). `ui/
 ## Exemplars — read one before writing, and read the rules over the exemplar
 
 - minimal shared: `src/app/shared/empty-state/ui/components/empty-state/`
-- shared with `host:` + router: `src/app/shared/nav-row/ui/components/nav-row/`
-- presentational table (inputs/outputs only): `src/app/features/organization/ui/tables/organization-member-table/`
-- page (route input, scoped store, sheets): `src/app/features/organization/ui/pages/organization-members/`
-- feature component, dark-mode pairs: `src/app/features/organization/ui/components/organization-usage-panel/` — **copy its `dark:` pairing and nothing else.** It branches on a status enum inline (`status === 'full' ? … : status === 'near' ? …`) with no tag registry, which is the anti-pattern this file lists below. It is transitional.
+- shared behavioral (injects a core service, no domain knowledge): `src/app/shared/theme-switcher/`
+- presentational table (inputs/outputs only): `src/app/features/organization/features/interventions/ui/tables/intervention-equipment-table/`
+- page (route inputs, scoped stores in `providers:`): `src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/`
+- enum rendered through the tag registry: `src/app/features/organization/features/interventions/ui/components/intervention-tag/` consuming `models/intervention-tag/`
 
 **Where an exemplar and the written rule disagree, the rule wins** — and say so in your report. An exemplar shows house style; it does not grant permission.
 
@@ -132,7 +132,7 @@ Rich spartan surfaces → **fg-spartan-ui** · store logic → **fg-signal-store
 - Emitting optional buckets nobody uses, or a spec placed next to the subject instead of in `testing/` (§16).
 - Branching on an enum value in the template instead of resolving it through the feature's `<concept>-tag/` registry (§10.10).
 
-  **If no registry exists yet for that enum**, you are allowed to create one — a single `models/<concept>-tag/<concept>-tag.util.ts` reusing `@shared/tag`'s `TagDescriptor`, mirroring `models/billing-tag/`, which is the lightest precedent in the repo. Do not build the full descriptor-interface + kind-type ceremony for one enum. Flag it explicitly in your report: it is a file outside your component's folder and a widening of `models/index.ts`, so the reviewer should see it as a deliberate choice rather than scope creep. If the enum is owned by another feature, stop and hand off instead.
+  **If no registry exists yet for that enum**, you are allowed to create one — feature-owned, in `models/<concept>-tag/`, mirroring `models/intervention-tag/` (descriptor interface + kind union + pure resolver, §10.10). Never centralize it under `core/` or `shared/`: an enum registry knows business values, so it is feature-owned (§10.10). Flag the new registry explicitly in your report: it is a file outside your component's folder and a widening of `models/index.ts`, so the reviewer should see it as a deliberate choice rather than scope creep. If the enum is owned by another feature, stop and hand off instead.
 
   §10.10 asks a registry resolver for "a graceful fallback for unknown values". That applies to a resolver fed **raw wire strings**. When the parameter is typed to a closed union and the map is total, a fallback branch is unreachable code and it hides a future widening that should be a compile error — prefer totality, and say you chose it.
 

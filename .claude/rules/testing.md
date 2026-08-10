@@ -5,6 +5,8 @@ paths:
 
 # Unit specs
 
+> Abridgement of the `web-testing` skill — harness code, exemplars, and the full gate live there. Change one, change both.
+
 - Specs live in a **`testing/` folder beside the subject**, named `<subject-file>.spec.ts`. A spec placed next to its subject is a §16 anti-pattern (§14.1).
 - The top-level `describe()` is the **exact symbol** under test — `describe('OrganizationMembersStore')` — no prefix, no path (§9.9).
 - **Assert only the boundary the unit owns** (§14.1). A store spec proves state transitions over a _mocked_ service; it never re-tests HTTP. A service spec proves transport; it never reads store state.
@@ -14,6 +16,7 @@ paths:
 | store               | `CallState` transitions, `patchState` results, event dispatch | mocked service, spied `Dispatcher`                               |
 | data-access service | verb, URL, params, body, error propagation                    | `HttpTestingController` + **`httpMock.verify()` in `afterEach`** |
 | guard / resolver    | allow vs redirect `UrlTree`                                   | mocked store, mocked `Router.createUrlTree`                      |
+| page                | route-param → store orchestration, child wiring               | mock injected stores                                             |
 | presentational      | rendering from `input()`, emitted `output()`                  | drive inputs — never inject a store                              |
 | directive           | host behaviour or the projected context                       | a **host component**, not `TestBed.createComponent(Directive)`   |
 | util                | return value incl. `null`, empty, boundary, fallback          | plain import, no `TestBed`                                       |

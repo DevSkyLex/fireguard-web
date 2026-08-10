@@ -1,7 +1,7 @@
 ---
 name: fg-pipe-builder
 description: Use to create an Angular pipe in fireguard-sso-web at shared/<concept>/ui/pipes/<name>/. This repo has ZERO pipes today — the shape is prescribed by ARCHITECTURE.md §9.2 and §8.5 but has no exemplar, so the first pipe sets the precedent AND must update §9.2 in the same change (§14.3). Also checks that a pipe is the right tool at all, since a computed signal usually is. Invoke for "add a pipe to the web app". Writes code.
-tools: Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__angular__find_examples
+tools: Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices
 model: sonnet
 ---
 
@@ -58,7 +58,7 @@ export class ExampleNamePipe implements PipeTransform {
 - file `<name>.pipe.ts`, folder `kebab-case` (§9.1, §9.2),
 - class **keeps the `Pipe` suffix**. §9.3 says nothing about pipes; this is a judgment by analogy — components drop `Component`, directives keep `Directive`, and a pipe patterns with the directive. Record it in §9.3 as part of your change (below) rather than leaving it inferred,
 - the decorator `name:` is `camelCase` and prefixed `app` — also a judgment, **not** derived from §9.4, which governs _selectors_ and does not reach a pipe name. The prefix earns its place by disambiguating from Angular's built-ins (`date`, `slice`, `async`); say so rather than citing a section that does not cover it,
-- **no `standalone: true`** — it is the Angular 21 default and appears nowhere in this codebase,
+- **no `standalone: true`** — it is the Angular 22 default and appears nowhere in this codebase,
 - **pure** — never set `pure: false`; an impure pipe runs on every change-detection cycle and defeats the `OnPush` discipline §1.1 mandates on every component,
 - no DI, no side effects, no `inject()`. A pipe needing a service is a `computed` over that service instead,
 - strict TS: explicit parameter and return types, no `any`, no non-null assertions,
@@ -76,7 +76,7 @@ In the same change, edit `ARCHITECTURE.md`:
 
 - **§8.5** — remove the `# same shape, if a pipe is ever added` annotation on `pipes/` in the `shared/` tree.
 - **§9.3** — add pipes to the class-suffix list ("directives keep the `Directive` suffix" → say the same for pipes), since nothing states it today.
-- If the pipe lives in a new concept, add it to the illustrative concept list in §8.5 and to `src/app/shared/README.md`.
+- If the pipe lives in a new concept, add it to the illustrative concept list in §8.5.
 
 Report each doc edit explicitly. A pipe shipped without them is, by §14.3, a defect.
 
@@ -93,10 +93,7 @@ Explicit named re-exports only — never `export *` (a hook blocks it).
 
 ## Exemplars — by analogy only
 
-There is no pipe to copy. Take the folder shape, barrel style, JSDoc density, and `testing/` harness from a directive of the same kind bucket and swap the decorator:
-
-- `src/app/shared/infinite-scroll/ui/directives/infinite-scroll/` — folder, barrel, spec layout
-- `src/app/shared/tag-severity/` — a flat, no-UI shared concept (if your pipe's concept has no other UI)
+There is no pipe to copy — and no directive either (the repo has zero of both). Take the folder shape, barrel style, JSDoc density, and `testing/` layout from an existing shared component unit (e.g. `src/app/shared/empty-state/ui/components/empty-state/`) and swap the decorator.
 
 A pipe spec needs no `TestBed`: instantiate the class and assert `transform()` directly, including the edge cases (`null`, `undefined`, empty string, boundary values).
 
@@ -119,7 +116,7 @@ Consuming component → **fg-component-builder** · a pure helper that turned ou
 ```bash
 npm run format
 npm run lint
-npx ng test --watch=false --include="src/app/shared/**/*.spec.ts"
+npx ng test --watch=false --include="src/app/<area>/**/*.spec.ts"
 npm run build
 ```
 

@@ -1,6 +1,7 @@
 ---
 name: fg-spartan-ui
 description: Use to build or adjust interface surfaces in fireguard-sso-web with spartan/ui — tables, forms, dialogs, sheets, menus, data surfaces — styled with Tailwind v4 utilities and the semantic theme tokens, with dark-mode (html[data-theme=dark]) parity. Checks the spartan catalog before anything is hand-rolled, adds missing components through the CLI, and looks up APIs through the spartan MCP instead of guessing. Invoke for feature UI and presentation work. Writes presentational code.
+tools: Read, Grep, Glob, Edit, Write, Bash, mcp__spartan__spartan_components_list, mcp__spartan__spartan_components_get, mcp__spartan__spartan_components_dependencies, mcp__spartan__spartan_blocks_list, mcp__spartan__spartan_blocks_get, mcp__spartan__spartan_blocks_dependencies, mcp__spartan__spartan_docs_get, mcp__spartan__spartan_accessibility_check, mcp__angular__search_documentation, mcp__angular__get_best_practices
 model: sonnet
 ---
 

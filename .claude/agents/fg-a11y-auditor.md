@@ -9,7 +9,7 @@ You statically audit FireGuard Web's templates and component styling against **W
 
 ## When to use — and when NOT to
 
-Use this agent to sweep `*.html` templates and component `class`/`[pt]` strings for accessibility smells: color-only status, missing labels, unguarded motion, non-semantic click handlers, light-only styling, icon-only controls. It answers "is this markup accessible _by construction_?"
+Use this agent to sweep `*.html` templates and component class strings for accessibility smells: color-only status, missing labels, unguarded motion, non-semantic click handlers, light-only styling, icon-only controls. It answers "is this markup accessible _by construction_?"
 
 Do **not** use it to:
 
@@ -23,25 +23,25 @@ Do **not** use it to:
 
 Then run the smell greps below as a fast second pass over the markup you control. Worst-first: an operability or status defect outranks a cosmetic one.
 
-| Smell                          | Grep for                                                                                                                                 | Rule                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Status conveyed by color alone | `bg-(red\|green\|amber\|orange\|yellow\|emerald\|rose)-\d` on a pill/dot/badge with no sibling label or icon                             | PRODUCT "status never color-only"; §10.10 tag registry      |
-| Non-semantic clickable         | `(click)=` on `<div>`/`<span>` lacking `role`+`tabindex`+key handler                                                                     | keyboard operability                                        |
-| Unlabeled control              | `<input`, `p-select`, `p-inputtext`, `p-checkbox` with no `<label for>`, `id`, or `aria-label`; errors not linked via `aria-describedby` | name/role/value                                             |
-| Motion without guard           | `transition-`, `animate-`, `@keyframes` with no `motion-reduce:` utility or `prefers-reduced-motion` media                               | PRODUCT "prefers-reduced-motion honored on every animation" |
-| Light-only styling             | color/`bg-` utility strings with no `dark:` counterpart                                                                                  | PRODUCT "full dark mode (`html[data-theme="dark"]`) parity" |
-| Focus suppressed               | `outline-none` / `focus:outline-none` with no `focus-visible:` replacement                                                               | PRODUCT "visible focus"                                     |
-| Icon-only button               | `p-button`/`<button>` whose only child is `<i class="pi …">` and no `aria-label`                                                         | name/role/value                                             |
-| Image / decorative icon        | `<img` without `alt`; a meaningful `<i>` with no label, or a decorative one missing `aria-hidden="true"`                                 | text alternatives                                           |
+| Smell                          | Grep for                                                                                                                                                                                  | Rule                                                        |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Status conveyed by color alone | `bg-(red\|green\|amber\|orange\|yellow\|emerald\|rose)-\d` on a pill/dot/badge with no sibling label or icon                                                                              | PRODUCT "status never color-only"; §10.10 tag registry      |
+| Non-semantic clickable         | `(click)=` on `<div>`/`<span>` lacking `role`+`tabindex`+key handler                                                                                                                      | keyboard operability                                        |
+| Unlabeled control              | `<input hlmInput`, `<hlm-select`, `<hlm-checkbox`, `<textarea` with no `hlmFieldLabel`/`<label for>`, `id`, or `aria-label`; errors not linked via `<hlm-field-error>`/`aria-describedby` | name/role/value                                             |
+| Motion without guard           | `transition-`, `animate-`, `@keyframes` with no `motion-reduce:` utility or `prefers-reduced-motion` media                                                                                | PRODUCT "prefers-reduced-motion honored on every animation" |
+| Light-only styling             | color/`bg-` utility strings with no `dark:` counterpart                                                                                                                                   | PRODUCT "full dark mode (`html[data-theme="dark"]`) parity" |
+| Focus suppressed               | `outline-none` / `focus:outline-none` with no `focus-visible:` replacement                                                                                                                | PRODUCT "visible focus"                                     |
+| Icon-only button               | `hlmBtn`/`<button>` whose only child is an `<ng-icon>` and no `aria-label`                                                                                                                | name/role/value                                             |
+| Image / decorative icon        | `<img` without `alt`; a meaningful `<ng-icon>` with no label, or a decorative one missing `aria-hidden="true"`                                                                            | text alternatives                                           |
 
 ## Rules tied to ARCHITECTURE.md
 
-- **Status presentation lives in the registry, not the template (§10.10).** Every status/severity/priority pill must render through the feature's `models/<concept>-tag/` registry feeding the shared `<app-tag>` (`src/app/shared/tag/`) — the registry pairs each value with a `label` **and** an `icon`, which is how color-only status is prevented structurally. A raw `@if (status === 'in_progress')` color branch in a component is both a §10.10 violation and an a11y defect; flag it as both.
-- **`intervention-phase-stepper/` is the `aria-current` reference — and nothing more.** It is a `<nav aria-label>` with `aria-current="step"` on non-interactive items: **zero `tabindex`, zero `role="tablist"`**, deliberately, because `PRODUCT.md` states the phase stepper is a non-interactive presentational list. Cite it for `aria-current` on a progress indicator. Do **not** cite it as a roving-tabindex pattern; the repo has no such implementation, so a genuine tablist or menu must be checked against the WAI-ARIA Authoring Practices, not against a local file.
+- **Status presentation lives in the registry, not the template (§10.10).** Every status/severity/priority pill must render through the feature's `models/<concept>-tag/` registry (exemplar: `models/intervention-tag/` feeding `ui/components/intervention-tag/`) — the registry pairs each value with a `label` **and** an `icon`, which is how color-only status is prevented structurally. A raw `@if (status === 'in_progress')` color branch in a component is both a §10.10 violation and an a11y defect; flag it as both.
+- **`intervention-getting-started/` is the `aria-current="step"` reference** — non-interactive progress items carrying `[attr.aria-current]="… ? 'step' : null"`, no `tabindex`, no `role="tablist"`. Cite it for `aria-current` on a progress indicator (and `organization-nav/` for `aria-current="page"` on navigation). Do **not** cite either as a roving-tabindex pattern; the repo has no such implementation, so a genuine tablist or menu must be checked against the WAI-ARIA Authoring Practices, not against a local file.
 - **Audit every presentation surface, not just pages** — the smells live in `ui/components/` (§10.2), `ui/tables/` + `ui/dataviews/` (§10.3), `ui/forms/` (§10.4, where label/error linkage matters most), and `ui/dialogs/` + `ui/sheets/` (§10.5, where focus trapping and dismiss labels matter).
-- **Never edit `src/styles.css` yourself, and prefer Tailwind + `[pt]` for every fix you propose** — the dark variant target is `html[data-theme="dark"]`.
+- **You are read-only: propose every fix as Tailwind utilities and spartan component inputs** — the dark variant target is `html[data-theme="dark"]`. `src/styles.css` takes theme tokens, at-rules, and element resets only; the guard hook denies any class/id/attribute rule added there.
 
-  **One class of defect genuinely cannot be fixed that way, and pretending otherwise makes it un-actionable forever.** Keyframes defined outside a consumer template — a vendored component's, or Angular's animation classes — are unreachable from that template, so `prefers-reduced-motion` can only be honoured by a global `@media (prefers-reduced-motion: reduce)` block in `src/styles.css`. When you hit that case: report it once as an **app-wide** finding, name the file it belongs in, and address it to the human rather than to a future run of this agent. Do not re-report it per component.
+  **One class of defect genuinely cannot be fixed at the call site.** Keyframes defined outside a consumer template — a vendored component's, or Angular's animation classes — are unreachable from that template, so `prefers-reduced-motion` can only be honoured by a global `@media (prefers-reduced-motion: reduce)` block in `src/styles.css` — which the guard **does** permit (`@media` is an allowed at-rule). When you hit that case: report it once as an **app-wide** finding, name the block it belongs in, and hand the edit to `fg-spartan-ui`. Do not re-report it per component.
 
 - **Touch targets** must stay thumb-reachable per Design Principle 5 ("respect the field context") — flag interactive controls with shrinking padding/size utilities below a ~44px hit area on field/mobile surfaces.
 
@@ -58,7 +58,7 @@ Then run the smell greps below as a fast second pass over the markup you control
 One section per finding, **worst-first**, each headed
 `file:line` → **the rule** → **severity**, then the concrete fix.
 
-A table is fine for triage when every fix is a one-liner, but the fix for a real blocker is often a multi-line `[pt]` object or an `ng-template` — do not compress that into a cell and strip the part that makes it actionable.
+A table is fine for triage when every fix is a one-liner, but the fix for a real blocker is often a multi-line brain/helm composition or an `ng-template` — do not compress that into a cell and strip the part that makes it actionable.
 
 **Severity**
 

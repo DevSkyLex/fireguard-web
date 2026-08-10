@@ -23,9 +23,8 @@ import { fileURLToPath } from 'node:url';
 
 // This file is `<app>/.claude/hooks/format.mjs`, so the app root is two levels up.
 // Deriving it from the script's own location rather than the payload cwd keeps the
-// hook correct in both modes: standalone (cwd IS the app root) and loaded as a plugin
-// from the monorepo root (cwd is the monorepo, and a cwd-based root would silently
-// find no .oxfmtrc.json and turn the hook into a no-op).
+// hook correct whatever the session cwd is (a worktree, the monorepo root) — a
+// cwd-based root would silently find no .oxfmtrc.json and turn the hook into a no-op.
 const APP_ROOT = path
   .resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
   .replace(/\\/g, '/');
@@ -38,6 +37,12 @@ const SKIP_SEGMENTS = [
   '/.git/',
   '/test-results/',
   '/playwright-report/',
+  '/.claude/worktrees/',
+  '/.impeccable/',
+  '/coverage/',
+  '/out-tsc/',
+  '/tmp/',
+  '/.build-check-',
 ];
 
 function readStdin() {
@@ -67,17 +72,17 @@ if (!FORMATTABLE.has(path.extname(normalized).toLowerCase())) process.exit(0);
 const root = APP_ROOT;
 if (!existsSync(path.join(root, '.oxfmtrc.json'))) process.exit(0);
 
-// The binary itself must be installed. `npx oxfmt` on a missing package exits
-// non-zero with "not recognized" rather than raising ENOENT, so execFileSync
-// cannot tell a missing toolchain from a real formatting failure — check first.
-const oxfmtBin = path.join(root, 'node_modules', '.bin', 'oxfmt');
-if (!existsSync(oxfmtBin) && !existsSync(`${oxfmtBin}.cmd`)) process.exit(0);
+// oxfmt's npm `bin` entry is a JS launcher run by Node itself. Invoking it through
+// `process.execPath` — instead of `npx` with `shell: true` — removes the npx cold
+// start on every edit, the Windows quoting hazard on paths with spaces, and the
+// EINVAL modern Node raises when spawning a `.cmd` shim without a shell.
+const oxfmtEntry = path.join(root, 'node_modules', 'oxfmt', 'bin', 'oxfmt');
+if (!existsSync(oxfmtEntry)) process.exit(0);
 
 try {
-  execFileSync('npx', ['oxfmt', '-c', '.oxfmtrc.json', filePath], {
+  execFileSync(process.execPath, [oxfmtEntry, '-c', '.oxfmtrc.json', filePath], {
     cwd: root,
     stdio: 'ignore',
-    shell: process.platform === 'win32',
   });
 } catch (error) {
   // ENOENT (toolchain absent) must not block; a real formatting failure should.

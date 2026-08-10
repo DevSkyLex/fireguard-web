@@ -20,24 +20,31 @@
       "Bash(git log:*)",
       "Bash(git show:*)"
     ],
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.local)",
-      "Read(./.env.*.local)",
-      "Read(./src/environments/environment*.ts)"
-    ]
+    "deny": ["Read(./.env)", "Read(./.env.*)"]
   },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "node .claude/hooks/guard.mjs" }]
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "node .claude/hooks/format.mjs" }]
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/format.mjs\"",
+            "timeout": 30
+          }
+        ]
       }
     ]
   }

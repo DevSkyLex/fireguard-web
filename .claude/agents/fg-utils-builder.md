@@ -13,7 +13,7 @@ You create pure helpers. Two decisions come before any code, and getting either 
 | ----------------------------------------------------------------- | ------------------ | ---------------------------- | ---------------------------------------------- |
 | a pure, stateless **function**                                    | `utils/`           | `.utils.ts`                  | **one folder per util** + its own `testing/`   |
 | a fixed runtime **value** — default, limit, named key, lookup map | `constants/`       | `.constants.ts`              | **flat**                                       |
-| a **UI choice list** for `p-select`, a menu, or a filter          | `options/`         | `.constants.ts`              | **flat**                                       |
+| a **UI choice list** for a select, a menu, or a filter            | `options/`         | `.constants.ts`              | **flat**                                       |
 | a `type` or `interface`                                           | `models/`          | `.type.ts` / `.interface.ts` | concept-first — **not yours**                  |
 | anything needing DI, HTTP, or store access                        | a service or store | —                            | → **fg-service-builder** / **fg-signal-store** |
 

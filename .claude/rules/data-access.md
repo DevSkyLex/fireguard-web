@@ -5,6 +5,8 @@ paths:
 
 # Data access
 
+> Abridgement of the `hydra-data-access` skill — DTO conventions, the envelope shape, and the adapter test live there. Change one, change both.
+
 - **Every feature API service extends `HydraApiService`** from `@core/api`. Never inject `HttpClient` (§11.3, §16).
 - The decorator is **`@Service()`**, never `@Injectable`, and never with `providedIn` — `@Service` has no such option (§10.14). Only the abstract base takes `@Service({ autoProvided: false })`.
 - Never build `HttpParams` or `HttpHeaders` outside the base class — extend its protected helpers (`buildUrl`, `buildParams`, `buildHeaders`).

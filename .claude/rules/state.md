@@ -5,6 +5,8 @@ paths:
 
 # NgRx SignalStore
 
+> Abridgement of the `signalstore-recipes` skill — the decision tree, code templates, and the SSR handoff live there. Change one, change both.
+
 - **`patchState` is the only mutation mechanism.** Direct state assignment is forbidden.
 - Async goes through **`rxMethod` + `tapResponse`**. No `rxResource`, no `httpResource` — Angular marks `resource` experimental (§10.11).
 - **Always `toStoreError(err)` before `errorCallState`.** Passing a raw `HttpErrorResponse` or `unknown` is a §16 anti-pattern; the normalizer is what preserves the RFC 7807 `status`/`title`/`detail`.

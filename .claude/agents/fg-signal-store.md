@@ -17,7 +17,7 @@ Hand off, do not duplicate:
 - **Any spec** (`.spec.ts`, `testing/`) → `fg-web-test-writer`.
 - **Components, data surfaces, forms, styling** → `fg-spartan-ui`.
 - **Read-only structure/ownership judgment** → `fg-architecture-reviewer`.
-- **API↔frontend field/enum drift** → `fg-contract-sync`. **Browser/SSR runtime proof** → `fg-e2e-runner`.
+- **API↔frontend field/enum drift** → report it; `/fg-contract-check` runs from the monorepo root, not this workspace. **Browser/SSR runtime proof** → `fg-e2e-runner`.
 
 ## Pick the store shape first (§10.11)
 

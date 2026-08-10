@@ -74,7 +74,7 @@ TestBed.configureTestingModule({
 
 ## Harness — directive with a projected template
 
-A template-marker directive is only observable through a host. Mirror what the real consumer does:
+**The repo has zero directives today** — this harness is the template to instantiate when the first one lands, not code to copy from the tree. A template-marker directive is only observable through a host. Mirror what the real consumer does:
 
 ```ts
 @Component({
@@ -94,8 +94,8 @@ Assert **every** context alias (`$implicit` and each named key) — a missing al
 - store — `src/app/features/auth/state/auth/testing/auth.store.spec.ts`
 - service — `src/app/features/organization/data-access/services/organization-member/testing/organization-member.service.spec.ts`
 - guard — `src/app/features/organization/http/guards/organization-access/testing/organization-access.guard.spec.ts`
-- directive with context — `src/app/shared/board/ui/directives/board-card/testing/`
-- projection through a host — `src/app/shared/chat/ui/components/chat-thread/testing/`
+- presentational — `src/app/shared/empty-state/ui/components/empty-state/testing/empty-state.component.spec.ts`
+- projection through a host — `src/app/shared/layout-slot/ui/components/slot-outlet/testing/slot-outlet.component.spec.ts`
 
 Grep the feature for a sibling spec before writing: reuse its fixtures and builders instead of re-deriving mock payloads.
 

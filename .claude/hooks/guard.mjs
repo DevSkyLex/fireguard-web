@@ -13,11 +13,14 @@
  *  1. Secrets: any `.env*` (except the committed `.env.example`/`.env.dist`).
  *  2. Generated trees: `node_modules/`, `dist/`, `.angular/`, `test-results/`,
  *     `playwright-report/` — build outputs, edit the source instead.
- *  3. `src/styles.css` — style via Tailwind utilities (CLAUDE.md rule 3).
+ *  3. Component rules (class/id/attribute selectors) in `src/styles.css` — the file
+ *     takes theme tokens, at-rules, and element resets only (CLAUDE.md rule 3).
  *  4. Runtime code inside a `models/` folder — `models/` is type-only (ARCHITECTURE.md
  *     §10.10), with the sanctioned `<concept>-tag/` registry-resolver exception.
  *  5. `export * from` inside a barrel — a barrel is a public surface and takes explicit
  *     named re-exports (ARCHITECTURE.md §13.3).
+ *  6. Loose documentation under `src/app/`: a multi-line `//` block or a template
+ *     HTML comment — prose belongs in the doc block (.claude/rules/comments.md).
  *
  * Intentionally conservative: it blocks only well-known, high-signal cases and never
  * blocks ordinary source edits, specs, or docs. In particular ARCHITECTURE.md and
@@ -89,10 +92,13 @@ for (const [seg, what] of GENERATED) {
 // in a global selector. Theme tokens and at-rules stay allowed.
 if (/(^|\/)src\/styles\.css$/.test(filePath)) {
   const body = String(payload?.tool_input?.content ?? payload?.tool_input?.new_string ?? '');
-  // A declaration block opened by an element, class, id, or attribute selector.
-  // `:root`, `@layer`, `@import`, `@theme`, `@custom-variant`, `@media` and the
-  // `html`/`body` element rules the reset needs are all deliberately allowed.
-  const componentRule = /^[ \t]*(?!html\b|body\b|:root\b|\*)[.#[a-zA-Z][^\n{}@]*\{/m;
+  // A declaration block opened by a class, id, or attribute selector — that is
+  // component styling. Element rules (`html`, `body`, the `router-outlet` reset),
+  // `:root`, `*`, and every at-rule (`@layer`, `@import`, `@theme`,
+  // `@custom-variant`, `@media`) stay allowed: they are the theme's own
+  // vocabulary. Spartan's stock `.dark` block is denied on purpose — this app
+  // switches dark mode on `html[data-theme="dark"]`, which passes.
+  const componentRule = /^[ \t]*[.#[][^\n{}]*\{/m;
 
   if (componentRule.test(body)) {
     deny(

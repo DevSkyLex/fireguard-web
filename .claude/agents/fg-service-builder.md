@@ -101,7 +101,7 @@ Explicit named re-exports only — never `export *` (a hook blocks it). `data-ac
 
 ## Hand off
 
-The store consuming the service → **fg-signal-store** · models/DTOs the service returns → **fg-feature-builder** · a pure function with no DI → **fg-utils-builder** · deeper specs → **fg-web-test-writer** · backend↔frontend contract drift → root **fg-contract-sync** · structural verdict → **fg-architecture-reviewer**.
+The store consuming the service → **fg-signal-store** · models/DTOs the service returns → **fg-feature-builder** · a pure function with no DI → **fg-utils-builder** · deeper specs → **fg-web-test-writer** · backend↔frontend contract drift → report it; `/fg-contract-check` runs from the monorepo root, not this workspace · structural verdict → **fg-architecture-reviewer**.
 
 ## Errors to avoid
 

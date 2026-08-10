@@ -1,6 +1,6 @@
 ---
 name: fireguard-naming
-description: Lookup table for FireGuard Web naming — which file suffix, folder, class name, and selector a given kind of unit takes, plus the five transitional deviations that must not be copied. Use when creating any new file in src/app, or when unsure whether an existing name is the target or a legacy artifact.
+description: Lookup table for FireGuard Web naming — which file suffix, folder, class name, and selector a given kind of unit takes, plus the four transitional deviations that must not be copied. Use when creating any new file in src/app, or when unsure whether an existing name is the target or a legacy artifact.
 ---
 
 # Naming lookup
@@ -40,6 +40,10 @@ The type separator is a **dot**: `auth.guard.ts`, never `auth-guard.ts`. One dec
 
 **Role suffixes for components** (§9.3): `…Page` `…Form` `…Table` `…Dataview` `…Dialog` `…Sheet` `…Panel` `…Card` `…Chart` `…Layout` `…Stepper` `…Toolbar`. A generic widget may be a bare noun (`Board`, `Calendar`).
 
+**A page carries `-page` on the folder and the files, not only on the class.** `ui/pages/interventions-page/interventions-page.component.ts` + `interventions-page.component.html` + `testing/interventions-page.component.spec.ts` → `InterventionsPage`, selector `app-interventions-page`. Every page folder in `src/app` follows this — there is no exempt feature.
+
+**Name a component after what it renders, not after the relation that brought it there.** `intervention-equipment-table`, never `intervention-linked-equipment-table`. The relational qualifiers `linked-`, `related-`, `associated-`, `attached-`, `parent-`, `child-` are banned in component folder, file, class and selector names; they belong to the state slice or API concept that models the relation (`InterventionLinkedResourcesStore` is correct — it owns the relation; the three tables it feeds are not).
+
 ## Banned suffixes (§9.2)
 
 `.module.ts` (standalone-only) · `.enum.ts` (no TS enums) · `.dto.ts` (use `…Input`/`…Output`) · `.page.ts` **inside `src/app`** (reserved for Playwright page objects) · bare `types.ts` / `constants.ts` with no concept prefix.
@@ -68,14 +72,13 @@ $localize`:@@org.members.loadError:Could not load members`;
 
 Page and section roots carry a kebab-case DOM `id` as the e2e hook (`id="login-page"`). `data-testid` is kebab-case, prefixed by the owning component (`account-mfa-confirm-code`).
 
-## The five transitional deviations — do NOT copy (§9.11)
+## The four transitional deviations — do NOT copy (§9.11)
 
 These exist in the codebase, are **not** the target, and must never be used as precedent:
 
 1. two form specs sit flat beside their subject instead of in `testing/` (`inspection-form`, `non-conformity-form`),
 2. two account state slices use `<name>-state.model.ts` instead of `state.interface.ts`,
-3. five features (`auth`, `account`, `error`, `maintenance`, `onboarding`) suffix page folders with `-page` — the target is the bare screen name; **do not add the suffix to new pages, and do not rename the existing ones wholesale**,
-4. one state aggregate uses bare `utils/constants.ts` and `models/types.ts`,
-5. one store file differs from its slice folder name (`state/organization-list/organization.store.ts`).
+3. one state aggregate uses bare `utils/constants.ts` and `models/types.ts`,
+4. one store file differs from its slice folder name (`state/organization-list/organization.store.ts`).
 
 Seeing one of these in a neighbouring file is not permission to repeat it.

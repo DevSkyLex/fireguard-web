@@ -842,8 +842,9 @@ Suffixes that must **not** be introduced:
 
 **Components carry no `Component` suffix** (`addTypeToClassName: false` in `angular.json`). The class name states the semantic role, and the role suffix is meaningful:
 
-- route pages always end in `Page`: `LoginPage`, `FacilityDetailPage`, `OrganizationMembersPage`. The **folder and file carry the suffix too** — `ui/pages/login-page/login-page.component.ts` — so a page is identifiable as one from its path alone, not only from its class,
+- route pages always end in `Page`: `LoginPage`, `FacilityDetailPage`, `OrganizationMembersPage`. The **folder and every file carry the suffix too** — `ui/pages/login-page/login-page.component.ts`, `login-page.component.html`, `testing/login-page.component.spec.ts` — so a page is identifiable as one from its path alone, not only from its class. Every page folder in `src/app` follows this; no feature is exempt,
 - other roles use their own suffix: `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Sheet`, `…Panel`, `…Card`, `…Chart`, `…Layout`, `…Stepper`, `…Toolbar`,
+- **a component is named after what it renders, not after the relation that brought it there**: `intervention-equipment-table` / `InterventionEquipmentTable`, never `intervention-linked-equipment-table`. The relational qualifiers `linked-`, `related-`, `associated-`, `attached-`, `parent-`, `child-` are excluded from component folder, file, class and selector names — they describe how the data was reached, which the owning state slice or API concept already states (`InterventionLinkedResourcesStore` keeps the qualifier because it owns the relation; the tables it feeds do not),
 - a generic widget may be a bare noun when no role suffix applies: `Board`, `Calendar`.
 
 Other symbol families:
@@ -933,7 +934,6 @@ The following minority patterns exist in the codebase, are **not** the target, a
 
 - two form component specs sit flat next to their subject instead of in `testing/` (`inspection-form`, `non-conformity-form`),
 - two account state slices use `<name>-state.model.ts` for store state instead of `state.interface.ts`,
-- page folders that carry no `-page` suffix (`ui/pages/organization-members/`) are the minority now: the suffix is the target (section 9.2) — do not rename existing folders wholesale, but every new page takes it,
 - one state aggregate uses bare `utils/constants.ts` and `models/types.ts` file names without a concept prefix,
 - a store file occasionally differs from its slice folder name (`state/organization-list/organization.store.ts`); the target is a matching pair.
 
@@ -1388,7 +1388,7 @@ models/intervention-tag/
 Rendering style is owned by small presentational components in `ui/components/`, not by the registry — the registry returns data only:
 
 - a **badge** component for tables, panels, and detail views (a neutral pill where only the icon carries colour),
-- a **select-option** component for `p-select` items (bare icon + label, no pill).
+- a **select-option** component for select entries (bare icon + label, no pill).
 
 To add or change a value, edit only the descriptor map in `<concept>-tag.util.ts`; every consumer follows. A new enum family gets a new map plus an entry in the `*TagKind` union. Re-export the descriptor interface, the kind type, and the resolver through the feature `models/index.ts`.
 
@@ -1858,7 +1858,7 @@ Providers must not be moved to `core` just because they are called from the app 
 | ------------ | --------------------------------------------------------------- | --------------- | ------------------------------------------------- |
 | `utils/`     | pure, stateless functions over models and primitives            | `.utils.ts`     | `api-date-time.utils.ts`, `map-facility.utils.ts` |
 | `constants/` | fixed runtime values: defaults, limits, named keys, lookup maps | `.constants.ts` | `pagination-defaults.constants.ts`                |
-| `options/`   | UI option sets for `p-select`, menus, and filters               | `.constants.ts` | `facility-type-options.constants.ts`              |
+| `options/`   | UI option sets for selects, menus, and filters                  | `.constants.ts` | `facility-type-options.constants.ts`              |
 
 The file inside a `utils/` folder takes the plural `.utils.ts` suffix, matching the folder name. A pure helper that stays co-located in a `models/` registry concept folder keeps the singular `.util.ts` (for example `intervention-tag.util.ts`); the suffix follows where the file lives.
 

@@ -52,7 +52,7 @@ export const INTERVENTION_ROUTES: Routes = [
         path: '',
         pathMatch: 'full',
         loadComponent: () =>
-          import('./ui/pages/interventions/interventions.component').then(
+          import('./ui/pages/interventions-page/interventions-page.component').then(
             (m) => m.InterventionsPage,
           ),
         title: $localize`:@@route.interventions:Interventions`,
@@ -61,7 +61,7 @@ export const INTERVENTION_ROUTES: Routes = [
       {
         path: ':interventionId',
         loadComponent: () =>
-          import('./ui/pages/intervention-detail/intervention-detail.component').then(
+          import('./ui/pages/intervention-detail-page/intervention-detail-page.component').then(
             (m) => m.InterventionDetailPage,
           ),
         title: interventionTitleResolver,

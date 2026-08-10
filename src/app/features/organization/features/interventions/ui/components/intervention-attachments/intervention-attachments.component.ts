@@ -32,6 +32,9 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
 /**
  * The backend's hard ceiling (`AttachmentConstraints::MAX_SIZE_BYTES`),
  * pre-checked here so an oversized pick fails fast instead of round-tripping.
+ * Images are exempt from this local check: the page compresses them before
+ * upload, so a multi-megabyte camera capture is exactly the input the
+ * pipeline exists for — the server stays authoritative on the final size.
  */
 const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -63,9 +66,10 @@ const MAX_ATTACHMENTS = 25;
  * upload date — the API exposes no download URL yet, and this section says
  * so rather than faking a link), a file picker, a camera capture button for
  * field photo evidence, and a confirm-gated per-row delete that locks only
- * its own row. Picks are pre-checked against the backend's 10 MiB ceiling,
- * MIME whitelist and 25-file cardinality cap so an invalid file fails fast;
- * the server stays authoritative. A `n / 25` counter appears once the list
+ * its own row. Picks are pre-checked against the backend's MIME whitelist,
+ * 25-file cardinality cap, and — for non-image files only, since the page
+ * compresses photos before upload — the 10 MiB ceiling, so an invalid file
+ * fails fast; the server stays authoritative. A `n / 25` counter appears once the list
  * is half full and the pickers close at the ceiling — the alternative is an
  * enabled button that can only ever answer 422. Presentational — the page
  * owns the store calls and the photo compression.
@@ -187,6 +191,15 @@ export class InterventionAttachments {
   //#region Properties
   private readonly locale: string = inject(LOCALE_ID);
 
+  /** One number formatter per precision — the `Intl` constructor is too costly for per-row calls. */
+  private readonly sizeFormats: ReadonlyMap<number, Intl.NumberFormat> = new Map<
+    number,
+    Intl.NumberFormat
+  >([
+    [0, new Intl.NumberFormat(this.locale, { maximumFractionDigits: 0 })],
+    [1, new Intl.NumberFormat(this.locale, { maximumFractionDigits: 1 })],
+  ]);
+
   /** The attachment awaiting delete confirmation, if any. */
   protected readonly pendingDelete: WritableSignal<InterventionAttachmentOutput | null> =
     signal<InterventionAttachmentOutput | null>(null);
@@ -300,7 +313,9 @@ export class InterventionAttachments {
       return;
     }
 
-    const oversized: File | undefined = files.find((file) => file.size > MAX_SIZE_BYTES);
+    const oversized: File | undefined = files.find(
+      (file) => !file.type.startsWith('image/') && file.size > MAX_SIZE_BYTES,
+    );
     if (oversized) {
       this.pickError.set(
         $localize`:@@intervention.attachments.tooLarge:"${oversized.name}:name:" exceeds the 10 MB limit.`,
@@ -373,9 +388,8 @@ export class InterventionAttachments {
    */
   protected sizeLabelOf(attachment: InterventionAttachmentOutput): string {
     const megabytes: number = attachment.size / (1024 * 1024);
-    const formatted: string = new Intl.NumberFormat(this.locale, {
-      maximumFractionDigits: megabytes >= 10 ? 0 : 1,
-    }).format(Math.max(megabytes, 0.1));
+    const format: Intl.NumberFormat | undefined = this.sizeFormats.get(megabytes >= 10 ? 0 : 1);
+    const formatted: string = format?.format(Math.max(megabytes, 0.1)) ?? megabytes.toFixed(1);
 
     return `${formatted} MB`;
   }

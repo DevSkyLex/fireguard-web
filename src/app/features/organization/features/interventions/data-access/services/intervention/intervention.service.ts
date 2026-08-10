@@ -7,6 +7,7 @@ import {
   of,
   reduce,
   switchMap,
+  take,
   takeWhile,
   timer,
   type Observable,
@@ -36,13 +37,30 @@ import type {
  * @const PUBLICATION_POLL_INTERVAL_MS
  *
  * @description
- * Provides the publication poll interval ms value.
+ * Delay between two successive publication status reads while polling.
  *
  * @since 1.0.0
  *
  * @type {number}
  */
 const PUBLICATION_POLL_INTERVAL_MS = 1_000;
+
+/**
+ * Constant PUBLICATION_POLL_MAX_EMISSIONS
+ * @const PUBLICATION_POLL_MAX_EMISSIONS
+ *
+ * @description
+ * Upper bound on the polling stream's emissions (initial state + one per
+ * interval tick, so ~2 minutes at the current interval). Without it a
+ * publication stuck in `processing` server-side would keep the publish
+ * dialog spinning forever; hitting the bound completes the stream with the
+ * publication still running, which callers must treat as a failure.
+ *
+ * @since 1.0.0
+ *
+ * @type {number}
+ */
+const PUBLICATION_POLL_MAX_EMISSIONS = 121;
 
 const toSecondsUtc = (date: Date): string => `${date.toISOString().slice(0, 19)}Z`;
 
@@ -51,7 +69,8 @@ const toSecondsUtc = (date: Date): string => `${date.toISOString().slice(0, 19)}
  * @const WORKSPACE_PAGE_SIZE
  *
  * @description
- * Provides the workspace page size value.
+ * Page size the `listAll*` helpers request per call while draining a
+ * collection, matching the API's clamp so each page is as large as allowed.
  *
  * @since 1.0.0
  *
@@ -64,7 +83,8 @@ const WORKSPACE_PAGE_SIZE = 100;
  * @const isPublicationRunning
  *
  * @description
- * Provides the is publication running value.
+ * Whether a publication is still `pending` or `processing` server-side, i.e.
+ * worth another poll tick.
  *
  * @since 1.0.0
  *
@@ -92,7 +112,9 @@ export class InterventionService extends HydraApiService {
    * @method list
    *
    * @description
-   * Executes the list operation.
+   * Reads one page of `/api/interventions` scoped to the organization,
+   * forwarding the name/status/type/site/people/due-date filters and the
+   * `order[field]` sort params alongside pagination.
    *
    * @access public
    * @since 1.0.0
@@ -138,7 +160,8 @@ export class InterventionService extends HydraApiService {
    * @method listAll
    *
    * @description
-   * Executes the list all operation.
+   * Drains every page of {@link list} (at {@link WORKSPACE_PAGE_SIZE} items a
+   * request) into one flat array, keeping the caller's filters and sort.
    *
    * @access public
    * @since 1.0.0
@@ -228,7 +251,7 @@ export class InterventionService extends HydraApiService {
    * @method get
    *
    * @description
-   * Executes the get operation.
+   * Reads one intervention by identifier (`GET /api/interventions/{id}`).
    *
    * @access public
    * @since 1.0.0
@@ -303,7 +326,7 @@ export class InterventionService extends HydraApiService {
    * @method listTypes
    *
    * @description
-   * Executes the list types operation.
+   * Reads the intervention-type catalog (`GET /api/intervention-types`).
    *
    * @access public
    * @since 1.0.0
@@ -319,7 +342,9 @@ export class InterventionService extends HydraApiService {
    * @method create
    *
    * @description
-   * Executes the create operation.
+   * Creates an intervention (`POST /api/interventions`), defaulting the type
+   * to `site_setup` and the priority to `normal`, and serializing the planned
+   * start and due dates to second-precision UTC.
    *
    * @access public
    * @since 1.0.0
@@ -375,7 +400,9 @@ export class InterventionService extends HydraApiService {
    * @method update
    *
    * @description
-   * Executes the update operation.
+   * Merge-patches an intervention (`PATCH /api/interventions/{id}`),
+   * serializing the date fields to second-precision UTC (or `null` to clear)
+   * and sending the revision as an `If-Match` precondition when provided.
    *
    * @access public
    * @since 1.0.0
@@ -435,7 +462,8 @@ export class InterventionService extends HydraApiService {
    * @method listWorkItems
    *
    * @description
-   * Executes the list work items operation.
+   * Reads one page of `/api/intervention-work-items` filtered to the
+   * intervention, optionally narrowed by assignee, source, action or status.
    *
    * @access public
    * @since 1.0.0
@@ -477,7 +505,8 @@ export class InterventionService extends HydraApiService {
    * @method listAllWorkItems
    *
    * @description
-   * Executes the list all work items operation.
+   * Drains every page of {@link listWorkItems} into one flat array, keeping
+   * the caller's filters.
    *
    * @access public
    * @since 1.0.0
@@ -511,7 +540,10 @@ export class InterventionService extends HydraApiService {
    * @method createWorkItem
    *
    * @description
-   * Executes the create work item operation.
+   * Creates a work item. With a `clientId` (offline replay) it becomes an
+   * idempotent `PUT /api/intervention-work-items/{clientId}` guarded by
+   * `If-None-Match: *`, so a replayed create never duplicates; otherwise a
+   * plain `POST`.
    *
    * @access public
    * @since 1.0.0
@@ -543,7 +575,8 @@ export class InterventionService extends HydraApiService {
    * @method updateWorkItem
    *
    * @description
-   * Executes the update work item operation.
+   * Merge-patches one work item (`PATCH /api/intervention-work-items/{id}`),
+   * sending the revision as an `If-Match` precondition when provided.
    *
    * @access public
    * @since 1.0.0
@@ -571,7 +604,8 @@ export class InterventionService extends HydraApiService {
    * @method removeWorkItem
    *
    * @description
-   * Executes the remove work item operation.
+   * Deletes one work item (`DELETE /api/intervention-work-items/{id}`),
+   * pinned to its revision through `If-Match`.
    *
    * @access public
    * @since 1.0.0
@@ -592,7 +626,8 @@ export class InterventionService extends HydraApiService {
    * @method listChanges
    *
    * @description
-   * Executes the list changes operation.
+   * Reads one page of `/api/intervention-changes` filtered to the
+   * intervention, optionally narrowed by resource or status.
    *
    * @access public
    * @since 1.0.0
@@ -623,7 +658,8 @@ export class InterventionService extends HydraApiService {
    * @method listAllChanges
    *
    * @description
-   * Executes the list all changes operation.
+   * Drains every page of {@link listChanges} into one flat array, keeping the
+   * caller's filters.
    *
    * @access public
    * @since 1.0.0
@@ -653,7 +689,10 @@ export class InterventionService extends HydraApiService {
    * @method createChange
    *
    * @description
-   * Executes the create change operation.
+   * Proposes a change. With a `clientId` (offline replay) it becomes an
+   * idempotent `PUT /api/intervention-changes/{clientId}` guarded by
+   * `If-None-Match: *`, so a replayed create never duplicates; otherwise a
+   * plain `POST`.
    *
    * @access public
    * @since 1.0.0
@@ -685,7 +724,8 @@ export class InterventionService extends HydraApiService {
    * @method updateChange
    *
    * @description
-   * Executes the update change operation.
+   * Merge-patches one change (`PATCH /api/intervention-changes/{id}`),
+   * sending the revision as an `If-Match` precondition when provided.
    *
    * @access public
    * @since 1.0.0
@@ -794,7 +834,8 @@ export class InterventionService extends HydraApiService {
    * @method listIssues
    *
    * @description
-   * Executes the list issues operation.
+   * Reads the intervention's quality issues
+   * (`GET /api/interventions/{id}/issues`).
    *
    * @access public
    * @since 1.0.0
@@ -814,7 +855,9 @@ export class InterventionService extends HydraApiService {
    * @method publish
    *
    * @description
-   * Executes the publish operation.
+   * Starts a publication (`POST /api/publications`) for the intervention,
+   * pinned to its current revision so a concurrent edit fails the publish
+   * rather than publishing stale content.
    *
    * @access public
    * @since 1.0.0
@@ -838,7 +881,8 @@ export class InterventionService extends HydraApiService {
    * @method getPublication
    *
    * @description
-   * Executes the get publication operation.
+   * Re-reads one publication's current state
+   * (`GET /api/publications/{id}`) — the read {@link pollPublication} repeats.
    *
    * @access public
    * @since 1.0.0
@@ -856,14 +900,18 @@ export class InterventionService extends HydraApiService {
    * @method pollPublication
    *
    * @description
-   * Executes the poll publication operation.
+   * Re-reads a publication once per interval until it leaves
+   * `pending`/`processing`, emitting each observed state. The stream is
+   * bounded by {@link PUBLICATION_POLL_MAX_EMISSIONS}: past that it completes
+   * with the last (possibly still running) state, so a caller must check the
+   * final status rather than assume completion means terminal.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {PublicationOutput} initial - initial value.
+   * @param {PublicationOutput} initial - The publication as the create call returned it.
    *
-   * @return {Observable<PublicationOutput>} Result of the poll publication operation.
+   * @return {Observable<PublicationOutput>} Every polled state, ending on the terminal one or at the bound.
    */
   public pollPublication(initial: PublicationOutput): Observable<PublicationOutput> {
     return of(initial).pipe(
@@ -875,6 +923,7 @@ export class InterventionService extends HydraApiService {
           : EMPTY,
       ),
       takeWhile(isPublicationRunning, true),
+      take(PUBLICATION_POLL_MAX_EMISSIONS),
     );
   }
 
@@ -883,7 +932,9 @@ export class InterventionService extends HydraApiService {
    * @method collectPages
    *
    * @description
-   * Executes the collect pages operation.
+   * Sequentially walks `loadPage` from page one until `totalItems` is
+   * covered (at a {@link WORKSPACE_PAGE_SIZE} stride) and concatenates every
+   * page's members into one array.
    *
    * @access private
    * @since 1.0.0

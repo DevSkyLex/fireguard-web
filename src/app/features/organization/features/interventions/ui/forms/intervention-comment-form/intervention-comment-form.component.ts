@@ -38,8 +38,8 @@ const EMPTY_VALUES: InterventionCommentFormValues = { body: '' };
  * @example
  * ```html
  * <app-intervention-comment-form
- *   [pending]="store.saving()"
- *   [serverError]="store.mutationError()"
+ *   [pending]="commentPending()"
+ *   [serverError]="commentError()"
  *   (submitted)="postComment($event)"
  * />
  * ```

@@ -39,7 +39,9 @@ export class InterventionQrScannerService {
    * @method scan
    *
    * @description
-   * Decodes the first QR code found in a captured photo.
+   * Decodes the first QR code found in a captured photo. A capture the
+   * browser cannot decode into an image resolves `null` rather than
+   * rejecting, so callers treat "unreadable" and "no code found" the same.
    *
    * @access public
    * @since 1.0.0
@@ -54,13 +56,21 @@ export class InterventionQrScannerService {
       return null;
     }
 
-    const image = await createImageBitmap(file);
+    let image: ImageBitmap;
+    try {
+      image = await createImageBitmap(file);
+    } catch {
+      return null;
+    }
+
     try {
       const results = await new Detector({
         formats: ['qr_code'],
       }).detect(image);
 
       return results[0]?.rawValue.trim() || null;
+    } catch {
+      return null;
     } finally {
       image.close();
     }

@@ -3622,6 +3622,10 @@
         <source>The intervention status could not be updated.</source>
         <target>No se pudo actualizar el estado de la intervención.</target>
       </trans-unit>
+      <trans-unit id="intervention.requestChanges.transitionFailed" datatype="html">
+        <source>The intervention status could not be changed.</source>
+        <target>No se pudo cambiar el estado de la intervención.</target>
+      </trans-unit>
       <trans-unit id="intervention.workspace.detailsFailed" datatype="html">
         <source>Intervention planning details could not be saved.</source>
         <target>No se pudieron guardar los detalles de planificación de la intervención.</target>
@@ -4446,6 +4450,18 @@
         <source>Add photos or documents to keep with this intervention.</source>
         <target>Agregue fotos o documentos para conservar con esta intervención.</target>
       </trans-unit>
+      <trans-unit id="intervention.attachments.capacityReached" datatype="html">
+        <source>This intervention already holds the maximum of <x id="max" equiv-text="MAX_ATTACHMENTS"/> files. Delete one to add another.</source>
+        <target>Esta intervención ya contiene el máximo de <x id="max"/> archivos. Elimine uno para agregar otro.</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.capacityExceeded" datatype="html">
+        <source>Only <x id="remaining" equiv-text="this.remainingSlots()"/> more file(s) can be added to this intervention.</source>
+        <target>Solo se pueden agregar <x id="remaining"/> archivo(s) más a esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.capacityHint" datatype="html">
+        <source>This intervention holds the maximum number of files. Delete one to add another.</source>
+        <target>Esta intervención contiene el número máximo de archivos. Elimine uno para agregar otro.</target>
+      </trans-unit>
       <trans-unit id="intervention.attachments.emptyDescReadOnly" datatype="html">
         <source>No one has attached a file to this intervention yet.</source>
         <target>Nadie ha adjuntado todavía un archivo a esta intervención.</target>
@@ -4851,6 +4867,10 @@
         <target>Sistema</target>
       </trans-unit>
       <trans-unit id="intervention.list.unknownMember" datatype="html">
+        <source>Unknown member</source>
+        <target>Miembro desconocido</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.memberFallback" datatype="html">
         <source>Member</source>
         <target>Miembro</target>
       </trans-unit>
@@ -8176,6 +8196,10 @@
       <trans-unit id="intervention.wit.skipPlaceholder" datatype="html">
         <source>Why is this item being skipped?</source>
         <target>¿Por qué se omite este elemento?</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.skipReasonLabel" datatype="html">
+        <source>Reason for skipping this work item</source>
+        <target>Motivo por el que se omite este elemento de trabajo</target>
       </trans-unit>
       <trans-unit id="intervention.checklist.site" datatype="html">
         <source>Choose a site</source>

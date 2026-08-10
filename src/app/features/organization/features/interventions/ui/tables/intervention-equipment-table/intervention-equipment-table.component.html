@@ -1,0 +1,71 @@
+@if (loading() && items().length === 0) {
+  <div
+    class="flex items-center gap-2 py-6 text-sm text-muted-foreground"
+    role="status"
+    data-testid="intervention-equipment-loading"
+  >
+    <hlm-spinner class="size-4" aria-hidden="true" />
+    <span i18n="@@intervention.linked.loading">Loading…</span>
+  </div>
+} @else if (error(); as message) {
+  <app-empty-state
+    icon="lucideCircleAlert"
+    class="rounded-md border border-dashed border-destructive/30 bg-destructive/5 p-6"
+    role="alert"
+    title="Linked equipment could not be loaded"
+    i18n-title="@@intervention.linked.equipment.errorTitle"
+    [description]="message"
+    data-testid="intervention-equipment-error"
+  />
+} @else if (items().length > 0) {
+  <div hlmTableContainer>
+    <table hlmTable data-testid="intervention-equipment-table">
+      <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.equipment.caption">
+        The equipment linked to this intervention.
+      </caption>
+
+      <thead hlmTableHeader>
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@intervention.linked.equipment.columnType">Type</th>
+          <th hlmTableHead i18n="@@intervention.linked.equipment.columnBrandModel">
+            Brand / model
+          </th>
+          <th hlmTableHead i18n="@@intervention.linked.equipment.columnStatus">Status</th>
+          <th hlmTableHead i18n="@@intervention.linked.equipment.columnLocation">Location</th>
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @for (item of items(); track item.id) {
+          <tr hlmTableRow data-testid="intervention-equipment-row">
+            <td hlmTableCell class="whitespace-normal">
+              <span class="font-medium text-foreground">{{ typeLabelOf(item) }}</span>
+              @if (item.serialNumber) {
+                <span class="block text-sm text-muted-foreground">{{ item.serialNumber }}</span>
+              }
+            </td>
+            <td hlmTableCell class="whitespace-normal">
+              {{ brandModelOf(item) }}
+            </td>
+            <td hlmTableCell>
+              <app-intervention-tag kind="equipmentStatus" [value]="item.status" />
+            </td>
+            <td hlmTableCell class="whitespace-normal">
+              {{ item.locationLabel }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <app-empty-state
+    icon="lucidePackage"
+    class="rounded-md border border-dashed border-border p-6"
+    title="No linked equipment"
+    i18n-title="@@intervention.linked.equipment.emptyTitle"
+    description="No equipment is linked to this intervention yet."
+    i18n-description="@@intervention.linked.equipment.emptyDesc"
+    data-testid="intervention-equipment-empty"
+  />
+}

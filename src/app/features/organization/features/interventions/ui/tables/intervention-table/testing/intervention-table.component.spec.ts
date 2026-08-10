@@ -5,7 +5,7 @@ import type {
   InterventionOutput,
   InterventionSortField,
 } from '@features/organization/features/interventions/models';
-import type { InterventionListItemViewModel } from '../../../pages/interventions/models';
+import type { InterventionListItemViewModel } from '../../../pages/interventions-page/models';
 import { InterventionTable } from '../intervention-table.component';
 import type { InterventionTableColumn, InterventionTransitionRequest } from '../models';
 

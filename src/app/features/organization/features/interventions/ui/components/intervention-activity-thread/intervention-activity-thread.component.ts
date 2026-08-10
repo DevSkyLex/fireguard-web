@@ -36,6 +36,7 @@ import {
   INTERVENTION_ACTIVITY_EVENT_ICON_NAME,
   INTERVENTION_ACTIVITY_EVENT_ICONS,
 } from './constants/intervention-activity-event-icons.constants';
+import type { InterventionActivityRowViewModel } from './models';
 
 /** How many skeleton rows the loading state shows. */
 const SKELETON_ROW_COUNT: number = 3;
@@ -256,6 +257,11 @@ export class InterventionActivityThread {
   /** The application's language, used to phrase the relative timestamps. */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
+  /** One date formatter for the reschedule labels — the constructor is too costly for per-row calls. */
+  private readonly dateFormat: Intl.DateTimeFormat = new Intl.DateTimeFormat(this.locale, {
+    dateStyle: 'medium',
+  });
+
   /**
    * Property skeletonRows
    * @readonly
@@ -280,48 +286,56 @@ export class InterventionActivityThread {
   protected readonly isEmpty: Signal<boolean> = computed<boolean>(
     () => !this.loading() && this.error() === null && this.activities().length === 0,
   );
+
+  /**
+   * Property rows
+   * @readonly
+   *
+   * @description
+   * The timeline as fully derived row view models, recomputed only when the
+   * activities or the member set change. Everything the template binds per
+   * row — actor identity, relative label, narrowed payloads, marker icon —
+   * is resolved here exactly once per entry instead of once per binding per
+   * change-detection pass.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @type {Signal<readonly InterventionActivityRowViewModel[]>}
+   */
+  protected readonly rows: Signal<readonly InterventionActivityRowViewModel[]> = computed<
+    readonly InterventionActivityRowViewModel[]
+  >(() => {
+    const members: readonly MemberSelectOption[] = this.members();
+
+    return this.activities().map((activity: InterventionActivityOutput) => {
+      const actor: MemberSelectOption | null = resolveInterventionActivityActor(
+        activity.actor,
+        members,
+      );
+      const reschedule = activity.event === 'rescheduled' ? this.rescheduleOf(activity) : null;
+
+      return {
+        activity,
+        actorName:
+          actor?.displayName ?? $localize`:@@intervention.list.unknownMember:Unknown member`,
+        actorInitials: actor?.initials ?? '?',
+        actorAvatar: actor?.avatarUrl ?? null,
+        relativeTime: formatInterventionRelativeTime(activity.createdAt, this.locale),
+        statusChange: activity.event === 'status_changed' ? this.statusChangeOf(activity) : null,
+        rescheduleLabel: reschedule === null ? null : this.rescheduleWindowLabelOf(reschedule),
+        icon:
+          INTERVENTION_ACTIVITY_EVENT_ICON_NAME[activity.event] ??
+          INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON,
+        iconClass:
+          INTERVENTION_ACTIVITY_EVENT_ICON_CLASS[activity.event] ??
+          INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON_CLASS,
+      };
+    });
+  });
   //#endregion
 
   //#region Methods
-  /**
-   * Method actorNameOf
-   * @description The activity's author, or a neutral fallback for an unresolved one.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionActivityOutput} activity - The entry in question.
-   * @returns {string} The author's display name.
-   */
-  protected actorNameOf(activity: InterventionActivityOutput): string {
-    return (
-      resolveInterventionActivityActor(activity.actor, this.members())?.displayName ??
-      $localize`:@@intervention.list.unknownMember:Unknown member`
-    );
-  }
-
-  /**
-   * Method actorInitialsOf
-   * @description The activity's author initials, for the comment card's avatar fallback.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionActivityOutput} activity - The entry in question.
-   * @returns {string} The author's initials, or a placeholder glyph.
-   */
-  protected actorInitialsOf(activity: InterventionActivityOutput): string {
-    return resolveInterventionActivityActor(activity.actor, this.members())?.initials ?? '?';
-  }
-
-  /**
-   * Method actorAvatarOf
-   * @description The activity's author avatar, when one is on file.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionActivityOutput} activity - The entry in question.
-   * @returns {string | null} The avatar URL, or null.
-   */
-  protected actorAvatarOf(activity: InterventionActivityOutput): string | null {
-    return resolveInterventionActivityActor(activity.actor, this.members())?.avatarUrl ?? null;
-  }
-
   /**
    * Method statusChangeOf
    *
@@ -331,14 +345,14 @@ export class InterventionActivityThread {
    * a generic `Record<string, unknown>` fallback, so a malformed entry must
    * degrade to `null` instead of rendering a broken pair of tags.
    *
-   * @access protected
+   * @access private
    * @since 1.0.0
    *
    * @param {InterventionActivityOutput} activity - The entry in question.
    *
    * @returns {InterventionStatusChangePayload | null} The `{ from; to }` pair, or null.
    */
-  protected statusChangeOf(
+  private statusChangeOf(
     activity: InterventionActivityOutput,
   ): InterventionStatusChangePayload | null {
     const payload: unknown = activity.payload;
@@ -356,14 +370,14 @@ export class InterventionActivityThread {
    * Defensive like {@link statusChangeOf}: a malformed payload degrades to
    * `null` and the row falls back to the generic line.
    *
-   * @access protected
+   * @access private
    * @since 4.3.0
    *
    * @param {InterventionActivityOutput} activity - The entry in question.
    *
    * @returns {{ plannedStartAt: string | null; dueAt: string | null } | null} The new window, or null.
    */
-  protected rescheduleOf(
+  private rescheduleOf(
     activity: InterventionActivityOutput,
   ): { readonly plannedStartAt: string | null; readonly dueAt: string | null } | null {
     const payload: unknown = activity.payload;
@@ -381,63 +395,19 @@ export class InterventionActivityThread {
   /**
    * Method rescheduleWindowLabelOf
    * @description The new planning window as a localized "start → due" label.
-   * @access protected
+   * @access private
    * @since 4.3.0
    * @param {{ plannedStartAt: string | null; dueAt: string | null }} window - The new window.
    * @returns {string} A localized date pair.
    */
-  protected rescheduleWindowLabelOf(window: {
+  private rescheduleWindowLabelOf(window: {
     readonly plannedStartAt: string | null;
     readonly dueAt: string | null;
   }): string {
     const label = (iso: string | null): string =>
-      iso === null
-        ? '—'
-        : new Intl.DateTimeFormat(this.locale, { dateStyle: 'medium' }).format(new Date(iso));
+      iso === null ? '—' : this.dateFormat.format(new Date(iso));
 
     return `${label(window.plannedStartAt)} → ${label(window.dueAt)}`;
-  }
-
-  /**
-   * Method relativeTimeOf
-   * @description The entry's creation time, as a localized relative label.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionActivityOutput} activity - The entry in question.
-   * @returns {string} A localized relative label.
-   */
-  protected relativeTimeOf(activity: InterventionActivityOutput): string {
-    return formatInterventionRelativeTime(activity.createdAt, this.locale);
-  }
-
-  /**
-   * Method systemEventIconOf
-   * @description The marker icon for a system entry's event, falling back to a generic glyph for an event the frontend does not yet know.
-   * @access protected
-   * @since 2.0.0
-   * @param {InterventionActivityOutput} activity - The entry in question.
-   * @returns {string} A registered `ng-icon` name.
-   */
-  protected systemEventIconOf(activity: InterventionActivityOutput): string {
-    return (
-      INTERVENTION_ACTIVITY_EVENT_ICON_NAME[activity.event] ??
-      INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON
-    );
-  }
-
-  /**
-   * Method systemEventIconClassOf
-   * @description The marker glyph's tint for a system entry's event, falling back to the neutral tint for an event the frontend does not yet know.
-   * @access protected
-   * @since 2.3.0
-   * @param {InterventionActivityOutput} activity - The entry in question.
-   * @returns {string} A literal Tailwind text-colour class pair.
-   */
-  protected systemEventIconClassOf(activity: InterventionActivityOutput): string {
-    return (
-      INTERVENTION_ACTIVITY_EVENT_ICON_CLASS[activity.event] ??
-      INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON_CLASS
-    );
   }
   //#endregion
 }

@@ -165,7 +165,7 @@ export class InterventionRequestChangesForm {
     return combined.length > 0
       ? combined
       : [
-          $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be changed.`,
+          $localize`:@@intervention.requestChanges.transitionFailed:The intervention status could not be changed.`,
         ];
   });
   //#endregion

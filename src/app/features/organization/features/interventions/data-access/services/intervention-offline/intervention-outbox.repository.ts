@@ -1,4 +1,4 @@
-import { effect, inject, Service, signal, type WritableSignal } from '@angular/core';
+import { effect, inject, Service, signal, type Signal, type WritableSignal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
@@ -143,7 +143,7 @@ export class InterventionOutboxRepository {
    *
    * @type {Signal<boolean>}
    */
-  public readonly hasUnsyncedChanges = this.unsynced.asReadonly();
+  public readonly hasUnsyncedChanges: Signal<boolean> = this.unsynced.asReadonly();
 
   /**
    * Property hasPendingChanges
@@ -160,7 +160,7 @@ export class InterventionOutboxRepository {
    *
    * @type {Signal<boolean>}
    */
-  public readonly hasPendingChanges = this.pending.asReadonly();
+  public readonly hasPendingChanges: Signal<boolean> = this.pending.asReadonly();
 
   /**
    * Property pendingCount
@@ -176,7 +176,7 @@ export class InterventionOutboxRepository {
    *
    * @type {Signal<number>}
    */
-  public readonly pendingCount = this.pendingOps.asReadonly();
+  public readonly pendingCount: Signal<number> = this.pendingOps.asReadonly();
   //#endregion
 
   //#region Constructor
@@ -186,14 +186,15 @@ export class InterventionOutboxRepository {
    *
    * @description
    * Resets the pending state on logout and recomputes it once the local
-   * stores are bound to the authenticated user.
+   * stores are bound to the authenticated user. Listens on `sessionEnded`
+   * rather than `logoutSucceeded`: the session is dropped locally on both
+   * branches of logout, so a failed logout request must reset these
+   * counters too.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
-    // `sessionEnded`, not `logoutSucceeded`: the session is dropped locally on both
-    // branches of logout, so a failed logout request must reset these counters too.
     this.events
       .on(authStoreEvents.sessionEnded)
       .pipe(takeUntilDestroyed())
@@ -209,8 +210,9 @@ export class InterventionOutboxRepository {
         if (!profile?.sub) {
           return;
         }
+        const sub: string = profile.sub;
         void this.database
-          .ensureOwnerBound(profile.sub as string)
+          .ensureOwnerBound(sub)
           .then(() => this.refresh())
           .catch(() => undefined);
       });

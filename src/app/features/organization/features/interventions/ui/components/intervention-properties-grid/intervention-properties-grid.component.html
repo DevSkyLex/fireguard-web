@@ -1,6 +1,7 @@
 <div class="flex flex-col gap-1">
   <div data-testid="intervention-field-priority">
     <app-inplace-field
+      #priorityField
       orientation="horizontal"
       class="w-full"
       label="Priority"
@@ -22,7 +23,10 @@
         [value]="intervention().priority"
         (valueChange)="pickPriority($any($event))"
       >
-        <hlm-select-trigger class="w-full">
+        <label for="intervention-prop-priority" class="sr-only" i18n="@@intervention.prop.priority"
+          >Priority</label
+        >
+        <hlm-select-trigger buttonId="intervention-prop-priority" class="w-full">
           <hlm-select-value />
         </hlm-select-trigger>
         <hlm-select-content *hlmSelectPortal>
@@ -40,6 +44,7 @@
 
   <div data-testid="intervention-field-site">
     <app-inplace-field
+      #siteField
       orientation="horizontal"
       class="w-full"
       label="Site"
@@ -54,7 +59,7 @@
       @if (siteLabel(); as site) {
         <span fieldValue class="truncate font-medium">{{ site }}</span>
       } @else {
-        <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.noSite">
+        <span fieldValue class="text-muted-foreground" i18n="@@intervention.prop.noSite">
           No site
         </span>
       }
@@ -66,7 +71,11 @@
         [itemToString]="siteLabelOf"
         (valueChange)="pickSite($any($event))"
       >
+        <label for="intervention-prop-site" class="sr-only" i18n="@@intervention.prop.site"
+          >Site</label
+        >
         <hlm-combobox-input
+          inputId="intervention-prop-site"
           placeholder="Search a site"
           i18n-placeholder="@@intervention.cf.sitePlaceholder"
         />
@@ -86,6 +95,7 @@
 
   <div data-testid="intervention-field-responsible">
     <app-inplace-field
+      #responsibleField
       orientation="horizontal"
       class="w-full"
       label="Responsible"
@@ -108,7 +118,7 @@
           <span class="truncate font-medium">{{ member.displayName }}</span>
         </span>
       } @else {
-        <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.unassigned">
+        <span fieldValue class="text-muted-foreground" i18n="@@intervention.prop.unassigned">
           Unassigned
         </span>
       }
@@ -120,7 +130,14 @@
         [itemToString]="memberLabelOf"
         (valueChange)="pickResponsible($any($event))"
       >
+        <label
+          for="intervention-prop-responsible"
+          class="sr-only"
+          i18n="@@intervention.cf.responsible"
+          >Responsible</label
+        >
         <hlm-combobox-input
+          inputId="intervention-prop-responsible"
           placeholder="Search a member"
           i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
         />
@@ -151,6 +168,7 @@
 
   <div data-testid="intervention-field-schedule">
     <app-inplace-field
+      #scheduleField
       orientation="horizontal"
       class="w-full"
       label="Planned window"
@@ -167,7 +185,7 @@
           {{ range[0] | date: 'mediumDate' }} – {{ range[1] | date: 'mediumDate' }}
         </span>
       } @else {
-        <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.notSet">
+        <span fieldValue class="text-muted-foreground" i18n="@@intervention.prop.notSet">
           Not set
         </span>
       }
@@ -177,7 +195,13 @@
         [date]="scheduleRange() ?? undefined"
         (dateChange)="pickSchedule($event)"
       >
-        <hlm-date-picker-trigger class="w-full">
+        <label
+          for="intervention-prop-schedule"
+          class="sr-only"
+          i18n="@@intervention.cf.plannedRange"
+          >Planned window</label
+        >
+        <hlm-date-picker-trigger buttonId="intervention-prop-schedule" class="w-full">
           <span i18n="@@intervention.cf.plannedRangePlaceholder">Select dates</span>
         </hlm-date-picker-trigger>
       </hlm-date-range-picker>
@@ -186,6 +210,7 @@
 
   <div data-testid="intervention-field-participants">
     <app-inplace-field
+      #participantsField
       orientation="horizontal"
       class="w-full"
       label="Participants"
@@ -213,9 +238,7 @@
           </hlm-avatar-group>
         </span>
       } @else {
-        <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.none"
-          >None</span
-        >
+        <span fieldValue class="text-muted-foreground" i18n="@@intervention.prop.none">None</span>
       }
 
       <hlm-combobox-multiple
@@ -235,6 +258,7 @@
             hlmComboboxChipInput
             placeholder="Search a member"
             i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
+            [attr.aria-labelledby]="participantsField.labelId"
           />
         </hlm-combobox-chips>
         <hlm-combobox-content *hlmComboboxPortal>
@@ -253,6 +277,7 @@
 
   <div data-testid="intervention-field-labels">
     <app-inplace-field
+      #labelsField
       orientation="horizontal"
       class="w-full"
       label="Labels"
@@ -283,9 +308,7 @@
           }
         </span>
       } @else {
-        <span fieldValue class="text-muted-foreground/70" i18n="@@intervention.prop.none"
-          >None</span
-        >
+        <span fieldValue class="text-muted-foreground" i18n="@@intervention.prop.none">None</span>
       }
 
       <hlm-combobox-multiple
@@ -305,6 +328,7 @@
             hlmComboboxChipInput
             placeholder="Search a label"
             i18n-placeholder="@@intervention.list.filterLabelPlaceholder"
+            [attr.aria-labelledby]="labelsField.labelId"
           />
         </hlm-combobox-chips>
         <hlm-combobox-content *hlmComboboxPortal>

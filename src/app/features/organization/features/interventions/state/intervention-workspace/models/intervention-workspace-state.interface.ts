@@ -78,10 +78,17 @@ export interface InterventionWorkspaceState {
   readonly attachmentsCallState: CallState;
 
   /**
-   * Lifecycle of the **last** attachment write — upload or delete; per-row
-   * attribution for deletes lives in {@link pendingAttachmentIds}.
+   * Lifecycle of the **last** attachment upload (`uploadAttachment`). Deletes
+   * have their own {@link attachmentDeleteCallState} — the two run
+   * concurrently, and one settling must not clear the other's pending state.
    */
   readonly attachmentWriteCallState: CallState;
+
+  /**
+   * Lifecycle of the **last** attachment delete (`removeAttachment`); per-row
+   * attribution lives in {@link pendingAttachmentIds}.
+   */
+  readonly attachmentDeleteCallState: CallState;
 
   /** Ids of the attachments with a delete in flight. */
   readonly pendingAttachmentIds: ReadonlySet<string>;
@@ -98,12 +105,6 @@ export interface InterventionWorkspaceState {
    * loaded first. Older pages are prepended on demand.
    */
   readonly activities: readonly InterventionActivityOutput[];
-
-  /**
-   * How many entries the timeline holds server-side, so a surface can tell
-   * "that is all of it" from "there is more above".
-   */
-  readonly activityTotal: number;
 
   /**
    * The lowest timeline page currently loaded, or `null` before the first

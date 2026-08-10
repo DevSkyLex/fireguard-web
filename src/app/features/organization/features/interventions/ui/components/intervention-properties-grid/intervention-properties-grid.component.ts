@@ -6,8 +6,9 @@ import {
   Component,
   computed,
   input,
+  linkedSignal,
   output,
-  signal,
+  untracked,
   type InputSignal,
   type InputSignalWithTransform,
   type OutputEmitterRef,
@@ -260,22 +261,45 @@ export class InterventionPropertiesGrid {
   /**
    * Property participantsDraft
    * @readonly
-   * @description The in-flight participant set, seeded when that field opens.
+   *
+   * @description
+   * The in-flight participant set, reseeded from the stored value each time
+   * the field transitions to open — keyed on the `editState` input rather
+   * than this component's own trigger, so a host opening the editor directly
+   * still gets a fresh draft. The stored read is untracked: a workspace
+   * refresh mid-edit must not wipe what the user has drafted.
+   *
    * @access protected
    * @since 1.0.0
    * @type {WritableSignal<string[]>}
    */
-  protected readonly participantsDraft: WritableSignal<string[]> = signal<string[]>([]);
+  protected readonly participantsDraft: WritableSignal<string[]> = linkedSignal<boolean, string[]>({
+    source: () => this.editState().open === 'participants',
+    computation: (open, previous) =>
+      open && previous?.source !== true
+        ? untracked(() => [...this.intervention().participants])
+        : (previous?.value ?? []),
+  });
 
   /**
    * Property labelsDraft
    * @readonly
-   * @description The in-flight label set, seeded when that field opens.
+   *
+   * @description
+   * The in-flight label set, reseeded on the field's open transition — same
+   * contract as {@link participantsDraft}.
+   *
    * @access protected
    * @since 1.0.0
    * @type {WritableSignal<string[]>}
    */
-  protected readonly labelsDraft: WritableSignal<string[]> = signal<string[]>([]);
+  protected readonly labelsDraft: WritableSignal<string[]> = linkedSignal<boolean, string[]>({
+    source: () => this.editState().open === 'labels',
+    computation: (open, previous) =>
+      open && previous?.source !== true
+        ? untracked(() => [...this.storedLabelIds()])
+        : (previous?.value ?? []),
+  });
 
   /**
    * Property siteLabel
@@ -467,8 +491,10 @@ export class InterventionPropertiesGrid {
    * Method onEditing
    *
    * @description
-   * Seeds the drafted set for a confirm-mode field on open, then forwards the
-   * request to the page, which owns which field is open.
+   * Forwards an open/close request to the page, which owns which field is
+   * open. The confirm-mode drafts reseed themselves on the `editState`
+   * transition ({@link participantsDraft}), so opening through the page's
+   * readiness list and opening here behave identically.
    *
    * @access protected
    * @since 1.0.0
@@ -479,10 +505,6 @@ export class InterventionPropertiesGrid {
    * @returns {void}
    */
   protected onEditing(target: InterventionEditTarget, open: boolean): void {
-    if (open && target === 'participants')
-      this.participantsDraft.set([...this.intervention().participants]);
-    if (open && target === 'labels') this.labelsDraft.set([...this.storedLabelIds()]);
-
     this.editTargetChanged.emit(open ? target : null);
   }
 
@@ -509,7 +531,8 @@ export class InterventionPropertiesGrid {
    * @returns {void}
    */
   protected pickSite(site: string | null): void {
-    if (site === this.intervention().site) return;
+    const stored: string | null | undefined = this.intervention().site;
+    if (site === stored || (site == null && stored == null)) return;
 
     this.detailsChanged.emit({ site });
   }
@@ -523,7 +546,8 @@ export class InterventionPropertiesGrid {
    * @returns {void}
    */
   protected pickResponsible(responsible: string | null): void {
-    if (responsible === this.intervention().responsible) return;
+    const stored: string | null | undefined = this.intervention().responsible;
+    if (responsible === stored || (responsible == null && stored == null)) return;
 
     this.detailsChanged.emit({ responsible });
   }

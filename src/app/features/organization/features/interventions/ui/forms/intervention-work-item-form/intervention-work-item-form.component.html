@@ -37,9 +37,12 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel i18n="@@intervention.wif.target">Target resource</label>
+      <label hlmFieldLabel for="intervention-work-item-target" i18n="@@intervention.wif.target"
+        >Target resource</label
+      >
       <hlm-combobox [formField]="workItemForm.target" [itemToString]="targetLabelOf">
         <hlm-combobox-input
+          inputId="intervention-work-item-target"
           placeholder="Optional site, facility or equipment target"
           i18n-placeholder="@@intervention.wif.targetPlaceholder"
         />
@@ -60,9 +63,12 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel i18n="@@intervention.wif.assignee">Assignee</label>
+      <label hlmFieldLabel for="intervention-work-item-assignee" i18n="@@intervention.wif.assignee"
+        >Assignee</label
+      >
       <hlm-combobox [formField]="workItemForm.assignee" [itemToString]="memberLabelOf">
         <hlm-combobox-input
+          inputId="intervention-work-item-assignee"
           placeholder="Assign this work item"
           i18n-placeholder="@@intervention.wif.assigneePlaceholder"
         />

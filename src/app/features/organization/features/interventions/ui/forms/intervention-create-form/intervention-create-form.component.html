@@ -87,9 +87,10 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel i18n="@@intervention.cf.site">Site</label>
+      <label hlmFieldLabel for="intervention-create-site" i18n="@@intervention.cf.site">Site</label>
       <hlm-combobox [formField]="createForm.site" [itemToString]="siteLabelOf">
         <hlm-combobox-input
+          inputId="intervention-create-site"
           placeholder="Search a site"
           i18n-placeholder="@@intervention.cf.sitePlaceholder"
         />
@@ -107,9 +108,15 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel i18n="@@intervention.cf.responsible">Responsible</label>
+      <label
+        hlmFieldLabel
+        for="intervention-create-responsible"
+        i18n="@@intervention.cf.responsible"
+        >Responsible</label
+      >
       <hlm-combobox [formField]="createForm.responsible" [itemToString]="memberLabelOf">
         <hlm-combobox-input
+          inputId="intervention-create-responsible"
           placeholder="Search a member"
           i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
         />

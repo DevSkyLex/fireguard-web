@@ -222,39 +222,6 @@ describe('InterventionWorkspaceStore offline field work', () => {
     expect(mockOffline.saveWorkspace).toHaveBeenCalled();
   });
 
-  it('mirrors intervention revision changes caused by queued resources', async () => {
-    await store.touchOfflineIntervention();
-
-    expect(store.intervention()?.revision).toBe(4);
-    expect(mockOffline.saveWorkspace).toHaveBeenCalledWith(
-      expect.objectContaining({ revision: 4 }),
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      [],
-      { replace: false },
-    );
-  });
-
-  it('records an already queued discovery without queuing its work item twice', async () => {
-    await store.recordQueuedDiscovery({
-      clientId: 'discovery-client-id',
-      intervention: intervention['@id'],
-      action: 'inventory',
-      target: '/api/equipment/equipment-2',
-      source: 'discovered',
-      required: false,
-    });
-
-    expect(mockOffline.queue).not.toHaveBeenCalled();
-    expect(store.workItems().at(-1)).toMatchObject({
-      id: 'discovery-client-id',
-      target: '/api/equipment/equipment-2',
-    });
-    expect(store.intervention()?.revision).toBe(5);
-    expect(store.intervention()?.workItemsCount).toBe(2);
-  });
-
   it('appends the created work item and bumps counters online without a full reload', async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     window.dispatchEvent(new Event('online'));
@@ -632,6 +599,34 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
+  it('keeps the normalized error in addCommentCallState on a genuine server rejection', () => {
+    mockService.addComment.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 })),
+    );
+
+    store.addComment({ interventionId: 'intervention-1', body: 'Looks good' });
+
+    expect(store.addCommentCallState().status).toBe('error');
+    expect(store.activities()).toEqual([]);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch.mock.calls[0][0]).toMatchObject({
+      type: '[Intervention Workspace Store] commentAddFailed',
+    });
+  });
+
+  it('clears the previously loaded activity timeline when load() targets a different intervention', () => {
+    store.loadActivities('intervention-1');
+    expect(store.activities()).toEqual([comment]);
+    expect(store.activityOldestPage()).toBe(1);
+
+    mockService.listAllWorkItems.mockReturnValue(of([]));
+    mockService.listAllChanges.mockReturnValue(of([]));
+    store.load('intervention-2');
+
+    expect(store.activities()).toEqual([]);
+    expect(store.activityOldestPage()).toBeNull();
+  });
+
   it('queues the comment when an online post fails on a network error', async () => {
     mockService.addComment.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
 
@@ -719,7 +714,6 @@ describe('InterventionWorkspaceStore call state', () => {
     expect(store.loading()).toBe(false);
     expect(store.saving()).toBe(false);
     expect(store.error()).toBeNull();
-    expect(store.mutationError()).toBeNull();
   });
 
   it('drives the load call state through to success', async () => {
@@ -739,7 +733,7 @@ describe('InterventionWorkspaceStore call state', () => {
     await vi.waitFor(() => expect(store.saving()).toBe(false));
 
     expect(store.updateDetailsCallState().status).toBe('error');
-    expect(store.mutationError()?.error).toEqual(violation); // The violations survive, so the edit drawer can land them on `dueAt`.
+    expect(store.updateDetailsCallState().error?.error).toEqual(violation); // The violations survive, so the edit drawer can land them on `dueAt`.
     expect(store.error()).toBe('dueAt: This value should be greater than plannedStartAt.');
   });
 

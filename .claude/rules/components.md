@@ -7,9 +7,11 @@ paths:
 # Angular components
 
 - **No `Component` suffix on the class.** `OrganizationUsagePanel`, not `OrganizationUsagePanelComponent`. Route pages end in `Page`; other roles take `…Panel`, `…Card`, `…Form`, `…Table`, `…Dataview`, `…Dialog`, `…Sheet` (§9.3).
+- **A route page carries `-page` on its folder AND its files**, not just on its class: `ui/pages/interventions-page/interventions-page.component.ts` → `InterventionsPage`, `app-interventions-page`. A page is identifiable from its path alone. No page folder in `src/app` is exempt (§9.3).
+- **Name a component after what it renders, never after the relation that brought it there.** `intervention-equipment-table`, never `intervention-linked-equipment-table`. Relational qualifiers — `linked-`, `related-`, `associated-`, `attached-`, `parent-`, `child-` — belong to the state slice or the API concept that models the relation, not to the component that displays the rows (§9.3).
 - **The selector is `app-` + the FOLDER name**, never the class name: folder `organization-members/` → `app-organization-members` (§9.4).
 - `ChangeDetectionStrategy.OnPush` on **every** component. External `templateUrl`, never an inline `template:`. No `styleUrl` (§1.1).
-- **No `standalone: true`** — it is the Angular 21 default and appears nowhere in this codebase.
+- **No `standalone: true`** — it is the Angular 22 default and appears nowhere in this codebase.
 - Members carry an explicit access modifier, an explicit type, and `readonly`: `public` for `input()`/`output()`, `protected` for what the template reads, `private` for injected collaborators (§9.7).
 - **Outputs are past-tense or nouns** — `submitted`, `cancelled`, `visibleChange`. Never `submit`, never `onSubmit`.
 - Every user-visible string is `$localize` with an explicit dotted id: `` $localize`:@@org.members.loadError:…` `` (§9.10).

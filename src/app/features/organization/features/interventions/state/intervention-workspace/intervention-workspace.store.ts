@@ -38,7 +38,6 @@ import {
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
 import type {
-  CreateInterventionWorkItemInput,
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
@@ -89,9 +88,9 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   attachments: [],
   attachmentsCallState: idleCallState(),
   attachmentWriteCallState: idleCallState(),
+  attachmentDeleteCallState: idleCallState(),
   pendingAttachmentIds: new Set<string>(),
   activities: [],
-  activityTotal: 0,
   activityOldestPage: null,
   activityCallState: idleCallState(),
 };
@@ -121,6 +120,7 @@ const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
   deleteCallState: idleCallState(),
   addCommentCallState: idleCallState(),
   attachmentWriteCallState: idleCallState(),
+  attachmentDeleteCallState: idleCallState(),
   pendingAttachmentIds: new Set<string>(),
 };
 
@@ -175,7 +175,9 @@ function withoutId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
  * A structured API problem (RFC 7807) is trusted for its `detail`: it is the most
  * specific explanation available, and for a 422 it travels with the `violations` a
  * form can project onto its fields. Everything else — transport failures, bare
- * 500s — falls back to `fallback`.
+ * 500s — falls back to `fallback`: `toStoreError` copies a raw `Error`'s technical
+ * message ("Http failure response for /api/…") into `message`, and that text must
+ * never be put in front of a field agent.
  *
  * @since 1.1.0
  *
@@ -186,9 +188,6 @@ function withoutId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
  */
 function workspaceFailure(error: unknown, fallback: string): StoreError {
   const storeError: StoreError = toStoreError(error);
-  // Only a structured API problem carries a message worth showing. A raw Error
-  // yields things like "Http failure response for /api/...", which `toStoreError`
-  // happily copies into `message` — never put that in front of a field agent.
   const detail: string | null = isApiError(storeError.error) ? storeError.message : null;
 
   return { ...storeError, message: detail ?? fallback };
@@ -254,14 +253,17 @@ export const InterventionWorkspaceStore = signalStore(
         isCallPending(store.rejectChangeCallState()) ||
         isCallPending(store.deleteCallState()) ||
         isCallPending(store.addCommentCallState()) ||
-        isCallPending(store.attachmentWriteCallState()),
+        isCallPending(store.attachmentWriteCallState()) ||
+        isCallPending(store.attachmentDeleteCallState()),
     ),
 
     /**
      * Message of the last failure, load or write, for the page banner.
      *
      * A write failure wins over a stale load failure: it is the more recent thing
-     * the user did.
+     * the user did. `addCommentCallState` is deliberately excluded — a rejected
+     * comment already renders inline in the composer, and a failure shown where
+     * it happened must not render a second time at the top of the page.
      */
     error: computed<string | null>(
       () =>
@@ -272,8 +274,8 @@ export const InterventionWorkspaceStore = signalStore(
         store.deleteWorkItemsCallState().error?.message ??
         store.rejectChangeCallState().error?.message ??
         store.deleteCallState().error?.message ??
-        store.addCommentCallState().error?.message ??
         store.attachmentWriteCallState().error?.message ??
+        store.attachmentDeleteCallState().error?.message ??
         store.loadCallState().error?.message ??
         null,
     ),
@@ -297,38 +299,12 @@ export const InterventionWorkspaceStore = signalStore(
       return oldest !== null && oldest > 1;
     }),
 
-    /**
-     * Normalized error of the last write, first non-null across the named
-     * write concerns.
-     *
-     * Unlike {@link error}, this keeps the whole payload, so a page can hand a 422
-     * to the form that caused it and land each violation on the field it names.
-     */
-    mutationError: computed<StoreError | null>(
-      () =>
-        store.transitionCallState().error ??
-        store.updateDetailsCallState().error ??
-        store.createWorkItemCallState().error ??
-        store.workItemWriteCallState().error ??
-        store.deleteWorkItemsCallState().error ??
-        store.rejectChangeCallState().error ??
-        store.deleteCallState().error ??
-        store.addCommentCallState().error ??
-        store.attachmentWriteCallState().error ??
-        null,
-    ),
-
-    progress: computed<number>(() => {
-      const total = store.workItems().length;
-      if (total === 0) return 0;
-      const done = store
-        .workItems()
-        .filter((item) => item.status === 'completed' || item.status === 'skipped').length;
-      return Math.round((done / total) * 100);
-    }),
+    /** How many of the loaded issues are publication blockers, for the action box. */
     blockerCount: computed<number>(
       () => store.issues().filter((issue) => issue.severity === 'blocker').length,
     ),
+
+    /** The item an operator should pick up next: the in-progress one, else the first planned. */
     nextWorkItem: computed<InterventionWorkItemOutput | null>(
       () =>
         store.workItems().find((item) => item.status === 'in_progress') ??
@@ -413,6 +389,9 @@ export const InterventionWorkspaceStore = signalStore(
               issues: [],
               attachments: [],
               attachmentsCallState: idleCallState(),
+              activities: [],
+              activityOldestPage: null,
+              activityCallState: idleCallState(),
               loadCallState: pendingCallState(),
               ...IDLE_WRITE_STATES,
             }),
@@ -516,7 +495,6 @@ export const InterventionWorkspaceStore = signalStore(
                 next: ({ page, collection }) =>
                   patchState(store, {
                     activities: collection.member,
-                    activityTotal: collection.totalItems,
                     activityOldestPage: page,
                     activityCallState: successCallState(null),
                   }),
@@ -566,7 +544,6 @@ export const InterventionWorkspaceStore = signalStore(
                 next: (collection) =>
                   patchState(store, {
                     activities: [...collection.member, ...store.activities()],
-                    activityTotal: collection.totalItems,
                     activityOldestPage: target,
                     activityCallState: successCallState(null),
                   }),
@@ -593,7 +570,6 @@ export const InterventionWorkspaceStore = signalStore(
                 ...store.activities(),
                 optimistic.comment(interventionId, body, clientId),
               ],
-              activityTotal: store.activityTotal() + 1,
               addCommentCallState: successCallState(null),
             });
           }),
@@ -611,7 +587,11 @@ export const InterventionWorkspaceStore = signalStore(
        * idempotent `comment.create` outbox operation and appended optimistically
        * instead of being lost, mirroring the other field actions. Only a genuine
        * server rejection dispatches `commentAddFailed` for the app-wide feedback
-       * listener; the timeline is then left untouched.
+       * listener; the timeline is then left untouched and the normalized
+       * rejection stays in `addCommentCallState` so the composer can render the
+       * API's violations inline. Posts flow through `concatMap`, not
+       * `switchMap`: comments are independent and a new one must never cancel a
+       * previous in-flight post — a dropped comment is lost work.
        *
        * @access public
        * @since 1.2.0
@@ -621,8 +601,6 @@ export const InterventionWorkspaceStore = signalStore(
       const addComment = rxMethod<InterventionCommentAddCommand>(
         pipe(
           tap(() => patchState(store, { addCommentCallState: pendingCallState() })),
-          // concatMap (not switchMap): comments are independent and must never
-          // cancel a previous in-flight post — a dropped comment is lost work.
           concatMap(({ interventionId, body }) => {
             if (connectivity.isOffline()) {
               return queueComment(interventionId, body);
@@ -632,7 +610,6 @@ export const InterventionWorkspaceStore = signalStore(
               map((activity) => {
                 patchState(store, {
                   activities: [...store.activities(), activity],
-                  activityTotal: store.activityTotal() + 1,
                   addCommentCallState: successCallState(null),
                 });
               }),
@@ -640,7 +617,7 @@ export const InterventionWorkspaceStore = signalStore(
                 if (connectivity.isNetworkFailure(error)) {
                   return queueComment(interventionId, body);
                 }
-                patchState(store, { addCommentCallState: successCallState(null) });
+                patchState(store, { addCommentCallState: errorCallState(toStoreError(error)) });
                 dispatcher.dispatch(
                   interventionWorkspaceStoreEvents.commentAddFailed(
                     toStoreFailureEventPayload(
@@ -663,16 +640,38 @@ export const InterventionWorkspaceStore = signalStore(
         loadOlderActivities,
         addComment,
 
+        /**
+         * Method transition
+         * @method transition
+         *
+         * @description
+         * Applies a status transition to the loaded intervention and stores the
+         * server-returned entity on success. Offline — or on a network failure
+         * that slipped past `navigator.onLine` — the transition is queued as an
+         * `intervention.update` outbox operation and applied optimistically, so
+         * a real connectivity drop never surfaces as a lost transition. A
+         * genuine rejection keeps the normalized error (its payload still
+         * carries the 422 violations a form needs) but replaces the message
+         * with status-specific wording — stale revision (412), forbidden (403),
+         * invalid transition (422) — mirroring the list store's mapping, so a
+         * 412 tells the user to refresh instead of retrying in a loop.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @type {RxMethod<InterventionTransitionRequest>}
+         */
         transition: rxMethod<InterventionTransitionRequest>(
           pipe(
             tap(() => patchState(store, { transitionCallState: pendingCallState() })),
             switchMap(({ interventionId, status, reviewNote }) => {
               const intervention = store.intervention();
 
-              // Queue the transition and apply it optimistically. Reused by the
-              // offline branch and by the online branch when the request fails on
-              // a network error (offline that slipped past navigator.onLine), so
-              // a real connectivity drop never surfaces as a lost transition.
+              /**
+               * Queues the transition and applies it optimistically. Reused by
+               * the offline branch and by the online branch when the request
+               * fails on a network error.
+               */
               const queueTransition = (current: InterventionOutput) =>
                 from(
                   offline.queue(interventionId, 'intervention.update', {
@@ -722,15 +721,8 @@ export const InterventionWorkspaceStore = signalStore(
                     if (connectivity.isNetworkFailure(error) && intervention) {
                       return queueTransition(intervention);
                     }
-                    // Distinguish the workflow-relevant statuses so a stale
-                    // revision (412) tells the user to refresh instead of
-                    // retrying in a loop, mirroring the list store's mapping.
                     const storeError = toStoreError(error);
                     patchState(store, {
-                      // Spread the normalized error rather than replace it: the
-                      // status-specific wording below is friendlier than the API's
-                      // `detail`, but the payload underneath still carries the 422
-                      // violations a form needs.
                       transitionCallState: errorCallState({
                         ...storeError,
                         message:
@@ -755,10 +747,12 @@ export const InterventionWorkspaceStore = signalStore(
             concatMap(({ interventionId, input }) => {
               const intervention = store.intervention();
 
-              // Queue the details update and apply it optimistically. Reused by
-              // the offline branch and by the online branch on a network failure
-              // (offline that slipped past navigator.onLine), so a real
-              // connectivity drop never surfaces as a lost planning edit.
+              /**
+               * Queues the details update and applies it optimistically. Reused
+               * by the offline branch and by the online branch on a network
+               * failure (offline that slipped past `navigator.onLine`), so a
+               * real connectivity drop never surfaces as a lost planning edit.
+               */
               const queueDetails = (current: InterventionOutput) => {
                 const { plannedStartAt, dueAt, labelIds, ...optimisticInput } = input;
                 const queuedInput = {
@@ -840,6 +834,24 @@ export const InterventionWorkspaceStore = signalStore(
           ),
         ),
 
+        /**
+         * Method createWorkItem
+         * @method createWorkItem
+         *
+         * @description
+         * Creates one work item. Offline, the create is queued as an idempotent
+         * `work-item.create` outbox operation and a client-built item is
+         * appended optimistically. Online, the authoritative created item (its
+         * assignee/target identities already resolved by the API) is appended
+         * and the intervention counters are bumped the same way the server does
+         * on a work item create — avoiding a full workspace reload and its
+         * loading flash.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @type {RxMethod<InterventionWorkItemCreateCommand>}
+         */
         createWorkItem: rxMethod<InterventionWorkItemCreateCommand>(
           pipe(
             tap(() => patchState(store, { createWorkItemCallState: pendingCallState() })),
@@ -883,11 +895,6 @@ export const InterventionWorkspaceStore = signalStore(
               return service.createWorkItem(input).pipe(
                 tapResponse({
                   next: (created: InterventionWorkItemOutput) => {
-                    // Append the authoritative created item (its assignee/target
-                    // identities are already resolved by the API) and bump the
-                    // intervention counters the same way the server does on a
-                    // work item create. This avoids a full workspace reload and
-                    // its loading flash.
                     const workItems: readonly InterventionWorkItemOutput[] = [
                       ...store.workItems(),
                       created,
@@ -925,13 +932,29 @@ export const InterventionWorkspaceStore = signalStore(
             }),
           ),
         ),
+        /**
+         * Method setWorkItemStatus
+         * @method setWorkItemStatus
+         *
+         * @description
+         * Changes one work item's status, queuing offline (or on a network
+         * failure) as a `work-item.update` outbox operation applied
+         * optimistically. Writes flow through `mergeMap`, not `switchMap`: a
+         * field agent ticks several checklist items quickly, and each
+         * independent toggle must not cancel the previous in-flight PATCH —
+         * each write locks its own row through {@link pendingWorkItemIds} on
+         * entry and unlocks it on settle. On success the toggled item (and the
+         * intervention's recomputed progress) is patched in place instead of a
+         * full `load()`, so ticking an item never flashes the full-screen
+         * skeleton and concurrent ticks don't each trigger a competing reload.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @type {RxMethod<InterventionWorkItemStatusCommand>}
+         */
         setWorkItemStatus: rxMethod<InterventionWorkItemStatusCommand>(
           pipe(
-            // mergeMap (not switchMap): a field agent ticks several checklist
-            // items quickly; each toggle is independent and must not cancel the
-            // previous in-flight PATCH. Each write marks its own row in
-            // `pendingWorkItemIds` on entry and unmarks it on settle, so
-            // concurrent toggles each lock the right row.
             mergeMap(({ interventionId, workItemId, status, skipReason }) => {
               patchState(store, {
                 workItemWriteCallState: pendingCallState(),
@@ -995,10 +1018,6 @@ export const InterventionWorkspaceStore = signalStore(
                 )
                 .pipe(
                   tapResponse({
-                    // Patch the toggled item (and the intervention's recomputed
-                    // progress) in place instead of a full `load()`, so ticking an
-                    // item never flashes the full-screen skeleton and concurrent
-                    // ticks don't each trigger a competing reload.
                     next: () => {
                       if (!item) {
                         patchState(store, { workItemWriteCallState: successCallState(null) });
@@ -1152,6 +1171,24 @@ export const InterventionWorkspaceStore = signalStore(
           ),
         ),
 
+        /**
+         * Method deleteWorkItems
+         * @method deleteWorkItems
+         *
+         * @description
+         * Deletes the given planned work items in one forkJoin pass. This is a
+         * connected, desk-time planning action: the offline outbox only replays
+         * creates and status changes, so offline the method surfaces a clear
+         * retryable message instead of silently failing. On success the deleted
+         * items are dropped and the server's counter recompute is mirrored
+         * locally, keeping the rail and table in sync without a full workspace
+         * reload and its loading flash.
+         *
+         * @access public
+         * @since 1.1.0
+         *
+         * @type {RxMethod<InterventionWorkItemDeleteCommand>}
+         */
         deleteWorkItems: rxMethod<InterventionWorkItemDeleteCommand>(
           pipe(
             tap(() => patchState(store, { deleteWorkItemsCallState: pendingCallState() })),
@@ -1161,17 +1198,12 @@ export const InterventionWorkspaceStore = signalStore(
                 return EMPTY;
               }
 
-              // Deleting a planned work item is a connected, desk-time planning
-              // action; the offline outbox only replays creates and status
-              // changes, so surface a clear message instead of silently failing.
               if (connectivity.isOffline()) {
                 patchState(store, {
                   deleteWorkItemsCallState: errorCallState({
-                    error: null,
+                    ...toStoreError(null),
                     message: $localize`:@@intervention.workspace.workItemDeleteOffline:Connect to the network to delete planned work items.`,
-                    code: null,
                     retryable: true,
-                    timestamp: 0,
                   }),
                 });
                 return EMPTY;
@@ -1182,9 +1214,6 @@ export const InterventionWorkspaceStore = signalStore(
               ).pipe(
                 tapResponse({
                   next: () => {
-                    // Drop the deleted items and mirror the server's counter
-                    // recompute locally so the rail and table stay in sync
-                    // without a full workspace reload and its loading flash.
                     const removedIds = new Set(workItems.map((item) => item.id));
                     const remaining: readonly InterventionWorkItemOutput[] = store
                       .workItems()
@@ -1378,7 +1407,7 @@ export const InterventionWorkspaceStore = signalStore(
           pipe(
             mergeMap(({ attachmentId, revision }) => {
               patchState(store, {
-                attachmentWriteCallState: pendingCallState(),
+                attachmentDeleteCallState: pendingCallState(),
                 pendingAttachmentIds: withId(store.pendingAttachmentIds(), attachmentId),
               });
 
@@ -1389,11 +1418,11 @@ export const InterventionWorkspaceStore = signalStore(
                       attachments: store
                         .attachments()
                         .filter((attachment) => attachment.id !== attachmentId),
-                      attachmentWriteCallState: successCallState(null),
+                      attachmentDeleteCallState: successCallState(null),
                     }),
                   error: (error: unknown) =>
                     patchState(store, {
-                      attachmentWriteCallState: errorCallState(
+                      attachmentDeleteCallState: errorCallState(
                         workspaceFailure(
                           error,
                           $localize`:@@intervention.workspace.attachmentDeleteFailed:The file could not be deleted.`,
@@ -1410,70 +1439,6 @@ export const InterventionWorkspaceStore = signalStore(
             }),
           ),
         ),
-
-        /**
-         * Method touchOfflineIntervention
-         * @method touchOfflineIntervention
-         *
-         * @description
-         * Mirrors the server-side intervention revision increment caused by a
-         * queued resource or media mutation.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @return {Promise<void>} Resolves after the local workspace is persisted.
-         */
-        async touchOfflineIntervention(): Promise<void> {
-          const intervention = store.intervention();
-          if (!intervention) return;
-          const updatedIntervention = optimistic.touch(intervention);
-          patchState(store, { intervention: updatedIntervention });
-          await offline.saveWorkspace(
-            updatedIntervention,
-            store.workItems(),
-            store.changes(),
-            store.issues(),
-            [],
-            { replace: false },
-          );
-        },
-
-        /**
-         * Method recordQueuedDiscovery
-         * @method recordQueuedDiscovery
-         *
-         * @description
-         * Appends a discovered work item that has already been persisted as an
-         * atomic outbox intention. Updates the store optimistically and
-         * persists the updated workspace to the offline cache without
-         * overwriting existing operations.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @param {CreateInterventionWorkItemInput} input - Work-item input carrying the client-generated id.
-         *
-         * @return {Promise<void>} Resolves after the local workspace is persisted.
-         */
-        async recordQueuedDiscovery(input: CreateInterventionWorkItemInput): Promise<void> {
-          const intervention = store.intervention();
-          const clientId = input.clientId;
-          if (!intervention || !clientId) return;
-
-          const workItem = optimistic.createWorkItem(input, clientId);
-          const workItems: readonly InterventionWorkItemOutput[] = [...store.workItems(), workItem];
-          const updatedIntervention = optimistic.addWorkItem(optimistic.touch(intervention));
-          patchState(store, { intervention: updatedIntervention, workItems });
-          await offline.saveWorkspace(
-            updatedIntervention,
-            workItems,
-            store.changes(),
-            store.issues(),
-            [],
-            { replace: false },
-          );
-        },
 
         /**
          * Method clearError

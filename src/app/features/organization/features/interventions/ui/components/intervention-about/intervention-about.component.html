@@ -35,6 +35,7 @@
 
   <div data-testid="intervention-description-field">
     <app-inplace-field
+      #descriptionField
       label="Description"
       i18n-label="@@intervention.pf.description"
       commit="confirm"
@@ -51,11 +52,7 @@
       @if (intervention().description; as text) {
         <span fieldValue class="whitespace-pre-line">{{ text }}</span>
       } @else {
-        <span
-          fieldValue
-          class="text-muted-foreground/70"
-          i18n="@@intervention.detail.noDescription"
-        >
+        <span fieldValue class="text-muted-foreground" i18n="@@intervention.detail.noDescription">
           No description yet. Add context, scope notes or instructions for this intervention.
         </span>
       }
@@ -67,6 +64,7 @@
         class="w-full"
         data-testid="intervention-description-input"
         [attr.maxlength]="descriptionMaxLength"
+        [attr.aria-labelledby]="descriptionField.labelId"
         [value]="descriptionDraft()"
         (input)="descriptionDraft.set($any($event.target).value)"
       ></textarea>

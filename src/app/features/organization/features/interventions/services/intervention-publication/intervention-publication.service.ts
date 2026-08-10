@@ -45,7 +45,10 @@ export class InterventionPublicationService {
    *
    * @description
    * Creates a publication for the given intervention and polls the API
-   * until a terminal status is reached.
+   * until a terminal status is reached. The poll is bounded: when it ends
+   * with the publication still `pending`/`processing`, this rejects instead
+   * of returning, so a stuck server job reads as a failed request rather
+   * than a successful publication.
    *
    * @access public
    * @since 1.0.0
@@ -56,7 +59,13 @@ export class InterventionPublicationService {
    */
   public async publish(intervention: InterventionOutput): Promise<PublicationOutput> {
     const publication = await lastValueFrom(this.interventions.publish(intervention));
-    return lastValueFrom(this.interventions.pollPublication(publication));
+    const final = await lastValueFrom(this.interventions.pollPublication(publication));
+
+    if (final.status === 'pending' || final.status === 'processing') {
+      throw new Error('Publication polling timed out before a terminal status.');
+    }
+
+    return final;
   }
   //#endregion
 }

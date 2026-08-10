@@ -234,7 +234,7 @@ export class InterventionSyncCoordinatorService {
    * @access public
    * @since 1.0.0
    *
-   * @return {void} Result of the start operation.
+   * @return {void}
    */
   public start(): void {
     if (typeof window === 'undefined') return;

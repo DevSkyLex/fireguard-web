@@ -1,36 +1,9 @@
 import { INTERVENTION_STATUS_TRANSITIONS } from '@features/organization/features/interventions/constants';
-import type { InterventionStatus } from '@features/organization/features/interventions/models';
-
-/**
- * Type InterventionTransitionCapability
- * @type InterventionTransitionCapability
- *
- * @description
- * The RBAC capability a workflow transition requires, mirroring the backend
- * `MutateInterventionWorkflowHandler::permission()` mapping. Consumers resolve
- * it to the matching `INTERVENTIONS_{PLAN,EXECUTE,REVIEW}` permission so the UI
- * only offers moves the server would authorize.
- *
- * @since 1.0.0
- */
-export type InterventionTransitionCapability = 'plan' | 'execute' | 'review';
-
-/**
- * Type InterventionTransitionSubject
- * @type InterventionTransitionSubject
- *
- * @description
- * Minimal shape the transition helpers need from an intervention: its current
- * status and, when present, the API-provided `allowedTransitions`. The field is
- * optional so a cached card persisted before the field existed still resolves
- * through the static fallback table.
- *
- * @since 1.0.0
- */
-export interface InterventionTransitionSubject {
-  readonly status: InterventionStatus;
-  readonly allowedTransitions?: readonly InterventionStatus[];
-}
+import type {
+  InterventionStatus,
+  InterventionTransitionCapability,
+  InterventionTransitionSubject,
+} from '@features/organization/features/interventions/models';
 
 /**
  * Function allowedTransitions
@@ -70,28 +43,6 @@ export function resolveAllowedTransitions(
   intervention: InterventionTransitionSubject,
 ): readonly InterventionStatus[] {
   return intervention.allowedTransitions ?? allowedTransitions(intervention.status);
-}
-
-/**
- * Function canTransitionIntervention
- *
- * @description
- * Whether an intervention may move to `to`, driven by its per-card
- * {@link resolveAllowedTransitions} set. A no-op transition (`status === to`) is
- * always allowed so same-lane drops and reorders are accepted.
- *
- * @param {InterventionTransitionSubject} intervention - Intervention to evaluate.
- * @param {InterventionStatus} to - Candidate target status.
- *
- * @returns {boolean} True when the transition is workflow-legal.
- *
- * @since 1.0.0
- */
-export function canTransitionIntervention(
-  intervention: InterventionTransitionSubject,
-  to: InterventionStatus,
-): boolean {
-  return intervention.status === to || resolveAllowedTransitions(intervention).includes(to);
 }
 
 /**

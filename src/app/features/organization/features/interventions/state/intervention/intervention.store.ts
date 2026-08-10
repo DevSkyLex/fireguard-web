@@ -358,7 +358,12 @@ export const InterventionStore = signalStore(
          * snapshot and a `transitionFailed` event is dispatched so the app-wide
          * feedback listener surfaces a toast — the message is tailored for a
          * stale revision (412), an invalid transition (422) and a forbidden
-         * change (403).
+         * change (403). Requests flow through `mergeMap`, not `switchMap`:
+         * board drag-drop can fire several transitions in quick succession,
+         * each keyed by its own id with its own optimistic snapshot/rollback,
+         * and `switchMap` would cancel an in-flight PATCH — dropping its
+         * success/rollback handlers and leaving a card visually moved while the
+         * server never confirmed.
          *
          * ⚠️ Zoneless: this method reads and writes `transitionCallState`. Never
          * call it from inside a tracked `effect()` without wrapping the call in
@@ -383,11 +388,6 @@ export const InterventionStore = signalStore(
               }
               patchState(store, { transitionCallState: pendingCallState<InterventionOutput>() });
             }),
-            // mergeMap (not switchMap): board drag-drop can fire several
-            // transitions in quick succession, each keyed by its own id with its
-            // own optimistic snapshot/rollback. switchMap would cancel an
-            // in-flight PATCH — dropping its success/rollback handlers and
-            // leaving a card visually moved while the server never confirmed.
             mergeMap(({ id, status, revision }) =>
               interventionService.update(id, { status }, revision).pipe(
                 tapResponse({

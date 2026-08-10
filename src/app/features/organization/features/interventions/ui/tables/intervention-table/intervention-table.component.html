@@ -31,7 +31,7 @@
                 type="button"
                 variant="ghost"
                 size="sm"
-                class="-ms-2 h-8 px-2"
+                class="-ms-2 h-8 px-2 max-sm:min-h-11"
                 data-testid="intervention-table-sort-priority"
                 (click)="sortChanged.emit('priority')"
               >
@@ -56,7 +56,7 @@
                 type="button"
                 variant="ghost"
                 size="sm"
-                class="ms-auto -me-2 h-8 px-2"
+                class="ms-auto -me-2 h-8 px-2 max-sm:min-h-11"
                 data-testid="intervention-table-sort-due"
                 (click)="sortChanged.emit('dueAt')"
               >
@@ -166,6 +166,7 @@
                   variant="ghost"
                   size="icon-sm"
                   align="end"
+                  class="max-sm:size-11"
                   data-testid="intervention-table-row-menu"
                   [hlmDropdownMenuTrigger]="rowMenu"
                 >

@@ -13,7 +13,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InterventionTag } from '../intervention-tag';
-import type { InterventionChangePatchLine } from './models';
+import type { InterventionChangeRowViewModel } from './models';
 import { formatInterventionChangePatch } from './utils';
 
 /**
@@ -103,40 +103,45 @@ export class InterventionChangeList {
 
   //#region Properties
   /**
-   * Property proposedChanges
+   * Property proposedRows
    * @readonly
-   * @description The changes still awaiting publication — rejected and applied ones are history.
+   *
+   * @description
+   * The still-proposed changes as fully derived row view models — rejected and
+   * applied ones are history. Resource kind and patch lines are resolved once
+   * per change instead of once per binding per change-detection pass.
+   *
    * @access protected
-   * @since 1.0.0
-   * @type {Signal<readonly InterventionChangeOutput[]>}
+   * @since 2.1.0
+   *
+   * @type {Signal<readonly InterventionChangeRowViewModel[]>}
    */
-  protected readonly proposedChanges: Signal<readonly InterventionChangeOutput[]> = computed<
-    readonly InterventionChangeOutput[]
-  >(() => this.changes().filter((change) => change.status === 'proposed'));
+  protected readonly proposedRows: Signal<readonly InterventionChangeRowViewModel[]> = computed<
+    readonly InterventionChangeRowViewModel[]
+  >(() => {
+    const pending: ReadonlySet<string> = this.pendingChangeIds();
+
+    return this.changes()
+      .filter((change) => change.status === 'proposed')
+      .map((change: InterventionChangeOutput) => ({
+        change,
+        resourceKind: this.resourceKindOf(change),
+        patchLines: formatInterventionChangePatch(change.patch),
+        pending: pending.has(change.id),
+      }));
+  });
   //#endregion
 
   //#region Methods
   /**
-   * Method isRowPending
-   * @description Whether this row's own rejection is in flight.
-   * @access protected
-   * @since 2.0.0
-   * @param {InterventionChangeOutput} change - The proposed change.
-   * @returns {boolean} True while the change's write is pending.
-   */
-  protected isRowPending(change: InterventionChangeOutput): boolean {
-    return this.pendingChangeIds().has(change.id);
-  }
-
-  /**
    * Method resourceKindOf
    * @description Names the kind of resource a change's IRI points at, for the row's caption.
-   * @access protected
+   * @access private
    * @since 1.0.0
    * @param {InterventionChangeOutput} change - The proposed change.
    * @returns {string} A short, localized resource kind.
    */
-  protected resourceKindOf(change: InterventionChangeOutput): string {
+  private resourceKindOf(change: InterventionChangeOutput): string {
     if (change.resource.includes('/equipment/'))
       return $localize`:@@intervention.changes.resourceEquipment:Equipment`;
     if (change.resource.includes('/facilities/'))
@@ -145,18 +150,6 @@ export class InterventionChangeList {
       return $localize`:@@intervention.changes.resourceInspection:Inspection`;
 
     return $localize`:@@intervention.changes.resourceOther:Linked resource`;
-  }
-
-  /**
-   * Method patchLinesOf
-   * @description The change's patch, as readable field/value lines.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionChangeOutput} change - The proposed change.
-   * @returns {readonly InterventionChangePatchLine[]} One line per patched field.
-   */
-  protected patchLinesOf(change: InterventionChangeOutput): readonly InterventionChangePatchLine[] {
-    return formatInterventionChangePatch(change.patch);
   }
   //#endregion
 }

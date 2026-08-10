@@ -6,11 +6,6 @@ export type { InterventionIssueSeverity } from './intervention/intervention-issu
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';
 export type { InterventionCalendarFilters } from './intervention-view/intervention-calendar-filters.interface';
 export type {
-  InterventionGrouping,
-  InterventionRender,
-  InterventionView,
-} from './intervention-view/intervention-view.interface';
-export type {
   InterventionDueWindow,
   InterventionListFilters,
 } from './intervention-view/intervention-list-filters.interface';
@@ -24,6 +19,8 @@ export type { InterventionUnsyncedEntry } from './intervention-queue/interventio
 export type { InterventionOutput } from './intervention/intervention-output.interface';
 export type { InterventionPriority } from './intervention/intervention-priority.type';
 export type { InterventionStatus } from './intervention/intervention-status.type';
+export type { InterventionTransitionCapability } from './intervention/intervention-transition-capability.type';
+export type { InterventionTransitionSubject } from './intervention/intervention-transition-subject.interface';
 export type { InterventionType } from './intervention/intervention-type.type';
 export type { UpdateInterventionInput } from './intervention/update-intervention-input.interface';
 export type { InterventionEditState } from './intervention-edit/intervention-edit-state.interface';

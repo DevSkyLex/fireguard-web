@@ -2,10 +2,12 @@ import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -33,7 +35,7 @@ import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
-import type { InterventionListItemViewModel } from '../../pages/interventions/models';
+import type { InterventionListItemViewModel } from '../../pages/interventions-page/models';
 import {
   INTERVENTION_TABLE_COLUMN,
   type InterventionTableColumn,
@@ -478,33 +480,36 @@ export class InterventionTable {
   }
 
   /**
-   * Method allSelected
-   * @method allSelected
+   * Property allSelected
+   * @readonly
    *
    * @description
    * Whether every currently rendered row is selected, driving the header
    * checkbox's checked state. Selection is scoped to the rendered rows (the
-   * current page), not the whole filtered set.
+   * current page), not the whole filtered set. A `computed` rather than a
+   * method: bound in the header, it would otherwise scan the page on every
+   * change-detection pass.
    *
    * @access protected
    * @since 5.0.0
    *
-   * @returns {boolean} True when the page is fully selected.
+   * @type {Signal<boolean>}
    */
-  protected allSelected(): boolean {
+  protected readonly allSelected: Signal<boolean> = computed<boolean>(() => {
     const rows: readonly InterventionListItemViewModel[] = this.items();
+    const selected: ReadonlySet<string> = this.selectedIds();
 
     return (
       rows.length > 0 &&
       rows.every((item: InterventionListItemViewModel): boolean =>
-        this.selectedIds().has(item.intervention.id),
+        selected.has(item.intervention.id),
       )
     );
-  }
+  });
 
   /**
-   * Method someSelected
-   * @method someSelected
+   * Property someSelected
+   * @readonly
    *
    * @description
    * Whether some but not all rendered rows are selected, driving the header
@@ -513,16 +518,18 @@ export class InterventionTable {
    * @access protected
    * @since 5.0.0
    *
-   * @returns {boolean} True when the page is partially selected.
+   * @type {Signal<boolean>}
    */
-  protected someSelected(): boolean {
+  protected readonly someSelected: Signal<boolean> = computed<boolean>(() => {
+    const selected: ReadonlySet<string> = this.selectedIds();
+
     return (
       !this.allSelected() &&
       this.items().some((item: InterventionListItemViewModel): boolean =>
-        this.selectedIds().has(item.intervention.id),
+        selected.has(item.intervention.id),
       )
     );
-  }
+  });
 
   /**
    * Method toggleAll

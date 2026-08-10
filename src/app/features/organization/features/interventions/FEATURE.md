@@ -27,7 +27,7 @@ This subfeature is responsible for:
   and is consumed once, so the parent feature's landing page can offer "New
   intervention" as a primary action that actually starts the work.
 
-  Sort and fold state are remembered in a cookie by
+  Sort, hidden columns and page size are remembered in a cookie by
   `InterventionListPreferencesService`; filters deliberately are not, being
   questions asked now rather than stored preferences.
 
@@ -69,14 +69,22 @@ Stores:
   as `loadCallState` (the workspace fetch), `activityCallState`, and **one named
   call state per write concern** (`transitionCallState`, `updateDetailsCallState`,
   `createWorkItemCallState`, `workItemWriteCallState`, `deleteWorkItemsCallState`,
-  `rejectChangeCallState`, `deleteCallState`, `addCommentCallState`), plus two
-  per-row pending sets (`pendingWorkItemIds`, `pendingChangeIds`) for the
-  concurrent `mergeMap` writes; `loading`, `saving` and `error` are derived over
-  them, and `mutationError` exposes the first non-null normalized `StoreError`. `load` blanks the workspace before fetching, which is
-  right on entry and wrong afterwards, so **`reload` exists for a refresh that
-  must not flash the page to a skeleton** — publication uses it. `loadFailed`
-  distinguishes a failed _fetch_ from a failed _write_, which is what lets the
-  detail page offer a retry only where retrying repairs anything.
+  `rejectChangeCallState`, `deleteCallState`, `addCommentCallState`,
+  `attachmentWriteCallState` for uploads and `attachmentDeleteCallState` for
+  deletes — split so one settling never clears the other's pending state), plus
+  per-row pending sets (`pendingWorkItemIds`, `pendingChangeIds`,
+  `pendingAttachmentIds`) for the concurrent `mergeMap` writes; `loading`,
+  `saving` and `error` are derived over them (`error` deliberately excludes
+  `addCommentCallState` — a rejected comment renders inline in the composer, and
+  a failure shown where it happened must not render again at the top of the
+  page). `load` blanks the whole workspace **including the activity timeline**
+  before fetching — the store survives prev/next navigation, and a stale
+  timeline under a fresh header attributed one intervention's history to
+  another — which is right on entry and wrong afterwards, so **`reload` exists
+  for a refresh that must not flash the page to a skeleton** — publication uses
+  it. `loadFailed` distinguishes a failed _fetch_ from a failed _write_, which
+  is what lets the detail page offer a retry only where retrying repairs
+  anything.
 
   Also owns the activity timeline (`activities`, `loadActivities`,
   `loadOlderActivities`, `addComment`). The API sorts `createdAt` **ascending**,
@@ -196,7 +204,7 @@ Internal code imports deep paths directly.
 
 ## Detail workspace composition
 
-The detail page (`ui/pages/intervention-detail`) is **tabbed again**, on
+The detail page (`ui/pages/intervention-detail-page`) is **tabbed again**, on
 direct instruction after a same-session correction to the 4.5 redesign this
 document originally described (see `### The rail is not the retired
 workspace tabs` for why this is not a reopening of the 3.0/4.0 retirements).
@@ -214,7 +222,7 @@ Three regions, left to right at `lg` and up:
    checklist, work items, changes, attachments, activity, comments — moved
    here unchanged, not rebuilt. **Facilities / Equipment / Inspections**
    each render one read-only `hlmTable`
-   (`InterventionLinkedFacilitiesTable`/`…EquipmentTable`/`…InspectionsTable`)
+   (`InterventionFacilitiesTable`/`…EquipmentTable`/`…InspectionsTable`)
    from `InterventionLinkedResourcesStore`, mounted lazily
    (`hlmTabsContentLazy`) on first activation and kept mounted after.
 3. **The second grid track — unchanged, and tab-independent.** The
@@ -530,9 +538,12 @@ injects `InterventionSyncCoordinatorService` and wires its signals in.
 `app-intervention-attachments` (between Changes and Activity) lists the
 intervention's files and offers a picker plus a camera capture whose images the
 page shrinks through `InterventionPhotoCompressorService` before upload. Picks
-are pre-checked against the backend's 10 MiB ceiling, MIME whitelist
-(images + PDF) and **25-file cardinality cap**
-(`AttachmentConstraints::MAX_ATTACHMENTS_PER_PARENT`); rows delete
+are pre-checked against the backend's MIME whitelist (images + PDF), the
+**25-file cardinality cap**
+(`AttachmentConstraints::MAX_ATTACHMENTS_PER_PARENT`) and — for non-image
+files only — its 10 MiB ceiling: a multi-megabyte camera capture is exactly
+what the compression pipeline exists for, so images skip the local size check
+and the server stays authoritative on the final size; rows delete
 confirm-gated and lock on their own write via the store's
 `pendingAttachmentIds`. The cap surfaces as a `n / 25` badge that appears once
 the list is half full and turns destructive at the ceiling, a hint line, and
@@ -676,6 +687,9 @@ follows.
   names the compliance record before the recap, swaps its button to a spinner and
   a `role="status"` line while the write and its poll run, and confirms success —
   the one irreversible write in the product must not look like a frozen modal.
+  The poll itself is **bounded** (~2 minutes): a publication stuck server-side
+  in `processing` ends as a failed request the dialog reports inline, never as
+  a spinner that outlives the operator's patience or as a false success.
 - **The page's fixed elements never reorder (WCAG 2.4.3).** Header → meta →
   error alert → Overview → Work items → Changes → Attachments → Activity →
   properties card
@@ -683,11 +697,13 @@ follows.
   card and action box are the second column's own top-to-bottom order,
   unaffected by which sections above render conditionally. The command bar's
   position is fixed too; only its _presence_ follows the breakpoint.
-- **Proposed changes are read-only.** `UpdateInterventionChangeInput.status`
-  only accepts `'proposed' | 'rejected'`, never `'applied'` — acceptance
-  happens automatically at publication, not through a client action — and
-  `InterventionWorkspaceStore` exposes no reject method yet.
-  `app-intervention-change-list` lists and explains; it does not act.
+- **Rejection is the only client action on a proposed change.**
+  `UpdateInterventionChangeInput.status` only accepts `'proposed' | 'rejected'`,
+  never `'applied'` — acceptance happens automatically at publication, not
+  through a client action. `InterventionWorkspaceStore.rejectChange` is the one
+  write, and `app-intervention-change-list` offers it per row only when the
+  page grants `canReject` (see `### Proposed changes: reject is the only
+client action`).
 - **Every property is edited where it is displayed, and each affordance opens a
   different editor.** This supersedes the old "one edit entry, not one per row":
   that rule existed because four pencils all opened the _same_ planning drawer, so

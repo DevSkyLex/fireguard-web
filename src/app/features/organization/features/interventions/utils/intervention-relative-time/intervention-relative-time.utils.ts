@@ -20,6 +20,42 @@ const RELATIVE_UNITS: ReadonlyArray<{
 ];
 
 /**
+ * Constant RELATIVE_FORMATS
+ *
+ * @description
+ * One `Intl.RelativeTimeFormat` per locale, built on first use. The
+ * constructor is among the most expensive objects the platform allocates, and
+ * this function is called from per-row template bindings — a fresh instance
+ * per call was a measurable change-detection cost.
+ *
+ * @since 1.0.0
+ */
+const RELATIVE_FORMATS = new Map<string, Intl.RelativeTimeFormat>();
+
+/**
+ * Function relativeFormatOf
+ *
+ * @description
+ * The memoized formatter for a locale.
+ *
+ * @access private
+ * @since 1.0.0
+ *
+ * @param {string} locale - The application's active locale.
+ *
+ * @returns {Intl.RelativeTimeFormat} The cached formatter.
+ */
+function relativeFormatOf(locale: string): Intl.RelativeTimeFormat {
+  let format: Intl.RelativeTimeFormat | undefined = RELATIVE_FORMATS.get(locale);
+  if (!format) {
+    format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    RELATIVE_FORMATS.set(locale, format);
+  }
+
+  return format;
+}
+
+/**
  * Function formatInterventionRelativeTime
  *
  * @description
@@ -42,7 +78,7 @@ export function formatInterventionRelativeTime(iso: string, locale: string): str
   if (Number.isNaN(parsed)) return iso;
 
   const elapsed: number = (parsed - Date.now()) / 1000;
-  const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const format: Intl.RelativeTimeFormat = relativeFormatOf(locale);
 
   for (const { unit, seconds } of RELATIVE_UNITS) {
     if (Math.abs(elapsed) >= seconds) {

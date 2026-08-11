@@ -13,6 +13,7 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /** Placeholder cards drawn while the first page loads. */
@@ -49,7 +50,15 @@ const SKELETON_CARDS: ReadonlyArray<number> = [1, 2, 3, 4, 5, 6];
  */
 @Component({
   selector: 'app-organization-role-grid',
-  imports: [NgIcon, HlmBadge, HlmButton, HlmSkeleton, ...HlmCardImports, ...HlmDropdownMenuImports],
+  imports: [
+    NgIcon,
+    HlmBadge,
+    HlmButton,
+    HlmSkeleton,
+    ...HlmCardImports,
+    ...HlmDropdownMenuImports,
+    ...HlmEmptyImports,
+  ],
   providers: [provideIcons({ lucideEllipsis, lucidePencil, lucideShieldCheck, lucideTrash2 })],
   templateUrl: './organization-role-grid.component.html',
   host: { class: 'block w-full' },

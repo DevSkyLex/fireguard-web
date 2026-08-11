@@ -7944,8 +7944,8 @@
           <context context-type="linenumber">131</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">4,5</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
+          <context context-type="linenumber">146</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
@@ -8042,123 +8042,207 @@
         <source>Member removed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">216</context>
+          <context context-type="linenumber">214</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.toast.bulkRemoved" datatype="html">
         <source>Members removed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">256</context>
+          <context context-type="linenumber">254</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.toast.bulkPartial" datatype="html">
         <source>Some members could not be removed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">261</context>
+          <context context-type="linenumber">259</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.toast.invited" datatype="html">
         <source>Invitation sent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">292</context>
+          <context context-type="linenumber">290</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.toast.revoked" datatype="html">
         <source>Invitation revoked</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">321</context>
+          <context context-type="linenumber">319</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.toast.resent" datatype="html">
         <source>Invitation resent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">358</context>
+          <context context-type="linenumber">356</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.toast.roleAssigned" datatype="html">
         <source>Role assigned</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">393</context>
+          <context context-type="linenumber">391</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">447</context>
+          <context context-type="linenumber">445</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.toast.bulkRoleFailed" datatype="html">
         <source>The role could not be assigned to some members.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">452</context>
+          <context context-type="linenumber">450</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.toast.roleRemoved" datatype="html">
         <source>Role removed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
-          <context context-type="linenumber">499</context>
+          <context context-type="linenumber">497</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.savedDetail" datatype="html">
         <source>The organization settings have been updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">98</context>
+          <context context-type="linenumber">121</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.saveError" datatype="html">
         <source>The settings could not be saved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">110</context>
+          <context context-type="linenumber">133</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logoDetail" datatype="html">
         <source>The organization logo has been updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">146</context>
+          <context context-type="linenumber">169</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logoError" datatype="html">
         <source>The logo could not be uploaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">158</context>
+          <context context-type="linenumber">181</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.logoRemovedDetail" datatype="html">
+        <source>The organization logo has been removed.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">226</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.logoRemoveError" datatype="html">
+        <source>The logo could not be removed.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">238</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.transferOwnershipDetail" datatype="html">
+        <source>Ownership has been transferred.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">278</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.transferOwnershipError" datatype="html">
+        <source>Ownership could not be transferred.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">290</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.suspendedDetail" datatype="html">
+        <source>The organization has been suspended.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">327</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.suspendError" datatype="html">
+        <source>The organization could not be suspended.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">339</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.restoredDetail" datatype="html">
+        <source>The organization has been restored.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">375</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.restoreError" datatype="html">
+        <source>The organization could not be restored.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">387</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.leftDetail" datatype="html">
+        <source>You have left the organization.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">422</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.leaveError" datatype="html">
+        <source>You could not leave this organization.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">434</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.deletedDetail" datatype="html">
         <source>The organization has been permanently deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">191</context>
+          <context context-type="linenumber">468</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.deleteError" datatype="html">
         <source>The organization could not be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">203</context>
+          <context context-type="linenumber">480</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logo.uploading" datatype="html">
         <source>Uploading…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-logo-picker/organization-logo-picker.component.html</context>
-          <context context-type="linenumber">21,23</context>
+          <context context-type="linenumber">22,24</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logo.choose" datatype="html">
         <source>Change logo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-logo-picker/organization-logo-picker.component.html</context>
-          <context context-type="linenumber">23,27</context>
+          <context context-type="linenumber">24,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.logo.removing" datatype="html">
+        <source>Removing…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-logo-picker/organization-logo-picker.component.html</context>
+          <context context-type="linenumber">41,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.logo.remove" datatype="html">
+        <source>Remove</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-logo-picker/organization-logo-picker.component.html</context>
+          <context context-type="linenumber">43,46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.pageHeader.memberCountOne" datatype="html">
@@ -8358,24 +8442,38 @@
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.noResults" datatype="html">
-        <source> No roles found. </source>
+        <source>No roles found.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
-          <context context-type="linenumber">81,85</context>
+          <context context-type="linenumber">87,88</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.permissionCountOne" datatype="html">
         <source>1 permission</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
-          <context context-type="linenumber">128</context>
+          <context context-type="linenumber">143</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.permissionCountMany" datatype="html">
         <source><x id="count" equiv-text="count"/> permissions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
-          <context context-type="linenumber">129</context>
+          <context context-type="linenumber">144</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.memberCountOne" datatype="html">
+        <source>1 member</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">161</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.memberCountMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> members</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">162</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.confirmTitle" datatype="html">
@@ -9201,197 +9299,218 @@
         <source>Invite member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">11,15</context>
+          <context context-type="linenumber">10,13</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">96,98</context>
+          <context context-type="linenumber">86,88</context>
         </context-group>
       </trans-unit>
       <trans-unit id="common.dismiss" datatype="html">
         <source>Dismiss</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">35,37</context>
+          <context context-type="linenumber">30,32</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.rosterHeading" datatype="html">
         <source>Roster</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">42,44</context>
+          <context context-type="linenumber">37,39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.errorTitle" datatype="html">
         <source>Couldn&apos;t load members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">65,66</context>
+          <context context-type="linenumber">57,58</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.errorText" datatype="html">
-        <source> The members could not be loaded. Check your connection and try again. </source>
+        <source>The members could not be loaded. Check your connection and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">67,69</context>
+          <context context-type="linenumber">59,60</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">77,79</context>
+          <context context-type="linenumber">68,70</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">184,186</context>
+          <context context-type="linenumber">171,173</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.emptyTitle" datatype="html">
         <source>No members yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">87,88</context>
+          <context context-type="linenumber">77,78</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.emptyText" datatype="html">
         <source> Invite someone to give them access to this organization. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">89,91</context>
+          <context context-type="linenumber">79,81</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.rowCount" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> row(s) shown</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">119,122</context>
+          <context context-type="linenumber">109,112</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.pagePrevious" datatype="html">
         <source>Previous page</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">136,137</context>
+          <context context-type="linenumber">118,119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.pageNext" datatype="html">
         <source>Next page</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">149,150</context>
+          <context context-type="linenumber">137,138</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitations.heading" datatype="html">
         <source>Pending invitations</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">164,166</context>
+          <context context-type="linenumber">155,157</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitations.errorTitle" datatype="html">
         <source>Couldn&apos;t load invitations</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">172,173</context>
+          <context context-type="linenumber">160,161</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitations.errorText" datatype="html">
-        <source> The invitations could not be loaded. Check your connection and try again. </source>
+        <source>The invitations could not be loaded. Check your connection and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">174,176</context>
+          <context context-type="linenumber">162,163</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitations.emptyTitle" datatype="html">
         <source>No pending invitations</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">194,195</context>
+          <context context-type="linenumber">180,181</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitations.emptyText" datatype="html">
         <source> Invitations you send will appear here until they are accepted, revoked or expire. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">196,198</context>
+          <context context-type="linenumber">182,184</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmCancel" datatype="html">
         <source>Cancel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">242,244</context>
+          <context context-type="linenumber">228,230</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmAction" datatype="html">
         <source> Remove </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
-          <context context-type="linenumber">250,252</context>
+          <context context-type="linenumber">236,238</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.pageIndicator" datatype="html">
+        <source>Page <x id="current" equiv-text="current"/> of <x id="total" equiv-text="total"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
+          <context context-type="linenumber">250</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.countOne" datatype="html">
         <source>1 member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">235</context>
+          <context context-type="linenumber">263</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.countMany" datatype="html">
         <source><x id="count" equiv-text="total"/> members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">236</context>
+          <context context-type="linenumber">264</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.actionErrorFallback" datatype="html">
         <source>The action could not be completed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">240</context>
+          <context context-type="linenumber">268</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.actionErrorTitle" datatype="html">
+        <source>Action failed</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
+          <context context-type="linenumber">271</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.pageNavAriaLabel" datatype="html">
+        <source>Members pages</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
+          <context context-type="linenumber">274</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.bulkRemoveButton" datatype="html">
         <source>Remove (<x id="count" equiv-text="this.selectedIds().size"/>)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">244</context>
+          <context context-type="linenumber">278</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmTitleMany" datatype="html">
         <source>Remove <x id="count" equiv-text="bulkIds.length"/> members?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">285</context>
+          <context context-type="linenumber">319</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmTitleOne" datatype="html">
         <source>Remove member?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">288</context>
+          <context context-type="linenumber">322</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmDescriptionMany" datatype="html">
         <source>This will remove <x id="count" equiv-text="bulkIds.length"/> members from the organization. This action cannot be undone.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">297</context>
+          <context context-type="linenumber">331</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmDescriptionOne" datatype="html">
         <source>This will remove this member from the organization. This action cannot be undone.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">298</context>
+          <context context-type="linenumber">332</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmDescriptionSingle" datatype="html">
         <source>This will remove &quot;<x id="name" equiv-text="single.email ?? single.displayName ?? single.id"/>&quot; from the organization. This action cannot be undone.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
-          <context context-type="linenumber">304</context>
+          <context context-type="linenumber">338</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscriptionStatus.active" datatype="html">
@@ -9451,157 +9570,171 @@
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.title" datatype="html">
-        <source> Organization settings </source>
+        <source>Organization settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">4,6</context>
+          <context context-type="linenumber">4,5</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subtitle" datatype="html">
-        <source> General identity, subscription, usage and workspace preferences. </source>
+        <source>General identity, subscription, usage and workspace preferences.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">7,11</context>
+          <context context-type="linenumber">6,7</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabsAriaLabel" datatype="html">
         <source>Organization settings sections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">20,21</context>
+          <context context-type="linenumber">19,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.general" datatype="html">
         <source>General</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">28,30</context>
+          <context context-type="linenumber">27,29</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.subscription" datatype="html">
         <source>Subscription</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">35,37</context>
+          <context context-type="linenumber">34,36</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.usage" datatype="html">
         <source>Usage</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">38,40</context>
+          <context context-type="linenumber">37,39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.notifications" datatype="html">
         <source>Notifications</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">45,48</context>
+          <context context-type="linenumber">44,47</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.regional" datatype="html">
         <source>Regional &amp; formats</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">52,54</context>
+          <context context-type="linenumber">51,53</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.danger" datatype="html">
         <source>Danger zone</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">60,63</context>
+          <context context-type="linenumber">59,62</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.currentTitle" datatype="html">
         <source> Current plan </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">95,97</context>
+          <context context-type="linenumber">100,102</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.managePortal" datatype="html">
         <source>Manage billing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">132,133</context>
+          <context context-type="linenumber">137,138</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.startCheckout" datatype="html">
         <source>Set up billing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">147,148</context>
+          <context context-type="linenumber">152,153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.billingErrorTitle" datatype="html">
+        <source> Couldn&apos;t complete the request </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">162,164</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.plansTitle" datatype="html">
         <source> Plans </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">163,165</context>
+          <context context-type="linenumber">174,176</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesTitle" datatype="html">
         <source> Invoices </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">178,181</context>
+          <context context-type="linenumber">189,192</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.invoicesErrorTitle" datatype="html">
+        <source> Couldn&apos;t load invoices </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">201,203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesEmptyTitle" datatype="html">
         <source>No invoices yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">192,193</context>
+          <context context-type="linenumber">209,210</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesEmptyDescription" datatype="html">
         <source>Invoices appear here once the organization has been billed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">194,195</context>
+          <context context-type="linenumber">211,212</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.downloadInvoice" datatype="html">
         <source>Download invoice</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">223,225</context>
+          <context context-type="linenumber">240,242</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.title" datatype="html">
         <source> Delete this organization </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">282,283</context>
+          <context context-type="linenumber">299,300</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.description" datatype="html">
         <source> Permanently deletes every facility, piece of equipment, inspection, intervention and member record. This cannot be undone. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">285,287</context>
+          <context context-type="linenumber">302,304</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.open" datatype="html">
         <source>Delete organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">300,302</context>
+          <context context-type="linenumber">317,319</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.endsOn" datatype="html">
         <source>Ends on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">466</context>
+          <context context-type="linenumber">470</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.renewsOn" datatype="html">
         <source>Renews on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">467</context>
+          <context context-type="linenumber">471</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.ariaLabel" datatype="html">
@@ -9612,129 +9745,129 @@
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.7d" datatype="html">
-        <source>7D</source>
+        <source> 7D </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">19,20</context>
+          <context context-type="linenumber">25,27</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.30d" datatype="html">
-        <source>30D</source>
+        <source> 30D </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">20,21</context>
+          <context context-type="linenumber">33,35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.90d" datatype="html">
-        <source>90D</source>
+        <source> 90D </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">21,22</context>
+          <context context-type="linenumber">41,43</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.12m" datatype="html">
-        <source>12M</source>
+        <source> 12M </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">22,25</context>
+          <context context-type="linenumber">49,51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.compareToggle.label" datatype="html">
         <source>Compare to previous period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">30,33</context>
+          <context context-type="linenumber">58,61</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.forbidden" datatype="html">
         <source>Not available with your permissions.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">45,48</context>
+          <context context-type="linenumber">73,76</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">139,141</context>
+          <context context-type="linenumber">173,175</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">172,174</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">205,207</context>
+          <context context-type="linenumber">206,208</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
           <context context-type="linenumber">239,241</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
+          <context context-type="linenumber">273,275</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.error.title" datatype="html">
         <source>Couldn&apos;t load statistics</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">51,52</context>
+          <context context-type="linenumber">79,80</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.error.description" datatype="html">
         <source>The organization&apos;s statistics couldn&apos;t be fetched.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">53,54</context>
+          <context context-type="linenumber">81,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">58,60</context>
+          <context context-type="linenumber">92,94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.title" datatype="html">
         <source>Non-conformities by severity</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">80,81</context>
+          <context context-type="linenumber">114,115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.description" datatype="html">
         <source> Current open and unresolved non-conformities across the organization, grouped by severity. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">82,85</context>
+          <context context-type="linenumber">116,119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.loadingAria" datatype="html">
         <source>Loading severity breakdown…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">90,91</context>
+          <context context-type="linenumber">124,125</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.empty" datatype="html">
         <source> No non-conformities recorded. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">99,101</context>
+          <context context-type="linenumber">133,135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.loadError" datatype="html">
         <source> This chart could not be loaded. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">146,149</context>
+          <context context-type="linenumber">180,183</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">179,182</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">212,215</context>
+          <context context-type="linenumber">213,216</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
           <context context-type="linenumber">246,249</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
+          <context context-type="linenumber">280,283</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.pageTitle" datatype="html">
@@ -9884,85 +10017,85 @@
           <context context-type="linenumber">962</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.team.title" datatype="html">
-        <source> Roles &amp; permissions </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">5,7</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.subtitle" datatype="html">
-        <source> Every role defines what a member can see and do in this organization. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">8,12</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.team.createRole" datatype="html">
         <source>New role</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">21,24</context>
+          <context context-type="linenumber">16,19</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">55,57</context>
+          <context context-type="linenumber">48,50</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.loadErrorTitle" datatype="html">
         <source>Roles could not be loaded</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">31,32</context>
+          <context context-type="linenumber">24,25</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.retry" datatype="html">
         <source>Try again</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">36,38</context>
+          <context context-type="linenumber">29,31</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.noCustomRolesTitle" datatype="html">
         <source>No custom roles yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">44,45</context>
+          <context context-type="linenumber">37,38</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.noCustomRolesDescription" datatype="html">
         <source>Create a role to grant a tailored set of permissions beyond the built-in roles.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">46,47</context>
+          <context context-type="linenumber">39,40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteConfirmTitle" datatype="html">
         <source>Delete this role?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">92,93</context>
+          <context context-type="linenumber">85,86</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteConfirmDescription" datatype="html">
         <source> Every member holding only this role loses the permissions it grants. This cannot be undone. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">94,96</context>
+          <context context-type="linenumber">87,89</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteConfirmCancel" datatype="html">
         <source>Cancel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">105,107</context>
+          <context context-type="linenumber">98,100</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteConfirmAction" datatype="html">
         <source> Delete </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">114,116</context>
+          <context context-type="linenumber">107,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.title" datatype="html">
+        <source>Roles &amp; permissions</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.ts</context>
+          <context context-type="linenumber">124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.subtitle" datatype="html">
+        <source>Every role defines what a member can see and do in this organization.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.ts</context>
+          <context context-type="linenumber">127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.code.criticalNonConformitiesOpen" datatype="html">
@@ -10067,57 +10200,57 @@
         <source>Overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">103</context>
+          <context context-type="linenumber">104</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.seeAll" datatype="html">
         <source>See all</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">109</context>
+          <context context-type="linenumber">110</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">121</context>
+          <context context-type="linenumber">124</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">133</context>
+          <context context-type="linenumber">138</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.changesRequested" datatype="html">
         <source>Sent back to you</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">115,116</context>
+          <context context-type="linenumber">118,119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.awaitingReview" datatype="html">
         <source>Awaiting your review</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">127,128</context>
+          <context context-type="linenumber">132,133</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.unsynced" datatype="html">
         <source>Waiting to sync</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">139,140</context>
+          <context context-type="linenumber">146,147</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.recent.title" datatype="html">
         <source>Recently updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">156,158</context>
+          <context context-type="linenumber">164,166</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.recent.loadingAria" datatype="html">
         <source>Loading recently updated interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">163,164</context>
+          <context context-type="linenumber">171,172</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.overdueBy" datatype="html">

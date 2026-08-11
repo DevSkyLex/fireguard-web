@@ -39,7 +39,9 @@ import type {
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import { OrganizationPageHeader } from '@features/organization/ui/components';
 import { EmptyState } from '@shared/empty-state';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
@@ -129,12 +131,14 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
     OrganizationGeneralForm,
     OrganizationLogoPicker,
     OrganizationNotificationsForm,
+    OrganizationPageHeader,
     OrganizationPlanSelector,
     OrganizationRegionalForm,
     OrganizationUsagePanel,
     HlmBadge,
     HlmButton,
     HlmSkeleton,
+    ...HlmAlertImports,
     ...HlmItemImports,
     ...HlmTabsImports,
   ],

@@ -13,8 +13,6 @@ import {
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronLeft,
-  lucideChevronRight,
   lucideCircleAlert,
   lucideMailPlus,
   lucideMailQuestion,
@@ -32,13 +30,20 @@ import {
   type OrganizationMemberOutput,
 } from '@features/organization/models';
 import {
+  ORGANIZATION_CONTEXT_PORT,
+  type OrganizationContextPort,
+} from '@features/organization/ports';
+import {
   MEMBERS_PAGE_SIZE,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
+import { OrganizationPageHeader } from '@features/organization/ui/components';
+import { ErrorState } from '@shared/error-state';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmLabel } from '@shared/ui/label';
+import { HlmPaginationImports } from '@shared/ui/pagination';
 import { OrganizationInviteDialog } from '../../dialogs/organization-invite-dialog';
 import {
   OrganizationMemberRolesDialog,
@@ -83,20 +88,21 @@ import { OrganizationMemberTable } from '../../tables/organization-member-table'
   selector: 'app-organization-members-page',
   imports: [
     NgIcon,
+    ErrorState,
     HlmButton,
-    HlmLabel,
     OrganizationInvitationTable,
     OrganizationInviteDialog,
     OrganizationMemberRolesDialog,
     OrganizationMemberTable,
+    OrganizationPageHeader,
     ...HlmAlertDialogImports,
+    ...HlmAlertImports,
     ...HlmEmptyImports,
+    ...HlmPaginationImports,
   ],
   providers: [
     OrganizationMembersStore,
     provideIcons({
-      lucideChevronLeft,
-      lucideChevronRight,
       lucideCircleAlert,
       lucideMailPlus,
       lucideMailQuestion,
@@ -131,6 +137,13 @@ export class OrganizationMembersPage {
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
+
+  /** The routed organization, identifying `app-organization-page-header`. */
+  protected readonly organizationContext: OrganizationContextPort =
+    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  /** The page's heading, matching the nav entry's own `route.members` label. */
+  protected readonly pageTitle: string = $localize`:@@route.members:Members`;
 
   /** Currently selected member ids, scoped to the loaded page — cleared on every reload. */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
@@ -222,6 +235,21 @@ export class OrganizationMembersPage {
     Math.max(1, Math.ceil(this.store.membersTotal() / MEMBERS_PAGE_SIZE)),
   );
 
+  /**
+   * Property pageIndicatorLabel
+   * @readonly
+   * @description The pagination nav's "Page X of Y" sentence.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly pageIndicatorLabel: Signal<string> = computed<string>(() => {
+    const current: number = this.page();
+    const total: number = this.membersPageCount();
+
+    return $localize`:@@org.members.pageIndicator:Page ${current}:current: of ${total}:total:`;
+  });
+
   /** Where a member row's link points. */
   protected readonly memberDetailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'members'],
@@ -238,6 +266,9 @@ export class OrganizationMembersPage {
 
   /** Fallback text for the action-error banner when the backend sent no message. */
   protected readonly actionErrorFallback: string = $localize`:@@org.members.actionErrorFallback:The action could not be completed.`;
+
+  /** The action-error banner's heading. */
+  protected readonly actionErrorTitle: string = $localize`:@@org.members.actionErrorTitle:Action failed`;
 
   /** The bulk-remove button's label, counting the current selection. */
   protected readonly bulkRemoveLabel: Signal<string> = computed<string>(

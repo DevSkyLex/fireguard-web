@@ -22,6 +22,7 @@ import {
   type OrganizationInvitationOutput,
   type OrganizationMemberOutput,
 } from '@features/organization/models';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationMembersStore } from '@features/organization/state/organization-members';
 import { OrganizationMembersPage } from '../organization-members-page.component';
 
@@ -89,6 +90,14 @@ describe('OrganizationMembersPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: {
+            selectedOrganizationId: signal<string | null>('org-1'),
+            selectedOrganization: signal({ name: 'Acme Corp' }),
+            isLoadingOrganization: signal(false),
+          },
+        },
         {
           provide: OrganizationPermissionService,
           useValue: {

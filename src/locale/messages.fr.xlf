@@ -9954,6 +9954,18 @@
         <source>The action could not be completed.</source>
         <target>L&apos;action n&apos;a pas pu être effectuée.</target>
       </trans-unit>
+      <trans-unit id="org.members.actionErrorTitle" datatype="html">
+        <source>Action failed</source>
+        <target>Échec de l&apos;action</target>
+      </trans-unit>
+      <trans-unit id="org.members.pageIndicator" datatype="html">
+        <source>Page <x id="current" equiv-text="current"/> of <x id="total" equiv-text="total"/></source>
+        <target>Page <x id="current" equiv-text="current"/> sur <x id="total" equiv-text="total"/></target>
+      </trans-unit>
+      <trans-unit id="org.members.pageNavAriaLabel" datatype="html">
+        <source>Members pages</source>
+        <target>Pages des membres</target>
+      </trans-unit>
       <trans-unit id="org.members.bulkRemoveButton" datatype="html">
         <source>Remove (<x id="count" equiv-text="this.selectedIds().size"/>)</source>
         <target>Retirer (<x id="count" equiv-text="this.selectedIds().size"/>)</target>
@@ -10381,6 +10393,14 @@
       <trans-unit id="org.settings.subscription.startCheckout" datatype="html">
         <source>Set up billing</source>
         <target>Configurer la facturation</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.billingErrorTitle" datatype="html">
+        <source>Couldn't complete the request</source>
+        <target>Impossible de terminer la demande</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.invoicesErrorTitle" datatype="html">
+        <source>Couldn't load invoices</source>
+        <target>Impossible de charger les factures</target>
       </trans-unit>
       <trans-unit id="org.settings.subscription.plansTitle" datatype="html">
         <source>Plans</source>

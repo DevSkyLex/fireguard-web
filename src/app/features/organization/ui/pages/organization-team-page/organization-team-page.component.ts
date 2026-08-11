@@ -22,10 +22,16 @@ import type {
 } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
+  ORGANIZATION_CONTEXT_PORT,
+  type OrganizationContextPort,
+} from '@features/organization/ports';
+import {
   OrganizationTeamStore,
   type OrganizationTeamStoreType,
 } from '@features/organization/state/organization-team';
+import { OrganizationPageHeader } from '@features/organization/ui/components';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { OrganizationRoleGrid } from '../../dataviews/organization-role-grid';
@@ -71,6 +77,8 @@ type PendingMutation = 'create' | 'delete' | 'permissions' | null;
   imports: [
     NgIcon,
     EmptyState,
+    ErrorState,
+    OrganizationPageHeader,
     OrganizationRoleCreateDialog,
     OrganizationRoleGrid,
     OrganizationRolePermissionsSheet,
@@ -107,6 +115,16 @@ export class OrganizationTeamPage {
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
+
+  /** The routed organization, identifying `app-organization-page-header`. */
+  protected readonly organizationContext: OrganizationContextPort =
+    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  /** The page's heading. */
+  protected readonly pageTitle: string = $localize`:@@org.team.title:Roles & permissions`;
+
+  /** The page's subheading. */
+  protected readonly pageSubtitle: string = $localize`:@@org.team.subtitle:Every role defines what a member can see and do in this organization.`;
 
   /** Whether the acting member may create, edit or delete a custom role. */
   protected readonly canManage: Signal<boolean> = computed<boolean>(() =>

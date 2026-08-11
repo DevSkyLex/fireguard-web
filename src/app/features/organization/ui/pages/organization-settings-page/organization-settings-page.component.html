@@ -1,12 +1,11 @@
 <div id="organization-settings" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <header class="flex flex-col gap-0.5">
-    <h1 class="text-xl font-semibold tracking-tight text-foreground" i18n="@@org.settings.title">
-      Organization settings
-    </h1>
-    <p class="text-sm text-muted-foreground" i18n="@@org.settings.subtitle">
-      General identity, subscription, usage and workspace preferences.
-    </p>
-  </header>
+  <app-organization-page-header
+    [organization]="organization()"
+    title="Organization settings"
+    i18n-title="@@org.settings.title"
+    subtitle="General identity, subscription, usage and workspace preferences."
+    i18n-subtitle="@@org.settings.subtitle"
+  />
 
   @if (!organizationReady()) {
     <div class="flex max-w-2xl flex-col gap-4" aria-hidden="true">
@@ -157,7 +156,13 @@
               </div>
 
               @if (billingStore.billingError(); as error) {
-                <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+                <div hlmAlert variant="destructive" data-testid="org-settings-billing-error">
+                  <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                  <p hlmAlertTitle i18n="@@org.settings.subscription.billingErrorTitle">
+                    Couldn't complete the request
+                  </p>
+                  <p hlmAlertDescription>{{ error.message }}</p>
+                </div>
               }
             </section>
 
@@ -190,7 +195,13 @@
                   <hlm-skeleton class="h-10 w-full" />
                 </div>
               } @else if (billingStore.invoicesError(); as error) {
-                <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+                <div hlmAlert variant="destructive" data-testid="org-settings-invoices-error">
+                  <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                  <p hlmAlertTitle i18n="@@org.settings.subscription.invoicesErrorTitle">
+                    Couldn't load invoices
+                  </p>
+                  <p hlmAlertDescription>{{ error.message }}</p>
+                </div>
               } @else if (billingStore.invoices().length === 0) {
                 <app-empty-state
                   icon="lucideReceipt"

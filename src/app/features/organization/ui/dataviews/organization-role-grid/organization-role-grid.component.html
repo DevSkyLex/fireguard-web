@@ -82,12 +82,11 @@
         </div>
       </div>
     } @empty {
-      <p
-        class="col-span-full py-8 text-center text-sm text-muted-foreground"
-        i18n="@@org.team.noResults"
-      >
-        No roles found.
-      </p>
+      <hlm-empty class="col-span-full">
+        <hlm-empty-header>
+          <div hlmEmptyTitle i18n="@@org.team.noResults">No roles found.</div>
+        </hlm-empty-header>
+      </hlm-empty>
     }
   }
 </div>

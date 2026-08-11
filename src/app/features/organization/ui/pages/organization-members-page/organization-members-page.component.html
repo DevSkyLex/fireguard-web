@@ -1,29 +1,24 @@
-<div id="organization-members" class="flex w-full flex-col gap-8 p-4 md:p-6">
-  <div class="flex flex-wrap items-start justify-between gap-3">
-    <div class="flex min-w-0 flex-col gap-1">
-      <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.members">Members</h1>
-      <p class="text-sm text-muted-foreground">{{ subtitle() }}</p>
-    </div>
-
+<div id="organization-members" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <app-organization-page-header
+    [organization]="organizationContext.selectedOrganization()"
+    [title]="pageTitle"
+    [subtitle]="subtitle()"
+  >
     @if (canManageMembers()) {
       <button hlmBtn data-testid="organization-members-invite" (click)="openInviteDialog()">
         <ng-icon name="lucideMailPlus" aria-hidden="true" />
         <span i18n="@@org.members.inviteButton">Invite member</span>
       </button>
     }
-  </div>
+  </app-organization-page-header>
 
   @if (actionError(); as error) {
-    <div
-      role="alert"
-      data-testid="organization-members-action-error"
-      class="flex items-start justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-    >
-      <span class="flex items-center gap-2">
-        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-        {{ error.message ?? actionErrorFallback }}
-      </span>
+    <div hlmAlert variant="destructive" data-testid="organization-members-action-error">
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <p hlmAlertTitle>{{ actionErrorTitle }}</p>
+      <p hlmAlertDescription>{{ error.message ?? actionErrorFallback }}</p>
       <button
+        hlmAlertAction
         hlmBtn
         type="button"
         variant="ghost"
@@ -57,27 +52,22 @@
     </div>
 
     @if (store.loadCallState().status === 'error') {
-      <hlm-empty class="border border-dashed">
-        <hlm-empty-header>
-          <hlm-empty-media variant="icon">
-            <ng-icon name="lucideCircleAlert" />
-          </hlm-empty-media>
-          <div hlmEmptyTitle i18n="@@org.members.errorTitle">Couldn't load members</div>
-          <div hlmEmptyDescription i18n="@@org.members.errorText">
-            The members could not be loaded. Check your connection and try again.
-          </div>
-        </hlm-empty-header>
-        <hlm-empty-content>
-          <button
-            hlmBtn
-            variant="outline"
-            data-testid="organization-members-retry"
-            (click)="reload()"
-          >
-            <span i18n="@@org.members.retry">Retry</span>
-          </button>
-        </hlm-empty-content>
-      </hlm-empty>
+      <app-error-state
+        icon="lucideCircleAlert"
+        title="Couldn't load members"
+        i18n-title="@@org.members.errorTitle"
+        description="The members could not be loaded. Check your connection and try again."
+        i18n-description="@@org.members.errorText"
+      >
+        <button
+          hlmBtn
+          variant="outline"
+          data-testid="organization-members-retry"
+          (click)="reload()"
+        >
+          <span i18n="@@org.members.retry">Retry</span>
+        </button>
+      </app-error-state>
     } @else if (!store.isLoading() && store.members().length === 0) {
       <hlm-empty class="border border-dashed">
         <hlm-empty-header>
@@ -120,40 +110,46 @@
         >
 
         @if (membersPageCount() > 1) {
-          <div class="mt-2 flex items-center gap-4 sm:mt-0">
-            <span hlmLabel data-testid="organization-members-page-indicator"
-              >Page {{ page() }} of {{ membersPageCount() }}</span
-            >
-
-            <div class="flex space-x-1">
-              <button
-                hlmBtn
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                data-testid="organization-members-page-prev"
-                i18n-aria-label="@@org.members.pagePrevious"
-                aria-label="Previous page"
-                [disabled]="page() === 1"
-                (click)="goToMembersPage(page() - 1)"
-              >
-                <ng-icon name="lucideChevronLeft" aria-hidden="true" />
-              </button>
-              <button
-                hlmBtn
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                data-testid="organization-members-page-next"
-                i18n-aria-label="@@org.members.pageNext"
-                aria-label="Next page"
-                [disabled]="page() === membersPageCount()"
-                (click)="goToMembersPage(page() + 1)"
-              >
-                <ng-icon name="lucideChevronRight" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
+          <nav
+            hlmPagination
+            aria-label="Members pages"
+            i18n-aria-label="@@org.members.pageNavAriaLabel"
+            class="mt-2 w-fit sm:mt-0"
+          >
+            <ul hlmPaginationContent>
+              <li hlmPaginationItem>
+                <hlm-pagination-previous
+                  iconOnly
+                  aria-label="Previous page"
+                  i18n-aria-label="@@org.members.pagePrevious"
+                  [class]="page() === 1 ? 'pointer-events-none opacity-50' : ''"
+                  [attr.aria-disabled]="page() === 1 ? 'true' : null"
+                  [attr.tabindex]="page() === 1 ? -1 : null"
+                  data-testid="organization-members-page-prev"
+                  (click)="goToMembersPage(page() - 1)"
+                />
+              </li>
+              <li hlmPaginationItem>
+                <span
+                  class="px-2 text-sm text-muted-foreground"
+                  data-testid="organization-members-page-indicator"
+                  >{{ pageIndicatorLabel() }}</span
+                >
+              </li>
+              <li hlmPaginationItem>
+                <hlm-pagination-next
+                  iconOnly
+                  aria-label="Next page"
+                  i18n-aria-label="@@org.members.pageNext"
+                  [class]="page() === membersPageCount() ? 'pointer-events-none opacity-50' : ''"
+                  [attr.aria-disabled]="page() === membersPageCount() ? 'true' : null"
+                  [attr.tabindex]="page() === membersPageCount() ? -1 : null"
+                  data-testid="organization-members-page-next"
+                  (click)="goToMembersPage(page() + 1)"
+                />
+              </li>
+            </ul>
+          </nav>
         }
       </div>
     }
@@ -164,27 +160,22 @@
       <h2 class="text-lg font-medium" i18n="@@org.invitations.heading">Pending invitations</h2>
 
       @if (store.loadCallState().status === 'error') {
-        <hlm-empty class="border border-dashed">
-          <hlm-empty-header>
-            <hlm-empty-media variant="icon">
-              <ng-icon name="lucideCircleAlert" />
-            </hlm-empty-media>
-            <div hlmEmptyTitle i18n="@@org.invitations.errorTitle">Couldn't load invitations</div>
-            <div hlmEmptyDescription i18n="@@org.invitations.errorText">
-              The invitations could not be loaded. Check your connection and try again.
-            </div>
-          </hlm-empty-header>
-          <hlm-empty-content>
-            <button
-              hlmBtn
-              variant="outline"
-              data-testid="organization-invitations-retry"
-              (click)="reload()"
-            >
-              <span i18n="@@org.members.retry">Retry</span>
-            </button>
-          </hlm-empty-content>
-        </hlm-empty>
+        <app-error-state
+          icon="lucideCircleAlert"
+          title="Couldn't load invitations"
+          i18n-title="@@org.invitations.errorTitle"
+          description="The invitations could not be loaded. Check your connection and try again."
+          i18n-description="@@org.invitations.errorText"
+        >
+          <button
+            hlmBtn
+            variant="outline"
+            data-testid="organization-invitations-retry"
+            (click)="reload()"
+          >
+            <span i18n="@@org.members.retry">Retry</span>
+          </button>
+        </app-error-state>
       } @else if (!store.isLoading() && store.activeInvitations().length === 0) {
         <hlm-empty class="border border-dashed">
           <hlm-empty-header>

@@ -21,6 +21,7 @@ import {
   type OrganizationPermissionOutput,
   type OrganizationRoleOutput,
 } from '@features/organization/models';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationTeamStore } from '@features/organization/state/organization-team';
 import { OrganizationTeamPage } from '../organization-team-page.component';
 
@@ -62,6 +63,14 @@ describe('OrganizationTeamPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: {
+            selectedOrganizationId: signal<string | null>('org-1'),
+            selectedOrganization: signal({ name: 'Acme Corp' }),
+            isLoadingOrganization: signal(false),
+          },
+        },
         {
           provide: OrganizationPermissionService,
           useValue: {

@@ -3,8 +3,10 @@ import {
   lucideCircleCheck,
   lucideCircleDotDashed,
   lucideCircleX,
+  lucideOctagonAlert,
   lucideSend,
   lucideTag,
+  lucideTriangleAlert,
   lucideX,
 } from '@ng-icons/lucide';
 
@@ -27,7 +29,9 @@ export const INSPECTION_STATUS_TAG_ICONS: Readonly<Record<string, string>> = {
   lucideCircleCheck,
   lucideCircleDotDashed,
   lucideCircleX,
+  lucideOctagonAlert,
   lucideSend,
   lucideTag,
+  lucideTriangleAlert,
   lucideX,
 };

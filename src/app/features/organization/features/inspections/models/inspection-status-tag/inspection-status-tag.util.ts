@@ -1,4 +1,5 @@
 import type { InspectionResult, InspectionStatus } from '../inspection/inspection-output.interface';
+import type { NonConformitySeverity } from '../non-conformity/non-conformity-output.interface';
 import type { InspectionStatusTagDescriptor } from './inspection-status-tag-descriptor.interface';
 import type { InspectionStatusTagKind } from './inspection-status-tag-kind.type';
 
@@ -57,10 +58,40 @@ const RESULT: Record<InspectionResult, InspectionStatusTagDescriptor> = {
   },
 };
 
+/**
+ * Non-conformity severity descriptors, ordered by escalating urgency. Reused
+ * by the organization statistics page's severity breakdown so a severity
+ * level never renders as a bare count without its label and icon
+ * (`ARCHITECTURE.md` §10.10, `PRODUCT.md`'s no-colour-alone rule).
+ */
+const NON_CONFORMITY_SEVERITY: Record<NonConformitySeverity, InspectionStatusTagDescriptor> = {
+  low: {
+    label: $localize`:@@nonConformitySeverity.low:Low`,
+    severity: 'neutral',
+    icon: 'lucideCircleDotDashed',
+  },
+  medium: {
+    label: $localize`:@@nonConformitySeverity.medium:Medium`,
+    severity: 'warning',
+    icon: 'lucideCircleAlert',
+  },
+  high: {
+    label: $localize`:@@nonConformitySeverity.high:High`,
+    severity: 'danger',
+    icon: 'lucideTriangleAlert',
+  },
+  critical: {
+    label: $localize`:@@nonConformitySeverity.critical:Critical`,
+    severity: 'danger',
+    icon: 'lucideOctagonAlert',
+  },
+};
+
 /** Registry indexed by tag kind. */
 const REGISTRY: Record<InspectionStatusTagKind, Record<string, InspectionStatusTagDescriptor>> = {
   status: STATUS,
   result: RESULT,
+  nonConformitySeverity: NON_CONFORMITY_SEVERITY,
 };
 
 /**

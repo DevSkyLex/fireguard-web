@@ -1,0 +1,294 @@
+<div id="organization-statistics" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <app-organization-page-header
+    [organization]="organizationContext.selectedOrganization()"
+    [title]="pageTitle"
+    [subtitle]="pageSubtitle"
+  >
+    <div class="flex flex-wrap items-center gap-3">
+      <hlm-toggle-group
+        type="single"
+        [nullable]="false"
+        variant="outline"
+        size="sm"
+        [value]="selectedPeriod()"
+        data-testid="org-statistics-period-toggle"
+        aria-label="Time period"
+        i18n-aria-label="@@org.statistics.period.ariaLabel"
+        (valueChange)="onPeriodChanged($event)"
+      >
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          value="7d"
+          i18n="@@org.statistics.period.7d"
+        >
+          7D
+        </button>
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          value="30d"
+          i18n="@@org.statistics.period.30d"
+        >
+          30D
+        </button>
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          value="90d"
+          i18n="@@org.statistics.period.90d"
+        >
+          90D
+        </button>
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          value="12m"
+          i18n="@@org.statistics.period.12m"
+        >
+          12M
+        </button>
+      </hlm-toggle-group>
+
+      <hlm-field orientation="horizontal" class="gap-2">
+        <label
+          hlmFieldLabel
+          for="org-statistics-compare"
+          i18n="@@org.statistics.compareToggle.label"
+          >Compare to previous period</label
+        >
+        <hlm-switch
+          id="org-statistics-compare"
+          data-testid="org-statistics-compare-toggle"
+          [checked]="compareToPreviousPeriod()"
+          (checkedChange)="compareToPreviousPeriod.set($event)"
+        />
+      </hlm-field>
+    </div>
+  </app-organization-page-header>
+
+  @if (dashboardStore.queryHasError() && isForbidden(dashboardStore.queryError())) {
+    <div hlmCard class="border-dashed">
+      <div hlmCardContent class="py-10 text-center text-sm text-muted-foreground">
+        <p i18n="@@org.statistics.forbidden">Not available with your permissions.</p>
+      </div>
+    </div>
+  } @else if (dashboardStore.queryHasError()) {
+    <app-error-state
+      icon="lucideTriangleAlert"
+      title="Couldn't load statistics"
+      i18n-title="@@org.statistics.error.title"
+      description="The organization's statistics couldn't be fetched."
+      i18n-description="@@org.statistics.error.description"
+    >
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        class="gap-2 max-sm:min-h-11"
+        (click)="retryDashboard()"
+      >
+        <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+        <span i18n="@@org.statistics.retry">Retry</span>
+      </button>
+    </app-error-state>
+  } @else {
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      @for (tile of kpiTiles(); track tile.id) {
+        <div [attr.data-testid]="'org-statistics-kpi-' + tile.id">
+          <app-stat-tile
+            [label]="tile.label"
+            [value]="tile.value"
+            [description]="tile.description"
+            [icon]="tile.icon"
+            [delta]="tile.delta"
+            [link]="tile.link"
+            [loading]="dashboardStore.isQueryLoading()"
+          />
+        </div>
+      }
+    </section>
+
+    <div hlmCard>
+      <div hlmCardHeader>
+        <h3 hlmCardTitle i18n="@@org.statistics.severity.title">Non-conformities by severity</h3>
+        <p hlmCardDescription i18n="@@org.statistics.severity.description">
+          Current open and unresolved non-conformities across the organization, grouped by severity.
+        </p>
+      </div>
+      <div hlmCardContent class="flex flex-col gap-3">
+        @if (dashboardStore.isQueryLoading()) {
+          <div
+            class="flex flex-col gap-3"
+            role="status"
+            aria-label="Loading severity breakdown…"
+            i18n-aria-label="@@org.statistics.severity.loadingAria"
+          >
+            @for (row of severitySkeletonRows; track row) {
+              <hlm-skeleton class="h-6 w-full" />
+            }
+          </div>
+        } @else if (severityTotal() === 0) {
+          <p class="text-sm text-muted-foreground" i18n="@@org.statistics.severity.empty">
+            No non-conformities recorded.
+          </p>
+        } @else {
+          @for (entry of severityBreakdown(); track entry.severity) {
+            <div
+              class="flex items-center justify-between gap-3"
+              [attr.data-testid]="'org-statistics-severity-' + entry.severity"
+            >
+              <span
+                hlmBadge
+                variant="outline"
+                class="gap-1.5 px-1.5 leading-none text-muted-foreground"
+              >
+                <ng-icon [name]="entry.descriptor.icon" class="shrink-0" aria-hidden="true" />
+                {{ entry.descriptor.label }}
+              </span>
+              <span class="text-sm font-medium text-foreground tabular-nums">{{
+                entry.count
+              }}</span>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div hlmCard data-testid="org-statistics-chart-inspections">
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>{{ inspectionsSeriesName }}</h3>
+        @if (inspectionsSummaryLine(); as line) {
+          <p hlmCardDescription>{{ line }}</p>
+        }
+      </div>
+      <div hlmCardContent>
+        @if (overviewTrendStore.queryHasError() && isForbidden(overviewTrendStore.queryError())) {
+          <p
+            class="py-10 text-center text-sm text-muted-foreground"
+            i18n="@@org.statistics.forbidden"
+          >
+            Not available with your permissions.
+          </p>
+        } @else if (overviewTrendStore.queryHasError()) {
+          <p
+            class="py-10 text-center text-sm text-muted-foreground"
+            i18n="@@org.statistics.trend.loadError"
+          >
+            This chart could not be loaded.
+          </p>
+        } @else {
+          <app-line-chart
+            [series]="inspectionsChartSeries()"
+            [label]="inspectionsChartLabel"
+            [loading]="overviewTrendStore.isQueryLoading()"
+            smooth
+          />
+        }
+      </div>
+    </div>
+
+    <div hlmCard data-testid="org-statistics-chart-non-conformities">
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>{{ nonConformitiesChartTitle }}</h3>
+        @if (nonConformitiesSummaryLine(); as line) {
+          <p hlmCardDescription>{{ line }}</p>
+        }
+      </div>
+      <div hlmCardContent>
+        @if (overviewTrendStore.queryHasError() && isForbidden(overviewTrendStore.queryError())) {
+          <p
+            class="py-10 text-center text-sm text-muted-foreground"
+            i18n="@@org.statistics.forbidden"
+          >
+            Not available with your permissions.
+          </p>
+        } @else if (overviewTrendStore.queryHasError()) {
+          <p
+            class="py-10 text-center text-sm text-muted-foreground"
+            i18n="@@org.statistics.trend.loadError"
+          >
+            This chart could not be loaded.
+          </p>
+        } @else {
+          <app-line-chart
+            [series]="nonConformitiesChartSeries()"
+            [label]="nonConformitiesChartLabel"
+            [loading]="overviewTrendStore.isQueryLoading()"
+            smooth
+          />
+        }
+      </div>
+    </div>
+
+    <div hlmCard data-testid="org-statistics-chart-equipment">
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>{{ equipmentSeriesName }}</h3>
+        @if (equipmentSummaryLine(); as line) {
+          <p hlmCardDescription>{{ line }}</p>
+        }
+      </div>
+      <div hlmCardContent>
+        @if (!assetGrowthTrendStore.canReadEquipment()) {
+          <p
+            class="py-10 text-center text-sm text-muted-foreground"
+            i18n="@@org.statistics.forbidden"
+          >
+            Not available with your permissions.
+          </p>
+        } @else if (assetGrowthTrendStore.queryHasError()) {
+          <p
+            class="py-10 text-center text-sm text-muted-foreground"
+            i18n="@@org.statistics.trend.loadError"
+          >
+            This chart could not be loaded.
+          </p>
+        } @else {
+          <app-line-chart
+            [series]="equipmentChartSeries()"
+            [label]="equipmentChartLabel"
+            [loading]="assetGrowthTrendStore.isQueryLoading()"
+            smooth
+            area
+          />
+        }
+      </div>
+    </div>
+
+    <div hlmCard data-testid="org-statistics-chart-facilities">
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>{{ facilitiesSeriesName }}</h3>
+        @if (facilitiesSummaryLine(); as line) {
+          <p hlmCardDescription>{{ line }}</p>
+        }
+      </div>
+      <div hlmCardContent>
+        @if (!assetGrowthTrendStore.canReadFacilities()) {
+          <p
+            class="py-10 text-center text-sm text-muted-foreground"
+            i18n="@@org.statistics.forbidden"
+          >
+            Not available with your permissions.
+          </p>
+        } @else if (assetGrowthTrendStore.queryHasError()) {
+          <p
+            class="py-10 text-center text-sm text-muted-foreground"
+            i18n="@@org.statistics.trend.loadError"
+          >
+            This chart could not be loaded.
+          </p>
+        } @else {
+          <app-line-chart
+            [series]="facilitiesChartSeries()"
+            [label]="facilitiesChartLabel"
+            [loading]="assetGrowthTrendStore.isQueryLoading()"
+            smooth
+            area
+          />
+        }
+      </div>
+    </div>
+  </div>
+</div>

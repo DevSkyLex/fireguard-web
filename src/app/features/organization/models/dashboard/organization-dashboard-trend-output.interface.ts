@@ -112,7 +112,12 @@ export type OrganizationDashboardTrendComparison = Readonly<
   readonly mode?: string | null;
   readonly from?: string | null;
   readonly to?: string | null;
-  readonly summary?: readonly OrganizationDashboardTrendSeriesPoint[];
+  /**
+   * Period-total scalars (`total`, `delta`), not a series — a single
+   * `{total?: int, delta?: float}` map per
+   * `GetOrganizationDashboardTrendProvider::normalizeComparison()`.
+   */
+  readonly summary?: OrganizationDashboardTrendComparisonScalarMap;
   readonly series?: readonly OrganizationDashboardTrendSeriesPoint[];
 };
 

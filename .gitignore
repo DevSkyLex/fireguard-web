@@ -57,3 +57,4 @@ Thumbs.db
 # Claude Code (réglages locaux)
 .claude/settings.local.json
 .claude/worktrees/
+__pycache__/

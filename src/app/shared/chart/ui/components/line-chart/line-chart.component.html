@@ -1,0 +1,41 @@
+@if (loading() || !isBrowser) {
+  <hlm-skeleton class="w-full" [style.height.px]="totalHeight()" />
+} @else if (isEmpty()) {
+  <app-empty-state [title]="emptyTitle" icon="lucideChartLine" [style.height.px]="totalHeight()" />
+} @else {
+  <div class="w-full" [style.height.px]="totalHeight()" role="img" [attr.aria-label]="label()">
+    <div class="w-full" [style.height.px]="height()">
+      @if (area()) {
+        <ngx-charts-area-chart
+          class="block h-full w-full"
+          aria-hidden="true"
+          [results]="chartData()"
+          [scheme]="colorScheme()"
+          [legend]="showLegend()"
+          [legendPosition]="legendPosition"
+          [xAxis]="true"
+          [yAxis]="true"
+          [curve]="curve()"
+          [autoScale]="true"
+          [roundDomains]="roundDomains()"
+          [animations]="animationsEnabled"
+        />
+      } @else {
+        <ngx-charts-line-chart
+          class="block h-full w-full"
+          aria-hidden="true"
+          [results]="chartData()"
+          [scheme]="colorScheme()"
+          [legend]="showLegend()"
+          [legendPosition]="legendPosition"
+          [xAxis]="true"
+          [yAxis]="true"
+          [curve]="curve()"
+          [autoScale]="true"
+          [roundDomains]="roundDomains()"
+          [animations]="animationsEnabled"
+        />
+      }
+    </div>
+  </div>
+}

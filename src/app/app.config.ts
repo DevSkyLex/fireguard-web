@@ -10,6 +10,7 @@ import {
   withHttpTransferCacheOptions,
   withNoIncrementalHydration,
 } from '@angular/platform-browser';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { APP_ROUTES } from '@app/app.routes';
@@ -35,7 +36,11 @@ import { provideSpartanHlm } from '@shared/ui/utils';
  *
  * @description
  * This configuration is used to provide the
- * application with the necessary providers.
+ * application with the necessary providers. Registers Angular's animation
+ * engine as a no-op (`provideNoopAnimations`): nothing in this codebase
+ * declares an `animations:` trigger, but a bundled dependency (ngx-charts)
+ * does, and without any engine registered its `[@animationState]` binding
+ * throws `NG05105` and the chart series never becomes visible.
  *
  * @version 1.0.0
  *
@@ -54,6 +59,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
+    provideNoopAnimations(),
     provideRouter(
       APP_ROUTES,
       withComponentInputBinding(),

@@ -1,0 +1,41 @@
+@if (loading() || !isBrowser) {
+  <hlm-skeleton class="w-full" [style.height.px]="totalHeight()" />
+} @else if (isEmpty()) {
+  <app-empty-state
+    [title]="emptyTitle"
+    icon="lucideChartColumn"
+    [style.height.px]="totalHeight()"
+  />
+} @else {
+  <div class="w-full" [style.height.px]="totalHeight()" role="img" [attr.aria-label]="label()">
+    <div class="w-full" [style.height.px]="height()">
+      @if (isGrouped()) {
+        <ngx-charts-bar-vertical-2d
+          class="block h-full w-full"
+          aria-hidden="true"
+          [results]="groupedData()"
+          [scheme]="colorScheme()"
+          [legend]="showLegend()"
+          [legendPosition]="legendPosition"
+          [xAxis]="true"
+          [yAxis]="true"
+          [roundDomains]="true"
+          [animations]="animationsEnabled"
+        />
+      } @else {
+        <ngx-charts-bar-vertical
+          class="block h-full w-full"
+          aria-hidden="true"
+          [results]="singleData()"
+          [scheme]="colorScheme()"
+          [legend]="showLegend()"
+          [legendPosition]="legendPosition"
+          [xAxis]="true"
+          [yAxis]="true"
+          [roundDomains]="true"
+          [animations]="animationsEnabled"
+        />
+      }
+    </div>
+  </div>
+}

@@ -54,6 +54,14 @@ import { withThemeSwitcher } from '@shared/theme-switcher';
  * `notFoundRedirectGuard` rather than a bare `redirectTo`, so the not-found page
  * receives the URL that failed and can name it (section 9.5).
  *
+ * `organizations/invitations/accept` is declared before the dashboard `''`
+ * route and outside its `organizations` child subtree on purpose: that subtree
+ * is reached through `organizationGuard`/`organizationAccessGuard`, both of
+ * which assume an authenticated member picking a workspace, while an
+ * invitation link must stay reachable signed out. It shares the focused shell
+ * with `error` and `auth` — a single centered page, no sidebar — because
+ * nothing here needs a workspace to render.
+ *
  * @since 1.0.0
  */
 export const APP_ROUTES: Routes = [
@@ -86,6 +94,15 @@ export const APP_ROUTES: Routes = [
     component: FocusedLayout,
     providers: [provideFocusedLayoutSlots({ header: [withThemeSwitcher()] })],
     loadChildren: () => import('@features/error/error.routes').then((m) => m.ERROR_ROUTES),
+  },
+  {
+    path: 'organizations/invitations/accept',
+    component: FocusedLayout,
+    providers: [provideFocusedLayoutSlots({ header: [withThemeSwitcher()] })],
+    loadChildren: () =>
+      import('@features/organization/organization-invitation-accept.routes').then(
+        (m) => m.ORGANIZATION_INVITATION_ACCEPT_ROUTES,
+      ),
   },
   {
     path: '',

@@ -55,7 +55,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * preview error) and the organization's own avatar for a state that does
  * (accepted, pending, not-available).
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */

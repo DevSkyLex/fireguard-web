@@ -9193,152 +9193,158 @@
           <context context-type="linenumber">298</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.invitationAccept.missingTokenTitle" datatype="html">
-        <source> Invalid invitation link </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">11,13</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.invitationAccept.missingToken" datatype="html">
-        <source> This invitation link is missing its token. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">14,17</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.invitationAccept.goHome" datatype="html">
         <source> Go to homepage </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">19,22</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">61,64</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">221,224</context>
+          <context context-type="linenumber">42,45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.loadingAria" datatype="html">
         <source>Loading invitation…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">27,28</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.invitationAccept.previewErrorTitle" datatype="html">
-        <source> We can&apos;t open this invitation </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">53,55</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.invitationAccept.previewError" datatype="html">
-        <source> This invitation link is invalid, expired or has already been used. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">56,59</context>
+          <context context-type="linenumber">64,65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.acceptedTitle" datatype="html">
         <source>You&apos;re in</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">86,87</context>
+          <context context-type="linenumber">114,115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.accepted" datatype="html">
         <source> You have joined the organization. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">88,91</context>
+          <context context-type="linenumber">116,119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.openOrganization" datatype="html">
         <source>Open</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">98,100</context>
+          <context context-type="linenumber">126,128</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.goToOrganization" datatype="html">
         <source> Go to your workspace </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">103,107</context>
+          <context context-type="linenumber">131,135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.title" datatype="html">
         <source>You&apos;ve been invited</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">124,126</context>
+          <context context-type="linenumber">152,154</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.invitedBy" datatype="html">
         <source>Invited by</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">126,127</context>
+          <context context-type="linenumber">154,155</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.toJoin" datatype="html">
         <source>to join</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">128,129</context>
+          <context context-type="linenumber">156,157</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.invitedEmailLabel" datatype="html">
         <source> Invited email </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">138,140</context>
+          <context context-type="linenumber">166,168</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.expiresLabel" datatype="html">
         <source> Expires </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">144,146</context>
+          <context context-type="linenumber">172,174</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.rolesLabel" datatype="html">
+        <source> Roles </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
+          <context context-type="linenumber">182,184</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.noRole" datatype="html">
+        <source> No role </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
+          <context context-type="linenumber">191,192</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.acceptErrorTitle" datatype="html">
         <source> We couldn&apos;t accept this invitation </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">154,156</context>
+          <context context-type="linenumber">203,205</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.decline" datatype="html">
         <source>Not now</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">168,171</context>
+          <context context-type="linenumber">217,220</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.accept" datatype="html">
         <source>Accept invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">182,184</context>
+          <context context-type="linenumber">231,233</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.missingTokenTitle" datatype="html">
+        <source>Invalid invitation link</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
+          <context context-type="linenumber">217</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.missingToken" datatype="html">
+        <source>This invitation link is missing its token.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
+          <context context-type="linenumber">227</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.previewErrorTitle" datatype="html">
+        <source>We can&apos;t open this invitation</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
+          <context context-type="linenumber">237</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.previewError" datatype="html">
+        <source>This invitation link is invalid, expired or has already been used.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
+          <context context-type="linenumber">247</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.notAvailableTitle" datatype="html">
-        <source> This invitation isn&apos;t available </source>
+        <source>This invitation isn&apos;t available</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">200,204</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
+          <context context-type="linenumber">257</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.notAcceptable" datatype="html">
-        <source> This invitation can no longer be accepted. </source>
+        <source>This invitation can no longer be accepted.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">215,219</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
+          <context context-type="linenumber">267</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.memberProfile.forbiddenTitle" datatype="html">

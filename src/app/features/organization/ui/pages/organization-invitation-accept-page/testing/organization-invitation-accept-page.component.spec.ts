@@ -11,10 +11,12 @@ import { OrganizationInvitationAcceptPage } from '../organization-invitation-acc
 
 /**
  * Builds the minimum preview the page reads, with a status the caller can
- * override.
+ * override. `roleNames` is left off the object entirely when omitted, which is
+ * how the API represents "no roleNames field" — distinct from an empty list.
  */
 function preview(
   status: OrganizationInvitationPreviewOutput['status'] = 'pending',
+  roleNames?: ReadonlyArray<string>,
 ): OrganizationInvitationPreviewOutput {
   return {
     id: '/organization_invitations/inv-1',
@@ -25,6 +27,7 @@ function preview(
     invitedEmail: 'bob@example.com',
     status,
     expiresAt: '2026-02-01T00:00:00+00:00',
+    ...(roleNames === undefined ? {} : { roleNames }),
   } as unknown as OrganizationInvitationPreviewOutput;
 }
 
@@ -151,6 +154,41 @@ describe('OrganizationInvitationAcceptPage', () => {
     expect(text).toContain('Ada Lovelace');
     expect(text).toContain('Acme Corp');
     expect(text).toContain('bob@example.com');
+  });
+
+  it('should list the granted roles as badges on a pending preview', async () => {
+    previewSignal.set(preview('pending', ['inspector', 'technicien']));
+    await render('tok-1');
+    const row: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="organization-invitation-accept-roles"]',
+    );
+
+    expect(row).not.toBeNull();
+    expect(
+      Array.from(row?.querySelectorAll('dd span') ?? []).map((badge: Element): string =>
+        (badge.textContent ?? '').trim(),
+      ),
+    ).toEqual(['inspector', 'technicien']);
+  });
+
+  it('should say no role when the invitation grants none', async () => {
+    previewSignal.set(preview('pending', []));
+    await render('tok-1');
+    const row: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="organization-invitation-accept-roles"]',
+    );
+
+    expect(row).not.toBeNull();
+    expect(row?.textContent).toContain('No role');
+  });
+
+  it('should omit the roles row when the API sent no roleNames field', async () => {
+    previewSignal.set(preview('pending'));
+    await render('tok-1');
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="organization-invitation-accept-roles"]'),
+    ).toBeNull();
   });
 
   it('should accept through the store when the visitor is signed in', async () => {

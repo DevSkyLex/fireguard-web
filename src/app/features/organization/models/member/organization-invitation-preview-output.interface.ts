@@ -26,5 +26,14 @@ export interface OrganizationInvitationPreviewOutput extends HydraItem {
   readonly status: OrganizationInvitationStatus;
   /** @type {string} */
   readonly expiresAt: string;
+  /**
+   * Names of the roles the invitation grants. The current API always sends the
+   * array, empty included; optional only to stay safe during the deploy window
+   * in which a backend predating the field may still answer. Absent therefore
+   * means "unknown", which the page renders differently from an empty list.
+   *
+   * @type {ReadonlyArray<string> | undefined}
+   */
+  readonly roleNames?: ReadonlyArray<string>;
   //#endregion
 }

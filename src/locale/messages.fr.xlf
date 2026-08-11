@@ -10854,6 +10854,14 @@
         <source> Expires </source>
         <target>Expire le</target>
       </trans-unit>
+      <trans-unit id="org.invitationAccept.rolesLabel" datatype="html">
+        <source> Roles </source>
+        <target>Rôles</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.noRole" datatype="html">
+        <source> No role </source>
+        <target>Aucun rôle</target>
+      </trans-unit>
       <trans-unit id="org.invitationAccept.acceptErrorTitle" datatype="html">
         <source> We couldn&apos;t accept this invitation </source>
         <target>Impossible d'accepter cette invitation</target>

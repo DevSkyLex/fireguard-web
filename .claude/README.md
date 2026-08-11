@@ -1,7 +1,7 @@
 # FireGuard Web — Claude Code tooling
 
 This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspace root to
-activate it: 12 agents, 13 commands, 8 skills, 9 rules, 4 MCP servers, and 2 project hooks
+activate it: 12 agents, 13 commands, 9 skills, 9 rules, 4 MCP servers, and 2 project hooks
 (plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
 
 > **This directory is also a plugin.** The monorepo root installs it as
@@ -20,6 +20,12 @@ Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\firegu
 `/fg-map`. Nothing is duplicated between the two.
 
 ## Agents
+
+Every agent is granted the `Skill` tool and opens with a **Skills to load** table naming which
+skills it must load and on what trigger. That is deliberate: the agent prompt states the
+_judgment_ (what to decide, in what order, what to hand off), the skill carries the
+_operational_ detail (commands, harnesses, decision tables). Neither restates the other, so
+neither drifts. From the monorepo root the skill names are namespaced `fireguard-web:<name>`.
 
 **Builders — they create code.** One per kind of unit; each decides _placement_ before writing.
 
@@ -71,6 +77,20 @@ commands, harnesses, decision tables, exemplar paths — and cites `ARCHITECTURE
 for the _rule_. That split is deliberate: `ARCHITECTURE.md` is normative (§1.3), and a skill
 that restated its rules would become a second source of truth that drifts.
 
+### Where repetition _is_ allowed, and the rule that keeps it honest
+
+Two kinds of file deliberately restate content they do not own:
+
+- **`rules/`** — path-scoped, so they load _without_ the skill. A rule that only pointed at a
+  skill would carry nothing at the moment it fires. Several therefore abridge one.
+- **A handful of agents** repeat the `--include` trap, because it costs a wasted run the first
+  time it bites and an agent that has not loaded `web-testing` would hit it.
+
+Every such passage opens with **"Abridgement of the `<skill>` skill — change one, change
+both."** That line is the whole contract: it is not decoration, it is how the next editor knows
+a second copy exists. A restatement without the marker is a bug — the backend proved it, where
+one false claim about `debug:firewall` lived in four files and got corrected in one.
+
 | Skill                 | Answers                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------------- |
 | `fireguard-naming`    | which suffix, folder, class name, selector — plus the 4 transitional deviations not to copy |
@@ -81,6 +101,7 @@ that restated its rules would become a second source of truth that drifts.
 | `e2e-playwright`      | `ApiMock`, page objects, port 4273, the `id`/`data-testid` hooks                            |
 | `feature-md`          | the canonical headings and the four update triggers                                         |
 | `impeccable`          | vendored third-party design skill (`npx impeccable`, Apache-2.0) — see below                |
+| `ui-ux-pro-max`       | vendored third-party design database (Python search over CSVs, MIT) — see below             |
 
 > **`impeccable`** is not a FireGuard-authored skill: it is vendored wholesale (~3.3 MB,
 > `scripts/` + 35 reference playbooks) to power the UI-uniformization work. Its two hooks
@@ -90,6 +111,27 @@ that restated its rules would become a second source of truth that drifts.
 > `colorize`/`typeset`/`overdrive` playbooks may touch theme tokens only on a decision
 > recorded in `DESIGN.md`; on any conflict, the `spartan-ui` skill and `rules/components.md`
 > win.
+
+> **`frontend-design`** is not vendored at all: it is Anthropic's official skill, enabled as the
+> plugin `frontend-design@claude-plugins-official` in `settings.json` here **and** at the monorepo
+> root, so it upgrades upstream rather than going stale in a copy. It is namespaced
+> `frontend-design:frontend-design` in both. **Precedence:** load it for the _writing_ — labels,
+> button verbs, error and empty-state copy, the rule that an action keeps its name through the
+> whole flow — and for its calibration of what a generic AI-generated design looks like. Its
+> visual-identity half (choose a display typeface, a palette, a signature element) has no target
+> in this app: there is no public marketing surface, and the identity is the spartan theme, which
+> is fixed. `fg-spartan-ui` and `fg-component-builder` carry that split in their skill tables.
+
+> **`ui-ux-pro-max`** is likewise vendored, from
+> [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
+> (MIT, commit `abb7f2f`, ~1.8 MB): a Python search over CSV databases of styles, palettes,
+> font pairings, UX guidelines, and per-stack rules. It is a **lookup table, not a design
+> director** — where `impeccable` drives a design pass, this one answers "what does the
+> literature say about X". Requires Python 3.x on PATH (`scripts/search.py`); no packages.
+> **Precedence:** its stack is always `angular`, spartan/ui stays the component library, the
+> theme tokens stay locked, and `--persist` is never run — the SKILL.md carries these
+> constraints in full. Local edits to the vendored file are listed in its Provenance footer;
+> reapply them when re-vendoring upstream.
 
 ## Rules (`rules/`)
 
@@ -111,8 +153,9 @@ that kind of file, not the how-to.
 
 > `directives-pipes.md` currently matches **nothing** — the repo has zero directives and zero
 > pipes. Both halves are dormant on purpose: the rule exists to cadre the first unit of each
-> kind, including the `ARCHITECTURE.md` edit the first pipe must carry. Same for `e2e.md`
-> while `e2e/` is empty pending the suite's return.
+> kind, including the `ARCHITECTURE.md` edit the first pipe must carry. `e2e.md`, by contrast,
+> is live: `e2e/` carries 9 specs across `onboarding/` and `organization/`, with page objects
+> and fixtures under `e2e/support/`.
 
 **Why this matters here:** `ARCHITECTURE.md` (~150 KB) is deliberately **not** `@`-imported
 by `CLAUDE.md` — importing it cost ~41 k tokens in every session. It is read on demand before

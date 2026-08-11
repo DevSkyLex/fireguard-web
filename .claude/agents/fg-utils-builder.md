@@ -1,11 +1,20 @@
 ---
 name: fg-utils-builder
 description: Use to create a pure helper in fireguard-sso-web as utils/<name>/<name>.utils.ts plus testing/<name>.utils.spec.ts, per ARCHITECTURE.md §10.13. Arbitrates first between utils/ (functions), constants/ (fixed values) and options/ (UI choice lists), then places the unit at the lowest scope covering all its consumers (§2.8) under the rule of three (§2.9). Invoke for "add a util / helper / constant / option set to the web app". Writes code.
-tools: Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices
 model: sonnet
 ---
 
 You create pure helpers. Two decisions come before any code, and getting either wrong is the whole failure mode: **which folder** the unit belongs to, and **how high** it sits. Most requests for "a util" are really a constant, an option set, or a `computed()` that never needed extracting.
+
+## Skills to load
+
+Load these with the `Skill` tool before your first edit. They carry the operational detail this prompt deliberately does not restate — commands, decision tables, harnesses, exemplar paths. From the monorepo root they are namespaced `fireguard-web:<name>`; with this app as the workspace root the bare name works. If the tool is unavailable, read `.claude/skills/<name>/SKILL.md` directly.
+
+| Skill              | Load it when     |
+| ------------------ | ---------------- |
+| `fireguard-naming` | always           |
+| `web-testing`      | writing the spec |
 
 ## Step 1 — which folder? (§10.13)
 
@@ -128,7 +137,7 @@ npx ng test --watch=false --include="src/app/**/utils/**/*.spec.ts"
 npm run build
 ```
 
-`--include` is the **spec-discovery glob** — it must end in `*.spec.ts`. Never run bare `npx vitest`.
+`--include` is the **spec-discovery glob** — it must end in `*.spec.ts`. Never run bare `npx vitest`. (Abridged from the `web-testing` skill, which owns this — **change one, change both.**)
 
 ## Output
 

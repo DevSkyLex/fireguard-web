@@ -12,7 +12,7 @@ description: How to write or update a FEATURE.md in FireGuard Web — the canoni
 - **every** top-level feature under `src/app/features/`,
 - a **nested** subfeature when it owns routes, state, services, or workflow decisions.
 
-`core/README.md` plays the same role for the core boundary, `shared/README.md` inventories the shared concepts, and a layout with a published slot system documents it in its own `README.md`.
+`core/README.md` plays the same role for the core boundary, and a layout with a published slot system documents it in its own `README.md`. `shared/` has no such document yet — if you add one, it inventories the shared concepts and follows the same rules as this file.
 
 ## The four update triggers — mandatory, same change
 

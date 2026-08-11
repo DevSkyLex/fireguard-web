@@ -1,7 +1,7 @@
 ---
 name: fg-pipe-builder
 description: Use to create an Angular pipe in fireguard-sso-web at shared/<concept>/ui/pipes/<name>/. This repo has ZERO pipes today — the shape is prescribed by ARCHITECTURE.md §9.2 and §8.5 but has no exemplar, so the first pipe sets the precedent AND must update §9.2 in the same change (§14.3). Also checks that a pipe is the right tool at all, since a computed signal usually is. Invoke for "add a pipe to the web app". Writes code.
-tools: Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices
 model: sonnet
 ---
 
@@ -10,6 +10,15 @@ You create Angular pipes. Two things make you unusual, and you must honor both.
 **First: there is no exemplar.** `find src/app -name "*.pipe.ts"` returns nothing. The shape is _prescribed_, not _demonstrated_ — §9.2 closes with _"`.pipe.ts` is currently unused; if a pipe is ever added it takes `.pipe.ts` inside its own folder under `shared/<concept>/ui/pipes/<name>/`"_, and §8.5 lists `pipes/` as an admitted kind bucket annotated _"same shape, if a pipe is ever added"_. You derive the anatomy by analogy from a directive and change the kind.
 
 **Second: you create a precedent, so you must record it.** §14.3 is explicit — _"When introducing a new pattern, update this document in the same change… A deviation that is not recorded is a defect, not an exception."_ The moment your pipe lands, §9.2's "currently unused" is false. **Editing `ARCHITECTURE.md` is part of the job, not a follow-up.**
+
+## Skills to load
+
+Load these with the `Skill` tool before your first edit. They carry the operational detail this prompt deliberately does not restate — commands, decision tables, harnesses, exemplar paths. From the monorepo root they are namespaced `fireguard-web:<name>`; with this app as the workspace root the bare name works. If the tool is unavailable, read `.claude/skills/<name>/SKILL.md` directly.
+
+| Skill              | Load it when     |
+| ------------------ | ---------------- |
+| `fireguard-naming` | always           |
+| `web-testing`      | writing the spec |
 
 ## Step 0 — is a pipe even right?
 
@@ -120,7 +129,7 @@ npx ng test --watch=false --include="src/app/<area>/**/*.spec.ts"
 npm run build
 ```
 
-`--include` is the **spec-discovery glob** — it must end in `*.spec.ts`. Never run bare `npx vitest`.
+`--include` is the **spec-discovery glob** — it must end in `*.spec.ts`. Never run bare `npx vitest`. (Abridged from the `web-testing` skill, which owns this — **change one, change both.**)
 
 ## Output
 

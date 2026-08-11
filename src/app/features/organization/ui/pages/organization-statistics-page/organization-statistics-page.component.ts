@@ -14,6 +14,7 @@ import {
   lucideCircleAlert,
   lucideCircleDotDashed,
   lucideClipboardCheck,
+  lucideLock,
   lucideOctagonAlert,
   lucideRefreshCw,
   lucideShieldCheck,
@@ -38,6 +39,7 @@ import {
 } from '@features/organization/state/organization-dashboard';
 import {
   OrganizationPageHeader,
+  OrganizationTrendChartNotice,
   StatTile,
   type StatTileDelta,
   type StatTileDeltaDirection,
@@ -52,10 +54,10 @@ import {
 } from '@features/organization/utils';
 import { LineChart, type ChartSeries } from '@shared/chart';
 import { ErrorState } from '@shared/error-state';
-import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmFieldImports } from '@shared/ui/field';
+import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
@@ -94,13 +96,16 @@ type OrganizationStatisticsKpiTile = {
  * Type OrganizationStatisticsSeverityEntry
  *
  * @description
- * View-model for one row of the non-conformity severity breakdown.
+ * View-model for one row of the non-conformity severity breakdown: its
+ * count and, for the proportional bar, what share of the breakdown's total
+ * that count is (0 when the total itself is 0).
  *
- * @since 1.0.0
+ * @since 1.1.0
  */
 type OrganizationStatisticsSeverityEntry = {
   readonly severity: NonConformitySeverity;
   readonly count: number;
+  readonly percent: number;
   readonly descriptor: InspectionStatusTagDescriptor;
 };
 
@@ -136,7 +141,15 @@ type OrganizationStatisticsSeverityEntry = {
  * `canReadEquipment` / `canReadFacilities` computed signals gate the
  * equipment and facilities charts individually, ahead of any request.
  *
- * @version 1.0.0
+ * The KPI row, the severity card and the four trend-chart cards render only
+ * once {@link DashboardStore}'s own query has actually succeeded — a
+ * dashboard failure shows the page-level forbidden card or `app-error-state`
+ * alone, never underneath it. The two trend stores keep loading independently
+ * of that gate (their own filter-driven `rxMethod`, wired in the
+ * constructor), so switching back to a healthy dashboard state shows
+ * whatever they had already resolved.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -147,13 +160,14 @@ type OrganizationStatisticsSeverityEntry = {
     ErrorState,
     LineChart,
     OrganizationPageHeader,
+    OrganizationTrendChartNotice,
     StatTile,
-    HlmBadge,
     HlmButton,
     HlmSkeleton,
     HlmSwitch,
     ...HlmCardImports,
     ...HlmFieldImports,
+    ...HlmProgressImports,
     ...HlmToggleGroupImports,
   ],
   providers: [
@@ -165,6 +179,7 @@ type OrganizationStatisticsSeverityEntry = {
       lucideCircleAlert,
       lucideCircleDotDashed,
       lucideClipboardCheck,
+      lucideLock,
       lucideOctagonAlert,
       lucideRefreshCw,
       lucideShieldCheck,
@@ -311,6 +326,37 @@ export class OrganizationStatisticsPage {
   protected readonly severitySkeletonRows: readonly number[] = [0, 1, 2, 3];
 
   /**
+   * Property forbiddenMessage
+   * @readonly
+   *
+   * @description
+   * The message a trend chart card shows in place of its plot when its
+   * backing store denies the read outright (403) — the same sentence the
+   * page-level dashboard-forbidden card already uses.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {string}
+   */
+  protected readonly forbiddenMessage: string = $localize`:@@org.statistics.forbidden:Not available with your permissions.`;
+
+  /**
+   * Property trendLoadErrorMessage
+   * @readonly
+   *
+   * @description
+   * The message a trend chart card shows in place of its plot when its
+   * backing store failed for any other reason.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {string}
+   */
+  protected readonly trendLoadErrorMessage: string = $localize`:@@org.statistics.trend.loadError:This chart could not be loaded.`;
+
+  /**
    * Property inspectionsSeriesName
    * @readonly
    *
@@ -431,7 +477,10 @@ export class OrganizationStatisticsPage {
    * @description
    * The KPI row's view-models: facility, equipment and completed-inspection
    * totals with their period comparison, the current open non-conformity
-   * count, and the non-conformity resolution rate.
+   * count, and the non-conformity resolution rate. Each tile links to the
+   * section it counts; facilities and equipment route to their own lists
+   * rather than the `assets` explorer, which is not mounted yet
+   * (`FEATURE.md`).
    *
    * @access protected
    * @since 1.0.0
@@ -465,8 +514,11 @@ export class OrganizationStatisticsPage {
       health,
       'nonConformityResolutionRate',
     );
-    const assetsLink: StatTileLink | null = organizationId
-      ? ['/organizations', organizationId, 'assets']
+    const facilitiesLink: StatTileLink | null = organizationId
+      ? ['/organizations', organizationId, 'facilities']
+      : null;
+    const equipmentsLink: StatTileLink | null = organizationId
+      ? ['/organizations', organizationId, 'equipments']
       : null;
     const inspectionsLink: StatTileLink | null = organizationId
       ? ['/organizations', organizationId, 'inspections']
@@ -482,7 +534,7 @@ export class OrganizationStatisticsPage {
         delta: showDelta
           ? this.toComparisonDelta(this.dashboardStore.facilitiesComparison(), true)
           : null,
-        link: assetsLink,
+        link: facilitiesLink,
       },
       {
         id: 'equipment',
@@ -493,7 +545,7 @@ export class OrganizationStatisticsPage {
         delta: showDelta
           ? this.toComparisonDelta(this.dashboardStore.equipmentComparison(), true)
           : null,
-        link: assetsLink,
+        link: equipmentsLink,
       },
       {
         id: 'inspections-completed',
@@ -543,24 +595,29 @@ export class OrganizationStatisticsPage {
    * @readonly
    *
    * @description
-   * The current open+unresolved non-conformity count per severity,
-   * ordered from critical to low, each paired with its registry descriptor.
+   * The current open+unresolved non-conformity count per severity, ordered
+   * from critical to low, each paired with its registry descriptor and its
+   * share of the breakdown's own total — the proportional bar's width.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @type {Signal<readonly OrganizationStatisticsSeverityEntry[]>}
    */
   protected readonly severityBreakdown: Signal<readonly OrganizationStatisticsSeverityEntry[]> =
-    computed(() =>
-      getOrganizationDashboardNonConformitySeverityBreakdown(
+    computed(() => {
+      const raw = getOrganizationDashboardNonConformitySeverityBreakdown(
         this.dashboardStore.queryData()?.overview,
-      ).map((entry): OrganizationStatisticsSeverityEntry => ({
+      );
+      const total: number = raw.reduce((sum, entry) => sum + entry.count, 0);
+
+      return raw.map((entry): OrganizationStatisticsSeverityEntry => ({
         severity: entry.severity,
         count: entry.count,
+        percent: total > 0 ? Math.round((entry.count / total) * 100) : 0,
         descriptor: resolveInspectionStatusTag('nonConformitySeverity', entry.severity),
-      })),
-    );
+      }));
+    });
 
   /**
    * Property severityTotal
@@ -574,6 +631,28 @@ export class OrganizationStatisticsPage {
   protected readonly severityTotal: Signal<number> = computed(() =>
     this.severityBreakdown().reduce((sum, entry) => sum + entry.count, 0),
   );
+
+  /**
+   * Property severitySummaryLine
+   * @readonly
+   *
+   * @description
+   * The severity card's subtitle: how many open, unresolved non-conformities
+   * the breakdown covers right now — a current snapshot, not scoped to the
+   * page's own period selector, since `DashboardStore` never applies it.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly severitySummaryLine: Signal<string> = computed(() => {
+    const total: number = this.severityTotal();
+
+    return total === 1
+      ? $localize`:@@org.statistics.severity.summaryOne:1 open and unresolved`
+      : $localize`:@@org.statistics.severity.summaryMany:${total}:total: open and unresolved`;
+  });
 
   /**
    * Property inspectionsChartSeries
@@ -789,6 +868,40 @@ export class OrganizationStatisticsPage {
    */
   protected retryDashboard(): void {
     this.dashboardStore.load(this.organizationContext.selectedOrganizationId() ?? undefined);
+  }
+
+  /**
+   * Method retryOverviewTrend
+   * @method retryOverviewTrend
+   *
+   * @description
+   * Re-runs the Inspections / Non-conformities trend query with the
+   * currently applied filters, for that card's own Retry action.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  protected retryOverviewTrend(): void {
+    this.overviewTrendStore.load(this.overviewTrendStore.loadParams());
+  }
+
+  /**
+   * Method retryAssetGrowthTrend
+   * @method retryAssetGrowthTrend
+   *
+   * @description
+   * Re-runs the Equipment / Facilities trend query with the currently
+   * applied filters, for that card's own Retry action.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  protected retryAssetGrowthTrend(): void {
+    this.assetGrowthTrendStore.load(this.assetGrowthTrendStore.loadParams());
   }
   //#endregion
 

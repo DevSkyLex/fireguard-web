@@ -114,6 +114,8 @@ describe('OrganizationStatisticsPage', () => {
   let overviewSetGranularity: ReturnType<typeof vi.fn>;
   let overviewSetDateRange: ReturnType<typeof vi.fn>;
   let overviewSetCompareEnabled: ReturnType<typeof vi.fn>;
+  let overviewLoad: ReturnType<typeof vi.fn>;
+  let overviewLoadParams: WritableSignal<{ readonly organizationId: string } | undefined>;
 
   let assetGrowthQueryData: WritableSignal<{
     readonly equipment?: OrganizationDashboardTrendOutput | null;
@@ -127,6 +129,8 @@ describe('OrganizationStatisticsPage', () => {
   let assetGrowthSetGranularity: ReturnType<typeof vi.fn>;
   let assetGrowthSetDateRange: ReturnType<typeof vi.fn>;
   let assetGrowthSetCompareEnabled: ReturnType<typeof vi.fn>;
+  let assetGrowthLoad: ReturnType<typeof vi.fn>;
+  let assetGrowthLoadParams: WritableSignal<{ readonly organizationId: string } | undefined>;
 
   async function render(): Promise<void> {
     dashboardQueryData = signal<OrganizationDashboardOutput | null>(null);
@@ -148,6 +152,10 @@ describe('OrganizationStatisticsPage', () => {
     overviewSetGranularity = vi.fn();
     overviewSetDateRange = vi.fn();
     overviewSetCompareEnabled = vi.fn();
+    overviewLoad = vi.fn();
+    overviewLoadParams = signal<{ readonly organizationId: string } | undefined>({
+      organizationId: 'org-1',
+    });
 
     assetGrowthQueryData = signal(null);
     assetGrowthQueryHasError = signal<boolean>(false);
@@ -158,6 +166,10 @@ describe('OrganizationStatisticsPage', () => {
     assetGrowthSetGranularity = vi.fn();
     assetGrowthSetDateRange = vi.fn();
     assetGrowthSetCompareEnabled = vi.fn();
+    assetGrowthLoad = vi.fn();
+    assetGrowthLoadParams = signal<{ readonly organizationId: string } | undefined>({
+      organizationId: 'org-1',
+    });
 
     const dashboardStoreMock = {
       queryData: dashboardQueryData,
@@ -181,6 +193,8 @@ describe('OrganizationStatisticsPage', () => {
       setGranularity: overviewSetGranularity,
       setDateRange: overviewSetDateRange,
       setCompareEnabled: overviewSetCompareEnabled,
+      load: overviewLoad,
+      loadParams: overviewLoadParams,
     };
 
     const assetGrowthTrendStoreMock = {
@@ -193,6 +207,8 @@ describe('OrganizationStatisticsPage', () => {
       setGranularity: assetGrowthSetGranularity,
       setDateRange: assetGrowthSetDateRange,
       setCompareEnabled: assetGrowthSetCompareEnabled,
+      load: assetGrowthLoad,
+      loadParams: assetGrowthLoadParams,
     };
 
     const themePort: Pick<ThemePort, 'resolvedTheme'> = {
@@ -255,6 +271,22 @@ describe('OrganizationStatisticsPage', () => {
     expect(text).toContain('7');
     expect(text).toContain('2 overdue');
     expect(text).toContain('88%');
+  });
+
+  it('points the facility and equipment KPI tiles at their mounted lists, not the unmounted assets explorer', async () => {
+    await render();
+    dashboardQueryData.set(dashboardData());
+    await fixture.whenStable();
+
+    const facilities: HTMLAnchorElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-statistics-kpi-facilities"] a',
+    );
+    const equipment: HTMLAnchorElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-statistics-kpi-equipment"] a',
+    );
+
+    expect(facilities?.getAttribute('href')).toBe('/organizations/org-1/facilities');
+    expect(equipment?.getAttribute('href')).toBe('/organizations/org-1/equipments');
   });
 
   it('shows KPI deltas while the compare toggle is on (the default)', async () => {
@@ -349,6 +381,47 @@ describe('OrganizationStatisticsPage', () => {
     expect(dashboardLoad).toHaveBeenCalledWith('org-1');
   });
 
+  it('hides the severity card and the trend charts grid behind the forbidden card on a 403 dashboard query', async () => {
+    await render();
+    dashboardQueryHasError.set(true);
+    dashboardQueryError.set(storeError(403));
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="org-statistics-chart-inspections"]'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid^="org-statistics-severity-"]'),
+    ).toBeNull();
+  });
+
+  it('hides the severity card and the trend charts grid behind the generic error state on a non-403 dashboard failure', async () => {
+    await render();
+    dashboardQueryHasError.set(true);
+    dashboardQueryError.set(storeError(500));
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="org-statistics-chart-inspections"]'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid^="org-statistics-severity-"]'),
+    ).toBeNull();
+  });
+
+  it('shows the severity card and the trend charts grid once the dashboard query settles', async () => {
+    await render();
+    dashboardQueryData.set(dashboardData());
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="org-statistics-chart-inspections"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid^="org-statistics-severity-"]'),
+    ).not.toBeNull();
+  });
+
   it('shows the severity skeleton while the dashboard query is loading', async () => {
     await render();
     dashboardIsQueryLoading.set(true);
@@ -386,6 +459,20 @@ describe('OrganizationStatisticsPage', () => {
     expect(mediumIndex).toBeLessThan(lowIndex);
   });
 
+  it('renders each severity row as a proportional bar sized to its share of the total', async () => {
+    await render();
+    dashboardQueryData.set(dashboardData());
+    await fixture.whenStable();
+
+    const criticalRow: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-statistics-severity-critical"]',
+    );
+    const bar: HTMLElement | null | undefined = criticalRow?.querySelector('hlm-progress');
+
+    expect(bar).not.toBeNull();
+    expect(bar?.getAttribute('aria-valuenow')).toBe('14');
+  });
+
   it('wires the inspections chart series, label and loading state to the chart', async () => {
     await render();
     overviewAlignedTrendData.set({
@@ -414,16 +501,29 @@ describe('OrganizationStatisticsPage', () => {
     overviewQueryError.set(storeError(403));
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.textContent).toContain('Not available with your permissions');
+    const card: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-statistics-chart-inspections"]',
+    );
+
+    expect(card?.textContent).toContain('Not available with your permissions');
+    expect(card?.querySelector('button')).toBeNull();
   });
 
-  it('shows the per-chart error line for the inspections chart on a non-403 failure', async () => {
+  it('shows the per-chart error line for the inspections chart on a non-403 failure and retries through the overview trend store', async () => {
     await render();
     overviewQueryHasError.set(true);
     overviewQueryError.set(storeError(500));
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.textContent).toContain('This chart could not be loaded');
+    const card: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-statistics-chart-inspections"]',
+    );
+
+    expect(card?.textContent).toContain('This chart could not be loaded');
+
+    card?.querySelector<HTMLButtonElement>('button')?.click();
+
+    expect(overviewLoad).toHaveBeenCalledWith({ organizationId: 'org-1' });
   });
 
   it('shows the permission line for the equipment chart when the store denies equipment reads', async () => {
@@ -435,6 +535,22 @@ describe('OrganizationStatisticsPage', () => {
 
     expect(charts.some((chart) => chart.label() === 'Equipment added over time')).toBe(false);
     expect(fixture.nativeElement.textContent).toContain('Not available with your permissions');
+  });
+
+  it('shows the per-chart error line for the equipment chart on a load failure and retries through the asset-growth trend store', async () => {
+    await render();
+    assetGrowthQueryHasError.set(true);
+    await fixture.whenStable();
+
+    const card: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-statistics-chart-equipment"]',
+    );
+
+    expect(card?.textContent).toContain('This chart could not be loaded');
+
+    card?.querySelector<HTMLButtonElement>('button')?.click();
+
+    expect(assetGrowthLoad).toHaveBeenCalledWith({ organizationId: 'org-1' });
   });
 
   it('shows the permission line for the facilities chart when the store denies facility reads', async () => {

@@ -9878,20 +9878,8 @@
           <context context-type="linenumber">73,76</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">173,175</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">206,208</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">239,241</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">273,275</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
+          <context context-type="linenumber">342</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.error.title" datatype="html">
@@ -9914,6 +9902,22 @@
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
           <context context-type="linenumber">92,94</context>
         </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
+          <context context-type="linenumber">186,188</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
+          <context context-type="linenumber">223,225</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
+          <context context-type="linenumber">260,262</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
+          <context context-type="linenumber">298,300</context>
+        </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.title" datatype="html">
         <source>Non-conformities by severity</source>
@@ -9922,191 +9926,186 @@
           <context context-type="linenumber">114,115</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.statistics.severity.description" datatype="html">
-        <source> Current open and unresolved non-conformities across the organization, grouped by severity. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">116,119</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.statistics.severity.loadingAria" datatype="html">
         <source>Loading severity breakdown…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">124,125</context>
+          <context context-type="linenumber">122,123</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.empty" datatype="html">
         <source> No non-conformities recorded. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">133,135</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.statistics.trend.loadError" datatype="html">
-        <source> This chart could not be loaded. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">180,183</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">213,216</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">246,249</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.html</context>
-          <context context-type="linenumber">280,283</context>
+          <context context-type="linenumber">134,136</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.pageTitle" datatype="html">
         <source>Statistics</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">286</context>
+          <context context-type="linenumber">301</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.pageSubtitle" datatype="html">
         <source>Track facility, member, equipment, and inspection trends across your organization.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">297</context>
+          <context context-type="linenumber">312</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.loadError" datatype="html">
+        <source>This chart could not be loaded.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
+          <context context-type="linenumber">357</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.inspections.title" datatype="html">
         <source>Inspections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">326</context>
+          <context context-type="linenumber">372</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.inspections.chartLabel" datatype="html">
         <source>Inspections performed over time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">337</context>
+          <context context-type="linenumber">383</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformities.title" datatype="html">
         <source>Non-conformities opened vs resolved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">348</context>
+          <context context-type="linenumber">394</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformities.chartLabel" datatype="html">
         <source>Non-conformities opened and resolved over time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">359</context>
+          <context context-type="linenumber">405</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformities.seriesOpened" datatype="html">
         <source>Opened</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">370</context>
+          <context context-type="linenumber">416</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformities.seriesResolved" datatype="html">
         <source>Resolved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">381</context>
+          <context context-type="linenumber">427</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.equipment.title" datatype="html">
         <source>Equipment added</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">392</context>
+          <context context-type="linenumber">438</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.equipment.chartLabel" datatype="html">
         <source>Equipment added over time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">403</context>
+          <context context-type="linenumber">449</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.facilities.title" datatype="html">
         <source>Facilities added</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">414</context>
+          <context context-type="linenumber">460</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.facilities.chartLabel" datatype="html">
         <source>Facilities added over time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">425</context>
+          <context context-type="linenumber">471</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.facilities" datatype="html">
         <source>Facilities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">478</context>
+          <context context-type="linenumber">530</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.equipment" datatype="html">
         <source>Equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">489</context>
+          <context context-type="linenumber">541</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.inspectionsCompleted" datatype="html">
         <source>Inspections completed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">500</context>
+          <context context-type="linenumber">552</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.openNonConformities" datatype="html">
         <source>Open non-conformities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">511</context>
+          <context context-type="linenumber">563</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.openNonConformitiesOverdue" datatype="html">
         <source><x id="count" equiv-text="overdueNonConformities"/> overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">515</context>
+          <context context-type="linenumber">567</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.resolutionRate" datatype="html">
         <source>Non-conformity resolution rate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">523</context>
+          <context context-type="linenumber">575</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.statistics.severity.summaryOne" datatype="html">
+        <source>1 open and unresolved</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
+          <context context-type="linenumber">653</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.statistics.severity.summaryMany" datatype="html">
+        <source><x id="total" equiv-text="total"/> open and unresolved</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
+          <context context-type="linenumber">654</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformitiesSummary" datatype="html">
         <source><x id="opened" equiv-text="openedTotal"/> opened, <x id="resolved" equiv-text="resolvedTotal"/> resolved this period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">674</context>
+          <context context-type="linenumber">753</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.summary" datatype="html">
         <source><x id="total" equiv-text="total"/> total this period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">956</context>
+          <context context-type="linenumber">1069</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.summaryWithDelta" datatype="html">
         <source><x id="total" equiv-text="total"/> total this period, <x id="delta" equiv-text="formattedDelta"/>% vs previous period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-statistics-page/organization-statistics-page.component.ts</context>
-          <context context-type="linenumber">962</context>
+          <context context-type="linenumber">1075</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.createRole" datatype="html">
@@ -10386,63 +10385,63 @@
         <source>Open interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">459</context>
+          <context context-type="linenumber">462</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities" datatype="html">
         <source>Open non-conformities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">471</context>
+          <context context-type="linenumber">474</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.inspectionsCompleted" datatype="html">
         <source>Inspections completed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">480</context>
+          <context context-type="linenumber">483</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.equipmentUnderMaintenance" datatype="html">
         <source>Equipment under maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">489</context>
+          <context context-type="linenumber">492</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.criticalNonConformitiesOpen" datatype="html">
         <source><x id="count" equiv-text="count"/> critical non-conformities still open</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">720</context>
+          <context context-type="linenumber">723</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.nonConformitiesOverdue" datatype="html">
         <source><x id="count" equiv-text="count"/> non-conformities overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">722</context>
+          <context context-type="linenumber">725</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.expiredInvitations" datatype="html">
         <source><x id="count" equiv-text="count"/> invitations expired</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">724</context>
+          <context context-type="linenumber">727</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.equipmentUnderMaintenance" datatype="html">
         <source><x id="count" equiv-text="count"/> equipment items under maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">726</context>
+          <context context-type="linenumber">729</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.generic" datatype="html">
         <source><x id="label" equiv-text="fallbackLabel"/> (<x id="count" equiv-text="count"/>)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">728</context>
+          <context context-type="linenumber">731</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.permissionsSheet.systemNotice" datatype="html">

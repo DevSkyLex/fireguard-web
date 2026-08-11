@@ -4,5 +4,6 @@ export type { OrganizationPageHeaderOrganization } from './organization-page-hea
 export { OrganizationTodayQueue } from './organization-today-queue';
 export { OrganizationSwitcher } from './organization-switcher';
 export type { OrganizationSwitcherOption } from './organization-switcher';
+export { OrganizationTrendChartNotice } from './organization-trend-chart-notice';
 export { StatTile } from './stat-tile';
 export type { StatTileDelta, StatTileDeltaDirection, StatTileLink } from './stat-tile';

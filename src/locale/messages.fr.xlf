@@ -8770,6 +8770,14 @@
         <source> Current open and unresolved non-conformities across the organization, grouped by severity. </source>
         <target>Non-conformités actuellement ouvertes et non résolues dans l'organisation, regroupées par gravité.</target>
       </trans-unit>
+      <trans-unit id="org.statistics.severity.summaryOne" datatype="html">
+        <source>1 open and unresolved</source>
+        <target>1 ouverte et non résolue</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.severity.summaryMany" datatype="html">
+        <source><x id="total" equiv-text="total"/> open and unresolved</source>
+        <target><x id="total" equiv-text="total"/> ouvertes et non résolues</target>
+      </trans-unit>
       <trans-unit id="org.statistics.severity.empty" datatype="html">
         <source> No non-conformities recorded. </source>
         <target>Aucune non-conformité enregistrée.</target>

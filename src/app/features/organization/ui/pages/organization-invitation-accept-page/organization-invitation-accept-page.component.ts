@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -43,9 +43,19 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * sign-in with this page's own URL (token included) as `returnUrl`.
  *
  * This is a route shell — orchestration and the request states — presented
- * as a single centered card inside `FocusedLayout`.
+ * as a single centered card inside `FocusedLayout`. The missing-token,
+ * preview-error and not-available states share one `#statusCard` template
+ * (icon-or-avatar, title, optional badge, description, a "Go to homepage"
+ * footer identical across the three) rather than three near-duplicate
+ * `hlmCard` blocks — a local `ng-template`, not a new component, since every
+ * consumer lives on this one page (`ARCHITECTURE.md` §2.8) and the codebase
+ * already uses this exact shape for a repeated, parameterized row
+ * (`ChannelsPage`'s `#row`, `StatTile`'s `#tileContent`). The icon area shows
+ * the chip for a state that has no organization to name (missing token,
+ * preview error) and the organization's own avatar for a state that does
+ * (accepted, pending, not-available).
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -53,6 +63,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
   selector: 'app-organization-invitation-accept-page',
   imports: [
     DatePipe,
+    NgTemplateOutlet,
     RouterLink,
     NgIcon,
     HlmAvatar,
@@ -194,6 +205,66 @@ export class OrganizationInvitationAcceptPage {
    */
   protected readonly statusTagIconClass: typeof ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS =
     ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS;
+
+  /**
+   * Property missingTokenTitle
+   * @readonly
+   * @description Heading for the shared status card when the link carries no token.
+   * @access protected
+   * @since 1.2.0
+   * @type {string}
+   */
+  protected readonly missingTokenTitle: string = $localize`:@@org.invitationAccept.missingTokenTitle:Invalid invitation link`;
+
+  /**
+   * Property missingTokenDescription
+   * @readonly
+   * @description Body for the shared status card when the link carries no token.
+   * @access protected
+   * @since 1.2.0
+   * @type {string}
+   */
+  protected readonly missingTokenDescription: string = $localize`:@@org.invitationAccept.missingToken:This invitation link is missing its token.`;
+
+  /**
+   * Property previewErrorTitle
+   * @readonly
+   * @description Heading for the shared status card when the preview request failed.
+   * @access protected
+   * @since 1.2.0
+   * @type {string}
+   */
+  protected readonly previewErrorTitle: string = $localize`:@@org.invitationAccept.previewErrorTitle:We can't open this invitation`;
+
+  /**
+   * Property previewErrorDescription
+   * @readonly
+   * @description Body for the shared status card when the preview request failed.
+   * @access protected
+   * @since 1.2.0
+   * @type {string}
+   */
+  protected readonly previewErrorDescription: string = $localize`:@@org.invitationAccept.previewError:This invitation link is invalid, expired or has already been used.`;
+
+  /**
+   * Property notAvailableTitle
+   * @readonly
+   * @description Heading for the shared status card when a resolved invitation can no longer be acted on.
+   * @access protected
+   * @since 1.2.0
+   * @type {string}
+   */
+  protected readonly notAvailableTitle: string = $localize`:@@org.invitationAccept.notAvailableTitle:This invitation isn't available`;
+
+  /**
+   * Property notAcceptableDescription
+   * @readonly
+   * @description Body for the shared status card when a resolved invitation can no longer be acted on.
+   * @access protected
+   * @since 1.2.0
+   * @type {string}
+   */
+  protected readonly notAcceptableDescription: string = $localize`:@@org.invitationAccept.notAcceptable:This invitation can no longer be accepted.`;
   //#endregion
 
   //#region Lifecycle

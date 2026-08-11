@@ -1,18 +1,41 @@
 <div id="organization-invitation-accept-page" class="mx-auto flex w-full max-w-md flex-col gap-6">
-  @if (token() === undefined) {
-    <div hlmCard data-testid="organization-invitation-accept-missing-token">
+  <span class="text-center text-sm font-medium text-muted-foreground">FireGuard</span>
+
+  <ng-template
+    #statusCard
+    let-testId="testId"
+    let-icon="icon"
+    let-avatarName="avatarName"
+    let-avatarLogoUrl="avatarLogoUrl"
+    let-title="title"
+    let-description="description"
+    let-badge="badge"
+  >
+    <div hlmCard [attr.data-testid]="testId">
       <div hlmCardContent class="flex flex-col items-center gap-3 py-2 text-center">
-        <div
-          class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
-        >
-          <ng-icon name="lucideLink2Off" class="text-2xl" aria-hidden="true" />
-        </div>
-        <h1 hlmCardTitle i18n="@@org.invitationAccept.missingTokenTitle">
-          Invalid invitation link
-        </h1>
-        <p hlmCardDescription i18n="@@org.invitationAccept.missingToken">
-          This invitation link is missing its token.
-        </p>
+        @if (avatarName) {
+          <hlm-avatar class="size-14 shrink-0 rounded-lg">
+            @if (avatarLogoUrl) {
+              <img hlmAvatarImage [src]="avatarLogoUrl" [alt]="avatarName" />
+            }
+            <span
+              hlmAvatarFallback
+              class="rounded-lg bg-muted text-base font-semibold text-foreground"
+              >{{ organizationInitials(avatarName) }}</span
+            >
+          </hlm-avatar>
+        } @else {
+          <div
+            class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
+          >
+            <ng-icon [name]="icon" class="text-2xl" aria-hidden="true" />
+          </div>
+        }
+        <h1 hlmCardTitle>{{ title }}</h1>
+        @if (badge) {
+          <ng-container *ngTemplateOutlet="badge" />
+        }
+        <p hlmCardDescription>{{ description }}</p>
       </div>
       <div hlmCardFooter class="justify-center">
         <a hlmBtn variant="outline" routerLink="/" i18n="@@org.invitationAccept.goHome">
@@ -20,6 +43,20 @@
         </a>
       </div>
     </div>
+  </ng-template>
+
+  @if (token() === undefined) {
+    <ng-container
+      *ngTemplateOutlet="
+        statusCard;
+        context: {
+          testId: 'organization-invitation-accept-missing-token',
+          icon: 'lucideLink2Off',
+          title: missingTokenTitle,
+          description: missingTokenDescription,
+        }
+      "
+    />
   } @else if (store.isLoadingPreview()) {
     <div
       hlmCard
@@ -42,26 +79,17 @@
       </div>
     </div>
   } @else if (store.isPreviewError()) {
-    <div hlmCard data-testid="organization-invitation-accept-preview-error">
-      <div hlmCardContent class="flex flex-col items-center gap-3 py-2 text-center">
-        <div
-          class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
-        >
-          <ng-icon name="lucideMailX" class="text-2xl" aria-hidden="true" />
-        </div>
-        <h1 hlmCardTitle i18n="@@org.invitationAccept.previewErrorTitle">
-          We can't open this invitation
-        </h1>
-        <p hlmCardDescription i18n="@@org.invitationAccept.previewError">
-          This invitation link is invalid, expired or has already been used.
-        </p>
-      </div>
-      <div hlmCardFooter class="justify-center">
-        <a hlmBtn variant="outline" routerLink="/" i18n="@@org.invitationAccept.goHome">
-          Go to homepage
-        </a>
-      </div>
-    </div>
+    <ng-container
+      *ngTemplateOutlet="
+        statusCard;
+        context: {
+          testId: 'organization-invitation-accept-preview-error',
+          icon: 'lucideMailX',
+          title: previewErrorTitle,
+          description: previewErrorDescription,
+        }
+      "
+    />
   } @else if (store.isAccepted()) {
     <div hlmCard data-testid="organization-invitation-accept-success">
       <div hlmCardContent class="flex flex-col items-center gap-3 py-2 text-center">
@@ -184,44 +212,30 @@
         </div>
       </div>
     } @else {
-      <div hlmCard data-testid="organization-invitation-accept-unavailable">
-        <div hlmCardHeader class="flex flex-col items-center gap-3 text-center">
-          <hlm-avatar class="size-14 shrink-0 rounded-lg">
-            @if (preview.organizationLogoUrl; as logoUrl) {
-              <img hlmAvatarImage [src]="logoUrl" [alt]="preview.organizationName" />
-            }
-            <span
-              hlmAvatarFallback
-              class="rounded-lg bg-muted text-base font-semibold text-foreground"
-              >{{ organizationInitials(preview.organizationName) }}</span
-            >
-          </hlm-avatar>
-          <h1 hlmCardTitle i18n="@@org.invitationAccept.notAvailableTitle">
-            This invitation isn't available
-          </h1>
-        </div>
-
-        <div hlmCardContent class="flex flex-col items-center gap-3 text-center">
-          @let statusTag = invitationStatusTag(preview.status);
-          <span hlmBadge variant="outline" class="gap-1 px-1.5 text-muted-foreground">
-            <ng-icon
-              [name]="statusTag.icon"
-              [class]="statusTagIconClass[statusTag.severity]"
-              aria-hidden="true"
-            />
-            <span>{{ statusTag.label }}</span>
-          </span>
-          <p class="text-sm text-muted-foreground" i18n="@@org.invitationAccept.notAcceptable">
-            This invitation can no longer be accepted.
-          </p>
-        </div>
-
-        <div hlmCardFooter class="justify-center">
-          <a hlmBtn variant="outline" routerLink="/" i18n="@@org.invitationAccept.goHome">
-            Go to homepage
-          </a>
-        </div>
-      </div>
+      <ng-template #unavailableBadge>
+        @let statusTag = invitationStatusTag(preview.status);
+        <span hlmBadge variant="outline" class="gap-1 px-1.5 text-muted-foreground">
+          <ng-icon
+            [name]="statusTag.icon"
+            [class]="statusTagIconClass[statusTag.severity]"
+            aria-hidden="true"
+          />
+          <span>{{ statusTag.label }}</span>
+        </span>
+      </ng-template>
+      <ng-container
+        *ngTemplateOutlet="
+          statusCard;
+          context: {
+            testId: 'organization-invitation-accept-unavailable',
+            avatarName: preview.organizationName,
+            avatarLogoUrl: preview.organizationLogoUrl,
+            title: notAvailableTitle,
+            description: notAcceptableDescription,
+            badge: unavailableBadge,
+          }
+        "
+      />
     }
   }
 </div>

@@ -97,6 +97,12 @@ describe('OrganizationInvitationAcceptPage', () => {
     accept = vi.fn();
   });
 
+  it('should show the FireGuard mark above the card', async () => {
+    await render(undefined);
+
+    expect(fixture.nativeElement.textContent).toContain('FireGuard');
+  });
+
   it('should show the missing-token card and never request a preview without one', async () => {
     await render(undefined);
 

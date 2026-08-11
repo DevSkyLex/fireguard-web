@@ -147,9 +147,9 @@ export class OrganizationSetupService {
    * @returns {Observable<readonly SetupOrganizationRole[]>} Observable emitting setup role summaries.
    */
   public listRoles(organizationId: string): Observable<readonly SetupOrganizationRole[]> {
-    return this.organizationRoleService.list(organizationId).pipe(
-      map((collection) =>
-        collection.member.map((role) => ({
+    return this.organizationRoleService.listAll(organizationId).pipe(
+      map((roles) =>
+        roles.map((role) => ({
           id: role.id,
           name: role.name,
           description: role.description,

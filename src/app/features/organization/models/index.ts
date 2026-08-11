@@ -7,7 +7,14 @@ export type { OrganizationInvitationStatus } from './member/organization-invitat
 export type { MemberDirectoryEntry } from './member/member-directory-entry.interface';
 export type { OrganizationMemberOutput } from './member/organization-member-output.interface';
 export type { CurrentOrganizationMemberProfileOutput } from './member/current-organization-member-profile-output.interface';
+export type {
+  OrganizationMemberListQuery,
+  OrganizationMemberSortDirection,
+  OrganizationMemberSortField,
+  OrganizationMemberStatusFilter,
+} from './member/organization-member-list-query.interface';
 export type { OrganizationRoleOutput } from './role/organization-role-output.interface';
+export type { OrganizationRolePermissionEntry } from './role/organization-role-permission-entry.interface';
 export {
   ORGANIZATION_PERMISSION,
   ORGANIZATION_PERMISSION_NAMES,
@@ -19,6 +26,8 @@ export type { RemoveOrganizationMembersResult } from './member/remove-organizati
 export type { CreateOrganizationRoleInput } from './role/create-organization-role-input.interface';
 export type { UpdateOrganizationRoleInput } from './role/update-organization-role-input.interface';
 export type { AssignOrganizationRoleInput } from './role/assign-organization-role-input.interface';
+export type { ReplaceOrganizationMemberRolesInput } from './role/replace-organization-member-roles-input.interface';
+export type { TransferOrganizationOwnershipInput } from './organization-entity/transfer-organization-ownership-input.interface';
 export type { AcceptOrganizationInvitationInput } from './member/accept-organization-invitation-input.interface';
 export type {
   OrganizationDashboardAlert,

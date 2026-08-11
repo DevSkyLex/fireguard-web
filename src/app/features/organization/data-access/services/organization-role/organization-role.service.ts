@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { EMPTY, expand, reduce, type Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
@@ -7,6 +7,7 @@ import type {
   CreateOrganizationRoleInput,
   UpdateOrganizationRoleInput,
   AssignOrganizationRoleInput,
+  ReplaceOrganizationMemberRolesInput,
   OrganizationMemberOutput,
 } from '@features/organization/models';
 
@@ -52,6 +53,63 @@ export class OrganizationRoleService extends HydraApiService {
   }
 
   /**
+   * Method listAll
+   * @method listAll
+   *
+   * @description
+   * Lists every role by walking the server-paginated collection page by page —
+   * the roles endpoint is really paginated since API lot P2.4, so a single
+   * `list()` call is a page, never the full catalog.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {RequestOptions} [options] - Optional extra request parameters.
+   *
+   * @return {Observable<readonly OrganizationRoleOutput[]>} An observable emitting the complete role list.
+   */
+  public listAll(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<readonly OrganizationRoleOutput[]> {
+    const pageSize = 100;
+    return this.list(organizationId, { ...options, page: 1, itemsPerPage: pageSize }).pipe(
+      expand((collection, pageIndex) =>
+        (pageIndex + 1) * pageSize < collection.totalItems
+          ? this.list(organizationId, { ...options, page: pageIndex + 2, itemsPerPage: pageSize })
+          : EMPTY,
+      ),
+      reduce(
+        (items, collection) => [...items, ...collection.member],
+        [] as readonly OrganizationRoleOutput[],
+      ),
+    );
+  }
+
+  /**
+   * Method get
+   * @method get
+   *
+   * @description
+   * Retrieves a single role, whose payload carries the `memberCount` the
+   * paginated list does not guarantee.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} roleId - The ID of the role to read.
+   *
+   * @return {Observable<OrganizationRoleOutput>} An observable emitting the role.
+   */
+  public get(organizationId: string, roleId: string): Observable<OrganizationRoleOutput> {
+    return this.getOne<OrganizationRoleOutput>(
+      `/api/organizations/${organizationId}/roles/${roleId}`,
+    );
+  }
+
+  /**
    * Method create
    * @method create
    *
@@ -83,7 +141,10 @@ export class OrganizationRoleService extends HydraApiService {
    *
    * @description
    * Updates an existing role using a partial merge-patch.
-   * Only the fields included in the input will be modified.
+   * Only the fields included in the input will be modified. Since backend
+   * 1.5.0 the payload accepts `name` alongside `description` and
+   * `permissions`, so this is the rename path too; the backend refuses a
+   * rename with **400** for a system role or a duplicate name.
    *
    * @access public
    * @since 1.0.0
@@ -147,6 +208,36 @@ export class OrganizationRoleService extends HydraApiService {
     input: AssignOrganizationRoleInput,
   ): Observable<OrganizationMemberOutput> {
     return this.post<AssignOrganizationRoleInput, OrganizationMemberOutput>(
+      `/api/organizations/${organizationId}/members/${memberId}/roles`,
+      input,
+    );
+  }
+
+  /**
+   * Method replaceMemberRoles
+   * @method replaceMemberRoles
+   *
+   * @description
+   * Sets a member's role set to exactly `input.roleIds` in one request,
+   * replacing the assign-one/revoke-one pair for editors that already know
+   * the whole intended set. The member comes back with the resolved
+   * assignment, so callers need no follow-up read.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} memberId - The ID of the member whose roles are being set.
+   * @param {ReplaceOrganizationMemberRolesInput} input - The complete intended role set.
+   *
+   * @return {Observable<OrganizationMemberOutput>} An observable emitting the updated member.
+   */
+  public replaceMemberRoles(
+    organizationId: string,
+    memberId: string,
+    input: ReplaceOrganizationMemberRolesInput,
+  ): Observable<OrganizationMemberOutput> {
+    return this.put<ReplaceOrganizationMemberRolesInput, OrganizationMemberOutput>(
       `/api/organizations/${organizationId}/members/${memberId}/roles`,
       input,
     );

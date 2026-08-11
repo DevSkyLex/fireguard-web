@@ -11,7 +11,7 @@ const flushEffects = async (): Promise<void> => {
 describe('OrganizationRoleListStore', () => {
   let store: OrganizationRoleListStore;
   let mockOrganizationRoleService: {
-    list: ReturnType<typeof vi.fn>;
+    listAll: ReturnType<typeof vi.fn>;
   };
 
   const collection: HydraCollection<{
@@ -31,7 +31,7 @@ describe('OrganizationRoleListStore', () => {
 
   beforeEach(() => {
     mockOrganizationRoleService = {
-      list: vi.fn().mockReturnValue(of(collection)),
+      listAll: vi.fn().mockReturnValue(of(collection.member)),
     };
 
     TestBed.configureTestingModule({
@@ -48,7 +48,7 @@ describe('OrganizationRoleListStore', () => {
     store.loadRoles('org-1');
     await flushEffects();
 
-    expect(mockOrganizationRoleService.list).toHaveBeenCalledWith('org-1');
+    expect(mockOrganizationRoleService.listAll).toHaveBeenCalledWith('org-1');
     expect(store.roles()).toEqual(collection.member);
     expect(store.rolesCallState().status).toBe('success');
   });

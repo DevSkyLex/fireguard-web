@@ -11,6 +11,7 @@ import type {
   OrganizationDashboardOutput,
   OrganizationDashboardTrendOutput,
   OrganizationPermissionOutput,
+  TransferOrganizationOwnershipInput,
 } from '@features/organization/models';
 import { OrganizationService } from '../organization.service';
 
@@ -285,7 +286,7 @@ describe('OrganizationService', () => {
           mode: 'previous_period',
           from: '2026-02-01T00:00:00+00:00',
           to: '2026-02-29T23:59:59+00:00',
-          summary: [{ key: 'delta', label: 'Delta', value: 2 }],
+          summary: { total: 2, delta: 20 },
           series: [{ bucket: '2026-W09', value: 1 }],
         },
       };
@@ -343,7 +344,7 @@ describe('OrganizationService', () => {
           mode: 'previous_period',
           from: '2026-02-01T00:00:00+00:00',
           to: '2026-02-29T23:59:59+00:00',
-          summary: [{ key: 'delta', label: 'Delta', value: -1 }],
+          summary: { total: 4, delta: -1 },
           series: [{ date: '2026-02-29', value: 1 }],
         },
       };
@@ -396,7 +397,7 @@ describe('OrganizationService', () => {
           mode: 'previous_period',
           from: '2026-02-01T00:00:00+00:00',
           to: '2026-02-29T23:59:59+00:00',
-          summary: [{ key: 'delta', label: 'Delta', value: 1 }],
+          summary: { total: 8, delta: 1 },
           series: [{ date: '2026-02-29', value: 2 }],
         },
       };
@@ -491,6 +492,142 @@ describe('OrganizationService', () => {
       expect(req.request.method).toBe('GET');
       expect(req.request.withCredentials).toBe(true);
       req.flush(mockCollection([mockPermission]));
+    });
+  });
+  // ── remove ─────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    it('should send DELETE request carrying the slug confirmation as a query parameter', () => {
+      service.remove('org-uuid-1', 'fireguard-inc').subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === `${baseUrl}/org-uuid-1`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.params.get('slug')).toBe('fireguard-inc');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(null);
+    });
+
+    it('should surface the unprocessable-entity raised by a mismatched confirmation', () => {
+      service.remove('org-uuid-1', 'wrong-slug').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(422);
+        },
+      });
+
+      const req = httpMock.expectOne((r) => r.url === `${baseUrl}/org-uuid-1`);
+      req.flush(
+        { status: 422, title: 'Unprocessable Entity' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+    });
+  });
+
+  // ── transferOwnership ──────────────────────────────────────────────────────
+
+  describe('transferOwnership', () => {
+    const input: TransferOrganizationOwnershipInput = {
+      newOwnerUserId: 'user-uuid-2',
+      slug: 'fireguard-inc',
+    };
+
+    it('should send POST request and return the refreshed organization', () => {
+      service.transferOwnership('org-uuid-1', input).subscribe((organization) => {
+        expect(organization.id).toBe('org-uuid-1');
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/transfer-ownership`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(input);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockOrg);
+    });
+
+    it('should surface the forbidden raised when the caller is not the current owner', () => {
+      service.transferOwnership('org-uuid-1', input).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(403);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/transfer-ownership`);
+      req.flush({ status: 403, title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+    });
+
+    it('should surface the unprocessable-entity raised by a mismatched slug', () => {
+      service.transferOwnership('org-uuid-1', { ...input, slug: 'nope' }).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(422);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/transfer-ownership`);
+      req.flush(
+        { status: 422, title: 'Unprocessable Entity' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+    });
+  });
+
+  // ── suspend / restore ──────────────────────────────────────────────────────
+
+  describe('suspend', () => {
+    it('should send a bodyless POST request and return the suspended organization', () => {
+      service.suspend('org-uuid-1').subscribe((organization) => {
+        expect(organization.status).toBe('suspended');
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/suspend`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toBeNull();
+      req.flush({ ...mockOrg, status: 'suspended', isActive: false });
+    });
+
+    it('should surface the conflict raised when the organization is archived', () => {
+      service.suspend('org-uuid-1').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(409);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/suspend`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
+    });
+  });
+
+  describe('restore', () => {
+    it('should send a bodyless POST request and return the restored organization', () => {
+      service.restore('org-uuid-1').subscribe((organization) => {
+        expect(organization.status).toBe('active');
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/restore`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toBeNull();
+      req.flush(mockOrg);
+    });
+  });
+
+  // ── removeLogo ─────────────────────────────────────────────────────────────
+
+  describe('removeLogo', () => {
+    it('should send DELETE request against the logo endpoint', () => {
+      service.removeLogo('org-uuid-1').subscribe();
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(null);
+    });
+
+    it('should surface the conflict raised when the organization is archived', () => {
+      service.removeLogo('org-uuid-1').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(409);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
     });
   });
 });

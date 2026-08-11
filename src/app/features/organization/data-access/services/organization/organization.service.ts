@@ -17,6 +17,7 @@ import type {
   ChangeOrganizationPlanInput,
   OrganizationQuotaOutput,
   OrganizationPermissionOutput,
+  TransferOrganizationOwnershipInput,
 } from '@features/organization/models';
 
 /**
@@ -184,19 +185,27 @@ export class OrganizationService extends HydraApiService {
    * @method remove
    *
    * @description
-   * Permanently deletes the organization identified by `id`.
-   * Named `remove` to avoid shadowing the protected `delete`
-   * method inherited from HydraApiService.
+   * Archives the organization identified by `id` — a reversible soft delete,
+   * not a permanent removal: the owned facilities, equipment, inspections and
+   * interventions are preserved, and {@link restore} brings it all back.
+   * Named `remove` to avoid shadowing the protected `delete` method inherited
+   * from HydraApiService.
+   *
+   * `slug` is a mandatory danger-zone confirmation carried as a **query
+   * parameter**, not a body: the caller retypes the organization's current
+   * slug and a missing or mismatched value is refused with **422** without
+   * archiving anything.
    *
    * @access public
    * @since 1.1.0
    *
-   * @param {string} id - The unique identifier of the organization to delete.
+   * @param {string} id - The unique identifier of the organization to archive.
+   * @param {string} slug - The organization's current slug, retyped as confirmation.
    *
    * @return {Observable<void>} Observable completing on success.
    */
-  public remove(id: string): Observable<void> {
-    return this.delete(`${OrganizationService.BASE_PATH}/${id}`);
+  public remove(id: string, slug: string): Observable<void> {
+    return this.delete(`${OrganizationService.BASE_PATH}/${id}`, { params: { slug } });
   }
 
   /**
@@ -326,6 +335,102 @@ export class OrganizationService extends HydraApiService {
         },
       )
       .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Method removeLogo
+   * @method removeLogo
+   *
+   * @description
+   * Clears the organization's logo. The endpoint answers **204 with no body**
+   * — unlike {@link uploadLogo}, it returns no refreshed organization — so the
+   * caller owns clearing `logoUrl` in its own state. Idempotent when there is
+   * no logo; **409** when the organization is archived.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<void>} Observable completing on success.
+   */
+  public removeLogo(organizationId: string): Observable<void> {
+    return this.delete(`${OrganizationService.BASE_PATH}/${organizationId}/logo`);
+  }
+
+  /**
+   * Method transferOwnership
+   * @method transferOwnership
+   *
+   * @description
+   * Hands ownership to another active member and returns the refreshed
+   * organization. Only the **current owner** may call this — it is deliberately
+   * outside RBAC, so no permission substitutes for it — and `input.slug` must
+   * retype the organization's current slug or the call is refused with **422**.
+   * The new owner is granted the system `admin` role if they lack it.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {TransferOrganizationOwnershipInput} input - The new owner's user id and the slug confirmation.
+   *
+   * @return {Observable<OrganizationOutput>} An observable emitting the refreshed organization.
+   */
+  public transferOwnership(
+    organizationId: string,
+    input: TransferOrganizationOwnershipInput,
+  ): Observable<OrganizationOutput> {
+    return this.post<TransferOrganizationOwnershipInput, OrganizationOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/transfer-ownership`,
+      input,
+    );
+  }
+
+  /**
+   * Method suspend
+   * @method suspend
+   *
+   * @description
+   * Suspends the organization and returns it refreshed. A dedicated action
+   * alongside — not replacing — the `isActive: false` toggle on {@link update},
+   * and gated by the same `organization.settings.write` permission. Idempotent
+   * when already suspended; **409** when the organization is archived.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<OrganizationOutput>} An observable emitting the suspended organization.
+   */
+  public suspend(organizationId: string): Observable<OrganizationOutput> {
+    return this.postAction<OrganizationOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/suspend`,
+    );
+  }
+
+  /**
+   * Method restore
+   * @method restore
+   *
+   * @description
+   * Returns the organization to active from suspended **or archived**, which
+   * makes it the undo for {@link remove}. Same permission and same
+   * coexistence with the legacy toggle as {@link suspend}. Idempotent when
+   * already active.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<OrganizationOutput>} An observable emitting the restored organization.
+   */
+  public restore(organizationId: string): Observable<OrganizationOutput> {
+    return this.postAction<OrganizationOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/restore`,
+    );
   }
 
   /**

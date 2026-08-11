@@ -30,7 +30,7 @@ describe('OrganizationSetupService', () => {
     invite: vi.fn(),
   };
   const organizationRoleService = {
-    list: vi.fn(),
+    listAll: vi.fn(),
   };
   const facilityService = {
     create: vi.fn(),
@@ -72,23 +72,21 @@ describe('OrganizationSetupService', () => {
   });
 
   it('should map organization roles to the setup contract', () => {
-    organizationRoleService.list.mockReturnValue(
-      of(
-        mockCollection([
-          {
-            '@id': '/api/organizations/org-1/roles/role-1',
-            '@type': 'OrganizationRole',
-            id: 'role-1',
-            organizationId: 'org-1',
-            name: 'admin',
-            description: 'Full access',
-            isSystem: true,
-            permissions: ['manage:*'],
-            createdAt: '2026-01-01T00:00:00+00:00',
-            updatedAt: '2026-01-01T00:00:00+00:00',
-          },
-        ]),
-      ),
+    organizationRoleService.listAll.mockReturnValue(
+      of([
+        {
+          '@id': '/api/organizations/org-1/roles/role-1',
+          '@type': 'OrganizationRole',
+          id: 'role-1',
+          organizationId: 'org-1',
+          name: 'admin',
+          description: 'Full access',
+          isSystem: true,
+          permissions: ['manage:*'],
+          createdAt: '2026-01-01T00:00:00+00:00',
+          updatedAt: '2026-01-01T00:00:00+00:00',
+        },
+      ]),
     );
 
     service.listRoles('org-1').subscribe((roles) => {

@@ -61,8 +61,8 @@ describe('OrganizationMemberService', () => {
     description: 'Organization owner',
     isSystem: true,
     permissions: [
-      ORGANIZATION_PERMISSION.FACILITIES_READ,
-      ORGANIZATION_PERMISSION.FACILITIES_WRITE,
+      { name: ORGANIZATION_PERMISSION.FACILITIES_READ, description: 'Read facilities' },
+      { name: ORGANIZATION_PERMISSION.FACILITIES_WRITE, description: 'Write facilities' },
     ],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-01-01T00:00:00+00:00',
@@ -216,6 +216,119 @@ describe('OrganizationMemberService', () => {
 
       const req = httpMock.expectOne(`${baseUrl}/missing-member`);
       req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
+  });
+  // ── get ────────────────────────────────────────────────────────────────────
+
+  describe('get', () => {
+    it('should send GET request and return the single member', () => {
+      service.get(orgId, 'member-uuid-1').subscribe((member) => {
+        expect(member.id).toBe('member-uuid-1');
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/member-uuid-1`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockMember);
+    });
+
+    it('should handle not found when the member belongs to another organization', () => {
+      service.get(orgId, 'member-uuid-9').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(404);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/member-uuid-9`);
+      req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
+  });
+
+  // ── reactivate ─────────────────────────────────────────────────────────────
+
+  describe('reactivate', () => {
+    it('should send a bodyless POST request and return the reactivated member', () => {
+      service.reactivate(orgId, 'member-uuid-1').subscribe((member) => {
+        expect(member.isActive).toBe(true);
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/member-uuid-1/reactivate`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toBeNull();
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockMember);
+    });
+
+    it('should surface the conflict raised when the plan member cap is reached', () => {
+      service.reactivate(orgId, 'member-uuid-1').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(409);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/member-uuid-1/reactivate`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
+    });
+  });
+
+  // ── leave ──────────────────────────────────────────────────────────────────
+
+  describe('leave', () => {
+    it('should send DELETE request against the literal /me segment', () => {
+      service.leave(orgId).subscribe();
+
+      const req = httpMock.expectOne(`${baseUrl}/me`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(null);
+    });
+
+    it('should surface the conflict raised when the caller owns the organization', () => {
+      service.leave(orgId).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(409);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/me`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
+    });
+  });
+
+  // ── list filters ───────────────────────────────────────────────────────────
+
+  describe('list filters', () => {
+    it('should serialize status, role and the bracketed sort pair', () => {
+      service
+        .list(
+          orgId,
+          { page: 2 },
+          { status: 'all', roleId: 'role-uuid-1', sortBy: 'joinedAt', sortDirection: 'desc' },
+        )
+        .subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === baseUrl);
+      expect(req.request.params.get('page')).toBe('2');
+      expect(req.request.params.get('status')).toBe('all');
+      expect(req.request.params.get('roleId')).toBe('role-uuid-1');
+      expect(req.request.params.get('order[joinedAt]')).toBe('desc');
+      req.flush(mockCollection([]));
+    });
+
+    it('should omit a sort field that carries no direction, leaving the server default', () => {
+      service.list(orgId, undefined, { sortBy: 'displayName' }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === baseUrl);
+      expect(req.request.params.get('order[displayName]')).toBeNull();
+      req.flush(mockCollection([]));
+    });
+
+    it('should send no filter parameters at all when the query is empty', () => {
+      service.list(orgId, undefined, {}).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === baseUrl);
+      expect(req.request.params.keys()).toEqual([]);
+      req.flush(mockCollection([]));
     });
   });
 });

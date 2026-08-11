@@ -44,11 +44,11 @@ export const OrganizationRoleListStore = signalStore(
       pipe(
         tap(() => patchState(store, { rolesCallState: pendingCallState() })),
         switchMap((organizationId) =>
-          roleService.list(organizationId).pipe(
+          roleService.listAll(organizationId).pipe(
             tapResponse({
-              next: (collection) =>
+              next: (roles) =>
                 patchState(store, {
-                  rolesCallState: successCallState([...collection.member]),
+                  rolesCallState: successCallState([...roles]),
                 }),
               error: (err: unknown) => {
                 const storeError: StoreError = toStoreError(err);

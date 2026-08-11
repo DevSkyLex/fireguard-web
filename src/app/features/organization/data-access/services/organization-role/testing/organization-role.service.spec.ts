@@ -10,6 +10,7 @@ import type {
   CreateOrganizationRoleInput,
   UpdateOrganizationRoleInput,
   AssignOrganizationRoleInput,
+  ReplaceOrganizationMemberRolesInput,
 } from '@features/organization/models';
 import { OrganizationRoleService } from '../organization-role.service';
 
@@ -47,7 +48,10 @@ describe('OrganizationRoleService', () => {
     name: 'Manager',
     description: 'Can manage facilities',
     isSystem: false,
-    permissions: ['facility:read', 'facility:write'],
+    permissions: [
+      { name: 'facility:read', description: 'Read facilities' },
+      { name: 'facility:write', description: 'Write facilities' },
+    ],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-03-01T00:00:00+00:00',
   };
@@ -82,6 +86,49 @@ describe('OrganizationRoleService', () => {
 
       const req = httpMock.expectOne(rolesUrl);
       req.flush({ status: 403, title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+    });
+  });
+
+  // ── listAll ────────────────────────────────────────────────────────────────
+
+  describe('listAll', () => {
+    it('should walk every server page and emit the concatenated role list', () => {
+      const second: OrganizationRoleOutput = { ...mockRole, id: 'role-uuid-2', name: 'Inspector' };
+      let result: readonly OrganizationRoleOutput[] = [];
+
+      service.listAll(orgId).subscribe((roles) => {
+        result = roles;
+      });
+
+      const firstRequest = httpMock.expectOne(
+        (request) =>
+          request.url === rolesUrl &&
+          request.params.get('page') === '1' &&
+          request.params.get('itemsPerPage') === '100',
+      );
+      firstRequest.flush({ ...mockCollection([mockRole]), totalItems: 101 });
+
+      const secondRequest = httpMock.expectOne(
+        (request) => request.url === rolesUrl && request.params.get('page') === '2',
+      );
+      secondRequest.flush({ ...mockCollection([second]), totalItems: 101 });
+
+      expect(result).toEqual([mockRole, second]);
+    });
+
+    it('should stop after a single page when the collection fits in it', () => {
+      let result: readonly OrganizationRoleOutput[] = [];
+
+      service.listAll(orgId).subscribe((roles) => {
+        result = roles;
+      });
+
+      const req = httpMock.expectOne(
+        (request) => request.url === rolesUrl && request.params.get('page') === '1',
+      );
+      req.flush(mockCollection([mockRole]));
+
+      expect(result).toEqual([mockRole]);
     });
   });
 
@@ -120,11 +167,14 @@ describe('OrganizationRoleService', () => {
     it('should send PATCH request and return updated role', () => {
       const updatedRole: OrganizationRoleOutput = {
         ...mockRole,
-        permissions: ['facility:read', 'equipment:read'],
+        permissions: [
+          { name: 'facility:read', description: 'Read facilities' },
+          { name: 'equipment:read', description: 'Read equipment' },
+        ],
       };
 
       service.update(orgId, 'role-uuid-1', input).subscribe((role) => {
-        expect(role.permissions).toContain('facility:read');
+        expect(role.permissions.map((permission) => permission.name)).toContain('facility:read');
       });
 
       const req = httpMock.expectOne(`${rolesUrl}/role-uuid-1`);
@@ -197,6 +247,84 @@ describe('OrganizationRoleService', () => {
       expect(req.request.method).toBe('DELETE');
       expect(req.request.withCredentials).toBe(true);
       req.flush(null);
+    });
+  });
+  // ── get ────────────────────────────────────────────────────────────────────
+
+  describe('get', () => {
+    it('should send GET request and return the role with its member count', () => {
+      service.get(orgId, 'role-uuid-1').subscribe((role) => {
+        expect(role.id).toBe('role-uuid-1');
+        expect(role.memberCount).toBe(4);
+      });
+
+      const req = httpMock.expectOne(`${rolesUrl}/role-uuid-1`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush({ ...mockRole, memberCount: 4 });
+    });
+
+    it('should handle not found when the role belongs to another organization', () => {
+      service.get(orgId, 'role-uuid-9').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(404);
+        },
+      });
+
+      const req = httpMock.expectOne(`${rolesUrl}/role-uuid-9`);
+      req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
+  });
+
+  // ── replaceMemberRoles ─────────────────────────────────────────────────────
+
+  describe('replaceMemberRoles', () => {
+    const memberId = 'member-uuid-1';
+    const rolesUrlForMember = `${mockEnv.apiUrl}/api/organizations/${orgId}/members/${memberId}/roles`;
+    const input: ReplaceOrganizationMemberRolesInput = {
+      roleIds: ['role-uuid-1', 'role-uuid-2'],
+    };
+    const mockMember: OrganizationMemberOutput = {
+      '@id': `/api/organizations/${orgId}/members/${memberId}`,
+      '@type': 'OrganizationMember',
+      id: memberId,
+      organizationId: orgId,
+      userId: 'user-uuid-2',
+      isActive: true,
+      joinedAt: '2026-01-15T10:00:00+00:00',
+      roleIds: ['role-uuid-1', 'role-uuid-2'],
+    };
+
+    it('should send PUT request with the complete role set and return the updated member', () => {
+      service.replaceMemberRoles(orgId, memberId, input).subscribe((member) => {
+        expect(member.id).toBe(memberId);
+      });
+
+      const req = httpMock.expectOne(rolesUrlForMember);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(input);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockMember);
+    });
+
+    it('should send an empty array as a full revocation rather than skipping the call', () => {
+      service.replaceMemberRoles(orgId, memberId, { roleIds: [] }).subscribe();
+
+      const req = httpMock.expectOne(rolesUrlForMember);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ roleIds: [] });
+      req.flush({ ...mockMember, roleIds: [] });
+    });
+
+    it('should surface the last-administrator conflict', () => {
+      service.replaceMemberRoles(orgId, memberId, { roleIds: [] }).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(409);
+        },
+      });
+
+      const req = httpMock.expectOne(rolesUrlForMember);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
     });
   });
 });

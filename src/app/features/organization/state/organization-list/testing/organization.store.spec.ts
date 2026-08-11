@@ -193,10 +193,13 @@ describe('OrganizationStore', () => {
 
       expect(store.isDeleting()).toBe(false);
 
-      store.deleteOne(otherOrganization.id);
+      store.deleteOne({ id: otherOrganization.id, slug: otherOrganization.slug });
       await flushEffects();
 
-      expect(mockOrganizationService.remove).toHaveBeenCalledWith(otherOrganization.id);
+      expect(mockOrganizationService.remove).toHaveBeenCalledWith(
+        otherOrganization.id,
+        otherOrganization.slug,
+      );
       expect(store.organizations()).toEqual([organization]);
       expect(store.totalOrganizations()).toBe(1);
       expect(store.isDeleting()).toBe(false);
@@ -206,7 +209,7 @@ describe('OrganizationStore', () => {
       mockOrganizationService.remove.mockReturnValue(of(undefined));
       activeOrganizationStoreStub.selectedOrganization.set(organization);
 
-      store.deleteOne(organization.id);
+      store.deleteOne({ id: organization.id, slug: organization.slug });
       await flushEffects();
 
       expect(activeOrganizationStoreStub.clearSelectedOrganization).toHaveBeenCalled();
@@ -216,7 +219,7 @@ describe('OrganizationStore', () => {
       mockOrganizationService.remove.mockReturnValue(of(undefined));
       activeOrganizationStoreStub.selectedOrganization.set(organization);
 
-      store.deleteOne(otherOrganization.id);
+      store.deleteOne({ id: otherOrganization.id, slug: otherOrganization.slug });
       await flushEffects();
 
       expect(activeOrganizationStoreStub.clearSelectedOrganization).not.toHaveBeenCalled();
@@ -226,7 +229,7 @@ describe('OrganizationStore', () => {
       const httpError = { status: 404, message: 'Not found' };
       mockOrganizationService.remove.mockReturnValue(throwError(() => httpError));
 
-      store.deleteOne(organization.id);
+      store.deleteOne({ id: organization.id, slug: organization.slug });
       await flushEffects();
 
       expect(store.isDeleting()).toBe(false);
@@ -251,7 +254,10 @@ describe('OrganizationStore', () => {
     it('should remove all matching organizations, decrement the total and set deleteCallState to success', async () => {
       mockOrganizationService.remove.mockReturnValue(of(undefined));
 
-      store.deleteMany([organization.id, otherOrganization.id]);
+      store.deleteMany([
+        { id: organization.id, slug: organization.slug },
+        { id: otherOrganization.id, slug: otherOrganization.slug },
+      ]);
       await flushEffects();
 
       expect(mockOrganizationService.remove).toHaveBeenCalledTimes(2);
@@ -264,7 +270,7 @@ describe('OrganizationStore', () => {
       mockOrganizationService.remove.mockReturnValue(of(undefined));
       activeOrganizationStoreStub.selectedOrganization.set(organization);
 
-      store.deleteMany([organization.id]);
+      store.deleteMany([{ id: organization.id, slug: organization.slug }]);
       await flushEffects();
 
       expect(activeOrganizationStoreStub.clearSelectedOrganization).toHaveBeenCalled();
@@ -274,7 +280,7 @@ describe('OrganizationStore', () => {
       mockOrganizationService.remove.mockReturnValue(of(undefined));
       activeOrganizationStoreStub.selectedOrganization.set(organization);
 
-      store.deleteMany([otherOrganization.id]);
+      store.deleteMany([{ id: otherOrganization.id, slug: otherOrganization.slug }]);
       await flushEffects();
 
       expect(activeOrganizationStoreStub.clearSelectedOrganization).not.toHaveBeenCalled();
@@ -284,7 +290,10 @@ describe('OrganizationStore', () => {
       const httpError = { status: 500, message: 'Server error' };
       mockOrganizationService.remove.mockReturnValue(throwError(() => httpError));
 
-      store.deleteMany([organization.id, otherOrganization.id]);
+      store.deleteMany([
+        { id: organization.id, slug: organization.slug },
+        { id: otherOrganization.id, slug: otherOrganization.slug },
+      ]);
       await flushEffects();
 
       expect(store.isDeleting()).toBe(false);

@@ -1,1 +1,1 @@
-export type { OrganizationState } from './state.interface';
+export type { OrganizationArchiveRequest, OrganizationState } from './state.interface';

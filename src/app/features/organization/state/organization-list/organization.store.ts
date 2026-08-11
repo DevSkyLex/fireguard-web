@@ -37,7 +37,7 @@ import type { OrganizationOutput, CreateOrganizationInput } from '@features/orga
 import { ActiveOrganizationStore } from '../active-organization/active-organization.store';
 import { organizationSettingsStoreEvents } from '../organization-settings/events';
 import { organizationStoreEvents } from './events';
-import type { OrganizationState } from './models';
+import type { OrganizationArchiveRequest, OrganizationState } from './models';
 
 //#region Initial State
 /**
@@ -415,22 +415,26 @@ export const OrganizationStore = signalStore(
          * @method deleteOne
          *
          * @description
-         * Deletes a single organization by ID. Uses `exhaustMap` to prevent
+         * Archives a single organization. Uses `exhaustMap` to prevent
          * concurrent deletes. On success: removes the item from the paginated
-         * list and clears the active selection if the deleted organization was
+         * list and clears the active selection if the archived organization was
          * the currently selected one.
+         *
+         * `slug` is the danger-zone confirmation the endpoint requires; the
+         * caller must have collected the retyped slug, since the backend
+         * refuses the call with 422 without it.
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<string>} An RxMethod that accepts the organization ID to delete.
+         * @type {RxMethod<OrganizationArchiveRequest>} An RxMethod accepting the organization id and its slug confirmation.
          */
-        deleteOne: rxMethod<string>(
+        deleteOne: rxMethod<OrganizationArchiveRequest>(
           pipe(
             tap((): void => {
               patchState(store, { deleteCallState: pendingCallState() });
             }),
-            exhaustMap((id: string) =>
-              organizationService.remove(id).pipe(
+            exhaustMap(({ id, slug }: OrganizationArchiveRequest) =>
+              organizationService.remove(id, slug).pipe(
                 tapResponse({
                   next: (): void => {
                     patchState(store, removeEntity(id, { collection: 'organization' }), {
@@ -461,22 +465,29 @@ export const OrganizationStore = signalStore(
          * @method deleteMany
          *
          * @description
-         * Bulk-deletes organizations in parallel using `forkJoin`. Uses `exhaustMap`
+         * Bulk-archives organizations in parallel using `forkJoin`. Uses `exhaustMap`
          * to prevent concurrent bulk-delete operations. On success: removes all
          * matching items from the list and clears the active selection if it was
-         * among the deleted IDs.
+         * among the archived IDs.
+         *
+         * Each request carries its own slug confirmation, since the endpoint
+         * validates one per organization.
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<string[]>} An RxMethod that accepts an array of organization IDs to delete.
+         * @type {RxMethod<readonly OrganizationArchiveRequest[]>} An RxMethod accepting one id/slug pair per organization.
          */
-        deleteMany: rxMethod<string[]>(
+        deleteMany: rxMethod<readonly OrganizationArchiveRequest[]>(
           pipe(
             tap((): void => {
               patchState(store, { deleteCallState: pendingCallState() });
             }),
-            exhaustMap((ids: string[]) =>
-              forkJoin(ids.map((id: string) => organizationService.remove(id))).pipe(
+            exhaustMap((requests: readonly OrganizationArchiveRequest[]) => {
+              const ids: string[] = requests.map((request) => request.id);
+
+              return forkJoin(
+                requests.map((request) => organizationService.remove(request.id, request.slug)),
+              ).pipe(
                 map((): void => void 0),
                 tapResponse({
                   next: (): void => {
@@ -500,8 +511,8 @@ export const OrganizationStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 

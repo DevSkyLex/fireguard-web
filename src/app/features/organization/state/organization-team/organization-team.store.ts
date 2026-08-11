@@ -85,9 +85,7 @@ export const OrganizationTeamStore = signalStore(
                       .pipe(map((response) => [...response.member]))
                   : of([]),
                 roles: includeRoles
-                  ? roleService
-                      .list(organizationId, { itemsPerPage: 30 })
-                      .pipe(map((response) => [...response.member]))
+                  ? roleService.listAll(organizationId).pipe(map((roles) => [...roles]))
                   : of([]),
                 invitations: includeInvitations
                   ? invitationService

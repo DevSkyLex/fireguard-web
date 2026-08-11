@@ -52,6 +52,7 @@ describe('OrganizationTeamStore', () => {
   const memberService = { list: vi.fn(), add: vi.fn(), remove: vi.fn() };
   const roleService = {
     list: vi.fn(),
+    listAll: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
@@ -67,6 +68,7 @@ describe('OrganizationTeamStore', () => {
     vi.clearAllMocks();
     memberService.list.mockReturnValue(of(collection([member])));
     roleService.list.mockReturnValue(of(collection([role])));
+    roleService.listAll.mockReturnValue(of([role]));
     invitationService.list.mockReturnValue(of(collection([invitation])));
     organizationService.listPermissions.mockReturnValue(of(collection([permission])));
     memberService.remove.mockReturnValue(of(undefined));
@@ -124,7 +126,7 @@ describe('OrganizationTeamStore', () => {
     await flushEffects();
 
     expect(memberService.list).not.toHaveBeenCalled();
-    expect(roleService.list).toHaveBeenCalled();
+    expect(roleService.listAll).toHaveBeenCalled();
     expect(invitationService.list).not.toHaveBeenCalled();
     expect(organizationService.listPermissions).not.toHaveBeenCalled();
     expect(store.roles()).toEqual([role]);

@@ -3,4 +3,6 @@ export type {
   OrganizationSettingsSaveParams,
   OrganizationSettingsLogoParams,
   OrganizationSettingsDeleteParams,
+  OrganizationSettingsStatusParams,
+  OrganizationSettingsTransferOwnershipParams,
 } from './state.interface';

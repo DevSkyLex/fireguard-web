@@ -144,6 +144,20 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     /**
+     * Group channels are organization workspaces — they belong to the
+     * workspace, unlike direct messages, which follow the reader and therefore
+     * live in the shell's bottom block beside the other utilities. The read
+     * permission is the API's floor for every channel operation.
+     */
+    id: 'channels',
+    label: $localize`:@@route.channels:Channels`,
+    icon: 'lucideHash',
+    path: 'channels',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
+  },
+  {
+    /**
      * One destination for the estate, replacing the separate "Facilities" and
      * "Equipments" entries. Sites, equipment and inspections are one business
      * chain, and two menu entries presented them as two independent catalogues.

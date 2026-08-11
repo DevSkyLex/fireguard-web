@@ -1,0 +1,100 @@
+@if (isLoading()) {
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+    @for (i of [1, 2, 3]; track i) {
+      <div hlmCard class="gap-3">
+        <div hlmCardHeader class="gap-2">
+          <hlm-skeleton class="h-4 w-24" />
+          <hlm-skeleton class="h-3 w-16" />
+        </div>
+        <div hlmCardContent class="flex flex-col gap-2">
+          <hlm-skeleton class="h-3 w-full" />
+          <hlm-skeleton class="h-3 w-3/4" />
+        </div>
+      </div>
+    }
+  </div>
+} @else if (loadError(); as error) {
+  <p role="alert" class="text-sm text-destructive">
+    {{ error.message }}
+  </p>
+} @else {
+  @if (changeError(); as error) {
+    <p role="alert" class="mb-4 text-sm text-destructive" data-testid="organization-plan-error">
+      {{ error.message }}
+    </p>
+  } @else if (changeSucceeded()) {
+    <p class="mb-4 text-sm text-muted-foreground" i18n="@@org.settings.plan.changed">
+      The organization's plan has been updated.
+    </p>
+  }
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    @for (row of rows(); track row.id) {
+      <div hlmCard class="gap-3" [attr.data-testid]="'organization-plan-card-' + row.key">
+        <div hlmCardHeader class="gap-1">
+          <div class="flex items-center justify-between gap-2">
+            <h3 hlmCardTitle>{{ row.name }}</h3>
+            @if (row.isCurrent) {
+              <span hlmBadge variant="outline" class="gap-1 text-foreground">
+                <ng-icon
+                  name="lucideCheck"
+                  class="text-emerald-500 dark:text-emerald-400"
+                  aria-hidden="true"
+                />
+                <span i18n="@@org.settings.plan.current">Current plan</span>
+              </span>
+            }
+          </div>
+          <p hlmCardDescription>{{ row.priceLabel }}</p>
+        </div>
+        <div hlmCardContent class="flex flex-col gap-3">
+          @if (row.description; as description) {
+            <p class="text-sm text-muted-foreground">{{ description }}</p>
+          }
+          @if (row.quotas.length > 0) {
+            <ul class="flex flex-col gap-1 text-sm text-foreground">
+              @for (quota of row.quotas; track quota.resource) {
+                <li>{{ quota.summary }}</li>
+              }
+            </ul>
+          }
+        </div>
+        <div hlmCardFooter>
+          @if (!row.isCurrent) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="w-full max-sm:min-h-11"
+              [disabled]="isChanging()"
+              (click)="requestChange(row)"
+            >
+              <span i18n="@@org.settings.plan.switch">Switch to this plan</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onDialogStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-plan-confirm-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.settings.plan.confirmTitle">Switch subscription plan?</h2>
+      <p hlmAlertDialogDescription>{{ confirmText() }}</p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        data-testid="organization-plan-confirm"
+        [disabled]="isChanging()"
+        (click)="confirmChange()"
+      >
+        <span i18n="@@org.settings.plan.confirmAction">Switch plan</span>
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

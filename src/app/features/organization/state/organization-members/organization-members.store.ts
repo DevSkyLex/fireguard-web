@@ -137,9 +137,7 @@ export const OrganizationMembersStore = signalStore(
                     .pipe(map((response) => [...response.member]))
                 : of([]),
               roles: includeRoles
-                ? roleService
-                    .list(organizationId, { itemsPerPage: 100 })
-                    .pipe(map((response) => [...response.member]))
+                ? roleService.listAll(organizationId).pipe(map((roles) => [...roles]))
                 : of([]),
             }).pipe(
               tapResponse({

@@ -1,0 +1,43 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-md"
+    data-testid="organization-member-roles-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@org.rolesDialog.title">Assign roles</h3>
+      @if (member(); as person) {
+        <p hlmDialogDescription>{{ person.displayName }}</p>
+      }
+    </hlm-dialog-header>
+
+    @if (roles().length === 0) {
+      <p class="text-sm text-muted-foreground" i18n="@@org.rolesDialog.empty">
+        This organization has no roles defined yet.
+      </p>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (role of roles(); track role.id) {
+          <li class="flex items-start gap-2.5">
+            <hlm-checkbox
+              [inputId]="'organization-member-role-' + role.id"
+              data-testid="organization-member-roles-dialog-checkbox"
+              [checked]="isAssigned(role.id)"
+              [disabled]="pending()"
+              (checkedChange)="roleToggled.emit({ roleId: role.id, assign: $event })"
+            />
+            <label
+              [for]="'organization-member-role-' + role.id"
+              class="flex flex-col gap-0.5 text-sm leading-none"
+            >
+              <span class="font-medium text-foreground">{{ role.name }}</span>
+              @if (role.description; as description) {
+                <span class="text-xs text-muted-foreground">{{ description }}</span>
+              }
+            </label>
+          </li>
+        }
+      </ul>
+    }
+  </hlm-dialog-content>
+</hlm-dialog>

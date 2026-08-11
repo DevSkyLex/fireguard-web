@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import type { ApiError } from '@core/api/models';
-import { OrganizationService } from '@features/organization/data-access';
+import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../../active-organization';
 import { organizationSettingsStoreEvents } from '../events';
@@ -18,9 +18,17 @@ describe('OrganizationSettingsStore', () => {
     update: ReturnType<typeof vi.fn>;
     uploadLogo: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
+    removeLogo: ReturnType<typeof vi.fn>;
+    transferOwnership: ReturnType<typeof vi.fn>;
+    suspend: ReturnType<typeof vi.fn>;
+    restore: ReturnType<typeof vi.fn>;
+  };
+  let mockMemberService: {
+    leave: ReturnType<typeof vi.fn>;
   };
   let mockActiveOrganizationStore: {
     setOrganization: ReturnType<typeof vi.fn>;
+    selectedOrganization: ReturnType<typeof vi.fn>;
   };
   let dispatcher: Dispatcher;
 
@@ -46,15 +54,24 @@ describe('OrganizationSettingsStore', () => {
       update: vi.fn().mockReturnValue(of(updatedOrg)),
       uploadLogo: vi.fn().mockReturnValue(of(updatedOrg)),
       remove: vi.fn().mockReturnValue(of(undefined)),
+      removeLogo: vi.fn().mockReturnValue(of(undefined)),
+      transferOwnership: vi.fn().mockReturnValue(of(updatedOrg)),
+      suspend: vi.fn().mockReturnValue(of({ ...updatedOrg, status: 'suspended', isActive: false })),
+      restore: vi.fn().mockReturnValue(of(updatedOrg)),
+    };
+    mockMemberService = {
+      leave: vi.fn().mockReturnValue(of(undefined)),
     };
     mockActiveOrganizationStore = {
       setOrganization: vi.fn(),
+      selectedOrganization: vi.fn().mockReturnValue(updatedOrg),
     };
 
     TestBed.configureTestingModule({
       providers: [
         OrganizationSettingsStore,
         { provide: OrganizationService, useValue: mockOrganizationService },
+        { provide: OrganizationMemberService, useValue: mockMemberService },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrganizationStore },
       ],
     });
@@ -108,11 +125,96 @@ describe('OrganizationSettingsStore', () => {
   });
 
   it('should delete the organization', async () => {
-    store.deleteOrganization({ organizationId: 'org-1' });
+    store.deleteOrganization({ organizationId: 'org-1', slug: 'acme' });
     await flushEffects();
 
-    expect(mockOrganizationService.remove).toHaveBeenCalledWith('org-1');
+    expect(mockOrganizationService.remove).toHaveBeenCalledWith('org-1', 'acme');
     expect(store.deleteSucceeded()).toBe(true);
     expect(store.isDeleting()).toBe(false);
+  });
+  it('should clear the logo locally rather than refetching, since the endpoint returns no body', async () => {
+    store.removeLogo({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(mockOrganizationService.removeLogo).toHaveBeenCalledWith('org-1');
+    expect(mockActiveOrganizationStore.setOrganization).toHaveBeenCalledWith({
+      ...updatedOrg,
+      logoUrl: null,
+    });
+    expect(store.isRemovingLogo()).toBe(false);
+  });
+
+  it('should transfer ownership and refresh the active organization', async () => {
+    store.transferOwnership({
+      organizationId: 'org-1',
+      newOwnerUserId: 'user-2',
+      slug: 'renamed-org',
+    });
+    await flushEffects();
+
+    expect(mockOrganizationService.transferOwnership).toHaveBeenCalledWith('org-1', {
+      newOwnerUserId: 'user-2',
+      slug: 'renamed-org',
+    });
+    expect(mockActiveOrganizationStore.setOrganization).toHaveBeenCalledWith(updatedOrg);
+    expect(store.transferOwnershipSucceeded()).toBe(true);
+  });
+
+  it('should expose the transfer error when the slug confirmation is refused', async () => {
+    const apiError: ApiError = {
+      '@id': '',
+      '@type': 'Error',
+      status: 422,
+      type: 'about:blank',
+      title: 'Unprocessable Entity',
+      detail: 'Slug confirmation does not match.',
+    };
+    mockOrganizationService.transferOwnership.mockReturnValue(throwError(() => apiError));
+
+    store.transferOwnership({ organizationId: 'org-1', newOwnerUserId: 'user-2', slug: 'nope' });
+    await flushEffects();
+
+    expect(store.transferOwnershipError()?.message).toBe('Slug confirmation does not match.');
+    expect(store.isTransferringOwnership()).toBe(false);
+  });
+
+  it('should suspend and restore through one shared status call state', async () => {
+    store.suspend({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(mockOrganizationService.suspend).toHaveBeenCalledWith('org-1');
+    expect(store.statusError()).toBeNull();
+
+    store.restore({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(mockOrganizationService.restore).toHaveBeenCalledWith('org-1');
+    expect(store.isChangingStatus()).toBe(false);
+  });
+
+  it('should leave the organization', async () => {
+    store.leave({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(mockMemberService.leave).toHaveBeenCalledWith('org-1');
+    expect(store.leaveSucceeded()).toBe(true);
+  });
+
+  it('should expose the conflict raised when the owner tries to leave', async () => {
+    const apiError: ApiError = {
+      '@id': '',
+      '@type': 'Error',
+      status: 409,
+      type: 'about:blank',
+      title: 'Conflict',
+      detail: 'Transfer ownership before leaving.',
+    };
+    mockMemberService.leave.mockReturnValue(throwError(() => apiError));
+
+    store.leave({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(store.leaveError()?.message).toBe('Transfer ownership before leaving.');
+    expect(store.leaveSucceeded()).toBe(false);
   });
 });

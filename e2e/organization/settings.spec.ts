@@ -1,0 +1,115 @@
+import { expect, test } from '@playwright/test';
+import { E2E_ORGANIZATION_ID, organizationOutput } from '../support/fixtures/api-fixtures';
+import {
+  E2E_PLAN_PRICING,
+  invoiceOutput,
+  organizationQuotaOutput,
+  organizationSubscriptionOutput,
+  planOutput,
+} from '../support/fixtures/billing-fixtures';
+import {
+  collectConsoleErrors,
+  expectNoHorizontalOverflow,
+  setDarkTheme,
+} from '../support/helpers/appearance';
+import { ApiMock } from '../support/mocks/api-mock';
+import { OrganizationSettingsPage } from '../support/pages/organization-settings.page';
+
+const SCREENSHOT_DIR =
+  'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard/92f41712-7d5f-443b-af9a-18c346a39be0/scratchpad/screenshots';
+
+test.describe('Organization settings', () => {
+  test('opens on the General tab by default and offers the Danger zone tab with delete permission', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({
+      organizations: [organizationOutput({ planName: 'Pro' })],
+    });
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    const settings = new OrganizationSettingsPage(page);
+
+    await settings.goto(E2E_ORGANIZATION_ID);
+
+    await expect(settings.root).toBeVisible();
+    await expect(settings.generalTab).toHaveAttribute('data-state', 'active');
+    await expect(settings.dangerTab).toBeVisible();
+    await expect(page.locator('#org-settings-name')).toHaveValue('E2E Organization');
+  });
+
+  test('deep-links onto the Usage tab and renders the quota meters', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    const settings = new OrganizationSettingsPage(page);
+
+    await settings.goto(E2E_ORGANIZATION_ID, 'usage');
+
+    await expect(settings.usageTab).toHaveAttribute('data-state', 'active');
+    await expect(page.getByTestId('organization-usage-row-members')).toBeVisible();
+  });
+
+  test('lazy-loads subscription data only once the Subscription tab is activated', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({
+      organizations: [organizationOutput({ planId: 'e2e-plan-pro', planName: 'Pro' })],
+    });
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    await api.mockOrganizationSubscription(E2E_ORGANIZATION_ID, organizationSubscriptionOutput());
+    await api.mockOrganizationInvoices(E2E_ORGANIZATION_ID, [invoiceOutput()]);
+    await api.mockBillingPricing(E2E_PLAN_PRICING);
+    await api.mockPlans([planOutput()]);
+    const settings = new OrganizationSettingsPage(page);
+
+    await settings.goto(E2E_ORGANIZATION_ID);
+    await expect(settings.root).toBeVisible();
+
+    // Not requested yet: the tab has not been opened.
+    const subscriptionRequest = page.waitForRequest(/\/billing\/subscription$/);
+
+    await settings.subscriptionTab.click();
+
+    await subscriptionRequest;
+    await expect(settings.billingPortalButton).toBeVisible();
+    await expect(page.getByTestId('organization-plan-card-pro')).toBeVisible();
+    await expect(settings.invoiceRows).toHaveCount(1);
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/settings-subscription-light-desktop.png` });
+  });
+
+  test('renders at 375px in dark mode with no console errors and no horizontal overflow', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    const consoleErrors = collectConsoleErrors(page);
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 800 });
+
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    const settings = new OrganizationSettingsPage(page);
+
+    await settings.goto(E2E_ORGANIZATION_ID);
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(settings.root).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/settings-dark-mobile.png` });
+    expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+  });
+
+  test('renders on desktop in light mode', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    const settings = new OrganizationSettingsPage(page);
+
+    await settings.goto(E2E_ORGANIZATION_ID);
+
+    await expect(settings.root).toBeVisible();
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/settings-light-desktop.png` });
+  });
+});

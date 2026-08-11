@@ -1,0 +1,67 @@
+<hlm-sheet
+  side="right"
+  [state]="sheetState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full overflow-y-auto sm:w-[480px] sm:max-w-none"
+    data-testid="organization-role-permissions-sheet"
+  >
+    @if (role(); as role) {
+      <hlm-sheet-header>
+        <h3 hlmSheetTitle>{{ role.name }}</h3>
+        @if (role.isSystem) {
+          <p hlmSheetDescription i18n="@@org.team.permissionsSheet.systemNotice">
+            System roles' permissions are fixed and cannot be edited.
+          </p>
+        } @else {
+          <p hlmSheetDescription i18n="@@org.team.permissionsSheet.description">
+            Choose the permissions this role grants.
+          </p>
+        }
+      </hlm-sheet-header>
+
+      @if (serverMessages().length > 0) {
+        <div
+          role="alert"
+          data-testid="organization-role-permissions-error"
+          class="px-4 text-sm text-destructive"
+        >
+          @for (message of serverMessages(); track message) {
+            <p>{{ message }}</p>
+          }
+        </div>
+      }
+
+      <div class="flex flex-col gap-4 px-4 pb-4">
+        @for (group of domainGroups(); track group.domain) {
+          <div class="flex flex-col gap-1.5">
+            <p class="text-sm font-medium text-foreground">{{ group.label }}</p>
+            @for (permission of group.permissions; track permission.name) {
+              <label
+                class="flex items-start gap-2 rounded-md px-2 py-1 text-sm"
+                [class.opacity-60]="readOnly()"
+              >
+                <hlm-checkbox
+                  class="mt-0.5"
+                  data-testid="organization-role-permission"
+                  [checked]="isChecked(permission.name)"
+                  [disabled]="readOnly()"
+                  (checkedChange)="toggle(permission.name, $event)"
+                />
+                <span class="flex flex-col">
+                  <span class="text-foreground">{{ permission.name }}</span>
+                  @if (permission.description) {
+                    <span class="text-xs text-muted-foreground">{{ permission.description }}</span>
+                  }
+                </span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+    }
+  </hlm-sheet-content>
+</hlm-sheet>

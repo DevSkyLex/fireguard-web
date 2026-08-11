@@ -30,9 +30,25 @@ export const organizationSettingsStoreEvents = eventGroup({
     logoUploadSucceeded: type<FeedbackEventPayload>(),
     /** Dispatched when uploading the logo fails. */
     logoUploadFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when the organization is deleted. */
+    /** Dispatched when the logo is removed. */
+    logoRemoveSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when removing the logo fails. */
+    logoRemoveFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when the organization is archived. */
     deleteSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when deleting the organization fails. */
+    /** Dispatched when archiving the organization fails. */
     deleteFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when ownership is handed to another member. */
+    transferOwnershipSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when the ownership transfer is refused. */
+    transferOwnershipFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when the organization is suspended or restored. */
+    statusChangeSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when suspending or restoring the organization fails. */
+    statusChangeFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when the acting member leaves the organization. */
+    leaveSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when leaving is refused — owner, or last administrator. */
+    leaveFailed: type<StoreFailureEventPayload>(),
   },
 });

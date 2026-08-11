@@ -66,6 +66,7 @@ describe('OrganizationMembersStore', () => {
   };
   let roleService: {
     list: ReturnType<typeof vi.fn>;
+    listAll: ReturnType<typeof vi.fn>;
     assignToMember: ReturnType<typeof vi.fn>;
     removeFromMember: ReturnType<typeof vi.fn>;
   };
@@ -85,6 +86,7 @@ describe('OrganizationMembersStore', () => {
     };
     roleService = {
       list: vi.fn().mockReturnValue(of(collection([role]))),
+      listAll: vi.fn().mockReturnValue(of([role])),
       assignToMember: vi.fn(),
       removeFromMember: vi.fn().mockReturnValue(of(undefined)),
     };

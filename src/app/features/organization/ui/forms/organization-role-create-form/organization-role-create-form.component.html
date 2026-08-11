@@ -1,0 +1,123 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group class="px-4">
+    @if (serverMessages().length > 0) {
+      <div
+        role="alert"
+        data-testid="organization-role-create-error"
+        class="text-sm text-destructive"
+      >
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="organization-role-create-name" i18n="@@org.team.form.name"
+        >Name</label
+      >
+      <input
+        hlmInput
+        id="organization-role-create-name"
+        type="text"
+        data-testid="organization-role-create-name"
+        placeholder="inspector"
+        i18n-placeholder="@@org.team.form.namePlaceholder"
+        [formField]="createForm.name"
+      />
+      <hlm-field-description i18n="@@org.team.form.nameHint">
+        Lowercase letters, numbers and underscores, 3-50 characters.
+      </hlm-field-description>
+      @if (createForm.name().touched() && createForm.name().invalid()) {
+        <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="organization-role-create-description"
+        i18n="@@org.team.form.description"
+        >Description</label
+      >
+      <textarea
+        hlmTextarea
+        id="organization-role-create-description"
+        rows="2"
+        data-testid="organization-role-create-description"
+        placeholder="What this role is for"
+        i18n-placeholder="@@org.team.form.descriptionPlaceholder"
+        [formField]="createForm.description"
+      ></textarea>
+      @if (createForm.description().touched() && createForm.description().invalid()) {
+        <hlm-field-error>{{ createForm.description().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <fieldset hlmFieldSet>
+      <legend hlmFieldLegend i18n="@@org.team.form.permissionsLabel">Permissions</legend>
+      <p class="-mt-1 text-sm text-muted-foreground" i18n="@@org.team.form.permissionsHint">
+        Choose at least one permission this role grants.
+      </p>
+
+      @if (createForm.permissions().touched() && createForm.permissions().invalid()) {
+        <p
+          role="alert"
+          class="text-sm text-destructive"
+          data-testid="organization-role-create-permissions-error"
+        >
+          {{ createForm.permissions().errors()[0].message }}
+        </p>
+      }
+
+      <div class="flex max-h-72 flex-col gap-4 overflow-y-auto">
+        @for (group of domainGroups(); track group.domain) {
+          <div class="flex flex-col gap-1.5">
+            <p class="text-sm font-medium text-foreground">{{ group.label }}</p>
+            @for (permission of group.permissions; track permission.name) {
+              <label class="flex items-start gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent">
+                <hlm-checkbox
+                  class="mt-0.5"
+                  data-testid="organization-role-create-permission"
+                  [checked]="isChecked(permission.name)"
+                  [disabled]="pending()"
+                  (checkedChange)="togglePermission(permission.name, $event)"
+                />
+                <span class="flex flex-col">
+                  <span class="text-foreground">{{ permission.name }}</span>
+                  @if (permission.description) {
+                    <span class="text-xs text-muted-foreground">{{ permission.description }}</span>
+                  }
+                </span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+    </fieldset>
+
+    <hlm-field orientation="horizontal">
+      <button
+        hlmBtn
+        type="submit"
+        data-testid="organization-role-create-submit"
+        [disabled]="pending()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.team.form.submitting">Creating…</span>
+        } @else {
+          <span i18n="@@org.team.form.submit">Create role</span>
+        }
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="organization-role-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

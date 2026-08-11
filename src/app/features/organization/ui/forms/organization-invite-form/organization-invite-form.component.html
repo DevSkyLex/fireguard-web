@@ -1,0 +1,74 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="organization-invite-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="organization-invite-email" i18n="@@org.inviteForm.email"
+        >Email</label
+      >
+      <input
+        hlmInput
+        id="organization-invite-email"
+        type="email"
+        data-testid="organization-invite-email"
+        placeholder="name@example.com"
+        i18n-placeholder="@@org.inviteForm.emailPlaceholder"
+        [formField]="inviteForm.email"
+      />
+      @if (inviteForm.email().touched() && inviteForm.email().invalid()) {
+        <hlm-field-error>{{ inviteForm.email().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="organization-invite-role" i18n="@@org.inviteForm.role">Role</label>
+      <hlm-select
+        id="organization-invite-role"
+        [itemToString]="roleLabelOf"
+        [formField]="inviteForm.roleId"
+      >
+        <hlm-select-trigger class="w-full" data-testid="organization-invite-role">
+          <hlm-select-value
+            placeholder="No role"
+            i18n-placeholder="@@org.inviteForm.rolePlaceholder"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (role of roleOptions(); track role.id) {
+              <hlm-select-item [value]="role.id">{{ role.name }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+      <hlm-field-description i18n="@@org.inviteForm.roleHint"
+        >Roles can also be assigned after the invitation is accepted.</hlm-field-description
+      >
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="organization-invite-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@org.inviteForm.submitting">Sending…</span>
+        } @else {
+          <span i18n="@@org.inviteForm.submit">Send invitation</span>
+        }
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="organization-invite-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

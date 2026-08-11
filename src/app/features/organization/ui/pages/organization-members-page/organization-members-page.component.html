@@ -1,0 +1,254 @@
+<div id="organization-members" class="flex w-full flex-col gap-8 p-4 md:p-6">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="flex min-w-0 flex-col gap-1">
+      <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.members">Members</h1>
+      <p class="text-sm text-muted-foreground">{{ subtitle() }}</p>
+    </div>
+
+    @if (canManageMembers()) {
+      <button hlmBtn data-testid="organization-members-invite" (click)="openInviteDialog()">
+        <ng-icon name="lucideMailPlus" aria-hidden="true" />
+        <span i18n="@@org.members.inviteButton">Invite member</span>
+      </button>
+    }
+  </div>
+
+  @if (actionError(); as error) {
+    <div
+      role="alert"
+      data-testid="organization-members-action-error"
+      class="flex items-start justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+    >
+      <span class="flex items-center gap-2">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        {{ error.message ?? actionErrorFallback }}
+      </span>
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        data-testid="organization-members-action-error-dismiss"
+        (click)="dismissActionError()"
+      >
+        <ng-icon name="lucideX" aria-hidden="true" />
+        <span class="sr-only" i18n="@@common.dismiss">Dismiss</span>
+      </button>
+    </div>
+  }
+
+  <section class="flex flex-col gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 class="text-lg font-medium" i18n="@@org.members.rosterHeading">Roster</h2>
+
+      @if (canManageMembers() && selectedIds().size > 0) {
+        <button
+          hlmBtn
+          type="button"
+          variant="destructive"
+          size="sm"
+          data-testid="organization-members-bulk-remove"
+          (click)="requestBulkRemove()"
+        >
+          <ng-icon name="lucideTrash2" aria-hidden="true" />
+          {{ bulkRemoveLabel() }}
+        </button>
+      }
+    </div>
+
+    @if (store.loadCallState().status === 'error') {
+      <hlm-empty class="border border-dashed">
+        <hlm-empty-header>
+          <hlm-empty-media variant="icon">
+            <ng-icon name="lucideCircleAlert" />
+          </hlm-empty-media>
+          <div hlmEmptyTitle i18n="@@org.members.errorTitle">Couldn't load members</div>
+          <div hlmEmptyDescription i18n="@@org.members.errorText">
+            The members could not be loaded. Check your connection and try again.
+          </div>
+        </hlm-empty-header>
+        <hlm-empty-content>
+          <button
+            hlmBtn
+            variant="outline"
+            data-testid="organization-members-retry"
+            (click)="reload()"
+          >
+            <span i18n="@@org.members.retry">Retry</span>
+          </button>
+        </hlm-empty-content>
+      </hlm-empty>
+    } @else if (!store.isLoading() && store.members().length === 0) {
+      <hlm-empty class="border border-dashed">
+        <hlm-empty-header>
+          <hlm-empty-media variant="icon">
+            <ng-icon name="lucideUsersRound" />
+          </hlm-empty-media>
+          <div hlmEmptyTitle i18n="@@org.members.emptyTitle">No members yet</div>
+          <div hlmEmptyDescription i18n="@@org.members.emptyText">
+            Invite someone to give them access to this organization.
+          </div>
+        </hlm-empty-header>
+        @if (canManageMembers()) {
+          <hlm-empty-content>
+            <button hlmBtn (click)="openInviteDialog()">
+              <ng-icon name="lucideMailPlus" aria-hidden="true" />
+              <span i18n="@@org.members.inviteButton">Invite member</span>
+            </button>
+          </hlm-empty-content>
+        }
+      </hlm-empty>
+    } @else {
+      <app-organization-member-table
+        [items]="store.members()"
+        [loading]="store.isLoading() && store.members().length === 0"
+        [selectedIds]="selectedIds()"
+        [canRemove]="canManageMembers()"
+        [canAssignRoles]="canManageRoles()"
+        [detailRouteBase]="memberDetailRouteBase()"
+        (selectionChanged)="onSelectionChanged($event)"
+        (manageRolesRequested)="openRolesDialog($event)"
+        (removeRequested)="requestRemove($event)"
+      />
+
+      <div class="flex flex-col justify-between sm:flex-row sm:items-center">
+        <span
+          class="text-sm text-muted-foreground"
+          data-testid="organization-members-row-count"
+          i18n="@@org.members.rowCount"
+          >{{ store.members().length }} of {{ store.membersTotal() }} row(s) shown</span
+        >
+
+        @if (membersPageCount() > 1) {
+          <div class="mt-2 flex items-center gap-4 sm:mt-0">
+            <span hlmLabel data-testid="organization-members-page-indicator"
+              >Page {{ page() }} of {{ membersPageCount() }}</span
+            >
+
+            <div class="flex space-x-1">
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                data-testid="organization-members-page-prev"
+                i18n-aria-label="@@org.members.pagePrevious"
+                aria-label="Previous page"
+                [disabled]="page() === 1"
+                (click)="goToMembersPage(page() - 1)"
+              >
+                <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+              </button>
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                data-testid="organization-members-page-next"
+                i18n-aria-label="@@org.members.pageNext"
+                aria-label="Next page"
+                [disabled]="page() === membersPageCount()"
+                (click)="goToMembersPage(page() + 1)"
+              >
+                <ng-icon name="lucideChevronRight" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  @if (canManageMembers()) {
+    <section class="flex flex-col gap-3">
+      <h2 class="text-lg font-medium" i18n="@@org.invitations.heading">Pending invitations</h2>
+
+      @if (store.loadCallState().status === 'error') {
+        <hlm-empty class="border border-dashed">
+          <hlm-empty-header>
+            <hlm-empty-media variant="icon">
+              <ng-icon name="lucideCircleAlert" />
+            </hlm-empty-media>
+            <div hlmEmptyTitle i18n="@@org.invitations.errorTitle">Couldn't load invitations</div>
+            <div hlmEmptyDescription i18n="@@org.invitations.errorText">
+              The invitations could not be loaded. Check your connection and try again.
+            </div>
+          </hlm-empty-header>
+          <hlm-empty-content>
+            <button
+              hlmBtn
+              variant="outline"
+              data-testid="organization-invitations-retry"
+              (click)="reload()"
+            >
+              <span i18n="@@org.members.retry">Retry</span>
+            </button>
+          </hlm-empty-content>
+        </hlm-empty>
+      } @else if (!store.isLoading() && store.activeInvitations().length === 0) {
+        <hlm-empty class="border border-dashed">
+          <hlm-empty-header>
+            <hlm-empty-media variant="icon">
+              <ng-icon name="lucideMailQuestion" />
+            </hlm-empty-media>
+            <div hlmEmptyTitle i18n="@@org.invitations.emptyTitle">No pending invitations</div>
+            <div hlmEmptyDescription i18n="@@org.invitations.emptyText">
+              Invitations you send will appear here until they are accepted, revoked or expire.
+            </div>
+          </hlm-empty-header>
+        </hlm-empty>
+      } @else {
+        <app-organization-invitation-table
+          [items]="store.activeInvitations()"
+          [roles]="store.roles()"
+          [links]="store.invitationLinks()"
+          [loading]="store.isLoading() && store.activeInvitations().length === 0"
+          [canManage]="canManageMembers()"
+          [pending]="store.isMutating()"
+          (linkCopyRequested)="copyInvitationLink($event)"
+          (resendRequested)="resendInvitation($event)"
+          (revokeRequested)="revokeInvitation($event)"
+        />
+      }
+    </section>
+  }
+</div>
+
+<app-organization-invite-dialog
+  [visible]="inviteDialogVisible()"
+  [pending]="store.isMutating()"
+  [serverError]="inviteServerError()"
+  [roleOptions]="store.roles()"
+  (visibleChange)="onInviteDialogVisibleChange($event)"
+  (submitted)="sendInvite($event)"
+/>
+
+<app-organization-member-roles-dialog
+  [visible]="rolesDialogMember() !== null"
+  [member]="rolesDialogMember()"
+  [roles]="store.roles()"
+  [pending]="store.isMutating()"
+  (visibleChange)="onRolesDialogVisibleChange($event)"
+  (roleToggled)="onRoleToggled($event)"
+/>
+
+<hlm-alert-dialog [state]="removeDialogState()" (stateChanged)="onRemoveDialogStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-members-remove-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle>{{ removeDialogTitle() }}</h2>
+      <p hlmAlertDialogDescription>{{ removeDialogDescription() }}</p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@org.members.removeConfirmCancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-members-remove-confirm"
+        (click)="confirmRemove()"
+        i18n="@@org.members.removeConfirmAction"
+      >
+        Remove
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

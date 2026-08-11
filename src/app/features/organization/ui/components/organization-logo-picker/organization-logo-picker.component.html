@@ -1,0 +1,64 @@
+<div class="flex items-center gap-4">
+  <hlm-avatar class="size-14 shrink-0 rounded-lg">
+    @if (logoUrl(); as url) {
+      <img hlmAvatarImage [src]="url" [alt]="organizationName()" />
+    }
+    <span hlmAvatarFallback class="rounded-lg text-sm font-semibold">{{ initials() }}</span>
+  </hlm-avatar>
+
+  <div class="flex flex-col gap-1.5">
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="w-fit gap-2 max-sm:min-h-11"
+        [disabled]="pending() || removing()"
+        (click)="fileInput.click()"
+      >
+        <ng-icon name="lucideUpload" class="text-sm" aria-hidden="true" />
+        @if (pending()) {
+          <span i18n="@@org.settings.logo.uploading">Uploading…</span>
+        } @else {
+          <span i18n="@@org.settings.logo.choose">Change logo</span>
+        }
+      </button>
+
+      @if (logoUrl()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="w-fit gap-2 text-muted-foreground max-sm:min-h-11"
+          data-testid="organization-logo-remove"
+          [disabled]="pending() || removing()"
+          (click)="removed.emit()"
+        >
+          <ng-icon name="lucideTrash2" class="text-sm" aria-hidden="true" />
+          @if (removing()) {
+            <span i18n="@@org.settings.logo.removing">Removing…</span>
+          } @else {
+            <span i18n="@@org.settings.logo.remove">Remove</span>
+          }
+        </button>
+      }
+    </div>
+
+    <input
+      #fileInput
+      type="file"
+      class="sr-only"
+      tabindex="-1"
+      accept="image/*"
+      data-testid="organization-logo-input"
+      [disabled]="pending()"
+      (change)="pick($event)"
+    />
+
+    @if (error(); as message) {
+      <p class="text-sm text-destructive" role="alert">{{ message }}</p>
+    }
+  </div>
+</div>

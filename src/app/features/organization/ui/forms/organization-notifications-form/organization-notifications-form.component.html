@@ -1,0 +1,111 @@
+<hlm-field-group>
+  <section class="flex flex-col gap-3">
+    <h3
+      class="text-sm font-semibold tracking-tight text-foreground"
+      i18n="@@org.settings.notifications.channelsTitle"
+    >
+      Delivery channels
+    </h3>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label hlmFieldLabel for="org-notif-email" i18n="@@org.settings.notifications.emailLabel"
+        >Email</label
+      >
+      <hlm-switch
+        id="org-notif-email"
+        [formField]="notificationsForm.emailEnabled"
+        (checkedChange)="commit()"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label hlmFieldLabel for="org-notif-in-app" i18n="@@org.settings.notifications.inAppLabel"
+        >In-app</label
+      >
+      <hlm-switch
+        id="org-notif-in-app"
+        [formField]="notificationsForm.inAppEnabled"
+        (checkedChange)="commit()"
+      />
+    </hlm-field>
+  </section>
+
+  <section class="flex flex-col gap-3 border-t border-border pt-5">
+    <h3
+      class="text-sm font-semibold tracking-tight text-foreground"
+      i18n="@@org.settings.notifications.eventsTitle"
+    >
+      Events
+    </h3>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label
+        hlmFieldLabel
+        for="org-notif-intervention-published"
+        i18n="@@org.settings.notifications.interventionPublishedLabel"
+        >Intervention published</label
+      >
+      <hlm-switch
+        id="org-notif-intervention-published"
+        [formField]="notificationsForm.interventionPublished"
+        (checkedChange)="commit()"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label
+        hlmFieldLabel
+        for="org-notif-intervention-assigned"
+        i18n="@@org.settings.notifications.interventionAssignedLabel"
+        >Intervention assigned to me</label
+      >
+      <hlm-switch
+        id="org-notif-intervention-assigned"
+        [formField]="notificationsForm.interventionAssigned"
+        (checkedChange)="commit()"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label
+        hlmFieldLabel
+        for="org-notif-inspection-due"
+        i18n="@@org.settings.notifications.inspectionDueLabel"
+        >Inspection due</label
+      >
+      <hlm-switch
+        id="org-notif-inspection-due"
+        [formField]="notificationsForm.inspectionDue"
+        (checkedChange)="commit()"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label
+        hlmFieldLabel
+        for="org-notif-non-conformity-opened"
+        i18n="@@org.settings.notifications.nonConformityOpenedLabel"
+        >Non-conformity opened</label
+      >
+      <hlm-switch
+        id="org-notif-non-conformity-opened"
+        [formField]="notificationsForm.nonConformityOpened"
+        (checkedChange)="commit()"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label
+        hlmFieldLabel
+        for="org-notif-member-invited"
+        i18n="@@org.settings.notifications.memberInvitedLabel"
+        >Member invited</label
+      >
+      <hlm-switch
+        id="org-notif-member-invited"
+        [formField]="notificationsForm.memberInvited"
+        (checkedChange)="commit()"
+      />
+    </hlm-field>
+  </section>
+</hlm-field-group>

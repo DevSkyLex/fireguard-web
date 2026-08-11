@@ -12,8 +12,10 @@ This feature is responsible for:
 - organization billing (Stripe-hosted Checkout / customer Portal and invoice history),
 - the organization landing page ("Today"): named work queues holding real
   interventions — overdue, sent back, awaiting review, and waiting to sync (the
-  last read from the local outbox) — plus a strip for the backend alert feed,
-  which reports counts only,
+  last read from the local outbox) — above them a fixed near-term KPI row and
+  the backend's alert feed (counts only), and below them a "Recently updated"
+  interventions list, all three sourced from the same `DashboardStore` copy
+  the queues do not depend on,
 - the organization statistics page: facility, member, equipment, and inspection KPI cards
   and trend charts (overview, inspection quality, non-conformities opened/resolved, asset growth),
 - organization-scoped permission helpers derived from the active member access payload,
@@ -33,11 +35,13 @@ This feature does not own generic shell composition or account-level user identi
 ## Routes
 
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing page),
-> `messages`, `interventions`, `equipments`, `facilities`, `inspections`, `calendar` and
-> `members/:memberId`. The remaining destinations below are the feature's contract and
-> are already listed by the sidebar navigation behind their permissions; each is remounted in
-> `organization.routes.ts` as its page is rebuilt. A listed destination whose route is absent is a
-> rebuild in progress, not a deviation.
+> `messages`, `channels`, `interventions`, `equipments`, `facilities`, `inspections`, `calendar`,
+> `members`, `members/:memberId`, `team`, `settings`, and `/organizations/invitations/accept`
+> (mounted at the app root, outside this subtree — see below). The remaining destinations below
+> (`assets`, `statistics`, `checklists`) are the feature's contract and are already listed by the
+> sidebar navigation behind their permissions; each is remounted in `organization.routes.ts` as its
+> page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
+> deviation.
 
 - `/organizations` — redirect-only: `organizationGuard` forwards to the default
   workspace (the last organization persisted in the `last-organization` cookie
@@ -58,6 +62,10 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/messages` — the direct-messages workspace, owned by the
   `collaboration` subfeature, gated by `organization.messaging.read`. `messages/:conversationId`
   opens one. Reached from the shell's bottom navigation, not from the organization sections
+- `/organizations/:organizationId/channels` — the channel workspace (group "salons"), owned by the
+  `collaboration` subfeature, gated by `organization.messaging.read`. `channels/:channelId` opens
+  one. Listed in the organization sections (`navigation/`), unlike direct messages: channels are
+  organization workspaces, while conversations follow the reader
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
@@ -76,8 +84,19 @@ The `:organizationId` parent route resolves organization context before child pa
 Organization navigation and routes are filtered by the active member permissions. Subscription
 plans cap resource quantities (see Subscription quotas below); they do not gate routes.
 
-The settings page's danger-zone tab (organization deletion) is additionally gated by the
-`organization.delete` permission. Notification and regional preferences are persisted via the
+The settings page's danger-zone tab is additionally gated by the `organization.delete` permission.
+
+**"Delete" is an archive, and it is reversible.** `DELETE /api/organizations/{id}` soft-deletes:
+the owned facilities, equipment, inspections and interventions are preserved, and
+`POST /{id}/restore` brings the organization back. The endpoint also requires a **`slug` query
+parameter** retyping the organization's current slug, or it refuses with 422 and archives nothing —
+the same confirmation `POST /{id}/transfer-ownership` takes in its body. The delete dialog gates on
+the organization **name** in the reader's own terms; the slug travels from the resolved
+organization, so the two are not the same string when a name and its slug differ.
+
+Ownership transfer is **outside RBAC**: only the organization's current owner may call it, and no
+permission substitutes for that. Suspend and restore, by contrast, need only
+`organization.settings.write` — the same permission the legacy `isActive` toggle already required. Notification and regional preferences are persisted via the
 settings `PATCH` but are not yet enforced (notification dispatch and app-wide date/locale
 formatting consume them in follow-up work).
 
@@ -92,10 +111,10 @@ Primary stores:
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
-- `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped separately by both the landing page — which reads only its alert feed — and the statistics page, each fetching its own copy of the aggregate `/dashboard` payload)
+- `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped separately by both the landing page — which reads the overview counts, the alert feed and the recent-interventions list, but none of the trend slices or the comparison block the statistics page's KPI deltas need — and the statistics page, each fetching its own copy of the aggregate `/dashboard` payload)
 - `FacilityTreeStore` (owned by the facilities subfeature, component-scoped to the assets explorer; the site hierarchy, loaded one branch at a time)
 - `OrganizationTodayStore` (component-scoped to the landing page; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
-- `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
+- `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations, logo upload and removal, and the danger-zone actions — archive, restore, suspend, ownership transfer and leaving the organization. One named `CallState` per action, since several are offered side by side and a shared one would leak an error between controls. Refreshes `ActiveOrganizationStore` on every mutation that returns an organization)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
 - `OrganizationInvitationAcceptStore` (page-scoped; loads the public invitation preview and accepts an invitation token)
@@ -166,11 +185,13 @@ landing guard falls back to: `ORGANIZATION_NAVIGATION_ITEMS` carries each destin
 permissions, and `buildOrganizationNavigation()` resolves the sections the active member may
 actually reach. Route visibility and fallback behaviour cannot diverge because both read this list.
 
-**Messaging is the one destination listed by the shell's bottom block rather than here.** Direct
-conversations are scoped to one organization on the API — `organization` is required on every call,
-the permissions are `organization.messaging.*`, and the Mercure topic is per organization — but
-they follow the reader rather than the workspace, so the row sits under Support with the other
-utilities. The shell completes its route with `ORGANIZATION_CONTEXT_PORT.selectedOrganizationId()`
+**Direct messages are the one destination listed by the shell's bottom block rather than here;
+channels are listed here.** Direct conversations are scoped to one organization on the API —
+`organization` is required on every call, the permissions are `organization.messaging.*`, and the
+Mercure topic is per organization — but they follow the reader rather than the workspace, so the
+row sits under Support with the other utilities. Channels are the opposite case: they are
+organization workspaces, so their row lives in `navigation/` with the other organization sections,
+behind the same `organization.messaging.read` floor. The shell completes its route with `ORGANIZATION_CONTEXT_PORT.selectedOrganizationId()`
 and withholds it entirely from a member without `organization.messaging.read`; the permission
 constant still comes from this feature's public API, so the gate cannot drift from the guard.
 
@@ -201,11 +222,20 @@ has been opened. `OrganizationSwitcher` has no "none selected" state left — it
 until the list arrives — and `OrganizationNav` renders no inert row.
 
 **Another member's profile is organization-owned, and thin by force rather than by choice.** There
-is no `GET /api/users/{id}` and no single-member endpoint at all; the only route to another person
-is this organization's member list. So `/organizations/:organizationId/members/:memberId` renders name, picture, roles and
-whether the membership is active — and nothing else, because nothing else reaches the client. It
-carries no edit control for the same reason: there is no endpoint one could call. Widening it means
-widening `MemberDirectoryEntry` first, and the backend before that.
+is still no `GET /api/users/{id}`. A single-member endpoint now exists —
+`GET /api/organizations/{organizationId}/members/{memberId}`, exposed as `OrganizationMemberService.get`
+— but it is a **deliberately thinner projection than the list**: the backend resolves no User
+module data on it, so `displayName` comes back as the raw `userId` and `email`, `avatarUrl`,
+`roleNames` and `isOwner` are absent. Reading one member through it would therefore _degrade_ the
+profile page, which is why `/organizations/:organizationId/members/:memberId` keeps sourcing
+`MEMBER_DIRECTORY_PORT` (the list) and renders name, picture, roles and whether the membership is
+active — and nothing else, because nothing else reaches the client. It carries no edit control for
+the same reason. Widening it means widening `MemberDirectoryEntry` first, and the backend before
+that.
+
+`isOwner` and `roleNames` are populated **only by the list endpoint**; every mutation response
+(reactivate, set-roles) and the member detail leave them at their defaults. Read owner status from
+a listed member, never from what a write returned.
 
 The route sits under `:organizationId` because that is the truth of it: a person is visible to you
 _as a member of an organization you can read_, never in the abstract.

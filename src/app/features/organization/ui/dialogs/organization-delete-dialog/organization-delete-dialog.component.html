@@ -1,0 +1,44 @@
+<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.settings.danger.confirmTitle">
+        Delete this organization?
+      </h2>
+      <p hlmAlertDialogDescription>{{ confirmText() }}</p>
+    </hlm-alert-dialog-header>
+
+    <div class="flex flex-col gap-1.5 px-6">
+      <label hlmFieldLabel for="organization-delete-confirm-name">{{ confirmLabel() }}</label>
+      <input
+        hlmInput
+        id="organization-delete-confirm-name"
+        type="text"
+        autocomplete="off"
+        class="w-full"
+        data-testid="organization-delete-confirm-input"
+        [value]="typedName()"
+        (input)="onTypedNameInput($event)"
+      />
+      @if (error(); as message) {
+        <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+      }
+    </div>
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-delete-confirm"
+        [disabled]="!canConfirm()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.danger.deleting">Deleting…</span>
+        } @else {
+          <span i18n="@@org.settings.danger.confirmAction">Delete organization</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

@@ -34,8 +34,8 @@ describe('OrganizationMemberAccessStore', () => {
     description: 'Organization owner',
     isSystem: true,
     permissions: [
-      ORGANIZATION_PERMISSION.FACILITIES_READ,
-      ORGANIZATION_PERMISSION.FACILITIES_WRITE,
+      { name: ORGANIZATION_PERMISSION.FACILITIES_READ, description: 'Read facilities' },
+      { name: ORGANIZATION_PERMISSION.FACILITIES_WRITE, description: 'Write facilities' },
     ],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-01-01T00:00:00+00:00',

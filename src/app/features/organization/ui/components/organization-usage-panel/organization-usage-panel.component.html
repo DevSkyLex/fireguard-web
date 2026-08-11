@@ -1,0 +1,54 @@
+@if (isLoading()) {
+  <div class="flex flex-col gap-5" aria-hidden="true">
+    @for (i of [1, 2, 3, 4]; track i) {
+      <div class="flex flex-col gap-2">
+        <hlm-skeleton class="h-3.5 w-32" />
+        <hlm-skeleton class="h-1.5 w-full rounded-full" />
+      </div>
+    }
+  </div>
+} @else if (error(); as err) {
+  <p role="alert" class="text-sm text-destructive" data-testid="organization-usage-error">
+    {{ err.message }}
+  </p>
+} @else if (rows().length === 0) {
+  <p class="text-sm text-muted-foreground" i18n="@@org.settings.usage.empty">
+    No usage data is available yet.
+  </p>
+} @else {
+  <div class="flex flex-col gap-5">
+    @for (row of rows(); track row.resource) {
+      <div
+        class="flex flex-col gap-1.5"
+        [attr.data-testid]="'organization-usage-row-' + row.resource"
+      >
+        <div class="flex items-center justify-between gap-2 text-sm">
+          <span class="font-medium text-foreground">{{ row.label }}</span>
+          @if (row.limit !== null) {
+            <span class="flex items-center gap-1.5 text-muted-foreground">
+              <span>{{ row.used }} / {{ row.limit }}</span>
+              @if (row.status.severity !== 'neutral') {
+                <ng-icon
+                  [name]="row.status.icon"
+                  [class]="statusIconClass[row.status.severity]"
+                  aria-hidden="true"
+                />
+                <span>{{ row.status.label }}</span>
+              }
+            </span>
+          } @else {
+            <span class="text-muted-foreground">
+              {{ row.used }} · <span i18n="@@org.settings.usage.unlimited">Unlimited</span>
+            </span>
+          }
+        </div>
+
+        @if (row.percent !== null) {
+          <hlm-progress [value]="row.percent" [attr.aria-label]="row.label">
+            <hlm-progress-indicator />
+          </hlm-progress>
+        }
+      </div>
+    }
+  </div>
+}

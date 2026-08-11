@@ -1,0 +1,93 @@
+<div
+  class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+  data-testid="organization-role-grid"
+>
+  @if (loading()) {
+    @for (card of skeletonCards; track card) {
+      <div hlmCard aria-hidden="true">
+        <div hlmCardHeader>
+          <hlm-skeleton class="h-5 w-32 max-w-full" />
+          <hlm-skeleton class="mt-2 h-4 w-20" />
+        </div>
+        <div hlmCardContent>
+          <hlm-skeleton class="h-4 w-24" />
+        </div>
+      </div>
+    }
+  } @else {
+    @for (item of items(); track item.id) {
+      <div hlmCard data-testid="organization-role-grid-card" class="relative">
+        @if (canManage() && !item.isSystem) {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            class="absolute end-2 top-2 max-sm:size-11"
+            data-testid="organization-role-grid-card-menu"
+            [hlmDropdownMenuTrigger]="roleMenu"
+          >
+            <ng-icon name="lucideEllipsis" aria-hidden="true" />
+            <span class="sr-only" i18n="@@org.team.rowMenu">Open menu</span>
+          </button>
+
+          <ng-template #roleMenu>
+            <hlm-dropdown-menu class="w-48">
+              <button
+                hlmDropdownMenuItem
+                data-testid="organization-role-grid-card-edit-permissions"
+                (click)="editPermissionsRequested.emit(item)"
+              >
+                <ng-icon name="lucidePencil" aria-hidden="true" />
+                <span i18n="@@org.team.editPermissions">Edit permissions</span>
+              </button>
+              <button
+                hlmDropdownMenuItem
+                data-testid="organization-role-grid-card-delete"
+                (click)="deleteRequested.emit(item)"
+              >
+                <ng-icon name="lucideTrash2" aria-hidden="true" />
+                <span i18n="@@org.team.delete">Delete</span>
+              </button>
+            </hlm-dropdown-menu>
+          </ng-template>
+        }
+
+        <div hlmCardHeader>
+          <p hlmCardTitle class="flex items-center gap-1.5 pe-8">
+            <span class="truncate">{{ item.name }}</span>
+            @if (item.isSystem) {
+              <span hlmBadge variant="secondary" class="shrink-0">
+                <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+                <span i18n="@@org.team.systemBadge">System</span>
+              </span>
+            }
+          </p>
+          @if (item.description; as description) {
+            <p hlmCardDescription class="truncate">{{ description }}</p>
+          }
+        </div>
+        <div hlmCardContent class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span class="text-sm text-muted-foreground tabular-nums">{{
+            permissionCountLabelOf(item)
+          }}</span>
+          @if (memberCountLabelOf(item); as memberCount) {
+            <span aria-hidden="true" class="text-sm text-muted-foreground">·</span>
+            <span
+              class="text-sm text-muted-foreground tabular-nums"
+              data-testid="organization-role-grid-card-member-count"
+              >{{ memberCount }}</span
+            >
+          }
+        </div>
+      </div>
+    } @empty {
+      <p
+        class="col-span-full py-8 text-center text-sm text-muted-foreground"
+        i18n="@@org.team.noResults"
+      >
+        No roles found.
+      </p>
+    }
+  }
+</div>

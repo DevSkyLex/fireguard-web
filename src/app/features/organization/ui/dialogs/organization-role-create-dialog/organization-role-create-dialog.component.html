@@ -1,0 +1,22 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-lg"
+    data-testid="organization-role-create-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@org.team.createDialog.title">New role</h3>
+      <p hlmDialogDescription i18n="@@org.team.createDialog.description">
+        Define a custom role and the permissions it grants.
+      </p>
+    </hlm-dialog-header>
+
+    <app-organization-role-create-form
+      [pending]="pending()"
+      [serverError]="serverError()"
+      [catalog]="catalog()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>

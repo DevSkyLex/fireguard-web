@@ -980,6 +980,210 @@
         <source>Channel</source>
         <target>Canal</target>
       </trans-unit>
+      <trans-unit id="route.channels" datatype="html">
+        <source>Channels</source>
+        <target>Canales</target>
+      </trans-unit>
+      <trans-unit id="channels.page.title" datatype="html">
+        <source>Channels</source>
+        <target>Canales</target>
+      </trans-unit>
+      <trans-unit id="channels.page.new" datatype="html">
+        <source>New channel</source>
+        <target>Nuevo canal</target>
+      </trans-unit>
+      <trans-unit id="channels.page.loadingAria" datatype="html">
+        <source>Loading channels</source>
+        <target>Cargando canales</target>
+      </trans-unit>
+      <trans-unit id="channels.page.loadErrorTitle" datatype="html">
+        <source>Channels could not be loaded</source>
+        <target>No se pudieron cargar los canales</target>
+      </trans-unit>
+      <trans-unit id="channels.page.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="channels.page.emptyTitle" datatype="html">
+        <source>No channels yet</source>
+        <target>Aún no hay canales</target>
+      </trans-unit>
+      <trans-unit id="channels.page.emptyDescription" datatype="html">
+        <source>Create one to start a group conversation.</source>
+        <target>Cree uno para iniciar una conversación grupal.</target>
+      </trans-unit>
+      <trans-unit id="channels.page.emptyCreate" datatype="html">
+        <source>Create channel</source>
+        <target>Crear canal</target>
+      </trans-unit>
+      <trans-unit id="channels.page.favorites" datatype="html">
+        <source>Favorites</source>
+        <target>Favoritos</target>
+      </trans-unit>
+      <trans-unit id="channels.page.all" datatype="html">
+        <source>All channels</source>
+        <target>Todos los canales</target>
+      </trans-unit>
+      <trans-unit id="channels.page.unread" datatype="html">
+        <source><x id="count" equiv-text="count"/> unread</source>
+        <target><x id="count" equiv-text="count"/> sin leer</target>
+      </trans-unit>
+      <trans-unit id="channels.page.noneOpenTitle" datatype="html">
+        <source>No channel open</source>
+        <target>Ningún canal abierto</target>
+      </trans-unit>
+      <trans-unit id="channels.page.noneOpenDescription" datatype="html">
+        <source>Pick a channel in the list, or create one.</source>
+        <target>Elija un canal de la lista o cree uno.</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.title" datatype="html">
+        <source>New channel</source>
+        <target>Nuevo canal</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.name" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.namePlaceholder" datatype="html">
+        <source>general</source>
+        <target>general</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.nameRequired" datatype="html">
+        <source>Give the channel a name</source>
+        <target>Póngale un nombre al canal</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.nameLength" datatype="html">
+        <source>Use between 2 and 80 characters.</source>
+        <target>Use entre 2 y 80 caracteres.</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.parent" datatype="html">
+        <source>Parent channel</source>
+        <target>Canal principal</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.parentPlaceholder" datatype="html">
+        <source>No parent — top level</source>
+        <target>Sin canal principal — nivel superior</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.parentNone" datatype="html">
+        <source>No parent — top level</source>
+        <target>Sin canal principal — nivel superior</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.parentHint" datatype="html">
+        <source>Only a top-level channel can be a parent.</source>
+        <target>Solo un canal de nivel superior puede ser un canal principal.</target>
+      </trans-unit>
+      <trans-unit id="channels.newDialog.submit" datatype="html">
+        <source>Create channel</source>
+        <target>Crear canal</target>
+      </trans-unit>
+      <trans-unit id="channels.editDialog.title" datatype="html">
+        <source>Channel settings</source>
+        <target>Ajustes del canal</target>
+      </trans-unit>
+      <trans-unit id="channels.editDialog.name" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="channels.editDialog.nameRequired" datatype="html">
+        <source>Give the channel a name</source>
+        <target>Póngale un nombre al canal</target>
+      </trans-unit>
+      <trans-unit id="channels.editDialog.nameLength" datatype="html">
+        <source>Use between 2 and 80 characters.</source>
+        <target>Use entre 2 y 80 caracteres.</target>
+      </trans-unit>
+      <trans-unit id="channels.editDialog.parent" datatype="html">
+        <source>Parent channel</source>
+        <target>Canal principal</target>
+      </trans-unit>
+      <trans-unit id="channels.editDialog.parentPlaceholder" datatype="html">
+        <source>No parent — top level</source>
+        <target>Sin canal principal — nivel superior</target>
+      </trans-unit>
+      <trans-unit id="channels.editDialog.parentNone" datatype="html">
+        <source>No parent — top level</source>
+        <target>Sin canal principal — nivel superior</target>
+      </trans-unit>
+      <trans-unit id="channels.editDialog.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Guardar cambios</target>
+      </trans-unit>
+      <trans-unit id="channels.room.back" datatype="html">
+        <source>Back to channels</source>
+        <target>Volver a los canales</target>
+      </trans-unit>
+      <trans-unit id="channels.room.participantsCount" datatype="html">
+        <source>participants</source>
+        <target>participantes</target>
+      </trans-unit>
+      <trans-unit id="channels.room.favorite" datatype="html">
+        <source>Add to favorites</source>
+        <target>Añadir a favoritos</target>
+      </trans-unit>
+      <trans-unit id="channels.room.unfavorite" datatype="html">
+        <source>Remove from favorites</source>
+        <target>Quitar de favoritos</target>
+      </trans-unit>
+      <trans-unit id="channels.room.actionsAria" datatype="html">
+        <source>Channel actions</source>
+        <target>Acciones del canal</target>
+      </trans-unit>
+      <trans-unit id="channels.room.manageParticipants" datatype="html">
+        <source>Participants</source>
+        <target>Participantes</target>
+      </trans-unit>
+      <trans-unit id="channels.room.rename" datatype="html">
+        <source>Rename or move</source>
+        <target>Renombrar o mover</target>
+      </trans-unit>
+      <trans-unit id="channels.room.delete" datatype="html">
+        <source>Delete channel</source>
+        <target>Eliminar canal</target>
+      </trans-unit>
+      <trans-unit id="channels.room.deleteConfirmTitle" datatype="html">
+        <source>Delete this channel?</source>
+        <target>¿Eliminar este canal?</target>
+      </trans-unit>
+      <trans-unit id="channels.room.deleteConfirmDescription" datatype="html">
+        <source>Its messages, pins, files and links stay, but the channel itself is gone for everyone. This cannot be undone.</source>
+        <target>Sus mensajes, fijados, archivos y enlaces permanecen, pero el canal en sí desaparece para todos. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="channels.room.deleteConfirmCancel" datatype="html">
+        <source>Cancel</source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="channels.room.deleteConfirmAction" datatype="html">
+        <source>Delete</source>
+        <target>Eliminar</target>
+      </trans-unit>
+      <trans-unit id="channels.room.composerPlaceholder" datatype="html">
+        <source>Message <x id="name" equiv-text="name"/></source>
+        <target>Mensaje a <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="channels.participants.title" datatype="html">
+        <source>Participants</source>
+        <target>Participantes</target>
+      </trans-unit>
+      <trans-unit id="channels.participants.emptyTitle" datatype="html">
+        <source>No participants</source>
+        <target>Sin participantes</target>
+      </trans-unit>
+      <trans-unit id="channels.participants.confirmRemove" datatype="html">
+        <source>Confirm</source>
+        <target>Confirmar</target>
+      </trans-unit>
+      <trans-unit id="channels.participants.addTitle" datatype="html">
+        <source>Add a member</source>
+        <target>Añadir un miembro</target>
+      </trans-unit>
+      <trans-unit id="channels.participants.noCandidates" datatype="html">
+        <source>No one left to add.</source>
+        <target>No queda nadie por añadir.</target>
+      </trans-unit>
+      <trans-unit id="channels.participants.removeAria" datatype="html">
+        <source>Remove <x id="name" equiv-text="name"/></source>
+        <target>Quitar a <x id="name" equiv-text="name"/></target>
+      </trans-unit>
       <trans-unit id="route.saved" datatype="html">
         <source>Saved</source>
         <target>Guardados</target>
@@ -3205,6 +3409,22 @@
       <trans-unit id="inspectionResult.fail" datatype="html">
         <source>Fail</source>
         <target>No apto</target>
+      </trans-unit>
+      <trans-unit id="nonConformitySeverity.low" datatype="html">
+        <source>Low</source>
+        <target>Baja</target>
+      </trans-unit>
+      <trans-unit id="nonConformitySeverity.medium" datatype="html">
+        <source>Medium</source>
+        <target>Media</target>
+      </trans-unit>
+      <trans-unit id="nonConformitySeverity.high" datatype="html">
+        <source>High</source>
+        <target>Alta</target>
+      </trans-unit>
+      <trans-unit id="nonConformitySeverity.critical" datatype="html">
+        <source>Critical</source>
+        <target>Crítica</target>
       </trans-unit>
       <trans-unit id="inspectionResult.partial" datatype="html">
         <source>Partial</source>
@@ -8043,6 +8263,22 @@
         <source>New intervention</source>
         <target>Nueva intervención</target>
       </trans-unit>
+      <trans-unit id="org.today.kpi.openInterventions" datatype="html">
+        <source>Open interventions</source>
+        <target>Intervenciones abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.openNonConformities" datatype="html">
+        <source>Open non-conformities</source>
+        <target>No conformidades abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.inspectionsCompleted" datatype="html">
+        <source>Inspections completed</source>
+        <target>Inspecciones completadas</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.equipmentUnderMaintenance" datatype="html">
+        <source>Equipment under maintenance</source>
+        <target>Equipos en mantenimiento</target>
+      </trans-unit>
       <trans-unit id="org.today.subtitleOne" datatype="html">
         <source>One thing needs a decision from you.</source>
         <target>Un elemento requiere una decisión tuya.</target>
@@ -8070,6 +8306,14 @@
       <trans-unit id="org.today.unsynced" datatype="html">
         <source>Waiting to sync</source>
         <target>Pendientes de sincronizar</target>
+      </trans-unit>
+      <trans-unit id="org.today.recent.title" datatype="html">
+        <source>Recently updated</source>
+        <target>Actualizadas recientemente</target>
+      </trans-unit>
+      <trans-unit id="org.today.recent.loadingAria" datatype="html">
+        <source>Loading recently updated interventions</source>
+        <target>Cargando las intervenciones actualizadas recientemente</target>
       </trans-unit>
       <trans-unit id="org.today.pendingChanges" datatype="html">
         <source><x id="count" equiv-text="entry.pendingCount"/> changes waiting to sync</source>
@@ -8112,8 +8356,48 @@
         <target>Ver las <x id="count" equiv-text="total"/> intervenciones planificadas</target>
       </trans-unit>
       <trans-unit id="org.today.alerts.title" datatype="html">
-        <source> Also waiting </source>
-        <target>También en espera</target>
+        <source> Also worth a look </source>
+        <target>También conviene revisar</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.loadingAria" datatype="html">
+        <source>Loading what else needs attention</source>
+        <target>Cargando qué más requiere atención</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.code.criticalNonConformitiesOpen" datatype="html">
+        <source>Critical non-conformities open</source>
+        <target>No conformidades críticas abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.code.nonConformitiesOverdue" datatype="html">
+        <source>Non-conformities overdue</source>
+        <target>No conformidades vencidas</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.code.expiredInvitations" datatype="html">
+        <source>Invitations expired</source>
+        <target>Invitaciones caducadas</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.code.equipmentUnderMaintenance" datatype="html">
+        <source>Equipment under maintenance</source>
+        <target>Equipos en mantenimiento</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.criticalNonConformitiesOpen" datatype="html">
+        <source><x id="count" equiv-text="count"/> critical non-conformities still open</source>
+        <target><x id="count" equiv-text="count"/> no conformidades críticas siguen abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.nonConformitiesOverdue" datatype="html">
+        <source><x id="count" equiv-text="count"/> non-conformities overdue</source>
+        <target><x id="count" equiv-text="count"/> no conformidades vencidas</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.expiredInvitations" datatype="html">
+        <source><x id="count" equiv-text="count"/> invitations expired</source>
+        <target><x id="count" equiv-text="count"/> invitaciones caducadas</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.equipmentUnderMaintenance" datatype="html">
+        <source><x id="count" equiv-text="count"/> equipment items under maintenance</source>
+        <target><x id="count" equiv-text="count"/> equipos en mantenimiento</target>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.generic" datatype="html">
+        <source><x id="label" equiv-text="fallbackLabel"/> (<x id="count" equiv-text="count"/>)</source>
+        <target><x id="label" equiv-text="fallbackLabel"/> (<x id="count" equiv-text="count"/>)</target>
       </trans-unit>
       <trans-unit id="org.today.alerts.errorTitle" datatype="html">
         <source>Couldn&apos;t load the rest of what&apos;s waiting</source>
@@ -8432,6 +8716,142 @@
       <trans-unit id="org.statistics.pageSubtitle" datatype="html">
         <source>Track facility, member, equipment, and inspection trends across your organization.</source>
         <target>Consulta las tendencias de instalaciones, miembros, equipos e inspecciones de tu organización.</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.period.ariaLabel" datatype="html">
+        <source>Time period</source>
+        <target>Periodo</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.period.7d" datatype="html">
+        <source>7D</source>
+        <target>7 d</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.period.30d" datatype="html">
+        <source>30D</source>
+        <target>30 d</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.period.90d" datatype="html">
+        <source>90D</source>
+        <target>90 d</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.period.12m" datatype="html">
+        <source>12M</source>
+        <target>12 m</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.compareToggle.label" datatype="html">
+        <source>Compare to previous period</source>
+        <target>Comparar con el período anterior</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.forbidden" datatype="html">
+        <source>Not available with your permissions.</source>
+        <target>No disponible con tus permisos.</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.error.title" datatype="html">
+        <source>Couldn&apos;t load statistics</source>
+        <target>No se pudieron cargar las estadísticas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.error.description" datatype="html">
+        <source>The organization&apos;s statistics couldn&apos;t be fetched.</source>
+        <target>No se pudieron obtener las estadísticas de la organización.</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.severity.title" datatype="html">
+        <source>Non-conformities by severity</source>
+        <target>No conformidades por gravedad</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.severity.loadingAria" datatype="html">
+        <source>Loading severity breakdown…</source>
+        <target>Cargando el desglose por gravedad…</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.severity.description" datatype="html">
+        <source> Current open and unresolved non-conformities across the organization, grouped by severity. </source>
+        <target>No conformidades actualmente abiertas y sin resolver en la organización, agrupadas por gravedad.</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.severity.empty" datatype="html">
+        <source> No non-conformities recorded. </source>
+        <target>No se han registrado no conformidades.</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.loadError" datatype="html">
+        <source> This chart could not be loaded. </source>
+        <target>No se pudo cargar este gráfico.</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.inspections.title" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.inspections.chartLabel" datatype="html">
+        <source>Inspections performed over time</source>
+        <target>Inspecciones realizadas a lo largo del tiempo</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.nonConformities.title" datatype="html">
+        <source>Non-conformities opened vs resolved</source>
+        <target>No conformidades abiertas y resueltas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.nonConformities.chartLabel" datatype="html">
+        <source>Non-conformities opened and resolved over time</source>
+        <target>No conformidades abiertas y resueltas a lo largo del tiempo</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.nonConformities.seriesOpened" datatype="html">
+        <source>Opened</source>
+        <target>Abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.nonConformities.seriesResolved" datatype="html">
+        <source>Resolved</source>
+        <target>Resueltas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.equipment.title" datatype="html">
+        <source>Equipment added</source>
+        <target>Equipo añadido</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.equipment.chartLabel" datatype="html">
+        <source>Equipment added over time</source>
+        <target>Equipo añadido a lo largo del tiempo</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.facilities.title" datatype="html">
+        <source>Facilities added</source>
+        <target>Instalaciones añadidas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.facilities.chartLabel" datatype="html">
+        <source>Facilities added over time</source>
+        <target>Instalaciones añadidas a lo largo del tiempo</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.facilities" datatype="html">
+        <source>Facilities</source>
+        <target>Instalaciones</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.equipment" datatype="html">
+        <source>Equipment</source>
+        <target>Equipo</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.inspectionsCompleted" datatype="html">
+        <source>Inspections completed</source>
+        <target>Inspecciones completadas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.openNonConformities" datatype="html">
+        <source>Open non-conformities</source>
+        <target>No conformidades abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.openNonConformitiesOverdue" datatype="html">
+        <source><x id="count" equiv-text="overdueNonConformities"/> overdue</source>
+        <target><x id="count" equiv-text="overdueNonConformities"/> vencidas</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.resolutionRate" datatype="html">
+        <source>Non-conformity resolution rate</source>
+        <target>Tasa de resolución de no conformidades</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.nonConformitiesSummary" datatype="html">
+        <source><x id="opened" equiv-text="openedTotal"/> opened, <x id="resolved" equiv-text="resolvedTotal"/> resolved this period</source>
+        <target><x id="opened" equiv-text="openedTotal"/> abiertas, <x id="resolved" equiv-text="resolvedTotal"/> resueltas en este período</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.summary" datatype="html">
+        <source><x id="total" equiv-text="total"/> total this period</source>
+        <target><x id="total" equiv-text="total"/> en total en este período</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.trend.summaryWithDelta" datatype="html">
+        <source><x id="total" equiv-text="total"/> total this period, <x id="delta" equiv-text="formattedDelta"/>% vs previous period</source>
+        <target><x id="total" equiv-text="total"/> en total en este período, <x id="delta" equiv-text="formattedDelta"/> % respecto al período anterior</target>
       </trans-unit>
       <trans-unit id="messages.nav.title" datatype="html">
         <source>Direct messages</source>
@@ -9332,6 +9752,1010 @@
       <trans-unit id="inspection.table.title" datatype="html">
         <source>Inspections</source>
         <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="org.team.title" datatype="html">
+        <source>Roles &amp; permissions</source>
+        <target>Roles y permisos</target>
+      </trans-unit>
+      <trans-unit id="org.team.subtitle" datatype="html">
+        <source>Every role defines what a member can see and do in this organization.</source>
+        <target>Cada rol define lo que un miembro puede ver y hacer en esta organización.</target>
+      </trans-unit>
+      <trans-unit id="org.team.createRole" datatype="html">
+        <source>New role</source>
+        <target>Nuevo rol</target>
+      </trans-unit>
+      <trans-unit id="org.team.loadErrorTitle" datatype="html">
+        <source>Roles could not be loaded</source>
+        <target>No se pudieron cargar los roles</target>
+      </trans-unit>
+      <trans-unit id="org.team.retry" datatype="html">
+        <source>Try again</source>
+        <target>Intentar de nuevo</target>
+      </trans-unit>
+      <trans-unit id="org.team.noCustomRolesTitle" datatype="html">
+        <source>No custom roles yet</source>
+        <target>Aún no hay roles personalizados</target>
+      </trans-unit>
+      <trans-unit id="org.team.noCustomRolesDescription" datatype="html">
+        <source>Create a role to grant a tailored set of permissions beyond the built-in roles.</source>
+        <target>Cree un rol para otorgar un conjunto de permisos personalizado más allá de los roles integrados.</target>
+      </trans-unit>
+      <trans-unit id="org.team.deleteConfirmTitle" datatype="html">
+        <source>Delete this role?</source>
+        <target>¿Eliminar este rol?</target>
+      </trans-unit>
+      <trans-unit id="org.team.deleteConfirmDescription" datatype="html">
+        <source>Every member holding only this role loses the permissions it grants. This cannot be undone.</source>
+        <target>Todo miembro que solo tenga este rol pierde los permisos que otorga. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="org.team.deleteConfirmCancel" datatype="html">
+        <source>Cancel</source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="org.team.deleteConfirmAction" datatype="html">
+        <source>Delete</source>
+        <target>Eliminar</target>
+      </trans-unit>
+      <trans-unit id="org.team.rowMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Abrir menú</target>
+      </trans-unit>
+      <trans-unit id="org.team.editPermissions" datatype="html">
+        <source>Edit permissions</source>
+        <target>Editar permisos</target>
+      </trans-unit>
+      <trans-unit id="org.team.delete" datatype="html">
+        <source>Delete</source>
+        <target>Eliminar</target>
+      </trans-unit>
+      <trans-unit id="org.team.systemBadge" datatype="html">
+        <source>System</source>
+        <target>Sistema</target>
+      </trans-unit>
+      <trans-unit id="org.team.noResults" datatype="html">
+        <source>No roles found.</source>
+        <target>No se encontraron roles.</target>
+      </trans-unit>
+      <trans-unit id="org.team.permissionCountOne" datatype="html">
+        <source>1 permission</source>
+        <target>1 permiso</target>
+      </trans-unit>
+      <trans-unit id="org.team.permissionCountMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> permissions</source>
+        <target><x id="count" equiv-text="count"/> permisos</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.name" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.namePlaceholder" datatype="html">
+        <source>inspector</source>
+        <target>inspector</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.nameHint" datatype="html">
+        <source>Lowercase letters, numbers and underscores, 3-50 characters.</source>
+        <target>Letras minúsculas, números y guiones bajos, de 3 a 50 caracteres.</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.description" datatype="html">
+        <source>Description</source>
+        <target>Descripción</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.descriptionPlaceholder" datatype="html">
+        <source>What this role is for</source>
+        <target>Para qué sirve este rol</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.permissionsLabel" datatype="html">
+        <source>Permissions</source>
+        <target>Permisos</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.permissionsHint" datatype="html">
+        <source>Choose at least one permission this role grants.</source>
+        <target>Elija al menos un permiso que otorgue este rol.</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.submitting" datatype="html">
+        <source>Creating…</source>
+        <target>Creando…</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.submit" datatype="html">
+        <source>Create role</source>
+        <target>Crear rol</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.nameRequired" datatype="html">
+        <source>Role name is required.</source>
+        <target>El nombre del rol es obligatorio.</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.namePattern" datatype="html">
+        <source>Use lowercase letters, numbers and underscores only (3-50 characters).</source>
+        <target>Use solo letras minúsculas, números y guiones bajos (3 a 50 caracteres).</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.descriptionTooLong" datatype="html">
+        <source>This description is too long.</source>
+        <target>Esta descripción es demasiado larga.</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.permissionsRequired" datatype="html">
+        <source>Select at least one permission.</source>
+        <target>Seleccione al menos un permiso.</target>
+      </trans-unit>
+      <trans-unit id="org.team.form.createFailed" datatype="html">
+        <source>The role could not be created.</source>
+        <target>No se pudo crear el rol.</target>
+      </trans-unit>
+      <trans-unit id="org.team.createDialog.title" datatype="html">
+        <source>New role</source>
+        <target>Nuevo rol</target>
+      </trans-unit>
+      <trans-unit id="org.team.createDialog.description" datatype="html">
+        <source>Define a custom role and the permissions it grants.</source>
+        <target>Defina un rol personalizado y los permisos que otorga.</target>
+      </trans-unit>
+      <trans-unit id="org.team.permissionsSheet.systemNotice" datatype="html">
+        <source>System roles' permissions are fixed and cannot be edited.</source>
+        <target>Los permisos de los roles del sistema son fijos y no se pueden editar.</target>
+      </trans-unit>
+      <trans-unit id="org.team.permissionsSheet.description" datatype="html">
+        <source>Choose the permissions this role grants.</source>
+        <target>Elija los permisos que otorga este rol.</target>
+      </trans-unit>
+      <trans-unit id="org.team.permissionsSheet.updateFailed" datatype="html">
+        <source>The role's permissions could not be updated.</source>
+        <target>No se pudieron actualizar los permisos del rol.</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.dashboard" datatype="html">
+        <source>Dashboard</source>
+        <target>Panel</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.events" datatype="html">
+        <source>Events</source>
+        <target>Eventos</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.members" datatype="html">
+        <source>Members</source>
+        <target>Miembros</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.roles" datatype="html">
+        <source>Roles</source>
+        <target>Roles</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.facilities" datatype="html">
+        <source>Facilities</source>
+        <target>Instalaciones</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.equipment" datatype="html">
+        <source>Equipment</source>
+        <target>Equipo</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.inspection" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.interventions" datatype="html">
+        <source>Interventions</source>
+        <target>Intervenciones</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.messaging" datatype="html">
+        <source>Messaging</source>
+        <target>Mensajería</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.assistant" datatype="html">
+        <source>Assistant</source>
+        <target>Asistente</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.settings" datatype="html">
+        <source>Settings</source>
+        <target>Ajustes</target>
+      </trans-unit>
+      <trans-unit id="org.team.domain.general" datatype="html">
+        <source>General</source>
+        <target>General</target>
+      </trans-unit>
+      <trans-unit id="org.members.countOne" datatype="html">
+        <source>1 member</source>
+        <target>1 miembro</target>
+      </trans-unit>
+      <trans-unit id="org.members.countMany" datatype="html">
+        <source><x id="count" equiv-text="total"/> members</source>
+        <target><x id="count" equiv-text="total"/> miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.actionErrorFallback" datatype="html">
+        <source>The action could not be completed.</source>
+        <target>No se pudo completar la acción.</target>
+      </trans-unit>
+      <trans-unit id="org.members.bulkRemoveButton" datatype="html">
+        <source>Remove (<x id="count" equiv-text="this.selectedIds().size"/>)</source>
+        <target>Quitar (<x id="count" equiv-text="this.selectedIds().size"/>)</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeConfirmTitleMany" datatype="html">
+        <source>Remove <x id="count" equiv-text="bulkIds.length"/> members?</source>
+        <target>¿Quitar a <x id="count" equiv-text="bulkIds.length"/> miembros?</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeConfirmTitleOne" datatype="html">
+        <source>Remove member?</source>
+        <target>¿Quitar miembro?</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeConfirmDescriptionMany" datatype="html">
+        <source>This will remove <x id="count" equiv-text="bulkIds.length"/> members from the organization. This action cannot be undone.</source>
+        <target>Esto eliminará a <x id="count" equiv-text="bulkIds.length"/> miembros de la organización. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeConfirmDescriptionOne" datatype="html">
+        <source>This will remove this member from the organization. This action cannot be undone.</source>
+        <target>Esto eliminará a este miembro de la organización. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeConfirmDescriptionSingle" datatype="html">
+        <source>This will remove &quot;<x id="name" equiv-text="single.email ?? single.displayName ?? single.id"/>&quot; from the organization. This action cannot be undone.</source>
+        <target>Esto eliminará a &quot;<x id="name" equiv-text="single.email ?? single.displayName ?? single.id"/>&quot; de la organización. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="org.members.inviteButton" datatype="html">
+        <source>Invite member</source>
+        <target>Invitar a un miembro</target>
+      </trans-unit>
+      <trans-unit id="org.members.rosterHeading" datatype="html">
+        <source>Roster</source>
+        <target>Plantilla</target>
+      </trans-unit>
+      <trans-unit id="org.members.errorTitle" datatype="html">
+        <source>Couldn&apos;t load members</source>
+        <target>No se pudieron cargar los miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.errorText" datatype="html">
+        <source>The members could not be loaded. Check your connection and try again.</source>
+        <target>No se pudieron cargar los miembros. Compruebe su conexión e inténtelo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="org.members.emptyTitle" datatype="html">
+        <source>No members yet</source>
+        <target>Aún no hay miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.emptyText" datatype="html">
+        <source>Invite someone to give them access to this organization.</source>
+        <target>Invite a alguien para darle acceso a esta organización.</target>
+      </trans-unit>
+      <trans-unit id="org.members.rowCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> row(s) shown</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> fila(s) mostrada(s)</target>
+      </trans-unit>
+      <trans-unit id="org.members.pagePrevious" datatype="html">
+        <source>Previous page</source>
+        <target>Página anterior</target>
+      </trans-unit>
+      <trans-unit id="org.members.pageNext" datatype="html">
+        <source>Next page</source>
+        <target>Página siguiente</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.heading" datatype="html">
+        <source>Pending invitations</source>
+        <target>Invitaciones pendientes</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.emptyTitle" datatype="html">
+        <source>No pending invitations</source>
+        <target>No hay invitaciones pendientes</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.emptyText" datatype="html">
+        <source>Invitations you send will appear here until they are accepted, revoked or expire.</source>
+        <target>Las invitaciones que envíe aparecerán aquí hasta que se acepten, revoquen o caduquen.</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeConfirmCancel" datatype="html">
+        <source>Cancel</source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeConfirmAction" datatype="html">
+        <source>Remove</source>
+        <target>Quitar</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.unnamed" datatype="html">
+        <source>Member</source>
+        <target>Miembro</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.rowSelectLabel" datatype="html">
+        <source>Select <x id="name" equiv-text="name"/></source>
+        <target>Seleccionar a <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="org.members.table.caption" datatype="html">
+        <source>Organization members</source>
+        <target>Miembros de la organización</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.selectAllLabel" datatype="html">
+        <source>Select all members</source>
+        <target>Seleccionar todos los miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.colMember" datatype="html">
+        <source>Member</source>
+        <target>Miembro</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.colEmail" datatype="html">
+        <source>Email</source>
+        <target>Correo electrónico</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.colRoles" datatype="html">
+        <source>Roles</source>
+        <target>Roles</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.colStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.colActions" datatype="html">
+        <source>Actions</source>
+        <target>Acciones</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.noRole" datatype="html">
+        <source>No role</source>
+        <target>Sin rol</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.active" datatype="html">
+        <source>Active</source>
+        <target>Activo</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.inactive" datatype="html">
+        <source>Inactive</source>
+        <target>Inactivo</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.rowMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Abrir menú</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.rowManageRoles" datatype="html">
+        <source>Assign roles</source>
+        <target>Asignar roles</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.rowRemove" datatype="html">
+        <source>Remove</source>
+        <target>Quitar</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.caption" datatype="html">
+        <source>Pending invitations</source>
+        <target>Invitaciones pendientes</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.colEmail" datatype="html">
+        <source>Email</source>
+        <target>Correo electrónico</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.colRoles" datatype="html">
+        <source>Roles</source>
+        <target>Roles</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.colStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.colInvited" datatype="html">
+        <source>Invited</source>
+        <target>Invitado el</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.colExpires" datatype="html">
+        <source>Expires</source>
+        <target>Expira</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.noRole" datatype="html">
+        <source>No role</source>
+        <target>Sin rol</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.colActions" datatype="html">
+        <source>Actions</source>
+        <target>Acciones</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.rowMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Abrir el menú</target>
+      </trans-unit>
+      <trans-unit id="route.invitationAccept" datatype="html">
+        <source>Join organization</source>
+        <target>Unirse a la organización</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.missingTokenTitle" datatype="html">
+        <source>Invalid invitation link</source>
+        <target>Enlace de invitación no válido</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.missingToken" datatype="html">
+        <source>This invitation link is missing its token.</source>
+        <target>A este enlace de invitación le falta su token.</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.goHome" datatype="html">
+        <source>Go to homepage</source>
+        <target>Ir a la página de inicio</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.previewErrorTitle" datatype="html">
+        <source>We can&apos;t open this invitation</source>
+        <target>No podemos abrir esta invitación</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.previewError" datatype="html">
+        <source>This invitation link is invalid, expired or has already been used.</source>
+        <target>Este enlace de invitación no es válido, ha expirado o ya se ha utilizado.</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.acceptedTitle" datatype="html">
+        <source>You&apos;re in</source>
+        <target>Ya estás dentro</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.accepted" datatype="html">
+        <source>You have joined the organization.</source>
+        <target>Te has unido a la organización.</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.openOrganization" datatype="html">
+        <source>Open</source>
+        <target>Abrir</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.goToOrganization" datatype="html">
+        <source>Go to your workspace</source>
+        <target>Ir a tu espacio de trabajo</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.title" datatype="html">
+        <source>You&apos;ve been invited</source>
+        <target>Te han invitado</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.invitedBy" datatype="html">
+        <source>Invited by</source>
+        <target>Invitación de</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.toJoin" datatype="html">
+        <source>to join</source>
+        <target>para unirte a</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.invitedEmailLabel" datatype="html">
+        <source>Invited email</source>
+        <target>Correo invitado</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.expiresLabel" datatype="html">
+        <source>Expires</source>
+        <target>Expira</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.acceptErrorTitle" datatype="html">
+        <source>We couldn&apos;t accept this invitation</source>
+        <target>No pudimos aceptar esta invitación</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.loadingAria" datatype="html">
+        <source>Loading invitation…</source>
+        <target>Cargando la invitación…</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.decline" datatype="html">
+        <source>Not now</source>
+        <target>Ahora no</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.accept" datatype="html">
+        <source>Accept invitation</source>
+        <target>Aceptar la invitación</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.notAvailableTitle" datatype="html">
+        <source>This invitation isn&apos;t available</source>
+        <target>Esta invitación no está disponible</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.notAcceptable" datatype="html">
+        <source>This invitation can no longer be accepted.</source>
+        <target>Esta invitación ya no se puede aceptar.</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.rowCopyLink" datatype="html">
+        <source>Copy accept link</source>
+        <target>Copiar enlace de aceptación</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.rowResend" datatype="html">
+        <source>Resend</source>
+        <target>Reenviar</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.rowRevoke" datatype="html">
+        <source>Revoke</source>
+        <target>Revocar</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.status.pending" datatype="html">
+        <source>Pending</source>
+        <target>Pendiente</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.status.accepted" datatype="html">
+        <source>Accepted</source>
+        <target>Aceptada</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.status.expired" datatype="html">
+        <source>Expired</source>
+        <target>Caducada</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.status.revoked" datatype="html">
+        <source>Revoked</source>
+        <target>Revocada</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.emailRequired" datatype="html">
+        <source>Enter an email address.</source>
+        <target>Introduzca una dirección de correo electrónico.</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.emailInvalid" datatype="html">
+        <source>Enter a valid email address.</source>
+        <target>Introduzca una dirección de correo electrónico válida.</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.submitFailed" datatype="html">
+        <source>The invitation could not be sent.</source>
+        <target>No se pudo enviar la invitación.</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.email" datatype="html">
+        <source>Email</source>
+        <target>Correo electrónico</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.emailPlaceholder" datatype="html">
+        <source>name@example.com</source>
+        <target>name@example.com</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.role" datatype="html">
+        <source>Role</source>
+        <target>Rol</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.rolePlaceholder" datatype="html">
+        <source>No role</source>
+        <target>Sin rol</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.roleHint" datatype="html">
+        <source>Roles can also be assigned after the invitation is accepted.</source>
+        <target>Los roles también se pueden asignar después de aceptar la invitación.</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.submitting" datatype="html">
+        <source>Sending…</source>
+        <target>Enviando…</target>
+      </trans-unit>
+      <trans-unit id="org.inviteForm.submit" datatype="html">
+        <source>Send invitation</source>
+        <target>Enviar invitación</target>
+      </trans-unit>
+      <trans-unit id="org.inviteDialog.title" datatype="html">
+        <source>Invite a member</source>
+        <target>Invitar a un miembro</target>
+      </trans-unit>
+      <trans-unit id="org.rolesDialog.title" datatype="html">
+        <source>Assign roles</source>
+        <target>Asignar roles</target>
+      </trans-unit>
+      <trans-unit id="org.rolesDialog.empty" datatype="html">
+        <source>This organization has no roles defined yet.</source>
+        <target>Esta organización aún no tiene roles definidos.</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.errorTitle" datatype="html">
+        <source>Couldn&apos;t load invitations</source>
+        <target>No se pudieron cargar las invitaciones</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.errorText" datatype="html">
+        <source>The invitations could not be loaded. Check your connection and try again.</source>
+        <target>No se pudieron cargar las invitaciones. Compruebe su conexión e inténtelo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscriptionStatus.active" datatype="html">
+        <source>Active</source>
+        <target>Activo</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscriptionStatus.trialing" datatype="html">
+        <source>Trial</source>
+        <target>Prueba</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscriptionStatus.pastDue" datatype="html">
+        <source>Payment past due</source>
+        <target>Pago atrasado</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscriptionStatus.unpaid" datatype="html">
+        <source>Unpaid</source>
+        <target>Impagado</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscriptionStatus.incomplete" datatype="html">
+        <source>Payment incomplete</source>
+        <target>Pago incompleto</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscriptionStatus.incompleteExpired" datatype="html">
+        <source>Expired</source>
+        <target>Caducado</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscriptionStatus.canceled" datatype="html">
+        <source>Canceled</source>
+        <target>Cancelado</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscriptionStatus.paused" datatype="html">
+        <source>Paused</source>
+        <target>En pausa</target>
+      </trans-unit>
+      <trans-unit id="org.settings.title" datatype="html">
+        <source>Organization settings</source>
+        <target>Configuración de la organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subtitle" datatype="html">
+        <source>General identity, subscription, usage and workspace preferences.</source>
+        <target>Identidad general, suscripción, uso y preferencias del espacio de trabajo.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.tabsAriaLabel" datatype="html">
+        <source>Organization settings sections</source>
+        <target>Secciones de configuración de la organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.tabs.general" datatype="html">
+        <source>General</source>
+        <target>General</target>
+      </trans-unit>
+      <trans-unit id="org.settings.tabs.subscription" datatype="html">
+        <source>Subscription</source>
+        <target>Suscripción</target>
+      </trans-unit>
+      <trans-unit id="org.settings.tabs.usage" datatype="html">
+        <source>Usage</source>
+        <target>Uso</target>
+      </trans-unit>
+      <trans-unit id="org.settings.tabs.notifications" datatype="html">
+        <source>Notifications</source>
+        <target>Notificaciones</target>
+      </trans-unit>
+      <trans-unit id="org.settings.tabs.regional" datatype="html">
+        <source>Regional &amp; formats</source>
+        <target>Regional y formatos</target>
+      </trans-unit>
+      <trans-unit id="org.settings.tabs.danger" datatype="html">
+        <source>Danger zone</source>
+        <target>Zona de peligro</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.currentTitle" datatype="html">
+        <source>Current plan</source>
+        <target>Plan actual</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.managePortal" datatype="html">
+        <source>Manage billing</source>
+        <target>Gestionar la facturación</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.startCheckout" datatype="html">
+        <source>Set up billing</source>
+        <target>Configurar la facturación</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.plansTitle" datatype="html">
+        <source>Plans</source>
+        <target>Planes</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.invoicesTitle" datatype="html">
+        <source>Invoices</source>
+        <target>Facturas</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.invoicesEmptyTitle" datatype="html">
+        <source>No invoices yet</source>
+        <target>Aún no hay facturas</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.invoicesEmptyDescription" datatype="html">
+        <source>Invoices appear here once the organization has been billed.</source>
+        <target>Las facturas aparecen aquí una vez que se ha facturado a la organización.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.downloadInvoice" datatype="html">
+        <source>Download invoice</source>
+        <target>Descargar factura</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.endsOn" datatype="html">
+        <source>Ends on <x id="date" equiv-text="date"/></source>
+        <target>Finaliza el <x id="date"/></target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.renewsOn" datatype="html">
+        <source>Renews on <x id="date" equiv-text="date"/></source>
+        <target>Se renueva el <x id="date"/></target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.title" datatype="html">
+        <source>Delete this organization</source>
+        <target>Eliminar esta organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.description" datatype="html">
+        <source>Permanently deletes every facility, piece of equipment, inspection, intervention and member record. This cannot be undone.</source>
+        <target>Elimina permanentemente cada instalación, equipo, inspección, intervención y ficha de miembro. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.open" datatype="html">
+        <source>Delete organization</source>
+        <target>Eliminar organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.logo.uploading" datatype="html">
+        <source>Uploading…</source>
+        <target>Subiendo…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.logo.choose" datatype="html">
+        <source>Change logo</source>
+        <target>Cambiar logotipo</target>
+      </trans-unit>
+      <trans-unit id="org.pageHeader.memberCountOne" datatype="html">
+        <source>1 member</source>
+        <target>1 miembro</target>
+      </trans-unit>
+      <trans-unit id="org.pageHeader.memberCountMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> members</source>
+        <target><x id="count" equiv-text="count"/> miembros</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.changed" datatype="html">
+        <source>The organization&apos;s plan has been updated.</source>
+        <target>El plan de la organización se ha actualizado.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.current" datatype="html">
+        <source>Current plan</source>
+        <target>Plan actual</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.switch" datatype="html">
+        <source>Switch to this plan</source>
+        <target>Cambiar a este plan</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.confirmTitle" datatype="html">
+        <source>Switch subscription plan?</source>
+        <target>¿Cambiar el plan de suscripción?</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.confirmAction" datatype="html">
+        <source>Switch plan</source>
+        <target>Cambiar de plan</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.free" datatype="html">
+        <source>Free</source>
+        <target>Gratis</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.perMonth" datatype="html">
+        <source><x id="price" equiv-text="formatted"/>/month</source>
+        <target><x id="price"/> / mes</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.confirmText" datatype="html">
+        <source>The organization will move to <x id="planName" equiv-text="planName"/> immediately. Resource limits and billing update right away.</source>
+        <target>La organización pasará inmediatamente a <x id="planName"/>. Los límites de recursos y la facturación se actualizan de inmediato.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.members" datatype="html">
+        <source>Members</source>
+        <target>Miembros</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.facilities" datatype="html">
+        <source>Facilities</source>
+        <target>Instalaciones</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.equipment" datatype="html">
+        <source>Equipment</source>
+        <target>Equipos</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.inspections" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.statusOk" datatype="html">
+        <source>OK</source>
+        <target>OK</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.statusNear" datatype="html">
+        <source>Near limit</source>
+        <target>Cerca del límite</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.statusFull" datatype="html">
+        <source>Limit reached</source>
+        <target>Límite alcanzado</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.empty" datatype="html">
+        <source>No usage data is available yet.</source>
+        <target>Aún no hay datos de uso disponibles.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.unlimited" datatype="html">
+        <source>Unlimited</source>
+        <target>Ilimitado</target>
+      </trans-unit>
+      <trans-unit id="org.statTile.deltaUp" datatype="html">
+        <source>Increase</source>
+        <target>Aumento</target>
+      </trans-unit>
+      <trans-unit id="org.statTile.deltaDown" datatype="html">
+        <source>Decrease</source>
+        <target>Disminución</target>
+      </trans-unit>
+      <trans-unit id="org.statTile.deltaFlat" datatype="html">
+        <source>No change</source>
+        <target>Sin cambios</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.nameLabel" datatype="html">
+        <source>Organization name</source>
+        <target>Nombre de la organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.slugLabel" datatype="html">
+        <source>URL slug</source>
+        <target>Slug de URL</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.descriptionLabel" datatype="html">
+        <source>Description</source>
+        <target>Descripción</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Guardar cambios</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.nameRequired" datatype="html">
+        <source>Enter an organization name</source>
+        <target>Introduzca un nombre de organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.slugRequired" datatype="html">
+        <source>Enter a URL slug</source>
+        <target>Introduzca un slug de URL</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.channelsTitle" datatype="html">
+        <source>Delivery channels</source>
+        <target>Canales de envío</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.emailLabel" datatype="html">
+        <source>Email</source>
+        <target>Correo electrónico</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.inAppLabel" datatype="html">
+        <source>In-app</source>
+        <target>En la aplicación</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.eventsTitle" datatype="html">
+        <source>Events</source>
+        <target>Eventos</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.interventionPublishedLabel" datatype="html">
+        <source>Intervention published</source>
+        <target>Intervención publicada</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.interventionAssignedLabel" datatype="html">
+        <source>Intervention assigned to me</source>
+        <target>Intervención asignada a mí</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.inspectionDueLabel" datatype="html">
+        <source>Inspection due</source>
+        <target>Inspección pendiente</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.nonConformityOpenedLabel" datatype="html">
+        <source>Non-conformity opened</source>
+        <target>No conformidad abierta</target>
+      </trans-unit>
+      <trans-unit id="org.settings.notifications.memberInvitedLabel" datatype="html">
+        <source>Member invited</source>
+        <target>Miembro invitado</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.dateFormatSlashEuropean" datatype="html">
+        <source>dd/MM/yyyy (31/12/2026)</source>
+        <target>dd/MM/yyyy (31/12/2026)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.dateFormatSlashUs" datatype="html">
+        <source>MM/dd/yyyy (12/31/2026)</source>
+        <target>MM/dd/yyyy (12/31/2026)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.dateFormatIso" datatype="html">
+        <source>yyyy-MM-dd (2026-12-31)</source>
+        <target>yyyy-MM-dd (2026-12-31)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.dateFormatDotEuropean" datatype="html">
+        <source>dd.MM.yyyy (31.12.2026)</source>
+        <target>dd.MM.yyyy (31.12.2026)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.dateFormatDashEuropean" datatype="html">
+        <source>dd-MM-yyyy (31-12-2026)</source>
+        <target>dd-MM-yyyy (31-12-2026)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.firstDayMonday" datatype="html">
+        <source>Monday</source>
+        <target>Lunes</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.firstDaySunday" datatype="html">
+        <source>Sunday</source>
+        <target>Domingo</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.metric" datatype="html">
+        <source>Metric</source>
+        <target>Métrico</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.imperial" datatype="html">
+        <source>Imperial</source>
+        <target>Imperial</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.timezoneLabel" datatype="html">
+        <source>Timezone</source>
+        <target>Zona horaria</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.localeLabel" datatype="html">
+        <source>Locale</source>
+        <target>Configuración regional</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.dateFormatLabel" datatype="html">
+        <source>Date format</source>
+        <target>Formato de fecha</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.firstDayOfWeekLabel" datatype="html">
+        <source>First day of week</source>
+        <target>Primer día de la semana</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.measurementSystemLabel" datatype="html">
+        <source>Measurement system</source>
+        <target>Sistema de medidas</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Guardar cambios</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.timezoneRequired" datatype="html">
+        <source>Enter a timezone</source>
+        <target>Introduzca una zona horaria</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.localeRequired" datatype="html">
+        <source>Enter a locale</source>
+        <target>Introduzca una configuración regional</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.confirmTitle" datatype="html">
+        <source>Delete this organization?</source>
+        <target>¿Eliminar esta organización?</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.deleting" datatype="html">
+        <source>Deleting…</source>
+        <target>Eliminando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.confirmAction" datatype="html">
+        <source>Delete organization</source>
+        <target>Eliminar organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.confirmText" datatype="html">
+        <source>This permanently deletes <x id="organizationName" equiv-text="name"/> — its facilities, equipment, inspections, interventions and members. This cannot be undone.</source>
+        <target>Esto elimina permanentemente <x id="organizationName"/>: sus instalaciones, equipos, inspecciones, intervenciones y miembros. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.confirmLabel" datatype="html">
+        <source>Type <x id="organizationName" equiv-text="name"/> to confirm</source>
+        <target>Escriba <x id="organizationName"/> para confirmar</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.missingTokenTitle" datatype="html">
+        <source> Invalid invitation link </source>
+        <target>Enlace de invitación no válido</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.missingToken" datatype="html">
+        <source> This invitation link is missing its token. </source>
+        <target>A este enlace de invitación le falta el token.</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.goHome" datatype="html">
+        <source> Go to homepage </source>
+        <target>Ir a la página de inicio</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.previewErrorTitle" datatype="html">
+        <source> We can&apos;t open this invitation </source>
+        <target>No podemos abrir esta invitación</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.previewError" datatype="html">
+        <source> This invitation link is invalid, expired or has already been used. </source>
+        <target>Este enlace de invitación no es válido, ha caducado o ya se ha utilizado.</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.acceptedTitle" datatype="html">
+        <source>You&apos;re in</source>
+        <target>Ya estás dentro</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.accepted" datatype="html">
+        <source> You have joined the organization. </source>
+        <target>Te has unido a la organización.</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.openOrganization" datatype="html">
+        <source>Open</source>
+        <target>Abrir</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.goToOrganization" datatype="html">
+        <source> Go to your workspace </source>
+        <target>Ir a tu espacio de trabajo</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.title" datatype="html">
+        <source>You&apos;ve been invited</source>
+        <target>Has sido invitado/a</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.invitedBy" datatype="html">
+        <source>Invited by</source>
+        <target>Invitado por</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.toJoin" datatype="html">
+        <source>to join</source>
+        <target>a unirte a</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.invitedEmailLabel" datatype="html">
+        <source> Invited email </source>
+        <target>Correo invitado</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.expiresLabel" datatype="html">
+        <source> Expires </source>
+        <target>Caduca el</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.acceptErrorTitle" datatype="html">
+        <source> We couldn&apos;t accept this invitation </source>
+        <target>No hemos podido aceptar esta invitación</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.decline" datatype="html">
+        <source>Not now</source>
+        <target>Ahora no</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.accept" datatype="html">
+        <source>Accept invitation</source>
+        <target>Aceptar invitación</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.notAvailableTitle" datatype="html">
+        <source> This invitation isn&apos;t available </source>
+        <target>Esta invitación ya no está disponible</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.notAcceptable" datatype="html">
+        <source> This invitation can no longer be accepted. </source>
+        <target>Esta invitación ya no se puede aceptar.</target>
       </trans-unit>
 </body>
   </file>

@@ -13,9 +13,36 @@ import {
   type OrganizationOutputFixture,
   type UserProfileOutputFixture,
 } from '../fixtures/api-fixtures';
+import type { ApiErrorFixture } from '../fixtures/api-fixtures';
+import type {
+  InvoiceOutputFixture,
+  OrganizationQuotaOutputFixture,
+  OrganizationSubscriptionOutputFixture,
+  PlanOutputFixture,
+  PlanPricingOutputFixture,
+} from '../fixtures/billing-fixtures';
+import type {
+  ChannelOutputFixture,
+  ChannelParticipantOutputFixture,
+  MessageOutputFixture,
+} from '../fixtures/channel-fixtures';
+import type {
+  OrganizationDashboardOutputFixture,
+  OrganizationDashboardTrendOutputFixture,
+} from '../fixtures/dashboard-fixtures';
 import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
 import type { FacilityOutputFixture } from '../fixtures/facility-fixtures';
 import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
+import type { InterventionOutputFixture } from '../fixtures/intervention-fixtures';
+import type {
+  OrganizationInvitationPreviewOutputFixture,
+  OrganizationMemberOutputFixture,
+} from '../fixtures/invitation-fixtures';
+import type { OrganizationInvitationOutputFixture } from '../fixtures/member-fixtures';
+import type {
+  OrganizationPermissionOutputFixture,
+  OrganizationRoleOutputFixture,
+} from '../fixtures/role-fixtures';
 
 /**
  * Backend origin the app is configured to call in the `e2e` build
@@ -415,5 +442,556 @@ export class ApiMock {
         await fulfillJson(route, 200, inspection);
       },
     );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/invitations/{token}/preview` — the public
+   * endpoint the invitation-accept page loads for anyone holding the token,
+   * signed in or not.
+   */
+  public async mockInvitationPreview(
+    token: string,
+    preview: OrganizationInvitationPreviewOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/invitations/${encodeURIComponent(token)}/preview`,
+      async (route) => {
+        await fulfillJson(route, 200, preview);
+      },
+    );
+  }
+
+  /**
+   * Mocks a failing `GET /api/organizations/invitations/{token}/preview` —
+   * an invalid, unknown or already-consumed token the backend cannot resolve.
+   */
+  public async mockInvitationPreviewError(
+    token: string,
+    error: Partial<ApiErrorFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/invitations/${encodeURIComponent(token)}/preview`,
+      async (route) => {
+        await fulfillJson(route, error.status ?? 404, {
+          '@id': '/errors/invitation-not-found',
+          '@type': 'Error',
+          status: 404,
+          type: 'about:blank',
+          title: 'This invitation link is invalid, expired or has already been used.',
+          ...error,
+        });
+      },
+    );
+  }
+
+  /**
+   * Mocks `POST /api/organizations/invitations/accept` — the authenticated
+   * action that turns a pending invitation into a membership.
+   */
+  public async mockInvitationAccept(member: OrganizationMemberOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/organizations/invitations/accept`, async (route) => {
+      await fulfillJson(route, 201, member);
+    });
+  }
+
+  /**
+   * Mocks a failing `POST /api/organizations/invitations/accept` — e.g. the
+   * invitation was revoked or expired between the preview and the click.
+   */
+  public async mockInvitationAcceptError(error: Partial<ApiErrorFixture> = {}): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/organizations/invitations/accept`, async (route) => {
+      await fulfillJson(route, error.status ?? 409, {
+        '@id': '/errors/invitation-accept-failed',
+        '@type': 'Error',
+        status: 409,
+        type: 'about:blank',
+        title: 'This invitation can no longer be accepted.',
+        detail: 'This invitation can no longer be accepted.',
+        ...error,
+      });
+    });
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/members` — the roster the
+   * members page and the shell's member directory both read. Registered
+   * after `mockAuthenticatedSession`, whose bootstrap installs the same
+   * route returning an empty collection.
+   */
+  public async mockOrganizationMembers(
+    organizationId: string,
+    members: ReadonlyArray<OrganizationMemberOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/members(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(members));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/invitations` — the
+   * pending-invitations grid on the members page.
+   */
+  public async mockOrganizationInvitations(
+    organizationId: string,
+    invitations: ReadonlyArray<OrganizationInvitationOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/invitations(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(invitations));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/roles` — the role catalog
+   * read by the members page's role badges/assignment dialog and by the team
+   * page's role grid.
+   */
+  public async mockOrganizationRoles(
+    organizationId: string,
+    roles: ReadonlyArray<OrganizationRoleOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/roles(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(roles));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/permissions` — the
+   * permission catalog read by the team page's create dialog and permission
+   * editor.
+   */
+  public async mockOrganizationPermissions(
+    organizationId: string,
+    permissions: ReadonlyArray<OrganizationPermissionOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/permissions(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(permissions));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/quota` — the per-resource
+   * usage `OrganizationQuotaStore` loads automatically for every organization
+   * route, and the settings page's Usage tab renders directly.
+   */
+  public async mockOrganizationQuota(
+    organizationId: string,
+    quota: OrganizationQuotaOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/quota`,
+      async (route) => {
+        await fulfillJson(route, 200, quota);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/billing/subscription` —
+   * the settings page's Subscription tab, loaded lazily on first activation.
+   */
+  public async mockOrganizationSubscription(
+    organizationId: string,
+    subscription: OrganizationSubscriptionOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/billing/subscription`,
+      async (route) => {
+        await fulfillJson(route, 200, subscription);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/billing/invoices` — the
+   * Subscription tab's invoice history.
+   */
+  public async mockOrganizationInvoices(
+    organizationId: string,
+    invoices: ReadonlyArray<InvoiceOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/billing/invoices(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(invoices));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/billing/pricing` — display pricing for the payable plan
+   * catalog, joined by `OrganizationPlanSelector` on `planKey`.
+   */
+  public async mockBillingPricing(
+    pricing: ReadonlyArray<PlanPricingOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/billing/pricing(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(pricing));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/plans` — the selectable plan catalog `OrganizationPlanSelector` loads on init.
+   */
+  public async mockPlans(plans: ReadonlyArray<PlanOutputFixture> = []): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/plans(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(plans));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/channels` — the channels page's list, and the dashboard
+   * shell's channel-section widget. Registered after `mockAuthenticatedSession`,
+   * whose bootstrap installs the same route returning an empty collection.
+   */
+  public async mockChannelList(channels: ReadonlyArray<ChannelOutputFixture> = []): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/channels(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(channels));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/channels/{channelId}` — the resource `ChannelsStore.loadOne`
+   * reads for the routed channel, and `channelTitleResolver` for the breadcrumb.
+   */
+  public async mockChannelDetail(channel: ChannelOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/channels/${channel.id}`, async (route) => {
+      await fulfillJson(route, 200, channel);
+    });
+  }
+
+  /**
+   * Mocks `GET /api/channels/{channelId}/participants` — the channel
+   * conversation page's roster, read by `ChannelParticipantsStore`.
+   */
+  public async mockChannelParticipants(
+    channelId: string,
+    participants: ReadonlyArray<ChannelParticipantOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/channels/${channelId}/participants`,
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(participants));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/conversations/{channelId}/messages` — the channel's
+   * thread, read by `MessageThreadStore.load`. A channel id is its
+   * conversation id on this API.
+   */
+  public async mockChannelMessages(
+    channelId: string,
+    messages: ReadonlyArray<MessageOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/conversations/${channelId}/messages(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(messages));
+      },
+    );
+  }
+
+  /**
+   * Mocks `PATCH /api/conversations/{channelId}/read` — the read-marker write
+   * `MessageThreadStore.markRead` fires on open and once the thread catches
+   * up, so this must be mocked even though a failure there is caught silently.
+   */
+  public async mockConversationMarkRead(channelId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/conversations/${channelId}/read`, async (route) => {
+      await fulfillJson(route, 200, { conversationId: channelId });
+    });
+  }
+
+  /**
+   * Mocks `GET /api/conversations/{channelId}/subscription` — the Mercure
+   * subscriber token `MessageThreadStore.connect` mints on open. A failure
+   * here is caught silently (realtime is an enhancement), but still worth
+   * mocking to keep the network log clean.
+   */
+  public async mockChannelSubscription(channelId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/conversations/${channelId}/subscription`,
+      async (route) => {
+        await fulfillJson(route, 200, {
+          '@id': `/api/conversations/${channelId}/subscription`,
+          '@type': 'Conversation',
+          topic: `/e2e/conversations/${channelId}`,
+          token: 'e2e-mercure-token',
+        });
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/dashboard` — the aggregate
+   * payload `DashboardStore` reads for the statistics page's KPI row,
+   * comparison deltas, and non-conformity severity breakdown.
+   */
+  public async mockOrganizationDashboard(
+    organizationId: string,
+    dashboard: OrganizationDashboardOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/dashboard(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, dashboard);
+      },
+    );
+  }
+
+  /**
+   * Mocks a failing `GET /api/organizations/{organizationId}/dashboard` —
+   * the statistics page's own "not available with your permissions" card
+   * (`status: 403`) or its generic retryable error state for any other status.
+   */
+  public async mockOrganizationDashboardError(
+    organizationId: string,
+    error: Partial<ApiErrorFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/dashboard(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, error.status ?? 403, {
+          '@id': '/errors/dashboard-forbidden',
+          '@type': 'Error',
+          status: 403,
+          type: 'about:blank',
+          title: 'You do not have permission to view this organization’s statistics.',
+          ...error,
+        });
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/dashboard/trends/inspections`
+   * — one of the three parallel requests `OverviewTrendStore` fires for the
+   * statistics page's Inspections chart.
+   */
+  public async mockDashboardInspectionsTrend(
+    organizationId: string,
+    trend: OrganizationDashboardTrendOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/dashboard/trends/inspections(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, trend);
+      },
+    );
+  }
+
+  /**
+   * Mocks a failing `GET /api/organizations/{organizationId}/dashboard/trends/inspections`.
+   * `OverviewTrendStore.load` fetches inspections, opened and resolved
+   * non-conformities via `forkJoin`, so this alone fails the whole card and
+   * renders both the Inspections and the Non-conformities charts as
+   * permission-degraded — the rest of the statistics page stays intact.
+   */
+  public async mockDashboardInspectionsTrendError(
+    organizationId: string,
+    error: Partial<ApiErrorFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/dashboard/trends/inspections(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, error.status ?? 403, {
+          '@id': '/errors/dashboard-trend-forbidden',
+          '@type': 'Error',
+          status: 403,
+          type: 'about:blank',
+          title: 'You do not have permission to view this trend.',
+          ...error,
+        });
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/dashboard/trends/non-conformities-opened`
+   * — the second of `OverviewTrendStore`'s three parallel requests.
+   */
+  public async mockDashboardNonConformitiesOpenedTrend(
+    organizationId: string,
+    trend: OrganizationDashboardTrendOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/dashboard/trends/non-conformities-opened(\\?.*)?$`,
+      ),
+      async (route) => {
+        await fulfillJson(route, 200, trend);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/dashboard/trends/non-conformities-resolved`
+   * — the third of `OverviewTrendStore`'s three parallel requests.
+   */
+  public async mockDashboardNonConformitiesResolvedTrend(
+    organizationId: string,
+    trend: OrganizationDashboardTrendOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/dashboard/trends/non-conformities-resolved(\\?.*)?$`,
+      ),
+      async (route) => {
+        await fulfillJson(route, 200, trend);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/dashboard/trends/equipment-created`
+   * — one of `AssetGrowthTrendStore`'s two parallel requests, backing the
+   * statistics page's Equipment added chart.
+   */
+  public async mockDashboardEquipmentCreatedTrend(
+    organizationId: string,
+    trend: OrganizationDashboardTrendOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/dashboard/trends/equipment-created(\\?.*)?$`,
+      ),
+      async (route) => {
+        await fulfillJson(route, 200, trend);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/dashboard/trends/facilities-created`
+   * — the other of `AssetGrowthTrendStore`'s two parallel requests, backing
+   * the statistics page's Facilities added chart.
+   */
+  public async mockDashboardFacilitiesCreatedTrend(
+    organizationId: string,
+    trend: OrganizationDashboardTrendOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/dashboard/trends/facilities-created(\\?.*)?$`,
+      ),
+      async (route) => {
+        await fulfillJson(route, 200, trend);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/interventions` for the parallel burst
+   * `OrganizationTodayStore.load` fires for the Today page's four work
+   * queues (`overdue` alone sends two requests, one per workable status —
+   * `buildInterventionQueueRequests`), multiplexed on the `status` /
+   * `dueAtBefore` / `dueAtAfter` query params each request carries. A request
+   * outside every recognized bucket — notably the app-boot
+   * `InterventionPrefetchService` warm-cache call — gets an empty collection
+   * rather than falling through to the safety net.
+   */
+  public async mockInterventionQueues(
+    queues: {
+      overdue?: ReadonlyArray<InterventionOutputFixture>;
+      changesRequested?: ReadonlyArray<InterventionOutputFixture>;
+      awaitingReview?: ReadonlyArray<InterventionOutputFixture>;
+      upcoming?: ReadonlyArray<InterventionOutputFixture>;
+    } = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    const overdue: ReadonlyArray<InterventionOutputFixture> = queues.overdue ?? [];
+    const changesRequested: ReadonlyArray<InterventionOutputFixture> =
+      queues.changesRequested ?? [];
+    const awaitingReview: ReadonlyArray<InterventionOutputFixture> = queues.awaitingReview ?? [];
+    const upcoming: ReadonlyArray<InterventionOutputFixture> = queues.upcoming ?? [];
+
+    await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
+      const url = new URL(route.request().url());
+      const status = url.searchParams.get('status');
+      const dueAtBefore = url.searchParams.get('dueAtBefore');
+      const dueAtAfter = url.searchParams.get('dueAtAfter');
+
+      if (status === 'submitted') {
+        await fulfillJson(route, 200, hydraCollection(awaitingReview));
+        return;
+      }
+      if (status === 'changes_requested') {
+        await fulfillJson(route, 200, hydraCollection(changesRequested));
+        return;
+      }
+      if (status === 'planned' && dueAtAfter) {
+        await fulfillJson(route, 200, hydraCollection(upcoming));
+        return;
+      }
+      if ((status === 'planned' || status === 'in_progress') && dueAtBefore) {
+        await fulfillJson(
+          route,
+          200,
+          hydraCollection(overdue.filter((intervention) => intervention.status === status)),
+        );
+        return;
+      }
+
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+  }
+
+  /**
+   * Mocks a failing `GET /api/interventions` — the Today page's work-queue
+   * error state (`OrganizationTodayStore.hasError`), independent of the
+   * dashboard KPI/alerts query.
+   */
+  public async mockInterventionQueuesError(error: Partial<ApiErrorFixture> = {}): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, error.status ?? 500, {
+        '@id': '/errors/intervention-queues-failed',
+        '@type': 'Error',
+        status: 500,
+        type: 'about:blank',
+        title: 'Could not load the intervention queues.',
+        ...error,
+      });
+    });
   }
 }

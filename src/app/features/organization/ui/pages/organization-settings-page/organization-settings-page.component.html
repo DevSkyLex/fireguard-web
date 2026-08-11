@@ -1,0 +1,323 @@
+<div id="organization-settings" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <header class="flex flex-col gap-0.5">
+    <h1 class="text-xl font-semibold tracking-tight text-foreground" i18n="@@org.settings.title">
+      Organization settings
+    </h1>
+    <p class="text-sm text-muted-foreground" i18n="@@org.settings.subtitle">
+      General identity, subscription, usage and workspace preferences.
+    </p>
+  </header>
+
+  @if (!organizationReady()) {
+    <div class="flex max-w-2xl flex-col gap-4" aria-hidden="true">
+      <hlm-skeleton class="h-8 w-64" />
+      <hlm-skeleton class="h-24 w-full" />
+      <hlm-skeleton class="h-24 w-full" />
+    </div>
+  } @else {
+    <hlm-tabs [tab]="activeTab()" class="flex-col" (tabActivated)="onTabActivated($event)">
+      <hlm-tabs-list
+        aria-label="Organization settings sections"
+        i18n-aria-label="@@org.settings.tabsAriaLabel"
+      >
+        <button
+          hlmTabsTrigger="general"
+          class="max-sm:min-h-11"
+          data-testid="org-settings-tab-general"
+        >
+          <span i18n="@@org.settings.tabs.general">General</span>
+        </button>
+        <button
+          hlmTabsTrigger="subscription"
+          class="max-sm:min-h-11"
+          data-testid="org-settings-tab-subscription"
+        >
+          <span i18n="@@org.settings.tabs.subscription">Subscription</span>
+        </button>
+        <button hlmTabsTrigger="usage" class="max-sm:min-h-11" data-testid="org-settings-tab-usage">
+          <span i18n="@@org.settings.tabs.usage">Usage</span>
+        </button>
+        <button
+          hlmTabsTrigger="notifications"
+          class="max-sm:min-h-11"
+          data-testid="org-settings-tab-notifications"
+        >
+          <span i18n="@@org.settings.tabs.notifications">Notifications</span>
+        </button>
+        <button
+          hlmTabsTrigger="regional"
+          class="max-sm:min-h-11"
+          data-testid="org-settings-tab-regional"
+        >
+          <span i18n="@@org.settings.tabs.regional">Regional & formats</span>
+        </button>
+        @if (canDelete()) {
+          <button
+            hlmTabsTrigger="danger"
+            class="max-sm:min-h-11"
+            data-testid="org-settings-tab-danger"
+          >
+            <span i18n="@@org.settings.tabs.danger">Danger zone</span>
+          </button>
+        }
+      </hlm-tabs-list>
+
+      <div hlmTabsContent="general" class="max-w-2xl">
+        <ng-template hlmTabsContentLazy>
+          <section class="flex flex-col gap-6">
+            <app-organization-logo-picker
+              [logoUrl]="organization()?.logoUrl ?? null"
+              [organizationName]="organization()?.name ?? ''"
+              [pending]="settingsStore.isUploadingLogo()"
+              [removing]="settingsStore.isRemovingLogo()"
+              [error]="
+                settingsStore.uploadLogoError()?.message ??
+                settingsStore.removeLogoError()?.message ??
+                null
+              "
+              (selected)="uploadLogo($event)"
+              (removed)="removeLogo()"
+            />
+
+            <app-organization-general-form
+              [organization]="generalFormValues()"
+              [pending]="settingsStore.isSaving()"
+              (submitted)="saveGeneral($event)"
+            />
+          </section>
+        </ng-template>
+      </div>
+
+      <div hlmTabsContent="subscription">
+        <ng-template hlmTabsContentLazy>
+          <div class="flex flex-col gap-8">
+            <section class="flex flex-col gap-4 rounded-lg border border-border p-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-col gap-0.5">
+                  <h3
+                    class="text-sm font-semibold tracking-tight text-foreground"
+                    i18n="@@org.settings.subscription.currentTitle"
+                  >
+                    Current plan
+                  </h3>
+                  <p class="text-sm text-foreground">
+                    {{ organization()?.planName ?? '—' }}
+                  </p>
+                </div>
+
+                <div class="flex flex-col items-end gap-1">
+                  @if (subscriptionStatusTag(); as status) {
+                    <span hlmBadge variant="outline" class="gap-1.5 text-foreground">
+                      <ng-icon
+                        [name]="status.icon"
+                        [class]="subscriptionStatusIconClass[status.severity]"
+                        aria-hidden="true"
+                      />
+                      {{ status.label }}
+                    </span>
+                  }
+                  @if (renewalStatusText(); as statusText) {
+                    <p class="text-xs text-muted-foreground">{{ statusText }}</p>
+                  }
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                @if (billingStore.subscription()?.hasSubscription) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="gap-2 max-sm:min-h-11"
+                    data-testid="org-settings-billing-portal"
+                    [disabled]="billingStore.isStartingPortal()"
+                    (click)="startPortal()"
+                  >
+                    <ng-icon name="lucideCreditCard" aria-hidden="true" />
+                    <span i18n="@@org.settings.subscription.managePortal">Manage billing</span>
+                    <ng-icon name="lucideExternalLink" class="text-xs" aria-hidden="true" />
+                  </button>
+                } @else {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="gap-2 max-sm:min-h-11"
+                    data-testid="org-settings-billing-checkout"
+                    [disabled]="billingStore.isStartingCheckout() || currentPlanKey() === null"
+                    (click)="startCheckout()"
+                  >
+                    <ng-icon name="lucideCreditCard" aria-hidden="true" />
+                    <span i18n="@@org.settings.subscription.startCheckout">Set up billing</span>
+                    <ng-icon name="lucideExternalLink" class="text-xs" aria-hidden="true" />
+                  </button>
+                }
+              </div>
+
+              @if (billingStore.billingError(); as error) {
+                <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+              }
+            </section>
+
+            <section class="flex flex-col gap-3">
+              <h3
+                class="text-sm font-semibold tracking-tight text-foreground"
+                i18n="@@org.settings.subscription.plansTitle"
+              >
+                Plans
+              </h3>
+              <app-organization-plan-selector
+                [organizationId]="organizationId() ?? ''"
+                [currentPlanId]="organization()?.planId ?? null"
+                [pricing]="billingStore.pricing()"
+                (currentPlanKeyChange)="onCurrentPlanKeyChange($event)"
+              />
+            </section>
+
+            <section class="flex flex-col gap-3">
+              <h3
+                class="text-sm font-semibold tracking-tight text-foreground"
+                i18n="@@org.settings.subscription.invoicesTitle"
+              >
+                Invoices
+              </h3>
+
+              @if (billingStore.isLoadingInvoices()) {
+                <div class="flex flex-col gap-2" aria-hidden="true">
+                  <hlm-skeleton class="h-10 w-full" />
+                  <hlm-skeleton class="h-10 w-full" />
+                </div>
+              } @else if (billingStore.invoicesError(); as error) {
+                <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+              } @else if (billingStore.invoices().length === 0) {
+                <app-empty-state
+                  icon="lucideReceipt"
+                  class="rounded-md border border-dashed border-border p-6"
+                  title="No invoices yet"
+                  i18n-title="@@org.settings.subscription.invoicesEmptyTitle"
+                  description="Invoices appear here once the organization has been billed."
+                  i18n-description="@@org.settings.subscription.invoicesEmptyDescription"
+                />
+              } @else {
+                <ul hlmItemGroup>
+                  @for (invoice of billingStore.invoices(); track invoice.id) {
+                    <li
+                      hlmItem
+                      variant="outline"
+                      size="sm"
+                      class="rounded-md"
+                      data-testid="org-settings-invoice-row"
+                    >
+                      <div hlmItemContent>
+                        <span hlmItemTitle>{{ formatInvoiceAmount(invoice) }}</span>
+                        <span hlmItemDescription>
+                          {{ formatDate(invoice.createdAt) ?? '—' }} · {{ invoice.status }}
+                        </span>
+                      </div>
+                      @if (invoice.invoicePdf ?? invoice.hostedInvoiceUrl; as downloadUrl) {
+                        <div hlmItemActions>
+                          <a
+                            hlmBtn
+                            variant="ghost"
+                            size="icon-sm"
+                            [href]="downloadUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            i18n-aria-label="@@org.settings.subscription.downloadInvoice"
+                            aria-label="Download invoice"
+                          >
+                            <ng-icon name="lucideDownload" aria-hidden="true" />
+                          </a>
+                        </div>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          </div>
+        </ng-template>
+      </div>
+
+      <div hlmTabsContent="usage" class="max-w-2xl">
+        <ng-template hlmTabsContentLazy>
+          <app-organization-usage-panel
+            [items]="quotaStore.items()"
+            [isLoading]="quotaStore.isLoadingQuota()"
+          />
+        </ng-template>
+      </div>
+
+      <div hlmTabsContent="notifications" class="max-w-2xl">
+        <ng-template hlmTabsContentLazy>
+          <app-organization-notifications-form
+            [notifications]="notificationsSeed()"
+            [pending]="settingsStore.isSaving()"
+            (submitted)="saveNotifications($event)"
+          />
+        </ng-template>
+      </div>
+
+      <div hlmTabsContent="regional" class="max-w-2xl">
+        <ng-template hlmTabsContentLazy>
+          <app-organization-regional-form
+            [regional]="regionalSeed()"
+            [pending]="settingsStore.isSaving()"
+            (submitted)="saveRegional($event)"
+          />
+        </ng-template>
+      </div>
+
+      @if (canDelete()) {
+        <div hlmTabsContent="danger" class="max-w-2xl">
+          <ng-template hlmTabsContentLazy>
+            <section class="flex flex-col gap-4 rounded-lg border border-destructive/30 p-4">
+              <div class="flex items-start gap-3">
+                <ng-icon
+                  name="lucideTriangleAlert"
+                  class="mt-0.5 shrink-0 text-destructive"
+                  aria-hidden="true"
+                />
+                <div class="flex flex-col gap-1">
+                  <h3
+                    class="text-sm font-semibold text-foreground"
+                    i18n="@@org.settings.danger.title"
+                  >
+                    Delete this organization
+                  </h3>
+                  <p class="text-sm text-muted-foreground" i18n="@@org.settings.danger.description">
+                    Permanently deletes every facility, piece of equipment, inspection, intervention
+                    and member record. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                hlmBtn
+                type="button"
+                variant="destructive"
+                class="w-fit gap-2 max-sm:min-h-11"
+                data-testid="org-settings-danger-open"
+                (click)="openDeleteDialog()"
+              >
+                <ng-icon name="lucideTrash2" aria-hidden="true" />
+                <span i18n="@@org.settings.danger.open">Delete organization</span>
+              </button>
+            </section>
+
+            <app-organization-delete-dialog
+              [visible]="confirmingDelete()"
+              [organizationName]="organization()?.name ?? ''"
+              [pending]="settingsStore.isDeleting()"
+              [error]="settingsStore.deleteError()?.message ?? null"
+              (visibleChange)="confirmingDelete.set($event)"
+              (confirmed)="deleteOrganization()"
+            />
+          </ng-template>
+        </div>
+      }
+    </hlm-tabs>
+  }
+</div>

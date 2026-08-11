@@ -80,3 +80,21 @@ export interface OrganizationState {
   readonly deleteCallState: CallState;
   //#endregion
 }
+
+/**
+ * Interface OrganizationArchiveRequest
+ * @interface OrganizationArchiveRequest
+ *
+ * @description
+ * One organization to archive, paired with the danger-zone confirmation the
+ * endpoint requires. The slug is not derivable from the id here — it is the
+ * value the caller retyped — so it travels with every archive request.
+ *
+ * @since 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+export interface OrganizationArchiveRequest {
+  readonly id: string;
+  readonly slug: string;
+}

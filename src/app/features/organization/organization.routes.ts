@@ -1,6 +1,11 @@
 import type { Routes } from '@angular/router';
-import { organizationAccessGuard, organizationGuard } from './http/guards';
+import {
+  organizationAccessGuard,
+  organizationGuard,
+  organizationPermissionGuard,
+} from './http/guards';
 import { organizationResolver, organizationTitleResolver } from './http/resolvers';
+import { ORGANIZATION_PERMISSION } from './models';
 
 /**
  * Constant ORGANIZATION_ROUTES
@@ -18,14 +23,16 @@ import { organizationResolver, organizationTitleResolver } from './http/resolver
  * `/organizations/:organizationId` resolves organization context before any
  * child renders, so a page never has to reason about a half-known workspace.
  *
- * The landing page, the direct messages and a member's profile are mounted
- * today; the remaining destinations named in `FEATURE.md` return under
- * `:organizationId` one at a time as their pages are rebuilt, and the sidebar
- * navigation already lists them behind their permissions.
+ * The landing page, the conversational surfaces (direct messages and
+ * channels), the administration pages (members, team, settings) and a member's
+ * profile are mounted today; the remaining destinations named in `FEATURE.md`
+ * (assets, statistics, checklists) return under `:organizationId` one at a
+ * time as their pages are rebuilt, and the sidebar navigation already lists
+ * them behind their permissions.
  *
- * `messages` loads the collaboration subfeature's route file directly rather
- * than its barrel, which also exports the offline sync coordinator and would
- * pull it into this lazy chunk.
+ * `messages` and `channels` load the collaboration subfeature's route files
+ * directly rather than its barrel, which also exports the offline sync
+ * coordinator and would pull it into this lazy chunk.
  *
  * @since 1.0.0
  */
@@ -60,6 +67,11 @@ export const ORGANIZATION_ROUTES: Routes = [
           ),
       },
       {
+        path: 'channels',
+        loadChildren: () =>
+          import('./features/collaboration/channels.routes').then((m) => m.CHANNEL_ROUTES),
+      },
+      {
         path: 'interventions',
         loadChildren: () =>
           import('./features/interventions/interventions.routes').then(
@@ -85,6 +97,67 @@ export const ORGANIZATION_ROUTES: Routes = [
         path: 'calendar',
         loadChildren: () =>
           import('./features/calendar/calendar.routes').then((m) => m.CALENDAR_ROUTES),
+      },
+      {
+        path: 'statistics',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-statistics-page/organization-statistics-page.component').then(
+            (m) => m.OrganizationStatisticsPage,
+          ),
+        title: $localize`:@@route.statistics:Statistics`,
+        data: { breadcrumb: $localize`:@@route.statistics:Statistics` },
+      },
+      {
+        path: 'members',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [
+              ORGANIZATION_PERMISSION.MEMBERS_READ,
+              ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
+            ],
+            match: 'any',
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-members-page/organization-members-page.component').then(
+            (m) => m.OrganizationMembersPage,
+          ),
+        title: $localize`:@@route.members:Members`,
+        data: { breadcrumb: $localize`:@@route.members:Members` },
+      },
+      {
+        path: 'team',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.ROLES_READ, ORGANIZATION_PERMISSION.ROLES_MANAGE],
+            match: 'any',
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-team-page/organization-team-page.component').then(
+            (m) => m.OrganizationTeamPage,
+          ),
+        title: $localize`:@@route.team:Team`,
+        data: { breadcrumb: $localize`:@@route.team:Team` },
+      },
+      {
+        path: 'settings',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-settings-page/organization-settings-page.component').then(
+            (m) => m.OrganizationSettingsPage,
+          ),
+        title: $localize`:@@route.settings:Settings`,
+        data: { breadcrumb: $localize`:@@route.settings:Settings` },
       },
       {
         path: 'members/:memberId',

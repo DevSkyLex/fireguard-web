@@ -1,0 +1,64 @@
+<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div class="flex flex-col gap-1.5">
+      <label hlmFieldLabel for="org-settings-name" i18n="@@org.settings.general.nameLabel"
+        >Organization name</label
+      >
+      <input
+        hlmInput
+        id="org-settings-name"
+        type="text"
+        autocomplete="organization"
+        class="w-full"
+        [formField]="generalForm.name"
+        [attr.aria-invalid]="generalForm.name().touched() && generalForm.name().invalid()"
+      />
+      @if (generalForm.name().touched() && generalForm.name().invalid()) {
+        <hlm-field-error>{{ generalForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label hlmFieldLabel for="org-settings-slug" i18n="@@org.settings.general.slugLabel"
+        >URL slug</label
+      >
+      <input
+        hlmInput
+        id="org-settings-slug"
+        type="text"
+        class="w-full"
+        [formField]="generalForm.slug"
+        [attr.aria-invalid]="generalForm.slug().touched() && generalForm.slug().invalid()"
+      />
+      @if (generalForm.slug().touched() && generalForm.slug().invalid()) {
+        <hlm-field-error>{{ generalForm.slug().errors()[0].message }}</hlm-field-error>
+      }
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label
+      hlmFieldLabel
+      for="org-settings-description"
+      i18n="@@org.settings.general.descriptionLabel"
+      >Description</label
+    >
+    <textarea
+      hlmTextarea
+      id="org-settings-description"
+      rows="3"
+      class="w-full"
+      [formField]="generalForm.description"
+    ></textarea>
+  </div>
+
+  <div class="flex flex-wrap justify-end gap-2">
+    <button hlmBtn type="submit" class="max-sm:min-h-11" [disabled]="!canSubmit()">
+      @if (pending()) {
+        <span i18n="@@org.settings.general.submitting">Saving…</span>
+      } @else {
+        <span i18n="@@org.settings.general.submit">Save changes</span>
+      }
+    </button>
+  </div>
+</form>

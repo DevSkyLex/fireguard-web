@@ -1,0 +1,15 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content class="sm:max-w-md" data-testid="organization-invite-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@org.inviteDialog.title">Invite a member</h3>
+    </hlm-dialog-header>
+
+    <app-organization-invite-form
+      [pending]="pending()"
+      [serverError]="serverError()"
+      [roleOptions]="roleOptions()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>

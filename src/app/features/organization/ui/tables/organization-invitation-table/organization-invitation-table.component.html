@@ -1,0 +1,121 @@
+<div hlmTableContainer class="rounded-md border border-border">
+  <table hlmTable data-testid="organization-invitation-table">
+    <caption hlmTableCaption class="sr-only" i18n="@@org.invitations.table.caption">
+      Pending invitations
+    </caption>
+
+    <thead hlmTableHeader>
+      <tr hlmTableRow>
+        <th hlmTableHead i18n="@@org.invitations.table.colEmail">Email</th>
+        <th hlmTableHead i18n="@@org.invitations.table.colRoles">Roles</th>
+        <th hlmTableHead i18n="@@org.invitations.table.colStatus">Status</th>
+        <th hlmTableHead i18n="@@org.invitations.table.colInvited">Invited</th>
+        <th hlmTableHead i18n="@@org.invitations.table.colExpires">Expires</th>
+        <th hlmTableHead class="w-[52px]">
+          <span class="sr-only" i18n="@@org.invitations.table.colActions">Actions</span>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody hlmTableBody>
+      @if (loading() && rows().length === 0) {
+        @for (row of skeletonRows; track row) {
+          <tr hlmTableRow aria-hidden="true">
+            <td hlmTableCell><hlm-skeleton class="h-4 w-40" /></td>
+            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+            <td hlmTableCell><hlm-skeleton class="ms-auto size-6" /></td>
+          </tr>
+        }
+      } @else {
+        @for (row of rows(); track row.invitation.id) {
+          <tr hlmTableRow data-testid="organization-invitation-table-row">
+            <td hlmTableCell class="font-medium text-foreground">{{ row.invitation.email }}</td>
+
+            <td hlmTableCell class="text-muted-foreground">
+              @if (row.roleNames.length > 0) {
+                {{ row.roleNames.join(', ') }}
+              } @else {
+                <span i18n="@@org.invitations.table.noRole">No role</span>
+              }
+            </td>
+
+            <td hlmTableCell>
+              <span hlmBadge variant="outline" class="px-1.5 leading-none text-muted-foreground">
+                <ng-icon
+                  [name]="row.statusIcon"
+                  [class]="row.statusIconClass"
+                  class="shrink-0"
+                  aria-hidden="true"
+                />
+                {{ row.statusLabel }}
+              </span>
+            </td>
+
+            <td hlmTableCell class="text-muted-foreground">
+              {{ row.invitation.createdAt | date: 'mediumDate' }}
+            </td>
+
+            <td hlmTableCell class="text-muted-foreground">
+              {{ row.invitation.expiresAt | date: 'mediumDate' }}
+            </td>
+
+            <td hlmTableCell class="text-right">
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                align="end"
+                class="max-sm:size-11"
+                data-testid="organization-invitation-table-row-menu"
+                [hlmDropdownMenuTrigger]="rowMenu"
+              >
+                <ng-icon name="lucideEllipsis" aria-hidden="true" />
+                <span class="sr-only" i18n="@@org.invitations.table.rowMenu">Open menu</span>
+              </button>
+
+              <ng-template #rowMenu>
+                <hlm-dropdown-menu class="w-52">
+                  @if (row.acceptUrl; as acceptUrl) {
+                    <button hlmDropdownMenuItem (click)="linkCopyRequested.emit(acceptUrl)">
+                      <ng-icon name="lucideCopy" aria-hidden="true" />
+                      <span i18n="@@org.invitations.table.rowCopyLink">Copy accept link</span>
+                    </button>
+                  }
+
+                  @if (canManage()) {
+                    <button
+                      hlmDropdownMenuItem
+                      data-testid="organization-invitation-table-row-resend"
+                      [disabled]="pending()"
+                      (click)="resendRequested.emit(row.invitation)"
+                    >
+                      <ng-icon name="lucideRotateCw" aria-hidden="true" />
+                      <span i18n="@@org.invitations.table.rowResend">Resend</span>
+                    </button>
+
+                    <hlm-dropdown-menu-separator />
+
+                    <button
+                      hlmDropdownMenuItem
+                      variant="destructive"
+                      data-testid="organization-invitation-table-row-revoke"
+                      [disabled]="pending()"
+                      (click)="revokeRequested.emit(row.invitation)"
+                    >
+                      <ng-icon name="lucideX" aria-hidden="true" />
+                      <span i18n="@@org.invitations.table.rowRevoke">Revoke</span>
+                    </button>
+                  }
+                </hlm-dropdown-menu>
+              </ng-template>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

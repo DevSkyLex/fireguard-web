@@ -1,0 +1,98 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="onboarding-equipment-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="onboarding-equipment-type" i18n="@@onboarding.equipmentForm.type">
+        Type
+      </label>
+      <hlm-select
+        id="onboarding-equipment-type"
+        [itemToString]="typeLabelOf"
+        [formField]="equipmentForm.type"
+      >
+        <hlm-select-trigger class="w-full" data-testid="onboarding-equipment-type">
+          <hlm-select-value
+            placeholder="Select an equipment type"
+            i18n-placeholder="@@onboarding.equipmentForm.typePlaceholder"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (option of typeOptions; track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+      @if (equipmentForm.type().touched() && equipmentForm.type().invalid()) {
+        <hlm-field-error>{{ equipmentForm.type().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="onboarding-equipment-brand" i18n="@@onboarding.equipmentForm.brand">
+        Brand
+      </label>
+      <input
+        hlmInput
+        id="onboarding-equipment-brand"
+        type="text"
+        data-testid="onboarding-equipment-brand"
+        placeholder="Kidde"
+        i18n-placeholder="@@onboarding.equipmentForm.brandPlaceholder"
+        [formField]="equipmentForm.brand"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="onboarding-equipment-model" i18n="@@onboarding.equipmentForm.model">
+        Model
+      </label>
+      <input
+        hlmInput
+        id="onboarding-equipment-model"
+        type="text"
+        data-testid="onboarding-equipment-model"
+        placeholder="Pro 210"
+        i18n-placeholder="@@onboarding.equipmentForm.modelPlaceholder"
+        [formField]="equipmentForm.model"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="onboarding-equipment-serial"
+        i18n="@@onboarding.equipmentForm.serial"
+      >
+        Serial number
+      </label>
+      <input
+        hlmInput
+        id="onboarding-equipment-serial"
+        type="text"
+        data-testid="onboarding-equipment-serial"
+        placeholder="SN-2024-001"
+        i18n-placeholder="@@onboarding.equipmentForm.serialPlaceholder"
+        [formField]="equipmentForm.serialNumber"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="onboarding-equipment-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@onboarding.equipmentForm.submitting">Registering…</span>
+        } @else {
+          <span i18n="@@onboarding.equipmentForm.submit">Continue</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

@@ -1,0 +1,199 @@
+<div class="flex flex-col gap-1">
+  <div
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    data-testid="facility-field-type"
+  >
+    <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@facility.info.type"
+      >Type</span
+    >
+    <span class="min-w-0 flex-1 text-sm font-medium">{{ typeLabelOf(facility().type) }}</span>
+  </div>
+
+  <div
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    data-testid="facility-field-parent"
+  >
+    <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@facility.info.parent"
+      >Parent</span
+    >
+    <span class="min-w-0 flex-1 text-sm">
+      @if (facility().parentFacilityId; as parentId) {
+        <a
+          class="rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          [routerLink]="['/organizations', organizationId(), 'facilities', parentId]"
+        >
+          <span i18n="@@facility.info.viewParent">View parent facility</span>
+        </a>
+      } @else {
+        <span class="text-muted-foreground" i18n="@@facility.info.rootFacility">Root facility</span>
+      }
+    </span>
+  </div>
+
+  <div data-testid="facility-field-name">
+    <app-inplace-field
+      #nameField
+      label="Name"
+      i18n-label="@@facility.info.name"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('name')"
+      [pending]="isSaving('name')"
+      [error]="errorFor('name')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('name', $event)"
+      (saved)="saveText()"
+    >
+      <span fieldValue class="font-medium">{{ facility().name }}</span>
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="nameField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="facility-field-code">
+    <app-inplace-field
+      #codeField
+      label="Code"
+      i18n-label="@@facility.info.code"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('code')"
+      [pending]="isSaving('code')"
+      [error]="errorFor('code')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('code', $event)"
+      (saved)="saveText()"
+    >
+      @if (facility().code; as value) {
+        <span fieldValue class="font-medium tabular-nums">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+          >Not specified</span
+        >
+      }
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="codeField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="facility-field-address">
+    <app-inplace-field
+      #addressField
+      label="Address"
+      i18n-label="@@facility.info.address"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('address')"
+      [pending]="isSaving('address')"
+      [error]="errorFor('address')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('address', $event)"
+      (saved)="saveText()"
+    >
+      @if (facility().address; as value) {
+        <span fieldValue class="font-medium">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+          >Not specified</span
+        >
+      }
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="addressField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="facility-field-coordinates">
+    <app-inplace-field
+      #coordinatesField
+      label="Coordinates"
+      i18n-label="@@facility.info.coordinates"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('coordinates')"
+      [pending]="isSaving('coordinates')"
+      [error]="errorFor('coordinates')"
+      [canSave]="canSaveCoordinates()"
+      (editingChange)="onCoordinatesEditing($event)"
+      (saved)="saveCoordinates()"
+    >
+      @if (facility().latitude != null && facility().longitude != null) {
+        <span fieldValue class="font-medium tabular-nums"
+          >{{ facility().latitude }}, {{ facility().longitude }}</span
+        >
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+          >Not specified</span
+        >
+      }
+
+      <div fieldEditor class="flex gap-2">
+        <div class="flex-1">
+          <label
+            [attr.for]="coordinatesField.editorId + '-lat'"
+            class="sr-only"
+            i18n="@@facility.info.latitude"
+            >Latitude</label
+          >
+          <input
+            hlmInput
+            type="number"
+            step="any"
+            min="-90"
+            max="90"
+            class="w-full"
+            placeholder="Latitude"
+            i18n-placeholder="@@facility.info.latitude"
+            [id]="coordinatesField.editorId + '-lat'"
+            [value]="latitudeDraft()"
+            (input)="latitudeDraft.set($any($event.target).value)"
+          />
+        </div>
+        <div class="flex-1">
+          <label
+            [attr.for]="coordinatesField.editorId + '-lng'"
+            class="sr-only"
+            i18n="@@facility.info.longitude"
+            >Longitude</label
+          >
+          <input
+            hlmInput
+            type="number"
+            step="any"
+            min="-180"
+            max="180"
+            class="w-full"
+            placeholder="Longitude"
+            i18n-placeholder="@@facility.info.longitude"
+            [id]="coordinatesField.editorId + '-lng'"
+            [value]="longitudeDraft()"
+            (input)="longitudeDraft.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+    </app-inplace-field>
+  </div>
+</div>

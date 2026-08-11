@@ -8,6 +8,11 @@
       "port": 4200
     },
     {
+      "name": "fireguard-web-attach",
+      "url": "http://localhost:4200",
+      "port": 4200
+    },
+    {
       "name": "fireguard-web-e2e",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "start:e2e", "--", "--port", "4273"],

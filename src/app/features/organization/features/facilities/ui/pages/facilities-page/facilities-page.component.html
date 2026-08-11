@@ -1,0 +1,261 @@
+<div id="facilities" class="flex w-full flex-col gap-4 p-4 md:p-6">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.facilities">Facilities</h1>
+
+    @if (canCreate()) {
+      <a hlmBtn data-testid="facilities-new" [routerLink]="[...listRouteBase(), 'create']">
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+        <span i18n="@@facility.newButton">New facility</span>
+      </a>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-wrap items-center gap-2">
+      <hlm-input-group class="w-full sm:w-72">
+        <hlm-input-group-addon>
+          <ng-icon name="lucideSearch" />
+        </hlm-input-group-addon>
+        <input
+          hlmInputGroupInput
+          type="search"
+          data-testid="facilities-search"
+          placeholder="Search facilities..."
+          i18n-placeholder="@@facility.list.searchPlaceholder"
+          aria-label="Search facilities..."
+          i18n-aria-label="@@facility.list.searchPlaceholder"
+          [value]="draftSearch()"
+          (input)="onSearchInput($event)"
+        />
+      </hlm-input-group>
+
+      <hlm-popover sideOffset="5" align="start">
+        <button
+          hlmPopoverTrigger
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="facilities-filters-trigger"
+        >
+          <ng-icon name="lucideListFilter" aria-hidden="true" />
+          <span i18n="@@facility.list.filtersButton">Filters</span>
+          @if (includeArchived()) {
+            <hlm-badge variant="secondary" class="ms-1">1</hlm-badge>
+          }
+        </button>
+        <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
+          <div class="flex items-center gap-2">
+            <hlm-checkbox
+              id="facilities-filter-archived"
+              data-testid="facilities-filter-archived"
+              [checked]="includeArchived()"
+              (checkedChange)="toggleIncludeArchived($event)"
+            />
+            <label for="facilities-filter-archived" hlmLabel i18n="@@facility.list.filterArchived"
+              >Show archived facilities</label
+            >
+
+            @if (includeArchived()) {
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                data-testid="facilities-clear-filters"
+                (click)="clearFilters()"
+              >
+                <ng-icon name="lucideX" aria-hidden="true" />
+                <span i18n="@@common.clearFilters">Clear filters</span>
+              </button>
+            }
+          </div>
+        </hlm-popover-content>
+      </hlm-popover>
+    </div>
+
+    <hlm-toggle-group
+      type="single"
+      [nullable]="false"
+      variant="outline"
+      size="sm"
+      [value]="layout()"
+      data-testid="facilities-layout-toggle"
+      (valueChange)="onLayoutChanged($event)"
+    >
+      <button
+        hlmToggleGroupItem
+        value="list"
+        data-testid="facilities-layout-list"
+        i18n-aria-label="@@facility.list.layoutList"
+        aria-label="List view"
+      >
+        <ng-icon name="lucideList" aria-hidden="true" />
+      </button>
+      <button
+        hlmToggleGroupItem
+        value="grid"
+        data-testid="facilities-layout-grid"
+        i18n-aria-label="@@facility.list.layoutGrid"
+        aria-label="Grid view"
+      >
+        <ng-icon name="lucideLayoutGrid" aria-hidden="true" />
+      </button>
+    </hlm-toggle-group>
+  </div>
+
+  @if (store.rootListCallState().status === 'error') {
+    <hlm-empty class="border border-dashed">
+      <hlm-empty-header>
+        <hlm-empty-media variant="icon">
+          <ng-icon name="lucideCircleAlert" />
+        </hlm-empty-media>
+        <div hlmEmptyTitle i18n="@@facility.list.errorTitle">Couldn't load facilities</div>
+        <div hlmEmptyDescription i18n="@@facility.list.errorText">
+          The facilities could not be loaded. Check your connection and try again.
+        </div>
+      </hlm-empty-header>
+      <hlm-empty-content>
+        <button hlmBtn variant="outline" data-testid="facilities-retry" (click)="reload()">
+          <span i18n="@@facility.list.retry">Retry</span>
+        </button>
+      </hlm-empty-content>
+    </hlm-empty>
+  } @else if (!store.isLoadingRootFacilities() && items().length === 0) {
+    <hlm-empty class="border border-dashed">
+      <hlm-empty-header>
+        <hlm-empty-media variant="icon">
+          <ng-icon [name]="hasSearchOrFilters() ? 'lucideSearch' : 'lucideNetwork'" />
+        </hlm-empty-media>
+        <div hlmEmptyTitle i18n="@@facility.list.emptyTitle">No facilities found</div>
+        <div hlmEmptyDescription i18n="@@facility.list.emptyDesc">
+          Adjust your search or filters, or register the sites you track.
+        </div>
+      </hlm-empty-header>
+      <hlm-empty-content>
+        @if (hasSearchOrFilters()) {
+          <button hlmBtn variant="outline" (click)="clearFilters()">
+            <span i18n="@@common.clearFilters">Clear filters</span>
+          </button>
+        } @else if (canCreate()) {
+          <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
+            <ng-icon name="lucidePlus" aria-hidden="true" />
+            <span i18n="@@facility.newButton">New facility</span>
+          </a>
+        }
+      </hlm-empty-content>
+    </hlm-empty>
+  } @else {
+    @if (layout() === 'list') {
+      <app-facility-table
+        [items]="items()"
+        [loading]="store.isLoadingRootFacilities() && items().length === 0"
+        [canWrite]="canWrite()"
+        [detailRouteBase]="listRouteBase()"
+        (archiveRequested)="onArchiveRequested($event)"
+        (restoreRequested)="onRestoreRequested($event)"
+      />
+    } @else {
+      <app-facility-grid
+        [items]="items()"
+        [loading]="store.isLoadingRootFacilities() && items().length === 0"
+        [canWrite]="canWrite()"
+        [detailRouteBase]="listRouteBase()"
+        (archiveRequested)="onArchiveRequested($event)"
+        (restoreRequested)="onRestoreRequested($event)"
+      />
+    }
+
+    <div class="flex flex-col justify-between sm:flex-row sm:items-center">
+      <span
+        class="text-sm text-muted-foreground"
+        data-testid="facilities-row-count"
+        i18n="@@facility.list.rowCount"
+        >{{ items().length }} of {{ store.totalRootFacilities() }} row(s) shown</span
+      >
+
+      <div class="mt-2 flex flex-wrap items-center gap-8 sm:mt-0">
+        <div class="flex items-center gap-2">
+          <label for="facilities-page-size" hlmLabel i18n="@@facility.list.rowsPerPage"
+            >Rows per page:</label
+          >
+          <hlm-select
+            class="inline-block"
+            [value]="pageSize()"
+            (valueChange)="setPageSize($event ?? 30)"
+          >
+            <hlm-select-trigger buttonId="facilities-page-size" class="me-1 inline-flex h-8 w-fit">
+              <hlm-select-value />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (size of pageSizes; track size) {
+                  <hlm-select-item [value]="size">{{ size }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        </div>
+
+        <span hlmLabel data-testid="facilities-page-indicator" i18n="@@facility.list.pageIndicator"
+          >Page {{ currentPage() }} of {{ pageCount() }}</span
+        >
+
+        <div class="flex space-x-1">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            data-testid="facilities-page-first"
+            i18n-aria-label="@@facility.list.pageFirst"
+            aria-label="First page"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(1)"
+          >
+            <ng-icon name="lucideChevronsLeft" aria-hidden="true" />
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            data-testid="facilities-page-prev"
+            i18n-aria-label="@@facility.list.pagePrevious"
+            aria-label="Previous page"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)"
+          >
+            <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            data-testid="facilities-page-next"
+            i18n-aria-label="@@facility.list.pageNext"
+            aria-label="Next page"
+            [disabled]="currentPage() === pageCount()"
+            (click)="goToPage(currentPage() + 1)"
+          >
+            <ng-icon name="lucideChevronRight" aria-hidden="true" />
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            data-testid="facilities-page-last"
+            i18n-aria-label="@@facility.list.pageLast"
+            aria-label="Last page"
+            [disabled]="currentPage() === pageCount()"
+            (click)="goToPage(pageCount())"
+          >
+            <ng-icon name="lucideChevronsRight" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

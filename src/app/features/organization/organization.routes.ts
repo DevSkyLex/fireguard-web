@@ -67,6 +67,21 @@ export const ORGANIZATION_ROUTES: Routes = [
           ),
       },
       {
+        path: 'equipments',
+        loadChildren: () =>
+          import('./features/equipments/equipments.routes').then((m) => m.EQUIPMENT_ROUTES),
+      },
+      {
+        path: 'facilities',
+        loadChildren: () =>
+          import('./features/facilities/facilities.routes').then((m) => m.FACILITY_ROUTES),
+      },
+      {
+        path: 'inspections',
+        loadChildren: () =>
+          import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
+      },
+      {
         path: 'calendar',
         loadChildren: () =>
           import('./features/calendar/calendar.routes').then((m) => m.CALENDAR_ROUTES),

@@ -1,0 +1,92 @@
+<div id="equipment-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
+  @if (activeEquipmentStore.selectedEquipment(); as equipment) {
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="flex min-w-0 flex-col gap-1">
+        <h1 class="min-w-0 truncate text-2xl font-semibold tracking-tight">{{ title() }}</h1>
+        <div class="flex flex-wrap items-center gap-2">
+          <app-equipment-status-tag kind="status" [value]="equipment.status" />
+          <app-equipment-status-tag
+            kind="maintenanceDueStatus"
+            [value]="equipment.maintenanceDueStatus"
+          />
+          <span class="text-sm text-muted-foreground">
+            @if (equipment.facilityName; as facility) {
+              {{ facility }}
+            } @else {
+              <span i18n="@@equipment.unassigned">Unassigned</span>
+            }
+          </span>
+        </div>
+        <p class="text-sm text-muted-foreground" data-testid="equipment-detail-meta">
+          {{ metaLine() }}
+        </p>
+      </div>
+
+      @if (canWrite()) {
+        <div class="flex items-center gap-2" data-testid="equipment-lifecycle-band">
+          @if (primaryAction(); as action) {
+            <button
+              hlmBtn
+              type="button"
+              class="max-sm:min-h-11"
+              data-testid="equipment-primary-action"
+              [disabled]="store.isChangingLifecycle()"
+              (click)="action.run()"
+            >
+              @if (store.isChangingLifecycle()) {
+                <hlm-spinner class="size-3.5" aria-hidden="true" />
+              }
+              {{ action.label }}
+            </button>
+          }
+
+          @if (canDecommission()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="max-sm:min-h-11"
+              data-testid="equipment-decommission"
+              [disabled]="store.isChangingLifecycle()"
+              (click)="onDecommission()"
+            >
+              <span i18n="@@equipment.decommission">Decommission</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <section
+      class="flex max-w-2xl flex-col gap-1"
+      aria-labelledby="equipment-detail-info-title"
+      data-testid="equipment-detail-info"
+    >
+      <h2
+        id="equipment-detail-info-title"
+        class="px-2 text-base font-semibold"
+        i18n="@@equipment.info.title"
+      >
+        Equipment information
+      </h2>
+      <app-equipment-information-panel
+        [equipment]="equipment"
+        [editable]="canWrite()"
+        [editState]="editState()"
+        (detailsChanged)="onDetailsChanged($event)"
+        (editTargetChanged)="onEditTargetChanged($event)"
+      />
+    </section>
+  } @else {
+    <div
+      class="flex flex-col gap-4"
+      role="status"
+      aria-label="Loading equipment"
+      i18n-aria-label="@@equipment.detail.loadingAria"
+    >
+      <hlm-skeleton class="h-8 w-64" />
+      <hlm-skeleton class="h-4 w-40" />
+      <hlm-skeleton class="h-64 w-full max-w-2xl" />
+    </div>
+  }
+</div>

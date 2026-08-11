@@ -1,0 +1,54 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="onboarding-org-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="onboarding-org-name" i18n="@@onboarding.orgForm.name">
+        Organization name
+      </label>
+      <input
+        hlmInput
+        id="onboarding-org-name"
+        type="text"
+        data-testid="onboarding-org-name"
+        placeholder="Acme Fire Safety"
+        i18n-placeholder="@@onboarding.orgForm.namePlaceholder"
+        [formField]="organizationForm.name"
+      />
+      @if (organizationForm.name().touched() && organizationForm.name().invalid()) {
+        <hlm-field-error>{{ organizationForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="onboarding-org-slug" i18n="@@onboarding.orgForm.slug">
+        URL slug (optional)
+      </label>
+      <input
+        hlmInput
+        id="onboarding-org-slug"
+        type="text"
+        data-testid="onboarding-org-slug"
+        placeholder="acme-fire-safety"
+        i18n-placeholder="@@onboarding.orgForm.slugPlaceholder"
+        [formField]="organizationForm.slug"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="onboarding-org-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@onboarding.orgForm.submitting">Creating…</span>
+        } @else {
+          <span i18n="@@onboarding.orgForm.submit">Continue</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

@@ -1914,6 +1914,262 @@
         <source>Send invitation</source>
         <target>Enviar invitación</target>
       </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.type" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.typePlaceholder" datatype="html">
+        <source>Select an equipment type</source>
+        <target>Selecciona un tipo de equipo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.typeRequired" datatype="html">
+        <source>Equipment type is required.</source>
+        <target>El tipo de equipo es obligatorio.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.brand" datatype="html">
+        <source>Brand</source>
+        <target>Marca</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.brandPlaceholder" datatype="html">
+        <source>Kidde</source>
+        <target>Kidde</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.model" datatype="html">
+        <source>Model</source>
+        <target>Modelo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.modelPlaceholder" datatype="html">
+        <source>Pro 210</source>
+        <target>Pro 210</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.serial" datatype="html">
+        <source>Serial number</source>
+        <target>Número de serie</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.serialPlaceholder" datatype="html">
+        <source>SN-2024-001</source>
+        <target>SN-2024-001</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.submitting" datatype="html">
+        <source>Registering…</source>
+        <target>Registrando…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.submit" datatype="html">
+        <source>Continue</source>
+        <target>Continuar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.createFailed" datatype="html">
+        <source>The equipment could not be registered.</source>
+        <target>No se pudo registrar el equipo.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.remove" datatype="html">
+        <source>Remove</source>
+        <target>Quitar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.capacity" datatype="html">
+        <source>You can stage up to 5 facilities at once.</source>
+        <target>Puedes preparar hasta 5 instalaciones a la vez.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.type" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.typePlaceholder" datatype="html">
+        <source>Select a facility type</source>
+        <target>Selecciona un tipo de instalación</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.name" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.namePlaceholder" datatype="html">
+        <source>Main warehouse</source>
+        <target>Almacén principal</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.address" datatype="html">
+        <source>Address (optional)</source>
+        <target>Dirección (opcional)</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.add" datatype="html">
+        <source>Add facility</source>
+        <target>Añadir instalación</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.submit" datatype="html">
+        <source>Continue</source>
+        <target>Continuar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.typeRequired" datatype="html">
+        <source>Facility type is required.</source>
+        <target>El tipo de instalación es obligatorio.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.nameRequired" datatype="html">
+        <source>Name is required.</source>
+        <target>El nombre es obligatorio.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.createFailed" datatype="html">
+        <source>The facilities could not be created.</source>
+        <target>No se pudieron crear las instalaciones.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilityType.site" datatype="html">
+        <source>Site</source>
+        <target>Sitio</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilityType.building" datatype="html">
+        <source>Building</source>
+        <target>Edificio</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilityType.floor" datatype="html">
+        <source>Floor</source>
+        <target>Planta</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilityType.zone" datatype="html">
+        <source>Zone</source>
+        <target>Zona</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilityType.area" datatype="html">
+        <source>Area</source>
+        <target>Área</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.remove" datatype="html">
+        <source>Remove</source>
+        <target>Quitar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.email" datatype="html">
+        <source>Email</source>
+        <target>Correo electrónico</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.emailPlaceholder" datatype="html">
+        <source>jordan@example.com</source>
+        <target>jordan@example.com</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.role" datatype="html">
+        <source>Role (optional)</source>
+        <target>Rol (opcional)</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.rolePlaceholder" datatype="html">
+        <source>No role</source>
+        <target>Sin rol</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.add" datatype="html">
+        <source>Add invitation</source>
+        <target>Añadir invitación</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.submitting" datatype="html">
+        <source>Sending…</source>
+        <target>Enviando…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.submit" datatype="html">
+        <source>Continue</source>
+        <target>Continuar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.emailRequired" datatype="html">
+        <source>Enter an email address.</source>
+        <target>Introduce una dirección de correo electrónico.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.emailInvalid" datatype="html">
+        <source>Enter a valid email address.</source>
+        <target>Introduce una dirección de correo electrónico válida.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.inviteFailed" datatype="html">
+        <source>The invitations could not be sent.</source>
+        <target>No se pudieron enviar las invitaciones.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.name" datatype="html">
+        <source>Organization name</source>
+        <target>Nombre de la organización</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.namePlaceholder" datatype="html">
+        <source>Acme Fire Safety</source>
+        <target>Acme Fire Safety</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.slug" datatype="html">
+        <source>URL slug (optional)</source>
+        <target>Slug de URL (opcional)</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.slugPlaceholder" datatype="html">
+        <source>acme-fire-safety</source>
+        <target>acme-fire-safety</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.submitting" datatype="html">
+        <source>Creating…</source>
+        <target>Creando…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.submit" datatype="html">
+        <source>Continue</source>
+        <target>Continuar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.nameRequired" datatype="html">
+        <source>Enter your organization's name.</source>
+        <target>Introduce el nombre de tu organización.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.createFailed" datatype="html">
+        <source>The organization could not be created.</source>
+        <target>No se pudo crear la organización.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.submitting" datatype="html">
+        <source>Confirming…</source>
+        <target>Confirmando…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.submit" datatype="html">
+        <source>Continue</source>
+        <target>Continuar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.free" datatype="html">
+        <source>Free</source>
+        <target>Gratis</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.perMonth" datatype="html">
+        <source><x id="price" equiv-text="formatted"/>/month</source>
+        <target><x id="price"/>/mes</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.required" datatype="html">
+        <source>Choose a plan to continue.</source>
+        <target>Elige un plan para continuar.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.confirmFailed" datatype="html">
+        <source>The plan could not be confirmed.</source>
+        <target>No se pudo confirmar el plan.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.rail.progress" datatype="html">
+        <source><x id="done" equiv-text="done"/> of <x id="total" equiv-text="total"/> completed</source>
+        <target><x id="done"/> de <x id="total"/> completados</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.brand" datatype="html">
+        <source>FireGuard</source>
+        <target>FireGuard</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.subhead" datatype="html">
+        <source>A few steps to get your organization ready.</source>
+        <target>Unos pocos pasos para preparar tu organización.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.stepStatus.pending" datatype="html">
+        <source>Not started</source>
+        <target>Sin empezar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.stepStatus.completed" datatype="html">
+        <source>Completed</source>
+        <target>Completado</target>
+      </trans-unit>
+      <trans-unit id="onboarding.stepStatus.skipped" datatype="html">
+        <source>Skipped</source>
+        <target>Omitido</target>
+      </trans-unit>
+      <trans-unit id="onboarding.stepStatus.blocked" datatype="html">
+        <source>Blocked</source>
+        <target>Bloqueado</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked" datatype="html">
+        <source>Your activation is blocked.</source>
+        <target>Tu activación está bloqueada.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.rollback" datatype="html">
+        <source>Go back a step</source>
+        <target>Volver al paso anterior</target>
+      </trans-unit>
       <trans-unit id="quotaResource.members" datatype="html">
         <source>Members</source>
         <target>Miembros</target>
@@ -2175,40 +2431,40 @@
         <target>El tipo de equipo es obligatorio.</target>
       </trans-unit>
       <trans-unit id="equipment.form.subtype" datatype="html">
-        <source> Sub-type <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-500 dark:text-surface-400&quot;&gt;"/>(optional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
-        <target>Subtipo <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(opcional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+        <source>Subtype</source>
+        <target>Subtipo</target>
       </trans-unit>
       <trans-unit id="equipment.form.subtypePlaceholder" datatype="html">
         <source>CO2</source>
         <target>CO2</target>
       </trans-unit>
       <trans-unit id="equipment.form.brand" datatype="html">
-        <source> Brand <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-500 dark:text-surface-400&quot;&gt;"/>(optional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
-        <target>Marca <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(opcional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+        <source>Brand</source>
+        <target>Marca</target>
       </trans-unit>
       <trans-unit id="equipment.form.brandPlaceholder" datatype="html">
         <source>Kidde</source>
         <target>Kidde</target>
       </trans-unit>
       <trans-unit id="equipment.form.model" datatype="html">
-        <source> Model <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-500 dark:text-surface-400&quot;&gt;"/>(optional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
-        <target>Modelo <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(opcional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+        <source>Model</source>
+        <target>Modelo</target>
       </trans-unit>
       <trans-unit id="equipment.form.modelPlaceholder" datatype="html">
         <source>Pro 210</source>
         <target>Pro 210</target>
       </trans-unit>
       <trans-unit id="equipment.form.serial" datatype="html">
-        <source> Serial Number <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-500 dark:text-surface-400&quot;&gt;"/>(optional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
-        <target>Número de serie <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(opcional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+        <source>Serial number</source>
+        <target>Número de serie</target>
       </trans-unit>
       <trans-unit id="equipment.form.serialPlaceholder" datatype="html">
         <source>SN-2024-001</source>
         <target>SN-2024-001</target>
       </trans-unit>
       <trans-unit id="equipment.form.location" datatype="html">
-        <source> Location Label <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-500 dark:text-surface-400&quot;&gt;"/>(optional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
-        <target>Etiqueta de ubicación <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(opcional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+        <source>Location</source>
+        <target>Ubicación</target>
       </trans-unit>
       <trans-unit id="equipment.form.locationPlaceholder" datatype="html">
         <source>Floor 2 — Near elevator</source>
@@ -2434,6 +2690,98 @@
         <source>Adjust your search or filters, or register the assets you track.</source>
         <target>Ajusta tu búsqueda o los filtros, o registra los activos que controlas.</target>
       </trans-unit>
+      <trans-unit id="equipment.cf.createFailed" datatype="html">
+        <source>The equipment could not be registered.</source>
+        <target>No se pudo registrar el equipo.</target>
+      </trans-unit>
+      <trans-unit id="equipment.cf.submitting" datatype="html">
+        <source>Registering…</source>
+        <target>Registrando…</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.loading" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.loadingAria" datatype="html">
+        <source>Loading equipment</source>
+        <target>Cargando equipo</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.metaUpdated" datatype="html">
+        <source>Updated <x id="when" equiv-text="when"/></source>
+        <target>Actualizado <x id="when" equiv-text="when"/></target>
+      </trans-unit>
+      <trans-unit id="equipment.list.errorTitle" datatype="html">
+        <source>Couldn't load equipment</source>
+        <target>No se pudieron cargar los equipos</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.filterType" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.pageFirst" datatype="html">
+        <source>First page</source>
+        <target>Primera página</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.pageIndicator" datatype="html">
+        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
+        <target>Página <x id="INTERPOLATION"/> de <x id="INTERPOLATION_1"/></target>
+      </trans-unit>
+      <trans-unit id="equipment.list.pageLast" datatype="html">
+        <source>Last page</source>
+        <target>Última página</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.pageNext" datatype="html">
+        <source>Next page</source>
+        <target>Página siguiente</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.pagePrevious" datatype="html">
+        <source>Previous page</source>
+        <target>Página anterior</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.rowCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalEquipment() }}"/> row(s) shown</source>
+        <target><x id="INTERPOLATION"/> de <x id="INTERPOLATION_1"/> fila(s) mostrada(s)</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.rowsPerPage" datatype="html">
+        <source>Rows per page:</source>
+        <target>Filas por página:</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenanceDue.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Vence pronto</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenanceDue.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>Atrasado</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenanceDue.unscheduled" datatype="html">
+        <source>Unscheduled</source>
+        <target>Sin programar</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenanceDue.upToDate" datatype="html">
+        <source>Up to date</source>
+        <target>Al día</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.colBrandModel" datatype="html">
+        <source>Brand / model</source>
+        <target>Marca / modelo</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.colMaintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>Mantenimiento</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.colStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.filterStatusPlaceholder" datatype="html">
+        <source>Any status</source>
+        <target>Cualquier estado</target>
+      </trans-unit>
       <trans-unit id="common.clearSelection" datatype="html">
         <source>Clear selection</source>
         <target>Borrar selección</target>
@@ -2454,6 +2802,254 @@
         <source>Facilities</source>
         <target>Instalaciones</target>
       </trans-unit>
+      <trans-unit id="facility.cf.createFailed" datatype="html">
+        <source>The facility could not be created.</source>
+        <target>No se pudo crear la instalación.</target>
+      </trans-unit>
+      <trans-unit id="facility.list.tableCaption" datatype="html">
+        <source>The organization's root facilities.</source>
+        <target>Las instalaciones raíz de la organización.</target>
+      </trans-unit>
+      <trans-unit id="facility.list.columnName" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="facility.list.columnType" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="facility.list.columnCode" datatype="html">
+        <source>Code</source>
+        <target>Código</target>
+      </trans-unit>
+      <trans-unit id="facility.list.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="facility.list.columnActions" datatype="html">
+        <source>Actions</source>
+        <target>Acciones</target>
+      </trans-unit>
+      <trans-unit id="facility.list.hasChildrenLabel" datatype="html">
+        <source>Has sub-facilities</source>
+        <target>Tiene subinstalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.list.rowMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Abrir menú</target>
+      </trans-unit>
+      <trans-unit id="facility.list.rowOpen" datatype="html">
+        <source>Open</source>
+        <target>Abrir</target>
+      </trans-unit>
+      <trans-unit id="facility.list.rowArchive" datatype="html">
+        <source>Archive</source>
+        <target>Archivar</target>
+      </trans-unit>
+      <trans-unit id="facility.list.rowRestore" datatype="html">
+        <source>Restore</source>
+        <target>Restaurar</target>
+      </trans-unit>
+      <trans-unit id="facility.list.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
+      </trans-unit>
+      <trans-unit id="facility.form.codeLabel" datatype="html">
+        <source>Code</source>
+        <target>Código</target>
+      </trans-unit>
+      <trans-unit id="facility.form.addressLabel" datatype="html">
+        <source>Address</source>
+        <target>Dirección</target>
+      </trans-unit>
+      <trans-unit id="facility.form.parentNoMatch" datatype="html">
+        <source>No facility matches.</source>
+        <target>Ninguna instalación coincide.</target>
+      </trans-unit>
+      <trans-unit id="facility.form.parentHint" datatype="html">
+        <source>Leave empty to create a root facility.</source>
+        <target>Déjelo vacío para crear una instalación raíz.</target>
+      </trans-unit>
+      <trans-unit id="facility.cf.submitting" datatype="html">
+        <source>Creating…</source>
+        <target>Creando…</target>
+      </trans-unit>
+      <trans-unit id="facility.form.submit" datatype="html">
+        <source>Create facility</source>
+        <target>Crear instalación</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.delete" datatype="html">
+        <source>Delete</source>
+        <target>Eliminar</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.tabsAriaLabel" datatype="html">
+        <source>Facility sections</source>
+        <target>Secciones de la instalación</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.tabs.overview" datatype="html">
+        <source>Overview</source>
+        <target>Resumen</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.tabs.information" datatype="html">
+        <source>Information</source>
+        <target>Información</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.hierarchyTitle" datatype="html">
+        <source>Hierarchy</source>
+        <target>Jerarquía</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.noChildren" datatype="html">
+        <source>This facility has no sub-facilities.</source>
+        <target>Esta instalación no tiene subinstalaciones.</target>
+      </trans-unit>
+      <trans-unit id="facility.metric.compliance.title" datatype="html">
+        <source>Compliance rate</source>
+        <target>Tasa de cumplimiento</target>
+      </trans-unit>
+      <trans-unit id="facility.metric.equipments.title" datatype="html">
+        <source>Equipment</source>
+        <target>Equipos</target>
+      </trans-unit>
+      <trans-unit id="facility.metric.nextInspection.title" datatype="html">
+        <source>Next inspection</source>
+        <target>Próxima inspección</target>
+      </trans-unit>
+      <trans-unit id="facility.metric.nextInspection.days" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ days }}"/> day(s)</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ days }}"/> día(s)</target>
+      </trans-unit>
+      <trans-unit id="facility.equipmentBreakdown.title" datatype="html">
+        <source>Equipment status</source>
+        <target>Estado de los equipos</target>
+      </trans-unit>
+      <trans-unit id="facility.equipmentBreakdown.loadingAria" datatype="html">
+        <source>Loading equipment status</source>
+        <target>Cargando el estado de los equipos</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInspections.title" datatype="html">
+        <source>Recent inspections</source>
+        <target>Inspecciones recientes</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInspections.loadingAria" datatype="html">
+        <source>Loading recent inspections</source>
+        <target>Cargando las inspecciones recientes</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.loading" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.loadingAria" datatype="html">
+        <source>Loading facility</source>
+        <target>Cargando instalación</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.metaUpdated" datatype="html">
+        <source>Updated <x id="when" equiv-text="when"/></source>
+        <target>Actualizada <x id="when" equiv-text="when"/></target>
+      </trans-unit>
+      <trans-unit id="facility.detail.deleteConfirmTitle" datatype="html">
+        <source>Delete facility?</source>
+        <target>¿Eliminar la instalación?</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.deleteConfirmDescription" datatype="html">
+        <source>A published facility is archived and can be restored; a draft facility is permanently removed. This cannot be undone from here.</source>
+        <target>Una instalación publicada se archiva y puede restaurarse; una instalación en borrador se elimina de forma permanente. Esta acción no se puede deshacer desde aquí.</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.deleteConfirmCancel" datatype="html">
+        <source>Cancel</source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.deleteConfirmAction" datatype="html">
+        <source>Delete</source>
+        <target>Eliminar</target>
+      </trans-unit>
+      <trans-unit id="facility.info.parent" datatype="html">
+        <source>Parent</source>
+        <target>Superior</target>
+      </trans-unit>
+      <trans-unit id="facility.info.viewParent" datatype="html">
+        <source>View parent facility</source>
+        <target>Ver instalación superior</target>
+      </trans-unit>
+      <trans-unit id="facility.info.rootFacility" datatype="html">
+        <source>Root facility</source>
+        <target>Instalación raíz</target>
+      </trans-unit>
+      <trans-unit id="facility.notSpecified" datatype="html">
+        <source>Not specified</source>
+        <target>No especificado</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInspections.pass" datatype="html">
+        <source>Pass</source>
+        <target>Aprobado</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInspections.fail" datatype="html">
+        <source>Fail</source>
+        <target>Fallido</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInspections.partial" datatype="html">
+        <source>Partial</source>
+        <target>Parcial</target>
+      </trans-unit>
+      <trans-unit id="facility.list.searchPlaceholder" datatype="html">
+        <source>Search facilities...</source>
+        <target>Buscar instalaciones...</target>
+      </trans-unit>
+      <trans-unit id="facility.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="facility.list.filterArchived" datatype="html">
+        <source>Show archived facilities</source>
+        <target>Mostrar instalaciones archivadas</target>
+      </trans-unit>
+      <trans-unit id="facility.list.layoutList" datatype="html">
+        <source>List view</source>
+        <target>Vista de lista</target>
+      </trans-unit>
+      <trans-unit id="facility.list.layoutGrid" datatype="html">
+        <source>Grid view</source>
+        <target>Vista de cuadrícula</target>
+      </trans-unit>
+      <trans-unit id="facility.list.errorTitle" datatype="html">
+        <source>Couldn't load facilities</source>
+        <target>No se pudieron cargar las instalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.list.emptyTitle" datatype="html">
+        <source>No facilities found</source>
+        <target>No se encontraron instalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.list.emptyDesc" datatype="html">
+        <source>Adjust your search or filters, or register the sites you track.</source>
+        <target>Ajuste su búsqueda o sus filtros, o registre los sitios que supervisa.</target>
+      </trans-unit>
+      <trans-unit id="facility.list.rowCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalRootFacilities() }}"/> row(s) shown</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ store.totalRootFacilities() }}"/> fila(s) mostrada(s)</target>
+      </trans-unit>
+      <trans-unit id="facility.list.rowsPerPage" datatype="html">
+        <source>Rows per page:</source>
+        <target>Filas por página:</target>
+      </trans-unit>
+      <trans-unit id="facility.list.pageIndicator" datatype="html">
+        <source>Page <x id="INTERPOLATION" equiv-text="{{ currentPage() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
+        <target>Página <x id="INTERPOLATION" equiv-text="{{ currentPage() }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
+      </trans-unit>
+      <trans-unit id="facility.list.pageFirst" datatype="html">
+        <source>First page</source>
+        <target>Primera página</target>
+      </trans-unit>
+      <trans-unit id="facility.list.pagePrevious" datatype="html">
+        <source>Previous page</source>
+        <target>Página anterior</target>
+      </trans-unit>
+      <trans-unit id="facility.list.pageNext" datatype="html">
+        <source>Next page</source>
+        <target>Página siguiente</target>
+      </trans-unit>
+      <trans-unit id="facility.list.pageLast" datatype="html">
+        <source>Last page</source>
+        <target>Última página</target>
+      </trans-unit>
       <trans-unit id="status.active" datatype="html">
         <source>Active</source>
         <target>Activa</target>
@@ -2461,6 +3057,14 @@
       <trans-unit id="status.archived" datatype="html">
         <source>Archived</source>
         <target>Archivada</target>
+      </trans-unit>
+      <trans-unit id="facility.form.latitudeRange" datatype="html">
+        <source>Enter a latitude between -90 and 90.</source>
+        <target>Introduzca una latitud entre -90 y 90.</target>
+      </trans-unit>
+      <trans-unit id="facility.form.longitudeRange" datatype="html">
+        <source>Enter a longitude between -180 and 180.</source>
+        <target>Introduzca una longitud entre -180 y 180.</target>
       </trans-unit>
       <trans-unit id="facility.equipmentBreakdown.commissioned" datatype="html">
         <source>Commissioned</source>
@@ -3066,14 +3670,6 @@
         <source>Unknown inspector</source>
         <target>Inspector desconocido</target>
       </trans-unit>
-      <trans-unit id="inspection.info.title" datatype="html">
-        <source> Inspection information </source>
-        <target>Información de la inspección</target>
-      </trans-unit>
-      <trans-unit id="inspection.info.result" datatype="html">
-        <source> Result </source>
-        <target>Resultado</target>
-      </trans-unit>
       <trans-unit id="inspection.info.performed" datatype="html">
         <source> Performed </source>
         <target>Realizada</target>
@@ -3081,22 +3677,6 @@
       <trans-unit id="inspection.info.nc" datatype="html">
         <source> Non-conformities </source>
         <target>No conformidades</target>
-      </trans-unit>
-      <trans-unit id="inspection.info.equipment" datatype="html">
-        <source> Equipment </source>
-        <target>Equipo</target>
-      </trans-unit>
-      <trans-unit id="inspection.info.facility" datatype="html">
-        <source> Facility </source>
-        <target>Instalación</target>
-      </trans-unit>
-      <trans-unit id="inspection.info.checklist" datatype="html">
-        <source> Checklist </source>
-        <target>Lista de verificación</target>
-      </trans-unit>
-      <trans-unit id="inspection.info.notes" datatype="html">
-        <source> Notes </source>
-        <target>Notas</target>
       </trans-unit>
       <trans-unit id="inspection.info.none" datatype="html">
         <source>None</source>
@@ -3106,14 +3686,6 @@
         <source>No notes</source>
         <target>Sin notas</target>
       </trans-unit>
-      <trans-unit id="inspection.form.equipment" datatype="html">
-        <source>Equipment</source>
-        <target>Equipo</target>
-      </trans-unit>
-      <trans-unit id="inspection.form.equipmentPlaceholder" datatype="html">
-        <source>Select equipment</source>
-        <target>Selecciona un equipo</target>
-      </trans-unit>
       <trans-unit id="inspection.form.searchEquipment" datatype="html">
         <source>Search equipment...</source>
         <target>Buscar equipo...</target>
@@ -3122,33 +3694,13 @@
         <source>Equipment is required.</source>
         <target>El equipo es obligatorio.</target>
       </trans-unit>
-      <trans-unit id="inspection.form.result" datatype="html">
-        <source>Result</source>
-        <target>Resultado</target>
-      </trans-unit>
-      <trans-unit id="inspection.form.resultPlaceholder" datatype="html">
-        <source>Select result</source>
-        <target>Selecciona un resultado</target>
-      </trans-unit>
       <trans-unit id="inspection.form.resultRequired" datatype="html">
         <source>Result is required.</source>
         <target>El resultado es obligatorio.</target>
       </trans-unit>
-      <trans-unit id="inspection.form.performedAt" datatype="html">
-        <source>Performed At</source>
-        <target>Realizada el</target>
-      </trans-unit>
-      <trans-unit id="inspection.form.performedAtPlaceholder" datatype="html">
-        <source>Select date and time</source>
-        <target>Selecciona fecha y hora</target>
-      </trans-unit>
       <trans-unit id="inspection.form.performedAtRequired" datatype="html">
         <source>Performed date is required.</source>
         <target>La fecha de realización es obligatoria.</target>
-      </trans-unit>
-      <trans-unit id="inspection.form.inspectorType" datatype="html">
-        <source>Inspector Type</source>
-        <target>Tipo de inspector</target>
       </trans-unit>
       <trans-unit id="inspection.form.inspectorTypePlaceholder" datatype="html">
         <source>Select inspector type</source>
@@ -3157,14 +3709,6 @@
       <trans-unit id="inspection.form.inspectorTypeRequired" datatype="html">
         <source>Inspector type is required.</source>
         <target>El tipo de inspector es obligatorio.</target>
-      </trans-unit>
-      <trans-unit id="inspection.form.inspectorName" datatype="html">
-        <source>Inspector Name</source>
-        <target>Nombre del inspector</target>
-      </trans-unit>
-      <trans-unit id="inspection.form.inspectorNamePlaceholder" datatype="html">
-        <source>John Doe</source>
-        <target>Juan Pérez</target>
       </trans-unit>
       <trans-unit id="inspection.form.inspectorNameRequired" datatype="html">
         <source>Inspector name is required.</source>
@@ -3214,10 +3758,6 @@
         <source>Inspector signature</source>
         <target>Firma del inspector</target>
       </trans-unit>
-      <trans-unit id="inspection.form.submit" datatype="html">
-        <source>Create Inspection</source>
-        <target>Crear inspección</target>
-      </trans-unit>
       <trans-unit id="inspection.form.inspectorDefault" datatype="html">
         <source>Inspector</source>
         <target>Inspector</target>
@@ -3258,14 +3798,6 @@
         <source>Add non-conformity</source>
         <target>Añadir no conformidad</target>
       </trans-unit>
-      <trans-unit id="inspection.create.title" datatype="html">
-        <source> New Inspection </source>
-        <target>Nueva inspección</target>
-      </trans-unit>
-      <trans-unit id="inspection.create.description" datatype="html">
-        <source> Prepare the inspection scope, target, and checklist before field execution. </source>
-        <target>Prepara el alcance, el objetivo y la lista de control antes del trabajo de campo.</target>
-      </trans-unit>
       <trans-unit id="inspection.detail.notFoundTitle" datatype="html">
         <source>Inspection not found</source>
         <target>Inspección no encontrada</target>
@@ -3273,10 +3805,6 @@
       <trans-unit id="inspection.detail.notFound" datatype="html">
         <source>Inspection not found or unavailable offline.</source>
         <target>Inspección no encontrada o no disponible sin conexión.</target>
-      </trans-unit>
-      <trans-unit id="inspection.detail.backToList" datatype="html">
-        <source>Back to inspections</source>
-        <target>Volver a las inspecciones</target>
       </trans-unit>
       <trans-unit id="inspection.tab.overview" datatype="html">
         <source>Overview</source>
@@ -3334,14 +3862,6 @@
         <source> History of the inspections performed across your organization&apos;s facilities and equipment. </source>
         <target>Historial de las inspecciones realizadas en las instalaciones y equipos de tu organización.</target>
       </trans-unit>
-      <trans-unit id="inspection.list.errorText" datatype="html">
-        <source>The inspections could not be loaded. Check your connection and try again.</source>
-        <target>No se pudieron cargar las inspecciones. Comprueba tu conexión e inténtalo de nuevo.</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.retry" datatype="html">
-        <source>Retry</source>
-        <target>Reintentar</target>
-      </trans-unit>
       <trans-unit id="inspection.cancel.message" datatype="html">
         <source>Cancel this draft inspection?</source>
         <target>¿Cancelar este borrador de inspección?</target>
@@ -3350,37 +3870,13 @@
         <source>Search inspections...</source>
         <target>Buscar inspecciones...</target>
       </trans-unit>
-      <trans-unit id="inspection.table.filtersButton" datatype="html">
-        <source>Filters</source>
-        <target>Filtros</target>
-      </trans-unit>
       <trans-unit id="inspection.table.filterPerformed" datatype="html">
         <source>Performed range</source>
         <target>Periodo de realización</target>
       </trans-unit>
-      <trans-unit id="inspection.newButton" datatype="html">
-        <source>New inspection</source>
-        <target>Nueva inspección</target>
-      </trans-unit>
       <trans-unit id="inspection.table.pageReport" datatype="html">
         <source>Showing {first} to {last} of {totalRecords} inspections</source>
         <target>Mostrando {first} a {last} de {totalRecords} inspecciones</target>
-      </trans-unit>
-      <trans-unit id="inspection.table.colInspector" datatype="html">
-        <source>Inspector</source>
-        <target>Inspector</target>
-      </trans-unit>
-      <trans-unit id="inspection.table.title" datatype="html">
-        <source>Inspections</source>
-        <target>Inspecciones</target>
-      </trans-unit>
-      <trans-unit id="inspection.table.colResult" datatype="html">
-        <source>Result</source>
-        <target>Resultado</target>
-      </trans-unit>
-      <trans-unit id="inspection.table.colStatus" datatype="html">
-        <source>Status</source>
-        <target>Estado</target>
       </trans-unit>
       <trans-unit id="inspection.table.colFindings" datatype="html">
         <source>Findings</source>
@@ -3397,14 +3893,6 @@
       <trans-unit id="inspection.table.rowActions" datatype="html">
         <source>Inspection actions</source>
         <target>Acciones de inspección</target>
-      </trans-unit>
-      <trans-unit id="inspection.table.emptyTitle" datatype="html">
-        <source>No inspections found</source>
-        <target>No se encontraron inspecciones</target>
-      </trans-unit>
-      <trans-unit id="inspection.table.emptyDesc" datatype="html">
-        <source>Adjust your search or filters, or record a new inspection.</source>
-        <target>Ajusta tu búsqueda o los filtros, o registra una nueva inspección.</target>
       </trans-unit>
       <trans-unit id="inspection.table.countPlural" datatype="html">
         <source><x id="count" equiv-text="total"/> inspections</source>
@@ -7933,10 +8421,6 @@
         <source>This change could not be saved.</source>
         <target>No se pudo guardar este cambio.</target>
       </trans-unit>
-      <trans-unit id="inspection.info.signature" datatype="html">
-        <source>Signature</source>
-        <target>Firma</target>
-      </trans-unit>
       <trans-unit id="route.statistics" datatype="html">
         <source>Statistics</source>
         <target>Estadísticas</target>
@@ -8568,6 +9052,286 @@
       <trans-unit id="intervention.linked.inspections.emptyDesc" datatype="html">
         <source>No inspection is linked to this intervention yet.</source>
         <target>Ninguna inspección está vinculada a esta intervención todavía.</target>
+      </trans-unit>
+      <trans-unit id="inspection.cancel" datatype="html">
+        <source>Cancel</source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="inspection.cf.createFailed" datatype="html">
+        <source>The inspection could not be created.</source>
+        <target>No se pudo crear la inspección.</target>
+      </trans-unit>
+      <trans-unit id="inspection.cf.equipmentRequired" datatype="html">
+        <source>Choose the inspected equipment.</source>
+        <target>Elija el equipo inspeccionado.</target>
+      </trans-unit>
+      <trans-unit id="inspection.cf.inspectorNameRequired" datatype="html">
+        <source>Name the inspector.</source>
+        <target>Indique el nombre del inspector.</target>
+      </trans-unit>
+      <trans-unit id="inspection.cf.performedAtRequired" datatype="html">
+        <source>Pick the date the inspection was carried out.</source>
+        <target>Elija la fecha en que se realizó la inspección.</target>
+      </trans-unit>
+      <trans-unit id="inspection.cf.resultRequired" datatype="html">
+        <source>Choose the inspection's result.</source>
+        <target>Elija el resultado de la inspección.</target>
+      </trans-unit>
+      <trans-unit id="inspection.cf.submitting" datatype="html">
+        <source>Creating…</source>
+        <target>Creando…</target>
+      </trans-unit>
+      <trans-unit id="inspection.close" datatype="html">
+        <source>Close</source>
+        <target>Cerrar</target>
+      </trans-unit>
+      <trans-unit id="inspection.create.description" datatype="html">
+        <source>Record which equipment was inspected, its result and who carried it out.</source>
+        <target>Registre el equipo inspeccionado, su resultado y quién la realizó.</target>
+      </trans-unit>
+      <trans-unit id="inspection.create.title" datatype="html">
+        <source>New Inspection</source>
+        <target>Nueva inspección</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.backToList" datatype="html">
+        <source>Back to inspections</source>
+        <target>Volver a inspecciones</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.cancelConfirmAction" datatype="html">
+        <source>Cancel inspection</source>
+        <target>Cancelar inspección</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.cancelConfirmDescription" datatype="html">
+        <source>This removes the draft inspection. This action cannot be undone.</source>
+        <target>Esto elimina el borrador de inspección. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.cancelConfirmDismiss" datatype="html">
+        <source>Keep it</source>
+        <target>Conservar</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.cancelConfirmTitle" datatype="html">
+        <source>Cancel inspection?</source>
+        <target>¿Cancelar la inspección?</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.loading" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.loadingAria" datatype="html">
+        <source>Loading inspection</source>
+        <target>Cargando inspección</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.metaUpdated" datatype="html">
+        <source>Updated <x id="when" equiv-text="when"/></source>
+        <target>Actualizada <x id="when" equiv-text="when"/></target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.nonConformitiesCountMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> non-conformities</source>
+        <target><x id="count" equiv-text="count"/> no conformidades</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.nonConformitiesCountOne" datatype="html">
+        <source>1 non-conformity</source>
+        <target>1 no conformidad</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.equipment" datatype="html">
+        <source>Equipment</source>
+        <target>Equipo</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.equipmentPlaceholder" datatype="html">
+        <source>Search equipment</source>
+        <target>Buscar equipo</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.inspectorName" datatype="html">
+        <source>Inspector name</source>
+        <target>Nombre del inspector</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.inspectorNamePlaceholder" datatype="html">
+        <source>Jane Doe</source>
+        <target>Juan Pérez</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.inspectorType" datatype="html">
+        <source>Inspector</source>
+        <target>Inspector</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.inspectorTypeExternal" datatype="html">
+        <source>External inspector</source>
+        <target>Inspector externo</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.inspectorTypeUser" datatype="html">
+        <source>Team member</source>
+        <target>Miembro del equipo</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.noEquipment" datatype="html">
+        <source>No equipment matches.</source>
+        <target>Ningún equipo coincide.</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.performedAt" datatype="html">
+        <source>Performed on</source>
+        <target>Realizada el</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.performedAtPlaceholder" datatype="html">
+        <source>Select a date</source>
+        <target>Seleccionar una fecha</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.result" datatype="html">
+        <source>Result</source>
+        <target>Resultado</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.resultPlaceholder" datatype="html">
+        <source>Select a result</source>
+        <target>Seleccionar un resultado</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.submit" datatype="html">
+        <source>Create inspection</source>
+        <target>Crear inspección</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.checklist" datatype="html">
+        <source>Checklist</source>
+        <target>Lista de verificación</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.equipment" datatype="html">
+        <source>Equipment</source>
+        <target>Equipo</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.facility" datatype="html">
+        <source>Facility</source>
+        <target>Instalación</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.inspector" datatype="html">
+        <source>Inspector</source>
+        <target>Inspector</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.notes" datatype="html">
+        <source>Notes</source>
+        <target>Notas</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.performedAt" datatype="html">
+        <source>Performed on</source>
+        <target>Realizada el</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.result" datatype="html">
+        <source>Result</source>
+        <target>Resultado</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.signature" datatype="html">
+        <source>Signature</source>
+        <target>Firma</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.title" datatype="html">
+        <source>Inspection information</source>
+        <target>Información de la inspección</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.viewEquipment" datatype="html">
+        <source>View equipment</source>
+        <target>Ver equipo</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.viewFacility" datatype="html">
+        <source>View facility</source>
+        <target>Ver instalación</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.errorText" datatype="html">
+        <source>The inspections could not be loaded. Check your connection and try again.</source>
+        <target>No se pudieron cargar las inspecciones. Compruebe su conexión e inténtelo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.errorTitle" datatype="html">
+        <source>Couldn't load inspections</source>
+        <target>No se pudieron cargar las inspecciones</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.filterResult" datatype="html">
+        <source>Result</source>
+        <target>Resultado</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.pageFirst" datatype="html">
+        <source>First page</source>
+        <target>Primera página</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.pageIndicator" datatype="html">
+        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
+        <target>Página <x id="INTERPOLATION" equiv-text="{{ page() }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
+      </trans-unit>
+      <trans-unit id="inspection.list.pageLast" datatype="html">
+        <source>Last page</source>
+        <target>Última página</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.pageNext" datatype="html">
+        <source>Next page</source>
+        <target>Página siguiente</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.pagePrevious" datatype="html">
+        <source>Previous page</source>
+        <target>Página anterior</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.rowCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalInspections() }}"/> row(s) shown</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ store.totalInspections() }}"/> fila(s) mostradas</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.rowsPerPage" datatype="html">
+        <source>Rows per page:</source>
+        <target>Filas por página:</target>
+      </trans-unit>
+      <trans-unit id="inspection.newButton" datatype="html">
+        <source>New inspection</source>
+        <target>Nueva inspección</target>
+      </trans-unit>
+      <trans-unit id="inspection.notSpecified" datatype="html">
+        <source>Not specified</source>
+        <target>No especificado</target>
+      </trans-unit>
+      <trans-unit id="inspection.submit" datatype="html">
+        <source>Submit</source>
+        <target>Enviar</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.colInspector" datatype="html">
+        <source>Inspector</source>
+        <target>Inspector</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.colNonConformities" datatype="html">
+        <source>Non-conformities</source>
+        <target>No conformidades</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.colPerformedAt" datatype="html">
+        <source>Performed on</source>
+        <target>Realizada el</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.colResult" datatype="html">
+        <source>Result</source>
+        <target>Resultado</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.colStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.emptyDesc" datatype="html">
+        <source>Adjust your filters, or open the inspections your team carries out.</source>
+        <target>Ajuste sus filtros, o abra las inspecciones que realiza su equipo.</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.emptyTitle" datatype="html">
+        <source>No inspections found</source>
+        <target>No se encontraron inspecciones</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.filterResultPlaceholder" datatype="html">
+        <source>Any result</source>
+        <target>Cualquier resultado</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.filterStatusPlaceholder" datatype="html">
+        <source>Any status</source>
+        <target>Cualquier estado</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.title" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
       </trans-unit>
 </body>
   </file>

@@ -33,7 +33,8 @@ This feature does not own generic shell composition or account-level user identi
 ## Routes
 
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing page),
-> `messages` and `members/:memberId`. The remaining destinations below are the feature's contract and
+> `messages`, `interventions`, `equipments`, `facilities`, `inspections`, `calendar` and
+> `members/:memberId`. The remaining destinations below are the feature's contract and
 > are already listed by the sidebar navigation behind their permissions; each is remounted in
 > `organization.routes.ts` as its page is rebuilt. A listed destination whose route is absent is a
 > rebuild in progress, not a deviation.

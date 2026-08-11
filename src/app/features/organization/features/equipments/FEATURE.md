@@ -23,38 +23,93 @@ This subfeature does not own top-level organization context or inspection workfl
 
 ## Routes
 
-- `/organizations/:organizationId/equipments`
-- `/organizations/:organizationId/equipments/create`
-- `/organizations/:organizationId/equipments/:equipmentId`
+- `/organizations/:organizationId/equipments` — `EquipmentsPage`: an
+  `hlmTable` of the organization's equipment (`EquipmentTable`), a debounced
+  search box (`?q=`, mapped to the backend `search` filter) and a filter
+  popover (type, status), paginated server-side. No row menu and no bulk
+  actions — the record itself is where every property is edited (see
+  below), so the list has nothing left to orchestrate beyond search, filter,
+  page and a "New equipment" link (`EQUIPMENT_WRITE`-gated) into `create`.
+- `/organizations/:organizationId/equipments/create` — `EquipmentCreatePage`:
+  `EquipmentCreateForm` (Signal Forms) asking for the one required field,
+  `type`; the five remaining editable properties are filled in afterward, in
+  place, on the created record. Navigates to `/:equipmentId` on success.
+- `/organizations/:organizationId/equipments/:equipmentId` —
+  `EquipmentDetailPage`. `equipmentResolver` (route `resolve`) populates
+  `ActiveEquipmentStore` before the page renders, redirecting back to the
+  index on failure; `equipmentTitleResolver` (route `title`) names the
+  document title and breadcrumb from the same resolved record via
+  `buildEquipmentTitle` (`utils/equipment-title/`).
 
-Equipment detail routes resolve active equipment context before rendering.
+  The lifecycle status band (page header) names the single relevant forward
+  transition for the current status — commission, resume service, or move
+  to maintenance — as the primary action, with Decommission as the
+  secondary; both read `EquipmentOutput.status` only, no per-status template
+  branching. `EquipmentStore.commission` serves both "Commission"
+  (`in_stock`) and "Resume service" (`under_maintenance`): the backend
+  handler accepts either non-decommissioned status and always lands on
+  `operational`.
 
 **The record is the edit surface.** Every property `UpdateEquipmentInput`
 accepts (`type`, `subType`, `brand`, `model`, `serialNumber`, `locationLabel`)
 opens where it is displayed, through `@shared/inplace-field`
-(`EquipmentInformationPanel`); the panel owns the draft and the cancel path,
-the page owns the call (ARCHITECTURE.md §10.5). `type` reuses the same
-`EQUIPMENT_TYPE_OPTIONS` catalog as the create form; `subType` is free text —
-it has no backend enum or option set of its own, unlike `type`.
-`/:equipmentId/edit` is retired and **redirects onto the record**, so
-installed applications and bookmarks still resolve.
+(`EquipmentInformationPanel`, `ui/components/`); the panel owns the shared
+text draft and the cancel path, the page owns the call (ARCHITECTURE.md
+§10.5) and the `EquipmentEditState`/`EquipmentEditTarget` pair
+(`models/equipment-edit/`) that tracks which field is open, saving, or
+rejected. `type` reuses the same `EQUIPMENT_TYPE_OPTIONS` catalog as the
+create form and commits on selection (`pick`); the other five are free text
+with an explicit Save (`confirm`), sharing one draft signal since only one
+field is ever open at a time. There is no separate edit page and no
+planning wizard.
 
-The lifecycle status band (equipment-detail header) names the single relevant
-forward transition for the current status — commission, resume service, or
-move to maintenance — as the primary action, with Decommission as the
-secondary; both read `EquipmentOutput.status` and `facilityId` only, no
-per-status template branching.
+Equipment status (`in_stock`/`operational`/`under_maintenance`/
+`decommissioned`) and maintenance-due status
+(`unscheduled`/`up_to_date`/`due_soon`/`overdue`) render through this
+feature's own presentation registry, `models/equipment-status-tag/` +
+`ui/components/equipment-status-tag/` (`EquipmentStatusTag`,
+`app-equipment-status-tag`) — named `-status-tag`, not `-tag`, because
+`equipment-tag/` already names the unrelated labeling-tag resource
+(`EquipmentTagOutput`). Its `status` kind reuses the exact `equipmentStatus.*`
+i18n ids `interventions`' own registry already defined for the same enum
+(one translation, two call sites) when it renders equipment read-only on the
+intervention detail page's Linked tab.
+
+**Deferred, not built:** attachments, maintenance-log history and the
+labeling-tag (`EquipmentTagOutput`) UI. `EquipmentStore` already carries the
+state and `EquipmentService` the transport for all three (see below), but
+none is named by a route in this document, and building three more
+subsystems (file upload, a log table, tag chips) was judged disproportionate
+to what is documented here. Revisit when a route requires one. Facility
+assignment/unassignment (`EquipmentStore.assignToFacility` /
+`unassignFromFacility`) is likewise data-access-only for now; the detail
+header shows the assigned facility's name (`EquipmentOutput.facilityName`)
+read-only.
+
+There is no `/:equipmentId/edit` route: the record itself is the edit
+surface (see above), and no route in this document links to one.
 
 ## State and Data Access
 
 Primary stores:
 
-- `EquipmentStore`
-- `ActiveEquipmentStore`
+- `EquipmentStore` — provided per leaf route (list, create, detail), each
+  getting its own instance: unlike `interventions`, this feature has no
+  documented list ↔ detail state-sharing requirement (no prev/next walk), so
+  the simpler independently-scoped default applies (`ARCHITECTURE.md` §10.11).
+- `ActiveEquipmentStore` — root-provided; the currently active record,
+  populated by `equipmentResolver`.
 
 Primary service:
 
 - `EquipmentService`
+
+Utility:
+
+- `buildEquipmentTitle` (`utils/equipment-title/`) — the shared "type —
+  brand model" title, consumed by both `equipmentTitleResolver` (document
+  title, breadcrumb) and `EquipmentDetailPage` (page `<h1>`), so the two
+  never drift.
 
 ## Cross-Feature Dependencies
 

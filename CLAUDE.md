@@ -119,5 +119,11 @@ Two things that listing does not tell you:
 - Backend and cross-cutting tooling stays at the monorepo root
   (`G:\Projets\fireguard\.claude\`): `/fg-contract-check`, `/fg-map`, `/fg-api-*`,
   `/fg-migrate`, `/fg-security-review`, plus pure-Bash `/fg-web-quality` and `/fg-e2e`
-  wrappers usable from there. **None of the frontend agents, skills, or MCP servers load
-  from the monorepo root** — a `.claude/` is read from the workspace root.
+  wrappers usable from there. This `.claude/` is also packaged as the **`fireguard-web`
+  plugin** (manifest `.claude/.claude-plugin/plugin.json`), installed at the monorepo
+  root — root sessions load the agents, the commands as `/fireguard-web:fg-…`, the
+  skills, and the guard/format hooks. Rules, permissions, MCP servers, and
+  `settings.local.json` are not plugin components: they still load only when this app is
+  the workspace root. The install is a cached copy — after changing anything under
+  `.claude/`, bump the plugin `version` and run
+  `claude plugin update fireguard-web@fireguard --scope project` from the monorepo root.

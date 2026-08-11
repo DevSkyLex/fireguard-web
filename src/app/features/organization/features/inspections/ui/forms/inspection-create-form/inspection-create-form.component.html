@@ -1,0 +1,147 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group class="px-4">
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="inspection-create-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="inspection-create-equipment" i18n="@@inspection.form.equipment"
+        >Equipment</label
+      >
+      <hlm-combobox [formField]="createForm.equipmentId" [itemToString]="equipmentLabelOf">
+        <hlm-combobox-input
+          inputId="inspection-create-equipment"
+          placeholder="Search equipment"
+          i18n-placeholder="@@inspection.form.equipmentPlaceholder"
+          data-testid="inspection-create-equipment"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@inspection.form.noEquipment"
+            >No equipment matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of equipmentOptions(); track option.value) {
+              <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+      @if (createForm.equipmentId().touched() && createForm.equipmentId().invalid()) {
+        <hlm-field-error>{{ createForm.equipmentId().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="inspection-create-result" i18n="@@inspection.form.result"
+        >Result</label
+      >
+      <hlm-select id="inspection-create-result" [formField]="createForm.result">
+        <hlm-select-trigger class="w-full" data-testid="inspection-create-result">
+          @if (createForm.result().value(); as result) {
+            <app-inspection-status-tag kind="result" [value]="result" asOption />
+          } @else {
+            <hlm-select-value
+              placeholder="Select a result"
+              i18n-placeholder="@@inspection.form.resultPlaceholder"
+            />
+          }
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (result of resultValues; track result) {
+              <hlm-select-item [value]="result">
+                <app-inspection-status-tag kind="result" [value]="result" asOption />
+              </hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+      @if (createForm.result().touched() && createForm.result().invalid()) {
+        <hlm-field-error>{{ createForm.result().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="inspection-create-performed-at" i18n="@@inspection.form.performedAt"
+        >Performed on</label
+      >
+      <hlm-date-picker [formField]="createForm.performedAt">
+        <hlm-date-picker-trigger buttonId="inspection-create-performed-at" class="w-full">
+          <span i18n="@@inspection.form.performedAtPlaceholder">Select a date</span>
+        </hlm-date-picker-trigger>
+      </hlm-date-picker>
+      @if (createForm.performedAt().touched() && createForm.performedAt().invalid()) {
+        <hlm-field-error>{{ createForm.performedAt().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="inspection-create-inspector-type"
+        i18n="@@inspection.form.inspectorType"
+        >Inspector</label
+      >
+      <hlm-select
+        id="inspection-create-inspector-type"
+        [itemToString]="inspectorTypeLabelOf"
+        [formField]="createForm.inspectorType"
+      >
+        <hlm-select-trigger class="w-full" data-testid="inspection-create-inspector-type">
+          <hlm-select-value />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (type of inspectorTypeValues; track type) {
+              <hlm-select-item [value]="type">{{ inspectorTypeLabelOf(type) }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="inspection-create-inspector-name"
+        i18n="@@inspection.form.inspectorName"
+        >Inspector name</label
+      >
+      <input
+        hlmInput
+        id="inspection-create-inspector-name"
+        type="text"
+        data-testid="inspection-create-inspector-name"
+        placeholder="Jane Doe"
+        i18n-placeholder="@@inspection.form.inspectorNamePlaceholder"
+        [formField]="createForm.inspectorName"
+      />
+      @if (createForm.inspectorName().touched() && createForm.inspectorName().invalid()) {
+        <hlm-field-error>{{ createForm.inspectorName().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="inspection-create-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@inspection.cf.submitting">Creating…</span>
+        } @else {
+          <span i18n="@@inspection.form.submit">Create inspection</span>
+        }
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="inspection-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

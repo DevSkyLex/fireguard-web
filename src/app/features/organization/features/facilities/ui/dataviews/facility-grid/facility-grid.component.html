@@ -1,0 +1,93 @@
+<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="facility-grid">
+  @if (loading()) {
+    @for (card of skeletonCards; track card) {
+      <div hlmCard aria-hidden="true">
+        <div hlmCardHeader>
+          <hlm-skeleton class="h-5 w-32 max-w-full" />
+          <hlm-skeleton class="mt-2 h-4 w-20" />
+        </div>
+        <div hlmCardContent>
+          <hlm-skeleton class="h-4 w-24" />
+        </div>
+      </div>
+    }
+  } @else {
+    @for (item of items(); track item.id) {
+      <div hlmCard data-testid="facility-grid-card" class="relative">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          class="absolute end-2 top-2 max-sm:size-11"
+          data-testid="facility-grid-card-menu"
+          [hlmDropdownMenuTrigger]="cardMenu"
+        >
+          <ng-icon name="lucideEllipsis" aria-hidden="true" />
+          <span class="sr-only" i18n="@@facility.list.rowMenu">Open menu</span>
+        </button>
+
+        <ng-template #cardMenu>
+          <hlm-dropdown-menu class="w-48">
+            @if (canWrite() && item.status === 'active') {
+              <button
+                hlmDropdownMenuItem
+                data-testid="facility-grid-card-archive"
+                (click)="archiveRequested.emit(item)"
+              >
+                <ng-icon name="lucideArchive" aria-hidden="true" />
+                <span i18n="@@facility.list.rowArchive">Archive</span>
+              </button>
+            }
+
+            @if (canWrite() && item.status === 'archived') {
+              <button
+                hlmDropdownMenuItem
+                data-testid="facility-grid-card-restore"
+                (click)="restoreRequested.emit(item)"
+              >
+                <ng-icon name="lucideArchiveRestore" aria-hidden="true" />
+                <span i18n="@@facility.list.rowRestore">Restore</span>
+              </button>
+            }
+          </hlm-dropdown-menu>
+        </ng-template>
+
+        <div hlmCardHeader>
+          <a
+            hlmCardTitle
+            class="flex items-center gap-1.5 rounded-sm pe-8 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [routerLink]="[...detailRouteBase(), item.id]"
+          >
+            <ng-icon
+              name="lucideBuilding2"
+              class="shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <span class="truncate">{{ item.name }}</span>
+            @if (item.hasChildren) {
+              <ng-icon
+                name="lucideNetwork"
+                class="shrink-0 text-muted-foreground"
+                i18n-aria-label="@@facility.list.hasChildrenLabel"
+                aria-label="Has sub-facilities"
+              />
+            }
+          </a>
+          <p hlmCardDescription>{{ typeLabelOf(item.type) }}</p>
+        </div>
+        <div hlmCardContent class="flex items-center justify-between gap-2">
+          <span class="text-sm text-muted-foreground tabular-nums">{{ item.code }}</span>
+          <app-facility-status-tag [value]="item.status" />
+        </div>
+      </div>
+    } @empty {
+      <p
+        class="col-span-full py-8 text-center text-sm text-muted-foreground"
+        i18n="@@facility.list.noResults"
+      >
+        No results.
+      </p>
+    }
+  }
+</div>

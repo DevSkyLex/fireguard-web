@@ -4,6 +4,17 @@ This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspac
 activate it: 12 agents, 13 commands, 8 skills, 9 rules, 4 MCP servers, and 2 project hooks
 (plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
 
+> **This directory is also a plugin.** The monorepo root installs it as
+> `fireguard-web@fireguard` (project scope, via the root `.claude-plugin/marketplace.json`),
+> so root sessions load the 12 agents, the commands namespaced as `/fireguard-web:fg-store`
+> and friends, the skills, and the guard/format hooks. MCP servers, `rules/`, permissions,
+> and `settings.local.json` are not plugin components — opening this directory as the
+> workspace root remains the only way to get everything. The manifest is
+> `.claude-plugin/plugin.json`; plugin-mode hook wiring is `hooks/hooks.json`. The install
+> is a **cached copy**: after changing tooling here, bump `version` in
+> `.claude-plugin/plugin.json` and run
+> `claude plugin update fireguard-web@fireguard --scope project` from the monorepo root.
+
 Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\fireguard\.claude\`) —
 `/fg-api-module`, `/fg-api-quality`, `/fg-migrate`, `/fg-security-review`, `/fg-contract-check`,
 `/fg-map`. Nothing is duplicated between the two.

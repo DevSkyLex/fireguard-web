@@ -1,0 +1,207 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  signal,
+  type InputSignal,
+  type OutputEmitterRef,
+  type Signal,
+  type WritableSignal,
+} from '@angular/core';
+import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import type {
+  CreateEquipmentInput,
+  EquipmentType,
+} from '@features/organization/features/equipments/models';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
+import { HlmButton } from '@shared/ui/button';
+import { HlmFieldImports } from '@shared/ui/field';
+import { HlmInput } from '@shared/ui/input';
+import { HlmSelectImports } from '@shared/ui/select';
+import type { EquipmentCreateFormDraft } from './models';
+
+/** A blank draft. */
+const EMPTY_VALUES: EquipmentCreateFormDraft = {
+  type: '',
+  subType: '',
+  brand: '',
+  model: '',
+  serialNumber: '',
+  locationLabel: '',
+};
+
+/** Trims a free-text field, sending `undefined` rather than an empty string. */
+function trimmed(value: string): string | undefined {
+  const trimmedValue: string = value.trim();
+
+  return trimmedValue === '' ? undefined : trimmedValue;
+}
+
+/**
+ * Component EquipmentCreateForm
+ * @class EquipmentCreateForm
+ *
+ * @description
+ * The form that registers an equipment, composed from spartan's field
+ * primitives: one `hlm-field-group`, one `hlm-field` per control, and
+ * `hlm-field-error` for the messages.
+ *
+ * It owns its model, its rules and its own validity, and emits
+ * {@link submitted} with the API-shaped payload — the page calls the store
+ * (`ARCHITECTURE.md` §10.4). `type` is the only required field: the record
+ * is completed progressively afterward, in place, on the detail page
+ * (`FEATURE.md` "The record is the edit surface").
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+@Component({
+  selector: 'app-equipment-create-form',
+  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  templateUrl: './equipment-create-form.component.html',
+  host: { class: 'block' },
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class EquipmentCreateForm {
+  //#region Inputs
+  /**
+   * Property pending
+   * @readonly
+   * @description Whether a creation request is in flight, which locks the controls.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly pending: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property serverError
+   * @readonly
+   * @description Whatever the store's create call failed with.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<unknown>}
+   */
+  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property submitted
+   * @readonly
+   * @description Emits the API-shaped payload once the form is valid.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<CreateEquipmentInput>}
+   */
+  public readonly submitted: OutputEmitterRef<CreateEquipmentInput> =
+    output<CreateEquipmentInput>();
+
+  /**
+   * Property cancelled
+   * @readonly
+   * @description The operator backed out without registering anything.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly cancelled: OutputEmitterRef<void> = output<void>();
+  //#endregion
+
+  //#region Properties
+  /** The edited draft. */
+  protected readonly model: WritableSignal<EquipmentCreateFormDraft> =
+    signal<EquipmentCreateFormDraft>(EMPTY_VALUES);
+
+  /**
+   * Property createForm
+   * @readonly
+   * @description The field tree and its rules.
+   * @access protected
+   * @since 1.0.0
+   * @type {FieldTree<EquipmentCreateFormDraft>}
+   */
+  protected readonly createForm: FieldTree<EquipmentCreateFormDraft> = form(this.model, (path) => {
+    required(path.type, {
+      message: $localize`:@@equipment.form.typeRequired:Equipment type is required.`,
+    });
+  });
+
+  /** The equipment types offered. */
+  protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
+
+  /**
+   * Property serverMessages
+   * @readonly
+   *
+   * @description
+   * Everything the API said about the rejected request, as flat lines shown
+   * above the form.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
+    const error: unknown = this.serverError();
+
+    if (error === null || error === undefined) return [];
+
+    const combined: readonly string[] = [
+      ...new Set([
+        ...Object.values(toServerFieldErrors(error)),
+        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
+      ]),
+    ];
+
+    return combined.length > 0
+      ? combined
+      : [$localize`:@@equipment.cf.createFailed:The equipment could not be registered.`];
+  });
+
+  /** Names a type on the closed select trigger. */
+  protected readonly typeLabelOf: (value: EquipmentType | '') => string = (value) =>
+    this.typeOptions.find((option) => option.value === value)?.label ?? '';
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method submit
+   *
+   * @description
+   * Marks the tree touched so every unmet rule shows at once, then emits
+   * when the form is valid. Blank optional fields are dropped rather than
+   * sent as empty strings.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {Event} event - The submit event.
+   *
+   * @returns {void}
+   */
+  protected submit(event: Event): void {
+    event.preventDefault();
+
+    this.createForm().markAsTouched();
+
+    if (this.createForm().invalid()) return;
+
+    const draft: EquipmentCreateFormDraft = this.model();
+    if (draft.type === '') return;
+
+    this.submitted.emit({
+      type: draft.type,
+      subType: trimmed(draft.subType),
+      brand: trimmed(draft.brand),
+      model: trimmed(draft.model),
+      serialNumber: trimmed(draft.serialNumber),
+      locationLabel: trimmed(draft.locationLabel),
+    });
+  }
+  //#endregion
+}

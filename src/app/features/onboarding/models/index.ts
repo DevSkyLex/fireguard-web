@@ -6,3 +6,6 @@ export type { OnboardingStepPresentation } from './onboarding-step/onboarding-st
 export type { OnboardingStepHistoryEntry } from './onboarding-step/onboarding-step-history-entry.interface';
 export type { OnboardingOutput } from './onboarding-output/onboarding-output.interface';
 export type { StartOnboardingInput } from './onboarding-output/start-onboarding-input.interface';
+export type { OnboardingStepStatusTagSeverity } from './onboarding-step-status-tag/onboarding-step-status-tag-severity.type';
+export type { OnboardingStepStatusTagDescriptor } from './onboarding-step-status-tag/onboarding-step-status-tag-descriptor.interface';
+export { resolveOnboardingStepStatusTag } from './onboarding-step-status-tag/onboarding-step-status-tag.util';

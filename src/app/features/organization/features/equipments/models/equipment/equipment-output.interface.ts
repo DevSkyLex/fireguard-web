@@ -1,5 +1,6 @@
 import type { HydraItem } from '@core/api/models';
 import type { EquipmentTagOutput } from '../equipment-tag/equipment-tag-output.interface';
+import type { EquipmentMaintenanceDueStatus } from './equipment-maintenance-due-status.type';
 
 /**
  * Type EquipmentStatus
@@ -153,6 +154,19 @@ export interface EquipmentOutput extends HydraItem {
   readonly locationLabel: string | null;
 
   /**
+   * Property facilityName
+   * @readonly
+   *
+   * @description
+   * Display name of the assigned facility, resolved server-side through the
+   * Facility module. `null` when unassigned, or when the name could not be
+   * resolved — an unresolved name is not a blank name.
+   *
+   * @type {string | null}
+   */
+  readonly facilityName: string | null;
+
+  /**
    * Property status
    * @readonly
    *
@@ -195,6 +209,19 @@ export interface EquipmentOutput extends HydraItem {
    * @type {ReadonlyArray<EquipmentTagOutput>}
    */
   readonly tags: ReadonlyArray<EquipmentTagOutput>;
+
+  /**
+   * Property maintenanceDueStatus
+   * @readonly
+   *
+   * @description
+   * How close the next scheduled maintenance is, resolved cross-module from
+   * the Maintenance module; `unscheduled` when the equipment has no
+   * maintenance schedule.
+   *
+   * @type {EquipmentMaintenanceDueStatus}
+   */
+  readonly maintenanceDueStatus: EquipmentMaintenanceDueStatus;
 
   /**
    * Property createdAt

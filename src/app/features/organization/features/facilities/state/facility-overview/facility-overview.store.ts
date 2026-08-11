@@ -168,6 +168,11 @@ export const FacilityOverviewStore = signalStore(
 
     /**
      * Per-status equipment breakdown rows used by the progress-bar summary.
+     * Colours mirror the severity this same status renders with elsewhere
+     * (`EQUIPMENT_STATUS_TAG_ICON_CLASS`): success for `operational`, warning
+     * for `under_maintenance`, danger for `decommissioned`, neutral for
+     * `in_stock` — the same literal light/dark rung pair, as a background
+     * fill rather than a glyph colour.
      */
     equipmentStatusRows: computed<ReadonlyArray<FacilityEquipmentStatusRow>>(() => {
       const equipment: ReadonlyArray<EquipmentOutput> = store.equipment();
@@ -190,28 +195,28 @@ export const FacilityOverviewStore = signalStore(
           count: byStatus.operational,
           total,
           ratio: total > 0 ? byStatus.operational / total : 0,
-          colorClass: 'bg-green-600',
+          colorClass: 'bg-green-500 dark:bg-green-400',
         },
         {
           label: $localize`:@@facility.equipmentBreakdown.inStock:In stock`,
           count: byStatus.in_stock,
           total,
           ratio: total > 0 ? byStatus.in_stock / total : 0,
-          colorClass: 'bg-blue-600',
+          colorClass: 'bg-neutral-500 dark:bg-neutral-400',
         },
         {
           label: $localize`:@@facility.equipmentBreakdown.underMaintenance:Under maintenance`,
           count: byStatus.under_maintenance,
           total,
           ratio: total > 0 ? byStatus.under_maintenance / total : 0,
-          colorClass: 'bg-amber-500',
+          colorClass: 'bg-amber-500 dark:bg-amber-400',
         },
         {
           label: $localize`:@@facility.equipmentBreakdown.decommissioned:Decommissioned`,
           count: byStatus.decommissioned,
           total,
           ratio: total > 0 ? byStatus.decommissioned / total : 0,
-          colorClass: 'bg-red-500',
+          colorClass: 'bg-red-500 dark:bg-red-400',
         },
       ];
     }),

@@ -1,0 +1,124 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="onboarding-facilities-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    @if (staged().length > 0) {
+      <ul class="flex flex-col gap-2" data-testid="onboarding-facilities-staged">
+        @for (facility of staged(); track facility.name; let i = $index) {
+          <li
+            class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 ring-1 ring-foreground/10"
+          >
+            <span class="text-sm">{{ facility.name }}</span>
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              [attr.data-testid]="'onboarding-facilities-remove-' + i"
+              (click)="removeFacility(i)"
+            >
+              <span i18n="@@onboarding.facilitiesForm.remove">Remove</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (atCapacity()) {
+      <p class="text-xs text-muted-foreground" i18n="@@onboarding.facilitiesForm.capacity">
+        You can stage up to 5 facilities at once.
+      </p>
+    } @else {
+      <hlm-field>
+        <label hlmFieldLabel for="onboarding-facility-type" i18n="@@onboarding.facilitiesForm.type">
+          Type
+        </label>
+        <hlm-select
+          id="onboarding-facility-type"
+          [itemToString]="typeLabelOf"
+          [formField]="draftForm.type"
+        >
+          <hlm-select-trigger class="w-full" data-testid="onboarding-facility-type">
+            <hlm-select-value
+              placeholder="Select a facility type"
+              i18n-placeholder="@@onboarding.facilitiesForm.typePlaceholder"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (option of typeOptions; track option.value) {
+                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="onboarding-facility-name" i18n="@@onboarding.facilitiesForm.name">
+          Name
+        </label>
+        <input
+          hlmInput
+          id="onboarding-facility-name"
+          type="text"
+          data-testid="onboarding-facility-name"
+          placeholder="Main warehouse"
+          i18n-placeholder="@@onboarding.facilitiesForm.namePlaceholder"
+          [formField]="draftForm.name"
+        />
+      </hlm-field>
+
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="onboarding-facility-address"
+          i18n="@@onboarding.facilitiesForm.address"
+        >
+          Address (optional)
+        </label>
+        <input
+          hlmInput
+          id="onboarding-facility-address"
+          type="text"
+          data-testid="onboarding-facility-address"
+          [formField]="draftForm.address"
+        />
+      </hlm-field>
+
+      <hlm-field orientation="horizontal">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          data-testid="onboarding-facility-add"
+          [disabled]="draftForm().invalid() || pending()"
+          (click)="addFacility()"
+        >
+          <span i18n="@@onboarding.facilitiesForm.add">Add facility</span>
+        </button>
+      </hlm-field>
+    }
+
+    <hlm-field orientation="horizontal">
+      <button
+        hlmBtn
+        type="submit"
+        data-testid="onboarding-facilities-submit"
+        [disabled]="pending()"
+      >
+        @if (pending()) {
+          <span i18n="@@onboarding.facilitiesForm.submitting">Saving…</span>
+        } @else {
+          <span i18n="@@onboarding.facilitiesForm.submit">Continue</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

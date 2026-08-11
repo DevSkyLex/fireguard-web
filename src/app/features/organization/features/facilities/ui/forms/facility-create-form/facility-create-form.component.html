@@ -1,0 +1,162 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group class="px-4">
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="facility-create-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="facility-create-type" i18n="@@facility.form.type">Type</label>
+      <hlm-select
+        id="facility-create-type"
+        [itemToString]="typeLabelOf"
+        [formField]="createForm.type"
+      >
+        <hlm-select-trigger class="w-full" data-testid="facility-create-type">
+          <hlm-select-value
+            placeholder="Select a facility type"
+            i18n-placeholder="@@facility.form.typePlaceholder"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (option of typeOptions; track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+      @if (createForm.type().touched() && createForm.type().invalid()) {
+        <hlm-field-error>{{ createForm.type().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="facility-create-name" i18n="@@facility.form.name">Name</label>
+      <input
+        hlmInput
+        id="facility-create-name"
+        type="text"
+        data-testid="facility-create-name"
+        placeholder="Main Building"
+        i18n-placeholder="@@facility.form.namePlaceholder"
+        [formField]="createForm.name"
+      />
+      @if (createForm.name().touched() && createForm.name().invalid()) {
+        <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="facility-create-parent" i18n="@@facility.form.parent"
+        >Parent facility</label
+      >
+      <hlm-combobox [formField]="createForm.parentFacilityId" [itemToString]="parentLabelOf">
+        <hlm-combobox-input
+          inputId="facility-create-parent"
+          placeholder="Search a facility, or leave empty for a root facility"
+          i18n-placeholder="@@facility.form.parentPlaceholder"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@facility.form.parentNoMatch"
+            >No facility matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of parentOptions(); track option.value) {
+              <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+      <hlm-field-description i18n="@@facility.form.parentHint"
+        >Leave empty to create a root facility.</hlm-field-description
+      >
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="facility-create-code" i18n="@@facility.form.codeLabel">Code</label>
+      <input
+        hlmInput
+        id="facility-create-code"
+        type="text"
+        data-testid="facility-create-code"
+        placeholder="BLD-001"
+        i18n-placeholder="@@facility.form.codePlaceholder"
+        [formField]="createForm.code"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="facility-create-address" i18n="@@facility.form.addressLabel"
+        >Address</label
+      >
+      <input
+        hlmInput
+        id="facility-create-address"
+        type="text"
+        data-testid="facility-create-address"
+        placeholder="123 Main Street, City"
+        i18n-placeholder="@@facility.form.addressPlaceholder"
+        [formField]="createForm.address"
+      />
+    </hlm-field>
+
+    <div class="flex gap-2">
+      <hlm-field class="flex-1">
+        <label hlmFieldLabel for="facility-create-latitude" i18n="@@facility.info.latitude"
+          >Latitude</label
+        >
+        <input
+          hlmInput
+          id="facility-create-latitude"
+          type="number"
+          step="any"
+          data-testid="facility-create-latitude"
+          [formField]="createForm.latitude"
+        />
+        @if (createForm.latitude().touched() && createForm.latitude().invalid()) {
+          <hlm-field-error>{{ createForm.latitude().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field class="flex-1">
+        <label hlmFieldLabel for="facility-create-longitude" i18n="@@facility.info.longitude"
+          >Longitude</label
+        >
+        <input
+          hlmInput
+          id="facility-create-longitude"
+          type="number"
+          step="any"
+          data-testid="facility-create-longitude"
+          [formField]="createForm.longitude"
+        />
+        @if (createForm.longitude().touched() && createForm.longitude().invalid()) {
+          <hlm-field-error>{{ createForm.longitude().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="facility-create-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@facility.cf.submitting">Creating…</span>
+        } @else {
+          <span i18n="@@facility.form.submit">Create facility</span>
+        }
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="facility-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

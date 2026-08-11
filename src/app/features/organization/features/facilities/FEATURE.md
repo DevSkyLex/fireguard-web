@@ -29,10 +29,34 @@ This subfeature does not own top-level organization selection. That remains in `
 Facility detail routes resolve facility context before child pages render.
 
 Facility coordinates come from the backend `latitude`/`longitude` fields
-(optional on `FacilityOutput`) and are captured in the facility create/edit form
-(`ui/forms/facility-form`, enforced both-or-neither). If a map surface is
-reintroduced, a generic, domain-agnostic map primitive would live as its own
-`shared/<concept>/` folder per `ARCHITECTURE.md` §8.5.
+(optional on `FacilityOutput`), enforced both-or-neither. They may be set at
+creation (`ui/forms/facility-create-form`) or afterward, in place, on the
+record's Information tab (`ui/components/facility-information-panel`) — there
+is no separate coordinates form. If a map surface is reintroduced, a generic,
+domain-agnostic map primitive would live as its own `shared/<concept>/`
+folder per `ARCHITECTURE.md` §8.5.
+
+## UI (this pass)
+
+- `ui/pages/facilities-page` (`FacilitiesPage`) — the roots-only list:
+  search, an "include archived" filter, a list/grid toggle
+  (`ui/tables/facility-table` / `ui/dataviews/facility-grid`), and a "New
+  facility" link. Row actions are limited to Archive/Restore.
+- `ui/pages/facility-create-page` (`FacilityCreatePage`) —
+  `ui/forms/facility-create-form`, requiring only `type` and `name`; parent,
+  code, address and coordinates are optional here and remain editable on the
+  record afterward.
+- `ui/pages/facility-detail-page` (`FacilityDetailPage`) — two tabs.
+  **Overview** (default) renders `ui/components/facility-hierarchy-chart`
+  (only when `hasChildren`) plus the `FacilityOverviewStore` summary
+  (compliance rate, equipment count/breakdown, next inspection, recent
+  inspections). **Information** renders
+  `ui/components/facility-information-panel`, the in-place edit surface for
+  `name`/`code`/`address`/coordinates; `type` and the parent render as
+  read-only rows. A header **Delete** action is danger, confirm-gated
+  (`hlm-alert-dialog`), and `FACILITIES_WRITE`-gated.
+- `ui/components/facility-status-tag` — the `FacilityOutput.status` registry
+  (`active`/`archived`), the only appearance of the enum in this feature.
 
 ## Facility Listing (Roots-Only DataView)
 
@@ -55,8 +79,9 @@ flat, paginated dataview with a list/grid layout toggle:
   the root listing.
 
 Search and pagination operate on the **root level only** (the `?page=` query
-param is synced for roots). Row actions reuse the existing view / edit /
-archive / restore flows.
+param is synced for roots). Row actions are Open (into the record, which is
+also the edit surface — there is no separate row-level edit action) and
+Archive/Restore.
 
 ## Facility Hierarchy (Detail Overview)
 
@@ -104,22 +129,27 @@ Primary service:
 - `/:facilityId/edit` is retired and **redirects onto the record**, so installed
   applications and bookmarks still resolve.
 - Depends on organization route context from the parent organization feature.
-- The parent feature consumes this subfeature's `state` barrel (`FacilityTreeStore`)
-  and its `ui/components` barrel (`AssetEquipmentTab`, `AssetInspectionTab`)
-  for the assets explorer at `/organizations/:organizationId/assets`
-  (ARCHITECTURE.md §4). Read-only — the parent browses the hierarchy, this
-  subfeature keeps ownership of sites and of those panes.
-- Consumes the sibling `equipments` and `inspections` subfeatures for the
-  `AssetEquipmentTab` / `AssetInspectionTab` panes (their stores, models and
-  tables). Those panes take an **optional** `facilityId`: given, they show one
-  site's contents; omitted, the whole organization's. That is what lets the same
-  pane serve the facility record and both axes of the assets explorer instead of
-  a second copy of the same orchestration.
-- Both panes navigate by **absolute** path. They are hosted at two different
-  depths — the facility record two segments down, the assets explorer one — and
-  a relative `../..` meant the right destination from one host and a dead URL
-  from the other.
+- The parent feature consumes this subfeature's `state` barrel
+  (`FacilityTreeStore`) for the assets explorer at
+  `/organizations/:organizationId/assets` (ARCHITECTURE.md §4). Read-only —
+  the parent browses the hierarchy, this subfeature keeps ownership of sites.
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
+
+### Deferred, not built
+
+`AssetEquipmentTab` / `AssetInspectionTab` — the shared equipment/inspection
+panes this document previously named for both the facility record and the
+assets explorer — are **not built in this pass**. `FacilityTreeStore` exists
+and the assets explorer route is not yet mounted (`organization/FEATURE.md`
+"Currently mounted"); the sibling `inspections` subfeature has no `ui/` of
+its own yet either. Building two composite panes ahead of the route and the
+sibling subfeature they would depend on was judged premature — the facility
+detail page's Overview tab instead reads its equipment/inspection summary
+directly from `FacilityOverviewStore` (`ARCHITECTURE.md` §10.10/§2.9). When
+the assets explorer route is built, revisit whether these panes are still the
+right shape; when they are, they take an **optional** `facilityId` and
+navigate by **absolute** path, for the same reason the rest of this
+document's cross-feature panes do.
 
 ## Deletion
 

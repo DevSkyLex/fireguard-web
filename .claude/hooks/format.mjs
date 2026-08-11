@@ -19,15 +19,22 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-// This file is `<app>/.claude/hooks/format.mjs`, so the app root is two levels up.
-// Deriving it from the script's own location rather than the payload cwd keeps the
-// hook correct whatever the session cwd is (a worktree, the monorepo root) — a
-// cwd-based root would silently find no .oxfmtrc.json and turn the hook into a no-op.
-const APP_ROOT = path
-  .resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
-  .replace(/\\/g, '/');
+// The app root is found by walking up FROM THE EDITED FILE until .oxfmtrc.json
+// appears. The script's own location cannot be used: `claude plugin install` COPIES
+// this .claude/ into ~/.claude/plugins/cache, so in plugin mode the running copy
+// lives nowhere near the app. Anchoring on the edited file works in both modes and
+// self-scopes the hook — a file outside this app never finds .oxfmtrc.json above it,
+// and the hook stays a silent no-op.
+function findAppRoot(fromFile, markerSegments) {
+  let dir = path.dirname(path.resolve(fromFile));
+  for (;;) {
+    if (existsSync(path.join(dir, ...markerSegments))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
 
 const FORMATTABLE = new Set(['.ts', '.html', '.css', '.scss', '.json', '.mjs', '.js', '.md']);
 const SKIP_SEGMENTS = [
@@ -69,8 +76,8 @@ const normalized = filePath.replace(/\\/g, '/');
 if (SKIP_SEGMENTS.some((seg) => normalized.includes(seg))) process.exit(0);
 if (!FORMATTABLE.has(path.extname(normalized).toLowerCase())) process.exit(0);
 
-const root = APP_ROOT;
-if (!existsSync(path.join(root, '.oxfmtrc.json'))) process.exit(0);
+const root = findAppRoot(filePath, ['.oxfmtrc.json']);
+if (!root) process.exit(0);
 
 // oxfmt's npm `bin` entry is a JS launcher run by Node itself. Invoking it through
 // `process.execPath` — instead of `npx` with `shell: true` — removes the npx cold

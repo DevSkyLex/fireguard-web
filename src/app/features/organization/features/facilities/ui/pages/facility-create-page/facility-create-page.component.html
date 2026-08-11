@@ -1,0 +1,33 @@
+<div id="facility-create" class="flex w-full flex-col gap-4 p-4 md:p-6">
+  <div class="flex items-start justify-between gap-3">
+    <div class="flex flex-col gap-1">
+      <h1 class="text-2xl font-semibold tracking-tight" i18n="@@facility.create.title">
+        New Facility
+      </h1>
+      <p class="text-sm text-muted-foreground" i18n="@@facility.create.description">
+        Register a site, building or area, and place it in the hierarchy.
+      </p>
+    </div>
+
+    <a
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      data-testid="facility-create-back"
+      [routerLink]="['/organizations', organizationId(), 'facilities']"
+    >
+      <span i18n="@@facility.detail.backToList">Back to facilities</span>
+    </a>
+  </div>
+
+  <div hlmCard class="max-w-xl">
+    <app-facility-create-form
+      [pending]="store.isCreating()"
+      [serverError]="store.createError()"
+      [parentOptions]="parentOptions()"
+      (submitted)="onSubmitted($event)"
+      (cancelled)="onCancelled()"
+    />
+  </div>
+</div>

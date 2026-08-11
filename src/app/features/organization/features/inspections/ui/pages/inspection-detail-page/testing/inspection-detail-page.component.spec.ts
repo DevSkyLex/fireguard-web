@@ -1,0 +1,241 @@
+import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
+import {
+  errorCallState,
+  idleCallState,
+  successCallState,
+  type CallState,
+} from '@core/request-state';
+import { OrganizationPermissionService } from '@features/organization/access';
+import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import {
+  ActiveInspectionStore,
+  InspectionStore,
+} from '@features/organization/features/inspections/state';
+import { InspectionDetailPage } from '../inspection-detail-page.component';
+
+const inspection = (overrides: Partial<InspectionOutput> = {}): InspectionOutput =>
+  ({
+    '@id': '/api/organizations/org-1/inspections/inspection-1',
+    '@type': 'Inspection',
+    id: 'inspection-1',
+    organizationId: 'org-1',
+    equipmentId: 'equipment-1',
+    facilityId: null,
+    result: 'pass',
+    status: 'draft',
+    performedAt: '2026-08-10T00:00:00Z',
+    inspector: null,
+    checklistId: null,
+    notes: null,
+    signature: null,
+    nonConformitiesCount: 0,
+    createdAt: '2026-08-10T00:00:00Z',
+    updatedAt: '2026-08-10T00:00:00Z',
+    ...overrides,
+  }) as InspectionOutput;
+
+describe('InspectionDetailPage', () => {
+  let fixture: ComponentFixture<InspectionDetailPage>;
+  let update: ReturnType<typeof vi.fn>;
+  let submit: ReturnType<typeof vi.fn>;
+  let close: ReturnType<typeof vi.fn>;
+  let cancel: ReturnType<typeof vi.fn>;
+  let navigate: ReturnType<typeof vi.fn>;
+  let selectedInspection: WritableSignal<InspectionOutput | null>;
+  let updateCallState: WritableSignal<CallState<InspectionOutput | null>>;
+  let cancelCallState: WritableSignal<CallState<string | null>>;
+  let isChangingLifecycle: WritableSignal<boolean>;
+
+  const createPage = async (): Promise<void> => {
+    fixture = TestBed.createComponent(InspectionDetailPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
+    fixture.componentRef.setInput('inspectionId', 'inspection-1');
+    await fixture.whenStable();
+  };
+
+  beforeEach(() => {
+    update = vi.fn();
+    submit = vi.fn();
+    close = vi.fn();
+    cancel = vi.fn();
+    selectedInspection = signal<InspectionOutput | null>(inspection());
+    updateCallState = signal<CallState<InspectionOutput | null>>(idleCallState());
+    cancelCallState = signal<CallState<string | null>>(idleCallState());
+    isChangingLifecycle = signal<boolean>(false);
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: ActiveInspectionStore, useValue: { selectedInspection } },
+        {
+          provide: InspectionStore,
+          useValue: {
+            update,
+            submit,
+            close,
+            cancel,
+            updateCallState,
+            cancelCallState,
+            updateError: signal(null),
+            isChangingLifecycle,
+          },
+        },
+        {
+          provide: OrganizationPermissionService,
+          useValue: { hasPermission: (): boolean => true },
+        },
+      ],
+    });
+
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+  });
+
+  it('should show the inspection title once resolved', async () => {
+    await createPage();
+
+    const text: string = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('Inspection 2026-08-10');
+  });
+
+  it('should show a loading state before the inspection resolves', async () => {
+    selectedInspection.set(null);
+    await createPage();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[role="status"]')).not.toBeNull();
+  });
+
+  it('should offer Submit and Cancel while draft', async () => {
+    await createPage();
+
+    const element: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="inspection-submit"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="inspection-cancel"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="inspection-close"]')).toBeNull();
+  });
+
+  it('should offer only Close while submitted', async () => {
+    selectedInspection.set(inspection({ status: 'submitted' }));
+    await createPage();
+
+    const element: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="inspection-close"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="inspection-submit"]')).toBeNull();
+    expect(element.querySelector('[data-testid="inspection-cancel"]')).toBeNull();
+  });
+
+  it('should offer no lifecycle action once closed', async () => {
+    selectedInspection.set(inspection({ status: 'closed' }));
+    await createPage();
+
+    expect(
+      (fixture.nativeElement as HTMLElement)
+        .querySelector('[data-testid="inspection-lifecycle-band"]')
+        ?.textContent?.trim(),
+    ).toBe('');
+  });
+
+  it('should gate the in-place fields to a draft inspection', async () => {
+    selectedInspection.set(inspection({ status: 'submitted' }));
+    await createPage();
+
+    expect(fixture.componentInstance['canEditFields']()).toBe(false);
+  });
+
+  it('should call submit when the Submit action is taken', async () => {
+    await createPage();
+
+    fixture.componentInstance['onSubmit']();
+
+    expect(submit).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      inspectionId: 'inspection-1',
+    });
+  });
+
+  it('should refuse a lifecycle action while another one is already in flight', async () => {
+    isChangingLifecycle.set(true);
+    await createPage();
+
+    fixture.componentInstance['onSubmit']();
+
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('should send the cancel write once confirmed', async () => {
+    await createPage();
+
+    fixture.componentInstance['requestCancel']();
+    fixture.componentInstance['confirmCancel']();
+
+    expect(cancel).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      inspectionId: 'inspection-1',
+    });
+  });
+
+  it('should return to the list once the cancellation succeeds', async () => {
+    await createPage();
+
+    cancelCallState.set(successCallState('inspection-1'));
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'inspections']);
+  });
+
+  it('should send an in-place patch for the currently open field', async () => {
+    await createPage();
+
+    fixture.componentInstance['onEditTargetChanged']('notes');
+    fixture.componentInstance['onDetailsChanged']({ notes: 'Looks fine' });
+
+    expect(update).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      inspectionId: 'inspection-1',
+      input: { notes: 'Looks fine' },
+    });
+  });
+
+  it('should close the field once its write succeeds', async () => {
+    await createPage();
+
+    fixture.componentInstance['onEditTargetChanged']('notes');
+    fixture.componentInstance['onDetailsChanged']({ notes: 'Looks fine' });
+    updateCallState.set(successCallState(inspection({ notes: 'Looks fine' })));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['editState']()).toEqual({
+      open: null,
+      saving: null,
+      failed: null,
+      failure: null,
+    });
+  });
+
+  it('should attribute a rejection to the field that caused it, and keep it open', async () => {
+    await createPage();
+
+    fixture.componentInstance['onEditTargetChanged']('notes');
+    fixture.componentInstance['onDetailsChanged']({ notes: 'Looks fine' });
+    updateCallState.set(
+      errorCallState({
+        error: null,
+        message: 'Rejected',
+        code: 422,
+        retryable: false,
+        timestamp: 0,
+      }),
+    );
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['editState']()).toEqual({
+      open: 'notes',
+      saving: null,
+      failed: 'notes',
+      failure: 'Rejected',
+    });
+  });
+});

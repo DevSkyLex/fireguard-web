@@ -51,6 +51,7 @@ describe('EquipmentService', () => {
     id: equipmentId,
     organizationId: orgId,
     facilityId: null,
+    facilityName: null,
     type: 'fire_extinguisher',
     subType: 'ABC',
     brand: 'Sicli',
@@ -61,6 +62,7 @@ describe('EquipmentService', () => {
     installedAt: null,
     commissionedAt: null,
     tags: [],
+    maintenanceDueStatus: 'unscheduled',
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-03-01T00:00:00+00:00',
   };

@@ -1,0 +1,211 @@
+<div class="flex flex-col gap-1">
+  <div
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    data-testid="inspection-field-equipment"
+  >
+    <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@inspection.info.equipment"
+      >Equipment</span
+    >
+    <span class="min-w-0 flex-1 text-sm">
+      <a
+        class="rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        [routerLink]="['/organizations', organizationId(), 'equipments', inspection().equipmentId]"
+      >
+        <span i18n="@@inspection.info.viewEquipment">View equipment</span>
+      </a>
+    </span>
+  </div>
+
+  <div
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    data-testid="inspection-field-facility"
+  >
+    <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@inspection.info.facility"
+      >Facility</span
+    >
+    <span class="min-w-0 flex-1 text-sm">
+      @if (inspection().facilityId; as facilityId) {
+        <a
+          class="rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          [routerLink]="['/organizations', organizationId(), 'facilities', facilityId]"
+        >
+          <span i18n="@@inspection.info.viewFacility">View facility</span>
+        </a>
+      } @else {
+        <span class="text-muted-foreground" i18n="@@inspection.notSpecified">Not specified</span>
+      }
+    </span>
+  </div>
+
+  <div
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    data-testid="inspection-field-checklist"
+  >
+    <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@inspection.info.checklist"
+      >Checklist</span
+    >
+    <span class="min-w-0 flex-1 text-sm">
+      @if (inspection().checklistId; as checklistId) {
+        <span class="font-medium tabular-nums">{{ checklistId }}</span>
+      } @else {
+        <span class="text-muted-foreground" i18n="@@inspection.notSpecified">Not specified</span>
+      }
+    </span>
+  </div>
+
+  <div
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    data-testid="inspection-field-inspector"
+  >
+    <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@inspection.info.inspector"
+      >Inspector</span
+    >
+    <span class="min-w-0 flex-1 text-sm">
+      @if (inspection().inspector; as inspector) {
+        <span class="font-medium">{{ inspector.displayName }}</span>
+        @if (inspector.organizationName; as organizationName) {
+          <span class="block text-xs text-muted-foreground">{{ organizationName }}</span>
+        }
+      } @else {
+        <span class="text-muted-foreground" i18n="@@inspection.notSpecified">Not specified</span>
+      }
+    </span>
+  </div>
+
+  <div data-testid="inspection-field-result">
+    <app-inplace-field
+      label="Result"
+      i18n-label="@@inspection.info.result"
+      commit="pick"
+      [editable]="editable()"
+      [editing]="isEditing('result')"
+      [pending]="isSaving('result')"
+      [error]="errorFor('result')"
+      (editingChange)="onResultEditing($event)"
+    >
+      <app-inspection-status-tag fieldValue kind="result" [value]="inspection().result" asOption />
+
+      <hlm-select
+        fieldEditor
+        class="w-full"
+        [value]="inspection().result"
+        (valueChange)="pickResult($any($event))"
+      >
+        <label for="inspection-prop-result" class="sr-only" i18n="@@inspection.info.result"
+          >Result</label
+        >
+        <hlm-select-trigger buttonId="inspection-prop-result" class="w-full">
+          <hlm-select-value />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (result of resultValues; track result) {
+              <hlm-select-item [value]="result">
+                <app-inspection-status-tag kind="result" [value]="result" asOption />
+              </hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="inspection-field-performed-at">
+    <app-inplace-field
+      #performedAtField
+      label="Performed on"
+      i18n-label="@@inspection.info.performedAt"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('performedAt')"
+      [pending]="isSaving('performedAt')"
+      [error]="errorFor('performedAt')"
+      [canSave]="canSaveDate()"
+      (editingChange)="onDateEditing($event)"
+      (saved)="saveDate()"
+    >
+      <span fieldValue class="font-medium tabular-nums">{{
+        inspection().performedAt.slice(0, 10)
+      }}</span>
+
+      <input
+        fieldEditor
+        hlmInput
+        type="date"
+        class="w-full"
+        [attr.aria-labelledby]="performedAtField.labelId"
+        [value]="dateDraft()"
+        (input)="dateDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="inspection-field-notes">
+    <app-inplace-field
+      #notesField
+      label="Notes"
+      i18n-label="@@inspection.info.notes"
+      commit="confirm"
+      orientation="vertical"
+      [editable]="editable()"
+      [editing]="isEditing('notes')"
+      [pending]="isSaving('notes')"
+      [error]="errorFor('notes')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('notes', $event)"
+      (saved)="saveText()"
+    >
+      @if (inspection().notes; as value) {
+        <span fieldValue class="whitespace-pre-wrap">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@inspection.notSpecified">
+          Not specified
+        </span>
+      }
+
+      <textarea
+        fieldEditor
+        hlmTextarea
+        class="w-full"
+        rows="3"
+        [attr.aria-labelledby]="notesField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      ></textarea>
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="inspection-field-signature">
+    <app-inplace-field
+      #signatureField
+      label="Signature"
+      i18n-label="@@inspection.info.signature"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('signature')"
+      [pending]="isSaving('signature')"
+      [error]="errorFor('signature')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('signature', $event)"
+      (saved)="saveText()"
+    >
+      @if (inspection().signature; as value) {
+        <span fieldValue class="font-medium">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@inspection.notSpecified">
+          Not specified
+        </span>
+      }
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="signatureField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+</div>

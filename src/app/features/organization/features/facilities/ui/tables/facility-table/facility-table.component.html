@@ -1,0 +1,126 @@
+<div class="max-h-[700px] w-full overflow-auto rounded-md border">
+  <div hlmTableContainer>
+    <table hlmTable>
+      <caption hlmTableCaption class="sr-only" i18n="@@facility.list.tableCaption">
+        The organization's root facilities.
+      </caption>
+
+      <thead hlmTableHeader>
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@facility.list.columnName">Name</th>
+          <th hlmTableHead i18n="@@facility.list.columnType">Type</th>
+          <th hlmTableHead i18n="@@facility.list.columnCode">Code</th>
+          <th hlmTableHead i18n="@@facility.list.columnStatus">Status</th>
+          <th hlmTableHead class="w-[52px]">
+            <span class="sr-only" i18n="@@facility.list.columnActions">Actions</span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @if (loading()) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-40 max-w-full" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-16" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="ms-auto size-6" /></td>
+            </tr>
+          }
+        } @else {
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="facility-table-row">
+              <td hlmTableCell>
+                <a
+                  class="inline-flex items-center gap-1.5 rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  [routerLink]="[...detailRouteBase(), item.id]"
+                >
+                  {{ item.name }}
+                  @if (item.hasChildren) {
+                    <ng-icon
+                      name="lucideNetwork"
+                      class="text-muted-foreground"
+                      i18n-aria-label="@@facility.list.hasChildrenLabel"
+                      aria-label="Has sub-facilities"
+                    />
+                  }
+                </a>
+              </td>
+
+              <td hlmTableCell class="text-muted-foreground">{{ typeLabelOf(item.type) }}</td>
+
+              <td hlmTableCell class="tabular-nums">
+                {{ item.code }}
+              </td>
+
+              <td hlmTableCell>
+                <app-facility-status-tag [value]="item.status" />
+              </td>
+
+              <td hlmTableCell class="text-right">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  align="end"
+                  class="max-sm:size-11"
+                  data-testid="facility-table-row-menu"
+                  [hlmDropdownMenuTrigger]="rowMenu"
+                >
+                  <ng-icon name="lucideEllipsis" aria-hidden="true" />
+                  <span class="sr-only" i18n="@@facility.list.rowMenu">Open menu</span>
+                </button>
+
+                <ng-template #rowMenu>
+                  <hlm-dropdown-menu class="w-48">
+                    <a hlmDropdownMenuItem [routerLink]="[...detailRouteBase(), item.id]">
+                      <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
+                      <span i18n="@@facility.list.rowOpen">Open</span>
+                    </a>
+
+                    @if (canWrite() && item.status === 'active') {
+                      <hlm-dropdown-menu-separator />
+                      <button
+                        hlmDropdownMenuItem
+                        data-testid="facility-table-row-archive"
+                        (click)="archiveRequested.emit(item)"
+                      >
+                        <ng-icon name="lucideArchive" aria-hidden="true" />
+                        <span i18n="@@facility.list.rowArchive">Archive</span>
+                      </button>
+                    }
+
+                    @if (canWrite() && item.status === 'archived') {
+                      <hlm-dropdown-menu-separator />
+                      <button
+                        hlmDropdownMenuItem
+                        data-testid="facility-table-row-restore"
+                        (click)="restoreRequested.emit(item)"
+                      >
+                        <ng-icon name="lucideArchiveRestore" aria-hidden="true" />
+                        <span i18n="@@facility.list.rowRestore">Restore</span>
+                      </button>
+                    }
+                  </hlm-dropdown-menu>
+                </ng-template>
+              </td>
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                colspan="5"
+                i18n="@@facility.list.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

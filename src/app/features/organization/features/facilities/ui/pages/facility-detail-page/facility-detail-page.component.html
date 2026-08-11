@@ -1,0 +1,265 @@
+<div id="facility-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
+  @if (activeFacilityStore.selectedFacility(); as facility) {
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="flex min-w-0 flex-col gap-1">
+        <h1 class="min-w-0 truncate text-2xl font-semibold tracking-tight">{{ facility.name }}</h1>
+        <div class="flex flex-wrap items-center gap-2">
+          <app-facility-status-tag [value]="facility.status" />
+          @if (facility.code; as code) {
+            <span class="text-sm text-muted-foreground tabular-nums">{{ code }}</span>
+          }
+          @if (facility.address; as address) {
+            <span class="text-sm text-muted-foreground">{{ address }}</span>
+          }
+        </div>
+        <p class="text-sm text-muted-foreground" data-testid="facility-detail-meta">
+          {{ metaLine() }}
+        </p>
+      </div>
+
+      @if (canWrite()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="destructive"
+          class="max-sm:min-h-11"
+          data-testid="facility-detail-delete"
+          (click)="requestDelete()"
+        >
+          <ng-icon name="lucideTrash2" aria-hidden="true" />
+          <span i18n="@@facility.detail.delete">Delete</span>
+        </button>
+      }
+    </div>
+
+    <hlm-tabs [tab]="activeTab()" class="flex-col" (tabActivated)="onLinkedTabActivated($event)">
+      <hlm-tabs-list
+        aria-label="Facility sections"
+        i18n-aria-label="@@facility.detail.tabsAriaLabel"
+      >
+        <button
+          hlmTabsTrigger="overview"
+          class="max-sm:min-h-11"
+          data-testid="facility-tab-overview"
+        >
+          <span i18n="@@facility.detail.tabs.overview">Overview</span>
+        </button>
+        <button
+          hlmTabsTrigger="information"
+          class="max-sm:min-h-11"
+          data-testid="facility-tab-information"
+        >
+          <span i18n="@@facility.detail.tabs.information">Information</span>
+        </button>
+      </hlm-tabs-list>
+
+      <div hlmTabsContent="overview" class="flex flex-col gap-6">
+        <section
+          class="flex flex-col gap-1"
+          aria-labelledby="facility-hierarchy-title"
+          data-testid="facility-detail-hierarchy"
+        >
+          <h2
+            id="facility-hierarchy-title"
+            class="px-2 text-base font-semibold"
+            i18n="@@facility.detail.hierarchyTitle"
+          >
+            Hierarchy
+          </h2>
+          @if (facility.hasChildren) {
+            <app-facility-hierarchy-chart
+              class="px-2"
+              [facility]="facility"
+              [childrenByParent]="store.childFacilitiesByParent()"
+              [activeFacilityId]="facilityId()"
+              (selected)="onHierarchyNodeSelected($event)"
+            />
+          } @else {
+            <p class="px-2 text-sm text-muted-foreground" i18n="@@facility.detail.noChildren">
+              This facility has no sub-facilities.
+            </p>
+          }
+        </section>
+
+        <div hlmCard>
+          <div hlmCardContent class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div class="flex flex-col gap-1">
+              <p class="text-xs text-muted-foreground" i18n="@@facility.metric.compliance.title">
+                Compliance rate
+              </p>
+              <p class="text-2xl font-semibold tabular-nums">{{ overview.complianceDisplay() }}</p>
+            </div>
+            <div class="flex flex-col gap-1 sm:border-s sm:border-border sm:ps-4">
+              <p class="text-xs text-muted-foreground" i18n="@@facility.metric.equipments.title">
+                Equipment
+              </p>
+              <p class="text-2xl font-semibold tabular-nums">{{ overview.equipmentCount() }}</p>
+              <p class="text-xs text-muted-foreground">{{ overview.equipmentDescription() }}</p>
+            </div>
+            <div class="flex flex-col gap-1 sm:border-s sm:border-border sm:ps-4">
+              <p
+                class="text-xs text-muted-foreground"
+                i18n="@@facility.metric.nextInspection.title"
+              >
+                Next inspection
+              </p>
+              <p class="text-2xl font-semibold tabular-nums">
+                @if (overview.nextInspectionInDays(); as days) {
+                  <span i18n="@@facility.metric.nextInspection.days">{{ days }} day(s)</span>
+                } @else {
+                  <span>—</span>
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+
+        @if (overview.isLoadingEquipment() || overview.equipmentCount() > 0) {
+          <section
+            class="flex flex-col gap-1"
+            aria-labelledby="facility-equipment-status-title"
+            data-testid="facility-detail-equipment-status"
+          >
+            <h2
+              id="facility-equipment-status-title"
+              class="px-2 text-base font-semibold"
+              i18n="@@facility.equipmentBreakdown.title"
+            >
+              Equipment status
+            </h2>
+            @if (overview.isLoadingEquipment()) {
+              <div
+                class="flex flex-col gap-3 px-2"
+                role="status"
+                aria-label="Loading equipment status"
+                i18n-aria-label="@@facility.equipmentBreakdown.loadingAria"
+              >
+                <hlm-skeleton class="h-3 w-full" />
+                <hlm-skeleton class="h-3 w-full" />
+                <hlm-skeleton class="h-3 w-full" />
+              </div>
+            } @else {
+              <div class="flex flex-col gap-3 px-2">
+                @for (row of overview.equipmentStatusRows(); track row.label) {
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center justify-between text-sm">
+                      <span>{{ row.label }}</span>
+                      <span class="text-muted-foreground tabular-nums">{{ row.count }}</span>
+                    </div>
+                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        class="h-full rounded-full"
+                        [class]="row.colorClass"
+                        [style.width.%]="row.ratio * 100"
+                        data-testid="facility-equipment-status-bar"
+                      ></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        @if (overview.isLoadingInspections() || overview.recentInspections().length > 0) {
+          <section
+            class="flex flex-col gap-1"
+            aria-labelledby="facility-recent-inspections-title"
+            data-testid="facility-detail-recent-inspections"
+          >
+            <h2
+              id="facility-recent-inspections-title"
+              class="px-2 text-base font-semibold"
+              i18n="@@facility.recentInspections.title"
+            >
+              Recent inspections
+            </h2>
+            @if (overview.isLoadingInspections()) {
+              <div
+                class="flex flex-col gap-2 px-2"
+                role="status"
+                aria-label="Loading recent inspections"
+                i18n-aria-label="@@facility.recentInspections.loadingAria"
+              >
+                <hlm-skeleton class="h-4 w-full" />
+                <hlm-skeleton class="h-4 w-full" />
+              </div>
+            } @else {
+              <div class="flex flex-col divide-y divide-border px-2">
+                @for (inspection of overview.recentInspections(); track inspection.id) {
+                  <div class="flex items-center justify-between py-2 text-sm">
+                    <span>{{ inspection.performedAt | date: 'mediumDate' }}</span>
+                    <span class="text-muted-foreground">{{
+                      resultLabelOf(inspection.result)
+                    }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+      </div>
+
+      <div hlmTabsContent="information" class="flex flex-col gap-4">
+        <section
+          class="flex max-w-2xl flex-col gap-1"
+          aria-labelledby="facility-detail-info-title"
+          data-testid="facility-detail-info"
+        >
+          <h2
+            id="facility-detail-info-title"
+            class="px-2 text-base font-semibold"
+            i18n="@@facility.info.title"
+          >
+            Facility information
+          </h2>
+          <app-facility-information-panel
+            [facility]="facility"
+            [editable]="canWrite()"
+            [editState]="editState()"
+            [organizationId]="organizationId()"
+            (detailsChanged)="onDetailsChanged($event)"
+            (editTargetChanged)="onEditTargetChanged($event)"
+          />
+        </section>
+      </div>
+    </hlm-tabs>
+  } @else {
+    <div
+      class="flex flex-col gap-4"
+      role="status"
+      aria-label="Loading facility"
+      i18n-aria-label="@@facility.detail.loadingAria"
+    >
+      <hlm-skeleton class="h-8 w-64" />
+      <hlm-skeleton class="h-4 w-40" />
+      <hlm-skeleton class="h-9 w-full max-w-md" />
+      <hlm-skeleton class="h-64 w-full" />
+    </div>
+  }
+</div>
+
+<hlm-alert-dialog [state]="deleteDialogState()" (stateChanged)="onDeleteDialogStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="facility-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@facility.detail.deleteConfirmTitle">Delete facility?</h2>
+      <p hlmAlertDialogDescription i18n="@@facility.detail.deleteConfirmDescription">
+        A published facility is archived and can be restored; a draft facility is permanently
+        removed. This cannot be undone from here.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@facility.detail.deleteConfirmCancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="facility-delete-confirm"
+        [disabled]="store.deleteCallState().status === 'pending'"
+        (click)="confirmDelete()"
+        i18n="@@facility.detail.deleteConfirmAction"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

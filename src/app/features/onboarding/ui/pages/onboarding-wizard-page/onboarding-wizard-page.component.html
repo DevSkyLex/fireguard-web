@@ -1,0 +1,100 @@
+<div class="mx-auto flex w-full max-w-xl flex-col gap-8">
+  @if (currentStep(); as step) {
+    <div class="lg:hidden" data-testid="onboarding-wizard-step-rail">
+      <app-onboarding-step-rail
+        [steps]="store.steps()"
+        [activeStepKey]="store.nextStep()"
+        [progress]="store.progress()"
+      />
+    </div>
+
+    @if (stepPresentation(); as presentation) {
+      <header class="flex flex-col gap-2">
+        <h1 class="text-2xl font-semibold tracking-tight">{{ presentation.label }}</h1>
+        <p class="text-sm text-muted-foreground">{{ presentation.description }}</p>
+      </header>
+    }
+
+    @switch (step.key) {
+      @case ('create_organization') {
+        <app-onboarding-organization-form
+          [pending]="stepPending()"
+          [serverError]="stepError()"
+          (submitted)="submitOrganization($event)"
+        />
+      }
+      @case ('select_plan') {
+        <app-onboarding-plan-form
+          [plans]="plans()"
+          [pricing]="pricing()"
+          [pending]="stepPending()"
+          [serverError]="stepError()"
+          (submitted)="submitPlan($event)"
+        />
+      }
+      @case ('invite_members') {
+        <app-onboarding-members-form
+          [roles]="roles()"
+          [pending]="stepPending()"
+          [serverError]="stepError()"
+          (submitted)="submitMembers($event)"
+        />
+      }
+      @case ('create_first_facility') {
+        <app-onboarding-facilities-form
+          [pending]="stepPending()"
+          [serverError]="stepError()"
+          (submitted)="submitFacilities($event)"
+        />
+      }
+      @case ('create_first_equipment') {
+        <app-onboarding-equipment-form
+          [pending]="stepPending()"
+          [serverError]="stepError()"
+          (submitted)="submitEquipment($event)"
+        />
+      }
+    }
+
+    @if (step.skippable && step.skipAvailable) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        data-testid="onboarding-wizard-skip"
+        [disabled]="stepPending()"
+        (click)="skipCurrentStep()"
+      >
+        <span i18n="@@onboarding.wizard.skip">Skip for now</span>
+      </button>
+    }
+  } @else if (store.isBlocked()) {
+    <div
+      role="alert"
+      data-testid="onboarding-wizard-blocked"
+      class="flex flex-col gap-3 rounded-lg px-4 py-3 ring-1 ring-destructive/20"
+    >
+      <p class="text-sm font-medium text-destructive" i18n="@@onboarding.wizard.blocked">
+        Your activation is blocked.
+      </p>
+      @if (store.blockedReason(); as reason) {
+        <p class="text-sm text-muted-foreground">{{ reason }}</p>
+      }
+      @if (store.canRollback()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          [disabled]="store.isRollingBack()"
+          (click)="rollbackStep()"
+        >
+          <span i18n="@@onboarding.wizard.rollback">Go back a step</span>
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="flex items-center justify-center py-16" data-testid="onboarding-wizard-loading">
+      <hlm-spinner />
+    </div>
+  }
+</div>

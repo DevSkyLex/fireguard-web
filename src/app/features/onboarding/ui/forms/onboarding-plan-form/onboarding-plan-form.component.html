@@ -1,0 +1,49 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="onboarding-plan-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <hlm-radio-group [formField]="planForm.planKey" data-testid="onboarding-plan-group">
+        @for (row of rows(); track row.key) {
+          <label
+            hlmLabel
+            [for]="'onboarding-plan-' + row.key"
+            class="flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 ring-1 ring-foreground/10"
+          >
+            <hlm-radio [value]="row.key" [inputId]="'onboarding-plan-' + row.key">
+              <hlm-radio-indicator indicator />
+            </hlm-radio>
+            <span class="flex flex-1 flex-col gap-0.5">
+              <span class="flex items-baseline justify-between gap-2">
+                <span class="text-sm font-medium">{{ row.name }}</span>
+                <span class="text-xs text-muted-foreground">{{ row.priceLabel }}</span>
+              </span>
+              @if (row.description; as description) {
+                <span class="text-xs text-muted-foreground">{{ description }}</span>
+              }
+            </span>
+          </label>
+        }
+      </hlm-radio-group>
+      @if (planForm.planKey().touched() && planForm.planKey().invalid()) {
+        <hlm-field-error>{{ planForm.planKey().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="onboarding-plan-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@onboarding.planForm.submitting">Confirming…</span>
+        } @else {
+          <span i18n="@@onboarding.planForm.submit">Continue</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

@@ -31,16 +31,74 @@ This subfeature does not own facility, equipment, or checklist data, even when i
 Inspection detail routes resolve active inspection context before rendering. The API delete
 operation represents cancellation and is exposed as such in the UI.
 
+## UI (this pass)
+
+- `ui/pages/inspections-page` (`InspectionsPage`) — an `hlmTable` of the
+  organization's inspections (`InspectionTable`), a status/result filter
+  popover, paginated server-side, and a "New inspection" link
+  (`INSPECTION_WRITE`-gated). No search box: unlike facilities/equipments,
+  `InspectionOutput` carries no searchable text field. No row menu and no
+  bulk actions — the record itself is where every property is edited.
+- `ui/pages/inspection-create-page` (`InspectionCreatePage`) —
+  `ui/forms/inspection-create-form`, asking only for what
+  `CreateInspectionInput` requires: `equipmentId` (a combobox sourced from
+  `InspectionCreationOptionsStore`), `result`, `performedAt`, `inspectorType`
+  and `inspectorName`. `notes` and `signature` are filled in afterward, in
+  place, on the created record.
+- `ui/pages/inspection-detail-page` (`InspectionDetailPage`) — a header
+  naming the record with its status, result and non-conformity count, a
+  lifecycle band (Submit + confirm-gated Cancel while `draft`, Close while
+  `submitted`, nothing once terminal), and
+  `ui/components/inspection-information-panel` for the in-place edit
+  surface. See "Cross-Feature Dependencies" below for exactly which fields
+  it opens.
+- `ui/components/inspection-status-tag` — the `InspectionOutput.status` and
+  `.result` registry (`kind: 'status' | 'result'`), the only appearance of
+  either enum in this feature. Reuses the exact `inspectionStatus.*` /
+  `inspectionResult.*` i18n ids `interventions`' own registry already
+  defined for the same enums (one translation, two call sites) when it
+  renders an inspection read-only on the intervention detail page's Linked
+  tab.
+
 ## State and Data Access
 
 Primary stores:
 
 - `InspectionStore`
 - `ActiveInspectionStore`
+- `InspectionCreationOptionsStore` (component-scoped to the create page;
+  loads the organization's equipment into the creation form's combobox
+  through `EquipmentService`, imported via the sibling `equipments` feature's
+  `data-access` barrel — the same cross-feature pattern
+  `InterventionPlanningOptionsStore` already established for its own
+  site/member pickers)
 
 Primary service:
 
 - `InspectionService`
+
+## Deferred, not built
+
+Non-conformity creation, listing, detail and status updates have no `ui/`
+surface in this pass, even though `InspectionStore` already carries the full
+`loadNonConformities` / `loadNonConformity` / `addNonConformity` /
+`updateNonConformityStatus` data-access flow (see above) — the detail page
+reads only `InspectionOutput.nonConformitiesCount` for its header line.
+Building a table, an add form/sheet and a second presentation registry
+(severity + status) was judged disproportionate to what this pass needed,
+matching the same call `equipments` made for attachments/maintenance-log
+history and `facilities` made for its asset panes. Revisit when a route or
+the inspection detail page's design names a non-conformities surface.
+
+The inspection creation form does not offer `facilityId` or `checklistId`,
+though both are accepted by `CreateInspectionInput`. Facility is optional
+and the inspected equipment already carries its own facility assignment;
+checklist has no source at all — the sibling `checklists` subfeature has no
+`ui/` yet. Building a second full options picker (mirroring the equipment
+one) for an optional field was judged disproportionate. `inspectorUserId`
+and `inspectorOrganizationName` are likewise not asked for — `inspectorName`
+alone covers the minimum viable record. Revisit any of these once a
+workflow actually needs to set the field.
 
 ## Cross-Feature Dependencies
 

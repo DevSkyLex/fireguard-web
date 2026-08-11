@@ -1,0 +1,127 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group class="px-4">
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="equipment-create-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="equipment-create-type" i18n="@@equipment.form.type">Type</label>
+      <hlm-select
+        id="equipment-create-type"
+        [itemToString]="typeLabelOf"
+        [formField]="createForm.type"
+      >
+        <hlm-select-trigger class="w-full" data-testid="equipment-create-type">
+          <hlm-select-value
+            placeholder="Select an equipment type"
+            i18n-placeholder="@@equipment.form.typePlaceholder"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (option of typeOptions; track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+      @if (createForm.type().touched() && createForm.type().invalid()) {
+        <hlm-field-error>{{ createForm.type().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="equipment-create-subtype" i18n="@@equipment.form.subtype"
+        >Subtype</label
+      >
+      <input
+        hlmInput
+        id="equipment-create-subtype"
+        type="text"
+        data-testid="equipment-create-subtype"
+        placeholder="CO2"
+        i18n-placeholder="@@equipment.form.subtypePlaceholder"
+        [formField]="createForm.subType"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="equipment-create-brand" i18n="@@equipment.form.brand">Brand</label>
+      <input
+        hlmInput
+        id="equipment-create-brand"
+        type="text"
+        data-testid="equipment-create-brand"
+        placeholder="Kidde"
+        i18n-placeholder="@@equipment.form.brandPlaceholder"
+        [formField]="createForm.brand"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="equipment-create-model" i18n="@@equipment.form.model">Model</label>
+      <input
+        hlmInput
+        id="equipment-create-model"
+        type="text"
+        data-testid="equipment-create-model"
+        placeholder="Pro 210"
+        i18n-placeholder="@@equipment.form.modelPlaceholder"
+        [formField]="createForm.model"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="equipment-create-serial" i18n="@@equipment.form.serial"
+        >Serial number</label
+      >
+      <input
+        hlmInput
+        id="equipment-create-serial"
+        type="text"
+        data-testid="equipment-create-serial"
+        placeholder="SN-2024-001"
+        i18n-placeholder="@@equipment.form.serialPlaceholder"
+        [formField]="createForm.serialNumber"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="equipment-create-location" i18n="@@equipment.form.location"
+        >Location</label
+      >
+      <input
+        hlmInput
+        id="equipment-create-location"
+        type="text"
+        data-testid="equipment-create-location"
+        placeholder="Floor 2 — Near elevator"
+        i18n-placeholder="@@equipment.form.locationPlaceholder"
+        [formField]="createForm.locationLabel"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="equipment-create-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@equipment.cf.submitting">Registering…</span>
+        } @else {
+          <span i18n="@@equipment.form.submit">Create Equipment</span>
+        }
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="equipment-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

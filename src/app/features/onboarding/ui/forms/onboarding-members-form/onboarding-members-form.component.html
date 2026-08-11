@@ -1,0 +1,98 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="onboarding-members-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    @if (staged().length > 0) {
+      <ul class="flex flex-col gap-2" data-testid="onboarding-members-staged">
+        @for (member of staged(); track member.email; let i = $index) {
+          <li
+            class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 ring-1 ring-foreground/10"
+          >
+            <span class="text-sm">{{ member.email }}</span>
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              [attr.data-testid]="'onboarding-members-remove-' + i"
+              (click)="removeMember(i)"
+            >
+              <span i18n="@@onboarding.membersForm.remove">Remove</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="onboarding-member-email" i18n="@@onboarding.membersForm.email">
+        Email
+      </label>
+      <input
+        hlmInput
+        id="onboarding-member-email"
+        type="email"
+        data-testid="onboarding-member-email"
+        placeholder="jordan@example.com"
+        i18n-placeholder="@@onboarding.membersForm.emailPlaceholder"
+        [formField]="draftForm.email"
+      />
+    </hlm-field>
+
+    @if (roles().length > 0) {
+      <hlm-field>
+        <label hlmFieldLabel for="onboarding-member-role" i18n="@@onboarding.membersForm.role">
+          Role (optional)
+        </label>
+        <hlm-select
+          id="onboarding-member-role"
+          [itemToString]="roleLabelOf"
+          [formField]="draftForm.roleId"
+        >
+          <hlm-select-trigger class="w-full" data-testid="onboarding-member-role">
+            <hlm-select-value
+              placeholder="No role"
+              i18n-placeholder="@@onboarding.membersForm.rolePlaceholder"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (role of roles(); track role.id) {
+                <hlm-select-item [value]="role.id">{{ role.name }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </hlm-field>
+    }
+
+    <hlm-field orientation="horizontal">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="onboarding-member-add"
+        [disabled]="draftForm().invalid() || pending()"
+        (click)="addMember()"
+      >
+        <span i18n="@@onboarding.membersForm.add">Add invitation</span>
+      </button>
+    </hlm-field>
+
+    <hlm-field orientation="horizontal">
+      <button hlmBtn type="submit" data-testid="onboarding-members-submit" [disabled]="pending()">
+        @if (pending()) {
+          <span i18n="@@onboarding.membersForm.submitting">Sending…</span>
+        } @else {
+          <span i18n="@@onboarding.membersForm.submit">Continue</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

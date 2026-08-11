@@ -1,0 +1,206 @@
+<div class="flex flex-col gap-1">
+  <div data-testid="equipment-field-type">
+    <app-inplace-field
+      label="Type"
+      i18n-label="@@equipment.info.type"
+      commit="pick"
+      [editable]="editable()"
+      [editing]="isEditing('type')"
+      [pending]="isSaving('type')"
+      [error]="errorFor('type')"
+      (editingChange)="onTypeEditing($event)"
+    >
+      <span fieldValue class="font-medium">{{ typeLabelOf(equipment().type) }}</span>
+
+      <hlm-select
+        fieldEditor
+        class="w-full"
+        [itemToString]="typeLabelOf"
+        [value]="equipment().type"
+        (valueChange)="pickType($any($event))"
+      >
+        <label for="equipment-prop-type" class="sr-only" i18n="@@equipment.info.type">Type</label>
+        <hlm-select-trigger buttonId="equipment-prop-type" class="w-full">
+          <hlm-select-value />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (option of typeOptions; track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="equipment-field-subtype">
+    <app-inplace-field
+      #subTypeField
+      label="Subtype"
+      i18n-label="@@equipment.info.subtype"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('subType')"
+      [pending]="isSaving('subType')"
+      [error]="errorFor('subType')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('subType', $event)"
+      (saved)="saveText()"
+    >
+      @if (equipment().subType; as value) {
+        <span fieldValue class="font-medium">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@equipment.notSpecified">
+          Not specified
+        </span>
+      }
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="subTypeField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="equipment-field-brand">
+    <app-inplace-field
+      #brandField
+      label="Brand"
+      i18n-label="@@equipment.info.brand"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('brand')"
+      [pending]="isSaving('brand')"
+      [error]="errorFor('brand')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('brand', $event)"
+      (saved)="saveText()"
+    >
+      @if (equipment().brand; as value) {
+        <span fieldValue class="font-medium">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@equipment.notSpecified">
+          Not specified
+        </span>
+      }
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="brandField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="equipment-field-model">
+    <app-inplace-field
+      #modelField
+      label="Model"
+      i18n-label="@@equipment.info.model"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('model')"
+      [pending]="isSaving('model')"
+      [error]="errorFor('model')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('model', $event)"
+      (saved)="saveText()"
+    >
+      @if (equipment().model; as value) {
+        <span fieldValue class="font-medium">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@equipment.notSpecified">
+          Not specified
+        </span>
+      }
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="modelField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="equipment-field-serial">
+    <app-inplace-field
+      #serialField
+      label="Serial number"
+      i18n-label="@@equipment.info.serial"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('serialNumber')"
+      [pending]="isSaving('serialNumber')"
+      [error]="errorFor('serialNumber')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('serialNumber', $event)"
+      (saved)="saveText()"
+    >
+      @if (equipment().serialNumber; as value) {
+        <span fieldValue class="font-medium tabular-nums">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@equipment.notSpecified">
+          Not specified
+        </span>
+      }
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="serialField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+
+  <div data-testid="equipment-field-location">
+    <app-inplace-field
+      #locationField
+      label="Location"
+      i18n-label="@@equipment.info.location"
+      commit="confirm"
+      [editable]="editable()"
+      [editing]="isEditing('locationLabel')"
+      [pending]="isSaving('locationLabel')"
+      [error]="errorFor('locationLabel')"
+      [canSave]="canSaveText()"
+      (editingChange)="onTextEditing('locationLabel', $event)"
+      (saved)="saveText()"
+    >
+      @if (equipment().locationLabel; as value) {
+        <span fieldValue class="font-medium">{{ value }}</span>
+      } @else {
+        <span fieldValue class="text-muted-foreground" i18n="@@equipment.notSpecified">
+          Not specified
+        </span>
+      }
+
+      <input
+        fieldEditor
+        hlmInput
+        type="text"
+        class="w-full"
+        [attr.aria-labelledby]="locationField.labelId"
+        [value]="textDraft()"
+        (input)="textDraft.set($any($event.target).value)"
+      />
+    </app-inplace-field>
+  </div>
+</div>

@@ -213,6 +213,62 @@ describe('OrganizationSettingsPage', () => {
     expect(byTestId('org-settings-tab-danger')).not.toBeNull();
   });
 
+  it('should show an icon ahead of every tab label', async () => {
+    await createPage();
+
+    for (const tabId of ['general', 'subscription', 'usage', 'notifications', 'regional']) {
+      expect(byTestId(`org-settings-tab-${tabId}`)?.querySelector('ng-icon')).not.toBeNull();
+    }
+  });
+
+  it('should give the danger tab trigger the destructive tint, never colour alone', async () => {
+    await createPage('danger');
+
+    const dangerTrigger: HTMLElement | null = byTestId('org-settings-tab-danger');
+
+    expect(dangerTrigger?.className).toContain('text-destructive');
+    expect(dangerTrigger?.querySelector('ng-icon')).not.toBeNull();
+    expect(dangerTrigger?.textContent).toContain('Danger zone');
+  });
+
+  it('should let the tab list scroll horizontally instead of wrapping', async () => {
+    await createPage();
+
+    const tabsList: HTMLElement | null = fixture.nativeElement.querySelector('hlm-tabs-list');
+
+    expect(tabsList?.className).toContain('overflow-x-auto');
+  });
+
+  it('should share the same max-width across every tab, including subscription', async () => {
+    await createPage();
+
+    for (const tabId of ['general', 'subscription', 'usage', 'notifications', 'regional']) {
+      const content: HTMLElement | null = fixture.nativeElement.querySelector(
+        `[hlmtabscontent="${tabId}"]`,
+      );
+
+      expect(content?.className).toContain('max-w-3xl');
+    }
+  });
+
+  it('should render the current-plan section as a card', async () => {
+    await createPage('subscription');
+
+    const trigger: HTMLElement = byTestId('org-settings-billing-checkout') as HTMLElement;
+    const card: HTMLElement | null = trigger.closest('[hlmCard], [data-slot="card"]');
+
+    expect(card).not.toBeNull();
+  });
+
+  it('should render the danger zone as a card', async () => {
+    await createPage('danger');
+
+    const trigger: HTMLElement = byTestId('org-settings-danger-open') as HTMLElement;
+    const card: HTMLElement | null = trigger.closest('[hlmCard], [data-slot="card"]');
+
+    expect(card).not.toBeNull();
+  });
+
   it('should write a picked tab back onto the ?tab= query parameter', async () => {
     await createPage();
 

@@ -17,14 +17,18 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBan,
+  lucideBell,
   lucideCircleAlert,
   lucideCircleCheck,
   lucideClock,
   lucideCreditCard,
   lucideDownload,
   lucideExternalLink,
+  lucideGauge,
+  lucideGlobe,
   lucideReceipt,
   lucideRefreshCw,
+  lucideSettings,
   lucideTrash2,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
@@ -44,6 +48,7 @@ import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -118,7 +123,13 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
  * resolves permissions, seeds every form from the active organization, and
  * performs navigation; its children only render (`ARCHITECTURE.md` §10.1).
  *
- * @version 1.0.0
+ * Each tab trigger carries an icon ahead of its label — the Danger zone
+ * trigger's icon and text both take the destructive tint, never colour
+ * alone. The tab list scrolls horizontally on a narrow viewport rather than
+ * wrapping, and every tab's content shares one `max-w-3xl` so the page does
+ * not visibly resize as the reader switches tabs.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -139,6 +150,7 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
     HlmButton,
     HlmSkeleton,
     ...HlmAlertImports,
+    ...HlmCardImports,
     ...HlmItemImports,
     ...HlmTabsImports,
   ],
@@ -147,14 +159,18 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
     OrganizationBillingStore,
     provideIcons({
       lucideBan,
+      lucideBell,
       lucideCircleAlert,
       lucideCircleCheck,
       lucideClock,
       lucideCreditCard,
       lucideDownload,
       lucideExternalLink,
+      lucideGauge,
+      lucideGlobe,
       lucideReceipt,
       lucideRefreshCw,
+      lucideSettings,
       lucideTrash2,
       lucideTriangleAlert,
     }),

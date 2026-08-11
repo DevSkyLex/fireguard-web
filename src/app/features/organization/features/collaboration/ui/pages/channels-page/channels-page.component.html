@@ -1,0 +1,152 @@
+<ng-template #row let-channel let-indent="indent">
+  <li>
+    <a
+      hlmItem
+      size="sm"
+      routerLinkActive
+      #rl="routerLinkActive"
+      [routerLink]="[channel.id]"
+      [attr.aria-current]="rl.isActive ? 'page' : null"
+      [class.ms-6]="indent"
+      class="block"
+      data-testid="channels-row"
+    >
+      <div hlmItemContent class="min-w-0">
+        <span hlmItemTitle class="truncate font-normal">#{{ channel.name }}</span>
+        @if (activityLabel(channel.lastMessageAt); as when) {
+          <span hlmItemDescription>{{ when }}</span>
+        }
+      </div>
+      @if (channel.unreadCount > 0) {
+        <div hlmItemActions>
+          <span hlmBadge [attr.aria-label]="unreadLabelFor(channel)">{{
+            channel.unreadCount
+          }}</span>
+        </div>
+      }
+    </a>
+  </li>
+</ng-template>
+
+<aside
+  class="flex w-full flex-col overflow-y-auto md:flex md:w-72 md:shrink-0 md:border-e"
+  [class.hidden]="hasOpenChannel()"
+  data-testid="channels-list"
+>
+  <div class="flex items-center justify-between gap-2 border-b px-4 py-3">
+    <h2 class="text-sm font-semibold text-foreground" i18n="@@channels.page.title">Channels</h2>
+    @if (canCreate()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        data-testid="channels-new"
+        i18n-aria-label="@@channels.page.new"
+        aria-label="New channel"
+        (click)="createDialogVisible.set(true)"
+      >
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+      </button>
+    }
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-2">
+    @if (isLoading()) {
+      <div
+        class="flex flex-col gap-2"
+        role="status"
+        aria-label="Loading channels"
+        i18n-aria-label="@@channels.page.loadingAria"
+      >
+        @for (row of [0, 1, 2, 3]; track row) {
+          <div class="flex items-center gap-2 px-2 py-2">
+            <hlm-skeleton class="h-3.5 w-24" />
+          </div>
+        }
+      </div>
+    } @else if (loadErrorMessage(); as message) {
+      <app-error-state
+        icon="lucideTriangleAlert"
+        title="Channels could not be loaded"
+        i18n-title="@@channels.page.loadErrorTitle"
+        [description]="message"
+      >
+        <button hlmBtn type="button" data-testid="channels-retry" (click)="reload()">
+          <span i18n="@@channels.page.retry">Retry</span>
+        </button>
+      </app-error-state>
+    } @else if (channels.channelEntities().length === 0) {
+      <app-empty-state
+        icon="lucidePlus"
+        title="No channels yet"
+        i18n-title="@@channels.page.emptyTitle"
+        description="Create one to start a group conversation."
+        i18n-description="@@channels.page.emptyDescription"
+      >
+        @if (canCreate()) {
+          <button
+            hlmBtn
+            type="button"
+            data-testid="channels-empty-create"
+            (click)="createDialogVisible.set(true)"
+          >
+            <span i18n="@@channels.page.emptyCreate">Create channel</span>
+          </button>
+        }
+      </app-empty-state>
+    } @else {
+      @if (favoriteChannels().length > 0) {
+        <div
+          class="px-2 pt-1 pb-1.5 text-xs font-medium text-muted-foreground"
+          i18n="@@channels.page.favorites"
+        >
+          Favorites
+        </div>
+        <ul class="mb-3 flex flex-col gap-0.5" data-testid="channels-favorites">
+          @for (channel of favoriteChannels(); track channel.id) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: channel }" />
+          }
+        </ul>
+      }
+
+      <div
+        class="px-2 pt-1 pb-1.5 text-xs font-medium text-muted-foreground"
+        i18n="@@channels.page.all"
+      >
+        All channels
+      </div>
+      <ul class="flex flex-col gap-0.5" data-testid="channels-tree">
+        @for (channel of channels.rootChannels(); track channel.id) {
+          <ng-container *ngTemplateOutlet="row; context: { $implicit: channel }" />
+          @for (child of childrenOf(channel.id); track child.id) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: child, indent: true }" />
+          }
+        }
+      </ul>
+    }
+  </div>
+</aside>
+
+<div class="flex min-h-0 flex-1 flex-col md:flex" [class.hidden]="!hasOpenChannel()">
+  @if (!hasOpenChannel()) {
+    <div class="m-auto">
+      <app-empty-state
+        title="No channel open"
+        i18n-title="@@channels.page.noneOpenTitle"
+        description="Pick a channel in the list, or create one."
+        i18n-description="@@channels.page.noneOpenDescription"
+      />
+    </div>
+  }
+
+  <router-outlet (activate)="hasOpenChannel.set(true)" (deactivate)="hasOpenChannel.set(false)" />
+</div>
+
+<app-new-channel-dialog
+  [visible]="createDialogVisible()"
+  [parentOptions]="rootChannelOptions()"
+  [pending]="channels.isMutating()"
+  (visibleChange)="createDialogVisible.set($event)"
+  (submitted)="submitCreate($event)"
+/>

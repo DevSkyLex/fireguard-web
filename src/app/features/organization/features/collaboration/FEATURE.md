@@ -10,9 +10,9 @@ belongs to.
 Owns the organization's conversational surface: direct conversations, channels, subject threads,
 messages and their reactions, pins, saves and attachments, plus presence and the AI assistant.
 
-**Direct conversations and the assistant have a UI today.** The data layer covers all of it —
-stores, transport, offline outbox, presence — and each remaining surface is a page plus a route
-away.
+**Direct conversations, channels and the assistant have a UI today.** The data layer covers all of
+it — stores, transport, offline outbox, presence — and each remaining surface (saved messages, the
+channel info panel, threaded replies) is a page plus a route away.
 
 Backed end-to-end by the API's `Messaging` and `Assistant` modules — nothing here is mocked. Those
 modules reach `Organization` exactly like `Intervention` and `Facility` do: through its inbound
@@ -21,7 +21,8 @@ and its published domain types.
 
 ## Entry Points
 
-- Routes: `collaboration.routes.ts`, mounted at `/organizations/:organizationId/messages`
+- Routes: `collaboration.routes.ts`, mounted at `/organizations/:organizationId/messages`, and
+  `channels.routes.ts`, mounted at `/organizations/:organizationId/channels`
 - Public API: `index.ts`
 - Bootstrap: `collaboration.feature.ts` (`provideCollaborationFeature()`), wired from `app.config.ts`
 
@@ -44,10 +45,19 @@ for those still goes through `@shared/layout-slot` and the dashboard layout's ow
 Gated by `organization.messaging.read`, on the parent only — the guard re-runs on an organization
 switch, and guarding just the child would leave the list open to a member without messaging access.
 
-| Path                       | Surface                                         |
-| -------------------------- | ----------------------------------------------- |
-| `messages`                 | an empty-state placeholder, list in the sidebar |
-| `messages/:conversationId` | that direct conversation, list in the sidebar   |
+| Path                       | Surface                                                    |
+| -------------------------- | ---------------------------------------------------------- |
+| `messages`                 | an empty-state placeholder, list in the sidebar            |
+| `messages/:conversationId` | that direct conversation, list in the sidebar              |
+| `channels`                 | the channel workspace: favorites, then a one-level tree    |
+| `channels/:channelId`      | that channel — same thread/composer machinery as a DM page |
+
+`channels.routes.ts` mirrors `collaboration.routes.ts`: master-detail under one
+`organization.messaging.read` guard, the child titled by `channelTitleResolver`. The channels row
+in the organization sidebar comes from `organization/navigation` — channels are organization
+workspaces, unlike direct messages, which follow the reader and stay in the shell's bottom block.
+`ChannelsPage` is the store host; the routed child reaches the same component-scoped
+`ChannelsStore` through the outlet's injector, the way `DirectConversationPage` reaches its stores.
 
 **The conversation list lives in the dashboard sidebar (`DirectMessagesNav`), not in these routes.**
 It is contributed to the shell's `sidebarNav` slot and stands on every signed-in page, the way a
@@ -69,8 +79,16 @@ inherited and it would otherwise render "Messages / Messages". The counterpart's
 there either — resolving it needs the whole conversation list _plus_ the member directory, more than
 a title resolver can ask for — so it lives in the conversation's own header.
 
-Channels and saved messages are **not mounted**. Their stores, services and models are complete and
-specced; only their pages are absent. Mounting one is a UI change plus its route.
+Saved messages are **not mounted**. Their store, service and models are complete and specced; only
+their page is absent. Mounting it is a UI change plus its route. The channel info panel
+(`ChannelPanelStore`: pins, files, links) is in the same position — the store is live and
+self-driving, its panel is not built.
+
+Channel participant add/remove lives in its own `state/channel-participants/` slice —
+`ChannelPanelStore` only reads the roster, and widening a read-side store with writes for a sheet
+it does not own would blur both. Favoriting a channel calls `ConversationService` from the page and
+then re-reads through `ChannelsStore.loadOne`, never trusting the write response's fabricated
+`isFavorite`/`unreadCount` (see Invariants).
 
 ## Offline
 

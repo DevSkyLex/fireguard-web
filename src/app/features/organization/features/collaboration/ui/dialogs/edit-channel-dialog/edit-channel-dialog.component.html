@@ -1,0 +1,72 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content class="sm:max-w-md" data-testid="edit-channel-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@channels.editDialog.title">Channel settings</h3>
+    </hlm-dialog-header>
+
+    <form novalidate (submit)="submit($event)">
+      <hlm-field-group>
+        <hlm-field>
+          <label hlmFieldLabel for="edit-channel-name" i18n="@@channels.editDialog.name"
+            >Name</label
+          >
+          <input
+            hlmInput
+            id="edit-channel-name"
+            type="text"
+            data-testid="edit-channel-name"
+            [formField]="editForm.name"
+          />
+          @if (editForm.name().touched() && editForm.name().invalid()) {
+            <hlm-field-error>{{ editForm.name().errors()[0].message }}</hlm-field-error>
+          }
+        </hlm-field>
+
+        @if (parentOptions().length > 0) {
+          <hlm-field>
+            <label hlmFieldLabel for="edit-channel-parent" i18n="@@channels.editDialog.parent"
+              >Parent channel</label
+            >
+            <hlm-select
+              id="edit-channel-parent"
+              [itemToString]="parentLabelOf"
+              [formField]="editForm.parentChannelId"
+            >
+              <hlm-select-trigger class="w-full" data-testid="edit-channel-parent">
+                <hlm-select-value
+                  placeholder="No parent — top level"
+                  i18n-placeholder="@@channels.editDialog.parentPlaceholder"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal>
+                <hlm-select-group>
+                  <hlm-select-item value="" i18n="@@channels.editDialog.parentNone"
+                    >No parent — top level</hlm-select-item
+                  >
+                  @for (option of parentOptions(); track option.value) {
+                    <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </hlm-field>
+        }
+
+        <hlm-field orientation="horizontal">
+          <button hlmBtn type="submit" data-testid="edit-channel-submit">
+            <span i18n="@@channels.editDialog.submit">Save changes</span>
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            data-testid="edit-channel-cancel"
+            (click)="visibleChange.emit(false)"
+          >
+            <span i18n="@@common.cancel">Cancel</span>
+          </button>
+        </hlm-field>
+      </hlm-field-group>
+    </form>
+  </hlm-dialog-content>
+</hlm-dialog>

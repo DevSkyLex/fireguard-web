@@ -1,0 +1,169 @@
+<header
+  class="flex h-12 shrink-0 items-center gap-2.5 border-b px-3 md:px-4"
+  data-testid="channel-conversation-header"
+>
+  <a
+    hlmBtn
+    variant="ghost"
+    size="icon"
+    class="size-8 shrink-0 md:hidden"
+    data-testid="channel-conversation-back"
+    i18n-aria-label="@@channels.room.back"
+    aria-label="Back to channels"
+    [routerLink]="['..']"
+  >
+    <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
+  </a>
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <span
+      class="truncate text-sm font-semibold text-foreground"
+      data-testid="channel-conversation-name"
+    >
+      {{ channelName() }}
+    </span>
+    <span class="truncate text-[11px] text-muted-foreground">
+      {{ participantCount() }}
+      <span i18n="@@channels.room.participantsCount">participants</span>
+    </span>
+  </div>
+
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="icon-sm"
+    class="shrink-0"
+    data-testid="channel-conversation-favorite"
+    [attr.aria-label]="isFavorite() ? favoriteOnLabel : favoriteOffLabel"
+    [attr.aria-pressed]="isFavorite()"
+    [disabled]="favoritePending()"
+    (click)="toggleFavorite()"
+  >
+    <ng-icon name="lucideStar" class="text-base" aria-hidden="true" />
+  </button>
+
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="icon-sm"
+    class="shrink-0"
+    id="channel-conversation-actions-trigger"
+    data-testid="channel-conversation-actions"
+    [hlmDropdownMenuTrigger]="actionsMenu"
+    align="end"
+    i18n-aria-label="@@channels.room.actionsAria"
+    aria-label="Channel actions"
+  >
+    <ng-icon name="lucideEllipsisVertical" class="text-base" aria-hidden="true" />
+  </button>
+
+  <ng-template #actionsMenu>
+    <hlm-dropdown-menu class="min-w-52">
+      <hlm-dropdown-menu-group>
+        <button
+          hlmDropdownMenuItem
+          class="gap-2"
+          data-testid="channel-conversation-participants-action"
+          (click)="participantsSheetVisible.set(true)"
+        >
+          <ng-icon name="lucideUsers" class="text-sm" aria-hidden="true" />
+          <span i18n="@@channels.room.manageParticipants">Participants</span>
+        </button>
+
+        @if (canManage()) {
+          <button
+            hlmDropdownMenuItem
+            class="gap-2"
+            data-testid="channel-conversation-edit-action"
+            (click)="editDialogVisible.set(true)"
+          >
+            <ng-icon name="lucidePencilLine" class="text-sm" aria-hidden="true" />
+            <span i18n="@@channels.room.rename">Rename or move</span>
+          </button>
+        }
+      </hlm-dropdown-menu-group>
+
+      @if (canManage()) {
+        <hlm-dropdown-menu-separator />
+
+        <button
+          hlmDropdownMenuItem
+          variant="destructive"
+          class="gap-2"
+          data-testid="channel-conversation-delete-action"
+          (click)="requestDelete()"
+        >
+          <ng-icon name="lucideTrash2" class="text-sm" aria-hidden="true" />
+          <span i18n="@@channels.room.delete">Delete channel</span>
+        </button>
+      }
+    </hlm-dropdown-menu>
+  </ng-template>
+</header>
+
+<app-message-thread
+  [messages]="messages()"
+  [loading]="thread.isLoading()"
+  [hasMore]="thread.hasMore()"
+  [errorMessage]="loadErrorMessage()"
+  [canReact]="canWrite()"
+  (loadMore)="thread.loadOlder()"
+  (retried)="thread.retryFailed($event)"
+  (reactionToggled)="toggleReaction($event)"
+  (caughtUp)="markRead()"
+>
+  <app-message-composer
+    [pending]="thread.isPosting()"
+    [readOnly]="!canWrite()"
+    [placeholder]="composerPlaceholder()"
+    [members]="mentionCandidates()"
+    (sent)="send($event)"
+  />
+</app-message-thread>
+
+<app-edit-channel-dialog
+  [visible]="editDialogVisible()"
+  [name]="channel()?.name ?? ''"
+  [parentChannelId]="currentParentId()"
+  [parentOptions]="parentOptions()"
+  (visibleChange)="editDialogVisible.set($event)"
+  (submitted)="submitEdit($event)"
+/>
+
+<app-channel-participants-sheet
+  [visible]="participantsSheetVisible()"
+  [participants]="participantViews()"
+  [candidates]="addableMembers()"
+  [canManage]="canManage()"
+  [loading]="participantsStore.isLoading()"
+  [pending]="participantsStore.isMutating()"
+  (visibleChange)="participantsSheetVisible.set($event)"
+  (added)="addParticipant($event)"
+  (removed)="removeParticipant($event)"
+/>
+
+<hlm-alert-dialog [state]="deleteDialogState()" (stateChanged)="onDeleteDialogStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="channel-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@channels.room.deleteConfirmTitle">Delete this channel?</h2>
+      <p hlmAlertDialogDescription i18n="@@channels.room.deleteConfirmDescription">
+        Its messages, pins, files and links stay, but the channel itself is gone for everyone. This
+        cannot be undone.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@channels.room.deleteConfirmCancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="channel-delete-confirm"
+        (click)="confirmDelete()"
+        i18n="@@channels.room.deleteConfirmAction"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

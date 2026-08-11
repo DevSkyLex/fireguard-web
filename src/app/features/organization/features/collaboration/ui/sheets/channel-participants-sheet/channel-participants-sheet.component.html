@@ -1,0 +1,151 @@
+<hlm-sheet side="right" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="flex w-full flex-col overflow-y-auto sm:w-[420px] sm:max-w-none"
+    data-testid="channel-participants-sheet"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@channels.participants.title">Participants</h3>
+    </hlm-sheet-header>
+
+    <div class="flex flex-col gap-2 px-4 pb-4">
+      @if (loading()) {
+        @for (row of [0, 1, 2]; track row) {
+          <div class="flex items-center gap-2.5 py-1.5">
+            <hlm-skeleton class="size-8 shrink-0 rounded-full" />
+            <hlm-skeleton class="h-3.5 w-32" />
+          </div>
+        }
+      } @else if (participants().length === 0) {
+        <app-empty-state
+          icon="lucideUsers"
+          title="No participants"
+          i18n-title="@@channels.participants.emptyTitle"
+        />
+      } @else {
+        <ul class="flex flex-col gap-1" data-testid="channel-participants-list">
+          @for (participant of participants(); track participant.memberId) {
+            <li class="flex items-center gap-2.5 rounded-lg px-1 py-1.5">
+              <hlm-avatar class="size-8 shrink-0">
+                @if (participant.avatarUrl; as avatarUrl) {
+                  <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                }
+                <span hlmAvatarFallback class="text-[11px]">
+                  {{ initialsOf(participant.displayName) }}
+                </span>
+              </hlm-avatar>
+
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span
+                  class="truncate text-sm font-medium"
+                  [class.text-foreground]="participant.isResolved"
+                  [class.text-muted-foreground]="!participant.isResolved"
+                >
+                  {{ participant.displayName }}
+                </span>
+                @if (participant.role; as role) {
+                  <span class="truncate text-[11px] text-muted-foreground">{{ role }}</span>
+                }
+              </span>
+
+              @if (canManage()) {
+                @if (pendingRemoval() === participant.memberId) {
+                  <div class="flex shrink-0 items-center gap-1">
+                    <button
+                      hlmBtn
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      data-testid="channel-participant-confirm-remove"
+                      [disabled]="pending()"
+                      (click)="confirmRemoval(participant.memberId)"
+                    >
+                      <span i18n="@@channels.participants.confirmRemove">Confirm</span>
+                    </button>
+                    <button
+                      hlmBtn
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      (click)="pendingRemoval.set(null)"
+                    >
+                      <span i18n="@@common.cancel">Cancel</span>
+                    </button>
+                  </div>
+                } @else {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    class="shrink-0"
+                    data-testid="channel-participant-remove"
+                    [attr.aria-label]="removeLabelFor(participant.displayName)"
+                    [disabled]="pending()"
+                    (click)="requestRemoval(participant.memberId)"
+                  >
+                    <ng-icon name="lucideUserMinus" class="text-base" aria-hidden="true" />
+                  </button>
+                }
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (canManage()) {
+        <div class="mt-4 flex flex-col gap-2 border-t pt-4">
+          <span class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <ng-icon name="lucideUserPlus" class="text-sm" aria-hidden="true" />
+            <span i18n="@@channels.participants.addTitle">Add a member</span>
+          </span>
+
+          <input
+            hlmInput
+            type="search"
+            data-testid="channel-participants-search"
+            placeholder="Search members"
+            i18n-placeholder="@@messages.picker.searchPlaceholder"
+            i18n-aria-label="@@messages.picker.searchLabel"
+            aria-label="Search members"
+            [value]="query()"
+            (input)="onQueryInput($event)"
+          />
+
+          @if (matches().length === 0) {
+            <p
+              class="px-1 py-2 text-xs text-muted-foreground"
+              i18n="@@channels.participants.noCandidates"
+            >
+              No one left to add.
+            </p>
+          } @else {
+            <ul class="-mx-1 flex max-h-56 flex-col overflow-y-auto px-1">
+              @for (member of matches(); track member.memberId) {
+                <li>
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-start transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+                    data-testid="channel-participant-candidate"
+                    [disabled]="pending()"
+                    (click)="add(member.memberId)"
+                  >
+                    <hlm-avatar class="size-7 shrink-0">
+                      @if (member.avatarUrl; as avatarUrl) {
+                        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                      }
+                      <span hlmAvatarFallback class="text-[10px]">
+                        {{ initialsOf(member.displayName) }}
+                      </span>
+                    </hlm-avatar>
+                    <span class="truncate text-sm text-foreground">{{ member.displayName }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+  </hlm-sheet-content>
+</hlm-sheet>

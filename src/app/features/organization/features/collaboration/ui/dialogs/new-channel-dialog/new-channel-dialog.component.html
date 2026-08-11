@@ -1,0 +1,75 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content class="sm:max-w-md" data-testid="new-channel-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@channels.newDialog.title">New channel</h3>
+    </hlm-dialog-header>
+
+    <form novalidate (submit)="submit($event)">
+      <hlm-field-group>
+        <hlm-field>
+          <label hlmFieldLabel for="new-channel-name" i18n="@@channels.newDialog.name">Name</label>
+          <input
+            hlmInput
+            id="new-channel-name"
+            type="text"
+            data-testid="new-channel-name"
+            placeholder="general"
+            i18n-placeholder="@@channels.newDialog.namePlaceholder"
+            [formField]="createForm.name"
+          />
+          @if (createForm.name().touched() && createForm.name().invalid()) {
+            <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
+          }
+        </hlm-field>
+
+        @if (parentOptions().length > 0) {
+          <hlm-field>
+            <label hlmFieldLabel for="new-channel-parent" i18n="@@channels.newDialog.parent"
+              >Parent channel</label
+            >
+            <hlm-select
+              id="new-channel-parent"
+              [itemToString]="parentLabelOf"
+              [formField]="createForm.parentChannelId"
+            >
+              <hlm-select-trigger class="w-full" data-testid="new-channel-parent">
+                <hlm-select-value
+                  placeholder="No parent — top level"
+                  i18n-placeholder="@@channels.newDialog.parentPlaceholder"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal>
+                <hlm-select-group>
+                  <hlm-select-item value="" i18n="@@channels.newDialog.parentNone"
+                    >No parent — top level</hlm-select-item
+                  >
+                  @for (option of parentOptions(); track option.value) {
+                    <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+            <hlm-field-description i18n="@@channels.newDialog.parentHint"
+              >Only a top-level channel can be a parent.</hlm-field-description
+            >
+          </hlm-field>
+        }
+
+        <hlm-field orientation="horizontal">
+          <button hlmBtn type="submit" data-testid="new-channel-submit" [disabled]="pending()">
+            <span i18n="@@channels.newDialog.submit">Create channel</span>
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            data-testid="new-channel-cancel"
+            (click)="visibleChange.emit(false)"
+          >
+            <span i18n="@@common.cancel">Cancel</span>
+          </button>
+        </hlm-field>
+      </hlm-field-group>
+    </form>
+  </hlm-dialog-content>
+</hlm-dialog>

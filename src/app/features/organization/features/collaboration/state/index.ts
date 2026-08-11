@@ -5,6 +5,11 @@ export {
   type ChannelPanelStoreType,
   type ChannelRouteContext,
 } from './channel-panel';
+export {
+  ChannelParticipantsStore,
+  channelParticipantsStoreEvents,
+  type ChannelParticipantsStoreType,
+} from './channel-participants';
 export { ChannelsStore, channelsStoreEvents, type ChannelsStoreType } from './channels';
 export {
   DirectConversationsStore,

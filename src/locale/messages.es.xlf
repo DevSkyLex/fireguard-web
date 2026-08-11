@@ -8287,6 +8287,14 @@
         <source><x id="count" equiv-text="count"/> things need a decision from you.</source>
         <target><x id="count" equiv-text="count"/> elementos requieren una decisión tuya.</target>
       </trans-unit>
+      <trans-unit id="org.today.queues.title" datatype="html">
+        <source>Your work queues</source>
+        <target>Tus colas de trabajo</target>
+      </trans-unit>
+      <trans-unit id="org.today.queueAllClear" datatype="html">
+        <source>0 — All clear</source>
+        <target>0 — Sin pendientes</target>
+      </trans-unit>
       <trans-unit id="org.today.overdue" datatype="html">
         <source>Overdue</source>
         <target>Vencidas</target>

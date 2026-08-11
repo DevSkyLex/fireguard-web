@@ -70,6 +70,10 @@ describe('OrganizationTodayPage', () => {
   let dashboardRecentInterventions: WritableSignal<
     readonly OrganizationDashboardRecentIntervention[]
   >;
+  let dashboardInspectionsComparison: WritableSignal<{
+    readonly value: string | number | null;
+    readonly direction: string | null;
+  } | null>;
 
   beforeEach(async () => {
     overdue = signal<InterventionQueue>(emptyQueue());
@@ -99,6 +103,10 @@ describe('OrganizationTodayPage', () => {
     dashboardIsQueryLoading = signal<boolean>(false);
     dashboardAlerts = signal<readonly OrganizationDashboardAlert[]>([]);
     dashboardRecentInterventions = signal<readonly OrganizationDashboardRecentIntervention[]>([]);
+    dashboardInspectionsComparison = signal<{
+      readonly value: string | number | null;
+      readonly direction: string | null;
+    } | null>(null);
 
     const dashboardStoreMock = {
       queryData: dashboardQueryData,
@@ -106,6 +114,7 @@ describe('OrganizationTodayPage', () => {
       isQueryLoading: dashboardIsQueryLoading,
       alerts: dashboardAlerts,
       recentInterventions: dashboardRecentInterventions,
+      inspectionsComparison: dashboardInspectionsComparison,
       load: vi.fn(),
     };
 
@@ -218,6 +227,30 @@ describe('OrganizationTodayPage', () => {
     expect(text).toContain('2');
   });
 
+  it('should attach the matching comparison delta only to the inspections-completed tile', async () => {
+    dashboardQueryData.set({
+      overview: {
+        interventions: { summary: [{ key: 'open', value: 5 }] },
+        nonConformities: { summary: [{ key: 'open', value: 3 }] },
+        inspections: { summary: [{ key: 'closed', value: 12 }] },
+        equipment: { summary: [{ key: 'underMaintenance', value: 2 }] },
+      },
+    } as unknown as OrganizationDashboardOutput);
+    dashboardInspectionsComparison.set({ value: '4', direction: 'up' });
+    await fixture.whenStable();
+
+    const tiles = fixture.componentInstance['kpiTiles']();
+
+    expect(tiles.find((tile) => tile.id === 'inspections-completed')?.delta).toEqual({
+      value: 4,
+      direction: 'up',
+      positiveIsGood: true,
+    });
+    expect(tiles.find((tile) => tile.id === 'open-interventions')?.delta).toBeNull();
+    expect(tiles.find((tile) => tile.id === 'open-non-conformities')?.delta).toBeNull();
+    expect(tiles.find((tile) => tile.id === 'equipment-under-maintenance')?.delta).toBeNull();
+  });
+
   it('should hide the open-interventions KPI tile from a member who cannot read interventions', async () => {
     permissions.set([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
     dashboardQueryData.set({
@@ -250,6 +283,55 @@ describe('OrganizationTodayPage', () => {
 
     expect(text).toContain('2 critical non-conformities still open');
     expect(text).toContain('4 equipment items under maintenance');
+  });
+
+  it('should link an alert row whose code names an evident destination, as an anchor', async () => {
+    dashboardAlerts.set([{ code: 'expired_invitations', severity: 'medium', count: 4 }]);
+    await fixture.whenStable();
+
+    const row: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-alert-expired_invitations"]',
+    );
+
+    expect(row?.tagName).toBe('A');
+    expect(row?.getAttribute('href')).toBe('/organizations/org-1/members');
+  });
+
+  it('should leave an unrecognized alert code as a plain, non-clickable row', async () => {
+    dashboardAlerts.set([{ code: 'something_new', severity: 'medium', count: 1 }]);
+    await fixture.whenStable();
+
+    const row: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-alert-something_new"]',
+    );
+
+    expect(row?.tagName).toBe('DIV');
+  });
+
+  it('should show an icon, a label and a count badge for each named queue in the work-queues card', async () => {
+    overdue.set({ key: 'overdue', total: 3, items: [] });
+    await fixture.whenStable();
+
+    const card: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-queues-card"]',
+    );
+
+    expect(card).not.toBeNull();
+    expect(card?.textContent).toContain('Overdue');
+    expect(card?.textContent).toContain('3');
+    expect(card?.querySelector('[data-testid="org-today-queue-overdue"] ng-icon')).not.toBeNull();
+  });
+
+  it('should keep an empty queue visible with an all-clear row instead of hiding it', async () => {
+    overdue.set({ key: 'overdue', total: 1, items: [intervention('i-1', null)] });
+    await fixture.whenStable();
+
+    const changesRequestedQueue: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-queue-changes-requested"]',
+    );
+
+    expect(changesRequestedQueue).not.toBeNull();
+    expect(changesRequestedQueue?.textContent).toContain('All clear');
   });
 
   it('should render the recently updated interventions list with a status tag and a responsible avatar', async () => {

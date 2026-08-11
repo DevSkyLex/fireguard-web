@@ -8280,6 +8280,14 @@
         <source><x id="count" equiv-text="count"/> things need a decision from you.</source>
         <target><x id="count" equiv-text="count"/> éléments attendent une décision de votre part.</target>
       </trans-unit>
+      <trans-unit id="org.today.queues.title" datatype="html">
+        <source>Your work queues</source>
+        <target>Vos files de travail</target>
+      </trans-unit>
+      <trans-unit id="org.today.queueAllClear" datatype="html">
+        <source>0 — All clear</source>
+        <target>0 — Rien à signaler</target>
+      </trans-unit>
       <trans-unit id="org.today.overdue" datatype="html">
         <source>Overdue</source>
         <target>En retard</target>

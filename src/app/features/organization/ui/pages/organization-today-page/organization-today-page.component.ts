@@ -4,14 +4,18 @@ import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBellRing,
+  lucideChevronRight,
   lucideCircleCheck,
   lucideClipboardCheck,
+  lucideCloudUpload,
   lucideCompass,
+  lucideEye,
   lucideMailWarning,
   lucideOctagonAlert,
   lucidePlus,
   lucideRefreshCw,
   lucideTriangleAlert,
+  lucideUndo2,
   lucideWrench,
 } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -34,6 +38,8 @@ import {
   OrganizationPageHeader,
   OrganizationTodayQueue,
   StatTile,
+  type StatTileDelta,
+  type StatTileDeltaDirection,
   type StatTileLink,
 } from '@features/organization/ui/components';
 import {
@@ -44,6 +50,7 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -65,10 +72,11 @@ const MILLISECONDS_PER_DAY = 86_400_000;
  *
  * @description
  * View-model for one `app-stat-tile` in the page's KPI row: a fixed
- * near-term snapshot, so unlike the Statistics page's KPI row it carries no
- * comparison delta.
+ * near-term snapshot, so most tiles carry no comparison delta — only
+ * `inspections-completed` reads one, because it is the one tile whose value
+ * matches a `DashboardStore` comparison entry one for one (`FEATURE.md`).
  *
- * @since 2.0.0
+ * @since 2.1.0
  */
 type OrganizationTodayKpiTile = {
   readonly id: string;
@@ -76,6 +84,7 @@ type OrganizationTodayKpiTile = {
   readonly value: string | number;
   readonly icon: string;
   readonly link: StatTileLink | null;
+  readonly delta: StatTileDelta | null;
 };
 
 /**
@@ -83,14 +92,17 @@ type OrganizationTodayKpiTile = {
  *
  * @description
  * View-model for one row of the dashboard's backend-computed alert feed.
+ * `link` is `null` when the code names nothing this app can navigate to yet,
+ * which keeps the row a plain sentence instead of a dead link.
  *
- * @since 2.0.0
+ * @since 2.1.0
  */
 type OrganizationTodayAlertRow = {
   readonly code: string;
   readonly message: string;
   readonly icon: string;
   readonly iconClass: string;
+  readonly link: StatTileLink | null;
 };
 
 /**
@@ -112,7 +124,16 @@ type OrganizationTodayAlertRow = {
  * rather than surfacing a second error state; the work queues below are the
  * page's primary content and stay usable regardless.
  *
- * @version 2.0.0
+ * Below the header and the KPI row, a two-column layout pairs the work
+ * queues (the primary column) with a rail holding the alert strip and the
+ * "Recently updated" card, collapsing to one stacked column under `lg`. The
+ * four named queues are composed inside one "Your work queues" card, each
+ * behind a page-owned row (icon, label, count badge, and — for the three
+ * collection-backed queues — a "see all" action); `OrganizationTodayQueue`
+ * itself renders in `embedded` mode there, so an empty queue still shows a
+ * visible "all clear" row rather than disappearing.
+ *
+ * @version 2.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -127,6 +148,7 @@ type OrganizationTodayAlertRow = {
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarImage,
+    HlmBadge,
     HlmButton,
     HlmSkeleton,
     InterventionTag,
@@ -141,14 +163,18 @@ type OrganizationTodayAlertRow = {
     OrganizationTodayStore,
     provideIcons({
       lucideBellRing,
+      lucideChevronRight,
       lucideCircleCheck,
       lucideClipboardCheck,
+      lucideCloudUpload,
       lucideCompass,
+      lucideEye,
       lucideMailWarning,
       lucideOctagonAlert,
       lucidePlus,
       lucideRefreshCw,
       lucideTriangleAlert,
+      lucideUndo2,
       lucideWrench,
     }),
   ],
@@ -398,10 +424,17 @@ export class OrganizationTodayPage {
    * The KPI row's view-models: open interventions (permission-gated), open
    * non-conformities, completed inspections and equipment under maintenance
    * — the fixed near-term snapshot `DashboardStore` always reports, each
-   * linking to the section that explains it.
+   * linking to the section that explains it. Only `inspections-completed`
+   * carries a delta: `DashboardStore.inspectionsComparison` compares the
+   * same `inspections`/`closed` figure this tile shows, the same pairing
+   * `OrganizationStatisticsPage` uses for its own inspections tile. The
+   * other three tiles have no matching comparison entry in the dashboard
+   * payload — `equipmentComparison`, in particular, tracks the total
+   * equipment count, not the `underMaintenance` subset this tile shows, so
+   * it is not a legitimate delta for it.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
    *
    * @type {Signal<readonly OrganizationTodayKpiTile[]>}
    */
@@ -428,6 +461,7 @@ export class OrganizationTodayPage {
           getOrganizationDashboardOverviewMetricValue(overview, 'interventions', 'open') ?? '—',
         icon: 'lucideCompass',
         link: interventionsLink,
+        delta: null,
       });
     }
 
@@ -439,6 +473,7 @@ export class OrganizationTodayPage {
           getOrganizationDashboardOverviewMetricValue(overview, 'nonConformities', 'open') ?? '—',
         icon: 'lucideTriangleAlert',
         link: inspectionsLink,
+        delta: null,
       },
       {
         id: 'inspections-completed',
@@ -447,6 +482,7 @@ export class OrganizationTodayPage {
           getOrganizationDashboardOverviewMetricValue(overview, 'inspections', 'closed') ?? '—',
         icon: 'lucideClipboardCheck',
         link: inspectionsLink,
+        delta: this.toComparisonDelta(this.dashboardStore.inspectionsComparison(), true),
       },
       {
         id: 'equipment-under-maintenance',
@@ -456,6 +492,7 @@ export class OrganizationTodayPage {
           '—',
         icon: 'lucideWrench',
         link: assetsLink,
+        delta: null,
       },
     );
 
@@ -470,16 +507,21 @@ export class OrganizationTodayPage {
    * The dashboard's backend-computed alert feed, resolved through the page's
    * alert-code registry into a localized, count-aware sentence per row.
    * Severity is never carried by colour alone: the icon and its tint are
-   * paired with the label in the same sentence.
+   * paired with the label in the same sentence. `link` routes to the
+   * section the code is actually about, resolved by {@link alertLinkFor};
+   * a code with no evident destination renders as a plain, non-clickable
+   * row.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
    *
    * @type {Signal<readonly OrganizationTodayAlertRow[]>}
    */
   protected readonly alertRows: Signal<readonly OrganizationTodayAlertRow[]> = computed(
-    (): readonly OrganizationTodayAlertRow[] =>
-      this.dashboardStore.alerts().map((alert): OrganizationTodayAlertRow => {
+    (): readonly OrganizationTodayAlertRow[] => {
+      const organizationId: string | null = this.organizationContext.selectedOrganizationId();
+
+      return this.dashboardStore.alerts().map((alert): OrganizationTodayAlertRow => {
         const code: string = typeof alert.code === 'string' ? alert.code : '';
         const count: number = typeof alert.count === 'number' ? alert.count : 0;
         const descriptor = resolveOrganizationDashboardAlertTag(code);
@@ -489,8 +531,10 @@ export class OrganizationTodayPage {
           icon: descriptor.icon,
           iconClass: this.alertIconClass[descriptor.severity],
           message: this.formatAlertMessage(code, count, descriptor.label),
+          link: this.alertLinkFor(code, organizationId),
         };
-      }),
+      });
+    },
   );
 
   /**
@@ -683,6 +727,77 @@ export class OrganizationTodayPage {
       default:
         return $localize`:@@org.today.alerts.generic:${fallbackLabel}:label: (${count}:count:)`;
     }
+  }
+
+  /**
+   * Method alertLinkFor
+   * @method alertLinkFor
+   *
+   * @description
+   * Resolves the section an alert code is actually about. `equipment_under_maintenance`
+   * routes to the equipment list (not the `assets` route, which is not
+   * mounted yet — see `FEATURE.md`); the two non-conformity codes route to
+   * Inspections, where non-conformities live; `expired_invitations` routes
+   * to Members. A code with no evident destination — including this
+   * registry's own unrecognized-code fallback — resolves to `null`, which
+   * the template renders as a plain, non-clickable row rather than guessing.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {string} code - Raw alert `code`.
+   * @param {string | null} organizationId - The routed organization, or `null` before it resolves.
+   *
+   * @returns {StatTileLink | null} The destination, or `null` when none is evident.
+   */
+  private alertLinkFor(code: string, organizationId: string | null): StatTileLink | null {
+    if (organizationId === null) return null;
+
+    switch (code) {
+      case 'critical_non_conformities_open':
+      case 'non_conformities_overdue':
+        return ['/organizations', organizationId, 'inspections'];
+      case 'expired_invitations':
+        return ['/organizations', organizationId, 'members'];
+      case 'equipment_under_maintenance':
+        return ['/organizations', organizationId, 'equipments'];
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Method toComparisonDelta
+   * @method toComparisonDelta
+   *
+   * @description
+   * Converts one of `DashboardStore`'s `*Comparison` signals — a pre-signed
+   * string magnitude and a literal direction — into the `StatTileDelta`
+   * shape `app-stat-tile` accepts. Mirrors
+   * `OrganizationStatisticsPage.toComparisonDelta`; not shared, since this
+   * is only the second usage (`ARCHITECTURE.md` rule of three).
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {{ readonly value: string | number | null; readonly direction: string | null } | null} entry - The store's comparison delta.
+   * @param {boolean} positiveIsGood - Whether `up` is the desirable direction for this metric.
+   *
+   * @returns {StatTileDelta | null} The tile delta, or `null` when no comparison is available.
+   */
+  private toComparisonDelta(
+    entry: { readonly value: string | number | null; readonly direction: string | null } | null,
+    positiveIsGood: boolean,
+  ): StatTileDelta | null {
+    if (!entry || entry.direction === null) return null;
+
+    const direction: StatTileDeltaDirection =
+      entry.direction === 'up' ? 'up' : entry.direction === 'down' ? 'down' : 'flat';
+    const magnitude: number = Math.abs(Number(entry.value ?? 0));
+
+    if (!Number.isFinite(magnitude)) return null;
+
+    return { value: magnitude, direction, positiveIsGood };
   }
   //#endregion
 }

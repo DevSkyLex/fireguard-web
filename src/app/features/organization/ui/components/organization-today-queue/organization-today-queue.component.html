@@ -1,17 +1,57 @@
-<!--
-  An empty queue that is not loading renders nothing: four empty boxes stacked
-  down the page say less than their absence, and the page's own all-clear state
-  already covers "nothing anywhere".
--->
-@if (loading() || interventions().length > 0) {
+<ng-template #items>
+  @if (loading()) {
+    @for (placeholder of [0, 1, 2]; track placeholder) {
+      <li class="flex items-center gap-3 rounded-lg border px-3 py-2.5">
+        <hlm-skeleton class="h-4 w-14 shrink-0" />
+        <hlm-skeleton class="h-4 flex-1" />
+      </li>
+    }
+  } @else {
+    @for (intervention of interventions(); track intervention.id) {
+      <li>
+        <button
+          type="button"
+          class="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
+          (click)="opened.emit(intervention)"
+        >
+          <span class="shrink-0 font-mono text-xs text-muted-foreground"
+            >FG-{{ intervention.number }}</span
+          >
+
+          <span class="flex min-w-0 flex-1 flex-col">
+            <span class="truncate text-sm text-foreground">{{ intervention.name }}</span>
+            @if (notes()[intervention.id]; as note) {
+              <span class="truncate text-xs text-muted-foreground">{{ note }}</span>
+            }
+          </span>
+
+          <ng-icon
+            name="lucideChevronRight"
+            class="shrink-0 text-sm text-muted-foreground"
+            aria-hidden="true"
+          />
+        </button>
+      </li>
+    }
+  }
+</ng-template>
+
+@if (embedded()) {
+  <ul class="flex flex-col gap-1.5" [attr.aria-label]="label()">
+    <ng-container [ngTemplateOutlet]="items" />
+    @if (!loading() && interventions().length === 0) {
+      <li
+        class="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground"
+      >
+        <ng-icon name="lucideCircleCheck" class="shrink-0" aria-hidden="true" />
+        <span i18n="@@org.today.queueAllClear">0 — All clear</span>
+      </li>
+    }
+  </ul>
+} @else if (loading() || interventions().length > 0) {
   <section class="flex flex-col gap-2">
     <div class="flex items-center gap-2">
       <h2 class="text-sm font-semibold text-foreground">{{ label() }}</h2>
-      <!--
-        The count is the organization-wide total, not the row count. Rendered
-        as a plain figure rather than a coloured pill: severity is carried by
-        the queue's own heading, not by the number.
-      -->
       <span class="text-sm text-muted-foreground tabular-nums">{{ total() }}</span>
 
       @if (actionLabel(); as action) {
@@ -28,45 +68,7 @@
     </div>
 
     <ul class="flex flex-col gap-1.5">
-      @if (loading()) {
-        @for (placeholder of [0, 1, 2]; track placeholder) {
-          <li class="flex items-center gap-3 rounded-lg border px-3 py-2.5">
-            <hlm-skeleton class="h-4 w-14 shrink-0" />
-            <hlm-skeleton class="h-4 flex-1" />
-          </li>
-        }
-      } @else {
-        @for (intervention of interventions(); track intervention.id) {
-          <li>
-            <!--
-              The whole row is the control, so the hit target is the row rather
-              than the title alone — this list is used on a phone in the field.
-            -->
-            <button
-              type="button"
-              class="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
-              (click)="opened.emit(intervention)"
-            >
-              <span class="shrink-0 font-mono text-xs text-muted-foreground"
-                >FG-{{ intervention.number }}</span
-              >
-
-              <span class="flex min-w-0 flex-1 flex-col">
-                <span class="truncate text-sm text-foreground">{{ intervention.name }}</span>
-                @if (notes()[intervention.id]; as note) {
-                  <span class="truncate text-xs text-muted-foreground">{{ note }}</span>
-                }
-              </span>
-
-              <ng-icon
-                name="lucideChevronRight"
-                class="shrink-0 text-sm text-muted-foreground"
-                aria-hidden="true"
-              />
-            </button>
-          </li>
-        }
-      }
+      <ng-container [ngTemplateOutlet]="items" />
     </ul>
   </section>
 }

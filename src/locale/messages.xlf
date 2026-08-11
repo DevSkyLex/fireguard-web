@@ -8333,6 +8333,13 @@
           <context context-type="linenumber">65,67</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.today.queueAllClear" datatype="html">
+        <source>0 — All clear</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-today-queue/organization-today-queue.component.html</context>
+          <context context-type="linenumber">47,51</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="org.settings.usage.members" datatype="html">
         <source>Members</source>
         <context-group purpose="location">
@@ -10225,194 +10232,217 @@
           <context context-type="linenumber">10,13</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.today.alerts.title" datatype="html">
-        <source> Also worth a look </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">33,36</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.today.alerts.loadingAria" datatype="html">
-        <source>Loading what else needs attention</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">40,41</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.today.errorTitle" datatype="html">
         <source>Couldn&apos;t load your work queues</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">65,66</context>
+          <context context-type="linenumber">37,38</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.errorDescription" datatype="html">
         <source>The interventions waiting on you couldn&apos;t be fetched. Anything saved on this device is still listed below.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">67,68</context>
+          <context context-type="linenumber">39,40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">78,80</context>
+          <context context-type="linenumber">50,52</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.allClearTitle" datatype="html">
         <source>Nothing is blocking</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">86,87</context>
+          <context context-type="linenumber">58,59</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.allClearDescription" datatype="html">
         <source>No intervention is overdue, none is waiting for review, and everything on this device is synced.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">88,89</context>
+          <context context-type="linenumber">60,61</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.nextDue" datatype="html">
         <source>Next due</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">93,94</context>
+          <context context-type="linenumber">65,66</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.today.queues.title" datatype="html">
+        <source>Your work queues</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
+          <context context-type="linenumber">74,76</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.overdue" datatype="html">
-        <source>Overdue</source>
+        <source> Overdue </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">104</context>
+          <context context-type="linenumber">85,86</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
+          <context context-type="linenumber">106</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.seeAll" datatype="html">
         <source>See all</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">110</context>
+          <context context-type="linenumber">100,101</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">124</context>
+          <context context-type="linenumber">138,139</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">138</context>
+          <context context-type="linenumber">172,173</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.changesRequested" datatype="html">
-        <source>Sent back to you</source>
+        <source> Sent back to you </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">118,119</context>
+          <context context-type="linenumber">126,128</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
+          <context context-type="linenumber">143,144</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.awaitingReview" datatype="html">
-        <source>Awaiting your review</source>
+        <source> Awaiting your review </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">132,133</context>
+          <context context-type="linenumber">160,161</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
+          <context context-type="linenumber">177,178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.unsynced" datatype="html">
-        <source>Waiting to sync</source>
+        <source> Waiting to sync </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">146,147</context>
+          <context context-type="linenumber">194,195</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
+          <context context-type="linenumber">202,203</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.title" datatype="html">
+        <source> Also worth a look </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
+          <context context-type="linenumber">222,225</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.today.alerts.loadingAria" datatype="html">
+        <source>Loading what else needs attention</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
+          <context context-type="linenumber">229,230</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.recent.title" datatype="html">
         <source>Recently updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">164,166</context>
+          <context context-type="linenumber">274,276</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.recent.loadingAria" datatype="html">
         <source>Loading recently updated interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.html</context>
-          <context context-type="linenumber">171,172</context>
+          <context context-type="linenumber">281,282</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.overdueBy" datatype="html">
         <source><x id="days" equiv-text="days"/> days late</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">344</context>
+          <context context-type="linenumber">370</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.pendingChanges" datatype="html">
         <source><x id="count" equiv-text="entry.pendingCount"/> changes waiting to sync</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">369</context>
+          <context context-type="linenumber">395</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openInterventions" datatype="html">
         <source>Open interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">426</context>
+          <context context-type="linenumber">459</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities" datatype="html">
         <source>Open non-conformities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">437</context>
+          <context context-type="linenumber">471</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.inspectionsCompleted" datatype="html">
         <source>Inspections completed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">445</context>
+          <context context-type="linenumber">480</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.equipmentUnderMaintenance" datatype="html">
         <source>Equipment under maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">453</context>
+          <context context-type="linenumber">489</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.criticalNonConformitiesOpen" datatype="html">
         <source><x id="count" equiv-text="count"/> critical non-conformities still open</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">676</context>
+          <context context-type="linenumber">720</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.nonConformitiesOverdue" datatype="html">
         <source><x id="count" equiv-text="count"/> non-conformities overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">678</context>
+          <context context-type="linenumber">722</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.expiredInvitations" datatype="html">
         <source><x id="count" equiv-text="count"/> invitations expired</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">680</context>
+          <context context-type="linenumber">724</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.equipmentUnderMaintenance" datatype="html">
         <source><x id="count" equiv-text="count"/> equipment items under maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">682</context>
+          <context context-type="linenumber">726</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.generic" datatype="html">
         <source><x id="label" equiv-text="fallbackLabel"/> (<x id="count" equiv-text="count"/>)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-today-page/organization-today-page.component.ts</context>
-          <context context-type="linenumber">684</context>
+          <context context-type="linenumber">728</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.permissionsSheet.systemNotice" datatype="html">

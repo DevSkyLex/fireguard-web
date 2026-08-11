@@ -110,4 +110,34 @@ describe('OrganizationTodayQueue', () => {
 
     expect(actioned).toHaveBeenCalledTimes(1);
   });
+
+  it('should render only the list body in embedded mode, without its own heading or action', async () => {
+    fixture.componentRef.setInput('embedded', true);
+    fixture.componentRef.setInput('total', 1);
+    fixture.componentRef.setInput('interventions', [intervention('i-1', 101, 'Check the riser')]);
+    fixture.componentRef.setInput('actionLabel', 'See all');
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('section')).toBeNull();
+    expect(fixture.nativeElement.querySelector('h2')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('See all');
+    expect(rows().length).toBe(1);
+  });
+
+  it('should show a visible all-clear row in embedded mode instead of disappearing when empty', async () => {
+    fixture.componentRef.setInput('embedded', true);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('ul')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('All clear');
+  });
+
+  it('should not show the all-clear row in embedded mode while still loading', async () => {
+    fixture.componentRef.setInput('embedded', true);
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).not.toContain('All clear');
+    expect(fixture.nativeElement.querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
+  });
 });

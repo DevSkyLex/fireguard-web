@@ -1,13 +1,17 @@
+import type { BooleanInput } from '@angular/cdk/coercion';
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   input,
   output,
   type InputSignal,
+  type InputSignalWithTransform,
   type OutputEmitterRef,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronRight } from '@ng-icons/lucide';
+import { lucideChevronRight, lucideCircleCheck } from '@ng-icons/lucide';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -26,10 +30,16 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * operator picked. It injects no store and calls no service — the page owns
  * orchestration (`ARCHITECTURE.md` §10.3).
  *
- * A queue that is empty and not loading renders nothing at all: four empty
- * boxes stacked down the page say less than their absence.
+ * Standalone (the default), a queue that is empty and not loading renders
+ * nothing at all: four empty boxes stacked down the page say less than their
+ * absence. {@link embedded} is for the opposite context — composed inside a
+ * page-owned card that already renders the heading, total and "see all"
+ * action itself (`OrganizationTodayPage`'s "Your work queues" card): the
+ * component then renders only its list body, and an empty, settled queue
+ * shows one muted "all clear" row instead of disappearing, so the file stays
+ * visible next to its siblings.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -45,8 +55,8 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-organization-today-queue',
-  imports: [NgIcon, HlmButton, HlmSkeleton],
-  providers: [provideIcons({ lucideChevronRight })],
+  imports: [NgIcon, NgTemplateOutlet, HlmButton, HlmSkeleton],
+  providers: [provideIcons({ lucideChevronRight, lucideCircleCheck })],
   templateUrl: './organization-today-queue.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -139,6 +149,27 @@ export class OrganizationTodayQueue {
    * @type {InputSignal<string | null>}
    */
   public readonly actionLabel: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property embedded
+   * @readonly
+   *
+   * @description
+   * Renders only the list body — no `<section>` wrapper, no own heading,
+   * total or "see all" action — for composition inside a page-owned card
+   * that already renders those. An empty, settled queue then shows one
+   * muted "all clear" row rather than disappearing, since the surrounding
+   * card still needs every file to stay visible.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly embedded: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(false, { transform: booleanAttribute });
   //#endregion
 
   //#region Outputs

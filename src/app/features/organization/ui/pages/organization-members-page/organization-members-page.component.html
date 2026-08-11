@@ -5,7 +5,12 @@
     [subtitle]="subtitle()"
   >
     @if (canManageMembers()) {
-      <button hlmBtn data-testid="organization-members-invite" (click)="openInviteDialog()">
+      <button
+        hlmBtn
+        class="max-sm:min-h-11"
+        data-testid="organization-members-invite"
+        (click)="openInviteDialog()"
+      >
         <ng-icon name="lucideMailPlus" aria-hidden="true" />
         <span i18n="@@org.members.inviteButton">Invite member</span>
       </button>
@@ -37,6 +42,7 @@
         type="button"
         variant="ghost"
         size="icon-sm"
+        class="max-sm:size-11"
         data-testid="organization-members-action-error-dismiss"
         (click)="dismissActionError()"
       >
@@ -135,6 +141,7 @@
         <button
           hlmBtn
           variant="outline"
+          class="max-sm:min-h-11"
           data-testid="organization-members-retry"
           (click)="reload()"
         >
@@ -164,13 +171,14 @@
             <button
               hlmBtn
               variant="outline"
+              class="max-sm:min-h-11"
               data-testid="organization-members-clear-filters"
               (click)="clearRosterFilters()"
             >
               <span i18n="@@common.clearFilters">Clear filters</span>
             </button>
           } @else if (canManageMembers()) {
-            <button hlmBtn (click)="openInviteDialog()">
+            <button hlmBtn class="max-sm:min-h-11" (click)="openInviteDialog()">
               <ng-icon name="lucideMailPlus" aria-hidden="true" />
               <span i18n="@@org.members.inviteButton">Invite member</span>
             </button>
@@ -194,6 +202,8 @@
         <span
           class="text-sm text-muted-foreground"
           data-testid="organization-members-row-count"
+          aria-live="polite"
+          aria-atomic="true"
           i18n="@@org.members.rowCount"
           >{{ store.members().length }} of {{ store.membersTotal() }} row(s) shown</span
         >
@@ -207,16 +217,20 @@
           >
             <ul hlmPaginationContent>
               <li hlmPaginationItem>
-                <hlm-pagination-previous
-                  iconOnly
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  class="max-sm:size-11"
                   aria-label="Previous page"
                   i18n-aria-label="@@org.members.pagePrevious"
-                  [class]="page() === 1 ? 'pointer-events-none opacity-50' : ''"
-                  [attr.aria-disabled]="page() === 1 ? 'true' : null"
-                  [attr.tabindex]="page() === 1 ? -1 : null"
                   data-testid="organization-members-page-prev"
+                  [disabled]="page() === 1"
                   (click)="goToMembersPage(page() - 1)"
-                />
+                >
+                  <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+                </button>
               </li>
               <li hlmPaginationItem>
                 <span
@@ -226,16 +240,20 @@
                 >
               </li>
               <li hlmPaginationItem>
-                <hlm-pagination-next
-                  iconOnly
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  class="max-sm:size-11"
                   aria-label="Next page"
                   i18n-aria-label="@@org.members.pageNext"
-                  [class]="page() === membersPageCount() ? 'pointer-events-none opacity-50' : ''"
-                  [attr.aria-disabled]="page() === membersPageCount() ? 'true' : null"
-                  [attr.tabindex]="page() === membersPageCount() ? -1 : null"
                   data-testid="organization-members-page-next"
+                  [disabled]="page() === membersPageCount()"
                   (click)="goToMembersPage(page() + 1)"
-                />
+                >
+                  <ng-icon name="lucideChevronRight" aria-hidden="true" />
+                </button>
               </li>
             </ul>
           </nav>
@@ -259,6 +277,7 @@
           <button
             hlmBtn
             variant="outline"
+            class="max-sm:min-h-11"
             data-testid="organization-invitations-retry"
             (click)="reload()"
           >

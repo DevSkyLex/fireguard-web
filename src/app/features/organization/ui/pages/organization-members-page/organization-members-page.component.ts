@@ -14,6 +14,8 @@ import {
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideChevronLeft,
+  lucideChevronRight,
   lucideCircleAlert,
   lucideGauge,
   lucideMailPlus,
@@ -122,7 +124,7 @@ type OrganizationMembersKpiTile = {
  * reflect. `OrganizationQuotaStore` (root-provided) supplies the "Seats
  * used" tile's used/limit reading, shared with the settings Usage tab.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -148,6 +150,8 @@ type OrganizationMembersKpiTile = {
   providers: [
     OrganizationMembersStore,
     provideIcons({
+      lucideChevronLeft,
+      lucideChevronRight,
       lucideCircleAlert,
       lucideGauge,
       lucideMailPlus,

@@ -26,4 +26,15 @@ describe('OrganizationTrendChartNotice', () => {
   it('renders no action when the caller projects none', () => {
     expect(fixture.nativeElement.querySelector('button')).toBeNull();
   });
+
+  it('announces as a status region by default', () => {
+    expect(fixture.nativeElement.getAttribute('role')).toBe('status');
+  });
+
+  it('announces as an alert when the variant is error', async () => {
+    fixture.componentRef.setInput('variant', 'error');
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.getAttribute('role')).toBe('alert');
+  });
 });

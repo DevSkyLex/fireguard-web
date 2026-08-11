@@ -118,7 +118,12 @@
             <span hlmBadge variant="outline">{{ label }}</span>
           }
           @if (groups.remaining > 0) {
-            <span hlmBadge variant="outline">+{{ groups.remaining }}</span>
+            <span
+              hlmBadge
+              variant="outline"
+              [attr.aria-label]="remainingGroupsLabelOf(groups.remaining)"
+              >+{{ groups.remaining }}</span
+            >
           }
         </div>
       }

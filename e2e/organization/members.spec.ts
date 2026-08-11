@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
+import { organizationQuotaOutput } from '../support/fixtures/billing-fixtures';
 import {
   inspectorOrganizationMemberOutput,
   organizationInvitationOutput,
@@ -26,6 +27,7 @@ test.describe('Organization members', () => {
   }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
     await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [
       organizationMemberOutput(),
       inspectorOrganizationMemberOutput(),
@@ -51,6 +53,7 @@ test.describe('Organization members', () => {
   test('opens the invite dialog and the role-assignment dialog', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
     await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [organizationMemberOutput()]);
     await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID, []);
     await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [ownerOrganizationRoleOutput()]);
@@ -73,6 +76,7 @@ test.describe('Organization members', () => {
   }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
     await api.mockOrganizationAccess(E2E_ORGANIZATION_ID, {
       permissions: ['organization.members.read'],
     });
@@ -97,6 +101,7 @@ test.describe('Organization members', () => {
 
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
     await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [
       organizationMemberOutput(),
       inspectorOrganizationMemberOutput(),
@@ -117,6 +122,7 @@ test.describe('Organization members', () => {
   test('renders on desktop in light mode', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
     await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [
       organizationMemberOutput(),
       inspectorOrganizationMemberOutput(),

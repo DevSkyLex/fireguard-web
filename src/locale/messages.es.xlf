@@ -9877,6 +9877,10 @@
         <source><x id="count" equiv-text="count"/> permissions</source>
         <target><x id="count" equiv-text="count"/> permisos</target>
       </trans-unit>
+      <trans-unit id="org.team.permissionGroupsRemaining" datatype="html">
+        <source>+<x id="count" equiv-text="remaining"/> more</source>
+        <target>+<x id="count" equiv-text="remaining"/> más</target>
+      </trans-unit>
       <trans-unit id="org.team.form.name" datatype="html">
         <source>Name</source>
         <target>Nombre</target>
@@ -10461,6 +10465,10 @@
         <source>Organization settings</source>
         <target>Configuración de la organización</target>
       </trans-unit>
+      <trans-unit id="org.settings.loadingAria" datatype="html">
+        <source>Loading organization settings</source>
+        <target>Cargando la configuración de la organización</target>
+      </trans-unit>
       <trans-unit id="org.settings.subtitle" datatype="html">
         <source>General identity, subscription, usage and workspace preferences.</source>
         <target>Identidad general, suscripción, uso y preferencias del espacio de trabajo.</target>
@@ -10520,6 +10528,10 @@
       <trans-unit id="org.settings.subscription.invoicesTitle" datatype="html">
         <source>Invoices</source>
         <target>Facturas</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.invoicesLoadingAria" datatype="html">
+        <source>Loading invoices</source>
+        <target>Cargando facturas</target>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesEmptyTitle" datatype="html">
         <source>No invoices yet</source>

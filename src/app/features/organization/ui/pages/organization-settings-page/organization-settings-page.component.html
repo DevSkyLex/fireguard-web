@@ -8,7 +8,12 @@
   />
 
   @if (!organizationReady()) {
-    <div class="flex max-w-2xl flex-col gap-4" aria-hidden="true">
+    <div
+      class="flex max-w-2xl flex-col gap-4"
+      role="status"
+      aria-label="Loading organization settings"
+      i18n-aria-label="@@org.settings.loadingAria"
+    >
       <hlm-skeleton class="h-8 w-64" />
       <hlm-skeleton class="h-24 w-full" />
       <hlm-skeleton class="h-24 w-full" />
@@ -195,7 +200,12 @@
               </h3>
 
               @if (billingStore.isLoadingInvoices()) {
-                <div class="flex flex-col gap-2" aria-hidden="true">
+                <div
+                  class="flex flex-col gap-2"
+                  role="status"
+                  aria-label="Loading invoices"
+                  i18n-aria-label="@@org.settings.subscription.invoicesLoadingAria"
+                >
                   <hlm-skeleton class="h-10 w-full" />
                   <hlm-skeleton class="h-10 w-full" />
                 </div>

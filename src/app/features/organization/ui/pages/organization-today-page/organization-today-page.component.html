@@ -236,9 +236,8 @@
             @for (alert of alertRows(); track alert.code) {
               @if (alert.link; as link) {
                 <a
-                  hlmAlert
                   [routerLink]="link"
-                  class="flex items-center gap-3 transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  class="group/alert relative flex w-full items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-start text-sm text-card-foreground transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
                   [attr.data-testid]="'org-today-alert-' + alert.code"
                 >
                   <ng-icon [name]="alert.icon" [class]="alert.iconClass" aria-hidden="true" />
@@ -294,7 +293,7 @@
                     'interventions',
                     intervention.id,
                   ]"
-                  class="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
+                  class="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none max-sm:min-h-11"
                   data-testid="org-today-recent-intervention"
                 >
                   <span class="shrink-0 font-mono text-xs text-muted-foreground"

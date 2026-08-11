@@ -149,7 +149,7 @@ function permissionGroupLabelOf(group: string): string {
  * no service. The page decides what to load and whether the acting member
  * may manage roles at all.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -334,6 +334,18 @@ export class OrganizationRoleGrid {
       shown: labels.slice(0, MAX_VISIBLE_PERMISSION_GROUPS),
       remaining: Math.max(0, labels.length - MAX_VISIBLE_PERMISSION_GROUPS),
     };
+  }
+
+  /**
+   * Method remainingGroupsLabelOf
+   * @description The accessible name for the "+N" overflow badge, since the badge itself shows only the bare number.
+   * @access protected
+   * @since 1.2.0
+   * @param {number} remaining - How many further permission groups the badge folds in.
+   * @returns {string} A sentence naming the remaining group count.
+   */
+  protected remainingGroupsLabelOf(remaining: number): string {
+    return $localize`:@@org.team.permissionGroupsRemaining:+${remaining}:count: more`;
   }
   //#endregion
 }

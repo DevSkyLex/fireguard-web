@@ -48,6 +48,7 @@
         type="button"
         variant="ghost"
         size="icon-sm"
+        class="max-sm:size-11"
         data-testid="channels-new"
         i18n-aria-label="@@channels.page.new"
         aria-label="New channel"
@@ -100,7 +101,13 @@
         i18n-title="@@channels.page.loadErrorTitle"
         [description]="message"
       >
-        <button hlmBtn type="button" data-testid="channels-retry" (click)="reload()">
+        <button
+          hlmBtn
+          type="button"
+          class="max-sm:min-h-11"
+          data-testid="channels-retry"
+          (click)="reload()"
+        >
           <span i18n="@@channels.page.retry">Retry</span>
         </button>
       </app-error-state>
@@ -116,6 +123,7 @@
           <button
             hlmBtn
             type="button"
+            class="max-sm:min-h-11"
             data-testid="channels-empty-create"
             (click)="createDialogVisible.set(true)"
           >
@@ -170,6 +178,7 @@
           <button
             hlmBtn
             type="button"
+            class="max-sm:min-h-11"
             data-testid="channels-none-open-create"
             (click)="createDialogVisible.set(true)"
           >

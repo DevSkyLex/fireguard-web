@@ -346,22 +346,44 @@ describe('OrganizationMembersPage', () => {
     expect(byTestId('organization-members-action-error')).not.toBeNull();
   });
 
-  it('should clamp members paging within the known page count', async () => {
+  it('should page members with the rendered pagination controls, disabling at the bounds', async () => {
     membersTotal.set(45); // MEMBERS_PAGE_SIZE is 20, so this spans three pages.
     await createPage();
 
-    fixture.componentInstance['goToMembersPage'](0);
+    const previous = byTestId('organization-members-page-prev') as HTMLButtonElement;
+    const next = byTestId('organization-members-page-next') as HTMLButtonElement;
+
+    expect(previous.disabled).toBe(true);
+    expect(next.disabled).toBe(false);
+
+    next.dispatchEvent(new Event('click', { bubbles: true }));
+    await fixture.whenStable();
+
     expect(loadMembers).toHaveBeenLastCalledWith({
       organizationId: 'org-1',
-      page: 1,
+      page: 2,
       search: '',
       status: 'all',
     });
+    expect(previous.disabled).toBe(false);
 
-    fixture.componentInstance['goToMembersPage'](99);
+    next.dispatchEvent(new Event('click', { bubbles: true }));
+    await fixture.whenStable();
+
     expect(loadMembers).toHaveBeenLastCalledWith({
       organizationId: 'org-1',
       page: 3,
+      search: '',
+      status: 'all',
+    });
+    expect(next.disabled).toBe(true);
+
+    previous.dispatchEvent(new Event('click', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(loadMembers).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      page: 2,
       search: '',
       status: 'all',
     });

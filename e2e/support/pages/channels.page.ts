@@ -16,6 +16,7 @@ export class ChannelsPage {
   public readonly tree: Locator = this.page.getByTestId('channels-tree');
   public readonly rows: Locator = this.page.getByTestId('channels-row');
   public readonly newButton: Locator = this.page.getByTestId('channels-new');
+  public readonly searchInput: Locator = this.page.getByTestId('channels-search');
   public readonly newDialog: Locator = this.page.getByTestId('new-channel-dialog');
   public readonly newNameInput: Locator = this.page.getByTestId('new-channel-name');
   public readonly newSubmit: Locator = this.page.getByTestId('new-channel-submit');
@@ -26,10 +27,7 @@ export class ChannelsPage {
 
   /** Opens the given channel by name from the list. */
   public async openChannel(name: string): Promise<void> {
-    await this.rows
-      .filter({ hasText: `#${name}` })
-      .first()
-      .click();
+    await this.rows.filter({ hasText: name }).first().click();
   }
 
   /** Opens the new-channel dialog from the list header. */

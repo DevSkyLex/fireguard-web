@@ -13,6 +13,9 @@ export class ChannelConversationPage {
 
   public readonly header: Locator = this.page.getByTestId('channel-conversation-header');
   public readonly name: Locator = this.page.getByTestId('channel-conversation-name');
+  public readonly participantsCountButton: Locator = this.page.getByTestId(
+    'channel-conversation-participants-count',
+  );
   public readonly thread: Locator = this.page.getByTestId('message-thread');
   public readonly composerInput: Locator = this.page.getByTestId('message-composer-input');
   public readonly composerSend: Locator = this.page.getByTestId('message-composer-send');

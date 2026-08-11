@@ -42,7 +42,7 @@ test.describe('Channels list', () => {
 
     await expect(channels.list).toBeVisible();
     await expect(channels.favorites).toBeVisible();
-    await expect(channels.favorites.getByText('#general')).toBeVisible();
+    await expect(channels.favorites.getByText('general')).toBeVisible();
     await expect(channels.tree).toBeVisible();
     // "general" is both favorited and a root channel, so it renders once in
     // Favorites and again under All channels — 4 rows for 3 distinct channels.

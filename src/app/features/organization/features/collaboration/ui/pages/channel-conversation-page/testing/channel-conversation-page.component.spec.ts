@@ -261,6 +261,19 @@ describe('ChannelConversationPage', () => {
     expect(favorite).not.toHaveBeenCalled();
   });
 
+  it('should open the participants sheet from the header count control', async () => {
+    await createPage();
+
+    expect(fixture.componentInstance['participantsSheetVisible']()).toBe(false);
+
+    byTestId('channel-conversation-participants-count')?.dispatchEvent(
+      new Event('click', { bubbles: true }),
+    );
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['participantsSheetVisible']()).toBe(true);
+  });
+
   it('should gate the actions-menu Rename/Delete entries on messaging.manage', async () => {
     await createPage();
 

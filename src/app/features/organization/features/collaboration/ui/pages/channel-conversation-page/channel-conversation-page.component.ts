@@ -107,7 +107,10 @@ import {
  * since it is the one endpoint that reports real derived fields — is what
  * folds the result back into the shared entity afterwards.
  *
- * @version 1.0.0
+ * The header shows no topic line: `ChannelOutput` carries no description or
+ * topic field on this API, so there is nothing to render there yet.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -274,6 +277,25 @@ export class ChannelConversationPage {
    */
   protected readonly participantCount: Signal<number> = computed(
     (): number => this.channel()?.participantCount ?? this.participantsStore.participants().length,
+  );
+
+  /**
+   * Property participantsButtonLabel
+   * @readonly
+   *
+   * @description
+   * The header's participant count control is a button that opens the
+   * roster, so its accessible name states the action rather than repeating
+   * the visible count alone.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly participantsButtonLabel: Signal<string> = computed(
+    (): string =>
+      $localize`:@@channels.room.participantsButtonAria:View the ${this.participantCount()}:count: participants`,
   );
 
   /**

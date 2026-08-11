@@ -2099,7 +2099,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.ts</context>
-          <context context-type="linenumber">619</context>
+          <context context-type="linenumber">641</context>
         </context-group>
       </trans-unit>
       <trans-unit id="workspace.assistant.loading" datatype="html">
@@ -2303,7 +2303,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.ts</context>
-          <context context-type="linenumber">616</context>
+          <context context-type="linenumber">638</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/direct-conversation-page/direct-conversation-page.component.ts</context>
@@ -2716,70 +2716,77 @@
         <source>participants</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">27,32</context>
+          <context context-type="linenumber">36,41</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.actionsAria" datatype="html">
         <source>Channel actions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">57,59</context>
+          <context context-type="linenumber">66,68</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.manageParticipants" datatype="html">
         <source>Participants</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">72,75</context>
+          <context context-type="linenumber">81,84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.rename" datatype="html">
         <source>Rename or move</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">83,85</context>
+          <context context-type="linenumber">92,94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.delete" datatype="html">
         <source>Delete channel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">99,102</context>
+          <context context-type="linenumber">108,111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.deleteConfirmTitle" datatype="html">
         <source>Delete this channel?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">150,151</context>
+          <context context-type="linenumber">159,160</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.deleteConfirmDescription" datatype="html">
         <source> Its messages, pins, files and links stay, but the channel itself is gone for everyone. This cannot be undone. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">152,155</context>
+          <context context-type="linenumber">161,164</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.deleteConfirmCancel" datatype="html">
         <source>Cancel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">157,159</context>
+          <context context-type="linenumber">166,168</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.deleteConfirmAction" datatype="html">
         <source> Delete </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.html</context>
-          <context context-type="linenumber">165,167</context>
+          <context context-type="linenumber">174,176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="channels.room.participantsButtonAria" datatype="html">
+        <source>View the <x id="count" equiv-text="this.participantCount()"/> participants</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.ts</context>
+          <context context-type="linenumber">298</context>
         </context-group>
       </trans-unit>
       <trans-unit id="messages.composer.placeholder" datatype="html">
         <source>Write a message</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.ts</context>
-          <context context-type="linenumber">502</context>
+          <context context-type="linenumber">524</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/direct-conversation-page/direct-conversation-page.component.ts</context>
@@ -2790,112 +2797,127 @@
         <source>Message <x id="name" equiv-text="this.channelName()"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.ts</context>
-          <context context-type="linenumber">503</context>
+          <context context-type="linenumber">525</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.unfavorite" datatype="html">
         <source>Remove from favorites</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.ts</context>
-          <context context-type="linenumber">633</context>
+          <context context-type="linenumber">655</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.favorite" datatype="html">
         <source>Add to favorites</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channel-conversation-page/channel-conversation-page.component.ts</context>
-          <context context-type="linenumber">648</context>
+          <context context-type="linenumber">670</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.title" datatype="html">
         <source>Channels</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">37,39</context>
+          <context context-type="linenumber">44,46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.new" datatype="html">
         <source>New channel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">46,47</context>
+          <context context-type="linenumber">53,54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="channels.page.searchPlaceholder" datatype="html">
+        <source>Search channels...</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
+          <context context-type="linenumber">71,72</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
+          <context context-type="linenumber">73,74</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.loadingAria" datatype="html">
         <source>Loading channels</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">59,60</context>
+          <context context-type="linenumber">87,88</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.loadErrorTitle" datatype="html">
         <source>Channels could not be loaded</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">71,72</context>
+          <context context-type="linenumber">99,100</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">76,78</context>
+          <context context-type="linenumber">104,106</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.emptyTitle" datatype="html">
         <source>No channels yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">82,83</context>
+          <context context-type="linenumber">110,111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.emptyDescription" datatype="html">
         <source>Create one to start a group conversation.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">84,85</context>
+          <context context-type="linenumber">112,113</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.emptyCreate" datatype="html">
         <source>Create channel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">94,97</context>
+          <context context-type="linenumber">122,125</context>
         </context-group>
-      </trans-unit>
-      <trans-unit id="channels.page.favorites" datatype="html">
-        <source> Favorites </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">104,106</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="channels.page.all" datatype="html">
-        <source> All channels </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">117,119</context>
+          <context context-type="linenumber">176,179</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.noneOpenTitle" datatype="html">
         <source>No channel open</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">135,136</context>
+          <context context-type="linenumber">164,165</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.noneOpenDescription" datatype="html">
         <source>Pick a channel in the list, or create one.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.html</context>
-          <context context-type="linenumber">137,138</context>
+          <context context-type="linenumber">166,167</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="channels.page.favoritesHeadingCount" datatype="html">
+        <source>Favorites (<x id="count" equiv-text="total"/>)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.ts</context>
+          <context context-type="linenumber">227</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="channels.page.allHeadingCount" datatype="html">
+        <source>All channels (<x id="count" equiv-text="total"/>)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.ts</context>
+          <context context-type="linenumber">241</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.page.unread" datatype="html">
         <source><x id="count" equiv-text="channel.unreadCount"/> unread</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/pages/channels-page/channels-page.component.ts</context>
-          <context context-type="linenumber">445</context>
+          <context context-type="linenumber">573</context>
         </context-group>
       </trans-unit>
       <trans-unit id="messages.conversation.back" datatype="html">

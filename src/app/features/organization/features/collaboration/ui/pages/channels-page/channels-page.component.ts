@@ -20,7 +20,13 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideTriangleAlert } from '@ng-icons/lucide';
+import {
+  lucideHash,
+  lucideMessageSquare,
+  lucidePlus,
+  lucideSearch,
+  lucideTriangleAlert,
+} from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
 import type { ChannelOutput } from '@features/organization/features/collaboration/models';
 import {
@@ -42,7 +48,9 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { NewChannelDialog, type NewChannelDraft } from '../../dialogs/new-channel-dialog';
 
@@ -69,7 +77,11 @@ import { NewChannelDialog, type NewChannelDraft } from '../../dialogs/new-channe
  * room's own back control is a plain link to this route rather than a
  * sidebar-sheet trigger.
  *
- * @version 1.0.0
+ * The list's search field filters {@link searchQuery} against every loaded
+ * channel's name, client-side — the whole list is already in memory, so a
+ * narrower match needs no further request.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -87,9 +99,20 @@ import { NewChannelDialog, type NewChannelDraft } from '../../dialogs/new-channe
     HlmButton,
     HlmSkeleton,
     NewChannelDialog,
+    ...HlmInputGroupImports,
     ...HlmItemImports,
+    ...HlmSeparatorImports,
   ],
-  providers: [ChannelsStore, provideIcons({ lucidePlus, lucideTriangleAlert })],
+  providers: [
+    ChannelsStore,
+    provideIcons({
+      lucideHash,
+      lucideMessageSquare,
+      lucidePlus,
+      lucideSearch,
+      lucideTriangleAlert,
+    }),
+  ],
   templateUrl: './channels-page.component.html',
   host: { class: 'flex min-h-0 min-w-0 flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -112,6 +135,50 @@ export class ChannelsPage {
   protected readonly channels: ChannelsStoreType = inject<ChannelsStoreType>(ChannelsStore);
 
   /**
+   * Property searchQuery
+   * @readonly
+   *
+   * @description
+   * The list filter's current text, matched against a channel's name only —
+   * client-side, since every channel is already loaded and a match narrows
+   * what is already in memory rather than asking the backend again.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly searchQuery: WritableSignal<string> = signal<string>('');
+
+  /**
+   * Property visibleChannels
+   * @readonly
+   *
+   * @description
+   * The loaded channels narrowed to {@link searchQuery}, or every channel
+   * when the filter is empty. Every other list computed reads from this
+   * rather than from `channels.channelEntities()` directly, so the filter
+   * applies uniformly to favorites, root channels and nested children.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly ChannelOutput[]>}
+   */
+  protected readonly visibleChannels: Signal<readonly ChannelOutput[]> = computed(
+    (): readonly ChannelOutput[] => {
+      const query: string = this.searchQuery().trim().toLowerCase();
+      const all: readonly ChannelOutput[] = this.channels.channelEntities();
+
+      return query === ''
+        ? all
+        : all.filter((channel: ChannelOutput): boolean =>
+            channel.name.toLowerCase().includes(query),
+          );
+    },
+  );
+
+  /**
    * Property favoriteChannels
    * @readonly
    *
@@ -126,20 +193,63 @@ export class ChannelsPage {
    */
   protected readonly favoriteChannels: Signal<readonly ChannelOutput[]> = computed(
     (): readonly ChannelOutput[] =>
-      this.channels
-        .channelEntities()
-        .filter((channel: ChannelOutput): boolean => channel.isFavorite),
+      this.visibleChannels().filter((channel: ChannelOutput): boolean => channel.isFavorite),
   );
+
+  /**
+   * Property visibleRootChannels
+   * @readonly
+   *
+   * @description
+   * Root channels — those without a parent — narrowed to {@link searchQuery}.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly ChannelOutput[]>}
+   */
+  protected readonly visibleRootChannels: Signal<readonly ChannelOutput[]> = computed(
+    (): readonly ChannelOutput[] =>
+      this.visibleChannels().filter((channel: ChannelOutput): boolean => !channel.parent),
+  );
+
+  /**
+   * Property favoritesHeading
+   * @readonly
+   * @description The favorites section's heading, naming how many favorited channels are shown.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly favoritesHeading: Signal<string> = computed<string>(() => {
+    const total: number = this.favoriteChannels().length;
+
+    return $localize`:@@channels.page.favoritesHeadingCount:Favorites (${total}:count:)`;
+  });
+
+  /**
+   * Property allChannelsHeading
+   * @readonly
+   * @description The full-tree section's heading, naming how many root channels are shown.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly allChannelsHeading: Signal<string> = computed<string>(() => {
+    const total: number = this.visibleRootChannels().length;
+
+    return $localize`:@@channels.page.allHeadingCount:All channels (${total}:count:)`;
+  });
 
   /**
    * Property childrenById
    * @readonly
    *
    * @description
-   * Every channel's children, keyed by the parent's id, so the tree renders
-   * without an O(n) scan per row. Matched on the trailing IRI segment, the
-   * way `ChannelPanelStore.children` does — the id is what is stable across
-   * responses, not the IRI.
+   * Every visible channel's children, keyed by the parent's id, so the tree
+   * renders without an O(n) scan per row. Matched on the trailing IRI
+   * segment, the way `ChannelPanelStore.children` does — the id is what is
+   * stable across responses, not the IRI.
    *
    * @access protected
    * @since 1.0.0
@@ -150,7 +260,7 @@ export class ChannelsPage {
     (): ReadonlyMap<string, readonly ChannelOutput[]> => {
       const byParent = new Map<string, ChannelOutput[]>();
 
-      for (const channel of this.channels.channelEntities()) {
+      for (const channel of this.visibleChannels()) {
         const parent: string | undefined = channel.parent;
         if (parent === undefined) continue;
 
@@ -356,6 +466,24 @@ export class ChannelsPage {
    */
   protected childrenOf(channelId: string): readonly ChannelOutput[] {
     return this.childrenById().get(channelId) ?? [];
+  }
+
+  /**
+   * Method onSearchInput
+   * @method onSearchInput
+   *
+   * @description
+   * Records a keystroke into the client-side list filter.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {Event} event - The input event.
+   *
+   * @returns {void}
+   */
+  protected onSearchInput(event: Event): void {
+    this.searchQuery.set((event.target as HTMLInputElement).value);
   }
 
   /**

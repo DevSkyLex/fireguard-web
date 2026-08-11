@@ -1,4 +1,4 @@
-<ng-template #row let-channel let-indent="indent">
+<ng-template #row let-channel>
   <li>
     <a
       hlmItem
@@ -7,12 +7,19 @@
       #rl="routerLinkActive"
       [routerLink]="[channel.id]"
       [attr.aria-current]="rl.isActive ? 'page' : null"
-      [class.ms-6]="indent"
       class="block"
       data-testid="channels-row"
     >
+      <div hlmItemMedia variant="icon">
+        <ng-icon name="lucideHash" aria-hidden="true" />
+      </div>
       <div hlmItemContent class="min-w-0">
-        <span hlmItemTitle class="truncate font-normal">#{{ channel.name }}</span>
+        <span
+          hlmItemTitle
+          class="truncate font-normal"
+          [class.font-semibold]="channel.unreadCount > 0"
+          >{{ channel.name }}</span
+        >
         @if (activityLabel(channel.lastMessageAt); as when) {
           <span hlmItemDescription>{{ when }}</span>
         }
@@ -50,6 +57,27 @@
       </button>
     }
   </div>
+
+  @if (channels.channelEntities().length > 0) {
+    <div class="border-b px-2 py-2">
+      <hlm-input-group>
+        <hlm-input-group-addon>
+          <ng-icon name="lucideSearch" />
+        </hlm-input-group-addon>
+        <input
+          hlmInputGroupInput
+          type="search"
+          data-testid="channels-search"
+          placeholder="Search channels..."
+          i18n-placeholder="@@channels.page.searchPlaceholder"
+          aria-label="Search channels..."
+          i18n-aria-label="@@channels.page.searchPlaceholder"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+        />
+      </hlm-input-group>
+    </div>
+  }
 
   <div class="flex-1 overflow-y-auto p-2">
     @if (isLoading()) {
@@ -97,30 +125,30 @@
       </app-empty-state>
     } @else {
       @if (favoriteChannels().length > 0) {
-        <div
-          class="px-2 pt-1 pb-1.5 text-xs font-medium text-muted-foreground"
-          i18n="@@channels.page.favorites"
-        >
-          Favorites
+        <div class="px-2 pt-1 pb-1.5 text-xs font-medium text-muted-foreground">
+          {{ favoritesHeading() }}
         </div>
-        <ul class="mb-3 flex flex-col gap-0.5" data-testid="channels-favorites">
+        <ul class="mb-2 flex flex-col gap-0.5" data-testid="channels-favorites">
           @for (channel of favoriteChannels(); track channel.id) {
             <ng-container *ngTemplateOutlet="row; context: { $implicit: channel }" />
           }
         </ul>
+        <hlm-separator class="mb-2" />
       }
 
-      <div
-        class="px-2 pt-1 pb-1.5 text-xs font-medium text-muted-foreground"
-        i18n="@@channels.page.all"
-      >
-        All channels
+      <div class="px-2 pt-1 pb-1.5 text-xs font-medium text-muted-foreground">
+        {{ allChannelsHeading() }}
       </div>
       <ul class="flex flex-col gap-0.5" data-testid="channels-tree">
-        @for (channel of channels.rootChannels(); track channel.id) {
+        @for (channel of visibleRootChannels(); track channel.id) {
           <ng-container *ngTemplateOutlet="row; context: { $implicit: channel }" />
-          @for (child of childrenOf(channel.id); track child.id) {
-            <ng-container *ngTemplateOutlet="row; context: { $implicit: child, indent: true }" />
+          @let children = childrenOf(channel.id);
+          @if (children.length > 0) {
+            <ul class="ms-4 flex flex-col gap-0.5 border-s ps-2">
+              @for (child of children; track child.id) {
+                <ng-container *ngTemplateOutlet="row; context: { $implicit: child }" />
+              }
+            </ul>
           }
         }
       </ul>
@@ -132,11 +160,23 @@
   @if (!hasOpenChannel()) {
     <div class="m-auto">
       <app-empty-state
+        icon="lucideMessageSquare"
         title="No channel open"
         i18n-title="@@channels.page.noneOpenTitle"
         description="Pick a channel in the list, or create one."
         i18n-description="@@channels.page.noneOpenDescription"
-      />
+      >
+        @if (canCreate()) {
+          <button
+            hlmBtn
+            type="button"
+            data-testid="channels-none-open-create"
+            (click)="createDialogVisible.set(true)"
+          >
+            <span i18n="@@channels.page.emptyCreate">Create channel</span>
+          </button>
+        }
+      </app-empty-state>
     </div>
   }
 

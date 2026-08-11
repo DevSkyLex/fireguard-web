@@ -177,6 +177,39 @@ describe('ChannelsPage', () => {
     expect(treeRows).toHaveLength(3);
   });
 
+  it('should narrow every section to channels whose name matches the search field', async () => {
+    channelEntities.set([
+      channel({ id: 'root-1', name: 'General' }),
+      channel({ id: 'root-2', name: 'Safety', isFavorite: true }),
+      channel({ id: 'child-1', name: 'Sub-team', parent: '/api/channels/root-1' }),
+    ]);
+    await createPage();
+
+    const search = byTestId('channels-search') as HTMLInputElement;
+    search.value = 'safe';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(
+      byTestId('channels-favorites')?.querySelectorAll('[data-testid="channels-row"]'),
+    ).toHaveLength(1);
+    expect(
+      byTestId('channels-tree')?.querySelectorAll('[data-testid="channels-row"]'),
+    ).toHaveLength(1);
+  });
+
+  it('should show a Create channel action in the "no channel open" pane only with messaging.manage', async () => {
+    channelEntities.set([channel({ id: 'root-1', name: 'General' })]);
+    await createPage();
+
+    expect(byTestId('channels-none-open-create')).not.toBeNull();
+
+    permissions.set([]);
+    await fixture.whenStable();
+
+    expect(byTestId('channels-none-open-create')).toBeNull();
+  });
+
   it('should send the create payload scoped to the routed organization', async () => {
     await createPage();
 

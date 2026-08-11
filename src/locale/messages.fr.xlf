@@ -989,6 +989,10 @@
         <source>New channel</source>
         <target>Nouveau canal</target>
       </trans-unit>
+      <trans-unit id="channels.page.searchPlaceholder" datatype="html">
+        <source>Search channels...</source>
+        <target>Rechercher un canal...</target>
+      </trans-unit>
       <trans-unit id="channels.page.loadingAria" datatype="html">
         <source>Loading channels</source>
         <target>Chargement des canaux</target>
@@ -1032,6 +1036,14 @@
       <trans-unit id="channels.page.noneOpenDescription" datatype="html">
         <source>Pick a channel in the list, or create one.</source>
         <target>Choisissez un canal dans la liste, ou créez-en un.</target>
+      </trans-unit>
+      <trans-unit id="channels.page.favoritesHeadingCount" datatype="html">
+        <source>Favorites (<x id="count" equiv-text="total"/>)</source>
+        <target>Favoris (<x id="count" equiv-text="total"/>)</target>
+      </trans-unit>
+      <trans-unit id="channels.page.allHeadingCount" datatype="html">
+        <source>All channels (<x id="count" equiv-text="total"/>)</source>
+        <target>Tous les canaux (<x id="count" equiv-text="total"/>)</target>
       </trans-unit>
       <trans-unit id="channels.newDialog.title" datatype="html">
         <source>New channel</source>
@@ -1116,6 +1128,10 @@
       <trans-unit id="channels.room.favorite" datatype="html">
         <source>Add to favorites</source>
         <target>Ajouter aux favoris</target>
+      </trans-unit>
+      <trans-unit id="channels.room.participantsButtonAria" datatype="html">
+        <source>View the <x id="count" equiv-text="this.participantCount()"/> participants</source>
+        <target>Voir les <x id="count" equiv-text="this.participantCount()"/> participants</target>
       </trans-unit>
       <trans-unit id="channels.room.unfavorite" datatype="html">
         <source>Remove from favorites</source>

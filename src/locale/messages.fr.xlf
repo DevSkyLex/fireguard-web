@@ -9774,6 +9774,18 @@
         <source>New role</source>
         <target>Nouveau rôle</target>
       </trans-unit>
+      <trans-unit id="org.team.kpiTotalRoles" datatype="html">
+        <source>Total roles</source>
+        <target>Rôles au total</target>
+      </trans-unit>
+      <trans-unit id="org.team.kpiCustomRoles" datatype="html">
+        <source>Custom roles</source>
+        <target>Rôles personnalisés</target>
+      </trans-unit>
+      <trans-unit id="org.team.kpiPermissionsCatalog" datatype="html">
+        <source>Permissions in catalog</source>
+        <target>Permissions au catalogue</target>
+      </trans-unit>
       <trans-unit id="org.team.loadErrorTitle" datatype="html">
         <source>Roles could not be loaded</source>
         <target>Impossible de charger les rôles</target>
@@ -9825,6 +9837,14 @@
       <trans-unit id="org.team.noResults" datatype="html">
         <source>No roles found.</source>
         <target>Aucun rôle trouvé.</target>
+      </trans-unit>
+      <trans-unit id="org.team.systemRolesHeadingCount" datatype="html">
+        <source>System roles (<x id="count" equiv-text="total"/>)</source>
+        <target>Rôles système (<x id="count" equiv-text="total"/>)</target>
+      </trans-unit>
+      <trans-unit id="org.team.customRolesHeadingCount" datatype="html">
+        <source>Custom roles (<x id="count" equiv-text="total"/>)</source>
+        <target>Rôles personnalisés (<x id="count" equiv-text="total"/>)</target>
       </trans-unit>
       <trans-unit id="org.team.permissionCountOne" datatype="html">
         <source>1 permission</source>

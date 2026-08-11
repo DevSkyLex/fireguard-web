@@ -12,7 +12,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucidePlus, lucideShieldPlus } from '@ng-icons/lucide';
+import {
+  lucideCircleAlert,
+  lucideKeyRound,
+  lucidePlus,
+  lucideShield,
+  lucideShieldPlus,
+} from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { CallState, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -29,8 +35,7 @@ import {
   OrganizationTeamStore,
   type OrganizationTeamStoreType,
 } from '@features/organization/state/organization-team';
-import { OrganizationPageHeader } from '@features/organization/ui/components';
-import { EmptyState } from '@shared/empty-state';
+import { OrganizationPageHeader, StatTile } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
@@ -42,14 +47,33 @@ import { OrganizationRolePermissionsSheet } from '../../sheets/organization-role
 type PendingMutation = 'create' | 'delete' | 'permissions' | null;
 
 /**
+ * Type OrganizationTeamKpiTile
+ *
+ * @description
+ * View-model for one `app-stat-tile` in the page's KPI row.
+ *
+ * @since 1.1.0
+ */
+type OrganizationTeamKpiTile = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string | number;
+  readonly icon: string;
+  readonly loading: boolean;
+};
+
+/**
  * Component OrganizationTeamPage
  * @class OrganizationTeamPage
  *
  * @description
  * Route entry page for the organization's roles and permissions
  * (`/organizations/:organizationId/team`, gated by `organization.roles.*`).
- * Renders every role — system and custom — through {@link OrganizationRoleGrid};
- * a member holding `organization.roles.manage` can create a role
+ * A KPI row (total, custom and catalog counts) sits above
+ * {@link OrganizationRoleGrid}, which itself splits the one loaded role list
+ * into a System roles and a Custom roles section — so the custom-roles empty
+ * state can never stack above a grid still full of system roles; a member
+ * holding `organization.roles.manage` can create a role
  * ({@link OrganizationRoleCreateDialog}), edit a custom role's permissions
  * ({@link OrganizationRolePermissionsSheet}), or delete a custom role
  * (a page-owned `hlm-alert-dialog`, the only overlay of the three simple
@@ -63,7 +87,7 @@ type PendingMutation = 'create' | 'delete' | 'permissions' | null;
  * to close the right dialog on success and show an error only where it
  * belongs, rather than trusting a bare "last call failed" signal.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```typescript
@@ -76,18 +100,18 @@ type PendingMutation = 'create' | 'delete' | 'permissions' | null;
   selector: 'app-organization-team-page',
   imports: [
     NgIcon,
-    EmptyState,
     ErrorState,
     OrganizationPageHeader,
     OrganizationRoleCreateDialog,
     OrganizationRoleGrid,
     OrganizationRolePermissionsSheet,
+    StatTile,
     HlmButton,
     ...HlmAlertDialogImports,
   ],
   providers: [
     OrganizationTeamStore,
-    provideIcons({ lucideCircleAlert, lucidePlus, lucideShieldPlus }),
+    provideIcons({ lucideCircleAlert, lucideKeyRound, lucidePlus, lucideShield, lucideShieldPlus }),
   ],
   templateUrl: './organization-team-page.component.html',
   host: { class: 'block' },
@@ -131,9 +155,52 @@ export class OrganizationTeamPage {
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.ROLES_MANAGE),
   );
 
-  /** The organization's custom (non-system) roles, deciding the empty-state CTA. */
+  /** The organization's custom (non-system) roles, backing the "Custom roles" KPI tile. */
   protected readonly customRoles: Signal<readonly OrganizationRoleOutput[]> = computed(
     (): readonly OrganizationRoleOutput[] => this.store.roles().filter((role) => !role.isSystem),
+  );
+
+  /**
+   * Property kpiTiles
+   * @readonly
+   *
+   * @description
+   * The KPI row's view-models: the total role count, the custom-role count,
+   * and the permission catalog size — all already loaded by this page's own
+   * `store.load()` call, so the row costs no extra request.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly OrganizationTeamKpiTile[]>}
+   */
+  protected readonly kpiTiles: Signal<readonly OrganizationTeamKpiTile[]> = computed(
+    (): readonly OrganizationTeamKpiTile[] => {
+      const loading: boolean = this.store.isLoading();
+
+      return [
+        {
+          id: 'total',
+          label: $localize`:@@org.team.kpiTotalRoles:Total roles`,
+          value: this.store.roles().length,
+          icon: 'lucideShield',
+          loading,
+        },
+        {
+          id: 'custom',
+          label: $localize`:@@org.team.kpiCustomRoles:Custom roles`,
+          value: this.customRoles().length,
+          icon: 'lucideShieldPlus',
+          loading,
+        },
+        {
+          id: 'permissions',
+          label: $localize`:@@org.team.kpiPermissionsCatalog:Permissions in catalog`,
+          value: this.store.permissions().length,
+          icon: 'lucideKeyRound',
+          loading,
+        },
+      ];
+    },
   );
 
   /** Whether the create-role dialog is open. */

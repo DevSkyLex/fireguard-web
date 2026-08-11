@@ -1,92 +1,140 @@
-<div
-  class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
-  data-testid="organization-role-grid"
->
+<div class="flex flex-col gap-6" data-testid="organization-role-grid">
   @if (loading()) {
-    @for (card of skeletonCards; track card) {
-      <div hlmCard aria-hidden="true">
-        <div hlmCardHeader>
-          <hlm-skeleton class="h-5 w-32 max-w-full" />
-          <hlm-skeleton class="mt-2 h-4 w-20" />
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      @for (card of skeletonCards; track card) {
+        <div hlmCard aria-hidden="true">
+          <div hlmCardHeader>
+            <hlm-skeleton class="h-5 w-32 max-w-full" />
+            <hlm-skeleton class="mt-2 h-4 w-20" />
+          </div>
+          <div hlmCardContent>
+            <hlm-skeleton class="h-4 w-24" />
+          </div>
         </div>
-        <div hlmCardContent>
-          <hlm-skeleton class="h-4 w-24" />
-        </div>
-      </div>
-    }
+      }
+    </div>
+  } @else if (items().length === 0) {
+    <hlm-empty>
+      <hlm-empty-header>
+        <div hlmEmptyTitle i18n="@@org.team.noResults">No roles found.</div>
+      </hlm-empty-header>
+    </hlm-empty>
   } @else {
-    @for (item of items(); track item.id) {
-      <div hlmCard data-testid="organization-role-grid-card" class="relative">
-        @if (canManage() && !item.isSystem) {
-          <button
-            hlmBtn
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            class="absolute end-2 top-2 max-sm:size-11"
-            data-testid="organization-role-grid-card-menu"
-            [hlmDropdownMenuTrigger]="roleMenu"
-          >
-            <ng-icon name="lucideEllipsis" aria-hidden="true" />
-            <span class="sr-only" i18n="@@org.team.rowMenu">Open menu</span>
-          </button>
-
-          <ng-template #roleMenu>
-            <hlm-dropdown-menu class="w-48">
-              <button
-                hlmDropdownMenuItem
-                data-testid="organization-role-grid-card-edit-permissions"
-                (click)="editPermissionsRequested.emit(item)"
-              >
-                <ng-icon name="lucidePencil" aria-hidden="true" />
-                <span i18n="@@org.team.editPermissions">Edit permissions</span>
-              </button>
-              <button
-                hlmDropdownMenuItem
-                data-testid="organization-role-grid-card-delete"
-                (click)="deleteRequested.emit(item)"
-              >
-                <ng-icon name="lucideTrash2" aria-hidden="true" />
-                <span i18n="@@org.team.delete">Delete</span>
-              </button>
-            </hlm-dropdown-menu>
-          </ng-template>
+    <section class="flex flex-col gap-3">
+      <h2 class="text-lg font-medium">{{ systemRolesHeading() }}</h2>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        @for (item of systemItems(); track item.id) {
+          <ng-container *ngTemplateOutlet="roleCard; context: { $implicit: item }" />
         }
-
-        <div hlmCardHeader>
-          <p hlmCardTitle class="flex items-center gap-1.5 pe-8">
-            <span class="truncate">{{ item.name }}</span>
-            @if (item.isSystem) {
-              <span hlmBadge variant="secondary" class="shrink-0">
-                <ng-icon name="lucideShieldCheck" aria-hidden="true" />
-                <span i18n="@@org.team.systemBadge">System</span>
-              </span>
-            }
-          </p>
-          @if (item.description; as description) {
-            <p hlmCardDescription class="truncate">{{ description }}</p>
-          }
-        </div>
-        <div hlmCardContent class="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span class="text-sm text-muted-foreground tabular-nums">{{
-            permissionCountLabelOf(item)
-          }}</span>
-          @if (memberCountLabelOf(item); as memberCount) {
-            <span aria-hidden="true" class="text-sm text-muted-foreground">·</span>
-            <span
-              class="text-sm text-muted-foreground tabular-nums"
-              data-testid="organization-role-grid-card-member-count"
-              >{{ memberCount }}</span
-            >
-          }
-        </div>
       </div>
-    } @empty {
-      <hlm-empty class="col-span-full">
-        <hlm-empty-header>
-          <div hlmEmptyTitle i18n="@@org.team.noResults">No roles found.</div>
-        </hlm-empty-header>
-      </hlm-empty>
-    }
+    </section>
+
+    <hlm-separator />
+
+    <section class="flex flex-col gap-3">
+      <h2 class="text-lg font-medium">{{ customRolesHeading() }}</h2>
+      @if (customItems().length === 0) {
+        @if (canManage()) {
+          <app-empty-state
+            icon="lucideShieldPlus"
+            class="rounded-md border border-dashed border-border p-6"
+            title="No custom roles yet"
+            i18n-title="@@org.team.noCustomRolesTitle"
+            description="Create a role to grant a tailored set of permissions beyond the built-in roles."
+            i18n-description="@@org.team.noCustomRolesDescription"
+          />
+        }
+      } @else {
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          @for (item of customItems(); track item.id) {
+            <ng-container *ngTemplateOutlet="roleCard; context: { $implicit: item }" />
+          }
+        </div>
+      }
+    </section>
   }
 </div>
+
+<ng-template #roleCard let-item>
+  <div hlmCard data-testid="organization-role-grid-card" class="relative">
+    @if (canManage() && !item.isSystem) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        class="absolute end-2 top-2 max-sm:size-11"
+        data-testid="organization-role-grid-card-menu"
+        [hlmDropdownMenuTrigger]="roleMenu"
+      >
+        <ng-icon name="lucideEllipsis" aria-hidden="true" />
+        <span class="sr-only" i18n="@@org.team.rowMenu">Open menu</span>
+      </button>
+
+      <ng-template #roleMenu>
+        <hlm-dropdown-menu class="w-48">
+          <button
+            hlmDropdownMenuItem
+            data-testid="organization-role-grid-card-edit-permissions"
+            (click)="editPermissionsRequested.emit(item)"
+          >
+            <ng-icon name="lucidePencil" aria-hidden="true" />
+            <span i18n="@@org.team.editPermissions">Edit permissions</span>
+          </button>
+          <button
+            hlmDropdownMenuItem
+            data-testid="organization-role-grid-card-delete"
+            (click)="deleteRequested.emit(item)"
+          >
+            <ng-icon name="lucideTrash2" aria-hidden="true" />
+            <span i18n="@@org.team.delete">Delete</span>
+          </button>
+        </hlm-dropdown-menu>
+      </ng-template>
+    }
+
+    <div hlmCardHeader>
+      <p hlmCardTitle class="flex items-center gap-1.5 pe-8">
+        <span class="truncate">{{ item.name }}</span>
+        @if (item.isSystem) {
+          <span hlmBadge variant="secondary" class="shrink-0">
+            <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+            <span i18n="@@org.team.systemBadge">System</span>
+          </span>
+        }
+      </p>
+      @if (item.description; as description) {
+        <p hlmCardDescription class="truncate">{{ description }}</p>
+      }
+    </div>
+    <div hlmCardContent class="flex flex-col gap-2">
+      @let groups = permissionGroupsOf(item);
+      @if (groups.shown.length > 0) {
+        <div
+          class="flex flex-wrap items-center gap-1.5"
+          data-testid="organization-role-grid-card-permission-groups"
+        >
+          @for (label of groups.shown; track label) {
+            <span hlmBadge variant="outline">{{ label }}</span>
+          }
+          @if (groups.remaining > 0) {
+            <span hlmBadge variant="outline">+{{ groups.remaining }}</span>
+          }
+        </div>
+      }
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span class="text-sm text-muted-foreground tabular-nums">{{
+          permissionCountLabelOf(item)
+        }}</span>
+        @if (memberCountLabelOf(item); as memberCount) {
+          <span aria-hidden="true" class="text-sm text-muted-foreground">·</span>
+          <span
+            class="text-sm text-muted-foreground tabular-nums"
+            data-testid="organization-role-grid-card-member-count"
+            >{{ memberCount }}</span
+          >
+        }
+      </div>
+    </div>
+  </div>
+</ng-template>

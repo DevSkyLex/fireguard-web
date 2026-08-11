@@ -30,25 +30,18 @@
       </button>
     </app-error-state>
   } @else {
-    @if (!store.isLoading() && canManage() && customRoles().length === 0) {
-      <app-empty-state
-        icon="lucideShieldPlus"
-        class="rounded-md border border-dashed border-border p-6"
-        title="No custom roles yet"
-        i18n-title="@@org.team.noCustomRolesTitle"
-        description="Create a role to grant a tailored set of permissions beyond the built-in roles."
-        i18n-description="@@org.team.noCustomRolesDescription"
-      >
-        <button
-          hlmBtn
-          type="button"
-          data-testid="organization-team-empty-create-role"
-          (click)="openCreateDialog()"
-        >
-          <span i18n="@@org.team.createRole">New role</span>
-        </button>
-      </app-empty-state>
-    }
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-3" data-testid="organization-team-kpis">
+      @for (tile of kpiTiles(); track tile.id) {
+        <div [attr.data-testid]="'organization-team-kpi-' + tile.id">
+          <app-stat-tile
+            [label]="tile.label"
+            [value]="tile.value"
+            [icon]="tile.icon"
+            [loading]="tile.loading"
+          />
+        </div>
+      }
+    </section>
 
     <app-organization-role-grid
       [items]="store.roles()"

@@ -8424,67 +8424,275 @@
           <context context-type="linenumber">40,42</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.team.noResults" datatype="html">
+        <source>No roles found.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
+          <context context-type="linenumber">19,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.noCustomRolesTitle" datatype="html">
+        <source>No custom roles yet</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
+          <context context-type="linenumber">41,42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.noCustomRolesDescription" datatype="html">
+        <source>Create a role to grant a tailored set of permissions beyond the built-in roles.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="org.team.rowMenu" datatype="html">
         <source>Open menu</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
-          <context context-type="linenumber">31,34</context>
+          <context context-type="linenumber">71,74</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.editPermissions" datatype="html">
         <source>Edit permissions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
-          <context context-type="linenumber">42,44</context>
+          <context context-type="linenumber">82,84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.delete" datatype="html">
         <source>Delete</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
-          <context context-type="linenumber">50,51</context>
+          <context context-type="linenumber">90,92</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.systemBadge" datatype="html">
         <source>System</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
-          <context context-type="linenumber">62,64</context>
+          <context context-type="linenumber">102,104</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.team.noResults" datatype="html">
-        <source>No roles found.</source>
+      <trans-unit id="org.team.domain.dashboard" datatype="html">
+        <source>Dashboard</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.html</context>
-          <context context-type="linenumber">87,88</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">91</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">98</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.events" datatype="html">
+        <source>Events</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">93</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">100</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.members" datatype="html">
+        <source>Members</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">95</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">102</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.roles" datatype="html">
+        <source>Roles</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">97</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">104</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.facilities" datatype="html">
+        <source>Facilities</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">99</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">106</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.equipment" datatype="html">
+        <source>Equipment</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">101</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">108</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.inspection" datatype="html">
+        <source>Inspections</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">103</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">110</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.interventions" datatype="html">
+        <source>Interventions</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">105</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">112</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.messaging" datatype="html">
+        <source>Messaging</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">107</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">114</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.assistant" datatype="html">
+        <source>Assistant</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">109</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">116</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.settings" datatype="html">
+        <source>Settings</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">118</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.domain.general" datatype="html">
+        <source>General</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">113</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
+          <context context-type="linenumber">120</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
+          <context context-type="linenumber">93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.systemRolesHeadingCount" datatype="html">
+        <source>System roles (<x id="count" equiv-text="total"/>)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">266</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.customRolesHeadingCount" datatype="html">
+        <source>Custom roles (<x id="count" equiv-text="total"/>)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
+          <context context-type="linenumber">280</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.permissionCountOne" datatype="html">
         <source>1 permission</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
-          <context context-type="linenumber">143</context>
+          <context context-type="linenumber">297</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.permissionCountMany" datatype="html">
         <source><x id="count" equiv-text="count"/> permissions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
-          <context context-type="linenumber">144</context>
+          <context context-type="linenumber">298</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.memberCountOne" datatype="html">
         <source>1 member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
-          <context context-type="linenumber">161</context>
+          <context context-type="linenumber">315</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.memberCountMany" datatype="html">
         <source><x id="count" equiv-text="count"/> members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-role-grid/organization-role-grid.component.ts</context>
-          <context context-type="linenumber">162</context>
+          <context context-type="linenumber">316</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.confirmTitle" datatype="html">
@@ -8926,138 +9134,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.html</context>
           <context context-type="linenumber">109,112</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.dashboard" datatype="html">
-        <source>Dashboard</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">98</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">71</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.events" datatype="html">
-        <source>Events</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">100</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">73</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.members" datatype="html">
-        <source>Members</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">102</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">75</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.roles" datatype="html">
-        <source>Roles</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">104</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">77</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.facilities" datatype="html">
-        <source>Facilities</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">106</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">79</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.equipment" datatype="html">
-        <source>Equipment</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">108</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">81</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.inspection" datatype="html">
-        <source>Inspections</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">110</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">83</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.interventions" datatype="html">
-        <source>Interventions</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">112</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">85</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.messaging" datatype="html">
-        <source>Messaging</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">114</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">87</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.assistant" datatype="html">
-        <source>Assistant</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">116</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">89</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.settings" datatype="html">
-        <source>Settings</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">118</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">91</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.domain.general" datatype="html">
-        <source>General</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-role-create-form/organization-role-create-form.component.ts</context>
-          <context context-type="linenumber">120</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/sheets/organization-role-permissions-sheet/organization-role-permissions-sheet.component.ts</context>
-          <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.form.nameRequired" datatype="html">
@@ -9679,133 +9755,133 @@
         <source>Organization settings sections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">19,20</context>
+          <context context-type="linenumber">20,21</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.general" datatype="html">
         <source>General</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">27,29</context>
+          <context context-type="linenumber">29,31</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.subscription" datatype="html">
         <source>Subscription</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">34,36</context>
+          <context context-type="linenumber">37,40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.usage" datatype="html">
         <source>Usage</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">37,39</context>
+          <context context-type="linenumber">45,47</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.notifications" datatype="html">
         <source>Notifications</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">44,47</context>
+          <context context-type="linenumber">53,56</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.regional" datatype="html">
         <source>Regional &amp; formats</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">51,53</context>
+          <context context-type="linenumber">61,63</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.tabs.danger" datatype="html">
         <source>Danger zone</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">59,62</context>
+          <context context-type="linenumber">70,73</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.currentTitle" datatype="html">
-        <source> Current plan </source>
+        <source>Current plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">100,102</context>
+          <context context-type="linenumber">106,108</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.managePortal" datatype="html">
         <source>Manage billing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">137,138</context>
+          <context context-type="linenumber">141,142</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.startCheckout" datatype="html">
         <source>Set up billing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">152,153</context>
+          <context context-type="linenumber">156,157</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.billingErrorTitle" datatype="html">
         <source> Couldn&apos;t complete the request </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">162,164</context>
+          <context context-type="linenumber">166,168</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.plansTitle" datatype="html">
         <source> Plans </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">174,176</context>
+          <context context-type="linenumber">179,181</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesTitle" datatype="html">
         <source> Invoices </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">189,192</context>
+          <context context-type="linenumber">194,197</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesErrorTitle" datatype="html">
         <source> Couldn&apos;t load invoices </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">201,203</context>
+          <context context-type="linenumber">206,208</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesEmptyTitle" datatype="html">
         <source>No invoices yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">209,210</context>
+          <context context-type="linenumber">214,215</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesEmptyDescription" datatype="html">
         <source>Invoices appear here once the organization has been billed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">211,212</context>
+          <context context-type="linenumber">216,217</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.downloadInvoice" datatype="html">
         <source>Download invoice</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">240,242</context>
+          <context context-type="linenumber">245,247</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.title" datatype="html">
-        <source> Delete this organization </source>
+        <source>Delete this organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">299,300</context>
+          <context context-type="linenumber">300,302</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.description" datatype="html">
         <source> Permanently deletes every facility, piece of equipment, inspection, intervention and member record. This cannot be undone. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">302,304</context>
+          <context context-type="linenumber">303,305</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.open" datatype="html">
@@ -9819,14 +9895,14 @@
         <source>Ends on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">470</context>
+          <context context-type="linenumber">486</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.renewsOn" datatype="html">
         <source>Renews on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">471</context>
+          <context context-type="linenumber">487</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.ariaLabel" datatype="html">
@@ -10114,10 +10190,6 @@
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
           <context context-type="linenumber">16,19</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">48,50</context>
-        </context-group>
       </trans-unit>
       <trans-unit id="org.team.loadErrorTitle" datatype="html">
         <source>Roles could not be loaded</source>
@@ -10133,60 +10205,67 @@
           <context context-type="linenumber">29,31</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.team.noCustomRolesTitle" datatype="html">
-        <source>No custom roles yet</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">37,38</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.team.noCustomRolesDescription" datatype="html">
-        <source>Create a role to grant a tailored set of permissions beyond the built-in roles.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">39,40</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.team.deleteConfirmTitle" datatype="html">
         <source>Delete this role?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">85,86</context>
+          <context context-type="linenumber">78,79</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteConfirmDescription" datatype="html">
         <source> Every member holding only this role loses the permissions it grants. This cannot be undone. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">87,89</context>
+          <context context-type="linenumber">80,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteConfirmCancel" datatype="html">
         <source>Cancel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">98,100</context>
+          <context context-type="linenumber">91,93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteConfirmAction" datatype="html">
         <source> Delete </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.html</context>
-          <context context-type="linenumber">107,109</context>
+          <context context-type="linenumber">100,102</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.title" datatype="html">
         <source>Roles &amp; permissions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.ts</context>
-          <context context-type="linenumber">124</context>
+          <context context-type="linenumber">148</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.subtitle" datatype="html">
         <source>Every role defines what a member can see and do in this organization.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.ts</context>
-          <context context-type="linenumber">127</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.kpiTotalRoles" datatype="html">
+        <source>Total roles</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.ts</context>
+          <context context-type="linenumber">183</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.kpiCustomRoles" datatype="html">
+        <source>Custom roles</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.ts</context>
+          <context context-type="linenumber">190</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.team.kpiPermissionsCatalog" datatype="html">
+        <source>Permissions in catalog</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team-page/organization-team-page.component.ts</context>
+          <context context-type="linenumber">197</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.code.criticalNonConformitiesOpen" datatype="html">

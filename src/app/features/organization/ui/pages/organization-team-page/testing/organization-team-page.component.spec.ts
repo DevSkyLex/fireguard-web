@@ -32,7 +32,7 @@ function role(overrides: Partial<OrganizationRoleOutput> = {}): OrganizationRole
     name: 'Inspector',
     description: null,
     isSystem: false,
-    permissions: ['organization.inspection.read'],
+    permissions: [{ name: 'organization.inspection.read', description: 'Read inspections' }],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-01-01T00:00:00+00:00',
     ...overrides,

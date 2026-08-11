@@ -168,4 +168,27 @@ test.describe('Equipment detail', () => {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/equipment-detail-dark-mobile.png` });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
+
+  test('paints the full-page skeleton immediately on a slow deep link, then swaps in the record', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    let releaseDetail!: () => void;
+    const detailHold = new Promise<void>((resolve) => (releaseDetail = resolve));
+    await api.mockEquipmentDetail(E2E_ORGANIZATION_ID, equipmentOutput(), {
+      holdUntil: detailHold,
+    });
+    const equipments = new EquipmentsPage(page);
+
+    await equipments.gotoDetail(E2E_ORGANIZATION_ID, E2E_EQUIPMENT_ID);
+
+    await expect(equipments.detailLoading).toBeVisible();
+    await expect(equipments.lifecycleBand).toHaveCount(0);
+
+    releaseDetail();
+
+    await expect(equipments.lifecycleBand).toBeVisible();
+    await expect(equipments.detailLoading).toHaveCount(0);
+  });
 });

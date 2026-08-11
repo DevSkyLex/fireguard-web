@@ -6,7 +6,9 @@ import {
   idleCallState,
   successCallState,
   type CallState,
+  type StoreError,
 } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
@@ -45,7 +47,9 @@ describe('FacilityDetailPage', () => {
   let ensureFacilityDescendantsLoaded: ReturnType<typeof vi.fn>;
   let overviewLoad: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
+  let setTitle: ReturnType<typeof vi.fn>;
   let selectedFacility: WritableSignal<FacilityOutput | null>;
+  let getError: WritableSignal<StoreError | null>;
   let updateCallState: WritableSignal<CallState<FacilityOutput | null>>;
   let deleteCallState: WritableSignal<CallState>;
   let hasPermission: ReturnType<typeof vi.fn>;
@@ -66,7 +70,9 @@ describe('FacilityDetailPage', () => {
     remove = vi.fn();
     ensureFacilityDescendantsLoaded = vi.fn();
     overviewLoad = vi.fn();
+    setTitle = vi.fn();
     selectedFacility = signal<FacilityOutput | null>(facility());
+    getError = signal<StoreError | null>(null);
     updateCallState = signal<CallState<FacilityOutput | null>>(idleCallState());
     deleteCallState = signal<CallState>(idleCallState());
     hasPermission = vi.fn().mockReturnValue(true);
@@ -75,7 +81,8 @@ describe('FacilityDetailPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        { provide: ActiveFacilityStore, useValue: { selectedFacility } },
+        { provide: ActiveFacilityStore, useValue: { selectedFacility, getError } },
+        { provide: TitleService, useValue: { setTitle } },
         {
           provide: FacilityStore,
           useValue: {
@@ -133,6 +140,28 @@ describe('FacilityDetailPage', () => {
     expect(root().textContent).toContain('HQ-01');
     expect(root().textContent).toContain('1 Main Street');
     expect(root().querySelector('app-facility-status-tag')).not.toBeNull();
+  });
+
+  it('should re-set the document title once the facility resolves', async () => {
+    selectedFacility.set(null);
+    await createPage();
+
+    expect(setTitle).not.toHaveBeenCalled();
+
+    selectedFacility.set(facility());
+    await fixture.whenStable();
+
+    expect(setTitle).toHaveBeenCalledWith('Headquarters');
+  });
+
+  it('should return to the organization landing page when the load fails', async () => {
+    selectedFacility.set(null);
+    await createPage();
+
+    getError.set({ error: null, message: 'down', code: 500, retryable: false, timestamp: 0 });
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1']);
   });
 
   it('should load the overview summary once the facility resolves', async () => {

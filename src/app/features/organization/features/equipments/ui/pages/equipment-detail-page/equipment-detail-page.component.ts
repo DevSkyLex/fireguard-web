@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,13 +7,16 @@ import {
   inject,
   input,
   LOCALE_ID,
+  PLATFORM_ID,
   signal,
   untracked,
   type InputSignal,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { isCallPending, type CallState } from '@core/request-state';
+import { Router } from '@angular/router';
+import { isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   EquipmentEditState,
@@ -56,9 +60,12 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * secondary, and {@link EquipmentInformationPanel} for the identification
  * fields.
  *
- * `equipmentResolver` (route `resolve`) populates {@link ActiveEquipmentStore}
- * before this page renders; a route-scoped {@link EquipmentStore} carries the
- * update and lifecycle writes.
+ * `equipmentResolver` (route `resolve`) seeds {@link ActiveEquipmentStore}
+ * fire-and-forget, so this page always renders immediately: the full-page
+ * skeleton shows from the store's pending state until the record lands, the
+ * document title follows through `TitleService`, and a load failure returns
+ * to the index. A route-scoped {@link EquipmentStore} carries the update and
+ * lifecycle writes.
  *
  * @version 1.0.0
  *
@@ -101,12 +108,21 @@ export class EquipmentDetailPage {
   //#endregion
 
   //#region Properties
-  /** The currently active equipment, resolved by `equipmentResolver` before this page renders. */
+  /** The currently active equipment, seeded by `equipmentResolver`; null until the fetch lands. */
   protected readonly activeEquipmentStore: ActiveEquipmentStore =
     inject<ActiveEquipmentStore>(ActiveEquipmentStore);
 
   /** The route-scoped store carrying the update and lifecycle writes. */
   protected readonly store: EquipmentStoreType = inject<EquipmentStoreType>(EquipmentStore);
+
+  /** Router used to return to the index when the record fails to load. */
+  private readonly router: Router = inject<Router>(Router);
+
+  /** Document title channel, kept in sync with the loaded record. */
+  private readonly titleService: TitleService = inject<TitleService>(TitleService);
+
+  /** Whether this instance runs in the browser — the failure redirect never fires during SSR. */
+  private readonly isBrowser: boolean = isPlatformBrowser(inject<object>(PLATFORM_ID));
 
   /** Organization permission checks gating every write on this page. */
   private readonly permissions: OrganizationPermissionService = inject(
@@ -219,7 +235,13 @@ export class EquipmentDetailPage {
   /**
    * Constructor
    * @constructor
-   * @description Settles the open in-place field once its own write clears.
+   *
+   * @description
+   * Settles the open in-place field once its own write clears, re-sets the
+   * document title once the seeded record lands (the title resolver only
+   * returned the neutral section label), and returns to the index when the
+   * load fails — the global feedback listener already toasts the failure.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -228,6 +250,22 @@ export class EquipmentDetailPage {
       const callState: CallState<EquipmentOutput | null> = this.store.updateCallState();
 
       untracked((): void => this.settleUpdateWrite(callState));
+    });
+
+    effect((): void => {
+      const title: string = this.title();
+      if (!title) return;
+
+      untracked((): void => this.titleService.setTitle(title));
+    });
+
+    effect((): void => {
+      const error: StoreError | null = this.activeEquipmentStore.getError();
+      if (error === null || !this.isBrowser) return;
+
+      untracked((): void => {
+        void this.router.navigate(['/organizations', this.organizationId(), 'equipments']);
+      });
     });
   }
   //#endregion

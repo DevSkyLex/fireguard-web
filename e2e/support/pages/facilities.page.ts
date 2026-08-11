@@ -34,6 +34,7 @@ export class FacilitiesPage {
   public readonly createLongitude: Locator = this.page.getByTestId('facility-create-longitude');
   public readonly createSubmit: Locator = this.page.getByTestId('facility-create-submit');
 
+  public readonly detailLoading: Locator = this.page.getByTestId('facility-detail-loading');
   public readonly deleteAction: Locator = this.page.getByTestId('facility-detail-delete');
   public readonly overviewTab: Locator = this.page.getByTestId('facility-tab-overview');
   public readonly informationTab: Locator = this.page.getByTestId('facility-tab-information');

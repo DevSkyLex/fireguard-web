@@ -31,7 +31,10 @@ import { InterventionStore } from './state';
  * falls through to `snapshot.title` when `title` is a `ResolveFn`, so one
  * invocation serves both the document title and the crumb — registering it
  * twice would run it twice, concurrently, with neither able to use the other's
- * cache.
+ * cache. The resolver answers synchronously (cached name or neutral label)
+ * while seeding the active-intervention fetch fire-and-forget, so activation
+ * never waits on the network and the page paints its own skeleton; once the
+ * workspace loads, the page re-sets the title through `TitleService`.
  *
  * @since 2.1.0
  *

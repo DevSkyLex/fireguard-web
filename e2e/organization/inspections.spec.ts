@@ -218,4 +218,27 @@ test.describe('Inspection detail', () => {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/inspection-detail-dark-mobile.png` });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
+
+  test('paints the full-page skeleton immediately on a slow deep link, then swaps in the record', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    let releaseDetail!: () => void;
+    const detailHold = new Promise<void>((resolve) => (releaseDetail = resolve));
+    await api.mockInspectionDetail(E2E_ORGANIZATION_ID, inspectionOutput(), {
+      holdUntil: detailHold,
+    });
+    const inspections = new InspectionsPage(page);
+
+    await inspections.gotoDetail(E2E_ORGANIZATION_ID, E2E_INSPECTION_ID);
+
+    await expect(inspections.detailLoading).toBeVisible();
+    await expect(inspections.nonConformitiesCount).toHaveCount(0);
+
+    releaseDetail();
+
+    await expect(inspections.nonConformitiesCount).toBeVisible();
+    await expect(inspections.detailLoading).toHaveCount(0);
+  });
 });

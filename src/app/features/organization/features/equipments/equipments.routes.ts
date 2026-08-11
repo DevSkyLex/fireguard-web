@@ -25,9 +25,11 @@ import { EquipmentStore } from './state';
  * independently-scoped instance per page is the simpler default
  * (`ARCHITECTURE.md` §10.11).
  *
- * `/:equipmentId` resolves the record through {@link equipmentResolver}
- * (redirecting back to the index on failure) and reuses the same resolved
- * state for the document title via {@link equipmentTitleResolver}.
+ * `/:equipmentId` seeds the record fetch through {@link equipmentResolver}
+ * without blocking activation — the page paints its skeleton from the store's
+ * pending state, and redirects back to the index itself if the load fails.
+ * {@link equipmentTitleResolver} titles the route synchronously from the same
+ * state, falling back to a neutral section label until the record lands.
  *
  * @since 1.0.0
  *
@@ -67,7 +69,7 @@ export const EQUIPMENT_ROUTES: Routes = [
       {
         path: ':equipmentId',
         providers: [EquipmentStore],
-        resolve: { equipment: equipmentResolver },
+        resolve: { equipmentSeeded: equipmentResolver },
         title: equipmentTitleResolver,
         loadComponent: () =>
           import('./ui/pages/equipment-detail-page/equipment-detail-page.component').then(

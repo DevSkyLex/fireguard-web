@@ -38,6 +38,11 @@ This subfeature is responsible for:
   fetch. `interventionTitleResolver` is registered as `title` **only**:
   `BreadcrumbService` falls through to `snapshot.title` when `title` is a
   `ResolveFn`, so one invocation serves both the document title and the crumb.
+  The resolver answers synchronously — cached name, or a neutral label while
+  seeding the active-intervention fetch fire-and-forget — so activation never
+  waits on the network (first-order on slow field connections) and the page
+  paints its own skeleton; once the workspace loads, the page re-sets the
+  document title through `TitleService`, which also refreshes the crumb.
 
 ## State and Data Access
 

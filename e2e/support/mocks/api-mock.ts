@@ -258,16 +258,21 @@ export class ApiMock {
 
   /**
    * Mocks `GET /api/organizations/{organizationId}/equipment/{equipment.id}` —
-   * the resource loaded by `equipmentResolver` for the equipment detail route.
+   * the resource seeded by `equipmentResolver` for the equipment detail route.
+   * Pass `holdUntil` to keep the response pending until the promise resolves,
+   * simulating a slow connection deterministically (no sleeps): assert the
+   * skeleton while held, release, then assert the content.
    */
   public async mockEquipmentDetail(
     organizationId: string,
     equipment: EquipmentOutputFixture,
+    options: { holdUntil?: Promise<void> } = {},
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(
       `${API_BASE_URL}/api/organizations/${organizationId}/equipment/${equipment.id}`,
       async (route) => {
+        if (options.holdUntil) await options.holdUntil;
         await fulfillJson(route, 200, equipment);
       },
     );
@@ -298,16 +303,21 @@ export class ApiMock {
 
   /**
    * Mocks `GET /api/organizations/{organizationId}/facilities/{facility.id}` —
-   * the resource loaded by `facilityResolver` for the facility detail route.
+   * the resource seeded by `facilityResolver` for the facility detail route.
+   * Pass `holdUntil` to keep the response pending until the promise resolves,
+   * simulating a slow connection deterministically (no sleeps): assert the
+   * skeleton while held, release, then assert the content.
    */
   public async mockFacilityDetail(
     organizationId: string,
     facility: FacilityOutputFixture,
+    options: { holdUntil?: Promise<void> } = {},
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(
       `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${facility.id}`,
       async (route) => {
+        if (options.holdUntil) await options.holdUntil;
         await fulfillJson(route, 200, facility);
       },
     );
@@ -387,16 +397,21 @@ export class ApiMock {
 
   /**
    * Mocks `GET /api/organizations/{organizationId}/inspections/{inspection.id}` —
-   * the resource loaded by `inspectionResolver` for the inspection detail route.
+   * the resource seeded by `inspectionResolver` for the inspection detail route.
+   * Pass `holdUntil` to keep the response pending until the promise resolves,
+   * simulating a slow connection deterministically (no sleeps): assert the
+   * skeleton while held, release, then assert the content.
    */
   public async mockInspectionDetail(
     organizationId: string,
     inspection: InspectionOutputFixture,
+    options: { holdUntil?: Promise<void> } = {},
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(
       `${API_BASE_URL}/api/organizations/${organizationId}/inspections/${inspection.id}`,
       async (route) => {
+        if (options.holdUntil) await options.holdUntil;
         await fulfillJson(route, 200, inspection);
       },
     );

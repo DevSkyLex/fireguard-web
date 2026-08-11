@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   provideRouter,
@@ -7,6 +7,7 @@ import {
   type ActivatedRouteSnapshot,
   type Routes,
 } from '@angular/router';
+import { TitleService } from '@core/title';
 import { BreadcrumbService } from '../breadcrumb.service';
 
 @Component({
@@ -54,10 +55,17 @@ const TEST_ROUTES: Routes = [
 describe('BreadcrumbService', () => {
   let service: BreadcrumbService;
   let router: Router;
+  let pageTitle: WritableSignal<string>;
 
   beforeEach(async () => {
+    pageTitle = signal<string>('');
+
     TestBed.configureTestingModule({
-      providers: [BreadcrumbService, provideRouter(TEST_ROUTES)],
+      providers: [
+        BreadcrumbService,
+        provideRouter(TEST_ROUTES),
+        { provide: TitleService, useValue: { pageTitle } },
+      ],
     });
 
     service = TestBed.inject(BreadcrumbService);
@@ -91,6 +99,25 @@ describe('BreadcrumbService', () => {
     await router.navigateByUrl('/account/settings');
 
     expect(service.items().map((item) => item.label)).toEqual(['Account', 'Settings']);
+  });
+
+  it('should follow the live page title on a current page labelled from its route title', async () => {
+    await router.navigateByUrl('/account/settings');
+
+    pageTitle.set('Fire extinguisher — Kidde Pro 210');
+
+    expect(service.items().map((item) => item.label)).toEqual([
+      'Account',
+      'Fire extinguisher — Kidde Pro 210',
+    ]);
+  });
+
+  it('should not overlay the live page title on a current page labelled from breadcrumb data', async () => {
+    await router.navigateByUrl('/account/notifications');
+
+    pageTitle.set('Something else entirely');
+
+    expect(service.items().map((item) => item.label)).toEqual(['Account', 'Notifications']);
   });
 
   it('should use resolved breadcrumb label from route snapshot data', async () => {

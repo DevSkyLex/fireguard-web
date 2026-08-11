@@ -36,6 +36,7 @@ import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import { isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
@@ -366,6 +367,9 @@ export class InterventionDetailPage {
   /** The application's language, used to phrase the meta line and the timeline. */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
+  /** Document title channel — the title resolver only returned a neutral label until the workspace loads. */
+  private readonly titleService: TitleService = inject<TitleService>(TitleService);
+
   /** Unregisters the tab-rail orientation media query listener on teardown. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
@@ -385,6 +389,13 @@ export class InterventionDetailPage {
         this.store.loadActivities(interventionId);
         this.store.loadAttachments(interventionId);
       });
+    });
+
+    effect((): void => {
+      const intervention: InterventionOutput | null = this.store.intervention();
+      if (!intervention) return;
+
+      untracked((): void => this.titleService.setTitle(intervention.name));
     });
 
     effect((): void => {

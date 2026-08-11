@@ -1,8 +1,10 @@
 import { inject } from '@angular/core';
 import { computed } from '@angular/core';
+import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
-import { Observable, tap } from 'rxjs';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { pipe, switchMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -139,8 +141,8 @@ export const ActiveEquipmentStore = signalStore(
        * @method setEquipment
        *
        * @description
-       * Directly sets the selected equipment (e.g., resolved from route data
-       * by DashboardLayout after the resolver runs).
+       * Directly sets the selected equipment (e.g., when a lifecycle or
+       * update write confirms the record's new state).
        *
        * @since 1.0.0
        *
@@ -160,41 +162,53 @@ export const ActiveEquipmentStore = signalStore(
        * @method resolveEquipment
        *
        * @description
-       * Fetches a single equipment by organization ID and equipment ID and marks
-       * it as the active one. Returns an Observable so Angular route resolvers
-       * can await the result.
+       * Seeds the active equipment from the route ids without blocking:
+       * the fetch runs fire-and-forget (`switchMap` cancels a superseded one)
+       * while `getCallState` reports progress, so the detail page can paint
+       * its skeleton immediately. Switching to a different equipment clears
+       * the previous record first; re-resolving the same id keeps it on
+       * screen. On failure the store dispatches `getFailed` (global toast)
+       * and leaves the redirect decision to the page.
        *
        * @since 1.0.0
        *
-       * @param {string} organizationId - Organization identifier.
-       * @param {string} equipmentId - Equipment identifier.
+       * @param {{ organizationId: string; equipmentId: string }} params - Organization and equipment identifiers.
        *
-       * @returns {Observable<EquipmentOutput>} Observable that emits the resolved
-       * equipment or an error if it fails.
+       * @returns {void} No return value — progress is observable through `getCallState`.
        */
-      resolveEquipment(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
-        patchState(store, { getCallState: pendingCallState() });
+      resolveEquipment: rxMethod<{ readonly organizationId: string; readonly equipmentId: string }>(
+        pipe(
+          tap(({ equipmentId }): void => {
+            const current: EquipmentOutput | null = store.selectedEquipment();
 
-        return equipmentService.get(organizationId, equipmentId).pipe(
-          tap({
-            next: (equipment: EquipmentOutput): void => {
-              patchState(store, {
-                selectedEquipment: equipment,
-                getCallState: successCallState(equipment),
-              });
-            },
-            error: (error: unknown): void => {
-              const storeError: StoreError = toStoreError(error);
-              patchState(store, { getCallState: errorCallState(storeError) });
-              dispatcher.dispatch(
-                activeEquipmentStoreEvents.getFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to load equipment'),
-                ),
-              );
-            },
+            patchState(store, {
+              selectedEquipment: current && current.id === equipmentId ? current : null,
+              getCallState: pendingCallState(),
+            });
           }),
-        );
-      },
+          switchMap(({ organizationId, equipmentId }) =>
+            equipmentService.get(organizationId, equipmentId).pipe(
+              tapResponse({
+                next: (equipment: EquipmentOutput): void => {
+                  patchState(store, {
+                    selectedEquipment: equipment,
+                    getCallState: successCallState(equipment),
+                  });
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { getCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    activeEquipmentStoreEvents.getFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load equipment'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
 
       /**
        * Method clearSelectedEquipment

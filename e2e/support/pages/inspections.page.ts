@@ -33,6 +33,7 @@ export class InspectionsPage {
   public readonly createSubmit: Locator = this.page.getByTestId('inspection-create-submit');
   public readonly createError: Locator = this.page.getByTestId('inspection-create-error');
 
+  public readonly detailLoading: Locator = this.page.getByTestId('inspection-detail-loading');
   public readonly lifecycleBand: Locator = this.page.getByTestId('inspection-lifecycle-band');
   public readonly submitAction: Locator = this.page.getByTestId('inspection-submit');
   public readonly cancelAction: Locator = this.page.getByTestId('inspection-cancel');

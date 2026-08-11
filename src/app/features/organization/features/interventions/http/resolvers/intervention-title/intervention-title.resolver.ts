@@ -1,6 +1,5 @@
 import { inject } from '@angular/core';
 import type { ActivatedRouteSnapshot, MaybeAsync, ResolveFn } from '@angular/router';
-import { catchError, map, of, type Observable } from 'rxjs';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import {
   ActiveInterventionStore,
@@ -12,9 +11,10 @@ import {
  * @const INTERVENTION_TITLE_FALLBACK
  *
  * @description
- * Neutral label used for the breadcrumb, page title and header banner when the
- * intervention name cannot be resolved (e.g. while offline before the workspace
- * cache hydrates), so the UI degrades gracefully instead of breaking.
+ * Neutral label used for the breadcrumb, page title and header banner until
+ * the intervention name is known (slow connection, offline before the
+ * workspace cache hydrates), so the UI degrades gracefully instead of
+ * breaking.
  *
  * @since 1.0.0
  *
@@ -26,16 +26,18 @@ const INTERVENTION_TITLE_FALLBACK: string = 'Intervention';
  * Resolver interventionTitleResolver
  *
  * @description
- * Resolves the intervention name for the breadcrumb, page title and header
- * banner, seeding the root {@link ActiveInterventionStore}. Returns the cached
- * name when the active intervention already matches the route id; otherwise it
- * fetches it. Unlike a hard data resolver it never redirects and falls back to
- * a neutral label on failure, so offline detail views keep working (the page's
+ * Resolves the intervention name for the breadcrumb and page title, seeding
+ * the root {@link ActiveInterventionStore}. Returns synchronously so
+ * navigation never waits on the network: the cached name when the active
+ * intervention already matches the route id, the neutral fallback otherwise —
+ * in which case the fetch runs fire-and-forget and the detail page re-sets
+ * the document title through `TitleService` once its workspace loads. It
+ * never redirects, so offline detail views keep working (the page's
  * workspace store still loads the full data from its offline cache).
  *
  * Used as both a `title` resolver and a `breadcrumb` resolver.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @param {ActivatedRouteSnapshot} route - Activated route snapshot carrying `:interventionId`.
@@ -54,12 +56,7 @@ export const interventionTitleResolver: ResolveFn<string> = (
   const current: InterventionOutput | null = activeInterventionStore.selectedIntervention();
   if (current && current.id === interventionId) return current.name;
 
-  const name$: Observable<string> = activeInterventionStore
-    .resolveIntervention(interventionId)
-    .pipe(
-      map((intervention: InterventionOutput): string => intervention.name),
-      catchError((): Observable<string> => of(INTERVENTION_TITLE_FALLBACK)),
-    );
+  activeInterventionStore.resolveIntervention(interventionId);
 
-  return name$;
+  return INTERVENTION_TITLE_FALLBACK;
 };

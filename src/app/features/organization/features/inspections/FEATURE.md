@@ -28,8 +28,16 @@ This subfeature does not own facility, equipment, or checklist data, even when i
 - `/organizations/:organizationId/inspections/:inspectionId`
 - `/organizations/:organizationId/inspections/:inspectionId/edit`
 
-Inspection detail routes resolve active inspection context before rendering. The API delete
-operation represents cancellation and is exposed as such in the UI.
+Inspection detail routes **seed** active inspection context without blocking
+activation: `inspectionResolver` fires the fetch into `ActiveInspectionStore`
+and returns immediately, the detail page paints a full-page skeleton from the
+store's pending state (first-order on slow field connections), the title
+resolver answers synchronously with a neutral label until the record lands
+(the page then re-sets the document title through `TitleService`), and a load
+failure toasts globally and returns to the index from the page. The resolver
+stays the single loading path for the record — the page never re-fetches it.
+The API delete operation represents cancellation and is exposed as such in
+the UI.
 
 ## UI (this pass)
 

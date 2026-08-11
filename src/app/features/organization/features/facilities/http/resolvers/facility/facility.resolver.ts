@@ -6,71 +6,38 @@ import {
   type ResolveFn,
   Router,
 } from '@angular/router';
-import { catchError, of } from 'rxjs';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { ActiveFacilityStore } from '@features/organization/features/facilities/state';
 
 /**
  * Resolver facilityResolver
  *
  * @description
- * Fetches the facility matching the `:facilityId` route param
- * before the route activates. Requires the parent route to
- * have already resolved `:organizationId`. The resolved
- * {@link FacilityOutput} is available in `ActivatedRoute.data['facility']`.
+ * Seeds {@link ActiveFacilityStore} with the `:facilityId` route param and
+ * returns immediately, so route activation never waits on the network: the
+ * detail page paints its skeleton from the store's pending state instead of
+ * leaving the app blank on a slow connection. The store remains the single
+ * loading path for the record; a fetch failure surfaces there and the page
+ * redirects back to the organization landing page. Only a malformed URL
+ * (missing ids) redirects from here.
  *
- * On failure the user is redirected to the parent organization page.
- *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
- * @param {ActivatedRouteSnapshot} route - The activated route snapshot containing the `:facilityId` parameter.
+ * @param {ActivatedRouteSnapshot} route - The activated route snapshot carrying `:facilityId`.
  *
- * @returns {Observable<FacilityOutput>} An observable emitting the fetched facility, or a redirect on failure.
+ * @returns {MaybeAsync<boolean | RedirectCommand>} `true` once the load is seeded, or a redirect on malformed ids.
  */
-export const facilityResolver: ResolveFn<FacilityOutput> = (
+export const facilityResolver: ResolveFn<boolean> = (
   route: ActivatedRouteSnapshot,
-): MaybeAsync<FacilityOutput | RedirectCommand> => {
-  /**
-   * Constant activeFacilityStore
-   * @const activeFacilityStore
-   *
-   * @description
-   * Active facility store for fetching the facility
-   * data based on the route parameters.
-   *
-   * @var {ActiveFacilityStore}
-   */
+): MaybeAsync<boolean | RedirectCommand> => {
   const activeFacilityStore: ActiveFacilityStore = inject<ActiveFacilityStore>(ActiveFacilityStore);
-
-  /**
-   * Constant router
-   * @const router
-   *
-   * @description
-   * Router for creating a redirection command in case the facility
-   * cannot be resolved, ensuring the user is
-   * redirected to a safe route.
-   *
-   * @var {Router}
-   */
   const router: Router = inject<Router>(Router);
-
-  // Extract organizationId from parent route parameters
   const organizationId: string | null = route.parent?.paramMap.get('organizationId') ?? null;
-
-  // Extract facilityId from route parameters
   const facilityId: string | null = route.paramMap.get('facilityId');
 
-  // If no organizationId or facilityId is present, redirect immediately
   if (!organizationId || !facilityId) return new RedirectCommand(router.parseUrl('/'));
 
-  // Attempt to resolve the facility, redirecting on failure
-  return activeFacilityStore
-    .resolveFacility(organizationId, facilityId)
-    .pipe(
-      catchError(() =>
-        of(new RedirectCommand(router.parseUrl(`/organizations/${organizationId}`))),
-      ),
-    );
+  activeFacilityStore.resolveFacility({ organizationId, facilityId });
+
+  return true;
 };

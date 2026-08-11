@@ -17,6 +17,7 @@ import {
   pendingCallState,
   type CallState,
 } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
@@ -223,6 +224,7 @@ describe('InterventionDetailPage', () => {
         { provide: InterventionOfflineService, useValue: { hasUnsyncedChanges: unsynced } },
         { provide: InterventionPublicationService, useValue: { publish } },
         { provide: FeedbackService, useValue: { success: vi.fn() } },
+        { provide: TitleService, useValue: { setTitle: vi.fn() } },
         { provide: Events, useValue: { on: (): typeof EMPTY => EMPTY } },
         { provide: Router, useValue: { navigate } },
       ],

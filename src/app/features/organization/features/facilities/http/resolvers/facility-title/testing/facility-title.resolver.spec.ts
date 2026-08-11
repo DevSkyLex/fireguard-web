@@ -1,27 +1,16 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom, isObservable, type Observable } from 'rxjs';
+import { convertToParamMap, type ActivatedRouteSnapshot } from '@angular/router';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { ActiveFacilityStore } from '@features/organization/features/facilities/state';
 import { facilityTitleResolver } from '../facility-title.resolver';
 
+function routeFor(facilityId: string): ActivatedRouteSnapshot {
+  return { paramMap: convertToParamMap({ facilityId }) } as ActivatedRouteSnapshot;
+}
+
 describe('facilityTitleResolver', () => {
-  const facility: FacilityOutput = {
-    '@id': '/api/facilities/fac-1',
-    '@type': 'Facility',
-    id: 'fac-1',
-    organizationId: 'org-1',
-    parentFacilityId: null,
-    hasChildren: false,
-    type: 'building',
-    name: 'HQ',
-    code: 'HQ',
-    status: 'active',
-    address: null,
-    metadata: {},
-    createdAt: '2026-01-01T00:00:00+00:00',
-    updatedAt: '2026-01-01T00:00:00+00:00',
-  };
+  const facility = { id: 'fac-1', name: 'HQ' } as unknown as FacilityOutput;
 
   const selectedFacility = signal<FacilityOutput | null>(facility);
 
@@ -40,26 +29,29 @@ describe('facilityTitleResolver', () => {
     });
   });
 
-  it('should return the facility name synchronously when already selected', () => {
+  it('should return the facility name synchronously when the selected facility matches the route', () => {
     const result = TestBed.runInInjectionContext(() =>
-      facilityTitleResolver({} as never, {} as never),
+      facilityTitleResolver(routeFor('fac-1'), {} as never),
     );
 
     expect(result).toBe('HQ');
   });
 
-  it('should wait for the selected facility when not already available', async () => {
+  it('should fall back to the neutral section label while the facility is still loading', () => {
     selectedFacility.set(null);
 
     const result = TestBed.runInInjectionContext(() =>
-      facilityTitleResolver({} as never, {} as never),
+      facilityTitleResolver(routeFor('fac-1'), {} as never),
     );
 
-    expect(isObservable(result)).toBe(true);
+    expect(result).toBe('Facility');
+  });
 
-    const pendingResult = firstValueFrom(result as Observable<string>);
-    selectedFacility.set(facility);
+  it('should not title the route with a different facility left from a previous visit', () => {
+    const result = TestBed.runInInjectionContext(() =>
+      facilityTitleResolver(routeFor('fac-2'), {} as never),
+    );
 
-    await expect(pendingResult).resolves.toBe('HQ');
+    expect(result).toBe('Facility');
   });
 });

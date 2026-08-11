@@ -6,7 +6,9 @@ import {
   idleCallState,
   successCallState,
   type CallState,
+  type StoreError,
 } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import {
@@ -43,7 +45,9 @@ describe('InspectionDetailPage', () => {
   let close: ReturnType<typeof vi.fn>;
   let cancel: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
+  let setTitle: ReturnType<typeof vi.fn>;
   let selectedInspection: WritableSignal<InspectionOutput | null>;
+  let getError: WritableSignal<StoreError | null>;
   let updateCallState: WritableSignal<CallState<InspectionOutput | null>>;
   let cancelCallState: WritableSignal<CallState<string | null>>;
   let isChangingLifecycle: WritableSignal<boolean>;
@@ -60,7 +64,9 @@ describe('InspectionDetailPage', () => {
     submit = vi.fn();
     close = vi.fn();
     cancel = vi.fn();
+    setTitle = vi.fn();
     selectedInspection = signal<InspectionOutput | null>(inspection());
+    getError = signal<StoreError | null>(null);
     updateCallState = signal<CallState<InspectionOutput | null>>(idleCallState());
     cancelCallState = signal<CallState<string | null>>(idleCallState());
     isChangingLifecycle = signal<boolean>(false);
@@ -69,7 +75,8 @@ describe('InspectionDetailPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        { provide: ActiveInspectionStore, useValue: { selectedInspection } },
+        { provide: ActiveInspectionStore, useValue: { selectedInspection, getError } },
+        { provide: TitleService, useValue: { setTitle } },
         {
           provide: InspectionStore,
           useValue: {
@@ -106,6 +113,28 @@ describe('InspectionDetailPage', () => {
     await createPage();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('[role="status"]')).not.toBeNull();
+  });
+
+  it('should re-set the document title once the inspection resolves', async () => {
+    selectedInspection.set(null);
+    await createPage();
+
+    expect(setTitle).not.toHaveBeenCalled();
+
+    selectedInspection.set(inspection());
+    await fixture.whenStable();
+
+    expect(setTitle).toHaveBeenCalledWith('Inspection 2026-08-10');
+  });
+
+  it('should return to the index when the load fails', async () => {
+    selectedInspection.set(null);
+    await createPage();
+
+    getError.set({ error: null, message: 'down', code: 500, retryable: false, timestamp: 0 });
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'inspections']);
   });
 
   it('should offer Submit and Cancel while draft', async () => {

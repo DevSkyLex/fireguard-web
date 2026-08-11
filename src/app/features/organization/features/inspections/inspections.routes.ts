@@ -25,9 +25,11 @@ import { InspectionStore } from './state';
  * independently-scoped instance per page is the simpler default
  * (`ARCHITECTURE.md` §10.11).
  *
- * `/:inspectionId` resolves the record through {@link inspectionResolver}
- * (redirecting back to the index on failure) and reuses the same resolved
- * state for the document title via {@link inspectionTitleResolver}.
+ * `/:inspectionId` seeds the record fetch through {@link inspectionResolver}
+ * without blocking activation — the page paints its skeleton from the store's
+ * pending state, and redirects back to the index itself if the load fails.
+ * {@link inspectionTitleResolver} titles the route synchronously from the
+ * same state, falling back to a neutral section label until the record lands.
  * `/:inspectionId/edit` is retired: the record itself is the edit surface
  * (`FEATURE.md` "The record is the edit surface"), so installed
  * applications and bookmarks are redirected onto it.
@@ -70,7 +72,7 @@ export const INSPECTION_ROUTES: Routes = [
       {
         path: ':inspectionId',
         providers: [InspectionStore],
-        resolve: { inspection: inspectionResolver },
+        resolve: { inspectionSeeded: inspectionResolver },
         title: inspectionTitleResolver,
         loadComponent: () =>
           import('./ui/pages/inspection-detail-page/inspection-detail-page.component').then(

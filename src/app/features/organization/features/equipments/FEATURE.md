@@ -35,11 +35,17 @@ This subfeature does not own top-level organization context or inspection workfl
   `type`; the five remaining editable properties are filled in afterward, in
   place, on the created record. Navigates to `/:equipmentId` on success.
 - `/organizations/:organizationId/equipments/:equipmentId` —
-  `EquipmentDetailPage`. `equipmentResolver` (route `resolve`) populates
-  `ActiveEquipmentStore` before the page renders, redirecting back to the
-  index on failure; `equipmentTitleResolver` (route `title`) names the
-  document title and breadcrumb from the same resolved record via
-  `buildEquipmentTitle` (`utils/equipment-title/`).
+  `EquipmentDetailPage`. `equipmentResolver` (route `resolve`) **seeds**
+  `ActiveEquipmentStore` fire-and-forget so activation never waits on the
+  network (first-order on slow field connections): the page paints a
+  full-page skeleton from the store's pending state, and on load failure the
+  page — not the resolver — toasts through the global feedback listener and
+  returns to the index. `equipmentTitleResolver` (route `title`) answers
+  synchronously via `buildEquipmentTitle` (`utils/equipment-title/`), falling
+  back to a neutral section label; once the record lands the page re-sets the
+  document title through `TitleService`, which also refreshes the
+  breadcrumb's current-page label. The resolver stays the single loading path
+  for the record — the page never re-fetches it.
 
   The lifecycle status band (page header) names the single relevant forward
   transition for the current status — commission, resume service, or move

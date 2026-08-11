@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,6 +7,7 @@ import {
   inject,
   input,
   LOCALE_ID,
+  PLATFORM_ID,
   signal,
   untracked,
   type InputSignal,
@@ -17,7 +18,8 @@ import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTrash2 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { isCallPending, type CallState } from '@core/request-state';
+import { isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   FacilityEditState,
@@ -66,9 +68,12 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * is no separate edit page). A danger, confirm-gated **Delete** action sits
  * in the header (`FEATURE.md` "Deletion").
  *
- * `facilityResolver` (route `resolve`) populates {@link ActiveFacilityStore}
- * before this page renders; a route-scoped {@link FacilityStore} carries the
- * update, archive/restore and delete writes, and a route-scoped
+ * `facilityResolver` (route `resolve`) seeds {@link ActiveFacilityStore}
+ * fire-and-forget, so this page always renders immediately: the full-page
+ * skeleton shows from the store's pending state until the record lands, the
+ * document title follows through `TitleService`, and a load failure returns
+ * to the organization landing page. A route-scoped {@link FacilityStore}
+ * carries the update, archive/restore and delete writes, and a route-scoped
  * {@link FacilityOverviewStore} carries the Overview tab's summary data.
  *
  * @version 1.0.0
@@ -118,9 +123,15 @@ export class FacilityDetailPage {
   //#endregion
 
   //#region Properties
-  /** The currently active facility, resolved by `facilityResolver` before this page renders. */
+  /** The currently active facility, seeded by `facilityResolver`; null until the fetch lands. */
   protected readonly activeFacilityStore: ActiveFacilityStore =
     inject<ActiveFacilityStore>(ActiveFacilityStore);
+
+  /** Document title channel, kept in sync with the loaded record. */
+  private readonly titleService: TitleService = inject<TitleService>(TitleService);
+
+  /** Whether this instance runs in the browser — the failure redirect never fires during SSR. */
+  private readonly isBrowser: boolean = isPlatformBrowser(inject<object>(PLATFORM_ID));
 
   /** The route-scoped store carrying the update, archive/restore and delete writes. */
   protected readonly store: FacilityStoreType = inject<FacilityStoreType>(FacilityStore);
@@ -133,7 +144,7 @@ export class FacilityDetailPage {
     OrganizationPermissionService,
   );
 
-  /** Router used to navigate a hierarchy-node selection and the post-delete return to the list. */
+  /** Router used for hierarchy-node navigation, the post-delete return and the load-failure redirect. */
   private readonly router: Router = inject(Router);
 
   /** The application's language, used to phrase the header's metadata line. */
@@ -203,10 +214,12 @@ export class FacilityDetailPage {
    * @constructor
    *
    * @description
-   * Settles the open in-place field once its own write clears, loads the
-   * Overview tab's summary and (when the facility has children) its
-   * descendant subtree once the record resolves, and returns to the list
-   * once a delete write succeeds.
+   * Settles the open in-place field once its own write clears; once the
+   * seeded record lands, re-sets the document title and loads the Overview
+   * tab's summary plus (when the facility has children) its descendant
+   * subtree; returns to the organization landing page when the load fails —
+   * the global feedback listener already toasts the failure — and to the
+   * list once a delete write succeeds.
    *
    * @access public
    * @since 1.0.0
@@ -225,6 +238,7 @@ export class FacilityDetailPage {
       const organizationId: string = this.organizationId();
 
       untracked((): void => {
+        this.titleService.setTitle(facility.name);
         this.overview.load({ organizationId, facilityId: facility.id });
 
         if (facility.hasChildren) {
@@ -233,6 +247,15 @@ export class FacilityDetailPage {
             facilityId: facility.id,
           });
         }
+      });
+    });
+
+    effect((): void => {
+      const error: StoreError | null = this.activeFacilityStore.getError();
+      if (error === null || !this.isBrowser) return;
+
+      untracked((): void => {
+        void this.router.navigate(['/organizations', this.organizationId()]);
       });
     });
 

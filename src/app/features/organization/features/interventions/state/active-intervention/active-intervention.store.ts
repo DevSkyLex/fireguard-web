@@ -1,7 +1,9 @@
 import { computed, inject } from '@angular/core';
+import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
-import { Observable, tap } from 'rxjs';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { pipe, switchMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -40,11 +42,11 @@ const INITIAL_ACTIVE_INTERVENTION_STATE: ActiveInterventionState = {
  * @const ActiveInterventionStore
  *
  * @description
- * Root-provided NgRx SignalStore tracking the currently viewed intervention so
- * route resolvers can populate the breadcrumb, page title and header banner
- * before the detail route activates. Mirrors the other `active-*` stores; the
- * component-scoped {@link InterventionWorkspaceStore} still owns the full
- * workspace (work items, changes, issues) and its offline handling.
+ * Root-provided NgRx SignalStore tracking the currently viewed intervention,
+ * seeded fire-and-forget by the detail route's title resolver. Mirrors the
+ * other `active-*` stores; the component-scoped
+ * {@link InterventionWorkspaceStore} still owns the full workspace (work
+ * items, changes, issues) and its offline handling.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -105,39 +107,54 @@ export const ActiveInterventionStore = signalStore(
        * @method resolveIntervention
        *
        * @description
-       * Fetches the intervention matching the route id and stores it as the
-       * active one. Returns the observable so resolvers can await it.
+       * Seeds the active intervention from the route id without blocking:
+       * the fetch runs fire-and-forget (`switchMap` cancels a superseded one)
+       * while `getCallState` reports progress. Switching to a different
+       * intervention clears the previous record first; re-resolving the same
+       * id keeps it on screen. On failure the store dispatches `getFailed`
+       * (global toast) — never a redirect, so offline detail views keep
+       * working from the workspace cache.
        *
        * @access public
        * @since 1.0.0
        *
        * @param {string} interventionId - Intervention identifier from the route.
        *
-       * @returns {Observable<InterventionOutput>} The fetched intervention.
+       * @returns {void} No return value — progress is observable through `getCallState`.
        */
-      resolveIntervention(interventionId: string): Observable<InterventionOutput> {
-        patchState(store, { getCallState: pendingCallState() });
+      resolveIntervention: rxMethod<string>(
+        pipe(
+          tap((interventionId: string): void => {
+            const current: InterventionOutput | null = store.selectedIntervention();
 
-        return interventionService.get(interventionId).pipe(
-          tap({
-            next: (intervention: InterventionOutput): void => {
-              patchState(store, {
-                selectedIntervention: intervention,
-                getCallState: successCallState(intervention),
-              });
-            },
-            error: (error: unknown): void => {
-              const storeError: StoreError = toStoreError(error);
-              patchState(store, { getCallState: errorCallState(storeError) });
-              dispatcher.dispatch(
-                activeInterventionStoreEvents.getFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to load intervention'),
-                ),
-              );
-            },
+            patchState(store, {
+              selectedIntervention: current && current.id === interventionId ? current : null,
+              getCallState: pendingCallState(),
+            });
           }),
-        );
-      },
+          switchMap((interventionId: string) =>
+            interventionService.get(interventionId).pipe(
+              tapResponse({
+                next: (intervention: InterventionOutput): void => {
+                  patchState(store, {
+                    selectedIntervention: intervention,
+                    getCallState: successCallState(intervention),
+                  });
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { getCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    activeInterventionStoreEvents.getFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load intervention'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
 
       /**
        * Method clearSelectedIntervention

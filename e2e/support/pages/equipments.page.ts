@@ -29,6 +29,7 @@ export class EquipmentsPage {
   public readonly createError: Locator = this.page.getByTestId('equipment-create-error');
   public readonly createSubmit: Locator = this.page.getByTestId('equipment-create-submit');
 
+  public readonly detailLoading: Locator = this.page.getByTestId('equipment-detail-loading');
   public readonly lifecycleBand: Locator = this.page.getByTestId('equipment-lifecycle-band');
   public readonly primaryAction: Locator = this.page.getByTestId('equipment-primary-action');
   public readonly decommissionAction: Locator = this.page.getByTestId('equipment-decommission');

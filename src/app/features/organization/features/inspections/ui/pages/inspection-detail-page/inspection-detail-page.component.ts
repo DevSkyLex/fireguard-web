@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +7,7 @@ import {
   inject,
   input,
   LOCALE_ID,
+  PLATFORM_ID,
   signal,
   untracked,
   type InputSignal,
@@ -16,7 +18,8 @@ import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBan } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { isCallPending, type CallState } from '@core/request-state';
+import { isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   InspectionEditState,
@@ -64,9 +67,12 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * cancelled; submitted inspections can be closed"); this page is the sole
  * owner of that gate; the panel only reflects it through {@link editable}.
  *
- * `inspectionResolver` (route `resolve`) populates {@link ActiveInspectionStore}
- * before this page renders; a route-scoped {@link InspectionStore} carries the
- * update and lifecycle writes.
+ * `inspectionResolver` (route `resolve`) seeds {@link ActiveInspectionStore}
+ * fire-and-forget, so this page always renders immediately: the full-page
+ * skeleton shows from the store's pending state until the record lands, the
+ * document title follows through `TitleService`, and a load failure returns
+ * to the index. A route-scoped {@link InspectionStore} carries the update
+ * and lifecycle writes.
  *
  * @version 1.0.0
  *
@@ -112,9 +118,15 @@ export class InspectionDetailPage {
   //#endregion
 
   //#region Properties
-  /** The currently active inspection, resolved by `inspectionResolver` before this page renders. */
+  /** The currently active inspection, seeded by `inspectionResolver`; null until the fetch lands. */
   protected readonly activeInspectionStore: ActiveInspectionStore =
     inject<ActiveInspectionStore>(ActiveInspectionStore);
+
+  /** Document title channel, kept in sync with the loaded record. */
+  private readonly titleService: TitleService = inject<TitleService>(TitleService);
+
+  /** Whether this instance runs in the browser — the failure redirect never fires during SSR. */
+  private readonly isBrowser: boolean = isPlatformBrowser(inject<object>(PLATFORM_ID));
 
   /** The route-scoped store carrying the update and lifecycle writes. */
   protected readonly store: InspectionStoreType = inject<InspectionStoreType>(InspectionStore);
@@ -265,9 +277,13 @@ export class InspectionDetailPage {
    * @constructor
    *
    * @description
-   * Settles the open in-place field once its own write clears, and returns
-   * to the list once a cancellation succeeds — `InspectionStore.cancel`
-   * removes the record, so there is nothing left here to show.
+   * Settles the open in-place field once its own write clears, re-sets the
+   * document title once the seeded record lands (the title resolver only
+   * returned the neutral section label), returns to the index when the load
+   * fails — the global feedback listener already toasts the failure — and
+   * returns to the list once a cancellation succeeds —
+   * `InspectionStore.cancel` removes the record, so there is nothing left
+   * here to show.
    *
    * @access public
    * @since 1.0.0
@@ -277,6 +293,22 @@ export class InspectionDetailPage {
       const callState: CallState<InspectionOutput | null> = this.store.updateCallState();
 
       untracked((): void => this.settleUpdateWrite(callState));
+    });
+
+    effect((): void => {
+      const title: string = this.title();
+      if (!title) return;
+
+      untracked((): void => this.titleService.setTitle(title));
+    });
+
+    effect((): void => {
+      const error: StoreError | null = this.activeInspectionStore.getError();
+      if (error === null || !this.isBrowser) return;
+
+      untracked((): void => {
+        void this.router.navigate(['/organizations', this.organizationId(), 'inspections']);
+      });
     });
 
     effect((): void => {

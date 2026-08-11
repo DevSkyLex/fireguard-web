@@ -1,8 +1,10 @@
 import { inject } from '@angular/core';
 import { computed } from '@angular/core';
+import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
-import { Observable, tap } from 'rxjs';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { pipe, switchMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -135,8 +137,8 @@ export const ActiveInspectionStore = signalStore(
        * @method setInspection
        *
        * @description
-       * Directly sets the selected inspection (e.g., resolved from route data
-       * by DashboardLayout after the resolver runs).
+       * Directly sets the selected inspection (e.g., when an update or
+       * lifecycle write confirms the record's new state).
        *
        * @since 1.0.0
        *
@@ -156,44 +158,56 @@ export const ActiveInspectionStore = signalStore(
        * @method resolveInspection
        *
        * @description
-       * Fetches a single inspection by organization ID and inspection ID and
-       * marks it as the active one. Returns an Observable so Angular route
-       * resolvers can await the result.
+       * Seeds the active inspection from the route ids without blocking:
+       * the fetch runs fire-and-forget (`switchMap` cancels a superseded one)
+       * while `getCallState` reports progress, so the detail page can paint
+       * its skeleton immediately. Switching to a different inspection clears
+       * the previous record first; re-resolving the same id keeps it on
+       * screen. On failure the store dispatches `getFailed` (global toast)
+       * and leaves the redirect decision to the page.
        *
        * @since 1.0.0
        *
-       * @param {string} organizationId - Organization identifier.
-       * @param {string} inspectionId - Inspection identifier.
+       * @param {{ organizationId: string; inspectionId: string }} params - Organization and inspection identifiers.
        *
-       * @returns {Observable<InspectionOutput>} Observable that emits the resolved
-       * inspection or an error if it fails.
+       * @returns {void} No return value — progress is observable through `getCallState`.
        */
-      resolveInspection(
-        organizationId: string,
-        inspectionId: string,
-      ): Observable<InspectionOutput> {
-        patchState(store, { getCallState: pendingCallState() });
+      resolveInspection: rxMethod<{
+        readonly organizationId: string;
+        readonly inspectionId: string;
+      }>(
+        pipe(
+          tap(({ inspectionId }): void => {
+            const current: InspectionOutput | null = store.selectedInspection();
 
-        return inspectionService.get(organizationId, inspectionId).pipe(
-          tap({
-            next: (inspection: InspectionOutput): void => {
-              patchState(store, {
-                selectedInspection: inspection,
-                getCallState: successCallState(inspection),
-              });
-            },
-            error: (error: unknown): void => {
-              const storeError: StoreError = toStoreError(error);
-              patchState(store, { getCallState: errorCallState(storeError) });
-              dispatcher.dispatch(
-                activeInspectionStoreEvents.getFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to load inspection'),
-                ),
-              );
-            },
+            patchState(store, {
+              selectedInspection: current && current.id === inspectionId ? current : null,
+              getCallState: pendingCallState(),
+            });
           }),
-        );
-      },
+          switchMap(({ organizationId, inspectionId }) =>
+            inspectionService.get(organizationId, inspectionId).pipe(
+              tapResponse({
+                next: (inspection: InspectionOutput): void => {
+                  patchState(store, {
+                    selectedInspection: inspection,
+                    getCallState: successCallState(inspection),
+                  });
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { getCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    activeInspectionStoreEvents.getFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load inspection'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
 
       /**
        * Method clearSelectedInspection

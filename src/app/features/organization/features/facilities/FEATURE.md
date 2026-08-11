@@ -26,7 +26,15 @@ This subfeature does not own top-level organization selection. That remains in `
 - `/organizations/:organizationId/facilities/:facilityId`
 - `/organizations/:organizationId/facilities/:facilityId/edit`
 
-Facility detail routes resolve facility context before child pages render.
+Facility detail routes **seed** facility context without blocking activation:
+`facilityResolver` fires the fetch into `ActiveFacilityStore` and returns
+immediately, the detail page paints a full-page skeleton from the store's
+pending state (first-order on slow field connections), the title resolver
+answers synchronously with a neutral label until the record lands (the page
+then re-sets the document title through `TitleService`), and a load failure
+toasts globally and returns to the organization landing page from the page.
+The resolver stays the single loading path for the record — the page never
+re-fetches it.
 
 Facility coordinates come from the backend `latitude`/`longitude` fields
 (optional on `FacilityOutput`), enforced both-or-neither. They may be set at

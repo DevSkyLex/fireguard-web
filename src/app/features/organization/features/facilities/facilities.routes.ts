@@ -24,11 +24,13 @@ import { FacilityStore } from './state';
  * list ↔ detail state-sharing requirement, so a fresh, independently-scoped
  * instance per page is the simpler default (`ARCHITECTURE.md` §10.11).
  *
- * `/:facilityId` resolves the record through {@link facilityResolver}
- * (redirecting to the organization landing page on failure) and reuses the
- * same resolved state for the document title via {@link facilityTitleResolver}.
- * `/:facilityId/edit` is retired: the record itself is the edit surface
- * (`FEATURE.md` "The record is the edit surface"), so installed
+ * `/:facilityId` seeds the record fetch through {@link facilityResolver}
+ * without blocking activation — the page paints its skeleton from the store's
+ * pending state, and redirects to the organization landing page itself if the
+ * load fails. {@link facilityTitleResolver} titles the route synchronously
+ * from the same state, falling back to a neutral section label until the
+ * record lands. `/:facilityId/edit` is retired: the record itself is the edit
+ * surface (`FEATURE.md` "The record is the edit surface"), so installed
  * applications and bookmarks are redirected onto it.
  *
  * @since 1.0.0
@@ -69,7 +71,7 @@ export const FACILITY_ROUTES: Routes = [
       {
         path: ':facilityId',
         providers: [FacilityStore],
-        resolve: { facility: facilityResolver },
+        resolve: { facilitySeeded: facilityResolver },
         title: facilityTitleResolver,
         loadComponent: () =>
           import('./ui/pages/facility-detail-page/facility-detail-page.component').then(

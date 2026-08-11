@@ -255,4 +255,28 @@ test.describe('Facility detail', () => {
       expect(swatch.fill, 'bar colour distinct from its bg-muted track').not.toBe(swatch.track);
     }
   });
+
+  test('paints the full-page skeleton immediately on a slow deep link, then swaps in the record', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    let releaseDetail!: () => void;
+    const detailHold = new Promise<void>((resolve) => (releaseDetail = resolve));
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput(), {
+      holdUntil: detailHold,
+    });
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+
+    await expect(facilities.detailLoading).toBeVisible();
+    await expect(facilities.overviewTab).toHaveCount(0);
+
+    releaseDetail();
+
+    await expect(facilities.overviewTab).toBeVisible();
+    await expect(facilities.detailLoading).toHaveCount(0);
+  });
 });

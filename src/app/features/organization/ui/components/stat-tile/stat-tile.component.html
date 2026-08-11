@@ -51,6 +51,14 @@
         <p class="text-sm text-muted-foreground">{{ hint }}</p>
       </div>
     }
+
+    @if (progress() !== null) {
+      <div hlmCardContent>
+        <hlm-progress [value]="progress()" [attr.aria-label]="label()">
+          <hlm-progress-indicator />
+        </hlm-progress>
+      </div>
+    }
   }
 </ng-template>
 

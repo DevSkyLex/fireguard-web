@@ -9994,9 +9994,49 @@
         <source>Invite member</source>
         <target>Inviter un membre</target>
       </trans-unit>
+      <trans-unit id="org.members.kpi.total" datatype="html">
+        <source>Total members</source>
+        <target>Total des membres</target>
+      </trans-unit>
+      <trans-unit id="org.members.kpi.active" datatype="html">
+        <source>Active</source>
+        <target>Actifs</target>
+      </trans-unit>
+      <trans-unit id="org.members.kpi.pendingInvitations" datatype="html">
+        <source>Pending invitations</source>
+        <target>Invitations en attente</target>
+      </trans-unit>
+      <trans-unit id="org.members.kpi.seatsUsed" datatype="html">
+        <source>Seats used</source>
+        <target>Sièges utilisés</target>
+      </trans-unit>
       <trans-unit id="org.members.rosterHeading" datatype="html">
         <source>Roster</source>
         <target>Effectif</target>
+      </trans-unit>
+      <trans-unit id="org.members.rosterHeadingCount" datatype="html">
+        <source>Roster (<x id="count" equiv-text="total"/>)</source>
+        <target>Effectif (<x id="count" equiv-text="total"/>)</target>
+      </trans-unit>
+      <trans-unit id="org.members.searchPlaceholder" datatype="html">
+        <source>Search by name or email...</source>
+        <target>Rechercher par nom ou e-mail...</target>
+      </trans-unit>
+      <trans-unit id="org.members.statusFilterAriaLabel" datatype="html">
+        <source>Filter by status</source>
+        <target>Filtrer par statut</target>
+      </trans-unit>
+      <trans-unit id="org.members.statusAll" datatype="html">
+        <source>All</source>
+        <target>Tous</target>
+      </trans-unit>
+      <trans-unit id="org.members.statusActive" datatype="html">
+        <source>Active</source>
+        <target>Actif</target>
+      </trans-unit>
+      <trans-unit id="org.members.statusInactive" datatype="html">
+        <source>Inactive</source>
+        <target>Inactif</target>
       </trans-unit>
       <trans-unit id="org.members.errorTitle" datatype="html">
         <source>Couldn&apos;t load members</source>
@@ -10014,6 +10054,14 @@
         <source>Invite someone to give them access to this organization.</source>
         <target>Invitez quelqu&apos;un pour lui donner accès à cette organisation.</target>
       </trans-unit>
+      <trans-unit id="org.members.emptyFilteredTitle" datatype="html">
+        <source>No members match</source>
+        <target>Aucun membre ne correspond</target>
+      </trans-unit>
+      <trans-unit id="org.members.emptyFilteredText" datatype="html">
+        <source>Adjust your search or the status filter.</source>
+        <target>Ajustez votre recherche ou le filtre de statut.</target>
+      </trans-unit>
       <trans-unit id="org.members.rowCount" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> row(s) shown</source>
         <target><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> ligne(s) affichée(s)</target>
@@ -10029,6 +10077,10 @@
       <trans-unit id="org.invitations.heading" datatype="html">
         <source>Pending invitations</source>
         <target>Invitations en attente</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.headingCount" datatype="html">
+        <source>Pending invitations (<x id="count" equiv-text="total"/>)</source>
+        <target>Invitations en attente (<x id="count" equiv-text="total"/>)</target>
       </trans-unit>
       <trans-unit id="org.invitations.emptyTitle" datatype="html">
         <source>No pending invitations</source>

@@ -12,7 +12,7 @@ import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { OrganizationMembersStore } from '../organization-members.store';
+import { MEMBERS_PAGE_SIZE, OrganizationMembersStore } from '../organization-members.store';
 
 const flush = async (): Promise<void> => {
   await Promise.resolve();
@@ -117,12 +117,24 @@ describe('OrganizationMembersStore', () => {
     expect(store.invitations().map((i) => i.id)).toEqual(['i1']);
     expect(store.roles().map((r) => r.id)).toEqual(['r1']);
     expect(store.membersTotal()).toBe(1);
+    expect(store.membersStatus()).toBe('all');
     expect(store.isLoading()).toBe(false);
+  });
+
+  it('fetches an organization-wide active-membership count alongside the initial load, independent of the roster page size', async () => {
+    memberService.list.mockImplementation((_org: string, options: { itemsPerPage: number }) =>
+      of(collection(options.itemsPerPage === 1 ? [member('a1'), member('a2')] : [member('m1')])),
+    );
+    store.load(ALL);
+    await flush();
+
+    expect(store.membersActiveTotal()).toBe(2);
+    expect(store.membersTotal()).toBe(1);
   });
 
   it('loads a members page with a server-side search term', async () => {
     memberService.list.mockReturnValue(of(collection([member('m2')])));
-    store.loadMembers({ organizationId: 'org-1', page: 2, search: 'ali' });
+    store.loadMembers({ organizationId: 'org-1', page: 2, search: 'ali', status: 'all' });
     await flush();
 
     expect(store.members().map((m) => m.id)).toEqual(['m2']);
@@ -130,7 +142,21 @@ describe('OrganizationMembersStore', () => {
     expect(store.membersSearch()).toBe('ali');
     expect(memberService.list).toHaveBeenCalledWith(
       'org-1',
-      expect.objectContaining({ page: 2, params: { search: 'ali' } }),
+      { page: 2, itemsPerPage: MEMBERS_PAGE_SIZE },
+      { search: 'ali', status: undefined },
+    );
+  });
+
+  it('loads a members page filtered by status', async () => {
+    memberService.list.mockReturnValue(of(collection([member('m3')])));
+    store.loadMembers({ organizationId: 'org-1', page: 1, search: '', status: 'inactive' });
+    await flush();
+
+    expect(store.membersStatus()).toBe('inactive');
+    expect(memberService.list).toHaveBeenCalledWith(
+      'org-1',
+      { page: 1, itemsPerPage: MEMBERS_PAGE_SIZE },
+      { search: undefined, status: 'inactive' },
     );
   });
 

@@ -109,6 +109,31 @@ describe('StatTile', () => {
     expect(magnitude?.className).not.toContain('font-medium');
   });
 
+  it('renders no progress meter when none is given', async () => {
+    await render();
+
+    expect(fixture.nativeElement.querySelector('hlm-progress')).toBeNull();
+  });
+
+  it('renders a progress meter for a zero percent value, not just a truthy one', async () => {
+    await render();
+    fixture.componentRef.setInput('progress', 0);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('hlm-progress')).not.toBeNull();
+  });
+
+  it('renders a progress meter at the given percentage', async () => {
+    await render();
+    fixture.componentRef.setInput('progress', 42);
+    await fixture.whenStable();
+
+    const meter: HTMLElement | null = fixture.nativeElement.querySelector('hlm-progress');
+
+    expect(meter).not.toBeNull();
+    expect(meter?.getAttribute('aria-valuenow')).toBe('42');
+  });
+
   it('weighs a desirable direction as emphasized rather than muted', async () => {
     await render();
     fixture.componentRef.setInput('delta', { value: 8, direction: 'up', positiveIsGood: true });

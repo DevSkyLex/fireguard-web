@@ -12,6 +12,20 @@
     }
   </app-organization-page-header>
 
+  <section class="grid grid-cols-2 gap-4 lg:grid-cols-4" data-testid="organization-members-kpis">
+    @for (tile of kpiTiles(); track tile.id) {
+      <div [attr.data-testid]="'organization-members-kpi-' + tile.id">
+        <app-stat-tile
+          [label]="tile.label"
+          [value]="tile.value"
+          [icon]="tile.icon"
+          [progress]="tile.progress"
+          [loading]="tile.loading"
+        />
+      </div>
+    }
+  </section>
+
   @if (actionError(); as error) {
     <div hlmAlert variant="destructive" data-testid="organization-members-action-error">
       <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -34,7 +48,7 @@
 
   <section class="flex flex-col gap-3">
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-lg font-medium" i18n="@@org.members.rosterHeading">Roster</h2>
+      <h2 class="text-lg font-medium">{{ rosterHeading() }}</h2>
 
       @if (canManageMembers() && selectedIds().size > 0) {
         <button
@@ -49,6 +63,65 @@
           {{ bulkRemoveLabel() }}
         </button>
       }
+    </div>
+
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <hlm-input-group class="w-full sm:w-72">
+        <hlm-input-group-addon>
+          <ng-icon name="lucideSearch" />
+        </hlm-input-group-addon>
+        <input
+          hlmInputGroupInput
+          type="search"
+          data-testid="organization-members-search"
+          placeholder="Search by name or email..."
+          i18n-placeholder="@@org.members.searchPlaceholder"
+          aria-label="Search by name or email..."
+          i18n-aria-label="@@org.members.searchPlaceholder"
+          [value]="searchTerm()"
+          (input)="onSearchInput($event)"
+        />
+      </hlm-input-group>
+
+      <hlm-toggle-group
+        type="single"
+        [nullable]="false"
+        variant="outline"
+        size="sm"
+        [value]="statusFilter()"
+        data-testid="organization-members-status-filter"
+        aria-label="Filter by status"
+        i18n-aria-label="@@org.members.statusFilterAriaLabel"
+        (valueChange)="onStatusFilterChanged($event)"
+      >
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          value="all"
+          data-testid="organization-members-status-all"
+          i18n="@@org.members.statusAll"
+        >
+          All
+        </button>
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          value="active"
+          data-testid="organization-members-status-active"
+          i18n="@@org.members.statusActive"
+        >
+          Active
+        </button>
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          value="inactive"
+          data-testid="organization-members-status-inactive"
+          i18n="@@org.members.statusInactive"
+        >
+          Inactive
+        </button>
+      </hlm-toggle-group>
     </div>
 
     @if (store.loadCallState().status === 'error') {
@@ -72,21 +145,37 @@
       <hlm-empty class="border border-dashed">
         <hlm-empty-header>
           <hlm-empty-media variant="icon">
-            <ng-icon name="lucideUsersRound" />
+            <ng-icon [name]="hasRosterFilters() ? 'lucideSearch' : 'lucideUsersRound'" />
           </hlm-empty-media>
-          <div hlmEmptyTitle i18n="@@org.members.emptyTitle">No members yet</div>
-          <div hlmEmptyDescription i18n="@@org.members.emptyText">
-            Invite someone to give them access to this organization.
-          </div>
+          @if (hasRosterFilters()) {
+            <div hlmEmptyTitle i18n="@@org.members.emptyFilteredTitle">No members match</div>
+            <div hlmEmptyDescription i18n="@@org.members.emptyFilteredText">
+              Adjust your search or the status filter.
+            </div>
+          } @else {
+            <div hlmEmptyTitle i18n="@@org.members.emptyTitle">No members yet</div>
+            <div hlmEmptyDescription i18n="@@org.members.emptyText">
+              Invite someone to give them access to this organization.
+            </div>
+          }
         </hlm-empty-header>
-        @if (canManageMembers()) {
-          <hlm-empty-content>
+        <hlm-empty-content>
+          @if (hasRosterFilters()) {
+            <button
+              hlmBtn
+              variant="outline"
+              data-testid="organization-members-clear-filters"
+              (click)="clearRosterFilters()"
+            >
+              <span i18n="@@common.clearFilters">Clear filters</span>
+            </button>
+          } @else if (canManageMembers()) {
             <button hlmBtn (click)="openInviteDialog()">
               <ng-icon name="lucideMailPlus" aria-hidden="true" />
               <span i18n="@@org.members.inviteButton">Invite member</span>
             </button>
-          </hlm-empty-content>
-        }
+          }
+        </hlm-empty-content>
       </hlm-empty>
     } @else {
       <app-organization-member-table
@@ -157,7 +246,7 @@
 
   @if (canManageMembers()) {
     <section class="flex flex-col gap-3">
-      <h2 class="text-lg font-medium" i18n="@@org.invitations.heading">Pending invitations</h2>
+      <h2 class="text-lg font-medium">{{ pendingInvitationsHeading() }}</h2>
 
       @if (store.loadCallState().status === 'error') {
         <app-error-state

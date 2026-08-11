@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMinus, lucideTrendingDown, lucideTrendingUp } from '@ng-icons/lucide';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import type { StatTileDelta, StatTileLink } from './models';
 
@@ -46,7 +47,14 @@ import type { StatTileDelta, StatTileLink } from './models';
  */
 @Component({
   selector: 'app-stat-tile',
-  imports: [NgIcon, NgTemplateOutlet, RouterLink, HlmSkeleton, ...HlmCardImports],
+  imports: [
+    NgIcon,
+    NgTemplateOutlet,
+    RouterLink,
+    HlmSkeleton,
+    ...HlmCardImports,
+    ...HlmProgressImports,
+  ],
   providers: [provideIcons({ lucideMinus, lucideTrendingDown, lucideTrendingUp })],
   templateUrl: './stat-tile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -155,6 +163,23 @@ export class StatTile {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property progress
+   * @readonly
+   *
+   * @description
+   * Optional 0–100 completion percentage, rendered as a compact meter below
+   * the value — for a metric better read as "how full" than as a trend
+   * (a quota seat count, for instance). Mutually orthogonal to {@link delta}:
+   * a tile shows one or the other, never both.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<number | null>}
+   */
+  public readonly progress: InputSignal<number | null> = input<number | null>(null);
   //#endregion
 
   //#region Properties

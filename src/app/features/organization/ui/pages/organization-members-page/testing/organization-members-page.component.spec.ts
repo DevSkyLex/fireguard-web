@@ -23,6 +23,7 @@ import {
   type OrganizationMemberOutput,
 } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationMembersStore } from '@features/organization/state/organization-members';
 import { OrganizationMembersPage } from '../organization-members-page.component';
 
@@ -64,6 +65,7 @@ describe('OrganizationMembersPage', () => {
   let members: WritableSignal<readonly OrganizationMemberOutput[]>;
   let activeInvitations: WritableSignal<readonly OrganizationInvitationOutput[]>;
   let membersTotal: WritableSignal<number>;
+  let membersActiveTotal: WritableSignal<number>;
   let loadCallState: WritableSignal<CallState>;
   let mutationCallState: WritableSignal<CallState>;
   let mutationError: Signal<StoreError | null>;
@@ -105,6 +107,10 @@ describe('OrganizationMembersPage', () => {
             hasPermission: (name: string): boolean => permissions().includes(name),
           },
         },
+        {
+          provide: OrganizationQuotaStore,
+          useValue: { items: signal([]), isLoadingQuota: signal(false) },
+        },
       ],
     });
 
@@ -122,6 +128,8 @@ describe('OrganizationMembersPage', () => {
               roles: signal([]),
               invitationLinks: signal({}),
               membersTotal,
+              membersActiveTotal,
+              membersSearch: signal(''),
               isLoading: signal(false),
               isMutating: signal(false),
               loadError: signal<StoreError | null>(null),
@@ -152,6 +160,7 @@ describe('OrganizationMembersPage', () => {
     members = signal<readonly OrganizationMemberOutput[]>([member()]);
     activeInvitations = signal<readonly OrganizationInvitationOutput[]>([invitation()]);
     membersTotal = signal<number>(1);
+    membersActiveTotal = signal<number>(1);
     loadCallState = signal<CallState>(idleCallState());
     mutationCallState = signal<CallState>(idleCallState());
     mutationError = computed(() => mutationCallState().error);
@@ -346,6 +355,7 @@ describe('OrganizationMembersPage', () => {
       organizationId: 'org-1',
       page: 1,
       search: '',
+      status: 'all',
     });
 
     fixture.componentInstance['goToMembersPage'](99);
@@ -353,6 +363,67 @@ describe('OrganizationMembersPage', () => {
       organizationId: 'org-1',
       page: 3,
       search: '',
+      status: 'all',
     });
+  });
+
+  it('re-queries the roster on a debounced search keystroke, resetting to page one', async () => {
+    await createPage();
+
+    fixture.componentInstance['onSearchInput']({
+      target: { value: 'amelie' },
+    } as unknown as Event);
+    await new Promise<void>((resolve) => setTimeout(resolve, 350));
+    await fixture.whenStable();
+
+    expect(loadMembers).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      page: 1,
+      search: 'amelie',
+      status: 'all',
+    });
+  });
+
+  it('re-queries the roster immediately on a status filter change, without debouncing', async () => {
+    await createPage();
+
+    fixture.componentInstance['onStatusFilterChanged']('inactive');
+
+    expect(loadMembers).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      page: 1,
+      search: '',
+      status: 'inactive',
+    });
+  });
+
+  it('clears the search term and the status filter together', async () => {
+    await createPage();
+    fixture.componentInstance['onStatusFilterChanged']('active');
+    loadMembers.mockClear();
+
+    fixture.componentInstance['clearRosterFilters']();
+
+    expect(fixture.componentInstance['searchTerm']()).toBe('');
+    expect(fixture.componentInstance['statusFilter']()).toBe('all');
+    expect(loadMembers).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      page: 1,
+      search: '',
+      status: 'all',
+    });
+  });
+
+  it('reports the KPI row from the store and the quota item for the seats-used tile', async () => {
+    membersTotal.set(12);
+    membersActiveTotal.set(9);
+    await createPage();
+
+    const tiles = fixture.componentInstance['kpiTiles']();
+
+    expect(tiles.find((tile) => tile.id === 'total')?.value).toBe(12);
+    expect(tiles.find((tile) => tile.id === 'active')?.value).toBe(9);
+    expect(tiles.find((tile) => tile.id === 'pending-invitations')?.value).toBe(1);
+    expect(tiles.find((tile) => tile.id === 'seats-used')?.value).toBe('—');
   });
 });

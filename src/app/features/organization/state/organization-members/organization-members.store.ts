@@ -32,6 +32,7 @@ import type {
   InviteOrganizationMemberInput,
   OrganizationInvitationOutput,
   OrganizationMemberOutput,
+  OrganizationMemberStatusFilter,
 } from '@features/organization/models';
 import { organizationMembersStoreEvents } from './events';
 import type {
@@ -49,6 +50,8 @@ const INITIAL_STATE: OrganizationMembersState = {
   membersTotal: 0,
   membersPage: 1,
   membersSearch: '',
+  membersStatus: 'all',
+  membersActiveTotal: 0,
   invitationLinks: {},
   loadCallState: idleCallState(),
   mutationCallState: idleCallState(),
@@ -80,6 +83,15 @@ function withCapturedLink(
  * `withEntities` collections for O(1) id-based updates; each successful mutation
  * dispatches a feedback event the app-wide listener renders as a confirmation
  * toast. Roles CRUD stays with the roles-only team page.
+ *
+ * {@link load} also fetches `membersActiveTotal`, a fixed organization-wide
+ * active-membership count independent of the roster's own search/status
+ * filter, so the page's KPI row reads correctly regardless of what the table
+ * below it is currently narrowed to. {@link loadMembers} re-issues the roster
+ * query with the given search term and status filter (`active` / `inactive` /
+ * `all`), which is also what {@link OrganizationMembersState.membersTotal}
+ * then reflects — the "N of M shown" line and the KPI row's own "Total
+ * members" tile both read that filtered total by design.
  *
  * @since 1.0.0
  */
@@ -131,6 +143,11 @@ export const OrganizationMembersStore = signalStore(
                       })),
                     )
                 : of({ items: [] as OrganizationMemberOutput[], total: 0 }),
+              membersActiveTotal: includeMembers
+                ? memberService
+                    .list(organizationId, { page: 1, itemsPerPage: 1 }, { status: 'active' })
+                    .pipe(map((response) => response.totalItems))
+                : of(0),
               invitations: includeInvitations
                 ? invitationService
                     .list(organizationId, { itemsPerPage: 100 })
@@ -141,7 +158,7 @@ export const OrganizationMembersStore = signalStore(
                 : of([]),
             }).pipe(
               tapResponse({
-                next: ({ members, invitations, roles }) =>
+                next: ({ members, membersActiveTotal, invitations, roles }) =>
                   patchState(
                     store,
                     setAllEntities(members.items, { collection: 'member' }),
@@ -149,8 +166,10 @@ export const OrganizationMembersStore = signalStore(
                     {
                       roles,
                       membersTotal: members.total,
+                      membersActiveTotal,
                       membersPage: 1,
                       membersSearch: '',
+                      membersStatus: 'all',
                       loadCallState: successCallState(null),
                     },
                   ),
@@ -161,17 +180,22 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Loads a single members page for the given search term (server-side). */
-      loadMembers: rxMethod<{ organizationId: string; page: number; search: string }>(
+      /** Loads a single members page for the given search term and status filter (server-side). */
+      loadMembers: rxMethod<{
+        organizationId: string;
+        page: number;
+        search: string;
+        status: OrganizationMemberStatusFilter;
+      }>(
         pipe(
           tap(() => patchState(store, { loadCallState: pendingCallState() })),
-          switchMap(({ organizationId, page, search }) =>
+          switchMap(({ organizationId, page, search, status }) =>
             memberService
-              .list(organizationId, {
-                page,
-                itemsPerPage: MEMBERS_PAGE_SIZE,
-                params: search ? { search } : undefined,
-              })
+              .list(
+                organizationId,
+                { page, itemsPerPage: MEMBERS_PAGE_SIZE },
+                { search: search || undefined, status: status === 'all' ? undefined : status },
+              )
               .pipe(
                 tapResponse({
                   next: (response) =>
@@ -182,6 +206,7 @@ export const OrganizationMembersStore = signalStore(
                         membersTotal: response.totalItems,
                         membersPage: page,
                         membersSearch: search,
+                        membersStatus: status,
                         loadCallState: successCallState(null),
                       },
                     ),

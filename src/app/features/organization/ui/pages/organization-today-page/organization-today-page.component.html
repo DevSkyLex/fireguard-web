@@ -1,21 +1,63 @@
 <div id="organization-today" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <header class="flex flex-wrap items-start justify-between gap-3">
-    <div class="flex min-w-0 flex-col gap-0.5">
-      <h1 class="text-xl font-semibold tracking-tight text-foreground" i18n="@@org.today.pageTitle">
-        Today
-      </h1>
-      @if (organizationName(); as name) {
-        <p class="truncate text-sm text-muted-foreground">{{ name }}</p>
-      }
-    </div>
-
+  <app-organization-page-header
+    [organization]="organizationContext.selectedOrganization()"
+    title="Today"
+    i18n-title="@@org.today.pageTitle"
+  >
     @if (canCreateInterventions()) {
       <button hlmBtn size="sm" class="shrink-0 gap-2 max-sm:min-h-11" (click)="startIntervention()">
         <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
         <span i18n="@@org.today.newIntervention">New intervention</span>
       </button>
     }
-  </header>
+  </app-organization-page-header>
+
+  @if (!dashboardStore.queryHasError()) {
+    <section class="grid grid-cols-2 gap-4 sm:grid-cols-4" data-testid="org-today-kpis">
+      @for (tile of kpiTiles(); track tile.id) {
+        <div [attr.data-testid]="'org-today-kpi-' + tile.id">
+          <app-stat-tile
+            [label]="tile.label"
+            [value]="tile.value"
+            [icon]="tile.icon"
+            [link]="tile.link"
+            [loading]="dashboardStore.isQueryLoading()"
+          />
+        </div>
+      }
+    </section>
+
+    @if (dashboardStore.isQueryLoading() || alertRows().length > 0) {
+      <section class="flex flex-col gap-2" data-testid="org-today-alerts">
+        <h2 class="text-sm font-medium text-muted-foreground" i18n="@@org.today.alerts.title">
+          Also worth a look
+        </h2>
+
+        @if (dashboardStore.isQueryLoading()) {
+          <div
+            class="flex flex-col gap-2"
+            role="status"
+            aria-label="Loading what else needs attention"
+            i18n-aria-label="@@org.today.alerts.loadingAria"
+          >
+            <hlm-skeleton class="h-10 w-full" />
+            <hlm-skeleton class="h-10 w-full" />
+          </div>
+        } @else {
+          @for (alert of alertRows(); track alert.code) {
+            <div
+              hlmAlert
+              class="flex items-center gap-3"
+              [attr.data-testid]="'org-today-alert-' + alert.code"
+            >
+              <ng-icon [name]="alert.icon" [class]="alert.iconClass" aria-hidden="true" />
+              <p hlmAlertTitle class="flex-1">{{ alert.message }}</p>
+            </div>
+          }
+        }
+      </section>
+    }
+  }
 
   @if (store.hasError()) {
     <app-error-state
@@ -56,55 +98,127 @@
     </app-empty-state>
   } @else if (canReadInterventions()) {
     <div class="flex flex-col gap-6">
-      <app-organization-today-queue
-        label="Overdue"
-        i18n-label="@@org.today.overdue"
-        [total]="store.overdue().total"
-        [interventions]="store.overdue().items"
-        [notes]="overdueNotes()"
-        [loading]="store.isLoading()"
-        actionLabel="See all"
-        i18n-actionLabel="@@org.today.seeAll"
-        (opened)="openIntervention($event)"
-        (actioned)="openInterventions()"
-      />
+      <div data-testid="org-today-queue-overdue">
+        <app-organization-today-queue
+          label="Overdue"
+          i18n-label="@@org.today.overdue"
+          [total]="store.overdue().total"
+          [interventions]="store.overdue().items"
+          [notes]="overdueNotes()"
+          [loading]="store.isLoading()"
+          actionLabel="See all"
+          i18n-actionLabel="@@org.today.seeAll"
+          (opened)="openIntervention($event)"
+          (actioned)="openInterventions()"
+        />
+      </div>
 
-      <app-organization-today-queue
-        label="Sent back to you"
-        i18n-label="@@org.today.changesRequested"
-        [total]="store.changesRequested().total"
-        [interventions]="store.changesRequested().items"
-        [loading]="store.isLoading()"
-        actionLabel="See all"
-        i18n-actionLabel="@@org.today.seeAll"
-        (opened)="openIntervention($event)"
-        (actioned)="openInterventions()"
-      />
+      <div data-testid="org-today-queue-changes-requested">
+        <app-organization-today-queue
+          label="Sent back to you"
+          i18n-label="@@org.today.changesRequested"
+          [total]="store.changesRequested().total"
+          [interventions]="store.changesRequested().items"
+          [loading]="store.isLoading()"
+          actionLabel="See all"
+          i18n-actionLabel="@@org.today.seeAll"
+          (opened)="openIntervention($event)"
+          (actioned)="openInterventions()"
+        />
+      </div>
 
-      <app-organization-today-queue
-        label="Awaiting your review"
-        i18n-label="@@org.today.awaitingReview"
-        [total]="store.awaitingReview().total"
-        [interventions]="store.awaitingReview().items"
-        [loading]="store.isLoading()"
-        actionLabel="See all"
-        i18n-actionLabel="@@org.today.seeAll"
-        (opened)="openIntervention($event)"
-        (actioned)="openInterventions()"
-      />
+      <div data-testid="org-today-queue-awaiting-review">
+        <app-organization-today-queue
+          label="Awaiting your review"
+          i18n-label="@@org.today.awaitingReview"
+          [total]="store.awaitingReview().total"
+          [interventions]="store.awaitingReview().items"
+          [loading]="store.isLoading()"
+          actionLabel="See all"
+          i18n-actionLabel="@@org.today.seeAll"
+          (opened)="openIntervention($event)"
+          (actioned)="openInterventions()"
+        />
+      </div>
 
-      <!--
-        No loading state: the local queue comes from IndexedDB, which resolves
-        before a skeleton would be worth showing.
-      -->
-      <app-organization-today-queue
-        label="Waiting to sync"
-        i18n-label="@@org.today.unsynced"
-        [total]="unsynced().length"
-        [interventions]="unsynced()"
-        [notes]="unsyncedNotes()"
-        (opened)="openIntervention($event)"
-      />
+      <div data-testid="org-today-queue-unsynced">
+        <app-organization-today-queue
+          label="Waiting to sync"
+          i18n-label="@@org.today.unsynced"
+          [total]="unsynced().length"
+          [interventions]="unsynced()"
+          [notes]="unsyncedNotes()"
+          (opened)="openIntervention($event)"
+        />
+      </div>
+    </div>
+  }
+
+  @if (
+    canReadInterventions() &&
+    !dashboardStore.queryHasError() &&
+    (dashboardStore.isQueryLoading() || recentInterventions().length > 0)
+  ) {
+    <div hlmCard data-testid="org-today-recent-interventions">
+      <div hlmCardHeader>
+        <h2 hlmCardTitle i18n="@@org.today.recent.title">Recently updated</h2>
+      </div>
+      <div hlmCardContent class="flex flex-col gap-1.5">
+        @if (dashboardStore.isQueryLoading()) {
+          <div
+            class="flex flex-col gap-2"
+            role="status"
+            aria-label="Loading recently updated interventions"
+            i18n-aria-label="@@org.today.recent.loadingAria"
+          >
+            <hlm-skeleton class="h-12 w-full" />
+            <hlm-skeleton class="h-12 w-full" />
+            <hlm-skeleton class="h-12 w-full" />
+          </div>
+        } @else {
+          @for (intervention of recentInterventions(); track intervention.id) {
+            <a
+              [routerLink]="[
+                '/organizations',
+                organizationContext.selectedOrganizationId(),
+                'interventions',
+                intervention.id,
+              ]"
+              class="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
+              data-testid="org-today-recent-intervention"
+            >
+              <span class="shrink-0 font-mono text-xs text-muted-foreground"
+                >FG-{{ intervention.number }}</span
+              >
+
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="truncate text-sm text-foreground">{{ intervention.name }}</span>
+                <span class="truncate text-xs text-muted-foreground">
+                  @if (intervention.siteName; as site) {
+                    {{ site }}
+                  }
+                  @if (intervention.dueAt; as due) {
+                    · <time [attr.datetime]="due">{{ due | date: 'mediumDate' }}</time>
+                  }
+                </span>
+              </span>
+
+              <app-intervention-tag kind="status" [value]="intervention.status" />
+
+              @if (intervention.responsibleName; as responsibleName) {
+                <hlm-avatar class="size-8 shrink-0">
+                  @if (intervention.responsibleAvatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback class="text-[10px]">{{
+                    responsibleInitials(intervention)
+                  }}</span>
+                </hlm-avatar>
+              }
+            </a>
+          }
+        }
+      </div>
     </div>
   }
 </div>

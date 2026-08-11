@@ -7,8 +7,14 @@ import type {
   InterventionOutput,
   InterventionQueue,
 } from '@features/organization/features/interventions/models';
+import type {
+  OrganizationDashboardAlert,
+  OrganizationDashboardOutput,
+  OrganizationDashboardRecentIntervention,
+} from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { DashboardStore } from '@features/organization/state/organization-dashboard';
 import { OrganizationTodayStore } from '@features/organization/state/organization-today';
 import { OrganizationTodayPage } from '../organization-today-page.component';
 
@@ -26,6 +32,29 @@ function emptyQueue(): InterventionQueue {
   return { key: 'overdue', total: 0, items: [] } as InterventionQueue;
 }
 
+/**
+ * Builds one recently-updated intervention row.
+ */
+function recentIntervention(
+  overrides: Partial<OrganizationDashboardRecentIntervention> = {},
+): OrganizationDashboardRecentIntervention {
+  return {
+    id: 'i-recent-1',
+    number: 202,
+    name: 'Replace extinguisher',
+    status: 'in_progress',
+    priority: 'high',
+    siteId: 'site-1',
+    siteName: 'Main warehouse',
+    responsibleId: 'member-1',
+    responsibleName: 'Jamie Rivera',
+    responsibleAvatarUrl: null,
+    dueAt: null,
+    updatedAt: '2026-08-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
 describe('OrganizationTodayPage', () => {
   let fixture: ComponentFixture<OrganizationTodayPage>;
   let overdue: WritableSignal<InterventionQueue>;
@@ -33,6 +62,14 @@ describe('OrganizationTodayPage', () => {
   let load: ReturnType<typeof vi.fn>;
   let loadUnsynced: ReturnType<typeof vi.fn>;
   let navigate: MockInstance;
+
+  let dashboardQueryData: WritableSignal<OrganizationDashboardOutput | null>;
+  let dashboardQueryHasError: WritableSignal<boolean>;
+  let dashboardIsQueryLoading: WritableSignal<boolean>;
+  let dashboardAlerts: WritableSignal<readonly OrganizationDashboardAlert[]>;
+  let dashboardRecentInterventions: WritableSignal<
+    readonly OrganizationDashboardRecentIntervention[]
+  >;
 
   beforeEach(async () => {
     overdue = signal<InterventionQueue>(emptyQueue());
@@ -43,7 +80,7 @@ describe('OrganizationTodayPage', () => {
     load = vi.fn();
     loadUnsynced = vi.fn();
 
-    const mockStore = {
+    const todayStoreMock = {
       overdue,
       changesRequested: signal<InterventionQueue>(emptyQueue()),
       awaitingReview: signal<InterventionQueue>(emptyQueue()),
@@ -55,6 +92,21 @@ describe('OrganizationTodayPage', () => {
       loadParams: signal<string | undefined>('org-1'),
       load,
       loadUnsynced,
+    };
+
+    dashboardQueryData = signal<OrganizationDashboardOutput | null>(null);
+    dashboardQueryHasError = signal<boolean>(false);
+    dashboardIsQueryLoading = signal<boolean>(false);
+    dashboardAlerts = signal<readonly OrganizationDashboardAlert[]>([]);
+    dashboardRecentInterventions = signal<readonly OrganizationDashboardRecentIntervention[]>([]);
+
+    const dashboardStoreMock = {
+      queryData: dashboardQueryData,
+      queryHasError: dashboardQueryHasError,
+      isQueryLoading: dashboardIsQueryLoading,
+      alerts: dashboardAlerts,
+      recentInterventions: dashboardRecentInterventions,
+      load: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -80,7 +132,12 @@ describe('OrganizationTodayPage', () => {
     });
 
     TestBed.overrideComponent(OrganizationTodayPage, {
-      set: { providers: [{ provide: OrganizationTodayStore, useValue: mockStore }] },
+      set: {
+        providers: [
+          { provide: OrganizationTodayStore, useValue: todayStoreMock },
+          { provide: DashboardStore, useValue: dashboardStoreMock },
+        ],
+      },
     });
 
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -129,8 +186,6 @@ describe('OrganizationTodayPage', () => {
   });
 
   it('should re-run both queue loads on retry', () => {
-    // The local queue loads separately so it survives a network failure; a
-    // retry that skipped it would leave the page half-refreshed.
     fixture.componentInstance['retryQueues']();
 
     expect(load).toHaveBeenCalledWith('org-1');
@@ -142,5 +197,82 @@ describe('OrganizationTodayPage', () => {
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('app-organization-today-queue')).toBeNull();
+  });
+
+  it('should render the KPI row from the dashboard overview', async () => {
+    dashboardQueryData.set({
+      overview: {
+        interventions: { summary: [{ key: 'open', value: 5 }] },
+        nonConformities: { summary: [{ key: 'open', value: 3 }] },
+        inspections: { summary: [{ key: 'closed', value: 12 }] },
+        equipment: { summary: [{ key: 'underMaintenance', value: 2 }] },
+      },
+    } as unknown as OrganizationDashboardOutput);
+    await fixture.whenStable();
+
+    const text: string = fixture.nativeElement.textContent;
+
+    expect(text).toContain('5');
+    expect(text).toContain('3');
+    expect(text).toContain('12');
+    expect(text).toContain('2');
+  });
+
+  it('should hide the open-interventions KPI tile from a member who cannot read interventions', async () => {
+    permissions.set([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
+    dashboardQueryData.set({
+      overview: { interventions: { summary: [{ key: 'open', value: 5 }] } },
+    } as unknown as OrganizationDashboardOutput);
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="org-today-kpi-open-interventions"]'),
+    ).toBeNull();
+  });
+
+  it('should hide the KPI row and the alert strip once the dashboard query fails', async () => {
+    dashboardAlerts.set([{ code: 'expired_invitations', severity: 'medium', count: 4 }]);
+    dashboardQueryHasError.set(true);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="org-today-kpis"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="org-today-alerts"]')).toBeNull();
+  });
+
+  it('should render one localized sentence per dashboard alert code', async () => {
+    dashboardAlerts.set([
+      { code: 'critical_non_conformities_open', severity: 'high', count: 2 },
+      { code: 'equipment_under_maintenance', severity: 'medium', count: 4 },
+    ]);
+    await fixture.whenStable();
+
+    const text: string = fixture.nativeElement.textContent;
+
+    expect(text).toContain('2 critical non-conformities still open');
+    expect(text).toContain('4 equipment items under maintenance');
+  });
+
+  it('should render the recently updated interventions list with a status tag and a responsible avatar', async () => {
+    dashboardRecentInterventions.set([recentIntervention()]);
+    await fixture.whenStable();
+
+    const row: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-recent-intervention"]',
+    );
+
+    expect(row).not.toBeNull();
+    expect(row?.textContent).toContain('Replace extinguisher');
+    expect(row?.querySelector('app-intervention-tag')).not.toBeNull();
+    expect(row?.textContent).toContain('JR');
+  });
+
+  it('should hide the recently updated interventions card from a member who cannot read interventions', async () => {
+    permissions.set([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
+    dashboardRecentInterventions.set([recentIntervention()]);
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="org-today-recent-interventions"]'),
+    ).toBeNull();
   });
 });

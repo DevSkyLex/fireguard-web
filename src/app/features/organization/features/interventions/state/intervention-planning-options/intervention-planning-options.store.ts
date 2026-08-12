@@ -150,8 +150,9 @@ export const InterventionPlanningOptionsStore = signalStore(
        * @method loadCreationOptions
        *
        * @description
-       * Loads site and member options for the intervention creation form.
-       * Resets all options and the loading flag before fetching.
+       * Loads site, member and label options for the intervention creation
+       * form and the list's filter bar. Resets all options and the loading
+       * flag before fetching.
        *
        * @access public
        * @since 1.0.0
@@ -183,6 +184,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                 page: 1,
                 itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
               }),
+              labels: labelService.list(`/api/organizations/${organizationId}`),
             });
           }),
           tapResponse({
@@ -200,6 +202,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                 members: result.members.member.map((member) =>
                   memberOption(member, result.organizationId),
                 ),
+                labels: result.labels.member,
                 loadCallState: successCallState(null),
               });
             },

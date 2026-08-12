@@ -70,11 +70,34 @@ export type InterventionListOptions = PaginationOptions & {
   readonly participant?: string;
 
   /**
+   * Member IRI matched as responsible OR participant — the "my interventions"
+   * filter, resolved with a single request instead of two OR'd ones.
+   *
+   * @type {string}
+   */
+  readonly member?: string;
+
+  /**
    * Facility IRI the intervention is attached to.
    *
    * @type {string}
    */
   readonly site?: string;
+
+  /**
+   * Intervention label IRI, e.g. `/api/intervention-labels/{id}`.
+   *
+   * @type {string}
+   */
+  readonly label?: string;
+
+  /**
+   * Exact per-organization intervention number; the API accepts an optional
+   * case-insensitive `FG-` prefix and answers 400 on anything non-numeric.
+   *
+   * @type {number}
+   */
+  readonly number?: number;
 
   /**
    * Inclusive lower bound (ISO 8601) applied to `plannedStartAt`.

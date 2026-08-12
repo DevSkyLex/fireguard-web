@@ -3,7 +3,14 @@ import type {
   InterventionListFilters,
   InterventionListOptions,
   InterventionListSort,
+  SelectOption,
 } from '@features/organization/features/interventions/models';
+import {
+  INTERVENTION_DUE_WINDOW_OPTIONS,
+  INTERVENTION_PRIORITY_FILTER_OPTIONS,
+  INTERVENTION_STATUS_FILTER_OPTIONS,
+  INTERVENTION_TYPE_FILTER_OPTIONS,
+} from '../../options/intervention-filter-options.constants';
 
 /**
  * Milliseconds in a day, for resolving the named due-date windows.
@@ -63,6 +70,9 @@ export function resolveDueWindow(
  * @param {InterventionListSort} sort - Active ordering.
  * @param {string} search - Trimmed free-text search, empty when unused.
  * @param {Date} now - Instant the due-date windows are anchored on.
+ * @param {string | null} memberIri - The signed-in member's IRI, resolving the
+ * `mine` narrowing to the API's `member` (responsible OR participant) filter;
+ * `mine` is silently dropped while the profile has not resolved yet.
  *
  * @returns {InterventionListOptions} Options to hand the store.
  *
@@ -73,6 +83,7 @@ export function buildInterventionListOptions(
   sort: InterventionListSort,
   search: string,
   now: Date,
+  memberIri: string | null = null,
 ): InterventionListOptions {
   const options: {
     -readonly [Key in keyof InterventionListOptions]: InterventionListOptions[Key];
@@ -84,6 +95,8 @@ export function buildInterventionListOptions(
   if (filters.priority) options.priority = filters.priority;
   if (filters.site) options.site = filters.site;
   if (filters.responsible) options.responsible = filters.responsible;
+  if (filters.label) options.label = filters.label;
+  if (filters.mine && memberIri) options.member = memberIri;
 
   if (filters.dueWindow) {
     const bounds = resolveDueWindow(filters.dueWindow, now);
@@ -95,11 +108,100 @@ export function buildInterventionListOptions(
 }
 
 /**
+ * The value of a query param when it names a known option, null otherwise —
+ * an unknown or tampered value is dropped rather than sent to the API.
+ */
+function parseOption<T extends string>(
+  raw: string | undefined,
+  options: readonly SelectOption<T>[],
+): T | null {
+  return options.find((option: SelectOption<T>): boolean => option.value === raw)?.value ?? null;
+}
+
+/** The last path segment of an IRI, null in and null out. */
+function lastIriSegment(iri: string | null): string | null {
+  return iri === null ? null : (iri.split('/').pop() ?? null);
+}
+
+/**
+ * Function parseInterventionListFilters
+ *
+ * @description
+ * Rebuilds the active narrowing from the URL's query params — the reverse of
+ * {@link serializeInterventionListFilters}. Enum-valued params are validated
+ * against the filter option catalogs (an unknown value parses as unfiltered);
+ * IRI-valued ones travel as raw ids and are rebuilt here.
+ *
+ * @param {object} raw - The raw query param values, undefined when absent.
+ * @param {string} organizationId - The active organization, anchoring member IRIs.
+ *
+ * @returns {InterventionListFilters} The narrowing the URL expresses.
+ *
+ * @since 5.2.0
+ */
+export function parseInterventionListFilters(
+  raw: {
+    readonly status?: string;
+    readonly type?: string;
+    readonly priority?: string;
+    readonly site?: string;
+    readonly responsible?: string;
+    readonly label?: string;
+    readonly mine?: string;
+    readonly due?: string;
+  },
+  organizationId: string,
+): InterventionListFilters {
+  return {
+    status: parseOption(raw.status, INTERVENTION_STATUS_FILTER_OPTIONS),
+    type: parseOption(raw.type, INTERVENTION_TYPE_FILTER_OPTIONS),
+    priority: parseOption(raw.priority, INTERVENTION_PRIORITY_FILTER_OPTIONS),
+    site: raw.site ? `/api/facilities/${raw.site}` : null,
+    responsible: raw.responsible
+      ? `/api/organizations/${organizationId}/members/${raw.responsible}`
+      : null,
+    label: raw.label ? `/api/intervention-labels/${raw.label}` : null,
+    mine: raw.mine === '1',
+    dueWindow: parseOption(raw.due, INTERVENTION_DUE_WINDOW_OPTIONS),
+  };
+}
+
+/**
+ * Function serializeInterventionListFilters
+ *
+ * @description
+ * Turns the active narrowing into the query params that express it — null
+ * removes the param from the URL, so a cleared filter leaves no residue. The
+ * reverse of {@link parseInterventionListFilters}.
+ *
+ * @param {InterventionListFilters} filters - Active narrowing.
+ *
+ * @returns {Record<string, string | null>} Query params for `navigateQuery`.
+ *
+ * @since 5.2.0
+ */
+export function serializeInterventionListFilters(
+  filters: InterventionListFilters,
+): Record<string, string | null> {
+  return {
+    status: filters.status,
+    type: filters.type,
+    priority: filters.priority,
+    site: lastIriSegment(filters.site),
+    responsible: lastIriSegment(filters.responsible),
+    label: lastIriSegment(filters.label),
+    mine: filters.mine ? '1' : null,
+    due: filters.dueWindow,
+  };
+}
+
+/**
  * Function countActiveFilters
  *
  * @description
  * How many narrowings are in force, for the badge on the filters button.
- * Search is deliberately excluded: it has its own visible input.
+ * Search is deliberately excluded: it has its own visible input — and so is
+ * `mine`, whose toggle chip already shows its own state.
  *
  * @param {InterventionListFilters} filters - Active narrowing.
  *
@@ -108,5 +210,7 @@ export function buildInterventionListOptions(
  * @since 1.0.0
  */
 export function countActiveFilters(filters: InterventionListFilters): number {
-  return Object.values(filters).filter((value) => value !== null).length;
+  return Object.entries(filters).filter(
+    ([key, value]) => key !== 'mine' && value !== null && value !== false,
+  ).length;
 }

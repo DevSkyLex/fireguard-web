@@ -189,6 +189,18 @@
                       <span i18n="@@intervention.list.rowCopyRef">Copy reference</span>
                     </button>
 
+                    @if (isRowAssignable(item.intervention)) {
+                      <hlm-dropdown-menu-separator />
+                      <button
+                        hlmDropdownMenuItem
+                        data-testid="intervention-table-row-assign"
+                        (click)="assignRequested.emit(item.intervention)"
+                      >
+                        <ng-icon name="lucideUserCog" aria-hidden="true" />
+                        <span i18n="@@intervention.list.assign">Assign responsible…</span>
+                      </button>
+                    }
+
                     @if (transitionsFor(item.intervention).length > 0) {
                       <hlm-dropdown-menu-separator />
                       <hlm-dropdown-menu-label i18n="@@intervention.list.rowMoveTo"
@@ -198,6 +210,12 @@
                         <button
                           hlmDropdownMenuItem
                           data-testid="intervention-table-row-transition"
+                          [disabled]="isTransitionGated(item.intervention, target)"
+                          [title]="
+                            isTransitionGated(item.intervention, target)
+                              ? responsibleOnlyReason
+                              : null
+                          "
                           (click)="
                             transitionRequested.emit({
                               intervention: item.intervention,

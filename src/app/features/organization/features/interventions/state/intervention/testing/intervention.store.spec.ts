@@ -332,4 +332,95 @@ describe('InterventionStore', () => {
       expect(store.interventionList()).toEqual([draftIntervention]);
     });
   });
+
+  describe('assignResponsible', () => {
+    const draftIntervention = {
+      id: 'intervention-1',
+      name: 'Site visit',
+      status: 'draft',
+      revision: 1,
+      responsible: null,
+    } as InterventionOutput;
+
+    beforeEach(() => {
+      mockInterventionService.list.mockReturnValue(
+        of({
+          '@id': '/api/interventions',
+          '@type': 'Collection',
+          totalItems: 1,
+          member: [draftIntervention],
+        }),
+      );
+      store.load({ organizationId: 'org-1' });
+    });
+
+    it('should optimistically patch the entity responsible before the request resolves', () => {
+      mockInterventionService.update.mockReturnValue(NEVER);
+
+      store.assignResponsible({
+        interventionId: 'intervention-1',
+        responsible: '/api/organizations/org-1/members/m1',
+        revision: 1,
+      });
+
+      expect(store.interventionList()[0]).toMatchObject({
+        responsible: '/api/organizations/org-1/members/m1',
+      });
+      expect(store.assignCallState().status).toBe('pending');
+      expect(mockInterventionService.update).toHaveBeenCalledWith(
+        'intervention-1',
+        { responsible: '/api/organizations/org-1/members/m1' },
+        1,
+      );
+    });
+
+    it('should merge the fresh server entity and dispatch a success feedback event', () => {
+      const updated = {
+        ...draftIntervention,
+        responsible: '/api/organizations/org-1/members/m1',
+        revision: 2,
+        allowedTransitions: ['planned'],
+      } as InterventionOutput;
+      mockInterventionService.update.mockReturnValue(of(updated));
+
+      store.assignResponsible({
+        interventionId: 'intervention-1',
+        responsible: '/api/organizations/org-1/members/m1',
+        revision: 1,
+      });
+
+      expect(store.interventionList()[0]).toEqual(updated);
+      expect(store.assignCallState().status).toBe('success');
+      expect(dispatch).toHaveBeenCalledTimes(1);
+      expect(dispatch.mock.calls[0][0]).toMatchObject({
+        type: '[Intervention Store] assignSucceeded',
+        payload: { severity: 'success' },
+      });
+    });
+
+    it('should roll back the optimistic patch and dispatch a failure event on error', () => {
+      mockInterventionService.update.mockReturnValue(
+        throwError(() => ({
+          '@type': 'ApiError',
+          status: 403,
+          type: '/errors/forbidden',
+          title: 'Forbidden',
+        })),
+      );
+
+      store.assignResponsible({
+        interventionId: 'intervention-1',
+        responsible: '/api/organizations/org-1/members/m1',
+        revision: 1,
+      });
+
+      expect(store.interventionList()[0]).toEqual(draftIntervention);
+      expect(store.assignCallState().status).toBe('error');
+      expect(dispatch).toHaveBeenCalledTimes(1);
+      expect(dispatch.mock.calls[0][0]).toMatchObject({
+        type: '[Intervention Store] assignFailed',
+        payload: { severity: 'error' },
+      });
+    });
+  });
 });

@@ -34,6 +34,16 @@ export interface InterventionListFilters {
   /** IRI of the responsible agent. */
   readonly responsible: string | null;
 
+  /** IRI of an intervention label the collection is narrowed to. */
+  readonly label: string | null;
+
+  /**
+   * "My interventions" — matches the signed-in member as responsible OR
+   * participant, via the API's `member` filter. `false` means not narrowed,
+   * and never counts as an active filter.
+   */
+  readonly mine: boolean;
+
   /** Named due-date window, resolved to `dueAtAfter`/`dueAtBefore` bounds. */
   readonly dueWindow: InterventionDueWindow | null;
   //#endregion

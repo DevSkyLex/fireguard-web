@@ -26,6 +26,7 @@ import { InterventionService } from '@features/organization/features/interventio
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { interventionStoreEvents } from './events';
 import type {
+  InterventionAssignCommand,
   InterventionCreateCommand,
   InterventionDeleteCommand,
   InterventionListLoadCommand,
@@ -59,6 +60,35 @@ function transitionFailureMessage(error: StoreError): string {
       return $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`;
     default:
       return $localize`:@@intervention.store.transitionFailed:The intervention status could not be updated.`;
+  }
+}
+
+/**
+ * Function assignFailureMessage
+ * @function assignFailureMessage
+ *
+ * @description
+ * Maps a normalized `assignResponsible` failure to a user-facing fallback
+ * message, distinguishing the workflow-relevant HTTP statuses (stale
+ * revision, forbidden, status refuses assignment) from a generic failure.
+ *
+ * @access private
+ * @since 4.2.0
+ *
+ * @param {StoreError} error - Normalized assign error.
+ *
+ * @return {string} Localized fallback message for the failure toast.
+ */
+function assignFailureMessage(error: StoreError): string {
+  switch (error.code) {
+    case 412:
+      return $localize`:@@intervention.store.assignStale:This intervention changed since it was loaded. Refresh and try again.`;
+    case 409:
+      return $localize`:@@intervention.store.assignConflict:This intervention cannot be assigned in its current status.`;
+    case 403:
+      return $localize`:@@intervention.store.assignForbidden:You do not have permission to assign this intervention.`;
+    default:
+      return $localize`:@@intervention.store.assignFailed:The intervention could not be assigned.`;
   }
 }
 
@@ -108,6 +138,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
   createCallState: idleCallState<InterventionOutput>(),
   transitionCallState: idleCallState<InterventionOutput>(),
   deleteCallState: idleCallState(),
+  assignCallState: idleCallState<InterventionOutput>(),
 } as const;
 //#endregion
 
@@ -122,7 +153,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
  * the server page the caller asked for — pagination, filtering and sorting are
  * server-side, and the entities ARE the current page.
  *
- * @version 4.1.0
+ * @version 4.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InterventionStore = signalStore(
@@ -226,6 +257,13 @@ export const InterventionStore = signalStore(
        * roll back the optimistic patch without a second fetch.
        */
       const transitionSnapshots = new Map<string, InterventionOutput>();
+
+      /**
+       * Pre-assignment entity snapshots keyed by intervention id, kept only
+       * for the lifetime of an in-flight `assignResponsible` call so a
+       * failure can roll back the optimistic patch without a second fetch.
+       */
+      const assignSnapshots = new Map<string, InterventionOutput>();
 
       return {
         /**
@@ -416,6 +454,95 @@ export const InterventionStore = signalStore(
                           storeError,
                           transitionFailureMessage(storeError),
                         ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method assignResponsible
+         * @method assignResponsible
+         *
+         * @description
+         * Assigns a responsible member to a cached intervention: patches the
+         * entity's `responsible` optimistically, sends the PATCH with the
+         * caller-supplied revision as `If-Match`, and merges the fresh
+         * `InterventionOutput` (updated `revision`/`allowedTransitions`) on
+         * success. On failure the entity is rolled back to its
+         * pre-assignment snapshot and an `assignFailed` event is dispatched
+         * so the app-wide feedback listener surfaces a toast — the message
+         * is tailored for a stale revision (412), a status that refuses
+         * assignment (409) and a forbidden change (403). Requests flow
+         * through `mergeMap`, not `switchMap`: a bulk assignment from the
+         * list can fire several requests in quick succession, each keyed by
+         * its own id with its own optimistic snapshot/rollback, and
+         * `switchMap` would cancel an in-flight PATCH — dropping its
+         * success/rollback handlers and leaving a row visually assigned
+         * while the server never confirmed.
+         *
+         * @access public
+         * @since 4.2.0
+         *
+         * @type {RxMethod<InterventionAssignCommand>}
+         */
+        assignResponsible: rxMethod<InterventionAssignCommand>(
+          pipe(
+            tap(({ interventionId, responsible }) => {
+              const snapshot = store.interventionEntityMap()[interventionId];
+              if (snapshot) {
+                assignSnapshots.set(interventionId, snapshot);
+                patchState(
+                  store,
+                  updateEntity(
+                    { id: interventionId, changes: { responsible } },
+                    { collection: 'intervention' },
+                  ),
+                );
+              }
+              patchState(store, { assignCallState: pendingCallState<InterventionOutput>() });
+            }),
+            mergeMap(({ interventionId, responsible, revision }) =>
+              interventionService.update(interventionId, { responsible }, revision).pipe(
+                tapResponse({
+                  next: (updated) => {
+                    assignSnapshots.delete(interventionId);
+                    patchState(
+                      store,
+                      updateEntity(
+                        { id: interventionId, changes: updated },
+                        { collection: 'intervention' },
+                      ),
+                      { assignCallState: successCallState(updated) },
+                    );
+                    dispatcher.dispatch(
+                      interventionStoreEvents.assignSucceeded(
+                        successFeedback(
+                          $localize`:@@intervention.assign.toast:Intervention assigned`,
+                        ),
+                      ),
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const snapshot = assignSnapshots.get(interventionId);
+                    assignSnapshots.delete(interventionId);
+                    if (snapshot) {
+                      patchState(
+                        store,
+                        updateEntity(
+                          { id: interventionId, changes: snapshot },
+                          { collection: 'intervention' },
+                        ),
+                      );
+                    }
+                    const storeError = toStoreError(error);
+                    patchState(store, { assignCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      interventionStoreEvents.assignFailed(
+                        toStoreFailureEventPayload(storeError, assignFailureMessage(storeError)),
                       ),
                     );
                   },

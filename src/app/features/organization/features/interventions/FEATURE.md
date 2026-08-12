@@ -22,14 +22,24 @@ This subfeature is responsible for:
 - `/organizations/:organizationId/interventions` — the index page: a spartan
   `hlmTable` of the organization's interventions, grouped and paginated, with a
   debounced search box synced to `?q=` (a server-side `name` filter), a filter
-  popover (status, type, deadline window), a column menu, row selection and a
-  permission-gated bulk delete. `?create=1` opens the creation sheet on arrival
-  and is consumed once, so the parent feature's landing page can offer "New
-  intervention" as a primary action that actually starts the work.
+  popover (status, type, priority, site, responsible, label, deadline window),
+  a "my interventions" toggle chip (`?mine=1`, the API's `member`
+  responsible-OR-participant filter), a column menu, row selection, and
+  permission-gated bulk actions. `?create=1` opens the creation sheet on
+  arrival and is consumed once, so the parent feature's landing page can offer
+  "New intervention" as a primary action that actually starts the work.
 
-  Sort, hidden columns and page size are remembered in a cookie by
-  `InterventionListPreferencesService`; filters deliberately are not, being
-  questions asked now rather than stored preferences.
+  **Filters live in the URL** (5.2 — this flips the earlier "questions asked
+  now, never persisted" stance): one query param per filter, raw ids for the
+  IRI-valued ones, parsed and validated by
+  `parseInterventionListFilters` / `serializeInterventionListFilters`
+  (`ui/pages/interventions-page/utils/intervention-list-query/`). A filtered
+  list is therefore shareable, bookmarkable, and restored by the back button —
+  an unknown or tampered param value parses as unfiltered rather than reaching
+  the API. Sort, hidden columns and page size stay in the cookie
+  (`InterventionListPreferencesService`) — presentation preferences, not
+  questions; filters never enter the cookie. The `?create=1` contract is
+  unchanged.
 
 - `/organizations/:organizationId/interventions/:interventionId` — the detail
   workspace, described below. Mounted as a second child of the same pathless
@@ -59,7 +69,12 @@ Stores:
   sorting are server-side end to end.
   `transition` applies a single status change optimistically (entity patch →
   PATCH with `If-Match` → merge fresh output on success, rollback +
-  `transitionFailed` toast event on error); `orderedIds` exposes the current
+  `transitionFailed` toast event on error); `assignResponsible` (5.2) hands the
+  responsible over with the same optimistic shape and its own
+  `assignSucceeded`/`assignFailed` events — `mergeMap`, like `delete`, so a
+  bulk assignment fans out per row with per-row rollback, driven from the list
+  through `ui/dialogs/intervention-assign-dialog` (presentational; one dialog
+  serves the single-row and bulk paths); `orderedIds` exposes the current
   entity order for the detail page's prev/next — **which therefore walks only
   the loaded page**: prev/next stops at the page bounds, an accepted trade-off
   of server paging. `delete` removes the cached
@@ -435,11 +450,13 @@ One identity gate sits on top of the capability filter: **withdrawing a
 submission** (`submitted` → `in_progress`, added to the backend policy and
 mirrored in `INTERVENTION_STATUS_TRANSITIONS`) is reserved server-side to the
 responsible member, so `transitionTargets()` hides it unless `canSubmit()` —
-the same responsible-identity signal that gates submission. The list page's row
-menu deliberately does **not** replicate this gate (the table is presentational
-and does not know the member's identity): a non-responsible clicking the
-withdrawal there takes the backend 403, which the optimistic `transition`
-rollback and `transitionFailed` toast already handle.
+the same responsible-identity signal that gates submission. Since 5.2 the list
+page's row menu applies **the same gate**: the table stays presentational and
+receives the signed-in member's IRI as a plain input (`currentMemberIri`), and
+disables the responsible-only moves with a stated reason instead of offering an
+action that predictably 403s. The optimistic `transition` rollback and the
+`transitionFailed` toast remain the safety net for a race the client cannot
+see (a reassignment landing between render and click).
 
 ### Proposed changes: reject is the only client action
 

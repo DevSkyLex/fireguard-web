@@ -52,13 +52,13 @@ import type {
   InterventionPhase,
   InterventionReadinessItem,
   InterventionReadinessTarget,
+  InterventionScanResult,
   InterventionStatus,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
 import {
-  InterventionDiscoveryService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
   InterventionSyncCoordinatorService,
@@ -355,9 +355,6 @@ export class InterventionDetailPage {
   private readonly fieldExecution: InterventionFieldExecutionService = inject(
     InterventionFieldExecutionService,
   );
-
-  /** Normalizes a scanned value to the canonical IRI work items reference. */
-  private readonly discovery: InterventionDiscoveryService = inject(InterventionDiscoveryService);
 
   /** Confirms a silent in-place commit so it is never invisible. */
   private readonly feedback: FeedbackService = inject(FeedbackService);
@@ -1189,8 +1186,10 @@ export class InterventionDetailPage {
    * Method uploadAttachments
    *
    * @description
-   * Uploads the picked files, compressing images first — camera captures are
-   * multi-megabyte and the backend caps at 10 MiB.
+   * Compresses the picked files — camera captures are multi-megabyte and the
+   * backend caps at 10 MiB — then uploads the ones that compressed
+   * successfully and reports the ones that did not, one toast per failed
+   * name.
    *
    * @access protected
    * @since 4.4.0
@@ -1200,24 +1199,21 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected uploadAttachments(files: readonly File[]): void {
-    for (const file of files) {
-      const prepared: Promise<File> = file.type.startsWith('image/')
-        ? this.photoCompressor.compress(file)
-        : Promise.resolve(file);
-      void prepared
-        .then((ready: File): void => {
+    void this.photoCompressor
+      .prepareAll(files)
+      .then(({ ready, failed }: { ready: File[]; failed: string[] }): void => {
+        for (const file of ready)
           this.store.uploadAttachment({
             interventionId: this.interventionId(),
-            file: ready,
-            fileName: ready.name,
+            file,
+            fileName: file.name,
           });
-        })
-        .catch((): void => {
+
+        for (const fileName of failed)
           this.feedback.error(
-            $localize`:@@intervention.attachments.prepareFailed:${file.name}:fileName: could not be prepared for upload.`,
+            $localize`:@@intervention.attachments.prepareFailed:${fileName}:fileName: could not be prepared for upload.`,
           );
-        });
-    }
+      });
   }
 
   /**
@@ -1242,10 +1238,10 @@ export class InterventionDetailPage {
    * Method onScanFileSelected
    *
    * @description
-   * Decodes a captured QR, normalizes it to its canonical IRI and reveals the
-   * matching work item — scroll plus focus, the same landing `revealFieldWork`
-   * gives the phase actions. No match, or an undecodable capture, becomes a
-   * toast rather than a dead click.
+   * Decodes a captured QR against the intervention's work items and reveals
+   * the match — scroll plus focus, the same landing `revealFieldWork` gives
+   * the phase actions. No match, or an undecodable capture, becomes a toast
+   * rather than a dead click.
    *
    * @access protected
    * @since 4.4.0
@@ -1260,32 +1256,30 @@ export class InterventionDetailPage {
     inputElement.value = ''; // Re-picking the same file fires no change event otherwise.
     if (!file) return;
 
-    void this.fieldExecution.scan(file).then((decoded: string | null): void => {
-      if (decoded === null) {
-        this.feedback.error(
-          $localize`:@@intervention.scan.unreadable:No QR code could be read from this capture.`,
+    void this.fieldExecution
+      .scanToWorkItem(file, this.store.workItems())
+      .then((result: InterventionScanResult): void => {
+        if (result.kind === 'unreadable') {
+          this.feedback.error(
+            $localize`:@@intervention.scan.unreadable:No QR code could be read from this capture.`,
+          );
+
+          return;
+        }
+
+        if (result.kind === 'noMatch') {
+          this.feedback.error(
+            $localize`:@@intervention.scan.noMatch:No work item of this intervention matches the scanned code.`,
+          );
+
+          return;
+        }
+
+        this.focusFieldWorkPanel();
+        this.feedback.success(
+          $localize`:@@intervention.scan.matched:Found: ${result.item.target ?? result.item.id}:target:`,
         );
-
-        return;
-      }
-
-      const target: string = this.discovery.normalizeScannedTarget(decoded);
-      const match: InterventionWorkItemOutput | undefined = this.store
-        .workItems()
-        .find((item) => item.target === target || item.target === decoded);
-      if (!match) {
-        this.feedback.error(
-          $localize`:@@intervention.scan.noMatch:No work item of this intervention matches the scanned code.`,
-        );
-
-        return;
-      }
-
-      this.focusFieldWorkPanel();
-      this.feedback.success(
-        $localize`:@@intervention.scan.matched:Found: ${match.target ?? match.id}:target:`,
-      );
-    });
+      });
   }
 
   /**

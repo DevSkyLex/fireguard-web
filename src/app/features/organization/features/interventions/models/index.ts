@@ -67,6 +67,7 @@ export type {
   InterventionPhase,
   InterventionPhotoAttachment,
   InterventionPlanningDetails,
+  InterventionScanResult,
   InterventionTransitionRequest,
   InterventionWorkItemStatusChange,
   MemberSelectOption,

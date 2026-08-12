@@ -25,7 +25,6 @@ import type {
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import {
-  InterventionDiscoveryService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
   InterventionSyncCoordinatorService,
@@ -208,15 +207,15 @@ describe('InterventionDetailPage', () => {
         },
         {
           provide: InterventionFieldExecutionService,
-          useValue: { scanSupported: (): boolean => false, scan: vi.fn() },
-        },
-        {
-          provide: InterventionDiscoveryService,
-          useValue: { normalizeScannedTarget: (value: string): string => value },
+          useValue: { scanSupported: (): boolean => false, scanToWorkItem: vi.fn() },
         },
         {
           provide: InterventionPhotoCompressorService,
-          useValue: { compress: vi.fn((file: File) => Promise.resolve(file)) },
+          useValue: {
+            prepareAll: vi.fn((files: readonly File[]) =>
+              Promise.resolve({ ready: [...files], failed: [] }),
+            ),
+          },
         },
         { provide: ConnectivityService, useValue: { online } },
         { provide: InterventionOfflineService, useValue: { hasUnsyncedChanges: unsynced } },

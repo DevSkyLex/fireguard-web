@@ -113,6 +113,15 @@ Stores:
   different intervention (prev/next) resets all three to idle so the next
   activation refetches. See `### The rail is not the retired workspace tabs`
   below.
+- `InterventionPublicationStore` — component-scoped (provided in
+  `InterventionDetailPage`); the publication request+poll flow, one named
+  `publishCallState`. The store is a thin wrapper: `InterventionPublicationService`
+  keeps sole ownership of the POST-202 + bounded-poll timing, and the store only
+  normalizes the outcome (a terminal `failed` result and a rejected promise both
+  surface through `error()`) and dispatches `publishSucceeded` on a genuine
+  completion — the page subscribes to that event for the toast and the
+  skeleton-free `reload`. Component-scoped so a stale failure never leaks into
+  the next intervention's visit.
 - `InterventionCalendarStore` — the interventions inside a bounded date window.
   **Currently dormant**: the calendar render is not part of the rebuilt list page.
 
@@ -240,7 +249,32 @@ Three regions, left to right at `lg` and up:
 The outer grid is therefore still `lg:grid-cols-[minmax(0,1fr)_20rem]`,
 **unchanged** from before this rail existed — the rail-plus-panel split lives
 entirely inside `<hlm-tabs>`'s own flex layout in the first track, not in a
-new grid-template. Below `lg` the container drops to `flex flex-col`: `<hlm-
+new grid-template.
+
+**The second track stays page-local — `DASHBOARD_PANEL_SLOT` was considered
+and declined (5.1).** The shell's panel slot is for shell-contextual rails; this
+column is route-record page content whose tab-independent visibility is an
+invariant of this document, with its own sticky behavior inside the page grid
+and a below-`lg` fallback to the command bar. Migrating it would change the
+rendered geometry — a sixth layout redesign — and the slot has no production
+consumer to anchor against (collaboration explicitly declined it too). Do not
+relitigate this without a product-level reason.
+
+**Page decomposition (5.1) — behavior-frozen extractions, layout untouched.**
+The page component delegates to units that carry their own specs: the label
+derivations live in `utils/intervention-summary/`; the capability surface
+(phase, permission gates, the mutability matrix, the status-menu targets) is
+built by `createInterventionCapabilities` (`utils/intervention-capabilities/`),
+a factory over page-owned signals — a factory rather than store computeds
+because the workspace store and the route-provided member-access store live in
+different injectors; the abandon/delete/skip confirmation is the presentational
+`ui/dialogs/intervention-confirm-dialog/` (its request/accepted types in
+`models/intervention-confirm/`); publication state is
+`InterventionPublicationStore` (above); QR-scan matching and upload preparation
+belong to `InterventionFieldExecutionService.scanToWorkItem` and
+`InterventionPhotoCompressorService.prepareAll`. The page keeps same-named
+protected aliases over the factory's signals, so the template contract never
+changed during the decomposition. Below `lg` the container drops to `flex flex-col`: `<hlm-
 tabs>` (rail, then whichever panel is active, in document order) stacks
 above the properties/action-box column, same order as before.
 

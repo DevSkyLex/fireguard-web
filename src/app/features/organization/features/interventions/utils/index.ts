@@ -1,3 +1,4 @@
+export { createInterventionCapabilities } from './intervention-capabilities/intervention-capabilities.utils';
 export { isInterventionDeletable } from './intervention-deletable/intervention-deletable.utils';
 export { buildInterventionQueueRequests } from './intervention-queue-requests/intervention-queue-requests.utils';
 export { formatInterventionRelativeTime } from './intervention-relative-time/intervention-relative-time.utils';

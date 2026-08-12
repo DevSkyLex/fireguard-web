@@ -1,3 +1,5 @@
+export type { InterventionCapabilities } from './intervention-capabilities.interface';
+export type { InterventionCapabilityDeps } from './intervention-capability-deps.interface';
 export type { InterventionCommandAction } from './intervention-command-action.interface';
 export type { InterventionDiscoveryRequest } from './intervention-discovery-request.interface';
 export type { InterventionDiscoveryResult } from './intervention-discovery-result.interface';

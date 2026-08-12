@@ -57,6 +57,8 @@ export type { InterventionAttachmentOutput } from './intervention-attachment/int
 export type { PublicationOutput } from './publication/publication-output.interface';
 export type { PublicationStatus } from './publication/publication-status.type';
 export type {
+  InterventionCapabilities,
+  InterventionCapabilityDeps,
   InterventionCommandAction,
   InterventionDiscoveryRequest,
   InterventionDiscoveryResult,

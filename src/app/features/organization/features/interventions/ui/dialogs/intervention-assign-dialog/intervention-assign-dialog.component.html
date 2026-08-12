@@ -56,6 +56,7 @@
         type="button"
         data-testid="intervention-assign-submit"
         [disabled]="!canSubmit()"
+        [attr.aria-busy]="busy() ? 'true' : null"
         (click)="submit()"
       >
         @if (busy()) {
@@ -64,6 +65,11 @@
           <span i18n="@@intervention.assign.submit">Assign</span>
         }
       </button>
+      <span class="sr-only" aria-live="polite">
+        @if (busy()) {
+          <span i18n="@@intervention.assign.submittingStatus">Assigning, please wait…</span>
+        }
+      </span>
     </hlm-dialog-footer>
   </hlm-dialog-content>
 </hlm-dialog>

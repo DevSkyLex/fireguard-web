@@ -15,6 +15,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCheck,
   lucideChevronLeft,
   lucideChevronRight,
   lucideChevronsLeft,
@@ -156,7 +157,7 @@ const NO_FILTERS: InterventionListFilters = {
  * dialog opens, so the count it shows is always what will actually delete —
  * never a promise the API would refuse with a 409.
  *
- * @version 5.0.0
+ * @version 6.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -183,6 +184,7 @@ const NO_FILTERS: InterventionListFilters = {
   providers: [
     InterventionPlanningOptionsStore,
     provideIcons({
+      lucideCheck,
       lucideChevronLeft,
       lucideChevronRight,
       lucideChevronsLeft,

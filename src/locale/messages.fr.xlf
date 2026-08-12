@@ -4555,6 +4555,10 @@
         <source>Assign</source>
         <target>Affecter</target>
       </trans-unit>
+      <trans-unit id="intervention.assign.submittingStatus" datatype="html">
+        <source>Assigning, please wait…</source>
+        <target>Affectation en cours, veuillez patienter…</target>
+      </trans-unit>
       <trans-unit id="intervention.assign.submitting" datatype="html">
         <source>Assigning…</source>
         <target>Affectation…</target>

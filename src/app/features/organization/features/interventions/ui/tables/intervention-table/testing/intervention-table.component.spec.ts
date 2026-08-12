@@ -432,7 +432,19 @@ describe('InterventionTable', () => {
       );
 
       expect(target?.disabled).toBe(true);
-      expect(target?.title).toBe('Only the responsible can do this.');
+      expect(target?.getAttribute('aria-describedby')).toBe('intervention-transition-gate-a1b2');
+      expect(document.getElementById('intervention-transition-gate-a1b2')?.textContent).toContain(
+        'Only the responsible can do this.',
+      );
+
+      const emitted: InterventionTransitionRequest[] = [];
+      fixture.componentInstance.transitionRequested.subscribe(
+        (request: InterventionTransitionRequest): void => {
+          emitted.push(request);
+        },
+      );
+      target?.click();
+      expect(emitted.length).toBe(0);
     });
 
     it('should enable the submitted target for the responsible', async () => {

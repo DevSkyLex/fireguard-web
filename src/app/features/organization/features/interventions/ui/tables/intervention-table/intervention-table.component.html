@@ -211,21 +211,33 @@
                           hlmDropdownMenuItem
                           data-testid="intervention-table-row-transition"
                           [disabled]="isTransitionGated(item.intervention, target)"
+                          [attr.aria-describedby]="
+                            isTransitionGated(item.intervention, target)
+                              ? 'intervention-transition-gate-' + item.intervention.id
+                              : null
+                          "
                           [title]="
                             isTransitionGated(item.intervention, target)
                               ? responsibleOnlyReason
                               : null
                           "
                           (click)="
-                            transitionRequested.emit({
-                              intervention: item.intervention,
-                              status: target,
-                            })
+                            isTransitionGated(item.intervention, target)
+                              ? null
+                              : transitionRequested.emit({
+                                  intervention: item.intervention,
+                                  status: target,
+                                })
                           "
                         >
                           {{ statusLabelOf(target) }}
                         </button>
                       }
+                      <span
+                        class="sr-only"
+                        [id]="'intervention-transition-gate-' + item.intervention.id"
+                        >{{ responsibleOnlyReason }}</span
+                      >
                     }
 
                     @if (isRowDeletable(item.intervention)) {

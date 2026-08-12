@@ -43,6 +43,8 @@ import type {
   InterventionAttachmentOutput,
   InterventionCapabilities,
   InterventionCommandAction,
+  InterventionConfirmAcceptedEvent,
+  InterventionConfirmRequest,
   InterventionEditState,
   InterventionEditTarget,
   InterventionIssueOutput,
@@ -100,7 +102,6 @@ import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
-import { HlmTextareaImports } from '@shared/ui/textarea';
 import { InterventionAbout } from '../../components/intervention-about';
 import { InterventionActionBox } from '../../components/intervention-action-box';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
@@ -112,6 +113,7 @@ import { InterventionPropertiesGrid } from '../../components/intervention-proper
 import { InterventionPublicationSummary } from '../../components/intervention-publication-summary';
 import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
+import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionRequestChangesSheet } from '../../sheets/intervention-request-changes-sheet';
@@ -120,7 +122,7 @@ import { InterventionEquipmentTable } from '../../tables/intervention-equipment-
 import { InterventionFacilitiesTable } from '../../tables/intervention-facilities-table';
 import { InterventionInspectionsTable } from '../../tables/intervention-inspections-table';
 import { InterventionWorkItemTable } from '../../tables/intervention-work-item-table';
-import type { InterventionConfirmRequest, InterventionLinkedResourceTabId } from './models';
+import type { InterventionLinkedResourceTabId } from './models';
 
 /** The edit state before anything is open. */
 const IDLE_EDIT_STATE: InterventionEditState = {
@@ -182,13 +184,13 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
     ...HlmSpinnerImports,
-    ...HlmTextareaImports,
     InterventionAbout,
     InterventionActionBox,
     InterventionCommandBar,
     InterventionActivityThread,
     InterventionAttachments,
     InterventionChangeList,
+    InterventionConfirmDialog,
     InterventionSyncStatus,
     InterventionCommentForm,
     InterventionGettingStarted,
@@ -527,9 +529,6 @@ export class InterventionDetailPage {
   /** What the text confirmation is asking about, if anything. */
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
     signal<InterventionConfirmRequest | null>(null);
-
-  /** The reason typed into the skip confirmation. */
-  protected readonly skipReasonDraft: WritableSignal<string> = signal<string>('');
 
   /** Whether the publish confirmation is open. */
   protected readonly publishConfirmOpen: WritableSignal<boolean> = signal<boolean>(false);
@@ -1037,61 +1036,9 @@ export class InterventionDetailPage {
     return index < 0 ? null : (this.listStore.orderedIds()[index + 1] ?? null);
   });
 
-  /** Whether the text confirmation is showing. */
-  protected readonly confirmDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
-    this.pendingConfirm() === null ? 'closed' : 'open',
-  );
-
   /** Whether the publish confirmation is showing. */
   protected readonly publishDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.publishConfirmOpen() ? 'open' : 'closed',
-  );
-
-  /** The text confirmation's heading. */
-  protected readonly confirmTitle: Signal<string> = computed<string>(() => {
-    switch (this.pendingConfirm()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.header:Abandon intervention`;
-      case 'deleteIntervention':
-        return $localize`:@@intervention.delete.header:Delete intervention`;
-      case 'deleteWorkItem':
-        return $localize`:@@intervention.deleteWi.headerOne:Delete work item`;
-      default:
-        return $localize`:@@intervention.wit.skipHeader:Skip work item`;
-    }
-  });
-
-  /** The text confirmation's body. */
-  protected readonly confirmDescription: Signal<string> = computed<string>(() => {
-    switch (this.pendingConfirm()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.message:Abandon this intervention? It leaves the active workflow and cannot be resumed.`;
-      case 'deleteIntervention':
-        return $localize`:@@intervention.delete.message:Delete this intervention? This cannot be undone.`;
-      case 'deleteWorkItem':
-        return $localize`:@@intervention.deleteWi.messageOne:Remove this prepared work item? This cannot be undone.`;
-      default:
-        return $localize`:@@intervention.wit.skipMessage:Say why this item is being skipped. The reason stays on the record.`;
-    }
-  });
-
-  /** The text confirmation's accept label. */
-  protected readonly confirmActionLabel: Signal<string> = computed<string>(() => {
-    switch (this.pendingConfirm()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.accept:Abandon`;
-      case 'deleteWorkItem':
-      case 'deleteIntervention':
-        return $localize`:@@common.delete:Delete`;
-      default:
-        return $localize`:@@intervention.wit.skip:Skip`;
-    }
-  });
-
-  /** Whether the text confirmation may be accepted. */
-  protected readonly canAcceptConfirm: Signal<boolean> = computed<boolean>(
-    () =>
-      this.pendingConfirm()?.kind !== 'skipWorkItem' || this.skipReasonDraft().trim().length > 0,
   );
   //#endregion
 
@@ -1430,29 +1377,30 @@ export class InterventionDetailPage {
 
   /** Asks to skip a work item, which needs a reason. */
   protected requestSkipWorkItem(workItem: InterventionWorkItemOutput): void {
-    this.skipReasonDraft.set('');
     this.pendingConfirm.set({ kind: 'skipWorkItem', workItem });
   }
 
   /**
-   * Method acceptConfirm
+   * Method onConfirmAccepted
    *
    * @description
-   * Runs whichever confirmation was open, then closes it. Deletion goes through
-   * the list store: it is the only one that removes the entity and repairs
-   * `orderedIds()`, which this page's prev/next footer walks.
+   * Runs whichever confirmation the dialog just accepted, then closes it.
+   * Deletion goes through the list store: it is the only one that removes the
+   * entity and repairs `orderedIds()`, which this page's prev/next footer
+   * walks.
    *
    * @access protected
    * @since 1.0.0
    *
+   * @param {InterventionConfirmAcceptedEvent} event - The confirmed request.
+   *
    * @returns {void}
    */
-  protected acceptConfirm(): void {
-    const request: InterventionConfirmRequest | null = this.pendingConfirm();
+  protected onConfirmAccepted(event: InterventionConfirmAcceptedEvent): void {
     const intervention: InterventionOutput | null = this.store.intervention();
-    if (request === null || intervention === null) return;
+    if (intervention === null) return;
 
-    switch (request.kind) {
+    switch (event.kind) {
       case 'abandon':
         this.store.transition({ interventionId: this.interventionId(), status: 'abandoned' });
         break;
@@ -1465,32 +1413,23 @@ export class InterventionDetailPage {
       case 'deleteWorkItem':
         this.store.deleteWorkItems({
           interventionId: this.interventionId(),
-          workItems: [request.workItem],
+          workItems: [event.workItem],
         });
         break;
       default:
         this.store.setWorkItemStatus({
           interventionId: this.interventionId(),
-          workItemId: request.workItem.id,
+          workItemId: event.workItem.id,
           status: 'skipped',
-          skipReason: this.skipReasonDraft().trim(),
+          skipReason: event.reason,
         });
     }
 
     this.pendingConfirm.set(null);
   }
 
-  /**
-   * Method onConfirmDialogStateChanged
-   * @description Any dismissal drops the pending request.
-   * @access protected
-   * @since 1.0.0
-   * @param {BrnDialogState} state - The dialog's new state.
-   * @returns {void}
-   */
-  protected onConfirmDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
-
+  /** Any dismissal drops the pending request. */
+  protected onConfirmDismissed(): void {
     this.pendingConfirm.set(null);
   }
 

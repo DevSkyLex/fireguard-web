@@ -23,6 +23,8 @@ export type { InterventionTransitionCapability } from './intervention/interventi
 export type { InterventionTransitionSubject } from './intervention/intervention-transition-subject.interface';
 export type { InterventionType } from './intervention/intervention-type.type';
 export type { UpdateInterventionInput } from './intervention/update-intervention-input.interface';
+export type { InterventionConfirmAcceptedEvent } from './intervention-confirm/intervention-confirm-accepted-event.type';
+export type { InterventionConfirmRequest } from './intervention-confirm/intervention-confirm-request.type';
 export type { InterventionEditState } from './intervention-edit/intervention-edit-state.interface';
 export type { InterventionEditTarget } from './intervention-edit/intervention-edit-target.type';
 export type { InterventionReadinessItem } from './intervention-edit/intervention-readiness-item.interface';

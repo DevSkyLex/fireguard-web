@@ -521,45 +521,12 @@
   (submitted)="requestChanges($event)"
 />
 
-<hlm-alert-dialog
-  [state]="confirmDialogState()"
-  (stateChanged)="onConfirmDialogStateChanged($event)"
->
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-detail-confirm-dialog">
-    <hlm-alert-dialog-header>
-      <h2 hlmAlertDialogTitle>{{ confirmTitle() }}</h2>
-      <p hlmAlertDialogDescription>{{ confirmDescription() }}</p>
-    </hlm-alert-dialog-header>
-
-    @if (pendingConfirm()?.kind === 'skipWorkItem') {
-      <textarea
-        hlmTextarea
-        rows="3"
-        class="w-full"
-        data-testid="intervention-detail-skip-reason"
-        placeholder="Why is this item being skipped?"
-        i18n-placeholder="@@intervention.wit.skipPlaceholder"
-        aria-label="Reason for skipping this work item"
-        i18n-aria-label="@@intervention.wit.skipReasonLabel"
-        [value]="skipReasonDraft()"
-        (input)="skipReasonDraft.set($any($event.target).value)"
-      ></textarea>
-    }
-
-    <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
-      <button
-        hlmAlertDialogAction
-        variant="destructive"
-        data-testid="intervention-detail-confirm-accept"
-        [disabled]="!canAcceptConfirm()"
-        (click)="acceptConfirm()"
-      >
-        {{ confirmActionLabel() }}
-      </button>
-    </hlm-alert-dialog-footer>
-  </hlm-alert-dialog-content>
-</hlm-alert-dialog>
+<app-intervention-confirm-dialog
+  [request]="pendingConfirm()"
+  [busy]="store.saving()"
+  (accepted)="onConfirmAccepted($event)"
+  (dismissed)="onConfirmDismissed()"
+/>
 
 <hlm-alert-dialog
   [state]="publishDialogState()"

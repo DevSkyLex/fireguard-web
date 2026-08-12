@@ -55,7 +55,6 @@ import type {
   InterventionStatus,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
-  PublicationOutput,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
 import {
@@ -64,7 +63,6 @@ import {
   InterventionPhotoCompressorService,
   InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
-import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import {
   InterventionStore,
   interventionStoreEvents,
@@ -78,6 +76,11 @@ import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '@features/organization/features/interventions/state/intervention-planning-options';
+import {
+  InterventionPublicationStore,
+  interventionPublicationStoreEvents,
+  type InterventionPublicationStoreType,
+} from '@features/organization/features/interventions/state/intervention-publication';
 import {
   InterventionWorkspaceStore,
   type InterventionWorkspaceStoreType,
@@ -209,6 +212,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionWorkspaceStore,
     InterventionPlanningOptionsStore,
     InterventionLinkedResourcesStore,
+    InterventionPublicationStore,
     provideIcons({
       lucideBan,
       lucideChevronLeft,
@@ -291,6 +295,22 @@ export class InterventionDetailPage {
     inject<InterventionLinkedResourcesStoreType>(InterventionLinkedResourcesStore);
 
   /**
+   * Property publicationStore
+   * @readonly
+   *
+   * @description
+   * Wraps `InterventionPublicationService`'s request-and-poll round trip as a
+   * `CallState`, scoped to this route so a stale attempt never carries over
+   * to the next intervention.
+   *
+   * @access protected
+   * @since 5.2.0
+   * @type {InterventionPublicationStoreType}
+   */
+  protected readonly publicationStore: InterventionPublicationStoreType =
+    inject<InterventionPublicationStoreType>(InterventionPublicationStore);
+
+  /**
    * Property listStore
    * @readonly
    *
@@ -338,11 +358,6 @@ export class InterventionDetailPage {
 
   /** Normalizes a scanned value to the canonical IRI work items reference. */
   private readonly discovery: InterventionDiscoveryService = inject(InterventionDiscoveryService);
-
-  /** Publishes and polls to a terminal state. */
-  private readonly publication: InterventionPublicationService = inject(
-    InterventionPublicationService,
-  );
 
   /** Confirms a silent in-place commit so it is never invisible. */
   private readonly feedback: FeedbackService = inject(FeedbackService);
@@ -440,6 +455,17 @@ export class InterventionDetailPage {
       .on(interventionStoreEvents.deleteSucceeded)
       .pipe(takeUntilDestroyed())
       .subscribe((): void => this.navigateToList());
+
+    this.events
+      .on(interventionPublicationStoreEvents.publishSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe((): void => {
+        this.store.reload(this.interventionId());
+        this.publishConfirmOpen.set(false);
+        this.feedback.success(
+          $localize`:@@intervention.publication.succeeded:Published to the compliance record`,
+        );
+      });
   }
   //#endregion
 
@@ -533,11 +559,30 @@ export class InterventionDetailPage {
   /** Whether the publish confirmation is open. */
   protected readonly publishConfirmOpen: WritableSignal<boolean> = signal<boolean>(false);
 
+  /**
+   * Property offlineBlockReason
+   * @readonly
+   *
+   * @description
+   * Set when the confirmation's accept is pressed while offline — checked
+   * again at that moment since connectivity may have dropped after the
+   * dialog opened. Takes priority over the store's own error in
+   * {@link publicationError} because the store was never called.
+   *
+   * @access private
+   * @since 5.2.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  private readonly offlineBlockReason: WritableSignal<string | null> = signal<string | null>(null);
+
   /** Whether a publication request and its poll are running. */
-  protected readonly publishing: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly publishing: Signal<boolean> = this.publicationStore.publishing;
 
   /** What publication failed with, shown inline in the publish confirmation. */
-  protected readonly publicationError: WritableSignal<string | null> = signal<string | null>(null);
+  protected readonly publicationError: Signal<string | null> = computed<string | null>(
+    () => this.offlineBlockReason() ?? this.publicationStore.error(),
+  );
 
   /** Whether the request-changes panel is open. */
   protected readonly requestChangesVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -1259,7 +1304,8 @@ export class InterventionDetailPage {
     const target: InterventionStatus | null = this.commandTransitionTarget();
 
     if (target === null) {
-      this.publicationError.set(null);
+      this.offlineBlockReason.set(null);
+      this.publicationStore.reset();
       this.publishConfirmOpen.set(true);
 
       return;
@@ -1448,70 +1494,38 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Method publishIntervention
+   * Method confirmPublish
    *
    * @description
-   * Writes to the compliance record. Deliberately private and reachable only
-   * from the confirmation's accept, which is what makes "publication is
-   * confirm-gated" structural rather than a convention.
+   * Runs the publication from the confirmation's accept — the only place that
+   * calls {@link publicationStore}'s `publish`, which is what makes
+   * "publication is confirm-gated" structural rather than a convention.
+   * Connectivity is re-checked here since it may have dropped after the
+   * dialog opened; the store is never even called in that case, and the
+   * offline reason is shown inline instead. The confirmation otherwise stays
+   * open on failure — the store's error surfaces inline and the operator can
+   * retry without reopening it — and closes only once `publishSucceeded`
+   * fires.
    *
-   * The confirmation stays open on failure — the reason is shown inline and
-   * the operator can retry without reopening it — and closes only once the
-   * write actually lands.
-   *
-   * On success the workspace is reloaded rather than re-loaded: `load` blanks
-   * the page first, which would flash the whole workspace to a skeleton at the
-   * exact moment the operator is watching for the outcome.
-   *
-   * @access private
+   * @access protected
    * @since 1.0.0
    *
-   * @returns {Promise<void>} Resolves once the publication reached a terminal state.
+   * @returns {void}
    */
-  private async publishIntervention(): Promise<void> {
+  protected confirmPublish(): void {
     const intervention: InterventionOutput | null = this.store.intervention();
     if (intervention === null) return;
 
     if (!this.online()) {
-      this.publicationError.set(
+      this.offlineBlockReason.set(
         $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`,
       );
 
       return;
     }
 
-    this.publishing.set(true);
-    this.publicationError.set(null);
-
-    try {
-      const result: PublicationOutput = await this.publication.publish(intervention);
-
-      if (result.status === 'failed') {
-        this.publicationError.set(
-          result.error ??
-            $localize`:@@intervention.publication.failed:Publication failed without applying partial changes.`,
-        );
-
-        return;
-      }
-
-      this.store.reload(this.interventionId());
-      this.publishConfirmOpen.set(false);
-      this.feedback.success(
-        $localize`:@@intervention.publication.succeeded:Published to the compliance record`,
-      );
-    } catch {
-      this.publicationError.set(
-        $localize`:@@intervention.publication.requestFailed:The publication request could not be completed.`,
-      );
-    } finally {
-      this.publishing.set(false);
-    }
-  }
-
-  /** Runs the publication from the confirmation's accept. */
-  protected confirmPublish(): void {
-    void this.publishIntervention();
+    this.offlineBlockReason.set(null);
+    this.publicationStore.publish(intervention);
   }
 
   /** Clears the load error and tries again. */

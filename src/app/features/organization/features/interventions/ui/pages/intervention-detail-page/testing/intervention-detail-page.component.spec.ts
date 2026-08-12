@@ -7,8 +7,6 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { EMPTY } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import {
@@ -225,7 +223,6 @@ describe('InterventionDetailPage', () => {
         { provide: InterventionPublicationService, useValue: { publish } },
         { provide: FeedbackService, useValue: { success: vi.fn() } },
         { provide: TitleService, useValue: { setTitle: vi.fn() } },
-        { provide: Events, useValue: { on: (): typeof EMPTY => EMPTY } },
         { provide: Router, useValue: { navigate } },
       ],
     });

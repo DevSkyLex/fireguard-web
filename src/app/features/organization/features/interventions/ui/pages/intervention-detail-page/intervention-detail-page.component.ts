@@ -81,11 +81,13 @@ import {
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
 import {
+  buildInterventionMetaLine,
   capabilityForTransition,
-  formatInterventionRelativeTime,
+  formatInterventionScheduleLabel,
   isInterventionDeletable,
   resolveAllowedTransitions,
-  resolveInterventionActivityActor,
+  resolveInterventionResponsibleLabel,
+  summarizeInterventionLabels,
 } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
@@ -900,32 +902,19 @@ export class InterventionDetailPage {
   );
 
   /** The responsible agent's display name, resolved from its IRI, for the details chip row. */
-  protected readonly responsibleLabel: Signal<string | null> = computed<string | null>(() => {
-    const responsible: string | null = this.store.intervention()?.responsible ?? null;
-
-    return responsible === null
-      ? null
-      : (this.planningOptions.members().find((member) => member.value === responsible)
-          ?.displayName ?? null);
-  });
+  protected readonly responsibleLabel: Signal<string | null> = computed<string | null>(() =>
+    resolveInterventionResponsibleLabel(this.store.intervention(), this.planningOptions.members()),
+  );
 
   /** The planned window as a short date range, for the details chip row. */
-  protected readonly scheduleLabel: Signal<string | null> = computed<string | null>(() => {
-    const intervention: InterventionOutput | null = this.store.intervention();
-    if (!intervention || intervention.plannedStartAt == null || intervention.dueAt == null)
-      return null;
-
-    const formatter = new Intl.DateTimeFormat(this.locale, { month: 'short', day: 'numeric' });
-
-    return `${formatter.format(new Date(intervention.plannedStartAt))} – ${formatter.format(new Date(intervention.dueAt))}`;
-  });
+  protected readonly scheduleLabel: Signal<string | null> = computed<string | null>(() =>
+    formatInterventionScheduleLabel(this.store.intervention(), this.locale),
+  );
 
   /** The intervention's labels, joined for the details chip row. */
-  protected readonly labelsSummary: Signal<string | null> = computed<string | null>(() => {
-    const labels = this.store.intervention()?.labels ?? [];
-
-    return labels.length === 0 ? null : labels.map((label) => label.name).join(', ');
-  });
+  protected readonly labelsSummary: Signal<string | null> = computed<string | null>(() =>
+    summarizeInterventionLabels(this.store.intervention()),
+  );
 
   /**
    * Property metaLine
@@ -945,48 +934,14 @@ export class InterventionDetailPage {
    *
    * @type {Signal<string>}
    */
-  protected readonly metaLine: Signal<string> = computed<string>(() => {
-    const intervention: InterventionOutput | null = this.store.intervention();
-    if (!intervention) return '';
-
-    const revision: string = `v${intervention.revision}`;
-    const activities = this.store.activities();
-    const last = activities.length > 0 ? activities[activities.length - 1] : undefined;
-
-    if (last === undefined) {
-      const when: string = formatInterventionRelativeTime(intervention.updatedAt, this.locale);
-
-      return $localize`:@@intervention.detail.metaUpdated:Updated ${when}:when: · revision ${revision}:revision:`;
-    }
-
-    const when: string = formatInterventionRelativeTime(last.createdAt, this.locale);
-    const actorName: string | undefined = resolveInterventionActivityActor(
-      last.actor,
+  protected readonly metaLine: Signal<string> = computed<string>(() =>
+    buildInterventionMetaLine(
+      this.store.intervention(),
+      this.store.activities(),
       this.planningOptions.members(),
-    )?.displayName;
-
-    if (last.kind === 'system' && last.event === 'status_changed')
-      return actorName === undefined
-        ? $localize`:@@intervention.detail.metaStatusChangedNoActor:Status changed ${when}:when: · revision ${revision}:revision:`
-        : $localize`:@@intervention.detail.metaStatusChanged:${actorName}:actor: changed the status ${when}:when: · revision ${revision}:revision:`;
-
-    if (last.kind === 'system' && last.event === 'created')
-      return actorName === undefined
-        ? $localize`:@@intervention.detail.metaCreatedNoActor:Created ${when}:when: · revision ${revision}:revision:`
-        : $localize`:@@intervention.detail.metaCreated:${actorName}:actor: created this intervention ${when}:when: · revision ${revision}:revision:`;
-
-    if (last.kind === 'system' && last.event === 'rescheduled')
-      return actorName === undefined
-        ? $localize`:@@intervention.detail.metaRescheduledNoActor:Rescheduled ${when}:when: · revision ${revision}:revision:`
-        : $localize`:@@intervention.detail.metaRescheduled:${actorName}:actor: moved the planned window ${when}:when: · revision ${revision}:revision:`;
-
-    if (last.kind === 'comment')
-      return actorName === undefined
-        ? $localize`:@@intervention.detail.metaCommentedNoActor:Commented ${when}:when: · revision ${revision}:revision:`
-        : $localize`:@@intervention.detail.metaCommented:${actorName}:actor: commented ${when}:when: · revision ${revision}:revision:`;
-
-    return $localize`:@@intervention.detail.metaUpdated:Updated ${when}:when: · revision ${revision}:revision:`;
-  });
+      this.locale,
+    ),
+  );
 
   /**
    * Property readinessItems

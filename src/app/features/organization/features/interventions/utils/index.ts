@@ -3,6 +3,12 @@ export { buildInterventionQueueRequests } from './intervention-queue-requests/in
 export { formatInterventionRelativeTime } from './intervention-relative-time/intervention-relative-time.utils';
 export { resolveInterventionActivityActor } from './intervention-activity-actor/intervention-activity-actor.utils';
 export {
+  buildInterventionMetaLine,
+  formatInterventionScheduleLabel,
+  resolveInterventionResponsibleLabel,
+  summarizeInterventionLabels,
+} from './intervention-summary/intervention-summary.utils';
+export {
   allowedTransitions,
   capabilityForTransition,
   resolveAllowedTransitions,

@@ -216,7 +216,7 @@
                               ? 'intervention-transition-gate-' + item.intervention.id
                               : null
                           "
-                          [title]="
+                          [attr.title]="
                             isTransitionGated(item.intervention, target)
                               ? responsibleOnlyReason
                               : null

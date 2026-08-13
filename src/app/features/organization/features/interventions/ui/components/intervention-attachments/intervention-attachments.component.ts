@@ -22,7 +22,11 @@ import {
   lucideTrash2,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { InterventionAttachmentOutput } from '@features/organization/features/interventions/models';
+import {
+  resolveInterventionTag,
+  type InterventionAttachmentOutput,
+  type InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadgeImports } from '@shared/ui/badge';
@@ -130,6 +134,18 @@ export class InterventionAttachments {
    */
   public readonly attachments: InputSignal<readonly InterventionAttachmentOutput[]> = input<
     readonly InterventionAttachmentOutput[]
+  >([]);
+
+  /**
+   * Property workItems
+   * @readonly
+   * @description The workspace's work items, used only to resolve a `workItemId` into a display label for the chip.
+   * @access public
+   * @since 5.4.0
+   * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
+   */
+  public readonly workItems: InputSignal<readonly InterventionWorkItemOutput[]> = input<
+    readonly InterventionWorkItemOutput[]
   >([]);
 
   /**
@@ -397,6 +413,31 @@ export class InterventionAttachments {
     const extension: string = fromName || (attachment.mimeType.split('/').at(-1) ?? '');
 
     return extension.slice(0, 4).toUpperCase();
+  }
+
+  /**
+   * Method workItemLabelOf
+   *
+   * @description
+   * The display label of the work item this attachment documents, resolved
+   * from {@link workItems} by id. Null both for a plain intervention-level
+   * attachment and for a `workItemId` that no longer resolves (the item was
+   * deleted after upload — the backend keeps the file as intervention-level
+   * evidence, but this component was not told that).
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   *
+   * @returns {string | null} The work item's action label, or null.
+   */
+  protected workItemLabelOf(attachment: InterventionAttachmentOutput): string | null {
+    const workItemId: string | null | undefined = attachment.workItemId;
+    if (!workItemId) return null;
+
+    const workItem = this.workItems().find((item) => item.id === workItemId);
+    return workItem ? resolveInterventionTag('workItemAction', workItem.action).label : null;
   }
 
   /**

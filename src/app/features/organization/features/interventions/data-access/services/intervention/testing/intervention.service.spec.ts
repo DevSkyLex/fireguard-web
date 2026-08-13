@@ -527,4 +527,45 @@ describe('InterventionService', () => {
 
     expect(result).toEqual(content);
   });
+
+  it('uploads an attachment scoped to a work item via the workItemId multipart field', () => {
+    const file = new Blob(['data'], { type: 'image/jpeg' });
+
+    service
+      .uploadAttachment('intervention-1', file, 'evidence.jpg', undefined, 'work-item-1')
+      .subscribe();
+
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/interventions/intervention-1/attachments`,
+    );
+    expect(request.request.method).toBe('POST');
+    const body = request.request.body as FormData;
+    expect(body.get('file')).toBeInstanceOf(Blob);
+    expect(body.get('workItemId')).toBe('work-item-1');
+    expect(body.has('label')).toBe(false);
+    request.flush({});
+  });
+
+  it('omits the workItemId multipart field for a plain intervention-level upload', () => {
+    const file = new Blob(['data'], { type: 'image/jpeg' });
+
+    service.uploadAttachment('intervention-1', file, 'evidence.jpg').subscribe();
+
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/interventions/intervention-1/attachments`,
+    );
+    const body = request.request.body as FormData;
+    expect(body.has('workItemId')).toBe(false);
+    request.flush({});
+  });
+
+  it('lists attachments narrowed to one work item via the workItem query param', () => {
+    service.listAttachments('intervention-1', 'work-item-1').subscribe();
+
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/interventions/intervention-1/attachments?workItem=work-item-1`,
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush({ member: [], totalItems: 0 });
+  });
 });

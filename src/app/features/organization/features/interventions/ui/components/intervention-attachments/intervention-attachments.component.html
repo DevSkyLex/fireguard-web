@@ -142,6 +142,17 @@
               @if (attachment.label) {
                 · {{ attachment.label }}
               }
+              @if (workItemLabelOf(attachment); as workItemLabel) {
+                ·
+                <span
+                  hlmBadge
+                  variant="outline"
+                  class="align-middle"
+                  data-testid="intervention-attachment-work-item-chip"
+                  i18n="@@intervention.attachments.forWorkItem"
+                  >For {{ workItemLabel }}</span
+                >
+              }
             </span>
           </div>
           <div hlmItemActions>

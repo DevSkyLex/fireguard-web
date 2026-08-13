@@ -148,6 +148,18 @@ export interface InterventionWorkItemOutput extends HydraItem {
   readonly skipReason: string | null;
 
   /**
+   * Property evidenceCount
+   * @readonly
+   *
+   * @description
+   * The number of attachments scoped to this work item, so a work item row
+   * can show a photo-evidence badge without a separate per-item fetch.
+   *
+   * @type {number}
+   */
+  readonly evidenceCount: number;
+
+  /**
    * Property revision
    * @readonly
    *

@@ -1,6 +1,9 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { InterventionAttachmentOutput } from '@features/organization/features/interventions/models';
+import type {
+  InterventionAttachmentOutput,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
 import { InterventionAttachments } from '../intervention-attachments.component';
 
 const MAX_ATTACHMENTS = 25;
@@ -333,5 +336,42 @@ describe('InterventionAttachments', () => {
     expect(
       root().querySelector('[data-testid="intervention-attachments-empty"]')?.textContent,
     ).toContain('No one has attached a file to this intervention yet.');
+  });
+
+  it('should show no work-item chip on a plain intervention-level attachment', async () => {
+    await create(1);
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachment-work-item-chip"]'),
+    ).toBeNull();
+  });
+
+  it('should name the work item a scoped attachment documents', async () => {
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    fixture = TestBed.createComponent(InterventionAttachments);
+    fixture.componentRef.setInput('attachments', [attachment(0, { workItemId: 'wi-1' })]);
+    fixture.componentRef.setInput('workItems', [
+      {
+        id: 'wi-1',
+        action: 'inspection',
+      } as InterventionWorkItemOutput,
+    ]);
+    await fixture.whenStable();
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachment-work-item-chip"]')?.textContent,
+    ).toContain('Inspection');
+  });
+
+  it('should show no chip when the attachment’s work item id no longer resolves', async () => {
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    fixture = TestBed.createComponent(InterventionAttachments);
+    fixture.componentRef.setInput('attachments', [attachment(0, { workItemId: 'wi-deleted' })]);
+    fixture.componentRef.setInput('workItems', []);
+    await fixture.whenStable();
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachment-work-item-chip"]'),
+    ).toBeNull();
   });
 });

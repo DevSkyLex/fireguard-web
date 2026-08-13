@@ -101,6 +101,7 @@ const workItem = (
     status: 'planned',
     required: true,
     skipReason: null,
+    evidenceCount: 0,
     revision: 1,
     createdAt: '2026-01-05T09:00:00Z',
     updatedAt: '2026-01-05T09:00:00Z',
@@ -175,6 +176,7 @@ describe('InterventionDetailPage', () => {
   let downloadAttachment: ReturnType<typeof vi.fn>;
   let browserDownloadTrigger: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
+  let uploadAttachment: ReturnType<typeof vi.fn>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byTestId = (id: string): HTMLElement =>
@@ -224,6 +226,7 @@ describe('InterventionDetailPage', () => {
       .mockReturnValue(of(new Blob(['file-bytes'], { type: 'application/pdf' })));
     browserDownloadTrigger = vi.fn();
     feedbackError = vi.fn();
+    uploadAttachment = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -368,7 +371,7 @@ describe('InterventionDetailPage', () => {
               attachmentWriteCallState: signal(idleCallState()),
               pendingAttachmentIds: signal(new Set<string>()),
               loadAttachments: vi.fn(),
-              uploadAttachment: vi.fn(),
+              uploadAttachment,
               removeAttachment: vi.fn(),
               blockerCount,
               nextWorkItem: signal(null),
@@ -1088,6 +1091,31 @@ describe('InterventionDetailPage', () => {
 
       expect(browserDownloadTrigger).not.toHaveBeenCalled();
       expect(feedbackError).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('work-item evidence intake', () => {
+    it('should open the evidence intake and upload with the row’s workItemId', async () => {
+      workItems.set([workItem({ id: 'wi-1' })]);
+      fixture = await createPage();
+
+      byTestId('intervention-work-item-evidence').dispatchEvent(new Event('click'));
+      await fixture.whenStable();
+
+      const photo = new File(['jpeg-bytes'], 'evidence.jpg', { type: 'image/jpeg' });
+      const input = fixture.nativeElement.querySelector(
+        '[data-testid="intervention-work-item-evidence-input"]',
+      ) as HTMLInputElement;
+      Object.defineProperty(input, 'files', {
+        configurable: true,
+        value: { 0: photo, length: 1, item: (i: number) => (i === 0 ? photo : null) }, // `DataTransfer` is absent from the test DOM and `input.files` is read-only.
+      });
+      input.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+
+      expect(uploadAttachment).toHaveBeenCalledWith(
+        expect.objectContaining({ interventionId: 'intervention-1', workItemId: 'wi-1' }),
+      );
     });
   });
 });

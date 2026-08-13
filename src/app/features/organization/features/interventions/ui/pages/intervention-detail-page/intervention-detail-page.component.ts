@@ -483,6 +483,12 @@ export class InterventionDetailPage {
       untracked((): void => this.settleDetailsWrite(callState));
     });
 
+    effect((): void => {
+      if (this.attachmentUploading() || this.evidenceUploadingWorkItemIds().size === 0) return;
+
+      untracked((): void => this.evidenceUploadingWorkItemIds.set(new Set<string>()));
+    });
+
     this.events
       .on(interventionStoreEvents.deleteSucceeded)
       .pipe(takeUntilDestroyed())
@@ -910,6 +916,51 @@ export class InterventionDetailPage {
   protected readonly pendingDownloadIds: WritableSignal<ReadonlySet<string>> = signal<
     ReadonlySet<string>
   >(new Set<string>());
+
+  /**
+   * Property evidenceUploadingWorkItemIds
+   * @readonly
+   *
+   * @description
+   * Ids of the work items whose evidence intake (compression + store upload)
+   * is currently in flight, so the table can lock and spin only the rows an
+   * operator actually started. Cleared once {@link attachmentUploading}
+   * settles back to idle.
+   *
+   * @access protected
+   * @since 5.4.0
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
+  protected readonly evidenceUploadingWorkItemIds: WritableSignal<ReadonlySet<string>> = signal<
+    ReadonlySet<string>
+  >(new Set<string>());
+
+  /**
+   * Property evidenceTargetWorkItemId
+   * @readonly
+   *
+   * @description
+   * The work item awaiting a file pick from the hidden evidence input,
+   * cleared once the pick resolves (chosen or cancelled).
+   *
+   * @access private
+   * @since 5.4.0
+   * @type {WritableSignal<string | null>}
+   */
+  private readonly evidenceTargetWorkItemId: WritableSignal<string | null> = signal<string | null>(
+    null,
+  );
+
+  /**
+   * Property evidenceInput
+   * @readonly
+   * @description The hidden file input {@link onEvidenceRequested} opens for the targeted row.
+   * @access private
+   * @since 5.4.0
+   * @type {Signal<ElementRef<HTMLInputElement> | undefined>}
+   */
+  private readonly evidenceInput: Signal<ElementRef<HTMLInputElement> | undefined> =
+    viewChild<ElementRef<HTMLInputElement>>('evidenceInput');
 
   /** Whether the device can decode a QR from a camera capture, shown in the execute phase only. */
   protected readonly canScanWorkItem: Signal<boolean> = this.caps.canScanWorkItem;
@@ -1389,6 +1440,71 @@ export class InterventionDetailPage {
             interventionId: this.interventionId(),
             file,
             fileName: file.name,
+          });
+
+        for (const fileName of failed)
+          this.feedback.error(
+            $localize`:@@intervention.attachments.prepareFailed:${fileName}:fileName: could not be prepared for upload.`,
+          );
+      });
+  }
+
+  /**
+   * Method onEvidenceRequested
+   *
+   * @description
+   * Targets one work item for the next pick and opens the hidden evidence
+   * input for it.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {InterventionWorkItemOutput} item - The row asking for evidence.
+   *
+   * @returns {void}
+   */
+  protected onEvidenceRequested(item: InterventionWorkItemOutput): void {
+    this.evidenceTargetWorkItemId.set(item.id);
+    this.evidenceInput()?.nativeElement.click();
+  }
+
+  /**
+   * Method onEvidenceFileSelected
+   *
+   * @description
+   * Compresses the picked files and uploads the ones that compressed
+   * successfully as evidence scoped to the targeted work item, reusing
+   * {@link uploadAttachments}' intake path with a `workItemId`. The row locks
+   * for the duration through {@link evidenceUploadingWorkItemIds}.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {Event} event - The evidence input's change event.
+   *
+   * @returns {void}
+   */
+  protected onEvidenceFileSelected(event: Event): void {
+    const inputElement: HTMLInputElement = event.target as HTMLInputElement;
+    const files: readonly File[] = Array.from(inputElement.files ?? []);
+    inputElement.value = ''; // Re-picking the same file fires no change event otherwise.
+    const workItemId: string | null = this.evidenceTargetWorkItemId();
+    this.evidenceTargetWorkItemId.set(null);
+    if (files.length === 0 || !workItemId) return;
+
+    this.evidenceUploadingWorkItemIds.update((ids: ReadonlySet<string>): ReadonlySet<string> =>
+      new Set(ids).add(workItemId),
+    );
+
+    void this.photoCompressor
+      .prepareAll(files)
+      .then(({ ready, failed }: { ready: File[]; failed: string[] }): void => {
+        for (const file of ready)
+          this.store.uploadAttachment({
+            interventionId: this.interventionId(),
+            file,
+            fileName: file.name,
+            workItemId,
           });
 
         for (const fileName of failed)

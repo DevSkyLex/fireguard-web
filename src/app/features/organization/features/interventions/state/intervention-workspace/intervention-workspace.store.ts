@@ -1356,8 +1356,11 @@ export const InterventionWorkspaceStore = signalStore(
          *
          * @description
          * Uploads one file (online-only in this pass — the outbox has no
-         * attachment operation) and appends the created attachment. Uses
-         * `concatMap`: two picked files upload in order, neither cancelled.
+         * attachment operation) and appends the created attachment. When the
+         * command carries a `workItemId`, the matching work item's
+         * `evidenceCount` is bumped locally so its badge updates without a
+         * reload. Uses `concatMap`: two picked files upload in order, neither
+         * cancelled.
          *
          * @access public
          * @since 4.4.0
@@ -1367,14 +1370,24 @@ export const InterventionWorkspaceStore = signalStore(
         uploadAttachment: rxMethod<InterventionAttachmentUploadCommand>(
           pipe(
             tap(() => patchState(store, { attachmentWriteCallState: pendingCallState() })),
-            concatMap(({ interventionId, file, fileName, label }) =>
-              service.uploadAttachment(interventionId, file, fileName, label).pipe(
+            concatMap(({ interventionId, file, fileName, label, workItemId }) =>
+              service.uploadAttachment(interventionId, file, fileName, label, workItemId).pipe(
                 tapResponse({
-                  next: (created) =>
+                  next: (created) => {
+                    const workItem = workItemId
+                      ? store.workItems().find((item) => item.id === workItemId)
+                      : undefined;
                     patchState(store, {
                       attachments: [...store.attachments(), created],
+                      workItems: workItem
+                        ? replaceWorkItem(store.workItems(), workItemId as string, {
+                            ...workItem,
+                            evidenceCount: workItem.evidenceCount + 1,
+                          })
+                        : store.workItems(),
                       attachmentWriteCallState: successCallState(null),
-                    }),
+                    });
+                  },
                   error: (error: unknown) =>
                     patchState(store, {
                       attachmentWriteCallState: errorCallState(

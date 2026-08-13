@@ -30,6 +30,18 @@ describe('InterventionPublicationSummary', () => {
   it('should stack its stats so one definition reads at rail and dialog width', () => {
     const rows: NodeListOf<Element> = root().querySelectorAll('dl > div');
 
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
+  });
+
+  it('should default to unsigned', () => {
+    expect(root().textContent).toContain('Not signed');
+  });
+
+  it('should report a captured signature', async () => {
+    fixture.componentRef.setInput('signed', true);
+    await fixture.whenStable();
+
+    expect(root().textContent).toContain('Signed');
+    expect(root().textContent).not.toContain('Not signed');
   });
 });

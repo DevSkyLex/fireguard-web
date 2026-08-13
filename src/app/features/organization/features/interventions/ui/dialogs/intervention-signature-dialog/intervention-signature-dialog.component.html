@@ -1,0 +1,73 @@
+<hlm-dialog [state]="visible() ? 'open' : 'closed'" (stateChanged)="onDialogStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-md"
+    data-testid="intervention-signature-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@intervention.signature.header">
+        Capture the completion signature
+      </h3>
+      <p hlmDialogDescription i18n="@@intervention.signature.description">
+        Have the responsible sign below to attach it to this submission. This step is optional — you
+        can skip it and submit without one.
+      </p>
+    </hlm-dialog-header>
+
+    <canvas
+      #canvas
+      class="h-48 w-full touch-none rounded-md border border-input bg-background text-foreground"
+      role="img"
+      aria-label="Signature drawing area"
+      i18n-aria-label="@@intervention.signature.canvasLabel"
+      data-testid="intervention-signature-canvas"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp($event)"
+      (pointercancel)="onPointerUp($event)"
+    ></canvas>
+
+    <hlm-dialog-footer>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="intervention-signature-skip"
+        (click)="dismissed.emit()"
+      >
+        <span i18n="@@intervention.signature.skip">Skip</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        data-testid="intervention-signature-clear"
+        [disabled]="!hasStrokes()"
+        (click)="clear()"
+      >
+        <span i18n="@@intervention.signature.clear">Clear</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        data-testid="intervention-signature-confirm"
+        [disabled]="!canConfirm()"
+        [attr.aria-busy]="busy() ? 'true' : null"
+        (click)="confirm()"
+      >
+        @if (busy()) {
+          <span i18n="@@intervention.signature.confirming">Saving…</span>
+        } @else {
+          <span i18n="@@intervention.signature.confirm">Confirm</span>
+        }
+      </button>
+      <span class="sr-only" aria-live="polite">
+        @if (busy()) {
+          <span i18n="@@intervention.signature.confirmingStatus"
+            >Saving the signature, please wait…</span
+          >
+        }
+      </span>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

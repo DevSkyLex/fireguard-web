@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/api/models';
+import type { InterventionAttachmentKind } from './intervention-attachment-kind.type';
 
 /**
  * Interface InterventionAttachmentOutput
@@ -10,7 +11,7 @@ import type { HydraItem } from '@core/api/models';
  * bearer-authenticated `GET /api/intervention-attachments/{id}/download`
  * route is read through `InterventionService.downloadAttachment`.
  *
- * @version 1.0.0
+ * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface InterventionAttachmentOutput extends HydraItem {
@@ -35,6 +36,13 @@ export interface InterventionAttachmentOutput extends HydraItem {
 
   /** The work item this attachment documents, when uploaded scoped to one. */
   readonly workItemId?: string | null;
+
+  /**
+   * `file` for a plain evidence upload, `signature` for the typed completion
+   * signature captured at submission time. At most one `signature` attachment
+   * exists per intervention.
+   */
+  readonly kind: InterventionAttachmentKind;
 
   /** Optimistic-concurrency revision (`If-Match: "revision-N"`). */
   readonly revision: number;

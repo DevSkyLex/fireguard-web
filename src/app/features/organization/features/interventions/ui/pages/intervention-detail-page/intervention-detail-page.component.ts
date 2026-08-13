@@ -38,7 +38,7 @@ import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
-import { isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { isCallError, isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
@@ -93,6 +93,7 @@ import {
 } from '@features/organization/features/interventions/state/intervention-publication';
 import {
   InterventionWorkspaceStore,
+  interventionWorkspaceStoreEvents,
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
 import {
@@ -131,6 +132,7 @@ import { InterventionPublicationSummary } from '../../components/intervention-pu
 import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
+import { InterventionSignatureDialog } from '../../dialogs/intervention-signature-dialog';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionRequestChangesSheet } from '../../sheets/intervention-request-changes-sheet';
@@ -213,6 +215,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionAttachments,
     InterventionChangeList,
     InterventionConfirmDialog,
+    InterventionSignatureDialog,
     InterventionSyncStatus,
     InterventionCommentForm,
     InterventionGettingStarted,
@@ -489,6 +492,13 @@ export class InterventionDetailPage {
       untracked((): void => this.evidenceUploadingWorkItemIds.set(new Set<string>()));
     });
 
+    effect((): void => {
+      if (!this.signingSubmitPending() || !isCallError(this.store.attachmentWriteCallState()))
+        return;
+
+      untracked((): void => this.signingSubmitPending.set(false));
+    });
+
     this.events
       .on(interventionStoreEvents.deleteSucceeded)
       .pipe(takeUntilDestroyed())
@@ -503,6 +513,16 @@ export class InterventionDetailPage {
         this.feedback.success(
           $localize`:@@intervention.publication.succeeded:Published to the compliance record`,
         );
+      });
+
+    this.events
+      .on(interventionWorkspaceStoreEvents.attachmentUploadSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }): void => {
+        if (payload.attachment.kind !== 'signature' || !this.signingSubmitPending()) return;
+
+        this.signingSubmitPending.set(false);
+        this.store.transition({ interventionId: this.interventionId(), status: 'submitted' });
       });
   }
   //#endregion
@@ -677,6 +697,31 @@ export class InterventionDetailPage {
 
   /** Whether the request-changes panel is open. */
   protected readonly requestChangesVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the completion-signature dialog interposed on submit is open. */
+  protected readonly signatureDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the signature just captured is uploading, which disables the dialog's Confirm. */
+  protected readonly signatureUploading: Signal<boolean> = computed<boolean>(
+    () => this.signingSubmitPending() && isCallPending(this.store.attachmentWriteCallState()),
+  );
+
+  /**
+   * Property signingSubmitPending
+   * @readonly
+   *
+   * @description
+   * Set the moment a captured signature starts uploading and cleared once
+   * that upload settles — success chains the submit transition, failure
+   * aborts the chain, so a later, unrelated attachment upload never
+   * mistakenly triggers a submit.
+   *
+   * @access private
+   * @since 5.5.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly signingSubmitPending: WritableSignal<boolean> = signal<boolean>(false);
 
   /** Whether the add-work-item panel is open. */
   protected readonly workItemSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -1631,7 +1676,12 @@ export class InterventionDetailPage {
    *
    * @description
    * Runs the phase's forward action. In `review` this only opens the
-   * confirmation — publication is never invoked directly.
+   * confirmation — publication is never invoked directly. In `execute`, once
+   * the field work is actually done, submitting an intervention that carries
+   * no completion signature yet opens {@link signatureDialogVisible} instead
+   * of transitioning outright — {@link onSignatureCaptured} and
+   * {@link onSignatureDismissed} both eventually call this transition
+   * themselves.
    *
    * @access protected
    * @since 1.0.0
@@ -1658,7 +1708,64 @@ export class InterventionDetailPage {
       return;
     }
 
+    if (target === 'submitted' && this.store.intervention()?.hasSignature === false) {
+      this.signatureDialogVisible.set(true);
+
+      return;
+    }
+
     this.store.transition({ interventionId: this.interventionId(), status: target });
+  }
+
+  /**
+   * Method onSignatureCaptured
+   *
+   * @description
+   * Closes the signature dialog and uploads the captured drawing as the
+   * intervention's completion signature. The submit transition is not
+   * dispatched here — it chains off the store's `attachmentUploadSucceeded`
+   * event once the upload has actually landed, so a failed upload never
+   * silently submits an unsigned intervention.
+   *
+   * @access protected
+   * @since 5.5.0
+   *
+   * @param {Blob} signature - The captured signature, PNG-encoded.
+   *
+   * @returns {void}
+   */
+  protected onSignatureCaptured(signature: Blob): void {
+    this.signingSubmitPending.set(true);
+    this.signatureDialogVisible.set(false);
+    this.store.uploadAttachment({
+      interventionId: this.interventionId(),
+      file: signature,
+      fileName: 'signature.png',
+      kind: 'signature',
+    });
+  }
+
+  /**
+   * Method onSignatureDismissed
+   *
+   * @description
+   * The operator declined the nudge — Escape, the backdrop, or Skip — so the
+   * transition proceeds unsigned; the backend does not require a signature to
+   * submit. A no-op while {@link signingSubmitPending} is set: closing the
+   * dialog programmatically from {@link onSignatureCaptured} also flows
+   * through the underlying `hlm-dialog`'s own close notification, and that
+   * closure already has its own chain running.
+   *
+   * @access protected
+   * @since 5.5.0
+   *
+   * @returns {void}
+   */
+  protected onSignatureDismissed(): void {
+    this.signatureDialogVisible.set(false);
+    if (this.signingSubmitPending()) return;
+
+    this.store.transition({ interventionId: this.interventionId(), status: 'submitted' });
   }
 
   /**
@@ -1980,6 +2087,7 @@ export class InterventionDetailPage {
     if (event.key !== 'j' && event.key !== 'k') return;
     if (this.pendingConfirm() !== null || this.publishConfirmOpen() || this.requestChangesVisible())
       return;
+    if (this.signatureDialogVisible()) return;
     if (this.workItemSheetVisible()) return;
     if (this.editState().open !== null) return;
 

@@ -295,6 +295,19 @@ export interface InterventionOutput extends HydraItem {
   readonly commentsCount: number;
 
   /**
+   * Property hasSignature
+   * @readonly
+   *
+   * @description
+   * Whether the intervention already carries a completion signature
+   * attachment. At most one exists per intervention — a re-upload replaces
+   * it, it never flips back to `false` on its own.
+   *
+   * @type {boolean}
+   */
+  readonly hasSignature: boolean;
+
+  /**
    * Property createdAt
    * @readonly
    *

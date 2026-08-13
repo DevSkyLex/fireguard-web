@@ -1,6 +1,7 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
 import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/request-state';
+import type { InterventionAttachmentOutput } from '@features/organization/features/interventions/models';
 
 /**
  * Constant interventionWorkspaceStoreEvents
@@ -13,11 +14,13 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
  * plays the same role for a proposed-change rejection (a row-scoped action
  * whose failure would otherwise be easy to miss); `deleteSucceeded` is
  * dispatched when the intervention is deleted so the toast fires and the page
- * can navigate away before the store is torn down. The rest of the
- * workspace's mutations still report failures through the inline `error`
- * field.
+ * can navigate away before the store is torn down; `attachmentUploadSucceeded`
+ * is dispatched on every successful upload so the page can chain a follow-up
+ * write — the completion-signature flow submits only once the signature
+ * upload it interposed has actually landed. The rest of the workspace's
+ * mutations still report failures through the inline `error` field.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const interventionWorkspaceStoreEvents = eventGroup({
@@ -26,5 +29,6 @@ export const interventionWorkspaceStoreEvents = eventGroup({
     commentAddFailed: type<StoreFailureEventPayload>(),
     rejectChangeFailed: type<StoreFailureEventPayload>(),
     deleteSucceeded: type<FeedbackEventPayload>(),
+    attachmentUploadSucceeded: type<{ readonly attachment: InterventionAttachmentOutput }>(),
   },
 });

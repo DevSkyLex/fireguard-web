@@ -18,6 +18,7 @@ import type {
   CreateInterventionChangeInput,
   CreateInterventionWorkItemInput,
   InterventionActivityOutput,
+  InterventionAttachmentKind,
   InterventionAttachmentOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
@@ -796,12 +797,16 @@ export class InterventionService extends HydraApiService {
    *
    * @description
    * Uploads one file as a multipart request (`file` + optional `label` +
-   * optional `workItemId`), mirroring `EquipmentService.uploadEvidence`'s
-   * FormData shape. Scoping to a work item makes the upload evidence for
-   * that item specifically — the backend rejects a work item id belonging to
-   * another intervention with a 422. The backend enforces 10 MiB and its
-   * MIME whitelist; callers pre-check to fail fast, the server stays
-   * authoritative.
+   * optional `workItemId` + optional `kind`), mirroring
+   * `EquipmentService.uploadEvidence`'s FormData shape. Scoping to a work item
+   * makes the upload evidence for that item specifically — the backend
+   * rejects a work item id belonging to another intervention with a 422.
+   * `kind: 'signature'` uploads the typed completion signature instead of a
+   * plain evidence file — the backend accepts it only from `in_progress` or
+   * `changes_requested` (409 otherwise), requires an image MIME type (422
+   * otherwise), and replaces any existing signature server-side. The backend
+   * enforces 10 MiB and its MIME whitelist; callers pre-check to fail fast,
+   * the server stays authoritative.
    *
    * @access public
    * @since 4.4.0
@@ -811,6 +816,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} fileName - file Name value.
    * @param {string} [label] - optional operator label.
    * @param {string} [workItemId] - Work item this upload documents, when scoped to one.
+   * @param {InterventionAttachmentKind} [kind] - `'file'` (default) or `'signature'`.
    *
    * @return {Observable<InterventionAttachmentOutput>} The created attachment.
    */
@@ -820,11 +826,13 @@ export class InterventionService extends HydraApiService {
     fileName: string,
     label?: string,
     workItemId?: string,
+    kind?: InterventionAttachmentKind,
   ): Observable<InterventionAttachmentOutput> {
     const body: FormData = new FormData();
     body.set('file', file, fileName);
     if (label) body.set('label', label);
     if (workItemId) body.set('workItemId', workItemId);
+    if (kind) body.set('kind', kind);
 
     return this.http.post<InterventionAttachmentOutput>(
       this.buildUrl(`/api/interventions/${interventionId}/attachments`),

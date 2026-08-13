@@ -8,7 +8,12 @@ import {
   InterventionOfflineService,
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
-import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import type {
+  InterventionLabelOutput,
+  InterventionOutput,
+  MemberSelectOption,
+  SelectOption,
+} from '@features/organization/features/interventions/models';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
@@ -800,6 +805,266 @@ describe('InterventionsPage', () => {
           '[data-testid="interventions-export-status"]',
         ),
       ).not.toBeNull();
+    });
+  });
+
+  describe('activeView', () => {
+    it('should read "all" for no status and no due window', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['activeView']()).toBe('all');
+    });
+
+    it('should read "overdue" for the overdue due window with no status', async () => {
+      fixture = await createPage({ due: 'overdue' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('overdue');
+    });
+
+    it('should read "sent-back" for status changes_requested with no due window', async () => {
+      fixture = await createPage({ status: 'changes_requested' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('sent-back');
+    });
+
+    it('should read "awaiting-review" for status submitted with no due window', async () => {
+      fixture = await createPage({ status: 'submitted' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('awaiting-review');
+    });
+
+    it('should read null for a custom combination matching none of the four views', async () => {
+      fixture = await createPage({ status: 'changes_requested', due: 'overdue' });
+
+      expect(fixture.componentInstance['activeView']()).toBeNull();
+    });
+  });
+
+  describe('onViewChanged', () => {
+    it('should navigate "all" to every filter cleared and reset the page', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['page'].set(3);
+
+      fixture.componentInstance['onViewChanged']('all');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {
+            status: null,
+            type: null,
+            priority: null,
+            site: null,
+            responsible: null,
+            label: null,
+            mine: null,
+            due: null,
+          },
+          queryParamsHandling: 'merge',
+        }),
+      );
+      expect(fixture.componentInstance['page']()).toBe(1);
+    });
+
+    it('should navigate "overdue" to the overdue due window with no status and reset the page', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['page'].set(3);
+
+      fixture.componentInstance['onViewChanged']('overdue');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {
+            status: null,
+            type: null,
+            priority: null,
+            site: null,
+            responsible: null,
+            label: null,
+            mine: null,
+            due: 'overdue',
+          },
+          queryParamsHandling: 'merge',
+        }),
+      );
+      expect(fixture.componentInstance['page']()).toBe(1);
+    });
+
+    it('should navigate "sent-back" to status changes_requested with no due window and reset the page', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['page'].set(3);
+
+      fixture.componentInstance['onViewChanged']('sent-back');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {
+            status: 'changes_requested',
+            type: null,
+            priority: null,
+            site: null,
+            responsible: null,
+            label: null,
+            mine: null,
+            due: null,
+          },
+          queryParamsHandling: 'merge',
+        }),
+      );
+      expect(fixture.componentInstance['page']()).toBe(1);
+    });
+
+    it('should navigate "awaiting-review" to status submitted with no due window and reset the page', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['page'].set(3);
+
+      fixture.componentInstance['onViewChanged']('awaiting-review');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {
+            status: 'submitted',
+            type: null,
+            priority: null,
+            site: null,
+            responsible: null,
+            label: null,
+            mine: null,
+            due: null,
+          },
+          queryParamsHandling: 'merge',
+        }),
+      );
+      expect(fixture.componentInstance['page']()).toBe(1);
+    });
+  });
+
+  describe('filter chips', () => {
+    it('should render one chip per active filter, resolving IRI-valued fields against the loaded options', async () => {
+      TestBed.overrideComponent(InterventionsPage, {
+        remove: { providers: [InterventionPlanningOptionsStore] },
+        add: {
+          providers: [
+            {
+              provide: InterventionPlanningOptionsStore,
+              useValue: {
+                sites: signal<readonly SelectOption[]>([
+                  { value: '/api/facilities/site-9', label: 'Warehouse 9' },
+                ]),
+                members: signal<readonly MemberSelectOption[]>([
+                  {
+                    value: '/api/organizations/org-1/members/member-9',
+                    label: 'Jordan Lee',
+                    displayName: 'Jordan Lee',
+                    roleLabel: 'Technician',
+                    avatarUrl: null,
+                    initials: 'JL',
+                  },
+                ]),
+                labels: signal<readonly InterventionLabelOutput[]>([
+                  {
+                    '@id': '/api/intervention-labels/label-9',
+                    '@type': 'InterventionLabel',
+                    id: 'label-9',
+                    organization: '/api/organizations/org-1',
+                    name: 'Compliance',
+                    color: '#ff0000',
+                    createdAt: '2026-01-01T00:00:00+00:00',
+                    updatedAt: '2026-01-01T00:00:00+00:00',
+                  },
+                ]),
+                templates: signal([]),
+                hasTemplates: signal(false),
+                loadCreationOptions: vi.fn(),
+              },
+            },
+          ],
+        },
+      });
+
+      fixture = await createPage({
+        status: 'changes_requested',
+        type: 'inventory',
+        priority: 'high',
+        site: 'site-9',
+        responsible: 'member-9',
+        label: 'label-9',
+        due: 'today',
+      });
+
+      expect(fixture.componentInstance['filterChips']()).toEqual([
+        {
+          key: 'status',
+          fieldLabel: 'Status',
+          valueLabel: 'Changes requested',
+          patch: { status: null },
+        },
+        { key: 'type', fieldLabel: 'Type', valueLabel: 'Inventory', patch: { type: null } },
+        { key: 'priority', fieldLabel: 'Priority', valueLabel: 'High', patch: { priority: null } },
+        { key: 'site', fieldLabel: 'Site', valueLabel: 'Warehouse 9', patch: { site: null } },
+        {
+          key: 'responsible',
+          fieldLabel: 'Responsible',
+          valueLabel: 'Jordan Lee',
+          patch: { responsible: null },
+        },
+        { key: 'label', fieldLabel: 'Label', valueLabel: 'Compliance', patch: { label: null } },
+        {
+          key: 'dueWindow',
+          fieldLabel: 'Deadline',
+          valueLabel: 'Due today',
+          patch: { dueWindow: null },
+        },
+      ]);
+    });
+
+    it('should fall back to the IRI’s last path segment while sites, members and labels are still loading', async () => {
+      fixture = await createPage({ site: 'site-42', responsible: 'member-77', label: 'label-88' });
+
+      const chips = fixture.componentInstance['filterChips']();
+
+      expect(chips.find((chip: { key: string }) => chip.key === 'site')?.valueLabel).toBe(
+        'site-42',
+      );
+      expect(chips.find((chip: { key: string }) => chip.key === 'responsible')?.valueLabel).toBe(
+        'member-77',
+      );
+      expect(chips.find((chip: { key: string }) => chip.key === 'label')?.valueLabel).toBe(
+        'label-88',
+      );
+    });
+
+    it('should apply the chip’s own patch when its remove button is clicked', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      const removeButton: HTMLButtonElement | null = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector('[data-testid="interventions-filter-chip-remove"]');
+      removeButton?.click();
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ status: null }),
+          queryParamsHandling: 'merge',
+        }),
+      );
+    });
+
+    it('should name a chip’s remove button by its field label', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['removeFilterLabel']('Status')).toBe(
+        'Remove filter: Status',
+      );
     });
   });
 });

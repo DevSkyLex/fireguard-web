@@ -89,6 +89,7 @@ import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggle } from '@shared/ui/toggle';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
@@ -105,7 +106,7 @@ import {
   type InterventionTableColumn,
   type InterventionTransitionRequest,
 } from '../../tables/intervention-table';
-import type { InterventionListItemViewModel } from './models';
+import type { InterventionFilterChip, InterventionListItemViewModel } from './models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_PRIORITY_FILTER_OPTIONS,
@@ -149,6 +150,19 @@ const NO_FILTERS: InterventionListFilters = {
 };
 
 /**
+ * Type InterventionListView
+ *
+ * @description
+ * The Linear-style segmented views the toolbar's toggle group offers. Each
+ * is a fixed `status`/`dueWindow` combination on top of the same
+ * {@link InterventionListFilters} contract the popover edits — there is no
+ * separate "view" state, only a derived read of the active narrowing.
+ *
+ * @since 6.3.0
+ */
+type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
+
+/**
  * Component InterventionsPage
  * @class InterventionsPage
  *
@@ -186,7 +200,13 @@ const NO_FILTERS: InterventionListFilters = {
  * server-side copy: it ends in the normal `create` call, and never carries
  * `status`, the planned window or the review note.
  *
- * @version 6.1.0
+ * The segmented views row above the toolbar and the removable filter chips
+ * below it are both read-only projections of {@link filters}, never a second
+ * copy of it: picking a view or removing a chip calls the same
+ * {@link applyFilter} path the popover's own selects use, so the URL stays
+ * the single source of truth (`FEATURE.md`).
+ *
+ * @version 6.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -211,6 +231,7 @@ const NO_FILTERS: InterventionListFilters = {
     ...HlmInputGroupImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
+    ...HlmToggleGroupImports,
   ],
   providers: [
     InterventionPlanningOptionsStore,
@@ -234,7 +255,7 @@ const NO_FILTERS: InterventionListFilters = {
     }),
   ],
   templateUrl: './interventions-page.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionsPage {
@@ -490,6 +511,35 @@ export class InterventionsPage {
         this.organizationId(),
       ),
   );
+
+  /**
+   * Property activeView
+   * @readonly
+   *
+   * @description
+   * Which of the toggle group's four segmented views the active narrowing
+   * currently matches, `null` for any other combination — a custom mix from
+   * the popover highlights none of the four rather than a misleading nearest
+   * one. Derived from {@link filters}' `status`/`dueWindow` alone; `q`,
+   * `mine`, `type`, `priority`, `site`, `responsible` and `label` never
+   * affect it.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @type {Signal<InterventionListView | null>}
+   */
+  protected readonly activeView: Signal<InterventionListView | null> =
+    computed<InterventionListView | null>(() => {
+      const filters: InterventionListFilters = this.filters();
+
+      if (filters.status === null && filters.dueWindow === null) return 'all';
+      if (filters.status === null && filters.dueWindow === 'overdue') return 'overdue';
+      if (filters.status === 'changes_requested' && filters.dueWindow === null) return 'sent-back';
+      if (filters.status === 'submitted' && filters.dueWindow === null) return 'awaiting-review';
+
+      return null;
+    });
 
   /** The active ordering, restored from the preferences cookie. */
   protected readonly sortOrder: WritableSignal<InterventionListSort> = signal<InterventionListSort>(
@@ -1041,6 +1091,97 @@ export class InterventionsPage {
   );
 
   /**
+   * Property filterChips
+   * @readonly
+   *
+   * @description
+   * One removable chip per active narrowing, in the popover's own field
+   * order — everything {@link activeFilterCount} counts, `mine` excluded the
+   * same way (it keeps its own toggle chip). Each chip's value label reuses
+   * the closed-select label resolvers the popover itself uses; the three
+   * IRI-valued fields fall back to the IRI's last path segment while their
+   * option list is still loading.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @type {Signal<readonly InterventionFilterChip[]>}
+   */
+  protected readonly filterChips: Signal<readonly InterventionFilterChip[]> = computed<
+    readonly InterventionFilterChip[]
+  >(() => {
+    const filters: InterventionListFilters = this.filters();
+    const chips: InterventionFilterChip[] = [];
+
+    if (filters.status) {
+      chips.push({
+        key: 'status',
+        fieldLabel: $localize`:@@intervention.list.filterStatus:Status`,
+        valueLabel: this.statusLabelOf(filters.status),
+        patch: { status: null },
+      });
+    }
+
+    if (filters.type) {
+      chips.push({
+        key: 'type',
+        fieldLabel: $localize`:@@intervention.list.filterType:Type`,
+        valueLabel: this.typeLabelOf(filters.type),
+        patch: { type: null },
+      });
+    }
+
+    if (filters.priority) {
+      chips.push({
+        key: 'priority',
+        fieldLabel: $localize`:@@intervention.list.filterPriority:Priority`,
+        valueLabel: this.priorityLabelOf(filters.priority),
+        patch: { priority: null },
+      });
+    }
+
+    if (filters.site) {
+      chips.push({
+        key: 'site',
+        fieldLabel: $localize`:@@intervention.list.filterSite:Site`,
+        valueLabel: this.siteLabelOf(filters.site) || this.lastIriSegmentLabel(filters.site),
+        patch: { site: null },
+      });
+    }
+
+    if (filters.responsible) {
+      chips.push({
+        key: 'responsible',
+        fieldLabel: $localize`:@@intervention.list.filterResponsible:Responsible`,
+        valueLabel:
+          this.responsibleLabelOf(filters.responsible) ||
+          this.lastIriSegmentLabel(filters.responsible),
+        patch: { responsible: null },
+      });
+    }
+
+    if (filters.label) {
+      chips.push({
+        key: 'label',
+        fieldLabel: $localize`:@@intervention.list.filterLabel:Label`,
+        valueLabel: this.labelLabelOf(filters.label) || this.lastIriSegmentLabel(filters.label),
+        patch: { label: null },
+      });
+    }
+
+    if (filters.dueWindow) {
+      chips.push({
+        key: 'dueWindow',
+        fieldLabel: $localize`:@@intervention.list.filterDue:Deadline`,
+        valueLabel: this.dueWindowLabelOf(filters.dueWindow),
+        patch: { dueWindow: null },
+      });
+    }
+
+    return chips;
+  });
+
+  /**
    * Property subtitle
    * @readonly
    *
@@ -1141,6 +1282,11 @@ export class InterventionsPage {
   /** Names a label IRI on a closed select trigger. */
   protected readonly labelLabelOf: (value: string) => string = (value: string): string =>
     this.labelDisplayMap().get(value) ?? '';
+
+  /** Names a filter chip's remove button, so each is distinguishable by screen reader. */
+  protected readonly removeFilterLabel: (fieldLabel: string) => string = (
+    fieldLabel: string,
+  ): string => $localize`:@@intervention.list.removeFilter:Remove filter: ${fieldLabel}:field:`;
 
   //#endregion
 
@@ -1301,6 +1447,47 @@ export class InterventionsPage {
   protected applyFilter(patch: Partial<InterventionListFilters>): void {
     this.page.set(1);
     this.navigateQuery(serializeInterventionListFilters({ ...this.filters(), ...patch }));
+  }
+
+  /**
+   * Method onViewChanged
+   * @method onViewChanged
+   *
+   * @description
+   * Narrows `hlm-toggle-group`'s single-select payload to a segmented view
+   * and applies the `status`/`dueWindow` pair it stands for through
+   * {@link applyFilter} — the same path a popover select uses, so a view is
+   * nothing but a shortcut into the one filter contract. `null` (every
+   * toggle deselected) is a no-op: the group only reaches it while
+   * {@link activeView} is already `null`, which the operator caused by
+   * picking a custom filter combination, not by clicking a view.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @param {InterventionListView | readonly InterventionListView[] | null | undefined} value - The toggle group's emitted value.
+   *
+   * @returns {void}
+   */
+  protected onViewChanged(
+    value: InterventionListView | readonly InterventionListView[] | null | undefined,
+  ): void {
+    const view: InterventionListView | null = typeof value === 'string' ? value : null;
+
+    switch (view) {
+      case 'all':
+        this.applyFilter({ status: null, dueWindow: null });
+        break;
+      case 'overdue':
+        this.applyFilter({ status: null, dueWindow: 'overdue' });
+        break;
+      case 'sent-back':
+        this.applyFilter({ status: 'changes_requested', dueWindow: null });
+        break;
+      case 'awaiting-review':
+        this.applyFilter({ status: 'submitted', dueWindow: null });
+        break;
+    }
   }
 
   /**
@@ -1470,6 +1657,26 @@ export class InterventionsPage {
     this.pageSize.set(size);
     this.page.set(1);
     this.persistListPreferences();
+  }
+
+  /**
+   * Method lastIriSegmentLabel
+   *
+   * @description
+   * A filter chip's fallback value label while its option list — sites,
+   * members or labels — is still loading and the IRI has no resolved display
+   * name yet: the IRI's own last path segment, readable enough to confirm
+   * which id is narrowing the list without waiting on the fetch.
+   *
+   * @access private
+   * @since 6.3.0
+   *
+   * @param {string} iri - The filter's IRI value.
+   *
+   * @returns {string} The IRI's last path segment.
+   */
+  private lastIriSegmentLabel(iri: string): string {
+    return iri.split('/').pop() ?? iri;
   }
 
   /**

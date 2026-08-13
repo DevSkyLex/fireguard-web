@@ -75,7 +75,13 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * "Duplicate" is offered from any status — {@link canDuplicate} is the only
  * gate — since duplicating an abandoned intervention is legitimate.
  *
- * @version 6.1.0
+ * The host is `min-h-0 flex-1`: the page's frame is a fixed-height flex
+ * column and this table is its only scrolling region — the host stretches to
+ * fill what the header, toolbar and pager leave, and the template's own
+ * `overflow-auto` shell scrolls inside that (`DESIGN.md`'s independent-
+ * columns rule).
+ *
+ * @version 6.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -106,7 +112,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
     }),
   ],
   templateUrl: './intervention-table.component.html',
-  host: { class: 'block w-full' },
+  host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionTable {

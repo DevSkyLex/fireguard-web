@@ -5911,6 +5911,30 @@
         <source>My interventions</source>
         <target>Mes interventions</target>
       </trans-unit>
+      <trans-unit id="intervention.kpi.total" datatype="html">
+        <source>Total</source>
+        <target>Total</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.open" datatype="html">
+        <source>Open</source>
+        <target>En cours</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>En retard</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Échéance proche</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.averagePublicationDays" datatype="html">
+        <source>Avg. publication</source>
+        <target>Publication moy.</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.averagePublicationDaysValue" datatype="html">
+        <source><x id="days" equiv-text="averagePublication"/> d</source>
+        <target><x id="days" equiv-text="averagePublication"/> j</target>
+      </trans-unit>
       <trans-unit id="intervention.list.bulkActionsButton" datatype="html">
         <source>Actions</source>
         <target>Actions</target>

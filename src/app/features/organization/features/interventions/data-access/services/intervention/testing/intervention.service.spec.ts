@@ -5,6 +5,7 @@ import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type {
   InterventionActivityOutput,
   InterventionOutput,
+  InterventionStatisticsOutput,
   InterventionWorkItemOutput,
   PublicationOutput,
 } from '@features/organization/features/interventions/models';
@@ -45,6 +46,25 @@ describe('InterventionService', () => {
     const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/publications/${publication.id}`);
     expect(request.request.method).toBe('GET');
     request.flush(publication);
+  });
+
+  it('reads the whole-organization statistics scoped by the organization IRI', () => {
+    const statistics = {
+      '@id': '/api/interventions/statistics',
+      '@type': 'InterventionStatistics',
+      id: 'statistics',
+      total: 12,
+    } as unknown as InterventionStatisticsOutput;
+
+    service.statistics('organization-1').subscribe((result) => expect(result).toEqual(statistics));
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === `${mockEnv.apiUrl}/api/interventions/statistics` &&
+        req.params.get('organization') === '/api/organizations/organization-1',
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush(statistics);
   });
 
   it('uses conditional PUT for offline work-item creation', () => {

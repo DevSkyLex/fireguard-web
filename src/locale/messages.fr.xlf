@@ -8974,10 +8974,6 @@
         <source>Field work you have already captured stays on this device and syncs on its own once you are back in range.</source>
         <target>Le travail de terrain déjà saisi reste sur cet appareil et se synchronisera tout seul dès que vous serez de nouveau à portée.</target>
       </trans-unit>
-      <trans-unit id="route.assets" datatype="html">
-        <source>Assets</source>
-        <target>Patrimoine</target>
-      </trans-unit>
       <trans-unit id="org.assets.subtitle" datatype="html">
         <source>Browse the estate by site, and see what each one holds.</source>
         <target>Parcourez le patrimoine par site, et voyez ce que chacun contient.</target>
@@ -9398,6 +9394,10 @@
         <source> No results. </source>
         <target>Aucun résultat.</target>
       </trans-unit>
+      <trans-unit id="intervention.list.pageIndicator" datatype="html">
+        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
+        <target>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
+      </trans-unit>
       <trans-unit id="intervention.list.pageFirst" datatype="html">
         <source>First page</source>
         <target>Première page</target>
@@ -9429,6 +9429,10 @@
       <trans-unit id="intervention.list.rowOpen" datatype="html">
         <source>Open</source>
         <target>Ouvrir</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalInterventions() }}"/> row(s) shown</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ store.totalInterventions() }}"/> ligne(s) affichée(s)</target>
       </trans-unit>
       <trans-unit id="intervention.list.rowsPerPage" datatype="html">
         <source>Rows per page:</source>

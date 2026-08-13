@@ -447,8 +447,8 @@ export class OrganizationTodayPage {
     const inspectionsLink: StatTileLink | null = organizationId
       ? ['/organizations', organizationId, 'inspections']
       : null;
-    const assetsLink: StatTileLink | null = organizationId
-      ? ['/organizations', organizationId, 'assets']
+    const equipmentsLink: StatTileLink | null = organizationId
+      ? ['/organizations', organizationId, 'equipments']
       : null;
 
     const tiles: OrganizationTodayKpiTile[] = [];
@@ -491,7 +491,7 @@ export class OrganizationTodayPage {
           getOrganizationDashboardOverviewMetricValue(overview, 'equipment', 'underMaintenance') ??
           '—',
         icon: 'lucideWrench',
-        link: assetsLink,
+        link: equipmentsLink,
         delta: null,
       },
     );

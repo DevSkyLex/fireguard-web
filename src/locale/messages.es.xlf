@@ -8981,10 +8981,6 @@
         <source>Field work you have already captured stays on this device and syncs on its own once you are back in range.</source>
         <target>El trabajo de campo ya registrado permanece en este dispositivo y se sincronizará solo cuando vuelvas a tener cobertura.</target>
       </trans-unit>
-      <trans-unit id="route.assets" datatype="html">
-        <source>Assets</source>
-        <target>Patrimonio</target>
-      </trans-unit>
       <trans-unit id="org.assets.subtitle" datatype="html">
         <source>Browse the estate by site, and see what each one holds.</source>
         <target>Recorre el patrimonio por sitio y mira lo que contiene cada uno.</target>
@@ -9405,6 +9401,10 @@
         <source> No results. </source>
         <target>Sin resultados.</target>
       </trans-unit>
+      <trans-unit id="intervention.list.pageIndicator" datatype="html">
+        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
+        <target>Página <x id="INTERPOLATION" equiv-text="{{ page() }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
+      </trans-unit>
       <trans-unit id="intervention.list.pageFirst" datatype="html">
         <source>First page</source>
         <target>Primera página</target>
@@ -9436,6 +9436,10 @@
       <trans-unit id="intervention.list.rowOpen" datatype="html">
         <source>Open</source>
         <target>Abrir</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.rowCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalInterventions() }}"/> row(s) shown</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ store.totalInterventions() }}"/> fila(s) mostradas</target>
       </trans-unit>
       <trans-unit id="intervention.list.rowsPerPage" datatype="html">
         <source>Rows per page:</source>

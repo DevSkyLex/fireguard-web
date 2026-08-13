@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCamera,
   lucideCircle,
   lucideCircleCheckBig,
   lucideCircleDot,
@@ -89,6 +90,7 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
   ],
   providers: [
     provideIcons({
+      lucideCamera,
       lucideCircle,
       lucideCircleCheckBig,
       lucideCircleDot,
@@ -277,6 +279,41 @@ export class InterventionWorkItemTable {
     boolean,
     BooleanInput
   >(false, { transform: booleanAttribute });
+
+  /**
+   * Property canAttachEvidence
+   * @readonly
+   *
+   * @description
+   * Whether a row's evidence affordance is offered, mirroring the page's
+   * `canManageAttachments` — the same phase/permission gate that governs the
+   * attachments section governs attaching evidence to one work item.
+   *
+   * @access public
+   * @since 5.4.0
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly canAttachEvidence: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(false, { transform: booleanAttribute });
+
+  /**
+   * Property evidencePendingItemIds
+   * @readonly
+   *
+   * @description
+   * Ids of the rows whose evidence upload (compression + store write) is in
+   * flight, so each row's evidence button locks and spins independently of
+   * the others.
+   *
+   * @access public
+   * @since 5.4.0
+   * @type {InputSignal<ReadonlySet<string>>}
+   */
+  public readonly evidencePendingItemIds: InputSignal<ReadonlySet<string>> = input<
+    ReadonlySet<string>
+  >(new Set<string>());
   //#endregion
 
   //#region Outputs
@@ -322,6 +359,17 @@ export class InterventionWorkItemTable {
    * @type {OutputEmitterRef<void>}
    */
   public readonly addRequested: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property evidenceRequested
+   * @readonly
+   * @description The operator wants to attach evidence to this row; the page opens the photo/file intake.
+   * @access public
+   * @since 5.4.0
+   * @type {OutputEmitterRef<InterventionWorkItemOutput>}
+   */
+  public readonly evidenceRequested: OutputEmitterRef<InterventionWorkItemOutput> =
+    output<InterventionWorkItemOutput>();
   //#endregion
 
   //#region View state
@@ -657,6 +705,32 @@ export class InterventionWorkItemTable {
    */
   protected hasRowActions(item: InterventionWorkItemOutput): boolean {
     return this.canSkipItem(item) || this.canDeleteItem(item);
+  }
+
+  /**
+   * Method isEvidencePending
+   * @description Whether this row's own evidence upload is in flight.
+   * @access protected
+   * @since 5.4.0
+   * @param {InterventionWorkItemOutput} item - The item being rendered.
+   * @returns {boolean} True while this row's evidence upload is pending.
+   */
+  protected isEvidencePending(item: InterventionWorkItemOutput): boolean {
+    return this.evidencePendingItemIds().has(item.id);
+  }
+
+  /**
+   * Method evidenceLabelOf
+   * @description The evidence button's accessible name, stating the current count when there is one.
+   * @access protected
+   * @since 5.4.0
+   * @param {InterventionWorkItemOutput} item - The item being rendered.
+   * @returns {string} A localized label.
+   */
+  protected evidenceLabelOf(item: InterventionWorkItemOutput): string {
+    return item.evidenceCount > 0
+      ? $localize`:@@intervention.wit.evidenceCount:Attach evidence — ${item.evidenceCount}:count: file(s) attached`
+      : $localize`:@@intervention.wit.evidenceEmpty:Attach evidence`;
   }
 
   /**

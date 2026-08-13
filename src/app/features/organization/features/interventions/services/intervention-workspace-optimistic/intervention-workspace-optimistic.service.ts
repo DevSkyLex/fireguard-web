@@ -85,6 +85,7 @@ export class InterventionWorkspaceOptimisticService {
       status: 'planned',
       required: input.required,
       skipReason: null,
+      evidenceCount: 0,
       revision: 1,
       createdAt: now,
       updatedAt: now,

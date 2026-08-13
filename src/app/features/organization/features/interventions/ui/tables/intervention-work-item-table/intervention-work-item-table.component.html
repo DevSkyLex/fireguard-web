@@ -130,7 +130,7 @@
                 <th hlmTableHead i18n="@@intervention.wit.columnAssignee">Assignee</th>
                 <th hlmTableHead i18n="@@intervention.wit.columnState">State</th>
                 <th hlmTableHead i18n="@@intervention.wit.columnSource">Source</th>
-                <th hlmTableHead class="w-[52px]">
+                <th hlmTableHead class="w-[92px]">
                   <span class="sr-only" i18n="@@intervention.wit.columnActions">Actions</span>
                 </th>
               </tr>
@@ -216,7 +216,39 @@
                     <span hlmBadge variant="outline">{{ sourceLabelOf(item) }}</span>
                   </td>
 
-                  <td hlmTableCell class="text-right">
+                  <td hlmTableCell class="text-right whitespace-nowrap">
+                    @if (canAttachEvidence()) {
+                      @if (isEvidencePending(item)) {
+                        <hlm-spinner
+                          size="xs"
+                          class="mr-1 inline-flex"
+                          data-testid="intervention-work-item-evidence-pending"
+                          aria-hidden="true"
+                        />
+                      } @else {
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          class="relative mr-1 text-muted-foreground max-sm:size-11"
+                          data-testid="intervention-work-item-evidence"
+                          [attr.aria-label]="evidenceLabelOf(item)"
+                          (click)="evidenceRequested.emit(item)"
+                        >
+                          <ng-icon name="lucideCamera" aria-hidden="true" />
+                          @if (item.evidenceCount > 0) {
+                            <span
+                              hlmBadge
+                              class="absolute -top-1 -right-1 h-3.5 min-w-3.5 justify-center rounded-full px-0.5 py-0 text-[9px] leading-none"
+                              data-testid="intervention-work-item-evidence-count"
+                              aria-hidden="true"
+                              >{{ item.evidenceCount }}</span
+                            >
+                          }
+                        </button>
+                      }
+                    }
                     @if (hasRowActions(item)) {
                       <button
                         hlmBtn

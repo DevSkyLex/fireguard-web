@@ -33,6 +33,9 @@ export interface InterventionAttachmentOutput extends HydraItem {
   /** Optional operator-typed label. */
   readonly label?: string | null;
 
+  /** The work item this attachment documents, when uploaded scoped to one. */
+  readonly workItemId?: string | null;
+
   /** Optimistic-concurrency revision (`If-Match: "revision-N"`). */
   readonly revision: number;
 

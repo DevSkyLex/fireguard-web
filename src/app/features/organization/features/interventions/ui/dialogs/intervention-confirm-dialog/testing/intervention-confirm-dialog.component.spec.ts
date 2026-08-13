@@ -22,6 +22,7 @@ const workItem: InterventionWorkItemOutput = {
   status: 'planned',
   required: true,
   skipReason: null,
+  evidenceCount: 0,
   revision: 1,
   createdAt: '2026-01-05T09:00:00Z',
   updatedAt: '2026-01-05T09:00:00Z',

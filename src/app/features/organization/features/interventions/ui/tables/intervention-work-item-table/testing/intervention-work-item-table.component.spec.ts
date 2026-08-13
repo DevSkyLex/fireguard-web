@@ -21,6 +21,7 @@ const baseItem: InterventionWorkItemOutput = {
   status: 'planned',
   required: true,
   skipReason: null,
+  evidenceCount: 0,
   revision: 1,
   createdAt: '2026-01-05T09:00:00Z',
   updatedAt: '2026-01-05T09:00:00Z',
@@ -356,5 +357,51 @@ describe('InterventionWorkItemTable', () => {
     await fixture.whenStable();
 
     expect(byTestId('intervention-work-items-progress')?.textContent).toContain('4/10');
+  });
+
+  it('should hide the evidence affordance when the page does not allow it', () => {
+    expect(byTestId('intervention-work-item-evidence')).toBeNull();
+  });
+
+  it('should show the evidence affordance without a count badge when the row has no evidence yet', async () => {
+    fixture.componentRef.setInput('canAttachEvidence', true);
+    await fixture.whenStable();
+
+    const button = byTestId('intervention-work-item-evidence');
+    expect(button).not.toBeNull();
+    expect(byTestId('intervention-work-item-evidence-count')).toBeNull();
+  });
+
+  it('should show the row’s evidence count as a badge once it has files', async () => {
+    fixture.componentRef.setInput('items', [item({ id: 'wi-1', evidenceCount: 3 })]);
+    fixture.componentRef.setInput('canAttachEvidence', true);
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-work-item-evidence-count')?.textContent?.trim()).toBe('3');
+  });
+
+  it('should emit evidenceRequested with the row’s item on click', async () => {
+    fixture.componentRef.setInput('canAttachEvidence', true);
+    await fixture.whenStable();
+
+    const requested: InterventionWorkItemOutput[] = [];
+    fixture.componentInstance.evidenceRequested.subscribe((requestedItem) =>
+      requested.push(requestedItem),
+    );
+
+    (byTestId('intervention-work-item-evidence') as HTMLButtonElement).click();
+
+    expect(requested).toHaveLength(1);
+    expect(requested[0]?.id).toBe('wi-1');
+  });
+
+  it('should lock and spin the row’s evidence button while its upload is pending', async () => {
+    fixture.componentRef.setInput('items', [item({ id: 'wi-1' })]);
+    fixture.componentRef.setInput('canAttachEvidence', true);
+    fixture.componentRef.setInput('evidencePendingItemIds', new Set(['wi-1']));
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-work-item-evidence')).toBeNull();
+    expect(byTestId('intervention-work-item-evidence-pending')).not.toBeNull();
   });
 });

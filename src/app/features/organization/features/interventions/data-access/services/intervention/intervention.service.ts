@@ -768,21 +768,25 @@ export class InterventionService extends HydraApiService {
    * @method listAttachments
    *
    * @description
-   * Lists an intervention's attachments. `downloadAttachment` reads one
-   * file's binary content separately.
+   * Lists an intervention's attachments, optionally narrowed to the ones
+   * scoped to one work item. `downloadAttachment` reads one file's binary
+   * content separately.
    *
    * @access public
    * @since 4.4.0
    *
    * @param {string} interventionId - intervention Id value.
+   * @param {string} [workItemId] - Narrows the list to attachments scoped to this work item.
    *
    * @return {Observable<HydraCollection<InterventionAttachmentOutput>>} The attachments.
    */
   public listAttachments(
     interventionId: string,
+    workItemId?: string,
   ): Observable<HydraCollection<InterventionAttachmentOutput>> {
     return this.getCollection<InterventionAttachmentOutput>(
       `/api/interventions/${interventionId}/attachments`,
+      workItemId ? { params: { workItem: workItemId } } : undefined,
     );
   }
 
@@ -791,10 +795,13 @@ export class InterventionService extends HydraApiService {
    * @method uploadAttachment
    *
    * @description
-   * Uploads one file as a multipart request (`file` + optional `label`),
-   * mirroring `EquipmentService.uploadEvidence`'s FormData shape. The
-   * backend enforces 10 MiB and its MIME whitelist; callers pre-check to
-   * fail fast, the server stays authoritative.
+   * Uploads one file as a multipart request (`file` + optional `label` +
+   * optional `workItemId`), mirroring `EquipmentService.uploadEvidence`'s
+   * FormData shape. Scoping to a work item makes the upload evidence for
+   * that item specifically — the backend rejects a work item id belonging to
+   * another intervention with a 422. The backend enforces 10 MiB and its
+   * MIME whitelist; callers pre-check to fail fast, the server stays
+   * authoritative.
    *
    * @access public
    * @since 4.4.0
@@ -803,6 +810,7 @@ export class InterventionService extends HydraApiService {
    * @param {Blob} file - file value.
    * @param {string} fileName - file Name value.
    * @param {string} [label] - optional operator label.
+   * @param {string} [workItemId] - Work item this upload documents, when scoped to one.
    *
    * @return {Observable<InterventionAttachmentOutput>} The created attachment.
    */
@@ -811,10 +819,12 @@ export class InterventionService extends HydraApiService {
     file: Blob,
     fileName: string,
     label?: string,
+    workItemId?: string,
   ): Observable<InterventionAttachmentOutput> {
     const body: FormData = new FormData();
     body.set('file', file, fileName);
     if (label) body.set('label', label);
+    if (workItemId) body.set('workItemId', workItemId);
 
     return this.http.post<InterventionAttachmentOutput>(
       this.buildUrl(`/api/interventions/${interventionId}/attachments`),

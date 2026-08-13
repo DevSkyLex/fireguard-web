@@ -4,6 +4,10 @@ import type { CreateEquipmentInput } from '@features/organization/features/equip
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
+import type {
+  InterventionScanResult,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
 import { InterventionPhotoCompressorService } from '../intervention-photo-compressor';
 import { InterventionQrScannerService } from '../intervention-qr-scanner';
 import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator';
@@ -192,6 +196,40 @@ export class InterventionFieldExecutionService {
   }
 
   /**
+   * Method scanToWorkItem
+   * @method scanToWorkItem
+   *
+   * @description
+   * Decodes a captured QR image, normalizes the decoded value to its
+   * canonical equipment IRI and matches it against the given work items.
+   * Absorbs the page's former decode-then-match flow into one call so the
+   * caller only branches on the returned {@link InterventionScanResult} kind.
+   *
+   * @access public
+   * @since 4.6.0
+   *
+   * @param {File} file - The captured QR image.
+   * @param {readonly InterventionWorkItemOutput[]} workItems - The intervention's current work items.
+   *
+   * @returns {Promise<InterventionScanResult>} The decode-and-match outcome.
+   */
+  public async scanToWorkItem(
+    file: File,
+    workItems: readonly InterventionWorkItemOutput[],
+  ): Promise<InterventionScanResult> {
+    const decoded: string | null = await this.scan(file);
+    if (decoded === null) return { kind: 'unreadable' };
+
+    const target: string = this.normalizeScannedTarget(decoded);
+    const match: InterventionWorkItemOutput | undefined = workItems.find(
+      (item) => item.target === target || item.target === decoded,
+    );
+    if (!match) return { kind: 'noMatch' };
+
+    return { kind: 'matched', item: match };
+  }
+
+  /**
    * Method attachPhoto
    * @method attachPhoto
    *
@@ -263,5 +301,35 @@ export class InterventionFieldExecutionService {
     const match = value.match(new RegExp(`^/api/${resource}/([^/?#]+)$`));
     if (!match?.[1]) throw new Error(`Invalid ${resource} resource`);
     return match[1];
+  }
+
+  /**
+   * Method normalizeScannedTarget
+   * @method normalizeScannedTarget
+   *
+   * @description
+   * Normalizes a scanned QR value to its canonical equipment IRI when
+   * possible. Mirrors `InterventionDiscoveryService.normalizeScannedTarget`;
+   * not delegated to it because that service already depends on this one, and
+   * duplicating one two-line rule reads better than a DI cycle.
+   *
+   * @access private
+   * @since 4.6.0
+   *
+   * @param {string} value - Raw scanned QR value.
+   *
+   * @returns {string} Canonical IRI when recognized, or the original value.
+   */
+  private normalizeScannedTarget(value: string): string {
+    const trimmed: string = value.trim();
+    if (/^\/api\/equipment\/[^/?#]+$/.test(trimmed)) return trimmed;
+    if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(trimmed)) return `/api/equipment/${trimmed}`;
+    try {
+      const url: URL = new URL(trimmed);
+      if (/^\/api\/equipment\/[^/?#]+$/.test(url.pathname)) return url.pathname;
+    } catch {
+      return trimmed;
+    }
+    return trimmed;
   }
 }

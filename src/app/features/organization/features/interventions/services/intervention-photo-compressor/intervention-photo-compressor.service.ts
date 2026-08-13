@@ -86,5 +86,37 @@ export class InterventionPhotoCompressorService {
 
     return new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
   }
+
+  /**
+   * Method prepareAll
+   * @method prepareAll
+   *
+   * @description
+   * Compresses every picked file, collecting the ones that compressed
+   * successfully separately from the names of the ones that did not — a
+   * caller uploads the former and reports the latter, without either outcome
+   * blocking the other.
+   *
+   * @access public
+   * @since 4.6.0
+   *
+   * @param {readonly File[]} files - The picked files.
+   *
+   * @return {Promise<{ ready: File[]; failed: string[] }>} The compressed files and the names that failed.
+   */
+  public async prepareAll(files: readonly File[]): Promise<{ ready: File[]; failed: string[] }> {
+    const settled: readonly PromiseSettledResult<File>[] = await Promise.allSettled(
+      files.map((file: File): Promise<File> => this.compress(file)),
+    );
+
+    const ready: File[] = [];
+    const failed: string[] = [];
+    settled.forEach((outcome: PromiseSettledResult<File>, index: number): void => {
+      if (outcome.status === 'fulfilled') ready.push(outcome.value);
+      else failed.push(files[index].name);
+    });
+
+    return { ready, failed };
+  }
   //#endregion
 }

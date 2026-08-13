@@ -41,7 +41,10 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionAttachmentOutput,
+  InterventionCapabilities,
   InterventionCommandAction,
+  InterventionConfirmAcceptedEvent,
+  InterventionConfirmRequest,
   InterventionEditState,
   InterventionEditTarget,
   InterventionIssueOutput,
@@ -49,20 +52,17 @@ import type {
   InterventionPhase,
   InterventionReadinessItem,
   InterventionReadinessTarget,
+  InterventionScanResult,
   InterventionStatus,
-  InterventionTransitionCapability,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
-  PublicationOutput,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
 import {
-  InterventionDiscoveryService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
   InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
-import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import {
   InterventionStore,
   interventionStoreEvents,
@@ -77,17 +77,21 @@ import {
   type InterventionPlanningOptionsStoreType,
 } from '@features/organization/features/interventions/state/intervention-planning-options';
 import {
+  InterventionPublicationStore,
+  interventionPublicationStoreEvents,
+  type InterventionPublicationStoreType,
+} from '@features/organization/features/interventions/state/intervention-publication';
+import {
   InterventionWorkspaceStore,
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
 import {
-  capabilityForTransition,
-  formatInterventionRelativeTime,
-  isInterventionDeletable,
-  resolveAllowedTransitions,
-  resolveInterventionActivityActor,
+  buildInterventionMetaLine,
+  createInterventionCapabilities,
+  formatInterventionScheduleLabel,
+  resolveInterventionResponsibleLabel,
+  summarizeInterventionLabels,
 } from '@features/organization/features/interventions/utils';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
@@ -101,7 +105,6 @@ import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
-import { HlmTextareaImports } from '@shared/ui/textarea';
 import { InterventionAbout } from '../../components/intervention-about';
 import { InterventionActionBox } from '../../components/intervention-action-box';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
@@ -113,6 +116,7 @@ import { InterventionPropertiesGrid } from '../../components/intervention-proper
 import { InterventionPublicationSummary } from '../../components/intervention-publication-summary';
 import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
+import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionRequestChangesSheet } from '../../sheets/intervention-request-changes-sheet';
@@ -121,7 +125,7 @@ import { InterventionEquipmentTable } from '../../tables/intervention-equipment-
 import { InterventionFacilitiesTable } from '../../tables/intervention-facilities-table';
 import { InterventionInspectionsTable } from '../../tables/intervention-inspections-table';
 import { InterventionWorkItemTable } from '../../tables/intervention-work-item-table';
-import type { InterventionConfirmRequest, InterventionLinkedResourceTabId } from './models';
+import type { InterventionLinkedResourceTabId } from './models';
 
 /** The edit state before anything is open. */
 const IDLE_EDIT_STATE: InterventionEditState = {
@@ -183,13 +187,13 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
     ...HlmSpinnerImports,
-    ...HlmTextareaImports,
     InterventionAbout,
     InterventionActionBox,
     InterventionCommandBar,
     InterventionActivityThread,
     InterventionAttachments,
     InterventionChangeList,
+    InterventionConfirmDialog,
     InterventionSyncStatus,
     InterventionCommentForm,
     InterventionGettingStarted,
@@ -208,6 +212,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionWorkspaceStore,
     InterventionPlanningOptionsStore,
     InterventionLinkedResourcesStore,
+    InterventionPublicationStore,
     provideIcons({
       lucideBan,
       lucideChevronLeft,
@@ -290,6 +295,22 @@ export class InterventionDetailPage {
     inject<InterventionLinkedResourcesStoreType>(InterventionLinkedResourcesStore);
 
   /**
+   * Property publicationStore
+   * @readonly
+   *
+   * @description
+   * Wraps `InterventionPublicationService`'s request-and-poll round trip as a
+   * `CallState`, scoped to this route so a stale attempt never carries over
+   * to the next intervention.
+   *
+   * @access protected
+   * @since 5.2.0
+   * @type {InterventionPublicationStoreType}
+   */
+  protected readonly publicationStore: InterventionPublicationStoreType =
+    inject<InterventionPublicationStoreType>(InterventionPublicationStore);
+
+  /**
    * Property listStore
    * @readonly
    *
@@ -333,14 +354,6 @@ export class InterventionDetailPage {
   /** Field toolbox: QR scan support and decoding. */
   private readonly fieldExecution: InterventionFieldExecutionService = inject(
     InterventionFieldExecutionService,
-  );
-
-  /** Normalizes a scanned value to the canonical IRI work items reference. */
-  private readonly discovery: InterventionDiscoveryService = inject(InterventionDiscoveryService);
-
-  /** Publishes and polls to a terminal state. */
-  private readonly publication: InterventionPublicationService = inject(
-    InterventionPublicationService,
   );
 
   /** Confirms a silent in-place commit so it is never invisible. */
@@ -439,6 +452,17 @@ export class InterventionDetailPage {
       .on(interventionStoreEvents.deleteSucceeded)
       .pipe(takeUntilDestroyed())
       .subscribe((): void => this.navigateToList());
+
+    this.events
+      .on(interventionPublicationStoreEvents.publishSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe((): void => {
+        this.store.reload(this.interventionId());
+        this.publishConfirmOpen.set(false);
+        this.feedback.success(
+          $localize`:@@intervention.publication.succeeded:Published to the compliance record`,
+        );
+      });
   }
   //#endregion
 
@@ -529,17 +553,33 @@ export class InterventionDetailPage {
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
     signal<InterventionConfirmRequest | null>(null);
 
-  /** The reason typed into the skip confirmation. */
-  protected readonly skipReasonDraft: WritableSignal<string> = signal<string>('');
-
   /** Whether the publish confirmation is open. */
   protected readonly publishConfirmOpen: WritableSignal<boolean> = signal<boolean>(false);
 
+  /**
+   * Property offlineBlockReason
+   * @readonly
+   *
+   * @description
+   * Set when the confirmation's accept is pressed while offline — checked
+   * again at that moment since connectivity may have dropped after the
+   * dialog opened. Takes priority over the store's own error in
+   * {@link publicationError} because the store was never called.
+   *
+   * @access private
+   * @since 5.2.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  private readonly offlineBlockReason: WritableSignal<string | null> = signal<string | null>(null);
+
   /** Whether a publication request and its poll are running. */
-  protected readonly publishing: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly publishing: Signal<boolean> = this.publicationStore.publishing;
 
   /** What publication failed with, shown inline in the publish confirmation. */
-  protected readonly publicationError: WritableSignal<string | null> = signal<string | null>(null);
+  protected readonly publicationError: Signal<string | null> = computed<string | null>(
+    () => this.offlineBlockReason() ?? this.publicationStore.error(),
+  );
 
   /** Whether the request-changes panel is open. */
   protected readonly requestChangesVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -554,22 +594,30 @@ export class InterventionDetailPage {
   protected readonly hasUnsyncedChanges: Signal<boolean> = this.offline.hasUnsyncedChanges;
 
   /**
-   * Property phase
+   * Property caps
    * @readonly
-   * @description Where the intervention sits in its lifecycle, derived from its status.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<InterventionPhase>}
+   *
+   * @description
+   * The derived capability surface — phase, permission gates, the mutability
+   * matrix and the status-menu targets — built injector-free from the page's
+   * own signals by `createInterventionCapabilities`. The protected aliases
+   * below keep the template contract unchanged.
+   *
+   * @access private
+   * @since 5.1.0
+   *
+   * @type {InterventionCapabilities}
    */
-  protected readonly phase: Signal<InterventionPhase> = computed<InterventionPhase>(() => {
-    const status: InterventionStatus | undefined = this.store.intervention()?.status;
-
-    if (status === 'planned' || status === 'in_progress' || status === 'changes_requested')
-      return 'execute';
-    if (status === 'submitted' || status === 'published') return 'review';
-
-    return 'prepare';
+  private readonly caps: InterventionCapabilities = createInterventionCapabilities({
+    intervention: this.store.intervention,
+    organizationId: this.organizationId,
+    memberId: computed<string | undefined>(() => this.memberAccess.profile()?.id),
+    hasPermission: (permission) => this.permissions.hasPermission(permission),
+    scanSupported: () => this.fieldExecution.scanSupported(),
   });
+
+  /** Where the intervention sits in its lifecycle, derived from its status. */
+  protected readonly phase: Signal<InterventionPhase> = this.caps.phase;
 
   /**
    * Property commandTransitionTarget
@@ -578,13 +626,8 @@ export class InterventionDetailPage {
    * @description
    * The status {@link invokeCommandAction} dispatches for the current phase, or
    * `null` in `review`, where the forward step is a publication rather than a
-   * status update.
-   *
-   * Both the action box and the status menu read this one signal:
-   * {@link invokeCommandAction} to dispatch it, {@link transitionTargets} to
-   * subtract it. That is what keeps a forward move from having two addresses —
-   * one behind the action box's readiness gate and one beside the status badge
-   * with no gate at all.
+   * status update. Both the action box and the status menu read this one
+   * signal, which keeps a forward move from having two addresses.
    *
    * @access private
    * @since 4.1.0
@@ -592,34 +635,19 @@ export class InterventionDetailPage {
    * @type {Signal<InterventionStatus | null>}
    */
   private readonly commandTransitionTarget: Signal<InterventionStatus | null> =
-    computed<InterventionStatus | null>(() => {
-      const phase: InterventionPhase = this.phase();
-
-      if (phase === 'prepare') return 'planned';
-      if (phase === 'execute') return 'submitted';
-
-      return null;
-    });
+    this.caps.commandTransitionTarget;
 
   /** Whether the member may plan. */
-  protected readonly canPlan: Signal<boolean> = computed<boolean>(() =>
-    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
-  );
+  protected readonly canPlan: Signal<boolean> = this.caps.canPlan;
 
   /** Whether the member may record field work. */
-  protected readonly canExecute: Signal<boolean> = computed<boolean>(() =>
-    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE),
-  );
+  protected readonly canExecute: Signal<boolean> = this.caps.canExecute;
 
   /** Whether the member may review. */
-  protected readonly canReview: Signal<boolean> = computed<boolean>(() =>
-    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_REVIEW),
-  );
+  protected readonly canReview: Signal<boolean> = this.caps.canReview;
 
   /** Whether the member may publish. */
-  protected readonly canPublish: Signal<boolean> = computed<boolean>(() =>
-    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PUBLISH),
-  );
+  protected readonly canPublish: Signal<boolean> = this.caps.canPublish;
 
   /**
    * Property canSubmit
@@ -634,92 +662,31 @@ export class InterventionDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canSubmit: Signal<boolean> = computed<boolean>(() => {
-    const responsible: string | null = this.store.intervention()?.responsible ?? null;
-    const memberId: string | undefined = this.memberAccess.profile()?.id;
+  protected readonly canSubmit: Signal<boolean> = this.caps.canSubmit;
 
-    return (
-      responsible !== null &&
-      memberId !== undefined &&
-      responsible === `/api/organizations/${this.organizationId()}/members/${memberId}`
-    );
-  });
-
-  /**
-   * Property canEditSchedule
-   * @readonly
-   *
-   * @description
-   * Whether dates, priority and participants accept a write — the backend's
-   * replanning matrix keeps them editable through `planned`, `in_progress`
-   * and `changes_requested`; `submitted` is frozen (withdraw first).
-   *
-   * @access protected
-   * @since 4.3.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly canEditSchedule: Signal<boolean> = computed<boolean>(() => {
-    const status: InterventionStatus | undefined = this.store.intervention()?.status;
-
-    return (
-      this.canPlan() &&
-      (status === 'draft' ||
-        status === 'planned' ||
-        status === 'in_progress' ||
-        status === 'changes_requested')
-    );
-  });
+  /** Whether dates, priority and participants accept a write, per the replanning matrix. */
+  protected readonly canEditSchedule: Signal<boolean> = this.caps.canEditSchedule;
 
   /** Whether the site accepts a write — draft only, as the backend enforces. */
-  protected readonly canEditSite: Signal<boolean> = computed<boolean>(
-    () => this.canPlan() && this.store.intervention()?.status === 'draft',
-  );
+  protected readonly canEditSite: Signal<boolean> = this.caps.canEditSite;
 
   /** Whether the responsible accepts a handover — draft and planned only. */
-  protected readonly canEditResponsible: Signal<boolean> = computed<boolean>(() => {
-    const status: InterventionStatus | undefined = this.store.intervention()?.status;
-
-    return this.canPlan() && (status === 'draft' || status === 'planned');
-  });
+  protected readonly canEditResponsible: Signal<boolean> = this.caps.canEditResponsible;
 
   /** Whether description and labels accept a write, which holds until a terminal status. */
-  protected readonly canEditDetails: Signal<boolean> = computed<boolean>(() => {
-    const status: InterventionStatus | undefined = this.store.intervention()?.status;
-
-    return (
-      this.canPlan() && status !== undefined && status !== 'published' && status !== 'abandoned'
-    );
-  });
+  protected readonly canEditDetails: Signal<boolean> = this.caps.canEditDetails;
 
   /** Whether the scope may still grow. */
-  protected readonly canAddWorkItem: Signal<boolean> = computed<boolean>(
-    () => this.canPlan() && this.store.intervention()?.status === 'draft',
-  );
+  protected readonly canAddWorkItem: Signal<boolean> = this.caps.canAddWorkItem;
 
   /** Whether an item may be skipped with a reason. */
-  protected readonly canSkipWorkItem: Signal<boolean> = computed<boolean>(
-    () => this.canExecute() && this.phase() === 'execute',
-  );
+  protected readonly canSkipWorkItem: Signal<boolean> = this.caps.canSkipWorkItem;
 
   /** Whether the intervention may be abandoned from its current status. */
-  protected readonly canAbandon: Signal<boolean> = computed<boolean>(() => {
-    const intervention: InterventionOutput | null = this.store.intervention();
-    if (!intervention) return false;
-
-    return (
-      resolveAllowedTransitions(intervention).includes('abandoned') &&
-      this.hasCapability(capabilityForTransition(intervention.status, 'abandoned'))
-    );
-  });
+  protected readonly canAbandon: Signal<boolean> = this.caps.canAbandon;
 
   /** Whether the intervention may be deleted outright rather than abandoned. */
-  protected readonly canDeleteIntervention: Signal<boolean> = computed<boolean>(() => {
-    const intervention: InterventionOutput | null = this.store.intervention();
-    if (!intervention || !isInterventionDeletable(intervention)) return false;
-
-    return intervention.status === 'draft' ? this.canPlan() : this.canExecute();
-  });
+  protected readonly canDeleteIntervention: Signal<boolean> = this.caps.canDeleteIntervention;
 
   /**
    * Property transitionTargets
@@ -747,23 +714,8 @@ export class InterventionDetailPage {
    *
    * @type {Signal<readonly InterventionStatus[]>}
    */
-  protected readonly transitionTargets: Signal<readonly InterventionStatus[]> = computed<
-    readonly InterventionStatus[]
-  >(() => {
-    const intervention: InterventionOutput | null = this.store.intervention();
-    if (!intervention) return [];
-
-    const owned: InterventionStatus | null = this.commandTransitionTarget();
-
-    return resolveAllowedTransitions(intervention)
-      .filter((status) => status !== 'abandoned')
-      .filter((status) => status !== owned)
-      .filter((status) => this.hasCapability(capabilityForTransition(intervention.status, status)))
-      .filter(
-        (status) =>
-          !(intervention.status === 'submitted' && status === 'in_progress') || this.canSubmit(),
-      );
-  });
+  protected readonly transitionTargets: Signal<readonly InterventionStatus[]> =
+    this.caps.transitionTargets;
 
   /**
    * Property canRejectChange
@@ -782,13 +734,7 @@ export class InterventionDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canRejectChange: Signal<boolean> = computed<boolean>(() => {
-    const status: InterventionStatus | undefined = this.store.intervention()?.status;
-    if (status === undefined) return false;
-    if (status === 'submitted') return this.canReview();
-
-    return (status === 'in_progress' || status === 'changes_requested') && this.canExecute();
-  });
+  protected readonly canRejectChange: Signal<boolean> = this.caps.canRejectChange;
 
   /**
    * Property canManageAttachments
@@ -806,13 +752,7 @@ export class InterventionDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canManageAttachments: Signal<boolean> = computed<boolean>(() => {
-    const status: InterventionStatus | undefined = this.store.intervention()?.status;
-    if (status === undefined) return false;
-    if (status === 'submitted' || status === 'published' || status === 'abandoned') return false;
-
-    return status === 'draft' ? this.canPlan() : this.canExecute();
-  });
+  protected readonly canManageAttachments: Signal<boolean> = this.caps.canManageAttachments;
 
   /** Whether an attachment upload is in flight. */
   protected readonly attachmentUploading: Signal<boolean> = computed<boolean>(() =>
@@ -820,9 +760,7 @@ export class InterventionDetailPage {
   );
 
   /** Whether the device can decode a QR from a camera capture, shown in the execute phase only. */
-  protected readonly canScanWorkItem: Signal<boolean> = computed<boolean>(
-    () => this.phase() === 'execute' && this.fieldExecution.scanSupported(),
-  );
+  protected readonly canScanWorkItem: Signal<boolean> = this.caps.canScanWorkItem;
 
   /** Whether the comment composer's own write is in flight. */
   protected readonly commentPending: Signal<boolean> = computed<boolean>(() =>
@@ -900,32 +838,19 @@ export class InterventionDetailPage {
   );
 
   /** The responsible agent's display name, resolved from its IRI, for the details chip row. */
-  protected readonly responsibleLabel: Signal<string | null> = computed<string | null>(() => {
-    const responsible: string | null = this.store.intervention()?.responsible ?? null;
-
-    return responsible === null
-      ? null
-      : (this.planningOptions.members().find((member) => member.value === responsible)
-          ?.displayName ?? null);
-  });
+  protected readonly responsibleLabel: Signal<string | null> = computed<string | null>(() =>
+    resolveInterventionResponsibleLabel(this.store.intervention(), this.planningOptions.members()),
+  );
 
   /** The planned window as a short date range, for the details chip row. */
-  protected readonly scheduleLabel: Signal<string | null> = computed<string | null>(() => {
-    const intervention: InterventionOutput | null = this.store.intervention();
-    if (!intervention || intervention.plannedStartAt == null || intervention.dueAt == null)
-      return null;
-
-    const formatter = new Intl.DateTimeFormat(this.locale, { month: 'short', day: 'numeric' });
-
-    return `${formatter.format(new Date(intervention.plannedStartAt))} – ${formatter.format(new Date(intervention.dueAt))}`;
-  });
+  protected readonly scheduleLabel: Signal<string | null> = computed<string | null>(() =>
+    formatInterventionScheduleLabel(this.store.intervention(), this.locale),
+  );
 
   /** The intervention's labels, joined for the details chip row. */
-  protected readonly labelsSummary: Signal<string | null> = computed<string | null>(() => {
-    const labels = this.store.intervention()?.labels ?? [];
-
-    return labels.length === 0 ? null : labels.map((label) => label.name).join(', ');
-  });
+  protected readonly labelsSummary: Signal<string | null> = computed<string | null>(() =>
+    summarizeInterventionLabels(this.store.intervention()),
+  );
 
   /**
    * Property metaLine
@@ -945,48 +870,14 @@ export class InterventionDetailPage {
    *
    * @type {Signal<string>}
    */
-  protected readonly metaLine: Signal<string> = computed<string>(() => {
-    const intervention: InterventionOutput | null = this.store.intervention();
-    if (!intervention) return '';
-
-    const revision: string = `v${intervention.revision}`;
-    const activities = this.store.activities();
-    const last = activities.length > 0 ? activities[activities.length - 1] : undefined;
-
-    if (last === undefined) {
-      const when: string = formatInterventionRelativeTime(intervention.updatedAt, this.locale);
-
-      return $localize`:@@intervention.detail.metaUpdated:Updated ${when}:when: · revision ${revision}:revision:`;
-    }
-
-    const when: string = formatInterventionRelativeTime(last.createdAt, this.locale);
-    const actorName: string | undefined = resolveInterventionActivityActor(
-      last.actor,
+  protected readonly metaLine: Signal<string> = computed<string>(() =>
+    buildInterventionMetaLine(
+      this.store.intervention(),
+      this.store.activities(),
       this.planningOptions.members(),
-    )?.displayName;
-
-    if (last.kind === 'system' && last.event === 'status_changed')
-      return actorName === undefined
-        ? $localize`:@@intervention.detail.metaStatusChangedNoActor:Status changed ${when}:when: · revision ${revision}:revision:`
-        : $localize`:@@intervention.detail.metaStatusChanged:${actorName}:actor: changed the status ${when}:when: · revision ${revision}:revision:`;
-
-    if (last.kind === 'system' && last.event === 'created')
-      return actorName === undefined
-        ? $localize`:@@intervention.detail.metaCreatedNoActor:Created ${when}:when: · revision ${revision}:revision:`
-        : $localize`:@@intervention.detail.metaCreated:${actorName}:actor: created this intervention ${when}:when: · revision ${revision}:revision:`;
-
-    if (last.kind === 'system' && last.event === 'rescheduled')
-      return actorName === undefined
-        ? $localize`:@@intervention.detail.metaRescheduledNoActor:Rescheduled ${when}:when: · revision ${revision}:revision:`
-        : $localize`:@@intervention.detail.metaRescheduled:${actorName}:actor: moved the planned window ${when}:when: · revision ${revision}:revision:`;
-
-    if (last.kind === 'comment')
-      return actorName === undefined
-        ? $localize`:@@intervention.detail.metaCommentedNoActor:Commented ${when}:when: · revision ${revision}:revision:`
-        : $localize`:@@intervention.detail.metaCommented:${actorName}:actor: commented ${when}:when: · revision ${revision}:revision:`;
-
-    return $localize`:@@intervention.detail.metaUpdated:Updated ${when}:when: · revision ${revision}:revision:`;
-  });
+      this.locale,
+    ),
+  );
 
   /**
    * Property readinessItems
@@ -1187,61 +1078,9 @@ export class InterventionDetailPage {
     return index < 0 ? null : (this.listStore.orderedIds()[index + 1] ?? null);
   });
 
-  /** Whether the text confirmation is showing. */
-  protected readonly confirmDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
-    this.pendingConfirm() === null ? 'closed' : 'open',
-  );
-
   /** Whether the publish confirmation is showing. */
   protected readonly publishDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.publishConfirmOpen() ? 'open' : 'closed',
-  );
-
-  /** The text confirmation's heading. */
-  protected readonly confirmTitle: Signal<string> = computed<string>(() => {
-    switch (this.pendingConfirm()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.header:Abandon intervention`;
-      case 'deleteIntervention':
-        return $localize`:@@intervention.delete.header:Delete intervention`;
-      case 'deleteWorkItem':
-        return $localize`:@@intervention.deleteWi.headerOne:Delete work item`;
-      default:
-        return $localize`:@@intervention.wit.skipHeader:Skip work item`;
-    }
-  });
-
-  /** The text confirmation's body. */
-  protected readonly confirmDescription: Signal<string> = computed<string>(() => {
-    switch (this.pendingConfirm()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.message:Abandon this intervention? It leaves the active workflow and cannot be resumed.`;
-      case 'deleteIntervention':
-        return $localize`:@@intervention.delete.message:Delete this intervention? This cannot be undone.`;
-      case 'deleteWorkItem':
-        return $localize`:@@intervention.deleteWi.messageOne:Remove this prepared work item? This cannot be undone.`;
-      default:
-        return $localize`:@@intervention.wit.skipMessage:Say why this item is being skipped. The reason stays on the record.`;
-    }
-  });
-
-  /** The text confirmation's accept label. */
-  protected readonly confirmActionLabel: Signal<string> = computed<string>(() => {
-    switch (this.pendingConfirm()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.accept:Abandon`;
-      case 'deleteWorkItem':
-      case 'deleteIntervention':
-        return $localize`:@@common.delete:Delete`;
-      default:
-        return $localize`:@@intervention.wit.skip:Skip`;
-    }
-  });
-
-  /** Whether the text confirmation may be accepted. */
-  protected readonly canAcceptConfirm: Signal<boolean> = computed<boolean>(
-    () =>
-      this.pendingConfirm()?.kind !== 'skipWorkItem' || this.skipReasonDraft().trim().length > 0,
   );
   //#endregion
 
@@ -1347,8 +1186,10 @@ export class InterventionDetailPage {
    * Method uploadAttachments
    *
    * @description
-   * Uploads the picked files, compressing images first — camera captures are
-   * multi-megabyte and the backend caps at 10 MiB.
+   * Compresses the picked files — camera captures are multi-megabyte and the
+   * backend caps at 10 MiB — then uploads the ones that compressed
+   * successfully and reports the ones that did not, one toast per failed
+   * name.
    *
    * @access protected
    * @since 4.4.0
@@ -1358,24 +1199,21 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected uploadAttachments(files: readonly File[]): void {
-    for (const file of files) {
-      const prepared: Promise<File> = file.type.startsWith('image/')
-        ? this.photoCompressor.compress(file)
-        : Promise.resolve(file);
-      void prepared
-        .then((ready: File): void => {
+    void this.photoCompressor
+      .prepareAll(files)
+      .then(({ ready, failed }: { ready: File[]; failed: string[] }): void => {
+        for (const file of ready)
           this.store.uploadAttachment({
             interventionId: this.interventionId(),
-            file: ready,
-            fileName: ready.name,
+            file,
+            fileName: file.name,
           });
-        })
-        .catch((): void => {
+
+        for (const fileName of failed)
           this.feedback.error(
-            $localize`:@@intervention.attachments.prepareFailed:${file.name}:fileName: could not be prepared for upload.`,
+            $localize`:@@intervention.attachments.prepareFailed:${fileName}:fileName: could not be prepared for upload.`,
           );
-        });
-    }
+      });
   }
 
   /**
@@ -1400,10 +1238,10 @@ export class InterventionDetailPage {
    * Method onScanFileSelected
    *
    * @description
-   * Decodes a captured QR, normalizes it to its canonical IRI and reveals the
-   * matching work item — scroll plus focus, the same landing `revealFieldWork`
-   * gives the phase actions. No match, or an undecodable capture, becomes a
-   * toast rather than a dead click.
+   * Decodes a captured QR against the intervention's work items and reveals
+   * the match — scroll plus focus, the same landing `revealFieldWork` gives
+   * the phase actions. No match, or an undecodable capture, becomes a toast
+   * rather than a dead click.
    *
    * @access protected
    * @since 4.4.0
@@ -1418,32 +1256,30 @@ export class InterventionDetailPage {
     inputElement.value = ''; // Re-picking the same file fires no change event otherwise.
     if (!file) return;
 
-    void this.fieldExecution.scan(file).then((decoded: string | null): void => {
-      if (decoded === null) {
-        this.feedback.error(
-          $localize`:@@intervention.scan.unreadable:No QR code could be read from this capture.`,
+    void this.fieldExecution
+      .scanToWorkItem(file, this.store.workItems())
+      .then((result: InterventionScanResult): void => {
+        if (result.kind === 'unreadable') {
+          this.feedback.error(
+            $localize`:@@intervention.scan.unreadable:No QR code could be read from this capture.`,
+          );
+
+          return;
+        }
+
+        if (result.kind === 'noMatch') {
+          this.feedback.error(
+            $localize`:@@intervention.scan.noMatch:No work item of this intervention matches the scanned code.`,
+          );
+
+          return;
+        }
+
+        this.focusFieldWorkPanel();
+        this.feedback.success(
+          $localize`:@@intervention.scan.matched:Found: ${result.item.target ?? result.item.id}:target:`,
         );
-
-        return;
-      }
-
-      const target: string = this.discovery.normalizeScannedTarget(decoded);
-      const match: InterventionWorkItemOutput | undefined = this.store
-        .workItems()
-        .find((item) => item.target === target || item.target === decoded);
-      if (!match) {
-        this.feedback.error(
-          $localize`:@@intervention.scan.noMatch:No work item of this intervention matches the scanned code.`,
-        );
-
-        return;
-      }
-
-      this.focusFieldWorkPanel();
-      this.feedback.success(
-        $localize`:@@intervention.scan.matched:Found: ${match.target ?? match.id}:target:`,
-      );
-    });
+      });
   }
 
   /**
@@ -1462,7 +1298,8 @@ export class InterventionDetailPage {
     const target: InterventionStatus | null = this.commandTransitionTarget();
 
     if (target === null) {
-      this.publicationError.set(null);
+      this.offlineBlockReason.set(null);
+      this.publicationStore.reset();
       this.publishConfirmOpen.set(true);
 
       return;
@@ -1580,29 +1417,30 @@ export class InterventionDetailPage {
 
   /** Asks to skip a work item, which needs a reason. */
   protected requestSkipWorkItem(workItem: InterventionWorkItemOutput): void {
-    this.skipReasonDraft.set('');
     this.pendingConfirm.set({ kind: 'skipWorkItem', workItem });
   }
 
   /**
-   * Method acceptConfirm
+   * Method onConfirmAccepted
    *
    * @description
-   * Runs whichever confirmation was open, then closes it. Deletion goes through
-   * the list store: it is the only one that removes the entity and repairs
-   * `orderedIds()`, which this page's prev/next footer walks.
+   * Runs whichever confirmation the dialog just accepted, then closes it.
+   * Deletion goes through the list store: it is the only one that removes the
+   * entity and repairs `orderedIds()`, which this page's prev/next footer
+   * walks.
    *
    * @access protected
    * @since 1.0.0
    *
+   * @param {InterventionConfirmAcceptedEvent} event - The confirmed request.
+   *
    * @returns {void}
    */
-  protected acceptConfirm(): void {
-    const request: InterventionConfirmRequest | null = this.pendingConfirm();
+  protected onConfirmAccepted(event: InterventionConfirmAcceptedEvent): void {
     const intervention: InterventionOutput | null = this.store.intervention();
-    if (request === null || intervention === null) return;
+    if (intervention === null) return;
 
-    switch (request.kind) {
+    switch (event.kind) {
       case 'abandon':
         this.store.transition({ interventionId: this.interventionId(), status: 'abandoned' });
         break;
@@ -1615,32 +1453,23 @@ export class InterventionDetailPage {
       case 'deleteWorkItem':
         this.store.deleteWorkItems({
           interventionId: this.interventionId(),
-          workItems: [request.workItem],
+          workItems: [event.workItem],
         });
         break;
       default:
         this.store.setWorkItemStatus({
           interventionId: this.interventionId(),
-          workItemId: request.workItem.id,
+          workItemId: event.workItem.id,
           status: 'skipped',
-          skipReason: this.skipReasonDraft().trim(),
+          skipReason: event.reason,
         });
     }
 
     this.pendingConfirm.set(null);
   }
 
-  /**
-   * Method onConfirmDialogStateChanged
-   * @description Any dismissal drops the pending request.
-   * @access protected
-   * @since 1.0.0
-   * @param {BrnDialogState} state - The dialog's new state.
-   * @returns {void}
-   */
-  protected onConfirmDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
-
+  /** Any dismissal drops the pending request. */
+  protected onConfirmDismissed(): void {
     this.pendingConfirm.set(null);
   }
 
@@ -1659,70 +1488,38 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Method publishIntervention
+   * Method confirmPublish
    *
    * @description
-   * Writes to the compliance record. Deliberately private and reachable only
-   * from the confirmation's accept, which is what makes "publication is
-   * confirm-gated" structural rather than a convention.
+   * Runs the publication from the confirmation's accept — the only place that
+   * calls {@link publicationStore}'s `publish`, which is what makes
+   * "publication is confirm-gated" structural rather than a convention.
+   * Connectivity is re-checked here since it may have dropped after the
+   * dialog opened; the store is never even called in that case, and the
+   * offline reason is shown inline instead. The confirmation otherwise stays
+   * open on failure — the store's error surfaces inline and the operator can
+   * retry without reopening it — and closes only once `publishSucceeded`
+   * fires.
    *
-   * The confirmation stays open on failure — the reason is shown inline and
-   * the operator can retry without reopening it — and closes only once the
-   * write actually lands.
-   *
-   * On success the workspace is reloaded rather than re-loaded: `load` blanks
-   * the page first, which would flash the whole workspace to a skeleton at the
-   * exact moment the operator is watching for the outcome.
-   *
-   * @access private
+   * @access protected
    * @since 1.0.0
    *
-   * @returns {Promise<void>} Resolves once the publication reached a terminal state.
+   * @returns {void}
    */
-  private async publishIntervention(): Promise<void> {
+  protected confirmPublish(): void {
     const intervention: InterventionOutput | null = this.store.intervention();
     if (intervention === null) return;
 
     if (!this.online()) {
-      this.publicationError.set(
+      this.offlineBlockReason.set(
         $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`,
       );
 
       return;
     }
 
-    this.publishing.set(true);
-    this.publicationError.set(null);
-
-    try {
-      const result: PublicationOutput = await this.publication.publish(intervention);
-
-      if (result.status === 'failed') {
-        this.publicationError.set(
-          result.error ??
-            $localize`:@@intervention.publication.failed:Publication failed without applying partial changes.`,
-        );
-
-        return;
-      }
-
-      this.store.reload(this.interventionId());
-      this.publishConfirmOpen.set(false);
-      this.feedback.success(
-        $localize`:@@intervention.publication.succeeded:Published to the compliance record`,
-      );
-    } catch {
-      this.publicationError.set(
-        $localize`:@@intervention.publication.requestFailed:The publication request could not be completed.`,
-      );
-    } finally {
-      this.publishing.set(false);
-    }
-  }
-
-  /** Runs the publication from the confirmation's accept. */
-  protected confirmPublish(): void {
-    void this.publishIntervention();
+    this.offlineBlockReason.set(null);
+    this.publicationStore.publish(intervention);
   }
 
   /** Clears the load error and tries again. */
@@ -1931,14 +1728,6 @@ export class InterventionDetailPage {
       'interventions',
       interventionId,
     ]);
-  }
-
-  /** Whether the member holds the capability a transition requires. */
-  private hasCapability(capability: InterventionTransitionCapability): boolean {
-    if (capability === 'plan') return this.canPlan();
-    if (capability === 'review') return this.canReview();
-
-    return this.canExecute();
   }
   //#endregion
 }

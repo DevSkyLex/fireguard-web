@@ -1,0 +1,36 @@
+<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-detail-confirm-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle>{{ title() }}</h2>
+      <p hlmAlertDialogDescription>{{ description() }}</p>
+    </hlm-alert-dialog-header>
+
+    @if (request()?.kind === 'skipWorkItem') {
+      <textarea
+        hlmTextarea
+        rows="3"
+        class="w-full"
+        data-testid="intervention-detail-skip-reason"
+        placeholder="Why is this item being skipped?"
+        i18n-placeholder="@@intervention.wit.skipPlaceholder"
+        aria-label="Reason for skipping this work item"
+        i18n-aria-label="@@intervention.wit.skipReasonLabel"
+        [value]="skipReasonDraft()"
+        (input)="onSkipReasonInput($event)"
+      ></textarea>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="intervention-detail-confirm-accept"
+        [disabled]="!canAccept()"
+        (click)="accept()"
+      >
+        {{ acceptLabel() }}
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

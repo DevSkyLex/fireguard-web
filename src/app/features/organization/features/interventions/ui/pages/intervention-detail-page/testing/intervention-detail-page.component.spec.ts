@@ -7,8 +7,6 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { EMPTY } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import {
@@ -27,7 +25,6 @@ import type {
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import {
-  InterventionDiscoveryService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
   InterventionSyncCoordinatorService,
@@ -210,22 +207,21 @@ describe('InterventionDetailPage', () => {
         },
         {
           provide: InterventionFieldExecutionService,
-          useValue: { scanSupported: (): boolean => false, scan: vi.fn() },
-        },
-        {
-          provide: InterventionDiscoveryService,
-          useValue: { normalizeScannedTarget: (value: string): string => value },
+          useValue: { scanSupported: (): boolean => false, scanToWorkItem: vi.fn() },
         },
         {
           provide: InterventionPhotoCompressorService,
-          useValue: { compress: vi.fn((file: File) => Promise.resolve(file)) },
+          useValue: {
+            prepareAll: vi.fn((files: readonly File[]) =>
+              Promise.resolve({ ready: [...files], failed: [] }),
+            ),
+          },
         },
         { provide: ConnectivityService, useValue: { online } },
         { provide: InterventionOfflineService, useValue: { hasUnsyncedChanges: unsynced } },
         { provide: InterventionPublicationService, useValue: { publish } },
         { provide: FeedbackService, useValue: { success: vi.fn() } },
         { provide: TitleService, useValue: { setTitle: vi.fn() } },
-        { provide: Events, useValue: { on: (): typeof EMPTY => EMPTY } },
         { provide: Router, useValue: { navigate } },
       ],
     });

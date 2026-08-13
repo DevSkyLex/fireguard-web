@@ -1,9 +1,12 @@
+export type { InterventionCapabilities } from './intervention-capabilities.interface';
+export type { InterventionCapabilityDeps } from './intervention-capability-deps.interface';
 export type { InterventionCommandAction } from './intervention-command-action.interface';
 export type { InterventionDiscoveryRequest } from './intervention-discovery-request.interface';
 export type { InterventionDiscoveryResult } from './intervention-discovery-result.interface';
 export type { InterventionPhase } from './intervention-phase.type';
 export type { InterventionPhotoAttachment } from './intervention-photo-attachment.interface';
 export type { InterventionPlanningDetails } from './intervention-planning-details.interface';
+export type { InterventionScanResult } from './intervention-scan-result.type';
 export type { InterventionTransitionRequest } from './intervention-transition-request.interface';
 export type { InterventionWorkItemStatusChange } from './intervention-work-item-status-change.interface';
 export type { MemberSelectOption } from './member-select-option.interface';

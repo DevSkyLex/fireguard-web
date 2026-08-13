@@ -24,6 +24,7 @@ import type {
   InterventionCalendarFilters,
   InterventionListOptions,
   InterventionOutput,
+  InterventionStatisticsOutput,
   InterventionTypeOutput,
   InterventionWorkItemOutput,
   PublicationOutput,
@@ -253,6 +254,29 @@ export class InterventionService extends HydraApiService {
    */
   public get(interventionId: string): Observable<InterventionOutput> {
     return this.getOne<InterventionOutput>(`/api/interventions/${interventionId}`);
+  }
+
+  /**
+   * Method statistics
+   * @method statistics
+   *
+   * @description
+   * Reads the whole-organization intervention snapshot the list page's KPI
+   * strip renders (`GET /api/interventions/statistics?organization=…`): total,
+   * the zero-filled status/priority breakdowns, overdue/dueSoon counts, the
+   * top-10 site/responsible breakdowns, and the average publication delay.
+   *
+   * @access public
+   * @since 5.3.0
+   *
+   * @param {string} organizationId - organization Id value.
+   *
+   * @return {Observable<InterventionStatisticsOutput>} Result of the statistics operation.
+   */
+  public statistics(organizationId: string): Observable<InterventionStatisticsOutput> {
+    return this.getOne<InterventionStatisticsOutput>('/api/interventions/statistics', {
+      params: { organization: `/api/organizations/${organizationId}` },
+    });
   }
 
   /**

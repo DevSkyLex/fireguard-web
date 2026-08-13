@@ -148,7 +148,10 @@ describe('InterventionsPage', () => {
           provide: OrganizationMemberAccessStore,
           useValue: { profile: signal({ id: 'member-1' }) },
         },
-        { provide: InterventionService, useValue: { listAll } },
+        {
+          provide: InterventionService,
+          useValue: { listAll, statistics: vi.fn().mockReturnValue(of(null)) },
+        },
         {
           provide: FeedbackService,
           useValue: { warn: feedbackWarn, error: feedbackError },

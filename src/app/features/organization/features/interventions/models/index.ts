@@ -4,6 +4,9 @@
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';
+export type { InterventionStatisticsOutput } from './intervention-statistics/intervention-statistics-output.interface';
+export type { InterventionSiteStatisticOutput } from './intervention-statistics/intervention-site-statistic-output.interface';
+export type { InterventionResponsibleStatisticOutput } from './intervention-statistics/intervention-responsible-statistic-output.interface';
 export type { InterventionCalendarFilters } from './intervention-view/intervention-calendar-filters.interface';
 export type {
   InterventionDueWindow,

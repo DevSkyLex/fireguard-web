@@ -1,0 +1,42 @@
+<div class="flex flex-wrap gap-3">
+  @if (loading()) {
+    @for (index of skeletonTiles; track index) {
+      <div hlmCard class="min-w-36 flex-1 basis-36">
+        <div hlmCardHeader class="gap-1.5">
+          <hlm-skeleton class="h-4 w-16" />
+          <hlm-skeleton class="h-7 w-12" />
+        </div>
+      </div>
+    }
+  } @else {
+    @for (tile of tiles(); track tile.id) {
+      <div
+        hlmCard
+        class="min-w-36 flex-1 basis-36"
+        [class.border-destructive]="tile.tone === 'destructive'"
+      >
+        <div hlmCardHeader class="flex-row items-start justify-between gap-2 py-3">
+          <div class="flex min-w-0 flex-col gap-1">
+            <p hlmCardDescription class="truncate">{{ tile.label }}</p>
+            <p
+              hlmCardTitle
+              class="text-2xl leading-none font-semibold tabular-nums"
+              [class.text-destructive]="tile.tone === 'destructive'"
+            >
+              {{ tile.value }}
+            </p>
+          </div>
+          @if (tile.icon; as iconName) {
+            <ng-icon
+              [name]="iconName"
+              class="shrink-0 text-lg"
+              [class.text-destructive]="tile.tone === 'destructive'"
+              [class.text-muted-foreground]="tile.tone !== 'destructive'"
+              aria-hidden="true"
+            />
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

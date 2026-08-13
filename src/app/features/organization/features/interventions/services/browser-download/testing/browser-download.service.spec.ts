@@ -29,7 +29,8 @@ describe('BrowserDownloadService', () => {
       providers: [BrowserDownloadService, { provide: PLATFORM_ID, useValue: 'server' }],
     });
     const service = TestBed.inject(BrowserDownloadService);
-    const createObjectUrlSpy = vi.spyOn(URL, 'createObjectURL');
+    const createObjectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:unused');
+    createObjectUrlSpy.mockClear(); // spyOn hands back the previous spy, history included, when a restore was skipped.
 
     service.trigger(new Blob(['x']), 'x.txt');
 

@@ -224,7 +224,7 @@ describe('InterventionAttachments', () => {
     expect(add?.disabled).toBe(true);
   });
 
-  it('should lock only the row whose own delete is in flight', async () => {
+  it('should lock only the row whose own delete is in flight, without unmounting the button', async () => {
     await create(2);
     fixture.componentRef.setInput('pendingIds', new Set(['attachment-0']));
     await fixture.whenStable();
@@ -232,10 +232,19 @@ describe('InterventionAttachments', () => {
     const rows: HTMLElement[] = Array.from(
       root().querySelectorAll('[data-testid="intervention-attachment-row"]'),
     );
+    const deleteButton0 = rows[0]?.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-delete"]',
+    );
+    const deleteButton1 = rows[1]?.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-delete"]',
+    );
 
-    expect(rows[0]?.querySelector('hlm-spinner')).not.toBeNull();
-    expect(rows[0]?.querySelector('[data-testid="intervention-attachment-delete"]')).toBeNull();
-    expect(rows[1]?.querySelector('[data-testid="intervention-attachment-delete"]')).not.toBeNull();
+    expect(deleteButton0).not.toBeNull();
+    expect(deleteButton0?.disabled).toBe(true);
+    expect(deleteButton0?.getAttribute('aria-busy')).toBe('true');
+    expect(deleteButton0?.querySelector('hlm-spinner')).not.toBeNull();
+    expect(deleteButton1?.disabled).toBe(false);
+    expect(deleteButton1?.getAttribute('aria-busy')).toBeNull();
   });
 
   it('should emit a delete only once the confirmation is accepted', async () => {
@@ -296,7 +305,7 @@ describe('InterventionAttachments', () => {
     expect(downloads).toEqual([attachment(1)]);
   });
 
-  it('should lock only the row whose own download is in flight', async () => {
+  it('should lock only the row whose own download is in flight, without unmounting the button', async () => {
     await create(2);
     fixture.componentRef.setInput('downloadingIds', new Set(['attachment-0']));
     await fixture.whenStable();
@@ -304,11 +313,19 @@ describe('InterventionAttachments', () => {
     const rows: HTMLElement[] = Array.from(
       root().querySelectorAll('[data-testid="intervention-attachment-row"]'),
     );
+    const downloadButton0 = rows[0]?.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-download"]',
+    );
+    const downloadButton1 = rows[1]?.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-download"]',
+    );
 
-    expect(rows[0]?.querySelector('[data-testid="intervention-attachment-download"]')).toBeNull();
-    expect(
-      rows[1]?.querySelector('[data-testid="intervention-attachment-download"]'),
-    ).not.toBeNull();
+    expect(downloadButton0).not.toBeNull();
+    expect(downloadButton0?.disabled).toBe(true);
+    expect(downloadButton0?.getAttribute('aria-busy')).toBe('true');
+    expect(downloadButton0?.querySelector('hlm-spinner')).not.toBeNull();
+    expect(downloadButton1?.disabled).toBe(false);
+    expect(downloadButton1?.getAttribute('aria-busy')).toBeNull();
   });
 
   it('should disable the download button while offline', async () => {

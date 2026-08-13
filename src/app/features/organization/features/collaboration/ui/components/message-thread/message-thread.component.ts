@@ -3,15 +3,18 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   LOCALE_ID,
   output,
+  signal,
   viewChild,
   type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideMessageSquare } from '@ng-icons/lucide';
@@ -300,6 +303,27 @@ export class MessageThread {
    * @type {string}
    */
   private readonly locale: string = inject<string>(LOCALE_ID);
+
+  /** The id of the newest incoming message already announced, so a re-render never re-announces it. */
+  private readonly lastAnnouncedMessageId: WritableSignal<string | null> = signal<string | null>(
+    null,
+  );
+
+  /**
+   * Property announcement
+   * @readonly
+   *
+   * @description
+   * The text a screen reader speaks for the newest **incoming** message —
+   * empty until one arrives. Own messages never populate it: the member who
+   * just sent one is already looking at it.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly announcement: WritableSignal<string> = signal<string>('');
   //#endregion
 
   //#region Lifecycle
@@ -308,14 +332,16 @@ export class MessageThread {
    * @constructor
    *
    * @description
-   * Registers the scroll-position effect. It runs after render because it has
-   * to measure the DOM the entries just produced.
+   * Registers the scroll-position effect, which runs after render because it
+   * has to measure the DOM the entries just produced, and the live-region
+   * announcement effect, which does not.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
     afterRenderEffect((): void => this.keepScrollPosition(this.entries()));
+    effect((): void => this.announceIncomingMessage());
   }
   //#endregion
 
@@ -403,6 +429,33 @@ export class MessageThread {
       element.scrollHeight - element.scrollTop - element.clientHeight <= BOTTOM_SLACK_PX;
 
     if (this.pinnedToBottom && !wasPinned) this.caughtUp.emit();
+  }
+
+  /**
+   * Method announceIncomingMessage
+   * @method announceIncomingMessage
+   *
+   * @description
+   * Updates {@link announcement} when a new **incoming** message lands, keyed
+   * by {@link lastAnnouncedMessageId} so the live region speaks each message
+   * once. A message the reading member just sent (`isOwn`) is skipped — they
+   * are already looking at it.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  private announceIncomingMessage(): void {
+    const latest: MessageView | undefined = this.messages().at(-1);
+    if (latest === undefined || latest.isOwn || latest.id === this.lastAnnouncedMessageId()) {
+      return;
+    }
+
+    this.lastAnnouncedMessageId.set(latest.id);
+    this.announcement.set(
+      $localize`:@@messages.thread.newMessageAnnouncement:New message from ${latest.authorName}:name:`,
+    );
   }
 
   /**

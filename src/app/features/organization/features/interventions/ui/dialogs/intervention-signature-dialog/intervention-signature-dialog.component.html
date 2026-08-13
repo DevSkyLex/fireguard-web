@@ -32,6 +32,7 @@
         hlmBtn
         type="button"
         variant="outline"
+        class="max-sm:min-h-11"
         data-testid="intervention-signature-skip"
         (click)="dismissed.emit()"
       >
@@ -41,6 +42,7 @@
         hlmBtn
         type="button"
         variant="ghost"
+        class="max-sm:min-h-11"
         data-testid="intervention-signature-clear"
         [disabled]="!hasStrokes()"
         (click)="clear()"
@@ -50,6 +52,7 @@
       <button
         hlmBtn
         type="button"
+        class="max-sm:min-h-11"
         data-testid="intervention-signature-confirm"
         [disabled]="!canConfirm()"
         [attr.aria-busy]="busy() ? 'true' : null"
@@ -66,6 +69,8 @@
           <span i18n="@@intervention.signature.confirmingStatus"
             >Saving the signature, please wait…</span
           >
+        } @else if (hasStrokes()) {
+          <span i18n="@@intervention.signature.capturedStatus">Signature captured</span>
         }
       </span>
     </hlm-dialog-footer>

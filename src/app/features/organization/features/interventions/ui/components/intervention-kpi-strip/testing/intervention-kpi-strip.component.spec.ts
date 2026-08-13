@@ -48,6 +48,14 @@ describe('InterventionKpiStrip', () => {
     expect(element.textContent?.trim()).toBe('');
   });
 
+  it('should announce the loading state to assistive tech rather than staying silent', async () => {
+    const element: HTMLElement = await render(null, true);
+
+    const status = element.querySelector('[role="status"]');
+    expect(status).not.toBeNull();
+    expect(status?.getAttribute('aria-label')).toBeTruthy();
+  });
+
   it('should render every KPI once loaded, summing the open statuses', async () => {
     const element: HTMLElement = await render(STATISTICS, false);
     const text: string = element.textContent ?? '';

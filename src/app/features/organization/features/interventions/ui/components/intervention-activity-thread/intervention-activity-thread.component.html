@@ -125,9 +125,12 @@
                   <p hlmBubbleContent class="whitespace-pre-line text-foreground">
                     @for (segment of row.bodySegments; track $index) {
                       @if (segment.kind === 'mention') {
-                        <span class="font-medium text-primary" [title]="segment.title">{{
-                          segment.text
-                        }}</span>
+                        <span class="font-medium text-primary" [title]="segment.title"
+                          >{{ segment.text }}
+                          @if (segment.title) {
+                            <span class="sr-only"> ({{ segment.title }})</span>
+                          }
+                        </span>
                       } @else {
                         {{ segment.text }}
                       }

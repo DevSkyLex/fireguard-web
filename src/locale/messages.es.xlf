@@ -1184,6 +1184,10 @@
         <source>The discussion could not be opened.</source>
         <target>No se pudo abrir la conversación.</target>
       </trans-unit>
+      <trans-unit id="messages.thread.newMessageAnnouncement" datatype="html">
+        <source>New message from <x id="name" equiv-text="latest.authorName"/></source>
+        <target>Nuevo mensaje de <x id="name" equiv-text="latest.authorName"/></target>
+      </trans-unit>
       <trans-unit id="channels.participants.title" datatype="html">
         <source>Participants</source>
         <target>Participantes</target>
@@ -4634,6 +4638,10 @@
         <source>Saving the signature, please wait…</source>
         <target>Guardando la firma, espere por favor…</target>
       </trans-unit>
+      <trans-unit id="intervention.signature.capturedStatus" datatype="html">
+        <source>Signature captured</source>
+        <target>Firma capturada</target>
+      </trans-unit>
       <trans-unit id="intervention.newButton" datatype="html">
         <source>New intervention</source>
         <target>Nueva intervención</target>
@@ -5961,6 +5969,10 @@
       <trans-unit id="intervention.list.mine" datatype="html">
         <source>My interventions</source>
         <target>Mis intervenciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.loadingAria" datatype="html">
+        <source>Loading key figures</source>
+        <target>Cargando indicadores clave</target>
       </trans-unit>
       <trans-unit id="intervention.kpi.total" datatype="html">
         <source>Total</source>
@@ -9372,6 +9384,10 @@
       <trans-unit id="intervention.list.exportButton" datatype="html">
         <source>Export</source>
         <target>Exportar</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.exportingStatus" datatype="html">
+        <source>Preparing the export…</source>
+        <target>Preparando la exportación…</target>
       </trans-unit>
       <trans-unit id="intervention.list.exportCapped" datatype="html">
         <source>Export capped at <x id="cap" equiv-text="EXPORT_ROW_CAP"/> rows.</source>

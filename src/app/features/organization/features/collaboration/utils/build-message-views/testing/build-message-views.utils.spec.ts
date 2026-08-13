@@ -1,6 +1,9 @@
-import type { MessageOutput } from '@features/organization/features/collaboration/models';
+import type {
+  BuildMessageViewsInput,
+  MessageOutput,
+} from '@features/organization/features/collaboration/models';
 import type { MemberDirectoryEntry } from '@features/organization/models';
-import { buildMessageViews, type BuildMessageViewsInput } from '../build-message-views.utils';
+import { buildMessageViews } from '../build-message-views.utils';
 
 function message(overrides: Partial<MessageOutput> = {}): MessageOutput {
   return {

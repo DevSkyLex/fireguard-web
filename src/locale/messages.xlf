@@ -2793,6 +2793,20 @@
           <context context-type="linenumber">292</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="messages.subjectDiscussion.composerPlaceholder" datatype="html">
+        <source>Message this discussion</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/subject-discussion/subject-discussion.component.html</context>
+          <context context-type="linenumber">16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messages.subjectDiscussion.openFailed" datatype="html">
+        <source>The discussion could not be opened.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/subject-discussion/subject-discussion.component.ts</context>
+          <context context-type="linenumber">393</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="channels.room.composerPlaceholder" datatype="html">
         <source>Message <x id="name" equiv-text="this.channelName()"/></source>
         <context-group purpose="location">
@@ -6501,6 +6515,27 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
           <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.discussion.trigger" datatype="html">
+        <source>Discussion</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.discussion.title" datatype="html">
+        <source>Discussion</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">573</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.discussion.subtitle" datatype="html">
+        <source>Live team messaging about this intervention</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">574</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.statusMenu" datatype="html">

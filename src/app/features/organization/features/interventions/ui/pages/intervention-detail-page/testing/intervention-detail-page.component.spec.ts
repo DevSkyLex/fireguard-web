@@ -7,6 +7,7 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import {
@@ -17,6 +18,10 @@ import {
 } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { ConversationService } from '@features/organization/features/collaboration/data-access';
+import type { ConversationOutput } from '@features/organization/features/collaboration/models';
+import { MessageThreadStore } from '@features/organization/features/collaboration/state';
+import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionActivityOutput,
@@ -31,6 +36,10 @@ import {
 } from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import { InterventionStore } from '@features/organization/features/interventions/state';
+import {
+  MEMBER_DIRECTORY_PORT,
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+} from '@features/organization/ports';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionLinkedResourcesStore } from '../../../../state/intervention-linked-resources';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
@@ -139,6 +148,7 @@ describe('InterventionDetailPage', () => {
   let publish: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let permitted: Set<string>;
+  let openSubjectThread: ReturnType<typeof vi.fn>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byTestId = (id: string): HTMLElement =>
@@ -163,6 +173,7 @@ describe('InterventionDetailPage', () => {
       'organization.interventions.execute',
       'organization.interventions.review',
       'organization.interventions.publish',
+      'organization.messaging.read',
     ]);
 
     load = vi.fn();
@@ -180,6 +191,7 @@ describe('InterventionDetailPage', () => {
     setPendingDuplicatePrefill = vi.fn();
     publish = vi.fn().mockResolvedValue({ status: 'completed', error: null });
     navigate = vi.fn().mockResolvedValue(true);
+    openSubjectThread = vi.fn().mockReturnValue(of({ id: 'conversation-1' } as ConversationOutput));
 
     TestBed.configureTestingModule({
       providers: [
@@ -230,7 +242,56 @@ describe('InterventionDetailPage', () => {
         { provide: FeedbackService, useValue: { success: vi.fn() } },
         { provide: TitleService, useValue: { setTitle: vi.fn() } },
         { provide: Router, useValue: { navigate } },
+        { provide: ConversationService, useValue: { openSubjectThread } },
+        {
+          provide: MEMBER_DIRECTORY_PORT,
+          useValue: {
+            byId: signal(new Map()),
+            isAvailable: signal(true),
+            isLoading: signal(false),
+            ensureLoaded: vi.fn(),
+            displayNameFor: (value: string): string => value,
+          },
+        },
+        {
+          provide: ORGANIZATION_MEMBER_ACCESS_PORT,
+          useValue: {
+            profile: signal({ id: 'member-1', organizationId: 'org-1' }),
+            roles: signal([]),
+            permissions: signal([]),
+            isLoadingAccess: signal(false),
+            accessError: signal(null),
+          },
+        },
       ],
+    });
+
+    TestBed.overrideComponent(SubjectDiscussion, {
+      remove: { providers: [MessageThreadStore] },
+      add: {
+        providers: [
+          {
+            provide: MessageThreadStore,
+            useValue: {
+              reset: vi.fn(),
+              load: vi.fn(),
+              connect: vi.fn(),
+              markRead: vi.fn(),
+              send: vi.fn(),
+              loadOlder: vi.fn(),
+              retryFailed: vi.fn(),
+              toggleReaction: vi.fn(),
+              sortedMessages: vi.fn(() => []),
+              pendingMessageIds: vi.fn(() => []),
+              failedMessageIds: vi.fn(() => []),
+              isLoading: vi.fn(() => false),
+              isPosting: vi.fn(() => false),
+              hasMore: vi.fn(() => false),
+              loadError: vi.fn(() => null),
+            },
+          },
+        ],
+      },
     });
 
     TestBed.overrideComponent(InterventionDetailPage, {
@@ -924,6 +985,38 @@ describe('InterventionDetailPage', () => {
       expect(addComment).toHaveBeenCalledWith({
         interventionId: 'intervention-1',
         body: 'Looks fine.',
+      });
+    });
+  });
+
+  describe('discussion', () => {
+    it('should offer the Discussion trigger when messaging.read is granted', async () => {
+      fixture = await createPage();
+
+      expect(byTestId('intervention-detail-discussion-trigger')).toBeTruthy();
+    });
+
+    it('should hide the Discussion trigger without messaging.read', async () => {
+      permitted.delete('organization.messaging.read');
+      fixture = await createPage();
+
+      expect(
+        root().querySelector('[data-testid="intervention-detail-discussion-trigger"]'),
+      ).toBeNull();
+    });
+
+    it('should open the discussion sheet and defer the thread load until then', async () => {
+      fixture = await createPage();
+
+      expect(openSubjectThread).not.toHaveBeenCalled();
+
+      byTestId('intervention-detail-discussion-trigger').dispatchEvent(new Event('click'));
+      await fixture.whenStable();
+
+      expect(openSubjectThread).toHaveBeenCalledWith({
+        organization: 'org-1',
+        subjectType: 'intervention',
+        subject: 'intervention-1',
       });
     });
   });

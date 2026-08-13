@@ -276,6 +276,12 @@ Internal code imports deep paths directly.
   records scoped to one intervention and renders them through its own tables; it creates, edits and
   deletes nothing on their behalf, and owns no facility/equipment/inspection state beyond the three
   call states in `InterventionLinkedResourcesStore`.
+- The detail page's Discussion sheet (6.2) embeds `SubjectDiscussion` from
+  `@features/organization/features/collaboration/ui/components` — an approved cross-feature
+  dependency, recorded in collaboration's own `FEATURE.md` under Published Contracts. This feature
+  supplies `organizationId`/`interventionId` and gates the trigger on
+  `organization.messaging.read`; it owns no messaging state, injects no collaboration store or
+  service directly, and the sheet's only wiring is the component's own inputs.
 
 ## Detail workspace composition
 
@@ -644,6 +650,16 @@ operations wait, and turns destructive with a count when operations are
 blocked, opening onto Sync now / Retry blocked / Discard blocked — the discard
 confirm-gated because it is data loss. The chip is presentational; each page
 injects `InterventionSyncCoordinatorService` and wires its signals in.
+
+### Discussion sits beside the activity thread, not inside it
+
+The header's Discussion button (6.2, gated on `organization.messaging.read`) opens a right-anchored
+sheet holding collaboration's `SubjectDiscussion` — live team messaging, Mercure-backed, the same
+surface a channel or a direct conversation renders. It is a different thing from
+`app-intervention-activity-thread`: the activity thread is the system record (status changes,
+field-work events) plus the intervention's own comments, append-only and part of the compliance
+history; the discussion is ephemeral team chatter that never becomes part of that record. Neither
+absorbs the other.
 
 ### Attachments and field capture
 

@@ -1,0 +1,20 @@
+<app-message-thread
+  [messages]="messages()"
+  [loading]="opening() || thread.isLoading()"
+  [hasMore]="thread.hasMore()"
+  [errorMessage]="loadErrorMessage()"
+  [canReact]="canWrite()"
+  (loadMore)="thread.loadOlder()"
+  (retried)="thread.retryFailed($event)"
+  (reactionToggled)="toggleReaction($event)"
+  (caughtUp)="markRead()"
+>
+  <app-message-composer
+    [pending]="thread.isPosting()"
+    [readOnly]="!canWrite() || opening()"
+    i18n-placeholder="@@messages.subjectDiscussion.composerPlaceholder"
+    placeholder="Message this discussion"
+    [members]="mentionCandidates()"
+    (sent)="send($event)"
+  />
+</app-message-thread>

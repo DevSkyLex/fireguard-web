@@ -66,6 +66,8 @@ export type {
   InterventionCommandAction,
   InterventionDiscoveryRequest,
   InterventionDiscoveryResult,
+  InterventionIssueTarget,
+  InterventionLinkedResourceTabId,
   InterventionPhase,
   InterventionPhotoAttachment,
   InterventionPlanningDetails,

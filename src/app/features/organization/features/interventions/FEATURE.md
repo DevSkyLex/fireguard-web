@@ -77,7 +77,12 @@ Stores:
   serves the single-row and bulk paths); `orderedIds` exposes the current
   entity order for the detail page's prev/next — **which therefore walks only
   the loaded page**: prev/next stops at the page bounds, an accepted trade-off
-  of server paging. `delete` removes the cached
+  of server paging. Extending it with an edge-fetch (`loadNextPage`) was
+  considered and deferred (5.3): the exact query context now lives in the
+  list URL's filter params, which the detail route does not carry, so a fetch
+  from the detail page could silently walk a different collection than the one
+  the operator filtered. Revisit only with a mechanism that carries the list
+  query context across the navigation. `delete` removes the cached
   entity and decrements `totalInterventions` on success; it uses `mergeMap` (not
   `switchMap`) so a bulk selection can delete several concurrently, each keyed by
   its own request and each dispatching its own `deleteSucceeded` / `deleteFailed`
@@ -458,6 +463,16 @@ action that predictably 403s. The optimistic `transition` rollback and the
 `transitionFailed` toast remain the safety net for a race the client cannot
 see (a reassignment landing between render and click).
 
+`app-intervention-issues-checklist` (execute and review phases) gives every
+loaded issue a direct address instead of a message to decode: blocker or
+warning, activating one moves the operator to the rail tab, in-place editor,
+or field-work section that resolves it (`resolveInterventionIssueTarget`,
+grounded in the exact `resource`/`field` pairs `InterventionIssueFinder`
+emits). It never bypasses the gate above — activating an issue only
+navigates, the same way `onReadinessActivated` does for a prepare-phase gap;
+the write that actually clears the issue still goes through the in-place
+editor, the work-item table, or the equipment record it points at.
+
 ### Proposed changes: reject is the only client action
 
 `UpdateInterventionChangeInput.status` only ever accepts
@@ -743,9 +758,15 @@ follows.
   names the compliance record before the recap, swaps its button to a spinner and
   a `role="status"` line while the write and its poll run, and confirms success —
   the one irreversible write in the product must not look like a frozen modal.
-  The poll itself is **bounded** (~2 minutes): a publication stuck server-side
-  in `processing` ends as a failed request the dialog reports inline, never as
-  a spinner that outlives the operator's patience or as a false success.
+  The poll itself is **bounded** (~2 minutes) and its exhaustion is
+  **recoverable, not terminal** (5.3): a publication stuck server-side past
+  the bound surfaces as a distinct timed-out state — "still running in the
+  background" with a single-shot "Check again" (`recheck()`, one re-read of
+  the publication, no new poll) — never as a spinner that outlives the
+  operator's patience, a false success, or a dead-end failure for a write
+  that may yet complete. Past ~30 seconds the in-flight copy switches to a
+  still-working variant so a long publication reads as long, not frozen. A
+  genuine `failed` result still reports inline as before.
 - **The page's fixed elements never reorder (WCAG 2.4.3).** Header → meta →
   error alert → Overview → Work items → Changes → Attachments → Activity →
   properties card

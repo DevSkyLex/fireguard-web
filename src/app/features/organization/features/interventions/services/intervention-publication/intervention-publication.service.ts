@@ -7,6 +7,52 @@ import type {
 } from '@features/organization/features/interventions/models';
 
 /**
+ * Class PublicationPollTimeoutError
+ * @class PublicationPollTimeoutError
+ * @extends {Error}
+ *
+ * @description
+ * Thrown by {@link InterventionPublicationService.publish} when the bounded
+ * poll gives up while the publication is still `pending`/`processing`. Carries
+ * the publication's id so a caller can tell this apart from every other
+ * rejection and re-check the same publication later, without changing the
+ * poll's own timing.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+export class PublicationPollTimeoutError extends Error {
+  //#region Properties
+  /**
+   * Property publicationId
+   * @readonly
+   * @description The publication whose poll timed out.
+   * @access public
+   * @since 1.0.0
+   * @type {string}
+   */
+  public readonly publicationId: string;
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Builds the error, fixing its `name` for reliable `instanceof`-free checks.
+   * @access public
+   * @since 1.0.0
+   * @param {string} publicationId - The publication whose poll timed out.
+   */
+  public constructor(publicationId: string) {
+    super('Publication polling timed out before a terminal status.');
+    this.name = 'PublicationPollTimeoutError';
+    this.publicationId = publicationId;
+  }
+  //#endregion
+}
+
+/**
  * Service InterventionPublicationService
  * @class InterventionPublicationService
  *
@@ -62,10 +108,31 @@ export class InterventionPublicationService {
     const final = await lastValueFrom(this.interventions.pollPublication(publication));
 
     if (final.status === 'pending' || final.status === 'processing') {
-      throw new Error('Publication polling timed out before a terminal status.');
+      throw new PublicationPollTimeoutError(final.id);
     }
 
     return final;
+  }
+
+  /**
+   * Method checkStatus
+   * @method checkStatus
+   *
+   * @description
+   * Re-reads one publication once — the recovery path a caller takes after
+   * {@link publish} rejects with a {@link PublicationPollTimeoutError}, so an
+   * operator can learn whether the server finished in the background without
+   * starting a whole new bounded poll.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} publicationId - The publication to re-read.
+   *
+   * @returns {Promise<PublicationOutput>} The publication's current state.
+   */
+  public async checkStatus(publicationId: string): Promise<PublicationOutput> {
+    return lastValueFrom(this.interventions.getPublication(publicationId));
   }
   //#endregion
 }

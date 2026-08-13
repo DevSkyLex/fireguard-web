@@ -1,1 +1,4 @@
-export { InterventionPublicationService } from './intervention-publication.service';
+export {
+  InterventionPublicationService,
+  PublicationPollTimeoutError,
+} from './intervention-publication.service';

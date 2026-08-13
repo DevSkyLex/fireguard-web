@@ -280,4 +280,81 @@ describe('InterventionWorkItemTable', () => {
 
     expect(requests).toBe(1);
   });
+
+  it('should show each filter chip with the count it would produce', () => {
+    expect(byTestId('intervention-work-items-filter-all')?.textContent).toContain('4');
+    expect(byTestId('intervention-work-items-filter-remaining')?.textContent).toContain('2');
+    expect(byTestId('intervention-work-items-filter-done')?.textContent).toContain('1');
+    expect(byTestId('intervention-work-items-filter-skipped')?.textContent).toContain('1');
+  });
+
+  it('should narrow the rows to the picked chip', async () => {
+    (byTestId('intervention-work-items-filter-done') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]?.textContent).toContain('Completed');
+  });
+
+  it('should show a filtered-empty state distinct from a truly empty scope', async () => {
+    fixture.componentRef.setInput('items', [item({ id: 'wi-1', status: 'planned' })]);
+    await fixture.whenStable();
+
+    (byTestId('intervention-work-items-filter-done') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-work-items-filtered-empty')).not.toBeNull();
+    expect(byTestId('intervention-work-items-empty')).toBeNull();
+  });
+
+  it('should offer no "Mine first" toggle without a known member', () => {
+    expect(byTestId('intervention-work-items-mine-first')).toBeNull();
+  });
+
+  it('should offer no "Mine first" toggle when the member has nothing assigned', async () => {
+    fixture.componentRef.setInput('currentMemberId', '/api/organizations/org-1/members/m-1');
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-work-items-mine-first')).toBeNull();
+  });
+
+  it('should pull the member’s own rows first once "Mine first" is on', async () => {
+    fixture.componentRef.setInput('items', [
+      item({
+        id: 'wi-1',
+        status: 'planned',
+        target: 'Not mine',
+        targetSummary: null,
+        assignee: '/api/organizations/org-1/members/m-2',
+      }),
+      item({
+        id: 'wi-2',
+        status: 'planned',
+        target: 'Mine',
+        targetSummary: null,
+        assignee: '/api/organizations/org-1/members/m-1',
+      }),
+    ]);
+    fixture.componentRef.setInput('currentMemberId', '/api/organizations/org-1/members/m-1');
+    await fixture.whenStable();
+
+    expect(rows()[0]?.textContent).toContain('Not mine');
+
+    (byTestId('intervention-work-items-mine-first') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(rows()[0]?.textContent).toContain('Mine');
+    expect(rows()[1]?.textContent).toContain('Not mine');
+  });
+
+  it('should render the progress bar and count only when the page asks for it', async () => {
+    expect(byTestId('intervention-work-items-progress')).toBeNull();
+
+    fixture.componentRef.setInput('showProgress', true);
+    fixture.componentRef.setInput('totalCount', 10);
+    fixture.componentRef.setInput('completedCount', 4);
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-work-items-progress')?.textContent).toContain('4/10');
+  });
 });

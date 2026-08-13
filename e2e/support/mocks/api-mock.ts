@@ -33,7 +33,12 @@ import type {
 import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
 import type { FacilityOutputFixture } from '../fixtures/facility-fixtures';
 import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
-import type { InterventionOutputFixture } from '../fixtures/intervention-fixtures';
+import type {
+  InterventionIssueOutputFixture,
+  InterventionLabelOutputFixture,
+  InterventionOutputFixture,
+  InterventionWorkItemOutputFixture,
+} from '../fixtures/intervention-fixtures';
 import type {
   OrganizationInvitationPreviewOutputFixture,
   OrganizationMemberOutputFixture,
@@ -993,5 +998,249 @@ export class ApiMock {
         ...error,
       });
     });
+  }
+
+  /**
+   * Mocks `GET /api/interventions` for the interventions list page
+   * (`InterventionStore.load`), echoing the `status` / `member` / `label` /
+   * `number` query params `InterventionsPage`'s filter bar and `mine` toggle
+   * send, so a filtered/shared URL renders only the matching fixtures rather
+   * than every one handed in. `label` matches against each fixture's own
+   * `labels` array — tests populate it with the label IRI(s) the fixture
+   * should be found under.
+   */
+  public async mockInterventionList(
+    organizationId: string,
+    interventions: ReadonlyArray<InterventionOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
+      const url = new URL(route.request().url());
+      const status = url.searchParams.get('status');
+      const member = url.searchParams.get('member');
+      const label = url.searchParams.get('label');
+      const number = url.searchParams.get('number');
+
+      const filtered = interventions.filter((intervention) => {
+        if (status && intervention.status !== status) return false;
+        if (
+          member &&
+          intervention.responsible !== member &&
+          !intervention.participants.includes(member)
+        ) {
+          return false;
+        }
+        if (label && !(intervention.labels as readonly string[]).includes(label)) return false;
+        if (number && String(intervention.number) !== number) return false;
+
+        return true;
+      });
+
+      await fulfillJson(route, 200, hydraCollection(filtered));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/intervention-labels` — the organization's label catalog,
+   * read by `InterventionPlanningOptionsStore` for the list page's label
+   * filter select and the create/detail forms' label editor.
+   */
+  public async mockInterventionLabels(
+    organizationId: string,
+    labels: ReadonlyArray<InterventionLabelOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/intervention-labels(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(labels));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment-types` — one of
+   * the parallel reads `InterventionPlanningOptionsStore.loadWorkspaceOptions`
+   * fires for the detail page's forms.
+   */
+  public async mockInterventionEquipmentTypes(
+    organizationId: string,
+    types: ReadonlyArray<{ readonly value: string; readonly label: string }> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment-types(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(types));
+      },
+    );
+  }
+
+  /**
+   * Mocks a successful `PATCH /api/interventions/{interventionId}` — the
+   * request `InterventionStore.transition` (single or bulk) sends. Pass the
+   * fixture as the server would return it post-transition (new `status`,
+   * bumped `revision`, refreshed `allowedTransitions`).
+   */
+  public async mockInterventionTransition(
+    interventionId: string,
+    updated: InterventionOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/interventions/${interventionId}`, async (route) => {
+      if (route.request().method() !== 'PATCH') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 200, updated);
+    });
+  }
+
+  /**
+   * Mocks a failing `PATCH /api/interventions/{interventionId}` — a
+   * transition the backend refuses (stale revision, invalid move, forbidden,
+   * or a plain conflict). `InterventionStore.transition` rolls the row back
+   * to its pre-transition snapshot and dispatches `transitionFailed` for the
+   * app-wide feedback listener to toast.
+   */
+  public async mockInterventionTransitionError(
+    interventionId: string,
+    error: Partial<ApiErrorFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/interventions/${interventionId}`, async (route) => {
+      if (route.request().method() !== 'PATCH') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, error.status ?? 409, {
+        '@id': '/errors/intervention-transition-failed',
+        '@type': 'Error',
+        status: 409,
+        type: 'about:blank',
+        title: 'The intervention status could not be updated.',
+        detail: 'The intervention status could not be updated.',
+        ...error,
+      });
+    });
+  }
+
+  /**
+   * Mocks `GET /api/interventions/{interventionId}` — the resource the
+   * detail page's workspace store (and `interventionTitleResolver`'s
+   * fire-and-forget seed) both read.
+   */
+  public async mockInterventionDetail(intervention: InterventionOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/interventions/${intervention.id}`, async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 200, intervention);
+    });
+  }
+
+  /**
+   * Mocks `GET /api/intervention-work-items` filtered to one intervention —
+   * `InterventionWorkspaceStore.load`'s work-item read, and the field-work
+   * table it feeds.
+   */
+  public async mockInterventionWorkItems(
+    interventionId: string,
+    workItems: ReadonlyArray<InterventionWorkItemOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/intervention-work-items(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(workItems));
+    });
+  }
+
+  /**
+   * Mocks a successful `PATCH /api/intervention-work-items/{workItemId}` —
+   * the request `InterventionWorkspaceStore.setWorkItemStatus` sends when an
+   * operator toggles a row's completion.
+   */
+  public async mockInterventionWorkItemUpdate(
+    workItemId: string,
+    updated: InterventionWorkItemOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/intervention-work-items/${workItemId}`,
+      async (route) => {
+        if (route.request().method() !== 'PATCH') {
+          await route.fallback();
+          return;
+        }
+        await fulfillJson(route, 200, updated);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/intervention-changes` filtered to one intervention —
+   * `InterventionWorkspaceStore.load`'s proposed-changes read.
+   */
+  public async mockInterventionChanges(
+    interventionId: string,
+    changes: ReadonlyArray<unknown> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/intervention-changes(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(changes));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/interventions/{interventionId}/issues` —
+   * `InterventionWorkspaceStore.load`'s publication-readiness read, which
+   * feeds `InterventionIssuesChecklist`. Re-registering this after the
+   * blocker's own fixture (Playwright matches routes last-registered-first)
+   * lets a spec serve a cleared list on a subsequent load without touching
+   * the first registration.
+   */
+  public async mockInterventionIssues(
+    interventionId: string,
+    issues: ReadonlyArray<InterventionIssueOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/interventions/${interventionId}/issues`,
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(issues));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/interventions/{interventionId}/activities` — the detail
+   * page's activity timeline, fetched alongside the workspace on load.
+   */
+  public async mockInterventionActivities(
+    interventionId: string,
+    activities: ReadonlyArray<unknown> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/interventions/${interventionId}/activities(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(activities));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/interventions/{interventionId}/attachments` — fetched
+   * alongside the workspace on load.
+   */
+  public async mockInterventionAttachments(
+    interventionId: string,
+    attachments: ReadonlyArray<unknown> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/interventions/${interventionId}/attachments`,
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(attachments));
+      },
+    );
   }
 }

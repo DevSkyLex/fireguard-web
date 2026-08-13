@@ -3,6 +3,8 @@ export type { InterventionCapabilityDeps } from './intervention-capability-deps.
 export type { InterventionCommandAction } from './intervention-command-action.interface';
 export type { InterventionDiscoveryRequest } from './intervention-discovery-request.interface';
 export type { InterventionDiscoveryResult } from './intervention-discovery-result.interface';
+export type { InterventionIssueTarget } from './intervention-issue-target.type';
+export type { InterventionLinkedResourceTabId } from './intervention-linked-resource-tab-id.type';
 export type { InterventionPhase } from './intervention-phase.type';
 export type { InterventionPhotoAttachment } from './intervention-photo-attachment.interface';
 export type { InterventionPlanningDetails } from './intervention-planning-details.interface';

@@ -1181,6 +1181,10 @@
         <source>The discussion could not be opened.</source>
         <target>La discussion n'a pas pu être ouverte.</target>
       </trans-unit>
+      <trans-unit id="messages.thread.newMessageAnnouncement" datatype="html">
+        <source>New message from <x id="name" equiv-text="latest.authorName"/></source>
+        <target>Nouveau message de <x id="name" equiv-text="latest.authorName"/></target>
+      </trans-unit>
       <trans-unit id="channels.participants.title" datatype="html">
         <source>Participants</source>
         <target>Participants</target>
@@ -4631,6 +4635,10 @@
         <source>Saving the signature, please wait…</source>
         <target>Enregistrement de la signature, veuillez patienter…</target>
       </trans-unit>
+      <trans-unit id="intervention.signature.capturedStatus" datatype="html">
+        <source>Signature captured</source>
+        <target>Signature capturée</target>
+      </trans-unit>
       <trans-unit id="intervention.newButton" datatype="html">
         <source>New intervention</source>
         <target>Nouvelle intervention</target>
@@ -5958,6 +5966,10 @@
       <trans-unit id="intervention.list.mine" datatype="html">
         <source>My interventions</source>
         <target>Mes interventions</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.loadingAria" datatype="html">
+        <source>Loading key figures</source>
+        <target>Chargement des indicateurs clés</target>
       </trans-unit>
       <trans-unit id="intervention.kpi.total" datatype="html">
         <source>Total</source>
@@ -9365,6 +9377,10 @@
       <trans-unit id="intervention.list.exportButton" datatype="html">
         <source>Export</source>
         <target>Exporter</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.exportingStatus" datatype="html">
+        <source>Preparing the export…</source>
+        <target>Préparation de l'export…</target>
       </trans-unit>
       <trans-unit id="intervention.list.exportCapped" datatype="html">
         <source>Export capped at <x id="cap" equiv-text="EXPORT_ROW_CAP"/> rows.</source>

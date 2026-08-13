@@ -1,3 +1,4 @@
+export type { BuildMessageViewsInput } from './build-message-views-input.interface';
 export type { MessageReactionToggle } from './message-reaction-toggle.interface';
 export type { MessageSendStatus } from './message-send-status.type';
 export type {

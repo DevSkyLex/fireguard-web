@@ -781,5 +781,25 @@ describe('InterventionsPage', () => {
       expect(feedbackError).toHaveBeenCalledTimes(1);
       expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
+
+    it('should mark the export button busy and announce it while the export is in flight', async () => {
+      totalInterventions.set(5);
+      fixture = await createPage();
+
+      const button = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="interventions-export"]',
+      );
+      expect(button?.getAttribute('aria-busy')).toBeNull();
+
+      fixture.componentInstance['exportBusy'].set(true);
+      await fixture.whenStable();
+
+      expect(button?.getAttribute('aria-busy')).toBe('true');
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="interventions-export-status"]',
+        ),
+      ).not.toBeNull();
+    });
   });
 });

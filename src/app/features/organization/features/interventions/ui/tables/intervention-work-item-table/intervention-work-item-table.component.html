@@ -218,24 +218,25 @@
 
                   <td hlmTableCell class="text-right whitespace-nowrap">
                     @if (canAttachEvidence()) {
-                      @if (isEvidencePending(item)) {
-                        <hlm-spinner
-                          size="xs"
-                          class="mr-1 inline-flex"
-                          data-testid="intervention-work-item-evidence-pending"
-                          aria-hidden="true"
-                        />
-                      } @else {
-                        <button
-                          hlmBtn
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          class="relative mr-1 text-muted-foreground max-sm:size-11"
-                          data-testid="intervention-work-item-evidence"
-                          [attr.aria-label]="evidenceLabelOf(item)"
-                          (click)="evidenceRequested.emit(item)"
-                        >
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        class="relative mr-1 text-muted-foreground max-sm:size-11"
+                        data-testid="intervention-work-item-evidence"
+                        [attr.aria-label]="evidenceLabelOf(item)"
+                        [disabled]="isEvidencePending(item)"
+                        [attr.aria-busy]="isEvidencePending(item) ? 'true' : null"
+                        (click)="evidenceRequested.emit(item)"
+                      >
+                        @if (isEvidencePending(item)) {
+                          <hlm-spinner
+                            size="xs"
+                            data-testid="intervention-work-item-evidence-pending"
+                            aria-hidden="true"
+                          />
+                        } @else {
                           <ng-icon name="lucideCamera" aria-hidden="true" />
                           @if (item.evidenceCount > 0) {
                             <span
@@ -246,8 +247,8 @@
                               >{{ item.evidenceCount }}</span
                             >
                           }
-                        </button>
-                      }
+                        }
+                      </button>
                     }
                     @if (hasRowActions(item)) {
                       <button

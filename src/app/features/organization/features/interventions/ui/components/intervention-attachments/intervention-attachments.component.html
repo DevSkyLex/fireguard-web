@@ -167,43 +167,45 @@
             </span>
           </div>
           <div hlmItemActions>
-            @if (isRowDownloading(attachment)) {
-              <hlm-spinner size="xs" aria-hidden="true" />
-            } @else {
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              class="text-muted-foreground max-sm:size-11"
+              data-testid="intervention-attachment-download"
+              i18n-aria-label="@@intervention.attachments.download"
+              aria-label="Download this file"
+              [disabled]="!online() || isRowDownloading(attachment)"
+              [attr.aria-busy]="isRowDownloading(attachment) ? 'true' : null"
+              (click)="downloadRequested.emit(attachment)"
+            >
+              @if (isRowDownloading(attachment)) {
+                <hlm-spinner size="xs" aria-hidden="true" />
+              } @else {
+                <ng-icon name="lucideDownload" aria-hidden="true" />
+              }
+            </button>
+            @if (canManage()) {
               <button
                 hlmBtn
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                class="text-muted-foreground max-sm:size-11"
-                data-testid="intervention-attachment-download"
-                i18n-aria-label="@@intervention.attachments.download"
-                aria-label="Download this file"
-                [disabled]="!online()"
-                (click)="downloadRequested.emit(attachment)"
+                class="text-muted-foreground hover:text-destructive max-sm:size-11"
+                data-testid="intervention-attachment-delete"
+                i18n-aria-label="@@intervention.attachments.delete"
+                aria-label="Delete this file"
+                [disabled]="!online() || isRowPending(attachment)"
+                [attr.aria-busy]="isRowPending(attachment) ? 'true' : null"
+                (click)="pendingDelete.set(attachment)"
               >
-                <ng-icon name="lucideDownload" aria-hidden="true" />
-              </button>
-            }
-            @if (canManage()) {
-              @if (isRowPending(attachment)) {
-                <hlm-spinner size="xs" aria-hidden="true" />
-              } @else {
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  class="text-muted-foreground hover:text-destructive max-sm:size-11"
-                  data-testid="intervention-attachment-delete"
-                  i18n-aria-label="@@intervention.attachments.delete"
-                  aria-label="Delete this file"
-                  [disabled]="!online()"
-                  (click)="pendingDelete.set(attachment)"
-                >
+                @if (isRowPending(attachment)) {
+                  <hlm-spinner size="xs" aria-hidden="true" />
+                } @else {
                   <ng-icon name="lucideTrash2" aria-hidden="true" />
-                </button>
-              }
+                }
+              </button>
             }
           </div>
         </li>

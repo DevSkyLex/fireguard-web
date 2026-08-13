@@ -118,6 +118,19 @@ describe('InterventionSignatureDialog', () => {
     expect(signed).toEqual([]);
   });
 
+  it('should announce the signature as captured once a stroke is drawn', async () => {
+    await setVisible(true);
+    const canvas: HTMLCanvasElement = canvasEl();
+    stubPointerCapture(canvas);
+
+    expect(content().textContent).not.toContain('Signature captured');
+
+    draw(canvas);
+    await fixture.whenStable();
+
+    expect(content().textContent).toContain('Signature captured');
+  });
+
   it('should clear strokes when reopened', async () => {
     await setVisible(true);
     const canvas: HTMLCanvasElement = canvasEl();

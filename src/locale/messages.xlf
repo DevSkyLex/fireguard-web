@@ -2398,6 +2398,13 @@
           <context context-type="linenumber">27,28</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="messages.thread.newMessageAnnouncement" datatype="html">
+        <source>New message from <x id="name" equiv-text="latest.authorName"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/message-thread/message-thread.component.ts</context>
+          <context context-type="linenumber">457</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="messages.thread.emptyDescription" datatype="html">
         <source>Say hello to start the conversation.</source>
         <context-group purpose="location">
@@ -6135,6 +6142,13 @@
           <context context-type="linenumber">162</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.kpi.loadingAria" datatype="html">
+        <source>Loading key figures</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-kpi-strip/intervention-kpi-strip.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.kpi.total" datatype="html">
         <source>Total</source>
         <context-group purpose="location">
@@ -6689,6 +6703,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/dialogs/intervention-signature-dialog/intervention-signature-dialog.component.html</context>
           <context context-type="linenumber">67,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.signature.capturedStatus" datatype="html">
+        <source>Signature captured</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/dialogs/intervention-signature-dialog/intervention-signature-dialog.component.html</context>
+          <context context-type="linenumber">73</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.comment.label" datatype="html">
@@ -7519,6 +7540,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-page/interventions-page.component.html</context>
           <context context-type="linenumber">431,435</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.list.exportingStatus" datatype="html">
+        <source>Preparing the export…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-page/interventions-page.component.html</context>
+          <context context-type="linenumber">438,445</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.list.columnsMenuLabel" datatype="html">

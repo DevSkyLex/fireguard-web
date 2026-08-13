@@ -48,6 +48,8 @@ import type {
   InterventionEditState,
   InterventionEditTarget,
   InterventionIssueOutput,
+  InterventionIssueTarget,
+  InterventionLinkedResourceTabId,
   InterventionOutput,
   InterventionPhase,
   InterventionReadinessItem,
@@ -112,6 +114,7 @@ import { InterventionAttachments } from '../../components/intervention-attachmen
 import { InterventionChangeList } from '../../components/intervention-change-list';
 import { InterventionCommandBar } from '../../components/intervention-command-bar';
 import { InterventionGettingStarted } from '../../components/intervention-getting-started';
+import { InterventionIssuesChecklist } from '../../components/intervention-issues-checklist';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
 import { InterventionPublicationSummary } from '../../components/intervention-publication-summary';
 import { InterventionSyncStatus } from '../../components/intervention-sync-status';
@@ -125,7 +128,6 @@ import { InterventionEquipmentTable } from '../../tables/intervention-equipment-
 import { InterventionFacilitiesTable } from '../../tables/intervention-facilities-table';
 import { InterventionInspectionsTable } from '../../tables/intervention-inspections-table';
 import { InterventionWorkItemTable } from '../../tables/intervention-work-item-table';
-import type { InterventionLinkedResourceTabId } from './models';
 
 /** The edit state before anything is open. */
 const IDLE_EDIT_STATE: InterventionEditState = {
@@ -197,6 +199,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionSyncStatus,
     InterventionCommentForm,
     InterventionGettingStarted,
+    InterventionIssuesChecklist,
     InterventionEquipmentTable,
     InterventionFacilitiesTable,
     InterventionInspectionsTable,
@@ -1158,6 +1161,36 @@ export class InterventionDetailPage {
     }
 
     this.onEditTargetChanged(target);
+  }
+
+  /**
+   * Method onIssueActivated
+   *
+   * @description
+   * Sends the operator to the address a publication issue resolved to: a
+   * rail tab for a sibling-resource issue, the matching in-place editor for
+   * an intervention-level field issue, or the field-work section for
+   * everything else — never a bypass of the publish gate itself, only a
+   * shortcut to the place that closes it.
+   *
+   * @access protected
+   * @since 5.3.0
+   *
+   * @param {InterventionIssueTarget} target - Where the activated issue points.
+   *
+   * @returns {void}
+   */
+  protected onIssueActivated(target: InterventionIssueTarget): void {
+    switch (target.kind) {
+      case 'railTab':
+        this.activeLinkedTab.set(target.tab);
+        break;
+      case 'edit':
+        this.onEditTargetChanged(target.target);
+        break;
+      default:
+        this.revealFieldWork();
+    }
   }
 
   /**

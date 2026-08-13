@@ -14,3 +14,4 @@ export {
   capabilityForTransition,
   resolveAllowedTransitions,
 } from './intervention-status-transition/intervention-status-transition.utils';
+export { resolveInterventionIssueTarget } from './intervention-issue-target/intervention-issue-target.utils';

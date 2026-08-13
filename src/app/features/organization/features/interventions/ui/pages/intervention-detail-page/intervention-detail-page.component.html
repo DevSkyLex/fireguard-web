@@ -207,6 +207,16 @@
               />
             }
 
+            @if (phase() === 'execute' || phase() === 'review') {
+              <div class="lg:hidden">
+                <app-intervention-issues-checklist
+                  [issues]="store.issues()"
+                  [phase]="phase()"
+                  (activated)="onIssueActivated($event)"
+                />
+              </div>
+            }
+
             <div
               #workItemsSection
               tabindex="-1"
@@ -397,6 +407,16 @@
             (invoked)="invokeCommandAction()"
           />
         </div>
+
+        @if (phase() === 'execute' || phase() === 'review') {
+          <div class="max-lg:hidden">
+            <app-intervention-issues-checklist
+              [issues]="store.issues()"
+              [phase]="phase()"
+              (activated)="onIssueActivated($event)"
+            />
+          </div>
+        }
       </div>
     </div>
 

@@ -9401,6 +9401,22 @@
         <source>This intervention is published</source>
         <target>Esta intervención está publicada</target>
       </trans-unit>
+      <trans-unit id="intervention.issues.title" datatype="html">
+        <source>Publication issues</source>
+        <target>Puntos de publicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.issues.clear" datatype="html">
+        <source>No blockers — ready to publish</source>
+        <target>Sin puntos bloqueantes — listo para publicar</target>
+      </trans-unit>
+      <trans-unit id="intervention.issues.secondaryToggleOne" datatype="html">
+        <source>1 point to review</source>
+        <target>1 punto por revisar</target>
+      </trans-unit>
+      <trans-unit id="intervention.issues.secondaryToggleMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> points to review</source>
+        <target><x id="count" equiv-text="count"/> puntos por revisar</target>
+      </trans-unit>
       <trans-unit id="intervention.wit.skipHeader" datatype="html">
         <source>Skip work item</source>
         <target>Omitir el elemento de trabajo</target>

@@ -458,6 +458,16 @@ action that predictably 403s. The optimistic `transition` rollback and the
 `transitionFailed` toast remain the safety net for a race the client cannot
 see (a reassignment landing between render and click).
 
+`app-intervention-issues-checklist` (execute and review phases) gives every
+loaded issue a direct address instead of a message to decode: blocker or
+warning, activating one moves the operator to the rail tab, in-place editor,
+or field-work section that resolves it (`resolveInterventionIssueTarget`,
+grounded in the exact `resource`/`field` pairs `InterventionIssueFinder`
+emits). It never bypasses the gate above — activating an issue only
+navigates, the same way `onReadinessActivated` does for a prepare-phase gap;
+the write that actually clears the issue still goes through the in-place
+editor, the work-item table, or the equipment record it points at.
+
 ### Proposed changes: reject is the only client action
 
 `UpdateInterventionChangeInput.status` only ever accepts

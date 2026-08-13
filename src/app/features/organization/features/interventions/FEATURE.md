@@ -661,6 +661,18 @@ field-work events) plus the intervention's own comments, append-only and part of
 history; the discussion is ephemeral team chatter that never becomes part of that record. Neither
 absorbs the other.
 
+### Comment mentions
+
+`app-intervention-comment-form` inserts the backend's own `@{memberUuid}`
+token verbatim when a mention is picked (typed `@` or the at-sign trigger
+button) — there is no label-to-marker rewrite step, unlike collaboration's
+message composer, because the backend notifies (in-app + email,
+`intervention.comment_mention`) off exactly that token in the stored body.
+`app-intervention-activity-thread` resolves the same tokens client-side to
+render a name; both share `utils/intervention-mentions/`. See both
+components' own docs for the mirrored-vs-shared reasoning against the
+collaboration feature's caret-query machinery.
+
 ### Attachments and field capture
 
 `app-intervention-attachments` (between Changes and Activity) lists the

@@ -15,3 +15,9 @@ export {
   capabilityForTransition,
   resolveAllowedTransitions,
 } from './intervention-status-transition/intervention-status-transition.utils';
+export {
+  findInterventionMentionQuery,
+  interventionMemberId,
+  parseInterventionMentions,
+  resolveInterventionMentionMember,
+} from './intervention-mentions/intervention-mentions.utils';

@@ -9653,6 +9653,22 @@
         <source>This comment is too long.</source>
         <target>Este comentario es demasiado largo.</target>
       </trans-unit>
+      <trans-unit id="intervention.comment.mentionsLabel" datatype="html">
+        <source>Members you can mention</source>
+        <target>Miembros que puedes mencionar</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.mentionTrigger" datatype="html">
+        <source>Mention a member</source>
+        <target>Mencionar a un miembro</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.mentionChipsLabel" datatype="html">
+        <source>Members who will be notified</source>
+        <target>Miembros que serán notificados</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.willNotify" datatype="html">
+        <source>Will notify:</source>
+        <target>Notificará a:</target>
+      </trans-unit>
       <trans-unit id="intervention.detail.detailsTitle" datatype="html">
         <source>Details</source>
         <target>Detalles</target>

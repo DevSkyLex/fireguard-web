@@ -28,6 +28,12 @@ This subfeature is responsible for:
   permission-gated bulk actions. `?create=1` opens the creation sheet on
   arrival and is consumed once, so the parent feature's landing page can offer
   "New intervention" as a primary action that actually starts the work.
+  **Export is a client-side CSV serialization of the current question** (same
+  filters, sort and visible columns as the screen), never a backend endpoint:
+  the already-loaded page is downloaded directly when it is the whole result
+  set, otherwise every matching row is drained through
+  `InterventionService.listAll` and capped at 1000 rows
+  (`ui/pages/interventions-page/utils/intervention-csv-export/`).
 
   **Filters live in the URL** (5.2 — this flips the earlier "questions asked
   now, never persisted" stance): one query param per filter, raw ids for the

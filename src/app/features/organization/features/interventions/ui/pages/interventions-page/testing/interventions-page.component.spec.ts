@@ -1,8 +1,13 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { InterventionStore } from '@features/organization/features/interventions/state';
@@ -70,6 +75,10 @@ describe('InterventionsPage', () => {
   let createdInterventionId: WritableSignal<string | null>;
   let listError: WritableSignal<unknown>;
   let pendingDuplicatePrefill: WritableSignal<unknown>;
+  let totalInterventions: WritableSignal<number>;
+  let listAll: ReturnType<typeof vi.fn>;
+  let feedbackWarn: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     load = vi.fn();
@@ -85,6 +94,10 @@ describe('InterventionsPage', () => {
     createdInterventionId = signal<string | null>(null);
     listError = signal<unknown>(null);
     pendingDuplicatePrefill = signal<unknown>(null);
+    totalInterventions = signal<number>(0);
+    listAll = vi.fn().mockReturnValue(of([]));
+    feedbackWarn = vi.fn();
+    feedbackError = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -104,7 +117,7 @@ describe('InterventionsPage', () => {
             createdInterventionId,
             listError,
             pendingDuplicatePrefill,
-            totalInterventions: signal(0),
+            totalInterventions,
             isLoadingInterventions: signal(false),
             isCreating: signal(false),
             createError: signal(null),
@@ -134,6 +147,11 @@ describe('InterventionsPage', () => {
         {
           provide: OrganizationMemberAccessStore,
           useValue: { profile: signal({ id: 'member-1' }) },
+        },
+        { provide: InterventionService, useValue: { listAll } },
+        {
+          provide: FeedbackService,
+          useValue: { warn: feedbackWarn, error: feedbackError },
         },
         { provide: Router, useValue: { navigate } },
         { provide: ActivatedRoute, useValue: {} },
@@ -681,6 +699,83 @@ describe('InterventionsPage', () => {
       expect(transition).toHaveBeenCalledWith({ id: 'i-1', status: 'abandoned', revision: 1 });
       expect(transition).toHaveBeenCalledWith({ id: 'i-2', status: 'abandoned', revision: 2 });
       expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+    });
+  });
+
+  describe('export', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should disable the button while the list is loading, busy or empty', async () => {
+      totalInterventions.set(0);
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+
+      totalInterventions.set(5);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(false);
+
+      fixture.componentInstance['exportBusy'].set(true);
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+    });
+
+    it('should export the loaded page directly when it already is the whole collection', async () => {
+      interventionList.set([intervention({ id: 'i-1' })]);
+      totalInterventions.set(1);
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+
+      expect(listAll).not.toHaveBeenCalled();
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    });
+
+    it('should drain every page through the service, with the current filters and sort, when more rows exist than are loaded', async () => {
+      interventionList.set([intervention({ id: 'i-1' })]);
+      totalInterventions.set(2);
+      listAll.mockReturnValue(of([intervention({ id: 'i-1' }), intervention({ id: 'i-2' })]));
+      fixture = await createPage({ status: 'planned', q: 'sweep' });
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(listAll).toHaveBeenCalledTimes(1);
+      expect(listAll.mock.calls[0][0]).toBe('org-1');
+      expect(listAll.mock.calls[0][1]).toMatchObject({ status: 'planned', name: 'sweep' });
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+    });
+
+    it('should cap a drained export and warn once truncated', async () => {
+      totalInterventions.set(1_500);
+      const rows: InterventionOutput[] = Array.from({ length: 1_200 }, (_unused, index) =>
+        intervention({ id: `i-${index}` }),
+      );
+      listAll.mockReturnValue(of(rows));
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(feedbackWarn).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    });
+
+    it('should clear the busy flag and report a failure when the drain errors', async () => {
+      totalInterventions.set(2);
+      listAll.mockReturnValue(throwError(() => new Error('network down')));
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
   });
 });

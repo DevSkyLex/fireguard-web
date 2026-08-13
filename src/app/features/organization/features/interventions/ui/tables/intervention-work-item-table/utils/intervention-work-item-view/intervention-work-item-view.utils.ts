@@ -1,8 +1,8 @@
 import type {
-  InterventionWorkItemFilter,
   InterventionWorkItemOutput,
   InterventionWorkItemStatus,
 } from '@features/organization/features/interventions/models';
+import type { InterventionWorkItemFilter } from '../../models/intervention-work-item-filter.type';
 
 /**
  * Constant FILTER_STATUSES

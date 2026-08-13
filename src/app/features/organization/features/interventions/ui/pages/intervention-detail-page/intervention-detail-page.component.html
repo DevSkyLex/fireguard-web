@@ -587,51 +587,49 @@
       </div>
     }
 
-    @if (publicationTimedOut()) {
-      <div
-        hlmAlert
-        class="bg-muted/50"
-        role="status"
-        data-testid="intervention-detail-publish-timed-out"
-      >
-        <ng-icon name="lucideClock" aria-hidden="true" />
-        <p hlmAlertTitle i18n="@@intervention.publish.timedOutMessage">
-          Publication is still running server-side — it will finish in the background.
-        </p>
-        <button
-          hlmAlertAction
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11"
-          data-testid="intervention-detail-publish-recheck"
-          [disabled]="publishing()"
-          [attr.aria-busy]="publishing() ? 'true' : null"
-          (click)="recheckPublication()"
+    @if (publicationTimedOut() || publishing()) {
+      <div class="flex flex-col gap-2">
+        <p
+          class="flex items-center gap-2 text-sm text-muted-foreground"
+          role="status"
+          data-testid="intervention-detail-publish-progress"
         >
-          <span i18n="@@intervention.publish.recheck">Check again</span>
-        </button>
-      </div>
-    }
-
-    @if (publishing()) {
-      <p
-        class="flex items-center gap-2 text-sm text-muted-foreground"
-        role="status"
-        data-testid="intervention-detail-publish-progress"
-      >
-        <hlm-spinner class="size-4" aria-hidden="true" />
-        @if (publicationLongRunning()) {
-          <span i18n="@@intervention.publish.stillRunning">
-            Still publishing — large interventions can take a couple of minutes.
-          </span>
-        } @else {
-          <span i18n="@@intervention.publish.inProgress">
-            Writing to the compliance record — do not close this window.
-          </span>
+          @if (publishing()) {
+            <hlm-spinner class="size-4" aria-hidden="true" />
+            @if (publicationLongRunning()) {
+              <span i18n="@@intervention.publish.stillRunning">
+                Still publishing — large interventions can take a couple of minutes.
+              </span>
+            } @else {
+              <span i18n="@@intervention.publish.inProgress">
+                Writing to the compliance record — do not close this window.
+              </span>
+            }
+          } @else {
+            <ng-icon name="lucideClock" aria-hidden="true" />
+            <span i18n="@@intervention.publish.timedOutMessage">
+              Publication is still running server-side — it will finish in the background.
+            </span>
+          }
+        </p>
+        @if (publicationTimedOut()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="self-start max-sm:min-h-11"
+            data-testid="intervention-detail-publish-recheck"
+            [attr.aria-disabled]="publishing() ? 'true' : null"
+            [attr.aria-busy]="publishing() ? 'true' : null"
+            [class.opacity-50]="publishing()"
+            [class.pointer-events-none]="publishing()"
+            (click)="publishing() || recheckPublication()"
+          >
+            <span i18n="@@intervention.publish.recheck">Check again</span>
+          </button>
         }
-      </p>
+      </div>
     }
 
     <hlm-alert-dialog-footer>
@@ -640,9 +638,11 @@
         <button
           hlmAlertDialogAction
           data-testid="intervention-detail-publish-confirm"
-          [disabled]="publishing()"
+          [attr.aria-disabled]="publishing() ? 'true' : null"
           [attr.aria-busy]="publishing() ? 'true' : null"
-          (click)="confirmPublish()"
+          [class.opacity-50]="publishing()"
+          [class.pointer-events-none]="publishing()"
+          (click)="publishing() || confirmPublish()"
         >
           @if (publishing()) {
             <span i18n="@@intervention.publish.pending">Publishing…</span>

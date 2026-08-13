@@ -758,9 +758,15 @@ follows.
   names the compliance record before the recap, swaps its button to a spinner and
   a `role="status"` line while the write and its poll run, and confirms success —
   the one irreversible write in the product must not look like a frozen modal.
-  The poll itself is **bounded** (~2 minutes): a publication stuck server-side
-  in `processing` ends as a failed request the dialog reports inline, never as
-  a spinner that outlives the operator's patience or as a false success.
+  The poll itself is **bounded** (~2 minutes) and its exhaustion is
+  **recoverable, not terminal** (5.3): a publication stuck server-side past
+  the bound surfaces as a distinct timed-out state — "still running in the
+  background" with a single-shot "Check again" (`recheck()`, one re-read of
+  the publication, no new poll) — never as a spinner that outlives the
+  operator's patience, a false success, or a dead-end failure for a write
+  that may yet complete. Past ~30 seconds the in-flight copy switches to a
+  still-working variant so a long publication reads as long, not frozen. A
+  genuine `failed` result still reports inline as before.
 - **The page's fixed elements never reorder (WCAG 2.4.3).** Header → meta →
   error alert → Overview → Work items → Changes → Attachments → Activity →
   properties card

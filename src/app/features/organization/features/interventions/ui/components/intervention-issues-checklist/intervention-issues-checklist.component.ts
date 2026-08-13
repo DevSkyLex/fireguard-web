@@ -17,10 +17,10 @@ import type {
   InterventionIssueTarget,
   InterventionPhase,
 } from '@features/organization/features/interventions/models';
-import { resolveInterventionIssueTarget } from '@features/organization/features/interventions/utils';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { InterventionTag } from '../intervention-tag';
+import { resolveInterventionIssueTarget } from './utils/intervention-issue-target/intervention-issue-target.utils';
 
 /**
  * Component InterventionIssuesChecklist

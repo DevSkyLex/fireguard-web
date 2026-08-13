@@ -28,11 +28,9 @@ import {
 } from '@ng-icons/lucide';
 import {
   resolveInterventionTag,
-  type InterventionWorkItemFilter,
   type InterventionWorkItemOutput,
   type InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
-import { filterAndGroupInterventionWorkItems } from '@features/organization/features/interventions/utils';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
@@ -48,6 +46,8 @@ import {
   WORK_ITEM_STATUS_ICON,
   WORK_ITEM_STATUS_ICON_CLASS,
 } from './constants/intervention-work-item-appearance.constants';
+import type { InterventionWorkItemFilter } from './models/intervention-work-item-filter.type';
+import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-item-view/intervention-work-item-view.utils';
 
 /**
  * Component InterventionWorkItemTable

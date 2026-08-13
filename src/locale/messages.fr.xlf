@@ -4315,6 +4315,142 @@
         <source>A temporary synchronization error interrupted this intervention.</source>
         <target>Une erreur de synchronisation temporaire a interrompu cette intervention.</target>
       </trans-unit>
+      <trans-unit id="intervention.sync.chipLabel" datatype="html">
+        <source>Synchronization status</source>
+        <target>État de la synchronisation</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.title" datatype="html">
+        <source> Synchronization </source>
+        <target> Synchronisation </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.running" datatype="html">
+        <source> Replaying queued changes… </source>
+        <target> Rejeu des modifications en attente… </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.blocked" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ blockedCount() }}"/> change(s) could not be replayed. </source>
+        <target> <x id="INTERPOLATION" equiv-text="{{ blockedCount() }}"/> modification(s) n'ont pas pu être rejouée(s). </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.pending" datatype="html">
+        <source> Some changes are waiting to sync. </source>
+        <target> Des modifications attendent d'être synchronisées. </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.now" datatype="html">
+        <source>Sync now</source>
+        <target>Synchroniser maintenant</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.retry" datatype="html">
+        <source>Retry blocked</source>
+        <target>Réessayer les modifications bloquées</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.discard" datatype="html">
+        <source>Discard blocked</source>
+        <target>Abandonner les modifications bloquées</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.discardTitle" datatype="html">
+        <source> Discard the blocked changes? </source>
+        <target> Abandonner les modifications bloquées ? </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.discardText" datatype="html">
+        <source> The changes that could not be replayed will be permanently lost. Work recorded on the server is not affected. </source>
+        <target> Les modifications qui n'ont pas pu être rejouées seront définitivement perdues. Le travail enregistré sur le serveur n'est pas affecté. </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.discardConfirm" datatype="html">
+        <source> Discard </source>
+        <target> Abandonner </target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.rejectChangeFailed" datatype="html">
+        <source>The proposed change could not be rejected.</source>
+        <target>La modification proposée n'a pas pu être rejetée.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.attachmentUploadFailed" datatype="html">
+        <source>The file could not be uploaded.</source>
+        <target>Le fichier n'a pas pu être téléversé.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.attachmentDeleteFailed" datatype="html">
+        <source>The file could not be deleted.</source>
+        <target>Le fichier n'a pas pu être supprimé.</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.rescheduledLine" datatype="html">
+        <source>moved the planned window to</source>
+        <target>a déplacé la fenêtre planifiée au</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.title" datatype="html">
+        <source>Attachments</source>
+        <target>Pièces jointes</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.caption" datatype="html">
+        <source> Photos and documents kept with this intervention. Download links are not available yet. </source>
+        <target> Photos et documents conservés avec cette intervention. Les liens de téléchargement ne sont pas encore disponibles. </target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.add" datatype="html">
+        <source>Add files</source>
+        <target>Ajouter des fichiers</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.photo" datatype="html">
+        <source>Take a photo</source>
+        <target>Prendre une photo</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.offline" datatype="html">
+        <source> Connect to the network to add files — attachments do not queue offline. </source>
+        <target> Connectez-vous au réseau pour ajouter des fichiers — les pièces jointes ne sont pas mises en file d'attente hors ligne. </target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.delete" datatype="html">
+        <source>Delete this file</source>
+        <target>Supprimer ce fichier</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.deleteTitle" datatype="html">
+        <source>Delete this file?</source>
+        <target>Supprimer ce fichier ?</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.deleteText" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ pendingDelete()?.fileName }}"/> will be permanently removed from this intervention. </source>
+        <target> <x id="INTERPOLATION" equiv-text="{{ pendingDelete()?.fileName }}"/> sera définitivement retiré de cette intervention. </target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.deleteConfirm" datatype="html">
+        <source> Delete </source>
+        <target> Supprimer </target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.tooLarge" datatype="html">
+        <source>&quot;<x id="name" equiv-text="oversized.name"/>&quot; exceeds the 10 MB limit.</source>
+        <target>« <x id="name" equiv-text="oversized.name"/> » dépasse la limite de 10 Mo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.unsupported" datatype="html">
+        <source>&quot;<x id="name" equiv-text="unsupported.name"/>&quot; is not an accepted format (images or PDF).</source>
+        <target>« <x id="name" equiv-text="unsupported.name"/> » n'est pas un format accepté (images ou PDF).</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.prepareFailed" datatype="html">
+        <source><x id="fileName" equiv-text="file.name"/> could not be prepared for upload.</source>
+        <target><x id="fileName" equiv-text="file.name"/> n'a pas pu être préparé pour le téléversement.</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.reject" datatype="html">
+        <source>Reject</source>
+        <target>Rejeter</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaRescheduledNoActor" datatype="html">
+        <source>Rescheduled <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target>Replanifiée <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.metaRescheduled" datatype="html">
+        <source><x id="actor" equiv-text="actorName"/> moved the planned window <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
+        <target><x id="actor" equiv-text="actorName"/> a déplacé la fenêtre planifiée <x id="when" equiv-text="when"/> · révision <x id="revision" equiv-text="revision"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterPriority" datatype="html">
+        <source>Priority</source>
+        <target>Priorité</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortPlannedStartAt" datatype="html">
+        <source>Start date</source>
+        <target>Date de début</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortName" datatype="html">
+        <source>Name</source>
+        <target>Nom</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortUpdatedAt" datatype="html">
+        <source>Last update</source>
+        <target>Dernière mise à jour</target>
+      </trans-unit>
       <trans-unit id="intervention.noRole" datatype="html">
         <source>No assigned role</source>
         <target>Aucun rôle attribué</target>

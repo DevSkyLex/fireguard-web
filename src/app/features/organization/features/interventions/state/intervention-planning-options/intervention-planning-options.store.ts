@@ -18,7 +18,10 @@ import {
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import { InterventionLabelService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionLabelService,
+  InterventionTemplateService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   MemberSelectOption,
   SelectOption,
@@ -33,6 +36,7 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
   equipmentTypes: [],
   members: [],
   labels: [],
+  templates: [],
   loadCallState: idleCallState(),
 };
 
@@ -135,6 +139,15 @@ export const InterventionPlanningOptionsStore = signalStore(
       const state = store.loadCallState();
       return isCallError(state) ? state.error : null;
     }),
+
+    /**
+     * Computed hasTemplates.
+     *
+     * @description
+     * True once the creation flow has at least one intervention template to
+     * offer — the "start from a template" picker stays hidden otherwise.
+     */
+    hasTemplates: computed<boolean>(() => store.templates().length > 0),
   })),
   withMethods(
     (
@@ -144,6 +157,7 @@ export const InterventionPlanningOptionsStore = signalStore(
       equipment = inject<EquipmentService>(EquipmentService),
       members = inject<OrganizationMemberService>(OrganizationMemberService),
       labelService = inject<InterventionLabelService>(InterventionLabelService),
+      templateService = inject<InterventionTemplateService>(InterventionTemplateService),
     ) => ({
       /**
        * Method loadCreationOptions
@@ -168,6 +182,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               equipmentTypes: [],
               members: [],
               labels: [],
+              templates: [],
               loadCallState: pendingCallState(),
             }),
           ),
@@ -185,6 +200,9 @@ export const InterventionPlanningOptionsStore = signalStore(
                 itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
               }),
               labels: labelService.list(`/api/organizations/${organizationId}`),
+              templates: templateService.list(`/api/organizations/${organizationId}`, {
+                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+              }),
             });
           }),
           tapResponse({
@@ -203,6 +221,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                   memberOption(member, result.organizationId),
                 ),
                 labels: result.labels.member,
+                templates: result.templates.member,
                 loadCallState: successCallState(null),
               });
             },
@@ -214,6 +233,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                 equipmentTypes: [],
                 members: [],
                 labels: [],
+                templates: [],
                 loadCallState: errorCallState(storeError),
               });
               dispatcher.dispatch(
@@ -248,6 +268,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               equipmentTypes: [],
               members: [],
               labels: [],
+              templates: [],
               loadCallState: pendingCallState(),
             }),
           ),
@@ -319,6 +340,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                 equipmentTypes: [],
                 members: [],
                 labels: [],
+                templates: [],
                 loadCallState: errorCallState(storeError),
               });
               dispatcher.dispatch(

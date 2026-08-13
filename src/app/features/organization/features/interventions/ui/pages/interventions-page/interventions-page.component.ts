@@ -1066,14 +1066,14 @@ export class InterventionsPage {
     });
 
     effect((): void => {
-      const created: InterventionOutput | null = this.store.createdIntervention();
+      const createdId: string | null = this.store.createdInterventionId();
 
       untracked((): void => {
-        if (!created) return;
+        if (!createdId) return;
 
         this.createSheetVisible.set(false);
         this.store.clearCreatedIntervention();
-        void this.router.navigate([...this.detailRouteBase(), created.id]);
+        void this.router.navigate([...this.detailRouteBase(), createdId]);
       });
     });
   }
@@ -1400,6 +1400,26 @@ export class InterventionsPage {
       plannedStartAt: values.plannedStartAt ?? undefined,
       dueAt: values.dueAt ?? undefined,
     });
+  }
+
+  /**
+   * Method instantiateFromTemplate
+   * @method instantiateFromTemplate
+   *
+   * @description
+   * Hands the chosen template to the store. The sheet closes and the page
+   * navigates once the store reports the new draft, the same as
+   * {@link createIntervention}.
+   *
+   * @access protected
+   * @since 4.3.0
+   *
+   * @param {string} templateId - The chosen template.
+   *
+   * @returns {void}
+   */
+  protected instantiateFromTemplate(templateId: string): void {
+    this.store.instantiateFromTemplate({ templateId });
   }
 
   /**

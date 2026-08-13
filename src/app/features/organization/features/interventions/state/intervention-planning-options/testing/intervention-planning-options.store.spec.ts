@@ -7,6 +7,7 @@ import { FacilityService } from '@features/organization/features/facilities/data
 import {
   InterventionLabelService,
   InterventionService,
+  InterventionTemplateService,
 } from '@features/organization/features/interventions/data-access';
 import { InterventionPlanningOptionsStore } from '../intervention-planning-options.store';
 
@@ -16,6 +17,7 @@ describe('InterventionPlanningOptionsStore', () => {
   let equipment: { list: ReturnType<typeof vi.fn>; listTypes: ReturnType<typeof vi.fn> };
   let members: { list: ReturnType<typeof vi.fn> };
   let labels: { list: ReturnType<typeof vi.fn> };
+  let templates: { list: ReturnType<typeof vi.fn> };
   let interventions: Record<string, never>;
   let dispatch: ReturnType<typeof vi.fn>;
 
@@ -66,6 +68,14 @@ describe('InterventionPlanningOptionsStore', () => {
         }),
       ),
     };
+    templates = {
+      list: vi.fn().mockReturnValue(
+        of({
+          member: [{ id: 'template-1', name: 'Annual inspection round' }],
+          totalItems: 1,
+        }),
+      ),
+    };
     interventions = {};
 
     TestBed.configureTestingModule({
@@ -76,6 +86,7 @@ describe('InterventionPlanningOptionsStore', () => {
         { provide: EquipmentService, useValue: equipment },
         { provide: OrganizationMemberService, useValue: members },
         { provide: InterventionLabelService, useValue: labels },
+        { provide: InterventionTemplateService, useValue: templates },
         { provide: InterventionService, useValue: interventions },
       ],
     });
@@ -110,6 +121,9 @@ describe('InterventionPlanningOptionsStore', () => {
     ]);
     expect(labels.list).toHaveBeenCalledWith('/api/organizations/org-1');
     expect(store.labels()).toEqual([{ id: 'label-1', name: 'Compliance', color: '#ff0000' }]);
+    expect(templates.list).toHaveBeenCalledWith('/api/organizations/org-1', { itemsPerPage: 100 });
+    expect(store.templates()).toEqual([{ id: 'template-1', name: 'Annual inspection round' }]);
+    expect(store.hasTemplates()).toBe(true);
   });
 
   it('loads target resources only for the intervention workspace', async () => {
@@ -129,6 +143,9 @@ describe('InterventionPlanningOptionsStore', () => {
     ]);
     expect(labels.list).toHaveBeenCalledWith('/api/organizations/org-1');
     expect(store.labels()).toEqual([{ id: 'label-1', name: 'Compliance', color: '#ff0000' }]);
+    expect(templates.list).not.toHaveBeenCalled();
+    expect(store.templates()).toEqual([]);
+    expect(store.hasTemplates()).toBe(false);
   });
 
   it('surfaces an error and clears options when a planning load fails', async () => {
@@ -140,6 +157,7 @@ describe('InterventionPlanningOptionsStore', () => {
 
     expect(store.sites()).toEqual([]);
     expect(store.members()).toEqual([]);
+    expect(store.templates()).toEqual([]);
     expect(store.loadError()).not.toBeNull();
     expect(dispatch).toHaveBeenCalled();
   });

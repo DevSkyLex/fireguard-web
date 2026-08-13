@@ -22,13 +22,20 @@ import {
   toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
-import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import {
+  InterventionService,
+  InterventionTemplateService,
+} from '@features/organization/features/interventions/data-access';
+import type {
+  InterventionOutput,
+  InterventionTemplateInstantiationOutput,
+} from '@features/organization/features/interventions/models';
 import { interventionStoreEvents } from './events';
 import type {
   InterventionAssignCommand,
   InterventionCreateCommand,
   InterventionDeleteCommand,
+  InterventionInstantiateFromTemplateCommand,
   InterventionListLoadCommand,
   InterventionState,
   InterventionTransitionCommand,
@@ -120,6 +127,32 @@ function deleteFailureMessage(error: StoreError): string {
   }
 }
 
+/**
+ * Function instantiateFailureMessage
+ * @function instantiateFailureMessage
+ *
+ * @description
+ * Maps a normalized `instantiateFromTemplate` failure to a user-facing
+ * fallback message.
+ *
+ * @access private
+ * @since 4.3.0
+ *
+ * @param {StoreError} error - Normalized instantiate error.
+ *
+ * @return {string} Localized fallback message for the failure toast.
+ */
+function instantiateFailureMessage(error: StoreError): string {
+  switch (error.code) {
+    case 404:
+      return $localize`:@@intervention.store.instantiateNotFound:This template no longer exists.`;
+    case 403:
+      return $localize`:@@intervention.store.instantiateForbidden:You do not have permission to use this template.`;
+    default:
+      return $localize`:@@intervention.store.instantiateFailed:The intervention could not be created from this template.`;
+  }
+}
+
 //#region Initial State
 /**
  * Constant INITIAL_INTERVENTION_STATE
@@ -139,6 +172,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
   transitionCallState: idleCallState<InterventionOutput>(),
   deleteCallState: idleCallState(),
   assignCallState: idleCallState<InterventionOutput>(),
+  instantiateCallState: idleCallState<InterventionTemplateInstantiationOutput>(),
 } as const;
 //#endregion
 
@@ -208,6 +242,56 @@ export const InterventionStore = signalStore(
     createError: computed<StoreError | null>(() => store.createCallState().error),
 
     /**
+     * Computed isInstantiatingFromTemplate.
+     *
+     * @description
+     * True while instantiating an intervention draft from a template is
+     * in-flight.
+     *
+     * @since 4.3.0
+     */
+    isInstantiatingFromTemplate: computed<boolean>(
+      () => store.instantiateCallState().status === 'pending',
+    ),
+
+    /**
+     * Computed instantiateFromTemplateError.
+     *
+     * @description
+     * Error from the last template instantiation, if any.
+     *
+     * @since 4.3.0
+     *
+     * @type {StoreError | null}
+     */
+    instantiateFromTemplateError: computed<StoreError | null>(
+      () => store.instantiateCallState().error,
+    ),
+
+    /**
+     * Computed createdInterventionId.
+     *
+     * @description
+     * Identifier of the intervention draft to navigate to, from whichever
+     * creation path last succeeded — the manual guided-creation form
+     * ({@link createdIntervention}) or a template instantiation. The
+     * instantiate endpoint returns only `{ interventionId, number }`, not a
+     * full {@link InterventionOutput}, so this is the single signal the page
+     * watches to close the creation sheet and navigate, regardless of which
+     * path produced it.
+     *
+     * @since 4.3.0
+     *
+     * @type {string | null}
+     */
+    createdInterventionId: computed<string | null>(
+      () =>
+        store.createCallState().data?.id ??
+        store.instantiateCallState().data?.interventionId ??
+        null,
+    ),
+
+    /**
      * Computed listError.
      *
      * @description
@@ -250,6 +334,7 @@ export const InterventionStore = signalStore(
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
       interventionService = inject<InterventionService>(InterventionService),
+      templateService = inject<InterventionTemplateService>(InterventionTemplateService),
     ) => {
       /**
        * Pre-transition entity snapshots keyed by intervention id, kept only
@@ -379,6 +464,54 @@ export const InterventionStore = signalStore(
                       },
                     }),
                   ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method instantiateFromTemplate
+         * @method instantiateFromTemplate
+         *
+         * @description
+         * Instantiates an intervention draft from a template — the "start
+         * from a template" alternative to {@link create} offered atop the
+         * same creation sheet. Records the success in `instantiateCallState`
+         * so `createdInterventionId`/`isInstantiatingFromTemplate` drive the
+         * page exactly like a manual create does. Uses `exhaustMap` to avoid
+         * duplicate submissions.
+         *
+         * @access public
+         * @since 4.3.0
+         *
+         * @type {RxMethod<InterventionInstantiateFromTemplateCommand>}
+         */
+        instantiateFromTemplate: rxMethod<InterventionInstantiateFromTemplateCommand>(
+          pipe(
+            tap(() =>
+              patchState(store, {
+                instantiateCallState: pendingCallState<InterventionTemplateInstantiationOutput>(),
+              }),
+            ),
+            exhaustMap(({ templateId }) =>
+              templateService.instantiate(templateId).pipe(
+                tapResponse({
+                  next: (result) => {
+                    patchState(store, { instantiateCallState: successCallState(result) });
+                  },
+                  error: (error: unknown) => {
+                    const storeError = toStoreError(error);
+                    patchState(store, { instantiateCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      interventionStoreEvents.instantiateFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          instantiateFailureMessage(storeError),
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
@@ -613,7 +746,8 @@ export const InterventionStore = signalStore(
          * @method clearCreatedIntervention
          *
          * @description
-         * Clears the last created intervention navigation handoff.
+         * Clears the last created intervention navigation handoff, from
+         * either creation path — manual create or template instantiation.
          *
          * @access public
          * @since 1.0.0
@@ -621,7 +755,10 @@ export const InterventionStore = signalStore(
          * @return {void}
          */
         clearCreatedIntervention(): void {
-          patchState(store, { createCallState: idleCallState<InterventionOutput>() });
+          patchState(store, {
+            createCallState: idleCallState<InterventionOutput>(),
+            instantiateCallState: idleCallState<InterventionTemplateInstantiationOutput>(),
+          });
         },
       };
     },

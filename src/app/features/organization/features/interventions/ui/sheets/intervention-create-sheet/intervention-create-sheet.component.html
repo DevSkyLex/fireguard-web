@@ -1,7 +1,7 @@
 <hlm-sheet
   side="right"
   [state]="sheetState()"
-  [disableClose]="pending()"
+  [disableClose]="pending() || instantiating()"
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-sheet-content
@@ -16,8 +16,60 @@
       </p>
     </hlm-sheet-header>
 
+    @if (templates().length > 0) {
+      <div
+        class="border-b border-border px-4 pb-4"
+        data-testid="intervention-create-template-picker"
+      >
+        <p class="text-sm font-medium text-foreground" i18n="@@intervention.cf.templatePickerLabel">
+          Start from a template
+        </p>
+        <div class="mt-2 flex items-center gap-2">
+          <hlm-select
+            [value]="selectedTemplateId()"
+            [itemToString]="templateLabelOf"
+            (valueChange)="selectedTemplateId.set($event ?? null)"
+          >
+            <hlm-select-trigger
+              buttonId="intervention-create-template"
+              class="w-full"
+              data-testid="intervention-create-template-select"
+            >
+              <hlm-select-value
+                placeholder="Choose a template"
+                i18n-placeholder="@@intervention.cf.templatePlaceholder"
+              />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (template of templates(); track template.id) {
+                  <hlm-select-item [value]="template.id">{{ template.name }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+          <button
+            hlmBtn
+            type="button"
+            data-testid="intervention-create-template-confirm"
+            [disabled]="!selectedTemplateId() || instantiating() || pending()"
+            (click)="confirmTemplateInstantiate()"
+          >
+            @if (instantiating()) {
+              <span i18n="@@intervention.cf.templateInstantiating">Creating…</span>
+            } @else {
+              <span i18n="@@intervention.cf.templateConfirm">Use template</span>
+            }
+          </button>
+        </div>
+        <p class="mt-1 text-xs text-muted-foreground" i18n="@@intervention.cf.templateHint">
+          Opens a draft prefilled from the template. You can adjust everything afterward.
+        </p>
+      </div>
+    }
+
     <app-intervention-create-form
-      [pending]="pending()"
+      [pending]="pending() || instantiating()"
       [serverError]="serverError()"
       [siteOptions]="siteOptions()"
       [memberOptions]="memberOptions()"

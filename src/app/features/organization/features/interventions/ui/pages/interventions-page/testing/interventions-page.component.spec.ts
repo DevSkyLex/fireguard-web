@@ -59,25 +59,27 @@ describe('InterventionsPage', () => {
   let fixture: ComponentFixture<InterventionsPage>;
   let load: ReturnType<typeof vi.fn>;
   let create: ReturnType<typeof vi.fn>;
+  let instantiateFromTemplate: ReturnType<typeof vi.fn>;
   let clearCreated: ReturnType<typeof vi.fn>;
   let transition: ReturnType<typeof vi.fn>;
   let deleteIntervention: ReturnType<typeof vi.fn>;
   let assignResponsible: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let interventionList: WritableSignal<readonly InterventionOutput[]>;
-  let createdIntervention: WritableSignal<InterventionOutput | null>;
+  let createdInterventionId: WritableSignal<string | null>;
   let listError: WritableSignal<unknown>;
 
   beforeEach(() => {
     load = vi.fn();
     create = vi.fn();
+    instantiateFromTemplate = vi.fn();
     clearCreated = vi.fn();
     transition = vi.fn();
     deleteIntervention = vi.fn();
     assignResponsible = vi.fn();
     navigate = vi.fn().mockResolvedValue(true);
     interventionList = signal<readonly InterventionOutput[]>([]);
-    createdIntervention = signal<InterventionOutput | null>(null);
+    createdInterventionId = signal<string | null>(null);
     listError = signal<unknown>(null);
 
     TestBed.configureTestingModule({
@@ -88,17 +90,19 @@ describe('InterventionsPage', () => {
           useValue: {
             load,
             create,
+            instantiateFromTemplate,
             transition,
             delete: deleteIntervention,
             assignResponsible,
             clearCreatedIntervention: clearCreated,
             interventionList,
-            createdIntervention,
+            createdInterventionId,
             listError,
             totalInterventions: signal(0),
             isLoadingInterventions: signal(false),
             isCreating: signal(false),
             createError: signal(null),
+            isInstantiatingFromTemplate: signal(false),
             assignCallState: signal({ status: 'idle' }),
           },
         },
@@ -140,6 +144,8 @@ describe('InterventionsPage', () => {
               sites: signal([]),
               members: signal([]),
               labels: signal([]),
+              templates: signal([]),
+              hasTemplates: signal(false),
               loadCreationOptions: vi.fn(),
             },
           },
@@ -274,11 +280,21 @@ describe('InterventionsPage', () => {
   it('should navigate to the intervention the store just created', async () => {
     fixture = await createPage();
 
-    createdIntervention.set(intervention({ id: 'new-1' }));
+    createdInterventionId.set('new-1');
     await fixture.whenStable();
 
     expect(clearCreated).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'new-1']);
+  });
+
+  it('should navigate to the draft created from a template, the same as a manual create', async () => {
+    fixture = await createPage();
+
+    createdInterventionId.set('new-2');
+    await fixture.whenStable();
+
+    expect(clearCreated).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'new-2']);
   });
 
   it('should show the failure state rather than an empty list when the load fails', async () => {
@@ -314,6 +330,14 @@ describe('InterventionsPage', () => {
       plannedStartAt: undefined,
       dueAt: undefined,
     });
+  });
+
+  it('should hand the picked template straight to the store', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['instantiateFromTemplate']('template-1');
+
+    expect(instantiateFromTemplate).toHaveBeenCalledWith({ templateId: 'template-1' });
   });
 
   describe('delete', () => {

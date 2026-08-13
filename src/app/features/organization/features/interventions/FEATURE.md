@@ -45,7 +45,14 @@ This subfeature is responsible for:
   workspace, described below. Mounted as a second child of the same pathless
   parent, so `InterventionStore` survives list ↔ detail navigation and the
   detail page's prev/next walks the order the list established, with no second
-  fetch. `interventionTitleResolver` is registered as `title` **only**:
+  fetch. **Creating from a template is a first-class path through the same
+  sheet**, not a separate flow: when the organization has intervention
+  templates (`GET /intervention-templates`), the sheet offers a "start from a
+  template" picker above the manual guided-creation form; confirming a pick
+  calls `InterventionStore.instantiateFromTemplate`
+  (`POST /intervention-templates/{id}/instantiate`, no override payload) and
+  ends at the exact same navigate-to-draft contract as a manual `create` —
+  see `createdInterventionId` below. `interventionTitleResolver` is registered as `title` **only**:
   `BreadcrumbService` falls through to `snapshot.title` when `title` is a
   `ResolveFn`, so one invocation serves both the document title and the crumb.
   The resolver answers synchronously — cached name, or a neutral label while
@@ -88,6 +95,14 @@ Stores:
   its own request and each dispatching its own `deleteSucceeded` / `deleteFailed`
   toast event — there is no aggregate "N deleted" outcome. **This is the only
   delete path wired to the UI** (see Invariants).
+  `instantiateFromTemplate` (4.3) instantiates a draft from a template through
+  `InterventionTemplateService`, in its own `instantiateCallState` (the
+  endpoint returns only `{ interventionId, number }`, not a full
+  `InterventionOutput`, so it cannot reuse `createCallState`'s type).
+  `createdInterventionId` is the single computed the creation sheet's
+  close-and-navigate effect watches — it resolves from whichever of
+  `createCallState`/`instantiateCallState` last succeeded, so a manual create
+  and a template instantiation reach the same detail page through one signal.
 - `InterventionWorkspaceStore` — component-scoped (provided in
   `InterventionDetailPage`); the active intervention workspace (intervention,
   work items, changes, issues) with online/offline mutations. Async state is held
@@ -152,6 +167,10 @@ Data-access (transport boundary — `data-access/`):
 - `InterventionLabelService` — HTTP API service (`HydraApiService`) for the
   organization-scoped intervention label catalog (CRUD); labels are embedded
   as `InterventionLabelSummary` on `InterventionOutput.labels`.
+- `InterventionTemplateService` (4.3) — HTTP API service (`HydraApiService`)
+  for the organization-scoped intervention template catalog: `list` (feeds
+  `InterventionPlanningOptionsStore.loadCreationOptions`'s `templates`) and
+  `instantiate` (feeds `InterventionStore.instantiateFromTemplate`).
 - `InterventionOfflineService` — IndexedDB persistence façade + cross-cutting purges (public entry point). Delegates to its internal collaborators:
   - `InterventionDatabaseService` — IndexedDB connection/schema, CRUD primitives, owner binding (also published for logout reset).
   - `InterventionOutboxRepository` — replay outbox + `hasUnsyncedChanges` signal.

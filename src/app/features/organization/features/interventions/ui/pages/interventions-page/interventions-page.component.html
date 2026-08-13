@@ -602,8 +602,11 @@
   [serverError]="store.createError()"
   [siteOptions]="planningOptions.sites()"
   [memberOptions]="planningOptions.members()"
+  [templates]="planningOptions.templates()"
+  [instantiating]="store.isInstantiatingFromTemplate()"
   (visibleChange)="createSheetVisible.set($event)"
   (submitted)="createIntervention($event)"
+  (templateInstantiated)="instantiateFromTemplate($event)"
 />
 
 <hlm-alert-dialog [state]="deleteDialogState()" (stateChanged)="onDeleteDialogStateChanged($event)">

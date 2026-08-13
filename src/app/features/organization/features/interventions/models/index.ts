@@ -52,6 +52,8 @@ export type { InterventionChangeOutput } from './intervention-change/interventio
 export type { InterventionChangeStatus } from './intervention-change/intervention-change-status.type';
 export type { UpdateInterventionChangeInput } from './intervention-change/update-intervention-change-input.interface';
 export type { InterventionTypeOutput } from './intervention-type/intervention-type-output.interface';
+export type { InterventionTemplateOutput } from './intervention-template/intervention-template-output.interface';
+export type { InterventionTemplateInstantiationOutput } from './intervention-template/intervention-template-instantiation-output.interface';
 export type { InterventionOutboxOperationFor } from './intervention-outbox/intervention-outbox-operation-for.interface';
 export type { InterventionOutboxOperation } from './intervention-outbox/intervention-outbox-operation.type';
 export type { InterventionOutboxPayloadMap } from './intervention-outbox/intervention-outbox-payload-map.interface';

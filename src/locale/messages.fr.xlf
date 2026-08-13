@@ -1173,6 +1173,14 @@
         <source>Message <x id="name" equiv-text="name"/></source>
         <target>Message <x id="name" equiv-text="name"/></target>
       </trans-unit>
+      <trans-unit id="messages.subjectDiscussion.composerPlaceholder" datatype="html">
+        <source>Message this discussion</source>
+        <target>Écrire dans cette discussion</target>
+      </trans-unit>
+      <trans-unit id="messages.subjectDiscussion.openFailed" datatype="html">
+        <source>The discussion could not be opened.</source>
+        <target>La discussion n'a pas pu être ouverte.</target>
+      </trans-unit>
       <trans-unit id="channels.participants.title" datatype="html">
         <source>Participants</source>
         <target>Participants</target>
@@ -5462,6 +5470,18 @@
       <trans-unit id="intervention.prop.status" datatype="html">
         <source> Status </source>
         <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="intervention.discussion.trigger" datatype="html">
+        <source>Discussion</source>
+        <target>Discussion</target>
+      </trans-unit>
+      <trans-unit id="intervention.discussion.title" datatype="html">
+        <source>Discussion</source>
+        <target>Discussion</target>
+      </trans-unit>
+      <trans-unit id="intervention.discussion.subtitle" datatype="html">
+        <source>Live team messaging about this intervention</source>
+        <target>Messagerie de l'équipe en direct pour cette intervention</target>
       </trans-unit>
       <trans-unit id="intervention.detail.statusMenu" datatype="html">
         <source>Move this intervention</source>

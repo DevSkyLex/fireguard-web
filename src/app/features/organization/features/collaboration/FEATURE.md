@@ -253,6 +253,29 @@ compose file); without it, questions are accepted and never answered.
 `state/` holds one slice per concern. Slices that key rows by id use `withEntities`; single-resource
 slices use plain `CallState` fields.
 
+## Published Contracts
+
+`SubjectDiscussion` (`ui/components/subject-discussion/`) is a self-contained, store-owning
+widget: `organizationId`, `subjectType`, `subjectId` and `active` in, nothing out. On activation
+it resolves its own conversation through `ConversationService.openSubjectThread` (get-or-create,
+memoized per `(organization, subjectType, subject)` triple so re-activating the same subject never
+repeats the call) and renders `MessageThread` + `MessageComposer` itself. A consumer embeds it
+inside its own sheet or panel and supplies the subject's identity; it owns no messaging state and
+injects nothing from this feature beyond the component.
+
+**Exported from `ui/components/index.ts`, never from the root `index.ts`.** The root barrel already
+carries `MessagingSyncCoordinatorService` for the app initializer that starts it, and
+`organization.routes.ts` / `organization/providers/index.ts` both load past the root barrel for
+exactly that reason (see Entry Points): a wide root export travels into whatever eagerly-loaded
+bundle imports it. `SubjectDiscussion` would land there too — it injects `MessageThreadStore`,
+which already depends on `MessagingSyncCoordinatorService` — so it is published through the
+concern-level `ui/components` barrel instead, the same public-surface class `ARCHITECTURE.md`
+§13.2 sanctions for a barrel scoped below the feature root. This costs a consumer nothing beyond
+what it already pays importing `MessageThread`: reaching this barrel at all means rendering a
+thread, coordinator included.
+
+Currently consumed by `features/interventions` (its own `FEATURE.md` records the dependency).
+
 ## Cross-Feature Dependencies
 
 - Consumes the parent feature's `ORGANIZATION_CONTEXT_PORT` wherever a unit needs the active
@@ -265,6 +288,10 @@ slices use plain `CallState` fields.
   `messaging.read` does not imply.
 - Consumes `@features/organization/models` for `ORGANIZATION_PERMISSION` and `MemberDirectoryEntry`,
   and `@features/organization/http/guards` for `organizationPermissionGuard`.
+- May be consumed by a sibling organization subfeature through `SubjectDiscussion`
+  (`ui/components`, see Published Contracts above) for its own record's live thread —
+  `features/interventions` is the first such consumer. A consumer supplies the subject's identity
+  and renders the surface inside its own overlay; it owns no messaging state.
 
 ## Invariants reviewers must preserve
 

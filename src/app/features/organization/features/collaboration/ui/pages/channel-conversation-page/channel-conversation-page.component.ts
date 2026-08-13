@@ -30,7 +30,6 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type {
   ChannelOutput,
   ChannelParticipantOutput,
-  MessageOutput,
   MessageReactionToggle,
   MessageView,
 } from '@features/organization/features/collaboration/models';
@@ -44,8 +43,8 @@ import {
   type MessageThreadStoreType,
 } from '@features/organization/features/collaboration/state';
 import {
+  buildMessageViews,
   memberIriOf,
-  renderMessageBodyHtml,
 } from '@features/organization/features/collaboration/utils';
 import {
   ORGANIZATION_PERMISSION,
@@ -312,30 +311,15 @@ export class ChannelConversationPage {
    * @type {Signal<readonly MessageView[]>}
    */
   protected readonly messages: Signal<readonly MessageView[]> = computed(
-    (): readonly MessageView[] => {
-      const own: string | null = memberIriOf(this.memberAccess.profile());
-      const pending: ReadonlySet<string> = new Set<string>(this.thread.pendingMessageIds());
-      const failed: ReadonlySet<string> = new Set<string>(this.thread.failedMessageIds());
-
-      return this.thread.sortedMessages().map((message: MessageOutput): MessageView => ({
-        id: message.id,
-        authorId: this.memberIdOf(message.authorMember),
-        authorName: this.authorNameOf(message),
-        authorAvatarUrl: this.directory.byId().get(this.memberIdOf(message.authorMember))
-          ?.avatarUrl,
-        bodyHtml: renderMessageBodyHtml(
-          message.body,
-          message.mentionNames,
-          this.unknownMemberLabel,
-        ),
-        createdAt: message.createdAt,
-        editedAt: message.editedAt,
-        isDeleted: message.isDeleted,
-        isOwn: own !== null && message.authorMember === own,
-        status: failed.has(message.id) ? 'failed' : pending.has(message.id) ? 'pending' : 'sent',
-        reactions: message.reactions,
-      }));
-    },
+    (): readonly MessageView[] =>
+      buildMessageViews({
+        messages: this.thread.sortedMessages(),
+        pendingMessageIds: this.thread.pendingMessageIds(),
+        failedMessageIds: this.thread.failedMessageIds(),
+        ownMemberIri: memberIriOf(this.memberAccess.profile()),
+        directory: this.directory.isAvailable() ? this.directory.byId() : null,
+        unknownMemberLabel: this.unknownMemberLabel,
+      }),
   );
 
   /**
@@ -934,47 +918,6 @@ export class ChannelConversationPage {
    */
   protected removeParticipant(memberId: string): void {
     this.participantsStore.remove({ channelId: this.channelId(), memberId });
-  }
-
-  /**
-   * Method authorNameOf
-   * @method authorNameOf
-   *
-   * @description
-   * Names a message's author, preferring the directory and falling back to
-   * the name the API stamped on the message. Never returns an id.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {MessageOutput} message - The message being drawn.
-   *
-   * @returns {string} A never-blank label.
-   */
-  private authorNameOf(message: MessageOutput): string {
-    const fromDirectory: string | undefined = this.directory.isAvailable()
-      ? this.directory.byId().get(this.memberIdOf(message.authorMember))?.displayName
-      : undefined;
-
-    return fromDirectory ?? message.authorDisplayName ?? this.unknownMemberLabel;
-  }
-
-  /**
-   * Method memberIdOf
-   * @method memberIdOf
-   *
-   * @description
-   * The bare member id inside an organization-member IRI.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {string} memberIri - The IRI a message carries.
-   *
-   * @returns {string} The trailing id segment.
-   */
-  private memberIdOf(memberIri: string): string {
-    return this.trailingSegmentOf(memberIri);
   }
 
   /**

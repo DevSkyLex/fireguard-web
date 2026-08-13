@@ -43,6 +43,7 @@ const intervention: InterventionOutput = {
   completedWorkItemsCount: 0,
   proposedChangesCount: 0,
   commentsCount: 0,
+  hasSignature: false,
   createdAt: '2026-01-05T09:00:00Z',
   updatedAt: '2026-01-05T09:00:00Z',
 };

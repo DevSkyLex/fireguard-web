@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleCheck, lucideCircleDashed } from '@ng-icons/lucide';
 
 /**
  * Component InterventionPublicationSummary
@@ -17,7 +19,7 @@ import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@an
  * the rail's ~256px and in a dialog twice that wide, and a horizontal stat strip
  * only works at one of them.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -25,6 +27,7 @@ import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@an
  *   [pendingChanges]="pendingChangesCount()"
  *   [inspections]="intervention().inspectionsCount"
  *   [revision]="intervention().revision"
+ *   [signed]="intervention().hasSignature"
  * />
  * ```
  *
@@ -32,6 +35,8 @@ import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@an
  */
 @Component({
   selector: 'app-intervention-publication-summary',
+  imports: [NgIcon],
+  providers: [provideIcons({ lucideCircleCheck, lucideCircleDashed })],
   templateUrl: './intervention-publication-summary.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -71,5 +76,15 @@ export class InterventionPublicationSummary {
    * @type {InputSignal<number>}
    */
   public readonly revision: InputSignal<number> = input.required<number>();
+
+  /**
+   * Property signed
+   * @readonly
+   * @description Whether the intervention already carries a completion signature attachment.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly signed: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 }

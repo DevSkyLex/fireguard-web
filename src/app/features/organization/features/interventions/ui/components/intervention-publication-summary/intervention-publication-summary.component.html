@@ -16,6 +16,27 @@
       <dt class="text-muted-foreground" i18n="@@intervention.publication.revision">Revision</dt>
       <dd class="font-mono text-xs text-foreground tabular-nums">v{{ revision() }}</dd>
     </div>
+    <div class="flex items-baseline justify-between gap-3">
+      <dt class="text-muted-foreground" i18n="@@intervention.publication.signature">
+        Completion signature
+      </dt>
+      <dd
+        class="flex items-center gap-1 font-medium text-foreground"
+        data-testid="intervention-publication-signature"
+      >
+        @if (signed()) {
+          <ng-icon
+            name="lucideCircleCheck"
+            class="text-green-500 dark:text-green-400"
+            aria-hidden="true"
+          />
+          <span i18n="@@intervention.publication.signed">Signed</span>
+        } @else {
+          <ng-icon name="lucideCircleDashed" class="text-muted-foreground" aria-hidden="true" />
+          <span i18n="@@intervention.publication.unsigned">Not signed</span>
+        }
+      </dd>
+    </div>
   </dl>
 
   <p class="text-xs text-muted-foreground" i18n="@@intervention.publication.atomic">

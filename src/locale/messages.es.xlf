@@ -4430,6 +4430,10 @@
         <source>For <x id="INTERPOLATION" equiv-text="{{ workItemLabel }}"/></source>
         <target>Para <x id="INTERPOLATION"/></target>
       </trans-unit>
+      <trans-unit id="intervention.attachments.signatureChip" datatype="html">
+        <source>Signature</source>
+        <target>Firma</target>
+      </trans-unit>
       <trans-unit id="intervention.attachments.tooLarge" datatype="html">
         <source>&quot;<x id="name" equiv-text="oversized.name"/>&quot; exceeds the 10 MB limit.</source>
         <target>«<x id="name" equiv-text="oversized.name"/>» supera el límite de 10 MB.</target>
@@ -4597,6 +4601,38 @@
       <trans-unit id="intervention.assign.submitting" datatype="html">
         <source>Assigning…</source>
         <target>Asignando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.header" datatype="html">
+        <source> Capture the completion signature </source>
+        <target> Capturar la firma de finalización </target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.description" datatype="html">
+        <source> Have the responsible sign below to attach it to this submission. This step is optional — you can skip it and submit without one. </source>
+        <target> Pida al responsable que firme a continuación para adjuntarla a este envío. Este paso es opcional — puede omitirlo y enviar sin firma. </target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.canvasLabel" datatype="html">
+        <source>Signature drawing area</source>
+        <target>Área de dibujo de la firma</target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.skip" datatype="html">
+        <source>Skip</source>
+        <target>Omitir</target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.clear" datatype="html">
+        <source>Clear</source>
+        <target>Borrar</target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.confirming" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.confirm" datatype="html">
+        <source>Confirm</source>
+        <target>Confirmar</target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.confirmingStatus" datatype="html">
+        <source>Saving the signature, please wait…</source>
+        <target>Guardando la firma, espere por favor…</target>
       </trans-unit>
       <trans-unit id="intervention.newButton" datatype="html">
         <source>New intervention</source>
@@ -9416,6 +9452,18 @@
       <trans-unit id="intervention.publication.revision" datatype="html">
         <source>Revision</source>
         <target>Revisión</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.signature" datatype="html">
+        <source> Completion signature </source>
+        <target> Firma de finalización </target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.signed" datatype="html">
+        <source>Signed</source>
+        <target>Firmada</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.unsigned" datatype="html">
+        <source>Not signed</source>
+        <target>Sin firmar</target>
       </trans-unit>
       <trans-unit id="intervention.publication.atomic" datatype="html">
         <source> Either everything succeeds, or no record is modified. </source>

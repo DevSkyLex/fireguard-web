@@ -21,6 +21,7 @@ const attachment = (
     mimeType: 'application/pdf',
     size: 1024,
     label: null,
+    kind: 'file',
     revision: 1,
     uploadedAt: '2026-01-05T09:00:00Z',
     ...overrides,
@@ -373,5 +374,24 @@ describe('InterventionAttachments', () => {
     expect(
       root().querySelector('[data-testid="intervention-attachment-work-item-chip"]'),
     ).toBeNull();
+  });
+
+  it('should show no Signature chip on a plain evidence file', async () => {
+    await create(1);
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachment-signature-chip"]'),
+    ).toBeNull();
+  });
+
+  it('should show a Signature chip on a signature-kind attachment', async () => {
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    fixture = TestBed.createComponent(InterventionAttachments);
+    fixture.componentRef.setInput('attachments', [attachment(0, { kind: 'signature' })]);
+    await fixture.whenStable();
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachment-signature-chip"]')?.textContent,
+    ).toContain('Signature');
   });
 });

@@ -153,6 +153,17 @@
                   >For {{ workItemLabel }}</span
                 >
               }
+              @if (attachment.kind === 'signature') {
+                ·
+                <span
+                  hlmBadge
+                  variant="secondary"
+                  class="align-middle"
+                  data-testid="intervention-attachment-signature-chip"
+                  i18n="@@intervention.attachments.signatureChip"
+                  >Signature</span
+                >
+              }
             </span>
           </div>
           <div hlmItemActions>

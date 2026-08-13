@@ -101,6 +101,7 @@ describe('InterventionActivityThread', () => {
 
     const mention = root().querySelector('[data-testid="intervention-activity-thread"] p span');
     expect(mention?.getAttribute('title')).toBe('Technician');
+    expect(mention?.querySelector('.sr-only')?.textContent).toContain('Technician');
   });
 
   it('should fall back to a neutral label for an unresolved comment mention', async () => {

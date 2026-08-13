@@ -421,6 +421,7 @@
         class="min-w-0 flex-1 max-sm:min-h-11"
         data-testid="interventions-export"
         [disabled]="exportDisabled()"
+        [attr.aria-busy]="exportBusy() ? 'true' : null"
         (click)="exportCsv()"
       >
         @if (exportBusy()) {
@@ -430,6 +431,16 @@
         }
         <span i18n="@@intervention.list.exportButton">Export</span>
       </button>
+      @if (exportBusy()) {
+        <span
+          class="sr-only"
+          aria-live="polite"
+          data-testid="interventions-export-status"
+          i18n="@@intervention.list.exportingStatus"
+        >
+          Preparing the export…
+        </span>
+      }
     </div>
 
     <ng-template #columnMenu>

@@ -109,4 +109,25 @@ describe('MessageThread', () => {
 
     expect(caughtUp.length).toBeGreaterThan(0);
   });
+
+  function liveRegion(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="message-thread-live-region"]',
+    );
+  }
+
+  it('should announce a new incoming message in the live region', async () => {
+    await setMessages([view(), view({ id: 'message-2', authorName: 'Léo Martin', isOwn: false })]);
+
+    expect(liveRegion()?.textContent).toContain('Léo Martin');
+  });
+
+  it('should not announce a message the current member just sent', async () => {
+    const beforeOwnMessage: string | null | undefined = liveRegion()?.textContent;
+
+    await setMessages([view(), view({ id: 'message-2', authorName: 'Léo Martin', isOwn: true })]);
+
+    expect(liveRegion()?.textContent).toBe(beforeOwnMessage);
+    expect(liveRegion()?.textContent).not.toContain('Léo Martin');
+  });
 });

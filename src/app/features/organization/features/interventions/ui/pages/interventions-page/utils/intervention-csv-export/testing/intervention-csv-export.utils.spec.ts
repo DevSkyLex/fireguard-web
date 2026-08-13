@@ -29,6 +29,7 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     completedWorkItemsCount: 0,
     proposedChangesCount: 0,
     commentsCount: 0,
+    hasSignature: false,
     createdAt: '2026-08-01T09:00:00+00:00',
     updatedAt: '2026-08-02T09:00:00+00:00',
     ...overrides,

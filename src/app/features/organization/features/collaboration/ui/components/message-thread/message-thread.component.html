@@ -4,6 +4,10 @@
   data-testid="message-thread"
   (scroll)="onScroll()"
 >
+  <span class="sr-only" aria-live="polite" data-testid="message-thread-live-region">{{
+    announcement()
+  }}</span>
+
   <div class="mx-auto flex w-full max-w-3xl flex-1 flex-col">
     @if (errorMessage(); as message) {
       <div class="my-auto py-6">

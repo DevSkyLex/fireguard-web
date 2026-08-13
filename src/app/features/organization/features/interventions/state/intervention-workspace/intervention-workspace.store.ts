@@ -38,6 +38,7 @@ import {
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
 import type {
+  InterventionAttachmentOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
@@ -1359,8 +1360,11 @@ export const InterventionWorkspaceStore = signalStore(
          * attachment operation) and appends the created attachment. When the
          * command carries a `workItemId`, the matching work item's
          * `evidenceCount` is bumped locally so its badge updates without a
-         * reload. Uses `concatMap`: two picked files upload in order, neither
-         * cancelled.
+         * reload. A `kind: 'signature'` upload dispatches
+         * `attachmentUploadSucceeded` in addition to the state patch, which is
+         * what lets the page chain the submit transition only once the
+         * completion signature it interposed has actually landed. Uses
+         * `concatMap`: two picked files upload in order, neither cancelled.
          *
          * @access public
          * @since 4.4.0
@@ -1370,35 +1374,42 @@ export const InterventionWorkspaceStore = signalStore(
         uploadAttachment: rxMethod<InterventionAttachmentUploadCommand>(
           pipe(
             tap(() => patchState(store, { attachmentWriteCallState: pendingCallState() })),
-            concatMap(({ interventionId, file, fileName, label, workItemId }) =>
-              service.uploadAttachment(interventionId, file, fileName, label, workItemId).pipe(
-                tapResponse({
-                  next: (created) => {
-                    const workItem = workItemId
-                      ? store.workItems().find((item) => item.id === workItemId)
-                      : undefined;
-                    patchState(store, {
-                      attachments: [...store.attachments(), created],
-                      workItems: workItem
-                        ? replaceWorkItem(store.workItems(), workItemId as string, {
-                            ...workItem,
-                            evidenceCount: workItem.evidenceCount + 1,
-                          })
-                        : store.workItems(),
-                      attachmentWriteCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown) =>
-                    patchState(store, {
-                      attachmentWriteCallState: errorCallState(
-                        workspaceFailure(
-                          error,
-                          $localize`:@@intervention.workspace.attachmentUploadFailed:The file could not be uploaded.`,
+            concatMap(({ interventionId, file, fileName, label, workItemId, kind }) =>
+              service
+                .uploadAttachment(interventionId, file, fileName, label, workItemId, kind)
+                .pipe(
+                  tapResponse({
+                    next: (created: InterventionAttachmentOutput) => {
+                      const workItem = workItemId
+                        ? store.workItems().find((item) => item.id === workItemId)
+                        : undefined;
+                      patchState(store, {
+                        attachments: [...store.attachments(), created],
+                        workItems: workItem
+                          ? replaceWorkItem(store.workItems(), workItemId as string, {
+                              ...workItem,
+                              evidenceCount: workItem.evidenceCount + 1,
+                            })
+                          : store.workItems(),
+                        attachmentWriteCallState: successCallState(null),
+                      });
+                      dispatcher.dispatch(
+                        interventionWorkspaceStoreEvents.attachmentUploadSucceeded({
+                          attachment: created,
+                        }),
+                      );
+                    },
+                    error: (error: unknown) =>
+                      patchState(store, {
+                        attachmentWriteCallState: errorCallState(
+                          workspaceFailure(
+                            error,
+                            $localize`:@@intervention.workspace.attachmentUploadFailed:The file could not be uploaded.`,
+                          ),
                         ),
-                      ),
-                    }),
-                }),
-              ),
+                      }),
+                  }),
+                ),
             ),
           ),
         ),

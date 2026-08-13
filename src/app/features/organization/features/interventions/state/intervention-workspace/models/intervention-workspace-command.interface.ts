@@ -1,5 +1,6 @@
 import type {
   CreateInterventionWorkItemInput,
+  InterventionAttachmentKind,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
   UpdateInterventionInput,
@@ -83,7 +84,9 @@ export interface InterventionChangeRejectCommand {
  * @description
  * Command used to upload one attachment. The file arrives pre-compressed
  * when it came from the camera; the page owns that step. An optional
- * `workItemId` scopes the upload as evidence for one work item.
+ * `workItemId` scopes the upload as evidence for one work item; an optional
+ * `kind` of `'signature'` uploads the typed completion signature instead of
+ * a plain evidence file (Phase 5d.2).
  *
  * @since 4.4.0
  */
@@ -93,6 +96,7 @@ export interface InterventionAttachmentUploadCommand {
   readonly fileName: string;
   readonly label?: string;
   readonly workItemId?: string;
+  readonly kind?: InterventionAttachmentKind;
 }
 
 /**

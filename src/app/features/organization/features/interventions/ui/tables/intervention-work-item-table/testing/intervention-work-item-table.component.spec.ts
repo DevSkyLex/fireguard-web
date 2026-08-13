@@ -395,13 +395,17 @@ describe('InterventionWorkItemTable', () => {
     expect(requested[0]?.id).toBe('wi-1');
   });
 
-  it('should lock and spin the row’s evidence button while its upload is pending', async () => {
+  it('should lock and spin the row’s evidence button while its upload is pending, without unmounting it', async () => {
     fixture.componentRef.setInput('items', [item({ id: 'wi-1' })]);
     fixture.componentRef.setInput('canAttachEvidence', true);
     fixture.componentRef.setInput('evidencePendingItemIds', new Set(['wi-1']));
     await fixture.whenStable();
 
-    expect(byTestId('intervention-work-item-evidence')).toBeNull();
+    const button = byTestId('intervention-work-item-evidence') as HTMLButtonElement | null;
+
+    expect(button).not.toBeNull();
+    expect(button?.disabled).toBe(true);
+    expect(button?.getAttribute('aria-busy')).toBe('true');
     expect(byTestId('intervention-work-item-evidence-pending')).not.toBeNull();
   });
 });

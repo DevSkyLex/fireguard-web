@@ -959,6 +959,7 @@ describe('InterventionWorkspaceStore evidence upload', () => {
       'evidence.jpg',
       undefined,
       workItem.id,
+      undefined,
     );
     expect(store.attachments()).toEqual([created]);
     expect(store.workItems()[0]?.evidenceCount).toBe(1);
@@ -986,5 +987,51 @@ describe('InterventionWorkspaceStore evidence upload', () => {
     await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('success'));
 
     expect(store.workItems()[0]?.evidenceCount).toBe(0);
+  });
+
+  it('threads kind to the service and dispatches attachmentUploadSucceeded on a signature upload', async () => {
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    const dispatcher = TestBed.inject(Dispatcher);
+    const dispatchSpy = vi.spyOn(dispatcher, 'dispatch');
+
+    const created = {
+      '@id': '/api/intervention-attachments/attachment-3',
+      '@type': 'InterventionAttachment',
+      id: 'attachment-3',
+      interventionId: 'intervention-1',
+      fileName: 'signature.png',
+      mimeType: 'image/png',
+      size: 512,
+      kind: 'signature',
+      revision: 1,
+      uploadedAt: '2026-06-12T08:00:00.000Z',
+    };
+    mockService['uploadAttachment'].mockReturnValue(of(created));
+
+    const file = new Blob(['data'], { type: 'image/png' });
+    store.uploadAttachment({
+      interventionId: 'intervention-1',
+      file,
+      fileName: 'signature.png',
+      kind: 'signature',
+    });
+
+    await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('success'));
+
+    expect(mockService['uploadAttachment']).toHaveBeenCalledWith(
+      'intervention-1',
+      file,
+      'signature.png',
+      undefined,
+      undefined,
+      'signature',
+    );
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: '[Intervention Workspace Store] attachmentUploadSucceeded',
+        payload: { attachment: created },
+      }),
+    );
   });
 });

@@ -42,6 +42,7 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     completedWorkItemsCount: 0,
     proposedChangesCount: 0,
     commentsCount: 0,
+    hasSignature: false,
     createdAt: '2026-08-01T09:00:00+00:00',
     updatedAt: '2026-08-02T09:00:00+00:00',
     ...overrides,
@@ -779,6 +780,26 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['exportBusy']()).toBe(false);
       expect(feedbackError).toHaveBeenCalledTimes(1);
       expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('should mark the export button busy and announce it while the export is in flight', async () => {
+      totalInterventions.set(5);
+      fixture = await createPage();
+
+      const button = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="interventions-export"]',
+      );
+      expect(button?.getAttribute('aria-busy')).toBeNull();
+
+      fixture.componentInstance['exportBusy'].set(true);
+      await fixture.whenStable();
+
+      expect(button?.getAttribute('aria-busy')).toBe('true');
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="interventions-export-status"]',
+        ),
+      ).not.toBeNull();
     });
   });
 });

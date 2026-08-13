@@ -162,6 +162,51 @@
       }
     },
     {
+      "files": ["src/app/features/organization/features/interventions/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@features/organization/features/collaboration/**",
+                  "!@features/organization/features/collaboration/ui/components"
+                ],
+                "message": "ARCHITECTURE.md 4 / 14.2 - interventions may consume collaboration only through its published ui/components barrel (SubjectDiscussion), the surface collaboration's FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/testing/**/*.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@shared"],
+                "message": "ARCHITECTURE.md 8.5 / 13.2 - `shared` has no root barrel. Import the concept: @shared/tag, @shared/empty-state, @shared/calendar."
+              },
+              {
+                "group": ["@core/*/services/**"],
+                "message": "ARCHITECTURE.md 13.2 - a core concern's barrel is its only entry point. Import @core/<concern>, never its services/ implementation files. The only sanctioned deep buckets are @core/api/models and @core/api/utils."
+              },
+              {
+                "group": ["@features/*/ui/pages/**", "@features/*/features/*/ui/pages/**"],
+                "message": "ARCHITECTURE.md 13.2 - `ui/pages/` is internal-only and has no public barrel. A page is a route entry; nothing imports it."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/**/*.spec.ts", "src/**/*.test.ts"],
       "plugins": ["typescript", "unicorn", "oxc", "vitest"],
       "env": {

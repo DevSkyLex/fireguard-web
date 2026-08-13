@@ -737,6 +737,58 @@ deleting a work item does not delete the evidence that documents it; the
 backend `SET NULL`s the attachment's `workItemId`, so the file survives as
 plain intervention-level evidence and its chip disappears.
 
+### Completion signature (Phase 5d.2)
+
+Attachments carry a `kind: 'file' | 'signature'` (`InterventionAttachmentOutput.kind`),
+mirroring the backend's `InterventionAttachmentKind` byte for byte, and
+`InterventionOutput.hasSignature` reports whether the intervention already
+carries one — at most one exists per intervention; a re-upload replaces it,
+never flips it back to `false`. The issue finder nudges a ready-but-unsigned
+intervention with a `recommendation`-severity issue, surfaced the same way
+every other issue is (`app-intervention-issues-checklist`); it does not gate
+anything, since the backend never requires a signature to submit.
+
+Capture is a **hand-rolled canvas signature pad**
+(`ui/dialogs/intervention-signature-dialog/`) — the spartan/ui catalog (46
+generated primitives plus everything still addable through
+`npx ng g @spartan-ng/cli:ui`) has no signature or freehand-canvas primitive,
+so this is the documented `ARCHITECTURE.md` §8.5 vendored-code exception. A
+fixed-size, device-pixel-ratio-aware `<canvas>` tracks Pointer Events
+(mouse/touch/pen alike) into `hasStrokes`, which gates Confirm; Confirm
+encodes the pad via `canvas.toBlob` (PNG) and emits `signed(Blob)`. All canvas
+work runs from a user gesture (opening the dialog, drawing a stroke) — there
+is nothing to guard for SSR, since the dialog's content is not in the DOM
+until it is open. The pad offers no keyboard-drawing simulation; the dialog
+copy states its purpose and the surrounding `hlm-dialog` still gives it a
+focus trap and Escape-to-dismiss.
+
+The dialog interposes on the `execute` phase's forward action
+(`InterventionDetailPage.invokeCommandAction`), and only there: once the field
+work is actually resolved (the same gate `commandTransitionTarget` already
+applies) and the loaded intervention carries no signature yet, the click opens
+the dialog instead of dispatching the `submitted` transition directly. A
+"Skip" button and the dialog's own Escape/backdrop close both count as
+declining the nudge and submit unsigned — the backend does not mandate a
+signature, so nothing here should read as blocking. Confirming instead uploads
+the PNG through the workspace store's `uploadAttachment` with `kind:
+'signature'`; the submit transition is **not** dispatched inline — it chains
+off the store's `attachmentUploadSucceeded` event once the upload has actually
+landed (a page-local `signingSubmitPending` flag arms the chain and is cleared
+either by that event or by the write's own `attachmentWriteCallState` turning
+to error), so a failed upload never silently submits an unsigned intervention.
+One design note worth keeping: setting the dialog's `visible` input to `false`
+from the capture handler still flows back through `hlm-dialog`'s own close
+notification, so the page's dismiss handler is a no-op while
+`signingSubmitPending` is set — otherwise a successful capture would also fire
+an extra, unwanted unsigned submit.
+
+Display: `app-intervention-publication-summary` gains a signed/unsigned line
+(icon + label, never colour alone) from `hasSignature`, rendered in both its
+call sites (the rail's publication group and the publish confirmation) from
+the one definition, same as its other stats. The attachments card shows a
+small "Signature" chip on `kind: 'signature'` rows, reusing the existing chip
+pattern next to the work-item chip.
+
 ### Write attribution is exact, not approximated
 
 The store's former **single `mutationCallState` for every write** — and the

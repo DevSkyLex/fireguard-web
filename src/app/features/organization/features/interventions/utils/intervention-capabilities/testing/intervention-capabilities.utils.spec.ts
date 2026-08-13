@@ -41,6 +41,7 @@ function buildIntervention(overrides: Partial<InterventionOutput> = {}): Interve
     completedWorkItemsCount: 0,
     proposedChangesCount: 0,
     commentsCount: 0,
+    hasSignature: false,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-02T00:00:00.000Z',
     ...overrides,

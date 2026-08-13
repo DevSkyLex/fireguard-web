@@ -7,6 +7,7 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
@@ -48,7 +49,10 @@ import {
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionLinkedResourcesStore } from '../../../../state/intervention-linked-resources';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
-import { InterventionWorkspaceStore } from '../../../../state/intervention-workspace';
+import {
+  InterventionWorkspaceStore,
+  interventionWorkspaceStoreEvents,
+} from '../../../../state/intervention-workspace';
 import { InterventionDetailPage } from '../intervention-detail-page.component';
 
 const MEMBER_IRI: string = '/api/organizations/org-1/members/member-1';
@@ -80,6 +84,7 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     completedWorkItemsCount: 0,
     proposedChangesCount: 0,
     commentsCount: 0,
+    hasSignature: false,
     createdAt: '2026-01-05T09:00:00Z',
     updatedAt: '2026-02-11T14:30:00Z',
     ...overrides,
@@ -120,6 +125,7 @@ const attachment = (
     mimeType: 'application/pdf',
     size: 1024,
     label: null,
+    kind: 'file',
     revision: 1,
     uploadedAt: '2026-01-05T09:00:00Z',
     ...overrides,
@@ -547,6 +553,111 @@ describe('InterventionDetailPage', () => {
 
       expect(prepareBox).not.toBeNull();
       expect(reviewBox).toBe(prepareBox);
+    });
+  });
+
+  describe('completion signature', () => {
+    it('should interpose the signature dialog on submit when the intervention is unsigned', async () => {
+      current.set(intervention({ status: 'in_progress', hasSignature: false }));
+      workItems.set([workItem({ status: 'completed' })]);
+      fixture = await createPage();
+
+      (byTestId('intervention-detail-command') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(inBody('intervention-signature-dialog')).not.toBeNull();
+      expect(transition).not.toHaveBeenCalled();
+    });
+
+    it('should submit unsigned when the dialog is skipped', async () => {
+      current.set(intervention({ status: 'in_progress', hasSignature: false }));
+      workItems.set([workItem({ status: 'completed' })]);
+      fixture = await createPage();
+
+      (byTestId('intervention-detail-command') as HTMLButtonElement).click();
+      await fixture.whenStable();
+      (
+        document.querySelector('[data-testid="intervention-signature-skip"]') as HTMLButtonElement
+      ).click();
+      await fixture.whenStable();
+
+      expect(inBody('intervention-signature-dialog')).toBeNull();
+      expect(uploadAttachment).not.toHaveBeenCalled();
+      expect(transition).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        status: 'submitted',
+      });
+    });
+
+    it('should upload the signature then submit only once the upload has landed', async () => {
+      current.set(intervention({ status: 'in_progress', hasSignature: false }));
+      workItems.set([workItem({ status: 'completed' })]);
+      fixture = await createPage();
+      const dispatcher: Dispatcher = TestBed.inject(Dispatcher);
+
+      (byTestId('intervention-detail-command') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      const canvas: HTMLCanvasElement = document.querySelector(
+        '[data-testid="intervention-signature-canvas"]',
+      ) as HTMLCanvasElement;
+      canvas.setPointerCapture = (): void => undefined;
+      canvas.releasePointerCapture = (): void => undefined;
+      canvas.dispatchEvent(
+        new PointerEvent('pointerdown', { clientX: 5, clientY: 5, pointerId: 1 }),
+      );
+      canvas.dispatchEvent(
+        new PointerEvent('pointermove', { clientX: 15, clientY: 15, pointerId: 1 }),
+      );
+      canvas.dispatchEvent(
+        new PointerEvent('pointerup', { clientX: 15, clientY: 15, pointerId: 1 }),
+      );
+      await fixture.whenStable();
+
+      const blob = new Blob(['signature'], { type: 'image/png' });
+      canvas.toBlob = (callback: BlobCallback): void => callback(blob);
+      (
+        document.querySelector(
+          '[data-testid="intervention-signature-confirm"]',
+        ) as HTMLButtonElement
+      ).click();
+      await fixture.whenStable();
+
+      expect(uploadAttachment).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        file: blob,
+        fileName: 'signature.png',
+        kind: 'signature',
+      });
+      expect(inBody('intervention-signature-dialog')).toBeNull();
+      expect(transition).not.toHaveBeenCalled();
+
+      dispatcher.dispatch(
+        interventionWorkspaceStoreEvents.attachmentUploadSucceeded({
+          attachment: attachment({ kind: 'signature' }),
+        }),
+      );
+      await fixture.whenStable();
+
+      expect(transition).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        status: 'submitted',
+      });
+    });
+
+    it('should submit directly without a dialog once already signed', async () => {
+      current.set(intervention({ status: 'in_progress', hasSignature: true }));
+      workItems.set([workItem({ status: 'completed' })]);
+      fixture = await createPage();
+
+      (byTestId('intervention-detail-command') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(inBody('intervention-signature-dialog')).toBeNull();
+      expect(transition).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        status: 'submitted',
+      });
     });
   });
 

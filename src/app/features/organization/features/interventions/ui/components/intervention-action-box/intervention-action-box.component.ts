@@ -146,6 +146,16 @@ export class InterventionActionBox {
   public readonly revision: InputSignal<number> = input<number>(0);
 
   /**
+   * Property signed
+   * @readonly
+   * @description Whether the intervention already carries a completion signature attachment.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly signed: InputSignal<boolean> = input<boolean>(false);
+
+  /**
    * Property busy
    * @readonly
    * @description Whether a write is already in flight, disabling the action.

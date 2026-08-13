@@ -11,6 +11,7 @@ export type {
 export type { ConversationAttachmentOutput } from './attachment';
 export type { DirectConversationView } from './direct-conversation-view';
 export type {
+  BuildMessageViewsInput,
   MessageDayEntry,
   MessageReactionToggle,
   MessageRowEntry,

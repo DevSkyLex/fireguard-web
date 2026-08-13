@@ -21,6 +21,7 @@ const attachment = (
     mimeType: 'application/pdf',
     size: 1024,
     label: null,
+    kind: 'file',
     revision: 1,
     uploadedAt: '2026-01-05T09:00:00Z',
     ...overrides,
@@ -223,7 +224,7 @@ describe('InterventionAttachments', () => {
     expect(add?.disabled).toBe(true);
   });
 
-  it('should lock only the row whose own delete is in flight', async () => {
+  it('should lock only the row whose own delete is in flight, without unmounting the button', async () => {
     await create(2);
     fixture.componentRef.setInput('pendingIds', new Set(['attachment-0']));
     await fixture.whenStable();
@@ -231,10 +232,19 @@ describe('InterventionAttachments', () => {
     const rows: HTMLElement[] = Array.from(
       root().querySelectorAll('[data-testid="intervention-attachment-row"]'),
     );
+    const deleteButton0 = rows[0]?.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-delete"]',
+    );
+    const deleteButton1 = rows[1]?.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-delete"]',
+    );
 
-    expect(rows[0]?.querySelector('hlm-spinner')).not.toBeNull();
-    expect(rows[0]?.querySelector('[data-testid="intervention-attachment-delete"]')).toBeNull();
-    expect(rows[1]?.querySelector('[data-testid="intervention-attachment-delete"]')).not.toBeNull();
+    expect(deleteButton0).not.toBeNull();
+    expect(deleteButton0?.disabled).toBe(true);
+    expect(deleteButton0?.getAttribute('aria-busy')).toBe('true');
+    expect(deleteButton0?.querySelector('hlm-spinner')).not.toBeNull();
+    expect(deleteButton1?.disabled).toBe(false);
+    expect(deleteButton1?.getAttribute('aria-busy')).toBeNull();
   });
 
   it('should emit a delete only once the confirmation is accepted', async () => {
@@ -295,7 +305,7 @@ describe('InterventionAttachments', () => {
     expect(downloads).toEqual([attachment(1)]);
   });
 
-  it('should lock only the row whose own download is in flight', async () => {
+  it('should lock only the row whose own download is in flight, without unmounting the button', async () => {
     await create(2);
     fixture.componentRef.setInput('downloadingIds', new Set(['attachment-0']));
     await fixture.whenStable();
@@ -303,11 +313,19 @@ describe('InterventionAttachments', () => {
     const rows: HTMLElement[] = Array.from(
       root().querySelectorAll('[data-testid="intervention-attachment-row"]'),
     );
+    const downloadButton0 = rows[0]?.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-download"]',
+    );
+    const downloadButton1 = rows[1]?.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-download"]',
+    );
 
-    expect(rows[0]?.querySelector('[data-testid="intervention-attachment-download"]')).toBeNull();
-    expect(
-      rows[1]?.querySelector('[data-testid="intervention-attachment-download"]'),
-    ).not.toBeNull();
+    expect(downloadButton0).not.toBeNull();
+    expect(downloadButton0?.disabled).toBe(true);
+    expect(downloadButton0?.getAttribute('aria-busy')).toBe('true');
+    expect(downloadButton0?.querySelector('hlm-spinner')).not.toBeNull();
+    expect(downloadButton1?.disabled).toBe(false);
+    expect(downloadButton1?.getAttribute('aria-busy')).toBeNull();
   });
 
   it('should disable the download button while offline', async () => {
@@ -373,5 +391,24 @@ describe('InterventionAttachments', () => {
     expect(
       root().querySelector('[data-testid="intervention-attachment-work-item-chip"]'),
     ).toBeNull();
+  });
+
+  it('should show no Signature chip on a plain evidence file', async () => {
+    await create(1);
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachment-signature-chip"]'),
+    ).toBeNull();
+  });
+
+  it('should show a Signature chip on a signature-kind attachment', async () => {
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    fixture = TestBed.createComponent(InterventionAttachments);
+    fixture.componentRef.setInput('attachments', [attachment(0, { kind: 'signature' })]);
+    await fixture.whenStable();
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachment-signature-chip"]')?.textContent,
+    ).toContain('Signature');
   });
 });

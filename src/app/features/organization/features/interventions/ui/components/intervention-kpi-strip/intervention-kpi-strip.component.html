@@ -1,13 +1,21 @@
 <div class="flex flex-wrap gap-3">
   @if (loading()) {
-    @for (index of skeletonTiles; track index) {
-      <div hlmCard class="min-w-36 flex-1 basis-36">
-        <div hlmCardHeader class="gap-1.5">
-          <hlm-skeleton class="h-4 w-16" />
-          <hlm-skeleton class="h-7 w-12" />
+    <div
+      class="contents"
+      role="status"
+      i18n-aria-label="@@intervention.kpi.loadingAria"
+      aria-label="Loading key figures"
+      data-testid="intervention-kpi-strip-loading"
+    >
+      @for (index of skeletonTiles; track index) {
+        <div hlmCard class="min-w-36 flex-1 basis-36">
+          <div hlmCardHeader class="gap-1.5">
+            <hlm-skeleton class="h-4 w-16" />
+            <hlm-skeleton class="h-7 w-12" />
+          </div>
         </div>
-      </div>
-    }
+      }
+    </div>
   } @else {
     @for (tile of tiles(); track tile.id) {
       <div

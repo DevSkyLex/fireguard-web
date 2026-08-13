@@ -719,6 +719,24 @@ backend follow-up. The QR button in the field-work section
 `InterventionDiscoveryService.normalizeScannedTarget` and reveals the matching
 work item, or toasts when nothing matches.
 
+Each work-item row also carries its own evidence affordance
+(`app-intervention-work-item-table`'s `canAttachEvidence`, gated the same as
+`canManageAttachments`), showing the row's `evidenceCount` as a small badge
+once it is above zero. The row only _requests_ evidence
+(`evidenceRequested`) — the table stays presentational; the page opens the
+same photo-intake path attachments use (`InterventionPhotoCompressorService.prepareAll`
+then `store.uploadAttachment`), passing the row's work-item id so the upload
+scopes to it. The row locks and spins on its own through the page-local
+`evidenceUploadingWorkItemIds`, cleared once the shared
+`attachmentWriteCallState` settles. An attachment scoped to a work item
+carries that id back (`workItemId` on `InterventionAttachmentOutput`) and the
+attachments card shows it as a subtle chip naming the work item (resolved
+from the workspace's loaded work items; an id that no longer resolves — the
+item was deleted after upload — shows no chip). **Deletion invariant:**
+deleting a work item does not delete the evidence that documents it; the
+backend `SET NULL`s the attachment's `workItemId`, so the file survives as
+plain intervention-level evidence and its chip disappears.
+
 ### Write attribution is exact, not approximated
 
 The store's former **single `mutationCallState` for every write** — and the

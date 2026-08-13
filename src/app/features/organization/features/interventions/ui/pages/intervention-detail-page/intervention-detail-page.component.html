@@ -289,10 +289,23 @@
                 [totalCount]="intervention.workItemsCount"
                 [completedCount]="intervention.completedWorkItemsCount"
                 [showProgress]="phase() === 'execute'"
+                [canAttachEvidence]="canManageAttachments()"
+                [evidencePendingItemIds]="evidenceUploadingWorkItemIds()"
                 (statusChanged)="onWorkItemStatusChanged($event)"
                 (skipRequested)="requestSkipWorkItem($event)"
                 (deleteRequested)="requestDeleteWorkItem($event)"
                 (addRequested)="workItemSheetVisible.set(true)"
+                (evidenceRequested)="onEvidenceRequested($event)"
+              />
+              <input
+                #evidenceInput
+                type="file"
+                class="sr-only"
+                tabindex="-1"
+                accept="image/*"
+                capture="environment"
+                data-testid="intervention-work-item-evidence-input"
+                (change)="onEvidenceFileSelected($event)"
               />
             </div>
 
@@ -307,6 +320,7 @@
 
             <app-intervention-attachments
               [attachments]="store.attachments()"
+              [workItems]="store.workItems()"
               [canManage]="canManageAttachments()"
               [pendingIds]="store.pendingAttachmentIds()"
               [downloadingIds]="pendingDownloadIds()"

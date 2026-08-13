@@ -39,6 +39,7 @@ const workItem = {
   status: 'planned',
   required: true,
   skipReason: null,
+  evidenceCount: 0,
   revision: 1,
   createdAt: '2026-06-12T08:00:00.000Z',
   updatedAt: '2026-06-12T08:00:00.000Z',
@@ -878,5 +879,112 @@ describe('InterventionWorkspaceStore call state', () => {
     expect(store.loadCallState().status).toBe('error');
     expect(store.intervention()).not.toBeNull();
     expect(store.error()).toBe('The intervention workspace could not be loaded.');
+  });
+});
+
+describe('InterventionWorkspaceStore evidence upload', () => {
+  let store: InstanceType<typeof InterventionWorkspaceStore>;
+  let mockService: Record<string, ReturnType<typeof vi.fn>>;
+
+  beforeEach(() => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    mockService = {
+      get: vi.fn().mockReturnValue(of(intervention)),
+      listAllWorkItems: vi.fn().mockReturnValue(of([workItem])),
+      listAllChanges: vi.fn().mockReturnValue(of([] as readonly InterventionChangeOutput[])),
+      listIssues: vi.fn().mockReturnValue(
+        of({
+          '@id': '/api/interventions/intervention-1/issues',
+          '@type': 'Collection',
+          totalItems: 0,
+          member: [] as readonly InterventionIssueOutput[],
+        }),
+      ),
+      uploadAttachment: vi.fn(),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        InterventionWorkspaceStore,
+        { provide: InterventionService, useValue: mockService },
+        {
+          provide: InterventionOfflineService,
+          useValue: {
+            getWorkspace: vi.fn(),
+            saveWorkspace: vi.fn().mockResolvedValue(undefined),
+            queue: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+      ],
+    });
+
+    store = TestBed.inject(InterventionWorkspaceStore);
+    store.load('intervention-1');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('threads workItemId to the service and bumps the matching item evidence count', async () => {
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    const created = {
+      '@id': '/api/intervention-attachments/attachment-1',
+      '@type': 'InterventionAttachment',
+      id: 'attachment-1',
+      interventionId: 'intervention-1',
+      fileName: 'evidence.jpg',
+      mimeType: 'image/jpeg',
+      size: 1024,
+      workItemId: workItem.id,
+      revision: 1,
+      uploadedAt: '2026-06-12T08:00:00.000Z',
+    };
+    mockService['uploadAttachment'].mockReturnValue(of(created));
+
+    const file = new Blob(['data'], { type: 'image/jpeg' });
+    store.uploadAttachment({
+      interventionId: 'intervention-1',
+      file,
+      fileName: 'evidence.jpg',
+      workItemId: workItem.id,
+    });
+
+    await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('success'));
+
+    expect(mockService['uploadAttachment']).toHaveBeenCalledWith(
+      'intervention-1',
+      file,
+      'evidence.jpg',
+      undefined,
+      workItem.id,
+    );
+    expect(store.attachments()).toEqual([created]);
+    expect(store.workItems()[0]?.evidenceCount).toBe(1);
+  });
+
+  it('leaves the work items untouched when the upload carries no workItemId', async () => {
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    const created = {
+      '@id': '/api/intervention-attachments/attachment-2',
+      '@type': 'InterventionAttachment',
+      id: 'attachment-2',
+      interventionId: 'intervention-1',
+      fileName: 'report.pdf',
+      mimeType: 'application/pdf',
+      size: 2048,
+      revision: 1,
+      uploadedAt: '2026-06-12T08:00:00.000Z',
+    };
+    mockService['uploadAttachment'].mockReturnValue(of(created));
+
+    const file = new Blob(['data'], { type: 'application/pdf' });
+    store.uploadAttachment({ interventionId: 'intervention-1', file, fileName: 'report.pdf' });
+
+    await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('success'));
+
+    expect(store.workItems()[0]?.evidenceCount).toBe(0);
   });
 });

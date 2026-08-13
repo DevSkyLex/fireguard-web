@@ -4423,6 +4423,10 @@
         <source> Delete </source>
         <target> Supprimer </target>
       </trans-unit>
+      <trans-unit id="intervention.attachments.forWorkItem" datatype="html">
+        <source>For <x id="INTERPOLATION" equiv-text="{{ workItemLabel }}"/></source>
+        <target>Pour <x id="INTERPOLATION"/></target>
+      </trans-unit>
       <trans-unit id="intervention.attachments.tooLarge" datatype="html">
         <source>&quot;<x id="name" equiv-text="oversized.name"/>&quot; exceeds the 10 MB limit.</source>
         <target>« <x id="name" equiv-text="oversized.name"/> » dépasse la limite de 10 Mo.</target>
@@ -9481,6 +9485,14 @@
       <trans-unit id="intervention.wit.progressAriaLabel" datatype="html">
         <source><x id="completed" equiv-text="this.completedCount()"/> of <x id="total" equiv-text="this.totalCount()"/> items completed</source>
         <target><x id="completed" equiv-text="this.completedCount()"/> sur <x id="total" equiv-text="this.totalCount()"/> éléments terminés</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.evidenceCount" datatype="html">
+        <source>Attach evidence — <x id="count" equiv-text="item.evidenceCount"/> file(s) attached</source>
+        <target>Ajouter une preuve — <x id="count"/> fichier(s) joint(s)</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.evidenceEmpty" datatype="html">
+        <source>Attach evidence</source>
+        <target>Ajouter une preuve</target>
       </trans-unit>
       <trans-unit id="intervention.rc.noteLabel" datatype="html">
         <source>Note</source>

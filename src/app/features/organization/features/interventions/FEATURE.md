@@ -181,11 +181,24 @@ Stores:
   the next intervention's visit.
 - `InterventionCalendarStore` — the interventions inside a bounded date window.
   **Currently dormant**: the calendar render is not part of the rebuilt list page.
+- `InterventionStatisticsStore` (5.3) — component-scoped (provided in
+  `InterventionsPage`); one `withQueryState` slice over
+  `InterventionService.statistics`, backing the list page's KPI strip
+  (`app-intervention-kpi-strip`, `ui/components/`). The snapshot is
+  **whole-organization, not filter-scoped** — the backend endpoint takes no
+  narrowing beyond `organization` — so the page reloads it only on an
+  organization switch, never on the list's own search/filter/sort/page
+  changes that reload `InterventionStore`. There is no cross-store refresh on
+  create/delete/transition either: the strip is a coarse "state of the
+  organization" snapshot, not a precise live counter, and wiring it to every
+  list mutation would trade a simple, obviously-correct reload trigger for a
+  fragile one covering a case the KPI strip's own purpose does not need.
 
 Data-access (transport boundary — `data-access/`):
 
 - `InterventionService` — HTTP API service (`HydraApiService`). Also owns the
-  intervention activity timeline (`listActivities`, `addComment`).
+  intervention activity timeline (`listActivities`, `addComment`), and the
+  whole-organization statistics snapshot (`statistics`).
 - `InterventionLabelService` — HTTP API service (`HydraApiService`) for the
   organization-scoped intervention label catalog (CRUD); labels are embedded
   as `InterventionLabelSummary` on `InterventionOutput.labels`.

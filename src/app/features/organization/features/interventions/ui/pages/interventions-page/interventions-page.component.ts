@@ -63,7 +63,9 @@ import {
   InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import {
+  InterventionStatisticsStore,
   InterventionStore,
+  type InterventionStatisticsStoreType,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import {
@@ -90,6 +92,7 @@ import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '../../../state/intervention-planning-options';
+import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
 import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
@@ -197,6 +200,7 @@ const NO_FILTERS: InterventionListFilters = {
     HlmToggle,
     InterventionAssignDialog,
     InterventionCreateSheet,
+    InterventionKpiStrip,
     InterventionSyncStatus,
     InterventionTable,
     InterventionTag,
@@ -209,6 +213,7 @@ const NO_FILTERS: InterventionListFilters = {
   ],
   providers: [
     InterventionPlanningOptionsStore,
+    InterventionStatisticsStore,
     provideIcons({
       lucideCheck,
       lucideChevronLeft,
@@ -329,6 +334,25 @@ export class InterventionsPage {
   /** Site and member choices for the filters and the creation form. */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
+
+  /**
+   * Property statisticsStore
+   * @readonly
+   *
+   * @description
+   * The KPI strip's organization-wide snapshot. Component-scoped and
+   * reloaded only on an organization switch — the snapshot is
+   * `INTERVENTIONS_READ`-gated the same as the list, but org-wide, so it
+   * must not refetch on every filter, search or page change the list
+   * itself reacts to (`FEATURE.md`).
+   *
+   * @access protected
+   * @since 5.3.0
+   *
+   * @type {InterventionStatisticsStoreType}
+   */
+  protected readonly statisticsStore: InterventionStatisticsStoreType =
+    inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
 
   /** The sync coordinator behind the toolbar's sync chip. */
   protected readonly sync: InterventionSyncCoordinatorService = inject(
@@ -1172,6 +1196,13 @@ export class InterventionsPage {
       const organizationId: string = this.organizationId();
       untracked((): void => {
         this.planningOptions.loadCreationOptions(organizationId);
+      });
+    });
+
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+      untracked((): void => {
+        this.statisticsStore.load(organizationId);
       });
     });
 

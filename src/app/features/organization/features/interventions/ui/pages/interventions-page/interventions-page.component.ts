@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -22,6 +23,7 @@ import {
   lucideChevronsRight,
   lucideCircleAlert,
   lucideClipboardList,
+  lucideDownload,
   lucideListFilter,
   lucidePlus,
   lucideSearch,
@@ -31,10 +33,14 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { isCallPending } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import {
   resolveInterventionTag,
   type InterventionAssignRequest,
@@ -78,6 +84,7 @@ import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggle } from '@shared/ui/toggle';
 import {
   InterventionPlanningOptionsStore,
@@ -102,6 +109,7 @@ import {
   INTERVENTION_TYPE_FILTER_OPTIONS,
 } from './options';
 import {
+  buildInterventionCsv,
   buildInterventionListOptions,
   countActiveFilters,
   parseInterventionListFilters,
@@ -116,6 +124,13 @@ const SEARCH_DEBOUNCE_MS: number = 300;
 
 /** The page sizes offered under the table — the server default first, its clamp last. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
+
+/**
+ * Hard cap on how many rows a multi-page CSV export drains before it stops
+ * asking for more — a runaway `listAll` would otherwise pull an unbounded
+ * organization history into one browser tab.
+ */
+const EXPORT_ROW_CAP: number = 1000;
 
 /** The narrowing a freshly opened list applies: none. */
 const NO_FILTERS: InterventionListFilters = {
@@ -178,6 +193,7 @@ const NO_FILTERS: InterventionListFilters = {
     HlmBadge,
     HlmButton,
     HlmLabel,
+    HlmSpinner,
     HlmToggle,
     InterventionAssignDialog,
     InterventionCreateSheet,
@@ -201,6 +217,7 @@ const NO_FILTERS: InterventionListFilters = {
       lucideChevronsRight,
       lucideCircleAlert,
       lucideClipboardList,
+      lucideDownload,
       lucideListFilter,
       lucidePlus,
       lucideSearch,
@@ -374,6 +391,21 @@ export class InterventionsPage {
   private readonly preferences: InterventionListPreferencesService =
     inject<InterventionListPreferencesService>(InterventionListPreferencesService);
 
+  /**
+   * Read directly rather than through {@link InterventionStore}: the export
+   * is a one-shot, page-local drain of every matching row, and the store's
+   * public surface only ever loads and caches one server page at a time
+   * (mirroring `ChannelConversationPage`'s direct `ConversationService` call
+   * for the one action its owning store has no method for).
+   */
+  private readonly interventionService: InterventionService = inject(InterventionService);
+
+  /** Reports the export's outcome — a truncation warning or a failure. */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
+
+  /** Unsubscribes the export's in-flight drain if the page is left mid-fetch. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
   /** The signed-in member, resolving the "my interventions" chip and the identity gates. */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
     inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
@@ -443,6 +475,9 @@ export class InterventionsPage {
 
   /** What the search box holds, before the debounce settles. */
   protected readonly draftSearch: WritableSignal<string> = signal<string>('');
+
+  /** Whether a multi-page export drain is currently in flight. */
+  protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
   /** The page window, one-based. */
   protected readonly page: WritableSignal<number> = signal<number>(1);
@@ -518,6 +553,45 @@ export class InterventionsPage {
 
   /** The page sizes offered under the table. */
   protected readonly pageSizes: ReadonlyArray<number> = PAGE_SIZES;
+
+  /**
+   * Property visibleColumns
+   * @readonly
+   *
+   * @description
+   * The optional columns currently shown, in the table's own order — exactly
+   * what the CSV export mirrors, so a column hidden on screen never appears
+   * in the file.
+   *
+   * @access protected
+   * @since 6.2.0
+   *
+   * @type {Signal<ReadonlyArray<InterventionTableColumn>>}
+   */
+  protected readonly visibleColumns: Signal<ReadonlyArray<InterventionTableColumn>> = computed(
+    (): ReadonlyArray<InterventionTableColumn> =>
+      this.allColumns.filter((id: InterventionTableColumn): boolean => this.isColumnVisible(id)),
+  );
+
+  /**
+   * Property exportDisabled
+   * @readonly
+   *
+   * @description
+   * Whether the "Export" button should be inert: nothing loaded yet, nothing
+   * matches the current query, or a multi-page drain is already running.
+   *
+   * @access protected
+   * @since 6.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly exportDisabled: Signal<boolean> = computed(
+    (): boolean =>
+      this.store.isLoadingInterventions() ||
+      this.exportBusy() ||
+      this.store.totalInterventions() === 0,
+  );
 
   /**
    * Property searchTerm
@@ -1914,6 +1988,99 @@ export class InterventionsPage {
         itemsPerPage: this.pageSize(),
       },
     });
+  }
+
+  /**
+   * Method exportCsv
+   * @method exportCsv
+   *
+   * @description
+   * Downloads the current question as CSV — same filters, same sort, same
+   * visible columns. The already-loaded page is exported directly when it
+   * is the entire matching collection; otherwise every matching row is
+   * drained first through `InterventionService.listAll`, capped at
+   * {@link EXPORT_ROW_CAP} rows with a toast when the cap truncates the file.
+   *
+   * @access protected
+   * @since 6.2.0
+   *
+   * @returns {void}
+   */
+  protected exportCsv(): void {
+    const loaded: readonly InterventionOutput[] = this.store.interventionList();
+    const total: number = this.store.totalInterventions();
+
+    if (total === 0) return;
+
+    if (total <= loaded.length) {
+      this.downloadInterventionCsv(loaded);
+      return;
+    }
+
+    this.exportBusy.set(true);
+
+    this.interventionService
+      .listAll(this.organizationId(), {
+        ...buildInterventionListOptions(
+          this.filters(),
+          this.sortOrder(),
+          this.searchTerm(),
+          new Date(),
+          this.filters().mine ? this.memberIri() : null,
+        ),
+      })
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (rows: readonly InterventionOutput[]): void => {
+          this.exportBusy.set(false);
+
+          const capped: boolean = rows.length > EXPORT_ROW_CAP;
+          if (capped) {
+            this.feedback.warn(
+              $localize`:@@intervention.list.exportCapped:Export capped at ${EXPORT_ROW_CAP}:cap: rows.`,
+            );
+          }
+
+          this.downloadInterventionCsv(capped ? rows.slice(0, EXPORT_ROW_CAP) : rows);
+        },
+        error: (): void => {
+          this.exportBusy.set(false);
+          this.feedback.error(
+            $localize`:@@intervention.list.exportFailed:Couldn't export interventions.`,
+          );
+        },
+      });
+  }
+
+  /** Serializes `rows` into CSV and triggers the browser download, browser-only. */
+  private downloadInterventionCsv(rows: readonly InterventionOutput[]): void {
+    const csv: string = buildInterventionCsv(rows, this.visibleColumns(), {
+      columnLabelOf: (id: InterventionTableColumn): string => this.columnLabelOf(id),
+      statusLabelOf: this.statusLabelOf,
+      typeLabelOf: this.typeLabelOf,
+      priorityLabelOf: this.priorityLabelOf,
+      siteLabelOf: this.siteLabelOf,
+    });
+
+    if (typeof document === 'undefined') return;
+
+    const blob: Blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url: string = URL.createObjectURL(blob);
+    const anchor: HTMLAnchorElement = document.createElement('a');
+    anchor.href = url;
+    anchor.download = this.exportFilename();
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** The export's filename: the organization, stamped with today's date (`yyyyMMdd`). */
+  private exportFilename(): string {
+    const now: Date = new Date();
+    const yyyy: string = String(now.getFullYear());
+    const mm: string = String(now.getMonth() + 1).padStart(2, '0');
+    const dd: string = String(now.getDate()).padStart(2, '0');
+
+    return `interventions-${this.organizationId()}-${yyyy}${mm}${dd}.csv`;
   }
 
   /** Merges query params into the URL without touching the path. */

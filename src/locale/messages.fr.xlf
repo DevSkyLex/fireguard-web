@@ -9270,6 +9270,18 @@
         <source>Columns</source>
         <target>Colonnes</target>
       </trans-unit>
+      <trans-unit id="intervention.list.exportButton" datatype="html">
+        <source>Export</source>
+        <target>Exporter</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.exportCapped" datatype="html">
+        <source>Export capped at <x id="cap" equiv-text="EXPORT_ROW_CAP"/> rows.</source>
+        <target>Export limité à <x id="cap" equiv-text="EXPORT_ROW_CAP"/> lignes.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.exportFailed" datatype="html">
+        <source>Couldn&apos;t export interventions.</source>
+        <target>Impossible d'exporter les interventions.</target>
+      </trans-unit>
       <trans-unit id="intervention.list.columnsMenuLabel" datatype="html">
         <source>Toggle columns</source>
         <target>Afficher les colonnes</target>

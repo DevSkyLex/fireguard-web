@@ -407,6 +407,24 @@
         <ng-icon name="lucideSettings2" aria-hidden="true" />
         <span i18n="@@intervention.list.columnsButton">Columns</span>
       </button>
+
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="min-w-0 flex-1 max-sm:min-h-11"
+        data-testid="interventions-export"
+        [disabled]="exportDisabled()"
+        (click)="exportCsv()"
+      >
+        @if (exportBusy()) {
+          <hlm-spinner class="size-4" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucideDownload" aria-hidden="true" />
+        }
+        <span i18n="@@intervention.list.exportButton">Export</span>
+      </button>
     </div>
 
     <ng-template #columnMenu>

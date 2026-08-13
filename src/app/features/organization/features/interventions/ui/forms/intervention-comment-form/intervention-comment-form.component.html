@@ -8,7 +8,7 @@
       </div>
     }
 
-    <hlm-field>
+    <hlm-field class="relative">
       <label
         hlmFieldLabel
         for="intervention-comment-body"
@@ -16,19 +16,107 @@
         i18n="@@intervention.comment.label"
         >Comment</label
       >
-      <textarea
-        hlmTextarea
-        id="intervention-comment-body"
-        rows="2"
-        data-testid="intervention-comment-body"
-        placeholder="Add a comment…"
-        i18n-placeholder="@@intervention.comment.placeholder"
-        [formField]="commentForm.body"
-      ></textarea>
+
+      @if (mentionCandidates().length > 0) {
+        <ul
+          class="absolute bottom-full left-0 z-20 mb-1 w-full max-w-sm overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+          id="intervention-comment-mentions"
+          role="listbox"
+          data-testid="intervention-comment-mentions"
+          i18n-aria-label="@@intervention.comment.mentionsLabel"
+          aria-label="Members you can mention"
+        >
+          @for (member of mentionCandidates(); track member.value; let index = $index) {
+            <li
+              role="option"
+              [attr.aria-selected]="index === activeMention()"
+              [id]="'intervention-comment-mention-' + member.value"
+            >
+              <button
+                hlmItem
+                size="xs"
+                type="button"
+                class="w-full text-start"
+                data-testid="intervention-comment-mention-option"
+                [class.bg-accent]="index === activeMention()"
+                (mousedown)="$event.preventDefault(); acceptMention(member)"
+              >
+                <div hlmItemMedia variant="image">
+                  <hlm-avatar size="sm">
+                    @if (member.avatarUrl; as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback class="text-[10px]">{{ member.initials }}</span>
+                  </hlm-avatar>
+                </div>
+                <div hlmItemContent>
+                  <span hlmItemTitle class="truncate font-normal">{{ member.displayName }}</span>
+                </div>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <div hlmInputGroup>
+        <textarea
+          hlmInputGroupTextarea
+          #field
+          id="intervention-comment-body"
+          rows="2"
+          data-testid="intervention-comment-body"
+          placeholder="Add a comment…"
+          i18n-placeholder="@@intervention.comment.placeholder"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="intervention-comment-mentions"
+          [formField]="commentForm.body"
+          [attr.aria-expanded]="mentionCandidates().length > 0"
+          [attr.aria-activedescendant]="activeMentionId()"
+          (keydown)="onKeydown($event)"
+          (input)="onFieldChanged()"
+          (keyup)="onFieldChanged()"
+          (click)="onFieldChanged()"
+        ></textarea>
+
+        <div hlmInputGroupAddon align="block-end">
+          <button
+            hlmInputGroupButton
+            size="icon-sm"
+            variant="ghost"
+            type="button"
+            data-testid="intervention-comment-mention-trigger"
+            i18n-aria-label="@@intervention.comment.mentionTrigger"
+            aria-label="Mention a member"
+            (click)="triggerMention()"
+          >
+            <ng-icon name="lucideAtSign" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
       @if (commentForm.body().touched() && commentForm.body().invalid()) {
         <hlm-field-error>{{ commentForm.body().errors()[0].message }}</hlm-field-error>
       }
     </hlm-field>
+
+    @if (mentionedMembers().length > 0) {
+      <ul
+        class="flex flex-wrap items-center gap-1.5"
+        data-testid="intervention-comment-mention-chips"
+        i18n-aria-label="@@intervention.comment.mentionChipsLabel"
+        aria-label="Members who will be notified"
+      >
+        <li class="text-xs text-muted-foreground" i18n="@@intervention.comment.willNotify">
+          Will notify:
+        </li>
+        @for (member of mentionedMembers(); track member.value) {
+          <li hlmBadge variant="secondary" data-testid="intervention-comment-mention-chip">
+            {{ member.displayName }}
+          </li>
+        }
+      </ul>
+    }
 
     <div class="flex justify-end">
       <button

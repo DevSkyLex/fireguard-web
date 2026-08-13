@@ -1,6 +1,16 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import type { MemberSelectOption } from '@features/organization/features/interventions/models';
 import { InterventionCommentForm } from '../intervention-comment-form.component';
+
+const MEMBER: MemberSelectOption = {
+  value: '/api/organizations/org-1/members/3fa85f64-5717-4562-b3fc-2c963f66afa6',
+  label: 'Marc Dubois',
+  displayName: 'Marc Dubois',
+  roleLabel: 'Technician',
+  avatarUrl: null,
+  initials: 'MD',
+};
 
 describe('InterventionCommentForm', () => {
   let fixture: ComponentFixture<InterventionCommentForm>;
@@ -12,9 +22,18 @@ describe('InterventionCommentForm', () => {
   const form = (): HTMLFormElement => root().querySelector('form') as HTMLFormElement;
   const submitButton = (): HTMLButtonElement =>
     root().querySelector('[data-testid="intervention-comment-submit"]') as HTMLButtonElement;
+  const mentionTrigger = (): HTMLButtonElement =>
+    root().querySelector(
+      '[data-testid="intervention-comment-mention-trigger"]',
+    ) as HTMLButtonElement;
+  const mentionOptions = (): NodeListOf<HTMLButtonElement> =>
+    root().querySelectorAll('[data-testid="intervention-comment-mention-option"]');
+  const mentionChips = (): NodeListOf<HTMLLIElement> =>
+    root().querySelectorAll('[data-testid="intervention-comment-mention-chip"]');
 
   const type = async (value: string): Promise<void> => {
     body().value = value;
+    body().selectionStart = value.length;
     body().dispatchEvent(new Event('input'));
     await fixture.whenStable();
   };
@@ -27,6 +46,7 @@ describe('InterventionCommentForm', () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
     fixture = TestBed.createComponent(InterventionCommentForm);
+    fixture.componentRef.setInput('members', [MEMBER]);
     await fixture.whenStable();
 
     submissions = [];
@@ -93,5 +113,50 @@ describe('InterventionCommentForm', () => {
 
   it('should announce nothing before a failure', () => {
     expect(root().querySelector('[data-testid="intervention-comment-error"]')).toBeNull();
+  });
+
+  it('should offer members from the picker once "@" is typed', async () => {
+    await type('ping @');
+
+    expect(mentionOptions().length).toBe(1);
+    expect(mentionOptions()[0].textContent).toContain('Marc Dubois');
+  });
+
+  it('should insert the member uuid token at the caret when a suggestion is picked', async () => {
+    await type('ping @');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
+    await fixture.whenStable();
+
+    expect(body().value).toBe('ping @{3fa85f64-5717-4562-b3fc-2c963f66afa6} ');
+    expect(mentionOptions().length).toBe(0);
+  });
+
+  it('should open the picker from the at-sign trigger button', async () => {
+    await fixture.whenStable();
+    mentionTrigger().dispatchEvent(new Event('click'));
+    await fixture.whenStable();
+
+    expect(body().value).toBe('@');
+    expect(mentionOptions().length).toBe(1);
+  });
+
+  it('should list who the draft will notify as it is typed', async () => {
+    await type('ping @{3fa85f64-5717-4562-b3fc-2c963f66afa6} please');
+
+    expect(mentionChips().length).toBe(1);
+    expect(mentionChips()[0].textContent).toContain('Marc Dubois');
+  });
+
+  it('should show no chips when the draft mentions nobody resolvable', async () => {
+    await type('ping @{00000000-0000-4000-8000-000000000000} please');
+
+    expect(mentionChips().length).toBe(0);
+  });
+
+  it('should submit the raw mention token verbatim', async () => {
+    await type('ping @{3fa85f64-5717-4562-b3fc-2c963f66afa6} please');
+    await submit();
+
+    expect(submissions).toEqual(['ping @{3fa85f64-5717-4562-b3fc-2c963f66afa6} please']);
   });
 });

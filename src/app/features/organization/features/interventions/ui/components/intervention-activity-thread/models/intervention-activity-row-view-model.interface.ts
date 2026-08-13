@@ -2,6 +2,7 @@ import type {
   InterventionActivityOutput,
   InterventionStatusChangePayload,
 } from '@features/organization/features/interventions/models';
+import type { InterventionActivityBodySegment } from './intervention-activity-body-segment.interface';
 
 /**
  * Interface InterventionActivityRowViewModel
@@ -45,5 +46,8 @@ export interface InterventionActivityRowViewModel {
 
   /** The marker glyph's literal Tailwind tint classes. */
   readonly iconClass: string;
+
+  /** A comment's body, split into text and resolved-mention runs; empty for a system entry. */
+  readonly bodySegments: readonly InterventionActivityBodySegment[];
   //#endregion
 }

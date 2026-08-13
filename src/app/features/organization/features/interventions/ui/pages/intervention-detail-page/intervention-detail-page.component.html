@@ -329,6 +329,7 @@
               <app-intervention-comment-form
                 [pending]="commentPending()"
                 [serverError]="commentError()"
+                [members]="planningOptions.members()"
                 (submitted)="postComment($event)"
               />
             </div>

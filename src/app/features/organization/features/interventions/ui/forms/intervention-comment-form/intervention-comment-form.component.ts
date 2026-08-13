@@ -1,20 +1,39 @@
 import {
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
   input,
   output,
   signal,
+  viewChild,
+  type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideAtSign } from '@ng-icons/lucide';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import type {
+  InterventionMentionQuery,
+  MemberSelectOption,
+} from '@features/organization/features/interventions/models';
+import {
+  findInterventionMentionQuery,
+  interventionMemberId,
+  parseInterventionMentions,
+  resolveInterventionMentionMember,
+} from '@features/organization/features/interventions/utils';
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
-import { HlmTextareaImports } from '@shared/ui/textarea';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
+import { HlmItemImports } from '@shared/ui/item';
+import { COMMENT_MENTION_SUGGESTION_LIMIT } from './constants/intervention-comment-mention.constants';
 import type { InterventionCommentFormValues } from './models';
 
 /** Longest a comment may be — mirrors what `InterventionService.addComment` accepts. */
@@ -33,13 +52,23 @@ const EMPTY_VALUES: InterventionCommentFormValues = { body: '' };
  * their own formatting, and a comment is read alongside them, not composed
  * as a separate document.
  *
- * @version 1.0.0
+ * Typing `@` — or pressing the at-sign button, for anyone who does not know
+ * the shortcut — opens a picker over {@link members}. Picking one inserts
+ * the backend's own `@{memberUuid}` token verbatim rather than a display
+ * name: the draft is exactly what gets posted, so there is no separate
+ * label-to-marker rewrite to keep in sync with the API contract. The chip
+ * row below the field parses the live draft the same way the activity
+ * thread renders a posted one, so the author sees who is about to be
+ * notified before sending.
+ *
+ * @version 2.0.0
  *
  * @example
  * ```html
  * <app-intervention-comment-form
  *   [pending]="commentPending()"
  *   [serverError]="commentError()"
+ *   [members]="planningOptions.members()"
  *   (submitted)="postComment($event)"
  * />
  * ```
@@ -48,7 +77,17 @@ const EMPTY_VALUES: InterventionCommentFormValues = { body: '' };
  */
 @Component({
   selector: 'app-intervention-comment-form',
-  imports: [FormField, HlmButton, ...HlmFieldImports, ...HlmTextareaImports],
+  imports: [
+    FormField,
+    NgIcon,
+    HlmButton,
+    ...HlmFieldImports,
+    ...HlmInputGroupImports,
+    ...HlmItemImports,
+    ...HlmAvatarImports,
+    ...HlmBadgeImports,
+  ],
+  providers: [provideIcons({ lucideAtSign })],
   templateUrl: './intervention-comment-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -83,6 +122,18 @@ export class InterventionCommentForm {
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property members
+   * @readonly
+   * @description Who can be mentioned here. Supplied already narrowed — the form offers whatever it is given and decides nothing about who belongs.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<readonly MemberSelectOption[]>}
+   */
+  public readonly members: InputSignal<readonly MemberSelectOption[]> = input<
+    readonly MemberSelectOption[]
+  >([]);
   //#endregion
 
   //#region Outputs
@@ -155,6 +206,151 @@ export class InterventionCommentForm {
       ? combined
       : [$localize`:@@intervention.workspace.commentAddFailed:The comment could not be posted.`];
   });
+
+  /**
+   * Property field
+   * @readonly
+   * @description The textarea, addressed directly so a mention insertion can set its caret.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<ElementRef<HTMLTextAreaElement> | undefined>}
+   */
+  protected readonly field: Signal<ElementRef<HTMLTextAreaElement> | undefined> =
+    viewChild<ElementRef<HTMLTextAreaElement>>('field');
+
+  /**
+   * Property mentionQuery
+   * @readonly
+   * @description The `@…` the caret is inside, or `null` when it is not in one.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<InterventionMentionQuery | null>}
+   */
+  protected readonly mentionQuery: Signal<InterventionMentionQuery | null> = computed(
+    (): InterventionMentionQuery | null =>
+      findInterventionMentionQuery(this.model().body, this.caret()),
+  );
+
+  /**
+   * Property mentionCandidates
+   * @readonly
+   *
+   * @description
+   * Members matching the active query, capped so the list never covers the
+   * comment being written. Empty whenever the list should not be showing at
+   * all — no query, nothing matching, or dismissed with Escape.
+   *
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<readonly MemberSelectOption[]>}
+   */
+  protected readonly mentionCandidates: Signal<readonly MemberSelectOption[]> = computed(
+    (): readonly MemberSelectOption[] => {
+      const query: InterventionMentionQuery | null = this.mentionQuery();
+
+      if (query === null || this.disabled()) return [];
+      if (query.term === this.dismissedMention()) return [];
+
+      const needle: string = query.term.toLocaleLowerCase();
+
+      return this.members()
+        .filter((member: MemberSelectOption): boolean =>
+          member.displayName.toLocaleLowerCase().includes(needle),
+        )
+        .slice(0, COMMENT_MENTION_SUGGESTION_LIMIT);
+    },
+  );
+
+  /**
+   * Property activeMention
+   * @readonly
+   * @description Index of the highlighted suggestion.
+   * @access protected
+   * @since 2.0.0
+   * @type {WritableSignal<number>}
+   */
+  protected readonly activeMention: WritableSignal<number> = signal<number>(0);
+
+  /**
+   * Property activeMentionId
+   * @readonly
+   * @description DOM id of the highlighted suggestion, so the field can point a screen reader at it while focus stays in the textarea. `null` closes the link.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly activeMentionId: Signal<string | null> = computed((): string | null => {
+    const member: MemberSelectOption | undefined = this.mentionCandidates()[this.activeMention()];
+
+    return member === undefined ? null : `intervention-comment-mention-${member.value}`;
+  });
+
+  /**
+   * Property mentionedMembers
+   * @readonly
+   *
+   * @description
+   * Who the draft, as currently written, will notify — parsed live from the
+   * body with the same {@link parseInterventionMentions} the activity
+   * thread uses to render a posted comment, deduplicated in first-appearance
+   * order. A token that no longer resolves against {@link members} (deleted
+   * mid-edit, or simply retyped) drops out silently rather than showing a
+   * chip for nobody.
+   *
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<readonly MemberSelectOption[]>}
+   */
+  protected readonly mentionedMembers: Signal<readonly MemberSelectOption[]> = computed(
+    (): readonly MemberSelectOption[] => {
+      const members: readonly MemberSelectOption[] = this.members();
+      const seen = new Set<string>();
+      const resolved: MemberSelectOption[] = [];
+
+      for (const segment of parseInterventionMentions(this.model().body)) {
+        if (segment.kind !== 'mention' || seen.has(segment.value)) continue;
+
+        const member: MemberSelectOption | null = resolveInterventionMentionMember(
+          segment.value,
+          members,
+        );
+
+        if (member === null) continue;
+
+        seen.add(segment.value);
+        resolved.push(member);
+      }
+
+      return resolved;
+    },
+  );
+
+  /** Caret offset in the draft, which is half of what decides the active query. */
+  private readonly caret: WritableSignal<number> = signal<number>(0);
+
+  /** Query term the list was dismissed for, so Escape does not re-open on it. */
+  private readonly dismissedMention: WritableSignal<string | null> = signal<string | null>(null);
+  //#endregion
+
+  //#region Lifecycle
+  /**
+   * Method constructor
+   * @constructor
+   * @description Keeps the field's height matched to its content, the same measurement `MessageComposer` uses — `field-sizing: content` is not implemented in Safari or Firefox.
+   * @access public
+   * @since 2.0.0
+   */
+  public constructor() {
+    afterRenderEffect((): void => {
+      const body: string = this.model().body;
+      const element: HTMLTextAreaElement | undefined = this.field()?.nativeElement;
+
+      if (element === undefined) return;
+
+      element.style.height = 'auto';
+      element.style.height = body.length === 0 ? '' : `${element.scrollHeight}px`;
+    });
+  }
   //#endregion
 
   //#region Methods
@@ -183,6 +379,158 @@ export class InterventionCommentForm {
     this.submitted.emit(this.model().body.trim());
     this.model.set(EMPTY_VALUES);
     this.commentForm().reset();
+    this.closeMentions();
+  }
+
+  /**
+   * Method onKeydown
+   *
+   * @description
+   * Drives the mention list while it is open — arrows move, Enter and Tab
+   * accept, Escape dismisses — and otherwise leaves the keystroke alone, so
+   * Enter still starts a new line as a plain textarea does.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {KeyboardEvent} event - The keystroke.
+   *
+   * @returns {void}
+   */
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.isComposing || this.mentionCandidates().length === 0) return;
+
+    this.handleMentionKey(event);
+  }
+
+  /**
+   * Method onFieldChanged
+   *
+   * @description
+   * Re-reads the caret so the mention list follows it. Bound to every event
+   * that can move a caret without changing the text — a click, an arrow key —
+   * as well as typing, because the query is a function of both.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected onFieldChanged(): void {
+    this.caret.set(this.field()?.nativeElement.selectionStart ?? 0);
+  }
+
+  /**
+   * Method acceptMention
+   *
+   * @description
+   * Replaces the `@…` the caret sits in with the member's `@{uuid}` token —
+   * the same one the API parses mentions from — and closes the list.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {MemberSelectOption} member - The chosen member.
+   *
+   * @returns {void}
+   */
+  protected acceptMention(member: MemberSelectOption): void {
+    const query: InterventionMentionQuery | null = this.mentionQuery();
+    const element: HTMLTextAreaElement | undefined = this.field()?.nativeElement;
+
+    if (query === null || element === undefined) return;
+
+    const body: string = this.model().body;
+    const inserted = `@{${interventionMemberId(member)}} `;
+    const next: string = body.slice(0, query.start) + inserted + body.slice(query.end);
+
+    this.model.set({ body: next });
+
+    const caretAfter: number = query.start + inserted.length;
+    element.value = next;
+    element.setSelectionRange(caretAfter, caretAfter);
+    element.focus();
+    this.caret.set(caretAfter);
+    this.activeMention.set(0);
+  }
+
+  /**
+   * Method triggerMention
+   *
+   * @description
+   * Opens the picker from the at-sign button rather than the keyboard, by
+   * inserting `@` at the caret exactly as typing it would.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected triggerMention(): void {
+    const element: HTMLTextAreaElement | undefined = this.field()?.nativeElement;
+
+    if (element === undefined) return;
+
+    const caret: number = element.selectionStart;
+    const body: string = this.model().body;
+    const next: string = body.slice(0, caret) + '@' + body.slice(caret);
+
+    this.model.set({ body: next });
+
+    const caretAfter: number = caret + 1;
+    element.value = next;
+    element.setSelectionRange(caretAfter, caretAfter);
+    element.focus();
+    this.caret.set(caretAfter);
+  }
+
+  /**
+   * Method handleMentionKey
+   *
+   * @description Applies one keystroke to the open mention list.
+   * @access private
+   * @since 2.0.0
+   *
+   * @param {KeyboardEvent} event - The keystroke.
+   *
+   * @returns {void}
+   */
+  private handleMentionKey(event: KeyboardEvent): void {
+    const candidates: readonly MemberSelectOption[] = this.mentionCandidates();
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const step: number = event.key === 'ArrowDown' ? 1 : candidates.length - 1;
+      this.activeMention.set((this.activeMention() + step) % candidates.length);
+
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === 'Tab') {
+      event.preventDefault();
+      const chosen: MemberSelectOption | undefined = candidates[this.activeMention()];
+
+      if (chosen !== undefined) this.acceptMention(chosen);
+
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeMentions();
+    }
+  }
+
+  /**
+   * Method closeMentions
+   * @description Dismisses the mention list without touching the draft, by remembering the query it was dismissed for.
+   * @access private
+   * @since 2.0.0
+   * @returns {void}
+   */
+  private closeMentions(): void {
+    this.dismissedMention.set(this.mentionQuery()?.term ?? null);
+    this.activeMention.set(0);
   }
   //#endregion
 }

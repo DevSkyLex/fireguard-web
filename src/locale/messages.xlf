@@ -5775,10 +5775,10 @@
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.caption" datatype="html">
-        <source> Photos and documents kept with this intervention. Download links are not available yet. </source>
+        <source> Photos and documents kept with this intervention. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-attachments/intervention-attachments.component.html</context>
-          <context context-type="linenumber">16,20</context>
+          <context context-type="linenumber">16,18</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.add" datatype="html">
@@ -5816,11 +5816,18 @@
           <context context-type="linenumber">108,109</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.attachments.download" datatype="html">
+        <source>Download this file</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-attachments/intervention-attachments.component.html</context>
+          <context context-type="linenumber">158,159</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.attachments.delete" datatype="html">
         <source>Delete this file</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-attachments/intervention-attachments.component.html</context>
-          <context context-type="linenumber">160,162</context>
+          <context context-type="linenumber">177,178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.deleteTitle" datatype="html">
@@ -7051,6 +7058,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
           <context context-type="linenumber">1375</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.downloadFailed" datatype="html">
+        <source>Couldn&apos;t download <x id="fileName" equiv-text="attachment.fileName"/>.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
+          <context context-type="linenumber">1459</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.unreadable" datatype="html">

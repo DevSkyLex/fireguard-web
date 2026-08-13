@@ -509,4 +509,22 @@ describe('InterventionService', () => {
     expect(result).toEqual(settled);
     vi.useRealTimers();
   });
+
+  it('reads an attachment as a blob via GET responseType blob', () => {
+    const content = new Blob(['file-bytes'], { type: 'application/pdf' });
+    let result: Blob | undefined;
+
+    service.downloadAttachment('attachment-1').subscribe((blob) => {
+      result = blob;
+    });
+
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/intervention-attachments/attachment-1/download`,
+    );
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(content);
+
+    expect(result).toEqual(content);
+  });
 });

@@ -705,10 +705,15 @@ button. A multi-file pick that would overflow the remaining slots is rejected
 **whole**, not partly, so the user is never left guessing which of their files
 landed. Gating mirrors the backend's
 `mutationPermission`: nothing in `submitted`/`published`/`abandoned`, `.plan`
-while drafting, `.execute` afterwards. **Approved exception:** the API exposes
-no download URL yet, so rows are metadata-only and the caption says so; upload
-is **online-only** (the outbox has no attachment operation) — both are
-documented backend follow-ups. The QR button in the field-work section
+while drafting, `.execute` afterwards. Every row also offers a download
+button, available regardless of manage permission: `InterventionService.downloadAttachment`
+reads the bearer-authenticated `GET /api/intervention-attachments/{id}/download`
+route as a `Blob` (a bare `<a href>` cannot carry the auth header) and the
+detail page hands it to the feature's `BrowserDownloadService` — the same
+service the list page's CSV export uses, lifted there once the attachment
+download became its second consumer. **Approved exception:** upload is
+**online-only** (the outbox has no attachment operation), a documented
+backend follow-up. The QR button in the field-work section
 (`scanSupported()` devices, execute phase only) decodes a capture through
 `InterventionFieldExecutionService.scan`, normalizes it via
 `InterventionDiscoveryService.normalizeScannedTarget` and reveals the matching

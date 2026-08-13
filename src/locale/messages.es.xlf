@@ -4391,8 +4391,8 @@
         <target>Archivos adjuntos</target>
       </trans-unit>
       <trans-unit id="intervention.attachments.caption" datatype="html">
-        <source> Photos and documents kept with this intervention. Download links are not available yet. </source>
-        <target> Fotos y documentos conservados con esta intervención. Los enlaces de descarga aún no están disponibles. </target>
+        <source> Photos and documents kept with this intervention. </source>
+        <target> Fotos y documentos conservados con esta intervención. </target>
       </trans-unit>
       <trans-unit id="intervention.attachments.add" datatype="html">
         <source>Add files</source>
@@ -4405,6 +4405,10 @@
       <trans-unit id="intervention.attachments.offline" datatype="html">
         <source> Connect to the network to add files — attachments do not queue offline. </source>
         <target> Conéctese a la red para añadir archivos — los adjuntos no se ponen en cola sin conexión. </target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.download" datatype="html">
+        <source>Download this file</source>
+        <target>Descargar este archivo</target>
       </trans-unit>
       <trans-unit id="intervention.attachments.delete" datatype="html">
         <source>Delete this file</source>
@@ -4433,6 +4437,10 @@
       <trans-unit id="intervention.attachments.prepareFailed" datatype="html">
         <source><x id="fileName" equiv-text="file.name"/> could not be prepared for upload.</source>
         <target><x id="fileName" equiv-text="file.name"/> no se pudo preparar para la subida.</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.downloadFailed" datatype="html">
+        <source>Couldn&apos;t download <x id="fileName" equiv-text="attachment.fileName"/>.</source>
+        <target>No se pudo descargar <x id="fileName" equiv-text="attachment.fileName"/>.</target>
       </trans-unit>
       <trans-unit id="intervention.changes.reject" datatype="html">
         <source>Reject</source>

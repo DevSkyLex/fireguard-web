@@ -15,6 +15,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCamera,
+  lucideDownload,
   lucideFileText,
   lucideImage,
   lucidePaperclip,
@@ -63,18 +64,18 @@ const MAX_ATTACHMENTS = 25;
  *
  * @description
  * The intervention's attached files: metadata rows (name, size, label,
- * upload date — the API exposes no download URL yet, and this section says
- * so rather than faking a link), a file picker, a camera capture button for
- * field photo evidence, and a confirm-gated per-row delete that locks only
- * its own row. Picks are pre-checked against the backend's MIME whitelist,
- * 25-file cardinality cap, and — for non-image files only, since the page
- * compresses photos before upload — the 10 MiB ceiling, so an invalid file
- * fails fast; the server stays authoritative. A `n / 25` counter appears once the list
- * is half full and the pickers close at the ceiling — the alternative is an
- * enabled button that can only ever answer 422. Presentational — the page
- * owns the store calls and the photo compression.
+ * upload date, a per-row download button), a file picker, a camera capture
+ * button for field photo evidence, and a confirm-gated per-row delete that
+ * locks only its own row. Picks are pre-checked against the backend's MIME
+ * whitelist, 25-file cardinality cap, and — for non-image files only, since
+ * the page compresses photos before upload — the 10 MiB ceiling, so an
+ * invalid file fails fast; the server stays authoritative. A `n / 25`
+ * counter appears once the list is half full and the pickers close at the
+ * ceiling — the alternative is an enabled button that can only ever answer
+ * 422. Presentational — the page owns the store calls, the photo
+ * compression, and the fetch-then-save that a download requires.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -82,10 +83,12 @@ const MAX_ATTACHMENTS = 25;
  *   [attachments]="store.attachments()"
  *   [canManage]="canManageAttachments()"
  *   [pendingIds]="store.pendingAttachmentIds()"
+ *   [downloadingIds]="pendingDownloadIds()"
  *   [uploading]="attachmentUploading()"
  *   [online]="online()"
  *   (filesPicked)="uploadAttachments($event)"
  *   (deleteRequested)="removeAttachment($event)"
+ *   (downloadRequested)="downloadAttachment($event)"
  * />
  * ```
  *
@@ -103,7 +106,14 @@ const MAX_ATTACHMENTS = 25;
     ...HlmSpinnerImports,
   ],
   providers: [
-    provideIcons({ lucideCamera, lucideFileText, lucideImage, lucidePaperclip, lucideTrash2 }),
+    provideIcons({
+      lucideCamera,
+      lucideDownload,
+      lucideFileText,
+      lucideImage,
+      lucidePaperclip,
+      lucideTrash2,
+    }),
   ],
   templateUrl: './intervention-attachments.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -141,6 +151,18 @@ export class InterventionAttachments {
    * @type {InputSignal<ReadonlySet<string>>}
    */
   public readonly pendingIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
+    new Set<string>(),
+  );
+
+  /**
+   * Property downloadingIds
+   * @readonly
+   * @description Ids of the attachments whose download is in flight, so each row locks on its own fetch.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<ReadonlySet<string>>}
+   */
+  public readonly downloadingIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
     new Set<string>(),
   );
 
@@ -185,6 +207,17 @@ export class InterventionAttachments {
    * @type {OutputEmitterRef<InterventionAttachmentOutput>}
    */
   public readonly deleteRequested: OutputEmitterRef<InterventionAttachmentOutput> =
+    output<InterventionAttachmentOutput>();
+
+  /**
+   * Property downloadRequested
+   * @readonly
+   * @description Emits the attachment the page should fetch and save to the visitor's device.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<InterventionAttachmentOutput>}
+   */
+  public readonly downloadRequested: OutputEmitterRef<InterventionAttachmentOutput> =
     output<InterventionAttachmentOutput>();
   //#endregion
 
@@ -376,6 +409,18 @@ export class InterventionAttachments {
    */
   protected isRowPending(attachment: InterventionAttachmentOutput): boolean {
     return this.pendingIds().has(attachment.id);
+  }
+
+  /**
+   * Method isRowDownloading
+   * @description Whether this row's own download is in flight.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   * @returns {boolean} True while the row's fetch is pending.
+   */
+  protected isRowDownloading(attachment: InterventionAttachmentOutput): boolean {
+    return this.downloadingIds().has(attachment.id);
   }
 
   /**

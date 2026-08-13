@@ -1,6 +1,7 @@
 /**
  * Interventions service public exports.
  */
+export { BrowserDownloadService } from './browser-download';
 export { InterventionDiscoveryService } from './intervention-discovery';
 export {
   InterventionFieldExecutionService,

@@ -21,9 +21,11 @@ export const WORK_ITEM_STATUS_ICON: Readonly<Record<InterventionWorkItemStatus, 
  * target is right for a gloved hand, but a 16px glyph adrift in it reads as an
  * oversized empty gutter, and nothing else in this app uses a target past 36px.
  *
- * The tints are literal palette pairs because the theme carries no success or
- * warning token — the same reason `intervention-tag-severity.constants.ts` does
- * it, though that file is private to the tag and must not be reached into.
+ * The tints are literal palette pairs: the theme's `--success` token maps to
+ * green-500, one step lighter than the green-600 this 20px glyph needs against
+ * Paper, and no warning/info token exists — the same reason
+ * `intervention-tag-severity.constants.ts` keeps its non-success pairs literal,
+ * though that file is private to the tag and must not be reached into.
  */
 export const WORK_ITEM_STATUS_ICON_CLASS: Readonly<Record<InterventionWorkItemStatus, string>> = {
   planned: 'text-[length:--spacing(5)] text-muted-foreground',

@@ -8,7 +8,7 @@ import type { InterventionTagSeverity } from '@features/organization/features/in
  *
  * This is how spartan's own dashboard draws a status: the badge stays
  * `outline` with a transparent ground and muted text, and only the glyph
- * carries the tone (`text-green-500 dark:text-green-400` on a "Done" row).
+ * carries the tone (`text-success` on a "Done" row).
  * Filling the badge instead turns a dense table into a row of coloured pills
  * and drowns out the one thing that should stand out.
  *
@@ -18,7 +18,9 @@ import type { InterventionTagSeverity } from '@features/organization/features/in
  * black or white.
  *
  * Literal strings, because Tailwind scans source text and would not see a
- * composed class name.
+ * composed class name. `success` is the one severity with a theme token
+ * (`--success`); `info`/`warning`/`danger` stay literal palette pairs until
+ * the theme grows the matching tokens.
  *
  * @since 3.0.0
  *
@@ -27,7 +29,7 @@ import type { InterventionTagSeverity } from '@features/organization/features/in
 export const INTERVENTION_TAG_ICON_CLASS: Readonly<Record<InterventionTagSeverity, string>> = {
   neutral: 'text-neutral-500 dark:text-neutral-400',
   info: 'text-blue-500 dark:text-blue-400',
-  success: 'text-green-500 dark:text-green-400',
+  success: 'text-success',
   warning: 'text-amber-500 dark:text-amber-400',
   danger: 'text-red-500 dark:text-red-400',
 };

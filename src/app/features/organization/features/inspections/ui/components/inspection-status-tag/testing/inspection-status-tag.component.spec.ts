@@ -50,8 +50,7 @@ describe('InspectionStatusTag', () => {
 
     expect(badge?.getAttribute('data-variant')).toBe('outline');
     expect(badge?.className).not.toMatch(/\bbg-(blue|green|amber|red)-/);
-    expect(icon?.className).toContain('text-green-500');
-    expect(icon?.className).toContain('dark:text-green-400');
+    expect(icon?.className).toContain('text-success');
   });
 
   it('should render icon and label as a plain row, with no badge, when used as an option', async () => {

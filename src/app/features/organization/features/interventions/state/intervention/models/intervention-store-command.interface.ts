@@ -68,3 +68,11 @@ export interface InterventionAssignCommand {
   readonly responsible: string;
   readonly revision: number;
 }
+
+/**
+ * Command instantiating an intervention draft from a template — the "start
+ * from a template" path offered alongside the manual guided-creation form.
+ */
+export interface InterventionInstantiateFromTemplateCommand {
+  readonly templateId: string;
+}

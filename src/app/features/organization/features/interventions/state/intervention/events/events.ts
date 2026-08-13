@@ -10,12 +10,13 @@ import type { InterventionOutput } from '@features/organization/features/interve
  * @description
  * Component-scoped intervention store events. `created` is dispatched when an
  * intervention is created so pages can react (navigate into the workspace);
- * `listFailed`, `createFailed`, `transitionFailed`, `deleteFailed` and
- * `assignFailed` are dispatched when the matching operation fails so the
- * feedback listener can surface a toast; `deleteSucceeded` and
- * `assignSucceeded` confirm their operation the same way.
+ * `listFailed`, `createFailed`, `instantiateFailed`, `transitionFailed`,
+ * `deleteFailed` and `assignFailed` are dispatched when the matching
+ * operation fails so the feedback listener can surface a toast;
+ * `deleteSucceeded` and `assignSucceeded` confirm their operation the same
+ * way.
  *
- * @version 4.2.0
+ * @version 4.3.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const interventionStoreEvents = eventGroup({
@@ -24,6 +25,7 @@ export const interventionStoreEvents = eventGroup({
     created: type<InterventionOutput>(),
     listFailed: type<StoreFailureEventPayload>(),
     createFailed: type<StoreFailureEventPayload>(),
+    instantiateFailed: type<StoreFailureEventPayload>(),
     transitionFailed: type<StoreFailureEventPayload>(),
     deleteSucceeded: type<FeedbackEventPayload>(),
     deleteFailed: type<StoreFailureEventPayload>(),

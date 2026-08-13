@@ -1,6 +1,7 @@
 import type { CallState } from '@core/request-state';
 import type {
   InterventionLabelOutput,
+  InterventionTemplateOutput,
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
@@ -19,6 +20,12 @@ export interface InterventionPlanningOptionsState {
    * (the sidebar label editor); empty for the creation flow.
    */
   readonly labels: readonly InterventionLabelOutput[];
+
+  /**
+   * Organization's intervention templates, loaded for the creation flow only
+   * (the "start from a template" picker); empty for the workspace flow.
+   */
+  readonly templates: readonly InterventionTemplateOutput[];
 
   /** Lifecycle of the planning-options load (pending / success / error). */
   readonly loadCallState: CallState;

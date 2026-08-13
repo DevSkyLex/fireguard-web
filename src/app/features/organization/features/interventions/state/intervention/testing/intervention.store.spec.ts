@@ -2,7 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { NEVER, of, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionService,
+  InterventionTemplateService,
+} from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '../intervention.store';
 
@@ -32,6 +35,7 @@ describe('InterventionStore', () => {
     update: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
   };
+  let mockInterventionTemplateService: { instantiate: ReturnType<typeof vi.fn> };
   let dispatch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -41,6 +45,9 @@ describe('InterventionStore', () => {
       update: vi.fn(),
       remove: vi.fn(),
     };
+    mockInterventionTemplateService = {
+      instantiate: vi.fn().mockReturnValue(of({ interventionId: 'intervention-2', number: 42 })),
+    };
     dispatch = vi.fn();
 
     TestBed.configureTestingModule({
@@ -48,6 +55,7 @@ describe('InterventionStore', () => {
         InterventionStore,
         { provide: Dispatcher, useValue: { dispatch } },
         { provide: InterventionService, useValue: mockInterventionService },
+        { provide: InterventionTemplateService, useValue: mockInterventionTemplateService },
       ],
     });
 
@@ -102,6 +110,7 @@ describe('InterventionStore', () => {
       expect.any(Object),
     );
     expect(store.createdIntervention()).toEqual(intervention);
+    expect(store.createdInterventionId()).toBe('intervention-1');
     expect(store.interventionList()).toEqual([intervention]);
     expect(store.totalInterventions()).toBe(1);
   });
@@ -421,6 +430,43 @@ describe('InterventionStore', () => {
         type: '[Intervention Store] assignFailed',
         payload: { severity: 'error' },
       });
+    });
+  });
+
+  describe('instantiateFromTemplate', () => {
+    it('should instantiate a template and expose the created id for navigation handoff', () => {
+      store.instantiateFromTemplate({ templateId: 'template-1' });
+
+      expect(mockInterventionTemplateService.instantiate).toHaveBeenCalledWith('template-1');
+      expect(store.createdInterventionId()).toBe('intervention-2');
+      expect(store.isInstantiatingFromTemplate()).toBe(false);
+    });
+
+    it('should dispatch a failure event and surface the error when instantiation fails', () => {
+      mockInterventionTemplateService.instantiate.mockReturnValue(
+        throwError(() => ({
+          '@type': 'ApiError',
+          status: 404,
+          type: '/errors/not-found',
+          title: 'Not Found',
+        })),
+      );
+
+      store.instantiateFromTemplate({ templateId: 'template-1' });
+
+      expect(store.createdInterventionId()).toBeNull();
+      expect(store.instantiateFromTemplateError()).not.toBeNull();
+      expect(dispatch).toHaveBeenCalledTimes(1);
+      expect(dispatch.mock.calls[0][0]).toMatchObject({
+        type: '[Intervention Store] instantiateFailed',
+      });
+    });
+
+    it('should clear the instantiate handoff', () => {
+      store.instantiateFromTemplate({ templateId: 'template-1' });
+      store.clearCreatedIntervention();
+
+      expect(store.createdInterventionId()).toBeNull();
     });
   });
 });

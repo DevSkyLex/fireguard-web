@@ -4539,6 +4539,18 @@
         <source>The intervention could not be assigned.</source>
         <target>L'intervention n'a pas pu être affectée.</target>
       </trans-unit>
+      <trans-unit id="intervention.store.instantiateNotFound" datatype="html">
+        <source>This template no longer exists.</source>
+        <target>Ce modèle n'existe plus.</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.instantiateForbidden" datatype="html">
+        <source>You do not have permission to use this template.</source>
+        <target>Vous n'avez pas la permission d'utiliser ce modèle.</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.instantiateFailed" datatype="html">
+        <source>The intervention could not be created from this template.</source>
+        <target>L'intervention n'a pas pu être créée à partir de ce modèle.</target>
+      </trans-unit>
       <trans-unit id="intervention.assign.toast" datatype="html">
         <source>Intervention assigned</source>
         <target>Intervention affectée</target>
@@ -5038,6 +5050,26 @@
       <trans-unit id="intervention.cf.duePlaceholder" datatype="html">
         <source>Select due date and time</source>
         <target>Sélectionner la date et l'heure d'échéance</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templatePickerLabel" datatype="html">
+        <source>Start from a template</source>
+        <target>Démarrer depuis un modèle</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templatePlaceholder" datatype="html">
+        <source>Choose a template</source>
+        <target>Choisir un modèle</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templateConfirm" datatype="html">
+        <source>Use template</source>
+        <target>Utiliser le modèle</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templateInstantiating" datatype="html">
+        <source>Creating…</source>
+        <target>Création…</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templateHint" datatype="html">
+        <source>Opens a draft prefilled from the template. You can adjust everything afterward.</source>
+        <target>Ouvre un brouillon prérempli à partir du modèle. Vous pourrez tout ajuster ensuite.</target>
       </trans-unit>
       <trans-unit id="intervention.cf.submit" datatype="html">
         <source>Create draft intervention</source>

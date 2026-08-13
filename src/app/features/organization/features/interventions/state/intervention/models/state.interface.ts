@@ -1,5 +1,8 @@
 import type { CallState } from '@core/request-state';
-import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import type {
+  InterventionOutput,
+  InterventionTemplateInstantiationOutput,
+} from '@features/organization/features/interventions/models';
 
 /**
  * Interface InterventionState
@@ -102,5 +105,21 @@ export interface InterventionState {
    * @type {CallState<InterventionOutput>}
    */
   readonly assignCallState: CallState<InterventionOutput>;
+
+  /**
+   * Property instantiateCallState
+   * @readonly
+   *
+   * @description
+   * Loading / success / error state for instantiating an intervention draft
+   * from a template, kept separate from {@link createCallState} since the
+   * two are alternative paths through the same creation sheet. Carries the
+   * `{ interventionId, number }` handoff on success.
+   *
+   * @since 4.3.0
+   *
+   * @type {CallState<InterventionTemplateInstantiationOutput>}
+   */
+  readonly instantiateCallState: CallState<InterventionTemplateInstantiationOutput>;
   //#endregion
 }

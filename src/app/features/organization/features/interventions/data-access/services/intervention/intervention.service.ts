@@ -768,8 +768,8 @@ export class InterventionService extends HydraApiService {
    * @method listAttachments
    *
    * @description
-   * Lists an intervention's attachments — metadata only, the API exposes no
-   * download URL yet.
+   * Lists an intervention's attachments. `downloadAttachment` reads one
+   * file's binary content separately.
    *
    * @access public
    * @since 4.4.0
@@ -841,6 +841,33 @@ export class InterventionService extends HydraApiService {
   public removeAttachment(attachmentId: string, revision: number): Observable<void> {
     return this.delete(`/api/intervention-attachments/${attachmentId}`, {
       headers: { 'If-Match': `"revision-${revision}"` },
+    });
+  }
+
+  /**
+   * Method downloadAttachment
+   * @method downloadAttachment
+   *
+   * @description
+   * Reads one attachment's binary content
+   * (`GET /api/intervention-attachments/{id}/download`). The route is
+   * bearer-authenticated and forces `Content-Disposition: attachment`, so a
+   * bare `<a href>` cannot carry it — the caller reads the resulting `Blob`
+   * and triggers the browser save itself. Calls `this.http` directly, like
+   * `uploadAttachment`, for a response shape (`responseType: 'blob'`) the
+   * base class does not support.
+   *
+   * @access public
+   * @since 4.7.0
+   *
+   * @param {string} attachmentId - attachment Id value.
+   *
+   * @return {Observable<Blob>} The attachment's binary content.
+   */
+  public downloadAttachment(attachmentId: string): Observable<Blob> {
+    return this.http.get(this.buildUrl(`/api/intervention-attachments/${attachmentId}/download`), {
+      responseType: 'blob',
+      withCredentials: true,
     });
   }
 

@@ -309,10 +309,12 @@
               [attachments]="store.attachments()"
               [canManage]="canManageAttachments()"
               [pendingIds]="store.pendingAttachmentIds()"
+              [downloadingIds]="pendingDownloadIds()"
               [uploading]="attachmentUploading()"
               [online]="online()"
               (filesPicked)="uploadAttachments($event)"
               (deleteRequested)="removeAttachment($event)"
+              (downloadRequested)="downloadAttachment($event)"
             />
 
             <app-intervention-activity-thread

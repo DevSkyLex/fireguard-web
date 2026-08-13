@@ -6,9 +6,9 @@ import type { HydraItem } from '@core/api/models';
  *
  * @description
  * One file attached to an intervention, mirroring the backend's
- * `InterventionAttachmentOutput`. Metadata only — the API exposes no
- * download URL yet, which the attachments section states plainly instead of
- * pretending a link exists.
+ * `InterventionAttachmentOutput`. Carries no download URL of its own — the
+ * bearer-authenticated `GET /api/intervention-attachments/{id}/download`
+ * route is read through `InterventionService.downloadAttachment`.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>

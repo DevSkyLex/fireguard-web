@@ -272,6 +272,53 @@ describe('InterventionAttachments', () => {
     expect(deletions).toEqual([]);
   });
 
+  it('should offer a download button on every row regardless of manage permission', async () => {
+    await create(2, false);
+
+    expect(root().querySelectorAll('[data-testid="intervention-attachment-download"]').length).toBe(
+      2,
+    );
+  });
+
+  it('should emit downloadRequested for the clicked row', async () => {
+    const downloads: InterventionAttachmentOutput[] = [];
+    await create(2);
+    fixture.componentInstance.downloadRequested.subscribe((target) => downloads.push(target));
+
+    root()
+      .querySelectorAll<HTMLButtonElement>('[data-testid="intervention-attachment-download"]')[1]
+      .click();
+
+    expect(downloads).toEqual([attachment(1)]);
+  });
+
+  it('should lock only the row whose own download is in flight', async () => {
+    await create(2);
+    fixture.componentRef.setInput('downloadingIds', new Set(['attachment-0']));
+    await fixture.whenStable();
+
+    const rows: HTMLElement[] = Array.from(
+      root().querySelectorAll('[data-testid="intervention-attachment-row"]'),
+    );
+
+    expect(rows[0]?.querySelector('[data-testid="intervention-attachment-download"]')).toBeNull();
+    expect(
+      rows[1]?.querySelector('[data-testid="intervention-attachment-download"]'),
+    ).not.toBeNull();
+  });
+
+  it('should disable the download button while offline', async () => {
+    await create(1);
+    fixture.componentRef.setInput('online', false);
+    await fixture.whenStable();
+
+    const download = root().querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-download"]',
+    );
+
+    expect(download?.disabled).toBe(true);
+  });
+
   it('should invite the manager to add the first file when the list is empty', async () => {
     await create(0);
 

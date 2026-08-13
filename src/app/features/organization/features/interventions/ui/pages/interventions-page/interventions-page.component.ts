@@ -59,6 +59,7 @@ import {
   type SelectOption,
 } from '@features/organization/features/interventions/models';
 import {
+  BrowserDownloadService,
   InterventionListPreferencesService,
   InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
@@ -423,6 +424,9 @@ export class InterventionsPage {
    * for the one action its owning store has no method for).
    */
   private readonly interventionService: InterventionService = inject(InterventionService);
+
+  /** Saves the generated CSV to the visitor's device, browser-only. */
+  private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
   /** Reports the export's outcome — a truncation warning or a failure. */
   private readonly feedback: FeedbackService = inject(FeedbackService);
@@ -2083,7 +2087,7 @@ export class InterventionsPage {
       });
   }
 
-  /** Serializes `rows` into CSV and triggers the browser download, browser-only. */
+  /** Serializes `rows` into CSV and triggers the browser download. */
   private downloadInterventionCsv(rows: readonly InterventionOutput[]): void {
     const csv: string = buildInterventionCsv(rows, this.visibleColumns(), {
       columnLabelOf: (id: InterventionTableColumn): string => this.columnLabelOf(id),
@@ -2093,15 +2097,8 @@ export class InterventionsPage {
       siteLabelOf: this.siteLabelOf,
     });
 
-    if (typeof document === 'undefined') return;
-
     const blob: Blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url: string = URL.createObjectURL(blob);
-    const anchor: HTMLAnchorElement = document.createElement('a');
-    anchor.href = url;
-    anchor.download = this.exportFilename();
-    anchor.click();
-    URL.revokeObjectURL(url);
+    this.browserDownload.trigger(blob, this.exportFilename());
   }
 
   /** The export's filename: the organization, stamped with today's date (`yyyyMMdd`). */

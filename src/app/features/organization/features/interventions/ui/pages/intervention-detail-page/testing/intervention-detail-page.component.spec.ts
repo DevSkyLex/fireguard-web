@@ -7,7 +7,7 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import {
@@ -22,14 +22,19 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
-import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   InterventionActivityOutput,
+  InterventionAttachmentOutput,
   InterventionIssueOutput,
   InterventionOutput,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import {
+  BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
   InterventionSyncCoordinatorService,
@@ -102,6 +107,23 @@ const workItem = (
     ...overrides,
   }) as InterventionWorkItemOutput;
 
+const attachment = (
+  overrides: Partial<InterventionAttachmentOutput> = {},
+): InterventionAttachmentOutput =>
+  ({
+    '@id': '/api/intervention-attachments/attachment-1',
+    '@type': 'InterventionAttachment',
+    id: 'attachment-1',
+    interventionId: 'intervention-1',
+    fileName: 'evidence.pdf',
+    mimeType: 'application/pdf',
+    size: 1024,
+    label: null,
+    revision: 1,
+    uploadedAt: '2026-01-05T09:00:00Z',
+    ...overrides,
+  }) as InterventionAttachmentOutput;
+
 const inBody = (id: string): HTMLElement =>
   document.querySelector(`[data-testid="${id}"]`) as HTMLElement;
 
@@ -122,6 +144,7 @@ describe('InterventionDetailPage', () => {
   let workItems: WritableSignal<readonly InterventionWorkItemOutput[]>;
   let issues: WritableSignal<readonly InterventionIssueOutput[]>;
   let activities: WritableSignal<readonly InterventionActivityOutput[]>;
+  let attachments: WritableSignal<readonly InterventionAttachmentOutput[]>;
   let saving: WritableSignal<boolean>;
   let updateDetailsCallState: WritableSignal<CallState>;
   let loadError: WritableSignal<string | null>;
@@ -149,6 +172,9 @@ describe('InterventionDetailPage', () => {
   let navigate: ReturnType<typeof vi.fn>;
   let permitted: Set<string>;
   let openSubjectThread: ReturnType<typeof vi.fn>;
+  let downloadAttachment: ReturnType<typeof vi.fn>;
+  let browserDownloadTrigger: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byTestId = (id: string): HTMLElement =>
@@ -159,6 +185,7 @@ describe('InterventionDetailPage', () => {
     workItems = signal<readonly InterventionWorkItemOutput[]>([]);
     issues = signal<readonly InterventionIssueOutput[]>([]);
     activities = signal<readonly InterventionActivityOutput[]>([]);
+    attachments = signal<readonly InterventionAttachmentOutput[]>([]);
     saving = signal(false);
     updateDetailsCallState = signal<CallState>(idleCallState());
     loadError = signal<string | null>(null);
@@ -192,6 +219,11 @@ describe('InterventionDetailPage', () => {
     publish = vi.fn().mockResolvedValue({ status: 'completed', error: null });
     navigate = vi.fn().mockResolvedValue(true);
     openSubjectThread = vi.fn().mockReturnValue(of({ id: 'conversation-1' } as ConversationOutput));
+    downloadAttachment = vi
+      .fn()
+      .mockReturnValue(of(new Blob(['file-bytes'], { type: 'application/pdf' })));
+    browserDownloadTrigger = vi.fn();
+    feedbackError = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -238,8 +270,10 @@ describe('InterventionDetailPage', () => {
         },
         { provide: ConnectivityService, useValue: { online } },
         { provide: InterventionOfflineService, useValue: { hasUnsyncedChanges: unsynced } },
+        { provide: InterventionService, useValue: { downloadAttachment } },
+        { provide: BrowserDownloadService, useValue: { trigger: browserDownloadTrigger } },
         { provide: InterventionPublicationService, useValue: { publish } },
-        { provide: FeedbackService, useValue: { success: vi.fn() } },
+        { provide: FeedbackService, useValue: { success: vi.fn(), error: feedbackError } },
         { provide: TitleService, useValue: { setTitle: vi.fn() } },
         { provide: Router, useValue: { navigate } },
         { provide: ConversationService, useValue: { openSubjectThread } },
@@ -329,7 +363,7 @@ describe('InterventionDetailPage', () => {
               pendingChangeIds: signal(new Set<string>()),
               deleteCallState: signal(idleCallState()),
               addCommentCallState: signal(idleCallState()),
-              attachments: signal([]),
+              attachments,
               attachmentsCallState: signal(idleCallState()),
               attachmentWriteCallState: signal(idleCallState()),
               pendingAttachmentIds: signal(new Set<string>()),
@@ -1029,6 +1063,31 @@ describe('InterventionDetailPage', () => {
       expect(byTestId('intervention-detail-not-found').textContent).toContain(
         'Intervention not found',
       );
+    });
+  });
+
+  describe('attachment download', () => {
+    it('should fetch the attachment and hand the blob to the browser download service', async () => {
+      attachments.set([attachment()]);
+      fixture = await createPage();
+
+      byTestId('intervention-attachment-download').dispatchEvent(new Event('click'));
+      await fixture.whenStable();
+
+      expect(downloadAttachment).toHaveBeenCalledWith('attachment-1');
+      expect(browserDownloadTrigger).toHaveBeenCalledWith(expect.any(Blob), 'evidence.pdf');
+    });
+
+    it('should clear the pending state and report a failure when the fetch errors', async () => {
+      downloadAttachment.mockReturnValue(throwError(() => new Error('network down')));
+      attachments.set([attachment()]);
+      fixture = await createPage();
+
+      byTestId('intervention-attachment-download').dispatchEvent(new Event('click'));
+      await fixture.whenStable();
+
+      expect(browserDownloadTrigger).not.toHaveBeenCalled();
+      expect(feedbackError).toHaveBeenCalledTimes(1);
     });
   });
 });

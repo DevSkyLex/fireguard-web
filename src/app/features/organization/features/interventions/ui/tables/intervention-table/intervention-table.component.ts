@@ -72,7 +72,10 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * {@link currentMemberIri} does not match the row's `responsible` — hidden
  * would leave the state unperceivable.
  *
- * @version 6.0.0
+ * "Duplicate" is offered from any status — {@link canDuplicate} is the only
+ * gate — since duplicating an abandoned intervention is legitimate.
+ *
+ * @version 6.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -218,6 +221,23 @@ export class InterventionTable {
   public readonly canAssign: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property canDuplicate
+   * @readonly
+   *
+   * @description
+   * Whether the row menu may offer "Duplicate". False hides the entry rather
+   * than showing a control that would be refused; unlike delete or assign,
+   * duplicating is offered from any status — duplicating an abandoned
+   * intervention is legitimate.
+   *
+   * @access public
+   * @since 6.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canDuplicate: InputSignal<boolean> = input<boolean>(false);
+
+  /**
    * Property currentMemberIri
    * @readonly
    *
@@ -345,6 +365,22 @@ export class InterventionTable {
    * @type {OutputEmitterRef<InterventionOutput>}
    */
   public readonly assignRequested: OutputEmitterRef<InterventionOutput> =
+    output<InterventionOutput>();
+
+  /**
+   * Property duplicateRequested
+   * @readonly
+   *
+   * @description
+   * A row menu asked to duplicate the intervention. The table never opens
+   * the creation sheet: the page builds the prefill and does.
+   *
+   * @access public
+   * @since 6.1.0
+   *
+   * @type {OutputEmitterRef<InterventionOutput>}
+   */
+  public readonly duplicateRequested: OutputEmitterRef<InterventionOutput> =
     output<InterventionOutput>();
 
   /**

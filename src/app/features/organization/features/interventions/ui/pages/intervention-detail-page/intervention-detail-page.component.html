@@ -64,7 +64,7 @@
           </ng-template>
         }
 
-        @if (canAbandon() || canDeleteIntervention()) {
+        @if (canPlan() || canAbandon() || canDeleteIntervention()) {
           <button
             hlmBtn
             type="button"
@@ -81,6 +81,16 @@
 
           <ng-template #moreMenu>
             <hlm-dropdown-menu class="w-56">
+              @if (canPlan()) {
+                <button
+                  hlmDropdownMenuItem
+                  data-testid="intervention-detail-duplicate"
+                  (click)="duplicateIntervention()"
+                >
+                  <ng-icon name="lucideCopy" aria-hidden="true" />
+                  <span i18n="@@intervention.duplicate.action">Duplicate</span>
+                </button>
+              }
               @if (canAbandon()) {
                 <button
                   hlmDropdownMenuItem

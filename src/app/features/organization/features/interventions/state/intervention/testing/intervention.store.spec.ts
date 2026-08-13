@@ -469,4 +469,32 @@ describe('InterventionStore', () => {
       expect(store.createdInterventionId()).toBeNull();
     });
   });
+
+  describe('pendingDuplicatePrefill', () => {
+    it('should hold nothing until the detail page sets a handoff', () => {
+      expect(store.pendingDuplicatePrefill()).toBeNull();
+    });
+
+    it('should record and clear the cross-route duplicate handoff', () => {
+      store.setPendingDuplicatePrefill({
+        name: 'Site visit (copy)',
+        type: 'inventory',
+        priority: 'normal',
+        site: '',
+        responsible: '',
+      });
+
+      expect(store.pendingDuplicatePrefill()).toEqual({
+        name: 'Site visit (copy)',
+        type: 'inventory',
+        priority: 'normal',
+        site: '',
+        responsible: '',
+      });
+
+      store.clearPendingDuplicatePrefill();
+
+      expect(store.pendingDuplicatePrefill()).toBeNull();
+    });
+  });
 });

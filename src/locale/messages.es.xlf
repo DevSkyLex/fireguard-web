@@ -5718,6 +5718,14 @@
         <source>Delete intervention</source>
         <target>Eliminar intervención</target>
       </trans-unit>
+      <trans-unit id="intervention.duplicate.action" datatype="html">
+        <source>Duplicate</source>
+        <target>Duplicar</target>
+      </trans-unit>
+      <trans-unit id="intervention.duplicate.nameSuffix" datatype="html">
+        <source><x id="name" equiv-text="name"/> (copy)</source>
+        <target><x id="name" equiv-text="name"/> (copia)</target>
+      </trans-unit>
       <trans-unit id="intervention.fwt.photoAria" datatype="html">
         <source>Add evidence photo</source>
         <target>Añadir foto de evidencia</target>

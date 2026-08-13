@@ -64,10 +64,12 @@ describe('InterventionsPage', () => {
   let transition: ReturnType<typeof vi.fn>;
   let deleteIntervention: ReturnType<typeof vi.fn>;
   let assignResponsible: ReturnType<typeof vi.fn>;
+  let clearPendingDuplicatePrefill: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let interventionList: WritableSignal<readonly InterventionOutput[]>;
   let createdInterventionId: WritableSignal<string | null>;
   let listError: WritableSignal<unknown>;
+  let pendingDuplicatePrefill: WritableSignal<unknown>;
 
   beforeEach(() => {
     load = vi.fn();
@@ -77,10 +79,12 @@ describe('InterventionsPage', () => {
     transition = vi.fn();
     deleteIntervention = vi.fn();
     assignResponsible = vi.fn();
+    clearPendingDuplicatePrefill = vi.fn();
     navigate = vi.fn().mockResolvedValue(true);
     interventionList = signal<readonly InterventionOutput[]>([]);
     createdInterventionId = signal<string | null>(null);
     listError = signal<unknown>(null);
+    pendingDuplicatePrefill = signal<unknown>(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -95,9 +99,11 @@ describe('InterventionsPage', () => {
             delete: deleteIntervention,
             assignResponsible,
             clearCreatedIntervention: clearCreated,
+            clearPendingDuplicatePrefill,
             interventionList,
             createdInterventionId,
             listError,
+            pendingDuplicatePrefill,
             totalInterventions: signal(0),
             isLoadingInterventions: signal(false),
             isCreating: signal(false),
@@ -338,6 +344,70 @@ describe('InterventionsPage', () => {
     fixture.componentInstance['instantiateFromTemplate']('template-1');
 
     expect(instantiateFromTemplate).toHaveBeenCalledWith({ templateId: 'template-1' });
+  });
+
+  describe('duplicate', () => {
+    it('should open the sheet prefilled from a row’s own Duplicate request', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestDuplicate'](
+        intervention({ name: 'Roof round', type: 'inventory', priority: 'high' }),
+      );
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+      expect(fixture.componentInstance['duplicatePrefill']()).toEqual({
+        name: 'Roof round (copy)',
+        type: 'inventory',
+        priority: 'high',
+        site: '',
+        responsible: '',
+      });
+    });
+
+    it('should drop the prefill once the sheet closes', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestDuplicate'](intervention());
+      fixture.componentInstance['onCreateSheetVisibleChange'](false);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['duplicatePrefill']()).toBeNull();
+    });
+
+    it('should drop a stale prefill when opening a plain creation', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestDuplicate'](intervention());
+      fixture.componentInstance['openCreate']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['duplicatePrefill']()).toBeNull();
+      expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+    });
+
+    it('should consume and clear a cross-route handoff from the detail page', async () => {
+      fixture = await createPage();
+
+      pendingDuplicatePrefill.set({
+        name: 'Site visit (copy)',
+        type: 'inventory',
+        priority: 'normal',
+        site: '',
+        responsible: '',
+      });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+      expect(fixture.componentInstance['duplicatePrefill']()).toEqual({
+        name: 'Site visit (copy)',
+        type: 'inventory',
+        priority: 'normal',
+        site: '',
+        responsible: '',
+      });
+      expect(clearPendingDuplicatePrefill).toHaveBeenCalled();
+    });
   });
 
   describe('delete', () => {

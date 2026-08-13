@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -21,6 +23,7 @@ import {
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import {
   resolveInterventionTag,
+  type InterventionDuplicatePrefill,
   type InterventionPriority,
   type InterventionType,
   type MemberSelectOption,
@@ -77,7 +80,10 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
  * Dates are date-only, picked together as one window through
  * `hlm-date-range-picker`, then split into `plannedStartAt`/`dueAt` on submit.
  *
- * @version 4.0.0
+ * {@link prefill} seeds the model for the "Duplicate" flow — never the planned
+ * window, which stays blank even when duplicating a scheduled intervention.
+ *
+ * @version 4.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -159,6 +165,24 @@ export class InterventionCreateForm {
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
     readonly MemberSelectOption[]
   >([]);
+
+  /**
+   * Property prefill
+   * @readonly
+   *
+   * @description
+   * Values to seed the draft with — the "Duplicate" entry point's payload.
+   * `null` (the default) leaves the form blank. Changing it re-seeds the
+   * model, and clearing it resets to blank; the sheet is what actually clears
+   * it once it closes.
+   *
+   * @access public
+   * @since 6.1.0
+   *
+   * @type {InputSignal<InterventionDuplicatePrefill | null>}
+   */
+  public readonly prefill: InputSignal<InterventionDuplicatePrefill | null> =
+    input<InterventionDuplicatePrefill | null>(null);
   //#endregion
 
   //#region Outputs
@@ -190,6 +214,31 @@ export class InterventionCreateForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Re-seeds {@link model} whenever {@link prefill} changes: the duplicated
+   * values merged onto a blank draft when set, and the blank draft again once
+   * it clears. Wrapped in `untracked` since the write must not re-trigger the
+   * effect it runs in.
+   *
+   * @access public
+   * @since 6.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const prefill: InterventionDuplicatePrefill | null = this.prefill();
+
+      untracked((): void => {
+        this.model.set(prefill ? { ...EMPTY_VALUES, ...prefill } : EMPTY_VALUES);
+      });
+    });
+  }
   //#endregion
 
   //#region Properties

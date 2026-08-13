@@ -106,4 +106,66 @@ describe('InterventionCreateForm', () => {
     expect(button?.disabled).toBe(true);
     expect(button?.textContent).toContain('Creating…');
   });
+
+  describe('prefill', () => {
+    it('should seed the model from a duplicate prefill', async () => {
+      fixture.componentRef.setInput('prefill', {
+        name: 'Roof round (copy)',
+        type: 'inventory',
+        priority: 'high',
+        site: '/api/facilities/facility-1',
+        responsible: '/api/organizations/org-1/members/member-1',
+      });
+      await fixture.whenStable();
+
+      const nameInput: HTMLInputElement = element.querySelector(
+        '[data-testid="intervention-create-name"]',
+      ) as HTMLInputElement;
+
+      expect(nameInput.value).toBe('Roof round (copy)');
+    });
+
+    it('should never seed the planned window from a prefill', async () => {
+      fixture.componentRef.setInput('prefill', {
+        name: 'Roof round (copy)',
+        type: 'inventory',
+        priority: 'high',
+        site: '',
+        responsible: '',
+      });
+      await fixture.whenStable();
+
+      const emitted: InterventionCreateFormValues[] = [];
+      fixture.componentInstance.submitted.subscribe(
+        (values: InterventionCreateFormValues): void => {
+          emitted.push(values);
+        },
+      );
+
+      await submit();
+
+      expect(emitted[0]?.plannedStartAt).toBeNull();
+      expect(emitted[0]?.dueAt).toBeNull();
+    });
+
+    it('should reset to blank once the prefill clears', async () => {
+      fixture.componentRef.setInput('prefill', {
+        name: 'Roof round (copy)',
+        type: 'inventory',
+        priority: 'high',
+        site: '',
+        responsible: '',
+      });
+      await fixture.whenStable();
+
+      fixture.componentRef.setInput('prefill', null);
+      await fixture.whenStable();
+
+      const nameInput: HTMLInputElement = element.querySelector(
+        '[data-testid="intervention-create-name"]',
+      ) as HTMLInputElement;
+
+      expect(nameInput.value).toBe('');
+    });
+  });
 });

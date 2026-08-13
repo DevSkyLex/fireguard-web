@@ -32,6 +32,23 @@
           (discardRequested)="sync.discardBlocked()"
         />
 
+        @if (canDiscuss()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="max-sm:size-11"
+            data-testid="intervention-detail-discussion-trigger"
+            aria-controls="intervention-discussion-sheet"
+            [attr.aria-expanded]="discussionSheetVisible()"
+            (click)="discussionSheetVisible.set(true)"
+          >
+            <ng-icon name="lucideMessagesSquare" class="text-base" aria-hidden="true" />
+            <span i18n="@@intervention.discussion.trigger">Discussion</span>
+          </button>
+        }
+
         @if (transitionTargets().length > 0) {
           <button
             hlmBtn
@@ -554,6 +571,34 @@
   (visibleChange)="requestChangesVisible.set($event)"
   (submitted)="requestChanges($event)"
 />
+
+@if (canDiscuss()) {
+  <hlm-sheet
+    side="right"
+    [state]="discussionSheetVisible() ? 'open' : 'closed'"
+    (stateChanged)="discussionSheetVisible.set($event === 'open')"
+  >
+    <hlm-sheet-content
+      *hlmSheetPortal
+      id="intervention-discussion-sheet"
+      class="flex flex-col overflow-hidden sm:max-w-xl!"
+    >
+      <hlm-sheet-header>
+        <h2 hlmSheetTitle i18n="@@intervention.discussion.title">Discussion</h2>
+        <p hlmSheetDescription i18n="@@intervention.discussion.subtitle">
+          Live team messaging about this intervention
+        </p>
+      </hlm-sheet-header>
+
+      <app-subject-discussion
+        subjectType="intervention"
+        [subjectId]="interventionId()"
+        [organizationId]="organizationId()"
+        [active]="discussionSheetVisible()"
+      />
+    </hlm-sheet-content>
+  </hlm-sheet>
+}
 
 <app-intervention-confirm-dialog
   [request]="pendingConfirm()"

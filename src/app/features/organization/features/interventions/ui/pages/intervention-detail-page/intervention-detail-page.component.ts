@@ -29,6 +29,7 @@ import {
   lucideCompass,
   lucideCopy,
   lucideEllipsis,
+  lucideMessagesSquare,
   lucideMessageSquareQuote,
   lucideScanLine,
   lucideTrash2,
@@ -40,6 +41,7 @@ import { FeedbackService } from '@core/feedback';
 import { isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionAttachmentOutput,
@@ -97,6 +99,7 @@ import {
   resolveInterventionResponsibleLabel,
   summarizeInterventionLabels,
 } from '@features/organization/features/interventions/utils';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
@@ -107,6 +110,7 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSeparator } from '@shared/ui/separator';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -196,6 +200,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
+    ...HlmSheetImports,
     ...HlmSpinnerImports,
     InterventionAbout,
     InterventionActionBox,
@@ -217,6 +222,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionTag,
     InterventionWorkItemSheet,
     InterventionWorkItemTable,
+    SubjectDiscussion,
     ...HlmTabsImports,
   ],
   providers: [
@@ -234,6 +240,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideCompass,
       lucideCopy,
       lucideEllipsis,
+      lucideMessagesSquare,
       lucideMessageSquareQuote,
       lucideScanLine,
       lucideTrash2,
@@ -652,6 +659,29 @@ export class InterventionDetailPage {
 
   /** Whether the add-work-item panel is open. */
   protected readonly workItemSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the live discussion sheet is open — also what defers `SubjectDiscussion`'s own load. */
+  protected readonly discussionSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property canDiscuss
+   * @readonly
+   *
+   * @description
+   * Whether the Discussion button and sheet render at all. Gated on
+   * `organization.messaging.read` — reading this page already implies
+   * `interventions.read`, so nothing else needs checking. Collaboration's
+   * `SubjectDiscussion` still gates its own composer on `messaging.write`
+   * separately, the same way every other messaging surface does.
+   *
+   * @access protected
+   * @since 6.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canDiscuss: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.MESSAGING_READ),
+  );
 
   /** Whether the browser can reach the API. */
   protected readonly online: Signal<boolean> = this.connectivity.online;

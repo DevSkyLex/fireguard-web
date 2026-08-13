@@ -77,7 +77,12 @@ Stores:
   serves the single-row and bulk paths); `orderedIds` exposes the current
   entity order for the detail page's prev/next — **which therefore walks only
   the loaded page**: prev/next stops at the page bounds, an accepted trade-off
-  of server paging. `delete` removes the cached
+  of server paging. Extending it with an edge-fetch (`loadNextPage`) was
+  considered and deferred (5.3): the exact query context now lives in the
+  list URL's filter params, which the detail route does not carry, so a fetch
+  from the detail page could silently walk a different collection than the one
+  the operator filtered. Revisit only with a mechanism that carries the list
+  query context across the navigation. `delete` removes the cached
   entity and decrements `totalInterventions` on success; it uses `mergeMap` (not
   `switchMap`) so a bulk selection can delete several concurrently, each keyed by
   its own request and each dispatching its own `deleteSucceeded` / `deleteFailed`

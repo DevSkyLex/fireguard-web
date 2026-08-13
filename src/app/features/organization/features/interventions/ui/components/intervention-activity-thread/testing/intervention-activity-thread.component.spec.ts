@@ -15,6 +15,15 @@ const MEMBER: MemberSelectOption = {
   initials: 'JD',
 };
 
+const MENTIONED_MEMBER: MemberSelectOption = {
+  value: '/api/organizations/org-1/members/3fa85f64-5717-4562-b3fc-2c963f66afa6',
+  label: 'Marc Dubois',
+  displayName: 'Marc Dubois',
+  roleLabel: 'Technician',
+  avatarUrl: null,
+  initials: 'MD',
+};
+
 const activity = (
   overrides: Partial<InterventionActivityOutput> = {},
 ): InterventionActivityOutput =>
@@ -72,6 +81,32 @@ describe('InterventionActivityThread', () => {
     await create();
     fixture.componentRef.setInput('activities', [
       activity({ actor: '/api/organizations/org-1/members/gone' }),
+    ]);
+    fixture.componentRef.setInput('members', [MEMBER]);
+    await fixture.whenStable();
+
+    expect(root().textContent).toContain('Unknown member');
+  });
+
+  it('should render a comment mention as the mentioned member name', async () => {
+    await create();
+    fixture.componentRef.setInput('activities', [
+      activity({ body: `@{${MENTIONED_MEMBER.value.split('/').pop()}} can you check this?` }),
+    ]);
+    fixture.componentRef.setInput('members', [MEMBER, MENTIONED_MEMBER]);
+    await fixture.whenStable();
+
+    expect(root().textContent).toContain('Marc Dubois');
+    expect(root().textContent).not.toContain('@{');
+
+    const mention = root().querySelector('[data-testid="intervention-activity-thread"] p span');
+    expect(mention?.getAttribute('title')).toBe('Technician');
+  });
+
+  it('should fall back to a neutral label for an unresolved comment mention', async () => {
+    await create();
+    fixture.componentRef.setInput('activities', [
+      activity({ body: '@{00000000-0000-4000-8000-000000000000} ping' }),
     ]);
     fixture.componentRef.setInput('members', [MEMBER]);
     await fixture.whenStable();

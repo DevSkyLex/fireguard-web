@@ -81,6 +81,8 @@ export type {
   SelectOption,
 } from './intervention-workflow';
 export type { MemberAvatar } from './member-avatar/member-avatar.interface';
+export type { InterventionMentionSegment } from './intervention-mention/intervention-mention-segment.interface';
+export type { InterventionMentionQuery } from './intervention-mention/intervention-mention-query.interface';
 
 /**
  * The enum presentation registry (`ARCHITECTURE.md` §10.10, exception 1): the

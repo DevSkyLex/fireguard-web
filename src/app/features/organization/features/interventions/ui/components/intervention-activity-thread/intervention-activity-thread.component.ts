@@ -14,12 +14,15 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideCircleAlert } from '@ng-icons/lucide';
 import type {
   InterventionActivityOutput,
+  InterventionMentionSegment,
   InterventionStatusChangePayload,
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
 import {
   formatInterventionRelativeTime,
+  parseInterventionMentions,
   resolveInterventionActivityActor,
+  resolveInterventionMentionMember,
 } from '@features/organization/features/interventions/utils';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
@@ -36,7 +39,7 @@ import {
   INTERVENTION_ACTIVITY_EVENT_ICON_NAME,
   INTERVENTION_ACTIVITY_EVENT_ICONS,
 } from './constants/intervention-activity-event-icons.constants';
-import type { InterventionActivityRowViewModel } from './models';
+import type { InterventionActivityBodySegment, InterventionActivityRowViewModel } from './models';
 
 /** How many skeleton rows the loading state shows. */
 const SKELETON_ROW_COUNT: number = 3;
@@ -134,7 +137,13 @@ const SKELETON_ROW_COUNT: number = 3;
  * loading (`InterventionWorkspaceStore.loadActivities`) and posting
  * (`InterventionCommentForm` + `store.addComment`).
  *
- * @version 3.0.0
+ * A comment's `@{uuid}` mention tokens are resolved to the mentioned
+ * member's display name and rendered as a plain `font-medium text-primary`
+ * span — no link, no `innerHTML` — with the role as its hover title. An
+ * unresolved token (the member left, or the id is malformed) falls back to
+ * the same neutral label an unattributable activity actor already gets.
+ *
+ * @version 3.1.0
  *
  * @example
  * ```html
@@ -330,12 +339,52 @@ export class InterventionActivityThread {
         iconClass:
           INTERVENTION_ACTIVITY_EVENT_ICON_CLASS[activity.event] ??
           INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON_CLASS,
+        bodySegments: activity.kind === 'system' ? [] : this.bodySegmentsOf(activity.body, members),
       };
     });
   });
   //#endregion
 
   //#region Methods
+  /**
+   * Method bodySegmentsOf
+   *
+   * @description
+   * Splits a comment's body into text and mention runs, resolving each
+   * `@{uuid}` token to the member's display name and role. A token that
+   * matches no loaded member — left the organization, or simply malformed —
+   * falls back to the same neutral label an unresolved activity actor gets.
+   *
+   * @access private
+   * @since 3.1.0
+   *
+   * @param {string | null} body - The comment's stored body.
+   * @param {readonly MemberSelectOption[]} members - The organization's loaded members.
+   *
+   * @returns {readonly InterventionActivityBodySegment[]} Text and resolved-mention runs, in order.
+   */
+  private bodySegmentsOf(
+    body: string | null,
+    members: readonly MemberSelectOption[],
+  ): readonly InterventionActivityBodySegment[] {
+    return parseInterventionMentions(body ?? '').map(
+      (segment: InterventionMentionSegment): InterventionActivityBodySegment => {
+        if (segment.kind === 'text') return { kind: 'text', text: segment.value, title: null };
+
+        const member: MemberSelectOption | null = resolveInterventionMentionMember(
+          segment.value,
+          members,
+        );
+
+        return {
+          kind: 'mention',
+          text: member?.displayName ?? $localize`:@@intervention.list.unknownMember:Unknown member`,
+          title: member?.roleLabel ?? null,
+        };
+      },
+    );
+  }
+
   /**
    * Method statusChangeOf
    *

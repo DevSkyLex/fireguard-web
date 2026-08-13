@@ -42,6 +42,7 @@ export type { InterventionStatusChangePayload } from './intervention-activity/in
 export type { CreateInterventionWorkItemInput } from './intervention-work-item/create-intervention-work-item-input.interface';
 export type { InterventionWorkItemAction } from './intervention-work-item/intervention-work-item-action.type';
 export type { InterventionWorkItemAssignee } from './intervention-work-item/intervention-work-item-assignee.interface';
+export type { InterventionWorkItemFilter } from './intervention-work-item/intervention-work-item-filter.type';
 export type { InterventionWorkItemOutput } from './intervention-work-item/intervention-work-item-output.interface';
 export type { InterventionWorkItemSource } from './intervention-work-item/intervention-work-item-source.type';
 export type { InterventionWorkItemTarget } from './intervention-work-item/intervention-work-item-target.interface';

@@ -6732,6 +6732,31 @@
           <context context-type="linenumber">624,627</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.publish.stillRunning" datatype="html">
+        <source> Still publishing — large interventions can take a couple of minutes. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">626,628</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.publish.timedOutMessage" datatype="html">
+        <source> Publication is still running server-side — it will finish in the background. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">598,600</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-publication/intervention-publication.store.ts</context>
+          <context context-type="linenumber">134</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.publish.recheck" datatype="html">
+        <source>Check again</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">613</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.detail.metaUpdated" datatype="html">
         <source>Updated <x id="when" equiv-text="when"/> · revision <x id="revision" equiv-text="revision"/></source>
         <context-group purpose="location">
@@ -7904,6 +7929,76 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.ts</context>
           <context context-type="linenumber">499</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.progressLabel" datatype="html">
+        <source>Progress</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterAriaLabel" datatype="html">
+        <source>Filter work items</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">58</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterAll" datatype="html">
+        <source>All</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterRemaining" datatype="html">
+        <source>Remaining</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterDone" datatype="html">
+        <source>Done</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterSkipped" datatype="html">
+        <source>Skipped</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">94</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.mineFirst" datatype="html">
+        <source>Mine first</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">110</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filteredEmptyTitle" datatype="html">
+        <source>No work items match this filter</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">274</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filteredEmptyDesc" datatype="html">
+        <source>Try another chip, or clear the filter to see the whole scope.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
+          <context context-type="linenumber">276</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wit.progressAriaLabel" datatype="html">
+        <source><x id="completed" equiv-text="this.completedCount()"/> of <x id="total" equiv-text="this.totalCount()"/> items completed</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.ts</context>
+          <context context-type="linenumber">438</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.permission.deniedDetail" datatype="html">

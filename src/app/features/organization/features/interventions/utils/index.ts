@@ -15,3 +15,4 @@ export {
   resolveAllowedTransitions,
 } from './intervention-status-transition/intervention-status-transition.utils';
 export { resolveInterventionIssueTarget } from './intervention-issue-target/intervention-issue-target.utils';
+export { filterAndGroupInterventionWorkItems } from './intervention-work-item-view/intervention-work-item-view.utils';

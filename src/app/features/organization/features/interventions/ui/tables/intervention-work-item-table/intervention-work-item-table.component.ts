@@ -6,10 +6,12 @@ import {
   computed,
   input,
   output,
+  signal,
   type InputSignal,
   type InputSignalWithTransform,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -18,6 +20,7 @@ import {
   lucideCircleDot,
   lucideCircleSlash,
   lucideEllipsis,
+  lucideFilterX,
   lucideListChecks,
   lucidePlus,
   lucideSkipForward,
@@ -25,16 +28,21 @@ import {
 } from '@ng-icons/lucide';
 import {
   resolveInterventionTag,
+  type InterventionWorkItemFilter,
   type InterventionWorkItemOutput,
   type InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
+import { filterAndGroupInterventionWorkItems } from '@features/organization/features/interventions/utils';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmToggle } from '@shared/ui/toggle';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { InterventionTag } from '../../components/intervention-tag';
 import {
   WORK_ITEM_STATUS_ICON,
@@ -69,12 +77,15 @@ import {
     NgIcon,
     EmptyState,
     HlmBadge,
+    HlmToggle,
     InterventionTag,
     ...HlmAvatarImports,
     ...HlmButtonImports,
     ...HlmDropdownMenuImports,
+    ...HlmProgressImports,
     ...HlmSpinnerImports,
     ...HlmTableImports,
+    ...HlmToggleGroupImports,
   ],
   providers: [
     provideIcons({
@@ -83,6 +94,7 @@ import {
       lucideCircleDot,
       lucideCircleSlash,
       lucideEllipsis,
+      lucideFilterX,
       lucideListChecks,
       lucidePlus,
       lucideSkipForward,
@@ -211,6 +223,60 @@ export class InterventionWorkItemTable {
     boolean,
     BooleanInput
   >(false, { transform: booleanAttribute });
+
+  /**
+   * Property currentMemberId
+   * @readonly
+   *
+   * @description
+   * The signed-in member's IRI in this organization — the same shape as a work
+   * item's own `assignee` — or `null` before the profile resolves. Drives the
+   * "Mine first" toggle's availability and its grouping.
+   *
+   * @access public
+   * @since 6.1.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly currentMemberId: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property totalCount
+   * @readonly
+   * @description The intervention's full work-item scope, from the aggregate — not just what filtered rows are showing.
+   * @access public
+   * @since 6.1.0
+   * @type {InputSignal<number>}
+   */
+  public readonly totalCount: InputSignal<number> = input<number>(0);
+
+  /**
+   * Property completedCount
+   * @readonly
+   * @description How many of the scope's items are completed, from the aggregate.
+   * @access public
+   * @since 6.1.0
+   * @type {InputSignal<number>}
+   */
+  public readonly completedCount: InputSignal<number> = input<number>(0);
+
+  /**
+   * Property showProgress
+   * @readonly
+   *
+   * @description
+   * Whether the completion bar renders above the table. The page passes this
+   * rather than the phase itself, so the table stays free of workflow
+   * knowledge — it is told when progress is worth showing, not why.
+   *
+   * @access public
+   * @since 6.1.0
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly showProgress: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(false, { transform: booleanAttribute });
   //#endregion
 
   //#region Outputs
@@ -258,7 +324,120 @@ export class InterventionWorkItemTable {
   public readonly addRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
+  //#region View state
+  /**
+   * Property activeFilter
+   * @readonly
+   *
+   * @description
+   * The active chip. A view preference local to this table, not route state —
+   * switching intervention detail pages resets it rather than carrying a stale
+   * filter across a different scope.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {WritableSignal<InterventionWorkItemFilter>}
+   */
+  protected readonly activeFilter: WritableSignal<InterventionWorkItemFilter> =
+    signal<InterventionWorkItemFilter>('all');
+
+  /**
+   * Property mineFirst
+   * @readonly
+   * @description Whether the operator's own rows are pulled to the top.
+   * @access protected
+   * @since 6.1.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly mineFirst: WritableSignal<boolean> = signal<boolean>(false);
+  //#endregion
+
   //#region Properties
+  /**
+   * Property filterCounts
+   * @readonly
+   * @description How many items each chip would show, over the full scope — read before the operator picks a chip, so it must not depend on {@link activeFilter}.
+   * @access protected
+   * @since 6.1.0
+   * @type {Signal<Readonly<Record<InterventionWorkItemFilter, number>>>}
+   */
+  protected readonly filterCounts: Signal<Readonly<Record<InterventionWorkItemFilter, number>>> =
+    computed<Readonly<Record<InterventionWorkItemFilter, number>>>(() => {
+      const items: readonly InterventionWorkItemOutput[] = this.items();
+
+      return {
+        all: items.length,
+        remaining: filterAndGroupInterventionWorkItems(items, 'remaining', null).length,
+        done: filterAndGroupInterventionWorkItems(items, 'done', null).length,
+        skipped: filterAndGroupInterventionWorkItems(items, 'skipped', null).length,
+      };
+    });
+
+  /**
+   * Property showMineFirstToggle
+   * @readonly
+   * @description Whether the "Mine first" toggle has anything to offer — a known member with at least one row assigned to them.
+   * @access protected
+   * @since 6.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly showMineFirstToggle: Signal<boolean> = computed<boolean>(() => {
+    const memberId: string | null = this.currentMemberId();
+
+    return memberId !== null && this.items().some((item) => item.assignee === memberId);
+  });
+
+  /**
+   * Property viewItems
+   * @readonly
+   *
+   * @description
+   * The rows the table actually renders: the active chip, then — only while
+   * {@link mineFirst} is on and available — the operator's own rows first.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<readonly InterventionWorkItemOutput[]>}
+   */
+  protected readonly viewItems: Signal<readonly InterventionWorkItemOutput[]> = computed<
+    readonly InterventionWorkItemOutput[]
+  >(() =>
+    filterAndGroupInterventionWorkItems(
+      this.items(),
+      this.activeFilter(),
+      this.mineFirst() && this.showMineFirstToggle() ? this.currentMemberId() : null,
+    ),
+  );
+
+  /**
+   * Property progressPercent
+   * @readonly
+   * @description The completion bar's fill, guarded against a zero-sized scope.
+   * @access protected
+   * @since 6.1.0
+   * @type {Signal<number>}
+   */
+  protected readonly progressPercent: Signal<number> = computed<number>(() => {
+    const total: number = this.totalCount();
+
+    return total > 0 ? Math.round((this.completedCount() / total) * 100) : 0;
+  });
+
+  /**
+   * Property progressLabel
+   * @readonly
+   * @description The completion bar's accessible name, stating the same count the visible text already shows.
+   * @access protected
+   * @since 6.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly progressLabel: Signal<string> = computed<string>(
+    () =>
+      $localize`:@@intervention.wit.progressAriaLabel:${this.completedCount()}:completed: of ${this.totalCount()}:total: items completed`,
+  );
+
   /**
    * Property doneCount
    * @readonly
@@ -520,6 +699,21 @@ export class InterventionWorkItemTable {
       workItemId: item.id,
       status: item.status === 'completed' ? 'planned' : 'completed',
     });
+  }
+
+  /**
+   * Method onFilterChanged
+   * @description Narrows `hlm-toggle-group`'s single-select payload down to a known chip, falling back to `all` for anything else.
+   * @access protected
+   * @since 6.1.0
+   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   * @returns {void}
+   */
+  protected onFilterChanged(value: string | readonly string[] | null | undefined): void {
+    const filter: InterventionWorkItemFilter =
+      value === 'remaining' || value === 'done' || value === 'skipped' ? value : 'all';
+
+    this.activeFilter.set(filter);
   }
   //#endregion
 }

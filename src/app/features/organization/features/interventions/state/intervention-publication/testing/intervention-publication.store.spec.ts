@@ -5,7 +5,10 @@ import type {
   InterventionOutput,
   PublicationOutput,
 } from '@features/organization/features/interventions/models';
-import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
+import {
+  InterventionPublicationService,
+  PublicationPollTimeoutError,
+} from '@features/organization/features/interventions/services/intervention-publication';
 import { InterventionPublicationStore } from '../intervention-publication.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -16,6 +19,7 @@ describe('InterventionPublicationStore', () => {
   let store: InstanceType<typeof InterventionPublicationStore>;
   let dispatch: ReturnType<typeof vi.fn>;
   let publish: ReturnType<typeof vi.fn>;
+  let checkStatus: ReturnType<typeof vi.fn>;
 
   const intervention = { id: 'intervention-1' } as unknown as InterventionOutput;
   const completed = { id: 'pub-1', status: 'completed' } as unknown as PublicationOutput;
@@ -23,12 +27,13 @@ describe('InterventionPublicationStore', () => {
   beforeEach(() => {
     dispatch = vi.fn();
     publish = vi.fn();
+    checkStatus = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
         InterventionPublicationStore,
         { provide: Dispatcher, useValue: { dispatch } },
-        { provide: InterventionPublicationService, useValue: { publish } },
+        { provide: InterventionPublicationService, useValue: { publish, checkStatus } },
       ],
     });
 
@@ -93,5 +98,133 @@ describe('InterventionPublicationStore', () => {
 
     expect(store.publishCallState().status).toBe('idle');
     expect(store.error()).toBeNull();
+  });
+
+  it('should capture the publication id and mark the attempt timed out on a poll timeout', async () => {
+    publish.mockRejectedValue(new PublicationPollTimeoutError('pub-1'));
+
+    store.publish(intervention);
+    await flushEffects();
+
+    expect(store.timedOut()).toBe(true);
+    expect(store.error()).toBe(
+      'Publication is still running server-side — it will finish in the background.',
+    );
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  describe('longRunning', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('should flip true once a publish attempt has been pending past the threshold', async () => {
+      publish.mockReturnValue(new Promise<PublicationOutput>(() => {}));
+
+      store.publish(intervention);
+      await flushEffects();
+
+      expect(store.longRunning()).toBe(false);
+
+      vi.advanceTimersByTime(30_000);
+      await flushEffects();
+
+      expect(store.longRunning()).toBe(true);
+    });
+
+    it('should not flip once the attempt has already settled', async () => {
+      publish.mockResolvedValue(completed);
+
+      store.publish(intervention);
+      await flushEffects();
+
+      vi.advanceTimersByTime(30_000);
+      await flushEffects();
+
+      expect(store.longRunning()).toBe(false);
+    });
+
+    it('should reset for a fresh attempt', async () => {
+      publish.mockReturnValue(new Promise<PublicationOutput>(() => {}));
+      store.publish(intervention);
+      await flushEffects();
+      vi.advanceTimersByTime(30_000);
+      await flushEffects();
+      expect(store.longRunning()).toBe(true);
+
+      publish.mockReturnValue(new Promise<PublicationOutput>(() => {}));
+      store.publish(intervention);
+      await flushEffects();
+
+      expect(store.longRunning()).toBe(false);
+    });
+  });
+
+  describe('recheck', () => {
+    beforeEach(async () => {
+      publish.mockRejectedValue(new PublicationPollTimeoutError('pub-1'));
+      store.publish(intervention);
+      await flushEffects();
+    });
+
+    it('should do nothing without a captured publication id', async () => {
+      store.reset();
+      checkStatus.mockClear();
+
+      store.recheck();
+      await flushEffects();
+
+      expect(checkStatus).not.toHaveBeenCalled();
+    });
+
+    it('should succeed once the server finishes in the background', async () => {
+      checkStatus.mockResolvedValue(completed);
+
+      store.recheck();
+      await flushEffects();
+
+      expect(checkStatus).toHaveBeenCalledWith('pub-1');
+      expect(store.publishCallState().status).toBe('success');
+      expect(store.publishCallState().data).toEqual(completed);
+      expect(store.timedOut()).toBe(false);
+      expect(dispatch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should stay timed out while the server is still working', async () => {
+      const stillProcessing = { id: 'pub-1', status: 'processing' } as unknown as PublicationOutput;
+      checkStatus.mockResolvedValue(stillProcessing);
+
+      store.recheck();
+      await flushEffects();
+
+      expect(store.timedOut()).toBe(true);
+      expect(store.publishCallState().status).toBe('error');
+      expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it('should surface a terminal failure once the server reports it', async () => {
+      const failed = {
+        id: 'pub-1',
+        status: 'failed',
+        error: 'Compliance rules rejected the record',
+      } as unknown as PublicationOutput;
+      checkStatus.mockResolvedValue(failed);
+
+      store.recheck();
+      await flushEffects();
+
+      expect(store.timedOut()).toBe(false);
+      expect(store.error()).toBe('Compliance rules rejected the record');
+      expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it('should map a rejected re-check to the fixed request-failed message', async () => {
+      checkStatus.mockRejectedValue(new Error('network down'));
+
+      store.recheck();
+      await flushEffects();
+
+      expect(store.publishCallState().status).toBe('error');
+      expect(store.error()).toBe('The publication request could not be completed.');
+    });
   });
 });

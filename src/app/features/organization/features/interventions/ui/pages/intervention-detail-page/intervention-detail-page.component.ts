@@ -24,6 +24,7 @@ import {
   lucideChevronLeft,
   lucideChevronRight,
   lucideCircleAlert,
+  lucideClock,
   lucideCloudUpload,
   lucideCompass,
   lucideEllipsis,
@@ -221,6 +222,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideChevronLeft,
       lucideChevronRight,
       lucideCircleAlert,
+      lucideClock,
       lucideCloudUpload,
       lucideCompass,
       lucideEllipsis,
@@ -610,10 +612,32 @@ export class InterventionDetailPage {
   /** Whether a publication request and its poll are running. */
   protected readonly publishing: Signal<boolean> = this.publicationStore.publishing;
 
-  /** What publication failed with, shown inline in the publish confirmation. */
-  protected readonly publicationError: Signal<string | null> = computed<string | null>(
-    () => this.offlineBlockReason() ?? this.publicationStore.error(),
-  );
+  /** Whether the current publish attempt has been pending long enough to say so. */
+  protected readonly publicationLongRunning: Signal<boolean> = this.publicationStore.longRunning;
+
+  /** Whether the last attempt ended because the poll gave up while the publication was still running server-side. */
+  protected readonly publicationTimedOut: Signal<boolean> = this.publicationStore.timedOut;
+
+  /**
+   * Property publicationError
+   * @readonly
+   *
+   * @description
+   * What the last publish attempt failed with, shown inline in the publish
+   * confirmation. `null` while {@link publicationTimedOut} is set — that case
+   * gets its own recovery copy and a "Check again" action instead of the
+   * generic destructive alert.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly publicationError: Signal<string | null> = computed<string | null>(() => {
+    if (this.publicationTimedOut()) return null;
+
+    return this.offlineBlockReason() ?? this.publicationStore.error();
+  });
 
   /** Whether the request-changes panel is open. */
   protected readonly requestChangesVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -652,6 +676,29 @@ export class InterventionDetailPage {
 
   /** Where the intervention sits in its lifecycle, derived from its status. */
   protected readonly phase: Signal<InterventionPhase> = this.caps.phase;
+
+  /**
+   * Property currentMemberIri
+   * @readonly
+   *
+   * @description
+   * The signed-in member's IRI in this organization, `null` until the profile
+   * resolves — the same identity {@link canSubmit} reads, and the shape a work
+   * item's own `assignee` carries, so the field-work table can match it
+   * directly for its "Mine first" grouping.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly currentMemberIri: Signal<string | null> = computed<string | null>(() => {
+    const memberId: string | undefined = this.memberAccess.profile()?.id;
+
+    return memberId === undefined
+      ? null
+      : `/api/organizations/${this.organizationId()}/members/${memberId}`;
+  });
 
   /**
    * Property commandTransitionTarget
@@ -1584,6 +1631,17 @@ export class InterventionDetailPage {
 
     this.offlineBlockReason.set(null);
     this.publicationStore.publish(intervention);
+  }
+
+  /**
+   * Method recheckPublication
+   * @description Asks the store to re-read the timed-out publication once, offered from the confirmation while {@link publicationTimedOut} is set.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected recheckPublication(): void {
+    this.publicationStore.recheck();
   }
 
   /** Clears the load error and tries again. */

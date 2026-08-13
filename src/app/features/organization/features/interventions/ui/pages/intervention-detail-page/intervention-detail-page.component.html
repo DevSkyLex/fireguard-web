@@ -258,6 +258,10 @@
                 [canDelete]="canAddWorkItem()"
                 [canAdd]="canAddWorkItem()"
                 [busy]="store.saving()"
+                [currentMemberId]="currentMemberIri()"
+                [totalCount]="intervention.workItemsCount"
+                [completedCount]="intervention.completedWorkItemsCount"
+                [showProgress]="phase() === 'execute'"
                 (statusChanged)="onWorkItemStatusChanged($event)"
                 (skipRequested)="requestSkipWorkItem($event)"
                 (deleteRequested)="requestDeleteWorkItem($event)"
@@ -583,6 +587,34 @@
       </div>
     }
 
+    @if (publicationTimedOut()) {
+      <div
+        hlmAlert
+        class="bg-muted/50"
+        role="status"
+        data-testid="intervention-detail-publish-timed-out"
+      >
+        <ng-icon name="lucideClock" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@intervention.publish.timedOutMessage">
+          Publication is still running server-side — it will finish in the background.
+        </p>
+        <button
+          hlmAlertAction
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-detail-publish-recheck"
+          [disabled]="publishing()"
+          [attr.aria-busy]="publishing() ? 'true' : null"
+          (click)="recheckPublication()"
+        >
+          <span i18n="@@intervention.publish.recheck">Check again</span>
+        </button>
+      </div>
+    }
+
     @if (publishing()) {
       <p
         class="flex items-center gap-2 text-sm text-muted-foreground"
@@ -590,27 +622,35 @@
         data-testid="intervention-detail-publish-progress"
       >
         <hlm-spinner class="size-4" aria-hidden="true" />
-        <span i18n="@@intervention.publish.inProgress">
-          Writing to the compliance record — do not close this window.
-        </span>
+        @if (publicationLongRunning()) {
+          <span i18n="@@intervention.publish.stillRunning">
+            Still publishing — large interventions can take a couple of minutes.
+          </span>
+        } @else {
+          <span i18n="@@intervention.publish.inProgress">
+            Writing to the compliance record — do not close this window.
+          </span>
+        }
       </p>
     }
 
     <hlm-alert-dialog-footer>
       <button hlmAlertDialogCancel [disabled]="publishing()" i18n="@@common.cancel">Cancel</button>
-      <button
-        hlmAlertDialogAction
-        data-testid="intervention-detail-publish-confirm"
-        [disabled]="publishing()"
-        [attr.aria-busy]="publishing() ? 'true' : null"
-        (click)="confirmPublish()"
-      >
-        @if (publishing()) {
-          <span i18n="@@intervention.publish.pending">Publishing…</span>
-        } @else {
-          <span i18n="@@intervention.publish.accept">Publish</span>
-        }
-      </button>
+      @if (!publicationTimedOut()) {
+        <button
+          hlmAlertDialogAction
+          data-testid="intervention-detail-publish-confirm"
+          [disabled]="publishing()"
+          [attr.aria-busy]="publishing() ? 'true' : null"
+          (click)="confirmPublish()"
+        >
+          @if (publishing()) {
+            <span i18n="@@intervention.publish.pending">Publishing…</span>
+          } @else {
+            <span i18n="@@intervention.publish.accept">Publish</span>
+          }
+        </button>
+      }
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>

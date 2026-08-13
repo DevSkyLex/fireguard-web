@@ -5578,6 +5578,18 @@
         <source>Publishing…</source>
         <target>Publicando…</target>
       </trans-unit>
+      <trans-unit id="intervention.publish.stillRunning" datatype="html">
+        <source> Still publishing — large interventions can take a couple of minutes. </source>
+        <target> Publicando todavía — las intervenciones grandes pueden tardar un par de minutos. </target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.timedOutMessage" datatype="html">
+        <source> Publication is still running server-side — it will finish in the background. </source>
+        <target> La publicación sigue en curso en el servidor — terminará en segundo plano. </target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.recheck" datatype="html">
+        <source>Check again</source>
+        <target>Comprobar de nuevo</target>
+      </trans-unit>
       <trans-unit id="intervention.publication.succeeded" datatype="html">
         <source>Published to the compliance record</source>
         <target>Publicada en el registro de conformidad</target>
@@ -9332,6 +9344,46 @@
       <trans-unit id="intervention.wit.complete" datatype="html">
         <source>Complete <x id="item" equiv-text="this.labelOf(item)"/></source>
         <target>Completar <x id="item" equiv-text="this.labelOf(item)"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.progressLabel" datatype="html">
+        <source>Progress</source>
+        <target>Progreso</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterAriaLabel" datatype="html">
+        <source>Filter work items</source>
+        <target>Filtrar elementos de trabajo</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterAll" datatype="html">
+        <source>All</source>
+        <target>Todos</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterRemaining" datatype="html">
+        <source>Remaining</source>
+        <target>Pendientes</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterDone" datatype="html">
+        <source>Done</source>
+        <target>Completados</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filterSkipped" datatype="html">
+        <source>Skipped</source>
+        <target>Omitidos</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.mineFirst" datatype="html">
+        <source>Mine first</source>
+        <target>Los míos primero</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filteredEmptyTitle" datatype="html">
+        <source>No work items match this filter</source>
+        <target>Ningún elemento coincide con este filtro</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filteredEmptyDesc" datatype="html">
+        <source>Try another chip, or clear the filter to see the whole scope.</source>
+        <target>Prueba con otro filtro, o bórralo para ver todo el alcance.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.progressAriaLabel" datatype="html">
+        <source><x id="completed" equiv-text="this.completedCount()"/> of <x id="total" equiv-text="this.totalCount()"/> items completed</source>
+        <target><x id="completed" equiv-text="this.completedCount()"/> de <x id="total" equiv-text="this.totalCount()"/> elementos completados</target>
       </trans-unit>
       <trans-unit id="intervention.rc.noteLabel" datatype="html">
         <source>Note</source>

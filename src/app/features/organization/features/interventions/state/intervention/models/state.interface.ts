@@ -1,5 +1,6 @@
 import type { CallState } from '@core/request-state';
 import type {
+  InterventionDuplicatePrefill,
   InterventionOutput,
   InterventionTemplateInstantiationOutput,
 } from '@features/organization/features/interventions/models';
@@ -121,5 +122,22 @@ export interface InterventionState {
    * @type {CallState<InterventionTemplateInstantiationOutput>}
    */
   readonly instantiateCallState: CallState<InterventionTemplateInstantiationOutput>;
+
+  /**
+   * Property pendingDuplicatePrefill
+   * @readonly
+   *
+   * @description
+   * A "Duplicate" prefill handed off across routes — set by
+   * `InterventionDetailPage` before it navigates to the list with
+   * `?create=1`, consumed once and cleared by `InterventionsPage`. `null`
+   * otherwise, including for the list's own row-level "Duplicate" entry
+   * point, which never leaves the page and never touches this field.
+   *
+   * @since 6.1.0
+   *
+   * @type {InterventionDuplicatePrefill | null}
+   */
+  readonly pendingDuplicatePrefill: InterventionDuplicatePrefill | null;
   //#endregion
 }

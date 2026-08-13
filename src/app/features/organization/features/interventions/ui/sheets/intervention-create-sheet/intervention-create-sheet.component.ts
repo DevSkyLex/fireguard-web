@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
+  InterventionDuplicatePrefill,
   InterventionTemplateOutput,
   MemberSelectOption,
   SelectOption,
@@ -159,6 +160,24 @@ export class InterventionCreateSheet {
    * @type {InputSignal<boolean>}
    */
   public readonly instantiating: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property prefill
+   * @readonly
+   *
+   * @description
+   * Values to seed the form with, forwarded untouched — the "Duplicate"
+   * entry point's payload. Owned by the page: the page is what clears it once
+   * this panel closes, the same way {@link selectedTemplateId} clears itself
+   * on close, but one level up since this value is not this sheet's own state.
+   *
+   * @access public
+   * @since 6.1.0
+   *
+   * @type {InputSignal<InterventionDuplicatePrefill | null>}
+   */
+  public readonly prefill: InputSignal<InterventionDuplicatePrefill | null> =
+    input<InterventionDuplicatePrefill | null>(null);
   //#endregion
 
   //#region Outputs

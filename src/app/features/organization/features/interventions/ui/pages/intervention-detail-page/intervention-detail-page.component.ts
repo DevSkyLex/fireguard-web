@@ -27,6 +27,7 @@ import {
   lucideClock,
   lucideCloudUpload,
   lucideCompass,
+  lucideCopy,
   lucideEllipsis,
   lucideMessageSquareQuote,
   lucideScanLine,
@@ -89,6 +90,7 @@ import {
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
 import {
+  buildInterventionDuplicatePrefill,
   buildInterventionMetaLine,
   createInterventionCapabilities,
   formatInterventionScheduleLabel,
@@ -173,7 +175,12 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * list store removes the entity and repairs `orderedIds()`, which this page's
  * prev/next footer walks.
  *
- * @version 4.0.0
+ * "Duplicate", gated on {@link canPlan}, cannot open the list's own creation
+ * sheet from here — it hands a prefill to `InterventionStore`'s
+ * `pendingDuplicatePrefill` and navigates to the list with `?create=1`,
+ * which reads and clears it once.
+ *
+ * @version 4.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -225,6 +232,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideClock,
       lucideCloudUpload,
       lucideCompass,
+      lucideCopy,
       lucideEllipsis,
       lucideMessageSquareQuote,
       lucideScanLine,
@@ -1514,6 +1522,31 @@ export class InterventionDetailPage {
   /** Asks to abandon. */
   protected requestAbandon(): void {
     this.pendingConfirm.set({ kind: 'abandon' });
+  }
+
+  /**
+   * Method duplicateIntervention
+   * @method duplicateIntervention
+   *
+   * @description
+   * Hands a prefill built from the current intervention to the list store
+   * and navigates there with `?create=1` — the cross-route counterpart of
+   * the list's own row-level "Duplicate", since this page cannot open the
+   * list's creation sheet directly.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @returns {void}
+   */
+  protected duplicateIntervention(): void {
+    const intervention: InterventionOutput | null = this.store.intervention();
+    if (intervention === null) return;
+
+    this.listStore.setPendingDuplicatePrefill(buildInterventionDuplicatePrefill(intervention));
+    void this.router.navigate(['/organizations', this.organizationId(), 'interventions'], {
+      queryParams: { create: '1' },
+    });
   }
 
   /** Asks to delete the intervention. */

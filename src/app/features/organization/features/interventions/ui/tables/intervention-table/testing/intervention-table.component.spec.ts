@@ -411,6 +411,54 @@ describe('InterventionTable', () => {
     });
   });
 
+  describe('duplicate', () => {
+    it('should not offer Duplicate without the permission', async () => {
+      fixture.componentRef.setInput('items', [
+        row({ intervention: intervention({ status: 'abandoned' }) }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      expect(document.querySelector('[data-testid="intervention-table-row-duplicate"]')).toBeNull();
+    });
+
+    it('should offer Duplicate for an abandoned intervention when permitted', async () => {
+      fixture.componentRef.setInput('canDuplicate', true);
+      fixture.componentRef.setInput('items', [
+        row({ intervention: intervention({ status: 'abandoned' }) }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      expect(
+        document.querySelector('[data-testid="intervention-table-row-duplicate"]'),
+      ).not.toBeNull();
+    });
+
+    it('should emit the row it was opened on when Duplicate is clicked', async () => {
+      const emitted: InterventionOutput[] = [];
+      fixture.componentInstance.duplicateRequested.subscribe(
+        (requested: InterventionOutput): void => {
+          emitted.push(requested);
+        },
+      );
+
+      fixture.componentRef.setInput('canDuplicate', true);
+      fixture.componentRef.setInput('items', [
+        row({ intervention: intervention({ id: 'i-dup' }) }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      document
+        .querySelector<HTMLButtonElement>('[data-testid="intervention-table-row-duplicate"]')
+        ?.click();
+
+      expect(emitted.length).toBe(1);
+      expect(emitted[0]?.id).toBe('i-dup');
+    });
+  });
+
   describe('identity-gated transitions', () => {
     it('should disable the submitted target for anyone but the responsible', async () => {
       fixture.componentRef.setInput('canTransition', true);

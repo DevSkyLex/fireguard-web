@@ -139,4 +139,22 @@ describe('InterventionCreateSheet', () => {
     );
     expect(confirmButton?.disabled).toBe(true);
   });
+
+  it('should forward a duplicate prefill to the form', async () => {
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('prefill', {
+      name: 'Roof round (copy)',
+      type: 'inventory',
+      priority: 'high',
+      site: '',
+      responsible: '',
+    });
+    await fixture.whenStable();
+
+    const nameInput: HTMLInputElement | null = document.querySelector(
+      '[data-testid="intervention-create-name"]',
+    );
+
+    expect(nameInput?.value).toBe('Roof round (copy)');
+  });
 });

@@ -61,6 +61,22 @@ This subfeature is responsible for:
   paints its own skeleton; once the workspace loads, the page re-sets the
   document title through `TitleService`, which also refreshes the crumb.
 
+  **"Duplicate" is a prefill of the same creation sheet, never a server-side
+  copy.** The list row menu and the detail page's overflow menu (gated on
+  `canPlan`, any status — duplicating an abandoned intervention is
+  legitimate) both build an `InterventionDuplicatePrefill`
+  (`buildInterventionDuplicatePrefill`, `utils/intervention-duplicate-prefill/`)
+  from the source `InterventionOutput`: name, type, priority, site and
+  responsible only. It **never** carries `status`, the planned window
+  (`plannedStartAt`/`dueAt`) or `reviewNote` — a duplicate opens as a fresh
+  draft, not a copy of the source's lifecycle, and ends in the exact same
+  `create` call a manual submission does. The detail page cannot open the
+  list's own sheet directly, so it hands the prefill to
+  `InterventionStore.pendingDuplicatePrefill` and navigates to the list with
+  `?create=1`; the list page consumes and clears it once
+  (`clearPendingDuplicatePrefill`), the same one-shot handoff shape as
+  `createdInterventionId`.
+
 ## State and Data Access
 
 Stores:

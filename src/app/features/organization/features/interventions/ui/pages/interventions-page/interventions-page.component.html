@@ -491,6 +491,7 @@
       [canTransition]="canTransition()"
       [canDelete]="canDelete()"
       [canAssign]="canAssign()"
+      [canDuplicate]="canDuplicate()"
       [currentMemberIri]="memberIri()"
       [selectedIds]="selectedIds()"
       [detailRouteBase]="detailRouteBase()"
@@ -499,6 +500,7 @@
       (referenceCopied)="copyReference($event)"
       (deleteRequested)="requestDelete($event)"
       (assignRequested)="requestAssign($event)"
+      (duplicateRequested)="requestDuplicate($event)"
       (selectionChanged)="onSelectionChanged($event)"
     />
 
@@ -604,7 +606,8 @@
   [memberOptions]="planningOptions.members()"
   [templates]="planningOptions.templates()"
   [instantiating]="store.isInstantiatingFromTemplate()"
-  (visibleChange)="createSheetVisible.set($event)"
+  [prefill]="duplicatePrefill()"
+  (visibleChange)="onCreateSheetVisibleChange($event)"
   (submitted)="createIntervention($event)"
   (templateInstantiated)="instantiateFromTemplate($event)"
 />

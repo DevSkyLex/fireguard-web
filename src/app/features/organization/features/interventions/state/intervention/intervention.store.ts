@@ -27,6 +27,7 @@ import {
   InterventionTemplateService,
 } from '@features/organization/features/interventions/data-access';
 import type {
+  InterventionDuplicatePrefill,
   InterventionOutput,
   InterventionTemplateInstantiationOutput,
 } from '@features/organization/features/interventions/models';
@@ -173,6 +174,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
   deleteCallState: idleCallState(),
   assignCallState: idleCallState<InterventionOutput>(),
   instantiateCallState: idleCallState<InterventionTemplateInstantiationOutput>(),
+  pendingDuplicatePrefill: null,
 } as const;
 //#endregion
 
@@ -187,7 +189,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
  * the server page the caller asked for — pagination, filtering and sorting are
  * server-side, and the entities ARE the current page.
  *
- * @version 4.2.0
+ * @version 4.3.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InterventionStore = signalStore(
@@ -759,6 +761,44 @@ export const InterventionStore = signalStore(
             createCallState: idleCallState<InterventionOutput>(),
             instantiateCallState: idleCallState<InterventionTemplateInstantiationOutput>(),
           });
+        },
+
+        /**
+         * Method setPendingDuplicatePrefill
+         * @method setPendingDuplicatePrefill
+         *
+         * @description
+         * Records a "Duplicate" prefill ahead of navigating from the detail
+         * page to the list route — the cross-route handoff `createdIntervention`
+         * uses for the opposite direction. `InterventionsPage` consumes it once
+         * and clears it via {@link clearPendingDuplicatePrefill}.
+         *
+         * @access public
+         * @since 6.1.0
+         *
+         * @param {InterventionDuplicatePrefill} prefill - The values to seed the creation form with.
+         *
+         * @return {void}
+         */
+        setPendingDuplicatePrefill(prefill: InterventionDuplicatePrefill): void {
+          patchState(store, { pendingDuplicatePrefill: prefill });
+        },
+
+        /**
+         * Method clearPendingDuplicatePrefill
+         * @method clearPendingDuplicatePrefill
+         *
+         * @description
+         * Clears the cross-route "Duplicate" handoff once the list page has
+         * read it, so a later plain "New intervention" never reuses it.
+         *
+         * @access public
+         * @since 6.1.0
+         *
+         * @return {void}
+         */
+        clearPendingDuplicatePrefill(): void {
+          patchState(store, { pendingDuplicatePrefill: null });
         },
       };
     },

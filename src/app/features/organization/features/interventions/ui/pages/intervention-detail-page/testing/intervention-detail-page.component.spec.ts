@@ -135,6 +135,7 @@ describe('InterventionDetailPage', () => {
   let createWorkItem: ReturnType<typeof vi.fn>;
   let workspaceDelete: ReturnType<typeof vi.fn>;
   let listDelete: ReturnType<typeof vi.fn>;
+  let setPendingDuplicatePrefill: ReturnType<typeof vi.fn>;
   let publish: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let permitted: Set<string>;
@@ -176,6 +177,7 @@ describe('InterventionDetailPage', () => {
     createWorkItem = vi.fn();
     workspaceDelete = vi.fn();
     listDelete = vi.fn();
+    setPendingDuplicatePrefill = vi.fn();
     publish = vi.fn().mockResolvedValue({ status: 'completed', error: null });
     navigate = vi.fn().mockResolvedValue(true);
 
@@ -184,7 +186,12 @@ describe('InterventionDetailPage', () => {
         provideZonelessChangeDetection(),
         {
           provide: InterventionStore,
-          useValue: { orderedIds, delete: listDelete, deleteCallState: signal(idleCallState()) },
+          useValue: {
+            orderedIds,
+            delete: listDelete,
+            deleteCallState: signal(idleCallState()),
+            setPendingDuplicatePrefill,
+          },
         },
         {
           provide: OrganizationPermissionService,
@@ -720,6 +727,39 @@ describe('InterventionDetailPage', () => {
 
       expect(listDelete).toHaveBeenCalledWith({ interventionId: 'intervention-1', revision: 3 });
       expect(workspaceDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('duplicate', () => {
+    it('should hand a prefill to the list store and navigate there with ?create=1', async () => {
+      current.set(intervention({ name: 'Quarterly sweep', type: 'inventory', priority: 'normal' }));
+      fixture = await createPage();
+
+      byTestId('intervention-detail-menu').click();
+      await fixture.whenStable();
+      (inBody('intervention-detail-duplicate') as HTMLButtonElement).click();
+
+      expect(setPendingDuplicatePrefill).toHaveBeenCalledWith({
+        name: 'Quarterly sweep (copy)',
+        type: 'inventory',
+        priority: 'normal',
+        site: '/api/facilities/facility-1',
+        responsible: MEMBER_IRI,
+      });
+      expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions'], {
+        queryParams: { create: '1' },
+      });
+    });
+
+    it('should not offer Duplicate without the plan permission', async () => {
+      permitted.delete('organization.interventions.plan');
+      current.set(intervention({ status: 'in_progress' }));
+      fixture = await createPage();
+
+      byTestId('intervention-detail-menu').click();
+      await fixture.whenStable();
+
+      expect(inBody('intervention-detail-duplicate')).toBeNull();
     });
   });
 

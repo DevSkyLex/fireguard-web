@@ -40,6 +40,7 @@ import {
   type InterventionAssignRequest,
   type InterventionAssignSubmittedEvent,
   type InterventionDueWindow,
+  type InterventionDuplicatePrefill,
   type InterventionListFilters,
   type InterventionListSort,
   type InterventionOutput,
@@ -59,7 +60,10 @@ import {
   InterventionStore,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
-import { isInterventionDeletable } from '@features/organization/features/interventions/utils';
+import {
+  buildInterventionDuplicatePrefill,
+  isInterventionDeletable,
+} from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   OrganizationMemberAccessStore,
@@ -157,7 +161,13 @@ const NO_FILTERS: InterventionListFilters = {
  * dialog opens, so the count it shows is always what will actually delete —
  * never a promise the API would refuse with a 409.
  *
- * @version 6.0.0
+ * "Duplicate" reuses the same creation sheet, prefilled — from a row's own
+ * menu, or from a cross-route handoff `InterventionStore.pendingDuplicatePrefill`
+ * carries when a detail page navigates here with `?create=1`. Never a
+ * server-side copy: it ends in the normal `create` call, and never carries
+ * `status`, the planned window or the review note.
+ *
+ * @version 6.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -443,6 +453,24 @@ export class InterventionsPage {
   /** Whether the creation sheet is open. */
   protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
+  /**
+   * Property duplicatePrefill
+   * @readonly
+   *
+   * @description
+   * What the creation sheet is currently prefilled with, from a "Duplicate"
+   * request — a row's own menu, or the cross-route handoff a detail page
+   * left on the store. `null` for a plain "New intervention". Cleared
+   * whenever the sheet closes, so a later plain creation never reuses it.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {WritableSignal<InterventionDuplicatePrefill | null>}
+   */
+  protected readonly duplicatePrefill: WritableSignal<InterventionDuplicatePrefill | null> =
+    signal<InterventionDuplicatePrefill | null>(null);
+
   /** Currently selected row ids, scoped to the loaded page — cleared on every load. */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
     new Set<string>(),
@@ -577,6 +605,25 @@ export class InterventionsPage {
    * @type {Signal<boolean>}
    */
   protected readonly canAssign: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
+  );
+
+  /**
+   * Property canDuplicate
+   * @readonly
+   *
+   * @description
+   * Whether the member may duplicate an intervention, which decides if the
+   * row menu offers "Duplicate" at all. Unlike delete and assign, no status
+   * narrows it further — duplicating an abandoned intervention is
+   * legitimate — so this is the only gate.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canDuplicate: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
@@ -1066,6 +1113,18 @@ export class InterventionsPage {
     });
 
     effect((): void => {
+      const prefill: InterventionDuplicatePrefill | null = this.store.pendingDuplicatePrefill();
+
+      untracked((): void => {
+        if (!prefill) return;
+
+        this.duplicatePrefill.set(prefill);
+        this.createSheetVisible.set(true);
+        this.store.clearPendingDuplicatePrefill();
+      });
+    });
+
+    effect((): void => {
       const createdId: string | null = this.store.createdInterventionId();
 
       untracked((): void => {
@@ -1363,7 +1422,8 @@ export class InterventionsPage {
    * @method openCreate
    *
    * @description
-   * Opens the creation sheet.
+   * Opens the creation sheet blank — drops any prefill a previous
+   * "Duplicate" left behind.
    *
    * @access protected
    * @since 1.0.0
@@ -1371,7 +1431,49 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected openCreate(): void {
+    this.duplicatePrefill.set(null);
     this.createSheetVisible.set(true);
+  }
+
+  /**
+   * Method requestDuplicate
+   * @method requestDuplicate
+   *
+   * @description
+   * Opens the creation sheet prefilled from a row's own "Duplicate" entry.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @param {InterventionOutput} intervention - The row "Duplicate" was invoked on.
+   *
+   * @returns {void}
+   */
+  protected requestDuplicate(intervention: InterventionOutput): void {
+    this.duplicatePrefill.set(buildInterventionDuplicatePrefill(intervention));
+    this.createSheetVisible.set(true);
+  }
+
+  /**
+   * Method onCreateSheetVisibleChange
+   * @method onCreateSheetVisibleChange
+   *
+   * @description
+   * Relays the sheet's open/closed state and, on close, drops any duplicate
+   * prefill — mirroring how the sheet clears its own template-picker
+   * selection on close, one level up since the prefill is this page's state.
+   *
+   * @access protected
+   * @since 6.1.0
+   *
+   * @param {boolean} visible - The sheet's next visibility.
+   *
+   * @returns {void}
+   */
+  protected onCreateSheetVisibleChange(visible: boolean): void {
+    this.createSheetVisible.set(visible);
+
+    if (!visible) this.duplicatePrefill.set(null);
   }
 
   /**

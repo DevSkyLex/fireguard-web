@@ -24,39 +24,104 @@
   </div>
 
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-    <hlm-input-group class="w-full sm:w-72">
-      <hlm-input-group-addon>
-        <ng-icon name="lucideSearch" />
-      </hlm-input-group-addon>
-      <input
-        hlmInputGroupInput
-        type="search"
-        data-testid="interventions-search"
-        placeholder="Search interventions..."
-        i18n-placeholder="@@intervention.list.searchPlaceholder"
-        aria-label="Search interventions..."
-        i18n-aria-label="@@intervention.list.searchPlaceholder"
-        [value]="draftSearch()"
-        (input)="onSearchInput($event)"
-      />
-    </hlm-input-group>
+    <div class="flex items-center gap-2">
+      <hlm-input-group class="w-full sm:w-72">
+        <hlm-input-group-addon>
+          <ng-icon name="lucideSearch" />
+        </hlm-input-group-addon>
+        <input
+          hlmInputGroupInput
+          type="search"
+          data-testid="interventions-search"
+          placeholder="Search interventions..."
+          i18n-placeholder="@@intervention.list.searchPlaceholder"
+          aria-label="Search interventions..."
+          i18n-aria-label="@@intervention.list.searchPlaceholder"
+          [value]="draftSearch()"
+          (input)="onSearchInput($event)"
+        />
+      </hlm-input-group>
+
+      <button
+        hlmToggle
+        type="button"
+        variant="outline"
+        size="sm"
+        class="max-sm:min-h-11"
+        data-testid="interventions-mine-toggle"
+        [state]="filters().mine ? 'on' : 'off'"
+        (stateChange)="toggleMine()"
+      >
+        @if (filters().mine) {
+          <ng-icon name="lucideCheck" aria-hidden="true" />
+        }
+        <span i18n="@@intervention.list.mine">My interventions</span>
+      </button>
+    </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      @if (canDelete() && selectedIds().size > 0) {
+      @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
         <button
           hlmBtn
           type="button"
-          variant="destructive"
+          variant="outline"
           size="sm"
           class="min-w-0 flex-1"
-          data-testid="interventions-bulk-delete"
-          [disabled]="deletableSelectedIds().length === 0"
-          (click)="requestBulkDelete()"
+          data-testid="interventions-bulk-actions"
+          [hlmDropdownMenuTrigger]="bulkMenu"
+          align="start"
         >
-          <ng-icon name="lucideTrash2" aria-hidden="true" />
-          {{ bulkDeleteLabel() }}
+          <span i18n="@@intervention.list.bulkActionsButton">Actions</span>
+          <hlm-badge variant="secondary" class="ms-1">{{ selectedIds().size }}</hlm-badge>
         </button>
       }
+
+      <ng-template #bulkMenu>
+        <hlm-dropdown-menu class="w-56">
+          @if (canTransition() && bulkTransitionTargets().length > 0) {
+            <hlm-dropdown-menu-label i18n="@@intervention.list.bulkMoveToLabel"
+              >Move to</hlm-dropdown-menu-label
+            >
+            @for (target of bulkTransitionTargets(); track target) {
+              @if (transitionableSelectedIds(target).length > 0) {
+                <button
+                  hlmDropdownMenuItem
+                  data-testid="interventions-bulk-transition"
+                  (click)="confirmBulkTransition(target)"
+                >
+                  {{ statusLabelOf(target) }} ({{ transitionableSelectedIds(target).length }})
+                </button>
+              }
+            }
+            <hlm-dropdown-menu-separator />
+          }
+
+          @if (canAssign() && assignableSelectedIds().length > 0) {
+            <button
+              hlmDropdownMenuItem
+              data-testid="interventions-bulk-assign"
+              (click)="requestBulkAssign()"
+            >
+              <ng-icon name="lucideUserCog" aria-hidden="true" />
+              {{ bulkAssignLabel() }}
+            </button>
+            <hlm-dropdown-menu-separator />
+          }
+
+          @if (canDelete()) {
+            <button
+              hlmDropdownMenuItem
+              variant="destructive"
+              data-testid="interventions-bulk-delete"
+              [disabled]="deletableSelectedIds().length === 0"
+              (click)="requestBulkDelete()"
+            >
+              <ng-icon name="lucideTrash2" aria-hidden="true" />
+              {{ bulkDeleteLabel() }}
+            </button>
+          }
+        </hlm-dropdown-menu>
+      </ng-template>
 
       <hlm-popover sideOffset="5" align="start" class="min-w-0 flex-1">
         <button
@@ -65,7 +130,7 @@
           type="button"
           variant="outline"
           size="sm"
-          class="w-full"
+          class="w-full max-sm:min-h-11"
           data-testid="interventions-filters-trigger"
         >
           <ng-icon name="lucideListFilter" aria-hidden="true" />
@@ -249,6 +314,38 @@
             </hlm-select>
 
             <hlm-select
+              [value]="filters().label"
+              [itemToString]="labelLabelOf"
+              (valueChange)="applyFilter({ label: $event ?? null })"
+            >
+              <label
+                for="interventions-filter-label"
+                class="sr-only"
+                i18n="@@intervention.list.filterLabel"
+                >Label</label
+              >
+              <hlm-select-trigger
+                buttonId="interventions-filter-label"
+                class="min-w-36"
+                data-testid="interventions-filter-label"
+              >
+                <hlm-select-value
+                  placeholder="Label"
+                  i18n-placeholder="@@intervention.list.filterLabel"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of labelOptions(); track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <span class="whitespace-nowrap">{{ option.label }}</span>
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+
+            <hlm-select
               [value]="filters().dueWindow"
               [itemToString]="dueWindowLabelOf"
               (valueChange)="applyFilter({ dueWindow: $event ?? null })"
@@ -302,7 +399,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="min-w-0 flex-1"
+        class="min-w-0 flex-1 max-sm:min-h-11"
         data-testid="interventions-columns"
         [hlmDropdownMenuTrigger]="columnMenu"
         align="end"
@@ -393,12 +490,15 @@
       [hiddenColumns]="hiddenColumns()"
       [canTransition]="canTransition()"
       [canDelete]="canDelete()"
+      [canAssign]="canAssign()"
+      [currentMemberIri]="memberIri()"
       [selectedIds]="selectedIds()"
       [detailRouteBase]="detailRouteBase()"
       (sortChanged)="applySortField($event)"
       (transitionRequested)="applyTransition($event)"
       (referenceCopied)="copyReference($event)"
       (deleteRequested)="requestDelete($event)"
+      (assignRequested)="requestAssign($event)"
       (selectionChanged)="onSelectionChanged($event)"
     />
 
@@ -526,3 +626,11 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
+
+<app-intervention-assign-dialog
+  [request]="assignRequest()"
+  [members]="planningOptions.members()"
+  [busy]="assignDialogBusy()"
+  (submitted)="submitAssign($event)"
+  (dismissed)="dismissAssign()"
+/>

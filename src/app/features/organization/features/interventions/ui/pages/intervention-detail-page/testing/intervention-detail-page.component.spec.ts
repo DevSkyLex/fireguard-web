@@ -184,7 +184,7 @@ describe('InterventionDetailPage', () => {
         provideZonelessChangeDetection(),
         {
           provide: InterventionStore,
-          useValue: { orderedIds, delete: listDelete },
+          useValue: { orderedIds, delete: listDelete, deleteCallState: signal(idleCallState()) },
         },
         {
           provide: OrganizationPermissionService,

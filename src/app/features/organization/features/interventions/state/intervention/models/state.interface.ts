@@ -86,5 +86,21 @@ export interface InterventionState {
    * @type {CallState}
    */
   readonly deleteCallState: CallState;
+
+  /**
+   * Property assignCallState
+   * @readonly
+   *
+   * @description
+   * Loading / success / error state for assigning a responsible member to a
+   * cached intervention, kept separate from {@link transitionCallState} so a
+   * concurrent status change never clobbers an in-flight assignment (and
+   * vice versa).
+   *
+   * @since 4.2.0
+   *
+   * @type {CallState<InterventionOutput>}
+   */
+  readonly assignCallState: CallState<InterventionOutput>;
   //#endregion
 }

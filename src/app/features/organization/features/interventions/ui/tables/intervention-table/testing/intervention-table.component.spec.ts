@@ -352,4 +352,165 @@ describe('InterventionTable', () => {
       expect(emitted[0]?.id).toBe('i-del');
     });
   });
+
+  describe('assign', () => {
+    it('should not offer Assign responsible without the permission', async () => {
+      fixture.componentRef.setInput('items', [
+        row({ intervention: intervention({ status: 'draft' }) }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      expect(document.querySelector('[data-testid="intervention-table-row-assign"]')).toBeNull();
+    });
+
+    it('should not offer Assign responsible for a status planning may not touch', async () => {
+      fixture.componentRef.setInput('canAssign', true);
+      fixture.componentRef.setInput('items', [
+        row({ intervention: intervention({ status: 'in_progress' }) }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      expect(document.querySelector('[data-testid="intervention-table-row-assign"]')).toBeNull();
+    });
+
+    it.each<'draft' | 'planned'>(['draft', 'planned'])(
+      'should offer Assign responsible for a %s intervention when permitted',
+      async (status: 'draft' | 'planned'): Promise<void> => {
+        fixture.componentRef.setInput('canAssign', true);
+        fixture.componentRef.setInput('items', [row({ intervention: intervention({ status }) })]);
+        await fixture.whenStable();
+        await openRowMenu();
+
+        expect(
+          document.querySelector('[data-testid="intervention-table-row-assign"]'),
+        ).not.toBeNull();
+      },
+    );
+
+    it('should emit the row it was opened on when Assign responsible is clicked', async () => {
+      const emitted: InterventionOutput[] = [];
+      fixture.componentInstance.assignRequested.subscribe((requested: InterventionOutput): void => {
+        emitted.push(requested);
+      });
+
+      fixture.componentRef.setInput('canAssign', true);
+      fixture.componentRef.setInput('items', [
+        row({ intervention: intervention({ id: 'i-assign', status: 'draft' }) }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      document
+        .querySelector<HTMLButtonElement>('[data-testid="intervention-table-row-assign"]')
+        ?.click();
+
+      expect(emitted.length).toBe(1);
+      expect(emitted[0]?.id).toBe('i-assign');
+    });
+  });
+
+  describe('identity-gated transitions', () => {
+    it('should disable the submitted target for anyone but the responsible', async () => {
+      fixture.componentRef.setInput('canTransition', true);
+      fixture.componentRef.setInput('currentMemberIri', '/api/organizations/1/members/other');
+      fixture.componentRef.setInput('items', [
+        row({
+          intervention: intervention({
+            status: 'in_progress',
+            allowedTransitions: ['submitted'],
+            responsible: '/api/organizations/1/members/me',
+          }),
+        }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      const target: HTMLButtonElement | null = document.querySelector(
+        '[data-testid="intervention-table-row-transition"]',
+      );
+
+      expect(target?.disabled).toBe(true);
+      expect(target?.getAttribute('aria-describedby')).toBe('intervention-transition-gate-a1b2');
+      expect(document.getElementById('intervention-transition-gate-a1b2')?.textContent).toContain(
+        'Only the responsible can do this.',
+      );
+
+      const emitted: InterventionTransitionRequest[] = [];
+      fixture.componentInstance.transitionRequested.subscribe(
+        (request: InterventionTransitionRequest): void => {
+          emitted.push(request);
+        },
+      );
+      target?.click();
+      expect(emitted.length).toBe(0);
+    });
+
+    it('should enable the submitted target for the responsible', async () => {
+      fixture.componentRef.setInput('canTransition', true);
+      fixture.componentRef.setInput('currentMemberIri', '/api/organizations/1/members/me');
+      fixture.componentRef.setInput('items', [
+        row({
+          intervention: intervention({
+            status: 'in_progress',
+            allowedTransitions: ['submitted'],
+            responsible: '/api/organizations/1/members/me',
+          }),
+        }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      const target: HTMLButtonElement | null = document.querySelector(
+        '[data-testid="intervention-table-row-transition"]',
+      );
+
+      expect(target?.disabled).toBe(false);
+    });
+
+    it('should disable withdrawal (in_progress) on a submitted row for anyone but the responsible', async () => {
+      fixture.componentRef.setInput('canTransition', true);
+      fixture.componentRef.setInput('currentMemberIri', '/api/organizations/1/members/other');
+      fixture.componentRef.setInput('items', [
+        row({
+          intervention: intervention({
+            status: 'submitted',
+            allowedTransitions: ['in_progress'],
+            responsible: '/api/organizations/1/members/me',
+          }),
+        }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      const target: HTMLButtonElement | null = document.querySelector(
+        '[data-testid="intervention-table-row-transition"]',
+      );
+
+      expect(target?.disabled).toBe(true);
+    });
+
+    it('should leave a target unrelated to submission ungated', async () => {
+      fixture.componentRef.setInput('canTransition', true);
+      fixture.componentRef.setInput('currentMemberIri', '/api/organizations/1/members/other');
+      fixture.componentRef.setInput('items', [
+        row({
+          intervention: intervention({
+            status: 'planned',
+            allowedTransitions: ['abandoned'],
+            responsible: '/api/organizations/1/members/me',
+          }),
+        }),
+      ]);
+      await fixture.whenStable();
+      await openRowMenu();
+
+      const target: HTMLButtonElement | null = document.querySelector(
+        '[data-testid="intervention-table-row-transition"]',
+      );
+
+      expect(target?.disabled).toBe(false);
+    });
+  });
 });

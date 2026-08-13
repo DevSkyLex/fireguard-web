@@ -523,7 +523,7 @@
 
 <app-intervention-confirm-dialog
   [request]="pendingConfirm()"
-  [busy]="store.saving()"
+  [busy]="confirmBusy()"
   (accepted)="onConfirmAccepted($event)"
   (dismissed)="onConfirmDismissed()"
 />

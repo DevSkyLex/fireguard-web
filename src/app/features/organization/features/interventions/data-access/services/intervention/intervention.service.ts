@@ -113,23 +113,14 @@ export class InterventionService extends HydraApiService {
    *
    * @description
    * Reads one page of `/api/interventions` scoped to the organization,
-   * forwarding the name/status/type/site/people/due-date filters and the
-   * `order[field]` sort params alongside pagination.
+   * forwarding the name/status/type/site/people/label/number/due-date filters
+   * and the `order[field]` sort params alongside pagination.
    *
    * @access public
    * @since 1.0.0
    *
    * @param {string} organizationId - organization Id value.
-   * @param {PaginationOptions & {
-   * name?: string;
-   * responsible?: string;
-   * participant?: string;
-   * type?: string;
-   * status?: string;
-   * site?: string;
-   * dueAtAfter?: string;
-   * dueAtBefore?: string;
-   * }} [options] - options value.
+   * @param {InterventionListOptions} [options] - options value.
    *
    * @return {Observable<HydraCollection<InterventionOutput>>} Result of the list operation.
    */
@@ -140,7 +131,7 @@ export class InterventionService extends HydraApiService {
     const params: Record<string, string> = { organization: `/api/organizations/${organizationId}` };
     for (const [key, value] of Object.entries(options ?? {})) {
       if (key === 'page' || key === 'itemsPerPage' || key === 'order') continue;
-      if (value) params[key] = value as string;
+      if (value) params[key] = String(value);
     }
     if (options?.order) {
       for (const [field, direction] of Object.entries(options.order)) {

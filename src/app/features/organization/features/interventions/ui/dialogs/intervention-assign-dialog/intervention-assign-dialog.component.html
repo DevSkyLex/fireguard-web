@@ -1,0 +1,75 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content class="sm:max-w-md" data-testid="intervention-assign-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@intervention.assign.header">Assign a responsible</h3>
+      <p hlmDialogDescription>{{ description() }}</p>
+    </hlm-dialog-header>
+
+    <hlm-field>
+      <label hlmFieldLabel for="intervention-assign-member" i18n="@@intervention.cf.responsible"
+        >Responsible</label
+      >
+      <hlm-combobox
+        [value]="selectedMember()"
+        [itemToString]="memberLabelOf"
+        (valueChange)="selectedMember.set($any($event))"
+      >
+        <hlm-combobox-input
+          inputId="intervention-assign-member"
+          placeholder="Search a member"
+          i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
+          data-testid="intervention-assign-member-input"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@intervention.list.filterNoMember"
+            >No member matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of members(); track option.value) {
+              <hlm-combobox-item
+                [value]="option.value"
+                [attr.data-testid]="'intervention-assign-option-' + option.value"
+              >
+                <hlm-avatar size="sm" class="shrink-0">
+                  @if (option.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
+                </hlm-avatar>
+                <span class="flex min-w-0 flex-col">
+                  <span class="truncate">{{ option.displayName }}</span>
+                  <span class="truncate text-xs text-muted-foreground">{{ option.roleLabel }}</span>
+                </span>
+              </hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+    </hlm-field>
+
+    <hlm-dialog-footer>
+      <button hlmBtn type="button" variant="outline" (click)="dismissed.emit()">
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        data-testid="intervention-assign-submit"
+        [disabled]="!canSubmit()"
+        [attr.aria-busy]="busy() ? 'true' : null"
+        (click)="submit()"
+      >
+        @if (busy()) {
+          <span i18n="@@intervention.assign.submitting">Assigning…</span>
+        } @else {
+          <span i18n="@@intervention.assign.submit">Assign</span>
+        }
+      </button>
+      <span class="sr-only" aria-live="polite">
+        @if (busy()) {
+          <span i18n="@@intervention.assign.submittingStatus">Assigning, please wait…</span>
+        }
+      </span>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

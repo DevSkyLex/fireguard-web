@@ -553,6 +553,37 @@ export class InterventionDetailPage {
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
     signal<InterventionConfirmRequest | null>(null);
 
+  /**
+   * Property confirmBusy
+   * @readonly
+   *
+   * @description
+   * Whether the write the open confirmation would trigger is in flight — the
+   * call state of that specific write, not the workspace's global `saving`,
+   * so an unrelated pending write (a comment, an in-place edit) never
+   * false-disables the dialog.
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly confirmBusy: Signal<boolean> = computed<boolean>(() => {
+    const request: InterventionConfirmRequest | null = this.pendingConfirm();
+    if (request === null) return false;
+
+    switch (request.kind) {
+      case 'abandon':
+        return isCallPending(this.store.transitionCallState());
+      case 'deleteIntervention':
+        return isCallPending(this.listStore.deleteCallState());
+      case 'deleteWorkItem':
+        return isCallPending(this.store.deleteWorkItemsCallState());
+      default:
+        return isCallPending(this.store.workItemWriteCallState());
+    }
+  });
+
   /** Whether the publish confirmation is open. */
   protected readonly publishConfirmOpen: WritableSignal<boolean> = signal<boolean>(false);
 

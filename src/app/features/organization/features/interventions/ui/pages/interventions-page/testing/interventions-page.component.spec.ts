@@ -6,6 +6,7 @@ import { InterventionOfflineService } from '@features/organization/features/inte
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { InterventionStore } from '@features/organization/features/interventions/state';
+import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import { InterventionsPage } from '../interventions-page.component';
 
@@ -61,6 +62,7 @@ describe('InterventionsPage', () => {
   let clearCreated: ReturnType<typeof vi.fn>;
   let transition: ReturnType<typeof vi.fn>;
   let deleteIntervention: ReturnType<typeof vi.fn>;
+  let assignResponsible: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let interventionList: WritableSignal<readonly InterventionOutput[]>;
   let createdIntervention: WritableSignal<InterventionOutput | null>;
@@ -72,6 +74,7 @@ describe('InterventionsPage', () => {
     clearCreated = vi.fn();
     transition = vi.fn();
     deleteIntervention = vi.fn();
+    assignResponsible = vi.fn();
     navigate = vi.fn().mockResolvedValue(true);
     interventionList = signal<readonly InterventionOutput[]>([]);
     createdIntervention = signal<InterventionOutput | null>(null);
@@ -87,6 +90,7 @@ describe('InterventionsPage', () => {
             create,
             transition,
             delete: deleteIntervention,
+            assignResponsible,
             clearCreatedIntervention: clearCreated,
             interventionList,
             createdIntervention,
@@ -95,6 +99,7 @@ describe('InterventionsPage', () => {
             isLoadingInterventions: signal(false),
             isCreating: signal(false),
             createError: signal(null),
+            assignCallState: signal({ status: 'idle' }),
           },
         },
         {
@@ -116,6 +121,10 @@ describe('InterventionsPage', () => {
           provide: InterventionOfflineService,
           useValue: { hasUnsyncedChanges: signal(false) },
         },
+        {
+          provide: OrganizationMemberAccessStore,
+          useValue: { profile: signal({ id: 'member-1' }) },
+        },
         { provide: Router, useValue: { navigate } },
         { provide: ActivatedRoute, useValue: {} },
       ],
@@ -130,6 +139,7 @@ describe('InterventionsPage', () => {
             useValue: {
               sites: signal([]),
               members: signal([]),
+              labels: signal([]),
               loadCreationOptions: vi.fn(),
             },
           },
@@ -160,13 +170,43 @@ describe('InterventionsPage', () => {
     expect(load.mock.calls.at(-1)?.[0].options.name).toBeUndefined();
   });
 
-  it('should narrow the query when a filter is picked', async () => {
+  it('should write a picked filter into the URL, the single source of truth', async () => {
     fixture = await createPage();
 
     fixture.componentInstance['applyFilter']({ status: 'planned' });
     await fixture.whenStable();
 
-    expect(load.mock.calls.at(-1)?.[0].options).toMatchObject({ status: 'planned' });
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({ status: 'planned' }),
+        queryParamsHandling: 'merge',
+      }),
+    );
+  });
+
+  it('should narrow the query from the filter params the URL carries', async () => {
+    fixture = await createPage();
+
+    fixture.componentRef.setInput('status', 'planned');
+    fixture.componentRef.setInput('label', 'l-1');
+    fixture.componentRef.setInput('mine', '1');
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options).toMatchObject({
+      status: 'planned',
+      label: '/api/intervention-labels/l-1',
+      member: '/api/organizations/org-1/members/member-1',
+    });
+  });
+
+  it('should drop an unknown filter value instead of sending it', async () => {
+    fixture = await createPage();
+
+    fixture.componentRef.setInput('status', 'bogus');
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options.status).toBeUndefined();
   });
 
   it('should reverse the ordering when the active column is picked again', async () => {
@@ -351,6 +391,201 @@ describe('InterventionsPage', () => {
         interventionId: 'i-abandoned',
         revision: 2,
       });
+      expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+    });
+  });
+
+  describe('mine toggle', () => {
+    it('should navigate the mine param on', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['toggleMine']();
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ mine: '1' }) }),
+      );
+    });
+
+    it('should navigate the mine param off when already on', async () => {
+      fixture = await createPage({ mine: '1' });
+
+      fixture.componentInstance['toggleMine']();
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ mine: null }) }),
+      );
+    });
+  });
+
+  describe('label filter', () => {
+    it('should send the label filter as an intervention-label IRI', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['applyFilter']({ label: '/api/intervention-labels/l-1' });
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ label: 'l-1' }) }),
+      );
+    });
+  });
+
+  describe('assign', () => {
+    it('should open the assign dialog for a single row without calling the store yet', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestAssign'](
+        intervention({ id: 'i-1', name: 'Roof round', responsible: null }),
+      );
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['assignRequest']()).toEqual({
+        interventionId: 'i-1',
+        interventionName: 'Roof round',
+        currentResponsible: null,
+      });
+      expect(assignResponsible).not.toHaveBeenCalled();
+    });
+
+    it('should call the store with the id, the picked member and the row’s revision on submit', async () => {
+      interventionList.set([intervention({ id: 'i-1', revision: 5 })]);
+      fixture = await createPage();
+
+      fixture.componentInstance['requestAssign'](intervention({ id: 'i-1', revision: 5 }));
+      fixture.componentInstance['submitAssign']({
+        interventionId: 'i-1',
+        responsible: '/api/organizations/org-1/members/member-2',
+      });
+      await fixture.whenStable();
+
+      expect(assignResponsible).toHaveBeenCalledWith({
+        interventionId: 'i-1',
+        responsible: '/api/organizations/org-1/members/member-2',
+        revision: 5,
+      });
+      expect(fixture.componentInstance['assignRequest']()).toBeNull();
+    });
+
+    it('should dismiss the assign dialog without calling the store', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestAssign'](intervention({ id: 'i-1' }));
+      fixture.componentInstance['dismissAssign']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['assignRequest']()).toBeNull();
+      expect(assignResponsible).not.toHaveBeenCalled();
+    });
+
+    it('should filter the selection to assignable rows only before opening the bulk dialog', async () => {
+      interventionList.set([
+        intervention({ id: 'i-draft', status: 'draft' }),
+        intervention({ id: 'i-published', status: 'published' }),
+      ]);
+      fixture = await createPage();
+
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-draft', 'i-published']));
+      fixture.componentInstance['requestBulkAssign']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['pendingBulkAssignIds']()).toEqual(['i-draft']);
+    });
+
+    it('should not open the bulk assign dialog when nothing selected is assignable', async () => {
+      interventionList.set([intervention({ id: 'i-published', status: 'published' })]);
+      fixture = await createPage();
+
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-published']));
+      fixture.componentInstance['requestBulkAssign']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['assignRequest']()).toBeNull();
+    });
+
+    it('should assign every assignable selected row and clear the selection on submit', async () => {
+      interventionList.set([
+        intervention({ id: 'i-draft', status: 'draft', revision: 1 }),
+        intervention({ id: 'i-planned', status: 'planned', revision: 2 }),
+      ]);
+      fixture = await createPage();
+
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-draft', 'i-planned']));
+      fixture.componentInstance['requestBulkAssign']();
+      fixture.componentInstance['submitAssign']({
+        interventionId: '',
+        responsible: '/api/organizations/org-1/members/member-2',
+      });
+      await fixture.whenStable();
+
+      expect(assignResponsible).toHaveBeenCalledWith({
+        interventionId: 'i-draft',
+        responsible: '/api/organizations/org-1/members/member-2',
+        revision: 1,
+      });
+      expect(assignResponsible).toHaveBeenCalledWith({
+        interventionId: 'i-planned',
+        responsible: '/api/organizations/org-1/members/member-2',
+        revision: 2,
+      });
+      expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+    });
+  });
+
+  describe('bulk transition', () => {
+    it('should only count selected rows whose allowedTransitions include the target', async () => {
+      interventionList.set([
+        intervention({ id: 'i-1', allowedTransitions: ['abandoned'] }),
+        intervention({ id: 'i-2', allowedTransitions: [] }),
+      ]);
+      fixture = await createPage();
+
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-1', 'i-2']));
+
+      expect(fixture.componentInstance['transitionableSelectedIds']('abandoned')).toEqual(['i-1']);
+    });
+
+    it('should gate the submitted target to the row’s own responsible', async () => {
+      interventionList.set([
+        intervention({
+          id: 'i-mine',
+          status: 'in_progress',
+          allowedTransitions: ['submitted'],
+          responsible: '/api/organizations/org-1/members/member-1',
+        }),
+        intervention({
+          id: 'i-other',
+          status: 'in_progress',
+          allowedTransitions: ['submitted'],
+          responsible: '/api/organizations/org-1/members/member-2',
+        }),
+      ]);
+      fixture = await createPage();
+
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-mine', 'i-other']));
+
+      expect(fixture.componentInstance['transitionableSelectedIds']('submitted')).toEqual([
+        'i-mine',
+      ]);
+    });
+
+    it('should call the store once per eligible row and clear the selection on confirm', async () => {
+      interventionList.set([
+        intervention({ id: 'i-1', allowedTransitions: ['abandoned'], revision: 1 }),
+        intervention({ id: 'i-2', allowedTransitions: ['abandoned'], revision: 2 }),
+      ]);
+      fixture = await createPage();
+
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-1', 'i-2']));
+      fixture.componentInstance['confirmBulkTransition']('abandoned');
+      await fixture.whenStable();
+
+      expect(transition).toHaveBeenCalledWith({ id: 'i-1', status: 'abandoned', revision: 1 });
+      expect(transition).toHaveBeenCalledWith({ id: 'i-2', status: 'abandoned', revision: 2 });
       expect(fixture.componentInstance['selectedIds']().size).toBe(0);
     });
   });

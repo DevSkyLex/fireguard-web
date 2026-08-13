@@ -15,6 +15,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCheck,
   lucideChevronLeft,
   lucideChevronRight,
   lucideChevronsLeft,
@@ -26,14 +27,18 @@ import {
   lucideSearch,
   lucideSettings2,
   lucideTrash2,
+  lucideUserCog,
   lucideX,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { isCallPending } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import {
   resolveInterventionTag,
+  type InterventionAssignRequest,
+  type InterventionAssignSubmittedEvent,
   type InterventionDueWindow,
   type InterventionListFilters,
   type InterventionListSort,
@@ -56,6 +61,10 @@ import {
 } from '@features/organization/features/interventions/state';
 import { isInterventionDeletable } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  OrganizationMemberAccessStore,
+  type OrganizationMemberAccessStoreType,
+} from '@features/organization/state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -65,12 +74,14 @@ import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmToggle } from '@shared/ui/toggle';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '../../../state/intervention-planning-options';
 import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
+import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
 import { InterventionCreateSheet } from '../../sheets/intervention-create-sheet';
 import {
@@ -86,7 +97,12 @@ import {
   INTERVENTION_STATUS_FILTER_OPTIONS,
   INTERVENTION_TYPE_FILTER_OPTIONS,
 } from './options';
-import { buildInterventionListOptions, countActiveFilters } from './utils';
+import {
+  buildInterventionListOptions,
+  countActiveFilters,
+  parseInterventionListFilters,
+  serializeInterventionListFilters,
+} from './utils';
 
 /** How close a deadline must be to count as "due soon". */
 const DUE_SOON_WINDOW_MS: number = 48 * 60 * 60 * 1000;
@@ -104,6 +120,8 @@ const NO_FILTERS: InterventionListFilters = {
   priority: null,
   site: null,
   responsible: null,
+  label: null,
+  mine: false,
   dueWindow: null,
 };
 
@@ -139,7 +157,7 @@ const NO_FILTERS: InterventionListFilters = {
  * dialog opens, so the count it shows is always what will actually delete —
  * never a promise the API would refuse with a 409.
  *
- * @version 5.0.0
+ * @version 6.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -150,6 +168,8 @@ const NO_FILTERS: InterventionListFilters = {
     HlmBadge,
     HlmButton,
     HlmLabel,
+    HlmToggle,
+    InterventionAssignDialog,
     InterventionCreateSheet,
     InterventionSyncStatus,
     InterventionTable,
@@ -164,6 +184,7 @@ const NO_FILTERS: InterventionListFilters = {
   providers: [
     InterventionPlanningOptionsStore,
     provideIcons({
+      lucideCheck,
       lucideChevronLeft,
       lucideChevronRight,
       lucideChevronsLeft,
@@ -175,6 +196,7 @@ const NO_FILTERS: InterventionListFilters = {
       lucideSearch,
       lucideSettings2,
       lucideTrash2,
+      lucideUserCog,
       lucideX,
     }),
   ],
@@ -230,6 +252,46 @@ export class InterventionsPage {
    * @type {InputSignal<string | undefined>}
    */
   public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /**
+   * Property status / type / priority / site / responsible / label / mine / due
+   * @readonly
+   *
+   * @description
+   * The narrowing the URL carries — one query param per filter, raw ids for
+   * the IRI-valued ones — so a filtered list is shareable, bookmarkable and
+   * survives a reload. Unknown values are ignored at parse time rather than
+   * sent to the API.
+   *
+   * @access public
+   * @since 5.2.0
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly status: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The type filter the URL carries. See {@link status}. */
+  public readonly type: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The priority filter the URL carries. See {@link status}. */
+  public readonly priority: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The site filter the URL carries, as a raw facility id. See {@link status}. */
+  public readonly site: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The responsible filter the URL carries, as a raw member id. See {@link status}. */
+  public readonly responsible: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+  );
+
+  /** The label filter the URL carries, as a raw label id. See {@link status}. */
+  public readonly label: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** `?mine=1` narrows to the signed-in member (responsible OR participant). */
+  public readonly mine: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The named due-date window the URL carries. See {@link status}. */
+  public readonly due: InputSignal<string | undefined> = input<string | undefined>(undefined);
   //#endregion
 
   //#region Properties
@@ -302,9 +364,62 @@ export class InterventionsPage {
   private readonly preferences: InterventionListPreferencesService =
     inject<InterventionListPreferencesService>(InterventionListPreferencesService);
 
-  /** The active narrowing. Questions asked now, so never persisted. */
-  protected readonly filters: WritableSignal<InterventionListFilters> =
-    signal<InterventionListFilters>(NO_FILTERS);
+  /** The signed-in member, resolving the "my interventions" chip and the identity gates. */
+  private readonly memberAccess: OrganizationMemberAccessStoreType =
+    inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
+
+  /**
+   * Property memberIri
+   * @readonly
+   *
+   * @description
+   * The signed-in member's IRI in this organization, null until the profile
+   * resolves — the same identity the detail page's submit gate reads.
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly memberIri: Signal<string | null> = computed<string | null>(() => {
+    const memberId: string | undefined = this.memberAccess.profile()?.id;
+
+    return memberId === undefined
+      ? null
+      : `/api/organizations/${this.organizationId()}/members/${memberId}`;
+  });
+
+  /**
+   * Property filters
+   * @readonly
+   *
+   * @description
+   * The active narrowing, parsed from the URL's query params — the URL is the
+   * single source of truth, so a filtered list is shareable and the back
+   * button restores it. Presentation preferences (sort, columns, page size)
+   * stay in the cookie; filters never do.
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @type {Signal<InterventionListFilters>}
+   */
+  protected readonly filters: Signal<InterventionListFilters> = computed<InterventionListFilters>(
+    () =>
+      parseInterventionListFilters(
+        {
+          status: this.status(),
+          type: this.type(),
+          priority: this.priority(),
+          site: this.site(),
+          responsible: this.responsible(),
+          label: this.label(),
+          mine: this.mine(),
+          due: this.due(),
+        },
+        this.organizationId(),
+      ),
+  );
 
   /** The active ordering, restored from the preferences cookie. */
   protected readonly sortOrder: WritableSignal<InterventionListSort> = signal<InterventionListSort>(
@@ -339,6 +454,18 @@ export class InterventionsPage {
 
   /** The selected, deletable ids the toolbar asked to bulk-delete, pending confirmation. */
   protected readonly pendingBulkDeleteIds: WritableSignal<ReadonlyArray<string> | null> =
+    signal<ReadonlyArray<string> | null>(null);
+
+  /**
+   * What `InterventionAssignDialog` is currently asking to assign, or `null`
+   * to keep it closed. Opened either from a single row's menu or from the
+   * bulk toolbar — {@link pendingBulkAssignIds} tells `submitAssign` which.
+   */
+  protected readonly assignRequest: WritableSignal<InterventionAssignRequest | null> =
+    signal<InterventionAssignRequest | null>(null);
+
+  /** The selected, assignable ids the toolbar asked to bulk-assign, pending the dialog. */
+  protected readonly pendingBulkAssignIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
 
   /** Status choices offered in the filter bar. */
@@ -435,6 +562,24 @@ export class InterventionsPage {
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_WRITE),
   );
 
+  /**
+   * Property canAssign
+   * @readonly
+   *
+   * @description
+   * Whether the member may assign a responsible, which decides if the row
+   * menu and the bulk toolbar offer "Assign responsible…" at all. Assignment
+   * is a planning action, gated on the same permission as scheduling.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canAssign: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
+  );
+
   /** Site names keyed by facility IRI. */
   private readonly siteDisplayMap: Signal<ReadonlyMap<string, string>> = computed(
     (): ReadonlyMap<string, string> =>
@@ -455,6 +600,40 @@ export class InterventionsPage {
             member.value,
             member,
           ]),
+      ),
+  );
+
+  /**
+   * Property labelOptions
+   * @readonly
+   *
+   * @description
+   * The organization's intervention labels, as the filter select's options —
+   * `InterventionLabelOutput` mapped to the IRI-valued {@link SelectOption}
+   * the filter's `label` narrowing carries.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<readonly SelectOption[]>}
+   */
+  protected readonly labelOptions: Signal<readonly SelectOption[]> = computed<
+    readonly SelectOption[]
+  >(() =>
+    this.planningOptions.labels().map((label): SelectOption => ({
+      value: `/api/intervention-labels/${label.id}`,
+      label: label.name,
+    })),
+  );
+
+  /** Labels keyed by IRI. */
+  private readonly labelDisplayMap: Signal<ReadonlyMap<string, string>> = computed(
+    (): ReadonlyMap<string, string> =>
+      new Map(
+        this.labelOptions().map((option: SelectOption): [string, string] => [
+          option.value,
+          option.label,
+        ]),
       ),
   );
 
@@ -535,6 +714,95 @@ export class InterventionsPage {
   protected readonly bulkDeleteLabel: Signal<string> = computed<string>(
     () =>
       $localize`:@@intervention.list.bulkDeleteButton:Delete (${this.deletableSelectedIds().length}:count:)`,
+  );
+
+  /**
+   * Property assignableSelectedIds
+   * @readonly
+   *
+   * @description
+   * Ids of the current selection that are actually assignable — status
+   * `draft` or `planned`, the same narrowing {@link InterventionTable} applies
+   * per row. What the bulk-assign action operates on and shows a count for.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<ReadonlyArray<string>>}
+   */
+  protected readonly assignableSelectedIds: Signal<ReadonlyArray<string>> = computed(() => {
+    const selected: ReadonlySet<string> = this.selectedIds();
+
+    return this.items()
+      .filter(
+        (item: InterventionListItemViewModel): boolean =>
+          selected.has(item.intervention.id) &&
+          (item.intervention.status === 'draft' || item.intervention.status === 'planned'),
+      )
+      .map((item: InterventionListItemViewModel): string => item.intervention.id);
+  });
+
+  /**
+   * Property bulkAssignLabel
+   * @readonly
+   *
+   * @description
+   * The bulk-assign menu entry's label, counting only the assignable subset
+   * of the selection.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly bulkAssignLabel: Signal<string> = computed<string>(
+    () =>
+      $localize`:@@intervention.list.bulkAssignButton:Assign responsible… (${this.assignableSelectedIds().length}:count:)`,
+  );
+
+  /**
+   * Property bulkTransitionTargets
+   * @readonly
+   *
+   * @description
+   * Every status the current selection could move to, as the union of each
+   * selected row's own `allowedTransitions` — the bulk "Move to" menu's own
+   * entries, each further narrowed by {@link transitionableSelectedIds}.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<readonly InterventionStatus[]>}
+   */
+  protected readonly bulkTransitionTargets: Signal<readonly InterventionStatus[]> = computed(
+    (): readonly InterventionStatus[] => {
+      const selected: ReadonlySet<string> = this.selectedIds();
+      const targets: Set<InterventionStatus> = new Set<InterventionStatus>();
+
+      for (const item of this.items()) {
+        if (!selected.has(item.intervention.id)) continue;
+        for (const target of item.intervention.allowedTransitions) targets.add(target);
+      }
+
+      return [...targets];
+    },
+  );
+
+  /**
+   * Property assignDialogBusy
+   * @readonly
+   *
+   * @description
+   * Whether the store's assignment write is in flight, disabling the
+   * dialog's submit while it runs.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly assignDialogBusy: Signal<boolean> = computed<boolean>(() =>
+    isCallPending(this.store.assignCallState()),
   );
 
   /**
@@ -721,6 +989,10 @@ export class InterventionsPage {
   protected readonly responsibleLabelOf: (value: string) => string = (value: string): string =>
     this.memberDisplayMap().get(value)?.label ?? '';
 
+  /** Names a label IRI on a closed select trigger. */
+  protected readonly labelLabelOf: (value: string) => string = (value: string): string =>
+    this.labelDisplayMap().get(value) ?? '';
+
   //#endregion
 
   //#region Constructor
@@ -760,13 +1032,14 @@ export class InterventionsPage {
       const search: string = this.searchTerm();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
+      const memberIri: string | null = filters.mine ? this.memberIri() : null;
 
       untracked((): void => {
         this.selectedIds.set(new Set<string>());
         this.store.load({
           organizationId,
           options: {
-            ...buildInterventionListOptions(filters, sort, search, new Date()),
+            ...buildInterventionListOptions(filters, sort, search, new Date(), memberIri),
             page,
             itemsPerPage: pageSize,
           },
@@ -859,7 +1132,25 @@ export class InterventionsPage {
    */
   protected applyFilter(patch: Partial<InterventionListFilters>): void {
     this.page.set(1);
-    this.filters.update((current: InterventionListFilters) => ({ ...current, ...patch }));
+    this.navigateQuery(serializeInterventionListFilters({ ...this.filters(), ...patch }));
+  }
+
+  /**
+   * Method toggleMine
+   * @method toggleMine
+   *
+   * @description
+   * Flips the "my interventions" narrowing — responsible OR participant,
+   * resolved server-side by the `member` filter.
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @returns {void}
+   */
+  protected toggleMine(): void {
+    this.page.set(1);
+    this.navigateQuery({ mine: this.filters().mine ? null : '1' });
   }
 
   /**
@@ -876,7 +1167,7 @@ export class InterventionsPage {
    */
   protected clearFilters(): void {
     this.page.set(1);
-    this.filters.set(NO_FILTERS);
+    this.navigateQuery(serializeInterventionListFilters(NO_FILTERS));
   }
 
   /**
@@ -1277,6 +1568,204 @@ export class InterventionsPage {
   }
 
   /**
+   * Method transitionableSelectedIds
+   * @method transitionableSelectedIds
+   *
+   * @description
+   * Ids of the current selection that may actually move to `target`: the
+   * row's own `allowedTransitions` must include it, and — mirroring
+   * `InterventionDetailPage`'s `canSubmit` identity gate — submitting or
+   * withdrawing a submission is reserved to the row's own responsible.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {InterventionStatus} target - The status the bulk action targets.
+   *
+   * @returns {ReadonlyArray<string>} The eligible ids.
+   */
+  protected transitionableSelectedIds(target: InterventionStatus): ReadonlyArray<string> {
+    const selected: ReadonlySet<string> = this.selectedIds();
+    const currentMemberIri: string | null = this.memberIri();
+
+    return this.items()
+      .filter((item: InterventionListItemViewModel): boolean => selected.has(item.intervention.id))
+      .filter((item: InterventionListItemViewModel): boolean =>
+        item.intervention.allowedTransitions.includes(target),
+      )
+      .filter((item: InterventionListItemViewModel): boolean => {
+        const requiresIdentity: boolean =
+          target === 'submitted' ||
+          (item.intervention.status === 'submitted' && target === 'in_progress');
+
+        return !requiresIdentity || currentMemberIri === item.intervention.responsible;
+      })
+      .map((item: InterventionListItemViewModel): string => item.intervention.id);
+  }
+
+  /**
+   * Method confirmBulkTransition
+   * @method confirmBulkTransition
+   *
+   * @description
+   * Sends the selection's eligible subset for `target` to the store, one
+   * `transition` call per intervention with its own cached revision, and
+   * clears the selection — mirroring `confirmDelete`'s bulk branch.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {InterventionStatus} target - The status to move the eligible rows to.
+   *
+   * @returns {void}
+   */
+  protected confirmBulkTransition(target: InterventionStatus): void {
+    const ids: ReadonlyArray<string> = this.transitionableSelectedIds(target);
+    if (ids.length === 0) return;
+
+    const byId: ReadonlyMap<string, InterventionOutput> = new Map(
+      this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
+        item.intervention.id,
+        item.intervention,
+      ]),
+    );
+
+    for (const id of ids) {
+      const intervention: InterventionOutput | undefined = byId.get(id);
+      if (intervention) {
+        this.store.transition({
+          id: intervention.id,
+          status: target,
+          revision: intervention.revision,
+        });
+      }
+    }
+
+    this.selectedIds.set(new Set<string>());
+  }
+
+  /**
+   * Method requestAssign
+   * @method requestAssign
+   *
+   * @description
+   * Opens the assign dialog for a single row's "Assign responsible…" entry.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {InterventionOutput} intervention - The row's intervention.
+   *
+   * @returns {void}
+   */
+  protected requestAssign(intervention: InterventionOutput): void {
+    this.pendingBulkAssignIds.set(null);
+    this.assignRequest.set({
+      interventionId: intervention.id,
+      interventionName: intervention.name,
+      currentResponsible: intervention.responsible,
+    });
+  }
+
+  /**
+   * Method requestBulkAssign
+   * @method requestBulkAssign
+   *
+   * @description
+   * Opens the assign dialog for the selection's assignable subset. A no-op
+   * when nothing selected can actually be assigned.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @returns {void}
+   */
+  protected requestBulkAssign(): void {
+    const ids: ReadonlyArray<string> = this.assignableSelectedIds();
+    if (ids.length === 0) return;
+
+    this.pendingBulkAssignIds.set(ids);
+    this.assignRequest.set({
+      interventionId: '',
+      interventionName:
+        ids.length === 1
+          ? $localize`:@@intervention.list.bulkAssignNameOne:1 intervention`
+          : $localize`:@@intervention.list.bulkAssignNameMany:${ids.length}:count: interventions`,
+      currentResponsible: null,
+    });
+  }
+
+  /**
+   * Method submitAssign
+   * @method submitAssign
+   *
+   * @description
+   * Sends the picked responsible to the store: once for the single pending
+   * row, or once per eligible id when the dialog was opened from the bulk
+   * toolbar — each call carries that row's own cached revision, mirroring
+   * `confirmDelete`'s bulk branch.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {InterventionAssignSubmittedEvent} event - The picked member.
+   *
+   * @returns {void}
+   */
+  protected submitAssign(event: InterventionAssignSubmittedEvent): void {
+    const byId: ReadonlyMap<string, InterventionOutput> = new Map(
+      this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
+        item.intervention.id,
+        item.intervention,
+      ]),
+    );
+
+    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkAssignIds();
+    if (bulkIds) {
+      for (const id of bulkIds) {
+        const intervention: InterventionOutput | undefined = byId.get(id);
+        if (intervention) {
+          this.store.assignResponsible({
+            interventionId: intervention.id,
+            responsible: event.responsible,
+            revision: intervention.revision,
+          });
+        }
+      }
+      this.selectedIds.set(new Set<string>());
+    } else {
+      const intervention: InterventionOutput | undefined = byId.get(event.interventionId);
+      if (intervention) {
+        this.store.assignResponsible({
+          interventionId: intervention.id,
+          responsible: event.responsible,
+          revision: intervention.revision,
+        });
+      }
+    }
+
+    this.assignRequest.set(null);
+    this.pendingBulkAssignIds.set(null);
+  }
+
+  /**
+   * Method dismissAssign
+   * @method dismissAssign
+   *
+   * @description
+   * Closes the assign dialog without submitting — Escape, the backdrop or Cancel.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @returns {void}
+   */
+  protected dismissAssign(): void {
+    this.assignRequest.set(null);
+    this.pendingBulkAssignIds.set(null);
+  }
+
+  /**
    * Method reload
    * @method reload
    *
@@ -1297,6 +1786,7 @@ export class InterventionsPage {
           this.sortOrder(),
           this.searchTerm(),
           new Date(),
+          this.filters().mine ? this.memberIri() : null,
         ),
         page: this.page(),
         itemsPerPage: this.pageSize(),

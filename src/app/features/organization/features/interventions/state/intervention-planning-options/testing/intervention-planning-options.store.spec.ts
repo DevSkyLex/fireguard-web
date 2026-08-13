@@ -82,7 +82,7 @@ describe('InterventionPlanningOptionsStore', () => {
     store = TestBed.inject(InterventionPlanningOptionsStore);
   });
 
-  it('loads only sites and members for intervention creation', async () => {
+  it('loads sites, members and labels for intervention creation', async () => {
     store.loadCreationOptions('org-1');
 
     await vi.waitFor(() => expect(store.loading()).toBe(false));
@@ -108,6 +108,8 @@ describe('InterventionPlanningOptionsStore', () => {
         initials: 'AA',
       },
     ]);
+    expect(labels.list).toHaveBeenCalledWith('/api/organizations/org-1');
+    expect(store.labels()).toEqual([{ id: 'label-1', name: 'Compliance', color: '#ff0000' }]);
   });
 
   it('loads target resources only for the intervention workspace', async () => {

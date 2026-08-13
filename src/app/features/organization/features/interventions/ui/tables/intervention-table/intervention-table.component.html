@@ -189,6 +189,18 @@
                       <span i18n="@@intervention.list.rowCopyRef">Copy reference</span>
                     </button>
 
+                    @if (isRowAssignable(item.intervention)) {
+                      <hlm-dropdown-menu-separator />
+                      <button
+                        hlmDropdownMenuItem
+                        data-testid="intervention-table-row-assign"
+                        (click)="assignRequested.emit(item.intervention)"
+                      >
+                        <ng-icon name="lucideUserCog" aria-hidden="true" />
+                        <span i18n="@@intervention.list.assign">Assign responsible…</span>
+                      </button>
+                    }
+
                     @if (transitionsFor(item.intervention).length > 0) {
                       <hlm-dropdown-menu-separator />
                       <hlm-dropdown-menu-label i18n="@@intervention.list.rowMoveTo"
@@ -198,16 +210,34 @@
                         <button
                           hlmDropdownMenuItem
                           data-testid="intervention-table-row-transition"
+                          [disabled]="isTransitionGated(item.intervention, target)"
+                          [attr.aria-describedby]="
+                            isTransitionGated(item.intervention, target)
+                              ? 'intervention-transition-gate-' + item.intervention.id
+                              : null
+                          "
+                          [attr.title]="
+                            isTransitionGated(item.intervention, target)
+                              ? responsibleOnlyReason
+                              : null
+                          "
                           (click)="
-                            transitionRequested.emit({
-                              intervention: item.intervention,
-                              status: target,
-                            })
+                            isTransitionGated(item.intervention, target)
+                              ? null
+                              : transitionRequested.emit({
+                                  intervention: item.intervention,
+                                  status: target,
+                                })
                           "
                         >
                           {{ statusLabelOf(target) }}
                         </button>
                       }
+                      <span
+                        class="sr-only"
+                        [id]="'intervention-transition-gate-' + item.intervention.id"
+                        >{{ responsibleOnlyReason }}</span
+                      >
                     }
 
                     @if (isRowDeletable(item.intervention)) {

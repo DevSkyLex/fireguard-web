@@ -4523,6 +4523,46 @@
         <source>The intervention status could not be updated.</source>
         <target>Impossible de mettre à jour le statut de l'intervention.</target>
       </trans-unit>
+      <trans-unit id="intervention.store.assignStale" datatype="html">
+        <source>This intervention changed since it was loaded. Refresh and try again.</source>
+        <target>Cette intervention a changé depuis son chargement. Actualisez et réessayez.</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.assignConflict" datatype="html">
+        <source>This intervention cannot be assigned in its current status.</source>
+        <target>Cette intervention ne peut pas être affectée dans son statut actuel.</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.assignForbidden" datatype="html">
+        <source>You do not have permission to assign this intervention.</source>
+        <target>Vous n'avez pas la permission d'affecter cette intervention.</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.assignFailed" datatype="html">
+        <source>The intervention could not be assigned.</source>
+        <target>L'intervention n'a pas pu être affectée.</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.toast" datatype="html">
+        <source>Intervention assigned</source>
+        <target>Intervention affectée</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.header" datatype="html">
+        <source>Assign a responsible</source>
+        <target>Affecter un responsable</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.message" datatype="html">
+        <source>Choose who is responsible for <x id="interventionName" equiv-text="interventionName"/>.</source>
+        <target>Choisissez qui est responsable de <x id="interventionName" equiv-text="interventionName"/>.</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.submit" datatype="html">
+        <source>Assign</source>
+        <target>Affecter</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.submittingStatus" datatype="html">
+        <source>Assigning, please wait…</source>
+        <target>Affectation en cours, veuillez patienter…</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.submitting" datatype="html">
+        <source>Assigning…</source>
+        <target>Affectation…</target>
+      </trans-unit>
       <trans-unit id="intervention.newButton" datatype="html">
         <source>New intervention</source>
         <target>Nouvelle intervention</target>
@@ -5787,6 +5827,38 @@
         <source>Delete</source>
         <target>Supprimer</target>
       </trans-unit>
+      <trans-unit id="intervention.list.assign" datatype="html">
+        <source>Assign responsible…</source>
+        <target>Affecter un responsable…</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.responsibleOnly" datatype="html">
+        <source>Only the responsible can do this.</source>
+        <target>Seul le responsable peut faire cela.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.mine" datatype="html">
+        <source>My interventions</source>
+        <target>Mes interventions</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.bulkActionsButton" datatype="html">
+        <source>Actions</source>
+        <target>Actions</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.bulkMoveToLabel" datatype="html">
+        <source>Move to</source>
+        <target>Déplacer vers</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.bulkAssignButton" datatype="html">
+        <source>Assign responsible… (<x id="count" equiv-text="this.assignableSelectedIds().length"/>)</source>
+        <target>Affecter un responsable… (<x id="count" equiv-text="this.assignableSelectedIds().length"/>)</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.bulkAssignNameOne" datatype="html">
+        <source>1 intervention</source>
+        <target>1 intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.bulkAssignNameMany" datatype="html">
+        <source><x id="count" equiv-text="ids.length"/> interventions</source>
+        <target><x id="count" equiv-text="ids.length"/> interventions</target>
+      </trans-unit>
       <trans-unit id="intervention.list.selectionCountOne" datatype="html">
         <source>1 selected</source>
         <target>1 sélectionnée</target>
@@ -5858,6 +5930,10 @@
       <trans-unit id="intervention.list.filterResponsible" datatype="html">
         <source>Responsible</source>
         <target>Responsable</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterLabel" datatype="html">
+        <source>Label</source>
+        <target>Étiquette</target>
       </trans-unit>
       <trans-unit id="intervention.list.filterDue" datatype="html">
         <source>Deadline</source>

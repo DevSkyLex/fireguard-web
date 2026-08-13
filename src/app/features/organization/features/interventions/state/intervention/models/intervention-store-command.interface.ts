@@ -56,3 +56,15 @@ export interface InterventionDeleteCommand {
   readonly interventionId: string;
   readonly revision: number;
 }
+
+/**
+ * Command assigning a responsible member to a single cached intervention
+ * entity. Carries the revision required for the optimistic-concurrency
+ * `If-Match` header; the store may receive several of these in quick
+ * succession (bulk assignment from the list), each resolved independently.
+ */
+export interface InterventionAssignCommand {
+  readonly interventionId: string;
+  readonly responsible: string;
+  readonly revision: number;
+}

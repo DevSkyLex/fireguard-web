@@ -20,6 +20,7 @@ import {
   lucideEllipsis,
   lucideSquareArrowOutUpRight,
   lucideTrash2,
+  lucideUserCog,
 } from '@ng-icons/lucide';
 import {
   resolveInterventionTag,
@@ -64,7 +65,14 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * check the page filters a bulk selection through, so the table never offers
  * a delete the API would refuse with a 409.
  *
- * @version 5.0.0
+ * Submitting and withdrawing a submission are reserved to the intervention's
+ * own responsible (mirroring `InterventionDetailPage`'s `canSubmit` gate): the
+ * `submitted` target on any row and the `in_progress` target on a `submitted`
+ * row stay visible but disabled, with a title explaining why, when
+ * {@link currentMemberIri} does not match the row's `responsible` — hidden
+ * would leave the state unperceivable.
+ *
+ * @version 6.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -91,6 +99,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
       lucideEllipsis,
       lucideSquareArrowOutUpRight,
       lucideTrash2,
+      lucideUserCog,
     }),
   ],
   templateUrl: './intervention-table.component.html',
@@ -192,6 +201,39 @@ export class InterventionTable {
   public readonly canDelete: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property canAssign
+   * @readonly
+   *
+   * @description
+   * Whether the row menu may offer "Assign responsible…". False hides the
+   * entry rather than showing a control that would be refused; the
+   * intervention's own status narrows it further per row (draft or planned
+   * only).
+   *
+   * @access public
+   * @since 6.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canAssign: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property currentMemberIri
+   * @readonly
+   *
+   * @description
+   * The signed-in member's own IRI, gating the identity-restricted
+   * transitions — submitting and withdrawing a submission are reserved to
+   * the intervention's own responsible.
+   *
+   * @access public
+   * @since 6.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly currentMemberIri: InputSignal<string | null> = input<string | null>(null);
+
+  /**
    * Property selectedIds
    * @readonly
    *
@@ -287,6 +329,22 @@ export class InterventionTable {
    * @type {OutputEmitterRef<InterventionOutput>}
    */
   public readonly deleteRequested: OutputEmitterRef<InterventionOutput> =
+    output<InterventionOutput>();
+
+  /**
+   * Property assignRequested
+   * @readonly
+   *
+   * @description
+   * A row menu asked to assign a responsible. The table never assigns: the
+   * page opens `InterventionAssignDialog` and calls the store.
+   *
+   * @access public
+   * @since 6.0.0
+   *
+   * @type {OutputEmitterRef<InterventionOutput>}
+   */
+  public readonly assignRequested: OutputEmitterRef<InterventionOutput> =
     output<InterventionOutput>();
 
   /**
@@ -460,6 +518,71 @@ export class InterventionTable {
   protected isRowDeletable(intervention: InterventionOutput): boolean {
     return this.canDelete() && isInterventionDeletable(intervention);
   }
+
+  /**
+   * Method isRowAssignable
+   * @method isRowAssignable
+   *
+   * @description
+   * Whether a row's menu may offer "Assign responsible…": the caller must
+   * have the permission ({@link canAssign}) and the intervention's own status
+   * must still be one planning may touch (draft or planned).
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {InterventionOutput} intervention - The row's intervention.
+   *
+   * @returns {boolean} True when "Assign responsible…" should render.
+   */
+  protected isRowAssignable(intervention: InterventionOutput): boolean {
+    return (
+      this.canAssign() && (intervention.status === 'draft' || intervention.status === 'planned')
+    );
+  }
+
+  /**
+   * Method isTransitionGated
+   * @method isTransitionGated
+   *
+   * @description
+   * Whether a status target is reserved to the intervention's own
+   * responsible — submitting (`submitted` as a target, from any status) and
+   * withdrawing a submission (`in_progress` as a target on a `submitted`
+   * row). The backend answers 403 for anyone else, so the entry stays
+   * visible but disabled rather than silently missing.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {InterventionOutput} intervention - The row's intervention.
+   * @param {InterventionStatus} target - The offered status target.
+   *
+   * @returns {boolean} True when the entry must be disabled.
+   */
+  protected isTransitionGated(
+    intervention: InterventionOutput,
+    target: InterventionStatus,
+  ): boolean {
+    const requiresIdentity: boolean =
+      target === 'submitted' || (intervention.status === 'submitted' && target === 'in_progress');
+
+    return requiresIdentity && this.currentMemberIri() !== intervention.responsible;
+  }
+
+  /**
+   * Property responsibleOnlyReason
+   * @readonly
+   *
+   * @description
+   * The disabled-entry title shown on an identity-gated transition.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {string}
+   */
+  protected readonly responsibleOnlyReason: string = $localize`:@@intervention.list.responsibleOnly:Only the responsible can do this.`;
 
   /**
    * Method isSelected

@@ -46,19 +46,14 @@ export class OrganizationTodayPage {
     return this.page.getByTestId(`org-today-queue-${id}`);
   }
 
-  /** The "See all" control inside one named queue. */
-  public queueSeeAllButton(id: string): Locator {
-    return this.queue(id).getByRole('button', { name: 'See all' });
+  /** The whole-row link of one deep-linked queue (`overdue`, `changes-requested`, `awaiting-review`) — there is no per-intervention preview for these. */
+  public queueRowLink(id: string): Locator {
+    return this.queue(id).getByRole('link');
   }
 
-  /** One intervention row inside a named queue, matched by its visible name. */
-  public queueRow(id: string, interventionName: string): Locator {
-    return this.queue(id).getByRole('button', { name: new RegExp(interventionName) });
-  }
-
-  /** Opens one intervention row from a named queue. */
-  public async openQueueRow(id: string, interventionName: string): Promise<void> {
-    await this.queueRow(id, interventionName).click();
+  /** Opens one deep-linked queue's whole-row link, navigating to the filtered interventions list. */
+  public async openQueueRow(id: string): Promise<void> {
+    await this.queueRowLink(id).click();
   }
 
   /** Opens one "Recently updated" row by its intervention name. */

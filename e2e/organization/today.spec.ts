@@ -151,12 +151,12 @@ test.describe('Organization Today page', () => {
       '4 equipment items under maintenance',
     );
 
-    await expect(today.queueRow('overdue', 'Inspect north riser valve')).toBeVisible();
-    await expect(today.queueRow('overdue', 'Replace hallway smoke detector')).toBeVisible();
-    await expect(
-      today.queueRow('changes-requested', 'Recheck sprinkler head torque'),
-    ).toBeVisible();
-    await expect(today.queueRow('awaiting-review', 'Submit annual alarm test')).toBeVisible();
+    await expect(today.queue('overdue')).toContainText('Overdue');
+    await expect(today.queue('overdue')).toContainText('2');
+    await expect(today.queue('changes-requested')).toContainText('Sent back to you');
+    await expect(today.queue('changes-requested')).toContainText('1');
+    await expect(today.queue('awaiting-review')).toContainText('Awaiting your review');
+    await expect(today.queue('awaiting-review')).toContainText('1');
 
     await expect(today.recentInterventionsCard).toBeVisible();
     await expect(today.recentInterventionRows).toHaveCount(1);
@@ -176,19 +176,20 @@ test.describe('Organization Today page', () => {
 
     await today.goto(E2E_ORGANIZATION_ID);
 
-    await expect(today.queueRow('overdue', 'Inspect north riser valve')).toBeVisible();
+    await expect(today.queue('overdue')).toContainText('Overdue');
+    await expect(today.queue('overdue')).toContainText('2');
     await expect(today.kpiSection).toHaveCount(0);
     await expect(today.alertsSection).toHaveCount(0);
     await expect(today.recentInterventionsCard).toHaveCount(0);
 
-    await today.queueSeeAllButton('overdue').click();
+    await today.openQueueRow('overdue');
 
     await expect(page).toHaveURL(
       new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?due=overdue$`),
     );
   });
 
-  test('deep-links each queue\'s "See all" button to the interventions list with the matching query params', async ({
+  test('deep-links each queue row to the interventions list with the matching query params', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -198,19 +199,19 @@ test.describe('Organization Today page', () => {
     const today = new OrganizationTodayPage(page);
 
     await today.goto(E2E_ORGANIZATION_ID);
-    await today.queueSeeAllButton('overdue').click();
+    await today.openQueueRow('overdue');
     await expect(page).toHaveURL(
       new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?due=overdue$`),
     );
 
     await today.goto(E2E_ORGANIZATION_ID);
-    await today.queueSeeAllButton('changes-requested').click();
+    await today.openQueueRow('changes-requested');
     await expect(page).toHaveURL(
       new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?status=changes_requested$`),
     );
 
     await today.goto(E2E_ORGANIZATION_ID);
-    await today.queueSeeAllButton('awaiting-review').click();
+    await today.openQueueRow('awaiting-review');
     await expect(page).toHaveURL(
       new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?status=submitted$`),
     );

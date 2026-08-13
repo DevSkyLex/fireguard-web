@@ -42,7 +42,10 @@ import { isCallPending, type CallState, type StoreError } from '@core/request-st
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
-import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   InterventionAttachmentOutput,
   InterventionCapabilities,
@@ -65,6 +68,7 @@ import type {
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
 import {
+  BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
   InterventionSyncCoordinatorService,
@@ -375,6 +379,17 @@ export class InterventionDetailPage {
   private readonly fieldExecution: InterventionFieldExecutionService = inject(
     InterventionFieldExecutionService,
   );
+
+  /**
+   * Read directly rather than through {@link InterventionStore}: an
+   * attachment download is a one-shot fetch-then-save with no state the
+   * store needs to own, mirroring `InterventionsPage`'s direct
+   * `InterventionService` call for its CSV export.
+   */
+  private readonly interventionService: InterventionService = inject(InterventionService);
+
+  /** Saves a downloaded attachment to the visitor's device, browser-only. */
+  private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
   /** Confirms a silent in-place commit so it is never invisible. */
   private readonly feedback: FeedbackService = inject(FeedbackService);
@@ -877,6 +892,24 @@ export class InterventionDetailPage {
   protected readonly attachmentUploading: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.attachmentWriteCallState()),
   );
+
+  /**
+   * Property pendingDownloadIds
+   * @readonly
+   *
+   * @description
+   * Ids of the attachments whose download is currently in flight — a
+   * page-local set, since a download is a one-shot fetch with no state the
+   * store needs to own, mirroring `pendingAttachmentIds`' per-row lock for
+   * deletes.
+   *
+   * @access protected
+   * @since 4.7.0
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
+  protected readonly pendingDownloadIds: WritableSignal<ReadonlySet<string>> = signal<
+    ReadonlySet<string>
+  >(new Set<string>());
 
   /** Whether the device can decode a QR from a camera capture, shown in the execute phase only. */
   protected readonly canScanWorkItem: Signal<boolean> = this.caps.canScanWorkItem;
@@ -1381,6 +1414,52 @@ export class InterventionDetailPage {
    */
   protected removeAttachment(attachment: InterventionAttachmentOutput): void {
     this.store.removeAttachment({ attachmentId: attachment.id, revision: attachment.revision });
+  }
+
+  /**
+   * Method downloadAttachment
+   *
+   * @description
+   * Fetches one attachment's binary content and saves it to the visitor's
+   * device, locking the row on its own fetch through
+   * {@link pendingDownloadIds} rather than the store — a download changes
+   * no persisted state.
+   *
+   * @access protected
+   * @since 4.7.0
+   *
+   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   *
+   * @returns {void}
+   */
+  protected downloadAttachment(attachment: InterventionAttachmentOutput): void {
+    this.pendingDownloadIds.update((ids: ReadonlySet<string>): ReadonlySet<string> =>
+      new Set(ids).add(attachment.id),
+    );
+
+    this.interventionService
+      .downloadAttachment(attachment.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.pendingDownloadIds.update((ids: ReadonlySet<string>): ReadonlySet<string> => {
+            const next: Set<string> = new Set(ids);
+            next.delete(attachment.id);
+            return next;
+          });
+          this.browserDownload.trigger(blob, attachment.fileName);
+        },
+        error: (): void => {
+          this.pendingDownloadIds.update((ids: ReadonlySet<string>): ReadonlySet<string> => {
+            const next: Set<string> = new Set(ids);
+            next.delete(attachment.id);
+            return next;
+          });
+          this.feedback.error(
+            $localize`:@@intervention.attachments.downloadFailed:Couldn't download ${attachment.fileName}:fileName:.`,
+          );
+        },
+      });
   }
 
   /**

@@ -11,7 +11,9 @@
     @if (icon(); as iconName) {
       <ng-icon
         [name]="iconName"
-        class="shrink-0 text-lg text-muted-foreground"
+        class="shrink-0 text-lg"
+        [class.text-destructive]="tone() === 'destructive'"
+        [class.text-muted-foreground]="tone() !== 'destructive'"
         aria-hidden="true"
       />
     }

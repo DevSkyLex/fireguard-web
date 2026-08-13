@@ -1,26 +1,25 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { InputSignal, Signal } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideClock } from '@ng-icons/lucide';
 import type { InterventionStatisticsOutput } from '@features/organization/features/interventions/models';
-import { HlmCardImports } from '@shared/ui/card';
-import { HlmSkeleton } from '@shared/ui/skeleton';
+import { StatTile, type StatTileTone } from '@features/organization/ui/components';
 
 /**
  * Type InterventionKpiTile
  *
  * @description
- * View-model for one card in the strip. `tone` is `destructive` only for
- * the overdue count when it is above zero — every other tile is neutral,
- * and severity is always paired with {@link icon} so it is never carried by
- * colour alone.
+ * View-model for one `app-stat-tile` in the strip. `tone` is `destructive`
+ * only for the overdue count when it is above zero — every other tile is
+ * neutral, and severity is always paired with {@link icon} so it is never
+ * carried by colour alone (the Glyph Rule, `DESIGN.md`).
  */
 type InterventionKpiTile = {
   readonly id: string;
   readonly label: string;
   readonly value: string;
   readonly icon: string | null;
-  readonly tone: 'neutral' | 'destructive';
+  readonly tone: StatTileTone;
 };
 
 /**
@@ -29,9 +28,11 @@ type InterventionKpiTile = {
  *
  * @description
  * Presentational KPI strip for the interventions list: total, open work,
- * overdue, due-soon and average-publication-delay counts, each a compact
- * `hlmCard` tile. Purely derived from {@link statistics} and {@link loading}
- * — it injects no store and calls no service (`ARCHITECTURE.md` §10.2).
+ * overdue, due-soon and average-publication-delay counts, each an
+ * {@link StatTile} — the same tile the organization's other data-dense
+ * surfaces use, rather than a hand-rolled card. Purely derived from
+ * {@link statistics} and {@link loading} — it injects no store and calls no
+ * service (`ARCHITECTURE.md` §10.2).
  *
  * "Open" sums `in_progress`, `planned` and `changes_requested` from
  * `byStatus` — the three statuses still awaiting forward motion, as
@@ -40,17 +41,13 @@ type InterventionKpiTile = {
  * when the backend reports a value: an organization with no published
  * interventions yet has nothing to average.
  *
- * While {@link loading} is true every tile renders a skeleton at the same
- * footprint as its resolved content, so the strip never reflows the
- * toolbar beneath it once data arrives.
- *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-kpi-strip',
-  imports: [NgIcon, HlmSkeleton, ...HlmCardImports],
+  imports: [StatTile],
   providers: [provideIcons({ lucideCircleAlert, lucideClock })],
   templateUrl: './intervention-kpi-strip.component.html',
   host: { class: 'block' },
@@ -117,7 +114,10 @@ export class InterventionKpiStrip {
    *
    * @description
    * The strip's fixed-order tiles. The average-publication tile is omitted
-   * rather than shown empty when the backend reports `null`.
+   * rather than shown empty when the backend reports `null` — while
+   * {@link loading} is true this keeps the tile count stable at the four
+   * always-shown metrics, matching the strip's resolved footprint once data
+   * arrives.
    *
    * @access protected
    * @since 1.0.0
@@ -178,21 +178,5 @@ export class InterventionKpiStrip {
 
     return tiles;
   });
-
-  /**
-   * Property skeletonTileCount
-   * @readonly
-   *
-   * @description
-   * How many skeleton tiles to render while loading — the four always-shown
-   * tiles, matching the strip's resolved footprint so it never grows once
-   * the average-publication tile (0 or 1 more) appears.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {readonly number[]}
-   */
-  protected readonly skeletonTiles: readonly number[] = [0, 1, 2, 3];
   //#endregion
 }

@@ -271,6 +271,10 @@ Internal code imports deep paths directly.
 - Depends on organization route context and permissions from the parent `features/organization`
   feature (`organizationPermissionGuard` from `@features/organization/http/guards`,
   `ORGANIZATION_PERMISSION` from `@features/organization/models`).
+- The KPI strip composes the parent's published `StatTile` (`StatTile`, `StatTileTone` from
+  `@features/organization/ui/components`) instead of hand-rolling stat cards — read-only
+  presentational reuse through the parent's `ui/components` barrel, so the two stat surfaces
+  cannot drift apart.
 - The parent feature consumes this feature's public API for its landing page's work queues
   (ARCHITECTURE.md §4): the root barrel's `InterventionService` plus the `models`, `utils`,
   `data-access` and `ui/components` concern barrels listed above. Read-only — the parent lists
@@ -646,8 +650,9 @@ that branch reachable.
 so the alert's button is gated on `store.loadFailed()`. A write failure states
 what happened and offers nothing that would silently discard it.
 
-`hlm-alert` has exactly two variants and the theme carries no success or warning
-token, so a notice's kind is conveyed by its **icon and title, never by colour**.
+`hlm-alert` has exactly two variants and the theme carries no warning or info
+token (`--success` exists, but only for status glyphs — the Glyph Rule), so a
+notice's kind is conveyed by its **icon and title, never by colour**.
 Every alert paints its own ground (`bg-muted/50`, `bg-destructive/5`) because
 `--card` and `--background` are the _same colour in the light theme_ — a stock
 alert would be white on white, separated by one hairline.

@@ -6,4 +6,9 @@ export { OrganizationSwitcher } from './organization-switcher';
 export type { OrganizationSwitcherOption } from './organization-switcher';
 export { OrganizationTrendChartNotice } from './organization-trend-chart-notice';
 export { StatTile } from './stat-tile';
-export type { StatTileDelta, StatTileDeltaDirection, StatTileLink } from './stat-tile';
+export type {
+  StatTileDelta,
+  StatTileDeltaDirection,
+  StatTileLink,
+  StatTileTone,
+} from './stat-tile';

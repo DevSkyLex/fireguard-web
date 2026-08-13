@@ -608,18 +608,28 @@ export class OrganizationTodayPage {
    * @method openInterventions
    *
    * @description
-   * Opens the full intervention list.
+   * Opens the full intervention list, optionally deep-linked into the
+   * narrowing that reproduces one of this page's own queues — the exact
+   * query params `serializeInterventionListFilters` writes to the URL
+   * (`status`, `due`), so the list opens already filtered instead of asking
+   * the operator to re-apply the same narrowing by hand. Omitted for the
+   * unsynced queue, which the list has no server-side filter for.
    *
    * @access protected
    * @since 1.0.0
    *
+   * @param {Readonly<Record<string, string>>} [queryParams] - The list's own
+   * filter query params reproducing this queue.
+   *
    * @returns {void}
    */
-  protected openInterventions(): void {
+  protected openInterventions(queryParams?: Readonly<Record<string, string>>): void {
     const organizationId: string | null = this.organizationContext.selectedOrganizationId();
     if (organizationId === null) return;
 
-    void this.router.navigate(['/organizations', organizationId, 'interventions']);
+    void this.router.navigate(['/organizations', organizationId, 'interventions'], {
+      queryParams,
+    });
   }
 
   /**

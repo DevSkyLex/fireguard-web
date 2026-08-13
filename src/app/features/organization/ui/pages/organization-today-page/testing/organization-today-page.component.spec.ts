@@ -183,7 +183,9 @@ describe('OrganizationTodayPage', () => {
   it('should open the full intervention list', () => {
     fixture.componentInstance['openInterventions']();
 
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions']);
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions'], {
+      queryParams: undefined,
+    });
   });
 
   it('should start an intervention with the drawer already open', () => {
@@ -332,6 +334,52 @@ describe('OrganizationTodayPage', () => {
 
     expect(changesRequestedQueue).not.toBeNull();
     expect(changesRequestedQueue?.textContent).toContain('All clear');
+  });
+
+  describe('see all navigation', () => {
+    it('should open the list filtered to overdue when the overdue queue’s See all is clicked', async () => {
+      const button: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="org-today-queue-overdue"] button',
+      );
+      button?.click();
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions'], {
+        queryParams: { due: 'overdue' },
+      });
+    });
+
+    it('should open the list filtered to changes requested when the sent-back queue’s See all is clicked', async () => {
+      const button: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="org-today-queue-changes-requested"] button',
+      );
+      button?.click();
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions'], {
+        queryParams: { status: 'changes_requested' },
+      });
+    });
+
+    it('should open the list filtered to submitted when the awaiting-review queue’s See all is clicked', async () => {
+      const button: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="org-today-queue-awaiting-review"] button',
+      );
+      button?.click();
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions'], {
+        queryParams: { status: 'submitted' },
+      });
+    });
+
+    it('should offer no See all navigation for the unsynced queue, which the list has no filter for', () => {
+      const button: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="org-today-queue-unsynced"] button',
+      );
+
+      expect(button).toBeNull();
+    });
   });
 
   it('should render the recently updated interventions list with a status tag and a responsible avatar', async () => {

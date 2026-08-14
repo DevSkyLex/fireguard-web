@@ -1,5 +1,5 @@
-<form (submit)="submit($event)">
-  <hlm-field-group class="px-4">
+<form (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
+  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
     @if (serverMessages().length > 0) {
       <div role="alert" data-testid="intervention-work-item-error" class="text-sm text-destructive">
         @for (message of serverMessages(); track message) {
@@ -95,25 +95,25 @@
         Unassigned items can be picked up by any field agent.
       </hlm-field-description>
     </hlm-field>
-
-    <hlm-field orientation="horizontal">
-      <button
-        hlmBtn
-        type="submit"
-        data-testid="intervention-work-item-submit"
-        [disabled]="pending() || disabled()"
-      >
-        <span i18n="@@intervention.wif.submit">Add to prepared scope</span>
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        data-testid="intervention-work-item-cancel"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@common.cancel">Cancel</span>
-      </button>
-    </hlm-field>
   </hlm-field-group>
+
+  <hlm-sheet-footer class="flex-col-reverse sm:flex-row sm:justify-end">
+    <button
+      hlmBtn
+      type="submit"
+      data-testid="intervention-work-item-submit"
+      [disabled]="pending() || disabled()"
+    >
+      <span i18n="@@intervention.wif.submit">Add to prepared scope</span>
+    </button>
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      data-testid="intervention-work-item-cancel"
+      (click)="cancelled.emit()"
+    >
+      <span i18n="@@common.cancel">Cancel</span>
+    </button>
+  </hlm-sheet-footer>
 </form>

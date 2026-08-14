@@ -31,7 +31,7 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
-import { isCallPending } from '@core/request-state';
+import { isCallPending, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import {
@@ -1364,6 +1364,15 @@ export class InterventionsPage {
         void this.router.navigate([...this.detailRouteBase(), createdId]);
       });
     });
+
+    effect((): void => {
+      const callState: CallState = this.store.deleteCallState();
+
+      untracked((): void => {
+        if (callState.status !== 'success') return;
+        if (this.pendingDelete() !== null) this.pendingDelete.set(null);
+      });
+    });
   }
   //#endregion
 
@@ -1888,6 +1897,7 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected requestDelete(intervention: InterventionOutput): void {
+    this.store.resetDeleteState();
     this.pendingDelete.set(intervention);
   }
 
@@ -1909,6 +1919,7 @@ export class InterventionsPage {
 
     if (ids.length === 0) return;
 
+    this.store.resetDeleteState();
     this.pendingBulkDeleteIds.set(ids);
   }
 
@@ -1917,10 +1928,15 @@ export class InterventionsPage {
    * @method confirmDelete
    *
    * @description
-   * Sends the pending target(s) to the store and closes the dialog. A bulk
-   * selection resolves each id back to its cached revision and calls
-   * `store.delete` once per intervention — the store's `mergeMap` runs them
-   * concurrently, each reporting its own success or failure.
+   * Sends the pending target(s) to the store. A single row's confirmation
+   * stays open, busy-disabled, until `deleteCallState` settles — the
+   * constructor effect closes it on success, and a failure surfaces inline
+   * rather than closing under the operator. A bulk selection is fired and
+   * forgotten instead: each id resolves back to its cached revision and
+   * calls `store.delete` once, concurrently via the store's `mergeMap`, each
+   * reporting its own success or failure as a toast — attributing one shared
+   * call state to several in-flight writes would not reliably tell the
+   * dialog when every one of them has settled.
    *
    * @access protected
    * @since 5.0.0
@@ -1952,7 +1968,6 @@ export class InterventionsPage {
       this.selectedIds.set(new Set<string>());
     }
 
-    this.pendingDelete.set(null);
     this.pendingBulkDeleteIds.set(null);
   }
 

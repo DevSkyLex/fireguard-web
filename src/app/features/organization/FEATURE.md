@@ -169,6 +169,8 @@ organization; the backend siblinghood is not what decides placement here, owners
 - `MemberDirectoryPort`
 - `organization/setup`
 - `OrganizationSetupService`
+- `organization/services`
+- `SubmissionGateService`
 - `withOrganizationSwitcher()`
 - `withOrganizationNav()`
 
@@ -178,6 +180,12 @@ These contracts are the stable boundaries for approved consumers:
 - approved sibling features consume current organization member roles and permissions through `ORGANIZATION_MEMBER_ACCESS_PORT`,
 - approved sibling features resolve a bare member id to a name and an avatar through `MEMBER_DIRECTORY_PORT`,
 - onboarding consumes organization-owned setup workflows through `organization/setup`,
+- this feature's own pages, and its nested subfeatures, build a surface's claim on a store that
+  multiplexes several mutations through one shared `mutationCallState` with
+  `SubmissionGateService` (`organization/services`). A gate reports busy and error only for the
+  write its own surface submitted, which is what keeps an earlier or sibling mutation's failure out
+  of the next dialog opened. It is a stopgap for stores that share one mutation call state —
+  a store with named per-action `CallState` fields (`ARCHITECTURE.md` §10.11) needs no gate,
 - a shell contributes the organization switcher to its sidebar-header slot through
   `withOrganizationSwitcher()`, and the organization navigation to the top of its sidebar-nav slot
   through `withOrganizationNav()`. Both are slot contribution factories — the shell renders the
@@ -289,3 +297,4 @@ re-tinted to look like a failure.
 - Organization-scoped child workflows stay under this feature boundary.
 - Layouts and sibling features consume organization behavior through the published port, not through direct store injection.
 - Resolvers that load organization context belong to this feature.
+- A mutating confirm dialog stays open, busy-locked, until the write settles — the members remove confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome inline, so the operator sees it exactly where they took the action and can retry without reopening the dialog, rather than the failure surfacing only as a page-level toast.

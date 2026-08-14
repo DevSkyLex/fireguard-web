@@ -990,6 +990,21 @@ follows.
 - **Quality gate** before considering work done: `npm run format` (oxfmt),
   `npm run lint` (oxlint) and `npm run build` must pass, plus the feature specs.
   Run `graphify update .` after changing code.
+- **UI notes**: `hlm-sheet` widths are one of three named sizes, an app-wide
+  convention (not only this feature's sheets — `organization-role-permissions-sheet`
+  and `channel-participants-sheet` follow it too) — `sm:w-[480px]` (default:
+  work-item, request-changes, role-permissions, participants), `sm:w-[540px]`
+  (create, to fit the template picker) and `sm:w-[560px]` (discussion, to fit
+  the message thread). Every width utility on `hlm-sheet-content` needs the
+  `!` important marker (`w-full! sm:w-[…px]! sm:max-w-none!`) — `HlmSheetContent`'s
+  own base classes carry `data-[side=right]:sm:max-w-sm` and `data-[side=right]:w-3/4`,
+  which beat a plain same-specificity utility. The three form-sheets (create,
+  request-changes, work-item) pin their embedded form's submit row in a sticky
+  `hlm-sheet-footer`: the form's own host is `flex min-h-0 flex-1 flex-col`,
+  its `hlm-field-group` scrolls independently (`min-h-0 flex-1
+overflow-y-auto`), and the footer sits outside that scroll region as the
+  form's last flex child — the form keeps owning the buttons; only the sheet's
+  layout changed.
 
 ## Invariants
 
@@ -1000,6 +1015,12 @@ follows.
   same signals the status band's forward action reads, so what the dialog
   recaps and what the band's disabled reason implies cannot drift.
   Publication is the one step that writes to the compliance record.
+- **A mutating confirm dialog stays open, busy-locked, until the write
+  settles.** The interventions delete confirm mirrors the publish
+  confirmation's own rule: it stays open on failure and shows the outcome
+  inline, so the operator sees it exactly where they took the action and can
+  retry without reopening the dialog, rather than the failure surfacing only
+  as a page-level toast.
 - **The phase's forward action has exactly one _live_ address, and one
   implementation, at every viewport.** `app-intervention-command-button` is
   the only markup; `app-intervention-status-band` is its only host, sticky

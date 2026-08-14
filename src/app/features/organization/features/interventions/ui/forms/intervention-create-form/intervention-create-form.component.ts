@@ -36,6 +36,7 @@ import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionCreateFormDraft, InterventionCreateFormValues } from './models';
 
@@ -83,7 +84,11 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
  * {@link prefill} seeds the model for the "Duplicate" flow — never the planned
  * window, which stays blank even when duplicating a scheduled intervention.
  *
- * @version 4.1.0
+ * Its own host fills the flex column its hosting sheet establishes: the field
+ * group scrolls independently while the `hlm-sheet-footer` action row stays
+ * pinned, without the sheet needing to know about the form's internal layout.
+ *
+ * @version 4.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -99,9 +104,10 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
     ...HlmDatePickerImports,
     ...HlmFieldImports,
     ...HlmSelectImports,
+    HlmSheetFooter,
   ],
   templateUrl: './intervention-create-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCreateForm {

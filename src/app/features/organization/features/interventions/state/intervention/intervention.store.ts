@@ -189,7 +189,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
  * the server page the caller asked for — pagination, filtering and sorting are
  * server-side, and the entities ARE the current page.
  *
- * @version 4.3.0
+ * @version 4.4.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InterventionStore = signalStore(
@@ -221,6 +221,30 @@ export const InterventionStore = signalStore(
      * True while intervention creation is in-flight.
      */
     isCreating: computed<boolean>(() => store.createCallState().status === 'pending'),
+
+    /**
+     * Computed isDeleting.
+     *
+     * @description
+     * True while a delete write is in-flight, driving the confirm dialog's
+     * busy discipline — its action button `[disabled]` and `[disableClose]`.
+     *
+     * @since 4.4.0
+     * @type {boolean}
+     */
+    isDeleting: computed<boolean>(() => store.deleteCallState().status === 'pending'),
+
+    /**
+     * Computed deleteError.
+     *
+     * @description
+     * Error from the last delete write, if any — surfaced in the confirm
+     * dialog rather than a page-level toast only.
+     *
+     * @since 4.4.0
+     * @type {StoreError | null}
+     */
+    deleteError: computed<StoreError | null>(() => store.deleteCallState().error),
 
     /**
      * Computed createdIntervention.
@@ -742,6 +766,24 @@ export const InterventionStore = signalStore(
             ),
           ),
         ),
+
+        /**
+         * Method resetDeleteState
+         * @method resetDeleteState
+         *
+         * @description
+         * Returns `deleteCallState` to idle — called when the delete confirm
+         * dialog opens for a fresh target, so a previous attempt's error
+         * never flashes in a dialog it does not belong to.
+         *
+         * @access public
+         * @since 4.4.0
+         *
+         * @return {void}
+         */
+        resetDeleteState(): void {
+          patchState(store, { deleteCallState: idleCallState() });
+        },
 
         /**
          * Method clearCreatedIntervention

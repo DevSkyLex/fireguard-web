@@ -137,6 +137,7 @@
   [name]="channel()?.name ?? ''"
   [parentChannelId]="currentParentId()"
   [parentOptions]="parentOptions()"
+  [pending]="channels.isMutating()"
   (visibleChange)="editDialogVisible.set($event)"
   (submitted)="submitEdit($event)"
 />
@@ -153,7 +154,11 @@
   (removed)="removeParticipant($event)"
 />
 
-<hlm-alert-dialog [state]="deleteDialogState()" (stateChanged)="onDeleteDialogStateChanged($event)">
+<hlm-alert-dialog
+  [state]="deleteDialogState()"
+  [disableClose]="deleteDialogBusy()"
+  (stateChanged)="onDeleteDialogStateChanged($event)"
+>
   <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="channel-delete-dialog">
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@channels.room.deleteConfirmTitle">Delete this channel?</h2>
@@ -162,13 +167,38 @@
         cannot be undone.
       </p>
     </hlm-alert-dialog-header>
+
+    @if (deleteDialogError(); as error) {
+      <p role="alert" class="text-sm text-destructive" data-testid="channel-delete-error">
+        {{ error.message }}
+      </p>
+    }
+
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@channels.room.deleteConfirmCancel">Cancel</button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="deleteDialogBusy() ? 'true' : null"
+        [attr.aria-busy]="deleteDialogBusy() ? 'true' : null"
+        [class.opacity-50]="deleteDialogBusy()"
+        [class.pointer-events-none]="deleteDialogBusy()"
+        (click)="deleteDialogBusy() || onDeleteDialogStateChanged('closed')"
+        i18n="@@channels.room.deleteConfirmCancel"
+      >
+        Cancel
+      </button>
       <button
         hlmAlertDialogAction
         variant="destructive"
+        class="max-sm:min-h-11"
         data-testid="channel-delete-confirm"
-        (click)="confirmDelete()"
+        [attr.aria-disabled]="deleteDialogBusy() ? 'true' : null"
+        [attr.aria-busy]="deleteDialogBusy() ? 'true' : null"
+        [class.opacity-50]="deleteDialogBusy()"
+        [class.pointer-events-none]="deleteDialogBusy()"
+        (click)="deleteDialogBusy() || confirmDelete()"
         i18n="@@channels.room.deleteConfirmAction"
       >
         Delete

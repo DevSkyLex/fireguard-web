@@ -240,7 +240,11 @@
   }
 </div>
 
-<hlm-alert-dialog [state]="deleteDialogState()" (stateChanged)="onDeleteDialogStateChanged($event)">
+<hlm-alert-dialog
+  [state]="deleteDialogState()"
+  [disableClose]="store.deleteCallState().status === 'pending'"
+  (stateChanged)="onDeleteDialogStateChanged($event)"
+>
   <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="facility-delete-dialog">
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@facility.detail.deleteConfirmTitle">Delete facility?</h2>
@@ -250,13 +254,32 @@
       </p>
     </hlm-alert-dialog-header>
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@facility.detail.deleteConfirmCancel">Cancel</button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="store.deleteCallState().status === 'pending' ? 'true' : null"
+        [attr.aria-busy]="store.deleteCallState().status === 'pending' ? 'true' : null"
+        [class.opacity-50]="store.deleteCallState().status === 'pending'"
+        [class.pointer-events-none]="store.deleteCallState().status === 'pending'"
+        (click)="
+          store.deleteCallState().status === 'pending' || onDeleteDialogStateChanged('closed')
+        "
+        i18n="@@facility.detail.deleteConfirmCancel"
+      >
+        Cancel
+      </button>
       <button
         hlmAlertDialogAction
         variant="destructive"
+        class="max-sm:min-h-11"
         data-testid="facility-delete-confirm"
-        [disabled]="store.deleteCallState().status === 'pending'"
-        (click)="confirmDelete()"
+        [attr.aria-disabled]="store.deleteCallState().status === 'pending' ? 'true' : null"
+        [attr.aria-busy]="store.deleteCallState().status === 'pending' ? 'true' : null"
+        [class.opacity-50]="store.deleteCallState().status === 'pending'"
+        [class.pointer-events-none]="store.deleteCallState().status === 'pending'"
+        (click)="store.deleteCallState().status === 'pending' || confirmDelete()"
         i18n="@@facility.detail.deleteConfirmAction"
       >
         Delete

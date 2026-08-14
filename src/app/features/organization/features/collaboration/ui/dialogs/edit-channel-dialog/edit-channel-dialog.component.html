@@ -2,6 +2,9 @@
   <hlm-dialog-content class="sm:max-w-md" data-testid="edit-channel-dialog" *hlmDialogPortal>
     <hlm-dialog-header>
       <h3 hlmDialogTitle i18n="@@channels.editDialog.title">Channel settings</h3>
+      <p hlmDialogDescription i18n="@@channels.editDialog.description">
+        Rename the channel or move it under a different parent.
+      </p>
     </hlm-dialog-header>
 
     <form novalidate (submit)="submit($event)">
@@ -53,15 +56,29 @@
         }
 
         <hlm-field orientation="horizontal">
-          <button hlmBtn type="submit" data-testid="edit-channel-submit">
+          <button
+            hlmBtn
+            type="submit"
+            class="max-sm:min-h-11"
+            data-testid="edit-channel-submit"
+            [attr.aria-disabled]="pending() ? 'true' : null"
+            [attr.aria-busy]="pending() ? 'true' : null"
+            [class.opacity-50]="pending()"
+            [class.pointer-events-none]="pending()"
+          >
             <span i18n="@@channels.editDialog.submit">Save changes</span>
           </button>
           <button
             hlmBtn
             type="button"
             variant="outline"
+            class="max-sm:min-h-11"
             data-testid="edit-channel-cancel"
-            (click)="visibleChange.emit(false)"
+            [attr.aria-disabled]="pending() ? 'true' : null"
+            [attr.aria-busy]="pending() ? 'true' : null"
+            [class.opacity-50]="pending()"
+            [class.pointer-events-none]="pending()"
+            (click)="pending() || visibleChange.emit(false)"
           >
             <span i18n="@@common.cancel">Cancel</span>
           </button>

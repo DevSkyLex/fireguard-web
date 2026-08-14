@@ -41,6 +41,7 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
+import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import {
   OrganizationQuotaStore,
   type OrganizationQuotaStoreType,
@@ -113,10 +114,10 @@ type OrganizationMembersKpiTile = {
  *
  * The store exposes one shared `mutationCallState` across every write
  * action, so a stale error from an earlier action must never leak into a
- * dialog opened afterwards: {@link inviteSubmitted} scopes the invite
- * dialog's error banner to invites actually attempted in the current
- * dialog session, and the page-level banner clears itself the moment a new
- * error lands and hides while the invite dialog is showing its own copy.
+ * dialog opened afterwards: the invite dialog and the remove confirmation
+ * each hold their own `SubmissionGate` over it, and the page-level banner
+ * clears itself the moment a new error lands and hides while either of them
+ * is showing its own copy.
  *
  * The roster's search and status filter are server-side: a debounced search
  * keystroke and an immediate status change both re-issue
@@ -189,6 +190,10 @@ export class OrganizationMembersPage {
     OrganizationPermissionService,
   );
 
+  /** Builds the per-surface claims on the store's one shared `mutationCallState`. */
+  private readonly submissionGates: SubmissionGateService =
+    inject<SubmissionGateService>(SubmissionGateService);
+
   /** The routed organization, identifying `app-organization-page-header`. */
   protected readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
@@ -228,8 +233,11 @@ export class OrganizationMembersPage {
   /** Whether the invite dialog is open. */
   protected readonly inviteDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether an invite was actually submitted in the current dialog session — scopes the error banner. */
-  protected readonly inviteSubmitted: WritableSignal<boolean> = signal<boolean>(false);
+  /** The invite dialog's claim on the shared mutation state, closing it once its own invite lands. */
+  private readonly inviteGate: SubmissionGate = this.submissionGates.create(
+    this.store.mutationCallState,
+    { onSuccess: (): void => this.inviteDialogVisible.set(false) },
+  );
 
   /** The member id the role-assignment dialog is currently open for, or `null` when closed. */
   protected readonly rolesDialogMemberId: WritableSignal<string | null> = signal<string | null>(
@@ -243,6 +251,17 @@ export class OrganizationMembersPage {
   /** The selected ids the toolbar asked to bulk-remove, pending confirmation. */
   protected readonly pendingBulkRemoveIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
+
+  /** The remove-confirm dialog's own claim, clearing its pending target once its own removal lands. */
+  private readonly removeGate: SubmissionGate = this.submissionGates.create(
+    this.store.mutationCallState,
+    {
+      onSuccess: (): void => {
+        this.pendingRemove.set(null);
+        this.pendingBulkRemoveIds.set(null);
+      },
+    },
+  );
 
   /** Whether the page-level action-error banner was dismissed for the error currently in state. */
   private readonly actionErrorDismissed: WritableSignal<boolean> = signal<boolean>(false);
@@ -460,20 +479,19 @@ export class OrganizationMembersPage {
   });
 
   /** The invite dialog's error banner, scoped to an invite actually attempted this session. */
-  protected readonly inviteServerError: Signal<StoreError | null> = computed<StoreError | null>(
-    () => (this.inviteSubmitted() ? this.store.mutationError() : null),
-  );
+  protected readonly inviteServerError: Signal<StoreError | null> = this.inviteGate.error;
 
   /**
    * Property actionError
    * @readonly
-   * @description A non-invite mutation's error (remove, resend, revoke, role toggle), shown as a page-level banner and hidden while the invite dialog is showing its own copy.
+   * @description A resend/revoke/role-toggle mutation's error, shown as a page-level banner and hidden while the invite dialog or the remove-confirm dialog is showing its own copy.
    * @access protected
    * @since 1.0.0
    * @type {Signal<StoreError | null>}
    */
   protected readonly actionError: Signal<StoreError | null> = computed<StoreError | null>(() => {
-    if (this.actionErrorDismissed() || this.inviteDialogVisible()) return null;
+    if (this.actionErrorDismissed() || this.inviteDialogVisible() || this.removeGate.isSubmitted())
+      return null;
 
     const state: CallState<null, StoreError> = this.store.mutationCallState();
 
@@ -484,6 +502,12 @@ export class OrganizationMembersPage {
   protected readonly removeDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.pendingRemove() !== null || this.pendingBulkRemoveIds() !== null ? 'open' : 'closed',
   );
+
+  /** Whether the remove-confirm dialog's own write is in flight — busy-disables its footer and blocks Escape/backdrop dismissal. */
+  protected readonly removeDialogBusy: Signal<boolean> = this.removeGate.isBusy;
+
+  /** The remove-confirm dialog's own error, scoped to a remove actually attempted this session — never a stale or unrelated mutation's failure. */
+  protected readonly removeDialogError: Signal<StoreError | null> = this.removeGate.error;
 
   /** The remove-confirm dialog's title, naming the count for a bulk removal. */
   protected readonly removeDialogTitle: Signal<string> = computed<string>(() => {
@@ -555,18 +579,6 @@ export class OrganizationMembersPage {
 
       untracked((): void => {
         if (status === 'error') this.actionErrorDismissed.set(false);
-      });
-    });
-
-    effect((): void => {
-      const submitted: boolean = this.inviteSubmitted();
-      const status: CallStatus = this.store.mutationCallState().status;
-
-      untracked((): void => {
-        if (submitted && status === 'success') {
-          this.inviteDialogVisible.set(false);
-          this.inviteSubmitted.set(false);
-        }
       });
     });
   }
@@ -677,7 +689,7 @@ export class OrganizationMembersPage {
    * @returns {void}
    */
   protected openInviteDialog(): void {
-    this.inviteSubmitted.set(false);
+    this.inviteGate.reset();
     this.inviteDialogVisible.set(true);
   }
 
@@ -691,7 +703,7 @@ export class OrganizationMembersPage {
    */
   protected onInviteDialogVisibleChange(visible: boolean): void {
     this.inviteDialogVisible.set(visible);
-    if (!visible) this.inviteSubmitted.set(false);
+    if (!visible) this.inviteGate.reset();
   }
 
   /**
@@ -703,7 +715,7 @@ export class OrganizationMembersPage {
    * @returns {void}
    */
   protected sendInvite(payload: InviteOrganizationMemberInput): void {
-    this.inviteSubmitted.set(true);
+    this.inviteGate.submit();
     this.store.invite({ organizationId: this.organizationId(), input: payload });
   }
 
@@ -767,6 +779,7 @@ export class OrganizationMembersPage {
    * @returns {void}
    */
   protected requestRemove(member: OrganizationMemberOutput): void {
+    this.removeGate.reset();
     this.pendingRemove.set(member);
   }
 
@@ -782,30 +795,40 @@ export class OrganizationMembersPage {
 
     if (ids.length === 0) return;
 
+    this.removeGate.reset();
     this.pendingBulkRemoveIds.set(ids);
   }
 
   /**
    * Method confirmRemove
-   * @description Sends the pending target(s) to the store and closes the dialog.
+   *
+   * @description
+   * Sends the pending target(s) to the store. The dialog stays open,
+   * busy-disabled, until `mutationCallState` settles — the constructor
+   * effect closes it on success; a failure surfaces inline via
+   * {@link removeDialogError} instead of closing under the operator.
+   *
    * @access protected
    * @since 1.0.0
    * @returns {void}
    */
   protected confirmRemove(): void {
     const single: OrganizationMemberOutput | null = this.pendingRemove();
+    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkRemoveIds();
+    if (single === null && bulkIds === null) return;
+
+    this.removeGate.submit();
+
     if (single) {
       this.store.removeMember({ organizationId: this.organizationId(), memberId: single.id });
+
+      return;
     }
 
-    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkRemoveIds();
     if (bulkIds) {
       this.store.removeMembers({ organizationId: this.organizationId(), memberIds: bulkIds });
       this.selectedIds.set(new Set<string>());
     }
-
-    this.pendingRemove.set(null);
-    this.pendingBulkRemoveIds.set(null);
   }
 
   /**
@@ -821,6 +844,7 @@ export class OrganizationMembersPage {
 
     this.pendingRemove.set(null);
     this.pendingBulkRemoveIds.set(null);
+    this.removeGate.reset();
   }
 
   /**

@@ -1089,6 +1089,10 @@
         <source>Channel settings</source>
         <target>Paramètres du canal</target>
       </trans-unit>
+      <trans-unit id="channels.editDialog.description" datatype="html">
+        <source> Rename the channel or move it under a different parent. </source>
+        <target> Renommez le canal ou déplacez-le sous un autre canal parent. </target>
+      </trans-unit>
       <trans-unit id="channels.editDialog.name" datatype="html">
         <source>Name</source>
         <target>Nom</target>
@@ -1188,6 +1192,10 @@
       <trans-unit id="channels.participants.title" datatype="html">
         <source>Participants</source>
         <target>Participants</target>
+      </trans-unit>
+      <trans-unit id="channels.participants.sheetDescription" datatype="html">
+        <source> See who's in this channel, and add or remove someone if you manage it. </source>
+        <target> Voyez qui fait partie de ce canal, et ajoutez ou retirez quelqu'un si vous le gérez. </target>
       </trans-unit>
       <trans-unit id="channels.participants.emptyTitle" datatype="html">
         <source>No participants</source>

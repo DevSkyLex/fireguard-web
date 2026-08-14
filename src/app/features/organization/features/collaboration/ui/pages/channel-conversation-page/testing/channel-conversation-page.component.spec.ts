@@ -1,8 +1,21 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import {
+  computed,
+  provideZonelessChangeDetection,
+  signal,
+  type Signal,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
+import {
+  errorCallState,
+  idleCallState,
+  toStoreError,
+  type CallState,
+  type StoreError,
+} from '@core/request-state';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type { ChannelOutput } from '@features/organization/features/collaboration/models';
 import {
@@ -62,6 +75,9 @@ describe('ChannelConversationPage', () => {
   let channelsUpdate: ReturnType<typeof vi.fn>;
   let channelsRemove: ReturnType<typeof vi.fn>;
   let channelsSetParent: ReturnType<typeof vi.fn>;
+  let channelsMutationCallState: WritableSignal<CallState>;
+  let channelsIsMutating: Signal<boolean>;
+  let channelsMutationError: Signal<StoreError | null>;
   let participants: WritableSignal<
     readonly { memberId: string; role?: string; source: string; addedAt: string }[]
   >;
@@ -101,6 +117,9 @@ describe('ChannelConversationPage', () => {
             update: channelsUpdate,
             remove: channelsRemove,
             setParent: channelsSetParent,
+            mutationCallState: channelsMutationCallState,
+            isMutating: channelsIsMutating,
+            mutationError: channelsMutationError,
           },
         },
         { provide: ConversationService, useValue: { favorite, unfavorite } },
@@ -171,6 +190,9 @@ describe('ChannelConversationPage', () => {
     channelsUpdate = vi.fn();
     channelsRemove = vi.fn();
     channelsSetParent = vi.fn();
+    channelsMutationCallState = signal<CallState>(idleCallState());
+    channelsIsMutating = computed(() => channelsMutationCallState().status === 'pending');
+    channelsMutationError = computed(() => channelsMutationCallState().error);
     participants = signal([]);
     participantsLoad = vi.fn();
     participantsReset = vi.fn();
@@ -316,6 +338,35 @@ describe('ChannelConversationPage', () => {
     fixture.componentInstance['confirmDelete']();
 
     expect(channelsRemove).toHaveBeenCalledWith('channel-1');
+  });
+
+  it('should busy-disable the delete confirmation while the confirmed write is in flight', async () => {
+    await createPage();
+
+    fixture.componentInstance['requestDelete']();
+    expect(fixture.componentInstance['deleteDialogBusy']()).toBe(false);
+
+    fixture.componentInstance['confirmDelete']();
+    channelsMutationCallState.set({ status: 'pending', data: null, error: null });
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['deleteDialogBusy']()).toBe(true);
+  });
+
+  it('should surface the delete write error inline without attributing an unrelated mutation failure', async () => {
+    await createPage();
+
+    channelsMutationCallState.set(errorCallState(toStoreError(new Error('stale'))));
+    await fixture.whenStable();
+    expect(fixture.componentInstance['deleteDialogError']()).toBeNull();
+
+    fixture.componentInstance['requestDelete']();
+    fixture.componentInstance['confirmDelete']();
+    channelsMutationCallState.set(errorCallState(toStoreError(new Error('channel is not empty'))));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['deleteDialogError']()).not.toBeNull();
+    expect(fixture.componentInstance['deleteDialogBusy']()).toBe(false);
   });
 
   it('should navigate back to the channel list once this exact channel reports deleted', async () => {

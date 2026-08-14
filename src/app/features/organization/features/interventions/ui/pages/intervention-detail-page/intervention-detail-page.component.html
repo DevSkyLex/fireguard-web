@@ -575,31 +575,12 @@
 />
 
 @if (canDiscuss()) {
-  <hlm-sheet
-    side="right"
-    [state]="discussionSheetVisible() ? 'open' : 'closed'"
-    (stateChanged)="discussionSheetVisible.set($event === 'open')"
-  >
-    <hlm-sheet-content
-      *hlmSheetPortal
-      id="intervention-discussion-sheet"
-      class="flex flex-col overflow-hidden sm:max-w-xl!"
-    >
-      <hlm-sheet-header>
-        <h2 hlmSheetTitle i18n="@@intervention.discussion.title">Discussion</h2>
-        <p hlmSheetDescription i18n="@@intervention.discussion.subtitle">
-          Live team messaging about this intervention
-        </p>
-      </hlm-sheet-header>
-
-      <app-subject-discussion
-        subjectType="intervention"
-        [subjectId]="interventionId()"
-        [organizationId]="organizationId()"
-        [active]="discussionSheetVisible()"
-      />
-    </hlm-sheet-content>
-  </hlm-sheet>
+  <app-intervention-discussion-sheet
+    [visible]="discussionSheetVisible()"
+    [organizationId]="organizationId()"
+    [interventionId]="interventionId()"
+    (visibleChange)="discussionSheetVisible.set($event)"
+  />
 }
 
 <app-intervention-confirm-dialog
@@ -621,7 +602,11 @@
   [disableClose]="publishing()"
   (stateChanged)="onPublishDialogStateChanged($event)"
 >
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-detail-publish-dialog">
+  <hlm-alert-dialog-content
+    class="sm:max-w-lg!"
+    *hlmAlertDialogPortal
+    data-testid="intervention-detail-publish-dialog"
+  >
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@intervention.publish.header">Publish intervention</h2>
       <p hlmAlertDialogDescription i18n="@@intervention.publish.stake">
@@ -698,10 +683,24 @@
     }
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel [disabled]="publishing()" i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="publishing() ? 'true' : null"
+        [attr.aria-busy]="publishing() ? 'true' : null"
+        [class.opacity-50]="publishing()"
+        [class.pointer-events-none]="publishing()"
+        (click)="publishing() || onPublishDialogStateChanged('closed')"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
       @if (!publicationTimedOut()) {
         <button
           hlmAlertDialogAction
+          class="max-sm:min-h-11"
           data-testid="intervention-detail-publish-confirm"
           [attr.aria-disabled]="publishing() ? 'true' : null"
           [attr.aria-busy]="publishing() ? 'true' : null"

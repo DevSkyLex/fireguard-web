@@ -103,7 +103,11 @@
   }
 </div>
 
-<hlm-alert-dialog [state]="cancelDialogState()" (stateChanged)="onCancelDialogStateChanged($event)">
+<hlm-alert-dialog
+  [state]="cancelDialogState()"
+  [disableClose]="store.cancelCallState().status === 'pending'"
+  (stateChanged)="onCancelDialogStateChanged($event)"
+>
   <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="inspection-cancel-dialog">
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@inspection.detail.cancelConfirmTitle">Cancel inspection?</h2>
@@ -112,13 +116,32 @@
       </p>
     </hlm-alert-dialog-header>
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@inspection.detail.cancelConfirmDismiss">Keep it</button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="store.cancelCallState().status === 'pending' ? 'true' : null"
+        [attr.aria-busy]="store.cancelCallState().status === 'pending' ? 'true' : null"
+        [class.opacity-50]="store.cancelCallState().status === 'pending'"
+        [class.pointer-events-none]="store.cancelCallState().status === 'pending'"
+        (click)="
+          store.cancelCallState().status === 'pending' || onCancelDialogStateChanged('closed')
+        "
+        i18n="@@inspection.detail.cancelConfirmDismiss"
+      >
+        Keep it
+      </button>
       <button
         hlmAlertDialogAction
         variant="destructive"
+        class="max-sm:min-h-11"
         data-testid="inspection-cancel-confirm"
-        [disabled]="store.cancelCallState().status === 'pending'"
-        (click)="confirmCancel()"
+        [attr.aria-disabled]="store.cancelCallState().status === 'pending' ? 'true' : null"
+        [attr.aria-busy]="store.cancelCallState().status === 'pending' ? 'true' : null"
+        [class.opacity-50]="store.cancelCallState().status === 'pending'"
+        [class.pointer-events-none]="store.cancelCallState().status === 'pending'"
+        (click)="store.cancelCallState().status === 'pending' || confirmCancel()"
         i18n="@@inspection.detail.cancelConfirmAction"
       >
         Cancel inspection

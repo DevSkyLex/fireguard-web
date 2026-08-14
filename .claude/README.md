@@ -198,12 +198,16 @@ installed and enabled at **both** scopes: `enabledPlugins` here _and_ in the roo
 `.claude/settings.json`. Marketplace entry: `fireguard-web-lsp`, source
 `./fireguard-sso-web/.claude/lsp`.
 
-**Paths are absolute, on purpose.** `${CLAUDE_PLUGIN_ROOT}` points into
-`~/.claude/plugins/cache/…`, a _copy_ of this directory, so it cannot reach `node_modules/`;
-and `${CLAUDE_PROJECT_DIR}` is `G:\Projets\fireguard` from the root but
-`…\fireguard-sso-web` from here — no single expansion covers both. Absolute paths do, at the
-cost of being machine-specific: **moving the workspace means editing `lsp/.lsp.json`** (and
-bumping its `version`, like any plugin change).
+**No path in `.lsp.json` is machine-specific** — `lsp/start.mjs` resolves everything at
+runtime, and it exists because neither placeholder can do the job: `${CLAUDE_PLUGIN_ROOT}`
+points into `~/.claude/plugins/cache/…`, a _copy_ of this directory that cannot reach
+`node_modules/`, and `${CLAUDE_PROJECT_DIR}` is `G:\Projets\fireguard` from the monorepo root
+but `…\fireguard-sso-web` from here. The launcher walks up from both until it finds
+`angular.json`, spawns the server out of that app's own `node_modules` with the app as cwd,
+and rewrites `rootUri` / `rootPath` / `workspaceFolders` in the single `initialize` request —
+which is exactly what a hardcoded `workspaceFolder` used to do. Everything after that one
+message is piped through unparsed, so the proxy cannot corrupt a running session; if the app
+or the server binary is missing it exits with a one-line reason on stderr rather than hanging.
 
 **The TypeScript server runs with `preferences.disableSuggestions`.** Measured on 15
 committed files, tsserver produced exactly two diagnostics and both were hint-level
@@ -224,8 +228,9 @@ therefore backs up nowhere. On a fresh machine, after `npm ci`:
    `{"name": "fireguard-web-lsp", "source": "./fireguard-sso-web/.claude/lsp"}`;
 2. run `claude plugin install fireguard-web-lsp@fireguard --scope project` **twice**, once
    from the monorepo root and once from this app — each scope pins its own version, so an
-   update later also has to be run from both;
-3. fix the absolute paths in `lsp/.lsp.json` if the workspace moved.
+   update later also has to be run from both.
+
+Nothing else — moving or renaming the workspace needs no edit, the launcher finds the app.
 
 Verify with `claude --debug-file dbg.log -p ok`, then grep the log: a healthy session logs
 `Loaded 2 LSP server(s) from plugin: fireguard-web-lsp` and a `Registered diagnostics

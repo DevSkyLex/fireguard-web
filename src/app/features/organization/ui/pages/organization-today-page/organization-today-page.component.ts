@@ -6,14 +6,15 @@ import {
   lucideBellRing,
   lucideChevronRight,
   lucideCircleCheck,
-  lucideClipboardCheck,
   lucideCloudUpload,
-  lucideCompass,
   lucideEye,
   lucideMailWarning,
+  lucideMinus,
   lucideOctagonAlert,
   lucidePlus,
   lucideRefreshCw,
+  lucideTrendingDown,
+  lucideTrendingUp,
   lucideTriangleAlert,
   lucideUndo2,
   lucideWrench,
@@ -37,7 +38,6 @@ import { OrganizationTodayStore } from '@features/organization/state/organizatio
 import {
   OrganizationPageHeader,
   OrganizationTodayQueue,
-  StatTile,
   type StatTileDelta,
   type StatTileDeltaDirection,
   type StatTileLink,
@@ -50,30 +50,18 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
-import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { ORGANIZATION_DASHBOARD_ALERT_TAG_ICON_CLASS } from './constants/organization-dashboard-alert-tag-icon-class.constants';
 import { resolveOrganizationDashboardAlertTag } from './models';
 
 /**
- * Constant MILLISECONDS_PER_DAY
- *
- * @description
- * Divisor turning a due-date gap into whole days.
- *
- * @since 1.0.0
- */
-const MILLISECONDS_PER_DAY = 86_400_000;
-
-/**
  * Type OrganizationTodayKpiTile
  *
  * @description
- * View-model for one `app-stat-tile` in the page's KPI row: a fixed
- * near-term snapshot, so most tiles carry no comparison delta — only
- * `inspections-completed` reads one, because it is the one tile whose value
+ * View-model for one cell of the page's inline KPI strip: a fixed near-term
+ * snapshot, so most cells carry no comparison delta — only
+ * `inspections-completed` reads one, because it is the one cell whose value
  * matches a `DashboardStore` comparison entry one for one (`FEATURE.md`).
  *
  * @since 2.1.0
@@ -82,7 +70,6 @@ type OrganizationTodayKpiTile = {
   readonly id: string;
   readonly label: string;
   readonly value: string | number;
-  readonly icon: string;
   readonly link: StatTileLink | null;
   readonly delta: StatTileDelta | null;
 };
@@ -112,7 +99,7 @@ type OrganizationTodayAlertRow = {
  * @description
  * Landing route of an organization. It answers one question — what needs me? —
  * with named queues holding real interventions: past due, sent back, awaiting
- * review, and waiting to sync. Above the queues, a KPI snapshot and the
+ * review, and waiting to sync. Above the queues, a quiet KPI strip and the
  * backend's alert feed (`DashboardStore`) give a fixed near-term read of the
  * organization; a "Recently updated" list closes the page with what changed
  * lately. Inventory counts and trend charts stay on the Statistics page.
@@ -124,16 +111,20 @@ type OrganizationTodayAlertRow = {
  * rather than surfacing a second error state; the work queues below are the
  * page's primary content and stay usable regardless.
  *
- * Below the header and the KPI row, a two-column layout pairs the work
- * queues (the primary column) with a rail holding the alert strip and the
- * "Recently updated" card, collapsing to one stacked column under `lg`. The
- * four named queues are composed inside one "Your work queues" card, each
- * behind a page-owned row (icon, label, count badge, and — for the three
- * collection-backed queues — a "see all" action); `OrganizationTodayQueue`
- * itself renders in `embedded` mode there, so an empty queue still shows a
- * visible "all clear" row rather than disappearing.
+ * Below the header, the KPI strip is a single row of label/value pairs
+ * (`text-base font-semibold`, never the 24px reserved for the page title) so
+ * it reads as a snapshot rather than a second headline. A two-column layout
+ * then pairs the work queues (the primary column) with a rail holding the
+ * alert strip and the "Recently updated" list, collapsing to one stacked
+ * column under `lg`. The four named queues render as one borderless "Your
+ * work queues" section: a divider list where each row (icon, label, count) is
+ * itself the link to the deep-linked interventions view — chrome comes from
+ * rhythm, not from a card per queue. The unsynced queue is the one exception:
+ * its content is local-only and reachable nowhere else, so its row stays
+ * un-linked and keeps `OrganizationTodayQueue` rendered in `embedded` mode
+ * underneath it as the page's one remaining in-page preview.
  *
- * @version 2.1.0
+ * @version 3.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -148,15 +139,12 @@ type OrganizationTodayAlertRow = {
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarImage,
-    HlmBadge,
     HlmButton,
     HlmSkeleton,
     InterventionTag,
     OrganizationPageHeader,
     OrganizationTodayQueue,
-    StatTile,
     ...HlmAlertImports,
-    ...HlmCardImports,
   ],
   providers: [
     DashboardStore,
@@ -165,14 +153,15 @@ type OrganizationTodayAlertRow = {
       lucideBellRing,
       lucideChevronRight,
       lucideCircleCheck,
-      lucideClipboardCheck,
       lucideCloudUpload,
-      lucideCompass,
       lucideEye,
       lucideMailWarning,
+      lucideMinus,
       lucideOctagonAlert,
       lucidePlus,
       lucideRefreshCw,
+      lucideTrendingDown,
+      lucideTrendingUp,
       lucideTriangleAlert,
       lucideUndo2,
       lucideWrench,
@@ -348,33 +337,6 @@ export class OrganizationTodayPage {
   );
 
   /**
-   * Property overdueNotes
-   * @readonly
-   *
-   * @description
-   * Secondary line of the overdue queue: how late each intervention is.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<Readonly<Record<string, string>>>}
-   */
-  protected readonly overdueNotes: Signal<Readonly<Record<string, string>>> = computed(
-    (): Readonly<Record<string, string>> => {
-      const notes: Record<string, string> = {};
-
-      for (const intervention of this.store.overdue().items) {
-        const days: number | null = this.daysLate(intervention.dueAt);
-        if (days === null) continue;
-
-        notes[intervention.id] = $localize`:@@org.today.overdueBy:${days}:days: days late`;
-      }
-
-      return notes;
-    },
-  );
-
-  /**
    * Property unsyncedNotes
    * @readonly
    *
@@ -459,7 +421,6 @@ export class OrganizationTodayPage {
         label: $localize`:@@org.today.kpi.openInterventions:Open interventions`,
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'interventions', 'open') ?? '—',
-        icon: 'lucideCompass',
         link: interventionsLink,
         delta: null,
       });
@@ -471,7 +432,6 @@ export class OrganizationTodayPage {
         label: $localize`:@@org.today.kpi.openNonConformities:Open non-conformities`,
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'nonConformities', 'open') ?? '—',
-        icon: 'lucideTriangleAlert',
         link: inspectionsLink,
         delta: null,
       },
@@ -480,7 +440,6 @@ export class OrganizationTodayPage {
         label: $localize`:@@org.today.kpi.inspectionsCompleted:Inspections completed`,
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'inspections', 'closed') ?? '—',
-        icon: 'lucideClipboardCheck',
         link: inspectionsLink,
         delta: this.toComparisonDelta(this.dashboardStore.inspectionsComparison(), true),
       },
@@ -490,7 +449,6 @@ export class OrganizationTodayPage {
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'equipment', 'underMaintenance') ??
           '—',
-        icon: 'lucideWrench',
         link: equipmentsLink,
         delta: null,
       },
@@ -604,35 +562,6 @@ export class OrganizationTodayPage {
   }
 
   /**
-   * Method openInterventions
-   * @method openInterventions
-   *
-   * @description
-   * Opens the full intervention list, optionally deep-linked into the
-   * narrowing that reproduces one of this page's own queues — the exact
-   * query params `serializeInterventionListFilters` writes to the URL
-   * (`status`, `due`), so the list opens already filtered instead of asking
-   * the operator to re-apply the same narrowing by hand. Omitted for the
-   * unsynced queue, which the list has no server-side filter for.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {Readonly<Record<string, string>>} [queryParams] - The list's own
-   * filter query params reproducing this queue.
-   *
-   * @returns {void}
-   */
-  protected openInterventions(queryParams?: Readonly<Record<string, string>>): void {
-    const organizationId: string | null = this.organizationContext.selectedOrganizationId();
-    if (organizationId === null) return;
-
-    void this.router.navigate(['/organizations', organizationId, 'interventions'], {
-      queryParams,
-    });
-  }
-
-  /**
    * Method startIntervention
    * @method startIntervention
    *
@@ -677,33 +606,76 @@ export class OrganizationTodayPage {
       ? getOrganizationInitials(intervention.responsibleName)
       : '';
   }
+
+  /**
+   * Method kpiDeltaIcon
+   * @method kpiDeltaIcon
+   *
+   * @description
+   * The arrow matching a KPI delta's literal direction — never its sentiment.
+   * Mirrors `StatTile.deltaIcon`; not shared, since the strip renders its own
+   * compact delta rather than composing `app-stat-tile` (`ARCHITECTURE.md`
+   * rule of three).
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {StatTileDelta} delta - The KPI cell's delta.
+   *
+   * @returns {string} A registered lucide icon name.
+   */
+  protected kpiDeltaIcon(delta: StatTileDelta): string {
+    if (delta.direction === 'up') return 'lucideTrendingUp';
+    if (delta.direction === 'down') return 'lucideTrendingDown';
+
+    return 'lucideMinus';
+  }
+
+  /**
+   * Method kpiDeltaGood
+   * @method kpiDeltaGood
+   *
+   * @description
+   * Whether a KPI delta's direction is the desirable one, `null` when flat.
+   * Drives the icon's foreground-vs-muted weight — the only tone the strip
+   * spends on a trend, chroma being reserved for status glyphs (`DESIGN.md`).
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {StatTileDelta} delta - The KPI cell's delta.
+   *
+   * @returns {boolean | null} Whether the direction is desirable, or `null` when flat.
+   */
+  protected kpiDeltaGood(delta: StatTileDelta): boolean | null {
+    if (delta.direction === 'flat') return null;
+
+    return (delta.direction === 'up') === delta.positiveIsGood;
+  }
+
+  /**
+   * Method kpiDeltaText
+   * @method kpiDeltaText
+   *
+   * @description
+   * The signed magnitude shown beside a KPI delta's arrow.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {StatTileDelta} delta - The KPI cell's delta.
+   *
+   * @returns {string} The signed magnitude.
+   */
+  protected kpiDeltaText(delta: StatTileDelta): string {
+    if (delta.direction === 'up') return `+${delta.value}`;
+    if (delta.direction === 'down') return `−${delta.value}`;
+
+    return `${delta.value}`;
+  }
   //#endregion
 
   //#region Internals
-  /**
-   * Method daysLate
-   * @method daysLate
-   *
-   * @description
-   * Whole days between a due date and now, or `null` when there is no date or
-   * the date is unparseable.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {string | null} dueAt - The intervention's due date.
-   *
-   * @returns {number | null} Days late, floored at one.
-   */
-  private daysLate(dueAt: string | null): number | null {
-    if (dueAt === null) return null;
-
-    const due: number = Date.parse(dueAt);
-    if (Number.isNaN(due)) return null;
-
-    return Math.max(1, Math.floor((Date.now() - due) / MILLISECONDS_PER_DAY));
-  }
-
   /**
    * Method formatAlertMessage
    * @method formatAlertMessage

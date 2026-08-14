@@ -159,33 +159,10 @@ describe('OrganizationTodayPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Acme Corp');
   });
 
-  it('should compute how late an overdue intervention is', async () => {
-    const threeDaysAgo = new Date(Date.now() - 3 * 86_400_000).toISOString();
-    overdue.set({ key: 'overdue', total: 1, items: [intervention('i-1', threeDaysAgo)] });
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.textContent).toContain('3 days late');
-  });
-
-  it('should leave an intervention without a due date unannotated', async () => {
-    overdue.set({ key: 'overdue', total: 1, items: [intervention('i-1', null)] });
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.textContent).not.toContain('days late');
-  });
-
   it('should open one intervention under the routed organization', () => {
     fixture.componentInstance['openIntervention'](intervention('i-1', null));
 
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'i-1']);
-  });
-
-  it('should open the full intervention list', () => {
-    fixture.componentInstance['openInterventions']();
-
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions'], {
-      queryParams: undefined,
-    });
   });
 
   it('should start an intervention with the drawer already open', () => {
@@ -227,6 +204,54 @@ describe('OrganizationTodayPage', () => {
     expect(text).toContain('3');
     expect(text).toContain('12');
     expect(text).toContain('2');
+  });
+
+  it('should render the KPI strip as label/value pairs sized as a snapshot, not the page headline', async () => {
+    dashboardQueryData.set({
+      overview: {
+        interventions: { summary: [{ key: 'open', value: 5 }] },
+        nonConformities: { summary: [{ key: 'open', value: 3 }] },
+        inspections: { summary: [{ key: 'closed', value: 12 }] },
+        equipment: { summary: [{ key: 'underMaintenance', value: 2 }] },
+      },
+    } as unknown as OrganizationDashboardOutput);
+    await fixture.whenStable();
+
+    for (const id of [
+      'open-interventions',
+      'open-non-conformities',
+      'inspections-completed',
+      'equipment-under-maintenance',
+    ]) {
+      expect(
+        fixture.nativeElement.querySelector(`[data-testid="org-today-kpi-${id}"]`),
+      ).not.toBeNull();
+    }
+
+    const tile: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-kpi-open-interventions"]',
+    );
+    const value: HTMLElement | null | undefined = tile?.querySelector('.tabular-nums');
+
+    expect(tile?.textContent).toContain('Open interventions');
+    expect(value?.querySelector('.sr-only')?.textContent).toContain('Open interventions');
+    expect(value?.textContent?.replace('Open interventions:', '').trim()).toBe('5');
+    expect(value?.className).toContain('tabular-nums');
+    expect(value?.className).not.toContain('text-2xl');
+  });
+
+  it('should link the equipment-under-maintenance KPI tile to the equipments route', async () => {
+    dashboardQueryData.set({
+      overview: { equipment: { summary: [{ key: 'underMaintenance', value: 2 }] } },
+    } as unknown as OrganizationDashboardOutput);
+    await fixture.whenStable();
+
+    const value: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-kpi-equipment-under-maintenance"] .tabular-nums',
+    );
+
+    expect(value?.tagName).toBe('A');
+    expect(value?.getAttribute('href')).toBe('/organizations/org-1/equipments');
   });
 
   it('should attach the matching comparison delta only to the inspections-completed tile', async () => {
@@ -324,16 +349,67 @@ describe('OrganizationTodayPage', () => {
     expect(card?.querySelector('[data-testid="org-today-queue-overdue"] ng-icon')).not.toBeNull();
   });
 
-  it('should keep an empty queue visible with an all-clear row instead of hiding it', async () => {
-    overdue.set({ key: 'overdue', total: 1, items: [intervention('i-1', null)] });
-    await fixture.whenStable();
-
-    const changesRequestedQueue: HTMLElement | null = fixture.nativeElement.querySelector(
+  it('should keep an empty linked queue visible as a link showing zero, not an embedded preview', async () => {
+    const row: HTMLElement | null = fixture.nativeElement.querySelector(
       '[data-testid="org-today-queue-changes-requested"]',
     );
+    const link: HTMLElement | null | undefined = row?.querySelector('a');
 
-    expect(changesRequestedQueue).not.toBeNull();
-    expect(changesRequestedQueue?.textContent).toContain('All clear');
+    expect(link).not.toBeNull();
+    expect(link?.textContent).toContain('0');
+    expect(row?.querySelector('app-organization-today-queue')).toBeNull();
+  });
+
+  it('should render no embedded queue preview for a linked queue even when it has items', async () => {
+    overdue.set({ key: 'overdue', total: 3, items: [intervention('i-1', null)] });
+    await fixture.whenStable();
+
+    const row: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-queue-overdue"]',
+    );
+
+    expect(row?.querySelector('app-organization-today-queue')).toBeNull();
+  });
+
+  describe('queue row navigation', () => {
+    it('should link the overdue row to the interventions list filtered to overdue', () => {
+      const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="org-today-queue-overdue"] a',
+      );
+
+      expect(link?.getAttribute('href')).toBe('/organizations/org-1/interventions?due=overdue');
+    });
+
+    it('should link the changes-requested row to the interventions list filtered to changes requested', () => {
+      const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="org-today-queue-changes-requested"] a',
+      );
+
+      expect(link?.getAttribute('href')).toBe(
+        '/organizations/org-1/interventions?status=changes_requested',
+      );
+    });
+
+    it('should link the awaiting-review row to the interventions list filtered to submitted', () => {
+      const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="org-today-queue-awaiting-review"] a',
+      );
+
+      expect(link?.getAttribute('href')).toBe(
+        '/organizations/org-1/interventions?status=submitted',
+      );
+    });
+
+    it('should render the unsynced row as a plain, un-linked row that still mounts its embedded queue preview', () => {
+      const row: HTMLElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="org-today-queue-unsynced"]',
+      );
+      const summary: Element | null | undefined = row?.firstElementChild;
+
+      expect(row?.querySelector(':scope > a')).toBeNull();
+      expect(summary?.querySelectorAll('ng-icon').length).toBe(1);
+      expect(row?.querySelector('app-organization-today-queue')).not.toBeNull();
+    });
   });
 
   describe('see all navigation', () => {

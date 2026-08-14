@@ -50,7 +50,6 @@
   },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
-    "fireguard-web-lsp@fireguard": true,
-    "typescript-lsp@claude-plugins-official": true
+    "fireguard-web-lsp@fireguard": true
   }
 }

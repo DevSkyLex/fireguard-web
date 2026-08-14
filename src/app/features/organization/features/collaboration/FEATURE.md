@@ -288,6 +288,10 @@ Currently consumed by `features/interventions` (its own `FEATURE.md` records the
   `messaging.read` does not imply.
 - Consumes `@features/organization/models` for `ORGANIZATION_PERMISSION` and `MemberDirectoryEntry`,
   and `@features/organization/http/guards` for `organizationPermissionGuard`.
+- Consumes `@features/organization/services` for `SubmissionGateService`. `ChannelsStore` shares one
+  `mutationCallState` across rename, move and delete, so `ChannelConversationPage`'s delete
+  confirmation holds a gate over it rather than reading `isMutating()`/`mutationError()` raw — a
+  rename that failed a moment earlier must not surface as the delete's own error.
 - May be consumed by a sibling organization subfeature through `SubjectDiscussion`
   (`ui/components`, see Published Contracts above) for its own record's live thread —
   `features/interventions` is the first such consumer. A consumer supplies the subject's identity

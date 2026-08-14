@@ -19,17 +19,9 @@
       "Bash(git log:*)",
       "Bash(git show:*)"
     ],
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)"
-    ]
+    "deny": ["Read(./.env)", "Read(./.env.*)"]
   },
-  "enabledMcpjsonServers": [
-    "angular",
-    "spartan",
-    "playwright",
-    "context7"
-  ],
+  "enabledMcpjsonServers": ["angular", "spartan", "playwright", "context7"],
   "hooks": {
     "PreToolUse": [
       {

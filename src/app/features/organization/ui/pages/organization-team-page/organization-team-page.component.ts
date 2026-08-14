@@ -1,14 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -20,6 +23,7 @@ import {
   lucideShieldPlus,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -28,14 +32,10 @@ import type {
 } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
-  ORGANIZATION_CONTEXT_PORT,
-  type OrganizationContextPort,
-} from '@features/organization/ports';
-import {
   OrganizationTeamStore,
   type OrganizationTeamStoreType,
 } from '@features/organization/state/organization-team';
-import { OrganizationPageHeader, StatTile } from '@features/organization/ui/components';
+import { StatTile } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
@@ -87,7 +87,12 @@ type OrganizationTeamKpiTile = {
  * to close the right dialog on success and show an error only where it
  * belongs, rather than trusting a bare "last call failed" signal.
  *
- * @version 1.1.0
+ * Its title lives in the shell breadcrumb; `app-organization-page-header`
+ * is not rendered here (the org identity row stays on the Today landing
+ * page only). "New role" registers on the shell header through
+ * `PageActionsService`.
+ *
+ * @version 1.2.0
  *
  * @example
  * ```typescript
@@ -101,7 +106,6 @@ type OrganizationTeamKpiTile = {
   imports: [
     NgIcon,
     ErrorState,
-    OrganizationPageHeader,
     OrganizationRoleCreateDialog,
     OrganizationRoleGrid,
     OrganizationRolePermissionsSheet,
@@ -140,15 +144,12 @@ export class OrganizationTeamPage {
     OrganizationPermissionService,
   );
 
-  /** The routed organization, identifying `app-organization-page-header`. */
-  protected readonly organizationContext: OrganizationContextPort =
-    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The page's heading. */
-  protected readonly pageTitle: string = $localize`:@@org.team.title:Roles & permissions`;
-
-  /** The page's subheading. */
-  protected readonly pageSubtitle: string = $localize`:@@org.team.subtitle:Every role defines what a member can see and do in this organization.`;
+  /** The "New role" button, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
 
   /** Whether the acting member may create, edit or delete a custom role. */
   protected readonly canManage: Signal<boolean> = computed<boolean>(() =>
@@ -268,16 +269,19 @@ export class OrganizationTeamPage {
    * @constructor
    *
    * @description
-   * Loads this organization's roles and permission catalog once, and closes
+   * Loads this organization's roles and permission catalog once, closes
    * whichever of the create dialog or the delete confirmation is open once
-   * its write settles successfully. The permission editor is deliberately
-   * left open on success — an operator toggling several permissions in a
-   * row should not have the panel close under them after the first one.
+   * its write settles successfully — the permission editor is deliberately
+   * left open on success, an operator toggling several permissions in a row
+   * should not have the panel close under them after the first one — and
+   * registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
 

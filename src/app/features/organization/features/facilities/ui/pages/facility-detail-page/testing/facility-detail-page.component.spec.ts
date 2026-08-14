@@ -1,6 +1,16 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -20,6 +30,28 @@ import type { InspectionResult } from '@features/organization/features/inspectio
 import { FacilityDetailPage } from '../facility-detail-page.component';
 
 const inBody = (id: string): HTMLElement | null => document.querySelector(`[data-testid="${id}"]`);
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `InterventionsPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
 
 const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
   ({
@@ -133,10 +165,9 @@ describe('FacilityDetailPage', () => {
     expect(root().querySelector('[role="status"]')).not.toBeNull();
   });
 
-  it('should show the facility name, status, code and address once resolved', async () => {
+  it('should show the facility status, code and address once resolved', async () => {
     await createPage();
 
-    expect(root().textContent).toContain('Headquarters');
     expect(root().textContent).toContain('HQ-01');
     expect(root().textContent).toContain('1 Main Street');
     expect(root().querySelector('app-facility-status-tag')).not.toBeNull();
@@ -294,13 +325,17 @@ describe('FacilityDetailPage', () => {
       hasPermission.mockReturnValue(false);
       await createPage();
 
-      expect(root().querySelector('[data-testid="facility-detail-delete"]')).toBeNull();
+      expect(
+        renderPageActions().querySelector('[data-testid="facility-detail-delete"]'),
+      ).toBeNull();
     });
 
     it('should open the confirmation before deleting, and delete only once confirmed', async () => {
       await createPage();
 
-      byTestId('facility-detail-delete')?.dispatchEvent(new MouseEvent('click'));
+      renderPageActions()
+        .querySelector('[data-testid="facility-detail-delete"]')
+        ?.dispatchEvent(new MouseEvent('click'));
       await fixture.whenStable();
 
       expect(remove).not.toHaveBeenCalled();

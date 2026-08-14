@@ -1,12 +1,18 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  Component,
   computed,
+  input,
   provideZonelessChangeDetection,
   signal,
+  type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -26,6 +32,28 @@ import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationMembersStore } from '@features/organization/state/organization-members';
 import { OrganizationMembersPage } from '../organization-members-page.component';
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `InterventionsPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
 
 function member(overrides: Partial<OrganizationMemberOutput> = {}): OrganizationMemberOutput {
   return {
@@ -210,12 +238,16 @@ describe('OrganizationMembersPage', () => {
 
   it('should show Invite only to a member holding members.manage', async () => {
     await createPage();
-    expect(byTestId('organization-members-invite')).not.toBeNull();
+    expect(
+      renderPageActions().querySelector('[data-testid="organization-members-invite"]'),
+    ).not.toBeNull();
 
     permissions.set([ORGANIZATION_PERMISSION.MEMBERS_READ]);
     await fixture.whenStable();
 
-    expect(byTestId('organization-members-invite')).toBeNull();
+    expect(
+      renderPageActions().querySelector('[data-testid="organization-members-invite"]'),
+    ).toBeNull();
   });
 
   it('should send the invite payload scoped to the routed organization and close the dialog on success', async () => {

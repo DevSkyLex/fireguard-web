@@ -1,13 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   effect,
   inject,
   input,
   untracked,
+  viewChild,
   type InputSignal,
+  type Signal,
+  type TemplateRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import type {
   CreateInspectionInput,
@@ -35,7 +40,10 @@ import { InspectionCreateForm } from '../../forms/inspection-create-form';
  * in place, on the created record (`FEATURE.md` "The record is the edit
  * surface").
  *
- * @version 1.0.0
+ * Its title lives in the shell breadcrumb (the route's static title); "Back
+ * to inspections" registers on the shell header through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -71,6 +79,13 @@ export class InspectionCreatePage {
 
   /** Router used to open the new record once it exists. */
   private readonly router: Router = inject(Router);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "Back to inspections" link, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -79,13 +94,15 @@ export class InspectionCreatePage {
    * @constructor
    *
    * @description
-   * Loads the equipment picker's options and navigates to the created
-   * record once the write settles successfully.
+   * Loads the equipment picker's options, navigates to the created record
+   * once the write settles successfully, and registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
 

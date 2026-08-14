@@ -1,23 +1,4 @@
-<div id="organization-team" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <app-organization-page-header
-    [organization]="organizationContext.selectedOrganization()"
-    [title]="pageTitle"
-    [subtitle]="pageSubtitle"
-  >
-    @if (canManage()) {
-      <button
-        hlmBtn
-        type="button"
-        class="max-sm:min-h-11"
-        data-testid="organization-team-create-role"
-        (click)="openCreateDialog()"
-      >
-        <ng-icon name="lucidePlus" aria-hidden="true" />
-        <span i18n="@@org.team.createRole">New role</span>
-      </button>
-    }
-  </app-organization-page-header>
-
+<div id="organization-team" class="flex h-full flex-col gap-6 p-4 md:p-6">
   @if (store.loadCallState().status === 'error') {
     <app-error-state
       icon="lucideCircleAlert"
@@ -102,3 +83,18 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
+
+<ng-template #pageActions>
+  @if (canManage()) {
+    <button
+      hlmBtn
+      type="button"
+      class="max-sm:min-h-11"
+      data-testid="organization-team-create-role"
+      (click)="openCreateDialog()"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span i18n="@@org.team.createRole">New role</span>
+    </button>
+  }
+</ng-template>

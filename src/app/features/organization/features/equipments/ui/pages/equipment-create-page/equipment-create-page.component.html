@@ -1,25 +1,7 @@
 <div id="equipment-create" class="flex w-full flex-col gap-4 p-4 md:p-6">
-  <div class="flex items-start justify-between gap-3">
-    <div class="flex flex-col gap-1">
-      <h1 class="text-2xl font-semibold tracking-tight" i18n="@@equipment.create.title">
-        New Equipment
-      </h1>
-      <p class="text-sm text-muted-foreground" i18n="@@equipment.create.description">
-        Register an asset with the details field agents need to identify and inspect it.
-      </p>
-    </div>
-
-    <a
-      hlmBtn
-      type="button"
-      variant="outline"
-      size="sm"
-      data-testid="equipment-create-back"
-      [routerLink]="['/organizations', organizationId(), 'equipments']"
-    >
-      <span i18n="@@equipment.detail.backToList">Back to equipment</span>
-    </a>
-  </div>
+  <p class="text-sm text-muted-foreground" i18n="@@equipment.create.description">
+    Register an asset with the details field agents need to identify and inspect it.
+  </p>
 
   <div hlmCard class="max-w-xl">
     <div hlmCardContent>
@@ -32,3 +14,16 @@
     </div>
   </div>
 </div>
+
+<ng-template #pageActions>
+  <a
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="sm"
+    data-testid="equipment-create-back"
+    [routerLink]="['/organizations', organizationId(), 'equipments']"
+  >
+    <span i18n="@@equipment.detail.backToList">Back to equipment</span>
+  </a>
+</ng-template>

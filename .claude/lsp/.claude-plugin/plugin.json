@@ -1,6 +1,6 @@
 {
   "name": "fireguard-web-lsp",
-  "version": "1.1.1",
-  "description": "FireGuard Web language servers — TypeScript on .ts, Angular on .html. Ships nothing but .lsp.json and the launcher that resolves the app at runtime, because LSP configuration is the one Claude Code component that loads exclusively from an *enabled plugin*: the fireguard-web plugin is deliberately disabled inside the app (its .claude/ already loads natively there), so the servers need their own plugin to be available from both the monorepo root and the app itself.",
+  "version": "1.2.0",
+  "description": "FireGuard Web Angular language server — @angular/language-server on .html. TypeScript (.ts) is covered by the official typescript-lsp@claude-plugins-official plugin; Angular stays homemade because Anthropic publishes no Angular plugin and the official schema cannot resolve the app dir from both the monorepo root and the app itself, which the bundled launcher does at runtime.",
   "author": { "name": "Valentin FORTIN", "email": "contact@valentin-fortin.pro" }
 }

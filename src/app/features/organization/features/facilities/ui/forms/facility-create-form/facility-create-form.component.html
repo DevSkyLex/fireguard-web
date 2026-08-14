@@ -53,6 +53,7 @@
         i18n-placeholder="@@facility.form.namePlaceholder"
         [formField]="createForm.name"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="createForm.name().touched() && createForm.name().invalid()"
       />
       @if (createForm.name().touched() && createForm.name().invalid()) {
         <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
@@ -95,6 +96,7 @@
         placeholder="BLD-001"
         i18n-placeholder="@@facility.form.codePlaceholder"
         [formField]="createForm.code"
+        [attr.aria-invalid]="createForm.code().touched() && createForm.code().invalid()"
       />
     </hlm-field>
 
@@ -110,6 +112,7 @@
         placeholder="123 Main Street, City"
         i18n-placeholder="@@facility.form.addressPlaceholder"
         [formField]="createForm.address"
+        [attr.aria-invalid]="createForm.address().touched() && createForm.address().invalid()"
       />
     </hlm-field>
 
@@ -125,6 +128,7 @@
           step="any"
           data-testid="facility-create-latitude"
           [formField]="createForm.latitude"
+          [attr.aria-invalid]="createForm.latitude().touched() && createForm.latitude().invalid()"
         />
         @if (createForm.latitude().touched() && createForm.latitude().invalid()) {
           <hlm-field-error>{{ createForm.latitude().errors()[0].message }}</hlm-field-error>
@@ -142,6 +146,7 @@
           step="any"
           data-testid="facility-create-longitude"
           [formField]="createForm.longitude"
+          [attr.aria-invalid]="createForm.longitude().touched() && createForm.longitude().invalid()"
         />
         @if (createForm.longitude().touched() && createForm.longitude().invalid()) {
           <hlm-field-error>{{ createForm.longitude().errors()[0].message }}</hlm-field-error>

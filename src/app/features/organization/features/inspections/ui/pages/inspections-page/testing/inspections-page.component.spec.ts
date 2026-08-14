@@ -1,6 +1,16 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import {
   idleCallState,
   successCallState,
@@ -23,6 +33,28 @@ const createPage = async (
   await created.whenStable();
 
   return created;
+};
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `InterventionsPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
 };
 
 describe('InspectionsPage', () => {
@@ -97,15 +129,13 @@ describe('InspectionsPage', () => {
     hasPermission.mockReturnValue(false);
     fixture = await createPage();
 
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="inspections-new"]'),
-    ).toBeNull();
+    expect(renderPageActions().querySelector('[data-testid="inspections-new"]')).toBeNull();
   });
 
   it('should offer "New inspection" with the write permission', async () => {
     fixture = await createPage();
 
-    const link: HTMLAnchorElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+    const link: HTMLAnchorElement | null = renderPageActions().querySelector(
       '[data-testid="inspections-new"]',
     );
 

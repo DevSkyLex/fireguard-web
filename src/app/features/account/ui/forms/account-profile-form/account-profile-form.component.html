@@ -14,6 +14,9 @@
           i18n-placeholder="@@account.profile.firstNamePlaceholder"
           data-testid="account-first-name"
           [formField]="profileForm.firstName"
+          [attr.aria-invalid]="
+            profileForm.firstName().touched() && profileForm.firstName().invalid()
+          "
         />
         @if (profileForm.firstName().touched() && profileForm.firstName().invalid()) {
           <hlm-field-error>{{ profileForm.firstName().errors()[0].message }}</hlm-field-error>
@@ -33,6 +36,7 @@
           i18n-placeholder="@@account.profile.lastNamePlaceholder"
           data-testid="account-last-name"
           [formField]="profileForm.lastName"
+          [attr.aria-invalid]="profileForm.lastName().touched() && profileForm.lastName().invalid()"
         />
         @if (profileForm.lastName().touched() && profileForm.lastName().invalid()) {
           <hlm-field-error>{{ profileForm.lastName().errors()[0].message }}</hlm-field-error>

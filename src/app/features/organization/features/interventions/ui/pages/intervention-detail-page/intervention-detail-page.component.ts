@@ -14,6 +14,7 @@ import {
   type ElementRef,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -36,6 +37,7 @@ import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallError, isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -183,7 +185,13 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * `pendingDuplicatePrefill` and navigates to the list with `?create=1`,
  * which reads and clears it once.
  *
- * @version 5.0.0
+ * The intervention's name is the shell breadcrumb's title, resolved by
+ * `interventionTitleResolver`; the meta line stays as a lead paragraph at
+ * content top, and Discussion plus the "more actions" menu register on the
+ * shell header through `PageActionsService`. The status band renders exactly
+ * where it always did.
+ *
+ * @version 5.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -404,6 +412,26 @@ export class InterventionDetailPage {
   /** Unregisters the tab-rail orientation media query listener on teardown. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The Discussion button and the "more actions" menu, registered on the
+   * shell header instead of rendering in a title band — the header carries
+   * every routed page's own name and actions now (`ARCHITECTURE.md` §9.3).
+   *
+   * @access private
+   * @since 6.5.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
+
   /** The deferred focus tick {@link revealFieldWork} schedules on a tab switch, cleared on teardown. */
   private pendingFocusTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -411,6 +439,7 @@ export class InterventionDetailPage {
     this.destroyRef.onDestroy((): void => {
       if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
     });
+    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
 
     effect((): void => {
       const interventionId: string = this.interventionId();

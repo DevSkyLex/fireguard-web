@@ -59,6 +59,10 @@ describe('DashboardBreadcrumb', () => {
     expect(steps()).toEqual(['Interventions', 'FG-101']);
   });
 
+  /**
+   * The last step is where the user already is: a link back to the current
+   * page is noise, and screen readers announce it as a destination.
+   */
   it('should link the steps behind the current one, and only those', async () => {
     items.set([
       { label: 'Interventions', routerLink: '/organizations/org-1/interventions', current: false },
@@ -66,8 +70,6 @@ describe('DashboardBreadcrumb', () => {
     ]);
     await fixture.whenStable();
 
-    // The last step is where the user already is: a link back to the current
-    // page is noise, and screen readers announce it as a destination.
     expect(
       fixture.nativeElement.querySelector('a[href="/organizations/org-1/interventions"]'),
     ).not.toBeNull();
@@ -84,11 +86,36 @@ describe('DashboardBreadcrumb', () => {
     expect(fixture.nativeElement.querySelectorAll('a').length).toBe(1);
   });
 
+  /**
+   * The header is one row; pushing the tool cluster off the card is worse
+   * than eliding a long label.
+   */
   it('should truncate rather than wrap', () => {
-    // The header is one row; pushing the tool cluster off the card is worse
-    // than eliding a long label.
     const list = fixture.nativeElement.querySelector('ol') as HTMLElement;
 
     expect(list.className).toContain('flex-nowrap');
+  });
+
+  it('should render the current step as the document h1', async () => {
+    items.set([{ label: 'FG-101', current: true }]);
+    await fixture.whenStable();
+
+    const heading = fixture.nativeElement.querySelector('h1');
+
+    expect(heading?.textContent?.trim()).toBe('FG-101');
+    expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(1);
+  });
+
+  /**
+   * `BreadcrumbService` never marks any item current when the deepest route
+   * suppressed its own breadcrumb (`organization-today-page`'s own case) —
+   * only an ordinary, linked ancestor renders, and never an `<h1>`, so the
+   * page's own title band stays the document's only heading.
+   */
+  it('should render no h1 at all when no step is current', async () => {
+    items.set([{ label: 'Acme Corp', routerLink: '/organizations/org-1', current: false }]);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(0);
   });
 });

@@ -17,6 +17,7 @@
         data-testid="email-request-address"
         [formField]="requestForm.email"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="requestForm.email().touched() && requestForm.email().invalid()"
       />
       @if (requestForm.email().touched() && requestForm.email().invalid()) {
         <hlm-field-error>{{ requestForm.email().errors()[0].message }}</hlm-field-error>

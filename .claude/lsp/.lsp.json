@@ -1,22 +1,4 @@
 {
-  "typescript": {
-    "command": "node",
-    "args": ["${CLAUDE_PLUGIN_ROOT}/start.mjs", "typescript"],
-    "extensionToLanguage": {
-      ".ts": "typescript",
-      ".mts": "typescript"
-    },
-    "initializationOptions": {
-      "preferences": {
-        "disableSuggestions": true
-      }
-    },
-    "startupTimeout": 60000,
-    "shutdownTimeout": 15000,
-    "restartOnCrash": true,
-    "maxRestarts": 3,
-    "diagnostics": true
-  },
   "angular": {
     "command": "node",
     "args": ["${CLAUDE_PLUGIN_ROOT}/start.mjs", "angular"],

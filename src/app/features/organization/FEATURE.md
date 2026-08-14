@@ -279,20 +279,41 @@ for a new create surface to follow. Sheet-hosted forms' padding ownership — wh
 sheet forms keep `px-4` on their own `hlm-field-group` instead of following the page/dialog
 pattern — is recorded in `features/interventions/FEATURE.md` § UI Conventions.
 
-A required Signal Forms field's `[attr.aria-invalid]` — bound at the call site as
-`f().touched() && f().invalid()`, per every form in this feature — is now redundant with (not
-overridden by) `HlmInput`/`HlmTextarea`/`HlmSelectTrigger`/`HlmDatePickerTrigger`'s own host
-binding: those `shared/ui` components (not owned here) each carry a repo-owned correction that
-announces the same touched-gated `spartanInvalid` state the visual ring already uses, superseding
-their vendored `BrnInput`-family default of the raw, untouched-gated `invalid`. The call-site
-binding stays for the day one of those controls is used with a Signal Forms field it does not read
-`spartanInvalid` from.
+Every native `<input hlmInput>`/`<textarea hlmTextarea>` bound with `[formField]` carries
+`[attr.aria-invalid]="f().touched() && f().invalid()"` at the call site — the sanctioned dialect
+across every feature's forms, documenting intent even where it is not (yet) fully effective. In
+today's vendored state, `BrnInput`/`BrnTextarea` (`shared/ui`, not owned here) already set their
+own host `aria-invalid` from the control's **raw** `invalid`, and that host binding wins over the
+call-site one: a pristine required field is announced invalid before it is ever touched. The
+visual ring is correctly touched-gated (`data-matches-spartan-invalid`) — only the announced value
+is off. A repo-owned helm-layer correction (mirroring the touched-gated `spartanInvalid` state the
+ring already reads) was evaluated and declined, to keep the vendored `shared/ui` layer untouched;
+the call-site binding stays because it becomes live the day that correction — or an upstream
+spartan fix — lands. `HlmSelectTrigger`, `HlmComboboxInput` and `HlmDatePickerTrigger` are
+`Component`s with their own template, so a call-site `[attr.aria-invalid]` on their host tag never
+reaches the real focusable control — no form here binds one on those.
 
 A submit control whose label swaps to a pending variant (`Save` → `Saving…`) carries
 `aria-live="polite"` directly on the `<button>` — the one mechanism this app uses to announce that
 swap, chosen over wrapping the swapped spans in a `role="status"` container because it needs no
 extra element and the button already owns `[attr.aria-busy]`. This applies across every feature's
 forms, not only `organization`'s, since the pattern is form-wide rather than feature-owned.
+
+**Page header (shell contract).** The dashboard shell's 48px header carries every routed page's
+title and header actions now, not the page itself: the current breadcrumb crumb (`route.title` /
+`data.breadcrumb`) renders as the document's one `<h1>`, and a page contributes its right-side
+action buttons through a `<ng-template #pageActions>` registered on `PageActionsService`
+(`@core/page-actions`) — never an in-page title band. `app-organization-page-header` was removed
+from `organization-team-page`, `organization-statistics-page`, `organization-settings-page` and
+`organization-members-page` for exactly this reason: it duplicated the crumb's own `<h1>`.
+**`organization-today-page` is the deliberate exception** — it keeps
+`app-organization-page-header`, carrying the org identity (avatar, plan, status) no other page
+shows, because it is the one landing page where that identity belongs. Its route also opts out of
+the breadcrumb trail (`data.breadcrumb: false`), so the header's own `<h1>` stays the document's
+only one; "New intervention" still registers through `PageActionsService` like every other page's
+actions, for click-target consistency. A page's informative subtitle (a live count, e.g. members'
+"N members" line) stays as a lead paragraph at content top; a decorative, static subtitle is
+dropped rather than kept as dead weight.
 
 ## Routing Notes
 

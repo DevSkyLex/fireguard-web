@@ -129,6 +129,9 @@
         i18n-placeholder="@@inspection.form.inspectorNamePlaceholder"
         [formField]="createForm.inspectorName"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="
+          createForm.inspectorName().touched() && createForm.inspectorName().invalid()
+        "
       />
       @if (createForm.inspectorName().touched() && createForm.inspectorName().invalid()) {
         <hlm-field-error>{{ createForm.inspectorName().errors()[0].message }}</hlm-field-error>

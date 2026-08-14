@@ -17,6 +17,7 @@
         data-testid="login-email"
         [formField]="loginForm.email"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="loginForm.email().touched() && loginForm.email().invalid()"
       />
       @if (loginForm.email().touched() && loginForm.email().invalid()) {
         <hlm-field-error>{{ loginForm.email().errors()[0].message }}</hlm-field-error>

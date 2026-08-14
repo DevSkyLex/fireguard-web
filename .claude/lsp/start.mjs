@@ -13,7 +13,7 @@
  *  3. pipes every later byte through untouched — the framing is parsed exactly once, so a
  *     bug here cannot corrupt a running session.
  *
- * Usage: node start.mjs <typescript|angular>
+ * Usage: node start.mjs angular
  */
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -38,10 +38,6 @@ function resolveAppDir() {
 }
 
 const SERVERS = {
-  typescript: (app) => [
-    join(app, 'node_modules/typescript-language-server/lib/cli.mjs'),
-    '--stdio',
-  ],
   angular: (app) => [
     join(app, 'node_modules/@angular/language-server/bin/ngserver'),
     '--stdio',

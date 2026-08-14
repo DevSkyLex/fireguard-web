@@ -15,6 +15,7 @@
           data-testid="org-settings-name"
           [formField]="generalForm.name"
           [attr.aria-required]="true"
+          [attr.aria-invalid]="generalForm.name().touched() && generalForm.name().invalid()"
         />
         @if (generalForm.name().touched() && generalForm.name().invalid()) {
           <hlm-field-error>{{ generalForm.name().errors()[0].message }}</hlm-field-error>
@@ -34,6 +35,7 @@
           data-testid="org-settings-slug"
           [formField]="generalForm.slug"
           [attr.aria-required]="true"
+          [attr.aria-invalid]="generalForm.slug().touched() && generalForm.slug().invalid()"
         />
         @if (generalForm.slug().touched() && generalForm.slug().invalid()) {
           <hlm-field-error>{{ generalForm.slug().errors()[0].message }}</hlm-field-error>
@@ -54,6 +56,9 @@
         rows="3"
         data-testid="org-settings-description"
         [formField]="generalForm.description"
+        [attr.aria-invalid]="
+          generalForm.description().touched() && generalForm.description().invalid()
+        "
       ></textarea>
     </hlm-field>
 

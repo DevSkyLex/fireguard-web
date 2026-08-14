@@ -15,6 +15,9 @@
           data-testid="org-regional-timezone"
           [formField]="regionalForm.timezone"
           [attr.aria-required]="true"
+          [attr.aria-invalid]="
+            regionalForm.timezone().touched() && regionalForm.timezone().invalid()
+          "
         />
         @if (regionalForm.timezone().touched() && regionalForm.timezone().invalid()) {
           <hlm-field-error>{{ regionalForm.timezone().errors()[0].message }}</hlm-field-error>
@@ -35,6 +38,7 @@
           data-testid="org-regional-locale"
           [formField]="regionalForm.locale"
           [attr.aria-required]="true"
+          [attr.aria-invalid]="regionalForm.locale().touched() && regionalForm.locale().invalid()"
         />
         @if (regionalForm.locale().touched() && regionalForm.locale().invalid()) {
           <hlm-field-error>{{ regionalForm.locale().errors()[0].message }}</hlm-field-error>

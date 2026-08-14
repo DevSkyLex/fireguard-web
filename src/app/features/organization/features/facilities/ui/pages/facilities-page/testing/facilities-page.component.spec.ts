@@ -1,6 +1,16 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -11,6 +21,28 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { FacilitiesPage } from '../facilities-page.component';
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `InterventionsPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
 
 const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
   ({
@@ -152,15 +184,13 @@ describe('FacilitiesPage', () => {
     hasPermission.mockReturnValue(false);
     fixture = await createPage();
 
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="facilities-new"]'),
-    ).toBeNull();
+    expect(renderPageActions().querySelector('[data-testid="facilities-new"]')).toBeNull();
   });
 
   it('should offer "New facility" with the write permission', async () => {
     fixture = await createPage();
 
-    const link: HTMLAnchorElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+    const link: HTMLAnchorElement | null = renderPageActions().querySelector(
       '[data-testid="facilities-new"]',
     );
 

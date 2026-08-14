@@ -1,15 +1,4 @@
 <div id="facilities" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
-    <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.facilities">Facilities</h1>
-
-    @if (canCreate()) {
-      <a hlmBtn data-testid="facilities-new" [routerLink]="[...listRouteBase(), 'create']">
-        <ng-icon name="lucidePlus" aria-hidden="true" />
-        <span i18n="@@facility.newButton">New facility</span>
-      </a>
-    }
-  </div>
-
   <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <div class="flex flex-wrap items-center gap-2">
       <hlm-input-group class="w-full sm:w-72">
@@ -181,3 +170,19 @@
     />
   }
 </div>
+
+<ng-template #pageActions>
+  @if (canCreate()) {
+    <a
+      hlmBtn
+      class="max-sm:min-h-11"
+      data-testid="facilities-new"
+      i18n-aria-label="@@facility.newButton"
+      aria-label="New facility"
+      [routerLink]="[...listRouteBase(), 'create']"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="max-sm:hidden" i18n="@@facility.newButton">New facility</span>
+    </a>
+  }
+</ng-template>

@@ -27,6 +27,7 @@
         i18n-placeholder="@@intervention.rc.notePlaceholder"
         [formField]="requestForm.note"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="requestForm.note().touched() && requestForm.note().invalid()"
       ></textarea>
       @if (requestForm.note().touched() && requestForm.note().invalid()) {
         <hlm-field-error>{{ requestForm.note().errors()[0].message }}</hlm-field-error>

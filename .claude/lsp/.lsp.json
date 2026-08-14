@@ -16,6 +16,7 @@
     },
     "workspaceFolder": "G:/Projets/fireguard/fireguard-sso-web",
     "startupTimeout": 60000,
+    "shutdownTimeout": 15000,
     "restartOnCrash": true,
     "maxRestarts": 3,
     "diagnostics": true
@@ -35,6 +36,7 @@
     },
     "workspaceFolder": "G:/Projets/fireguard/fireguard-sso-web",
     "startupTimeout": 120000,
+    "shutdownTimeout": 15000,
     "restartOnCrash": true,
     "maxRestarts": 3,
     "diagnostics": true

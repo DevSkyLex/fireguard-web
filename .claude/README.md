@@ -217,6 +217,20 @@ Expect ~4 s (TS) and ~8 s (Angular) before the first diagnostics of a session �
 project has to be typechecked once. To keep the navigation but silence the automatic
 injection on a server, set `"diagnostics": false` on it.
 
+**Rebuilding the wiring.** Half of it lives at the monorepo root, which is not a git repo and
+therefore backs up nowhere. On a fresh machine, after `npm ci`:
+
+1. declare the plugin in `G:\Projets\fireguard\.claude-plugin\marketplace.json` —
+   `{"name": "fireguard-web-lsp", "source": "./fireguard-sso-web/.claude/lsp"}`;
+2. run `claude plugin install fireguard-web-lsp@fireguard --scope project` **twice**, once
+   from the monorepo root and once from this app — each scope pins its own version, so an
+   update later also has to be run from both;
+3. fix the absolute paths in `lsp/.lsp.json` if the workspace moved.
+
+Verify with `claude --debug-file dbg.log -p ok`, then grep the log: a healthy session logs
+`Loaded 2 LSP server(s) from plugin: fireguard-web-lsp` and a `Registered diagnostics
+handler` line per server.
+
 ## Hooks
 
 Both project hooks are wired in `settings.json` on `Write|Edit|MultiEdit`, through

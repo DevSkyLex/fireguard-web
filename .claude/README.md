@@ -1,7 +1,7 @@
 # FireGuard Web — Claude Code tooling
 
 This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspace root to
-activate it: 12 agents, 13 commands, 9 skills, 9 rules, 4 MCP servers, 2 LSP servers, and
+activate it: 12 agents, 13 commands, 9 skills, 10 rules, 4 MCP servers, 2 LSP servers, and
 2 project hooks (plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
 
 > **This directory is also a plugin.** The monorepo root installs it as
@@ -150,6 +150,7 @@ that kind of file, not the how-to.
 | `barrels.md`          | `**/index.ts`                              | never `export *`, narrow by default, which folders get none                           |
 | `testing.md`          | `*.spec.ts`                                | the boundary each unit owns, the harnesses, the `--include` trap                      |
 | `e2e.md`              | `e2e/**`                                   | `ApiMock`, port 4273, locate by `id`/`data-testid`, local-noon fixtures               |
+| `lsp-usage.md`        | `src/**/*.ts` / `.html`                    | LSP for symbols / grep for text, 1-based positions, `findReferences` on the **token** |
 
 > `directives-pipes.md` currently matches **nothing** — the repo has zero directives and zero
 > pipes. Both halves are dormant on purpose: the rule exists to cadre the first unit of each
@@ -175,8 +176,12 @@ automatically so nothing critical depends on that read happening.
 
 Two language servers, both installed as devDependencies so the versions travel with the app
 and `npm ci` provisions them. They give Claude `goToDefinition` / `findReferences` / `hover` /
-`documentSymbol` — and, more importantly, push diagnostics into the session **after every
-edit**, instead of at `npm run build` time.
+`documentSymbol` / `workspaceSymbol` / `goToImplementation` — and, more importantly, push
+diagnostics into the session **after every edit**, instead of at `npm run build` time. When to
+reach for them rather than for grep is in `rules/lsp-usage.md`, along with the one trap worth
+knowing: a **port** is bound by `InjectionToken` + `useExisting`, so nothing declares
+`implements ThemePort` and both `goToImplementation` and `findReferences` on the interface come
+back empty — run `findReferences` on the _token_ instead.
 
 | Server       | Runs                                  | Opens   | Catches                                                                             |
 | ------------ | ------------------------------------- | ------- | ----------------------------------------------------------------------------------- |

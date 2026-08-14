@@ -100,11 +100,6 @@ npm run build         # validates strict Angular templates
 > runner treat every `.html` and `.component.ts` under it as a test entry and
 > fails with `No loader is configured for ".html" files`.
 
-## After changing code
-
-If a graphify graph exists (`graphify-out/`), run `graphify update .` and prefer
-`graphify query` for codebase questions.
-
 ## Tooling — this app ships its own `.claude/`
 
 Open **`fireguard-sso-web/`** as the workspace root to activate it. The agents,

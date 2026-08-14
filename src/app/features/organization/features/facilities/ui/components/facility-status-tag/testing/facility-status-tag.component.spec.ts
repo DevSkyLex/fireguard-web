@@ -45,8 +45,7 @@ describe('FacilityStatusTag', () => {
 
     expect(badge?.getAttribute('data-variant')).toBe('outline');
     expect(badge?.className).not.toMatch(/\bbg-(blue|green|amber|red|neutral)-/);
-    expect(icon?.className).toContain('text-green-500');
-    expect(icon?.className).toContain('dark:text-green-400');
+    expect(icon?.className).toContain('text-success');
   });
 
   it('should tint archived neutral, as a reversible state rather than a failure', async () => {

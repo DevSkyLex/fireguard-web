@@ -65,14 +65,17 @@ describe('InterventionTag', () => {
     },
   );
 
-  it.each([
-    ['published', 'green'],
-    ['abandoned', 'red'],
-  ])('should put the %s tone on the glyph alone, in %s', async (status: string, hue: string) => {
-    const icon: Element | null = (await render('status', status)).querySelector('ng-icon');
+  it('should put the published tone on the glyph alone, via the success token', async () => {
+    const icon: Element | null = (await render('status', 'published')).querySelector('ng-icon');
 
-    expect(icon?.className).toContain(`text-${hue}-500`);
-    expect(icon?.className).toContain(`dark:text-${hue}-400`);
+    expect(icon?.className).toContain('text-success');
+  });
+
+  it('should put the abandoned tone on the glyph alone, in red', async () => {
+    const icon: Element | null = (await render('status', 'abandoned')).querySelector('ng-icon');
+
+    expect(icon?.className).toContain('text-red-500');
+    expect(icon?.className).toContain('dark:text-red-400');
   });
 
   it.each(['draft', 'planned', 'in_progress', 'submitted', 'changes_requested'])(

@@ -20,7 +20,7 @@ export const ORGANIZATION_DASHBOARD_ALERT_TAG_ICON_CLASS: Readonly<
 > = {
   neutral: 'text-neutral-500 dark:text-neutral-400',
   info: 'text-blue-500 dark:text-blue-400',
-  success: 'text-green-500 dark:text-green-400',
+  success: 'text-success',
   warning: 'text-amber-500 dark:text-amber-400',
   danger: 'text-red-500 dark:text-red-400',
 };

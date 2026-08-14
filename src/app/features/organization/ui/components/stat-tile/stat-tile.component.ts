@@ -7,7 +7,7 @@ import { lucideMinus, lucideTrendingDown, lucideTrendingUp } from '@ng-icons/luc
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-import type { StatTileDelta, StatTileLink } from './models';
+import type { StatTileDelta, StatTileLink, StatTileTone } from './models';
 
 /**
  * Component StatTile
@@ -30,7 +30,11 @@ import type { StatTileDelta, StatTileLink } from './models';
  * Rendered as an anchor when {@link link} is set and a plain card otherwise,
  * sharing one content template so the two branches cannot drift.
  *
- * @version 1.0.0
+ * {@link tone} carries the same achromatic discipline for a metric that is
+ * simply in a bad state rather than trending one way or another (an overdue
+ * count, say): it colours the icon alone, per the Glyph Rule (`DESIGN.md`).
+ *
+ * @version 1.2.0
  *
  * @example
  * ```html
@@ -180,6 +184,22 @@ export class StatTile {
    * @type {InputSignal<number | null>}
    */
   public readonly progress: InputSignal<number | null> = input<number | null>(null);
+
+  /**
+   * Property tone
+   * @readonly
+   *
+   * @description
+   * The tile's severity, `neutral` by default. Maps **only** to the icon's
+   * colour — the Glyph Rule (`DESIGN.md`) — the surface, border, value and
+   * label stay on their neutral tokens regardless of tone.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {InputSignal<StatTileTone>}
+   */
+  public readonly tone: InputSignal<StatTileTone> = input<StatTileTone>('neutral');
   //#endregion
 
   //#region Properties

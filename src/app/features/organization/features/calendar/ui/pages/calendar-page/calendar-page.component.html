@@ -1,9 +1,57 @@
-<div id="calendar-page" class="flex w-full flex-col gap-4 p-4 md:p-6">
-  <div class="flex min-w-0 flex-col gap-1">
+<div id="calendar-page" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  <div class="flex min-w-0 shrink-0 flex-col gap-1">
     <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.calendar">Calendar</h1>
     <p class="text-sm text-muted-foreground" i18n="@@calendar.subtitle">
       Every scheduled commitment — events, inspections, interventions and maintenance.
     </p>
+  </div>
+
+  <div class="flex shrink-0 flex-wrap items-center gap-3" data-testid="calendar-toolbar">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      data-testid="calendar-toolbar-today"
+      (click)="goToday()"
+    >
+      <span i18n="@@calendar.today">Today</span>
+    </button>
+
+    <div class="flex items-center gap-1">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        data-testid="calendar-toolbar-prev"
+        i18n-aria-label="@@calendar.previousMonth"
+        aria-label="Previous month"
+        (click)="stepMonth(-1)"
+      >
+        <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        data-testid="calendar-toolbar-next"
+        i18n-aria-label="@@calendar.nextMonth"
+        aria-label="Next month"
+        (click)="stepMonth(1)"
+      >
+        <ng-icon name="lucideChevronRight" aria-hidden="true" />
+      </button>
+    </div>
+
+    <span
+      class="truncate text-base font-semibold text-foreground capitalize"
+      data-testid="calendar-toolbar-period"
+      aria-live="polite"
+    >
+      {{ periodLabel() }}
+    </span>
   </div>
 
   @if (loadFailed()) {
@@ -24,14 +72,20 @@
       </hlm-empty-content>
     </hlm-empty>
   } @else {
-    <div class="grid gap-4 lg:grid-cols-[2fr_1fr]">
-      <div>
-        @if (store.isQueryLoading() && events().length === 0) {
-          <hlm-skeleton class="h-96 w-full" />
-        } @else {
-          <app-calendar [(month)]="month" [(selectedDay)]="selectedDay" [events]="events()" />
-        }
-      </div>
+    <div
+      class="hidden min-h-0 flex-1 flex-col gap-4 md:flex lg:grid lg:grid-cols-[2fr_1fr] lg:grid-rows-[minmax(0,1fr)]"
+    >
+      @if (store.isQueryLoading() && events().length === 0) {
+        <hlm-skeleton class="h-96 w-full" />
+      } @else {
+        <app-calendar
+          class="min-h-0"
+          [showToolbar]="false"
+          [(month)]="month"
+          [(selectedDay)]="selectedDay"
+          [events]="events()"
+        />
+      }
 
       <div hlmCard class="self-start lg:sticky lg:top-4">
         <div hlmCardHeader>
@@ -43,34 +97,34 @@
               Nothing scheduled this day.
             </p>
           } @else {
-            @for (item of dayItems(); track item.sourceKey + item.id) {
-              @if (interventionLinkOf(item); as link) {
-                <a
-                  hlmItem
-                  size="sm"
-                  class="rounded-md"
-                  data-testid="calendar-day-item"
-                  [routerLink]="link"
-                >
-                  <div hlmItemContent>
-                    <span hlmItemTitle class="line-clamp-1">{{ item.title }}</span>
-                    <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
-                  </div>
-                  <span hlmBadge [variant]="toneOf(item)">{{ sourceLabelOf(item) }}</span>
-                </a>
-              } @else {
-                <div hlmItem size="sm" class="rounded-md" data-testid="calendar-day-item">
-                  <div hlmItemContent>
-                    <span hlmItemTitle class="line-clamp-1">{{ item.title }}</span>
-                    <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
-                  </div>
-                  <span hlmBadge [variant]="toneOf(item)">{{ sourceLabelOf(item) }}</span>
-                </div>
-              }
-            }
+            <app-calendar-entry-list [items]="dayItems()" [organizationId]="organizationId()" />
           }
         </div>
       </div>
+    </div>
+
+    <div
+      id="calendar-agenda"
+      data-testid="calendar-agenda"
+      class="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto md:hidden"
+    >
+      @if (store.isQueryLoading() && events().length === 0) {
+        <hlm-skeleton class="h-48 w-full" />
+      } @else if (agendaGroups().length === 0) {
+        <p class="py-3 text-sm text-muted-foreground" i18n="@@calendar.agendaEmpty">
+          Nothing scheduled in this period.
+        </p>
+      } @else {
+        @for (group of agendaGroups(); track group.day) {
+          <div
+            class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
+            data-testid="calendar-agenda-group"
+          >
+            <h3 class="text-sm font-semibold text-foreground">{{ group.label }}</h3>
+            <app-calendar-entry-list [items]="group.items" [organizationId]="organizationId()" />
+          </div>
+        }
+      }
     </div>
   }
 </div>

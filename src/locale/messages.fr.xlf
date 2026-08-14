@@ -8300,6 +8300,10 @@
         <source>Open <x id="INTERPOLATION" equiv-text="{{ timed.event.title }}"/></source>
         <target>Ouvrir <x id="INTERPOLATION"/></target>
       </trans-unit>
+      <trans-unit id="calendar.agendaEmpty" datatype="html">
+        <source> Nothing scheduled in this period. </source>
+        <target>Rien de prévu sur cette période.</target>
+      </trans-unit>
       <trans-unit id="shared.commentComposer.placeholder" datatype="html">
         <source>Write a comment…</source>
         <target>Écrire un commentaire…</target>

@@ -347,7 +347,7 @@ describe('OrganizationMembersPage', () => {
   });
 
   it('should page members with the rendered pagination controls, disabling at the bounds', async () => {
-    membersTotal.set(45); // MEMBERS_PAGE_SIZE is 20, so this spans three pages.
+    membersTotal.set(65); // The default page size is 30, so this spans three pages.
     await createPage();
 
     const previous = byTestId('organization-members-page-prev') as HTMLButtonElement;
@@ -364,6 +364,7 @@ describe('OrganizationMembersPage', () => {
       page: 2,
       search: '',
       status: 'all',
+      pageSize: 30,
     });
     expect(previous.disabled).toBe(false);
 
@@ -375,6 +376,7 @@ describe('OrganizationMembersPage', () => {
       page: 3,
       search: '',
       status: 'all',
+      pageSize: 30,
     });
     expect(next.disabled).toBe(true);
 
@@ -386,6 +388,23 @@ describe('OrganizationMembersPage', () => {
       page: 2,
       search: '',
       status: 'all',
+      pageSize: 30,
+    });
+  });
+
+  it('changes the page size through the pagination band and returns to the first page', async () => {
+    membersTotal.set(65);
+    await createPage();
+
+    fixture.componentInstance['setPageSize'](60);
+    await fixture.whenStable();
+
+    expect(loadMembers).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      page: 1,
+      search: '',
+      status: 'all',
+      pageSize: 60,
     });
   });
 
@@ -403,6 +422,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: 'amelie',
       status: 'all',
+      pageSize: 30,
     });
   });
 
@@ -416,6 +436,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: '',
       status: 'inactive',
+      pageSize: 30,
     });
   });
 
@@ -433,6 +454,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: '',
       status: 'all',
+      pageSize: 30,
     });
   });
 

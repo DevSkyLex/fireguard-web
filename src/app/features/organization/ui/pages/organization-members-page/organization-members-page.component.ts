@@ -14,8 +14,6 @@ import {
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronLeft,
-  lucideChevronRight,
   lucideCircleAlert,
   lucideGauge,
   lucideMailPlus,
@@ -51,14 +49,17 @@ import {
   MEMBERS_PAGE_SIZE,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
-import { OrganizationPageHeader, StatTile } from '@features/organization/ui/components';
+import {
+  ListPagination,
+  OrganizationPageHeader,
+  StatTile,
+} from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
-import { HlmPaginationImports } from '@shared/ui/pagination';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { OrganizationInviteDialog } from '../../dialogs/organization-invite-dialog';
 import {
@@ -134,6 +135,7 @@ type OrganizationMembersKpiTile = {
     NgIcon,
     ErrorState,
     HlmButton,
+    ListPagination,
     OrganizationInvitationTable,
     OrganizationInviteDialog,
     OrganizationMemberRolesDialog,
@@ -145,13 +147,10 @@ type OrganizationMembersKpiTile = {
     ...HlmEmptyImports,
     ...HlmInputGroupImports,
     ...HlmToggleGroupImports,
-    ...HlmPaginationImports,
   ],
   providers: [
     OrganizationMembersStore,
     provideIcons({
-      lucideChevronLeft,
-      lucideChevronRight,
       lucideCircleAlert,
       lucideGauge,
       lucideMailPlus,
@@ -215,6 +214,9 @@ export class OrganizationMembersPage {
 
   /** The members page window, one-based. */
   protected readonly page: WritableSignal<number> = signal<number>(1);
+
+  /** How many roster rows a page holds, from the pagination band's rows-per-page select. */
+  protected readonly pageSize: WritableSignal<number> = signal<number>(MEMBERS_PAGE_SIZE);
 
   /** What the roster search box holds; debounced before it reaches the wire. */
   protected readonly searchTerm: WritableSignal<string> = signal<string>('');
@@ -302,23 +304,8 @@ export class OrganizationMembersPage {
    * @type {Signal<number>}
    */
   protected readonly membersPageCount: Signal<number> = computed<number>(() =>
-    Math.max(1, Math.ceil(this.store.membersTotal() / MEMBERS_PAGE_SIZE)),
+    Math.max(1, Math.ceil(this.store.membersTotal() / this.pageSize())),
   );
-
-  /**
-   * Property pageIndicatorLabel
-   * @readonly
-   * @description The pagination nav's "Page X of Y" sentence.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<string>}
-   */
-  protected readonly pageIndicatorLabel: Signal<string> = computed<string>(() => {
-    const current: number = this.page();
-    const total: number = this.membersPageCount();
-
-    return $localize`:@@org.members.pageIndicator:Page ${current}:current: of ${total}:total:`;
-  });
 
   /** Where a member row's link points. */
   protected readonly memberDetailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
@@ -549,6 +536,7 @@ export class OrganizationMembersPage {
 
       untracked((): void => {
         this.page.set(1);
+        this.pageSize.set(MEMBERS_PAGE_SIZE);
         this.selectedIds.set(new Set<string>());
         this.searchTerm.set('');
         this.statusFilter.set('all');
@@ -613,6 +601,19 @@ export class OrganizationMembersPage {
     const clamped: number = Math.min(Math.max(1, target), this.membersPageCount());
 
     this.queryMembers(clamped);
+  }
+
+  /**
+   * Method setPageSize
+   * @description Changes how many roster rows a page holds and returns to the first page.
+   * @access protected
+   * @since 1.2.0
+   * @param {number} size - The chosen page size.
+   * @returns {void}
+   */
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.queryMembers(1);
   }
 
   /**
@@ -882,9 +883,10 @@ export class OrganizationMembersPage {
    *
    * @description
    * Re-issues the server-side roster query for the given page with the
-   * current search term and status filter, clearing the row selection —
-   * the shared tail of every roster-narrowing entry point (pagination, the
-   * debounced search, the status toggle).
+   * current search term, status filter and page size, clearing the row
+   * selection — the shared tail of every roster-narrowing entry point
+   * (pagination, the rows-per-page select, the debounced search, the status
+   * toggle).
    *
    * @access private
    * @since 1.1.0
@@ -901,6 +903,7 @@ export class OrganizationMembersPage {
       page,
       search: this.searchTerm().trim(),
       status: this.statusFilter(),
+      pageSize: this.pageSize(),
     });
   }
   //#endregion

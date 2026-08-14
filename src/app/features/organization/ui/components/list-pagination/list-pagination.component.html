@@ -1,0 +1,98 @@
+<div class="flex shrink-0 flex-col justify-between sm:flex-row sm:items-center">
+  <span
+    class="text-sm text-muted-foreground"
+    aria-live="polite"
+    aria-atomic="true"
+    [attr.data-testid]="testId('row-count')"
+    >{{ rowCountLabel() }}</span
+  >
+
+  <div class="mt-2 flex flex-wrap items-center gap-8 sm:mt-0">
+    <div class="flex items-center gap-2">
+      <label [attr.for]="testId('page-size')" hlmLabel>{{ pageSizeLabel }}</label>
+      <hlm-select class="inline-block" [value]="pageSize()" (valueChange)="changePageSize($event)">
+        <hlm-select-trigger
+          [buttonId]="testId('page-size')"
+          class="me-1 inline-flex h-8 w-fit max-sm:h-11"
+          [attr.data-testid]="testId('page-size')"
+        >
+          <hlm-select-value />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (size of pageSizes(); track size) {
+              <hlm-select-item [value]="size">{{ size }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </div>
+
+    <span hlmLabel [attr.data-testid]="testId('page-indicator')">{{ pageIndicatorLabel() }}</span>
+
+    <nav hlmPagination [aria-label]="ariaNav">
+      <ul hlmPaginationContent>
+        <li hlmPaginationItem>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            class="max-sm:size-11"
+            [attr.data-testid]="testId('page-first')"
+            [attr.aria-label]="ariaFirst"
+            [disabled]="page() === 1"
+            (click)="goToPage(1)"
+          >
+            <ng-icon name="lucideChevronsLeft" aria-hidden="true" />
+          </button>
+        </li>
+        <li hlmPaginationItem>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            class="max-sm:size-11"
+            [attr.data-testid]="testId('page-prev')"
+            [attr.aria-label]="ariaPrevious"
+            [disabled]="page() === 1"
+            (click)="goToPage(page() - 1)"
+          >
+            <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+          </button>
+        </li>
+        <li hlmPaginationItem>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            class="max-sm:size-11"
+            [attr.data-testid]="testId('page-next')"
+            [attr.aria-label]="ariaNext"
+            [disabled]="page() === pageCount()"
+            (click)="goToPage(page() + 1)"
+          >
+            <ng-icon name="lucideChevronRight" aria-hidden="true" />
+          </button>
+        </li>
+        <li hlmPaginationItem>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            class="max-sm:size-11"
+            [attr.data-testid]="testId('page-last')"
+            [attr.aria-label]="ariaLast"
+            [disabled]="page() === pageCount()"
+            (click)="goToPage(pageCount())"
+          >
+            <ng-icon name="lucideChevronsRight" aria-hidden="true" />
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>

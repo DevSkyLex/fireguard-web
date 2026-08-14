@@ -32,6 +32,8 @@ export interface OrganizationMembersState {
   readonly membersTotal: number;
   /** One-based current members page. */
   readonly membersPage: number;
+  /** Rows per members page, chosen from the pagination band's rows-per-page select. */
+  readonly membersPageSize: number;
   /** Active server-side member search term. */
   readonly membersSearch: string;
   /** Active server-side member status filter. */

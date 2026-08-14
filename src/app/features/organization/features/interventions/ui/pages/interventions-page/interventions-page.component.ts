@@ -17,10 +17,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
-  lucideChevronLeft,
-  lucideChevronRight,
-  lucideChevronsLeft,
-  lucideChevronsRight,
   lucideCircleAlert,
   lucideClipboardList,
   lucideDownload,
@@ -74,13 +70,14 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import { ListPagination } from '@features/organization/ui/components';
+import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
-import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinner } from '@shared/ui/spinner';
@@ -209,9 +206,9 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
   selector: 'app-interventions-page',
   imports: [
     NgIcon,
+    ErrorState,
     HlmBadge,
     HlmButton,
-    HlmLabel,
     HlmSpinner,
     HlmToggle,
     InterventionAssignDialog,
@@ -219,6 +216,7 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
     InterventionKpiStrip,
     InterventionTable,
     InterventionTag,
+    ListPagination,
     ...HlmAlertDialogImports,
     ...HlmDropdownMenuImports,
     ...HlmEmptyImports,
@@ -232,10 +230,6 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
     InterventionStatisticsStore,
     provideIcons({
       lucideCheck,
-      lucideChevronLeft,
-      lucideChevronRight,
-      lucideChevronsLeft,
-      lucideChevronsRight,
       lucideCircleAlert,
       lucideClipboardList,
       lucideDownload,
@@ -611,9 +605,6 @@ export class InterventionsPage {
   /** Every hideable column, for the column menu. */
   protected readonly allColumns: ReadonlyArray<InterventionTableColumn> =
     INTERVENTION_TABLE_COLUMNS;
-
-  /** The page sizes offered under the table. */
-  protected readonly pageSizes: ReadonlyArray<number> = PAGE_SIZES;
 
   /**
    * Property visibleColumns

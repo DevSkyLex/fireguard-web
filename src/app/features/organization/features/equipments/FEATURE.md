@@ -120,6 +120,9 @@ Utility:
 ## Cross-Feature Dependencies
 
 - Depends on organization route context from the parent feature.
+- Consumes `ListPagination` from the parent `features/organization` feature
+  (`@features/organization/ui/components`) for the list page's shared pagination band — see
+  `organization/FEATURE.md` § UI Conventions.
 - May be referenced by other organization subfeatures, but equipment ownership stays local to this subfeature.
 - Publishes the canonical `EQUIPMENT_TYPE_OPTIONS` through the feature public API (`index.ts`); the onboarding `create-equipment-form` consumes it so the equipment type catalog is not duplicated.
 

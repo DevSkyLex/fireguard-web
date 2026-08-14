@@ -41,6 +41,14 @@ import type {
 } from './models/state.interface';
 
 /**
+ * Default server-side page size for the members table — the same
+ * `[30, 60, 100]` family the other organization list pages offer through
+ * `ListPagination`, so the roster's rows-per-page select opens on a value one
+ * of its own options actually matches.
+ */
+export const MEMBERS_PAGE_SIZE = 30;
+
+/**
  * Initial organization members workflow state. Members and invitations are held
  * in `withEntities` collections; only roles, the link map and call states live
  * in plain state.
@@ -49,6 +57,7 @@ const INITIAL_STATE: OrganizationMembersState = {
   roles: [],
   membersTotal: 0,
   membersPage: 1,
+  membersPageSize: MEMBERS_PAGE_SIZE,
   membersSearch: '',
   membersStatus: 'all',
   membersActiveTotal: 0,
@@ -57,9 +66,6 @@ const INITIAL_STATE: OrganizationMembersState = {
   mutationCallState: idleCallState(),
   lastMutationCanExceedQuota: false,
 };
-
-/** Server-side page size for the members table. */
-export const MEMBERS_PAGE_SIZE = 20;
 
 /**
  * Captures the fresh accept link returned by an invite/resend response into the
@@ -168,6 +174,7 @@ export const OrganizationMembersStore = signalStore(
                       membersTotal: members.total,
                       membersActiveTotal,
                       membersPage: 1,
+                      membersPageSize: MEMBERS_PAGE_SIZE,
                       membersSearch: '',
                       membersStatus: 'all',
                       loadCallState: successCallState(null),
@@ -180,20 +187,26 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Loads a single members page for the given search term and status filter (server-side). */
+      /**
+       * Loads a single members page for the given search term, status filter
+       * and page size (server-side). `pageSize` defaults to
+       * {@link MEMBERS_PAGE_SIZE} so an existing caller that predates the
+       * rows-per-page select keeps its prior behavior.
+       */
       loadMembers: rxMethod<{
         organizationId: string;
         page: number;
         search: string;
         status: OrganizationMemberStatusFilter;
+        pageSize?: number;
       }>(
         pipe(
           tap(() => patchState(store, { loadCallState: pendingCallState() })),
-          switchMap(({ organizationId, page, search, status }) =>
+          switchMap(({ organizationId, page, search, status, pageSize = MEMBERS_PAGE_SIZE }) =>
             memberService
               .list(
                 organizationId,
-                { page, itemsPerPage: MEMBERS_PAGE_SIZE },
+                { page, itemsPerPage: pageSize },
                 { search: search || undefined, status: status === 'all' ? undefined : status },
               )
               .pipe(
@@ -205,6 +218,7 @@ export const OrganizationMembersStore = signalStore(
                       {
                         membersTotal: response.totalItems,
                         membersPage: page,
+                        membersPageSize: pageSize,
                         membersSearch: search,
                         membersStatus: status,
                         loadCallState: successCallState(null),

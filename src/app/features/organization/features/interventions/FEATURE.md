@@ -342,6 +342,9 @@ Internal code imports deep paths directly.
 - Depends on organization route context and permissions from the parent `features/organization`
   feature (`organizationPermissionGuard` from `@features/organization/http/guards`,
   `ORGANIZATION_PERMISSION` from `@features/organization/models`).
+- Consumes `ListPagination` from the parent `features/organization` feature
+  (`@features/organization/ui/components`) for the list page's shared pagination band — see
+  `organization/FEATURE.md` § UI Conventions.
 - The parent feature consumes this feature's public API for its landing page's work queues
   (ARCHITECTURE.md §4): the root barrel's `InterventionService` plus the `models`, `utils`,
   `data-access` and `ui/components` concern barrels listed above. Read-only — the parent lists

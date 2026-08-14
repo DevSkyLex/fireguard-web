@@ -22,11 +22,13 @@
   </div>
 
   <div hlmCard class="max-w-xl">
-    <app-equipment-create-form
-      [pending]="store.isCreating()"
-      [serverError]="store.createError()"
-      (submitted)="onSubmitted($event)"
-      (cancelled)="onCancelled()"
-    />
+    <div hlmCardContent>
+      <app-equipment-create-form
+        [pending]="store.isCreating()"
+        [serverError]="store.createError()"
+        (submitted)="onSubmitted($event)"
+        (cancelled)="onCancelled()"
+      />
+    </div>
   </div>
 </div>

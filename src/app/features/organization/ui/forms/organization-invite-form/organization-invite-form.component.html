@@ -9,8 +9,10 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="organization-invite-email" i18n="@@org.inviteForm.email"
-        >Email</label
+      <label hlmFieldLabel for="organization-invite-email"
+        ><span i18n="@@org.inviteForm.email">Email</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <input
         hlmInput
@@ -20,6 +22,7 @@
         placeholder="name@example.com"
         i18n-placeholder="@@org.inviteForm.emailPlaceholder"
         [formField]="inviteForm.email"
+        [attr.aria-required]="true"
       />
       @if (inviteForm.email().touched() && inviteForm.email().invalid()) {
         <hlm-field-error>{{ inviteForm.email().errors()[0].message }}</hlm-field-error>
@@ -28,12 +31,12 @@
 
     <hlm-field>
       <label hlmFieldLabel for="organization-invite-role" i18n="@@org.inviteForm.role">Role</label>
-      <hlm-select
-        id="organization-invite-role"
-        [itemToString]="roleLabelOf"
-        [formField]="inviteForm.roleId"
-      >
-        <hlm-select-trigger class="w-full" data-testid="organization-invite-role">
+      <hlm-select [itemToString]="roleLabelOf" [formField]="inviteForm.roleId">
+        <hlm-select-trigger
+          buttonId="organization-invite-role"
+          class="w-full"
+          data-testid="organization-invite-role"
+        >
           <hlm-select-value
             placeholder="No role"
             i18n-placeholder="@@org.inviteForm.rolePlaceholder"
@@ -52,22 +55,31 @@
       >
     </hlm-field>
 
-    <hlm-field orientation="horizontal">
-      <button hlmBtn type="submit" data-testid="organization-invite-submit" [disabled]="pending()">
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="organization-invite-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="organization-invite-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
         @if (pending()) {
           <span i18n="@@org.inviteForm.submitting">Sending…</span>
         } @else {
           <span i18n="@@org.inviteForm.submit">Send invitation</span>
         }
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        data-testid="organization-invite-cancel"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@common.cancel">Cancel</span>
       </button>
     </hlm-field>
   </hlm-field-group>

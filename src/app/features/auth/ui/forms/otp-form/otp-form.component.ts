@@ -18,7 +18,7 @@ import {
 } from '@angular/forms/signals';
 import { BrnInputOtp } from '@spartan-ng/brain/input-otp';
 import { HlmButton } from '@shared/ui/button';
-import { HlmFieldError, HlmFieldLabel } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import {
   HlmInputOtp,
   HlmInputOtpGroup,
@@ -62,6 +62,10 @@ const OTP_LENGTH = 6;
  * authenticator app — a TOTP challenge is generated on the device, so there is
  * nothing to send again (`FEATURE.md`, auth).
  *
+ * `brn-input-otp` binds `[formField]` natively, with no compatibility layer:
+ * it owns the real input behind the slots, which is what carries
+ * `autocomplete="one-time-code"` and the numeric keypad on a phone.
+ *
  * @version 1.0.0
  *
  * @example
@@ -77,12 +81,11 @@ const OTP_LENGTH = 6;
     FormField,
     BrnInputOtp,
     HlmButton,
-    HlmFieldError,
-    HlmFieldLabel,
     HlmInputOtp,
     HlmInputOtpGroup,
     HlmInputOtpSeparator,
     HlmInputOtpSlot,
+    ...HlmFieldImports,
   ],
   templateUrl: './otp-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

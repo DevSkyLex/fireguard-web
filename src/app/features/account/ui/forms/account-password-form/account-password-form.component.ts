@@ -20,7 +20,7 @@ import type { AccountPasswordChangeStep } from '@features/account/state';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth';
 import { PasswordInput } from '@shared/password-input';
 import { HlmButton } from '@shared/ui/button';
-import { HlmFieldError, HlmFieldLabel } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import type { AccountPasswordConfirmFormValues, AccountPasswordRequestFormValues } from './models';
 
@@ -78,7 +78,7 @@ const CODE_LENGTH = 6;
  */
 @Component({
   selector: 'app-account-password-form',
-  imports: [FormField, PasswordInput, HlmButton, HlmFieldError, HlmFieldLabel, HlmInput],
+  imports: [FormField, PasswordInput, HlmButton, HlmInput, ...HlmFieldImports],
   templateUrl: './account-password-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

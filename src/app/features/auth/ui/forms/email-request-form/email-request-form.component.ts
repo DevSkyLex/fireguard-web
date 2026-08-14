@@ -16,7 +16,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import { HlmButton } from '@shared/ui/button';
-import { HlmFieldError, HlmFieldLabel } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import type { EmailRequestFormValues } from './models';
 
@@ -41,7 +41,7 @@ import type { EmailRequestFormValues } from './models';
  */
 @Component({
   selector: 'app-email-request-form',
-  imports: [FormField, HlmButton, HlmFieldError, HlmFieldLabel, HlmInput],
+  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports],
   templateUrl: './email-request-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

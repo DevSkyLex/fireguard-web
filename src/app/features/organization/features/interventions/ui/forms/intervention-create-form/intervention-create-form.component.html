@@ -1,4 +1,4 @@
-<form (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
+<form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
   <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
     @if (serverMessages().length > 0) {
       <div role="alert" data-testid="intervention-create-error" class="text-sm text-destructive">
@@ -9,8 +9,10 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="intervention-create-name" i18n="@@intervention.cf.nameLabel"
-        >Intervention name</label
+      <label hlmFieldLabel for="intervention-create-name"
+        ><span i18n="@@intervention.cf.nameLabel">Intervention name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <input
         hlmInput
@@ -20,6 +22,7 @@
         placeholder="Autumn extinguisher round"
         i18n-placeholder="@@intervention.cf.namePlaceholder"
         [formField]="createForm.name"
+        [attr.aria-required]="true"
       />
       @if (createForm.name().touched() && createForm.name().invalid()) {
         <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
@@ -30,12 +33,8 @@
       <label hlmFieldLabel for="intervention-create-type" i18n="@@intervention.cf.objective"
         >Objective</label
       >
-      <hlm-select
-        id="intervention-create-type"
-        [itemToString]="typeLabelOf"
-        [formField]="createForm.type"
-      >
-        <hlm-select-trigger class="w-full">
+      <hlm-select [itemToString]="typeLabelOf" [formField]="createForm.type">
+        <hlm-select-trigger buttonId="intervention-create-type" class="w-full">
           @if (createForm.type().value(); as type) {
             <app-intervention-tag kind="type" [value]="type" asOption />
           } @else {
@@ -62,12 +61,8 @@
       <label hlmFieldLabel for="intervention-create-priority" i18n="@@intervention.cf.priorityLabel"
         >Priority</label
       >
-      <hlm-select
-        id="intervention-create-priority"
-        [itemToString]="priorityLabelOf"
-        [formField]="createForm.priority"
-      >
-        <hlm-select-trigger class="w-full">
+      <hlm-select [itemToString]="priorityLabelOf" [formField]="createForm.priority">
+        <hlm-select-trigger buttonId="intervention-create-priority" class="w-full">
           @if (createForm.priority().value(); as priority) {
             <app-intervention-tag kind="priority" [value]="priority" asOption />
           } @else {
@@ -162,22 +157,31 @@
     </hlm-field>
   </hlm-field-group>
 
-  <hlm-sheet-footer class="flex-col-reverse sm:flex-row sm:justify-end">
-    <button hlmBtn type="submit" data-testid="intervention-create-submit" [disabled]="pending()">
+  <hlm-sheet-footer class="flex-col sm:flex-row sm:justify-end">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="max-sm:min-h-11"
+      data-testid="intervention-create-cancel"
+      (click)="cancelled.emit()"
+    >
+      <span i18n="@@intervention.cf.cancel">Cancel</span>
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      class="max-sm:min-h-11"
+      data-testid="intervention-create-submit"
+      [disabled]="pending()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
+    >
       @if (pending()) {
         <span i18n="@@intervention.cf.submitting">Creating…</span>
       } @else {
         <span i18n="@@intervention.cf.submit">Create intervention</span>
       }
-    </button>
-    <button
-      hlmBtn
-      type="button"
-      variant="outline"
-      data-testid="intervention-create-cancel"
-      (click)="cancelled.emit()"
-    >
-      <span i18n="@@intervention.cf.cancel">Cancel</span>
     </button>
   </hlm-sheet-footer>
 </form>

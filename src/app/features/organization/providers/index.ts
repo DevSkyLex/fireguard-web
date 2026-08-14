@@ -5,3 +5,4 @@ export {
   provideCollaborationAssistant,
   withAssistantToggle,
 } from '../features/collaboration/providers/assistant';
+export { withSyncIndicator } from '../features/interventions/providers/sync-indicator';

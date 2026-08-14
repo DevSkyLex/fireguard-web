@@ -4,17 +4,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { OrganizationPermissionService } from '@features/organization/access';
-import {
-  InterventionOfflineService,
-  InterventionService,
-} from '@features/organization/features/interventions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionLabelOutput,
   InterventionOutput,
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
-import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
@@ -134,21 +130,6 @@ describe('InterventionsPage', () => {
         {
           provide: OrganizationPermissionService,
           useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => true },
-        },
-        {
-          provide: InterventionSyncCoordinatorService,
-          useValue: {
-            syncing: signal(false),
-            blockedOperations: signal(0),
-            problem: signal(null),
-            syncAll: vi.fn(),
-            retryBlocked: vi.fn(),
-            discardBlocked: vi.fn(),
-          },
-        },
-        {
-          provide: InterventionOfflineService,
-          useValue: { hasUnsyncedChanges: signal(false) },
         },
         {
           provide: OrganizationMemberAccessStore,

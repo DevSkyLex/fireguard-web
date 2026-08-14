@@ -26,6 +26,7 @@ export class InterventionsPage {
   public readonly clearFiltersButton: Locator = this.page.getByTestId(
     'interventions-clear-filters',
   );
+  public readonly syncIndicatorTrigger: Locator = this.page.getByTestId('intervention-sync-status');
 
   /** Navigates straight to the list with a raw query string, exercising a shared/bookmarked filtered URL. */
   public async gotoWithQuery(organizationId: string, query: string): Promise<void> {

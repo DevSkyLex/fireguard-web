@@ -23,10 +23,7 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
-import {
-  InterventionOfflineService,
-  InterventionService,
-} from '@features/organization/features/interventions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionActivityOutput,
   InterventionAttachmentOutput,
@@ -39,7 +36,6 @@ import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
-  InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import { InterventionStore } from '@features/organization/features/interventions/state';
@@ -178,7 +174,6 @@ describe('InterventionDetailPage', () => {
   let blockerCount: WritableSignal<number>;
   let orderedIds: WritableSignal<readonly string[]>;
   let online: WritableSignal<boolean>;
-  let unsynced: WritableSignal<boolean>;
 
   let load: ReturnType<typeof vi.fn>;
   let reload: ReturnType<typeof vi.fn>;
@@ -221,7 +216,6 @@ describe('InterventionDetailPage', () => {
     blockerCount = signal(0);
     orderedIds = signal<readonly string[]>([]);
     online = signal(true);
-    unsynced = signal(false);
     permitted = new Set<string>([
       'organization.interventions.plan',
       'organization.interventions.execute',
@@ -274,17 +268,6 @@ describe('InterventionDetailPage', () => {
           useValue: { profile: signal({ id: 'member-1' }) },
         },
         {
-          provide: InterventionSyncCoordinatorService,
-          useValue: {
-            syncing: signal(false),
-            blockedOperations: signal(0),
-            problem: signal(null),
-            syncAll: vi.fn(),
-            retryBlocked: vi.fn(),
-            discardBlocked: vi.fn(),
-          },
-        },
-        {
           provide: InterventionFieldExecutionService,
           useValue: { scanSupported: (): boolean => false, scanToWorkItem: vi.fn() },
         },
@@ -297,7 +280,6 @@ describe('InterventionDetailPage', () => {
           },
         },
         { provide: ConnectivityService, useValue: { online } },
-        { provide: InterventionOfflineService, useValue: { hasUnsyncedChanges: unsynced } },
         { provide: InterventionService, useValue: { downloadAttachment } },
         { provide: BrowserDownloadService, useValue: { trigger: browserDownloadTrigger } },
         { provide: InterventionPublicationService, useValue: { publish } },
@@ -845,13 +827,6 @@ describe('InterventionDetailPage', () => {
       expect(byTestId('intervention-detail-review-note').textContent).toContain(
         'Re-check the third floor.',
       );
-    });
-
-    it('should surface unsynced changes through the sync chip, not a dismissable banner', async () => {
-      unsynced.set(true);
-      fixture = await createPage();
-
-      expect(byTestId('intervention-sync-status')).not.toBeNull();
     });
   });
 

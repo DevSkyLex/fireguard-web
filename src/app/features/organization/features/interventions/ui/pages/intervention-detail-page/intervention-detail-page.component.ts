@@ -25,7 +25,6 @@ import {
   lucideChevronRight,
   lucideCircleAlert,
   lucideClock,
-  lucideCloudUpload,
   lucideCompass,
   lucideCopy,
   lucideEllipsis,
@@ -41,10 +40,7 @@ import { isCallError, isCallPending, type CallState, type StoreError } from '@co
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
-import {
-  InterventionOfflineService,
-  InterventionService,
-} from '@features/organization/features/interventions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionAttachmentOutput,
   InterventionCapabilities,
@@ -70,7 +66,6 @@ import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
-  InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import {
   InterventionStore,
@@ -127,7 +122,6 @@ import { InterventionIssuesChecklist } from '../../components/intervention-issue
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
 import { InterventionPublicationSummary } from '../../components/intervention-publication-summary';
 import { InterventionStatusBand } from '../../components/intervention-status-band';
-import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
 import { InterventionSignatureDialog } from '../../dialogs/intervention-signature-dialog';
@@ -215,7 +209,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionConfirmDialog,
     InterventionSignatureDialog,
     InterventionStatusBand,
-    InterventionSyncStatus,
     InterventionCommentForm,
     InterventionGettingStarted,
     InterventionIssuesChecklist,
@@ -242,7 +235,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideChevronRight,
       lucideCircleAlert,
       lucideClock,
-      lucideCloudUpload,
       lucideCompass,
       lucideCopy,
       lucideEllipsis,
@@ -362,14 +354,6 @@ export class InterventionDetailPage {
 
   /** Whether the browser can reach the API, which gates publication. */
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
-
-  /** The outbox, read only for the unsynced indicator. */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
-
-  /** The sync coordinator behind the header's sync chip. */
-  protected readonly sync: InterventionSyncCoordinatorService = inject(
-    InterventionSyncCoordinatorService,
-  );
 
   /** Shrinks camera captures under the backend's 10 MiB attachment ceiling. */
   private readonly photoCompressor: InterventionPhotoCompressorService = inject(
@@ -754,9 +738,6 @@ export class InterventionDetailPage {
 
   /** Whether the browser can reach the API. */
   protected readonly online: Signal<boolean> = this.connectivity.online;
-
-  /** Whether the offline outbox has changes waiting to sync. */
-  protected readonly hasUnsyncedChanges: Signal<boolean> = this.offline.hasUnsyncedChanges;
 
   /**
    * Property caps

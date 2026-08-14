@@ -251,6 +251,33 @@ test.describe('Organization Today page', () => {
     );
   });
 
+  test('shows the shell header sync indicator in its quiet up-to-date state, outside the page content', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await mockFullDashboard(api);
+    await mockPopulatedQueues(api);
+    const today = new OrganizationTodayPage(page);
+
+    await today.goto(E2E_ORGANIZATION_ID);
+
+    await expect(today.syncIndicatorTrigger).toBeVisible();
+    await expect(today.root.getByTestId('intervention-sync-status')).toHaveCount(0);
+    await expect(today.syncIndicatorTrigger).toHaveAttribute('aria-label', 'Up to date');
+    await expect(
+      today.syncIndicatorTrigger.getByTestId('intervention-sync-blocked-count'),
+    ).toHaveCount(0);
+    await expect(
+      today.syncIndicatorTrigger.getByTestId('intervention-sync-pending-count'),
+    ).toHaveCount(0);
+
+    await today.openSyncIndicator();
+
+    await expect(today.syncIndicatorLastSynced).toBeVisible();
+    await expect(today.syncIndicatorLastSynced).toContainText('Last synced');
+  });
+
   test('renders at 375px in dark mode with no console errors and no horizontal overflow', async ({
     page,
     context,

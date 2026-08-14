@@ -201,7 +201,10 @@ constant still comes from this feature's public API, so the gate cannot drift fr
 **The assistant is in neither list.** It is not a destination — it has no URL and opens over the
 current page — so it is a single control in the header's action cluster, published by the
 `collaboration` subfeature, which carries its own sheet rather than claiming a shell panel. A
-navigation row would promise an address that does not exist.
+navigation row would promise an address that does not exist. **The intervention sync indicator is
+likewise absent from both lists**, for the same reason: it is not a destination either, and is
+published by the `interventions` subfeature as a header-action slot contribution
+(`withSyncIndicator()`, documented in that feature's own `FEATURE.md`).
 
 `OrganizationSwitcher` (`ui/components/organization-switcher/`) is feature-owned even though it
 only ever renders inside a layout: it reads organization state, and rendering location does not

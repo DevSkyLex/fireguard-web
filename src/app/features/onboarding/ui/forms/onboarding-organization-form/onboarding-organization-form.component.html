@@ -9,8 +9,10 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="onboarding-org-name" i18n="@@onboarding.orgForm.name">
-        Organization name
+      <label hlmFieldLabel for="onboarding-org-name"
+        ><span i18n="@@onboarding.orgForm.name"> Organization name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span>
       </label>
       <input
         hlmInput
@@ -20,6 +22,8 @@
         placeholder="Acme Fire Safety"
         i18n-placeholder="@@onboarding.orgForm.namePlaceholder"
         [formField]="organizationForm.name"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="organizationForm.name().touched() && organizationForm.name().invalid()"
       />
       @if (organizationForm.name().touched() && organizationForm.name().invalid()) {
         <hlm-field-error>{{ organizationForm.name().errors()[0].message }}</hlm-field-error>
@@ -38,11 +42,20 @@
         placeholder="acme-fire-safety"
         i18n-placeholder="@@onboarding.orgForm.slugPlaceholder"
         [formField]="organizationForm.slug"
+        [attr.aria-invalid]="organizationForm.slug().touched() && organizationForm.slug().invalid()"
       />
     </hlm-field>
 
-    <hlm-field orientation="horizontal">
-      <button hlmBtn type="submit" data-testid="onboarding-org-submit" [disabled]="pending()">
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="onboarding-org-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
         @if (pending()) {
           <span i18n="@@onboarding.orgForm.submitting">Creating…</span>
         } @else {

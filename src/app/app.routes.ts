@@ -11,12 +11,14 @@ import {
   withDirectMessagesNav,
   withOrganizationNav,
   withOrganizationSwitcher,
+  withSyncIndicator,
 } from '@features/organization';
 import {
   DashboardLayout,
   provideDashboardLayoutSlots,
   withDashboardBreadcrumb,
   withDashboardGlobalNav,
+  withDashboardPageActions,
 } from '@layouts/dashboard-layout';
 import { FocusedLayout, provideFocusedLayoutSlots } from '@layouts/focused-layout';
 import {
@@ -35,6 +37,12 @@ import { withThemeSwitcher } from '@shared/theme-switcher';
  * Every shell is wired to real features — the authentication workflow and the
  * mandatory activation wizard share the split shell, the error pages the
  * focused one, and both the account and the organization tree the dashboard.
+ * The split shell's own `data.splitWidth` widens its form column per route:
+ * `auth` keeps the shell's `md` default (a one-field form), `onboarding` sets
+ * `xl` for its multi-column plan step — `2xl` was tried and rejected, it
+ * pushes the showcase panel below half its width between the `lg` breakpoint
+ * and ~1472px viewport, which is the opposite of "give the wizard room"
+ * (`SplitLayout` `@description`).
  *
  * The dashboard is mounted **once**, for every signed-in destination. Its
  * sidebar is composed rather than swapped per section: the organization block
@@ -80,6 +88,7 @@ export const APP_ROUTES: Routes = [
     path: 'onboarding',
     component: SplitLayout,
     canActivate: [authGuard, maintenanceGuard],
+    data: { splitWidth: 'xl' },
     providers: [
       provideSplitLayoutSlots({
         showcase: [withSplitLayoutShowcase(), withOnboardingShowcase()],
@@ -115,7 +124,12 @@ export const APP_ROUTES: Routes = [
         sidebarNav: [withOrganizationNav(), withDirectMessagesNav(), withDashboardGlobalNav()],
         sidebarFooter: [withAccountMenu()],
         header: [withDashboardBreadcrumb()],
-        headerActions: [withAssistantToggle(), withThemeSwitcher()],
+        headerActions: [
+          withDashboardPageActions(),
+          withAssistantToggle(),
+          withSyncIndicator(),
+          withThemeSwitcher(),
+        ],
       }),
     ],
     children: [

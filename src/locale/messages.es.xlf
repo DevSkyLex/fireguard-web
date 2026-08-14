@@ -70,6 +70,10 @@
         <source>Cancel</source>
         <target>Cancelar</target>
       </trans-unit>
+      <trans-unit id="common.required" datatype="html">
+        <source> required</source>
+        <target> obligatorio</target>
+      </trans-unit>
       <trans-unit id="account.mfa.secretLabel" datatype="html">
         <source>Manual entry key</source>
         <target>Clave de entrada manual</target>
@@ -1092,6 +1096,10 @@
         <source>Channel settings</source>
         <target>Ajustes del canal</target>
       </trans-unit>
+      <trans-unit id="channels.editDialog.description" datatype="html">
+        <source> Rename the channel or move it under a different parent. </source>
+        <target> Cambia el nombre del canal o muévelo bajo otro canal principal. </target>
+      </trans-unit>
       <trans-unit id="channels.editDialog.name" datatype="html">
         <source>Name</source>
         <target>Nombre</target>
@@ -1191,6 +1199,10 @@
       <trans-unit id="channels.participants.title" datatype="html">
         <source>Participants</source>
         <target>Participantes</target>
+      </trans-unit>
+      <trans-unit id="channels.participants.sheetDescription" datatype="html">
+        <source> See who's in this channel, and add or remove someone if you manage it. </source>
+        <target> Consulta quién está en este canal, y añade o elimina a alguien si lo gestionas. </target>
       </trans-unit>
       <trans-unit id="channels.participants.emptyTitle" datatype="html">
         <source>No participants</source>
@@ -2906,6 +2918,10 @@
         <source>Location</source>
         <target>Ubicación</target>
       </trans-unit>
+      <trans-unit id="equipment.table.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
+      </trans-unit>
       <trans-unit id="common.updated" datatype="html">
         <source>Updated</source>
         <target>Actualizado</target>
@@ -2953,34 +2969,6 @@
       <trans-unit id="equipment.list.filterType" datatype="html">
         <source>Type</source>
         <target>Tipo</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pageFirst" datatype="html">
-        <source>First page</source>
-        <target>Primera página</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pageIndicator" datatype="html">
-        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
-        <target>Página <x id="INTERPOLATION"/> de <x id="INTERPOLATION_1"/></target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pageLast" datatype="html">
-        <source>Last page</source>
-        <target>Última página</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Página siguiente</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Página anterior</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalEquipment() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION"/> de <x id="INTERPOLATION_1"/> fila(s) mostrada(s)</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.rowsPerPage" datatype="html">
-        <source>Rows per page:</source>
-        <target>Filas por página:</target>
       </trans-unit>
       <trans-unit id="equipment.maintenanceDue.dueSoon" datatype="html">
         <source>Due soon</source>
@@ -3242,6 +3230,10 @@
         <source>Grid view</source>
         <target>Vista de cuadrícula</target>
       </trans-unit>
+      <trans-unit id="facility.list.gridRegion" datatype="html">
+        <source>Facilities grid</source>
+        <target>Cuadrícula de sitios</target>
+      </trans-unit>
       <trans-unit id="facility.list.errorTitle" datatype="html">
         <source>Couldn't load facilities</source>
         <target>No se pudieron cargar las instalaciones</target>
@@ -3253,34 +3245,6 @@
       <trans-unit id="facility.list.emptyDesc" datatype="html">
         <source>Adjust your search or filters, or register the sites you track.</source>
         <target>Ajuste su búsqueda o sus filtros, o registre los sitios que supervisa.</target>
-      </trans-unit>
-      <trans-unit id="facility.list.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalRootFacilities() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ store.totalRootFacilities() }}"/> fila(s) mostrada(s)</target>
-      </trans-unit>
-      <trans-unit id="facility.list.rowsPerPage" datatype="html">
-        <source>Rows per page:</source>
-        <target>Filas por página:</target>
-      </trans-unit>
-      <trans-unit id="facility.list.pageIndicator" datatype="html">
-        <source>Page <x id="INTERPOLATION" equiv-text="{{ currentPage() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
-        <target>Página <x id="INTERPOLATION" equiv-text="{{ currentPage() }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
-      </trans-unit>
-      <trans-unit id="facility.list.pageFirst" datatype="html">
-        <source>First page</source>
-        <target>Primera página</target>
-      </trans-unit>
-      <trans-unit id="facility.list.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Página anterior</target>
-      </trans-unit>
-      <trans-unit id="facility.list.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Página siguiente</target>
-      </trans-unit>
-      <trans-unit id="facility.list.pageLast" datatype="html">
-        <source>Last page</source>
-        <target>Última página</target>
       </trans-unit>
       <trans-unit id="status.active" datatype="html">
         <source>Active</source>
@@ -4330,10 +4294,6 @@
         <source>A temporary synchronization error interrupted this intervention.</source>
         <target>Un error de sincronización temporal interrumpió esta intervención.</target>
       </trans-unit>
-      <trans-unit id="intervention.sync.chipLabel" datatype="html">
-        <source>Synchronization status</source>
-        <target>Estado de la sincronización</target>
-      </trans-unit>
       <trans-unit id="intervention.sync.title" datatype="html">
         <source> Synchronization </source>
         <target> Sincronización </target>
@@ -4369,6 +4329,38 @@
       <trans-unit id="intervention.sync.discardText" datatype="html">
         <source> The changes that could not be replayed will be permanently lost. Work recorded on the server is not affected. </source>
         <target> Los cambios que no se pudieron reproducir se perderán definitivamente. El trabajo registrado en el servidor no se ve afectado. </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaOffline" datatype="html">
+        <source>Offline, changes queued locally</source>
+        <target>Sin conexión, cambios en espera en este dispositivo</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaBlocked" datatype="html">
+        <source>Synchronization blocked, <x id="count" equiv-text="count"/> change(s) could not be replayed</source>
+        <target>Sincronización bloqueada, <x id="count" equiv-text="count"/> cambio(s) no se pudieron reproducir</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaSyncing" datatype="html">
+        <source>Synchronizing</source>
+        <target>Sincronizando</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaPending" datatype="html">
+        <source><x id="count" equiv-text="count"/> change(s) waiting to sync</source>
+        <target><x id="count" equiv-text="count"/> cambio(s) a la espera de sincronizarse</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaSynced" datatype="html">
+        <source>Up to date</source>
+        <target>Actualizado</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.offlineExplain" datatype="html">
+        <source> You're offline. Changes are saved on this device and will sync automatically once you're back online. </source>
+        <target> Estás sin conexión. Los cambios se guardan en este dispositivo y se sincronizarán automáticamente en cuanto vuelvas a estar en línea. </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.upToDate" datatype="html">
+        <source>Up to date</source>
+        <target>Actualizado</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.lastSynced" datatype="html">
+        <source>Last synced <x id="when" equiv-text="relative"/></source>
+        <target>Última sincronización <x id="when" equiv-text="relative"/></target>
       </trans-unit>
       <trans-unit id="intervention.sync.discardConfirm" datatype="html">
         <source> Discard </source>
@@ -5238,6 +5230,10 @@
         <source>Request changes</source>
         <target>Solicitar cambios</target>
       </trans-unit>
+      <trans-unit id="intervention.rc.submitting" datatype="html">
+        <source>Sending…</source>
+        <target>Enviando…</target>
+      </trans-unit>
       <trans-unit id="intervention.sf.title" datatype="html">
         <source> Skip work item </source>
         <target>Omitir elemento de trabajo</target>
@@ -5302,6 +5298,10 @@
         <source>Add to prepared scope</source>
         <target>Añadir al alcance preparado</target>
       </trans-unit>
+      <trans-unit id="intervention.wif.submitting" datatype="html">
+        <source>Adding…</source>
+        <target>Añadiendo…</target>
+      </trans-unit>
       <trans-unit id="intervention.detail.loadingAria" datatype="html">
         <source>Loading intervention</source>
         <target>Cargando intervención</target>
@@ -5333,10 +5333,6 @@
       <trans-unit id="intervention.detail.changesRequestedBanner" datatype="html">
         <source>Changes requested by the reviewer</source>
         <target>Cambios solicitados por el revisor</target>
-      </trans-unit>
-      <trans-unit id="intervention.detail.blockersBanner" datatype="html">
-        <source>Publication blocked — a compliance point must be cleared</source>
-        <target>Publicación bloqueada — debe resolverse un punto de conformidad</target>
       </trans-unit>
       <trans-unit id="intervention.review.executionComplete" datatype="html">
         <source>Execution complete — all field work is resolved and no blocking issues remain.</source>
@@ -5510,10 +5506,6 @@
         <source>About</source>
         <target>Acerca de</target>
       </trans-unit>
-      <trans-unit id="intervention.detail.aboutCaption" datatype="html">
-        <source> What this intervention is — status, reference, type and description. </source>
-        <target> Qué es esta intervención — estado, referencia, tipo y descripción. </target>
-      </trans-unit>
       <trans-unit id="intervention.detail.reference" datatype="html">
         <source> Reference </source>
         <target> Referencia </target>
@@ -5521,10 +5513,6 @@
       <trans-unit id="intervention.sidebar.title" datatype="html">
         <source>Properties</source>
         <target>Propiedades</target>
-      </trans-unit>
-      <trans-unit id="intervention.sidebar.titleCaption" datatype="html">
-        <source> The intervention's core details — priority, site, schedule and team. </source>
-        <target> Los datos clave de la intervención: prioridad, sitio, planificación y equipo. </target>
       </trans-unit>
       <trans-unit id="intervention.prop.status" datatype="html">
         <source> Status </source>
@@ -5542,17 +5530,9 @@
         <source>Live team messaging about this intervention</source>
         <target>Mensajería del equipo en directo sobre esta intervención</target>
       </trans-unit>
-      <trans-unit id="intervention.detail.statusMenu" datatype="html">
-        <source>Move this intervention</source>
-        <target>Mover esta intervención</target>
-      </trans-unit>
       <trans-unit id="intervention.detail.statusMenuLabel" datatype="html">
         <source>Send it to</source>
         <target>Enviarla a</target>
-      </trans-unit>
-      <trans-unit id="intervention.detail.commandBarSeeDetails" datatype="html">
-        <source>— see what is blocking</source>
-        <target>— ver qué lo bloquea</target>
       </trans-unit>
       <trans-unit id="intervention.detail.tabFieldWork" datatype="html">
         <source>Field work</source>
@@ -8327,6 +8307,10 @@
         <source>Open <x id="INTERPOLATION" equiv-text="{{ timed.event.title }}"/></source>
         <target>Abrir <x id="INTERPOLATION"/></target>
       </trans-unit>
+      <trans-unit id="calendar.agendaEmpty" datatype="html">
+        <source> Nothing scheduled in this period. </source>
+        <target>No hay nada previsto en este periodo.</target>
+      </trans-unit>
       <trans-unit id="shared.commentComposer.placeholder" datatype="html">
         <source>Write a comment…</source>
         <target>Escribe un comentario…</target>
@@ -8981,10 +8965,6 @@
         <source>Field work you have already captured stays on this device and syncs on its own once you are back in range.</source>
         <target>El trabajo de campo ya registrado permanece en este dispositivo y se sincronizará solo cuando vuelvas a tener cobertura.</target>
       </trans-unit>
-      <trans-unit id="route.assets" datatype="html">
-        <source>Assets</source>
-        <target>Patrimonio</target>
-      </trans-unit>
       <trans-unit id="org.assets.subtitle" datatype="html">
         <source>Browse the estate by site, and see what each one holds.</source>
         <target>Recorre el patrimonio por sitio y mira lo que contiene cada uno.</target>
@@ -9405,22 +9385,6 @@
         <source> No results. </source>
         <target>Sin resultados.</target>
       </trans-unit>
-      <trans-unit id="intervention.list.pageFirst" datatype="html">
-        <source>First page</source>
-        <target>Primera página</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.pageLast" datatype="html">
-        <source>Last page</source>
-        <target>Última página</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Página siguiente</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Página anterior</target>
-      </trans-unit>
       <trans-unit id="intervention.list.rowCopyRef" datatype="html">
         <source>Copy reference</source>
         <target>Copiar la referencia</target>
@@ -9437,13 +9401,33 @@
         <source>Open</source>
         <target>Abrir</target>
       </trans-unit>
-      <trans-unit id="intervention.list.rowsPerPage" datatype="html">
-        <source>Rows per page:</source>
-        <target>Filas por página:</target>
-      </trans-unit>
       <trans-unit id="intervention.list.overdueLabel" datatype="html">
         <source>Overdue</source>
         <target>Atrasado</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewsAriaLabel" datatype="html">
+        <source>Views</source>
+        <target>Vistas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewAll" datatype="html">
+        <source>All</source>
+        <target>Todas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewOverdue" datatype="html">
+        <source>Overdue</source>
+        <target>Atrasadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewSentBack" datatype="html">
+        <source>Sent back</source>
+        <target>Devueltas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewAwaitingReview" datatype="html">
+        <source>Awaiting review</source>
+        <target>Pendientes de revisión</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.removeFilter" datatype="html">
+        <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
+        <target>Quitar el filtro: <x id="field" equiv-text="fieldLabel"/></target>
       </trans-unit>
           <trans-unit id="intervention.notice.folded" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ foldedCount() }}"/> more</source>
@@ -9625,10 +9609,6 @@
         <source>Some changes are waiting to sync</source>
         <target>Algunos cambios esperan sincronización</target>
       </trans-unit>
-      <trans-unit id="intervention.notice.readyToPublish" datatype="html">
-        <source>Ready to publish</source>
-        <target>Listo para publicar</target>
-      </trans-unit>
       <trans-unit id="intervention.notice.published" datatype="html">
         <source>This intervention is published</source>
         <target>Esta intervención está publicada</target>
@@ -9680,6 +9660,26 @@
       <trans-unit id="intervention.actionBox.published" datatype="html">
         <source> Published and locked at revision v<x id="INTERPOLATION" equiv-text="{{ revision() }}"/> </source>
         <target> Publicada y bloqueada en la revisión v<x id="INTERPOLATION" equiv-text="{{ revision() }}"/> </target>
+      </trans-unit>
+      <trans-unit id="intervention.band.phase.prepare" datatype="html">
+        <source>Preparation</source>
+        <target>Preparación</target>
+      </trans-unit>
+      <trans-unit id="intervention.band.phase.execute" datatype="html">
+        <source>Field work</source>
+        <target>Trabajo de campo</target>
+      </trans-unit>
+      <trans-unit id="intervention.band.phase.review" datatype="html">
+        <source>Review</source>
+        <target>Revisión</target>
+      </trans-unit>
+      <trans-unit id="intervention.band.blockers" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ blockersCount() }}"/> blocking issues</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ blockersCount() }}"/> problemas bloqueantes</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.tabs.changes" datatype="html">
+        <source>Changes</source>
+        <target>Cambios</target>
       </trans-unit>
       <trans-unit id="intervention.activity.title" datatype="html">
         <source> Activity </source>
@@ -10173,37 +10173,9 @@
         <source>Status</source>
         <target>Estado</target>
       </trans-unit>
-      <trans-unit id="inspection.list.pageFirst" datatype="html">
-        <source>First page</source>
-        <target>Primera página</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.pageIndicator" datatype="html">
-        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
-        <target>Página <x id="INTERPOLATION" equiv-text="{{ page() }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
-      </trans-unit>
-      <trans-unit id="inspection.list.pageLast" datatype="html">
-        <source>Last page</source>
-        <target>Última página</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Página siguiente</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Página anterior</target>
-      </trans-unit>
       <trans-unit id="inspection.list.retry" datatype="html">
         <source>Retry</source>
         <target>Reintentar</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalInspections() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ store.totalInspections() }}"/> fila(s) mostradas</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.rowsPerPage" datatype="html">
-        <source>Rows per page:</source>
-        <target>Filas por página:</target>
       </trans-unit>
       <trans-unit id="inspection.newButton" datatype="html">
         <source>New inspection</source>
@@ -10236,6 +10208,10 @@
       <trans-unit id="inspection.table.colStatus" datatype="html">
         <source>Status</source>
         <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
       </trans-unit>
       <trans-unit id="inspection.table.emptyDesc" datatype="html">
         <source>Adjust your filters, or open the inspections your team carries out.</source>
@@ -10497,14 +10473,6 @@
         <source>Action failed</source>
         <target>La acción falló</target>
       </trans-unit>
-      <trans-unit id="org.members.pageIndicator" datatype="html">
-        <source>Page <x id="current" equiv-text="current"/> of <x id="total" equiv-text="total"/></source>
-        <target>Página <x id="current" equiv-text="current"/> de <x id="total" equiv-text="total"/></target>
-      </trans-unit>
-      <trans-unit id="org.members.pageNavAriaLabel" datatype="html">
-        <source>Members pages</source>
-        <target>Páginas de miembros</target>
-      </trans-unit>
       <trans-unit id="org.members.bulkRemoveButton" datatype="html">
         <source>Remove (<x id="count" equiv-text="this.selectedIds().size"/>)</source>
         <target>Quitar (<x id="count" equiv-text="this.selectedIds().size"/>)</target>
@@ -10601,18 +10569,6 @@
         <source>Adjust your search or the status filter.</source>
         <target>Ajusta tu búsqueda o el filtro de estado.</target>
       </trans-unit>
-      <trans-unit id="org.members.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> fila(s) mostrada(s)</target>
-      </trans-unit>
-      <trans-unit id="org.members.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Página anterior</target>
-      </trans-unit>
-      <trans-unit id="org.members.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Página siguiente</target>
-      </trans-unit>
       <trans-unit id="org.invitations.heading" datatype="html">
         <source>Pending invitations</source>
         <target>Invitaciones pendientes</target>
@@ -10669,6 +10625,10 @@
         <source>Status</source>
         <target>Estado</target>
       </trans-unit>
+      <trans-unit id="org.members.table.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
+      </trans-unit>
       <trans-unit id="org.members.table.colActions" datatype="html">
         <source>Actions</source>
         <target>Acciones</target>
@@ -10720,6 +10680,10 @@
       <trans-unit id="org.invitations.table.colExpires" datatype="html">
         <source>Expires</source>
         <target>Expira</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
       </trans-unit>
       <trans-unit id="org.invitations.table.noRole" datatype="html">
         <source>No role</source>
@@ -11376,6 +11340,38 @@
       <trans-unit id="org.invitationAccept.notAcceptable" datatype="html">
         <source> This invitation can no longer be accepted. </source>
         <target>Esta invitación ya no se puede aceptar.</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.rowCount" datatype="html">
+        <source><x id="shown" equiv-text="shown"/> of <x id="total" equiv-text="total"/> row(s) shown</source>
+        <target><x id="shown" equiv-text="shown"/> de <x id="total" equiv-text="total"/> fila(s) mostradas</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.pageIndicator" datatype="html">
+        <source>Page <x id="page" equiv-text="page"/> of <x id="pageCount" equiv-text="pageCount"/></source>
+        <target>Página <x id="page" equiv-text="page"/> de <x id="pageCount" equiv-text="pageCount"/></target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.pageSizeLabel" datatype="html">
+        <source>Rows per page:</source>
+        <target>Filas por página:</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.nav" datatype="html">
+        <source>Pagination</source>
+        <target>Paginación</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.ariaFirst" datatype="html">
+        <source>First page</source>
+        <target>Primera página</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.ariaPrevious" datatype="html">
+        <source>Previous page</source>
+        <target>Página anterior</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.ariaNext" datatype="html">
+        <source>Next page</source>
+        <target>Página siguiente</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.ariaLast" datatype="html">
+        <source>Last page</source>
+        <target>Última página</target>
       </trans-unit>
 </body>
   </file>

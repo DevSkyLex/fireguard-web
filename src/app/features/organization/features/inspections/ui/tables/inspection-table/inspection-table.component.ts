@@ -25,7 +25,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * no service. The page decides what to load, filter and paginate; this
  * component only renders the page it is handed.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -33,7 +33,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
   selector: 'app-inspection-table',
   imports: [RouterLink, InspectionStatusTag, HlmSkeleton, ...HlmTableImports],
   templateUrl: './inspection-table.component.html',
-  host: { class: 'block w-full' },
+  host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionTable {
@@ -74,5 +74,18 @@ export class InspectionTable {
   //#region Properties
   /** Placeholder rows for the loading render. */
   protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method columnCount
+   * @description How many cells a row has, so the empty-state message can span the full width.
+   * @access protected
+   * @since 1.1.0
+   * @returns {number} The rendered column count.
+   */
+  protected columnCount(): number {
+    return 5;
+  }
   //#endregion
 }

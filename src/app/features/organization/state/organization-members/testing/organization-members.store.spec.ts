@@ -160,6 +160,25 @@ describe('OrganizationMembersStore', () => {
     );
   });
 
+  it('loads a members page with an explicit page size, remembered on the state', async () => {
+    memberService.list.mockReturnValue(of(collection([member('m4')])));
+    store.loadMembers({
+      organizationId: 'org-1',
+      page: 1,
+      search: '',
+      status: 'all',
+      pageSize: 60,
+    });
+    await flush();
+
+    expect(store.membersPageSize()).toBe(60);
+    expect(memberService.list).toHaveBeenCalledWith(
+      'org-1',
+      { page: 1, itemsPerPage: 60 },
+      { search: undefined, status: undefined },
+    );
+  });
+
   it('keeps only pending/expired invitations in activeInvitations', async () => {
     invitationService.list.mockReturnValue(
       of(

@@ -1,156 +1,182 @@
-<div hlmTableContainer class="rounded-md border border-border">
-  <table hlmTable data-testid="organization-member-table">
-    <caption hlmTableCaption class="sr-only" i18n="@@org.members.table.caption">
-      Organization members
-    </caption>
+<div class="h-full w-full overflow-hidden rounded-md border border-border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="organization-member-table-caption"
+  >
+    <table hlmTable data-testid="organization-member-table">
+      <caption
+        hlmTableCaption
+        id="organization-member-table-caption"
+        class="sr-only"
+        i18n="@@org.members.table.caption"
+      >
+        Organization members
+      </caption>
 
-    <thead hlmTableHeader>
-      <tr hlmTableRow>
-        @if (canRemove()) {
-          <th hlmTableHead class="w-10">
-            <hlm-checkbox
-              data-testid="organization-member-table-select-all"
-              aria-label="Select all members"
-              i18n-aria-label="@@org.members.table.selectAllLabel"
-              [checked]="allSelected()"
-              [indeterminate]="someSelected()"
-              (checkedChange)="toggleAll($event)"
-            />
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+        <tr hlmTableRow>
+          @if (canRemove()) {
+            <th hlmTableHead class="w-10">
+              <hlm-checkbox
+                data-testid="organization-member-table-select-all"
+                aria-label="Select all members"
+                i18n-aria-label="@@org.members.table.selectAllLabel"
+                [checked]="allSelected()"
+                [indeterminate]="someSelected()"
+                (checkedChange)="toggleAll($event)"
+              />
+            </th>
+          }
+          <th hlmTableHead i18n="@@org.members.table.colMember">Member</th>
+          <th hlmTableHead i18n="@@org.members.table.colEmail">Email</th>
+          <th hlmTableHead i18n="@@org.members.table.colRoles">Roles</th>
+          <th hlmTableHead i18n="@@org.members.table.colStatus">Status</th>
+          <th hlmTableHead class="w-[52px]">
+            <span class="sr-only" i18n="@@org.members.table.colActions">Actions</span>
           </th>
-        }
-        <th hlmTableHead i18n="@@org.members.table.colMember">Member</th>
-        <th hlmTableHead i18n="@@org.members.table.colEmail">Email</th>
-        <th hlmTableHead i18n="@@org.members.table.colRoles">Roles</th>
-        <th hlmTableHead i18n="@@org.members.table.colStatus">Status</th>
-        <th hlmTableHead class="w-[52px]">
-          <span class="sr-only" i18n="@@org.members.table.colActions">Actions</span>
-        </th>
-      </tr>
-    </thead>
+        </tr>
+      </thead>
 
-    <tbody hlmTableBody>
-      @if (loading() && items().length === 0) {
-        @for (row of skeletonRows; track row) {
-          <tr hlmTableRow aria-hidden="true">
-            @if (canRemove()) {
-              <td hlmTableCell><hlm-skeleton class="size-4" /></td>
-            }
-            <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-40" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-16" /></td>
-            <td hlmTableCell><hlm-skeleton class="ms-auto size-6" /></td>
-          </tr>
-        }
-      } @else {
-        @for (member of items(); track member.id) {
-          <tr hlmTableRow data-testid="organization-member-table-row">
-            @if (canRemove()) {
+      <tbody hlmTableBody>
+        @if (loading() && items().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              @if (canRemove()) {
+                <td hlmTableCell><hlm-skeleton class="size-4" /></td>
+              }
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-40" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-16" /></td>
+              <td hlmTableCell><hlm-skeleton class="ms-auto size-6" /></td>
+            </tr>
+          }
+        } @else {
+          @for (member of items(); track member.id) {
+            <tr hlmTableRow data-testid="organization-member-table-row">
+              @if (canRemove()) {
+                <td hlmTableCell>
+                  <hlm-checkbox
+                    data-testid="organization-member-table-row-select"
+                    [checked]="isSelected(member.id)"
+                    [aria-label]="selectRowLabel(nameOf(member))"
+                    (checkedChange)="toggleRow(member.id, $event)"
+                  />
+                </td>
+              }
+
               <td hlmTableCell>
-                <hlm-checkbox
-                  data-testid="organization-member-table-row-select"
-                  [checked]="isSelected(member.id)"
-                  [aria-label]="selectRowLabel(nameOf(member))"
-                  (checkedChange)="toggleRow(member.id, $event)"
-                />
-              </td>
-            }
-
-            <td hlmTableCell>
-              <a
-                class="flex items-center gap-2.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                [routerLink]="[...detailRouteBase(), member.id]"
-              >
-                <hlm-avatar size="sm" class="shrink-0">
-                  @if (member.avatarUrl; as avatarUrl) {
-                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
-                  }
-                  <span hlmAvatarFallback class="text-[10px]">{{ initialsOf(member) }}</span>
-                </hlm-avatar>
-                <span class="truncate font-medium text-foreground hover:underline">{{
-                  nameOf(member)
-                }}</span>
-              </a>
-            </td>
-
-            <td hlmTableCell class="text-muted-foreground">
-              @if (member.email; as email) {
-                {{ email }}
-              } @else {
-                <span aria-hidden="true">—</span>
-              }
-            </td>
-
-            <td hlmTableCell>
-              @if (member.roleNames && member.roleNames.length > 0) {
-                <div class="flex flex-wrap gap-1">
-                  @for (roleName of member.roleNames; track roleName) {
-                    <span hlmBadge variant="secondary">{{ roleName }}</span>
-                  }
-                </div>
-              } @else {
-                <span class="text-muted-foreground" i18n="@@org.members.table.noRole">No role</span>
-              }
-            </td>
-
-            <td hlmTableCell>
-              @if (member.isActive) {
-                <span hlmBadge variant="secondary" i18n="@@org.members.table.active">Active</span>
-              } @else {
-                <span hlmBadge variant="outline" i18n="@@org.members.table.inactive">Inactive</span>
-              }
-            </td>
-
-            <td hlmTableCell class="text-right">
-              @if (canRemove() || canAssignRoles()) {
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  align="end"
-                  class="max-sm:size-11"
-                  data-testid="organization-member-table-row-menu"
-                  [hlmDropdownMenuTrigger]="rowMenu"
+                <a
+                  class="flex items-center gap-2.5 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  [routerLink]="[...detailRouteBase(), member.id]"
                 >
-                  <ng-icon name="lucideEllipsis" aria-hidden="true" />
-                  <span class="sr-only" i18n="@@org.members.table.rowMenu">Open menu</span>
-                </button>
-
-                <ng-template #rowMenu>
-                  <hlm-dropdown-menu class="w-52">
-                    @if (canAssignRoles()) {
-                      <button
-                        hlmDropdownMenuItem
-                        data-testid="organization-member-table-row-roles"
-                        (click)="manageRolesRequested.emit(member)"
-                      >
-                        <ng-icon name="lucideShieldCheck" aria-hidden="true" />
-                        <span i18n="@@org.members.table.rowManageRoles">Assign roles</span>
-                      </button>
+                  <hlm-avatar size="sm" class="shrink-0">
+                    @if (member.avatarUrl; as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
                     }
+                    <span hlmAvatarFallback class="text-[10px]">{{ initialsOf(member) }}</span>
+                  </hlm-avatar>
+                  <span class="truncate font-medium text-foreground">{{ nameOf(member) }}</span>
+                </a>
+              </td>
 
-                    @if (canRemove()) {
+              <td hlmTableCell class="text-muted-foreground">
+                @if (member.email; as email) {
+                  {{ email }}
+                } @else {
+                  <span aria-hidden="true">—</span>
+                }
+              </td>
+
+              <td hlmTableCell>
+                @if (member.roleNames && member.roleNames.length > 0) {
+                  <div class="flex flex-wrap gap-1">
+                    @for (roleName of member.roleNames; track roleName) {
+                      <span hlmBadge variant="secondary">{{ roleName }}</span>
+                    }
+                  </div>
+                } @else {
+                  <span class="text-muted-foreground" i18n="@@org.members.table.noRole"
+                    >No role</span
+                  >
+                }
+              </td>
+
+              <td hlmTableCell>
+                @if (member.isActive) {
+                  <span hlmBadge variant="secondary" i18n="@@org.members.table.active">Active</span>
+                } @else {
+                  <span hlmBadge variant="outline" i18n="@@org.members.table.inactive"
+                    >Inactive</span
+                  >
+                }
+              </td>
+
+              <td hlmTableCell class="text-right">
+                @if (canRemove() || canAssignRoles()) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    align="end"
+                    class="max-sm:size-11"
+                    data-testid="organization-member-table-row-menu"
+                    [hlmDropdownMenuTrigger]="rowMenu"
+                  >
+                    <ng-icon name="lucideEllipsis" aria-hidden="true" />
+                    <span class="sr-only" i18n="@@org.members.table.rowMenu">Open menu</span>
+                  </button>
+
+                  <ng-template #rowMenu>
+                    <hlm-dropdown-menu class="w-52">
                       @if (canAssignRoles()) {
-                        <hlm-dropdown-menu-separator />
+                        <button
+                          hlmDropdownMenuItem
+                          data-testid="organization-member-table-row-roles"
+                          (click)="manageRolesRequested.emit(member)"
+                        >
+                          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+                          <span i18n="@@org.members.table.rowManageRoles">Assign roles</span>
+                        </button>
                       }
-                      <button
-                        hlmDropdownMenuItem
-                        variant="destructive"
-                        data-testid="organization-member-table-row-remove"
-                        (click)="removeRequested.emit(member)"
-                      >
-                        <ng-icon name="lucideTrash2" aria-hidden="true" />
-                        <span i18n="@@org.members.table.rowRemove">Remove</span>
-                      </button>
-                    }
-                  </hlm-dropdown-menu>
-                </ng-template>
-              }
-            </td>
-          </tr>
+
+                      @if (canRemove()) {
+                        @if (canAssignRoles()) {
+                          <hlm-dropdown-menu-separator />
+                        }
+                        <button
+                          hlmDropdownMenuItem
+                          variant="destructive"
+                          data-testid="organization-member-table-row-remove"
+                          (click)="removeRequested.emit(member)"
+                        >
+                          <ng-icon name="lucideTrash2" aria-hidden="true" />
+                          <span i18n="@@org.members.table.rowRemove">Remove</span>
+                        </button>
+                      }
+                    </hlm-dropdown-menu>
+                  </ng-template>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                [attr.colspan]="columnCount()"
+                i18n="@@org.members.table.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
         }
-      }
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
 </div>

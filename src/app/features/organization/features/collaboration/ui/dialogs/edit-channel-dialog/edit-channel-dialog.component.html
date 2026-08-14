@@ -2,13 +2,18 @@
   <hlm-dialog-content class="sm:max-w-md" data-testid="edit-channel-dialog" *hlmDialogPortal>
     <hlm-dialog-header>
       <h3 hlmDialogTitle i18n="@@channels.editDialog.title">Channel settings</h3>
+      <p hlmDialogDescription i18n="@@channels.editDialog.description">
+        Rename the channel or move it under a different parent.
+      </p>
     </hlm-dialog-header>
 
     <form novalidate (submit)="submit($event)">
       <hlm-field-group>
         <hlm-field>
-          <label hlmFieldLabel for="edit-channel-name" i18n="@@channels.editDialog.name"
-            >Name</label
+          <label hlmFieldLabel for="edit-channel-name"
+            ><span i18n="@@channels.editDialog.name">Name</span
+            ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+            ><span class="sr-only" i18n="@@common.required"> required</span></label
           >
           <input
             hlmInput
@@ -16,6 +21,8 @@
             type="text"
             data-testid="edit-channel-name"
             [formField]="editForm.name"
+            [attr.aria-required]="true"
+            [attr.aria-invalid]="editForm.name().touched() && editForm.name().invalid()"
           />
           @if (editForm.name().touched() && editForm.name().invalid()) {
             <hlm-field-error>{{ editForm.name().errors()[0].message }}</hlm-field-error>
@@ -27,12 +34,12 @@
             <label hlmFieldLabel for="edit-channel-parent" i18n="@@channels.editDialog.parent"
               >Parent channel</label
             >
-            <hlm-select
-              id="edit-channel-parent"
-              [itemToString]="parentLabelOf"
-              [formField]="editForm.parentChannelId"
-            >
-              <hlm-select-trigger class="w-full" data-testid="edit-channel-parent">
+            <hlm-select [itemToString]="parentLabelOf" [formField]="editForm.parentChannelId">
+              <hlm-select-trigger
+                buttonId="edit-channel-parent"
+                class="w-full"
+                data-testid="edit-channel-parent"
+              >
                 <hlm-select-value
                   placeholder="No parent — top level"
                   i18n-placeholder="@@channels.editDialog.parentPlaceholder"
@@ -52,18 +59,32 @@
           </hlm-field>
         }
 
-        <hlm-field orientation="horizontal">
-          <button hlmBtn type="submit" data-testid="edit-channel-submit">
-            <span i18n="@@channels.editDialog.submit">Save changes</span>
-          </button>
+        <hlm-field orientation="horizontal" class="justify-end">
           <button
             hlmBtn
             type="button"
             variant="outline"
+            class="max-sm:min-h-11"
             data-testid="edit-channel-cancel"
-            (click)="visibleChange.emit(false)"
+            [attr.aria-disabled]="pending() ? 'true' : null"
+            [attr.aria-busy]="pending() ? 'true' : null"
+            [class.opacity-50]="pending()"
+            [class.pointer-events-none]="pending()"
+            (click)="pending() || visibleChange.emit(false)"
           >
             <span i18n="@@common.cancel">Cancel</span>
+          </button>
+          <button
+            hlmBtn
+            type="submit"
+            class="max-sm:min-h-11"
+            data-testid="edit-channel-submit"
+            [attr.aria-disabled]="pending() ? 'true' : null"
+            [attr.aria-busy]="pending() ? 'true' : null"
+            [class.opacity-50]="pending()"
+            [class.pointer-events-none]="pending()"
+          >
+            <span i18n="@@channels.editDialog.submit">Save changes</span>
           </button>
         </hlm-field>
       </hlm-field-group>

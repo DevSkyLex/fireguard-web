@@ -107,6 +107,21 @@ describe('InterventionCreateForm', () => {
     expect(button?.textContent).toContain('Creating…');
   });
 
+  it('should place cancel before the submit control in the DOM', () => {
+    const buttons: HTMLButtonElement[] = Array.from(element.querySelectorAll('button[type]'));
+    const cancelIndex: number = buttons.findIndex(
+      (button: HTMLButtonElement): boolean =>
+        button.dataset['testid'] === 'intervention-create-cancel',
+    );
+    const submitIndex: number = buttons.findIndex(
+      (button: HTMLButtonElement): boolean =>
+        button.dataset['testid'] === 'intervention-create-submit',
+    );
+
+    expect(cancelIndex).toBeGreaterThanOrEqual(0);
+    expect(cancelIndex).toBeLessThan(submitIndex);
+  });
+
   describe('prefill', () => {
     it('should seed the model from a duplicate prefill', async () => {
       fixture.componentRef.setInput('prefill', {

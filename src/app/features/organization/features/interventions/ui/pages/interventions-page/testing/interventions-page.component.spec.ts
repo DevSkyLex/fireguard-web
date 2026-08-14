@@ -1,15 +1,33 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
-import { OrganizationPermissionService } from '@features/organization/access';
+import { PageActionsService } from '@core/page-actions';
 import {
-  InterventionOfflineService,
-  InterventionService,
-} from '@features/organization/features/interventions/data-access';
-import type { InterventionOutput } from '@features/organization/features/interventions/models';
-import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
+  errorCallState,
+  idleCallState,
+  successCallState,
+  toStoreError,
+  type CallState,
+} from '@core/request-state';
+import { OrganizationPermissionService } from '@features/organization/access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
+import type {
+  InterventionLabelOutput,
+  InterventionOutput,
+  MemberSelectOption,
+  SelectOption,
+} from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
@@ -61,6 +79,34 @@ const createPage = async (
   return created;
 };
 
+/**
+ * Stands in for the shell's `DashboardPageActions`: every migrated page
+ * registers its header actions as a `TemplateRef` on the real
+ * `PageActionsService` (never mocked, so the constructor effect and the
+ * teardown clear behave exactly as in production) rather than rendering them
+ * in its own template. A spec that needs to click one of those buttons
+ * renders the currently registered template through this outlet, the same
+ * way the shell does — this is the approach every migrated page's spec
+ * reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
 describe('InterventionsPage', () => {
   let fixture: ComponentFixture<InterventionsPage>;
   let load: ReturnType<typeof vi.fn>;
@@ -69,6 +115,8 @@ describe('InterventionsPage', () => {
   let clearCreated: ReturnType<typeof vi.fn>;
   let transition: ReturnType<typeof vi.fn>;
   let deleteIntervention: ReturnType<typeof vi.fn>;
+  let resetDeleteState: ReturnType<typeof vi.fn>;
+  let deleteCallState: WritableSignal<CallState>;
   let assignResponsible: ReturnType<typeof vi.fn>;
   let clearPendingDuplicatePrefill: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
@@ -88,6 +136,8 @@ describe('InterventionsPage', () => {
     clearCreated = vi.fn();
     transition = vi.fn();
     deleteIntervention = vi.fn();
+    resetDeleteState = vi.fn();
+    deleteCallState = signal<CallState>(idleCallState());
     assignResponsible = vi.fn();
     clearPendingDuplicatePrefill = vi.fn();
     navigate = vi.fn().mockResolvedValue(true);
@@ -111,6 +161,10 @@ describe('InterventionsPage', () => {
             instantiateFromTemplate,
             transition,
             delete: deleteIntervention,
+            resetDeleteState,
+            deleteCallState,
+            isDeleting: signal(false),
+            deleteError: signal(null),
             assignResponsible,
             clearCreatedIntervention: clearCreated,
             clearPendingDuplicatePrefill,
@@ -131,21 +185,6 @@ describe('InterventionsPage', () => {
           useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => true },
         },
         {
-          provide: InterventionSyncCoordinatorService,
-          useValue: {
-            syncing: signal(false),
-            blockedOperations: signal(0),
-            problem: signal(null),
-            syncAll: vi.fn(),
-            retryBlocked: vi.fn(),
-            discardBlocked: vi.fn(),
-          },
-        },
-        {
-          provide: InterventionOfflineService,
-          useValue: { hasUnsyncedChanges: signal(false) },
-        },
-        {
           provide: OrganizationMemberAccessStore,
           useValue: { profile: signal({ id: 'member-1' }) },
         },
@@ -157,7 +196,7 @@ describe('InterventionsPage', () => {
           provide: FeedbackService,
           useValue: { warn: feedbackWarn, error: feedbackError },
         },
-        { provide: Router, useValue: { navigate } },
+        { provide: Router, useValue: { navigate, events: EMPTY } },
         { provide: ActivatedRoute, useValue: {} },
       ],
     });
@@ -180,6 +219,21 @@ describe('InterventionsPage', () => {
         ],
       },
     });
+  });
+
+  it('should render the "New intervention" button through the shell header actions', async () => {
+    fixture = await createPage();
+
+    const header: HTMLElement = renderPageActions();
+    const button: HTMLButtonElement | null = header.querySelector(
+      '[data-testid="interventions-new"]',
+    );
+
+    expect(button).not.toBeNull();
+    button?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
   });
 
   it('should load the list for the workspace on arrival', async () => {
@@ -441,9 +495,10 @@ describe('InterventionsPage', () => {
 
       expect(fixture.componentInstance['deleteDialogState']()).toBe('open');
       expect(deleteIntervention).not.toHaveBeenCalled();
+      expect(resetDeleteState).toHaveBeenCalled();
     });
 
-    it('should call the store with the id and revision once the single delete is confirmed', async () => {
+    it('should call the store with the id and revision once the single delete is confirmed, and keep the dialog open while it is pending', async () => {
       fixture = await createPage();
 
       fixture.componentInstance['requestDelete'](intervention({ id: 'i-1', revision: 3 }));
@@ -451,7 +506,29 @@ describe('InterventionsPage', () => {
       await fixture.whenStable();
 
       expect(deleteIntervention).toHaveBeenCalledWith({ interventionId: 'i-1', revision: 3 });
+      expect(fixture.componentInstance['deleteDialogState']()).toBe('open');
+    });
+
+    it('should close the single-delete confirmation once the store reports success', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestDelete'](intervention({ id: 'i-1', revision: 3 }));
+      fixture.componentInstance['confirmDelete']();
+      deleteCallState.set(successCallState(null));
+      await fixture.whenStable();
+
       expect(fixture.componentInstance['deleteDialogState']()).toBe('closed');
+    });
+
+    it('should keep the single-delete confirmation open and let the store error surface inline on failure', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestDelete'](intervention({ id: 'i-1', revision: 3 }));
+      fixture.componentInstance['confirmDelete']();
+      deleteCallState.set(errorCallState(toStoreError(new Error('Conflict'))));
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['deleteDialogState']()).toBe('open');
     });
 
     it('should clear the pending target on any dismissal, not only confirm', async () => {
@@ -800,6 +877,266 @@ describe('InterventionsPage', () => {
           '[data-testid="interventions-export-status"]',
         ),
       ).not.toBeNull();
+    });
+  });
+
+  describe('activeView', () => {
+    it('should read "all" for no status and no due window', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['activeView']()).toBe('all');
+    });
+
+    it('should read "overdue" for the overdue due window with no status', async () => {
+      fixture = await createPage({ due: 'overdue' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('overdue');
+    });
+
+    it('should read "sent-back" for status changes_requested with no due window', async () => {
+      fixture = await createPage({ status: 'changes_requested' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('sent-back');
+    });
+
+    it('should read "awaiting-review" for status submitted with no due window', async () => {
+      fixture = await createPage({ status: 'submitted' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('awaiting-review');
+    });
+
+    it('should read null for a custom combination matching none of the four views', async () => {
+      fixture = await createPage({ status: 'changes_requested', due: 'overdue' });
+
+      expect(fixture.componentInstance['activeView']()).toBeNull();
+    });
+  });
+
+  describe('onViewChanged', () => {
+    it('should navigate "all" to every filter cleared and reset the page', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['page'].set(3);
+
+      fixture.componentInstance['onViewChanged']('all');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {
+            status: null,
+            type: null,
+            priority: null,
+            site: null,
+            responsible: null,
+            label: null,
+            mine: null,
+            due: null,
+          },
+          queryParamsHandling: 'merge',
+        }),
+      );
+      expect(fixture.componentInstance['page']()).toBe(1);
+    });
+
+    it('should navigate "overdue" to the overdue due window with no status and reset the page', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['page'].set(3);
+
+      fixture.componentInstance['onViewChanged']('overdue');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {
+            status: null,
+            type: null,
+            priority: null,
+            site: null,
+            responsible: null,
+            label: null,
+            mine: null,
+            due: 'overdue',
+          },
+          queryParamsHandling: 'merge',
+        }),
+      );
+      expect(fixture.componentInstance['page']()).toBe(1);
+    });
+
+    it('should navigate "sent-back" to status changes_requested with no due window and reset the page', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['page'].set(3);
+
+      fixture.componentInstance['onViewChanged']('sent-back');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {
+            status: 'changes_requested',
+            type: null,
+            priority: null,
+            site: null,
+            responsible: null,
+            label: null,
+            mine: null,
+            due: null,
+          },
+          queryParamsHandling: 'merge',
+        }),
+      );
+      expect(fixture.componentInstance['page']()).toBe(1);
+    });
+
+    it('should navigate "awaiting-review" to status submitted with no due window and reset the page', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['page'].set(3);
+
+      fixture.componentInstance['onViewChanged']('awaiting-review');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {
+            status: 'submitted',
+            type: null,
+            priority: null,
+            site: null,
+            responsible: null,
+            label: null,
+            mine: null,
+            due: null,
+          },
+          queryParamsHandling: 'merge',
+        }),
+      );
+      expect(fixture.componentInstance['page']()).toBe(1);
+    });
+  });
+
+  describe('filter chips', () => {
+    it('should render one chip per active filter, resolving IRI-valued fields against the loaded options', async () => {
+      TestBed.overrideComponent(InterventionsPage, {
+        remove: { providers: [InterventionPlanningOptionsStore] },
+        add: {
+          providers: [
+            {
+              provide: InterventionPlanningOptionsStore,
+              useValue: {
+                sites: signal<readonly SelectOption[]>([
+                  { value: '/api/facilities/site-9', label: 'Warehouse 9' },
+                ]),
+                members: signal<readonly MemberSelectOption[]>([
+                  {
+                    value: '/api/organizations/org-1/members/member-9',
+                    label: 'Jordan Lee',
+                    displayName: 'Jordan Lee',
+                    roleLabel: 'Technician',
+                    avatarUrl: null,
+                    initials: 'JL',
+                  },
+                ]),
+                labels: signal<readonly InterventionLabelOutput[]>([
+                  {
+                    '@id': '/api/intervention-labels/label-9',
+                    '@type': 'InterventionLabel',
+                    id: 'label-9',
+                    organization: '/api/organizations/org-1',
+                    name: 'Compliance',
+                    color: '#ff0000',
+                    createdAt: '2026-01-01T00:00:00+00:00',
+                    updatedAt: '2026-01-01T00:00:00+00:00',
+                  },
+                ]),
+                templates: signal([]),
+                hasTemplates: signal(false),
+                loadCreationOptions: vi.fn(),
+              },
+            },
+          ],
+        },
+      });
+
+      fixture = await createPage({
+        status: 'changes_requested',
+        type: 'inventory',
+        priority: 'high',
+        site: 'site-9',
+        responsible: 'member-9',
+        label: 'label-9',
+        due: 'today',
+      });
+
+      expect(fixture.componentInstance['filterChips']()).toEqual([
+        {
+          key: 'status',
+          fieldLabel: 'Status',
+          valueLabel: 'Changes requested',
+          patch: { status: null },
+        },
+        { key: 'type', fieldLabel: 'Type', valueLabel: 'Inventory', patch: { type: null } },
+        { key: 'priority', fieldLabel: 'Priority', valueLabel: 'High', patch: { priority: null } },
+        { key: 'site', fieldLabel: 'Site', valueLabel: 'Warehouse 9', patch: { site: null } },
+        {
+          key: 'responsible',
+          fieldLabel: 'Responsible',
+          valueLabel: 'Jordan Lee',
+          patch: { responsible: null },
+        },
+        { key: 'label', fieldLabel: 'Label', valueLabel: 'Compliance', patch: { label: null } },
+        {
+          key: 'dueWindow',
+          fieldLabel: 'Deadline',
+          valueLabel: 'Due today',
+          patch: { dueWindow: null },
+        },
+      ]);
+    });
+
+    it('should fall back to the IRI’s last path segment while sites, members and labels are still loading', async () => {
+      fixture = await createPage({ site: 'site-42', responsible: 'member-77', label: 'label-88' });
+
+      const chips = fixture.componentInstance['filterChips']();
+
+      expect(chips.find((chip: { key: string }) => chip.key === 'site')?.valueLabel).toBe(
+        'site-42',
+      );
+      expect(chips.find((chip: { key: string }) => chip.key === 'responsible')?.valueLabel).toBe(
+        'member-77',
+      );
+      expect(chips.find((chip: { key: string }) => chip.key === 'label')?.valueLabel).toBe(
+        'label-88',
+      );
+    });
+
+    it('should apply the chip’s own patch when its remove button is clicked', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      const removeButton: HTMLButtonElement | null = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector('[data-testid="interventions-filter-chip-remove"]');
+      removeButton?.click();
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ status: null }),
+          queryParamsHandling: 'merge',
+        }),
+      );
+    });
+
+    it('should name a chip’s remove button by its field label', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['removeFilterLabel']('Status')).toBe(
+        'Remove filter: Status',
+      );
     });
   });
 });

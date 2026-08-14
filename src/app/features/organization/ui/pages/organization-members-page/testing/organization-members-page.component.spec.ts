@@ -1,12 +1,18 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  Component,
   computed,
+  input,
   provideZonelessChangeDetection,
   signal,
+  type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -26,6 +32,28 @@ import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationMembersStore } from '@features/organization/state/organization-members';
 import { OrganizationMembersPage } from '../organization-members-page.component';
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `InterventionsPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
 
 function member(overrides: Partial<OrganizationMemberOutput> = {}): OrganizationMemberOutput {
   return {
@@ -69,6 +97,7 @@ describe('OrganizationMembersPage', () => {
   let loadCallState: WritableSignal<CallState>;
   let mutationCallState: WritableSignal<CallState>;
   let mutationError: Signal<StoreError | null>;
+  let isMutating: Signal<boolean>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
   let load: ReturnType<typeof vi.fn>;
   let loadMembers: ReturnType<typeof vi.fn>;
@@ -131,7 +160,7 @@ describe('OrganizationMembersPage', () => {
               membersActiveTotal,
               membersSearch: signal(''),
               isLoading: signal(false),
-              isMutating: signal(false),
+              isMutating,
               loadError: signal<StoreError | null>(null),
               mutationError,
               loadCallState,
@@ -164,6 +193,7 @@ describe('OrganizationMembersPage', () => {
     loadCallState = signal<CallState>(idleCallState());
     mutationCallState = signal<CallState>(idleCallState());
     mutationError = computed(() => mutationCallState().error);
+    isMutating = computed(() => mutationCallState().status === 'pending');
     permissions = signal<ReadonlyArray<string>>([
       ORGANIZATION_PERMISSION.MEMBERS_READ,
       ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
@@ -208,12 +238,16 @@ describe('OrganizationMembersPage', () => {
 
   it('should show Invite only to a member holding members.manage', async () => {
     await createPage();
-    expect(byTestId('organization-members-invite')).not.toBeNull();
+    expect(
+      renderPageActions().querySelector('[data-testid="organization-members-invite"]'),
+    ).not.toBeNull();
 
     permissions.set([ORGANIZATION_PERMISSION.MEMBERS_READ]);
     await fixture.whenStable();
 
-    expect(byTestId('organization-members-invite')).toBeNull();
+    expect(
+      renderPageActions().querySelector('[data-testid="organization-members-invite"]'),
+    ).toBeNull();
   });
 
   it('should send the invite payload scoped to the routed organization and close the dialog on success', async () => {
@@ -265,7 +299,7 @@ describe('OrganizationMembersPage', () => {
     });
   });
 
-  it('should remove a single member on confirm and clear the pending target', async () => {
+  it('should remove a single member on confirm and keep the dialog open until the write settles', async () => {
     await createPage();
     fixture.componentInstance['requestRemove'](member());
     await fixture.whenStable();
@@ -274,7 +308,31 @@ describe('OrganizationMembersPage', () => {
     fixture.componentInstance['confirmRemove']();
 
     expect(removeMember).toHaveBeenCalledWith({ organizationId: 'org-1', memberId: 'member-1' });
+    expect(fixture.componentInstance['removeDialogState']()).toBe('open');
+  });
+
+  it('should close the remove confirmation once the store reports success', async () => {
+    await createPage();
+    fixture.componentInstance['requestRemove'](member());
+    fixture.componentInstance['confirmRemove']();
+
+    mutationCallState.set(successCallState(null));
+    await fixture.whenStable();
+
     expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
+  });
+
+  it('should keep the remove confirmation open and surface the store error inline on failure', async () => {
+    await createPage();
+    fixture.componentInstance['requestRemove'](member());
+    fixture.componentInstance['confirmRemove']();
+
+    mutationCallState.set(errorCallState(toStoreError(new Error('cannot remove the last owner'))));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['removeDialogState']()).toBe('open');
+    expect(fixture.componentInstance['removeDialogError']()).not.toBeNull();
+    expect(byTestId('organization-members-action-error')).toBeNull();
   });
 
   it('should bulk-remove the current selection and clear it', async () => {
@@ -347,7 +405,7 @@ describe('OrganizationMembersPage', () => {
   });
 
   it('should page members with the rendered pagination controls, disabling at the bounds', async () => {
-    membersTotal.set(45); // MEMBERS_PAGE_SIZE is 20, so this spans three pages.
+    membersTotal.set(65); // The default page size is 30, so this spans three pages.
     await createPage();
 
     const previous = byTestId('organization-members-page-prev') as HTMLButtonElement;
@@ -364,6 +422,7 @@ describe('OrganizationMembersPage', () => {
       page: 2,
       search: '',
       status: 'all',
+      pageSize: 30,
     });
     expect(previous.disabled).toBe(false);
 
@@ -375,6 +434,7 @@ describe('OrganizationMembersPage', () => {
       page: 3,
       search: '',
       status: 'all',
+      pageSize: 30,
     });
     expect(next.disabled).toBe(true);
 
@@ -386,6 +446,23 @@ describe('OrganizationMembersPage', () => {
       page: 2,
       search: '',
       status: 'all',
+      pageSize: 30,
+    });
+  });
+
+  it('changes the page size through the pagination band and returns to the first page', async () => {
+    membersTotal.set(65);
+    await createPage();
+
+    fixture.componentInstance['setPageSize'](60);
+    await fixture.whenStable();
+
+    expect(loadMembers).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      page: 1,
+      search: '',
+      status: 'all',
+      pageSize: 60,
     });
   });
 
@@ -403,6 +480,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: 'amelie',
       status: 'all',
+      pageSize: 30,
     });
   });
 
@@ -416,6 +494,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: '',
       status: 'inactive',
+      pageSize: 30,
     });
   });
 
@@ -433,6 +512,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: '',
       status: 'all',
+      pageSize: 30,
     });
   });
 

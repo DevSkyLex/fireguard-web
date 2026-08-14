@@ -104,7 +104,7 @@ describe('DashboardLayout', () => {
     expect(fixture.nativeElement.querySelector('#dashboard-panel')).toBeNull();
   });
 
-  it('moves focus to the main column from the skip link without navigating', async () => {
+  it('moves focus to the routed content column from the skip link without navigating', async () => {
     const fixture = await render();
     const element: HTMLElement = fixture.nativeElement;
     const link: HTMLAnchorElement | null = element.querySelector<HTMLAnchorElement>(
@@ -113,11 +113,9 @@ describe('DashboardLayout', () => {
     const event: MouseEvent = new MouseEvent('click', { cancelable: true, bubbles: true });
 
     expect(link).not.toBeNull();
-    link?.dispatchEvent(event);
+    link?.dispatchEvent(event); // `<base href="/">` would otherwise hard-navigate to the app root.
 
-    // `<base href="/">` would otherwise turn the fragment into a hard navigation
-    // to the app root.
     expect(event.defaultPrevented).toBe(true);
-    expect(document.activeElement).toBe(element.querySelector('#dashboard-main'));
+    expect(document.activeElement).toBe(element.querySelector('#dashboard-content'));
   });
 });

@@ -1,15 +1,19 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import type {
   CreateFacilityInput,
@@ -36,7 +40,10 @@ import { FacilityCreateForm } from '../../forms/facility-create-form';
  * remaining property is filled in or refined, in place (`FEATURE.md` "The
  * record is the edit surface").
  *
- * @version 1.0.0
+ * Its title lives in the shell breadcrumb (the route's static title); "Back
+ * to facilities" registers on the shell header through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -83,17 +90,26 @@ export class FacilityCreatePage {
       label: facility.name,
     })),
   );
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "Back to facilities" link, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
   /**
    * Constructor
    * @constructor
-   * @description Loads the parent-facility candidates and navigates to the created record once the write settles successfully.
+   * @description Loads the parent-facility candidates, navigates to the created record once the write settles successfully, and registers {@link pageActions}.
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
 

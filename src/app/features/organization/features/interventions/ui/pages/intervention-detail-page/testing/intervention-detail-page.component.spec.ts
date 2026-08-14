@@ -1,16 +1,22 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  Component,
+  input as inputSignal,
   provideZonelessChangeDetection,
   signal,
   type DebugElement,
+  type InputSignal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -23,13 +29,11 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
-import {
-  InterventionOfflineService,
-  InterventionService,
-} from '@features/organization/features/interventions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionActivityOutput,
   InterventionAttachmentOutput,
+  InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
   InterventionWorkItemOutput,
@@ -38,7 +42,6 @@ import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
-  InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import { InterventionStore } from '@features/organization/features/interventions/state';
@@ -131,8 +134,55 @@ const attachment = (
     ...overrides,
   }) as InterventionAttachmentOutput;
 
+const change = (overrides: Partial<InterventionChangeOutput> = {}): InterventionChangeOutput =>
+  ({
+    '@id': '/api/intervention-changes/change-1',
+    '@type': 'InterventionChange',
+    id: 'change-1',
+    intervention: '/api/interventions/intervention-1',
+    workItem: null,
+    resource: '/api/facilities/facility-1',
+    patch: { name: 'North wing' },
+    status: 'proposed',
+    revision: 1,
+    createdAt: '2026-01-05T09:00:00Z',
+    updatedAt: '2026-01-05T09:00:00Z',
+    ...overrides,
+  }) as InterventionChangeOutput;
+
 const inBody = (id: string): HTMLElement =>
   document.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+
+/**
+ * Stands in for the shell's `DashboardPageActions`. Discussion and the
+ * "more actions" menu are registered as a `TemplateRef` on the real
+ * `PageActionsService` (never mocked, so the constructor effect and the
+ * teardown clear behave exactly as in production) rather than rendered in
+ * the page's own template — a spec that needs to interact with either
+ * renders the currently registered template through this outlet, the same
+ * way the shell does. This is the approach every migrated page's spec
+ * reuses (`InterventionsPage`'s spec is the other example).
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    inputSignal<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
+const byPageActionsTestId = (id: string): HTMLElement | null =>
+  renderPageActions().querySelector(`[data-testid="${id}"]`);
 
 const createPage = async (): Promise<ComponentFixture<InterventionDetailPage>> => {
   const created: ComponentFixture<InterventionDetailPage> =
@@ -152,6 +202,7 @@ describe('InterventionDetailPage', () => {
   let issues: WritableSignal<readonly InterventionIssueOutput[]>;
   let activities: WritableSignal<readonly InterventionActivityOutput[]>;
   let attachments: WritableSignal<readonly InterventionAttachmentOutput[]>;
+  let changes: WritableSignal<readonly InterventionChangeOutput[]>;
   let saving: WritableSignal<boolean>;
   let updateDetailsCallState: WritableSignal<CallState>;
   let loadError: WritableSignal<string | null>;
@@ -160,7 +211,6 @@ describe('InterventionDetailPage', () => {
   let blockerCount: WritableSignal<number>;
   let orderedIds: WritableSignal<readonly string[]>;
   let online: WritableSignal<boolean>;
-  let unsynced: WritableSignal<boolean>;
 
   let load: ReturnType<typeof vi.fn>;
   let reload: ReturnType<typeof vi.fn>;
@@ -194,6 +244,7 @@ describe('InterventionDetailPage', () => {
     issues = signal<readonly InterventionIssueOutput[]>([]);
     activities = signal<readonly InterventionActivityOutput[]>([]);
     attachments = signal<readonly InterventionAttachmentOutput[]>([]);
+    changes = signal<readonly InterventionChangeOutput[]>([]);
     saving = signal(false);
     updateDetailsCallState = signal<CallState>(idleCallState());
     loadError = signal<string | null>(null);
@@ -202,7 +253,6 @@ describe('InterventionDetailPage', () => {
     blockerCount = signal(0);
     orderedIds = signal<readonly string[]>([]);
     online = signal(true);
-    unsynced = signal(false);
     permitted = new Set<string>([
       'organization.interventions.plan',
       'organization.interventions.execute',
@@ -255,17 +305,6 @@ describe('InterventionDetailPage', () => {
           useValue: { profile: signal({ id: 'member-1' }) },
         },
         {
-          provide: InterventionSyncCoordinatorService,
-          useValue: {
-            syncing: signal(false),
-            blockedOperations: signal(0),
-            problem: signal(null),
-            syncAll: vi.fn(),
-            retryBlocked: vi.fn(),
-            discardBlocked: vi.fn(),
-          },
-        },
-        {
           provide: InterventionFieldExecutionService,
           useValue: { scanSupported: (): boolean => false, scanToWorkItem: vi.fn() },
         },
@@ -278,13 +317,12 @@ describe('InterventionDetailPage', () => {
           },
         },
         { provide: ConnectivityService, useValue: { online } },
-        { provide: InterventionOfflineService, useValue: { hasUnsyncedChanges: unsynced } },
         { provide: InterventionService, useValue: { downloadAttachment } },
         { provide: BrowserDownloadService, useValue: { trigger: browserDownloadTrigger } },
         { provide: InterventionPublicationService, useValue: { publish } },
         { provide: FeedbackService, useValue: { success: vi.fn(), error: feedbackError } },
         { provide: TitleService, useValue: { setTitle: vi.fn() } },
-        { provide: Router, useValue: { navigate } },
+        { provide: Router, useValue: { navigate, events: EMPTY } },
         { provide: ConversationService, useValue: { openSubjectThread } },
         {
           provide: MEMBER_DIRECTORY_PORT,
@@ -352,7 +390,7 @@ describe('InterventionDetailPage', () => {
             useValue: {
               intervention: current,
               workItems,
-              changes: signal([]),
+              changes,
               issues,
               activities,
               activityCallState: signal(idleCallState()),
@@ -541,18 +579,95 @@ describe('InterventionDetailPage', () => {
 
     it('should stay at the same address across phases', async () => {
       fixture = await createPage();
-      const prepareBox: HTMLElement | null = root().querySelector(
-        '[data-testid="intervention-action-box"]',
+      const prepareBand: HTMLElement | null = root().querySelector(
+        '[data-testid="intervention-detail-status-band"]',
       );
 
       current.set(intervention({ status: 'submitted' }));
       await fixture.whenStable();
-      const reviewBox: HTMLElement | null = root().querySelector(
-        '[data-testid="intervention-action-box"]',
+      const reviewBand: HTMLElement | null = root().querySelector(
+        '[data-testid="intervention-detail-status-band"]',
       );
 
-      expect(prepareBox).not.toBeNull();
-      expect(reviewBox).toBe(prepareBox);
+      expect(prepareBand).not.toBeNull();
+      expect(reviewBand).toBe(prepareBand);
+    });
+  });
+
+  describe('the status band', () => {
+    it("should render the page's status, phase, action, blockers and review note as the band's own inputs", async () => {
+      current.set(
+        intervention({ status: 'changes_requested', reviewNote: 'Re-check the third floor.' }),
+      );
+      issues.set([
+        {
+          '@id': '/api/issues/1',
+          '@type': 'InterventionIssue',
+          severity: 'blocker',
+          resource: '/api/facilities/1',
+          field: null,
+          message: 'Missing sign-off.',
+        } as InterventionIssueOutput,
+      ]);
+      fixture = await createPage();
+
+      const band: HTMLElement = byTestId('intervention-detail-status-band');
+
+      expect(band.textContent).toContain('Changes requested');
+      expect(band.textContent).toContain('Field work');
+      expect(byTestId('intervention-detail-command').textContent).toContain('Record field work');
+      expect(byTestId('intervention-detail-blockers').textContent).toContain('1');
+      expect(byTestId('intervention-detail-review-note').textContent).toContain(
+        'Re-check the third floor.',
+      );
+    });
+
+    it("should dispatch the page's own transition when the band's action is invoked", async () => {
+      fixture = await createPage();
+
+      (byTestId('intervention-detail-command') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(transition).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        status: 'planned',
+      });
+    });
+
+    it('should scroll to and focus the issues checklist when the band asks to see the blockers', async () => {
+      current.set(intervention({ status: 'submitted' }));
+      issues.set([
+        {
+          '@id': '/api/issues/1',
+          '@type': 'InterventionIssue',
+          severity: 'blocker',
+          resource: '/api/facilities/1',
+          field: null,
+          message: 'Missing sign-off.',
+        } as InterventionIssueOutput,
+      ]);
+      fixture = await createPage();
+      const originalScrollIntoView: (options?: boolean | ScrollIntoViewOptions) => void =
+        HTMLElement.prototype.scrollIntoView;
+      const scrollIntoView: ReturnType<
+        typeof vi.fn<(options?: boolean | ScrollIntoViewOptions) => void>
+      > = vi.fn();
+      HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+      try {
+        byTestId('intervention-detail-blockers').click();
+        await fixture.whenStable();
+
+        const checklistWrapper: HTMLElement | null = root()
+          .querySelector('app-intervention-issues-checklist')
+          ?.closest('[tabindex="-1"]') as HTMLElement | null;
+
+        expect(checklistWrapper).not.toBeNull();
+        expect(scrollIntoView.mock.instances[0]).toBe(checklistWrapper);
+        expect(document.activeElement).toBe(checklistWrapper);
+      } finally {
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      }
     });
   });
 
@@ -662,15 +777,19 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('publication recap', () => {
-    it('should show no publication recap before the intervention reaches review', async () => {
+    it('should show the recap only inside the publish confirmation, never inline on the page', async () => {
+      current.set(intervention({ status: 'submitted' }));
       fixture = await createPage();
 
-      expect(
-        root().querySelector('[data-testid="intervention-detail-publication-summary"]'),
-      ).toBeNull();
+      expect(root().querySelector('app-intervention-publication-summary')).toBeNull();
+
+      byTestId('intervention-detail-command').click();
+      await fixture.whenStable();
+
+      expect(document.querySelector('app-intervention-publication-summary')).not.toBeNull();
     });
 
-    it('should show the recap and the blockers once ready for review', async () => {
+    it('should count the blockers on the status band and list them in the issues checklist', async () => {
       current.set(intervention({ status: 'submitted' }));
       issues.set([
         {
@@ -684,8 +803,8 @@ describe('InterventionDetailPage', () => {
       ]);
       fixture = await createPage();
 
-      expect(byTestId('intervention-detail-publication-summary')).not.toBeNull();
-      expect(byTestId('intervention-detail-blockers').textContent).toContain('Missing sign-off.');
+      expect(byTestId('intervention-detail-blockers').textContent).toContain('1');
+      expect(root().textContent).toContain('Missing sign-off.');
     });
   });
 
@@ -736,7 +855,7 @@ describe('InterventionDetailPage', () => {
       expect(load).toHaveBeenCalledTimes(2);
     });
 
-    it('should show the reviewer note atop the field work it concerns', async () => {
+    it('should show the reviewer note as a strip inside the status band', async () => {
       current.set(
         intervention({ status: 'changes_requested', reviewNote: 'Re-check the third floor.' }),
       );
@@ -745,13 +864,6 @@ describe('InterventionDetailPage', () => {
       expect(byTestId('intervention-detail-review-note').textContent).toContain(
         'Re-check the third floor.',
       );
-    });
-
-    it('should surface unsynced changes through the sync chip, not a dismissable banner', async () => {
-      unsynced.set(true);
-      fixture = await createPage();
-
-      expect(byTestId('intervention-sync-status')).not.toBeNull();
     });
   });
 
@@ -764,7 +876,7 @@ describe('InterventionDetailPage', () => {
         }),
       );
       fixture = await createPage();
-      byTestId('intervention-detail-status-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
 
       const entries: HTMLElement[] = Array.from(
@@ -775,9 +887,7 @@ describe('InterventionDetailPage', () => {
       expect(entries.some((entry) => entry.textContent?.includes('In progress'))).toBe(true);
     });
 
-    it('should not offer the forward move the action box gates', async () => {
-      // The action box refuses to submit while work items are open. A menu entry
-      // doing it anyway would make that gate advisory.
+    it('should not offer the forward move the status band gates, which would make its readiness check advisory', async () => {
       current.set(
         intervention({
           status: 'changes_requested',
@@ -785,7 +895,7 @@ describe('InterventionDetailPage', () => {
         }),
       );
       fixture = await createPage();
-      byTestId('intervention-detail-status-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
 
       const entries: HTMLElement[] = Array.from(
@@ -795,22 +905,56 @@ describe('InterventionDetailPage', () => {
       expect(entries.some((entry) => entry.textContent?.includes('Submitted'))).toBe(false);
     });
 
-    it('should hide itself entirely when the action box owns every remaining move', async () => {
-      // A draft can only go to `planned` (the action box's job) or `abandoned`
-      // (the overflow menu's), so there is nothing left for this menu to offer.
+    it('should offer no transition group when the band owns every remaining move, even with the overflow menu still present for Duplicate', async () => {
       current.set(intervention({ status: 'draft', allowedTransitions: ['planned', 'abandoned'] }));
       fixture = await createPage();
+      byPageActionsTestId('intervention-detail-menu')?.click();
+      await fixture.whenStable();
 
-      expect(root().querySelector('[data-testid="intervention-detail-status-menu"]')).toBeNull();
+      expect(document.querySelector('[data-testid="intervention-detail-transition"]')).toBeNull();
+      expect(root().textContent).not.toContain('Send it to');
     });
 
-    it('should drop a target the member lacks the capability for', async () => {
+    it('should drop a target the member lacks the capability for, and hide the overflow trigger with nothing left to offer', async () => {
       permitted.delete('organization.interventions.plan');
       permitted.delete('organization.interventions.execute');
       current.set(intervention({ status: 'draft', allowedTransitions: ['planned'] }));
       fixture = await createPage();
 
-      expect(root().querySelector('[data-testid="intervention-detail-status-menu"]')).toBeNull();
+      expect(byPageActionsTestId('intervention-detail-menu')).toBeNull();
+    });
+
+    it('should still offer the menu and its transition group to a member with only transition rights, and dispatch the exact move on pick', async () => {
+      permitted.delete('organization.interventions.plan');
+      permitted.delete('organization.interventions.review');
+      current.set(
+        intervention({
+          status: 'changes_requested',
+          allowedTransitions: ['in_progress', 'submitted', 'abandoned'],
+        }),
+      );
+      fixture = await createPage();
+
+      expect(byPageActionsTestId('intervention-detail-menu')).not.toBeNull();
+
+      byPageActionsTestId('intervention-detail-menu')?.click();
+      await fixture.whenStable();
+
+      const entries: HTMLElement[] = Array.from(
+        document.querySelectorAll('[data-testid="intervention-detail-transition"]'),
+      );
+
+      expect(entries).toHaveLength(1);
+      expect(inBody('intervention-detail-duplicate')).toBeNull();
+      expect(inBody('intervention-detail-abandon')).toBeNull();
+      expect(inBody('intervention-detail-delete')).toBeNull();
+
+      entries[0].click();
+
+      expect(transition).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        status: 'in_progress',
+      });
     });
   });
 
@@ -910,7 +1054,7 @@ describe('InterventionDetailPage', () => {
     it('should abandon only after the confirmation is accepted', async () => {
       fixture = await createPage();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
       (inBody('intervention-detail-abandon') as HTMLButtonElement).click();
       await fixture.whenStable();
@@ -928,7 +1072,7 @@ describe('InterventionDetailPage', () => {
     it('should delete through the list store, the only one that repairs the collection', async () => {
       fixture = await createPage();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
       (inBody('intervention-detail-delete') as HTMLButtonElement).click();
       await fixture.whenStable();
@@ -944,7 +1088,7 @@ describe('InterventionDetailPage', () => {
       current.set(intervention({ name: 'Quarterly sweep', type: 'inventory', priority: 'normal' }));
       fixture = await createPage();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
       (inBody('intervention-detail-duplicate') as HTMLButtonElement).click();
 
@@ -965,7 +1109,7 @@ describe('InterventionDetailPage', () => {
       current.set(intervention({ status: 'in_progress' }));
       fixture = await createPage();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
 
       expect(inBody('intervention-detail-duplicate')).toBeNull();
@@ -1091,9 +1235,69 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('proposed changes', () => {
-    it('should render nothing when there is nothing proposed', async () => {
+    it('should show zero on the changes tab trigger and mount nothing until that tab activates', async () => {
       fixture = await createPage();
 
+      expect(byTestId('intervention-tab-changes').textContent).toContain('0');
+      expect(root().querySelector('[data-testid="intervention-change-list"]')).toBeNull();
+
+      byTestId('intervention-tab-changes').click();
+      await fixture.whenStable();
+
+      const list: HTMLElement | null = root().querySelector(
+        '[data-testid="intervention-change-list"]',
+      );
+
+      expect(list).not.toBeNull();
+      expect(list?.querySelectorAll('[data-testid="intervention-change-row"]')).toHaveLength(0);
+    });
+
+    it('should count only the still-proposed changes on the trigger, once activated', async () => {
+      changes.set([
+        change({ id: 'change-1', status: 'proposed' }),
+        change({ id: 'change-2', status: 'rejected' }),
+        change({ id: 'change-3', status: 'proposed' }),
+      ]);
+      fixture = await createPage();
+
+      expect(byTestId('intervention-tab-changes').textContent).toContain('2');
+
+      byTestId('intervention-tab-changes').click();
+      await fixture.whenStable();
+
+      const list: HTMLElement | null = root().querySelector(
+        '[data-testid="intervention-change-list"]',
+      );
+
+      expect(list?.querySelectorAll('[data-testid="intervention-change-row"]')).toHaveLength(2);
+    });
+  });
+
+  describe('linked tabs', () => {
+    it('should mount attachments only once its tab activates, and show the total count on the trigger', async () => {
+      attachments.set([attachment(), attachment({ id: 'attachment-2' })]);
+      fixture = await createPage();
+
+      expect(byTestId('intervention-tab-attachments').textContent).toContain('2');
+      expect(root().querySelector('app-intervention-attachments')).toBeNull();
+
+      byTestId('intervention-tab-attachments').click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-intervention-attachments')).not.toBeNull();
+    });
+
+    it('should ignore an activated id outside the known tab union and keep the overview tab showing', async () => {
+      fixture = await createPage();
+      const tabsHost: DebugElement = fixture.debugElement.query(By.css('hlm-tabs'));
+
+      tabsHost.triggerEventHandler('tabActivated', 'bogus');
+      await fixture.whenStable();
+
+      expect(byTestId('intervention-tab-overview').getAttribute('data-state')).toBe('active');
+      expect(byTestId('intervention-tab-changes').getAttribute('data-state')).not.toBe('active');
+      expect((byTestId('intervention-detail-field-work') as HTMLElement).hidden).toBe(false);
+      expect(root().querySelector('app-intervention-attachments')).toBeNull();
       expect(root().querySelector('[data-testid="intervention-change-list"]')).toBeNull();
     });
   });
@@ -1141,16 +1345,14 @@ describe('InterventionDetailPage', () => {
     it('should offer the Discussion trigger when messaging.read is granted', async () => {
       fixture = await createPage();
 
-      expect(byTestId('intervention-detail-discussion-trigger')).toBeTruthy();
+      expect(byPageActionsTestId('intervention-detail-discussion-trigger')).toBeTruthy();
     });
 
     it('should hide the Discussion trigger without messaging.read', async () => {
       permitted.delete('organization.messaging.read');
       fixture = await createPage();
 
-      expect(
-        root().querySelector('[data-testid="intervention-detail-discussion-trigger"]'),
-      ).toBeNull();
+      expect(byPageActionsTestId('intervention-detail-discussion-trigger')).toBeNull();
     });
 
     it('should open the discussion sheet and defer the thread load until then', async () => {
@@ -1158,7 +1360,9 @@ describe('InterventionDetailPage', () => {
 
       expect(openSubjectThread).not.toHaveBeenCalled();
 
-      byTestId('intervention-detail-discussion-trigger').dispatchEvent(new Event('click'));
+      byPageActionsTestId('intervention-detail-discussion-trigger')?.dispatchEvent(
+        new Event('click'),
+      );
       await fixture.whenStable();
 
       expect(openSubjectThread).toHaveBeenCalledWith({
@@ -1184,6 +1388,8 @@ describe('InterventionDetailPage', () => {
     it('should fetch the attachment and hand the blob to the browser download service', async () => {
       attachments.set([attachment()]);
       fixture = await createPage();
+      byTestId('intervention-tab-attachments').click();
+      await fixture.whenStable();
 
       byTestId('intervention-attachment-download').dispatchEvent(new Event('click'));
       await fixture.whenStable();
@@ -1196,6 +1402,8 @@ describe('InterventionDetailPage', () => {
       downloadAttachment.mockReturnValue(throwError(() => new Error('network down')));
       attachments.set([attachment()]);
       fixture = await createPage();
+      byTestId('intervention-tab-attachments').click();
+      await fixture.whenStable();
 
       byTestId('intervention-attachment-download').dispatchEvent(new Event('click'));
       await fixture.whenStable();

@@ -106,4 +106,83 @@ test.describe('Interventions list — shared filtered URL', () => {
       new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions$`),
     );
   });
+
+  test('shows exactly one sync indicator, contributed by the shell header, with no page-local copy', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockListPage(api);
+    const interventions = new InterventionsPage(page);
+
+    await interventions.goto(E2E_ORGANIZATION_ID);
+
+    await expect(interventions.syncIndicatorTrigger).toBeVisible();
+    await expect(page.getByTestId('intervention-sync-status')).toHaveCount(1);
+    await expect(interventions.root.getByTestId('intervention-sync-status')).toHaveCount(0);
+  });
+});
+
+test.describe('Interventions list — segmented views and filter chips', () => {
+  test('selecting the Overdue view narrows the URL to due=overdue and stays highlighted after reload', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockListPage(api);
+    const interventions = new InterventionsPage(page);
+
+    await interventions.goto(E2E_ORGANIZATION_ID);
+
+    await expect(interventions.viewButton('All')).toHaveAttribute('aria-pressed', 'true');
+
+    await interventions.selectView('Overdue');
+
+    await expect(page).toHaveURL(/[?&]due=overdue(&|$)/);
+    await expect(interventions.viewButton('Overdue')).toHaveAttribute('aria-pressed', 'true');
+
+    await page.reload();
+
+    await expect(page).toHaveURL(/[?&]due=overdue(&|$)/);
+    await expect(interventions.viewButton('Overdue')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('applying a status filter from the popover shows a removable chip, and removing it clears the param', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockListPage(api);
+    const interventions = new InterventionsPage(page);
+
+    await interventions.goto(E2E_ORGANIZATION_ID);
+    await interventions.filtersTrigger.click();
+    await page.getByTestId('interventions-filter-status').click();
+    await page.getByRole('option', { name: 'Planned' }).click();
+    await page.keyboard.press('Escape');
+
+    await expect(page).toHaveURL(/[?&]status=planned(&|$)/);
+    await expect(interventions.filterChip('Status')).toBeVisible();
+    await expect(interventions.filterChip('Status')).toContainText('Planned');
+
+    await interventions.removeFilterChip('Status');
+
+    await expect(page).not.toHaveURL(/status=planned/);
+    await expect(interventions.filterChip('Status')).toHaveCount(0);
+  });
+
+  test('"Clear filters" is reachable from the chip row now that it has moved out of the popover', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockListPage(api);
+    const interventions = new InterventionsPage(page);
+
+    await interventions.gotoWithQuery(E2E_ORGANIZATION_ID, 'status=planned&mine=1');
+
+    await expect(interventions.clearFiltersButton).toBeVisible();
+    await interventions.clearFiltersButton.click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions$`),
+    );
+    await expect(interventions.filterChips).toHaveCount(0);
+  });
 });

@@ -1,12 +1,4 @@
-<div id="organization-settings" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <app-organization-page-header
-    [organization]="organization()"
-    title="Organization settings"
-    i18n-title="@@org.settings.title"
-    subtitle="General identity, subscription, usage and workspace preferences."
-    i18n-subtitle="@@org.settings.subtitle"
-  />
-
+<div id="organization-settings" class="flex h-full flex-col gap-6 p-4 md:p-6">
   @if (!organizationReady()) {
     <div
       class="flex max-w-2xl flex-col gap-4"
@@ -19,15 +11,16 @@
       <hlm-skeleton class="h-24 w-full" />
     </div>
   } @else {
-    <hlm-tabs [tab]="activeTab()" class="flex-col" (tabActivated)="onTabActivated($event)">
-      <hlm-tabs-list
-        class="max-w-full justify-start overflow-x-auto"
-        aria-label="Organization settings sections"
-        i18n-aria-label="@@org.settings.tabsAriaLabel"
-      >
+    <hlm-tabs
+      [tab]="activeTab()"
+      [orientation]="settingsTabsOrientation()"
+      class="flex flex-col gap-4 lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-8"
+      (tabActivated)="onTabActivated($event)"
+    >
+      <ng-template #settingsTabTriggers>
         <button
           hlmTabsTrigger="general"
-          class="flex-none max-sm:min-h-11"
+          class="max-sm:min-h-11"
           data-testid="org-settings-tab-general"
         >
           <ng-icon name="lucideSettings" aria-hidden="true" />
@@ -35,23 +28,19 @@
         </button>
         <button
           hlmTabsTrigger="subscription"
-          class="flex-none max-sm:min-h-11"
+          class="max-sm:min-h-11"
           data-testid="org-settings-tab-subscription"
         >
           <ng-icon name="lucideCreditCard" aria-hidden="true" />
           <span i18n="@@org.settings.tabs.subscription">Subscription</span>
         </button>
-        <button
-          hlmTabsTrigger="usage"
-          class="flex-none max-sm:min-h-11"
-          data-testid="org-settings-tab-usage"
-        >
+        <button hlmTabsTrigger="usage" class="max-sm:min-h-11" data-testid="org-settings-tab-usage">
           <ng-icon name="lucideGauge" aria-hidden="true" />
           <span i18n="@@org.settings.tabs.usage">Usage</span>
         </button>
         <button
           hlmTabsTrigger="notifications"
-          class="flex-none max-sm:min-h-11"
+          class="max-sm:min-h-11"
           data-testid="org-settings-tab-notifications"
         >
           <ng-icon name="lucideBell" aria-hidden="true" />
@@ -59,7 +48,7 @@
         </button>
         <button
           hlmTabsTrigger="regional"
-          class="flex-none max-sm:min-h-11"
+          class="max-sm:min-h-11"
           data-testid="org-settings-tab-regional"
         >
           <ng-icon name="lucideGlobe" aria-hidden="true" />
@@ -68,14 +57,35 @@
         @if (canDelete()) {
           <button
             hlmTabsTrigger="danger"
-            class="flex-none text-destructive max-sm:min-h-11"
+            class="max-sm:min-h-11"
             data-testid="org-settings-tab-danger"
           >
-            <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+            <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
             <span i18n="@@org.settings.tabs.danger">Danger zone</span>
           </button>
         }
-      </hlm-tabs-list>
+      </ng-template>
+
+      @if (settingsTabsOrientation() === 'vertical') {
+        <hlm-tabs-list
+          variant="line"
+          class="shrink-0 items-stretch lg:sticky lg:top-4"
+          aria-label="Organization settings sections"
+          i18n-aria-label="@@org.settings.tabsAriaLabel"
+        >
+          <ng-container *ngTemplateOutlet="settingsTabTriggers" />
+        </hlm-tabs-list>
+      } @else {
+        <hlm-paginated-tabs-list
+          variant="line"
+          class="w-full"
+          data-testid="org-settings-tabs-list"
+          aria-label="Organization settings sections"
+          i18n-aria-label="@@org.settings.tabsAriaLabel"
+        >
+          <ng-container *ngTemplateOutlet="settingsTabTriggers" />
+        </hlm-paginated-tabs-list>
+      }
 
       <div hlmTabsContent="general" class="max-w-3xl">
         <ng-template hlmTabsContentLazy>

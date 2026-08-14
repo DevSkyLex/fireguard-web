@@ -27,7 +27,7 @@ export class InterventionDetailPage {
   public readonly fieldWorkSection: Locator = this.page.getByTestId(
     'intervention-detail-field-work',
   );
-  public readonly workItemRows: Locator = this.page.getByTestId('intervention-work-item-row');
+  public readonly workItemRows: Locator = this.page.getByTestId('intervention-work-item-table-row');
   public readonly commandButton: Locator = this.page.locator(
     '[data-testid="intervention-detail-command"]:visible',
   );

@@ -101,8 +101,33 @@ describe('RegisterForm', () => {
     await fill(fixture);
     await submit(fixture);
 
-    // The form emits what it edits; dropping `confirmPassword` for the API is
-    // the page's job, not this component's.
+    // The form emits what it edits; dropping `confirmPassword` is the page's job.
     expect(submitted).toHaveBeenCalledWith(VALID);
+  });
+
+  it('should mark the first name field aria-invalid once submission touches it empty', async () => {
+    await submit(fixture);
+
+    const firstName = fixture.nativeElement.querySelector(
+      '#register-first-name',
+    ) as HTMLInputElement;
+
+    expect(firstName.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('should swap the submit label to the pending wording while registering', async () => {
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Creating your account…');
+  });
+
+  it('should mark the email label required with an aria-hidden asterisk', () => {
+    const label = fixture.nativeElement.querySelector(
+      'label[for="register-email"]',
+    ) as HTMLLabelElement;
+    const asterisk = label.querySelector('span[aria-hidden="true"]');
+
+    expect(asterisk?.textContent).toContain('*');
   });
 });

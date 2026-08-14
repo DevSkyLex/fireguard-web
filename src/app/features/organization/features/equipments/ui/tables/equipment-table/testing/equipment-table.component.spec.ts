@@ -86,7 +86,28 @@ describe('EquipmentTable', () => {
   it('should draw skeleton rows while loading with nothing loaded yet', async () => {
     await render([], true);
 
+    const rows: NodeListOf<HTMLElement> = root().querySelectorAll('tbody tr');
+
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
     expect(root().querySelectorAll('[data-testid="equipment-table-row"]').length).toBe(0);
+    expect(
+      [...rows].every((row: HTMLElement): boolean => row.getAttribute('aria-hidden') === 'true'),
+    ).toBe(true);
+  });
+
+  it('should say so plainly when there is nothing to show', async () => {
+    await render([], false);
+
+    expect(root().textContent).toContain('No results.');
+  });
+
+  it('should name the scrolling region from the table caption', async () => {
+    await render([equipment()]);
+
+    const region: HTMLElement | null = root().querySelector('[role="region"]');
+    const caption: HTMLElement | null = root().querySelector('caption');
+
+    expect(region?.getAttribute('aria-labelledby')).toBe(caption?.id);
+    expect(caption?.id).toBeTruthy();
   });
 });

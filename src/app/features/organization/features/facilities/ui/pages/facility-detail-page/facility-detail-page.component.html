@@ -1,36 +1,17 @@
 <div id="facility-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
   @if (activeFacilityStore.selectedFacility(); as facility) {
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div class="flex min-w-0 flex-col gap-1">
-        <h1 class="min-w-0 truncate text-2xl font-semibold tracking-tight">{{ facility.name }}</h1>
-        <div class="flex flex-wrap items-center gap-2">
-          <app-facility-status-tag [value]="facility.status" />
-          @if (facility.code; as code) {
-            <span class="text-sm text-muted-foreground tabular-nums">{{ code }}</span>
-          }
-          @if (facility.address; as address) {
-            <span class="text-sm text-muted-foreground">{{ address }}</span>
-          }
-        </div>
-        <p class="text-sm text-muted-foreground" data-testid="facility-detail-meta">
-          {{ metaLine() }}
-        </p>
-      </div>
-
-      @if (canWrite()) {
-        <button
-          hlmBtn
-          type="button"
-          variant="destructive"
-          class="max-sm:min-h-11"
-          data-testid="facility-detail-delete"
-          (click)="requestDelete()"
-        >
-          <ng-icon name="lucideTrash2" aria-hidden="true" />
-          <span i18n="@@facility.detail.delete">Delete</span>
-        </button>
+    <div class="flex flex-wrap items-center gap-2">
+      <app-facility-status-tag [value]="facility.status" />
+      @if (facility.code; as code) {
+        <span class="text-sm text-muted-foreground tabular-nums">{{ code }}</span>
+      }
+      @if (facility.address; as address) {
+        <span class="text-sm text-muted-foreground">{{ address }}</span>
       }
     </div>
+    <p class="text-sm text-muted-foreground" data-testid="facility-detail-meta">
+      {{ metaLine() }}
+    </p>
 
     <hlm-tabs [tab]="activeTab()" class="flex-col" (tabActivated)="onLinkedTabActivated($event)">
       <hlm-tabs-list
@@ -240,7 +221,11 @@
   }
 </div>
 
-<hlm-alert-dialog [state]="deleteDialogState()" (stateChanged)="onDeleteDialogStateChanged($event)">
+<hlm-alert-dialog
+  [state]="deleteDialogState()"
+  [disableClose]="store.deleteCallState().status === 'pending'"
+  (stateChanged)="onDeleteDialogStateChanged($event)"
+>
   <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="facility-delete-dialog">
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@facility.detail.deleteConfirmTitle">Delete facility?</h2>
@@ -250,13 +235,32 @@
       </p>
     </hlm-alert-dialog-header>
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@facility.detail.deleteConfirmCancel">Cancel</button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="store.deleteCallState().status === 'pending' ? 'true' : null"
+        [attr.aria-busy]="store.deleteCallState().status === 'pending' ? 'true' : null"
+        [class.opacity-50]="store.deleteCallState().status === 'pending'"
+        [class.pointer-events-none]="store.deleteCallState().status === 'pending'"
+        (click)="
+          store.deleteCallState().status === 'pending' || onDeleteDialogStateChanged('closed')
+        "
+        i18n="@@facility.detail.deleteConfirmCancel"
+      >
+        Cancel
+      </button>
       <button
         hlmAlertDialogAction
         variant="destructive"
+        class="max-sm:min-h-11"
         data-testid="facility-delete-confirm"
-        [disabled]="store.deleteCallState().status === 'pending'"
-        (click)="confirmDelete()"
+        [attr.aria-disabled]="store.deleteCallState().status === 'pending' ? 'true' : null"
+        [attr.aria-busy]="store.deleteCallState().status === 'pending' ? 'true' : null"
+        [class.opacity-50]="store.deleteCallState().status === 'pending'"
+        [class.pointer-events-none]="store.deleteCallState().status === 'pending'"
+        (click)="store.deleteCallState().status === 'pending' || confirmDelete()"
         i18n="@@facility.detail.deleteConfirmAction"
       >
         Delete
@@ -264,3 +268,19 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
+
+<ng-template #pageActions>
+  @if (canWrite()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="destructive"
+      class="max-sm:min-h-11"
+      data-testid="facility-detail-delete"
+      (click)="requestDelete()"
+    >
+      <ng-icon name="lucideTrash2" aria-hidden="true" />
+      <span i18n="@@facility.detail.delete">Delete</span>
+    </button>
+  }
+</ng-template>

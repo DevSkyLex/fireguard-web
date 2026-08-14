@@ -1,0 +1,160 @@
+<hlm-popover sideOffset="5" align="end">
+  <button
+    hlmPopoverTrigger
+    hlmBtn
+    type="button"
+    variant="ghost"
+    [size]="triggerSize()"
+    class="gap-1.5 max-sm:size-11"
+    data-testid="intervention-sync-status"
+    [attr.aria-label]="triggerAriaLabel()"
+  >
+    @switch (state()) {
+      @case ('offline') {
+        <ng-icon name="lucideCloudOff" class="text-muted-foreground" aria-hidden="true" />
+      }
+      @case ('blocked') {
+        <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+      }
+      @case ('syncing') {
+        <hlm-spinner size="xs" aria-hidden="true" />
+      }
+      @case ('pending') {
+        <ng-icon name="lucideCloudUpload" aria-hidden="true" />
+      }
+      @default {
+        <ng-icon name="lucideCloudCheck" class="text-muted-foreground" aria-hidden="true" />
+      }
+    }
+    @if (state() === 'blocked') {
+      <span hlmBadge variant="destructive" data-testid="intervention-sync-blocked-count">{{
+        blockedCount()
+      }}</span>
+    } @else if (state() === 'pending') {
+      <span hlmBadge variant="secondary" data-testid="intervention-sync-pending-count">{{
+        pendingCount()
+      }}</span>
+    }
+  </button>
+
+  <hlm-popover-content *hlmPopoverPortal class="flex w-72 flex-col gap-3 p-3">
+    <div class="flex flex-col gap-1">
+      <p class="text-sm font-medium text-foreground" i18n="@@intervention.sync.title">
+        Synchronization
+      </p>
+      @switch (state()) {
+        @case ('offline') {
+          <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.offlineExplain">
+            You're offline. Changes are saved on this device and will sync automatically once you're
+            back online.
+          </p>
+          @if (pendingCount() > 0) {
+            <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.pending">
+              Some changes are waiting to sync.
+            </p>
+          }
+        }
+        @case ('blocked') {
+          <p class="text-xs text-destructive" i18n="@@intervention.sync.blocked">
+            {{ blockedCount() }} change(s) could not be replayed.
+          </p>
+        }
+        @case ('syncing') {
+          <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.running">
+            Replaying queued changes…
+          </p>
+        }
+        @case ('pending') {
+          <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.pending">
+            Some changes are waiting to sync.
+          </p>
+        }
+        @default {
+          <p class="text-xs text-muted-foreground" data-testid="intervention-sync-last-synced">
+            {{ lastSyncedLabel() }}
+          </p>
+        }
+      }
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="max-sm:min-h-11"
+        data-testid="intervention-sync-now"
+        [disabled]="state() === 'syncing'"
+        (click)="syncNow()"
+      >
+        <ng-icon name="lucideRefreshCw" aria-hidden="true" />
+        <span i18n="@@intervention.sync.now">Sync now</span>
+      </button>
+      @if (state() === 'blocked') {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-sync-retry"
+          [disabled]="state() === 'syncing'"
+          (click)="retry()"
+        >
+          <span i18n="@@intervention.sync.retry">Retry blocked</span>
+        </button>
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="text-destructive hover:text-destructive max-sm:min-h-11"
+          data-testid="intervention-sync-discard"
+          [disabled]="state() === 'syncing'"
+          (click)="discardConfirmVisible.set(true)"
+        >
+          <span i18n="@@intervention.sync.discard">Discard blocked</span>
+        </button>
+      }
+    </div>
+  </hlm-popover-content>
+</hlm-popover>
+
+<span
+  class="sr-only"
+  data-testid="intervention-sync-live"
+  [attr.role]="state() === 'blocked' ? 'alert' : 'status'"
+  [attr.aria-live]="state() === 'blocked' ? 'assertive' : 'polite'"
+  [attr.aria-busy]="state() === 'syncing'"
+  >{{ triggerAriaLabel() }}</span
+>
+
+<hlm-alert-dialog
+  [state]="discardConfirmVisible() ? 'open' : 'closed'"
+  (stateChanged)="onDiscardDialogStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-sync-discard-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@intervention.sync.discardTitle">
+        Discard the blocked changes?
+      </h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.sync.discardText">
+        The changes that could not be replayed will be permanently lost. Work recorded on the server
+        is not affected.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="intervention-sync-discard-confirm"
+        (click)="confirmDiscard()"
+        i18n="@@intervention.sync.discardConfirm"
+      >
+        Discard
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

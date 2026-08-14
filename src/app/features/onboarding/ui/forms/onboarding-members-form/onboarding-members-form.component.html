@@ -31,8 +31,10 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="onboarding-member-email" i18n="@@onboarding.membersForm.email">
-        Email
+      <label hlmFieldLabel for="onboarding-member-email"
+        ><span i18n="@@onboarding.membersForm.email"> Email</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span>
       </label>
       <input
         hlmInput
@@ -42,6 +44,8 @@
         placeholder="jordan@example.com"
         i18n-placeholder="@@onboarding.membersForm.emailPlaceholder"
         [formField]="draftForm.email"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="draftForm.email().touched() && draftForm.email().invalid()"
       />
     </hlm-field>
 
@@ -50,12 +54,12 @@
         <label hlmFieldLabel for="onboarding-member-role" i18n="@@onboarding.membersForm.role">
           Role (optional)
         </label>
-        <hlm-select
-          id="onboarding-member-role"
-          [itemToString]="roleLabelOf"
-          [formField]="draftForm.roleId"
-        >
-          <hlm-select-trigger class="w-full" data-testid="onboarding-member-role">
+        <hlm-select [itemToString]="roleLabelOf" [formField]="draftForm.roleId">
+          <hlm-select-trigger
+            buttonId="onboarding-member-role"
+            class="w-full"
+            data-testid="onboarding-member-role"
+          >
             <hlm-select-value
               placeholder="No role"
               i18n-placeholder="@@onboarding.membersForm.rolePlaceholder"
@@ -77,6 +81,7 @@
         hlmBtn
         type="button"
         variant="outline"
+        class="max-sm:min-h-11"
         data-testid="onboarding-member-add"
         [disabled]="draftForm().invalid() || pending()"
         (click)="addMember()"
@@ -85,8 +90,16 @@
       </button>
     </hlm-field>
 
-    <hlm-field orientation="horizontal">
-      <button hlmBtn type="submit" data-testid="onboarding-members-submit" [disabled]="pending()">
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="onboarding-members-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
         @if (pending()) {
           <span i18n="@@onboarding.membersForm.submitting">Sending…</span>
         } @else {

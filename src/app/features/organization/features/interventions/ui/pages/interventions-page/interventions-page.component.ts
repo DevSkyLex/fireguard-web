@@ -8,8 +8,10 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -17,10 +19,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
-  lucideChevronLeft,
-  lucideChevronRight,
-  lucideChevronsLeft,
-  lucideChevronsRight,
   lucideCircleAlert,
   lucideClipboardList,
   lucideDownload,
@@ -35,12 +33,10 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
-import { isCallPending } from '@core/request-state';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
+import { isCallPending, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import {
-  InterventionOfflineService,
-  InterventionService,
-} from '@features/organization/features/interventions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import {
   resolveInterventionTag,
   type InterventionAssignRequest,
@@ -61,7 +57,6 @@ import {
 import {
   BrowserDownloadService,
   InterventionListPreferencesService,
-  InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import {
   InterventionStatisticsStore,
@@ -78,23 +73,24 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import { ListPagination } from '@features/organization/ui/components';
+import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
-import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggle } from '@shared/ui/toggle';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '../../../state/intervention-planning-options';
 import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
-import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
@@ -105,7 +101,7 @@ import {
   type InterventionTableColumn,
   type InterventionTransitionRequest,
 } from '../../tables/intervention-table';
-import type { InterventionListItemViewModel } from './models';
+import type { InterventionFilterChip, InterventionListItemViewModel } from './models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_PRIORITY_FILTER_OPTIONS,
@@ -149,6 +145,19 @@ const NO_FILTERS: InterventionListFilters = {
 };
 
 /**
+ * Type InterventionListView
+ *
+ * @description
+ * The Linear-style segmented views the toolbar's toggle group offers. Each
+ * is a fixed `status`/`dueWindow` combination on top of the same
+ * {@link InterventionListFilters} contract the popover edits — there is no
+ * separate "view" state, only a derived read of the active narrowing.
+ *
+ * @since 6.3.0
+ */
+type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
+
+/**
  * Component InterventionsPage
  * @class InterventionsPage
  *
@@ -186,7 +195,18 @@ const NO_FILTERS: InterventionListFilters = {
  * server-side copy: it ends in the normal `create` call, and never carries
  * `status`, the planned window or the review note.
  *
- * @version 6.1.0
+ * The segmented views row above the toolbar and the removable filter chips
+ * below it are both read-only projections of {@link filters}, never a second
+ * copy of it: picking a view or removing a chip calls the same
+ * {@link applyFilter} path the popover's own selects use, so the URL stays
+ * the single source of truth (`FEATURE.md`).
+ *
+ * Its title lives in the shell breadcrumb, not in-page — the route's
+ * `data.breadcrumb` supplies it. "New intervention" registers on the shell
+ * header through `PageActionsService` instead of rendering its own title
+ * band.
+ *
+ * @version 6.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -194,33 +214,30 @@ const NO_FILTERS: InterventionListFilters = {
   selector: 'app-interventions-page',
   imports: [
     NgIcon,
+    ErrorState,
     HlmBadge,
     HlmButton,
-    HlmLabel,
     HlmSpinner,
     HlmToggle,
     InterventionAssignDialog,
     InterventionCreateSheet,
     InterventionKpiStrip,
-    InterventionSyncStatus,
     InterventionTable,
     InterventionTag,
+    ListPagination,
     ...HlmAlertDialogImports,
     ...HlmDropdownMenuImports,
     ...HlmEmptyImports,
     ...HlmInputGroupImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
+    ...HlmToggleGroupImports,
   ],
   providers: [
     InterventionPlanningOptionsStore,
     InterventionStatisticsStore,
     provideIcons({
       lucideCheck,
-      lucideChevronLeft,
-      lucideChevronRight,
-      lucideChevronsLeft,
-      lucideChevronsRight,
       lucideCircleAlert,
       lucideClipboardList,
       lucideDownload,
@@ -234,7 +251,7 @@ const NO_FILTERS: InterventionListFilters = {
     }),
   ],
   templateUrl: './interventions-page.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionsPage {
@@ -355,17 +372,6 @@ export class InterventionsPage {
   protected readonly statisticsStore: InterventionStatisticsStoreType =
     inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
 
-  /** The sync coordinator behind the toolbar's sync chip. */
-  protected readonly sync: InterventionSyncCoordinatorService = inject(
-    InterventionSyncCoordinatorService,
-  );
-
-  /** The outbox, read only for the chip's pending indicator. */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
-
-  /** Whether the offline outbox has changes waiting to sync. */
-  protected readonly hasUnsyncedChanges: Signal<boolean> = this.offline.hasUnsyncedChanges;
-
   /**
    * Property permissions
    * @readonly
@@ -434,6 +440,26 @@ export class InterventionsPage {
   /** Unsubscribes the export's in-flight drain if the page is left mid-fetch. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The "New intervention" button, registered on the shell header instead of
+   * rendering in-page — the shell header carries every routed page's title
+   * and actions now (`ARCHITECTURE.md` §9.3).
+   *
+   * @access private
+   * @since 6.4.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
+
   /** The signed-in member, resolving the "my interventions" chip and the identity gates. */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
     inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
@@ -490,6 +516,35 @@ export class InterventionsPage {
         this.organizationId(),
       ),
   );
+
+  /**
+   * Property activeView
+   * @readonly
+   *
+   * @description
+   * Which of the toggle group's four segmented views the active narrowing
+   * currently matches, `null` for any other combination — a custom mix from
+   * the popover highlights none of the four rather than a misleading nearest
+   * one. Derived from {@link filters}' `status`/`dueWindow` alone; `q`,
+   * `mine`, `type`, `priority`, `site`, `responsible` and `label` never
+   * affect it.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @type {Signal<InterventionListView | null>}
+   */
+  protected readonly activeView: Signal<InterventionListView | null> =
+    computed<InterventionListView | null>(() => {
+      const filters: InterventionListFilters = this.filters();
+
+      if (filters.status === null && filters.dueWindow === null) return 'all';
+      if (filters.status === null && filters.dueWindow === 'overdue') return 'overdue';
+      if (filters.status === 'changes_requested' && filters.dueWindow === null) return 'sent-back';
+      if (filters.status === 'submitted' && filters.dueWindow === null) return 'awaiting-review';
+
+      return null;
+    });
 
   /** The active ordering, restored from the preferences cookie. */
   protected readonly sortOrder: WritableSignal<InterventionListSort> = signal<InterventionListSort>(
@@ -578,9 +633,6 @@ export class InterventionsPage {
   /** Every hideable column, for the column menu. */
   protected readonly allColumns: ReadonlyArray<InterventionTableColumn> =
     INTERVENTION_TABLE_COLUMNS;
-
-  /** The page sizes offered under the table. */
-  protected readonly pageSizes: ReadonlyArray<number> = PAGE_SIZES;
 
   /**
    * Property visibleColumns
@@ -1041,6 +1093,97 @@ export class InterventionsPage {
   );
 
   /**
+   * Property filterChips
+   * @readonly
+   *
+   * @description
+   * One removable chip per active narrowing, in the popover's own field
+   * order — everything {@link activeFilterCount} counts, `mine` excluded the
+   * same way (it keeps its own toggle chip). Each chip's value label reuses
+   * the closed-select label resolvers the popover itself uses; the three
+   * IRI-valued fields fall back to the IRI's last path segment while their
+   * option list is still loading.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @type {Signal<readonly InterventionFilterChip[]>}
+   */
+  protected readonly filterChips: Signal<readonly InterventionFilterChip[]> = computed<
+    readonly InterventionFilterChip[]
+  >(() => {
+    const filters: InterventionListFilters = this.filters();
+    const chips: InterventionFilterChip[] = [];
+
+    if (filters.status) {
+      chips.push({
+        key: 'status',
+        fieldLabel: $localize`:@@intervention.list.filterStatus:Status`,
+        valueLabel: this.statusLabelOf(filters.status),
+        patch: { status: null },
+      });
+    }
+
+    if (filters.type) {
+      chips.push({
+        key: 'type',
+        fieldLabel: $localize`:@@intervention.list.filterType:Type`,
+        valueLabel: this.typeLabelOf(filters.type),
+        patch: { type: null },
+      });
+    }
+
+    if (filters.priority) {
+      chips.push({
+        key: 'priority',
+        fieldLabel: $localize`:@@intervention.list.filterPriority:Priority`,
+        valueLabel: this.priorityLabelOf(filters.priority),
+        patch: { priority: null },
+      });
+    }
+
+    if (filters.site) {
+      chips.push({
+        key: 'site',
+        fieldLabel: $localize`:@@intervention.list.filterSite:Site`,
+        valueLabel: this.siteLabelOf(filters.site) || this.lastIriSegmentLabel(filters.site),
+        patch: { site: null },
+      });
+    }
+
+    if (filters.responsible) {
+      chips.push({
+        key: 'responsible',
+        fieldLabel: $localize`:@@intervention.list.filterResponsible:Responsible`,
+        valueLabel:
+          this.responsibleLabelOf(filters.responsible) ||
+          this.lastIriSegmentLabel(filters.responsible),
+        patch: { responsible: null },
+      });
+    }
+
+    if (filters.label) {
+      chips.push({
+        key: 'label',
+        fieldLabel: $localize`:@@intervention.list.filterLabel:Label`,
+        valueLabel: this.labelLabelOf(filters.label) || this.lastIriSegmentLabel(filters.label),
+        patch: { label: null },
+      });
+    }
+
+    if (filters.dueWindow) {
+      chips.push({
+        key: 'dueWindow',
+        fieldLabel: $localize`:@@intervention.list.filterDue:Deadline`,
+        valueLabel: this.dueWindowLabelOf(filters.dueWindow),
+        patch: { dueWindow: null },
+      });
+    }
+
+    return chips;
+  });
+
+  /**
    * Property subtitle
    * @readonly
    *
@@ -1142,6 +1285,11 @@ export class InterventionsPage {
   protected readonly labelLabelOf: (value: string) => string = (value: string): string =>
     this.labelDisplayMap().get(value) ?? '';
 
+  /** Names a filter chip's remove button, so each is distinguishable by screen reader. */
+  protected readonly removeFilterLabel: (fieldLabel: string) => string = (
+    fieldLabel: string,
+  ): string => $localize`:@@intervention.list.removeFilter:Remove filter: ${fieldLabel}:field:`;
+
   //#endregion
 
   //#region Constructor
@@ -1158,6 +1306,8 @@ export class InterventionsPage {
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+
     effect((): void => {
       const term: string = this.searchTerm();
       untracked((): void => {
@@ -1244,6 +1394,15 @@ export class InterventionsPage {
         void this.router.navigate([...this.detailRouteBase(), createdId]);
       });
     });
+
+    effect((): void => {
+      const callState: CallState = this.store.deleteCallState();
+
+      untracked((): void => {
+        if (callState.status !== 'success') return;
+        if (this.pendingDelete() !== null) this.pendingDelete.set(null);
+      });
+    });
   }
   //#endregion
 
@@ -1301,6 +1460,47 @@ export class InterventionsPage {
   protected applyFilter(patch: Partial<InterventionListFilters>): void {
     this.page.set(1);
     this.navigateQuery(serializeInterventionListFilters({ ...this.filters(), ...patch }));
+  }
+
+  /**
+   * Method onViewChanged
+   * @method onViewChanged
+   *
+   * @description
+   * Narrows `hlm-toggle-group`'s single-select payload to a segmented view
+   * and applies the `status`/`dueWindow` pair it stands for through
+   * {@link applyFilter} — the same path a popover select uses, so a view is
+   * nothing but a shortcut into the one filter contract. `null` (every
+   * toggle deselected) is a no-op: the group only reaches it while
+   * {@link activeView} is already `null`, which the operator caused by
+   * picking a custom filter combination, not by clicking a view.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @param {InterventionListView | readonly InterventionListView[] | null | undefined} value - The toggle group's emitted value.
+   *
+   * @returns {void}
+   */
+  protected onViewChanged(
+    value: InterventionListView | readonly InterventionListView[] | null | undefined,
+  ): void {
+    const view: InterventionListView | null = typeof value === 'string' ? value : null;
+
+    switch (view) {
+      case 'all':
+        this.applyFilter({ status: null, dueWindow: null });
+        break;
+      case 'overdue':
+        this.applyFilter({ status: null, dueWindow: 'overdue' });
+        break;
+      case 'sent-back':
+        this.applyFilter({ status: 'changes_requested', dueWindow: null });
+        break;
+      case 'awaiting-review':
+        this.applyFilter({ status: 'submitted', dueWindow: null });
+        break;
+    }
   }
 
   /**
@@ -1470,6 +1670,26 @@ export class InterventionsPage {
     this.pageSize.set(size);
     this.page.set(1);
     this.persistListPreferences();
+  }
+
+  /**
+   * Method lastIriSegmentLabel
+   *
+   * @description
+   * A filter chip's fallback value label while its option list — sites,
+   * members or labels — is still loading and the IRI has no resolved display
+   * name yet: the IRI's own last path segment, readable enough to confirm
+   * which id is narrowing the list without waiting on the fetch.
+   *
+   * @access private
+   * @since 6.3.0
+   *
+   * @param {string} iri - The filter's IRI value.
+   *
+   * @returns {string} The IRI's last path segment.
+   */
+  private lastIriSegmentLabel(iri: string): string {
+    return iri.split('/').pop() ?? iri;
   }
 
   /**
@@ -1707,6 +1927,7 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected requestDelete(intervention: InterventionOutput): void {
+    this.store.resetDeleteState();
     this.pendingDelete.set(intervention);
   }
 
@@ -1728,6 +1949,7 @@ export class InterventionsPage {
 
     if (ids.length === 0) return;
 
+    this.store.resetDeleteState();
     this.pendingBulkDeleteIds.set(ids);
   }
 
@@ -1736,10 +1958,15 @@ export class InterventionsPage {
    * @method confirmDelete
    *
    * @description
-   * Sends the pending target(s) to the store and closes the dialog. A bulk
-   * selection resolves each id back to its cached revision and calls
-   * `store.delete` once per intervention — the store's `mergeMap` runs them
-   * concurrently, each reporting its own success or failure.
+   * Sends the pending target(s) to the store. A single row's confirmation
+   * stays open, busy-disabled, until `deleteCallState` settles — the
+   * constructor effect closes it on success, and a failure surfaces inline
+   * rather than closing under the operator. A bulk selection is fired and
+   * forgotten instead: each id resolves back to its cached revision and
+   * calls `store.delete` once, concurrently via the store's `mergeMap`, each
+   * reporting its own success or failure as a toast — attributing one shared
+   * call state to several in-flight writes would not reliably tell the
+   * dialog when every one of them has settled.
    *
    * @access protected
    * @since 5.0.0
@@ -1771,7 +1998,6 @@ export class InterventionsPage {
       this.selectedIds.set(new Set<string>());
     }
 
-    this.pendingDelete.set(null);
     this.pendingBulkDeleteIds.set(null);
   }
 

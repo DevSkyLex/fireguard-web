@@ -1,21 +1,22 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronLeft,
-  lucideChevronRight,
   lucideCircleAlert,
   lucideGauge,
   lucideMailPlus,
@@ -28,6 +29,7 @@ import {
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState, CallStatus, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -39,10 +41,7 @@ import {
   type OrganizationMemberStatusFilter,
   type OrganizationQuotaItemOutput,
 } from '@features/organization/models';
-import {
-  ORGANIZATION_CONTEXT_PORT,
-  type OrganizationContextPort,
-} from '@features/organization/ports';
+import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import {
   OrganizationQuotaStore,
   type OrganizationQuotaStoreType,
@@ -51,14 +50,13 @@ import {
   MEMBERS_PAGE_SIZE,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
-import { OrganizationPageHeader, StatTile } from '@features/organization/ui/components';
+import { ListPagination, StatTile } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
-import { HlmPaginationImports } from '@shared/ui/pagination';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { OrganizationInviteDialog } from '../../dialogs/organization-invite-dialog';
 import {
@@ -112,10 +110,10 @@ type OrganizationMembersKpiTile = {
  *
  * The store exposes one shared `mutationCallState` across every write
  * action, so a stale error from an earlier action must never leak into a
- * dialog opened afterwards: {@link inviteSubmitted} scopes the invite
- * dialog's error banner to invites actually attempted in the current
- * dialog session, and the page-level banner clears itself the moment a new
- * error lands and hides while the invite dialog is showing its own copy.
+ * dialog opened afterwards: the invite dialog and the remove confirmation
+ * each hold their own `SubmissionGate` over it, and the page-level banner
+ * clears itself the moment a new error lands and hides while either of them
+ * is showing its own copy.
  *
  * The roster's search and status filter are server-side: a debounced search
  * keystroke and an immediate status change both re-issue
@@ -124,7 +122,13 @@ type OrganizationMembersKpiTile = {
  * reflect. `OrganizationQuotaStore` (root-provided) supplies the "Seats
  * used" tile's used/limit reading, shared with the settings Usage tab.
  *
- * @version 1.2.0
+ * Its title lives in the shell breadcrumb; `app-organization-page-header` is
+ * not rendered here (the org identity row stays on the Today landing page
+ * only), {@link subtitle}'s member count stays as a lead line at content
+ * top, and "Invite member" registers on the shell header through
+ * `PageActionsService`.
+ *
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -134,24 +138,21 @@ type OrganizationMembersKpiTile = {
     NgIcon,
     ErrorState,
     HlmButton,
+    ListPagination,
     OrganizationInvitationTable,
     OrganizationInviteDialog,
     OrganizationMemberRolesDialog,
     OrganizationMemberTable,
-    OrganizationPageHeader,
     StatTile,
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
     ...HlmEmptyImports,
     ...HlmInputGroupImports,
     ...HlmToggleGroupImports,
-    ...HlmPaginationImports,
   ],
   providers: [
     OrganizationMembersStore,
     provideIcons({
-      lucideChevronLeft,
-      lucideChevronRight,
       lucideCircleAlert,
       lucideGauge,
       lucideMailPlus,
@@ -190,9 +191,9 @@ export class OrganizationMembersPage {
     OrganizationPermissionService,
   );
 
-  /** The routed organization, identifying `app-organization-page-header`. */
-  protected readonly organizationContext: OrganizationContextPort =
-    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+  /** Builds the per-surface claims on the store's one shared `mutationCallState`. */
+  private readonly submissionGates: SubmissionGateService =
+    inject<SubmissionGateService>(SubmissionGateService);
 
   /**
    * Property quotaStore
@@ -205,8 +206,12 @@ export class OrganizationMembersPage {
   protected readonly quotaStore: OrganizationQuotaStoreType =
     inject<OrganizationQuotaStoreType>(OrganizationQuotaStore);
 
-  /** The page's heading, matching the nav entry's own `route.members` label. */
-  protected readonly pageTitle: string = $localize`:@@route.members:Members`;
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "Invite member" button, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
 
   /** Currently selected member ids, scoped to the loaded page — cleared on every reload. */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
@@ -215,6 +220,9 @@ export class OrganizationMembersPage {
 
   /** The members page window, one-based. */
   protected readonly page: WritableSignal<number> = signal<number>(1);
+
+  /** How many roster rows a page holds, from the pagination band's rows-per-page select. */
+  protected readonly pageSize: WritableSignal<number> = signal<number>(MEMBERS_PAGE_SIZE);
 
   /** What the roster search box holds; debounced before it reaches the wire. */
   protected readonly searchTerm: WritableSignal<string> = signal<string>('');
@@ -226,8 +234,11 @@ export class OrganizationMembersPage {
   /** Whether the invite dialog is open. */
   protected readonly inviteDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether an invite was actually submitted in the current dialog session — scopes the error banner. */
-  protected readonly inviteSubmitted: WritableSignal<boolean> = signal<boolean>(false);
+  /** The invite dialog's claim on the shared mutation state, closing it once its own invite lands. */
+  private readonly inviteGate: SubmissionGate = this.submissionGates.create(
+    this.store.mutationCallState,
+    { onSuccess: (): void => this.inviteDialogVisible.set(false) },
+  );
 
   /** The member id the role-assignment dialog is currently open for, or `null` when closed. */
   protected readonly rolesDialogMemberId: WritableSignal<string | null> = signal<string | null>(
@@ -241,6 +252,17 @@ export class OrganizationMembersPage {
   /** The selected ids the toolbar asked to bulk-remove, pending confirmation. */
   protected readonly pendingBulkRemoveIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
+
+  /** The remove-confirm dialog's own claim, clearing its pending target once its own removal lands. */
+  private readonly removeGate: SubmissionGate = this.submissionGates.create(
+    this.store.mutationCallState,
+    {
+      onSuccess: (): void => {
+        this.pendingRemove.set(null);
+        this.pendingBulkRemoveIds.set(null);
+      },
+    },
+  );
 
   /** Whether the page-level action-error banner was dismissed for the error currently in state. */
   private readonly actionErrorDismissed: WritableSignal<boolean> = signal<boolean>(false);
@@ -302,23 +324,8 @@ export class OrganizationMembersPage {
    * @type {Signal<number>}
    */
   protected readonly membersPageCount: Signal<number> = computed<number>(() =>
-    Math.max(1, Math.ceil(this.store.membersTotal() / MEMBERS_PAGE_SIZE)),
+    Math.max(1, Math.ceil(this.store.membersTotal() / this.pageSize())),
   );
-
-  /**
-   * Property pageIndicatorLabel
-   * @readonly
-   * @description The pagination nav's "Page X of Y" sentence.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<string>}
-   */
-  protected readonly pageIndicatorLabel: Signal<string> = computed<string>(() => {
-    const current: number = this.page();
-    const total: number = this.membersPageCount();
-
-    return $localize`:@@org.members.pageIndicator:Page ${current}:current: of ${total}:total:`;
-  });
 
   /** Where a member row's link points. */
   protected readonly memberDetailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
@@ -473,20 +480,19 @@ export class OrganizationMembersPage {
   });
 
   /** The invite dialog's error banner, scoped to an invite actually attempted this session. */
-  protected readonly inviteServerError: Signal<StoreError | null> = computed<StoreError | null>(
-    () => (this.inviteSubmitted() ? this.store.mutationError() : null),
-  );
+  protected readonly inviteServerError: Signal<StoreError | null> = this.inviteGate.error;
 
   /**
    * Property actionError
    * @readonly
-   * @description A non-invite mutation's error (remove, resend, revoke, role toggle), shown as a page-level banner and hidden while the invite dialog is showing its own copy.
+   * @description A resend/revoke/role-toggle mutation's error, shown as a page-level banner and hidden while the invite dialog or the remove-confirm dialog is showing its own copy.
    * @access protected
    * @since 1.0.0
    * @type {Signal<StoreError | null>}
    */
   protected readonly actionError: Signal<StoreError | null> = computed<StoreError | null>(() => {
-    if (this.actionErrorDismissed() || this.inviteDialogVisible()) return null;
+    if (this.actionErrorDismissed() || this.inviteDialogVisible() || this.removeGate.isSubmitted())
+      return null;
 
     const state: CallState<null, StoreError> = this.store.mutationCallState();
 
@@ -497,6 +503,12 @@ export class OrganizationMembersPage {
   protected readonly removeDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.pendingRemove() !== null || this.pendingBulkRemoveIds() !== null ? 'open' : 'closed',
   );
+
+  /** Whether the remove-confirm dialog's own write is in flight — busy-disables its footer and blocks Escape/backdrop dismissal. */
+  protected readonly removeDialogBusy: Signal<boolean> = this.removeGate.isBusy;
+
+  /** The remove-confirm dialog's own error, scoped to a remove actually attempted this session — never a stale or unrelated mutation's failure. */
+  protected readonly removeDialogError: Signal<StoreError | null> = this.removeGate.error;
 
   /** The remove-confirm dialog's title, naming the count for a bulk removal. */
   protected readonly removeDialogTitle: Signal<string> = computed<string>(() => {
@@ -534,13 +546,15 @@ export class OrganizationMembersPage {
    * @description
    * Wires the resource load (re-firing whenever the organization or the
    * resolved permissions change, and resetting the search/status filter with
-   * it), the debounced roster search, and the page-level error banner's
-   * auto-reset.
+   * it), the debounced roster search, the page-level error banner's
+   * auto-reset, and registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const includeMembers: boolean = this.canReadMembers();
@@ -549,6 +563,7 @@ export class OrganizationMembersPage {
 
       untracked((): void => {
         this.page.set(1);
+        this.pageSize.set(MEMBERS_PAGE_SIZE);
         this.selectedIds.set(new Set<string>());
         this.searchTerm.set('');
         this.statusFilter.set('all');
@@ -567,18 +582,6 @@ export class OrganizationMembersPage {
 
       untracked((): void => {
         if (status === 'error') this.actionErrorDismissed.set(false);
-      });
-    });
-
-    effect((): void => {
-      const submitted: boolean = this.inviteSubmitted();
-      const status: CallStatus = this.store.mutationCallState().status;
-
-      untracked((): void => {
-        if (submitted && status === 'success') {
-          this.inviteDialogVisible.set(false);
-          this.inviteSubmitted.set(false);
-        }
       });
     });
   }
@@ -613,6 +616,19 @@ export class OrganizationMembersPage {
     const clamped: number = Math.min(Math.max(1, target), this.membersPageCount());
 
     this.queryMembers(clamped);
+  }
+
+  /**
+   * Method setPageSize
+   * @description Changes how many roster rows a page holds and returns to the first page.
+   * @access protected
+   * @since 1.2.0
+   * @param {number} size - The chosen page size.
+   * @returns {void}
+   */
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.queryMembers(1);
   }
 
   /**
@@ -676,7 +692,7 @@ export class OrganizationMembersPage {
    * @returns {void}
    */
   protected openInviteDialog(): void {
-    this.inviteSubmitted.set(false);
+    this.inviteGate.reset();
     this.inviteDialogVisible.set(true);
   }
 
@@ -690,7 +706,7 @@ export class OrganizationMembersPage {
    */
   protected onInviteDialogVisibleChange(visible: boolean): void {
     this.inviteDialogVisible.set(visible);
-    if (!visible) this.inviteSubmitted.set(false);
+    if (!visible) this.inviteGate.reset();
   }
 
   /**
@@ -702,7 +718,7 @@ export class OrganizationMembersPage {
    * @returns {void}
    */
   protected sendInvite(payload: InviteOrganizationMemberInput): void {
-    this.inviteSubmitted.set(true);
+    this.inviteGate.submit();
     this.store.invite({ organizationId: this.organizationId(), input: payload });
   }
 
@@ -766,6 +782,7 @@ export class OrganizationMembersPage {
    * @returns {void}
    */
   protected requestRemove(member: OrganizationMemberOutput): void {
+    this.removeGate.reset();
     this.pendingRemove.set(member);
   }
 
@@ -781,30 +798,40 @@ export class OrganizationMembersPage {
 
     if (ids.length === 0) return;
 
+    this.removeGate.reset();
     this.pendingBulkRemoveIds.set(ids);
   }
 
   /**
    * Method confirmRemove
-   * @description Sends the pending target(s) to the store and closes the dialog.
+   *
+   * @description
+   * Sends the pending target(s) to the store. The dialog stays open,
+   * busy-disabled, until `mutationCallState` settles — the constructor
+   * effect closes it on success; a failure surfaces inline via
+   * {@link removeDialogError} instead of closing under the operator.
+   *
    * @access protected
    * @since 1.0.0
    * @returns {void}
    */
   protected confirmRemove(): void {
     const single: OrganizationMemberOutput | null = this.pendingRemove();
+    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkRemoveIds();
+    if (single === null && bulkIds === null) return;
+
+    this.removeGate.submit();
+
     if (single) {
       this.store.removeMember({ organizationId: this.organizationId(), memberId: single.id });
+
+      return;
     }
 
-    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkRemoveIds();
     if (bulkIds) {
       this.store.removeMembers({ organizationId: this.organizationId(), memberIds: bulkIds });
       this.selectedIds.set(new Set<string>());
     }
-
-    this.pendingRemove.set(null);
-    this.pendingBulkRemoveIds.set(null);
   }
 
   /**
@@ -820,6 +847,7 @@ export class OrganizationMembersPage {
 
     this.pendingRemove.set(null);
     this.pendingBulkRemoveIds.set(null);
+    this.removeGate.reset();
   }
 
   /**
@@ -882,9 +910,10 @@ export class OrganizationMembersPage {
    *
    * @description
    * Re-issues the server-side roster query for the given page with the
-   * current search term and status filter, clearing the row selection —
-   * the shared tail of every roster-narrowing entry point (pagination, the
-   * debounced search, the status toggle).
+   * current search term, status filter and page size, clearing the row
+   * selection — the shared tail of every roster-narrowing entry point
+   * (pagination, the rows-per-page select, the debounced search, the status
+   * toggle).
    *
    * @access private
    * @since 1.1.0
@@ -901,6 +930,7 @@ export class OrganizationMembersPage {
       page,
       search: this.searchTerm().trim(),
       status: this.statusFilter(),
+      pageSize: this.pageSize(),
     });
   }
   //#endregion

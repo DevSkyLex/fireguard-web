@@ -77,6 +77,12 @@ describe('ChannelParticipantsSheet', () => {
     expect(panel()?.textContent).toContain('No participants');
   });
 
+  it('should carry a description naming the sheet’s purpose', async () => {
+    await open();
+
+    expect(panel()?.textContent).toContain('See who');
+  });
+
   it('should mark an unresolved participant distinctly, never as a raw id', async () => {
     await open();
     fixture.componentRef.setInput('participants', [

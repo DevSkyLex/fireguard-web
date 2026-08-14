@@ -252,12 +252,6 @@ describe('OrganizationStatisticsPage', () => {
     await fixture.whenStable();
   }
 
-  it('names the organization the header identifies', async () => {
-    await render();
-
-    expect(fixture.nativeElement.textContent).toContain('Acme Corp');
-  });
-
   it('renders the KPI tiles from the dashboard store', async () => {
     await render();
     dashboardQueryData.set(dashboardData());

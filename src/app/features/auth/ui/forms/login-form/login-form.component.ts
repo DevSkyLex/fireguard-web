@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
 import { PasswordInput } from '@shared/password-input';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
-import { HlmFieldError, HlmFieldLabel } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import type { LoginFormValues } from './models';
 
@@ -46,9 +46,8 @@ import type { LoginFormValues } from './models';
     PasswordInput,
     HlmButton,
     HlmCheckbox,
-    HlmFieldError,
-    HlmFieldLabel,
     HlmInput,
+    ...HlmFieldImports,
   ],
   templateUrl: './login-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

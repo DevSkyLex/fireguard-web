@@ -81,4 +81,32 @@ describe('SplitLayout', () => {
     expect(element.querySelector('header #header-stub')).not.toBeNull();
     expect(element.querySelector('footer #footer-stub')).not.toBeNull();
   });
+
+  it('defaults the content and column width to md', async () => {
+    const fixture = await render();
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(element.querySelector('#split-layout-content-box')?.className).toContain('max-w-md');
+    expect(element.querySelector('#split-layout-column')?.className).toContain('lg:min-w-[32rem]');
+  });
+
+  it('widens the content and column width from route data', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('splitWidth', 'xl');
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(element.querySelector('#split-layout-content-box')?.className).toContain('max-w-xl');
+    expect(element.querySelector('#split-layout-column')?.className).toContain('lg:min-w-[40rem]');
+  });
+
+  it('supports the 2xl width for a route that opts into it', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('splitWidth', '2xl');
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(element.querySelector('#split-layout-content-box')?.className).toContain('max-w-2xl');
+    expect(element.querySelector('#split-layout-column')?.className).toContain('lg:min-w-[46rem]');
+  });
 });

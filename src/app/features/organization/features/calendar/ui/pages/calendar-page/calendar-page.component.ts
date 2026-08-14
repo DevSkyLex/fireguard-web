@@ -14,9 +14,9 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert } from '@ng-icons/lucide';
+import { lucideChevronLeft, lucideChevronRight, lucideCircleAlert } from '@ng-icons/lucide';
+import { SOURCE_TONE } from '@features/organization/features/calendar/constants';
 import type {
   CalendarFeedItemOutput,
   CalendarSourceKey,
@@ -26,22 +26,26 @@ import {
   type CalendarFeedStoreType,
 } from '@features/organization/features/calendar/state';
 import { Calendar, toIsoDay, type CalendarDisplayEvent } from '@shared/calendar';
-import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { CalendarEntryList } from '../../components/calendar-entry-list';
 
 /**
- * The badge tone each feed source renders with, both on the grid chips and in
- * the day panel — one glance says what kind of commitment a day carries.
+ * Type CalendarPageAgendaGroup
+ *
+ * @description
+ * One day's worth of the agenda the page renders below `md` — the same
+ * window the month grid shows above it, grouped by local day since the
+ * shrunken grid does not render there (`FEATURE.md`).
+ *
+ * @since 1.1.0
  */
-const SOURCE_TONE: Readonly<Record<CalendarSourceKey, CalendarDisplayEvent['tone']>> = {
-  calendar_event: 'default',
-  intervention: 'secondary',
-  inspection: 'outline',
-  maintenance: 'destructive',
+type CalendarPageAgendaGroup = {
+  readonly day: string;
+  readonly label: string;
+  readonly items: readonly CalendarFeedItemOutput[];
 };
 
 /**
@@ -50,17 +54,21 @@ const SOURCE_TONE: Readonly<Record<CalendarSourceKey, CalendarDisplayEvent['tone
  *
  * @description
  * The organization's calendar: every dated commitment — standalone events,
- * inspections, interventions, preventive maintenance — on one month grid,
- * read from the backend's unified feed. The grid is the shared generic
- * `app-calendar`; this page maps feed items onto its display shape, loads a
- * window one week wider than the visible month on each side (the grid shows
- * leading and trailing filler days whose chips must not silently vanish), and
- * renders the selected day's entries as a list — an intervention entry links
- * to its workspace. Browser-only loading: the feed is a dated, authenticated
- * read that would immediately refetch after hydration (ARCHITECTURE.md
- * §12.5-3).
+ * inspections, interventions, preventive maintenance — read from the
+ * backend's unified feed. A full-height console: a page-level toolbar band
+ * (Today, prev/next month, the current period label) drives the page's own
+ * `month`/`selectedDay` state — the shared `app-calendar` widget renders with
+ * its own built-in toolbar hidden (`showToolbar="false"`) so the two never
+ * duplicate — and the grid fills the remaining height, scrolling internally
+ * if a month overflows. At `md` and below, the shrunken grid gives way to an
+ * agenda: the same window's entries grouped by day, since a month grid is
+ * unusable at phone width. The grid's own day panel and the agenda's day
+ * groups both render through `CalendarEntryList`, the single row renderer for
+ * a feed entry — an intervention entry links to its workspace. Browser-only
+ * loading: the feed is a dated, authenticated read that would immediately
+ * refetch after hydration (ARCHITECTURE.md §12.5-3).
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -68,18 +76,19 @@ const SOURCE_TONE: Readonly<Record<CalendarSourceKey, CalendarDisplayEvent['tone
   selector: 'app-calendar-page',
   imports: [
     Calendar,
+    CalendarEntryList,
     NgIcon,
-    RouterLink,
-    HlmBadge,
     HlmButton,
     HlmSkeleton,
     ...HlmCardImports,
     ...HlmEmptyImports,
-    ...HlmItemImports,
   ],
-  providers: [CalendarFeedStore, provideIcons({ lucideCircleAlert })],
+  providers: [
+    CalendarFeedStore,
+    provideIcons({ lucideChevronLeft, lucideChevronRight, lucideCircleAlert }),
+  ],
   templateUrl: './calendar-page.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarPage {
@@ -104,7 +113,7 @@ export class CalendarPage {
 
   private readonly locale: string = inject(LOCALE_ID);
 
-  /** Anchor of the displayed month, driven two-way by the grid. */
+  /** Anchor of the displayed month, driven two-way by the grid and by the toolbar. */
   protected readonly month: WritableSignal<Date> = signal<Date>(new Date());
 
   /** The selected day (`yyyy-MM-dd`), today on arrival. */
@@ -114,12 +123,28 @@ export class CalendarPage {
 
   /** Feed items mapped onto the shared calendar's generic chips. */
   protected readonly events: Signal<readonly CalendarDisplayEvent[]> = computed(() =>
-    this.store.items().map((item: CalendarFeedItemOutput): CalendarDisplayEvent => ({
-      id: `${item.sourceKey}:${item.id}`,
-      date: item.startsAt,
-      label: item.title,
-      tone: SOURCE_TONE[item.sourceKey] ?? 'outline',
-    })),
+    this.store.items().map((item: CalendarFeedItemOutput): CalendarDisplayEvent => {
+      const key: CalendarSourceKey = item.sourceKey;
+
+      return {
+        id: `${item.sourceKey}:${item.id}`,
+        date: item.startsAt,
+        label: item.title,
+        tone: SOURCE_TONE[key] ?? 'outline',
+      };
+    }),
+  );
+
+  /**
+   * Property periodLabel
+   * @readonly
+   * @description The toolbar's "Month Year" label — the grid's own title, hidden, mirrors it.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly periodLabel: Signal<string> = computed<string>(() =>
+    new Intl.DateTimeFormat(this.locale, { month: 'long', year: 'numeric' }).format(this.month()),
   );
 
   /** The selected day's entries, earliest first. */
@@ -141,6 +166,40 @@ export class CalendarPage {
     return new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(
       new Date(`${day}T00:00:00`),
     );
+  });
+
+  /**
+   * Property agendaGroups
+   * @readonly
+   *
+   * @description
+   * The loaded window's entries grouped by local day, earliest day and
+   * earliest entry first — the agenda's day sections below `md`, where the
+   * shrunken month grid does not render.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly CalendarPageAgendaGroup[]>}
+   */
+  protected readonly agendaGroups: Signal<readonly CalendarPageAgendaGroup[]> = computed(() => {
+    const grouped = new Map<string, CalendarFeedItemOutput[]>();
+    for (const item of this.store.items()) {
+      const day: string = toIsoDay(new Date(item.startsAt));
+      const bucket: CalendarFeedItemOutput[] = grouped.get(day) ?? [];
+      bucket.push(item);
+      grouped.set(day, bucket);
+    }
+
+    return [...grouped.entries()]
+      .toSorted(([dayA], [dayB]) => dayA.localeCompare(dayB))
+      .map(([day, items]): CalendarPageAgendaGroup => ({
+        day,
+        label: new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(
+          new Date(`${day}T00:00:00`),
+        ),
+        items: items.toSorted((a, b) => a.startsAt.localeCompare(b.startsAt)),
+      }));
   });
 
   /** Whether the last feed read failed. */
@@ -177,6 +236,32 @@ export class CalendarPage {
   }
 
   /**
+   * Method goToday
+   * @description Re-anchors the toolbar on the current month and selects today.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected goToday(): void {
+    const today: Date = new Date();
+    this.month.set(new Date(today.getFullYear(), today.getMonth(), 1));
+    this.selectedDay.set(toIsoDay(today));
+  }
+
+  /**
+   * Method stepMonth
+   * @description Moves the toolbar's anchor one month backwards or forwards.
+   * @access protected
+   * @since 1.1.0
+   * @param {number} offset - `-1` or `1`.
+   * @returns {void}
+   */
+  protected stepMonth(offset: number): void {
+    const current: Date = this.month();
+    this.month.set(new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  }
+
+  /**
    * Method windowOf
    *
    * @description
@@ -201,69 +286,6 @@ export class CalendarPage {
       from: new Date(anchor.getFullYear(), anchor.getMonth(), 1 - 7).toISOString(),
       to: new Date(anchor.getFullYear(), anchor.getMonth() + 1, 7, 23, 59, 59).toISOString(),
     };
-  }
-
-  /**
-   * Method sourceLabelOf
-   * @description Names a feed source for the day panel's badge.
-   * @access protected
-   * @since 1.0.0
-   * @param {CalendarFeedItemOutput} item - The entry in question.
-   * @returns {string} A short localized source name.
-   */
-  protected sourceLabelOf(item: CalendarFeedItemOutput): string {
-    switch (item.sourceKey) {
-      case 'calendar_event':
-        return $localize`:@@calendar.source.event:Event`;
-      case 'inspection':
-        return $localize`:@@calendar.source.inspection:Inspection`;
-      case 'intervention':
-        return $localize`:@@calendar.source.intervention:Intervention`;
-      case 'maintenance':
-        return $localize`:@@calendar.source.maintenance:Maintenance`;
-    }
-  }
-
-  /**
-   * Method toneOf
-   * @description The badge tone of a feed entry, from its source.
-   * @access protected
-   * @since 1.0.0
-   * @param {CalendarFeedItemOutput} item - The entry in question.
-   * @returns {CalendarDisplayEvent['tone']} The `hlm-badge` variant.
-   */
-  protected toneOf(item: CalendarFeedItemOutput): CalendarDisplayEvent['tone'] {
-    return SOURCE_TONE[item.sourceKey] ?? 'outline';
-  }
-
-  /**
-   * Method timeLabelOf
-   * @description The entry's time-of-day, or the localized all-day label.
-   * @access protected
-   * @since 1.0.0
-   * @param {CalendarFeedItemOutput} item - The entry in question.
-   * @returns {string} A short time label.
-   */
-  protected timeLabelOf(item: CalendarFeedItemOutput): string {
-    if (item.allDay) return $localize`:@@calendar.allDay:All day`;
-
-    return new Intl.DateTimeFormat(this.locale, { timeStyle: 'short' }).format(
-      new Date(item.startsAt),
-    );
-  }
-
-  /**
-   * Method interventionLinkOf
-   * @description The intervention workspace route for an intervention entry, null otherwise.
-   * @access protected
-   * @since 1.0.0
-   * @param {CalendarFeedItemOutput} item - The entry in question.
-   * @returns {readonly string[] | null} The router commands, or null.
-   */
-  protected interventionLinkOf(item: CalendarFeedItemOutput): readonly string[] | null {
-    return item.sourceKey === 'intervention'
-      ? ['/organizations', this.organizationId(), 'interventions', item.targetId]
-      : null;
   }
   //#endregion
 }

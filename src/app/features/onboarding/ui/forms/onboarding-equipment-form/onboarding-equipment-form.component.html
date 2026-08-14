@@ -9,15 +9,17 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="onboarding-equipment-type" i18n="@@onboarding.equipmentForm.type">
-        Type
+      <label hlmFieldLabel for="onboarding-equipment-type"
+        ><span i18n="@@onboarding.equipmentForm.type"> Type</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span>
       </label>
-      <hlm-select
-        id="onboarding-equipment-type"
-        [itemToString]="typeLabelOf"
-        [formField]="equipmentForm.type"
-      >
-        <hlm-select-trigger class="w-full" data-testid="onboarding-equipment-type">
+      <hlm-select [itemToString]="typeLabelOf" [formField]="equipmentForm.type">
+        <hlm-select-trigger
+          buttonId="onboarding-equipment-type"
+          class="w-full"
+          data-testid="onboarding-equipment-type"
+        >
           <hlm-select-value
             placeholder="Select an equipment type"
             i18n-placeholder="@@onboarding.equipmentForm.typePlaceholder"
@@ -48,6 +50,7 @@
         placeholder="Kidde"
         i18n-placeholder="@@onboarding.equipmentForm.brandPlaceholder"
         [formField]="equipmentForm.brand"
+        [attr.aria-invalid]="equipmentForm.brand().touched() && equipmentForm.brand().invalid()"
       />
     </hlm-field>
 
@@ -63,6 +66,7 @@
         placeholder="Pro 210"
         i18n-placeholder="@@onboarding.equipmentForm.modelPlaceholder"
         [formField]="equipmentForm.model"
+        [attr.aria-invalid]="equipmentForm.model().touched() && equipmentForm.model().invalid()"
       />
     </hlm-field>
 
@@ -82,11 +86,22 @@
         placeholder="SN-2024-001"
         i18n-placeholder="@@onboarding.equipmentForm.serialPlaceholder"
         [formField]="equipmentForm.serialNumber"
+        [attr.aria-invalid]="
+          equipmentForm.serialNumber().touched() && equipmentForm.serialNumber().invalid()
+        "
       />
     </hlm-field>
 
-    <hlm-field orientation="horizontal">
-      <button hlmBtn type="submit" data-testid="onboarding-equipment-submit" [disabled]="pending()">
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="onboarding-equipment-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
         @if (pending()) {
           <span i18n="@@onboarding.equipmentForm.submitting">Registering…</span>
         } @else {

@@ -23,7 +23,7 @@ import { InterventionSyncService } from '../intervention-sync';
  * UI components, and provides imperative `syncAll` and `retryBlocked`
  * entry points for user-initiated synchronization.
  *
- * @version 1.0.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -76,6 +76,22 @@ export class InterventionSyncCoordinatorService {
   private readonly problemState: WritableSignal<string | null> = signal<string | null>(null);
 
   /**
+   * Property lastSyncedAtState
+   * @readonly
+   *
+   * @description
+   * Mutable backing signal for the timestamp of the last replay cycle that
+   * completed clean (no blocked operations, no problem); surfaced read-only
+   * through {@link lastSyncedAt}.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {WritableSignal<Date | null>}
+   */
+  private readonly lastSyncedAtState: WritableSignal<Date | null> = signal<Date | null>(null);
+
+  /**
    * Property syncing
    * @readonly
    *
@@ -119,6 +135,21 @@ export class InterventionSyncCoordinatorService {
    * @type {Signal<string | null>}
    */
   public readonly problem: Signal<string | null> = this.problemState.asReadonly();
+
+  /**
+   * Property lastSyncedAt
+   * @readonly
+   *
+   * @description
+   * Read-only timestamp of the last outbox replay cycle that finished clean,
+   * or null if none has yet. Consumed by UI to show "last synced" status.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {Signal<Date | null>}
+   */
+  public readonly lastSyncedAt: Signal<Date | null> = this.lastSyncedAtState.asReadonly();
 
   /**
    * Property offline
@@ -249,7 +280,9 @@ export class InterventionSyncCoordinatorService {
    * Replays all pending outbox operations for every intervention that has
    * queued changes, in sequence. Guards against concurrent calls and
    * offline state. Sets {@link syncing} for the duration and updates
-   * {@link blockedOperations} and {@link problem} on completion.
+   * {@link blockedOperations} and {@link problem} on completion. Stamps
+   * {@link lastSyncedAt} only when the cycle completes clean, that is with
+   * no blocked operations and no problem.
    *
    * @access public
    * @since 1.0.0
@@ -281,6 +314,9 @@ export class InterventionSyncCoordinatorService {
       );
     } finally {
       await this.refreshStatus();
+      if (this.blockedOperationsState() === 0 && this.problemState() === null) {
+        this.lastSyncedAtState.set(new Date());
+      }
       this.syncingState.set(false);
     }
   }

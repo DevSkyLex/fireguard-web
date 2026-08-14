@@ -15,6 +15,12 @@ export class OrganizationMembersPage {
   public readonly root: Locator = this.page.locator('#organization-members');
   public readonly inviteButton: Locator = this.page.getByTestId('organization-members-invite');
   public readonly rowCount: Locator = this.page.getByTestId('organization-members-row-count');
+  public readonly pageIndicator: Locator = this.page.getByTestId(
+    'organization-members-page-indicator',
+  );
+  public readonly pageSizeTrigger: Locator = this.page.getByTestId(
+    'organization-members-page-size',
+  );
   public readonly memberTable: Locator = this.page.getByTestId('organization-member-table');
   public readonly memberRows: Locator = this.page.getByTestId('organization-member-table-row');
   public readonly memberRowRolesTrigger: Locator = this.page.getByTestId(
@@ -55,5 +61,11 @@ export class OrganizationMembersPage {
   public async requestRemoveForRow(rowIndex: number = 0): Promise<void> {
     await this.memberRows.nth(rowIndex).getByTestId('organization-member-table-row-menu').click();
     await this.memberRowRemoveTrigger.click();
+  }
+
+  /** Opens the pagination band's rows-per-page select and picks the given value. */
+  public async choosePageSize(size: number): Promise<void> {
+    await this.pageSizeTrigger.click();
+    await this.page.getByRole('option', { name: String(size), exact: true }).click();
   }
 }

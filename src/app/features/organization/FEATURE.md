@@ -37,11 +37,13 @@ This feature does not own generic shell composition or account-level user identi
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing page),
 > `messages`, `channels`, `interventions`, `equipments`, `facilities`, `inspections`, `calendar`,
 > `members`, `members/:memberId`, `team`, `settings`, and `/organizations/invitations/accept`
-> (mounted at the app root, outside this subtree — see below). The remaining destinations below
-> (`assets`, `statistics`, `checklists`) are the feature's contract and are already listed by the
-> sidebar navigation behind their permissions; each is remounted in `organization.routes.ts` as its
-> page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
-> deviation.
+> (mounted at the app root, outside this subtree — see below). `statistics` and `checklists` are the
+> feature's remaining contract and are already listed by the sidebar navigation behind their
+> permissions; each is remounted in `organization.routes.ts` as its page is rebuilt. A listed
+> destination whose route is absent is a rebuild in progress, not a deviation. `assets` (the estate
+> explorer) is future work and is **not yet listed by the sidebar**: the navigation's interim entries
+> are the two routes it will absorb, `facilities` and `equipments`, each gated on its own read
+> permission.
 
 - `/organizations` — redirect-only: `organizationGuard` forwards to the default
   workspace (the last organization persisted in the `last-organization` cookie
@@ -52,13 +54,14 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId` — the "Today" landing page; the landing guard
   redirects a member who can read neither interventions nor the dashboard to their
   first permitted destination
-- `/organizations/:organizationId/assets` — the estate explorer, on two
-  first-level axes: **by site** (the hierarchy on the left, the selected site's
-  equipment and inspections on the right) and **everything** (the same panes
-  unscoped, so an operator holding a serial number and no site can still find
-  it). **It is the single navigation entry for the estate**, replacing the
-  former "Facilities" and "Equipments" pair; both route trees below stay mounted
-  so records, creation forms and deep links keep resolving
+- `/organizations/:organizationId/assets` — not yet mounted. The planned estate
+  explorer, on two first-level axes: **by site** (the hierarchy on the left, the
+  selected site's equipment and inspections on the right) and **everything**
+  (the same panes unscoped, so an operator holding a serial number and no site
+  can still find it). Once built it becomes the single navigation entry for the
+  estate, replacing the "Facilities" and "Equipments" pair below; both route
+  trees stay mounted regardless so records, creation forms and deep links keep
+  resolving
 - `/organizations/:organizationId/messages` — the direct-messages workspace, owned by the
   `collaboration` subfeature, gated by `organization.messaging.read`. `messages/:conversationId`
   opens one. Reached from the shell's bottom navigation, not from the organization sections
@@ -166,6 +169,8 @@ organization; the backend siblinghood is not what decides placement here, owners
 - `MemberDirectoryPort`
 - `organization/setup`
 - `OrganizationSetupService`
+- `organization/services`
+- `SubmissionGateService`
 - `withOrganizationSwitcher()`
 - `withOrganizationNav()`
 
@@ -175,6 +180,12 @@ These contracts are the stable boundaries for approved consumers:
 - approved sibling features consume current organization member roles and permissions through `ORGANIZATION_MEMBER_ACCESS_PORT`,
 - approved sibling features resolve a bare member id to a name and an avatar through `MEMBER_DIRECTORY_PORT`,
 - onboarding consumes organization-owned setup workflows through `organization/setup`,
+- this feature's own pages, and its nested subfeatures, build a surface's claim on a store that
+  multiplexes several mutations through one shared `mutationCallState` with
+  `SubmissionGateService` (`organization/services`). A gate reports busy and error only for the
+  write its own surface submitted, which is what keeps an earlier or sibling mutation's failure out
+  of the next dialog opened. It is a stopgap for stores that share one mutation call state —
+  a store with named per-action `CallState` fields (`ARCHITECTURE.md` §10.11) needs no gate,
 - a shell contributes the organization switcher to its sidebar-header slot through
   `withOrganizationSwitcher()`, and the organization navigation to the top of its sidebar-nav slot
   through `withOrganizationNav()`. Both are slot contribution factories — the shell renders the
@@ -198,7 +209,10 @@ constant still comes from this feature's public API, so the gate cannot drift fr
 **The assistant is in neither list.** It is not a destination — it has no URL and opens over the
 current page — so it is a single control in the header's action cluster, published by the
 `collaboration` subfeature, which carries its own sheet rather than claiming a shell panel. A
-navigation row would promise an address that does not exist.
+navigation row would promise an address that does not exist. **The intervention sync indicator is
+likewise absent from both lists**, for the same reason: it is not a destination either, and is
+published by the `interventions` subfeature as a header-action slot contribution
+(`withSyncIndicator()`, documented in that feature's own `FEATURE.md`).
 
 `OrganizationSwitcher` (`ui/components/organization-switcher/`) is feature-owned even though it
 only ever renders inside a layout: it reads organization state, and rendering location does not
@@ -246,6 +260,61 @@ requires `organization.members.read`, which messaging permissions do **not** imp
 publishes `isAvailable` and consumers must degrade to raw ids rather than surface an error. The
 store never calls the API without the permission — the request would be a guaranteed 403.
 
+## UI Conventions
+
+List pages (roster, facilities, equipments, inspections, interventions) share one pagination
+recipe, `app-list-pagination` (`ui/components/list-pagination/`), and one boundary for the three
+empty/error idioms spartan offers: `hlm-empty` with a dashed border (`border border-dashed`) is a
+**page-level empty slot** (nothing loaded, no rows to show); `app-empty-state`
+(`@shared/empty-state`) is an **in-card or in-section empty slot** nested inside a larger page;
+`app-error-state` (`@shared/error-state`) is **every list's error state**, never `hlm-empty`
+re-tinted to look like a failure.
+
+**Create-surface placement** follows field count and navigation cost, not precedent: a form of
+**3 fields or fewer with no navigation cost** belongs in a dialog; **4 to 8 fields that should
+keep the list in context** belong in a right sheet; a form that **needs its own URL or deep-link,
+or exceeds 8 fields**, belongs in a route page. The equipment, facility and inspection create
+pages predate this rule and stay as route pages — that is a recorded exception, not a precedent
+for a new create surface to follow. Sheet-hosted forms' padding ownership — why the 3 intervention
+sheet forms keep `px-4` on their own `hlm-field-group` instead of following the page/dialog
+pattern — is recorded in `features/interventions/FEATURE.md` § UI Conventions.
+
+Every native `<input hlmInput>`/`<textarea hlmTextarea>` bound with `[formField]` carries
+`[attr.aria-invalid]="f().touched() && f().invalid()"` at the call site — the sanctioned dialect
+across every feature's forms, documenting intent even where it is not (yet) fully effective. In
+today's vendored state, `BrnInput`/`BrnTextarea` (`shared/ui`, not owned here) already set their
+own host `aria-invalid` from the control's **raw** `invalid`, and that host binding wins over the
+call-site one: a pristine required field is announced invalid before it is ever touched. The
+visual ring is correctly touched-gated (`data-matches-spartan-invalid`) — only the announced value
+is off. A repo-owned helm-layer correction (mirroring the touched-gated `spartanInvalid` state the
+ring already reads) was evaluated and declined, to keep the vendored `shared/ui` layer untouched;
+the call-site binding stays because it becomes live the day that correction — or an upstream
+spartan fix — lands. `HlmSelectTrigger`, `HlmComboboxInput` and `HlmDatePickerTrigger` are
+`Component`s with their own template, so a call-site `[attr.aria-invalid]` on their host tag never
+reaches the real focusable control — no form here binds one on those.
+
+A submit control whose label swaps to a pending variant (`Save` → `Saving…`) carries
+`aria-live="polite"` directly on the `<button>` — the one mechanism this app uses to announce that
+swap, chosen over wrapping the swapped spans in a `role="status"` container because it needs no
+extra element and the button already owns `[attr.aria-busy]`. This applies across every feature's
+forms, not only `organization`'s, since the pattern is form-wide rather than feature-owned.
+
+**Page header (shell contract).** The dashboard shell's 48px header carries every routed page's
+title and header actions now, not the page itself: the current breadcrumb crumb (`route.title` /
+`data.breadcrumb`) renders as the document's one `<h1>`, and a page contributes its right-side
+action buttons through a `<ng-template #pageActions>` registered on `PageActionsService`
+(`@core/page-actions`) — never an in-page title band. `app-organization-page-header` was removed
+from `organization-team-page`, `organization-statistics-page`, `organization-settings-page` and
+`organization-members-page` for exactly this reason: it duplicated the crumb's own `<h1>`.
+**`organization-today-page` is the deliberate exception** — it keeps
+`app-organization-page-header`, carrying the org identity (avatar, plan, status) no other page
+shows, because it is the one landing page where that identity belongs. Its route also opts out of
+the breadcrumb trail (`data.breadcrumb: false`), so the header's own `<h1>` stays the document's
+only one; "New intervention" still registers through `PageActionsService` like every other page's
+actions, for click-target consistency. A page's informative subtitle (a live count, e.g. members'
+"N members" line) stays as a lead paragraph at content top; a decorative, static subtitle is
+dropped rather than kept as dead weight.
+
 ## Routing Notes
 
 - Parent resolvers establish organization context and breadcrumb/title data.
@@ -273,3 +342,4 @@ store never calls the API without the permission — the request would be a guar
 - Organization-scoped child workflows stay under this feature boundary.
 - Layouts and sibling features consume organization behavior through the published port, not through direct store injection.
 - Resolvers that load organization context belong to this feature.
+- A mutating confirm dialog stays open, busy-locked, until the write settles — the members remove confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome inline, so the operator sees it exactly where they took the action and can retry without reopening the dialog, rather than the failure surfacing only as a page-level toast.

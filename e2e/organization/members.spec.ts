@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
 import { organizationQuotaOutput } from '../support/fixtures/billing-fixtures';
 import {
+  E2E_MEMBER_ID,
   inspectorOrganizationMemberOutput,
   organizationInvitationOutput,
   organizationMemberOutput,
@@ -15,7 +16,7 @@ import {
   expectNoHorizontalOverflow,
   setDarkTheme,
 } from '../support/helpers/appearance';
-import { ApiMock } from '../support/mocks/api-mock';
+import { ApiMock, API_BASE_URL } from '../support/mocks/api-mock';
 import { OrganizationMembersPage } from '../support/pages/organization-members.page';
 
 const SCREENSHOT_DIR =
@@ -71,6 +72,85 @@ test.describe('Organization members', () => {
     await expect(members.rolesDialog).toBeVisible();
   });
 
+  test('keeps the remove-confirm dialog open and shows the inline error when the removal fails', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [organizationMemberOutput()]);
+    await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID, []);
+    await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [ownerOrganizationRoleOutput()]);
+    await api.mockOrganizationMemberRemoveError(E2E_ORGANIZATION_ID, E2E_MEMBER_ID, {
+      title: 'The last owner cannot be removed.',
+      detail: 'The last owner cannot be removed.',
+    });
+    const members = new OrganizationMembersPage(page);
+
+    await members.goto(E2E_ORGANIZATION_ID);
+    await expect(members.memberRows).toHaveCount(1);
+
+    await members.requestRemoveForRow();
+    await expect(members.removeDialog).toBeVisible();
+
+    await members.removeConfirm.click();
+
+    await expect(page.getByTestId('organization-members-remove-error')).toHaveText(
+      'The last owner cannot be removed.',
+    );
+    await expect(members.removeDialog).toBeVisible();
+    await expect(members.memberRows).toHaveCount(1);
+  });
+
+  test('closes the remove-confirm dialog only after the removal settles', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [organizationMemberOutput()]);
+    await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID, []);
+    await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [ownerOrganizationRoleOutput()]);
+    await api.mockOrganizationMemberRemove(E2E_ORGANIZATION_ID, E2E_MEMBER_ID);
+    const members = new OrganizationMembersPage(page);
+
+    await members.goto(E2E_ORGANIZATION_ID);
+    await members.requestRemoveForRow();
+    await expect(members.removeDialog).toBeVisible();
+
+    await members.removeConfirm.click();
+
+    await expect(members.removeDialog).toBeHidden();
+  });
+
+  test('blocks Escape while the removal is in flight, and allows it again once idle', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [organizationMemberOutput()]);
+    await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID, []);
+    await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [ownerOrganizationRoleOutput()]);
+    await page.route(
+      `${API_BASE_URL}/api/organizations/${E2E_ORGANIZATION_ID}/members/${E2E_MEMBER_ID}`,
+      async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        await route.fulfill({ status: 204 });
+      },
+    );
+    const members = new OrganizationMembersPage(page);
+
+    await members.goto(E2E_ORGANIZATION_ID);
+    await members.requestRemoveForRow();
+    await expect(members.removeDialog).toBeVisible();
+
+    await members.removeConfirm.click();
+    await page.keyboard.press('Escape');
+
+    await expect(members.removeDialog).toBeVisible();
+
+    await expect(members.removeDialog).toBeHidden({ timeout: 3000 });
+  });
+
   test('hides invite, roster actions and the pending-invitations grid without members.manage', async ({
     page,
   }) => {
@@ -117,6 +197,34 @@ test.describe('Organization members', () => {
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/members-dark-mobile.png` });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+  });
+
+  test('changes the roster page size and re-requests the roster at the new size', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [
+      organizationMemberOutput(),
+      inspectorOrganizationMemberOutput(),
+    ]);
+    await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID, []);
+    await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [ownerOrganizationRoleOutput()]);
+    const members = new OrganizationMembersPage(page);
+
+    await members.goto(E2E_ORGANIZATION_ID);
+    await expect(members.memberRows).toHaveCount(2);
+    await expect(members.pageSizeTrigger).toHaveText('30');
+
+    const requestPromise = page.waitForRequest((request) =>
+      /\/api\/organizations\/[^/]+\/members\?.*itemsPerPage=60/.test(request.url()),
+    );
+    await members.choosePageSize(60);
+    const request = await requestPromise;
+
+    expect(request.url()).toContain('page=1');
+    await expect(members.pageSizeTrigger).toHaveText('60');
   });
 
   test('renders on desktop in light mode', async ({ page }) => {

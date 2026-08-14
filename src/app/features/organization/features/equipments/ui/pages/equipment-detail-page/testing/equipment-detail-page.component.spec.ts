@@ -1,6 +1,16 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -40,6 +50,28 @@ const equipment = (overrides: Partial<EquipmentOutput> = {}): EquipmentOutput =>
     updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
   }) as EquipmentOutput;
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `InterventionsPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
 
 describe('EquipmentDetailPage', () => {
   let fixture: ComponentFixture<EquipmentDetailPage>;
@@ -100,13 +132,10 @@ describe('EquipmentDetailPage', () => {
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
 
-  it('should show the equipment title and status once resolved', async () => {
+  it('should resolve the equipment title once the record lands', async () => {
     await createPage();
 
-    const text: string = (fixture.nativeElement as HTMLElement).textContent ?? '';
-
-    expect(text).toContain('Fire extinguisher');
-    expect(text).toContain('Kidde Pro 210');
+    expect(fixture.componentInstance['title']()).toBe('Fire extinguisher — Kidde Pro 210');
   });
 
   it('should show a loading state before the equipment resolves', async () => {
@@ -147,9 +176,7 @@ describe('EquipmentDetailPage', () => {
     await createPage();
 
     expect(
-      (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="equipment-primary-action"]',
-      )?.textContent,
+      renderPageActions().querySelector('[data-testid="equipment-primary-action"]')?.textContent,
     ).toContain(label);
   });
 
@@ -158,9 +185,7 @@ describe('EquipmentDetailPage', () => {
     await createPage();
 
     expect(
-      (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="equipment-primary-action"]',
-      ),
+      renderPageActions().querySelector('[data-testid="equipment-primary-action"]'),
     ).toBeNull();
   });
 
@@ -168,18 +193,14 @@ describe('EquipmentDetailPage', () => {
     selectedEquipment.set(equipment({ status: 'decommissioned' }));
     await createPage();
 
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="equipment-decommission"]',
-      ),
-    ).toBeNull();
+    expect(renderPageActions().querySelector('[data-testid="equipment-decommission"]')).toBeNull();
   });
 
   it('should call commission when the primary action is taken from in_stock', async () => {
     await createPage();
 
     (
-      (fixture.nativeElement as HTMLElement).querySelector(
+      renderPageActions().querySelector(
         '[data-testid="equipment-primary-action"]',
       ) as HTMLButtonElement
     ).click();
@@ -194,7 +215,7 @@ describe('EquipmentDetailPage', () => {
     await createPage();
 
     (
-      (fixture.nativeElement as HTMLElement).querySelector(
+      renderPageActions().querySelector(
         '[data-testid="equipment-decommission"]',
       ) as HTMLButtonElement
     ).click();

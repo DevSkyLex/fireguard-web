@@ -12,128 +12,33 @@
       <hlm-skeleton class="h-64 w-full" />
     </div>
   } @else if (store.intervention(); as intervention) {
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div class="flex min-w-0 flex-col gap-1">
-        <h1 class="min-w-0 truncate text-2xl font-semibold tracking-tight">
-          {{ intervention.name }}
-        </h1>
-        <p class="text-sm text-muted-foreground" data-testid="intervention-detail-meta">
-          {{ metaLine() }}
-        </p>
-      </div>
+    <p class="text-sm text-muted-foreground" data-testid="intervention-detail-meta">
+      {{ metaLine() }}
+    </p>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <app-intervention-sync-status
-          [syncing]="sync.syncing()"
-          [blockedCount]="sync.blockedOperations()"
-          [unsynced]="hasUnsyncedChanges()"
-          (syncRequested)="sync.syncAll()"
-          (retryRequested)="sync.retryBlocked()"
-          (discardRequested)="sync.discardBlocked()"
-        />
+    <app-intervention-status-band
+      [status]="intervention.status"
+      [phase]="phase()"
+      [action]="commandAction()"
+      [busy]="store.saving()"
+      [blockersCount]="blockerIssues().length"
+      [revision]="intervention.revision"
+      [reviewNote]="intervention.reviewNote"
+      (invoked)="invokeCommandAction()"
+      (blockersRequested)="revealBlockers()"
+    />
 
-        @if (canDiscuss()) {
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            class="max-sm:size-11"
-            data-testid="intervention-detail-discussion-trigger"
-            aria-controls="intervention-discussion-sheet"
-            [attr.aria-expanded]="discussionSheetVisible()"
-            (click)="discussionSheetVisible.set(true)"
-          >
-            <ng-icon name="lucideMessagesSquare" class="text-base" aria-hidden="true" />
-            <span i18n="@@intervention.discussion.trigger">Discussion</span>
-          </button>
-        }
-
-        @if (transitionTargets().length > 0) {
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            align="start"
-            class="max-sm:min-h-11"
-            data-testid="intervention-detail-status-menu"
-            [hlmDropdownMenuTrigger]="statusMenu"
-          >
-            <span i18n="@@intervention.detail.statusMenu">Move this intervention</span>
-          </button>
-
-          <ng-template #statusMenu>
-            <hlm-dropdown-menu class="w-56">
-              <hlm-dropdown-menu-label i18n="@@intervention.detail.statusMenuLabel"
-                >Send it to</hlm-dropdown-menu-label
-              >
-              @for (target of transitionTargets(); track target) {
-                <button
-                  hlmDropdownMenuItem
-                  data-testid="intervention-detail-transition"
-                  (click)="onTransitionSelect(target)"
-                >
-                  <app-intervention-tag kind="status" [value]="target" asOption />
-                </button>
-              }
-            </hlm-dropdown-menu>
-          </ng-template>
-        }
-
-        @if (canPlan() || canAbandon() || canDeleteIntervention()) {
-          <button
-            hlmBtn
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            align="end"
-            class="max-sm:size-11"
-            data-testid="intervention-detail-menu"
-            [hlmDropdownMenuTrigger]="moreMenu"
-          >
-            <ng-icon name="lucideEllipsis" aria-hidden="true" />
-            <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
-          </button>
-
-          <ng-template #moreMenu>
-            <hlm-dropdown-menu class="w-56">
-              @if (canPlan()) {
-                <button
-                  hlmDropdownMenuItem
-                  data-testid="intervention-detail-duplicate"
-                  (click)="duplicateIntervention()"
-                >
-                  <ng-icon name="lucideCopy" aria-hidden="true" />
-                  <span i18n="@@intervention.duplicate.action">Duplicate</span>
-                </button>
-              }
-              @if (canAbandon()) {
-                <button
-                  hlmDropdownMenuItem
-                  data-testid="intervention-detail-abandon"
-                  (click)="requestAbandon()"
-                >
-                  <ng-icon name="lucideBan" aria-hidden="true" />
-                  <span i18n="@@intervention.abandon.action">Abandon intervention</span>
-                </button>
-              }
-              @if (canDeleteIntervention()) {
-                <button
-                  hlmDropdownMenuItem
-                  variant="destructive"
-                  data-testid="intervention-detail-delete"
-                  (click)="requestDeleteIntervention()"
-                >
-                  <ng-icon name="lucideTrash2" aria-hidden="true" />
-                  <span i18n="@@intervention.delete.action">Delete intervention</span>
-                </button>
-              }
-            </hlm-dropdown-menu>
-          </ng-template>
-        }
-      </div>
-    </div>
+    <app-intervention-status-band
+      [status]="intervention.status"
+      [phase]="phase()"
+      [action]="commandAction()"
+      [busy]="store.saving()"
+      [blockersCount]="blockerIssues().length"
+      [revision]="intervention.revision"
+      [reviewNote]="intervention.reviewNote"
+      (invoked)="invokeCommandAction()"
+      (blockersRequested)="revealBlockers()"
+    />
 
     @if (pageError(); as message) {
       <div
@@ -181,6 +86,22 @@
             <span i18n="@@intervention.linked.tabs.overview">Overview</span>
           </button>
           <button
+            hlmTabsTrigger="changes"
+            class="max-sm:min-h-11"
+            data-testid="intervention-tab-changes"
+          >
+            <span i18n="@@intervention.linked.tabs.changes">Changes</span>
+            <span class="tabular-nums">{{ pendingChangesCount() }}</span>
+          </button>
+          <button
+            hlmTabsTrigger="attachments"
+            class="max-sm:min-h-11"
+            data-testid="intervention-tab-attachments"
+          >
+            <span i18n="@@intervention.attachments.title">Attachments</span>
+            <span class="tabular-nums">{{ store.attachments().length }}</span>
+          </button>
+          <button
             hlmTabsTrigger="facilities"
             class="max-sm:min-h-11"
             data-testid="intervention-tab-facilities"
@@ -209,7 +130,7 @@
         @if (linkedTabsOrientation() === 'vertical') {
           <hlm-tabs-list
             variant="line"
-            class="shrink-0 items-stretch lg:sticky lg:top-4"
+            class="shrink-0 items-stretch lg:sticky lg:top-32"
             aria-label="Intervention sections"
             i18n-aria-label="@@intervention.linked.tabsAriaLabel"
           >
@@ -235,7 +156,11 @@
             }
 
             @if (phase() === 'execute' || phase() === 'review') {
-              <div class="lg:hidden">
+              <div
+                #mobileIssuesSection
+                tabindex="-1"
+                class="scroll-mt-72 outline-none md:scroll-mt-36 lg:hidden"
+              >
                 <app-intervention-issues-checklist
                   [issues]="store.issues()"
                   [phase]="phase()"
@@ -247,7 +172,7 @@
             <div
               #workItemsSection
               tabindex="-1"
-              class="flex flex-col gap-4 outline-none"
+              class="flex scroll-mt-72 flex-col gap-4 outline-none md:scroll-mt-36"
               data-testid="intervention-detail-field-work"
             >
               @if (canScanWorkItem()) {
@@ -266,18 +191,9 @@
                 </div>
               }
 
-              @if (intervention.status === 'changes_requested' && intervention.reviewNote) {
-                <div hlmAlert class="bg-muted/50" data-testid="intervention-detail-review-note">
-                  <ng-icon name="lucideMessageSquareQuote" aria-hidden="true" />
-                  <p hlmAlertTitle i18n="@@intervention.detail.changesRequestedBanner">
-                    Changes requested by the reviewer
-                  </p>
-                  <p hlmAlertDescription>{{ intervention.reviewNote }}</p>
-                </div>
-              }
-
               <app-intervention-work-item-table
                 [items]="store.workItems()"
+                [loading]="store.loading()"
                 [nextItemId]="nextWorkItemId()"
                 [pendingItemIds]="store.pendingWorkItemIds()"
                 [canToggle]="canExecute() && phase() === 'execute'"
@@ -309,28 +225,6 @@
               />
             </div>
 
-            @if (pendingChangesCount() > 0) {
-              <app-intervention-change-list
-                [changes]="store.changes()"
-                [canReject]="canRejectChange()"
-                [pendingChangeIds]="store.pendingChangeIds()"
-                (rejected)="rejectChange($event)"
-              />
-            }
-
-            <app-intervention-attachments
-              [attachments]="store.attachments()"
-              [workItems]="store.workItems()"
-              [canManage]="canManageAttachments()"
-              [pendingIds]="store.pendingAttachmentIds()"
-              [downloadingIds]="pendingDownloadIds()"
-              [uploading]="attachmentUploading()"
-              [online]="online()"
-              (filesPicked)="uploadAttachments($event)"
-              (deleteRequested)="removeAttachment($event)"
-              (downloadRequested)="downloadAttachment($event)"
-            />
-
             <app-intervention-activity-thread
               [activities]="store.activities()"
               [members]="planningOptions.members()"
@@ -350,6 +244,34 @@
               />
             </div>
           </div>
+        </div>
+
+        <div hlmTabsContent="changes" class="min-w-0">
+          <ng-template hlmTabsContentLazy>
+            <app-intervention-change-list
+              [changes]="store.changes()"
+              [canReject]="canRejectChange()"
+              [pendingChangeIds]="store.pendingChangeIds()"
+              (rejected)="rejectChange($event)"
+            />
+          </ng-template>
+        </div>
+
+        <div hlmTabsContent="attachments" class="min-w-0">
+          <ng-template hlmTabsContentLazy>
+            <app-intervention-attachments
+              [attachments]="store.attachments()"
+              [workItems]="store.workItems()"
+              [canManage]="canManageAttachments()"
+              [pendingIds]="store.pendingAttachmentIds()"
+              [downloadingIds]="pendingDownloadIds()"
+              [uploading]="attachmentUploading()"
+              [online]="online()"
+              (filesPicked)="uploadAttachments($event)"
+              (deleteRequested)="removeAttachment($event)"
+              (downloadRequested)="downloadAttachment($event)"
+            />
+          </ng-template>
         </div>
 
         <div hlmTabsContent="facilities" class="min-w-0">
@@ -383,7 +305,7 @@
         </div>
       </hlm-tabs>
 
-      <div class="flex flex-col gap-6 lg:sticky lg:top-4">
+      <div class="flex flex-col gap-6 lg:sticky lg:top-32">
         <section
           class="flex flex-col gap-1"
           aria-labelledby="intervention-detail-about-title"
@@ -396,9 +318,6 @@
           >
             About
           </h2>
-          <p class="px-2 text-xs text-muted-foreground" i18n="@@intervention.detail.aboutCaption">
-            What this intervention is — status, reference, type and description.
-          </p>
 
           <app-intervention-about
             [intervention]="intervention"
@@ -423,9 +342,6 @@
           >
             Properties
           </h2>
-          <p class="px-2 text-xs text-muted-foreground" i18n="@@intervention.sidebar.titleCaption">
-            The intervention's core details — priority, site, schedule and team.
-          </p>
 
           <app-intervention-properties-grid
             [intervention]="intervention"
@@ -442,23 +358,12 @@
           />
         </section>
 
-        <div #actionBoxSection tabindex="-1" class="outline-none">
-          <app-intervention-action-box
-            [action]="commandAction()"
-            [phase]="phase()"
-            [status]="intervention.status"
-            [blockers]="blockerIssues()"
-            [pendingChanges]="pendingChangesCount()"
-            [inspections]="intervention.inspectionsCount"
-            [revision]="intervention.revision"
-            [signed]="intervention.hasSignature"
-            [busy]="store.saving()"
-            (invoked)="invokeCommandAction()"
-          />
-        </div>
-
         @if (phase() === 'execute' || phase() === 'review') {
-          <div class="max-lg:hidden">
+          <div
+            #desktopIssuesSection
+            tabindex="-1"
+            class="scroll-mt-72 outline-none max-lg:hidden md:scroll-mt-36"
+          >
             <app-intervention-issues-checklist
               [issues]="store.issues()"
               [phase]="phase()"
@@ -558,16 +463,6 @@
       </button>
     </app-empty-state>
   }
-
-  @if (store.intervention()) {
-    <app-intervention-command-bar
-      [action]="commandAction()"
-      [blockers]="blockerIssues()"
-      [busy]="store.saving()"
-      (invoked)="invokeCommandAction()"
-      (detailsRequested)="revealActionBox()"
-    />
-  }
 </div>
 
 <app-intervention-work-item-sheet
@@ -591,31 +486,12 @@
 />
 
 @if (canDiscuss()) {
-  <hlm-sheet
-    side="right"
-    [state]="discussionSheetVisible() ? 'open' : 'closed'"
-    (stateChanged)="discussionSheetVisible.set($event === 'open')"
-  >
-    <hlm-sheet-content
-      *hlmSheetPortal
-      id="intervention-discussion-sheet"
-      class="flex flex-col overflow-hidden sm:max-w-xl!"
-    >
-      <hlm-sheet-header>
-        <h2 hlmSheetTitle i18n="@@intervention.discussion.title">Discussion</h2>
-        <p hlmSheetDescription i18n="@@intervention.discussion.subtitle">
-          Live team messaging about this intervention
-        </p>
-      </hlm-sheet-header>
-
-      <app-subject-discussion
-        subjectType="intervention"
-        [subjectId]="interventionId()"
-        [organizationId]="organizationId()"
-        [active]="discussionSheetVisible()"
-      />
-    </hlm-sheet-content>
-  </hlm-sheet>
+  <app-intervention-discussion-sheet
+    [visible]="discussionSheetVisible()"
+    [organizationId]="organizationId()"
+    [interventionId]="interventionId()"
+    (visibleChange)="discussionSheetVisible.set($event)"
+  />
 }
 
 <app-intervention-confirm-dialog
@@ -637,7 +513,11 @@
   [disableClose]="publishing()"
   (stateChanged)="onPublishDialogStateChanged($event)"
 >
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-detail-publish-dialog">
+  <hlm-alert-dialog-content
+    class="sm:max-w-lg!"
+    *hlmAlertDialogPortal
+    data-testid="intervention-detail-publish-dialog"
+  >
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@intervention.publish.header">Publish intervention</h2>
       <p hlmAlertDialogDescription i18n="@@intervention.publish.stake">
@@ -714,10 +594,24 @@
     }
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel [disabled]="publishing()" i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="publishing() ? 'true' : null"
+        [attr.aria-busy]="publishing() ? 'true' : null"
+        [class.opacity-50]="publishing()"
+        [class.pointer-events-none]="publishing()"
+        (click)="publishing() || onPublishDialogStateChanged('closed')"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
       @if (!publicationTimedOut()) {
         <button
           hlmAlertDialogAction
+          class="max-sm:min-h-11"
           data-testid="intervention-detail-publish-confirm"
           [attr.aria-disabled]="publishing() ? 'true' : null"
           [attr.aria-busy]="publishing() ? 'true' : null"
@@ -735,3 +629,97 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
+
+<ng-template #pageActions>
+  @if (canDiscuss()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="max-sm:size-11"
+      data-testid="intervention-detail-discussion-trigger"
+      aria-controls="intervention-discussion-sheet"
+      i18n-aria-label="@@intervention.discussion.trigger"
+      aria-label="Discussion"
+      [attr.aria-expanded]="discussionSheetVisible()"
+      (click)="discussionSheetVisible.set(true)"
+    >
+      <ng-icon name="lucideMessagesSquare" class="text-base" aria-hidden="true" />
+      <span class="max-sm:hidden" i18n="@@intervention.discussion.trigger">Discussion</span>
+    </button>
+  }
+
+  @if (transitionTargets().length > 0 || canPlan() || canAbandon() || canDeleteIntervention()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      align="end"
+      class="max-sm:size-11"
+      data-testid="intervention-detail-menu"
+      [hlmDropdownMenuTrigger]="moreMenu"
+    >
+      <ng-icon name="lucideEllipsis" aria-hidden="true" />
+      <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
+    </button>
+
+    <ng-template #moreMenu>
+      <hlm-dropdown-menu class="w-56">
+        @if (transitionTargets().length > 0) {
+          <hlm-dropdown-menu-group aria-labelledby="intervention-transition-group-label">
+            <hlm-dropdown-menu-label
+              id="intervention-transition-group-label"
+              i18n="@@intervention.detail.statusMenuLabel"
+              >Send it to</hlm-dropdown-menu-label
+            >
+            @for (target of transitionTargets(); track target) {
+              <button
+                hlmDropdownMenuItem
+                data-testid="intervention-detail-transition"
+                (click)="onTransitionSelect(target)"
+              >
+                <app-intervention-tag kind="status" [value]="target" asOption />
+              </button>
+            }
+          </hlm-dropdown-menu-group>
+          @if (canPlan() || canAbandon() || canDeleteIntervention()) {
+            <hlm-dropdown-menu-separator />
+          }
+        }
+        @if (canPlan()) {
+          <button
+            hlmDropdownMenuItem
+            data-testid="intervention-detail-duplicate"
+            (click)="duplicateIntervention()"
+          >
+            <ng-icon name="lucideCopy" aria-hidden="true" />
+            <span i18n="@@intervention.duplicate.action">Duplicate</span>
+          </button>
+        }
+        @if (canAbandon()) {
+          <button
+            hlmDropdownMenuItem
+            data-testid="intervention-detail-abandon"
+            (click)="requestAbandon()"
+          >
+            <ng-icon name="lucideBan" aria-hidden="true" />
+            <span i18n="@@intervention.abandon.action">Abandon intervention</span>
+          </button>
+        }
+        @if (canDeleteIntervention()) {
+          <button
+            hlmDropdownMenuItem
+            variant="destructive"
+            data-testid="intervention-detail-delete"
+            (click)="requestDeleteIntervention()"
+          >
+            <ng-icon name="lucideTrash2" aria-hidden="true" />
+            <span i18n="@@intervention.delete.action">Delete intervention</span>
+          </button>
+        }
+      </hlm-dropdown-menu>
+    </ng-template>
+  }
+</ng-template>

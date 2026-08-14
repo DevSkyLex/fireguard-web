@@ -23,6 +23,25 @@ interface BreadcrumbTrailNode {
 }
 
 /**
+ * Interface BreadcrumbTrailResult
+ *
+ * @description
+ * What one route-tree walk produces: the trail itself, plus whether the
+ * deepest route node (the one actually rendering, with no `firstChild`)
+ * contributed its own label. A leaf that suppresses its breadcrumb
+ * (`data.breadcrumb: false`, or simply no label to resolve) leaves an
+ * ancestor's node as the trail's last entry — {@link BreadcrumbService.items}
+ * reads {@link deepestSuppressed} to keep from mislabelling that ancestor as
+ * the current page.
+ *
+ * @since 2.2.0
+ */
+interface BreadcrumbTrailResult {
+  readonly trail: readonly BreadcrumbTrailNode[];
+  readonly deepestSuppressed: boolean;
+}
+
+/**
  * Service BreadcrumbService
  * @class BreadcrumbService
  *
@@ -34,7 +53,13 @@ interface BreadcrumbTrailNode {
  * resolver returned a neutral label while its record was still loading gets
  * its real name in the trail as soon as the page re-sets the document title.
  *
- * @version 2.1.0
+ * The current-page marker is withheld when the deepest route in the tree
+ * suppressed its own breadcrumb: an ancestor's node would otherwise stand in
+ * as "current" and get overlaid with a live page title that is not its own
+ * (`organization-today-page`'s route pattern — a title-resolved parent, a
+ * `data.breadcrumb: false` leaf).
+ *
+ * @version 2.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -99,17 +124,17 @@ export class BreadcrumbService {
    * overlay is applied.
    *
    * @access private
-   * @since 2.1.0
+   * @since 2.2.0
    *
-   * @type {Signal<BreadcrumbTrailNode[]>}
+   * @type {Signal<BreadcrumbTrailResult>}
    */
-  private readonly navigationTrail: Signal<BreadcrumbTrailNode[]> = toSignal(
+  private readonly navigationTrail: Signal<BreadcrumbTrailResult> = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       startWith(null),
-      map((): BreadcrumbTrailNode[] => this.buildBreadcrumbs(this.router.routerState.root)),
+      map((): BreadcrumbTrailResult => this.buildBreadcrumbs(this.router.routerState.root)),
     ),
-    { initialValue: [] },
+    { initialValue: { trail: [], deepestSuppressed: false } },
   );
 
   /**
@@ -117,22 +142,25 @@ export class BreadcrumbService {
    * @readonly
    *
    * @description
-   * Dynamic breadcrumbs synchronized with navigation events. The last item
-   * is the current page: it carries no link, and when its label came from
-   * the route-title fallback it tracks the live page title.
+   * Dynamic breadcrumbs synchronized with navigation events. The last item is
+   * the current page: it carries no link, and when its label came from the
+   * route-title fallback it tracks the live page title. When the deepest
+   * route node suppressed its own breadcrumb ({@link BreadcrumbTrailResult.deepestSuppressed}),
+   * the trail's last entry is an ancestor rather than the page itself, so it
+   * renders as an ordinary link instead of being mislabelled current.
    *
    * @access public
-   * @since 1.0.0
+   * @since 2.2.0
    *
    * @type {Signal<BreadcrumbItem[]>}
    */
   public readonly items: Signal<BreadcrumbItem[]> = computed<BreadcrumbItem[]>(() => {
-    const trail: BreadcrumbTrailNode[] = this.navigationTrail();
+    const { trail, deepestSuppressed }: BreadcrumbTrailResult = this.navigationTrail();
     const pageTitle: string = this.titleService.pageTitle();
     const lastIndex: number = trail.length - 1;
 
     return trail.map((node: BreadcrumbTrailNode, index: number): BreadcrumbItem => {
-      if (index !== lastIndex) {
+      if (index !== lastIndex || deepestSuppressed) {
         return { label: node.label, routerLink: node.routerLink, current: false };
       }
 
@@ -150,21 +178,27 @@ export class BreadcrumbService {
    * @method buildBreadcrumbs
    *
    * @description
-   * Traverses the active route tree to create the labelled trail nodes.
+   * Traverses the active route tree to create the labelled trail nodes,
+   * tracking alongside it whether the deepest node visited (no `firstChild`
+   * left, the route that actually renders) resolved a label of its own —
+   * {@link BreadcrumbTrailResult.deepestSuppressed} is the negation of that,
+   * read by {@link items} to keep an ancestor's node from standing in as the
+   * current page's.
    *
    * @access private
-   * @since 1.0.0
+   * @since 2.2.0
    *
    * @param {ActivatedRoute} route - Root activated route.
    *
-   * @returns {BreadcrumbTrailNode[]} Generated trail nodes.
+   * @returns {BreadcrumbTrailResult} The generated trail and the deepest-node flag.
    */
-  private buildBreadcrumbs(route: ActivatedRoute | null | undefined): BreadcrumbTrailNode[] {
-    if (!route) return [];
+  private buildBreadcrumbs(route: ActivatedRoute | null | undefined): BreadcrumbTrailResult {
+    if (!route) return { trail: [], deepestSuppressed: false };
 
     const trail: BreadcrumbTrailNode[] = [];
     let currentRoute: ActivatedRoute | null = route;
     let currentUrl: string = '';
+    let deepestResolved: boolean = false;
 
     while (currentRoute) {
       const snapshot: ActivatedRouteSnapshot = currentRoute.snapshot;
@@ -173,6 +207,8 @@ export class BreadcrumbService {
       const path: string = (snapshot?.url ?? []).map((segment): string => segment.path).join('/');
 
       if (path) currentUrl = `${currentUrl}/${path}`;
+
+      deepestResolved = resolved !== null;
 
       if (resolved) {
         trail.push({
@@ -185,7 +221,7 @@ export class BreadcrumbService {
       currentRoute = currentRoute.firstChild;
     }
 
-    return trail;
+    return { trail, deepestSuppressed: !deepestResolved };
   }
 
   /**

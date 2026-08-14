@@ -151,12 +151,12 @@ test.describe('Organization Today page', () => {
       '4 equipment items under maintenance',
     );
 
-    await expect(today.queueRow('overdue', 'Inspect north riser valve')).toBeVisible();
-    await expect(today.queueRow('overdue', 'Replace hallway smoke detector')).toBeVisible();
-    await expect(
-      today.queueRow('changes-requested', 'Recheck sprinkler head torque'),
-    ).toBeVisible();
-    await expect(today.queueRow('awaiting-review', 'Submit annual alarm test')).toBeVisible();
+    await expect(today.queue('overdue')).toContainText('Overdue');
+    await expect(today.queue('overdue')).toContainText('2');
+    await expect(today.queue('changes-requested')).toContainText('Sent back to you');
+    await expect(today.queue('changes-requested')).toContainText('1');
+    await expect(today.queue('awaiting-review')).toContainText('Awaiting your review');
+    await expect(today.queue('awaiting-review')).toContainText('1');
 
     await expect(today.recentInterventionsCard).toBeVisible();
     await expect(today.recentInterventionRows).toHaveCount(1);
@@ -176,15 +176,44 @@ test.describe('Organization Today page', () => {
 
     await today.goto(E2E_ORGANIZATION_ID);
 
-    await expect(today.queueRow('overdue', 'Inspect north riser valve')).toBeVisible();
+    await expect(today.queue('overdue')).toContainText('Overdue');
+    await expect(today.queue('overdue')).toContainText('2');
     await expect(today.kpiSection).toHaveCount(0);
     await expect(today.alertsSection).toHaveCount(0);
     await expect(today.recentInterventionsCard).toHaveCount(0);
 
-    await today.queueSeeAllButton('overdue').click();
+    await today.openQueueRow('overdue');
 
     await expect(page).toHaveURL(
-      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions$`),
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?due=overdue$`),
+    );
+  });
+
+  test('deep-links each queue row to the interventions list with the matching query params', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await mockFullDashboard(api);
+    await mockPopulatedQueues(api);
+    const today = new OrganizationTodayPage(page);
+
+    await today.goto(E2E_ORGANIZATION_ID);
+    await today.openQueueRow('overdue');
+    await expect(page).toHaveURL(
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?due=overdue$`),
+    );
+
+    await today.goto(E2E_ORGANIZATION_ID);
+    await today.openQueueRow('changes-requested');
+    await expect(page).toHaveURL(
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?status=changes_requested$`),
+    );
+
+    await today.goto(E2E_ORGANIZATION_ID);
+    await today.openQueueRow('awaiting-review');
+    await expect(page).toHaveURL(
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?status=submitted$`),
     );
   });
 
@@ -220,6 +249,33 @@ test.describe('Organization Today page', () => {
     await expect(page).toHaveURL(
       `/organizations/${E2E_ORGANIZATION_ID}/interventions/e2e-intervention-recent-1`,
     );
+  });
+
+  test('shows the shell header sync indicator in its quiet up-to-date state, outside the page content', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await mockFullDashboard(api);
+    await mockPopulatedQueues(api);
+    const today = new OrganizationTodayPage(page);
+
+    await today.goto(E2E_ORGANIZATION_ID);
+
+    await expect(today.syncIndicatorTrigger).toBeVisible();
+    await expect(today.root.getByTestId('intervention-sync-status')).toHaveCount(0);
+    await expect(today.syncIndicatorTrigger).toHaveAttribute('aria-label', 'Up to date');
+    await expect(
+      today.syncIndicatorTrigger.getByTestId('intervention-sync-blocked-count'),
+    ).toHaveCount(0);
+    await expect(
+      today.syncIndicatorTrigger.getByTestId('intervention-sync-pending-count'),
+    ).toHaveCount(0);
+
+    await today.openSyncIndicator();
+
+    await expect(today.syncIndicatorLastSynced).toBeVisible();
+    await expect(today.syncIndicatorLastSynced).toContainText('Last synced');
   });
 
   test('renders at 375px in dark mode with no console errors and no horizontal overflow', async ({

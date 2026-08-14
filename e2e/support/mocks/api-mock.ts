@@ -541,6 +541,60 @@ export class ApiMock {
   }
 
   /**
+   * Mocks a successful `DELETE /api/organizations/{organizationId}/members/{memberId}`
+   * — the request `OrganizationMembersStore.removeMember` sends from the
+   * members page's remove-confirm dialog.
+   */
+  public async mockOrganizationMemberRemove(
+    organizationId: string,
+    memberId: string,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/members/${memberId}`,
+      async (route) => {
+        if (route.request().method() !== 'DELETE') {
+          await route.fallback();
+          return;
+        }
+        await route.fulfill({ status: 204 });
+      },
+    );
+  }
+
+  /**
+   * Mocks a failing `DELETE /api/organizations/{organizationId}/members/{memberId}`
+   * — the removal the backend refuses (e.g. the sole remaining owner). The
+   * remove-confirm dialog stays open and shows this error inline instead of
+   * closing.
+   */
+  public async mockOrganizationMemberRemoveError(
+    organizationId: string,
+    memberId: string,
+    error: Partial<ApiErrorFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/members/${memberId}`,
+      async (route) => {
+        if (route.request().method() !== 'DELETE') {
+          await route.fallback();
+          return;
+        }
+        await fulfillJson(route, error.status ?? 409, {
+          '@id': '/errors/member-remove-failed',
+          '@type': 'Error',
+          status: 409,
+          type: 'about:blank',
+          title: 'This member could not be removed.',
+          detail: 'This member could not be removed.',
+          ...error,
+        });
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/invitations` — the
    * pending-invitations grid on the members page.
    */

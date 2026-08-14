@@ -11,7 +11,7 @@ import {
 import { form, FormField, maxLength, type FieldTree } from '@angular/forms/signals';
 import { USER_LOCALE_OPTIONS } from '@features/account/options';
 import { HlmButton } from '@shared/ui/button';
-import { HlmFieldError, HlmFieldLabel } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { AccountProfileFormValues } from './models';
@@ -53,7 +53,7 @@ const NAME_MAX_LENGTH: number = 100;
  */
 @Component({
   selector: 'app-account-profile-form',
-  imports: [FormField, HlmButton, HlmFieldError, HlmFieldLabel, HlmInput, ...HlmSelectImports],
+  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
   templateUrl: './account-profile-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

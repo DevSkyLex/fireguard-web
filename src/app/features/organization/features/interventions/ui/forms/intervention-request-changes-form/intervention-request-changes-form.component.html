@@ -1,5 +1,5 @@
-<form (submit)="submit($event)">
-  <hlm-field-group class="px-4">
+<form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
+  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
     @if (serverMessages().length > 0) {
       <div
         role="alert"
@@ -13,11 +13,10 @@
     }
 
     <hlm-field>
-      <label
-        hlmFieldLabel
-        for="intervention-request-changes-note"
-        i18n="@@intervention.rc.noteLabel"
-        >Note</label
+      <label hlmFieldLabel for="intervention-request-changes-note"
+        ><span i18n="@@intervention.rc.noteLabel">Note</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <textarea
         hlmTextarea
@@ -27,31 +26,41 @@
         placeholder="e.g. Re-inspect the third-floor extinguishers — the pressure gauge photo is missing."
         i18n-placeholder="@@intervention.rc.notePlaceholder"
         [formField]="requestForm.note"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="requestForm.note().touched() && requestForm.note().invalid()"
       ></textarea>
       @if (requestForm.note().touched() && requestForm.note().invalid()) {
         <hlm-field-error>{{ requestForm.note().errors()[0].message }}</hlm-field-error>
       }
     </hlm-field>
-
-    <hlm-field orientation="horizontal">
-      <button
-        hlmBtn
-        type="submit"
-        variant="destructive"
-        data-testid="intervention-request-changes-submit"
-        [disabled]="pending() || disabled()"
-      >
-        <span i18n="@@intervention.rc.submit">Request changes</span>
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        data-testid="intervention-request-changes-cancel"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@common.cancel">Cancel</span>
-      </button>
-    </hlm-field>
   </hlm-field-group>
+
+  <hlm-sheet-footer class="flex-col sm:flex-row sm:justify-end">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="max-sm:min-h-11"
+      data-testid="intervention-request-changes-cancel"
+      (click)="cancelled.emit()"
+    >
+      <span i18n="@@common.cancel">Cancel</span>
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      variant="destructive"
+      class="max-sm:min-h-11"
+      data-testid="intervention-request-changes-submit"
+      [disabled]="pending() || disabled()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
+    >
+      @if (pending()) {
+        <span i18n="@@intervention.rc.submitting">Sending…</span>
+      } @else {
+        <span i18n="@@intervention.rc.submit">Request changes</span>
+      }
+    </button>
+  </hlm-sheet-footer>
 </form>

@@ -134,6 +134,48 @@ describe('AccountPasswordForm', () => {
       });
     });
 
+    it('should list the start-over button before the confirm submit button in the action row', () => {
+      const row = fixture.nativeElement.querySelector(
+        'hlm-field[orientation="horizontal"]',
+      ) as HTMLElement;
+      const buttons = Array.from(row.querySelectorAll('button'));
+      const startOver = fixture.nativeElement.querySelector(
+        '[data-testid="account-password-start-over"]',
+      ) as HTMLButtonElement;
+      const confirmSubmit = fixture.nativeElement.querySelector(
+        '[data-testid="account-password-confirm-submit"]',
+      ) as HTMLButtonElement;
+
+      expect(buttons[0]).toBe(startOver);
+      expect(buttons[1]).toBe(confirmSubmit);
+    });
+
+    it('should mark the code field aria-invalid once submission touches it empty', async () => {
+      await submit(fixture);
+
+      const code = fixture.nativeElement.querySelector(
+        '#account-password-code',
+      ) as HTMLInputElement;
+
+      expect(code.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('should swap the confirm submit label to the pending wording while changing', async () => {
+      fixture.componentRef.setInput('pending', true);
+      await fixture.whenStable();
+
+      expect(fixture.nativeElement.textContent).toContain('Changing…');
+    });
+
+    it('should mark the new password label required with an aria-hidden asterisk', () => {
+      const label = fixture.nativeElement.querySelector(
+        'label[for="account-new-password"]',
+      ) as HTMLLabelElement;
+      const asterisk = label.querySelector('span[aria-hidden="true"]');
+
+      expect(asterisk?.textContent).toContain('*');
+    });
+
     it('should clear both steps when starting over', async () => {
       const restarted = vi.fn();
       fixture.componentInstance.restarted.subscribe(restarted);

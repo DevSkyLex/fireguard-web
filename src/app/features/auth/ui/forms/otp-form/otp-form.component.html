@@ -1,66 +1,75 @@
-<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
-  <div class="flex flex-col items-center gap-1.5">
-    <label hlmFieldLabel for="otp-code" class="self-start" i18n="@@auth.otp.label"
-      >Verification code</label
-    >
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <hlm-field class="items-center">
+      <label hlmFieldLabel for="otp-code" class="self-start"
+        ><span i18n="@@auth.otp.label">Verification code</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
 
-    <!--
-      `brn-input-otp` binds `[formField]` natively — no compatibility layer. It
-      owns the real input behind the slots, which is what carries
-      `autocomplete="one-time-code"` and the numeric keypad on a phone.
+      <brn-input-otp
+        hlmInputOtp
+        inputId="otp-code"
+        autocomplete="one-time-code"
+        data-testid="otp-code"
+        [length]="length"
+        [formField]="otpForm.code"
+        [attr.aria-invalid]="otpForm.code().touched() && otpForm.code().invalid()"
+        (completed)="autoSubmit()"
+      >
+        <hlm-input-otp-group>
+          <hlm-input-otp-slot index="0" />
+          <hlm-input-otp-slot index="1" />
+          <hlm-input-otp-slot index="2" />
+        </hlm-input-otp-group>
+        <hlm-input-otp-separator />
+        <hlm-input-otp-group>
+          <hlm-input-otp-slot index="3" />
+          <hlm-input-otp-slot index="4" />
+          <hlm-input-otp-slot index="5" />
+        </hlm-input-otp-group>
+      </brn-input-otp>
 
-      `(completed)` submits on the sixth digit: retyping a code and then hunting
-      for a button is the one interaction this screen exists for.
-    -->
-    <brn-input-otp
-      hlmInputOtp
-      inputId="otp-code"
-      autocomplete="one-time-code"
-      [length]="length"
-      [formField]="otpForm.code"
-      (completed)="autoSubmit()"
-    >
-      <hlm-input-otp-group>
-        <hlm-input-otp-slot index="0" />
-        <hlm-input-otp-slot index="1" />
-        <hlm-input-otp-slot index="2" />
-      </hlm-input-otp-group>
-      <hlm-input-otp-separator />
-      <hlm-input-otp-group>
-        <hlm-input-otp-slot index="3" />
-        <hlm-input-otp-slot index="4" />
-        <hlm-input-otp-slot index="5" />
-      </hlm-input-otp-group>
-    </brn-input-otp>
+      @if (otpForm.code().touched() && otpForm.code().invalid()) {
+        <hlm-field-error class="self-start">{{
+          otpForm.code().errors()[0].message
+        }}</hlm-field-error>
+      }
+    </hlm-field>
 
-    @if (otpForm.code().touched() && otpForm.code().invalid()) {
-      <hlm-field-error class="self-start">{{ otpForm.code().errors()[0].message }}</hlm-field-error>
-    }
-  </div>
-
-  <button hlmBtn type="submit" class="w-full max-sm:min-h-11" [disabled]="pending()">
-    @if (pending()) {
-      <span i18n="@@auth.otp.submitting">Verifying…</span>
-    } @else {
-      <span i18n="@@auth.otp.submit">Verify</span>
-    }
-  </button>
-
-  @if (showResend()) {
     <button
       hlmBtn
-      type="button"
-      variant="ghost"
-      size="sm"
+      type="submit"
       class="w-full max-sm:min-h-11"
-      [disabled]="resending()"
-      (click)="resent.emit()"
+      data-testid="otp-submit"
+      [disabled]="pending()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
     >
-      @if (resending()) {
-        <span i18n="@@auth.otp.resending">Sending a new code…</span>
+      @if (pending()) {
+        <span i18n="@@auth.otp.submitting">Verifying…</span>
       } @else {
-        <span i18n="@@auth.otp.resend">Send a new code</span>
+        <span i18n="@@auth.otp.submit">Verify</span>
       }
     </button>
-  }
+
+    @if (showResend()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="w-full max-sm:min-h-11"
+        data-testid="otp-resend"
+        [disabled]="resending()"
+        (click)="resent.emit()"
+      >
+        @if (resending()) {
+          <span i18n="@@auth.otp.resending">Sending a new code…</span>
+        } @else {
+          <span i18n="@@auth.otp.resend">Send a new code</span>
+        }
+      </button>
+    }
+  </hlm-field-group>
 </form>

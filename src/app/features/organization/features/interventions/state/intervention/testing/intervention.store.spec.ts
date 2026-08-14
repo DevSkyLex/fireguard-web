@@ -340,6 +340,50 @@ describe('InterventionStore', () => {
 
       expect(store.interventionList()).toEqual([draftIntervention]);
     });
+
+    it('should report isDeleting while the write is in flight', () => {
+      mockInterventionService.remove.mockReturnValue(NEVER);
+
+      expect(store.isDeleting()).toBe(false);
+
+      store.delete({ interventionId: 'intervention-1', revision: 1 });
+
+      expect(store.isDeleting()).toBe(true);
+    });
+
+    it('should expose the delete error and stop reporting isDeleting on failure', () => {
+      mockInterventionService.remove.mockReturnValue(
+        throwError(() => ({
+          '@type': 'ApiError',
+          status: 409,
+          type: '/errors/conflict',
+          title: 'Conflict',
+        })),
+      );
+
+      store.delete({ interventionId: 'intervention-1', revision: 1 });
+
+      expect(store.isDeleting()).toBe(false);
+      expect(store.deleteError()).not.toBeNull();
+    });
+
+    it('should reset the delete call state back to idle', () => {
+      mockInterventionService.remove.mockReturnValue(
+        throwError(() => ({
+          '@type': 'ApiError',
+          status: 409,
+          type: '/errors/conflict',
+          title: 'Conflict',
+        })),
+      );
+      store.delete({ interventionId: 'intervention-1', revision: 1 });
+      expect(store.deleteError()).not.toBeNull();
+
+      store.resetDeleteState();
+
+      expect(store.deleteError()).toBeNull();
+      expect(store.deleteCallState().status).toBe('idle');
+    });
   });
 
   describe('assignResponsible', () => {

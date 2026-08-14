@@ -25,11 +25,10 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
  * @class InterventionCommandButton
  *
  * @description
- * The phase's forward action as a button, and nothing else. It exists so the
- * action the operator must take has one *implementation* while having one
- * address per viewport: `InterventionActionBox` renders it in the second column
- * from `lg` up, `InterventionCommandBar` renders it in a bottom bar below that,
- * where the column would otherwise stack after the whole content flow.
+ * The phase's forward action as a button, and nothing else. `InterventionStatusBand`
+ * is its one host, at every viewport — the earlier split between a desktop
+ * action box and a mobile command bar is retired, so there is no longer a
+ * second address to keep in sync with this one.
  *
  * `loading` shows a spinner in place of the glyph rather than beside it, so the
  * button never changes width mid-write.
@@ -100,6 +99,16 @@ export class InterventionCommandButton {
     boolean,
     BooleanInput
   >(false, { transform: booleanAttribute });
+
+  /**
+   * Property describedBy
+   * @readonly
+   * @description The id of an element describing the button — the disabled reason a caller renders beside it, if any.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly describedBy: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs

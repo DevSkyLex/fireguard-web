@@ -1,100 +1,131 @@
-<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
-  <div class="grid gap-4 sm:grid-cols-2">
-    <div class="flex flex-col gap-1.5">
-      <label hlmFieldLabel for="register-first-name" i18n="@@auth.firstName.label"
-        >First name</label
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <hlm-field>
+        <label hlmFieldLabel for="register-first-name"
+          ><span i18n="@@auth.firstName.label">First name</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <input
+          hlmInput
+          id="register-first-name"
+          type="text"
+          autocomplete="given-name"
+          placeholder="Ada"
+          i18n-placeholder="@@auth.firstName.placeholder"
+          data-testid="register-first-name"
+          [formField]="registerForm.firstName"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="
+            registerForm.firstName().touched() && registerForm.firstName().invalid()
+          "
+        />
+        @if (registerForm.firstName().touched() && registerForm.firstName().invalid()) {
+          <hlm-field-error>{{ registerForm.firstName().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="register-last-name"
+          ><span i18n="@@auth.lastName.label">Last name</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <input
+          hlmInput
+          id="register-last-name"
+          type="text"
+          autocomplete="family-name"
+          placeholder="Lovelace"
+          i18n-placeholder="@@auth.lastName.placeholder"
+          data-testid="register-last-name"
+          [formField]="registerForm.lastName"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="
+            registerForm.lastName().touched() && registerForm.lastName().invalid()
+          "
+        />
+        @if (registerForm.lastName().touched() && registerForm.lastName().invalid()) {
+          <hlm-field-error>{{ registerForm.lastName().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+
+    <hlm-field>
+      <label hlmFieldLabel for="register-email"
+        ><span i18n="@@auth.email.label">Email address</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <input
         hlmInput
-        id="register-first-name"
-        type="text"
-        autocomplete="given-name"
-        placeholder="Ada"
-        i18n-placeholder="@@auth.firstName.placeholder"
-        class="w-full"
-        [formField]="registerForm.firstName"
-        [attr.aria-invalid]="
-          registerForm.firstName().touched() && registerForm.firstName().invalid()
-        "
+        id="register-email"
+        type="email"
+        autocomplete="email"
+        inputmode="email"
+        placeholder="you@company.com"
+        i18n-placeholder="@@auth.email.placeholder"
+        data-testid="register-email"
+        [formField]="registerForm.email"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="registerForm.email().touched() && registerForm.email().invalid()"
       />
-      @if (registerForm.firstName().touched() && registerForm.firstName().invalid()) {
-        <hlm-field-error>{{ registerForm.firstName().errors()[0].message }}</hlm-field-error>
+      @if (registerForm.email().touched() && registerForm.email().invalid()) {
+        <hlm-field-error>{{ registerForm.email().errors()[0].message }}</hlm-field-error>
       }
-    </div>
+    </hlm-field>
 
-    <div class="flex flex-col gap-1.5">
-      <label hlmFieldLabel for="register-last-name" i18n="@@auth.lastName.label">Last name</label>
-      <input
-        hlmInput
-        id="register-last-name"
-        type="text"
-        autocomplete="family-name"
-        placeholder="Lovelace"
-        i18n-placeholder="@@auth.lastName.placeholder"
-        class="w-full"
-        [formField]="registerForm.lastName"
-        [attr.aria-invalid]="registerForm.lastName().touched() && registerForm.lastName().invalid()"
+    <hlm-field>
+      <label hlmFieldLabel for="register-password"
+        ><span i18n="@@auth.password.label">Password</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <app-password-input
+        inputId="register-password"
+        autocomplete="new-password"
+        placeholder="At least 8 characters"
+        i18n-placeholder="@@auth.password.placeholder"
+        [field]="registerForm.password"
       />
-      @if (registerForm.lastName().touched() && registerForm.lastName().invalid()) {
-        <hlm-field-error>{{ registerForm.lastName().errors()[0].message }}</hlm-field-error>
+      @if (registerForm.password().touched() && registerForm.password().invalid()) {
+        <hlm-field-error>{{ registerForm.password().errors()[0].message }}</hlm-field-error>
       }
-    </div>
-  </div>
+    </hlm-field>
 
-  <div class="flex flex-col gap-1.5">
-    <label hlmFieldLabel for="register-email" i18n="@@auth.email.label">Email address</label>
-    <input
-      hlmInput
-      id="register-email"
-      type="email"
-      autocomplete="email"
-      inputmode="email"
-      placeholder="you@company.com"
-      i18n-placeholder="@@auth.email.placeholder"
-      class="w-full"
-      [formField]="registerForm.email"
-      [attr.aria-invalid]="registerForm.email().touched() && registerForm.email().invalid()"
-    />
-    @if (registerForm.email().touched() && registerForm.email().invalid()) {
-      <hlm-field-error>{{ registerForm.email().errors()[0].message }}</hlm-field-error>
-    }
-  </div>
+    <hlm-field>
+      <label hlmFieldLabel for="register-confirm-password"
+        ><span i18n="@@auth.passwordConfirmation.label">Repeat password</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <app-password-input
+        inputId="register-confirm-password"
+        autocomplete="new-password"
+        placeholder="Repeat your password"
+        i18n-placeholder="@@auth.passwordConfirmation.placeholder"
+        [field]="registerForm.confirmPassword"
+      />
+      @if (registerForm.confirmPassword().touched() && registerForm.confirmPassword().invalid()) {
+        <hlm-field-error>{{ registerForm.confirmPassword().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
 
-  <div class="flex flex-col gap-1.5">
-    <label hlmFieldLabel for="register-password" i18n="@@auth.password.label">Password</label>
-    <app-password-input
-      inputId="register-password"
-      autocomplete="new-password"
-      placeholder="At least 8 characters"
-      i18n-placeholder="@@auth.password.placeholder"
-      [field]="registerForm.password"
-    />
-    @if (registerForm.password().touched() && registerForm.password().invalid()) {
-      <hlm-field-error>{{ registerForm.password().errors()[0].message }}</hlm-field-error>
-    }
-  </div>
-
-  <div class="flex flex-col gap-1.5">
-    <label hlmFieldLabel for="register-confirm-password" i18n="@@auth.passwordConfirmation.label"
-      >Repeat password</label
+    <button
+      hlmBtn
+      type="submit"
+      class="w-full max-sm:min-h-11"
+      data-testid="register-submit"
+      [disabled]="pending()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
     >
-    <app-password-input
-      inputId="register-confirm-password"
-      autocomplete="new-password"
-      placeholder="Repeat your password"
-      i18n-placeholder="@@auth.passwordConfirmation.placeholder"
-      [field]="registerForm.confirmPassword"
-    />
-    @if (registerForm.confirmPassword().touched() && registerForm.confirmPassword().invalid()) {
-      <hlm-field-error>{{ registerForm.confirmPassword().errors()[0].message }}</hlm-field-error>
-    }
-  </div>
-
-  <button hlmBtn type="submit" class="w-full max-sm:min-h-11" [disabled]="pending()">
-    @if (pending()) {
-      <span i18n="@@auth.register.submitting">Creating your account…</span>
-    } @else {
-      <span i18n="@@auth.register.submit">Create account</span>
-    }
-  </button>
+      @if (pending()) {
+        <span i18n="@@auth.register.submitting">Creating your account…</span>
+      } @else {
+        <span i18n="@@auth.register.submit">Create account</span>
+      }
+    </button>
+  </hlm-field-group>
 </form>

@@ -288,6 +288,10 @@ Currently consumed by `features/interventions` (its own `FEATURE.md` records the
   `messaging.read` does not imply.
 - Consumes `@features/organization/models` for `ORGANIZATION_PERMISSION` and `MemberDirectoryEntry`,
   and `@features/organization/http/guards` for `organizationPermissionGuard`.
+- Consumes `@features/organization/services` for `SubmissionGateService`. `ChannelsStore` shares one
+  `mutationCallState` across rename, move and delete, so `ChannelConversationPage`'s delete
+  confirmation holds a gate over it rather than reading `isMutating()`/`mutationError()` raw — a
+  rename that failed a moment earlier must not surface as the delete's own error.
 - May be consumed by a sibling organization subfeature through `SubjectDiscussion`
   (`ui/components`, see Published Contracts above) for its own record's live thread —
   `features/interventions` is the first such consumer. A consumer supplies the subject's identity
@@ -514,3 +518,7 @@ the panel nor its toggle renders.
   renders the same neutral label.
 - Only replay-safe operations (message send, reactions, pins, saves) may be queued in the offline
   outbox; read-state mutations (conversation read markers) must never be queued.
+- **A mutating confirm dialog stays open, busy-locked, until the write settles.** The channel delete
+  confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome
+  inline, so the operator sees it exactly where they took the action and can retry without reopening
+  the dialog, rather than the failure surfacing only as a page-level toast.

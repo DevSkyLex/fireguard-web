@@ -12,7 +12,7 @@ import { form, type FieldTree } from '@angular/forms/signals';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
 import { HlmButton } from '@shared/ui/button';
-import { HlmFieldError, HlmFieldLabel } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import type { NewPasswordFormValues } from './models';
 
 /**
@@ -35,7 +35,7 @@ import type { NewPasswordFormValues } from './models';
  */
 @Component({
   selector: 'app-new-password-form',
-  imports: [PasswordInput, HlmButton, HlmFieldError, HlmFieldLabel],
+  imports: [PasswordInput, HlmButton, ...HlmFieldImports],
   templateUrl: './new-password-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

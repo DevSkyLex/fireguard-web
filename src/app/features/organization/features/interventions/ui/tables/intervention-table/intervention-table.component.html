@@ -1,11 +1,22 @@
-<div class="max-h-[700px] w-full overflow-auto rounded-md border">
-  <div hlmTableContainer>
-    <table hlmTable>
-      <caption hlmTableCaption class="sr-only" i18n="@@intervention.list.tableCaption">
+<div class="h-full w-full overflow-hidden rounded-md border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="intervention-table-caption"
+  >
+    <table hlmTable data-testid="intervention-table">
+      <caption
+        hlmTableCaption
+        id="intervention-table-caption"
+        class="sr-only"
+        i18n="@@intervention.list.tableCaption"
+      >
         The organization's interventions.
       </caption>
 
-      <thead hlmTableHeader>
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
         <tr hlmTableRow>
           <th hlmTableHead class="w-10">
             <hlm-checkbox
@@ -115,7 +126,7 @@
 
               <td hlmTableCell>
                 <a
-                  class="rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  class="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   [routerLink]="[...detailRouteBase(), item.intervention.id]"
                   >{{ item.intervention.name }}</a
                 >

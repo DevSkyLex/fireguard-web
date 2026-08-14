@@ -1,0 +1,6 @@
+{
+  "name": "fireguard-web-lsp",
+  "version": "1.2.0",
+  "description": "FireGuard Web Angular language server — @angular/language-server on .html. TypeScript (.ts) is covered by the official typescript-lsp@claude-plugins-official plugin; Angular stays homemade because Anthropic publishes no Angular plugin and the official schema cannot resolve the app dir from both the monorepo root and the app itself, which the bundled launcher does at runtime.",
+  "author": { "name": "Valentin FORTIN", "email": "contact@valentin-fortin.pro" }
+}

@@ -6,7 +6,7 @@
 >
   <hlm-sheet-content
     *hlmSheetPortal
-    class="w-full overflow-y-auto sm:w-[480px] sm:max-w-none"
+    class="w-full! overflow-y-auto sm:w-[480px]! sm:max-w-none!"
     data-testid="organization-role-permissions-sheet"
   >
     @if (role(); as role) {
@@ -23,19 +23,19 @@
         }
       </hlm-sheet-header>
 
-      @if (serverMessages().length > 0) {
-        <div
-          role="alert"
-          data-testid="organization-role-permissions-error"
-          class="px-4 text-sm text-destructive"
-        >
-          @for (message of serverMessages(); track message) {
-            <p>{{ message }}</p>
-          }
-        </div>
-      }
-
       <div class="flex flex-col gap-4 px-4 pb-4">
+        @if (serverMessages().length > 0) {
+          <div
+            role="alert"
+            data-testid="organization-role-permissions-error"
+            class="text-sm text-destructive"
+          >
+            @for (message of serverMessages(); track message) {
+              <p>{{ message }}</p>
+            }
+          </div>
+        }
+
         @for (group of domainGroups(); track group.domain) {
           <div class="flex flex-col gap-1.5">
             <p class="text-sm font-medium text-foreground">{{ group.label }}</p>

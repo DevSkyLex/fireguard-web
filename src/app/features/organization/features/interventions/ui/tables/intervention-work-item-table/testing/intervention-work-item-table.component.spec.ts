@@ -38,7 +38,7 @@ describe('InterventionWorkItemTable', () => {
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const rows = (): HTMLElement[] =>
-    Array.from(root().querySelectorAll('[data-testid="intervention-work-item-row"]'));
+    Array.from(root().querySelectorAll('[data-testid="intervention-work-item-table-row"]'));
   const toggles = (): HTMLButtonElement[] =>
     Array.from(root().querySelectorAll('[data-testid="intervention-work-item-toggle"]'));
   const byTestId = (id: string): HTMLElement | null =>
@@ -248,6 +248,23 @@ describe('InterventionWorkItemTable', () => {
     await fixture.whenStable();
 
     expect(root().querySelectorAll('[data-testid="intervention-work-item-menu"]')).toHaveLength(1);
+  });
+
+  it('should draw skeleton rows while loading with nothing loaded yet', async () => {
+    fixture.componentRef.setInput('items', []);
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    const skeletonRows: HTMLElement[] = Array.from(
+      root().querySelectorAll('[data-testid="intervention-work-item-table"] tbody tr'),
+    );
+
+    expect(skeletonRows.length).toBeGreaterThan(0);
+    expect(
+      skeletonRows.every((row: HTMLElement): boolean => row.getAttribute('aria-hidden') === 'true'),
+    ).toBe(true);
+    expect(byTestId('intervention-work-items-empty')).toBeNull();
+    expect(root().querySelector('[role="status"]')).not.toBeNull();
   });
 
   it('should invite the first item when the scope is empty and writable', async () => {

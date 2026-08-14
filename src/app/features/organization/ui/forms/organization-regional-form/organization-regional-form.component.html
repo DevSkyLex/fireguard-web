@@ -1,126 +1,147 @@
-<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
-  <div class="grid gap-4 sm:grid-cols-2">
-    <div class="flex flex-col gap-1.5">
-      <label hlmFieldLabel for="org-regional-timezone" i18n="@@org.settings.regional.timezoneLabel"
-        >Timezone</label
-      >
-      <input
-        hlmInput
-        id="org-regional-timezone"
-        type="text"
-        placeholder="Europe/Paris"
-        class="w-full"
-        [formField]="regionalForm.timezone"
-        [attr.aria-invalid]="regionalForm.timezone().touched() && regionalForm.timezone().invalid()"
-      />
-      @if (regionalForm.timezone().touched() && regionalForm.timezone().invalid()) {
-        <hlm-field-error>{{ regionalForm.timezone().errors()[0].message }}</hlm-field-error>
-      }
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <hlm-field>
+        <label hlmFieldLabel for="org-regional-timezone"
+          ><span i18n="@@org.settings.regional.timezoneLabel">Timezone</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <input
+          hlmInput
+          id="org-regional-timezone"
+          type="text"
+          placeholder="Europe/Paris"
+          data-testid="org-regional-timezone"
+          [formField]="regionalForm.timezone"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="
+            regionalForm.timezone().touched() && regionalForm.timezone().invalid()
+          "
+        />
+        @if (regionalForm.timezone().touched() && regionalForm.timezone().invalid()) {
+          <hlm-field-error>{{ regionalForm.timezone().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="org-regional-locale"
+          ><span i18n="@@org.settings.regional.localeLabel">Locale</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <input
+          hlmInput
+          id="org-regional-locale"
+          type="text"
+          placeholder="fr-FR"
+          data-testid="org-regional-locale"
+          [formField]="regionalForm.locale"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="regionalForm.locale().touched() && regionalForm.locale().invalid()"
+        />
+        @if (regionalForm.locale().touched() && regionalForm.locale().invalid()) {
+          <hlm-field-error>{{ regionalForm.locale().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
     </div>
 
-    <div class="flex flex-col gap-1.5">
-      <label hlmFieldLabel for="org-regional-locale" i18n="@@org.settings.regional.localeLabel"
-        >Locale</label
-      >
-      <input
-        hlmInput
-        id="org-regional-locale"
-        type="text"
-        placeholder="fr-FR"
-        class="w-full"
-        [formField]="regionalForm.locale"
-        [attr.aria-invalid]="regionalForm.locale().touched() && regionalForm.locale().invalid()"
-      />
-      @if (regionalForm.locale().touched() && regionalForm.locale().invalid()) {
-        <hlm-field-error>{{ regionalForm.locale().errors()[0].message }}</hlm-field-error>
-      }
-    </div>
-  </div>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="org-regional-date-format"
+          i18n="@@org.settings.regional.dateFormatLabel"
+          >Date format</label
+        >
+        <hlm-select [itemToString]="dateFormatLabel" [formField]="regionalForm.dateFormat">
+          <hlm-select-trigger
+            buttonId="org-regional-date-format"
+            class="w-full"
+            data-testid="org-regional-date-format"
+          >
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (option of dateFormatOptions; track option.value) {
+                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </hlm-field>
 
-  <div class="grid gap-4 sm:grid-cols-3">
-    <div class="flex flex-col gap-1.5">
-      <label
-        hlmFieldLabel
-        for="org-regional-date-format"
-        i18n="@@org.settings.regional.dateFormatLabel"
-        >Date format</label
-      >
-      <hlm-select
-        id="org-regional-date-format"
-        [itemToString]="dateFormatLabel"
-        [formField]="regionalForm.dateFormat"
-      >
-        <hlm-select-trigger class="w-full">
-          <hlm-select-value />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of dateFormatOptions; track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="org-regional-first-day"
+          i18n="@@org.settings.regional.firstDayOfWeekLabel"
+          >First day of week</label
+        >
+        <hlm-select [itemToString]="firstDayOfWeekLabel" [formField]="regionalForm.firstDayOfWeek">
+          <hlm-select-trigger
+            buttonId="org-regional-first-day"
+            class="w-full"
+            data-testid="org-regional-first-day"
+          >
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (option of firstDayOfWeekOptions; track option.value) {
+                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </hlm-field>
+
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="org-regional-measurement"
+          i18n="@@org.settings.regional.measurementSystemLabel"
+          >Measurement system</label
+        >
+        <hlm-select
+          [itemToString]="measurementSystemLabel"
+          [formField]="regionalForm.measurementSystem"
+        >
+          <hlm-select-trigger
+            buttonId="org-regional-measurement"
+            class="w-full"
+            data-testid="org-regional-measurement"
+          >
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (option of measurementSystemOptions; track option.value) {
+                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </hlm-field>
     </div>
 
-    <div class="flex flex-col gap-1.5">
-      <label
-        hlmFieldLabel
-        for="org-regional-first-day"
-        i18n="@@org.settings.regional.firstDayOfWeekLabel"
-        >First day of week</label
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="org-regional-submit"
+        [disabled]="!canSubmit()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
       >
-      <hlm-select
-        id="org-regional-first-day"
-        [itemToString]="firstDayOfWeekLabel"
-        [formField]="regionalForm.firstDayOfWeek"
-      >
-        <hlm-select-trigger class="w-full">
-          <hlm-select-value />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of firstDayOfWeekOptions; track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-    </div>
-
-    <div class="flex flex-col gap-1.5">
-      <label
-        hlmFieldLabel
-        for="org-regional-measurement"
-        i18n="@@org.settings.regional.measurementSystemLabel"
-        >Measurement system</label
-      >
-      <hlm-select
-        id="org-regional-measurement"
-        [itemToString]="measurementSystemLabel"
-        [formField]="regionalForm.measurementSystem"
-      >
-        <hlm-select-trigger class="w-full">
-          <hlm-select-value />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of measurementSystemOptions; track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-    </div>
-  </div>
-
-  <div class="flex flex-wrap justify-end gap-2">
-    <button hlmBtn type="submit" class="max-sm:min-h-11" [disabled]="!canSubmit()">
-      @if (pending()) {
-        <span i18n="@@org.settings.regional.submitting">Saving…</span>
-      } @else {
-        <span i18n="@@org.settings.regional.submit">Save changes</span>
-      }
-    </button>
-  </div>
+        @if (pending()) {
+          <span i18n="@@org.settings.regional.submitting">Saving…</span>
+        } @else {
+          <span i18n="@@org.settings.regional.submit">Save changes</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
 </form>

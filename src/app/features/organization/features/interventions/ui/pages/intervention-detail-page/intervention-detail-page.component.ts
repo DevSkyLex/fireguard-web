@@ -14,6 +14,7 @@ import {
   type ElementRef,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -25,12 +26,10 @@ import {
   lucideChevronRight,
   lucideCircleAlert,
   lucideClock,
-  lucideCloudUpload,
   lucideCompass,
   lucideCopy,
   lucideEllipsis,
   lucideMessagesSquare,
-  lucideMessageSquareQuote,
   lucideScanLine,
   lucideTrash2,
 } from '@ng-icons/lucide';
@@ -38,14 +37,11 @@ import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallError, isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
-import {
-  InterventionOfflineService,
-  InterventionService,
-} from '@features/organization/features/interventions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionAttachmentOutput,
   InterventionCapabilities,
@@ -71,7 +67,6 @@ import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
-  InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import {
   InterventionStore,
@@ -115,26 +110,24 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSeparator } from '@shared/ui/separator';
-import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { InterventionAbout } from '../../components/intervention-about';
-import { InterventionActionBox } from '../../components/intervention-action-box';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
 import { InterventionAttachments } from '../../components/intervention-attachments';
 import { InterventionChangeList } from '../../components/intervention-change-list';
-import { InterventionCommandBar } from '../../components/intervention-command-bar';
 import { InterventionGettingStarted } from '../../components/intervention-getting-started';
 import { InterventionIssuesChecklist } from '../../components/intervention-issues-checklist';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
 import { InterventionPublicationSummary } from '../../components/intervention-publication-summary';
-import { InterventionSyncStatus } from '../../components/intervention-sync-status';
+import { InterventionStatusBand } from '../../components/intervention-status-band';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
 import { InterventionSignatureDialog } from '../../dialogs/intervention-signature-dialog';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
+import { InterventionDiscussionSheet } from '../../sheets/intervention-discussion-sheet';
 import { InterventionRequestChangesSheet } from '../../sheets/intervention-request-changes-sheet';
 import { InterventionWorkItemSheet } from '../../sheets/intervention-work-item-sheet';
 import { InterventionEquipmentTable } from '../../tables/intervention-equipment-table';
@@ -156,24 +149,26 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  *
  * @description
  * One intervention, from planning to publication, laid out as two columns: a
- * first track carrying the linked-resources rail (`hlm-tabs`, four triggers:
- * Overview, then one lookup table each for Facilities / Equipment /
- * Inspections) beside the active tab's panel — Overview holds every workflow
- * section (work items, changes, attachments, activity) unsplit — and a second
- * column stacking the properties card above the action box, tab-independent.
- * At `lg` and up the second column is `sticky`; below `lg` everything stacks
- * and `linkedTabsOrientation` flips the rail horizontal (`activeLinkedTab`
- * drives which panel renders and lazy-loads a lookup tab on first activation).
+ * first track carrying the linked-resources rail (`hlm-tabs`, six triggers:
+ * Overview, Changes, Attachments, then one lookup table each for Facilities /
+ * Equipment / Inspections) beside the active tab's panel, and a second column
+ * stacking the properties card above the desktop issues checklist,
+ * tab-independent. At `lg` and up the second column is `sticky`; below `lg`
+ * everything stacks and `linkedTabsOrientation` flips the rail horizontal
+ * (`activeLinkedTab` drives which panel renders and lazy-loads a tab's data
+ * on first activation).
  *
- * Three decisions a reviewer should know about.
+ * Four decisions a reviewer should know about.
  *
  * The phase's forward action (Plan / Submit / Publish) keeps its one address
- * on the page, `app-intervention-action-box`, **outside the content column**.
- * So do the blocker and pending-changes counts it reads from the store: an
- * earlier design tucked proposed changes and blockers inside tab panels with
- * no outside indicator, and `FEATURE.md` records why that was retired —
- * nothing that gates publication may be visible only inside a section the
- * operator has to scroll to.
+ * on the page, `app-intervention-status-band`, a sticky band directly under
+ * the title row that serves every viewport — retiring the earlier split
+ * between a desktop-only action box and a mobile-only command bar, along
+ * with both components. The band reads the same blocker count the desktop
+ * issues checklist does: an earlier design tucked proposed changes and
+ * blockers inside tab panels with no outside indicator, and `FEATURE.md`
+ * records why that was retired — nothing that gates publication may be
+ * visible only inside a section the operator has to scroll to.
  *
  * The store exposes one named call state per write concern, so nothing here
  * approximates attribution anymore: the in-place fields settle on
@@ -190,7 +185,13 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * `pendingDuplicatePrefill` and navigates to the list with `?create=1`,
  * which reads and clears it once.
  *
- * @version 4.1.0
+ * The intervention's name is the shell breadcrumb's title, resolved by
+ * `interventionTitleResolver`; the meta line stays as a lead paragraph at
+ * content top, and Discussion plus the "more actions" menu register on the
+ * shell header through `PageActionsService`. The status band renders exactly
+ * where it always did.
+ *
+ * @version 5.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -206,17 +207,15 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
-    ...HlmSheetImports,
     ...HlmSpinnerImports,
     InterventionAbout,
-    InterventionActionBox,
-    InterventionCommandBar,
     InterventionActivityThread,
     InterventionAttachments,
     InterventionChangeList,
     InterventionConfirmDialog,
+    InterventionDiscussionSheet,
     InterventionSignatureDialog,
-    InterventionSyncStatus,
+    InterventionStatusBand,
     InterventionCommentForm,
     InterventionGettingStarted,
     InterventionIssuesChecklist,
@@ -229,7 +228,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionTag,
     InterventionWorkItemSheet,
     InterventionWorkItemTable,
-    SubjectDiscussion,
     ...HlmTabsImports,
   ],
   providers: [
@@ -243,12 +241,10 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideChevronRight,
       lucideCircleAlert,
       lucideClock,
-      lucideCloudUpload,
       lucideCompass,
       lucideCopy,
       lucideEllipsis,
       lucideMessagesSquare,
-      lucideMessageSquareQuote,
       lucideScanLine,
       lucideTrash2,
     }),
@@ -365,14 +361,6 @@ export class InterventionDetailPage {
   /** Whether the browser can reach the API, which gates publication. */
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
 
-  /** The outbox, read only for the unsynced indicator. */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
-
-  /** The sync coordinator behind the header's sync chip. */
-  protected readonly sync: InterventionSyncCoordinatorService = inject(
-    InterventionSyncCoordinatorService,
-  );
-
   /** Shrinks camera captures under the backend's 10 MiB attachment ceiling. */
   private readonly photoCompressor: InterventionPhotoCompressorService = inject(
     InterventionPhotoCompressorService,
@@ -424,6 +412,26 @@ export class InterventionDetailPage {
   /** Unregisters the tab-rail orientation media query listener on teardown. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The Discussion button and the "more actions" menu, registered on the
+   * shell header instead of rendering in a title band — the header carries
+   * every routed page's own name and actions now (`ARCHITECTURE.md` §9.3).
+   *
+   * @access private
+   * @since 6.5.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
+
   /** The deferred focus tick {@link revealFieldWork} schedules on a tab switch, cleared on teardown. */
   private pendingFocusTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -431,6 +439,7 @@ export class InterventionDetailPage {
     this.destroyRef.onDestroy((): void => {
       if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
     });
+    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
 
     effect((): void => {
       const interventionId: string = this.interventionId();
@@ -533,21 +542,26 @@ export class InterventionDetailPage {
     viewChild<ElementRef<HTMLElement>>('workItemsSection');
 
   /**
-   * Property actionBoxSection
+   * Property mobileIssuesSection
    * @readonly
-   *
-   * @description
-   * The action box's wrapper, which the mobile command bar scrolls to when a
-   * blocker is what disables it: the bar carries the reason, the box carries the
-   * list.
-   *
+   * @description The Overview tab's issues checklist wrapper, visible below `lg`, which {@link revealBlockers} targets there.
    * @access private
-   * @since 4.1.0
-   *
+   * @since 5.0.0
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
    */
-  private readonly actionBoxSection: Signal<ElementRef<HTMLElement> | undefined> =
-    viewChild<ElementRef<HTMLElement>>('actionBoxSection');
+  private readonly mobileIssuesSection: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('mobileIssuesSection');
+
+  /**
+   * Property desktopIssuesSection
+   * @readonly
+   * @description The second column's issues checklist wrapper, visible at `lg` and up, which {@link revealBlockers} targets there.
+   * @access private
+   * @since 5.0.0
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  private readonly desktopIssuesSection: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('desktopIssuesSection');
 
   /**
    * Property editState
@@ -572,7 +586,7 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * Which of the left-hand rail's four tabs is showing — `overview` by
+   * Which of the left-hand rail's six tabs is showing — `overview` by
    * default. Page-local UI state, not store-owned: the store only tracks
    * whether each of the three lookup tabs has ever loaded, not which one is
    * currently visible.
@@ -752,9 +766,6 @@ export class InterventionDetailPage {
   /** Whether the browser can reach the API. */
   protected readonly online: Signal<boolean> = this.connectivity.online;
 
-  /** Whether the offline outbox has changes waiting to sync. */
-  protected readonly hasUnsyncedChanges: Signal<boolean> = this.offline.hasUnsyncedChanges;
-
   /**
    * Property caps
    * @readonly
@@ -811,7 +822,7 @@ export class InterventionDetailPage {
    * @description
    * The status {@link invokeCommandAction} dispatches for the current phase, or
    * `null` in `review`, where the forward step is a publication rather than a
-   * status update. Both the action box and the status menu read this one
+   * status update. Both the status band and the status menu read this one
    * signal, which keeps a forward move from having two addresses.
    *
    * @access private
@@ -878,16 +889,16 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * The statuses this menu offers — the moves the action box does **not** own:
-   * starting or reopening field work, and sending an intervention back for
-   * changes. In practice that leaves `in_progress` and `changes_requested`.
+   * The statuses this menu offers — the moves the status band does **not**
+   * own: starting or reopening field work, and sending an intervention back
+   * for changes. In practice that leaves `in_progress` and `changes_requested`.
    *
    * Four exclusions, each for its own reason:
    *
    * - {@link commandTransitionTarget}, because the phase's forward move belongs
-   *   to the action box and its readiness gate. Offering it here too made that
+   *   to the band and its readiness gate. Offering it here too made that
    *   gate advisory: an agent could submit from this menu with work items still
-   *   open, which the action box deliberately refuses.
+   *   open, which the band deliberately refuses.
    * - `abandoned`, because it is destructive and has its own confirmed action.
    * - anything the member lacks the capability for.
    * - withdrawing a submission (`submitted` → `in_progress`) when the member is
@@ -1186,8 +1197,8 @@ export class InterventionDetailPage {
    *
    * @description
    * The single forward action for the current phase, or `null` when the member
-   * has nothing to do here. Rendered exactly once, in `app-intervention-action-box`,
-   * whatever the phase.
+   * has nothing to do here. Rendered exactly once, in
+   * `app-intervention-status-band`, whatever the phase.
    *
    * In `execute` it is a living action: while work remains it sends the
    * operator to the checklist rather than offering a submit they cannot use,
@@ -2044,6 +2055,8 @@ export class InterventionDetailPage {
   protected onLinkedTabActivated(tab: string): void {
     if (
       tab === 'overview' ||
+      tab === 'changes' ||
+      tab === 'attachments' ||
       tab === 'facilities' ||
       tab === 'equipment' ||
       tab === 'inspections'
@@ -2142,9 +2155,9 @@ export class InterventionDetailPage {
    * Sends the operator to the work-items section: opens the add-item sheet
    * when the scope is still empty, or scrolls to and focuses the section
    * otherwise. The section lives in the Overview tab, so this switches the
-   * rail there first — the command bar and action box that call this method
-   * sit outside the tabs and may fire from any of the other three. A switch
-   * away from Overview defers the scroll/focus one tick, since `[hidden]`
+   * rail there first — the status band that calls this method sits outside
+   * the tabs and may fire from any of the other five. A switch away from
+   * Overview defers the scroll/focus one tick, since `[hidden]`
    * only clears once the tab's panel binding flushes; a plain scroll that
    * leaves focus on the trigger that requested it would strand a keyboard
    * user regardless (WCAG 2.4.3), which is why the section itself receives
@@ -2172,19 +2185,38 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Method revealActionBox
+   * Method revealBlockers
    *
    * @description
-   * Sends the operator to the action box, where the blocker list the mobile
-   * command bar can only summarize actually lives.
+   * Sends the operator to the issues checklist, where the blocker list the
+   * status band can only summarize actually lives: the Overview tab's inline
+   * checklist below `lg`, the second column's own copy at `lg` and up. Switches
+   * the rail to Overview first, deferred one tick when that actually changed
+   * the active tab, mirroring {@link revealFieldWork}.
    *
    * @access protected
-   * @since 4.1.0
+   * @since 5.0.0
    *
    * @returns {void}
    */
-  protected revealActionBox(): void {
-    this.scrollToAndFocus(this.actionBoxSection()?.nativeElement);
+  protected revealBlockers(): void {
+    const switchingTab: boolean = this.activeLinkedTab() !== 'overview';
+    this.activeLinkedTab.set('overview');
+
+    if (switchingTab) {
+      if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
+      this.pendingFocusTimeout = setTimeout((): void => this.focusIssuesChecklist());
+    } else this.focusIssuesChecklist();
+  }
+
+  /** Scrolls to and focuses whichever issues checklist the current viewport shows. */
+  private focusIssuesChecklist(): void {
+    const section: HTMLElement | undefined =
+      this.linkedTabsOrientation() === 'vertical'
+        ? this.desktopIssuesSection()?.nativeElement
+        : this.mobileIssuesSection()?.nativeElement;
+
+    this.scrollToAndFocus(section);
   }
 
   /** Scrolls to and focuses the field-work section. */

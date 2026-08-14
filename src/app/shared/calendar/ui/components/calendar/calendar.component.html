@@ -1,5 +1,5 @@
-<div class="flex flex-col gap-3" data-testid="calendar">
-  <div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex h-full min-h-0 flex-col gap-3" data-testid="calendar">
+  <div class="flex flex-wrap items-center justify-between gap-2" [class.sr-only]="!showToolbar()">
     <div brnCalendarHeader class="min-w-0">
       <h2
         class="truncate text-base font-semibold text-foreground capitalize"
@@ -9,47 +9,49 @@
       </h2>
     </div>
 
-    <div class="flex items-center gap-1">
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="calendar-today"
-        (click)="goToday()"
-      >
-        <span i18n="@@calendar.today">Today</span>
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="icon-sm"
-        data-testid="calendar-prev"
-        i18n-aria-label="@@calendar.previousMonth"
-        aria-label="Previous month"
-        (click)="stepMonth(-1)"
-      >
-        <ng-icon name="lucideChevronLeft" aria-hidden="true" />
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="icon-sm"
-        data-testid="calendar-next"
-        i18n-aria-label="@@calendar.nextMonth"
-        aria-label="Next month"
-        (click)="stepMonth(1)"
-      >
-        <ng-icon name="lucideChevronRight" aria-hidden="true" />
-      </button>
-    </div>
+    @if (showToolbar()) {
+      <div class="flex items-center gap-1">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="calendar-today"
+          (click)="goToday()"
+        >
+          <span i18n="@@calendar.today">Today</span>
+        </button>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          data-testid="calendar-prev"
+          i18n-aria-label="@@calendar.previousMonth"
+          aria-label="Previous month"
+          (click)="stepMonth(-1)"
+        >
+          <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+        </button>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          data-testid="calendar-next"
+          i18n-aria-label="@@calendar.nextMonth"
+          aria-label="Next month"
+          (click)="stepMonth(1)"
+        >
+          <ng-icon name="lucideChevronRight" aria-hidden="true" />
+        </button>
+      </div>
+    }
   </div>
 
-  <div class="rounded-lg border border-border">
+  <div class="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
     <table brnCalendarGrid class="w-full table-fixed border-separate border-spacing-0">
-      <thead>
+      <thead class="sticky top-0 z-10 bg-background">
         <tr>
           <th
             *brnCalendarWeekday="let weekday"

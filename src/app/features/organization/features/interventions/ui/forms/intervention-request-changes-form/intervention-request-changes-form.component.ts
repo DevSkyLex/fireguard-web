@@ -14,6 +14,7 @@ import { form, FormField, maxLength, required, type FieldTree } from '@angular/f
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { InterventionRequestChangesFormValues } from './models';
 
@@ -35,14 +36,19 @@ const EMPTY_VALUES: InterventionRequestChangesFormValues = { note: '' };
  * requires the note, and the field agent reads it as the instruction for what
  * to fix.
  *
- * @version 1.0.0
+ * Its own host fills the flex column its hosting sheet establishes: the field
+ * group scrolls independently while the `hlm-sheet-footer` action row stays
+ * pinned, without the sheet needing to know about the form's internal layout.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-request-changes-form',
-  imports: [FormField, HlmButton, ...HlmFieldImports, ...HlmTextareaImports],
+  imports: [FormField, HlmButton, ...HlmFieldImports, HlmSheetFooter, ...HlmTextareaImports],
   templateUrl: './intervention-request-changes-form.component.html',
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionRequestChangesForm {

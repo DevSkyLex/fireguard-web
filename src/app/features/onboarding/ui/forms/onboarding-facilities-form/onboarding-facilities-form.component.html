@@ -36,15 +36,17 @@
       </p>
     } @else {
       <hlm-field>
-        <label hlmFieldLabel for="onboarding-facility-type" i18n="@@onboarding.facilitiesForm.type">
-          Type
+        <label hlmFieldLabel for="onboarding-facility-type"
+          ><span i18n="@@onboarding.facilitiesForm.type"> Type</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span>
         </label>
-        <hlm-select
-          id="onboarding-facility-type"
-          [itemToString]="typeLabelOf"
-          [formField]="draftForm.type"
-        >
-          <hlm-select-trigger class="w-full" data-testid="onboarding-facility-type">
+        <hlm-select [itemToString]="typeLabelOf" [formField]="draftForm.type">
+          <hlm-select-trigger
+            buttonId="onboarding-facility-type"
+            class="w-full"
+            data-testid="onboarding-facility-type"
+          >
             <hlm-select-value
               placeholder="Select a facility type"
               i18n-placeholder="@@onboarding.facilitiesForm.typePlaceholder"
@@ -61,8 +63,10 @@
       </hlm-field>
 
       <hlm-field>
-        <label hlmFieldLabel for="onboarding-facility-name" i18n="@@onboarding.facilitiesForm.name">
-          Name
+        <label hlmFieldLabel for="onboarding-facility-name"
+          ><span i18n="@@onboarding.facilitiesForm.name"> Name</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span>
         </label>
         <input
           hlmInput
@@ -72,6 +76,8 @@
           placeholder="Main warehouse"
           i18n-placeholder="@@onboarding.facilitiesForm.namePlaceholder"
           [formField]="draftForm.name"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="draftForm.name().touched() && draftForm.name().invalid()"
         />
       </hlm-field>
 
@@ -89,6 +95,7 @@
           type="text"
           data-testid="onboarding-facility-address"
           [formField]="draftForm.address"
+          [attr.aria-invalid]="draftForm.address().touched() && draftForm.address().invalid()"
         />
       </hlm-field>
 
@@ -97,6 +104,7 @@
           hlmBtn
           type="button"
           variant="outline"
+          class="max-sm:min-h-11"
           data-testid="onboarding-facility-add"
           [disabled]="draftForm().invalid() || pending()"
           (click)="addFacility()"
@@ -106,12 +114,15 @@
       </hlm-field>
     }
 
-    <hlm-field orientation="horizontal">
+    <hlm-field orientation="horizontal" class="justify-end">
       <button
         hlmBtn
         type="submit"
+        class="max-sm:min-h-11"
         data-testid="onboarding-facilities-submit"
         [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
       >
         @if (pending()) {
           <span i18n="@@onboarding.facilitiesForm.submitting">Saving…</span>

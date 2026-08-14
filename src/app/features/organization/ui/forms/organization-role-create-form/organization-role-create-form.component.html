@@ -1,5 +1,5 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group class="px-4">
+  <hlm-field-group>
     @if (serverMessages().length > 0) {
       <div
         role="alert"
@@ -13,8 +13,10 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="organization-role-create-name" i18n="@@org.team.form.name"
-        >Name</label
+      <label hlmFieldLabel for="organization-role-create-name"
+        ><span i18n="@@org.team.form.name">Name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <input
         hlmInput
@@ -24,6 +26,8 @@
         placeholder="inspector"
         i18n-placeholder="@@org.team.form.namePlaceholder"
         [formField]="createForm.name"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="createForm.name().touched() && createForm.name().invalid()"
       />
       <hlm-field-description i18n="@@org.team.form.nameHint">
         Lowercase letters, numbers and underscores, 3-50 characters.
@@ -48,6 +52,9 @@
         placeholder="What this role is for"
         i18n-placeholder="@@org.team.form.descriptionPlaceholder"
         [formField]="createForm.description"
+        [attr.aria-invalid]="
+          createForm.description().touched() && createForm.description().invalid()
+        "
       ></textarea>
       @if (createForm.description().touched() && createForm.description().invalid()) {
         <hlm-field-error>{{ createForm.description().errors()[0].message }}</hlm-field-error>
@@ -61,13 +68,9 @@
       </p>
 
       @if (createForm.permissions().touched() && createForm.permissions().invalid()) {
-        <p
-          role="alert"
-          class="text-sm text-destructive"
-          data-testid="organization-role-create-permissions-error"
-        >
+        <hlm-field-error data-testid="organization-role-create-permissions-error">
           {{ createForm.permissions().errors()[0].message }}
-        </p>
+        </hlm-field-error>
       }
 
       <div class="flex max-h-72 flex-col gap-4 overflow-y-auto">
@@ -96,27 +99,31 @@
       </div>
     </fieldset>
 
-    <hlm-field orientation="horizontal">
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="organization-role-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
       <button
         hlmBtn
         type="submit"
+        class="max-sm:min-h-11"
         data-testid="organization-role-create-submit"
         [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
       >
         @if (pending()) {
           <span i18n="@@org.team.form.submitting">Creating…</span>
         } @else {
           <span i18n="@@org.team.form.submit">Create role</span>
         }
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        data-testid="organization-role-create-cancel"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@common.cancel">Cancel</span>
       </button>
     </hlm-field>
   </hlm-field-group>

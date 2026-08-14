@@ -18,7 +18,7 @@ import {
 } from '@angular/forms/signals';
 import { BrnInputOtp } from '@spartan-ng/brain/input-otp';
 import { HlmButton } from '@shared/ui/button';
-import { HlmFieldError } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import {
   HlmInputOtp,
   HlmInputOtpGroup,
@@ -77,11 +77,11 @@ const OTP_LENGTH = 6;
     FormField,
     BrnInputOtp,
     HlmButton,
-    HlmFieldError,
     HlmInputOtp,
     HlmInputOtpGroup,
     HlmInputOtpSeparator,
     HlmInputOtpSlot,
+    ...HlmFieldImports,
   ],
   templateUrl: './account-otp-code-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

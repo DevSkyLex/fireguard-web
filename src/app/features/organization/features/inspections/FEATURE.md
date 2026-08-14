@@ -122,6 +122,9 @@ workflow actually needs to set the field.
 - `/:inspectionId/edit` is retired and **redirects onto the record**, so
   installed applications and bookmarks still resolve.
 - Depends on organization route context from the parent feature.
+- Consumes `ListPagination` from the parent `features/organization` feature
+  (`@features/organization/ui/components`) for the list page's shared pagination band — see
+  `organization/FEATURE.md` § UI Conventions.
 - May compose facility, equipment, and checklist data as supporting inputs for inspection workflows.
 - Must not absorb ownership of those sibling subfeatures just because the create flow depends on them.
 

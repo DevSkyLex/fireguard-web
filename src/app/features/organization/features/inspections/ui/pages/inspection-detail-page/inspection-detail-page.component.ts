@@ -2,6 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -10,14 +11,17 @@ import {
   PLATFORM_ID,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBan } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -74,7 +78,12 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * to the index. A route-scoped {@link InspectionStore} carries the update
  * and lifecycle writes.
  *
- * @version 1.0.0
+ * The record's name is the shell breadcrumb's title, resolved by
+ * `inspectionTitleResolver`; the status tags, non-conformity count and meta
+ * line stay as a lead group at content top, and the lifecycle band registers
+ * on the shell header through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -269,6 +278,13 @@ export class InspectionDetailPage {
   protected readonly cancelDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.pendingCancel() ? 'open' : 'closed',
   );
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The lifecycle band (Cancel/Submit/Close), registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -280,15 +296,17 @@ export class InspectionDetailPage {
    * Settles the open in-place field once its own write clears, re-sets the
    * document title once the seeded record lands (the title resolver only
    * returned the neutral section label), returns to the index when the load
-   * fails — the global feedback listener already toasts the failure — and
+   * fails — the global feedback listener already toasts the failure —
    * returns to the list once a cancellation succeeds —
    * `InspectionStore.cancel` removes the record, so there is nothing left
-   * here to show.
+   * here to show — and registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const callState: CallState<InspectionOutput | null> = this.store.updateCallState();
 

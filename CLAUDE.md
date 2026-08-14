@@ -100,11 +100,6 @@ npm run build         # validates strict Angular templates
 > runner treat every `.html` and `.component.ts` under it as a test entry and
 > fails with `No loader is configured for ".html" files`.
 
-## After changing code
-
-If a graphify graph exists (`graphify-out/`), run `graphify update .` and prefer
-`graphify query` for codebase questions.
-
 ## Tooling — this app ships its own `.claude/`
 
 Open **`fireguard-sso-web/`** as the workspace root to activate it. The agents,
@@ -122,7 +117,11 @@ Two things that listing does not tell you:
   wrappers usable from there. This `.claude/` is also packaged as the **`fireguard-web`
   plugin** (manifest `.claude/.claude-plugin/plugin.json`), installed at the monorepo
   root — root sessions load the agents, the commands as `/fireguard-web:fg-…`, the
-  skills, and the guard/format hooks. Rules, permissions, MCP servers, and
+  skills, and the guard/format hooks. The two **language servers** (TypeScript on
+  `.ts`, Angular templates on `.html`) ship as a second, LSP-only plugin —
+  `fireguard-web-lsp`, source `.claude/lsp/` — enabled in both scopes, because LSP
+  config loads only from an enabled plugin and this one is disabled here. Rules,
+  permissions, MCP servers, and
   `settings.local.json` are not plugin components: they still load only when this app is
   the workspace root. The install is a cached copy — after changing anything under
   `.claude/`, bump the plugin `version` and run

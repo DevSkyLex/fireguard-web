@@ -1,0 +1,14 @@
+{
+  "angular": {
+    "command": "node",
+    "args": ["${CLAUDE_PLUGIN_ROOT}/start.mjs", "angular"],
+    "extensionToLanguage": {
+      ".html": "html"
+    },
+    "startupTimeout": 120000,
+    "shutdownTimeout": 15000,
+    "restartOnCrash": true,
+    "maxRestarts": 3,
+    "diagnostics": true
+  }
+}

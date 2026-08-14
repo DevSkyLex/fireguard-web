@@ -1,63 +1,87 @@
-<div hlmTableContainer class="rounded-md border border-border">
-  <table hlmTable data-testid="inspection-table">
-    <caption hlmTableCaption class="sr-only" i18n="@@inspection.table.title">
-      Inspections
-    </caption>
+<div class="h-full w-full overflow-hidden rounded-md border border-border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="inspection-table-caption"
+  >
+    <table hlmTable data-testid="inspection-table">
+      <caption
+        hlmTableCaption
+        id="inspection-table-caption"
+        class="sr-only"
+        i18n="@@inspection.table.title"
+      >
+        Inspections
+      </caption>
 
-    <thead hlmTableHeader>
-      <tr hlmTableRow>
-        <th hlmTableHead i18n="@@inspection.table.colPerformedAt">Performed on</th>
-        <th hlmTableHead i18n="@@inspection.table.colInspector">Inspector</th>
-        <th hlmTableHead i18n="@@inspection.table.colResult">Result</th>
-        <th hlmTableHead i18n="@@inspection.table.colStatus">Status</th>
-        <th hlmTableHead i18n="@@inspection.table.colNonConformities">Non-conformities</th>
-      </tr>
-    </thead>
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@inspection.table.colPerformedAt">Performed on</th>
+          <th hlmTableHead i18n="@@inspection.table.colInspector">Inspector</th>
+          <th hlmTableHead i18n="@@inspection.table.colResult">Result</th>
+          <th hlmTableHead i18n="@@inspection.table.colStatus">Status</th>
+          <th hlmTableHead i18n="@@inspection.table.colNonConformities">Non-conformities</th>
+        </tr>
+      </thead>
 
-    <tbody hlmTableBody>
-      @if (loading() && items().length === 0) {
-        @for (row of skeletonRows; track row) {
-          <tr hlmTableRow>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-8" /></td>
-          </tr>
-        }
-      } @else {
-        @for (item of items(); track item.id) {
-          <tr hlmTableRow data-testid="inspection-table-row">
-            <td hlmTableCell class="whitespace-normal">
-              <a
-                class="rounded-sm font-medium text-foreground tabular-nums hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                [routerLink]="[...detailRouteBase(), item.id]"
-                >{{ item.performedAt.slice(0, 10) }}</a
+      <tbody hlmTableBody>
+        @if (loading() && items().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-8" /></td>
+            </tr>
+          }
+        } @else {
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="inspection-table-row">
+              <td hlmTableCell class="whitespace-normal">
+                <a
+                  class="rounded-sm font-medium text-foreground tabular-nums hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  [routerLink]="[...detailRouteBase(), item.id]"
+                  >{{ item.performedAt.slice(0, 10) }}</a
+                >
+              </td>
+
+              <td hlmTableCell class="whitespace-normal text-muted-foreground">
+                @if (item.inspector; as inspector) {
+                  {{ inspector.displayName }}
+                } @else {
+                  <span i18n="@@inspection.notSpecified">Not specified</span>
+                }
+              </td>
+
+              <td hlmTableCell>
+                <app-inspection-status-tag kind="result" [value]="item.result" />
+              </td>
+
+              <td hlmTableCell>
+                <app-inspection-status-tag kind="status" [value]="item.status" />
+              </td>
+
+              <td hlmTableCell class="text-muted-foreground tabular-nums">
+                {{ item.nonConformitiesCount }}
+              </td>
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                [attr.colspan]="columnCount()"
+                i18n="@@inspection.table.noResults"
               >
-            </td>
-
-            <td hlmTableCell class="whitespace-normal text-muted-foreground">
-              @if (item.inspector; as inspector) {
-                {{ inspector.displayName }}
-              } @else {
-                <span i18n="@@inspection.notSpecified">Not specified</span>
-              }
-            </td>
-
-            <td hlmTableCell>
-              <app-inspection-status-tag kind="result" [value]="item.result" />
-            </td>
-
-            <td hlmTableCell>
-              <app-inspection-status-tag kind="status" [value]="item.status" />
-            </td>
-
-            <td hlmTableCell class="text-muted-foreground tabular-nums">
-              {{ item.nonConformitiesCount }}
-            </td>
-          </tr>
+                No results.
+              </td>
+            </tr>
+          }
         }
-      }
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
 </div>

@@ -1,13 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   effect,
   inject,
   input,
   untracked,
+  viewChild,
   type InputSignal,
+  type Signal,
+  type TemplateRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import type {
   CreateEquipmentInput,
@@ -34,7 +39,10 @@ import { EquipmentCreateForm } from '../../forms/equipment-create-form';
  * the edit surface"), so this page asks for nothing beyond the one required
  * field.
  *
- * @version 1.0.0
+ * Its title lives in the shell breadcrumb (the route's static title); "Back
+ * to equipment" registers on the shell header through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -64,17 +72,26 @@ export class EquipmentCreatePage {
 
   /** Router used to open the new record once it exists. */
   private readonly router: Router = inject(Router);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "Back to equipment" link, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
   /**
    * Constructor
    * @constructor
-   * @description Navigates to the created record once the write settles successfully.
+   * @description Navigates to the created record once the write settles successfully, and registers {@link pageActions}.
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const state: CallState<EquipmentOutput | null> = this.store.createCallState();
 

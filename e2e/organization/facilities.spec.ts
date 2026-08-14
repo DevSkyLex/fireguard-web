@@ -153,7 +153,7 @@ test.describe('Facility detail', () => {
 
     await facilities.hierarchyNodes.nth(1).click();
     await expect(page).toHaveURL(new RegExp(`/facilities/${E2E_FACILITY_CHILD_ID}$`));
-    await expect(page.getByRole('heading', { name: 'Ground Floor' })).toBeVisible();
+    await expect(page.getByTestId('dashboard-breadcrumb-current')).toHaveText('Ground Floor');
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/facility-detail-light-desktop.png` });
   });

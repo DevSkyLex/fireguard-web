@@ -1,71 +1,15 @@
 <div id="inspection-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
   @if (activeInspectionStore.selectedInspection(); as inspection) {
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div class="flex min-w-0 flex-col gap-1">
-        <h1 class="min-w-0 truncate text-2xl font-semibold tracking-tight">{{ title() }}</h1>
-        <div class="flex flex-wrap items-center gap-2">
-          <app-inspection-status-tag kind="status" [value]="inspection.status" />
-          <app-inspection-status-tag kind="result" [value]="inspection.result" />
-          <span
-            class="text-sm text-muted-foreground"
-            data-testid="inspection-non-conformities-count"
-            >{{ nonConformitiesLabel() }}</span
-          >
-        </div>
-        <p class="text-sm text-muted-foreground" data-testid="inspection-detail-meta">
-          {{ metaLine() }}
-        </p>
-      </div>
-
-      @if (canWrite()) {
-        <div class="flex items-center gap-2" data-testid="inspection-lifecycle-band">
-          @if (canCancel()) {
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              class="max-sm:min-h-11"
-              data-testid="inspection-cancel"
-              [disabled]="store.isChangingLifecycle()"
-              (click)="requestCancel()"
-            >
-              <ng-icon name="lucideBan" aria-hidden="true" />
-              <span i18n="@@inspection.cancel">Cancel</span>
-            </button>
-
-            <button
-              hlmBtn
-              type="button"
-              class="max-sm:min-h-11"
-              data-testid="inspection-submit"
-              [disabled]="store.isChangingLifecycle()"
-              (click)="onSubmit()"
-            >
-              @if (store.isChangingLifecycle()) {
-                <hlm-spinner class="size-3.5" aria-hidden="true" />
-              }
-              <span i18n="@@inspection.submit">Submit</span>
-            </button>
-          }
-
-          @if (canClose()) {
-            <button
-              hlmBtn
-              type="button"
-              class="max-sm:min-h-11"
-              data-testid="inspection-close"
-              [disabled]="store.isChangingLifecycle()"
-              (click)="onClose()"
-            >
-              @if (store.isChangingLifecycle()) {
-                <hlm-spinner class="size-3.5" aria-hidden="true" />
-              }
-              <span i18n="@@inspection.close">Close</span>
-            </button>
-          }
-        </div>
-      }
+    <div class="flex flex-wrap items-center gap-2">
+      <app-inspection-status-tag kind="status" [value]="inspection.status" />
+      <app-inspection-status-tag kind="result" [value]="inspection.result" />
+      <span class="text-sm text-muted-foreground" data-testid="inspection-non-conformities-count">{{
+        nonConformitiesLabel()
+      }}</span>
     </div>
+    <p class="text-sm text-muted-foreground" data-testid="inspection-detail-meta">
+      {{ metaLine() }}
+    </p>
 
     <section
       class="flex max-w-2xl flex-col gap-1"
@@ -103,7 +47,11 @@
   }
 </div>
 
-<hlm-alert-dialog [state]="cancelDialogState()" (stateChanged)="onCancelDialogStateChanged($event)">
+<hlm-alert-dialog
+  [state]="cancelDialogState()"
+  [disableClose]="store.cancelCallState().status === 'pending'"
+  (stateChanged)="onCancelDialogStateChanged($event)"
+>
   <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="inspection-cancel-dialog">
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@inspection.detail.cancelConfirmTitle">Cancel inspection?</h2>
@@ -112,13 +60,32 @@
       </p>
     </hlm-alert-dialog-header>
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@inspection.detail.cancelConfirmDismiss">Keep it</button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="store.cancelCallState().status === 'pending' ? 'true' : null"
+        [attr.aria-busy]="store.cancelCallState().status === 'pending' ? 'true' : null"
+        [class.opacity-50]="store.cancelCallState().status === 'pending'"
+        [class.pointer-events-none]="store.cancelCallState().status === 'pending'"
+        (click)="
+          store.cancelCallState().status === 'pending' || onCancelDialogStateChanged('closed')
+        "
+        i18n="@@inspection.detail.cancelConfirmDismiss"
+      >
+        Keep it
+      </button>
       <button
         hlmAlertDialogAction
         variant="destructive"
+        class="max-sm:min-h-11"
         data-testid="inspection-cancel-confirm"
-        [disabled]="store.cancelCallState().status === 'pending'"
-        (click)="confirmCancel()"
+        [attr.aria-disabled]="store.cancelCallState().status === 'pending' ? 'true' : null"
+        [attr.aria-busy]="store.cancelCallState().status === 'pending' ? 'true' : null"
+        [class.opacity-50]="store.cancelCallState().status === 'pending'"
+        [class.pointer-events-none]="store.cancelCallState().status === 'pending'"
+        (click)="store.cancelCallState().status === 'pending' || confirmCancel()"
         i18n="@@inspection.detail.cancelConfirmAction"
       >
         Cancel inspection
@@ -126,3 +93,54 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
+
+<ng-template #pageActions>
+  @if (canWrite()) {
+    <div class="flex items-center gap-2" data-testid="inspection-lifecycle-band">
+      @if (canCancel()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="max-sm:min-h-11"
+          data-testid="inspection-cancel"
+          [disabled]="store.isChangingLifecycle()"
+          (click)="requestCancel()"
+        >
+          <ng-icon name="lucideBan" aria-hidden="true" />
+          <span i18n="@@inspection.cancel">Cancel</span>
+        </button>
+
+        <button
+          hlmBtn
+          type="button"
+          class="max-sm:min-h-11"
+          data-testid="inspection-submit"
+          [disabled]="store.isChangingLifecycle()"
+          (click)="onSubmit()"
+        >
+          @if (store.isChangingLifecycle()) {
+            <hlm-spinner class="size-3.5" aria-hidden="true" />
+          }
+          <span i18n="@@inspection.submit">Submit</span>
+        </button>
+      }
+
+      @if (canClose()) {
+        <button
+          hlmBtn
+          type="button"
+          class="max-sm:min-h-11"
+          data-testid="inspection-close"
+          [disabled]="store.isChangingLifecycle()"
+          (click)="onClose()"
+        >
+          @if (store.isChangingLifecycle()) {
+            <hlm-spinner class="size-3.5" aria-hidden="true" />
+          }
+          <span i18n="@@inspection.close">Close</span>
+        </button>
+      }
+    </div>
+  }
+</ng-template>

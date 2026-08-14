@@ -1,24 +1,23 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronLeft,
-  lucideChevronRight,
-  lucideChevronsLeft,
-  lucideChevronsRight,
   lucideCircleAlert,
   lucideLayoutGrid,
   lucideList,
@@ -29,6 +28,7 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
@@ -36,6 +36,8 @@ import {
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { ListPagination } from '@features/organization/ui/components';
+import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
@@ -43,7 +45,6 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
-import { HlmSelectImports } from '@shared/ui/select';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { FacilityGrid } from '../../dataviews/facility-grid';
 import { FacilityTable } from '../../tables/facility-table';
@@ -75,7 +76,10 @@ type FacilityLayout = 'list' | 'grid';
  * surface"), so this page has no row menu beyond those two and no bulk
  * actions.
  *
- * @version 1.0.0
+ * Its title lives in the shell breadcrumb; "New facility" registers on the
+ * shell header through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -84,8 +88,10 @@ type FacilityLayout = 'list' | 'grid';
   imports: [
     RouterLink,
     NgIcon,
+    ErrorState,
     FacilityGrid,
     FacilityTable,
+    ListPagination,
     HlmBadge,
     HlmButton,
     HlmCheckbox,
@@ -93,15 +99,10 @@ type FacilityLayout = 'list' | 'grid';
     ...HlmEmptyImports,
     ...HlmInputGroupImports,
     ...HlmPopoverImports,
-    ...HlmSelectImports,
     ...HlmToggleGroupImports,
   ],
   providers: [
     provideIcons({
-      lucideChevronLeft,
-      lucideChevronRight,
-      lucideChevronsLeft,
-      lucideChevronsRight,
       lucideCircleAlert,
       lucideLayoutGrid,
       lucideList,
@@ -113,7 +114,7 @@ type FacilityLayout = 'list' | 'grid';
     }),
   ],
   templateUrl: './facilities-page.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilitiesPage {
@@ -175,9 +176,6 @@ export class FacilitiesPage {
 
   /** How many rows a page holds. Not URL-synced, only the page number is. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
-
-  /** The page sizes offered under the list. */
-  protected readonly pageSizes: readonly number[] = PAGE_SIZES;
 
   /**
    * Property searchTerm
@@ -262,6 +260,13 @@ export class FacilitiesPage {
     this.organizationId(),
     'facilities',
   ]);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "New facility" button, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -273,11 +278,14 @@ export class FacilitiesPage {
    * Wires the search round-trip and the load effect: a settled (debounced)
    * search resets the page synchronously with the query navigation so the
    * load effect fires once, already on the first page of the new result set.
+   * Also registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const term: string = this.searchTerm();
       untracked((): void => {

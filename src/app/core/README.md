@@ -13,8 +13,8 @@ It is the home for:
 - app-wide routing primitives (`routing/strategies`, `routing/guards`),
 - shared async store infrastructure (`request-state`),
 - appearance mode (`theme` — dark/light/system),
-- shell-level concerns (`splash-screen`, `breadcrumb`, `connectivity`,
-  `cookie`, `mercure`, `title`, `locale`),
+- shell-level concerns (`splash-screen`, `breadcrumb`, `page-actions`,
+  `connectivity`, `cookie`, `mercure`, `title`, `locale`),
 - neutral contracts (ports) backing shared UI.
 
 `core/` is **not** a fallback for business code. Anything that knows a business
@@ -34,7 +34,7 @@ core/
   api/            theme/         feedback/        splash-screen/
   breadcrumb/     connectivity/  cookie/          mercure/
   title/          request-state/ boot-readiness/  locale/
-  indexed-db/
+  page-actions/   indexed-db/
   config/         http/          routing/         # infrastructure groupings
 ```
 

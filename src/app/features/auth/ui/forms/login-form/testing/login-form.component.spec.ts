@@ -106,4 +106,31 @@ describe('LoginForm', () => {
 
     expect(submit.disabled).toBe(true);
   });
+
+  it('should mark the email field aria-invalid once it is touched and invalid', async () => {
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
+      new Event('submit'),
+    );
+    await fixture.whenStable();
+
+    const email = fixture.nativeElement.querySelector('#login-email') as HTMLInputElement;
+
+    expect(email.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('should swap the submit label to the pending wording while signing in', async () => {
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Signing in…');
+  });
+
+  it('should mark the email label required with an aria-hidden asterisk', () => {
+    const label = fixture.nativeElement.querySelector(
+      'label[for="login-email"]',
+    ) as HTMLLabelElement;
+    const asterisk = label.querySelector('span[aria-hidden="true"]');
+
+    expect(asterisk?.textContent).toContain('*');
+  });
 });

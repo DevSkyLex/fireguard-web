@@ -1,29 +1,29 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronLeft,
-  lucideChevronRight,
-  lucideChevronsLeft,
-  lucideChevronsRight,
   lucideCircleAlert,
   lucideClipboardCheck,
   lucideListFilter,
   lucidePlus,
   lucideX,
 } from '@ng-icons/lucide';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   InspectionOutput,
@@ -35,10 +35,11 @@ import {
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { ListPagination } from '@features/organization/ui/components';
+import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
@@ -69,7 +70,10 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
  * edited (`FEATURE.md` "The record is the edit surface"), so this page has
  * no row menu and no bulk actions to orchestrate.
  *
- * @version 1.0.0
+ * Its title lives in the shell breadcrumb; "New inspection" registers on the
+ * shell header through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -78,21 +82,18 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
   imports: [
     RouterLink,
     NgIcon,
+    ErrorState,
     InspectionStatusTag,
     InspectionTable,
+    ListPagination,
     HlmBadge,
     HlmButton,
-    HlmLabel,
     ...HlmEmptyImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
   ],
   providers: [
     provideIcons({
-      lucideChevronLeft,
-      lucideChevronRight,
-      lucideChevronsLeft,
-      lucideChevronsRight,
       lucideCircleAlert,
       lucideClipboardCheck,
       lucideListFilter,
@@ -101,7 +102,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     }),
   ],
   templateUrl: './inspections-page.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionsPage {
@@ -143,9 +144,6 @@ export class InspectionsPage {
 
   /** Result choices offered in the filter bar. */
   protected readonly resultValues: readonly InspectionResult[] = RESULT_VALUES;
-
-  /** The page sizes offered under the table. */
-  protected readonly pageSizes: readonly number[] = PAGE_SIZES;
 
   /**
    * Property hasFilters
@@ -210,17 +208,26 @@ export class InspectionsPage {
     this.organizationId(),
     'inspections',
   ]);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "New inspection" button, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
   /**
    * Constructor
    * @constructor
-   * @description Wires the load effect, re-running on every filter, page or page-size change.
+   * @description Wires the load effect, re-running on every filter, page or page-size change, and registers {@link pageActions}.
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const page: number = this.page();

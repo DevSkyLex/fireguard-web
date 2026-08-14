@@ -1,33 +1,30 @@
 <div id="inspection-create" class="flex w-full flex-col gap-4 p-4 md:p-6">
-  <div class="flex items-start justify-between gap-3">
-    <div class="flex flex-col gap-1">
-      <h1 class="text-2xl font-semibold tracking-tight" i18n="@@inspection.create.title">
-        New Inspection
-      </h1>
-      <p class="text-sm text-muted-foreground" i18n="@@inspection.create.description">
-        Record which equipment was inspected, its result and who carried it out.
-      </p>
-    </div>
-
-    <a
-      hlmBtn
-      type="button"
-      variant="outline"
-      size="sm"
-      data-testid="inspection-create-back"
-      [routerLink]="['/organizations', organizationId(), 'inspections']"
-    >
-      <span i18n="@@inspection.detail.backToList">Back to inspections</span>
-    </a>
-  </div>
+  <p class="text-sm text-muted-foreground" i18n="@@inspection.create.description">
+    Record which equipment was inspected, its result and who carried it out.
+  </p>
 
   <div hlmCard class="max-w-xl">
-    <app-inspection-create-form
-      [pending]="store.isCreating()"
-      [serverError]="store.createError()"
-      [equipmentOptions]="creationOptions.equipmentOptions()"
-      (submitted)="onSubmitted($event)"
-      (cancelled)="onCancelled()"
-    />
+    <div hlmCardContent>
+      <app-inspection-create-form
+        [pending]="store.isCreating()"
+        [serverError]="store.createError()"
+        [equipmentOptions]="creationOptions.equipmentOptions()"
+        (submitted)="onSubmitted($event)"
+        (cancelled)="onCancelled()"
+      />
+    </div>
   </div>
 </div>
+
+<ng-template #pageActions>
+  <a
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="sm"
+    data-testid="inspection-create-back"
+    [routerLink]="['/organizations', organizationId(), 'inspections']"
+  >
+    <span i18n="@@inspection.detail.backToList">Back to inspections</span>
+  </a>
+</ng-template>

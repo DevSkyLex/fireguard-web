@@ -1,4 +1,8 @@
-<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
   <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-delete-dialog">
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@org.settings.danger.confirmTitle">
@@ -7,7 +11,7 @@
       <p hlmAlertDialogDescription>{{ confirmText() }}</p>
     </hlm-alert-dialog-header>
 
-    <div class="flex flex-col gap-1.5 px-6">
+    <div class="flex flex-col gap-1.5">
       <label hlmFieldLabel for="organization-delete-confirm-name">{{ confirmLabel() }}</label>
       <input
         hlmInput
@@ -20,7 +24,9 @@
         (input)="onTypedNameInput($event)"
       />
       @if (error(); as message) {
-        <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+        <p role="alert" class="text-sm text-destructive" data-testid="organization-delete-error">
+          {{ message }}
+        </p>
       }
     </div>
 

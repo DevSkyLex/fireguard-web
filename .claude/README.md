@@ -1,8 +1,8 @@
 # FireGuard Web — Claude Code tooling
 
 This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspace root to
-activate it: 12 agents, 13 commands, 9 skills, 9 rules, 4 MCP servers, and 2 project hooks
-(plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
+activate it: 12 agents, 13 commands, 9 skills, 9 rules, 4 MCP servers, 2 LSP servers, and
+2 project hooks (plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
 
 > **This directory is also a plugin.** The monorepo root installs it as
 > `fireguard-web@fireguard` (project scope, via the root `.claude-plugin/marketplace.json`),
@@ -170,6 +170,71 @@ automatically so nothing critical depends on that read happening.
 | `spartan`    | `npx -y @spartan-ng/mcp`       | 17    | the component catalog, APIs, and blocks — ask it before writing markup                                                                      |
 | `playwright` | `npx -y @playwright/mcp`       | 24    | the heaviest; the writing agents scope it out via their `tools:` lists — only `fg-e2e-runner` declares it                                   |
 | `context7`   | `npx -y @upstash/context7-mcp` | 2     | NgRx, Tailwind, CDK — what the other two do not cover                                                                                       |
+
+## LSP servers (`lsp/`, plugin `fireguard-web-lsp` + official `typescript-lsp`)
+
+Two language servers. They give Claude `goToDefinition` / `findReferences` / `hover` /
+`documentSymbol` — and, more importantly, push diagnostics into the session **after every
+edit**, instead of at `npm run build` time.
+
+| Server       | Plugin                                                                                                                    | Runs                                  | Opens   | Catches                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `typescript` | `typescript-lsp@claude-plugins-official` (since 2026-08-14; needs `npm install -g typescript-language-server typescript`) | `typescript-language-server --stdio`  | `.ts`   | type errors, unused symbols — the strict-build failures, at edit time               |
+| `angular`    | `fireguard-web-lsp@fireguard` (homemade — Anthropic publishes no Angular plugin; runs from devDependencies via `npm ci`)  | `@angular/language-server` (ngserver) | `.html` | template errors: unknown property on the component, element missing from `imports:` |
+
+The official TypeScript plugin runs the **global** server with workspace root
+`${CLAUDE_PROJECT_DIR}` and no `initializationOptions` — the version no longer travels with
+the app, hint-tier suggestions are back on, and a monorepo-root session roots at
+`G:\Projets\fireguard`.
+
+The split is deliberate: `ngserver` also speaks TypeScript, so scoping it to `.html` avoids
+two servers publishing the same diagnostic twice. The trade-off is that **inline** templates
+in a `.ts` file get no Angular checking — this repo puts every template in its own
+`.component.html` (§10.2), so that costs nothing today.
+
+**Why they are their own plugin, `lsp/` rather than a `.lsp.json` next to this file.** LSP
+configuration is the one component Claude Code loads _only from an enabled plugin_ — there is
+no project-level source for it. And `fireguard-web@fireguard` is deliberately **disabled**
+when this app is the workspace root (everything it carries already loads natively from
+`.claude/`), so a `.lsp.json` inside it would only ever start the servers from the monorepo
+root. `lsp/` is therefore a second, minimal plugin — nothing but `.lsp.json` and a manifest —
+installed and enabled at **both** scopes: `enabledPlugins` here _and_ in the root
+`.claude/settings.json`. Marketplace entry: `fireguard-web-lsp`, source
+`./fireguard-sso-web/.claude/lsp`.
+
+**No path in `.lsp.json` is machine-specific** — `lsp/start.mjs` resolves everything at
+runtime, and it exists because neither placeholder can do the job: `${CLAUDE_PLUGIN_ROOT}`
+points into `~/.claude/plugins/cache/…`, a _copy_ of this directory that cannot reach
+`node_modules/`, and `${CLAUDE_PROJECT_DIR}` is `G:\Projets\fireguard` from the monorepo root
+but `…\fireguard-sso-web` from here. The launcher walks up from both until it finds
+`angular.json`, spawns `ngserver` out of that app's own `node_modules` with the app as cwd,
+and rewrites `rootUri` / `rootPath` / `workspaceFolders` in the single `initialize` request —
+which is exactly what a hardcoded `workspaceFolder` used to do. Everything after that one
+message is piped through unparsed, so the proxy cannot corrupt a running session; if the app
+or the server binary is missing it exits with a one-line reason on stderr rather than hanging.
+
+Expect ~4 s (TS) and ~8 s (Angular) before the first diagnostics of a session — the Angular
+project has to be typechecked once.
+
+To install the official TypeScript plugin on a fresh machine:
+`claude plugin install typescript-lsp@claude-plugins-official --scope project`, run from the
+monorepo root **and** from this app. To keep the navigation but silence the automatic
+injection on a server, set `"diagnostics": false` on it.
+
+**Rebuilding the wiring.** Half of it lives at the monorepo root, which is not a git repo and
+therefore backs up nowhere. On a fresh machine, after `npm ci`:
+
+1. declare the plugin in `G:\Projets\fireguard\.claude-plugin\marketplace.json` —
+   `{"name": "fireguard-web-lsp", "source": "./fireguard-sso-web/.claude/lsp"}`;
+2. run `claude plugin install fireguard-web-lsp@fireguard --scope project` **twice**, once
+   from the monorepo root and once from this app — each scope pins its own version, so an
+   update later also has to be run from both.
+
+Nothing else — moving or renaming the workspace needs no edit, the launcher finds the app.
+
+Verify with `claude --debug-file dbg.log -p ok`, then grep the log: a healthy session logs
+`Loaded 1 LSP server(s) from plugin: fireguard-web-lsp`, the same for `typescript-lsp`, and a
+`Registered diagnostics handler` line per server.
 
 ## Hooks
 

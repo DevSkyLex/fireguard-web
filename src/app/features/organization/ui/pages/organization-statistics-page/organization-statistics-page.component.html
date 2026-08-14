@@ -1,72 +1,4 @@
-<div id="organization-statistics" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <app-organization-page-header
-    [organization]="organizationContext.selectedOrganization()"
-    [title]="pageTitle"
-    [subtitle]="pageSubtitle"
-  >
-    <div class="flex flex-wrap items-center gap-3">
-      <hlm-toggle-group
-        type="single"
-        [nullable]="false"
-        variant="outline"
-        size="sm"
-        [value]="selectedPeriod()"
-        data-testid="org-statistics-period-toggle"
-        aria-label="Time period"
-        i18n-aria-label="@@org.statistics.period.ariaLabel"
-        (valueChange)="onPeriodChanged($event)"
-      >
-        <button
-          hlmToggleGroupItem
-          class="max-sm:min-h-11"
-          value="7d"
-          i18n="@@org.statistics.period.7d"
-        >
-          7D
-        </button>
-        <button
-          hlmToggleGroupItem
-          class="max-sm:min-h-11"
-          value="30d"
-          i18n="@@org.statistics.period.30d"
-        >
-          30D
-        </button>
-        <button
-          hlmToggleGroupItem
-          class="max-sm:min-h-11"
-          value="90d"
-          i18n="@@org.statistics.period.90d"
-        >
-          90D
-        </button>
-        <button
-          hlmToggleGroupItem
-          class="max-sm:min-h-11"
-          value="12m"
-          i18n="@@org.statistics.period.12m"
-        >
-          12M
-        </button>
-      </hlm-toggle-group>
-
-      <hlm-field orientation="horizontal" class="gap-2">
-        <label
-          hlmFieldLabel
-          for="org-statistics-compare"
-          i18n="@@org.statistics.compareToggle.label"
-          >Compare to previous period</label
-        >
-        <hlm-switch
-          id="org-statistics-compare"
-          data-testid="org-statistics-compare-toggle"
-          [checked]="compareToPreviousPeriod()"
-          (checkedChange)="compareToPreviousPeriod.set($event)"
-        />
-      </hlm-field>
-    </div>
-  </app-organization-page-header>
-
+<div id="organization-statistics" class="flex h-full flex-col gap-6 p-4 md:p-6">
   @if (dashboardStore.queryHasError() && isForbidden(dashboardStore.queryError())) {
     <div hlmCard class="border-dashed">
       <div hlmCardContent class="py-10 text-center text-sm text-muted-foreground">
@@ -316,3 +248,64 @@
     </div>
   }
 </div>
+
+<ng-template #pageActions>
+  <div class="flex flex-wrap items-center gap-3">
+    <hlm-toggle-group
+      type="single"
+      [nullable]="false"
+      variant="outline"
+      size="sm"
+      [value]="selectedPeriod()"
+      data-testid="org-statistics-period-toggle"
+      aria-label="Time period"
+      i18n-aria-label="@@org.statistics.period.ariaLabel"
+      (valueChange)="onPeriodChanged($event)"
+    >
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="7d"
+        i18n="@@org.statistics.period.7d"
+      >
+        7D
+      </button>
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="30d"
+        i18n="@@org.statistics.period.30d"
+      >
+        30D
+      </button>
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="90d"
+        i18n="@@org.statistics.period.90d"
+      >
+        90D
+      </button>
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="12m"
+        i18n="@@org.statistics.period.12m"
+      >
+        12M
+      </button>
+    </hlm-toggle-group>
+
+    <hlm-field orientation="horizontal" class="gap-2">
+      <label hlmFieldLabel for="org-statistics-compare" i18n="@@org.statistics.compareToggle.label"
+        >Compare to previous period</label
+      >
+      <hlm-switch
+        id="org-statistics-compare"
+        data-testid="org-statistics-compare-toggle"
+        [checked]="compareToPreviousPeriod()"
+        (checkedChange)="compareToPreviousPeriod.set($event)"
+      />
+    </hlm-field>
+  </div>
+</ng-template>

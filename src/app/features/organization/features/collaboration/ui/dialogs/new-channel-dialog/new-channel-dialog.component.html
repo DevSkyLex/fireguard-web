@@ -7,7 +7,11 @@
     <form novalidate (submit)="submit($event)">
       <hlm-field-group>
         <hlm-field>
-          <label hlmFieldLabel for="new-channel-name" i18n="@@channels.newDialog.name">Name</label>
+          <label hlmFieldLabel for="new-channel-name"
+            ><span i18n="@@channels.newDialog.name">Name</span
+            ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+            ><span class="sr-only" i18n="@@common.required"> required</span></label
+          >
           <input
             hlmInput
             id="new-channel-name"
@@ -16,6 +20,8 @@
             placeholder="general"
             i18n-placeholder="@@channels.newDialog.namePlaceholder"
             [formField]="createForm.name"
+            [attr.aria-required]="true"
+            [attr.aria-invalid]="createForm.name().touched() && createForm.name().invalid()"
           />
           @if (createForm.name().touched() && createForm.name().invalid()) {
             <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
@@ -27,12 +33,12 @@
             <label hlmFieldLabel for="new-channel-parent" i18n="@@channels.newDialog.parent"
               >Parent channel</label
             >
-            <hlm-select
-              id="new-channel-parent"
-              [itemToString]="parentLabelOf"
-              [formField]="createForm.parentChannelId"
-            >
-              <hlm-select-trigger class="w-full" data-testid="new-channel-parent">
+            <hlm-select [itemToString]="parentLabelOf" [formField]="createForm.parentChannelId">
+              <hlm-select-trigger
+                buttonId="new-channel-parent"
+                class="w-full"
+                data-testid="new-channel-parent"
+              >
                 <hlm-select-value
                   placeholder="No parent — top level"
                   i18n-placeholder="@@channels.newDialog.parentPlaceholder"
@@ -55,18 +61,26 @@
           </hlm-field>
         }
 
-        <hlm-field orientation="horizontal">
-          <button hlmBtn type="submit" data-testid="new-channel-submit" [disabled]="pending()">
-            <span i18n="@@channels.newDialog.submit">Create channel</span>
-          </button>
+        <hlm-field orientation="horizontal" class="justify-end">
           <button
             hlmBtn
             type="button"
             variant="outline"
+            class="max-sm:min-h-11"
             data-testid="new-channel-cancel"
             (click)="visibleChange.emit(false)"
           >
             <span i18n="@@common.cancel">Cancel</span>
+          </button>
+          <button
+            hlmBtn
+            type="submit"
+            class="max-sm:min-h-11"
+            data-testid="new-channel-submit"
+            [disabled]="pending()"
+            [attr.aria-busy]="pending() ? 'true' : null"
+          >
+            <span i18n="@@channels.newDialog.submit">Create channel</span>
           </button>
         </hlm-field>
       </hlm-field-group>

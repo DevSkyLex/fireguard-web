@@ -49,7 +49,7 @@ describe('InterventionEquipmentTable', () => {
     ]);
     await fixture.whenStable();
 
-    const row: HTMLElement = byTestId('intervention-equipment-row') as HTMLElement;
+    const row: HTMLElement = byTestId('intervention-equipment-table-row') as HTMLElement;
 
     expect(row.textContent).toContain('fire extinguisher');
     expect(row.textContent).toContain('Sicli CO2-6');
@@ -57,22 +57,26 @@ describe('InterventionEquipmentTable', () => {
     expect(row.textContent).toContain('Hall A');
   });
 
-  it('should show a loading indicator while the tab fetch is in flight and nothing has loaded yet', async () => {
+  it('should draw skeleton rows while the tab fetch is in flight and nothing has loaded yet', async () => {
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
-    const status: HTMLElement | null = byTestId('intervention-equipment-loading');
+    const rows: NodeListOf<HTMLElement> = root().querySelectorAll('tbody tr');
+    const status: HTMLElement | null = root().querySelector('[role="status"]');
 
+    expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
+    expect(
+      [...rows].every((row: HTMLElement): boolean => row.getAttribute('aria-hidden') === 'true'),
+    ).toBe(true);
     expect(status).not.toBeNull();
-    expect(status?.getAttribute('role')).toBe('status');
   });
 
-  it('should not show the loading indicator once equipment is already on screen', async () => {
+  it('should not show the skeleton rows once equipment is already on screen', async () => {
     fixture.componentRef.setInput('items', [equipment()]);
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
-    expect(byTestId('intervention-equipment-loading')).toBeNull();
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
   });
 
   it('should surface a fetch error as an alert', async () => {

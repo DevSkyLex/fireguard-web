@@ -44,7 +44,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * no service. The page decides what to load, filter and paginate; a menu
  * choice only asks for the write through an `output()`.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -69,7 +69,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
     }),
   ],
   templateUrl: './facility-table.component.html',
-  host: { class: 'block w-full' },
+  host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityTable {
@@ -158,6 +158,17 @@ export class FacilityTable {
       FACILITY_TYPE_OPTIONS.find((option) => option.value === (type as FacilityType))?.label ??
       type.replace(/_/g, ' ')
     );
+  }
+
+  /**
+   * Method columnCount
+   * @description How many cells a row has, so the empty-state message can span the full width.
+   * @access protected
+   * @since 1.1.0
+   * @returns {number} The rendered column count.
+   */
+  protected columnCount(): number {
+    return 5;
   }
   //#endregion
 }

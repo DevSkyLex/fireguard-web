@@ -1,74 +1,102 @@
-<div hlmTableContainer class="rounded-md border border-border">
-  <table hlmTable data-testid="equipment-table">
-    <caption hlmTableCaption class="sr-only" i18n="@@equipment.table.title">
-      Equipments
-    </caption>
+<div class="h-full w-full overflow-hidden rounded-md border border-border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="equipment-table-caption"
+  >
+    <table hlmTable data-testid="equipment-table">
+      <caption
+        hlmTableCaption
+        id="equipment-table-caption"
+        class="sr-only"
+        i18n="@@equipment.table.title"
+      >
+        Equipments
+      </caption>
 
-    <thead hlmTableHeader>
-      <tr hlmTableRow>
-        <th hlmTableHead i18n="@@equipment.table.colEquipment">Equipment</th>
-        <th hlmTableHead i18n="@@equipment.table.colBrandModel">Brand / model</th>
-        <th hlmTableHead i18n="@@equipment.table.colStatus">Status</th>
-        <th hlmTableHead i18n="@@equipment.table.colMaintenance">Maintenance</th>
-        <th hlmTableHead i18n="@@equipment.table.colLocation">Location</th>
-      </tr>
-    </thead>
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@equipment.table.colEquipment">Equipment</th>
+          <th hlmTableHead i18n="@@equipment.table.colBrandModel">Brand / model</th>
+          <th hlmTableHead i18n="@@equipment.table.colStatus">Status</th>
+          <th hlmTableHead i18n="@@equipment.table.colMaintenance">Maintenance</th>
+          <th hlmTableHead i18n="@@equipment.table.colLocation">Location</th>
+        </tr>
+      </thead>
 
-    <tbody hlmTableBody>
-      @if (loading() && items().length === 0) {
-        @for (row of skeletonRows; track row) {
-          <tr hlmTableRow>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-          </tr>
-        }
-      } @else {
-        @for (item of items(); track item.id) {
-          <tr hlmTableRow data-testid="equipment-table-row">
-            <td hlmTableCell class="whitespace-normal">
-              <a
-                class="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                [routerLink]="[...detailRouteBase(), item.id]"
-                >{{ typeLabelOf(item.type) }}</a
-              >
-              @if (item.serialNumber) {
-                <span class="block text-sm text-muted-foreground">{{ item.serialNumber }}</span>
-              }
-            </td>
-
-            <td hlmTableCell class="whitespace-normal text-muted-foreground">
-              {{ brandModelOf(item) }}
-            </td>
-
-            <td hlmTableCell>
-              <app-equipment-status-tag kind="status" [value]="item.status" />
-            </td>
-
-            <td hlmTableCell>
-              <app-equipment-status-tag
-                kind="maintenanceDueStatus"
-                [value]="item.maintenanceDueStatus"
-              />
-            </td>
-
-            <td hlmTableCell class="whitespace-normal">
-              @if (item.facilityName; as facility) {
-                <span class="font-medium text-foreground">{{ facility }}</span>
-                @if (item.locationLabel) {
-                  <span class="block text-sm text-muted-foreground">{{ item.locationLabel }}</span>
+      <tbody hlmTableBody>
+        @if (loading() && items().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+            </tr>
+          }
+        } @else {
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="equipment-table-row">
+              <td hlmTableCell class="whitespace-normal">
+                <a
+                  class="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  [routerLink]="[...detailRouteBase(), item.id]"
+                  >{{ typeLabelOf(item.type) }}</a
+                >
+                @if (item.serialNumber) {
+                  <span class="block text-sm text-muted-foreground">{{ item.serialNumber }}</span>
                 }
-              } @else if (item.locationLabel) {
-                <span class="text-muted-foreground">{{ item.locationLabel }}</span>
-              } @else {
-                <span class="text-muted-foreground" i18n="@@equipment.unassigned">Unassigned</span>
-              }
-            </td>
-          </tr>
+              </td>
+
+              <td hlmTableCell class="whitespace-normal text-muted-foreground">
+                {{ brandModelOf(item) }}
+              </td>
+
+              <td hlmTableCell>
+                <app-equipment-status-tag kind="status" [value]="item.status" />
+              </td>
+
+              <td hlmTableCell>
+                <app-equipment-status-tag
+                  kind="maintenanceDueStatus"
+                  [value]="item.maintenanceDueStatus"
+                />
+              </td>
+
+              <td hlmTableCell class="whitespace-normal">
+                @if (item.facilityName; as facility) {
+                  <span class="font-medium text-foreground">{{ facility }}</span>
+                  @if (item.locationLabel) {
+                    <span class="block text-sm text-muted-foreground">{{
+                      item.locationLabel
+                    }}</span>
+                  }
+                } @else if (item.locationLabel) {
+                  <span class="text-muted-foreground">{{ item.locationLabel }}</span>
+                } @else {
+                  <span class="text-muted-foreground" i18n="@@equipment.unassigned"
+                    >Unassigned</span
+                  >
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                [attr.colspan]="columnCount()"
+                i18n="@@equipment.table.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
         }
-      }
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
 </div>

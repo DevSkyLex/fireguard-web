@@ -5,9 +5,12 @@ import { lucideClipboardCheck, lucideCircleAlert } from '@ng-icons/lucide';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAvatarImports } from '@shared/ui/avatar';
-import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
+
+/** Placeholder rows drawn while the tab's own fetch is in flight. */
+const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 
 /**
  * Component InterventionInspectionsTable
@@ -19,7 +22,7 @@ import { InterventionTag } from '../../components/intervention-tag';
  * through the backend's canonical `intervention` search filter. No
  * pagination, no search, no row actions.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -28,9 +31,9 @@ import { InterventionTag } from '../../components/intervention-tag';
   imports: [
     DatePipe,
     EmptyState,
+    HlmSkeleton,
     InterventionTag,
     ...HlmAvatarImports,
-    ...HlmSpinnerImports,
     ...HlmTableImports,
   ],
   providers: [provideIcons({ lucideCircleAlert, lucideClipboardCheck })],
@@ -69,6 +72,11 @@ export class InterventionInspectionsTable {
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
+  //#endregion
+
+  //#region Properties
+  /** Placeholder rows for the loading render. */
+  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
   //#endregion
 
   //#region Methods

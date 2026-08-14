@@ -3,9 +3,12 @@ import { provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucidePackage } from '@ng-icons/lucide';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EmptyState } from '@shared/empty-state';
-import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
+
+/** Placeholder rows drawn while the tab's own fetch is in flight. */
+const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 
 /**
  * Component InterventionEquipmentTable
@@ -17,13 +20,13 @@ import { InterventionTag } from '../../components/intervention-tag';
  * the backend's canonical `intervention` search filter. No pagination, no
  * search, no row actions.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-equipment-table',
-  imports: [EmptyState, InterventionTag, ...HlmSpinnerImports, ...HlmTableImports],
+  imports: [EmptyState, HlmSkeleton, InterventionTag, ...HlmTableImports],
   providers: [provideIcons({ lucideCircleAlert, lucidePackage })],
   templateUrl: './intervention-equipment-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +63,11 @@ export class InterventionEquipmentTable {
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
+  //#endregion
+
+  //#region Properties
+  /** Placeholder rows for the loading render. */
+  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
   //#endregion
 
   //#region Methods

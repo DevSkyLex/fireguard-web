@@ -41,7 +41,7 @@ describe('InterventionInspectionsTable', () => {
     fixture.componentRef.setInput('items', [inspection({ result: 'fail', status: 'closed' })]);
     await fixture.whenStable();
 
-    const row: HTMLElement = byTestId('intervention-inspection-row') as HTMLElement;
+    const row: HTMLElement = byTestId('intervention-inspections-table-row') as HTMLElement;
 
     expect(row.textContent).toContain('Fail');
     expect(row.textContent).toContain('Closed');
@@ -63,25 +63,29 @@ describe('InterventionInspectionsTable', () => {
     ]);
     await fixture.whenStable();
 
-    expect(byTestId('intervention-inspection-row')?.textContent).toContain('Jane Doe');
+    expect(byTestId('intervention-inspections-table-row')?.textContent).toContain('Jane Doe');
   });
 
-  it('should show a loading indicator while the tab fetch is in flight and nothing has loaded yet', async () => {
+  it('should draw skeleton rows while the tab fetch is in flight and nothing has loaded yet', async () => {
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
-    const status: HTMLElement | null = byTestId('intervention-inspections-loading');
+    const rows: NodeListOf<HTMLElement> = root().querySelectorAll('tbody tr');
+    const status: HTMLElement | null = root().querySelector('[role="status"]');
 
+    expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
+    expect(
+      [...rows].every((row: HTMLElement): boolean => row.getAttribute('aria-hidden') === 'true'),
+    ).toBe(true);
     expect(status).not.toBeNull();
-    expect(status?.getAttribute('role')).toBe('status');
   });
 
-  it('should not show the loading indicator once inspections are already on screen', async () => {
+  it('should not show the skeleton rows once inspections are already on screen', async () => {
     fixture.componentRef.setInput('items', [inspection()]);
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
-    expect(byTestId('intervention-inspections-loading')).toBeNull();
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
   });
 
   it('should surface a fetch error as an alert', async () => {

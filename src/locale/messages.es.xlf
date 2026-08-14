@@ -2906,6 +2906,10 @@
         <source>Location</source>
         <target>Ubicación</target>
       </trans-unit>
+      <trans-unit id="equipment.table.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
+      </trans-unit>
       <trans-unit id="common.updated" datatype="html">
         <source>Updated</source>
         <target>Actualizado</target>
@@ -10289,6 +10293,10 @@
         <source>Status</source>
         <target>Estado</target>
       </trans-unit>
+      <trans-unit id="inspection.table.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
+      </trans-unit>
       <trans-unit id="inspection.table.emptyDesc" datatype="html">
         <source>Adjust your filters, or open the inspections your team carries out.</source>
         <target>Ajuste sus filtros, o abra las inspecciones que realiza su equipo.</target>
@@ -10721,6 +10729,10 @@
         <source>Status</source>
         <target>Estado</target>
       </trans-unit>
+      <trans-unit id="org.members.table.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
+      </trans-unit>
       <trans-unit id="org.members.table.colActions" datatype="html">
         <source>Actions</source>
         <target>Acciones</target>
@@ -10772,6 +10784,10 @@
       <trans-unit id="org.invitations.table.colExpires" datatype="html">
         <source>Expires</source>
         <target>Expira</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.table.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
       </trans-unit>
       <trans-unit id="org.invitations.table.noRole" datatype="html">
         <source>No role</source>

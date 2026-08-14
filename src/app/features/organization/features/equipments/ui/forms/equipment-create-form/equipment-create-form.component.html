@@ -50,6 +50,7 @@
         placeholder="CO2"
         i18n-placeholder="@@equipment.form.subtypePlaceholder"
         [formField]="createForm.subType"
+        [attr.aria-invalid]="createForm.subType().touched() && createForm.subType().invalid()"
       />
     </hlm-field>
 
@@ -63,6 +64,7 @@
         placeholder="Kidde"
         i18n-placeholder="@@equipment.form.brandPlaceholder"
         [formField]="createForm.brand"
+        [attr.aria-invalid]="createForm.brand().touched() && createForm.brand().invalid()"
       />
     </hlm-field>
 
@@ -76,6 +78,7 @@
         placeholder="Pro 210"
         i18n-placeholder="@@equipment.form.modelPlaceholder"
         [formField]="createForm.model"
+        [attr.aria-invalid]="createForm.model().touched() && createForm.model().invalid()"
       />
     </hlm-field>
 
@@ -91,6 +94,9 @@
         placeholder="SN-2024-001"
         i18n-placeholder="@@equipment.form.serialPlaceholder"
         [formField]="createForm.serialNumber"
+        [attr.aria-invalid]="
+          createForm.serialNumber().touched() && createForm.serialNumber().invalid()
+        "
       />
     </hlm-field>
 
@@ -106,6 +112,9 @@
         placeholder="Floor 2 — Near elevator"
         i18n-placeholder="@@equipment.form.locationPlaceholder"
         [formField]="createForm.locationLabel"
+        [attr.aria-invalid]="
+          createForm.locationLabel().touched() && createForm.locationLabel().invalid()
+        "
       />
     </hlm-field>
 

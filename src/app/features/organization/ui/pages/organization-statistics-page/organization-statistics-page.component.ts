@@ -1,11 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   signal,
+  viewChild,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -21,6 +24,7 @@ import {
   lucideTriangleAlert,
   lucideWrench,
 } from '@ng-icons/lucide';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { StoreError } from '@core/request-state';
 import {
   resolveInspectionStatusTag,
@@ -38,7 +42,6 @@ import {
   OverviewTrendStore,
 } from '@features/organization/state/organization-dashboard';
 import {
-  OrganizationPageHeader,
   OrganizationTrendChartNotice,
   StatTile,
   type StatTileDelta,
@@ -149,7 +152,12 @@ type OrganizationStatisticsSeverityEntry = {
  * constructor), so switching back to a healthy dashboard state shows
  * whatever they had already resolved.
  *
- * @version 1.1.0
+ * Its title lives in the shell breadcrumb; `app-organization-page-header` is
+ * not rendered here (the org identity row stays on the Today landing page
+ * only). The period toggle and compare switch register on the shell header
+ * through `PageActionsService`.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -159,7 +167,6 @@ type OrganizationStatisticsSeverityEntry = {
     NgIcon,
     ErrorState,
     LineChart,
-    OrganizationPageHeader,
     OrganizationTrendChartNotice,
     StatTile,
     HlmButton,
@@ -288,28 +295,6 @@ export class OrganizationStatisticsPage {
    * @type {WritableSignal<boolean>}
    */
   protected readonly compareToPreviousPeriod: WritableSignal<boolean> = signal<boolean>(true);
-
-  /**
-   * Property pageTitle
-   * @readonly
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {string}
-   */
-  protected readonly pageTitle: string = $localize`:@@org.statistics.pageTitle:Statistics`;
-
-  /**
-   * Property pageSubtitle
-   * @readonly
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {string}
-   */
-  protected readonly pageSubtitle: string = $localize`:@@org.statistics.pageSubtitle:Track facility, member, equipment, and inspection trends across your organization.`;
 
   /**
    * Property severitySkeletonRows
@@ -790,6 +775,13 @@ export class OrganizationStatisticsPage {
       output?.comparison?.summary?.['delta'],
     );
   });
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The period toggle and compare switch, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Lifecycle
@@ -798,11 +790,14 @@ export class OrganizationStatisticsPage {
    *
    * @description
    * Wires the page's period selector to both trend stores so a preset or
-   * compare-toggle change refetches every trend chart in one place.
+   * compare-toggle change refetches every trend chart in one place, and
+   * registers {@link pageActions}.
    *
    * @since 1.0.0
    */
   constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect(() => {
       this.applyPeriodToTrendStores(this.selectedPeriod(), this.compareToPreviousPeriod());
     });

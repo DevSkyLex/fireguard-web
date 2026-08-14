@@ -45,7 +45,6 @@ import type {
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
-import { OrganizationPageHeader } from '@features/organization/ui/components';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
@@ -132,7 +131,11 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
  * tab's content shares one `max-w-3xl` so the page does not visibly resize
  * as the reader switches tabs.
  *
- * @version 1.2.0
+ * Its title lives in the shell breadcrumb; `app-organization-page-header` is
+ * not rendered here (the org identity row stays on the Today landing page
+ * only), and this page has no header actions of its own to register.
+ *
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -146,7 +149,6 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
     OrganizationGeneralForm,
     OrganizationLogoPicker,
     OrganizationNotificationsForm,
-    OrganizationPageHeader,
     OrganizationPlanSelector,
     OrganizationRegionalForm,
     OrganizationUsagePanel,

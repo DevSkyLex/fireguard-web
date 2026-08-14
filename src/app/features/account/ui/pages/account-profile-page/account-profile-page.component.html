@@ -1,13 +1,4 @@
-<div id="account-profile" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <header class="flex min-w-0 flex-col gap-0.5">
-    <h1 class="text-xl font-semibold tracking-tight text-foreground" i18n="@@account.profile.title">
-      Your account
-    </h1>
-    <p class="text-sm text-muted-foreground" i18n="@@account.profile.subtitle">
-      Your identity, your picture and your language.
-    </p>
-  </header>
-
+<div id="account-profile" class="flex h-full flex-col gap-6 p-4 md:p-6">
   <div class="flex max-w-2xl flex-col gap-6">
     @if (hasProfileError()) {
       <app-error-state

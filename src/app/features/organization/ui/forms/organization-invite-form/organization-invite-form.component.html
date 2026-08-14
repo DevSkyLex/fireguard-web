@@ -23,6 +23,7 @@
         i18n-placeholder="@@org.inviteForm.emailPlaceholder"
         [formField]="inviteForm.email"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="inviteForm.email().touched() && inviteForm.email().invalid()"
       />
       @if (inviteForm.email().touched() && inviteForm.email().invalid()) {
         <hlm-field-error>{{ inviteForm.email().errors()[0].message }}</hlm-field-error>

@@ -1,14 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -26,6 +29,7 @@ import {
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState, CallStatus, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -37,10 +41,6 @@ import {
   type OrganizationMemberStatusFilter,
   type OrganizationQuotaItemOutput,
 } from '@features/organization/models';
-import {
-  ORGANIZATION_CONTEXT_PORT,
-  type OrganizationContextPort,
-} from '@features/organization/ports';
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import {
   OrganizationQuotaStore,
@@ -50,11 +50,7 @@ import {
   MEMBERS_PAGE_SIZE,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
-import {
-  ListPagination,
-  OrganizationPageHeader,
-  StatTile,
-} from '@features/organization/ui/components';
+import { ListPagination, StatTile } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
@@ -126,7 +122,13 @@ type OrganizationMembersKpiTile = {
  * reflect. `OrganizationQuotaStore` (root-provided) supplies the "Seats
  * used" tile's used/limit reading, shared with the settings Usage tab.
  *
- * @version 1.2.0
+ * Its title lives in the shell breadcrumb; `app-organization-page-header` is
+ * not rendered here (the org identity row stays on the Today landing page
+ * only), {@link subtitle}'s member count stays as a lead line at content
+ * top, and "Invite member" registers on the shell header through
+ * `PageActionsService`.
+ *
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -141,7 +143,6 @@ type OrganizationMembersKpiTile = {
     OrganizationInviteDialog,
     OrganizationMemberRolesDialog,
     OrganizationMemberTable,
-    OrganizationPageHeader,
     StatTile,
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
@@ -194,10 +195,6 @@ export class OrganizationMembersPage {
   private readonly submissionGates: SubmissionGateService =
     inject<SubmissionGateService>(SubmissionGateService);
 
-  /** The routed organization, identifying `app-organization-page-header`. */
-  protected readonly organizationContext: OrganizationContextPort =
-    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
-
   /**
    * Property quotaStore
    * @readonly
@@ -209,8 +206,12 @@ export class OrganizationMembersPage {
   protected readonly quotaStore: OrganizationQuotaStoreType =
     inject<OrganizationQuotaStoreType>(OrganizationQuotaStore);
 
-  /** The page's heading, matching the nav entry's own `route.members` label. */
-  protected readonly pageTitle: string = $localize`:@@route.members:Members`;
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "Invite member" button, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
 
   /** Currently selected member ids, scoped to the loaded page — cleared on every reload. */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
@@ -545,13 +546,15 @@ export class OrganizationMembersPage {
    * @description
    * Wires the resource load (re-firing whenever the organization or the
    * resolved permissions change, and resetting the search/status filter with
-   * it), the debounced roster search, and the page-level error banner's
-   * auto-reset.
+   * it), the debounced roster search, the page-level error banner's
+   * auto-reset, and registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const includeMembers: boolean = this.canReadMembers();

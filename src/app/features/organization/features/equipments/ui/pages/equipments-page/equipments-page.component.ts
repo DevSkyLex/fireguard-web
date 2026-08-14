@@ -1,14 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -23,6 +26,7 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   EquipmentOutput,
@@ -75,7 +79,10 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * edited (`FEATURE.md` "The record is the edit surface"), so this page has
  * no row menu and no bulk actions to orchestrate.
  *
- * @version 1.0.0
+ * Its title lives in the shell breadcrumb; "New equipment" registers on the
+ * shell header through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -245,6 +252,13 @@ export class EquipmentsPage {
   /** Names an equipment type on a closed select trigger. */
   protected readonly typeLabelOf: (value: EquipmentType) => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? value;
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "New equipment" button, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -256,12 +270,15 @@ export class EquipmentsPage {
    * Wires the search round-trip and the load effect, the same shape
    * `InterventionsPage` uses: a settled (debounced) search resets the page
    * synchronously with the query navigation so the load effect fires once,
-   * already on the first page of the new result set.
+   * already on the first page of the new result set. Also registers
+   * {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const term: string = this.searchTerm();
       untracked((): void => {

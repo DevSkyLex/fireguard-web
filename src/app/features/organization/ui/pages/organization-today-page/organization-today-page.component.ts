@@ -1,5 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  viewChild,
+  type Signal,
+  type TemplateRef,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -19,6 +28,7 @@ import {
   lucideUndo2,
   lucideWrench,
 } from '@ng-icons/lucide';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   InterventionOutput,
@@ -124,7 +134,16 @@ type OrganizationTodayAlertRow = {
  * un-linked and keeps `OrganizationTodayQueue` rendered in `embedded` mode
  * underneath it as the page's one remaining in-page preview.
  *
- * @version 3.0.0
+ * The deliberate exception to the shell-header migration: `app-organization-
+ * page-header` still renders here, carrying the org identity (avatar, plan,
+ * status) the other organization pages no longer show — this is the one
+ * landing page where it belongs. Its route also opts out of the breadcrumb
+ * trail (`data.breadcrumb: false`), so the header's own `<h1>` stays the
+ * document's only one. "New intervention" still registers on the shell
+ * header through `PageActionsService`, for the same click-target consistency
+ * as every other migrated page.
+ *
+ * @version 3.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -514,6 +533,26 @@ export class OrganizationTodayPage {
   > = computed((): readonly OrganizationDashboardRecentIntervention[] =>
     this.dashboardStore.recentInterventions(),
   );
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "New intervention" button, registered on the shell header instead of `app-organization-page-header`'s own action slot. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Registers {@link pageActions} on the shell header.
+   * @access public
+   * @since 3.1.0
+   */
+  public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+  }
   //#endregion
 
   //#region Methods

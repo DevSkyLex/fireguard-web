@@ -48,6 +48,17 @@ const TEST_ROUTES: Routes = [
           },
         ],
       },
+      {
+        path: 'workspace',
+        title: 'Workspace',
+        children: [
+          {
+            path: '',
+            component: TestPage,
+            data: { breadcrumb: false },
+          },
+        ],
+      },
     ],
   },
 ];
@@ -151,10 +162,33 @@ describe('BreadcrumbService', () => {
       firstChild: null,
     } as unknown as ActivatedRoute;
 
-    const items = (
-      service as unknown as { buildBreadcrumbs: (route: ActivatedRoute) => unknown[] }
+    const result = (
+      service as unknown as {
+        buildBreadcrumbs: (route: ActivatedRoute) => {
+          trail: unknown[];
+          deepestSuppressed: boolean;
+        };
+      }
     ).buildBreadcrumbs(unsafeRoute);
 
-    expect(items).toEqual([]);
+    expect(result.trail).toEqual([]);
+  });
+
+  /**
+   * `organization-today-page`'s own bug: the leaf suppresses its breadcrumb
+   * (`data.breadcrumb: false`) under a title-only ancestor, which used to
+   * leave that ancestor's node as the trail's last entry, marked `current`
+   * and overlaid with the leaf's own live page title.
+   */
+  it('should not mark an ancestor current when the deepest route suppresses its own breadcrumb', async () => {
+    await router.navigateByUrl('/workspace');
+
+    pageTitle.set('Some unrelated leaf title');
+
+    const items = service.items();
+
+    expect(items.map((item) => item.label)).toEqual(['Workspace']);
+    expect(items.every((item) => item.current === false)).toBe(true);
+    expect(items[0]?.routerLink).toBe('/workspace');
   });
 });

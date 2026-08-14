@@ -1,16 +1,22 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  Component,
+  input as inputSignal,
   provideZonelessChangeDetection,
   signal,
   type DebugElement,
+  type InputSignal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -146,6 +152,37 @@ const change = (overrides: Partial<InterventionChangeOutput> = {}): Intervention
 
 const inBody = (id: string): HTMLElement =>
   document.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+
+/**
+ * Stands in for the shell's `DashboardPageActions`. Discussion and the
+ * "more actions" menu are registered as a `TemplateRef` on the real
+ * `PageActionsService` (never mocked, so the constructor effect and the
+ * teardown clear behave exactly as in production) rather than rendered in
+ * the page's own template — a spec that needs to interact with either
+ * renders the currently registered template through this outlet, the same
+ * way the shell does. This is the approach every migrated page's spec
+ * reuses (`InterventionsPage`'s spec is the other example).
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    inputSignal<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
+const byPageActionsTestId = (id: string): HTMLElement | null =>
+  renderPageActions().querySelector(`[data-testid="${id}"]`);
 
 const createPage = async (): Promise<ComponentFixture<InterventionDetailPage>> => {
   const created: ComponentFixture<InterventionDetailPage> =
@@ -285,7 +322,7 @@ describe('InterventionDetailPage', () => {
         { provide: InterventionPublicationService, useValue: { publish } },
         { provide: FeedbackService, useValue: { success: vi.fn(), error: feedbackError } },
         { provide: TitleService, useValue: { setTitle: vi.fn() } },
-        { provide: Router, useValue: { navigate } },
+        { provide: Router, useValue: { navigate, events: EMPTY } },
         { provide: ConversationService, useValue: { openSubjectThread } },
         {
           provide: MEMBER_DIRECTORY_PORT,
@@ -839,7 +876,7 @@ describe('InterventionDetailPage', () => {
         }),
       );
       fixture = await createPage();
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
 
       const entries: HTMLElement[] = Array.from(
@@ -858,7 +895,7 @@ describe('InterventionDetailPage', () => {
         }),
       );
       fixture = await createPage();
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
 
       const entries: HTMLElement[] = Array.from(
@@ -871,7 +908,7 @@ describe('InterventionDetailPage', () => {
     it('should offer no transition group when the band owns every remaining move, even with the overflow menu still present for Duplicate', async () => {
       current.set(intervention({ status: 'draft', allowedTransitions: ['planned', 'abandoned'] }));
       fixture = await createPage();
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
 
       expect(document.querySelector('[data-testid="intervention-detail-transition"]')).toBeNull();
@@ -884,7 +921,7 @@ describe('InterventionDetailPage', () => {
       current.set(intervention({ status: 'draft', allowedTransitions: ['planned'] }));
       fixture = await createPage();
 
-      expect(root().querySelector('[data-testid="intervention-detail-menu"]')).toBeNull();
+      expect(byPageActionsTestId('intervention-detail-menu')).toBeNull();
     });
 
     it('should still offer the menu and its transition group to a member with only transition rights, and dispatch the exact move on pick', async () => {
@@ -898,9 +935,9 @@ describe('InterventionDetailPage', () => {
       );
       fixture = await createPage();
 
-      expect(byTestId('intervention-detail-menu')).not.toBeNull();
+      expect(byPageActionsTestId('intervention-detail-menu')).not.toBeNull();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
 
       const entries: HTMLElement[] = Array.from(
@@ -1017,7 +1054,7 @@ describe('InterventionDetailPage', () => {
     it('should abandon only after the confirmation is accepted', async () => {
       fixture = await createPage();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
       (inBody('intervention-detail-abandon') as HTMLButtonElement).click();
       await fixture.whenStable();
@@ -1035,7 +1072,7 @@ describe('InterventionDetailPage', () => {
     it('should delete through the list store, the only one that repairs the collection', async () => {
       fixture = await createPage();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
       (inBody('intervention-detail-delete') as HTMLButtonElement).click();
       await fixture.whenStable();
@@ -1051,7 +1088,7 @@ describe('InterventionDetailPage', () => {
       current.set(intervention({ name: 'Quarterly sweep', type: 'inventory', priority: 'normal' }));
       fixture = await createPage();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
       (inBody('intervention-detail-duplicate') as HTMLButtonElement).click();
 
@@ -1072,7 +1109,7 @@ describe('InterventionDetailPage', () => {
       current.set(intervention({ status: 'in_progress' }));
       fixture = await createPage();
 
-      byTestId('intervention-detail-menu').click();
+      byPageActionsTestId('intervention-detail-menu')?.click();
       await fixture.whenStable();
 
       expect(inBody('intervention-detail-duplicate')).toBeNull();
@@ -1308,16 +1345,14 @@ describe('InterventionDetailPage', () => {
     it('should offer the Discussion trigger when messaging.read is granted', async () => {
       fixture = await createPage();
 
-      expect(byTestId('intervention-detail-discussion-trigger')).toBeTruthy();
+      expect(byPageActionsTestId('intervention-detail-discussion-trigger')).toBeTruthy();
     });
 
     it('should hide the Discussion trigger without messaging.read', async () => {
       permitted.delete('organization.messaging.read');
       fixture = await createPage();
 
-      expect(
-        root().querySelector('[data-testid="intervention-detail-discussion-trigger"]'),
-      ).toBeNull();
+      expect(byPageActionsTestId('intervention-detail-discussion-trigger')).toBeNull();
     });
 
     it('should open the discussion sheet and defer the thread load until then', async () => {
@@ -1325,7 +1360,9 @@ describe('InterventionDetailPage', () => {
 
       expect(openSubjectThread).not.toHaveBeenCalled();
 
-      byTestId('intervention-detail-discussion-trigger').dispatchEvent(new Event('click'));
+      byPageActionsTestId('intervention-detail-discussion-trigger')?.dispatchEvent(
+        new Event('click'),
+      );
       await fixture.whenStable();
 
       expect(openSubjectThread).toHaveBeenCalledWith({

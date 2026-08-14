@@ -1,14 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -25,6 +28,7 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
@@ -72,7 +76,10 @@ type FacilityLayout = 'list' | 'grid';
  * surface"), so this page has no row menu beyond those two and no bulk
  * actions.
  *
- * @version 1.0.0
+ * Its title lives in the shell breadcrumb; "New facility" registers on the
+ * shell header through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -253,6 +260,13 @@ export class FacilitiesPage {
     this.organizationId(),
     'facilities',
   ]);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "New facility" button, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -264,11 +278,14 @@ export class FacilitiesPage {
    * Wires the search round-trip and the load effect: a settled (debounced)
    * search resets the page synchronously with the query navigation so the
    * load effect fires once, already on the first page of the new result set.
+   * Also registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const term: string = this.searchTerm();
       untracked((): void => {

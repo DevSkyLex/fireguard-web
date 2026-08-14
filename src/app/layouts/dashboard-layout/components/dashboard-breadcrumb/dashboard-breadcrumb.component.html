@@ -21,11 +21,22 @@
       -->
       <li hlmBreadcrumbItem class="min-w-0">
         @if (item.current || !item.routerLink) {
-          <span hlmBreadcrumbPage class="block truncate">{{ item.label }}</span>
+          <h1
+            hlmBreadcrumbPage
+            data-testid="dashboard-breadcrumb-current"
+            class="block max-w-[40ch] truncate text-sm font-semibold text-foreground"
+            [title]="item.label"
+          >
+            {{ item.label }}
+          </h1>
         } @else {
-          <a hlmBreadcrumbLink class="block truncate" [routerLink]="item.routerLink">{{
-            item.label
-          }}</a>
+          <a
+            hlmBreadcrumbLink
+            class="block truncate"
+            [routerLink]="item.routerLink"
+            [title]="item.label"
+            >{{ item.label }}</a
+          >
         }
       </li>
     }

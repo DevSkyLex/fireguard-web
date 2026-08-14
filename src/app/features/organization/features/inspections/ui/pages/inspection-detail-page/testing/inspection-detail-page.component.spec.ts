@@ -1,6 +1,16 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -37,6 +47,28 @@ const inspection = (overrides: Partial<InspectionOutput> = {}): InspectionOutput
     updatedAt: '2026-08-10T00:00:00Z',
     ...overrides,
   }) as InspectionOutput;
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `InterventionsPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
 
 describe('InspectionDetailPage', () => {
   let fixture: ComponentFixture<InspectionDetailPage>;
@@ -100,12 +132,10 @@ describe('InspectionDetailPage', () => {
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
 
-  it('should show the inspection title once resolved', async () => {
+  it('should resolve the inspection title once the record lands', async () => {
     await createPage();
 
-    const text: string = (fixture.nativeElement as HTMLElement).textContent ?? '';
-
-    expect(text).toContain('Inspection 2026-08-10');
+    expect(fixture.componentInstance['title']()).toBe('Inspection 2026-08-10');
   });
 
   it('should show a loading state before the inspection resolves', async () => {
@@ -140,20 +170,20 @@ describe('InspectionDetailPage', () => {
   it('should offer Submit and Cancel while draft', async () => {
     await createPage();
 
-    const element: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('[data-testid="inspection-submit"]')).not.toBeNull();
-    expect(element.querySelector('[data-testid="inspection-cancel"]')).not.toBeNull();
-    expect(element.querySelector('[data-testid="inspection-close"]')).toBeNull();
+    const header: HTMLElement = renderPageActions();
+    expect(header.querySelector('[data-testid="inspection-submit"]')).not.toBeNull();
+    expect(header.querySelector('[data-testid="inspection-cancel"]')).not.toBeNull();
+    expect(header.querySelector('[data-testid="inspection-close"]')).toBeNull();
   });
 
   it('should offer only Close while submitted', async () => {
     selectedInspection.set(inspection({ status: 'submitted' }));
     await createPage();
 
-    const element: HTMLElement = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('[data-testid="inspection-close"]')).not.toBeNull();
-    expect(element.querySelector('[data-testid="inspection-submit"]')).toBeNull();
-    expect(element.querySelector('[data-testid="inspection-cancel"]')).toBeNull();
+    const header: HTMLElement = renderPageActions();
+    expect(header.querySelector('[data-testid="inspection-close"]')).not.toBeNull();
+    expect(header.querySelector('[data-testid="inspection-submit"]')).toBeNull();
+    expect(header.querySelector('[data-testid="inspection-cancel"]')).toBeNull();
   });
 
   it('should offer no lifecycle action once closed', async () => {
@@ -161,7 +191,7 @@ describe('InspectionDetailPage', () => {
     await createPage();
 
     expect(
-      (fixture.nativeElement as HTMLElement)
+      renderPageActions()
         .querySelector('[data-testid="inspection-lifecycle-band"]')
         ?.textContent?.trim(),
     ).toBe('');

@@ -1,8 +1,18 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -67,6 +77,34 @@ const createPage = async (
   await created.whenStable();
 
   return created;
+};
+
+/**
+ * Stands in for the shell's `DashboardPageActions`: every migrated page
+ * registers its header actions as a `TemplateRef` on the real
+ * `PageActionsService` (never mocked, so the constructor effect and the
+ * teardown clear behave exactly as in production) rather than rendering them
+ * in its own template. A spec that needs to click one of those buttons
+ * renders the currently registered template through this outlet, the same
+ * way the shell does — this is the approach every migrated page's spec
+ * reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
 };
 
 describe('InterventionsPage', () => {
@@ -158,7 +196,7 @@ describe('InterventionsPage', () => {
           provide: FeedbackService,
           useValue: { warn: feedbackWarn, error: feedbackError },
         },
-        { provide: Router, useValue: { navigate } },
+        { provide: Router, useValue: { navigate, events: EMPTY } },
         { provide: ActivatedRoute, useValue: {} },
       ],
     });
@@ -181,6 +219,21 @@ describe('InterventionsPage', () => {
         ],
       },
     });
+  });
+
+  it('should render the "New intervention" button through the shell header actions', async () => {
+    fixture = await createPage();
+
+    const header: HTMLElement = renderPageActions();
+    const button: HTMLButtonElement | null = header.querySelector(
+      '[data-testid="interventions-new"]',
+    );
+
+    expect(button).not.toBeNull();
+    button?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
   });
 
   it('should load the list for the workspace on arrival', async () => {

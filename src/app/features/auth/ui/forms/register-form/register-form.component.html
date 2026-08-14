@@ -17,6 +17,9 @@
           data-testid="register-first-name"
           [formField]="registerForm.firstName"
           [attr.aria-required]="true"
+          [attr.aria-invalid]="
+            registerForm.firstName().touched() && registerForm.firstName().invalid()
+          "
         />
         @if (registerForm.firstName().touched() && registerForm.firstName().invalid()) {
           <hlm-field-error>{{ registerForm.firstName().errors()[0].message }}</hlm-field-error>
@@ -39,6 +42,9 @@
           data-testid="register-last-name"
           [formField]="registerForm.lastName"
           [attr.aria-required]="true"
+          [attr.aria-invalid]="
+            registerForm.lastName().touched() && registerForm.lastName().invalid()
+          "
         />
         @if (registerForm.lastName().touched() && registerForm.lastName().invalid()) {
           <hlm-field-error>{{ registerForm.lastName().errors()[0].message }}</hlm-field-error>
@@ -63,6 +69,7 @@
         data-testid="register-email"
         [formField]="registerForm.email"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="registerForm.email().touched() && registerForm.email().invalid()"
       />
       @if (registerForm.email().touched() && registerForm.email().invalid()) {
         <hlm-field-error>{{ registerForm.email().errors()[0].message }}</hlm-field-error>

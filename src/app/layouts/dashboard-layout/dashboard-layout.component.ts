@@ -53,6 +53,13 @@ import {
  * The shell never scrolls: it is `overflow-hidden` and each column owns its own
  * scroller, so a pinned toolbar stays put while its content moves.
  *
+ * The header is 48px, sized to the 32px control rhythm rather than to hold a
+ * title band of its own: the breadcrumb's current crumb is the document's
+ * `h1`, so no routed page repeats it. For the same reason the routed content
+ * column carries no `container mx-auto` — a page's own density utilities
+ * (`p-4 md:p-6`) now own its horizontal rhythm, and a page that wants the
+ * shell's full width is free to take it.
+ *
  * @version 1.0.0
  *
  * @example
@@ -190,19 +197,22 @@ export class DashboardLayout {
   );
 
   /**
-   * Property main
+   * Property content
    * @readonly
    *
    * @description
-   * The main column, focused by the skip link.
+   * The routed content column, focused by the skip link. It is the target
+   * rather than the `<main>` landmark itself so that activating the link
+   * lands past the header's title and tool cluster, on the page the user
+   * asked to reach.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
    */
-  private readonly main: Signal<ElementRef<HTMLElement> | undefined> =
-    viewChild<ElementRef<HTMLElement>>('main');
+  private readonly content: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('content');
 
   /**
    * Property toggleSidebarLabel
@@ -241,7 +251,7 @@ export class DashboardLayout {
    */
   protected skipToContent(event: Event): void {
     event.preventDefault();
-    this.main()?.nativeElement.focus();
+    this.content()?.nativeElement.focus();
   }
   //#endregion
 }

@@ -27,6 +27,7 @@
         i18n-placeholder="@@org.team.form.namePlaceholder"
         [formField]="createForm.name"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="createForm.name().touched() && createForm.name().invalid()"
       />
       <hlm-field-description i18n="@@org.team.form.nameHint">
         Lowercase letters, numbers and underscores, 3-50 characters.
@@ -51,6 +52,9 @@
         placeholder="What this role is for"
         i18n-placeholder="@@org.team.form.descriptionPlaceholder"
         [formField]="createForm.description"
+        [attr.aria-invalid]="
+          createForm.description().touched() && createForm.description().invalid()
+        "
       ></textarea>
       @if (createForm.description().touched() && createForm.description().invalid()) {
         <hlm-field-error>{{ createForm.description().errors()[0].message }}</hlm-field-error>

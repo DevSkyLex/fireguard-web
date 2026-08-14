@@ -1,12 +1,4 @@
-<div id="organization-settings" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
-  <app-organization-page-header
-    [organization]="organization()"
-    title="Organization settings"
-    i18n-title="@@org.settings.title"
-    subtitle="General identity, subscription, usage and workspace preferences."
-    i18n-subtitle="@@org.settings.subtitle"
-  />
-
+<div id="organization-settings" class="flex h-full flex-col gap-6 p-4 md:p-6">
   @if (!organizationReady()) {
     <div
       class="flex max-w-2xl flex-col gap-4"

@@ -8,8 +8,10 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -31,6 +33,7 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
@@ -198,7 +201,12 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
  * {@link applyFilter} path the popover's own selects use, so the URL stays
  * the single source of truth (`FEATURE.md`).
  *
- * @version 6.3.0
+ * Its title lives in the shell breadcrumb, not in-page — the route's
+ * `data.breadcrumb` supplies it. "New intervention" registers on the shell
+ * header through `PageActionsService` instead of rendering its own title
+ * band.
+ *
+ * @version 6.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -431,6 +439,26 @@ export class InterventionsPage {
 
   /** Unsubscribes the export's in-flight drain if the page is left mid-fetch. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The "New intervention" button, registered on the shell header instead of
+   * rendering in-page — the shell header carries every routed page's title
+   * and actions now (`ARCHITECTURE.md` §9.3).
+   *
+   * @access private
+   * @since 6.4.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
 
   /** The signed-in member, resolving the "my interventions" chip and the identity gates. */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
@@ -1278,6 +1306,8 @@ export class InterventionsPage {
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+
     effect((): void => {
       const term: string = this.searchTerm();
       untracked((): void => {

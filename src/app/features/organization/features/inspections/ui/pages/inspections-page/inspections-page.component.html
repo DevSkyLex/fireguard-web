@@ -1,15 +1,4 @@
 <div id="inspections" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
-    <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.inspections">Inspections</h1>
-
-    @if (canCreate()) {
-      <a hlmBtn data-testid="inspections-new" [routerLink]="[...listRouteBase(), 'create']">
-        <ng-icon name="lucidePlus" aria-hidden="true" />
-        <span i18n="@@inspection.newButton">New inspection</span>
-      </a>
-    }
-  </div>
-
   <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <hlm-popover sideOffset="5" align="start">
       <button
@@ -171,3 +160,19 @@
     />
   }
 </div>
+
+<ng-template #pageActions>
+  @if (canCreate()) {
+    <a
+      hlmBtn
+      class="max-sm:min-h-11"
+      data-testid="inspections-new"
+      i18n-aria-label="@@inspection.newButton"
+      aria-label="New inspection"
+      [routerLink]="[...listRouteBase(), 'create']"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="max-sm:hidden" i18n="@@inspection.newButton">New inspection</span>
+    </a>
+  }
+</ng-template>

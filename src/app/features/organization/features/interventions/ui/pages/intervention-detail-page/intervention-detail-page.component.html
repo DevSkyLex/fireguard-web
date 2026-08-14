@@ -12,110 +12,21 @@
       <hlm-skeleton class="h-64 w-full" />
     </div>
   } @else if (store.intervention(); as intervention) {
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div class="flex min-w-0 flex-col gap-1">
-        <h1 class="min-w-0 truncate text-2xl font-semibold tracking-tight">
-          {{ intervention.name }}
-        </h1>
-        <p class="text-sm text-muted-foreground" data-testid="intervention-detail-meta">
-          {{ metaLine() }}
-        </p>
-      </div>
+    <p class="text-sm text-muted-foreground" data-testid="intervention-detail-meta">
+      {{ metaLine() }}
+    </p>
 
-      <div class="flex flex-wrap items-center gap-2">
-        @if (canDiscuss()) {
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            class="max-sm:size-11"
-            data-testid="intervention-detail-discussion-trigger"
-            aria-controls="intervention-discussion-sheet"
-            [attr.aria-expanded]="discussionSheetVisible()"
-            (click)="discussionSheetVisible.set(true)"
-          >
-            <ng-icon name="lucideMessagesSquare" class="text-base" aria-hidden="true" />
-            <span i18n="@@intervention.discussion.trigger">Discussion</span>
-          </button>
-        }
-
-        @if (
-          transitionTargets().length > 0 || canPlan() || canAbandon() || canDeleteIntervention()
-        ) {
-          <button
-            hlmBtn
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            align="end"
-            class="max-sm:size-11"
-            data-testid="intervention-detail-menu"
-            [hlmDropdownMenuTrigger]="moreMenu"
-          >
-            <ng-icon name="lucideEllipsis" aria-hidden="true" />
-            <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
-          </button>
-
-          <ng-template #moreMenu>
-            <hlm-dropdown-menu class="w-56">
-              @if (transitionTargets().length > 0) {
-                <hlm-dropdown-menu-group aria-labelledby="intervention-transition-group-label">
-                  <hlm-dropdown-menu-label
-                    id="intervention-transition-group-label"
-                    i18n="@@intervention.detail.statusMenuLabel"
-                    >Send it to</hlm-dropdown-menu-label
-                  >
-                  @for (target of transitionTargets(); track target) {
-                    <button
-                      hlmDropdownMenuItem
-                      data-testid="intervention-detail-transition"
-                      (click)="onTransitionSelect(target)"
-                    >
-                      <app-intervention-tag kind="status" [value]="target" asOption />
-                    </button>
-                  }
-                </hlm-dropdown-menu-group>
-                @if (canPlan() || canAbandon() || canDeleteIntervention()) {
-                  <hlm-dropdown-menu-separator />
-                }
-              }
-              @if (canPlan()) {
-                <button
-                  hlmDropdownMenuItem
-                  data-testid="intervention-detail-duplicate"
-                  (click)="duplicateIntervention()"
-                >
-                  <ng-icon name="lucideCopy" aria-hidden="true" />
-                  <span i18n="@@intervention.duplicate.action">Duplicate</span>
-                </button>
-              }
-              @if (canAbandon()) {
-                <button
-                  hlmDropdownMenuItem
-                  data-testid="intervention-detail-abandon"
-                  (click)="requestAbandon()"
-                >
-                  <ng-icon name="lucideBan" aria-hidden="true" />
-                  <span i18n="@@intervention.abandon.action">Abandon intervention</span>
-                </button>
-              }
-              @if (canDeleteIntervention()) {
-                <button
-                  hlmDropdownMenuItem
-                  variant="destructive"
-                  data-testid="intervention-detail-delete"
-                  (click)="requestDeleteIntervention()"
-                >
-                  <ng-icon name="lucideTrash2" aria-hidden="true" />
-                  <span i18n="@@intervention.delete.action">Delete intervention</span>
-                </button>
-              }
-            </hlm-dropdown-menu>
-          </ng-template>
-        }
-      </div>
-    </div>
+    <app-intervention-status-band
+      [status]="intervention.status"
+      [phase]="phase()"
+      [action]="commandAction()"
+      [busy]="store.saving()"
+      [blockersCount]="blockerIssues().length"
+      [revision]="intervention.revision"
+      [reviewNote]="intervention.reviewNote"
+      (invoked)="invokeCommandAction()"
+      (blockersRequested)="revealBlockers()"
+    />
 
     <app-intervention-status-band
       [status]="intervention.status"
@@ -718,3 +629,97 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
+
+<ng-template #pageActions>
+  @if (canDiscuss()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="max-sm:size-11"
+      data-testid="intervention-detail-discussion-trigger"
+      aria-controls="intervention-discussion-sheet"
+      i18n-aria-label="@@intervention.discussion.trigger"
+      aria-label="Discussion"
+      [attr.aria-expanded]="discussionSheetVisible()"
+      (click)="discussionSheetVisible.set(true)"
+    >
+      <ng-icon name="lucideMessagesSquare" class="text-base" aria-hidden="true" />
+      <span class="max-sm:hidden" i18n="@@intervention.discussion.trigger">Discussion</span>
+    </button>
+  }
+
+  @if (transitionTargets().length > 0 || canPlan() || canAbandon() || canDeleteIntervention()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      align="end"
+      class="max-sm:size-11"
+      data-testid="intervention-detail-menu"
+      [hlmDropdownMenuTrigger]="moreMenu"
+    >
+      <ng-icon name="lucideEllipsis" aria-hidden="true" />
+      <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
+    </button>
+
+    <ng-template #moreMenu>
+      <hlm-dropdown-menu class="w-56">
+        @if (transitionTargets().length > 0) {
+          <hlm-dropdown-menu-group aria-labelledby="intervention-transition-group-label">
+            <hlm-dropdown-menu-label
+              id="intervention-transition-group-label"
+              i18n="@@intervention.detail.statusMenuLabel"
+              >Send it to</hlm-dropdown-menu-label
+            >
+            @for (target of transitionTargets(); track target) {
+              <button
+                hlmDropdownMenuItem
+                data-testid="intervention-detail-transition"
+                (click)="onTransitionSelect(target)"
+              >
+                <app-intervention-tag kind="status" [value]="target" asOption />
+              </button>
+            }
+          </hlm-dropdown-menu-group>
+          @if (canPlan() || canAbandon() || canDeleteIntervention()) {
+            <hlm-dropdown-menu-separator />
+          }
+        }
+        @if (canPlan()) {
+          <button
+            hlmDropdownMenuItem
+            data-testid="intervention-detail-duplicate"
+            (click)="duplicateIntervention()"
+          >
+            <ng-icon name="lucideCopy" aria-hidden="true" />
+            <span i18n="@@intervention.duplicate.action">Duplicate</span>
+          </button>
+        }
+        @if (canAbandon()) {
+          <button
+            hlmDropdownMenuItem
+            data-testid="intervention-detail-abandon"
+            (click)="requestAbandon()"
+          >
+            <ng-icon name="lucideBan" aria-hidden="true" />
+            <span i18n="@@intervention.abandon.action">Abandon intervention</span>
+          </button>
+        }
+        @if (canDeleteIntervention()) {
+          <button
+            hlmDropdownMenuItem
+            variant="destructive"
+            data-testid="intervention-detail-delete"
+            (click)="requestDeleteIntervention()"
+          >
+            <ng-icon name="lucideTrash2" aria-hidden="true" />
+            <span i18n="@@intervention.delete.action">Delete intervention</span>
+          </button>
+        }
+      </hlm-dropdown-menu>
+    </ng-template>
+  }
+</ng-template>

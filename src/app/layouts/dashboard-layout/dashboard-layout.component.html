@@ -19,7 +19,7 @@
   -->
   <a
     class="sr-only rounded-md bg-background text-sm font-semibold text-foreground shadow-lg outline-2 outline-ring focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-2"
-    href="#dashboard-main"
+    href="#dashboard-content"
     i18n="@@dashboard.skipToContent"
     data-testid="dashboard-skip-link"
     (click)="skipToContent($event)"
@@ -45,8 +45,8 @@
     }
   </hlm-sidebar>
 
-  <main #main hlmSidebarInset id="dashboard-main" tabindex="-1" class="min-w-0 outline-none">
-    <header class="flex h-16 shrink-0 items-center gap-2 px-4">
+  <main hlmSidebarInset id="dashboard-main" class="min-w-0 outline-none">
+    <header class="flex h-12 shrink-0 items-center gap-2 px-4">
       <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
 
       <div class="mr-2 flex h-4 items-center">
@@ -64,8 +64,13 @@
       </div>
     </header>
 
-    <div class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-b-xl">
-      <div class="container mx-auto flex min-h-0 flex-1 flex-col px-0">
+    <div
+      #content
+      id="dashboard-content"
+      tabindex="-1"
+      class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-b-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <div class="flex min-h-0 flex-1 flex-col px-0">
         <router-outlet />
       </div>
     </div>

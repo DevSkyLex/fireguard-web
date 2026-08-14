@@ -2,6 +2,7 @@ import { DatePipe, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -10,14 +11,17 @@ import {
   PLATFORM_ID,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTrash2 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -65,8 +69,9 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * {@link FacilityOverviewStore}; **Information** renders
  * {@link FacilityInformationPanel}, the in-place edit surface for every
  * writable property (`FEATURE.md` "The record is the edit surface" — there
- * is no separate edit page). A danger, confirm-gated **Delete** action sits
- * in the header (`FEATURE.md` "Deletion").
+ * is no separate edit page). A danger, confirm-gated **Delete** action
+ * registers on the shell header through `PageActionsService` (`FEATURE.md`
+ * "Deletion").
  *
  * `facilityResolver` (route `resolve`) seeds {@link ActiveFacilityStore}
  * fire-and-forget, so this page always renders immediately: the full-page
@@ -74,9 +79,11 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * document title follows through `TitleService`, and a load failure returns
  * to the organization landing page. A route-scoped {@link FacilityStore}
  * carries the update, archive/restore and delete writes, and a route-scoped
- * {@link FacilityOverviewStore} carries the Overview tab's summary data.
+ * {@link FacilityOverviewStore} carries the Overview tab's summary data. The
+ * record's name is the shell breadcrumb's title, resolved by
+ * `facilityTitleResolver`.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -206,6 +213,13 @@ export class FacilityDetailPage {
 
     return $localize`:@@facility.detail.metaUpdated:Updated ${when}:when:`;
   });
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The Delete button, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -218,13 +232,15 @@ export class FacilityDetailPage {
    * seeded record lands, re-sets the document title and loads the Overview
    * tab's summary plus (when the facility has children) its descendant
    * subtree; returns to the organization landing page when the load fails —
-   * the global feedback listener already toasts the failure — and to the
-   * list once a delete write succeeds.
+   * the global feedback listener already toasts the failure — returns to the
+   * list once a delete write succeeds — and registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const callState: CallState<FacilityOutput | null> = this.store.updateCallState();
 

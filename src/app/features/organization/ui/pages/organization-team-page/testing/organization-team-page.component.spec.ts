@@ -1,11 +1,18 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  Component,
   computed,
+  input,
   provideZonelessChangeDetection,
   signal,
+  type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -24,6 +31,28 @@ import {
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationTeamStore } from '@features/organization/state/organization-team';
 import { OrganizationTeamPage } from '../organization-team-page.component';
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `InterventionsPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
 
 function role(overrides: Partial<OrganizationRoleOutput> = {}): OrganizationRoleOutput {
   return {
@@ -63,6 +92,7 @@ describe('OrganizationTeamPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideRouter([]),
         {
           provide: ORGANIZATION_CONTEXT_PORT,
           useValue: {
@@ -142,12 +172,16 @@ describe('OrganizationTeamPage', () => {
 
   it('should show the create-role action only to a member holding roles.manage', async () => {
     await createPage();
-    expect(byTestId('organization-team-create-role')).not.toBeNull();
+    expect(
+      renderPageActions().querySelector('[data-testid="organization-team-create-role"]'),
+    ).not.toBeNull();
 
     permissions.set([]);
     await fixture.whenStable();
 
-    expect(byTestId('organization-team-create-role')).toBeNull();
+    expect(
+      renderPageActions().querySelector('[data-testid="organization-team-create-role"]'),
+    ).toBeNull();
   });
 
   it('should offer a retry that re-runs the same load after a failure', async () => {

@@ -22,6 +22,7 @@
             data-testid="edit-channel-name"
             [formField]="editForm.name"
             [attr.aria-required]="true"
+            [attr.aria-invalid]="editForm.name().touched() && editForm.name().invalid()"
           />
           @if (editForm.name().touched() && editForm.name().invalid()) {
             <hlm-field-error>{{ editForm.name().errors()[0].message }}</hlm-field-error>

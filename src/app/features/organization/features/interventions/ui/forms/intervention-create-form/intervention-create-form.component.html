@@ -23,6 +23,7 @@
         i18n-placeholder="@@intervention.cf.namePlaceholder"
         [formField]="createForm.name"
         [attr.aria-required]="true"
+        [attr.aria-invalid]="createForm.name().touched() && createForm.name().invalid()"
       />
       @if (createForm.name().touched() && createForm.name().invalid()) {
         <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>

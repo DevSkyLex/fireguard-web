@@ -18,6 +18,7 @@ import {
   provideDashboardLayoutSlots,
   withDashboardBreadcrumb,
   withDashboardGlobalNav,
+  withDashboardPageActions,
 } from '@layouts/dashboard-layout';
 import { FocusedLayout, provideFocusedLayoutSlots } from '@layouts/focused-layout';
 import {
@@ -123,7 +124,12 @@ export const APP_ROUTES: Routes = [
         sidebarNav: [withOrganizationNav(), withDirectMessagesNav(), withDashboardGlobalNav()],
         sidebarFooter: [withAccountMenu()],
         header: [withDashboardBreadcrumb()],
-        headerActions: [withAssistantToggle(), withSyncIndicator(), withThemeSwitcher()],
+        headerActions: [
+          withDashboardPageActions(),
+          withAssistantToggle(),
+          withSyncIndicator(),
+          withThemeSwitcher(),
+        ],
       }),
     ],
     children: [

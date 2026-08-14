@@ -2,6 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -10,11 +11,14 @@ import {
   PLATFORM_ID,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -67,7 +71,12 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * to the index. A route-scoped {@link EquipmentStore} carries the update and
  * lifecycle writes.
  *
- * @version 1.0.0
+ * The record's name is the shell breadcrumb's title, resolved by
+ * `equipmentTitleResolver`; the status tags and meta line stay as a lead
+ * group at content top, and the lifecycle band registers on the shell header
+ * through `PageActionsService`.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -229,6 +238,13 @@ export class EquipmentDetailPage {
   protected readonly canDecommission: Signal<boolean> = computed<boolean>(
     () => this.activeEquipmentStore.selectedEquipment()?.status !== 'decommissioned',
   );
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The lifecycle band, registered on the shell header instead of an in-page title band. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -239,13 +255,16 @@ export class EquipmentDetailPage {
    * @description
    * Settles the open in-place field once its own write clears, re-sets the
    * document title once the seeded record lands (the title resolver only
-   * returned the neutral section label), and returns to the index when the
-   * load fails — the global feedback listener already toasts the failure.
+   * returned the neutral section label), returns to the index when the
+   * load fails — the global feedback listener already toasts the failure —
+   * and registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const callState: CallState<EquipmentOutput | null> = this.store.updateCallState();
 

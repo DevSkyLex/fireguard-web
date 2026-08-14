@@ -462,10 +462,14 @@ client-side, so the very first paint (SSR and pre-hydration) always renders
 a one-time layout adjustment on desktop loads, accepted rather than adding
 `PLATFORM_ID`/`afterNextRender` machinery for a cosmetic first frame.
 
-1. **Header** — wayfinding only: the intervention `h1`, the reference number,
-   and one `⋯` overflow menu carrying both the status transition group (when
-   `transitionTargets().length > 0`) and Duplicate/Abandon/Delete. The status
-   tag itself moved to the band directly beneath (item 4).
+1. **Header** — the intervention's name is the shell breadcrumb's `<h1>`
+   (`interventionTitleResolver`, `data.title`), not an in-page band. Discussion
+   and one `⋯` overflow menu — carrying both the status transition group (when
+   `transitionTargets().length > 0`) and Duplicate/Abandon/Delete — register on
+   the shell header through `PageActionsService` (`@core/page-actions`)
+   instead, the same contract every other route page's header actions use
+   (`organization/FEATURE.md` "Page header (shell contract)"). The status tag
+   itself is on the band directly beneath (item 4).
 2. **Meta line** — who acted last and when, plus the revision, derived from
    the most recent loaded activity entry (`InterventionWorkspaceStore.activities`)
    and falling back to `updatedAt` while the timeline is empty or still
@@ -989,7 +993,6 @@ follows.
   shared model types rather than redeclaring shapes.
 - **Quality gate** before considering work done: `npm run format` (oxfmt),
   `npm run lint` (oxlint) and `npm run build` must pass, plus the feature specs.
-  Run `graphify update .` after changing code.
 - **UI notes**: `hlm-sheet` widths are one of three named sizes, an app-wide
   convention (not only this feature's sheets — `organization-role-permissions-sheet`
   and `channel-participants-sheet` follow it too) — `sm:w-[480px]` (default:

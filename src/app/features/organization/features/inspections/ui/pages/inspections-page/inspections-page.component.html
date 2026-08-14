@@ -1,6 +1,6 @@
 <div id="inspections" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-    <hlm-popover sideOffset="5" align="start">
+  <app-list-toolbar>
+    <hlm-popover toolbarEnd sideOffset="5" align="start">
       <button
         hlmPopoverTrigger
         hlmBtn
@@ -16,7 +16,7 @@
         }
       </button>
       <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <hlm-select
             [value]="filters().status"
             (valueChange)="applyFilter({ status: $event ?? null })"
@@ -29,7 +29,7 @@
             >
             <hlm-select-trigger
               buttonId="inspections-filter-status"
-              class="min-w-36"
+              class="w-full"
               data-testid="inspections-filter-status"
             >
               @if (filters().status; as status) {
@@ -64,7 +64,7 @@
             >
             <hlm-select-trigger
               buttonId="inspections-filter-result"
-              class="min-w-36"
+              class="w-full"
               data-testid="inspections-filter-result"
             >
               @if (filters().result; as result) {
@@ -103,7 +103,7 @@
         </div>
       </hlm-popover-content>
     </hlm-popover>
-  </div>
+  </app-list-toolbar>
 
   @if (store.listCallState().status === 'error') {
     <app-error-state

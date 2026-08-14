@@ -64,8 +64,8 @@
         }
       </div>
 
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <hlm-input-group class="w-full sm:w-72">
+      <app-list-toolbar>
+        <hlm-input-group toolbarStart class="w-full sm:w-72">
           <hlm-input-group-addon>
             <ng-icon name="lucideSearch" />
           </hlm-input-group-addon>
@@ -83,6 +83,7 @@
         </hlm-input-group>
 
         <hlm-toggle-group
+          toolbarEnd
           type="single"
           [nullable]="false"
           variant="outline"
@@ -121,7 +122,7 @@
             Inactive
           </button>
         </hlm-toggle-group>
-      </div>
+      </app-list-toolbar>
 
       @if (store.loadCallState().status === 'error') {
         <app-error-state

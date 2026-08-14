@@ -263,7 +263,8 @@ store never calls the API without the permission — the request would be a guar
 ## UI Conventions
 
 List pages (roster, facilities, equipments, inspections, interventions) share one pagination
-recipe, `app-list-pagination` (`ui/components/list-pagination/`), and one boundary for the three
+recipe, `app-list-pagination` (`ui/components/list-pagination/`), one toolbar shell,
+`app-list-toolbar` (`ui/components/list-toolbar/`), and one boundary for the three
 empty/error idioms spartan offers: `hlm-empty` with a dashed border (`border border-dashed`) is a
 **page-level empty slot** (nothing loaded, no rows to show); `app-empty-state`
 (`@shared/empty-state`) is an **in-card or in-section empty slot** nested inside a larger page;

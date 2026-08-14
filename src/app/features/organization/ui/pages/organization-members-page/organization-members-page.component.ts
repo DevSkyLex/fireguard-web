@@ -50,7 +50,7 @@ import {
   MEMBERS_PAGE_SIZE,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
-import { ListPagination, StatTile } from '@features/organization/ui/components';
+import { ListPagination, ListToolbar, StatTile } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
@@ -139,6 +139,7 @@ type OrganizationMembersKpiTile = {
     ErrorState,
     HlmButton,
     ListPagination,
+    ListToolbar,
     OrganizationInvitationTable,
     OrganizationInviteDialog,
     OrganizationMemberRolesDialog,

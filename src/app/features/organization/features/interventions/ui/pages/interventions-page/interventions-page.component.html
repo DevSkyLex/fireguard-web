@@ -53,8 +53,8 @@
     </button>
   </hlm-toggle-group>
 
-  <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-    <div class="flex items-center gap-2">
+  <app-list-toolbar>
+    <div toolbarStart class="flex items-center gap-2">
       <hlm-input-group class="w-full sm:w-72">
         <hlm-input-group-addon>
           <ng-icon name="lucideSearch" />
@@ -89,14 +89,14 @@
       </button>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div toolbarEnd class="flex flex-wrap items-center gap-2">
       @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
         <button
           hlmBtn
           type="button"
           variant="outline"
           size="sm"
-          class="min-w-0 flex-1"
+          class="max-sm:grow"
           data-testid="interventions-bulk-actions"
           [hlmDropdownMenuTrigger]="bulkMenu"
           align="start"
@@ -153,7 +153,7 @@
         </hlm-dropdown-menu>
       </ng-template>
 
-      <hlm-popover sideOffset="5" align="start" class="min-w-0 flex-1">
+      <hlm-popover sideOffset="5" align="start" class="max-sm:grow">
         <button
           hlmPopoverTrigger
           hlmBtn
@@ -170,7 +170,7 @@
           }
         </button>
         <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
-          <div class="flex flex-wrap items-center gap-2">
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <hlm-select
               [value]="filters().status"
               [itemToString]="statusLabelOf"
@@ -184,7 +184,7 @@
               >
               <hlm-select-trigger
                 buttonId="interventions-filter-status"
-                class="min-w-36"
+                class="w-full"
                 data-testid="interventions-filter-status"
               >
                 @if (filters().status; as status) {
@@ -220,7 +220,7 @@
               >
               <hlm-select-trigger
                 buttonId="interventions-filter-type"
-                class="min-w-36"
+                class="w-full"
                 data-testid="interventions-filter-type"
               >
                 @if (filters().type; as type) {
@@ -256,7 +256,7 @@
               >
               <hlm-select-trigger
                 buttonId="interventions-filter-priority"
-                class="min-w-36"
+                class="w-full"
                 data-testid="interventions-filter-priority"
               >
                 @if (filters().priority; as priority) {
@@ -292,7 +292,7 @@
               >
               <hlm-select-trigger
                 buttonId="interventions-filter-site"
-                class="min-w-36"
+                class="w-full"
                 data-testid="interventions-filter-site"
               >
                 <hlm-select-value
@@ -324,7 +324,7 @@
               >
               <hlm-select-trigger
                 buttonId="interventions-filter-responsible"
-                class="min-w-36"
+                class="w-full"
                 data-testid="interventions-filter-responsible"
               >
                 <hlm-select-value
@@ -356,7 +356,7 @@
               >
               <hlm-select-trigger
                 buttonId="interventions-filter-label"
-                class="min-w-36"
+                class="w-full"
                 data-testid="interventions-filter-label"
               >
                 <hlm-select-value
@@ -388,7 +388,7 @@
               >
               <hlm-select-trigger
                 buttonId="interventions-filter-due"
-                class="min-w-36"
+                class="w-full"
                 data-testid="interventions-filter-due"
               >
                 <hlm-select-value
@@ -415,7 +415,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="min-w-0 flex-1 max-sm:min-h-11"
+        class="max-sm:min-h-11 max-sm:grow"
         data-testid="interventions-columns"
         [hlmDropdownMenuTrigger]="columnMenu"
         align="end"
@@ -429,7 +429,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="min-w-0 flex-1 max-sm:min-h-11"
+        class="max-sm:min-h-11 max-sm:grow"
         data-testid="interventions-export"
         [disabled]="exportDisabled()"
         [attr.aria-busy]="exportBusy() ? 'true' : null"
@@ -453,27 +453,27 @@
         </span>
       }
     </div>
+  </app-list-toolbar>
 
-    <ng-template #columnMenu>
-      <hlm-dropdown-menu class="w-44">
-        <hlm-dropdown-menu-label i18n="@@intervention.list.columnsMenuLabel"
-          >Toggle columns</hlm-dropdown-menu-label
+  <ng-template #columnMenu>
+    <hlm-dropdown-menu class="w-44">
+      <hlm-dropdown-menu-label i18n="@@intervention.list.columnsMenuLabel"
+        >Toggle columns</hlm-dropdown-menu-label
+      >
+      <hlm-dropdown-menu-separator />
+      @for (id of allColumns; track id) {
+        <button
+          hlmDropdownMenuCheckbox
+          data-testid="interventions-column-toggle"
+          [checked]="isColumnVisible(id)"
+          (triggered)="toggleColumn(id)"
         >
-        <hlm-dropdown-menu-separator />
-        @for (id of allColumns; track id) {
-          <button
-            hlmDropdownMenuCheckbox
-            data-testid="interventions-column-toggle"
-            [checked]="isColumnVisible(id)"
-            (triggered)="toggleColumn(id)"
-          >
-            <hlm-dropdown-menu-checkbox-indicator />
-            {{ columnLabelOf(id) }}
-          </button>
-        }
-      </hlm-dropdown-menu>
-    </ng-template>
-  </div>
+          <hlm-dropdown-menu-checkbox-indicator />
+          {{ columnLabelOf(id) }}
+        </button>
+      }
+    </hlm-dropdown-menu>
+  </ng-template>
 
   @if (activeFilterCount() > 0) {
     <div
@@ -490,7 +490,7 @@
           {{ chip.fieldLabel }}: {{ chip.valueLabel }}
           <button
             type="button"
-            class="inline-flex size-4 shrink-0 items-center justify-center rounded-full transition-colors outline-none hover:bg-foreground/10 focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:min-h-11 max-sm:min-w-11"
+            class="inline-flex size-4 shrink-0 items-center justify-center rounded-full transition-colors outline-none hover:bg-foreground/10 focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:-my-3 max-sm:-me-1 max-sm:min-h-11 max-sm:min-w-11"
             data-testid="interventions-filter-chip-remove"
             [attr.aria-label]="removeFilterLabel(chip.fieldLabel)"
             (click)="applyFilter(chip.patch)"

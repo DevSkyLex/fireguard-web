@@ -35,7 +35,7 @@ import {
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ListPagination } from '@features/organization/ui/components';
+import { ListPagination, ListToolbar } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -86,6 +86,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     InspectionStatusTag,
     InspectionTable,
     ListPagination,
+    ListToolbar,
     HlmBadge,
     HlmButton,
     ...HlmEmptyImports,

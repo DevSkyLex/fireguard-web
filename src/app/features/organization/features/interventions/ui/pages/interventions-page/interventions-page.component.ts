@@ -73,7 +73,7 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
-import { ListPagination } from '@features/organization/ui/components';
+import { ListPagination, ListToolbar } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
@@ -225,6 +225,7 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
     InterventionTable,
     InterventionTag,
     ListPagination,
+    ListToolbar,
     ...HlmAlertDialogImports,
     ...HlmDropdownMenuImports,
     ...HlmEmptyImports,

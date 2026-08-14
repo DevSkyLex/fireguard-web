@@ -1,6 +1,6 @@
 {
   "name": "fireguard-web-lsp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "FireGuard Web language servers — TypeScript on .ts, Angular on .html. Ships nothing but .lsp.json, because LSP configuration is the one Claude Code component that loads exclusively from an *enabled plugin*: the fireguard-web plugin is deliberately disabled inside the app (its .claude/ already loads natively there), so the servers need their own plugin to be available from both the monorepo root and the app itself.",
   "author": { "name": "Valentin FORTIN", "email": "contact@valentin-fortin.pro" }
 }

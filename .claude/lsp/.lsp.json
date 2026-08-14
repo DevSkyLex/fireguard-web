@@ -9,6 +9,11 @@
       ".ts": "typescript",
       ".mts": "typescript"
     },
+    "initializationOptions": {
+      "preferences": {
+        "disableSuggestions": true
+      }
+    },
     "workspaceFolder": "G:/Projets/fireguard/fireguard-sso-web",
     "startupTimeout": 60000,
     "restartOnCrash": true,

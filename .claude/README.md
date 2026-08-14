@@ -205,7 +205,15 @@ and `${CLAUDE_PROJECT_DIR}` is `G:\Projets\fireguard` from the root but
 cost of being machine-specific: **moving the workspace means editing `lsp/.lsp.json`** (and
 bumping its `version`, like any plugin change).
 
-Expect ~4 s (TS) and ~7 s (Angular) before the first diagnostics of a session — the Angular
+**The TypeScript server runs with `preferences.disableSuggestions`.** Measured on 15
+committed files, tsserver produced exactly two diagnostics and both were hint-level
+suggestions — `ts80009` (JSDoc typedef convertible) and `ts6133` on a deliberately-held
+`EffectRef` — i.e. two false positives and nothing else. The preference drops the whole
+hint tier; errors and warnings are unaffected (re-verified by injecting a type error). What
+is genuinely lost is the unused-import/unused-variable tier, which `npm run lint` covers at
+gate time anyway.
+
+Expect ~4 s (TS) and ~8 s (Angular) before the first diagnostics of a session — the Angular
 project has to be typechecked once. To keep the navigation but silence the automatic
 injection on a server, set `"diagnostics": false` on it.
 

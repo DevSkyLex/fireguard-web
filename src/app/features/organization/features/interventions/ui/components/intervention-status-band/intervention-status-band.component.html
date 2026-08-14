@@ -1,0 +1,58 @@
+<div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+  <app-intervention-tag kind="status" [value]="status()" />
+
+  <span class="text-sm text-muted-foreground">{{ phaseLabel() }}</span>
+
+  @if (blockersCount() > 0) {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      class="text-muted-foreground max-sm:min-h-11"
+      data-testid="intervention-detail-blockers"
+      (click)="blockersRequested.emit()"
+    >
+      <ng-icon name="lucideLock" class="text-destructive" aria-hidden="true" />
+      <span i18n="@@intervention.band.blockers">{{ blockersCount() }} blocking issues</span>
+    </button>
+  }
+
+  <div class="ms-auto flex flex-col items-end gap-0.5">
+    @if (status() === 'published') {
+      <div class="flex items-center gap-2 text-sm text-muted-foreground">
+        <ng-icon name="lucideCircleCheckBig" class="text-foreground" aria-hidden="true" />
+        <span i18n="@@intervention.actionBox.published">
+          Published and locked at revision v{{ revision() }}
+        </span>
+      </div>
+    } @else if (action(); as action) {
+      <app-intervention-command-button
+        [action]="action"
+        [busy]="busy()"
+        [describedBy]="action.disabledReason ? 'intervention-command-reason' : null"
+        (invoked)="invoked.emit()"
+      />
+      @if (action.disabledReason; as reason) {
+        <p id="intervention-command-reason" class="text-xs text-muted-foreground">{{ reason }}</p>
+      }
+    }
+  </div>
+</div>
+
+@if (showReviewNote()) {
+  <div
+    hlmAlert
+    class="border-destructive/30 bg-destructive/10"
+    data-testid="intervention-detail-review-note"
+  >
+    <ng-icon name="lucideMessageSquareQuote" class="text-destructive" aria-hidden="true" />
+    <p
+      hlmAlertTitle
+      class="text-sm text-destructive"
+      i18n="@@intervention.detail.changesRequestedBanner"
+    >
+      Changes requested by the reviewer
+    </p>
+    <p hlmAlertDescription class="text-sm text-foreground">{{ reviewNote() }}</p>
+  </div>
+}

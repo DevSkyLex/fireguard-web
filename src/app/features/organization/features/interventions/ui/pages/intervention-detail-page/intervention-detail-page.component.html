@@ -49,39 +49,9 @@
           </button>
         }
 
-        @if (transitionTargets().length > 0) {
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            align="start"
-            class="max-sm:min-h-11"
-            data-testid="intervention-detail-status-menu"
-            [hlmDropdownMenuTrigger]="statusMenu"
-          >
-            <span i18n="@@intervention.detail.statusMenu">Move this intervention</span>
-          </button>
-
-          <ng-template #statusMenu>
-            <hlm-dropdown-menu class="w-56">
-              <hlm-dropdown-menu-label i18n="@@intervention.detail.statusMenuLabel"
-                >Send it to</hlm-dropdown-menu-label
-              >
-              @for (target of transitionTargets(); track target) {
-                <button
-                  hlmDropdownMenuItem
-                  data-testid="intervention-detail-transition"
-                  (click)="onTransitionSelect(target)"
-                >
-                  <app-intervention-tag kind="status" [value]="target" asOption />
-                </button>
-              }
-            </hlm-dropdown-menu>
-          </ng-template>
-        }
-
-        @if (canPlan() || canAbandon() || canDeleteIntervention()) {
+        @if (
+          transitionTargets().length > 0 || canPlan() || canAbandon() || canDeleteIntervention()
+        ) {
           <button
             hlmBtn
             type="button"
@@ -98,6 +68,27 @@
 
           <ng-template #moreMenu>
             <hlm-dropdown-menu class="w-56">
+              @if (transitionTargets().length > 0) {
+                <hlm-dropdown-menu-group aria-labelledby="intervention-transition-group-label">
+                  <hlm-dropdown-menu-label
+                    id="intervention-transition-group-label"
+                    i18n="@@intervention.detail.statusMenuLabel"
+                    >Send it to</hlm-dropdown-menu-label
+                  >
+                  @for (target of transitionTargets(); track target) {
+                    <button
+                      hlmDropdownMenuItem
+                      data-testid="intervention-detail-transition"
+                      (click)="onTransitionSelect(target)"
+                    >
+                      <app-intervention-tag kind="status" [value]="target" asOption />
+                    </button>
+                  }
+                </hlm-dropdown-menu-group>
+                @if (canPlan() || canAbandon() || canDeleteIntervention()) {
+                  <hlm-dropdown-menu-separator />
+                }
+              }
               @if (canPlan()) {
                 <button
                   hlmDropdownMenuItem
@@ -134,6 +125,18 @@
         }
       </div>
     </div>
+
+    <app-intervention-status-band
+      [status]="intervention.status"
+      [phase]="phase()"
+      [action]="commandAction()"
+      [busy]="store.saving()"
+      [blockersCount]="blockerIssues().length"
+      [revision]="intervention.revision"
+      [reviewNote]="intervention.reviewNote"
+      (invoked)="invokeCommandAction()"
+      (blockersRequested)="revealBlockers()"
+    />
 
     @if (pageError(); as message) {
       <div
@@ -181,6 +184,22 @@
             <span i18n="@@intervention.linked.tabs.overview">Overview</span>
           </button>
           <button
+            hlmTabsTrigger="changes"
+            class="max-sm:min-h-11"
+            data-testid="intervention-tab-changes"
+          >
+            <span i18n="@@intervention.linked.tabs.changes">Changes</span>
+            <span class="tabular-nums">{{ pendingChangesCount() }}</span>
+          </button>
+          <button
+            hlmTabsTrigger="attachments"
+            class="max-sm:min-h-11"
+            data-testid="intervention-tab-attachments"
+          >
+            <span i18n="@@intervention.attachments.title">Attachments</span>
+            <span class="tabular-nums">{{ store.attachments().length }}</span>
+          </button>
+          <button
             hlmTabsTrigger="facilities"
             class="max-sm:min-h-11"
             data-testid="intervention-tab-facilities"
@@ -209,7 +228,7 @@
         @if (linkedTabsOrientation() === 'vertical') {
           <hlm-tabs-list
             variant="line"
-            class="shrink-0 items-stretch lg:sticky lg:top-4"
+            class="shrink-0 items-stretch lg:sticky lg:top-32"
             aria-label="Intervention sections"
             i18n-aria-label="@@intervention.linked.tabsAriaLabel"
           >
@@ -235,7 +254,11 @@
             }
 
             @if (phase() === 'execute' || phase() === 'review') {
-              <div class="lg:hidden">
+              <div
+                #mobileIssuesSection
+                tabindex="-1"
+                class="scroll-mt-72 outline-none md:scroll-mt-36 lg:hidden"
+              >
                 <app-intervention-issues-checklist
                   [issues]="store.issues()"
                   [phase]="phase()"
@@ -247,7 +270,7 @@
             <div
               #workItemsSection
               tabindex="-1"
-              class="flex flex-col gap-4 outline-none"
+              class="flex scroll-mt-72 flex-col gap-4 outline-none md:scroll-mt-36"
               data-testid="intervention-detail-field-work"
             >
               @if (canScanWorkItem()) {
@@ -263,16 +286,6 @@
                       (change)="onScanFileSelected($event)"
                     />
                   </label>
-                </div>
-              }
-
-              @if (intervention.status === 'changes_requested' && intervention.reviewNote) {
-                <div hlmAlert class="bg-muted/50" data-testid="intervention-detail-review-note">
-                  <ng-icon name="lucideMessageSquareQuote" aria-hidden="true" />
-                  <p hlmAlertTitle i18n="@@intervention.detail.changesRequestedBanner">
-                    Changes requested by the reviewer
-                  </p>
-                  <p hlmAlertDescription>{{ intervention.reviewNote }}</p>
                 </div>
               }
 
@@ -309,28 +322,6 @@
               />
             </div>
 
-            @if (pendingChangesCount() > 0) {
-              <app-intervention-change-list
-                [changes]="store.changes()"
-                [canReject]="canRejectChange()"
-                [pendingChangeIds]="store.pendingChangeIds()"
-                (rejected)="rejectChange($event)"
-              />
-            }
-
-            <app-intervention-attachments
-              [attachments]="store.attachments()"
-              [workItems]="store.workItems()"
-              [canManage]="canManageAttachments()"
-              [pendingIds]="store.pendingAttachmentIds()"
-              [downloadingIds]="pendingDownloadIds()"
-              [uploading]="attachmentUploading()"
-              [online]="online()"
-              (filesPicked)="uploadAttachments($event)"
-              (deleteRequested)="removeAttachment($event)"
-              (downloadRequested)="downloadAttachment($event)"
-            />
-
             <app-intervention-activity-thread
               [activities]="store.activities()"
               [members]="planningOptions.members()"
@@ -350,6 +341,34 @@
               />
             </div>
           </div>
+        </div>
+
+        <div hlmTabsContent="changes" class="min-w-0">
+          <ng-template hlmTabsContentLazy>
+            <app-intervention-change-list
+              [changes]="store.changes()"
+              [canReject]="canRejectChange()"
+              [pendingChangeIds]="store.pendingChangeIds()"
+              (rejected)="rejectChange($event)"
+            />
+          </ng-template>
+        </div>
+
+        <div hlmTabsContent="attachments" class="min-w-0">
+          <ng-template hlmTabsContentLazy>
+            <app-intervention-attachments
+              [attachments]="store.attachments()"
+              [workItems]="store.workItems()"
+              [canManage]="canManageAttachments()"
+              [pendingIds]="store.pendingAttachmentIds()"
+              [downloadingIds]="pendingDownloadIds()"
+              [uploading]="attachmentUploading()"
+              [online]="online()"
+              (filesPicked)="uploadAttachments($event)"
+              (deleteRequested)="removeAttachment($event)"
+              (downloadRequested)="downloadAttachment($event)"
+            />
+          </ng-template>
         </div>
 
         <div hlmTabsContent="facilities" class="min-w-0">
@@ -383,7 +402,7 @@
         </div>
       </hlm-tabs>
 
-      <div class="flex flex-col gap-6 lg:sticky lg:top-4">
+      <div class="flex flex-col gap-6 lg:sticky lg:top-32">
         <section
           class="flex flex-col gap-1"
           aria-labelledby="intervention-detail-about-title"
@@ -396,9 +415,6 @@
           >
             About
           </h2>
-          <p class="px-2 text-xs text-muted-foreground" i18n="@@intervention.detail.aboutCaption">
-            What this intervention is — status, reference, type and description.
-          </p>
 
           <app-intervention-about
             [intervention]="intervention"
@@ -423,9 +439,6 @@
           >
             Properties
           </h2>
-          <p class="px-2 text-xs text-muted-foreground" i18n="@@intervention.sidebar.titleCaption">
-            The intervention's core details — priority, site, schedule and team.
-          </p>
 
           <app-intervention-properties-grid
             [intervention]="intervention"
@@ -442,23 +455,12 @@
           />
         </section>
 
-        <div #actionBoxSection tabindex="-1" class="outline-none">
-          <app-intervention-action-box
-            [action]="commandAction()"
-            [phase]="phase()"
-            [status]="intervention.status"
-            [blockers]="blockerIssues()"
-            [pendingChanges]="pendingChangesCount()"
-            [inspections]="intervention.inspectionsCount"
-            [revision]="intervention.revision"
-            [signed]="intervention.hasSignature"
-            [busy]="store.saving()"
-            (invoked)="invokeCommandAction()"
-          />
-        </div>
-
         @if (phase() === 'execute' || phase() === 'review') {
-          <div class="max-lg:hidden">
+          <div
+            #desktopIssuesSection
+            tabindex="-1"
+            class="scroll-mt-72 outline-none max-lg:hidden md:scroll-mt-36"
+          >
             <app-intervention-issues-checklist
               [issues]="store.issues()"
               [phase]="phase()"
@@ -557,16 +559,6 @@
         <span i18n="@@intervention.detail.backToList">Back to interventions</span>
       </button>
     </app-empty-state>
-  }
-
-  @if (store.intervention()) {
-    <app-intervention-command-bar
-      [action]="commandAction()"
-      [blockers]="blockerIssues()"
-      [busy]="store.saving()"
-      (invoked)="invokeCommandAction()"
-      (detailsRequested)="revealActionBox()"
-    />
   }
 </div>
 

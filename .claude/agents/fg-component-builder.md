@@ -1,7 +1,7 @@
 ---
 name: fg-component-builder
 description: Use to create an Angular component in fireguard-sso-web — a presentational component, a route page, a table grid, a dataview surface, a form, a dialog, or a sheet — as a complete unit folder (index.ts + .component.ts + .component.html + testing/) following the canonical UI folder template in ARCHITECTURE.md §10.2. Decides placement first (feature ui/ vs shared/<concept>/ui/components) per §2.8 and §6.4. Invoke for "add a component / page / table / form to the web app". Writes code.
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__spartan__spartan_components_list, mcp__spartan__spartan_components_get, mcp__spartan__spartan_blocks_list, mcp__spartan__spartan_blocks_get, mcp__spartan__spartan_docs_get
+tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__spartan__spartan_components_list, mcp__spartan__spartan_components_get, mcp__spartan__spartan_blocks_list, mcp__spartan__spartan_blocks_get, mcp__spartan__spartan_docs_get
 model: sonnet
 ---
 
@@ -26,6 +26,26 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 > palette, build a signature element — has **no target in this app**: the identity is the
 > spartan theme and it is fixed. Never let it move a token, add a font, or hand-roll a
 > "signature" component.
+
+## Navigating by symbol
+
+When you know a **symbol** — a class, an interface, a store feature, an injection token, a
+component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+(`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
+search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
+`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
+nothing), and the call hierarchy.
+
+Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
+on `.html`. The second is the one worth remembering — a binding in a template resolves to
+the component member it reads, so you can check a template against its class without
+opening both.
+
+Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+of three: it counts the real consumers instead of the ones you assume exist.
+
+`Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
+path, an i18n id, a naming convention swept over a tree.
 
 ## Step 1 — placement, before anything else
 

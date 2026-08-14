@@ -1,7 +1,7 @@
 ---
 name: fg-signal-store
 description: Use for NgRx SignalStore work in fireguard-sso-web — creating or refactoring stores, choosing named CallState fields vs withQueryState, rxMethod + tapResponse flows, toStoreError normalization, withEntities collections, typed events (eventGroup + Dispatcher), root-vs-component scoping, and SSR TransferState handoffs, per ARCHITECTURE.md §10.11 and @core/request-state. Invoke when adding or fixing feature state. Writes code within the state/ slice.
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash
+tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash
 model: sonnet
 ---
 
@@ -15,6 +15,26 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 | --------------------- | ------------------------------------------------------------------- |
 | `signalstore-recipes` | always — the decision tree and the templates this prompt summarises |
 | `fireguard-naming`    | naming the slice files, events or tokens                            |
+
+## Navigating by symbol
+
+When you know a **symbol** — a class, an interface, a store feature, an injection token, a
+component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+(`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
+search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
+`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
+nothing), and the call hierarchy.
+
+Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
+on `.html`. The second is the one worth remembering — a binding in a template resolves to
+the component member it reads, so you can check a template against its class without
+opening both.
+
+Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+of three: it counts the real consumers instead of the ones you assume exist.
+
+`Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
+path, an i18n id, a naming convention swept over a tree.
 
 ## When to use — and when not to
 

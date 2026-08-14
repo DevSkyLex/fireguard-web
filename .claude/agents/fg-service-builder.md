@@ -1,7 +1,7 @@
 ---
 name: fg-service-builder
 description: Use to create a service in fireguard-sso-web — a transport service extending HydraApiService in data-access/services/<concern>/, a behavioral service in services/<concern>/, an access helper in access/services/<concern>/, or a pure data adapter in data-access/adapters/. Routes to the right kind first, then emits the folder with its colocated testing/ spec, per ARCHITECTURE.md §10.6-§10.8 and §11.3. Invoke for "add a service / API client / adapter to the web app". Writes code.
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__context7__resolve-library-id, mcp__context7__query-docs
+tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__context7__resolve-library-id, mcp__context7__query-docs
 model: sonnet
 ---
 
@@ -16,6 +16,26 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 | `hydra-data-access` | always — the `HydraApiService` contract, the envelope, DTOs and the error flow |
 | `fireguard-naming`  | always                                                                         |
 | `web-testing`       | writing the colocated spec — the `HttpTestingController` harness is there      |
+
+## Navigating by symbol
+
+When you know a **symbol** — a class, an interface, a store feature, an injection token, a
+component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+(`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
+search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
+`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
+nothing), and the call hierarchy.
+
+Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
+on `.html`. The second is the one worth remembering — a binding in a template resolves to
+the component member it reads, so you can check a template against its class without
+opening both.
+
+Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+of three: it counts the real consumers instead of the ones you assume exist.
+
+`Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
+path, an i18n id, a naming convention swept over a tree.
 
 ## Step 1 — which kind?
 

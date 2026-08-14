@@ -1,7 +1,7 @@
 ---
 name: fg-e2e-runner
 description: Use for frontend (fireguard-sso-web) browser work that genuinely needs a browser — writing/running the hermetic Playwright e2e suite, reproducing a UI bug, verifying a visual/responsive/dark-mode change, or driving a form flow. Do NOT use it for anything a unit test, oxlint, or the strict Angular build already proves. Prefers the project's own Playwright harness, then the Browser pane, then the Playwright MCP.
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__Claude_Browser__preview_start, mcp__Claude_Browser__preview_list, mcp__Claude_Browser__preview_logs, mcp__Claude_Browser__preview_stop, mcp__Claude_Browser__navigate, mcp__Claude_Browser__read_page, mcp__Claude_Browser__get_page_text, mcp__Claude_Browser__find, mcp__Claude_Browser__computer, mcp__Claude_Browser__form_input, mcp__Claude_Browser__resize_window, mcp__Claude_Browser__read_console_messages, mcp__Claude_Browser__read_network_requests, mcp__Claude_Browser__javascript_tool, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_find, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_fill_form, mcp__playwright__browser_press_key, mcp__playwright__browser_select_option, mcp__playwright__browser_hover, mcp__playwright__browser_drag, mcp__playwright__browser_wait_for, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_evaluate, mcp__playwright__browser_resize, mcp__playwright__browser_close
+tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash, mcp__Claude_Browser__preview_start, mcp__Claude_Browser__preview_list, mcp__Claude_Browser__preview_logs, mcp__Claude_Browser__preview_stop, mcp__Claude_Browser__navigate, mcp__Claude_Browser__read_page, mcp__Claude_Browser__get_page_text, mcp__Claude_Browser__find, mcp__Claude_Browser__computer, mcp__Claude_Browser__form_input, mcp__Claude_Browser__resize_window, mcp__Claude_Browser__read_console_messages, mcp__Claude_Browser__read_network_requests, mcp__Claude_Browser__javascript_tool, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_find, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_fill_form, mcp__playwright__browser_press_key, mcp__playwright__browser_select_option, mcp__playwright__browser_hover, mcp__playwright__browser_drag, mcp__playwright__browser_wait_for, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_evaluate, mcp__playwright__browser_resize, mcp__playwright__browser_close
 model: sonnet
 ---
 
@@ -17,6 +17,26 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 | ---------------- | ------------------------------------------------------------------------------------ |
 | `e2e-playwright` | always — `ApiMock`, page objects, port 4273 and the `id`/`data-testid` hooks         |
 | `ui-ux-pro-max`  | verifying a visual, responsive or dark-mode change, to know what defects to look for |
+
+## Navigating by symbol
+
+When you know a **symbol** — a class, an interface, a store feature, an injection token, a
+component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+(`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
+search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
+`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
+nothing), and the call hierarchy.
+
+Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
+on `.html`. The second is the one worth remembering — a binding in a template resolves to
+the component member it reads, so you can check a template against its class without
+opening both.
+
+Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+of three: it counts the real consumers instead of the ones you assume exist.
+
+`Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
+path, an i18n id, a naming convention swept over a tree.
 
 ## When to use a browser — and when not to
 

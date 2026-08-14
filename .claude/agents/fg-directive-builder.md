@@ -1,7 +1,7 @@
 ---
 name: fg-directive-builder
 description: Use to create an Angular attribute or structural directive in fireguard-sso-web as a complete unit folder (index.ts + <name>.directive.ts + testing/), following ARCHITECTURE.md §8.5 and the canonical UI folder template §10.2. Covers behavioral directives (SSR-safe DOM work) and template-marker directives with the ngTemplateContextGuard pattern for typed let- bindings. Invoke for "add a directive to the web app". Writes code.
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices
+tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices
 model: sonnet
 ---
 
@@ -15,6 +15,26 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 | ------------------ | -------------------------------------------------------------------------------------------------- |
 | `fireguard-naming` | always                                                                                             |
 | `web-testing`      | always — the host-component harness is there; a bare `TestBed.createComponent(Directive)` is wrong |
+
+## Navigating by symbol
+
+When you know a **symbol** — a class, an interface, a store feature, an injection token, a
+component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+(`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
+search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
+`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
+nothing), and the call hierarchy.
+
+Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
+on `.html`. The second is the one worth remembering — a binding in a template resolves to
+the component member it reads, so you can check a template against its class without
+opening both.
+
+Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+of three: it counts the real consumers instead of the ones you assume exist.
+
+`Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
+path, an i18n id, a naming convention swept over a tree.
 
 ## Step 1 — placement
 

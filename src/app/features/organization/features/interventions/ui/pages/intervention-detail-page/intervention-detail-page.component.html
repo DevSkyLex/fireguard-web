@@ -28,6 +28,18 @@
       (blockersRequested)="revealBlockers()"
     />
 
+    <app-intervention-status-band
+      [status]="intervention.status"
+      [phase]="phase()"
+      [action]="commandAction()"
+      [busy]="store.saving()"
+      [blockersCount]="blockerIssues().length"
+      [revision]="intervention.revision"
+      [reviewNote]="intervention.reviewNote"
+      (invoked)="invokeCommandAction()"
+      (blockersRequested)="revealBlockers()"
+    />
+
     @if (pageError(); as message) {
       <div
         hlmAlert

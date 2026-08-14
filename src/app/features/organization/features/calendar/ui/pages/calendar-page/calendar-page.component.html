@@ -50,6 +50,57 @@
     </span>
   </div>
 
+  <div class="flex shrink-0 flex-wrap items-center gap-3" data-testid="calendar-toolbar">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="max-sm:min-h-11 max-sm:min-w-11"
+      data-testid="calendar-toolbar-today"
+      (click)="goToday()"
+    >
+      <span i18n="@@calendar.today">Today</span>
+    </button>
+
+    <div class="flex items-center gap-1">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        class="max-sm:size-11"
+        data-testid="calendar-toolbar-prev"
+        i18n-aria-label="@@calendar.previousMonth"
+        aria-label="Previous month"
+        (click)="stepMonth(-1)"
+      >
+        <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        class="max-sm:size-11"
+        data-testid="calendar-toolbar-next"
+        i18n-aria-label="@@calendar.nextMonth"
+        aria-label="Next month"
+        (click)="stepMonth(1)"
+      >
+        <ng-icon name="lucideChevronRight" aria-hidden="true" />
+      </button>
+    </div>
+
+    <span
+      class="truncate text-base font-semibold text-foreground capitalize"
+      data-testid="calendar-toolbar-period"
+      aria-live="polite"
+    >
+      {{ periodLabel() }}
+    </span>
+  </div>
+
   @if (loadFailed()) {
     <hlm-empty class="border border-dashed">
       <hlm-empty-header>

@@ -1,7 +1,7 @@
 ---
 name: fg-web-test-writer
 description: Use to author or repair fireguard-sso-web unit/integration specs (run via npx ng test --watch=false, never bare vitest), targeting the architectural boundary each unit owns — stores (state transitions), data-access services (contract mapping), guards/resolvers (routing decisions), pages (orchestration), presentational components/dataviews (rendering + outputs). Invoke when a change needs spec coverage. Writes specs; does not drive a browser (hand e2e/visual to fg-e2e-runner).
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash
+tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash
 model: sonnet
 ---
 
@@ -16,6 +16,26 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 | `web-testing`      | always — the `--include` trap alone will cost you a run                  |
 | `e2e-playwright`   | the case really belongs in the browser suite and you are handing it over |
 | `fireguard-naming` | naming spec files or `testing/` folders                                  |
+
+## Navigating by symbol
+
+When you know a **symbol** — a class, an interface, a store feature, an injection token, a
+component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+(`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
+search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
+`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
+nothing), and the call hierarchy.
+
+Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
+on `.html`. The second is the one worth remembering — a binding in a template resolves to
+the component member it reads, so you can check a template against its class without
+opening both.
+
+Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+of three: it counts the real consumers instead of the ones you assume exist.
+
+`Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
+path, an i18n id, a naming convention swept over a tree.
 
 ## The boundary each unit owns (§14.1)
 

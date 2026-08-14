@@ -1,7 +1,7 @@
 ---
 name: fg-feature-builder
 description: Use to scaffold or extend a fireguard-sso-web feature — the route tree, data-access services, a state slice, type-only models/, ui/ surfaces, optional http/ ports/ providers/, and the required FEATURE.md — following the concern-oriented layout in ARCHITECTURE.md §8.3/§8.4. Emits only the concerns the slice actually needs and wires it into routing. Invoke for "add a feature / subfeature / slice to the web app". Writes code; hands complex state, rich UI, and specs to the specialists.
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__angular__list_projects, mcp__context7__resolve-library-id, mcp__context7__query-docs
+tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__angular__list_projects, mcp__context7__resolve-library-id, mcp__context7__query-docs
 model: sonnet
 ---
 
@@ -18,6 +18,26 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 | `hydra-data-access`   | the slice emits `data-access/`                               |
 | `signalstore-recipes` | the slice emits `state/`                                     |
 | `spartan-ui`          | the slice emits `ui/`                                        |
+
+## Navigating by symbol
+
+When you know a **symbol** — a class, an interface, a store feature, an injection token, a
+component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+(`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
+search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
+`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
+nothing), and the call hierarchy.
+
+Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
+on `.html`. The second is the one worth remembering — a binding in a template resolves to
+the component member it reads, so you can check a template against its class without
+opening both.
+
+Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+of three: it counts the real consumers instead of the ones you assume exist.
+
+`Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
+path, an i18n id, a naming convention swept over a tree.
 
 ## Before you scaffold
 

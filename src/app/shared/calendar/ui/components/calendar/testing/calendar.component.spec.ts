@@ -148,4 +148,31 @@ describe('Calendar', () => {
     expect(fixture.componentInstance.month().getMonth()).toBe(new Date().getMonth());
     expect(fixture.componentInstance.selectedDay()).not.toBeNull();
   });
+
+  it('should hide its own Today/prev/next controls when the host supplies its own toolbar', async () => {
+    await create();
+
+    expect(root().querySelector('[data-testid="calendar-today"]')).not.toBeNull();
+
+    fixture.componentRef.setInput('showToolbar', false);
+    await fixture.whenStable();
+
+    expect(root().querySelector('[data-testid="calendar-today"]')).toBeNull();
+    expect(root().querySelector('[data-testid="calendar-prev"]')).toBeNull();
+    expect(root().querySelector('[data-testid="calendar-next"]')).toBeNull();
+  });
+
+  it('should keep the month title in the DOM, visually hidden, so the grid keeps its accessible name', async () => {
+    await create();
+
+    fixture.componentRef.setInput('showToolbar', false);
+    await fixture.whenStable();
+
+    const monthTitle: HTMLElement | null = root().querySelector('[data-testid="calendar-month"]');
+    const grid: HTMLElement | null = root().querySelector('[role="grid"]');
+
+    expect(monthTitle).not.toBeNull();
+    expect(monthTitle?.closest('.sr-only')).not.toBeNull();
+    expect(grid?.getAttribute('aria-labelledby')).toBe(monthTitle?.parentElement?.id ?? null);
+  });
 });

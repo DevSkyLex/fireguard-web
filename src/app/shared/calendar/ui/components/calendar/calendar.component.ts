@@ -74,7 +74,13 @@ const WEEKDAY_REFERENCE = new Date(2024, 0, 7);
  * roving `tabindex`, arrow / Home / End / PageUp / PageDown navigation and
  * `aria-selected` — over this widget's own month model.
  *
- * @version 2.0.0
+ * The host may supply its own Today/prev/next chrome instead of this
+ * widget's built-in one (`showToolbar`) — the month title stays in the DOM
+ * either way, `sr-only` when hidden, because `brnCalendarGrid`'s
+ * `aria-labelledby` always points at it: hiding the whole header would leave
+ * the grid with no accessible name.
+ *
+ * @version 2.1.0
  *
  * @example
  * ```html
@@ -101,6 +107,7 @@ const WEEKDAY_REFERENCE = new Date(2024, 0, 7);
     provideBrnCalendar(Calendar),
   ],
   templateUrl: './calendar.component.html',
+  host: { class: 'block min-h-0 w-full' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Calendar implements BrnCalendarBase<Date> {
@@ -146,6 +153,22 @@ export class Calendar implements BrnCalendarBase<Date> {
    * @type {InputSignal<Date[]>}
    */
   public readonly highlightDays: InputSignal<Date[]> = input<Date[]>([]);
+
+  /**
+   * Property showToolbar
+   * @readonly
+   *
+   * @description
+   * Whether this widget renders its own Today/prev/next controls. A host
+   * that supplies its own toolbar band sets this `false`; the month title
+   * stays in the DOM regardless (see class doc), so the grid keeps an
+   * accessible name.
+   *
+   * @access public
+   * @since 2.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly showToolbar: InputSignal<boolean> = input<boolean>(true);
   //#endregion
 
   //#region Properties

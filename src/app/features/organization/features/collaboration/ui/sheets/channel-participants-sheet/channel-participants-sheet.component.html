@@ -1,11 +1,19 @@
-<hlm-sheet side="right" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
+<hlm-sheet
+  side="right"
+  [state]="sheetState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
   <hlm-sheet-content
     *hlmSheetPortal
-    class="flex w-full flex-col overflow-y-auto sm:w-[420px] sm:max-w-none"
+    class="flex w-full! flex-col overflow-y-auto sm:w-[480px]! sm:max-w-none!"
     data-testid="channel-participants-sheet"
   >
     <hlm-sheet-header>
       <h3 hlmSheetTitle i18n="@@channels.participants.title">Participants</h3>
+      <p hlmSheetDescription i18n="@@channels.participants.sheetDescription">
+        See who's in this channel, and add or remove someone if you manage it.
+      </p>
     </hlm-sheet-header>
 
     <div class="flex flex-col gap-2 px-4 pb-4">

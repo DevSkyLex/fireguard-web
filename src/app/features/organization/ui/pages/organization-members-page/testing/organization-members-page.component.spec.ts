@@ -69,6 +69,7 @@ describe('OrganizationMembersPage', () => {
   let loadCallState: WritableSignal<CallState>;
   let mutationCallState: WritableSignal<CallState>;
   let mutationError: Signal<StoreError | null>;
+  let isMutating: Signal<boolean>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
   let load: ReturnType<typeof vi.fn>;
   let loadMembers: ReturnType<typeof vi.fn>;
@@ -131,7 +132,7 @@ describe('OrganizationMembersPage', () => {
               membersActiveTotal,
               membersSearch: signal(''),
               isLoading: signal(false),
-              isMutating: signal(false),
+              isMutating,
               loadError: signal<StoreError | null>(null),
               mutationError,
               loadCallState,
@@ -164,6 +165,7 @@ describe('OrganizationMembersPage', () => {
     loadCallState = signal<CallState>(idleCallState());
     mutationCallState = signal<CallState>(idleCallState());
     mutationError = computed(() => mutationCallState().error);
+    isMutating = computed(() => mutationCallState().status === 'pending');
     permissions = signal<ReadonlyArray<string>>([
       ORGANIZATION_PERMISSION.MEMBERS_READ,
       ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
@@ -265,7 +267,7 @@ describe('OrganizationMembersPage', () => {
     });
   });
 
-  it('should remove a single member on confirm and clear the pending target', async () => {
+  it('should remove a single member on confirm and keep the dialog open until the write settles', async () => {
     await createPage();
     fixture.componentInstance['requestRemove'](member());
     await fixture.whenStable();
@@ -274,7 +276,31 @@ describe('OrganizationMembersPage', () => {
     fixture.componentInstance['confirmRemove']();
 
     expect(removeMember).toHaveBeenCalledWith({ organizationId: 'org-1', memberId: 'member-1' });
+    expect(fixture.componentInstance['removeDialogState']()).toBe('open');
+  });
+
+  it('should close the remove confirmation once the store reports success', async () => {
+    await createPage();
+    fixture.componentInstance['requestRemove'](member());
+    fixture.componentInstance['confirmRemove']();
+
+    mutationCallState.set(successCallState(null));
+    await fixture.whenStable();
+
     expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
+  });
+
+  it('should keep the remove confirmation open and surface the store error inline on failure', async () => {
+    await createPage();
+    fixture.componentInstance['requestRemove'](member());
+    fixture.componentInstance['confirmRemove']();
+
+    mutationCallState.set(errorCallState(toStoreError(new Error('cannot remove the last owner'))));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['removeDialogState']()).toBe('open');
+    expect(fixture.componentInstance['removeDialogError']()).not.toBeNull();
+    expect(byTestId('organization-members-action-error')).toBeNull();
   });
 
   it('should bulk-remove the current selection and clear it', async () => {

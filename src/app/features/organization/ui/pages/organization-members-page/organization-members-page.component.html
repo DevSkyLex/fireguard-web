@@ -292,6 +292,7 @@
 
   <hlm-alert-dialog
     [state]="removeDialogState()"
+    [disableClose]="removeDialogBusy()"
     (stateChanged)="onRemoveDialogStateChanged($event)"
   >
     <hlm-alert-dialog-content
@@ -302,13 +303,42 @@
         <h2 hlmAlertDialogTitle>{{ removeDialogTitle() }}</h2>
         <p hlmAlertDialogDescription>{{ removeDialogDescription() }}</p>
       </hlm-alert-dialog-header>
+
+      @if (removeDialogError(); as error) {
+        <p
+          role="alert"
+          class="text-sm text-destructive"
+          data-testid="organization-members-remove-error"
+        >
+          {{ error.message }}
+        </p>
+      }
+
       <hlm-alert-dialog-footer>
-        <button hlmAlertDialogCancel i18n="@@org.members.removeConfirmCancel">Cancel</button>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="max-sm:min-h-11"
+          [attr.aria-disabled]="removeDialogBusy() ? 'true' : null"
+          [attr.aria-busy]="removeDialogBusy() ? 'true' : null"
+          [class.opacity-50]="removeDialogBusy()"
+          [class.pointer-events-none]="removeDialogBusy()"
+          (click)="removeDialogBusy() || onRemoveDialogStateChanged('closed')"
+          i18n="@@org.members.removeConfirmCancel"
+        >
+          Cancel
+        </button>
         <button
           hlmAlertDialogAction
           variant="destructive"
+          class="max-sm:min-h-11"
           data-testid="organization-members-remove-confirm"
-          (click)="confirmRemove()"
+          [attr.aria-disabled]="removeDialogBusy() ? 'true' : null"
+          [attr.aria-busy]="removeDialogBusy() ? 'true' : null"
+          [class.opacity-50]="removeDialogBusy()"
+          [class.pointer-events-none]="removeDialogBusy()"
+          (click)="removeDialogBusy() || confirmRemove()"
           i18n="@@org.members.removeConfirmAction"
         >
           Remove

@@ -3,6 +3,13 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import {
+  errorCallState,
+  idleCallState,
+  successCallState,
+  toStoreError,
+  type CallState,
+} from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
@@ -70,6 +77,8 @@ describe('InterventionsPage', () => {
   let clearCreated: ReturnType<typeof vi.fn>;
   let transition: ReturnType<typeof vi.fn>;
   let deleteIntervention: ReturnType<typeof vi.fn>;
+  let resetDeleteState: ReturnType<typeof vi.fn>;
+  let deleteCallState: WritableSignal<CallState>;
   let assignResponsible: ReturnType<typeof vi.fn>;
   let clearPendingDuplicatePrefill: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
@@ -89,6 +98,8 @@ describe('InterventionsPage', () => {
     clearCreated = vi.fn();
     transition = vi.fn();
     deleteIntervention = vi.fn();
+    resetDeleteState = vi.fn();
+    deleteCallState = signal<CallState>(idleCallState());
     assignResponsible = vi.fn();
     clearPendingDuplicatePrefill = vi.fn();
     navigate = vi.fn().mockResolvedValue(true);
@@ -112,6 +123,10 @@ describe('InterventionsPage', () => {
             instantiateFromTemplate,
             transition,
             delete: deleteIntervention,
+            resetDeleteState,
+            deleteCallState,
+            isDeleting: signal(false),
+            deleteError: signal(null),
             assignResponsible,
             clearCreatedIntervention: clearCreated,
             clearPendingDuplicatePrefill,
@@ -427,9 +442,10 @@ describe('InterventionsPage', () => {
 
       expect(fixture.componentInstance['deleteDialogState']()).toBe('open');
       expect(deleteIntervention).not.toHaveBeenCalled();
+      expect(resetDeleteState).toHaveBeenCalled();
     });
 
-    it('should call the store with the id and revision once the single delete is confirmed', async () => {
+    it('should call the store with the id and revision once the single delete is confirmed, and keep the dialog open while it is pending', async () => {
       fixture = await createPage();
 
       fixture.componentInstance['requestDelete'](intervention({ id: 'i-1', revision: 3 }));
@@ -437,7 +453,29 @@ describe('InterventionsPage', () => {
       await fixture.whenStable();
 
       expect(deleteIntervention).toHaveBeenCalledWith({ interventionId: 'i-1', revision: 3 });
+      expect(fixture.componentInstance['deleteDialogState']()).toBe('open');
+    });
+
+    it('should close the single-delete confirmation once the store reports success', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestDelete'](intervention({ id: 'i-1', revision: 3 }));
+      fixture.componentInstance['confirmDelete']();
+      deleteCallState.set(successCallState(null));
+      await fixture.whenStable();
+
       expect(fixture.componentInstance['deleteDialogState']()).toBe('closed');
+    });
+
+    it('should keep the single-delete confirmation open and let the store error surface inline on failure', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['requestDelete'](intervention({ id: 'i-1', revision: 3 }));
+      fixture.componentInstance['confirmDelete']();
+      deleteCallState.set(errorCallState(toStoreError(new Error('Conflict'))));
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['deleteDialogState']()).toBe('open');
     });
 
     it('should clear the pending target on any dismissal, not only confirm', async () => {

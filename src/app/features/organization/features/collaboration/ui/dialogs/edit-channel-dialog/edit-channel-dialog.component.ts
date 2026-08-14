@@ -24,6 +24,7 @@ import { HlmButton } from '@shared/ui/button';
 import {
   HlmDialog,
   HlmDialogContent,
+  HlmDialogDescription,
   HlmDialogHeader,
   HlmDialogPortal,
   HlmDialogTitle,
@@ -80,6 +81,7 @@ const CHANNEL_NAME_MAX_LENGTH = 80;
     HlmButton,
     HlmDialog,
     HlmDialogContent,
+    HlmDialogDescription,
     HlmDialogHeader,
     HlmDialogPortal,
     HlmDialogTitle,
@@ -149,6 +151,21 @@ export class EditChannelDialog {
   public readonly parentOptions: InputSignal<
     ReadonlyArray<{ readonly value: string; readonly label: string }>
   > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+
+  /**
+   * Property pending
+   * @readonly
+   *
+   * @description
+   * Whether a write this dialog's submit triggered — a rename or a move — is
+   * still in flight, disabling the submit button against a double click.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly pending: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -291,10 +308,13 @@ export class EditChannelDialog {
    *
    * @description
    * Marks the tree touched so every unmet rule shows at once, then emits and
-   * closes once the form is valid.
+   * closes once the form is valid. Guards on {@link pending} itself — the
+   * submit button carries no native `disabled` (its own busy-driven disabling
+   * would drop focus to `<body>` mid-dialog), so a stray Enter-triggered
+   * resubmission while a save is already in flight is refused here instead.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @param {Event} event - The submit event.
    *
@@ -302,6 +322,8 @@ export class EditChannelDialog {
    */
   protected submit(event: Event): void {
     event.preventDefault();
+
+    if (this.pending()) return;
 
     this.editForm().markAsTouched();
 

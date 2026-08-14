@@ -514,3 +514,7 @@ the panel nor its toggle renders.
   renders the same neutral label.
 - Only replay-safe operations (message send, reactions, pins, saves) may be queued in the offline
   outbox; read-state mutations (conversation read markers) must never be queued.
+- **A mutating confirm dialog stays open, busy-locked, until the write settles.** The channel delete
+  confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome
+  inline, so the operator sees it exactly where they took the action and can retry without reopening
+  the dialog, rather than the failure surfacing only as a page-level toast.

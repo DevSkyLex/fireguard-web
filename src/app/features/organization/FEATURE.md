@@ -289,3 +289,4 @@ re-tinted to look like a failure.
 - Organization-scoped child workflows stay under this feature boundary.
 - Layouts and sibling features consume organization behavior through the published port, not through direct store injection.
 - Resolvers that load organization context belong to this feature.
+- A mutating confirm dialog stays open, busy-locked, until the write settles — the members remove confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome inline, so the operator sees it exactly where they took the action and can retry without reopening the dialog, rather than the failure surfacing only as a page-level toast.

@@ -14,18 +14,35 @@
       </p>
     </hlm-dialog-header>
 
-    <canvas
-      #canvas
-      class="h-48 w-full touch-none rounded-md border border-input bg-background text-foreground"
-      role="img"
-      aria-label="Signature drawing area"
-      i18n-aria-label="@@intervention.signature.canvasLabel"
-      data-testid="intervention-signature-canvas"
-      (pointerdown)="onPointerDown($event)"
-      (pointermove)="onPointerMove($event)"
-      (pointerup)="onPointerUp($event)"
-      (pointercancel)="onPointerUp($event)"
-    ></canvas>
+    <div class="flex flex-col gap-2">
+      <canvas
+        #canvas
+        class="h-48 w-full touch-none rounded-md border border-input bg-background text-foreground"
+        role="img"
+        aria-label="Signature drawing area"
+        i18n-aria-label="@@intervention.signature.canvasLabel"
+        data-testid="intervention-signature-canvas"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerUp($event)"
+      ></canvas>
+
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="self-end max-sm:min-h-11"
+        data-testid="intervention-signature-clear"
+        [attr.aria-disabled]="!hasStrokes() ? 'true' : null"
+        [class.opacity-50]="!hasStrokes()"
+        [class.pointer-events-none]="!hasStrokes()"
+        (click)="!hasStrokes() || clear()"
+      >
+        <span i18n="@@intervention.signature.clear">Clear</span>
+      </button>
+    </div>
 
     <hlm-dialog-footer>
       <button
@@ -37,17 +54,6 @@
         (click)="dismissed.emit()"
       >
         <span i18n="@@intervention.signature.skip">Skip</span>
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="ghost"
-        class="max-sm:min-h-11"
-        data-testid="intervention-signature-clear"
-        [disabled]="!hasStrokes()"
-        (click)="clear()"
-      >
-        <span i18n="@@intervention.signature.clear">Clear</span>
       </button>
       <button
         hlmBtn

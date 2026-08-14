@@ -26,6 +26,7 @@ import {
 import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { Observable } from 'rxjs';
+import type { StoreError } from '@core/request-state';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type {
   ChannelOutput,
@@ -59,6 +60,7 @@ import {
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import {
@@ -568,6 +570,25 @@ export class ChannelConversationPage {
   protected readonly deletePending: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property deleteGate
+   * @readonly
+   *
+   * @description
+   * The delete confirmation's claim on the shared mutation state, scoping
+   * {@link deleteDialogBusy} and {@link deleteDialogError} to a delete
+   * actually confirmed here — `ChannelsStore` shares one `mutationCallState`
+   * across rename, move and delete.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {SubmissionGate}
+   */
+  private readonly deleteGate: SubmissionGate = inject<SubmissionGateService>(
+    SubmissionGateService,
+  ).create(this.channels.mutationCallState);
+
+  /**
    * Property deleteDialogState
    * @readonly
    *
@@ -582,6 +603,36 @@ export class ChannelConversationPage {
   protected readonly deleteDialogState: Signal<BrnDialogState> = computed((): BrnDialogState =>
     this.deletePending() ? 'open' : 'closed',
   );
+
+  /**
+   * Property deleteDialogBusy
+   * @readonly
+   *
+   * @description
+   * Whether the confirmed delete write is in flight, busy-disabling the
+   * dialog's footer and blocking Escape/backdrop dismissal.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly deleteDialogBusy: Signal<boolean> = this.deleteGate.isBusy;
+
+  /**
+   * Property deleteDialogError
+   * @readonly
+   *
+   * @description
+   * The delete write's own error, scoped to a delete actually confirmed this
+   * session.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly deleteDialogError: Signal<StoreError | null> = this.deleteGate.error;
 
   /**
    * Property favoritePending
@@ -842,6 +893,7 @@ export class ChannelConversationPage {
    * @returns {void}
    */
   protected requestDelete(): void {
+    this.deleteGate.reset();
     this.deletePending.set(true);
   }
 
@@ -852,7 +904,8 @@ export class ChannelConversationPage {
    * @description
    * Sends the delete write. Navigation back to the channel list happens once
    * `ChannelsStore` reports the deletion, via the constructor's event
-   * subscription.
+   * subscription; a failure surfaces inline through {@link deleteDialogError}
+   * instead, leaving the dialog open.
    *
    * @access protected
    * @since 1.0.0
@@ -860,6 +913,7 @@ export class ChannelConversationPage {
    * @returns {void}
    */
   protected confirmDelete(): void {
+    this.deleteGate.submit();
     this.channels.remove(this.channelId());
   }
 
@@ -882,6 +936,7 @@ export class ChannelConversationPage {
     if (state === 'open') return;
 
     this.deletePending.set(false);
+    this.deleteGate.reset();
   }
 
   /**

@@ -39,7 +39,6 @@ import { FeedbackService } from '@core/feedback';
 import { isCallError, isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionAttachmentOutput,
@@ -109,7 +108,6 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSeparator } from '@shared/ui/separator';
-import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -127,6 +125,7 @@ import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-di
 import { InterventionSignatureDialog } from '../../dialogs/intervention-signature-dialog';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
+import { InterventionDiscussionSheet } from '../../sheets/intervention-discussion-sheet';
 import { InterventionRequestChangesSheet } from '../../sheets/intervention-request-changes-sheet';
 import { InterventionWorkItemSheet } from '../../sheets/intervention-work-item-sheet';
 import { InterventionEquipmentTable } from '../../tables/intervention-equipment-table';
@@ -200,13 +199,13 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
-    ...HlmSheetImports,
     ...HlmSpinnerImports,
     InterventionAbout,
     InterventionActivityThread,
     InterventionAttachments,
     InterventionChangeList,
     InterventionConfirmDialog,
+    InterventionDiscussionSheet,
     InterventionSignatureDialog,
     InterventionStatusBand,
     InterventionCommentForm,
@@ -221,7 +220,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionTag,
     InterventionWorkItemSheet,
     InterventionWorkItemTable,
-    SubjectDiscussion,
     ...HlmTabsImports,
   ],
   providers: [

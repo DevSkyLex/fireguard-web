@@ -37,10 +37,7 @@ import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { isCallPending } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import {
-  InterventionOfflineService,
-  InterventionService,
-} from '@features/organization/features/interventions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import {
   resolveInterventionTag,
   type InterventionAssignRequest,
@@ -61,7 +58,6 @@ import {
 import {
   BrowserDownloadService,
   InterventionListPreferencesService,
-  InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import {
   InterventionStatisticsStore,
@@ -95,7 +91,6 @@ import {
   type InterventionPlanningOptionsStoreType,
 } from '../../../state/intervention-planning-options';
 import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
-import { InterventionSyncStatus } from '../../components/intervention-sync-status';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
@@ -222,7 +217,6 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
     InterventionAssignDialog,
     InterventionCreateSheet,
     InterventionKpiStrip,
-    InterventionSyncStatus,
     InterventionTable,
     InterventionTag,
     ...HlmAlertDialogImports,
@@ -375,17 +369,6 @@ export class InterventionsPage {
    */
   protected readonly statisticsStore: InterventionStatisticsStoreType =
     inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
-
-  /** The sync coordinator behind the toolbar's sync chip. */
-  protected readonly sync: InterventionSyncCoordinatorService = inject(
-    InterventionSyncCoordinatorService,
-  );
-
-  /** The outbox, read only for the chip's pending indicator. */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
-
-  /** Whether the offline outbox has changes waiting to sync. */
-  protected readonly hasUnsyncedChanges: Signal<boolean> = this.offline.hasUnsyncedChanges;
 
   /**
    * Property permissions

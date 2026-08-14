@@ -4327,10 +4327,6 @@
         <source>A temporary synchronization error interrupted this intervention.</source>
         <target>Une erreur de synchronisation temporaire a interrompu cette intervention.</target>
       </trans-unit>
-      <trans-unit id="intervention.sync.chipLabel" datatype="html">
-        <source>Synchronization status</source>
-        <target>État de la synchronisation</target>
-      </trans-unit>
       <trans-unit id="intervention.sync.title" datatype="html">
         <source> Synchronization </source>
         <target> Synchronisation </target>
@@ -4370,6 +4366,38 @@
       <trans-unit id="intervention.sync.discardConfirm" datatype="html">
         <source> Discard </source>
         <target> Abandonner </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaOffline" datatype="html">
+        <source>Offline, changes queued locally</source>
+        <target>Hors ligne, modifications en attente sur cet appareil</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaBlocked" datatype="html">
+        <source>Synchronization blocked, <x id="count" equiv-text="count"/> change(s) could not be replayed</source>
+        <target>Synchronisation bloquée, <x id="count" equiv-text="count"/> modification(s) n'ont pas pu être rejouée(s)</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaSyncing" datatype="html">
+        <source>Synchronizing</source>
+        <target>Synchronisation en cours</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaPending" datatype="html">
+        <source><x id="count" equiv-text="count"/> change(s) waiting to sync</source>
+        <target><x id="count" equiv-text="count"/> modification(s) en attente de synchronisation</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaSynced" datatype="html">
+        <source>Up to date</source>
+        <target>À jour</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.offlineExplain" datatype="html">
+        <source> You're offline. Changes are saved on this device and will sync automatically once you're back online. </source>
+        <target> Vous êtes hors ligne. Les modifications sont enregistrées sur cet appareil et seront synchronisées automatiquement dès votre retour en ligne. </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.upToDate" datatype="html">
+        <source>Up to date</source>
+        <target>À jour</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.lastSynced" datatype="html">
+        <source>Last synced <x id="when" equiv-text="relative"/></source>
+        <target>Dernière synchronisation <x id="when" equiv-text="relative"/></target>
       </trans-unit>
       <trans-unit id="intervention.workspace.rejectChangeFailed" datatype="html">
         <source>The proposed change could not be rejected.</source>

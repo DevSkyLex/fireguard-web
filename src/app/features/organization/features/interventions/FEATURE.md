@@ -295,6 +295,18 @@ Main provider:
 
 - `provideInterventionsFeature`
 
+Shell contribution:
+
+- `withSyncIndicator` (`providers/sync-indicator/`) — contributes
+  `InterventionSyncIndicator` to the dashboard shell's header-actions slot.
+  Published through `@features/organization` the same hop-by-hop path as
+  `withAssistantToggle`: the provider's own local `index.ts`, re-exported by
+  `organization/providers/index.ts` (a deep import, bypassing this feature's
+  own root barrel on purpose — see Published Contracts), then
+  `organization/index.ts`. Wired into `app.routes.ts`'s dashboard route
+  `headerActions`, order `20`, between the assistant toggle (`10`) and the
+  theme switcher (`100`).
+
 ## Published Contracts
 
 The root `index.ts` stays deliberately narrow (see the comment in the file): a wide barrel
@@ -306,15 +318,20 @@ drags the IndexedDB/offline graph into every consumer's initial bundle. It publi
   implementation path rather than through `./data-access`, because that barrel also carries the
   offline services.
 
-Nothing else is published from the root barrel. The parent feature additionally consumes three
+Nothing else is published from the root barrel — `withSyncIndicator` included: `organization/providers/index.ts`
+imports it from `providers/sync-indicator`'s own local `index.ts` directly, the same deep-import shape
+`withAssistantToggle` uses for collaboration's assistant provider, precisely so this widening never has to
+flow through (and thereby widen) the deliberately narrow root barrel above.
+
+The parent feature additionally consumes three
 concern-level barrels, which are public surfaces in their own right (ARCHITECTURE.md §13.2):
 
 - `models` — `InterventionOutput`, the queue types, the status/priority unions.
 - `utils` — `buildInterventionQueueRequests`, the catalogue mapping a named question to the
   collection queries answering it.
 - `data-access` — `InterventionOfflineService`, for the "waiting to sync" queue. This one does
-  pull the offline graph in, deliberately: the landing page must list local work, and the
-  detail page injects the same service for its `unsynced` notice.
+  pull the offline graph in, deliberately: the landing page must list local work, and
+  `InterventionSyncIndicator` injects the same service for the shell's sync indicator.
 - `ui/components` — `InterventionTag`, so a queue row renders an intervention enum through this
   feature's own registry rather than a copied map.
 
@@ -697,8 +714,9 @@ below the badge/phase/action row; a failed activity fetch is an alert with a
 retry inside the Activity section; the blocker count is the band's own
 control, and the blocking compliance issues it points at sit in the issues
 checklist; a publication failure is inline in the publish confirmation,
-which stays open so the operator can retry; and an unsynced outbox is a
-small header indicator rather than a dismissable banner. A
+which stays open so the operator can retry; and an unsynced outbox is the
+shell's own sync indicator rather than a dismissable page-level banner (see
+`### Offline`). A
 field-level rejection is already shown by the field itself
 (`editState.failed`) and is excluded from the top-of-page alert so it never
 renders twice.
@@ -733,14 +751,48 @@ alert would be white on white, separated by one hairline.
 ### Offline
 
 The workspace store already queues writes, applies them optimistically and keeps
-an IndexedDB snapshot. The visible surface is
-`app-intervention-sync-status` — the **one address** for the outbox's state,
-on both the list toolbar and the detail header (it replaced the header's
-one-way unsynced badge): a chip that spins during a replay, shows a cloud when
-operations wait, and turns destructive with a count when operations are
-blocked, opening onto Sync now / Retry blocked / Discard blocked — the discard
-confirm-gated because it is data loss. The chip is presentational; each page
-injects `InterventionSyncCoordinatorService` and wires its signals in.
+an IndexedDB snapshot. The visible surface is `app-intervention-sync-indicator`
+(`ui/components/intervention-sync-indicator/`), a **shell** widget contributed
+to the dashboard's header-actions slot through `withSyncIndicator()`
+(`providers/sync-indicator/`, mirroring `withAssistantToggle()`) rather than
+mounted per intervention page — offline is a permanent condition of the
+workspace, not a per-page notice, and the former per-page
+`app-intervention-sync-status` unmounted entirely once healthy, leaving an
+agent who had just saved offline work with no confirmation once they
+navigated to another page. The indicator is present on **every** dashboard
+page, not only the interventions ones: the outbox is device-global, not
+scoped to whichever intervention screen happens to be open.
+
+Five mutually exclusive states, in priority order (a dropped connection
+outranks a blocked replay, which outranks one in flight, which outranks
+self-syncable work still queued): **offline** (muted glyph, popover explains
+the offline state and any pending count), **blocked** (destructive glyph plus
+a count badge, popover carries Retry blocked / Discard blocked — discard
+confirm-gated because it is data loss), **syncing** (spinner), **pending**
+(neutral glyph plus a count badge, popover offers Sync now), **synced**
+(quiet, no badge, popover states "Last synced `<relative time>`" via
+`InterventionSyncCoordinatorService.lastSyncedAt`, reusing
+`formatInterventionRelativeTime` — this indicator is its third consumer
+alongside the detail page's meta line and its activity thread). Resolves to
+`synced` server-side without an explicit SSR guard:
+`ConnectivityService.online` is optimistic-online there, and the coordinator
+and outbox signals default to their empty values before any IndexedDB access
+runs.
+
+Being a shell widget, `InterventionSyncIndicator` is — unlike every other
+component in this feature — allowed to inject `InterventionSyncCoordinatorService`,
+`InterventionOfflineService` and `ConnectivityService` directly rather than
+taking them as inputs (`ARCHITECTURE.md`: "Layouts may render feature-owned
+widgets through public APIs"). Publishing `withSyncIndicator()` to
+`app.routes.ts` therefore pulls the whole offline/IndexedDB graph into the
+dashboard shell's own bundle, the same trade-off `withAssistantToggle()`
+already accepts for the assistant — accepted here because the indicator now
+being permanent means that graph loads for every dashboard visit regardless.
+
+The indicator's trigger deliberately keeps the retired component's
+`data-testid="intervention-sync-status"` rather than minting a new one, so
+every existing sync locator — e2e specs and page objects included — survives
+the migration unchanged.
 
 ### Discussion sits beside the activity thread, not inside it
 

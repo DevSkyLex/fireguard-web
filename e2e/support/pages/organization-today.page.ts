@@ -26,9 +26,18 @@ export class OrganizationTodayPage {
   public readonly recentInterventionRows: Locator = this.page.getByTestId(
     'org-today-recent-intervention',
   );
+  public readonly syncIndicatorTrigger: Locator = this.page.getByTestId('intervention-sync-status');
+  public readonly syncIndicatorLastSynced: Locator = this.page.getByTestId(
+    'intervention-sync-last-synced',
+  );
 
   public async goto(organizationId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}`);
+  }
+
+  /** Opens the shell header's permanent sync indicator popover. */
+  public async openSyncIndicator(): Promise<void> {
+    await this.syncIndicatorTrigger.click();
   }
 
   /** Locates one KPI tile's wrapper by its stable id (`open-interventions`, `open-non-conformities`, `inspections-completed`, `equipment-under-maintenance`). */

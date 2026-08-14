@@ -106,6 +106,20 @@ test.describe('Interventions list — shared filtered URL', () => {
       new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions$`),
     );
   });
+
+  test('shows exactly one sync indicator, contributed by the shell header, with no page-local copy', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockListPage(api);
+    const interventions = new InterventionsPage(page);
+
+    await interventions.goto(E2E_ORGANIZATION_ID);
+
+    await expect(interventions.syncIndicatorTrigger).toBeVisible();
+    await expect(page.getByTestId('intervention-sync-status')).toHaveCount(1);
+    await expect(interventions.root.getByTestId('intervention-sync-status')).toHaveCount(0);
+  });
 });
 
 test.describe('Interventions list — segmented views and filter chips', () => {

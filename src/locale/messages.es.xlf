@@ -4330,10 +4330,6 @@
         <source>A temporary synchronization error interrupted this intervention.</source>
         <target>Un error de sincronización temporal interrumpió esta intervención.</target>
       </trans-unit>
-      <trans-unit id="intervention.sync.chipLabel" datatype="html">
-        <source>Synchronization status</source>
-        <target>Estado de la sincronización</target>
-      </trans-unit>
       <trans-unit id="intervention.sync.title" datatype="html">
         <source> Synchronization </source>
         <target> Sincronización </target>
@@ -4369,6 +4365,38 @@
       <trans-unit id="intervention.sync.discardText" datatype="html">
         <source> The changes that could not be replayed will be permanently lost. Work recorded on the server is not affected. </source>
         <target> Los cambios que no se pudieron reproducir se perderán definitivamente. El trabajo registrado en el servidor no se ve afectado. </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaOffline" datatype="html">
+        <source>Offline, changes queued locally</source>
+        <target>Sin conexión, cambios en espera en este dispositivo</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaBlocked" datatype="html">
+        <source>Synchronization blocked, <x id="count" equiv-text="count"/> change(s) could not be replayed</source>
+        <target>Sincronización bloqueada, <x id="count" equiv-text="count"/> cambio(s) no se pudieron reproducir</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaSyncing" datatype="html">
+        <source>Synchronizing</source>
+        <target>Sincronizando</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaPending" datatype="html">
+        <source><x id="count" equiv-text="count"/> change(s) waiting to sync</source>
+        <target><x id="count" equiv-text="count"/> cambio(s) a la espera de sincronizarse</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.indicator.ariaSynced" datatype="html">
+        <source>Up to date</source>
+        <target>Actualizado</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.offlineExplain" datatype="html">
+        <source> You're offline. Changes are saved on this device and will sync automatically once you're back online. </source>
+        <target> Estás sin conexión. Los cambios se guardan en este dispositivo y se sincronizarán automáticamente en cuanto vuelvas a estar en línea. </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.upToDate" datatype="html">
+        <source>Up to date</source>
+        <target>Actualizado</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.lastSynced" datatype="html">
+        <source>Last synced <x id="when" equiv-text="relative"/></source>
+        <target>Última sincronización <x id="when" equiv-text="relative"/></target>
       </trans-unit>
       <trans-unit id="intervention.sync.discardConfirm" datatype="html">
         <source> Discard </source>

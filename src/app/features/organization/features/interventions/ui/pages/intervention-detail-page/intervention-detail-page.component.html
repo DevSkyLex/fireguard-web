@@ -23,15 +23,6 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <app-intervention-sync-status
-          [syncing]="sync.syncing()"
-          [blockedCount]="sync.blockedOperations()"
-          [unsynced]="hasUnsyncedChanges()"
-          (syncRequested)="sync.syncAll()"
-          (retryRequested)="sync.retryBlocked()"
-          (discardRequested)="sync.discardBlocked()"
-        />
-
         @if (canDiscuss()) {
           <button
             hlmBtn

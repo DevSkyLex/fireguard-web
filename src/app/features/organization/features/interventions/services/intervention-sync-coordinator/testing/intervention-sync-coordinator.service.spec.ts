@@ -61,6 +61,44 @@ describe('InterventionSyncCoordinatorService', () => {
     expect(service.syncing()).toBe(false);
   });
 
+  it('should have a null lastSyncedAt initially', () => {
+    const service = build();
+
+    expect(service.lastSyncedAt()).toBeNull();
+  });
+
+  it('should stamp lastSyncedAt once a replay cycle completes clean', async () => {
+    offline.listInterventionIdsWithOutbox.mockResolvedValue(['i-1']);
+    const service = build();
+
+    await service.syncAll();
+
+    expect(service.lastSyncedAt()).toBeInstanceOf(Date);
+  });
+
+  it('should not stamp lastSyncedAt when the replay cycle ends blocked', async () => {
+    offline.listInterventionIdsWithOutbox.mockResolvedValue(['i-1']);
+    offline.listOutbox.mockResolvedValue([{ id: 'op-1', status: 'conflict', error: 'Conflict!' }]);
+    const service = build();
+
+    await service.syncAll();
+
+    expect(service.blockedOperations()).toBe(1);
+    expect(service.lastSyncedAt()).toBeNull();
+  });
+
+  it('should not stamp lastSyncedAt when the replay cycle ends failed', async () => {
+    offline.listInterventionIdsWithOutbox.mockResolvedValue(['i-1']);
+    offline.listOutbox.mockResolvedValue([{ id: 'op-1', status: 'failed', error: 'Failed!' }]);
+    sync.replayOutbox.mockRejectedValue(new Error('boom'));
+    const service = build();
+
+    await service.syncAll();
+
+    expect(service.problem()).not.toBeNull();
+    expect(service.lastSyncedAt()).toBeNull();
+  });
+
   it('should surface the count and message of blocked operations', async () => {
     offline.listInterventionIdsWithOutbox.mockResolvedValue(['i-1']);
     offline.listOutbox.mockResolvedValue([{ id: 'op-1', status: 'conflict', error: 'Conflict!' }]);

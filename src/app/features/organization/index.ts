@@ -9,6 +9,7 @@ export {
   withDirectMessagesNav,
   withOrganizationNav,
   withOrganizationSwitcher,
+  withSyncIndicator,
 } from './providers';
 export { provideOrganizationFeature } from './organization.feature';
 export { organizationGuard, organizationPermissionGuard } from './http/guards';

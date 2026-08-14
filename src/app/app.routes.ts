@@ -11,6 +11,7 @@ import {
   withDirectMessagesNav,
   withOrganizationNav,
   withOrganizationSwitcher,
+  withSyncIndicator,
 } from '@features/organization';
 import {
   DashboardLayout,
@@ -115,7 +116,7 @@ export const APP_ROUTES: Routes = [
         sidebarNav: [withOrganizationNav(), withDirectMessagesNav(), withDashboardGlobalNav()],
         sidebarFooter: [withAccountMenu()],
         header: [withDashboardBreadcrumb()],
-        headerActions: [withAssistantToggle(), withThemeSwitcher()],
+        headerActions: [withAssistantToggle(), withSyncIndicator(), withThemeSwitcher()],
       }),
     ],
     children: [

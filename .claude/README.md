@@ -1,8 +1,8 @@
 # FireGuard Web — Claude Code tooling
 
 This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspace root to
-activate it: 12 agents, 13 commands, 9 skills, 9 rules, 4 MCP servers, and 2 project hooks
-(plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
+activate it: 12 agents, 13 commands, 9 skills, 9 rules, 4 MCP servers, 2 LSP servers, and
+2 project hooks (plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
 
 > **This directory is also a plugin.** The monorepo root installs it as
 > `fireguard-web@fireguard` (project scope, via the root `.claude-plugin/marketplace.json`),
@@ -170,6 +170,44 @@ automatically so nothing critical depends on that read happening.
 | `spartan`    | `npx -y @spartan-ng/mcp`       | 17    | the component catalog, APIs, and blocks — ask it before writing markup                                                                      |
 | `playwright` | `npx -y @playwright/mcp`       | 24    | the heaviest; the writing agents scope it out via their `tools:` lists — only `fg-e2e-runner` declares it                                   |
 | `context7`   | `npx -y @upstash/context7-mcp` | 2     | NgRx, Tailwind, CDK — what the other two do not cover                                                                                       |
+
+## LSP servers (`lsp/`, plugin `fireguard-web-lsp`)
+
+Two language servers, both installed as devDependencies so the versions travel with the app
+and `npm ci` provisions them. They give Claude `goToDefinition` / `findReferences` / `hover` /
+`documentSymbol` — and, more importantly, push diagnostics into the session **after every
+edit**, instead of at `npm run build` time.
+
+| Server       | Runs                                  | Opens   | Catches                                                                             |
+| ------------ | ------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `typescript` | `typescript-language-server --stdio`  | `.ts`   | type errors, unused symbols — the strict-build failures, at edit time               |
+| `angular`    | `@angular/language-server` (ngserver) | `.html` | template errors: unknown property on the component, element missing from `imports:` |
+
+The split is deliberate: `ngserver` also speaks TypeScript, so scoping it to `.html` avoids
+two servers publishing the same diagnostic twice. The trade-off is that **inline** templates
+in a `.ts` file get no Angular checking — this repo puts every template in its own
+`.component.html` (§10.2), so that costs nothing today.
+
+**Why they are their own plugin, `lsp/` rather than a `.lsp.json` next to this file.** LSP
+configuration is the one component Claude Code loads _only from an enabled plugin_ — there is
+no project-level source for it. And `fireguard-web@fireguard` is deliberately **disabled**
+when this app is the workspace root (everything it carries already loads natively from
+`.claude/`), so a `.lsp.json` inside it would only ever start the servers from the monorepo
+root. `lsp/` is therefore a second, minimal plugin — nothing but `.lsp.json` and a manifest —
+installed and enabled at **both** scopes: `enabledPlugins` here _and_ in the root
+`.claude/settings.json`. Marketplace entry: `fireguard-web-lsp`, source
+`./fireguard-sso-web/.claude/lsp`.
+
+**Paths are absolute, on purpose.** `${CLAUDE_PLUGIN_ROOT}` points into
+`~/.claude/plugins/cache/…`, a _copy_ of this directory, so it cannot reach `node_modules/`;
+and `${CLAUDE_PROJECT_DIR}` is `G:\Projets\fireguard` from the root but
+`…\fireguard-sso-web` from here — no single expansion covers both. Absolute paths do, at the
+cost of being machine-specific: **moving the workspace means editing `lsp/.lsp.json`** (and
+bumping its `version`, like any plugin change).
+
+Expect ~4 s (TS) and ~7 s (Angular) before the first diagnostics of a session — the Angular
+project has to be typechecked once. To keep the navigation but silence the automatic
+injection on a server, set `"diagnostics": false` on it.
 
 ## Hooks
 

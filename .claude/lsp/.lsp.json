@@ -1,0 +1,37 @@
+{
+  "typescript": {
+    "command": "node",
+    "args": [
+      "G:/Projets/fireguard/fireguard-sso-web/node_modules/typescript-language-server/lib/cli.mjs",
+      "--stdio"
+    ],
+    "extensionToLanguage": {
+      ".ts": "typescript",
+      ".mts": "typescript"
+    },
+    "workspaceFolder": "G:/Projets/fireguard/fireguard-sso-web",
+    "startupTimeout": 60000,
+    "restartOnCrash": true,
+    "maxRestarts": 3,
+    "diagnostics": true
+  },
+  "angular": {
+    "command": "node",
+    "args": [
+      "G:/Projets/fireguard/fireguard-sso-web/node_modules/@angular/language-server/bin/ngserver",
+      "--stdio",
+      "--tsProbeLocations",
+      "G:/Projets/fireguard/fireguard-sso-web",
+      "--ngProbeLocations",
+      "G:/Projets/fireguard/fireguard-sso-web"
+    ],
+    "extensionToLanguage": {
+      ".html": "html"
+    },
+    "workspaceFolder": "G:/Projets/fireguard/fireguard-sso-web",
+    "startupTimeout": 120000,
+    "restartOnCrash": true,
+    "maxRestarts": 3,
+    "diagnostics": true
+  }
+}

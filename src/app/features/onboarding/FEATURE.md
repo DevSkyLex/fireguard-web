@@ -37,7 +37,14 @@ boundary, never through organization subfeature stores.
   `maintenanceGuard` are applied on the mounting route in `app.routes.ts`,
   alongside the other top-level shells that share them; `onboardingGuard`
   itself is declared inside `onboarding.routes.ts`, guarding the wizard's one
-  route.
+  route. The mounting route also sets `data: { splitWidth: 'xl' }`, which
+  `SplitLayout` binds as its own `splitWidth` input through
+  `withComponentInputBinding()`: the wizard's widest step (`select_plan`)
+  needs more than the shell's shared `md` (28rem) default. `2xl` was tried and
+  rejected — at that cap the form column's floor pushes the showcase panel
+  below half its width between the `lg` breakpoint and roughly 1472px of
+  viewport, unbalancing the very panel the wizard depends on for its
+  progress rail.
 - The dashboard shell's root route (`app.routes.ts`, the `DashboardLayout`
   mount) carries `onboardingRequiredGuard` in its own `canActivate`, forming
   the mutual gate described under "Invariants". `authGuard`/`maintenanceGuard`

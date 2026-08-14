@@ -1,29 +1,11 @@
 <div id="split-layout" class="flex min-h-dvh bg-background text-foreground">
-  <!--
-    Branded panel, half the viewport from `lg` up. It is dropped entirely rather
-    than rendered empty when no contribution claims it, so a route that dresses
-    the shell with nothing still gets a usable full-width form column instead of
-    a blank half screen.
-  -->
-  <!--
-    Half the viewport, but it is the half that yields. Without a floor on the
-    form column the panel kept its 50% and the form absorbed every pixel lost
-    between `lg` and a wide screen, which crushed the two-column register form.
-    The `min-w` below is `max-w-md` (28rem) plus the column's own `sm:px-8`
-    gutters, so the widest form fits exactly before the panel starts giving way.
-  -->
   @if (showcase(); as contribution) {
     <aside id="split-layout-showcase" class="hidden bg-muted text-foreground lg:grid lg:w-1/2">
       <ng-container *ngComponentOutlet="contribution.component" />
     </aside>
   }
 
-  <div class="relative flex min-h-dvh flex-1 flex-col lg:min-w-[32rem]">
-    <!--
-      The header floats over the column instead of taking a row of its own, so
-      the form stays centred on the full viewport height rather than on what is
-      left below the chrome.
-    -->
+  <div id="split-layout-column" [class]="columnClass()">
     @if (header.length > 0) {
       <header
         class="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-4 px-6 py-5 sm:px-8"
@@ -32,22 +14,8 @@
       </header>
     }
 
-    <!--
-      Owns the breathing room around the routed page: `py-16` keeps a short form
-      clear of the floating header.
-    -->
     <main id="split-layout-content" class="flex flex-1 flex-col justify-center px-6 py-16 sm:px-8">
-      <!--
-        The content box, and the only thing that caps a form's width. Pages fill
-        it edge to edge and declare no width of their own — which is what keeps
-        sign-in and registration the same size instead of jumping between
-        `max-w-sm` and `max-w-md` as the user moves from one to the other.
-
-        Bounded rather than free: an email field stretched across an ultrawide
-        screen is harder to read, not easier. `mx-auto` centres it on the inline
-        axis, `justify-center` above on the block axis.
-      -->
-      <div class="mx-auto flex w-full max-w-md flex-col">
+      <div id="split-layout-content-box" [class]="contentClass()">
         <router-outlet />
       </div>
     </main>

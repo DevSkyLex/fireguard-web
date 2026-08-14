@@ -216,4 +216,31 @@ describe('FacilityCreateForm', () => {
 
     expect(cancelled.length).toBe(1);
   });
+
+  it('should clear the name control aria-invalid once a name is entered', async () => {
+    const nameInput: HTMLInputElement | null = element.querySelector(
+      '[data-testid="facility-create-name"]',
+    );
+
+    await submit();
+    expect(nameInput?.getAttribute('aria-invalid')).toBe('true');
+
+    await setModel({ type: 'building' });
+    await fill('facility-create-name', 'Headquarters');
+
+    expect(nameInput?.getAttribute('aria-invalid')).not.toBe('true');
+  });
+
+  it('should place cancel before the submit control in the DOM', () => {
+    const buttons: HTMLButtonElement[] = Array.from(element.querySelectorAll('button[type]'));
+    const cancelIndex: number = buttons.findIndex(
+      (button: HTMLButtonElement): boolean => button.dataset['testid'] === 'facility-create-cancel',
+    );
+    const submitIndex: number = buttons.findIndex(
+      (button: HTMLButtonElement): boolean => button.dataset['testid'] === 'facility-create-submit',
+    );
+
+    expect(cancelIndex).toBeGreaterThanOrEqual(0);
+    expect(cancelIndex).toBeLessThan(submitIndex);
+  });
 });

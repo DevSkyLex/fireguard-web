@@ -1,4 +1,4 @@
-<form (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
+<form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
   <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
     @if (serverMessages().length > 0) {
       <div role="alert" data-testid="intervention-work-item-error" class="text-sm text-destructive">
@@ -9,15 +9,13 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="intervention-work-item-action" i18n="@@intervention.wif.actionLabel"
-        >Action</label
+      <label hlmFieldLabel for="intervention-work-item-action"
+        ><span i18n="@@intervention.wif.actionLabel">Action</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
-      <hlm-select
-        id="intervention-work-item-action"
-        [itemToString]="actionLabelOf"
-        [formField]="workItemForm.action"
-      >
-        <hlm-select-trigger class="w-full">
+      <hlm-select [itemToString]="actionLabelOf" [formField]="workItemForm.action">
+        <hlm-select-trigger buttonId="intervention-work-item-action" class="w-full">
           @if (workItemForm.action().value(); as action) {
             <app-intervention-tag kind="workItemAction" [value]="action" asOption />
           } @else {
@@ -34,6 +32,9 @@
           </hlm-select-group>
         </hlm-select-content>
       </hlm-select>
+      @if (workItemForm.action().touched() && workItemForm.action().invalid()) {
+        <hlm-field-error>{{ workItemForm.action().errors()[0].message }}</hlm-field-error>
+      }
     </hlm-field>
 
     <hlm-field>
@@ -97,23 +98,31 @@
     </hlm-field>
   </hlm-field-group>
 
-  <hlm-sheet-footer class="flex-col-reverse sm:flex-row sm:justify-end">
-    <button
-      hlmBtn
-      type="submit"
-      data-testid="intervention-work-item-submit"
-      [disabled]="pending() || disabled()"
-    >
-      <span i18n="@@intervention.wif.submit">Add to prepared scope</span>
-    </button>
+  <hlm-sheet-footer class="flex-col sm:flex-row sm:justify-end">
     <button
       hlmBtn
       type="button"
       variant="outline"
+      class="max-sm:min-h-11"
       data-testid="intervention-work-item-cancel"
       (click)="cancelled.emit()"
     >
       <span i18n="@@common.cancel">Cancel</span>
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      class="max-sm:min-h-11"
+      data-testid="intervention-work-item-submit"
+      [disabled]="pending() || disabled()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
+    >
+      @if (pending()) {
+        <span i18n="@@intervention.wif.submitting">Adding…</span>
+      } @else {
+        <span i18n="@@intervention.wif.submit">Add to prepared scope</span>
+      }
     </button>
   </hlm-sheet-footer>
 </form>

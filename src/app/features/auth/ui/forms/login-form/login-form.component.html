@@ -1,60 +1,77 @@
-<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
-  <div class="flex flex-col gap-1.5">
-    <label hlmFieldLabel for="login-email" i18n="@@auth.email.label">Email address</label>
-    <input
-      hlmInput
-      id="login-email"
-      type="email"
-      autocomplete="email"
-      inputmode="email"
-      placeholder="you@company.com"
-      i18n-placeholder="@@auth.email.placeholder"
-      class="w-full"
-      [formField]="loginForm.email"
-      [attr.aria-invalid]="loginForm.email().touched() && loginForm.email().invalid()"
-    />
-    <!--
-      Errors appear only after the field has been touched: a blank form must not
-      greet the user in red. `errors()` carries every failing rule, so the first
-      is the most specific thing to say.
-    -->
-    @if (loginForm.email().touched() && loginForm.email().invalid()) {
-      <hlm-field-error>{{ loginForm.email().errors()[0].message }}</hlm-field-error>
-    }
-  </div>
-
-  <div class="flex flex-col gap-1.5">
-    <div class="flex items-center justify-between gap-2">
-      <label hlmFieldLabel for="login-password" i18n="@@auth.password.label">Password</label>
-      <a
-        class="text-xs text-muted-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        routerLink="/auth/password-reset/forgot"
-        i18n="@@auth.login.forgotPassword"
-        >Forgot password?</a
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <hlm-field>
+      <label hlmFieldLabel for="login-email"
+        ><span i18n="@@auth.email.label">Email address</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
-    </div>
-    <app-password-input
-      inputId="login-password"
-      autocomplete="current-password"
-      placeholder="Your password"
-      i18n-placeholder="@@auth.login.passwordPlaceholder"
-      [field]="loginForm.password"
-    />
-    @if (loginForm.password().touched() && loginForm.password().invalid()) {
-      <hlm-field-error>{{ loginForm.password().errors()[0].message }}</hlm-field-error>
-    }
-  </div>
+      <input
+        hlmInput
+        id="login-email"
+        type="email"
+        autocomplete="email"
+        inputmode="email"
+        placeholder="you@company.com"
+        i18n-placeholder="@@auth.email.placeholder"
+        data-testid="login-email"
+        [formField]="loginForm.email"
+        [attr.aria-required]="true"
+      />
+      @if (loginForm.email().touched() && loginForm.email().invalid()) {
+        <hlm-field-error>{{ loginForm.email().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
 
-  <label class="flex items-center gap-2 text-sm text-muted-foreground">
-    <hlm-checkbox id="login-remember" [formField]="loginForm.rememberMe" />
-    <span i18n="@@auth.login.rememberMe">Keep me signed in</span>
-  </label>
+    <hlm-field>
+      <div class="flex items-center justify-between gap-2">
+        <label hlmFieldLabel for="login-password"
+          ><span i18n="@@auth.password.label">Password</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <a
+          class="text-xs text-muted-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          routerLink="/auth/password-reset/forgot"
+          i18n="@@auth.login.forgotPassword"
+          >Forgot password?</a
+        >
+      </div>
+      <app-password-input
+        inputId="login-password"
+        autocomplete="current-password"
+        placeholder="Your password"
+        i18n-placeholder="@@auth.login.passwordPlaceholder"
+        [field]="loginForm.password"
+      />
+      @if (loginForm.password().touched() && loginForm.password().invalid()) {
+        <hlm-field-error>{{ loginForm.password().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
 
-  <button hlmBtn type="submit" class="w-full max-sm:min-h-11" [disabled]="pending()">
-    @if (pending()) {
-      <span i18n="@@auth.login.submitting">Signing in…</span>
-    } @else {
-      <span i18n="@@auth.login.submit">Sign in</span>
-    }
-  </button>
+    <label class="flex items-center gap-2 text-sm text-muted-foreground">
+      <hlm-checkbox
+        id="login-remember"
+        data-testid="login-remember"
+        [formField]="loginForm.rememberMe"
+      />
+      <span i18n="@@auth.login.rememberMe">Keep me signed in</span>
+    </label>
+
+    <button
+      hlmBtn
+      type="submit"
+      class="w-full max-sm:min-h-11"
+      data-testid="login-submit"
+      [disabled]="pending()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
+    >
+      @if (pending()) {
+        <span i18n="@@auth.login.submitting">Signing in…</span>
+      } @else {
+        <span i18n="@@auth.login.submit">Sign in</span>
+      }
+    </button>
+  </hlm-field-group>
 </form>

@@ -107,4 +107,38 @@ describe('InterventionRequestChangesForm', () => {
   it('should announce nothing before a failure', () => {
     expect(root().querySelector('[data-testid="intervention-request-changes-error"]')).toBeNull();
   });
+
+  it('should list the cancel button before the submit button in the action row', () => {
+    const footer = root().querySelector('hlm-sheet-footer') as HTMLElement;
+    const buttons = Array.from(footer.querySelectorAll('button'));
+    const cancelButton = root().querySelector(
+      '[data-testid="intervention-request-changes-cancel"]',
+    ) as HTMLButtonElement;
+
+    expect(buttons[0]).toBe(cancelButton);
+    expect(buttons[1]).toBe(submitButton());
+  });
+
+  it('should mark the note field aria-invalid once submission touches it empty', async () => {
+    await submit();
+
+    expect(note().getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('should swap the submit label to the pending wording while sending', async () => {
+    await type('Re-check the third floor.');
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+
+    expect(root().textContent).toContain('Sending…');
+  });
+
+  it('should mark the note label required with an aria-hidden asterisk', () => {
+    const label = root().querySelector(
+      'label[for="intervention-request-changes-note"]',
+    ) as HTMLLabelElement;
+    const asterisk = label.querySelector('span[aria-hidden="true"]');
+
+    expect(asterisk?.textContent).toContain('*');
+  });
 });

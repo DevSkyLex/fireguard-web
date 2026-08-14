@@ -1004,7 +1004,21 @@ follows.
   its `hlm-field-group` scrolls independently (`min-h-0 flex-1
 overflow-y-auto`), and the footer sits outside that scroll region as the
   form's last flex child — the form keeps owning the buttons; only the sheet's
-  layout changed.
+  layout changed. That footer stays `flex-col sm:flex-row` (never
+  `flex-col-reverse`): DOM order, visual order and tab order must agree at
+  every breakpoint (WCAG 2.4.3), so Cancel-first-in-DOM already puts Submit
+  last — nearest the thumb on a bottom-anchored mobile sheet — without a
+  reversed row.
+- **Padding ownership**: these same three form-sheets keep `px-4` on their
+  own `hlm-field-group` rather than moving it to the sheet host, unlike the
+  page/dialog-hosted create forms elsewhere in `organization` (which inherit
+  their gutter from `hlmCard`/the dialog panel). `hlm-sheet-content` supplies
+  no inset of its own — header and footer self-pad via their own component
+  styles — so the scrollable field group is the only element that can own the
+  scroll region's horizontal padding without either double-padding the footer
+  or restructuring the sticky-footer-inside-the-form layout the paragraph
+  above documents. Cross-referenced from `organization/FEATURE.md` § UI
+  Conventions, where the create-surface placement rule lives.
 
 ## Invariants
 

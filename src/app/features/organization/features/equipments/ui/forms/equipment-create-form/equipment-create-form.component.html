@@ -1,5 +1,5 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group class="px-4">
+  <hlm-field-group>
     @if (serverMessages().length > 0) {
       <div role="alert" data-testid="equipment-create-error" class="text-sm text-destructive">
         @for (message of serverMessages(); track message) {
@@ -9,13 +9,17 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="equipment-create-type" i18n="@@equipment.form.type">Type</label>
-      <hlm-select
-        id="equipment-create-type"
-        [itemToString]="typeLabelOf"
-        [formField]="createForm.type"
+      <label hlmFieldLabel for="equipment-create-type"
+        ><span i18n="@@equipment.form.type">Type</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
-        <hlm-select-trigger class="w-full" data-testid="equipment-create-type">
+      <hlm-select [itemToString]="typeLabelOf" [formField]="createForm.type">
+        <hlm-select-trigger
+          buttonId="equipment-create-type"
+          class="w-full"
+          data-testid="equipment-create-type"
+        >
           <hlm-select-value
             placeholder="Select an equipment type"
             i18n-placeholder="@@equipment.form.typePlaceholder"
@@ -105,22 +109,31 @@
       />
     </hlm-field>
 
-    <hlm-field orientation="horizontal">
-      <button hlmBtn type="submit" data-testid="equipment-create-submit" [disabled]="pending()">
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="equipment-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="equipment-create-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
         @if (pending()) {
           <span i18n="@@equipment.cf.submitting">Registering…</span>
         } @else {
           <span i18n="@@equipment.form.submit">Create Equipment</span>
         }
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        data-testid="equipment-create-cancel"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@common.cancel">Cancel</span>
       </button>
     </hlm-field>
   </hlm-field-group>

@@ -1,5 +1,5 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group class="px-4">
+  <hlm-field-group>
     @if (serverMessages().length > 0) {
       <div role="alert" data-testid="facility-create-error" class="text-sm text-destructive">
         @for (message of serverMessages(); track message) {
@@ -9,13 +9,17 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="facility-create-type" i18n="@@facility.form.type">Type</label>
-      <hlm-select
-        id="facility-create-type"
-        [itemToString]="typeLabelOf"
-        [formField]="createForm.type"
+      <label hlmFieldLabel for="facility-create-type"
+        ><span i18n="@@facility.form.type">Type</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
-        <hlm-select-trigger class="w-full" data-testid="facility-create-type">
+      <hlm-select [itemToString]="typeLabelOf" [formField]="createForm.type">
+        <hlm-select-trigger
+          buttonId="facility-create-type"
+          class="w-full"
+          data-testid="facility-create-type"
+        >
           <hlm-select-value
             placeholder="Select a facility type"
             i18n-placeholder="@@facility.form.typePlaceholder"
@@ -35,7 +39,11 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel for="facility-create-name" i18n="@@facility.form.name">Name</label>
+      <label hlmFieldLabel for="facility-create-name"
+        ><span i18n="@@facility.form.name">Name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
       <input
         hlmInput
         id="facility-create-name"
@@ -44,6 +52,7 @@
         placeholder="Main Building"
         i18n-placeholder="@@facility.form.namePlaceholder"
         [formField]="createForm.name"
+        [attr.aria-required]="true"
       />
       @if (createForm.name().touched() && createForm.name().invalid()) {
         <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
@@ -104,8 +113,8 @@
       />
     </hlm-field>
 
-    <div class="flex gap-2">
-      <hlm-field class="flex-1">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <hlm-field>
         <label hlmFieldLabel for="facility-create-latitude" i18n="@@facility.info.latitude"
           >Latitude</label
         >
@@ -122,7 +131,7 @@
         }
       </hlm-field>
 
-      <hlm-field class="flex-1">
+      <hlm-field>
         <label hlmFieldLabel for="facility-create-longitude" i18n="@@facility.info.longitude"
           >Longitude</label
         >
@@ -140,22 +149,31 @@
       </hlm-field>
     </div>
 
-    <hlm-field orientation="horizontal">
-      <button hlmBtn type="submit" data-testid="facility-create-submit" [disabled]="pending()">
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="facility-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="facility-create-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
         @if (pending()) {
           <span i18n="@@facility.cf.submitting">Creating…</span>
         } @else {
           <span i18n="@@facility.form.submit">Create facility</span>
         }
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        data-testid="facility-create-cancel"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@common.cancel">Cancel</span>
       </button>
     </hlm-field>
   </hlm-field-group>

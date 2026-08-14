@@ -13,7 +13,7 @@ import {
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import type { OrganizationRegionalSettings } from '@features/organization/models';
 import { HlmButton } from '@shared/ui/button';
-import { HlmFieldError, HlmFieldLabel } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import {
@@ -46,7 +46,7 @@ import {
  */
 @Component({
   selector: 'app-organization-regional-form',
-  imports: [FormField, HlmButton, HlmFieldError, HlmFieldLabel, HlmInput, ...HlmSelectImports],
+  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
   templateUrl: './organization-regional-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

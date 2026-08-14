@@ -1,5 +1,5 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group class="px-4">
+  <hlm-field-group>
     @if (serverMessages().length > 0) {
       <div role="alert" data-testid="inspection-create-error" class="text-sm text-destructive">
         @for (message of serverMessages(); track message) {
@@ -9,8 +9,10 @@
     }
 
     <hlm-field>
-      <label hlmFieldLabel for="inspection-create-equipment" i18n="@@inspection.form.equipment"
-        >Equipment</label
+      <label hlmFieldLabel for="inspection-create-equipment"
+        ><span i18n="@@inspection.form.equipment">Equipment</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <hlm-combobox [formField]="createForm.equipmentId" [itemToString]="equipmentLabelOf">
         <hlm-combobox-input
@@ -36,11 +38,17 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel for="inspection-create-result" i18n="@@inspection.form.result"
-        >Result</label
+      <label hlmFieldLabel for="inspection-create-result"
+        ><span i18n="@@inspection.form.result">Result</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
-      <hlm-select id="inspection-create-result" [formField]="createForm.result">
-        <hlm-select-trigger class="w-full" data-testid="inspection-create-result">
+      <hlm-select [formField]="createForm.result">
+        <hlm-select-trigger
+          buttonId="inspection-create-result"
+          class="w-full"
+          data-testid="inspection-create-result"
+        >
           @if (createForm.result().value(); as result) {
             <app-inspection-status-tag kind="result" [value]="result" asOption />
           } @else {
@@ -66,8 +74,10 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel for="inspection-create-performed-at" i18n="@@inspection.form.performedAt"
-        >Performed on</label
+      <label hlmFieldLabel for="inspection-create-performed-at"
+        ><span i18n="@@inspection.form.performedAt">Performed on</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <hlm-date-picker [formField]="createForm.performedAt">
         <hlm-date-picker-trigger buttonId="inspection-create-performed-at" class="w-full">
@@ -86,12 +96,12 @@
         i18n="@@inspection.form.inspectorType"
         >Inspector</label
       >
-      <hlm-select
-        id="inspection-create-inspector-type"
-        [itemToString]="inspectorTypeLabelOf"
-        [formField]="createForm.inspectorType"
-      >
-        <hlm-select-trigger class="w-full" data-testid="inspection-create-inspector-type">
+      <hlm-select [itemToString]="inspectorTypeLabelOf" [formField]="createForm.inspectorType">
+        <hlm-select-trigger
+          buttonId="inspection-create-inspector-type"
+          class="w-full"
+          data-testid="inspection-create-inspector-type"
+        >
           <hlm-select-value />
         </hlm-select-trigger>
         <hlm-select-content *hlmSelectPortal>
@@ -105,11 +115,10 @@
     </hlm-field>
 
     <hlm-field>
-      <label
-        hlmFieldLabel
-        for="inspection-create-inspector-name"
-        i18n="@@inspection.form.inspectorName"
-        >Inspector name</label
+      <label hlmFieldLabel for="inspection-create-inspector-name"
+        ><span i18n="@@inspection.form.inspectorName">Inspector name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <input
         hlmInput
@@ -119,28 +128,38 @@
         placeholder="Jane Doe"
         i18n-placeholder="@@inspection.form.inspectorNamePlaceholder"
         [formField]="createForm.inspectorName"
+        [attr.aria-required]="true"
       />
       @if (createForm.inspectorName().touched() && createForm.inspectorName().invalid()) {
         <hlm-field-error>{{ createForm.inspectorName().errors()[0].message }}</hlm-field-error>
       }
     </hlm-field>
 
-    <hlm-field orientation="horizontal">
-      <button hlmBtn type="submit" data-testid="inspection-create-submit" [disabled]="pending()">
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="inspection-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="inspection-create-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
         @if (pending()) {
           <span i18n="@@inspection.cf.submitting">Creating…</span>
         } @else {
           <span i18n="@@inspection.form.submit">Create inspection</span>
         }
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        data-testid="inspection-create-cancel"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@common.cancel">Cancel</span>
       </button>
     </hlm-field>
   </hlm-field-group>

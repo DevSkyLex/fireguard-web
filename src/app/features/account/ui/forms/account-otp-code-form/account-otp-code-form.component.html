@@ -1,56 +1,70 @@
-<form class="flex flex-col gap-4" novalidate (submit)="submit($event)">
-  <div class="flex flex-col gap-1.5">
-    <brn-input-otp
-      hlmInputOtp
-      class="justify-start"
-      autocomplete="one-time-code"
-      [inputId]="inputId()"
-      [length]="length"
-      [formField]="codeForm.code"
-      (completed)="autoSubmit()"
-    >
-      <hlm-input-otp-group>
-        <hlm-input-otp-slot index="0" />
-        <hlm-input-otp-slot index="1" />
-        <hlm-input-otp-slot index="2" />
-      </hlm-input-otp-group>
-      <hlm-input-otp-separator />
-      <hlm-input-otp-group>
-        <hlm-input-otp-slot index="3" />
-        <hlm-input-otp-slot index="4" />
-        <hlm-input-otp-slot index="5" />
-      </hlm-input-otp-group>
-    </brn-input-otp>
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <hlm-field class="items-center">
+      <label hlmFieldLabel [attr.for]="inputId()" class="self-start"
+        ><span i18n="@@auth.otp.label">Verification code</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
 
-    @if (codeForm.code().touched() && codeForm.code().invalid()) {
-      <hlm-field-error>{{ codeForm.code().errors()[0].message }}</hlm-field-error>
-    }
-  </div>
+      <brn-input-otp
+        hlmInputOtp
+        class="justify-start"
+        autocomplete="one-time-code"
+        data-testid="account-otp-code"
+        [inputId]="inputId()"
+        [length]="length"
+        [formField]="codeForm.code"
+        [attr.aria-invalid]="codeForm.code().touched() && codeForm.code().invalid()"
+        (completed)="autoSubmit()"
+      >
+        <hlm-input-otp-group>
+          <hlm-input-otp-slot index="0" />
+          <hlm-input-otp-slot index="1" />
+          <hlm-input-otp-slot index="2" />
+        </hlm-input-otp-group>
+        <hlm-input-otp-separator />
+        <hlm-input-otp-group>
+          <hlm-input-otp-slot index="3" />
+          <hlm-input-otp-slot index="4" />
+          <hlm-input-otp-slot index="5" />
+        </hlm-input-otp-group>
+      </brn-input-otp>
 
-  <div class="flex flex-wrap gap-2">
-    <button
-      hlmBtn
-      type="submit"
-      [variant]="destructive() ? 'destructive' : 'default'"
-      class="max-sm:min-h-11"
-      [disabled]="pending()"
-    >
-      @if (pending()) {
-        <span i18n="@@account.otp.submitting">Checking…</span>
-      } @else {
-        <span>{{ submitLabel() }}</span>
+      @if (codeForm.code().touched() && codeForm.code().invalid()) {
+        <hlm-field-error>{{ codeForm.code().errors()[0].message }}</hlm-field-error>
       }
-    </button>
+    </hlm-field>
 
-    <button
-      hlmBtn
-      type="button"
-      variant="ghost"
-      class="max-sm:min-h-11"
-      [disabled]="pending()"
-      (click)="cancelled.emit()"
-    >
-      <span i18n="@@account.otp.cancel">Cancel</span>
-    </button>
-  </div>
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="account-otp-code-cancel"
+        [disabled]="pending()"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@account.otp.cancel">Cancel</span>
+      </button>
+
+      <button
+        hlmBtn
+        type="submit"
+        [variant]="destructive() ? 'destructive' : 'default'"
+        class="max-sm:min-h-11"
+        data-testid="account-otp-code-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@account.otp.submitting">Checking…</span>
+        } @else {
+          <span>{{ submitLabel() }}</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
 </form>

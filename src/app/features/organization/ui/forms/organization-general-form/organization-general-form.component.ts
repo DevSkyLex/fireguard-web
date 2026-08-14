@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { HlmButton } from '@shared/ui/button';
-import { HlmFieldError, HlmFieldLabel } from '@shared/ui/field';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmTextarea } from '@shared/ui/textarea';
 import type { OrganizationGeneralFormValues } from './models';
@@ -43,7 +43,7 @@ import type { OrganizationGeneralFormValues } from './models';
  */
 @Component({
   selector: 'app-organization-general-form',
-  imports: [FormField, HlmButton, HlmFieldError, HlmFieldLabel, HlmInput, HlmTextarea],
+  imports: [FormField, HlmButton, HlmInput, HlmTextarea, ...HlmFieldImports],
   templateUrl: './organization-general-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

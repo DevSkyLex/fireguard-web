@@ -270,6 +270,30 @@ empty/error idioms spartan offers: `hlm-empty` with a dashed border (`border bor
 `app-error-state` (`@shared/error-state`) is **every list's error state**, never `hlm-empty`
 re-tinted to look like a failure.
 
+**Create-surface placement** follows field count and navigation cost, not precedent: a form of
+**3 fields or fewer with no navigation cost** belongs in a dialog; **4 to 8 fields that should
+keep the list in context** belong in a right sheet; a form that **needs its own URL or deep-link,
+or exceeds 8 fields**, belongs in a route page. The equipment, facility and inspection create
+pages predate this rule and stay as route pages — that is a recorded exception, not a precedent
+for a new create surface to follow. Sheet-hosted forms' padding ownership — why the 3 intervention
+sheet forms keep `px-4` on their own `hlm-field-group` instead of following the page/dialog
+pattern — is recorded in `features/interventions/FEATURE.md` § UI Conventions.
+
+A required Signal Forms field's `[attr.aria-invalid]` — bound at the call site as
+`f().touched() && f().invalid()`, per every form in this feature — is now redundant with (not
+overridden by) `HlmInput`/`HlmTextarea`/`HlmSelectTrigger`/`HlmDatePickerTrigger`'s own host
+binding: those `shared/ui` components (not owned here) each carry a repo-owned correction that
+announces the same touched-gated `spartanInvalid` state the visual ring already uses, superseding
+their vendored `BrnInput`-family default of the raw, untouched-gated `invalid`. The call-site
+binding stays for the day one of those controls is used with a Signal Forms field it does not read
+`spartanInvalid` from.
+
+A submit control whose label swaps to a pending variant (`Save` → `Saving…`) carries
+`aria-live="polite"` directly on the `<button>` — the one mechanism this app uses to announce that
+swap, chosen over wrapping the swapped spans in a `role="status"` container because it needs no
+extra element and the button already owns `[attr.aria-busy]`. This applies across every feature's
+forms, not only `organization`'s, since the pattern is form-wide rather than feature-owned.
+
 ## Routing Notes
 
 - Parent resolvers establish organization context and breadcrumb/title data.

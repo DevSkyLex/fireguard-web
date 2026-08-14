@@ -114,6 +114,23 @@ describe('NewChannelDialog', () => {
     expect(visibility).toEqual([false]);
   });
 
+  it('should place cancel before the submit control in the DOM', async () => {
+    await open();
+
+    const buttons: HTMLButtonElement[] = Array.from(
+      panel()?.querySelectorAll('button[type]') ?? [],
+    );
+    const cancelIndex: number = buttons.findIndex(
+      (button: HTMLButtonElement): boolean => button.dataset['testid'] === 'new-channel-cancel',
+    );
+    const submitIndex: number = buttons.findIndex(
+      (button: HTMLButtonElement): boolean => button.dataset['testid'] === 'new-channel-submit',
+    );
+
+    expect(cancelIndex).toBeGreaterThanOrEqual(0);
+    expect(cancelIndex).toBeLessThan(submitIndex);
+  });
+
   it('should offer no parent field when there are no root-channel candidates', async () => {
     await open();
 

@@ -88,4 +88,28 @@ describe('InterventionWorkItemForm', () => {
   it('should announce nothing before a failure', () => {
     expect(root().querySelector('[data-testid="intervention-work-item-error"]')).toBeNull();
   });
+
+  it('should list the cancel button before the submit button in the action row', () => {
+    const footer = root().querySelector('hlm-sheet-footer') as HTMLElement;
+    const buttons = Array.from(footer.querySelectorAll('button'));
+
+    expect(buttons[0]).toBe(cancelButton());
+    expect(buttons[1]).toBe(submitButton());
+  });
+
+  it('should swap the submit label to the pending wording while creating', async () => {
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+
+    expect(root().textContent).toContain('Adding…');
+  });
+
+  it('should mark the action label required with an aria-hidden asterisk', () => {
+    const label = root().querySelector(
+      'label[for="intervention-work-item-action"]',
+    ) as HTMLLabelElement;
+    const asterisk = label.querySelector('span[aria-hidden="true"]');
+
+    expect(asterisk?.textContent).toContain('*');
+  });
 });

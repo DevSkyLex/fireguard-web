@@ -70,6 +70,10 @@
         <source>Cancel</source>
         <target>Annuler</target>
       </trans-unit>
+      <trans-unit id="common.required" datatype="html">
+        <source> required</source>
+        <target> obligatoire</target>
+      </trans-unit>
       <trans-unit id="account.mfa.secretLabel" datatype="html">
         <source>Manual entry key</source>
         <target>Clé de saisie manuelle</target>
@@ -5223,6 +5227,10 @@
         <source>Request changes</source>
         <target>Demander des corrections</target>
       </trans-unit>
+      <trans-unit id="intervention.rc.submitting" datatype="html">
+        <source>Sending…</source>
+        <target>Envoi en cours…</target>
+      </trans-unit>
       <trans-unit id="intervention.sf.title" datatype="html">
         <source> Skip work item </source>
         <target>Ignorer l'élément de travail</target>
@@ -5286,6 +5294,10 @@
       <trans-unit id="intervention.wif.submit" datatype="html">
         <source>Add to prepared scope</source>
         <target>Ajouter à la portée préparée</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.submitting" datatype="html">
+        <source>Adding…</source>
+        <target>Ajout en cours…</target>
       </trans-unit>
       <trans-unit id="intervention.detail.loadingAria" datatype="html">
         <source>Loading intervention</source>

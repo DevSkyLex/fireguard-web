@@ -2550,6 +2550,17 @@
           <context context-type="linenumber">52,53</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="common.required" datatype="html">
+        <source> required</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
+          <context context-type="linenumber">14</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="channels.editDialog.nameRequired" datatype="html">
         <source>Give the channel a name</source>
         <context-group purpose="location">
@@ -6891,6 +6902,13 @@
           <context context-type="linenumber">44,46</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.rc.submitting" datatype="html">
+        <source>Sending…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-request-changes-form/intervention-request-changes-form.component.html</context>
+          <context context-type="linenumber">59</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.rc.noteRequired" datatype="html">
         <source>A note is required so the agent knows what to fix.</source>
         <context-group purpose="location">
@@ -6973,6 +6991,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-work-item-form/intervention-work-item-form.component.html</context>
           <context context-type="linenumber">106,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.wif.submitting" datatype="html">
+        <source>Adding…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-work-item-form/intervention-work-item-form.component.html</context>
+          <context context-type="linenumber">123</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.wif.actionRequired" datatype="html">

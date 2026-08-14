@@ -7,7 +7,8 @@ import type { Locator, Page } from '@playwright/test';
  * Wraps the interventions list route (`/organizations/:organizationId/interventions`)
  * behind named locators and one method per user intent: navigating with a raw
  * query string (a shared/bookmarked filtered URL), reading a row, selecting
- * rows and driving the bulk-actions dropdown.
+ * rows, driving the bulk-actions dropdown, picking a segmented view and
+ * reading/removing a filter chip.
  */
 export class InterventionsPage {
   public constructor(private readonly page: Page) {}
@@ -20,6 +21,11 @@ export class InterventionsPage {
   public readonly tableRows: Locator = this.page.getByTestId('intervention-table-row');
   public readonly createSheet: Locator = this.page.getByTestId('intervention-create-sheet');
   public readonly selectAll: Locator = this.page.getByTestId('intervention-table-select-all');
+  public readonly viewsRow: Locator = this.page.getByTestId('interventions-views');
+  public readonly filterChips: Locator = this.page.getByTestId('interventions-filter-chip');
+  public readonly clearFiltersButton: Locator = this.page.getByTestId(
+    'interventions-clear-filters',
+  );
 
   /** Navigates straight to the list with a raw query string, exercising a shared/bookmarked filtered URL. */
   public async gotoWithQuery(organizationId: string, query: string): Promise<void> {
@@ -71,5 +77,30 @@ export class InterventionsPage {
   /** The app-wide toast deck's visible entries (spartan's sonner, `role="status"`). */
   public toast(text: string): Locator {
     return this.page.getByRole('status').filter({ hasText: text });
+  }
+
+  /** The views row's toggle button named `label`, e.g. `"Overdue"`. */
+  public viewButton(label: string): Locator {
+    return this.viewsRow.getByRole('button', { name: label });
+  }
+
+  /** Selects one of the views row's segmented views, applying its filter. */
+  public async selectView(label: string): Promise<void> {
+    await this.viewButton(label).click();
+  }
+
+  /** Whether the named view's toggle currently reads pressed. */
+  public async isViewActive(label: string): Promise<boolean> {
+    return (await this.viewButton(label).getAttribute('aria-pressed')) === 'true';
+  }
+
+  /** The removable filter chip naming `fieldLabel`, e.g. `"Status"`. */
+  public filterChip(fieldLabel: string): Locator {
+    return this.filterChips.filter({ hasText: fieldLabel });
+  }
+
+  /** Removes the filter chip naming `fieldLabel`, clearing just that narrowing. */
+  public async removeFilterChip(fieldLabel: string): Promise<void> {
+    await this.filterChip(fieldLabel).getByTestId('interventions-filter-chip-remove').click();
   }
 }

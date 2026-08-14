@@ -47,6 +47,60 @@ This subfeature is responsible for:
   questions; filters never enter the cookie. The `?create=1` contract is
   unchanged.
 
+  **Segmented views (6.3)** sit above the toolbar as a single-select
+  `hlm-toggle-group` — All / Overdue / Sent back / Awaiting review. A view is
+  **derived from `filters()`, never stored**: `all` is `status=null &
+dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
+  `sent-back` is `status=changes_requested` with `dueWindow=null`,
+  `awaiting-review` is `status=submitted` with `dueWindow=null`; any other
+  combination — a custom mix built from the popover — highlights none of the
+  four rather than a misleading nearest one. Picking a view calls the same
+  `applyFilter` path a popover select uses, so a view is a shortcut into the
+  one filter contract, not a second state to keep in sync with it.
+
+  **Removable filter chips (6.3)** render below the toolbar whenever a filter
+  is active: one `hlmBadge` per set field (status, type, priority, site,
+  responsible, label, deadline window), each removed by patching that one
+  field back to `null` through `applyFilter` — the same effect as clearing it
+  from the popover. `mine` keeps its own toggle chip outside this row, as
+  before (it was already excluded from `activeFilterCount`). The popover
+  remains the sole editor; the "Clear filters" button that used to live
+  inside it now lives at the end of the chip row instead, since the two are
+  the same action once chips make the active narrowing visible outside the
+  popover.
+
+  **The parent feature's Today page deep-links its three collection-backed
+  queues' "See all" buttons into this narrowing**, reusing
+  `serializeInterventionListFilters`'s own param names: overdue →
+  `?due=overdue`, sent back → `?status=changes_requested`, awaiting review →
+  `?status=submitted`. The unsynced queue has no server-side filter to
+  deep-link to, so its "See all" stays absent. **The Overdue view is broader
+  than Today's overdue queue**: the view is every status past due
+  (`dueAtBefore=now`, no status narrowing), while `OrganizationTodayStore`'s
+  `overdue` queue narrows to `planned`/`in_progress` — a past-due `submitted`
+  or `changes_requested` intervention shows in the Overdue view but not in
+  the Today queue of the same name. Do not conflate the two when reasoning
+  about either.
+
+  **The page is a full-height console (6.3): nothing scrolls except the table
+  rows.** `InterventionsPage`'s host is `flex min-h-0 flex-1 flex-col` (not
+  `block`), so `#interventions` — itself `flex min-h-0 flex-1 flex-col` —
+  receives a real, bounded height from `DashboardLayout`'s routed-content
+  wrapper rather than growing to its own content and pushing the scroll onto
+  the shell. That wrapper (`dashboard-layout.component.html`) carries a
+  matching `min-h-0` for the same reason: a flex item's automatic minimum
+  size defaults to its content size, and without `min-h-0` at every level the
+  chain silently breaks and the browser falls back to scrolling the whole
+  page instead of just the table. `InterventionTable`'s own `h-full`
+  scrollable shell then fills exactly what the header, KPI strip, views row,
+  toolbar, chips row and footer leave. The sticky `thead` is `sticky top-0`
+  on `hlmTableContainer` itself (`h-full overflow-y-auto`), not on a separate
+  outer wrapper — `overflow-x-auto` (needed for wide tables) forces
+  `overflow-y` to compute as `auto` too regardless of what is written, so a
+  wrapper split across two nested divs makes the sticky header pin to the
+  wrong (non-scrolling) ancestor. Changing any of these three files without
+  the others reintroduces page-level scrolling or an unstuck header.
+
 - `/organizations/:organizationId/interventions/:interventionId` — the detail
   workspace, described below. Mounted as a second child of the same pathless
   parent, so `InterventionStore` survives list ↔ detail navigation and the

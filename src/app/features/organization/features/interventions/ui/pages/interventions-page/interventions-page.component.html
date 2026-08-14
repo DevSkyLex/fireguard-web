@@ -1,5 +1,5 @@
-<div id="interventions" class="flex w-full flex-col gap-4 p-4 md:p-6">
-  <div class="flex flex-wrap items-start justify-between gap-3">
+<div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
     <div class="flex min-w-0 flex-col gap-1">
       <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.interventions">
         Interventions
@@ -24,11 +24,58 @@
   </div>
 
   <app-intervention-kpi-strip
+    class="shrink-0"
     [statistics]="statisticsStore.queryData()"
     [loading]="statisticsStore.isQueryLoading()"
   />
 
-  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+  <hlm-toggle-group
+    type="single"
+    [nullable]="true"
+    variant="outline"
+    size="default"
+    class="max-w-full shrink-0 overflow-x-auto"
+    data-testid="interventions-views"
+    [value]="activeView()"
+    aria-label="Views"
+    i18n-aria-label="@@intervention.list.viewsAriaLabel"
+    (valueChange)="onViewChanged($event)"
+  >
+    <button
+      hlmToggleGroupItem
+      value="all"
+      class="max-sm:min-h-11"
+      i18n="@@intervention.list.viewAll"
+    >
+      All
+    </button>
+    <button
+      hlmToggleGroupItem
+      value="overdue"
+      class="max-sm:min-h-11"
+      i18n="@@intervention.list.viewOverdue"
+    >
+      Overdue
+    </button>
+    <button
+      hlmToggleGroupItem
+      value="sent-back"
+      class="max-sm:min-h-11"
+      i18n="@@intervention.list.viewSentBack"
+    >
+      Sent back
+    </button>
+    <button
+      hlmToggleGroupItem
+      value="awaiting-review"
+      class="max-sm:min-h-11"
+      i18n="@@intervention.list.viewAwaitingReview"
+    >
+      Awaiting review
+    </button>
+  </hlm-toggle-group>
+
+  <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <div class="flex items-center gap-2">
       <hlm-input-group class="w-full sm:w-72">
         <hlm-input-group-addon>
@@ -381,20 +428,6 @@
                 </hlm-select-group>
               </hlm-select-content>
             </hlm-select>
-
-            @if (activeFilterCount() > 0) {
-              <button
-                hlmBtn
-                type="button"
-                variant="ghost"
-                size="sm"
-                data-testid="interventions-clear-filters"
-                (click)="clearFilters()"
-              >
-                <ng-icon name="lucideX" aria-hidden="true" />
-                <span i18n="@@common.clearFilters">Clear filters</span>
-              </button>
-            }
           </div>
         </hlm-popover-content>
       </hlm-popover>
@@ -463,6 +496,45 @@
       </hlm-dropdown-menu>
     </ng-template>
   </div>
+
+  @if (activeFilterCount() > 0) {
+    <div
+      class="flex shrink-0 flex-wrap items-center gap-2"
+      data-testid="interventions-filter-chips"
+    >
+      @for (chip of filterChips(); track chip.key) {
+        <span
+          hlmBadge
+          variant="secondary"
+          class="inline-flex items-center gap-1 overflow-visible py-0.5 pe-1"
+          data-testid="interventions-filter-chip"
+        >
+          {{ chip.fieldLabel }}: {{ chip.valueLabel }}
+          <button
+            type="button"
+            class="inline-flex size-4 shrink-0 items-center justify-center rounded-full transition-colors outline-none hover:bg-foreground/10 focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:min-h-11 max-sm:min-w-11"
+            data-testid="interventions-filter-chip-remove"
+            [attr.aria-label]="removeFilterLabel(chip.fieldLabel)"
+            (click)="applyFilter(chip.patch)"
+          >
+            <ng-icon name="lucideX" class="size-3" aria-hidden="true" />
+          </button>
+        </span>
+      }
+
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-testid="interventions-clear-filters"
+        (click)="clearFilters()"
+      >
+        <ng-icon name="lucideX" aria-hidden="true" />
+        <span i18n="@@common.clearFilters">Clear filters</span>
+      </button>
+    </div>
+  }
 
   @if (hasError()) {
     <hlm-empty class="border border-dashed">
@@ -538,9 +610,10 @@
       (selectionChanged)="onSelectionChanged($event)"
     />
 
-    <div class="flex flex-col justify-between sm:flex-row sm:items-center">
+    <div class="flex shrink-0 flex-col justify-between sm:flex-row sm:items-center">
       <span
         class="text-sm text-muted-foreground"
+        aria-live="polite"
         data-testid="interventions-row-count"
         i18n="@@intervention.list.rowCount"
         >{{ items().length }} of {{ store.totalInterventions() }} row(s) shown</span

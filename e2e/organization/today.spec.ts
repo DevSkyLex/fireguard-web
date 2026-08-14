@@ -184,7 +184,35 @@ test.describe('Organization Today page', () => {
     await today.queueSeeAllButton('overdue').click();
 
     await expect(page).toHaveURL(
-      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions$`),
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?due=overdue$`),
+    );
+  });
+
+  test('deep-links each queue\'s "See all" button to the interventions list with the matching query params', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await mockFullDashboard(api);
+    await mockPopulatedQueues(api);
+    const today = new OrganizationTodayPage(page);
+
+    await today.goto(E2E_ORGANIZATION_ID);
+    await today.queueSeeAllButton('overdue').click();
+    await expect(page).toHaveURL(
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?due=overdue$`),
+    );
+
+    await today.goto(E2E_ORGANIZATION_ID);
+    await today.queueSeeAllButton('changes-requested').click();
+    await expect(page).toHaveURL(
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?status=changes_requested$`),
+    );
+
+    await today.goto(E2E_ORGANIZATION_ID);
+    await today.queueSeeAllButton('awaiting-review').click();
+    await expect(page).toHaveURL(
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?status=submitted$`),
     );
   });
 

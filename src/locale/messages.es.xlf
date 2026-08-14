@@ -9449,6 +9449,30 @@
         <source>Overdue</source>
         <target>Atrasado</target>
       </trans-unit>
+      <trans-unit id="intervention.list.viewsAriaLabel" datatype="html">
+        <source>Views</source>
+        <target>Vistas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewAll" datatype="html">
+        <source>All</source>
+        <target>Todas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewOverdue" datatype="html">
+        <source>Overdue</source>
+        <target>Atrasadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewSentBack" datatype="html">
+        <source>Sent back</source>
+        <target>Devueltas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewAwaitingReview" datatype="html">
+        <source>Awaiting review</source>
+        <target>Pendientes de revisión</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.removeFilter" datatype="html">
+        <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
+        <target>Quitar el filtro: <x id="field" equiv-text="fieldLabel"/></target>
+      </trans-unit>
           <trans-unit id="intervention.notice.folded" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ foldedCount() }}"/> more</source>
         <target><x id="INTERPOLATION" equiv-text="{{ foldedCount() }}"/> más</target>

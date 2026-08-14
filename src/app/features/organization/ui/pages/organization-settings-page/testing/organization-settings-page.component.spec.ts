@@ -221,22 +221,22 @@ describe('OrganizationSettingsPage', () => {
     }
   });
 
-  it('should give the danger tab trigger the destructive tint, never colour alone', async () => {
+  it('should give the danger tab trigger icon the destructive tint, keeping its label neutral', async () => {
     await createPage('danger');
 
     const dangerTrigger: HTMLElement | null = byTestId('org-settings-tab-danger');
+    const dangerIcon: Element | null | undefined = dangerTrigger?.querySelector('ng-icon');
 
-    expect(dangerTrigger?.className).toContain('text-destructive');
-    expect(dangerTrigger?.querySelector('ng-icon')).not.toBeNull();
+    expect(dangerIcon?.className).toContain('text-destructive');
+    expect(dangerTrigger?.className).not.toContain('text-destructive');
     expect(dangerTrigger?.textContent).toContain('Danger zone');
   });
 
-  it('should let the tab list scroll horizontally instead of wrapping', async () => {
+  it('should collapse the section list to a paginated horizontal row below the lg rail breakpoint', async () => {
     await createPage();
 
-    const tabsList: HTMLElement | null = fixture.nativeElement.querySelector('hlm-tabs-list');
-
-    expect(tabsList?.className).toContain('overflow-x-auto');
+    expect(fixture.nativeElement.querySelector('hlm-tabs-list')).toBeNull();
+    expect(fixture.nativeElement.querySelector('hlm-paginated-tabs-list')).not.toBeNull();
   });
 
   it('should share the same max-width across every tab, including subscription', async () => {

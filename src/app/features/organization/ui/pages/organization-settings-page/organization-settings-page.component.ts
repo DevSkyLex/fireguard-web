@@ -1,7 +1,9 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
@@ -124,12 +126,13 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
  * performs navigation; its children only render (`ARCHITECTURE.md` §10.1).
  *
  * Each tab trigger carries an icon ahead of its label — the Danger zone
- * trigger's icon and text both take the destructive tint, never colour
- * alone. The tab list scrolls horizontally on a narrow viewport rather than
- * wrapping, and every tab's content shares one `max-w-3xl` so the page does
- * not visibly resize as the reader switches tabs.
+ * trigger tints its icon destructive, never colour alone, while its label
+ * stays neutral like its siblings. The section list is a `lg`-and-up left
+ * rail that collapses to a horizontally-scrollable row below that, and every
+ * tab's content shares one `max-w-3xl` so the page does not visibly resize
+ * as the reader switches tabs.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -137,6 +140,7 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
   selector: 'app-organization-settings-page',
   imports: [
     NgIcon,
+    NgTemplateOutlet,
     EmptyState,
     OrganizationDeleteDialog,
     OrganizationGeneralForm,
@@ -282,6 +286,9 @@ export class OrganizationSettingsPage {
    */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
+  /** Unregisters the settings tab-rail orientation media query listener on teardown. */
+  private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
+
   /**
    * Property defaultRegional
    * @readonly
@@ -379,6 +386,26 @@ export class OrganizationSettingsPage {
       return resolved === 'danger' && !this.canDelete() ? 'general' : resolved;
     },
   );
+
+  /**
+   * Property settingsTabsOrientation
+   * @readonly
+   *
+   * @description
+   * Whether the section list lays out as a `lg`-and-up left rail
+   * (`vertical`, `hlm-tabs-list`) or a horizontally-scrollable row above the
+   * panes (`horizontal`, `hlm-paginated-tabs-list`) on narrower viewports —
+   * driven by a `(min-width: 1024px)` media query. Starts `horizontal`
+   * (server/pre-hydration default) and upgrades once the browser evaluates
+   * the query.
+   *
+   * @access protected
+   * @since 1.2.0
+   * @type {WritableSignal<'horizontal' | 'vertical'>}
+   */
+  protected readonly settingsTabsOrientation: WritableSignal<'horizontal' | 'vertical'> = signal<
+    'horizontal' | 'vertical'
+  >('horizontal');
 
   /**
    * Property generalFormValues
@@ -593,6 +620,19 @@ export class OrganizationSettingsPage {
     });
   });
   //#endregion
+
+  constructor() {
+    const desktopQuery: MediaQueryList | undefined = globalThis.matchMedia?.('(min-width: 1024px)');
+    if (!desktopQuery) return;
+
+    this.settingsTabsOrientation.set(desktopQuery.matches ? 'vertical' : 'horizontal');
+    const onDesktopQueryChange = (event: MediaQueryListEvent): void =>
+      this.settingsTabsOrientation.set(event.matches ? 'vertical' : 'horizontal');
+    desktopQuery.addEventListener('change', onDesktopQueryChange);
+    this.destroyRef.onDestroy(() =>
+      desktopQuery.removeEventListener('change', onDesktopQueryChange),
+    );
+  }
 
   //#region Methods
   /**

@@ -86,6 +86,17 @@ describe('ListPagination', () => {
     expect((byTestId('widgets-page-prev') as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it('should disable next and last when pageCount is 0', async () => {
+    fixture.componentRef.setInput('page', 1);
+    fixture.componentRef.setInput('pageCount', 0);
+    await fixture.whenStable();
+
+    expect((byTestId('widgets-page-next') as HTMLButtonElement).disabled).toBe(true);
+    expect((byTestId('widgets-page-last') as HTMLButtonElement).disabled).toBe(true);
+    expect((byTestId('widgets-page-first') as HTMLButtonElement).disabled).toBe(true);
+    expect((byTestId('widgets-page-prev') as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('should emit pageChanged with 1 when first is clicked', () => {
     const emitted: number[] = [];
     fixture.componentInstance.pageChanged.subscribe((value: number) => emitted.push(value));
@@ -144,5 +155,23 @@ describe('ListPagination', () => {
 
   it('should default the page sizes to 30/60/100', () => {
     expect(fixture.componentInstance.pageSizes()).toEqual([30, 60, 100]);
+  });
+
+  it('should clamp an out-of-range goToPage target and emit the clamped value', () => {
+    const emitted: number[] = [];
+    fixture.componentInstance.pageChanged.subscribe((value: number) => emitted.push(value));
+
+    (fixture.componentInstance as unknown as { goToPage(target: number): void }).goToPage(999);
+
+    expect(emitted).toEqual([5]);
+  });
+
+  it('should emit nothing when goToPage targets the current page', () => {
+    const emitted: number[] = [];
+    fixture.componentInstance.pageChanged.subscribe((value: number) => emitted.push(value));
+
+    (fixture.componentInstance as unknown as { goToPage(target: number): void }).goToPage(2);
+
+    expect(emitted).toEqual([]);
   });
 });

@@ -227,6 +227,14 @@ describe('InterventionTable', () => {
     expect(caption?.textContent?.trim().length).toBeGreaterThan(0);
   });
 
+  it('should name the scrolling region from the table caption', () => {
+    const region: HTMLElement | null = element.querySelector('[role="region"]');
+    const caption: HTMLElement | null = element.querySelector('caption');
+
+    expect(region?.getAttribute('aria-labelledby')).toBe(caption?.id);
+    expect(caption?.id).toBeTruthy();
+  });
+
   it('should draw placeholder rows while loading, and no data rows', async () => {
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();

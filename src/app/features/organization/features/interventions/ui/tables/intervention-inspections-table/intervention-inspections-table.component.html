@@ -1,11 +1,31 @@
 @if (loading() && items().length === 0) {
-  <div
-    class="flex items-center gap-2 py-6 text-sm text-muted-foreground"
-    role="status"
-    data-testid="intervention-inspections-loading"
-  >
-    <hlm-spinner class="size-4" aria-hidden="true" />
-    <span i18n="@@intervention.linked.loading">Loading…</span>
+  <span class="sr-only" role="status" i18n="@@intervention.linked.loading">Loading…</span>
+  <div hlmTableContainer>
+    <table hlmTable data-testid="intervention-inspections-table">
+      <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.inspections.caption">
+        The inspections linked to this intervention.
+      </caption>
+
+      <thead hlmTableHeader>
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">Performed</th>
+          <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
+          <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
+          <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @for (row of skeletonRows; track row) {
+          <tr hlmTableRow aria-hidden="true">
+            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+            <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
 } @else if (error(); as message) {
   <app-empty-state
@@ -35,7 +55,7 @@
 
       <tbody hlmTableBody>
         @for (item of items(); track item.id) {
-          <tr hlmTableRow data-testid="intervention-inspection-row">
+          <tr hlmTableRow data-testid="intervention-inspections-table-row">
             <td hlmTableCell>
               {{ item.performedAt | date: 'mediumDate' }}
             </td>

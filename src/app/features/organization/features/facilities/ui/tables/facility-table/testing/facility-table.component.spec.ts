@@ -79,11 +79,18 @@ describe('FacilityTable', () => {
     expect(rows[1].querySelector('[aria-label="Has sub-facilities"]')).toBeNull();
   });
 
-  it('should draw skeleton rows while loading, and no data rows', async () => {
-    await render([facility()], true);
+  it('should draw skeleton rows while loading with nothing loaded yet', async () => {
+    await render([], true);
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
     expect(root().querySelectorAll('[data-testid="facility-table-row"]').length).toBe(0);
+  });
+
+  it('should keep the rows already on screen rather than swap them for skeletons on a refetch', async () => {
+    await render([facility()], true);
+
+    expect(root().querySelectorAll('[data-testid="facility-table-row"]').length).toBe(1);
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
   });
 
   it('should say so plainly when a page holds no rows', async () => {
@@ -170,5 +177,15 @@ describe('FacilityTable', () => {
 
     expect(caption?.className).toContain('sr-only');
     expect(caption?.textContent?.trim().length).toBeGreaterThan(0);
+  });
+
+  it('should name the scrolling region from the table caption', async () => {
+    await render([facility()]);
+
+    const region: HTMLElement | null = root().querySelector('[role="region"]');
+    const caption: HTMLElement | null = root().querySelector('caption');
+
+    expect(region?.getAttribute('aria-labelledby')).toBe(caption?.id);
+    expect(caption?.id).toBeTruthy();
   });
 });

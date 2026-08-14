@@ -72,6 +72,22 @@ describe('OrganizationInvitationTable', () => {
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
   });
 
+  it('should say so plainly when there is nothing to show', async () => {
+    await createTable();
+
+    expect(root().textContent).toContain('No results.');
+  });
+
+  it('should name the scrolling region from the table caption', async () => {
+    await createTable([invitation()]);
+
+    const region: HTMLElement | null = root().querySelector('[role="region"]');
+    const caption: HTMLElement | null = root().querySelector('caption');
+
+    expect(region?.getAttribute('aria-labelledby')).toBe(caption?.id);
+    expect(caption?.id).toBeTruthy();
+  });
+
   it('should join roleIds against the given roles, in the order the API returned them', async () => {
     await createTable();
     fixture.componentRef.setInput('items', [invitation({ roleIds: ['r2', 'r1'] })]);

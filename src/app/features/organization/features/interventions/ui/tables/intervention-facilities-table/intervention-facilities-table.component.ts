@@ -7,9 +7,12 @@ import type {
 } from '@features/organization/features/facilities/models';
 import { EmptyState } from '@shared/empty-state';
 import { HlmBadge } from '@shared/ui/badge';
-import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
+
+/** Placeholder rows drawn while the tab's own fetch is in flight. */
+const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 
 /**
  * The localized label for each facility type, resolved through a component
@@ -37,13 +40,13 @@ const FACILITY_TYPE_LABEL: Readonly<Record<FacilityType, string>> = {
  * small, and this is a lookup, not a management surface (that stays in the
  * facilities feature's own upcoming pages).
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-facilities-table',
-  imports: [EmptyState, HlmBadge, InterventionTag, ...HlmSpinnerImports, ...HlmTableImports],
+  imports: [EmptyState, HlmBadge, HlmSkeleton, InterventionTag, ...HlmTableImports],
   providers: [provideIcons({ lucideCircleAlert, lucideMapPin })],
   templateUrl: './intervention-facilities-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +83,11 @@ export class InterventionFacilitiesTable {
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
+  //#endregion
+
+  //#region Properties
+  /** Placeholder rows for the loading render. */
+  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
   //#endregion
 
   //#region Methods

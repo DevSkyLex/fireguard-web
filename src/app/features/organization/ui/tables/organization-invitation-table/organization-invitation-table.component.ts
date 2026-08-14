@@ -47,7 +47,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
  * page's single `mutationCallState` is in flight, since the store carries no
  * per-invitation request state.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -72,7 +72,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
     }),
   ],
   templateUrl: './organization-invitation-table.component.html',
-  host: { class: 'block w-full' },
+  host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationInvitationTable {
@@ -220,5 +220,18 @@ export class OrganizationInvitationTable {
       );
     },
   );
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method columnCount
+   * @description How many cells a row has, so the empty-state message can span the full width.
+   * @access protected
+   * @since 1.1.0
+   * @returns {number} The rendered column count.
+   */
+  protected columnCount(): number {
+    return 6;
+  }
   //#endregion
 }

@@ -282,6 +282,7 @@
 
               <app-intervention-work-item-table
                 [items]="store.workItems()"
+                [loading]="store.loading()"
                 [nextItemId]="nextWorkItemId()"
                 [pendingItemIds]="store.pendingWorkItemIds()"
                 [canToggle]="canExecute() && phase() === 'execute'"

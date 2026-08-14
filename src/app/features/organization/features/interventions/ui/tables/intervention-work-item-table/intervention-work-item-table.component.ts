@@ -38,6 +38,7 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmProgressImports } from '@shared/ui/progress';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmToggle } from '@shared/ui/toggle';
@@ -49,6 +50,9 @@ import {
 } from './constants/intervention-work-item-appearance.constants';
 import type { InterventionWorkItemFilter } from './models/intervention-work-item-filter.type';
 import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-item-view/intervention-work-item-view.utils';
+
+/** Placeholder rows drawn while the intervention's own fetch is in flight. */
+const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /**
  * Component InterventionWorkItemTable
@@ -68,7 +72,7 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
  * against `InterventionTable`'s 44px) was excess chrome, not part of the
  * target — the button's own 44px still renders untouched at `p-0`.
  *
- * @version 2.2.0
+ * @version 2.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -78,6 +82,7 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
     NgIcon,
     EmptyState,
     HlmBadge,
+    HlmSkeleton,
     HlmToggle,
     InterventionTag,
     ...HlmAvatarImports,
@@ -118,6 +123,24 @@ export class InterventionWorkItemTable {
    */
   public readonly items: InputSignal<readonly InterventionWorkItemOutput[]> =
     input.required<readonly InterventionWorkItemOutput[]>();
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether the intervention's own fetch is in flight. The detail page gates
+   * its whole route on this same signal (`store.loading()`), so a row never
+   * actually renders it true — it exists so this table follows the same
+   * skeleton-loading dialect as its sibling grids rather than staying the one
+   * exception.
+   *
+   * @access public
+   * @since 2.3.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property nextItemId
@@ -402,6 +425,9 @@ export class InterventionWorkItemTable {
   //#endregion
 
   //#region Properties
+  /** Placeholder rows for the loading render. */
+  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+
   /**
    * Property filterCounts
    * @readonly

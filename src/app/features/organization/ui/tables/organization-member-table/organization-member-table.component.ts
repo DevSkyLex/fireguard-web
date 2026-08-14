@@ -44,7 +44,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * when `canRemove` is granted, since selection exists solely to feed the
  * page's bulk-remove action.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -65,7 +65,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
   ],
   providers: [provideIcons({ lucideEllipsis, lucideShieldCheck, lucideTrash2 })],
   templateUrl: './organization-member-table.component.html',
-  host: { class: 'block w-full' },
+  host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMemberTable {
@@ -304,6 +304,17 @@ export class OrganizationMemberTable {
    */
   protected selectRowLabel(name: string): string {
     return $localize`:@@org.members.table.rowSelectLabel:Select ${name}:name:`;
+  }
+
+  /**
+   * Method columnCount
+   * @description How many cells a row currently has, so the empty-state message can span the full width. The leading checkbox column only renders when `canRemove` is granted.
+   * @access protected
+   * @since 1.1.0
+   * @returns {number} The rendered column count.
+   */
+  protected columnCount(): number {
+    return this.canRemove() ? 6 : 5;
   }
   //#endregion
 }

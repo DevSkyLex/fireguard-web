@@ -157,20 +157,20 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
   },
   {
-    /**
-     * One destination for the estate, replacing the separate "Facilities" and
-     * "Equipments" entries. Sites, equipment and inspections are one business
-     * chain, and two menu entries presented them as two independent catalogues.
-     *
-     * Gated on the facilities permission because the explorer opens on the site
-     * hierarchy; the equipment pane inside it is gated separately.
-     */
-    id: 'assets',
-    label: $localize`:@@route.assets:Assets`,
-    icon: 'lucideNetwork',
-    path: 'assets',
+    id: 'facilities',
+    label: $localize`:@@route.facilities:Facilities`,
+    icon: 'lucideBuilding2',
+    path: 'facilities',
     group: 'assets',
     permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
+  },
+  {
+    id: 'equipments',
+    label: $localize`:@@route.equipments:Equipments`,
+    icon: 'lucideWrench',
+    path: 'equipments',
+    group: 'assets',
+    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
   },
   {
     id: 'statistics',

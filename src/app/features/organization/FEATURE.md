@@ -37,11 +37,13 @@ This feature does not own generic shell composition or account-level user identi
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing page),
 > `messages`, `channels`, `interventions`, `equipments`, `facilities`, `inspections`, `calendar`,
 > `members`, `members/:memberId`, `team`, `settings`, and `/organizations/invitations/accept`
-> (mounted at the app root, outside this subtree — see below). The remaining destinations below
-> (`assets`, `statistics`, `checklists`) are the feature's contract and are already listed by the
-> sidebar navigation behind their permissions; each is remounted in `organization.routes.ts` as its
-> page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
-> deviation.
+> (mounted at the app root, outside this subtree — see below). `statistics` and `checklists` are the
+> feature's remaining contract and are already listed by the sidebar navigation behind their
+> permissions; each is remounted in `organization.routes.ts` as its page is rebuilt. A listed
+> destination whose route is absent is a rebuild in progress, not a deviation. `assets` (the estate
+> explorer) is future work and is **not yet listed by the sidebar**: the navigation's interim entries
+> are the two routes it will absorb, `facilities` and `equipments`, each gated on its own read
+> permission.
 
 - `/organizations` — redirect-only: `organizationGuard` forwards to the default
   workspace (the last organization persisted in the `last-organization` cookie
@@ -52,13 +54,14 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId` — the "Today" landing page; the landing guard
   redirects a member who can read neither interventions nor the dashboard to their
   first permitted destination
-- `/organizations/:organizationId/assets` — the estate explorer, on two
-  first-level axes: **by site** (the hierarchy on the left, the selected site's
-  equipment and inspections on the right) and **everything** (the same panes
-  unscoped, so an operator holding a serial number and no site can still find
-  it). **It is the single navigation entry for the estate**, replacing the
-  former "Facilities" and "Equipments" pair; both route trees below stay mounted
-  so records, creation forms and deep links keep resolving
+- `/organizations/:organizationId/assets` — not yet mounted. The planned estate
+  explorer, on two first-level axes: **by site** (the hierarchy on the left, the
+  selected site's equipment and inspections on the right) and **everything**
+  (the same panes unscoped, so an operator holding a serial number and no site
+  can still find it). Once built it becomes the single navigation entry for the
+  estate, replacing the "Facilities" and "Equipments" pair below; both route
+  trees stay mounted regardless so records, creation forms and deep links keep
+  resolving
 - `/organizations/:organizationId/messages` — the direct-messages workspace, owned by the
   `collaboration` subfeature, gated by `organization.messaging.read`. `messages/:conversationId`
   opens one. Reached from the shell's bottom navigation, not from the organization sections

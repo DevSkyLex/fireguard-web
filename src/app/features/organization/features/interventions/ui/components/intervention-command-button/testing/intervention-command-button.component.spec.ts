@@ -70,6 +70,17 @@ describe('InterventionCommandButton', () => {
     expect(button()?.getAttribute('aria-busy')).toBe('true');
   });
 
+  it('should describe the button by an external id when given one', async () => {
+    await create();
+
+    expect(button()?.hasAttribute('aria-describedby')).toBe(false);
+
+    fixture.componentRef.setInput('describedBy', 'intervention-command-reason');
+    await fixture.whenStable();
+
+    expect(button()?.getAttribute('aria-describedby')).toBe('intervention-command-reason');
+  });
+
   it('should fill its container only when asked to', async () => {
     await create();
 

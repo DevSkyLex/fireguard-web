@@ -5331,10 +5331,6 @@
         <source>Changes requested by the reviewer</source>
         <target>Modifications demandées par le relecteur</target>
       </trans-unit>
-      <trans-unit id="intervention.detail.blockersBanner" datatype="html">
-        <source>Publication blocked — a compliance point must be cleared</source>
-        <target>Publication bloquée — un point de conformité doit être levé</target>
-      </trans-unit>
       <trans-unit id="intervention.review.executionComplete" datatype="html">
         <source>Execution complete — all field work is resolved and no blocking issues remain.</source>
         <target>Exécution terminée — tout le travail de terrain est traité et aucune anomalie bloquante ne subsiste.</target>
@@ -5507,10 +5503,6 @@
         <source>About</source>
         <target>À propos</target>
       </trans-unit>
-      <trans-unit id="intervention.detail.aboutCaption" datatype="html">
-        <source> What this intervention is — status, reference, type and description. </source>
-        <target> Ce qu'est cette intervention — statut, référence, type et description. </target>
-      </trans-unit>
       <trans-unit id="intervention.detail.reference" datatype="html">
         <source> Reference </source>
         <target> Référence </target>
@@ -5518,10 +5510,6 @@
       <trans-unit id="intervention.sidebar.title" datatype="html">
         <source>Properties</source>
         <target>Propriétés</target>
-      </trans-unit>
-      <trans-unit id="intervention.sidebar.titleCaption" datatype="html">
-        <source> The intervention's core details — priority, site, schedule and team. </source>
-        <target> Les informations clés de l'intervention — priorité, site, planning et équipe. </target>
       </trans-unit>
       <trans-unit id="intervention.prop.status" datatype="html">
         <source> Status </source>
@@ -5539,17 +5527,9 @@
         <source>Live team messaging about this intervention</source>
         <target>Messagerie de l'équipe en direct pour cette intervention</target>
       </trans-unit>
-      <trans-unit id="intervention.detail.statusMenu" datatype="html">
-        <source>Move this intervention</source>
-        <target>Déplacer cette intervention</target>
-      </trans-unit>
       <trans-unit id="intervention.detail.statusMenuLabel" datatype="html">
         <source>Send it to</source>
         <target>L'envoyer vers</target>
-      </trans-unit>
-      <trans-unit id="intervention.detail.commandBarSeeDetails" datatype="html">
-        <source>— see what is blocking</source>
-        <target>— voir ce qui bloque</target>
       </trans-unit>
       <trans-unit id="intervention.detail.tabFieldWork" datatype="html">
         <source>Field work</source>
@@ -9646,10 +9626,6 @@
         <source>Some changes are waiting to sync</source>
         <target>Des modifications attendent la synchronisation</target>
       </trans-unit>
-      <trans-unit id="intervention.notice.readyToPublish" datatype="html">
-        <source>Ready to publish</source>
-        <target>Prêt à publier</target>
-      </trans-unit>
       <trans-unit id="intervention.notice.published" datatype="html">
         <source>This intervention is published</source>
         <target>Cette intervention est publiée</target>
@@ -9701,6 +9677,26 @@
       <trans-unit id="intervention.actionBox.published" datatype="html">
         <source> Published and locked at revision v<x id="INTERPOLATION" equiv-text="{{ revision() }}"/> </source>
         <target> Publiée et verrouillée à la révision v<x id="INTERPOLATION" equiv-text="{{ revision() }}"/> </target>
+      </trans-unit>
+      <trans-unit id="intervention.band.phase.prepare" datatype="html">
+        <source>Preparation</source>
+        <target>Préparation</target>
+      </trans-unit>
+      <trans-unit id="intervention.band.phase.execute" datatype="html">
+        <source>Field work</source>
+        <target>Travail terrain</target>
+      </trans-unit>
+      <trans-unit id="intervention.band.phase.review" datatype="html">
+        <source>Review</source>
+        <target>Revue</target>
+      </trans-unit>
+      <trans-unit id="intervention.band.blockers" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ blockersCount() }}"/> blocking issues</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ blockersCount() }}"/> problèmes bloquants</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.tabs.changes" datatype="html">
+        <source>Changes</source>
+        <target>Changements</target>
       </trans-unit>
       <trans-unit id="intervention.activity.title" datatype="html">
         <source> Activity </source>

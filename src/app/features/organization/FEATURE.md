@@ -252,6 +252,16 @@ requires `organization.members.read`, which messaging permissions do **not** imp
 publishes `isAvailable` and consumers must degrade to raw ids rather than surface an error. The
 store never calls the API without the permission — the request would be a guaranteed 403.
 
+## UI Conventions
+
+List pages (roster, facilities, equipments, inspections, interventions) share one pagination
+recipe, `app-list-pagination` (`ui/components/list-pagination/`), and one boundary for the three
+empty/error idioms spartan offers: `hlm-empty` with a dashed border (`border border-dashed`) is a
+**page-level empty slot** (nothing loaded, no rows to show); `app-empty-state`
+(`@shared/empty-state`) is an **in-card or in-section empty slot** nested inside a larger page;
+`app-error-state` (`@shared/error-state`) is **every list's error state**, never `hlm-empty`
+re-tinted to look like a failure.
+
 ## Routing Notes
 
 - Parent resolvers establish organization context and breadcrumb/title data.

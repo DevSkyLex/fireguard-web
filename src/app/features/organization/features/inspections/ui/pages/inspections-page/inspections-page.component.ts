@@ -14,10 +14,6 @@ import {
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronLeft,
-  lucideChevronRight,
-  lucideChevronsLeft,
-  lucideChevronsRight,
   lucideCircleAlert,
   lucideClipboardCheck,
   lucideListFilter,
@@ -35,10 +31,11 @@ import {
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { ListPagination } from '@features/organization/ui/components';
+import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
@@ -78,21 +75,18 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
   imports: [
     RouterLink,
     NgIcon,
+    ErrorState,
     InspectionStatusTag,
     InspectionTable,
+    ListPagination,
     HlmBadge,
     HlmButton,
-    HlmLabel,
     ...HlmEmptyImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
   ],
   providers: [
     provideIcons({
-      lucideChevronLeft,
-      lucideChevronRight,
-      lucideChevronsLeft,
-      lucideChevronsRight,
       lucideCircleAlert,
       lucideClipboardCheck,
       lucideListFilter,
@@ -101,7 +95,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     }),
   ],
   templateUrl: './inspections-page.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionsPage {
@@ -143,9 +137,6 @@ export class InspectionsPage {
 
   /** Result choices offered in the filter bar. */
   protected readonly resultValues: readonly InspectionResult[] = RESULT_VALUES;
-
-  /** The page sizes offered under the table. */
-  protected readonly pageSizes: readonly number[] = PAGE_SIZES;
 
   /**
    * Property hasFilters

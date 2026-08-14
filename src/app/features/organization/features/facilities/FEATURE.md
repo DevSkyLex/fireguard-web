@@ -137,6 +137,9 @@ Primary service:
 - `/:facilityId/edit` is retired and **redirects onto the record**, so installed
   applications and bookmarks still resolve.
 - Depends on organization route context from the parent organization feature.
+- Consumes `ListPagination` from the parent `features/organization` feature
+  (`@features/organization/ui/components`) for the list page's shared pagination band — see
+  `organization/FEATURE.md` § UI Conventions.
 - The parent feature consumes this subfeature's `state` barrel
   (`FacilityTreeStore`) for the assets explorer at
   `/organizations/:organizationId/assets` (ARCHITECTURE.md §4). Read-only —

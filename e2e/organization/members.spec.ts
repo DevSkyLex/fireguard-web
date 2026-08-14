@@ -119,6 +119,34 @@ test.describe('Organization members', () => {
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 
+  test('changes the roster page size and re-requests the roster at the new size', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [
+      organizationMemberOutput(),
+      inspectorOrganizationMemberOutput(),
+    ]);
+    await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID, []);
+    await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [ownerOrganizationRoleOutput()]);
+    const members = new OrganizationMembersPage(page);
+
+    await members.goto(E2E_ORGANIZATION_ID);
+    await expect(members.memberRows).toHaveCount(2);
+    await expect(members.pageSizeTrigger).toHaveText('30');
+
+    const requestPromise = page.waitForRequest((request) =>
+      /\/api\/organizations\/[^/]+\/members\?.*itemsPerPage=60/.test(request.url()),
+    );
+    await members.choosePageSize(60);
+    const request = await requestPromise;
+
+    expect(request.url()).toContain('page=1');
+    await expect(members.pageSizeTrigger).toHaveText('60');
+  });
+
   test('renders on desktop in light mode', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();

@@ -1,5 +1,5 @@
-<div id="inspections" class="flex w-full flex-col gap-4 p-4 md:p-6">
-  <div class="flex flex-wrap items-start justify-between gap-3">
+<div id="inspections" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
     <h1 class="text-2xl font-semibold tracking-tight" i18n="@@route.inspections">Inspections</h1>
 
     @if (canCreate()) {
@@ -10,8 +10,8 @@
     }
   </div>
 
-  <div class="flex justify-end">
-    <hlm-popover sideOffset="5" align="end">
+  <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <hlm-popover sideOffset="5" align="start">
       <button
         hlmPopoverTrigger
         hlmBtn
@@ -117,22 +117,17 @@
   </div>
 
   @if (store.listCallState().status === 'error') {
-    <hlm-empty class="border border-dashed">
-      <hlm-empty-header>
-        <hlm-empty-media variant="icon">
-          <ng-icon name="lucideCircleAlert" />
-        </hlm-empty-media>
-        <div hlmEmptyTitle i18n="@@inspection.list.errorTitle">Couldn't load inspections</div>
-        <div hlmEmptyDescription i18n="@@inspection.list.errorText">
-          The inspections could not be loaded. Check your connection and try again.
-        </div>
-      </hlm-empty-header>
-      <hlm-empty-content>
-        <button hlmBtn variant="outline" data-testid="inspections-retry" (click)="reload()">
-          <span i18n="@@inspection.list.retry">Retry</span>
-        </button>
-      </hlm-empty-content>
-    </hlm-empty>
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="Couldn't load inspections"
+      i18n-title="@@inspection.list.errorTitle"
+      description="The inspections could not be loaded. Check your connection and try again."
+      i18n-description="@@inspection.list.errorText"
+    >
+      <button hlmBtn variant="outline" data-testid="inspections-retry" (click)="reload()">
+        <span i18n="@@inspection.list.retry">Retry</span>
+      </button>
+    </app-error-state>
   } @else if (!store.isLoadingInspections() && items().length === 0) {
     <hlm-empty class="border border-dashed">
       <hlm-empty-header>
@@ -164,99 +159,15 @@
       [detailRouteBase]="listRouteBase()"
     />
 
-    <div class="flex flex-col justify-between sm:flex-row sm:items-center">
-      <span
-        class="text-sm text-muted-foreground"
-        data-testid="inspections-row-count"
-        i18n="@@inspection.list.rowCount"
-        >{{ items().length }} of {{ store.totalInspections() }} row(s) shown</span
-      >
-
-      <div class="mt-2 flex flex-wrap items-center gap-8 sm:mt-0">
-        <div class="flex items-center gap-2">
-          <label for="inspections-page-size" hlmLabel i18n="@@inspection.list.rowsPerPage"
-            >Rows per page:</label
-          >
-          <hlm-select
-            class="inline-block"
-            [value]="pageSize()"
-            (valueChange)="setPageSize($event ?? 30)"
-          >
-            <hlm-select-trigger buttonId="inspections-page-size" class="me-1 inline-flex h-8 w-fit">
-              <hlm-select-value />
-            </hlm-select-trigger>
-            <hlm-select-content *hlmSelectPortal>
-              <hlm-select-group>
-                @for (size of pageSizes; track size) {
-                  <hlm-select-item [value]="size">{{ size }}</hlm-select-item>
-                }
-              </hlm-select-group>
-            </hlm-select-content>
-          </hlm-select>
-        </div>
-
-        <span
-          hlmLabel
-          data-testid="inspections-page-indicator"
-          i18n="@@inspection.list.pageIndicator"
-          >Page {{ page() }} of {{ pageCount() }}</span
-        >
-
-        <div class="flex space-x-1">
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            data-testid="inspections-page-first"
-            i18n-aria-label="@@inspection.list.pageFirst"
-            aria-label="First page"
-            [disabled]="page() === 1"
-            (click)="goToPage(1)"
-          >
-            <ng-icon name="lucideChevronsLeft" aria-hidden="true" />
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            data-testid="inspections-page-prev"
-            i18n-aria-label="@@inspection.list.pagePrevious"
-            aria-label="Previous page"
-            [disabled]="page() === 1"
-            (click)="goToPage(page() - 1)"
-          >
-            <ng-icon name="lucideChevronLeft" aria-hidden="true" />
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            data-testid="inspections-page-next"
-            i18n-aria-label="@@inspection.list.pageNext"
-            aria-label="Next page"
-            [disabled]="page() === pageCount()"
-            (click)="goToPage(page() + 1)"
-          >
-            <ng-icon name="lucideChevronRight" aria-hidden="true" />
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            data-testid="inspections-page-last"
-            i18n-aria-label="@@inspection.list.pageLast"
-            aria-label="Last page"
-            [disabled]="page() === pageCount()"
-            (click)="goToPage(pageCount())"
-          >
-            <ng-icon name="lucideChevronsRight" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-    </div>
+    <app-list-pagination
+      [page]="page()"
+      [pageCount]="pageCount()"
+      [pageSize]="pageSize()"
+      [total]="store.totalInspections()"
+      [shown]="items().length"
+      testIdPrefix="inspections"
+      (pageChanged)="goToPage($event)"
+      (pageSizeChanged)="setPageSize($event)"
+    />
   }
 </div>

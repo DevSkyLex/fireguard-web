@@ -15,10 +15,6 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronLeft,
-  lucideChevronRight,
-  lucideChevronsLeft,
-  lucideChevronsRight,
   lucideCircleAlert,
   lucideListFilter,
   lucidePackage,
@@ -39,11 +35,12 @@ import {
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { ListPagination } from '@features/organization/ui/components';
+import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
-import { HlmLabel } from '@shared/ui/label';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
@@ -87,11 +84,12 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
   imports: [
     RouterLink,
     NgIcon,
+    ErrorState,
     EquipmentStatusTag,
     EquipmentTable,
+    ListPagination,
     HlmBadge,
     HlmButton,
-    HlmLabel,
     ...HlmEmptyImports,
     ...HlmInputGroupImports,
     ...HlmPopoverImports,
@@ -99,10 +97,6 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
   ],
   providers: [
     provideIcons({
-      lucideChevronLeft,
-      lucideChevronRight,
-      lucideChevronsLeft,
-      lucideChevronsRight,
       lucideCircleAlert,
       lucideListFilter,
       lucidePackage,
@@ -112,7 +106,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     }),
   ],
   templateUrl: './equipments-page.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentsPage {
@@ -173,9 +167,6 @@ export class EquipmentsPage {
 
   /** Status choices offered in the filter bar. */
   protected readonly statusValues: readonly EquipmentStatus[] = STATUS_VALUES;
-
-  /** The page sizes offered under the table. */
-  protected readonly pageSizes: readonly number[] = PAGE_SIZES;
 
   /**
    * Property searchTerm

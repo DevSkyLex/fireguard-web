@@ -529,24 +529,17 @@
   }
 
   @if (hasError()) {
-    <hlm-empty class="border border-dashed">
-      <hlm-empty-header>
-        <hlm-empty-media variant="icon">
-          <ng-icon name="lucideCircleAlert" />
-        </hlm-empty-media>
-        <div hlmEmptyTitle i18n="@@intervention.list.errorTitle">
-          Couldn't load the interventions
-        </div>
-        <div hlmEmptyDescription i18n="@@intervention.list.errorText">
-          The interventions could not be loaded. Check your connection and try again.
-        </div>
-      </hlm-empty-header>
-      <hlm-empty-content>
-        <button hlmBtn variant="outline" data-testid="interventions-retry" (click)="reload()">
-          <span i18n="@@intervention.list.retry">Try again</span>
-        </button>
-      </hlm-empty-content>
-    </hlm-empty>
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="Couldn't load the interventions"
+      i18n-title="@@intervention.list.errorTitle"
+      description="The interventions could not be loaded. Check your connection and try again."
+      i18n-description="@@intervention.list.errorText"
+    >
+      <button hlmBtn variant="outline" data-testid="interventions-retry" (click)="reload()">
+        <span i18n="@@intervention.list.retry">Try again</span>
+      </button>
+    </app-error-state>
   } @else if (!store.isLoadingInterventions() && items().length === 0) {
     <hlm-empty class="border border-dashed">
       <hlm-empty-header>
@@ -602,104 +595,16 @@
       (selectionChanged)="onSelectionChanged($event)"
     />
 
-    <div class="flex shrink-0 flex-col justify-between sm:flex-row sm:items-center">
-      <span
-        class="text-sm text-muted-foreground"
-        aria-live="polite"
-        data-testid="interventions-row-count"
-        i18n="@@intervention.list.rowCount"
-        >{{ items().length }} of {{ store.totalInterventions() }} row(s) shown</span
-      >
-
-      <div class="mt-2 flex flex-wrap items-center gap-8 sm:mt-0">
-        <div class="flex items-center gap-2">
-          <label for="interventions-page-size" hlmLabel i18n="@@intervention.list.rowsPerPage"
-            >Rows per page:</label
-          >
-          <hlm-select
-            class="inline-block"
-            [value]="pageSize()"
-            (valueChange)="setPageSize($event ?? 30)"
-          >
-            <hlm-select-trigger
-              buttonId="interventions-page-size"
-              class="me-1 inline-flex h-8 w-fit"
-            >
-              <hlm-select-value />
-            </hlm-select-trigger>
-            <hlm-select-content *hlmSelectPortal>
-              <hlm-select-group>
-                @for (size of pageSizes; track size) {
-                  <hlm-select-item [value]="size">{{ size }}</hlm-select-item>
-                }
-              </hlm-select-group>
-            </hlm-select-content>
-          </hlm-select>
-        </div>
-
-        <span
-          hlmLabel
-          data-testid="interventions-page-indicator"
-          i18n="@@intervention.list.pageIndicator"
-          >Page {{ page() }} of {{ pageCount() }}</span
-        >
-
-        <div class="flex space-x-1">
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            data-testid="interventions-page-first"
-            i18n-aria-label="@@intervention.list.pageFirst"
-            aria-label="First page"
-            [disabled]="page() === 1"
-            (click)="goToPage(1)"
-          >
-            <ng-icon name="lucideChevronsLeft" aria-hidden="true" />
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            data-testid="interventions-page-prev"
-            i18n-aria-label="@@intervention.list.pagePrevious"
-            aria-label="Previous page"
-            [disabled]="page() === 1"
-            (click)="goToPage(page() - 1)"
-          >
-            <ng-icon name="lucideChevronLeft" aria-hidden="true" />
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            data-testid="interventions-page-next"
-            i18n-aria-label="@@intervention.list.pageNext"
-            aria-label="Next page"
-            [disabled]="page() === pageCount()"
-            (click)="goToPage(page() + 1)"
-          >
-            <ng-icon name="lucideChevronRight" aria-hidden="true" />
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            data-testid="interventions-page-last"
-            i18n-aria-label="@@intervention.list.pageLast"
-            aria-label="Last page"
-            [disabled]="page() === pageCount()"
-            (click)="goToPage(pageCount())"
-          >
-            <ng-icon name="lucideChevronsRight" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-    </div>
+    <app-list-pagination
+      [page]="page()"
+      [pageCount]="pageCount()"
+      [pageSize]="pageSize()"
+      [total]="store.totalInterventions()"
+      [shown]="items().length"
+      testIdPrefix="interventions"
+      (pageChanged)="goToPage($event)"
+      (pageSizeChanged)="setPageSize($event)"
+    />
   }
 </div>
 

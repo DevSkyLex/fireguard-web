@@ -2955,34 +2955,6 @@
         <source>Type</source>
         <target>Type</target>
       </trans-unit>
-      <trans-unit id="equipment.list.pageFirst" datatype="html">
-        <source>First page</source>
-        <target>Première page</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pageIndicator" datatype="html">
-        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
-        <target>Page <x id="INTERPOLATION"/> sur <x id="INTERPOLATION_1"/></target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pageLast" datatype="html">
-        <source>Last page</source>
-        <target>Dernière page</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Page suivante</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Page précédente</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalEquipment() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION"/> sur <x id="INTERPOLATION_1"/> ligne(s) affichée(s)</target>
-      </trans-unit>
-      <trans-unit id="equipment.list.rowsPerPage" datatype="html">
-        <source>Rows per page:</source>
-        <target>Lignes par page :</target>
-      </trans-unit>
       <trans-unit id="equipment.maintenanceDue.dueSoon" datatype="html">
         <source>Due soon</source>
         <target>Échéance proche</target>
@@ -3243,6 +3215,10 @@
         <source>Grid view</source>
         <target>Vue grille</target>
       </trans-unit>
+      <trans-unit id="facility.list.gridRegion" datatype="html">
+        <source>Facilities grid</source>
+        <target>Grille des sites</target>
+      </trans-unit>
       <trans-unit id="facility.list.errorTitle" datatype="html">
         <source>Couldn't load facilities</source>
         <target>Impossible de charger les établissements</target>
@@ -3254,34 +3230,6 @@
       <trans-unit id="facility.list.emptyDesc" datatype="html">
         <source>Adjust your search or filters, or register the sites you track.</source>
         <target>Ajustez votre recherche ou vos filtres, ou enregistrez les sites que vous suivez.</target>
-      </trans-unit>
-      <trans-unit id="facility.list.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalRootFacilities() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ store.totalRootFacilities() }}"/> ligne(s) affichée(s)</target>
-      </trans-unit>
-      <trans-unit id="facility.list.rowsPerPage" datatype="html">
-        <source>Rows per page:</source>
-        <target>Lignes par page :</target>
-      </trans-unit>
-      <trans-unit id="facility.list.pageIndicator" datatype="html">
-        <source>Page <x id="INTERPOLATION" equiv-text="{{ currentPage() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
-        <target>Page <x id="INTERPOLATION" equiv-text="{{ currentPage() }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
-      </trans-unit>
-      <trans-unit id="facility.list.pageFirst" datatype="html">
-        <source>First page</source>
-        <target>Première page</target>
-      </trans-unit>
-      <trans-unit id="facility.list.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Page précédente</target>
-      </trans-unit>
-      <trans-unit id="facility.list.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Page suivante</target>
-      </trans-unit>
-      <trans-unit id="facility.list.pageLast" datatype="html">
-        <source>Last page</source>
-        <target>Dernière page</target>
       </trans-unit>
       <trans-unit id="status.active" datatype="html">
         <source>Active</source>
@@ -9406,26 +9354,6 @@
         <source> No results. </source>
         <target>Aucun résultat.</target>
       </trans-unit>
-      <trans-unit id="intervention.list.pageIndicator" datatype="html">
-        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
-        <target>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
-      </trans-unit>
-      <trans-unit id="intervention.list.pageFirst" datatype="html">
-        <source>First page</source>
-        <target>Première page</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.pageLast" datatype="html">
-        <source>Last page</source>
-        <target>Dernière page</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Page suivante</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Page précédente</target>
-      </trans-unit>
       <trans-unit id="intervention.list.rowCopyRef" datatype="html">
         <source>Copy reference</source>
         <target>Copier la référence</target>
@@ -9441,14 +9369,6 @@
       <trans-unit id="intervention.list.rowOpen" datatype="html">
         <source>Open</source>
         <target>Ouvrir</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalInterventions() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ store.totalInterventions() }}"/> ligne(s) affichée(s)</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.rowsPerPage" datatype="html">
-        <source>Rows per page:</source>
-        <target>Lignes par page :</target>
       </trans-unit>
       <trans-unit id="intervention.list.overdueLabel" datatype="html">
         <source>Overdue</source>
@@ -10222,37 +10142,9 @@
         <source>Status</source>
         <target>Statut</target>
       </trans-unit>
-      <trans-unit id="inspection.list.pageFirst" datatype="html">
-        <source>First page</source>
-        <target>Première page</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.pageIndicator" datatype="html">
-        <source>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></source>
-        <target>Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ pageCount() }}"/></target>
-      </trans-unit>
-      <trans-unit id="inspection.list.pageLast" datatype="html">
-        <source>Last page</source>
-        <target>Dernière page</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Page suivante</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Page précédente</target>
-      </trans-unit>
       <trans-unit id="inspection.list.retry" datatype="html">
         <source>Retry</source>
         <target>Réessayer</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.totalInspections() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ items().length }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ store.totalInspections() }}"/> ligne(s) affichée(s)</target>
-      </trans-unit>
-      <trans-unit id="inspection.list.rowsPerPage" datatype="html">
-        <source>Rows per page:</source>
-        <target>Lignes par page :</target>
       </trans-unit>
       <trans-unit id="inspection.newButton" datatype="html">
         <source>New inspection</source>
@@ -10550,14 +10442,6 @@
         <source>Action failed</source>
         <target>Échec de l&apos;action</target>
       </trans-unit>
-      <trans-unit id="org.members.pageIndicator" datatype="html">
-        <source>Page <x id="current" equiv-text="current"/> of <x id="total" equiv-text="total"/></source>
-        <target>Page <x id="current" equiv-text="current"/> sur <x id="total" equiv-text="total"/></target>
-      </trans-unit>
-      <trans-unit id="org.members.pageNavAriaLabel" datatype="html">
-        <source>Members pages</source>
-        <target>Pages des membres</target>
-      </trans-unit>
       <trans-unit id="org.members.bulkRemoveButton" datatype="html">
         <source>Remove (<x id="count" equiv-text="this.selectedIds().size"/>)</source>
         <target>Retirer (<x id="count" equiv-text="this.selectedIds().size"/>)</target>
@@ -10653,18 +10537,6 @@
       <trans-unit id="org.members.emptyFilteredText" datatype="html">
         <source>Adjust your search or the status filter.</source>
         <target>Ajustez votre recherche ou le filtre de statut.</target>
-      </trans-unit>
-      <trans-unit id="org.members.rowCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> row(s) shown</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ store.members().length }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ store.membersTotal() }}"/> ligne(s) affichée(s)</target>
-      </trans-unit>
-      <trans-unit id="org.members.pagePrevious" datatype="html">
-        <source>Previous page</source>
-        <target>Page précédente</target>
-      </trans-unit>
-      <trans-unit id="org.members.pageNext" datatype="html">
-        <source>Next page</source>
-        <target>Page suivante</target>
       </trans-unit>
       <trans-unit id="org.invitations.heading" datatype="html">
         <source>Pending invitations</source>
@@ -11437,6 +11309,38 @@
       <trans-unit id="org.invitationAccept.notAcceptable" datatype="html">
         <source> This invitation can no longer be accepted. </source>
         <target>Cette invitation ne peut plus être acceptée.</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.rowCount" datatype="html">
+        <source><x id="shown" equiv-text="shown"/> of <x id="total" equiv-text="total"/> row(s) shown</source>
+        <target><x id="shown" equiv-text="shown"/> sur <x id="total" equiv-text="total"/> ligne(s) affichée(s)</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.pageIndicator" datatype="html">
+        <source>Page <x id="page" equiv-text="page"/> of <x id="pageCount" equiv-text="pageCount"/></source>
+        <target>Page <x id="page" equiv-text="page"/> sur <x id="pageCount" equiv-text="pageCount"/></target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.pageSizeLabel" datatype="html">
+        <source>Rows per page:</source>
+        <target>Lignes par page :</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.nav" datatype="html">
+        <source>Pagination</source>
+        <target>Pagination</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.ariaFirst" datatype="html">
+        <source>First page</source>
+        <target>Première page</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.ariaPrevious" datatype="html">
+        <source>Previous page</source>
+        <target>Page précédente</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.ariaNext" datatype="html">
+        <source>Next page</source>
+        <target>Page suivante</target>
+      </trans-unit>
+      <trans-unit id="org.listPagination.ariaLast" datatype="html">
+        <source>Last page</source>
+        <target>Dernière page</target>
       </trans-unit>
 </body>
   </file>

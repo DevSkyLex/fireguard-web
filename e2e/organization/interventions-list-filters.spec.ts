@@ -60,7 +60,7 @@ async function mockListPage(api: ApiMock): Promise<void> {
 }
 
 test.describe('Interventions list — shared filtered URL', () => {
-  test('renders only the matching fixtures for a shared status+mine URL, counting mine separately in the Filters badge', async ({
+  test('renders only the matching fixtures for a shared status+mine URL, showing a Status chip and the mine toggle pressed', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -74,7 +74,7 @@ test.describe('Interventions list — shared filtered URL', () => {
     await expect(interventions.row('Sprinkler head replacement')).toHaveCount(0);
     await expect(interventions.row('Annual alarm compliance check')).toHaveCount(0);
 
-    await expect(interventions.filtersTrigger).toContainText('1');
+    await expect(interventions.filterChip('Status')).toBeVisible();
     await expect(interventions.mineToggle).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -89,7 +89,7 @@ test.describe('Interventions list — shared filtered URL', () => {
     await expect(interventions.row('Riser check assigned to me')).toHaveCount(0);
     await expect(interventions.row('Riser check assigned to someone else')).toHaveCount(0);
     await expect(interventions.row('Sprinkler head replacement')).toHaveCount(0);
-    await expect(interventions.filtersTrigger).toContainText('1');
+    await expect(interventions.filterChip('Label')).toBeVisible();
   });
 
   test('still opens the creation sheet on ?create=1, the contract the landing page relies on', async ({
@@ -145,7 +145,7 @@ test.describe('Interventions list — segmented views and filter chips', () => {
     await expect(interventions.viewButton('Overdue')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('applying a status filter from the popover shows a removable chip, and removing it clears the param', async ({
+  test('adding a status filter from the "+ Filter" menu shows an editable chip, and removing it clears the param', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -153,10 +153,8 @@ test.describe('Interventions list — segmented views and filter chips', () => {
     const interventions = new InterventionsPage(page);
 
     await interventions.goto(E2E_ORGANIZATION_ID);
-    await interventions.filtersTrigger.click();
-    await page.getByTestId('interventions-filter-status').click();
+    await interventions.addFilter('Status');
     await page.getByRole('option', { name: 'Planned' }).click();
-    await page.keyboard.press('Escape');
 
     await expect(page).toHaveURL(/[?&]status=planned(&|$)/);
     await expect(interventions.filterChip('Status')).toBeVisible();
@@ -166,6 +164,25 @@ test.describe('Interventions list — segmented views and filter chips', () => {
 
     await expect(page).not.toHaveURL(/status=planned/);
     await expect(interventions.filterChip('Status')).toHaveCount(0);
+  });
+
+  test('clicking a chip’s value segment reopens its selector to change the value, without removing the chip', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockListPage(api);
+    const interventions = new InterventionsPage(page);
+
+    await interventions.gotoWithQuery(E2E_ORGANIZATION_ID, 'status=planned');
+
+    await expect(interventions.filterChip('Status')).toContainText('Planned');
+
+    await interventions.openFilterChipValue('interventions-filter-status');
+    await page.getByRole('option', { name: 'In progress' }).click();
+
+    await expect(page).toHaveURL(/[?&]status=in_progress(&|$)/);
+    await expect(interventions.filterChip('Status')).toContainText('In progress');
+    await expect(interventions.filterChips).toHaveCount(1);
   });
 
   test('"Clear filters" is reachable from the chip row now that it has moved out of the popover', async ({

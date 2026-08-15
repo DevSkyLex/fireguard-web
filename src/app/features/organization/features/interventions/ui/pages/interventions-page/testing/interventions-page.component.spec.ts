@@ -1074,22 +1074,49 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['filterChips']()).toEqual([
         {
           key: 'status',
+          icon: 'lucideCircleDot',
           fieldLabel: 'Status',
           valueLabel: 'Changes requested',
           patch: { status: null },
         },
-        { key: 'type', fieldLabel: 'Type', valueLabel: 'Inventory', patch: { type: null } },
-        { key: 'priority', fieldLabel: 'Priority', valueLabel: 'High', patch: { priority: null } },
-        { key: 'site', fieldLabel: 'Site', valueLabel: 'Warehouse 9', patch: { site: null } },
+        {
+          key: 'type',
+          icon: 'lucideWrench',
+          fieldLabel: 'Type',
+          valueLabel: 'Inventory',
+          patch: { type: null },
+        },
+        {
+          key: 'priority',
+          icon: 'lucideFlag',
+          fieldLabel: 'Priority',
+          valueLabel: 'High',
+          patch: { priority: null },
+        },
+        {
+          key: 'site',
+          icon: 'lucideMapPin',
+          fieldLabel: 'Site',
+          valueLabel: 'Warehouse 9',
+          patch: { site: null },
+        },
         {
           key: 'responsible',
+          icon: 'lucideUser',
           fieldLabel: 'Responsible',
           valueLabel: 'Jordan Lee',
           patch: { responsible: null },
         },
-        { key: 'label', fieldLabel: 'Label', valueLabel: 'Compliance', patch: { label: null } },
+        {
+          key: 'label',
+          icon: 'lucideTag',
+          fieldLabel: 'Label',
+          valueLabel: 'Compliance',
+          patch: { label: null },
+        },
         {
           key: 'dueWindow',
+          icon: 'lucideCalendarClock',
           fieldLabel: 'Deadline',
           valueLabel: 'Due today',
           patch: { dueWindow: null },
@@ -1137,6 +1164,105 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['removeFilterLabel']('Status')).toBe(
         'Remove filter: Status',
       );
+    });
+
+    it('should name a chip’s value segment by its field label, distinctly from the remove button', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['changeFilterLabel']('Status')).toBe(
+        'Change filter: Status',
+      );
+    });
+
+    it('should offer only the fields not yet active through the "+ Filter" menu', async () => {
+      fixture = await createPage({ status: 'planned', priority: 'high' });
+
+      const offered = fixture.componentInstance['unsetFilterFields']().map(
+        (field: { key: string }) => field.key,
+      );
+
+      expect(offered).toEqual(['type', 'site', 'responsible', 'label', 'dueWindow']);
+    });
+
+    it('should force a field’s selector open when picked from the "+ Filter" menu, and drop it from the menu meanwhile', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['openFilterField']('site');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('open');
+      expect(
+        fixture.componentInstance['unsetFilterFields']().some(
+          (field: { key: string }) => field.key === 'site',
+        ),
+      ).toBe(false);
+    });
+
+    it('should clear the forced-open field once its selector reports closed', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['openFilterField']('site');
+      fixture.componentInstance['onFieldPopoverStateChanged']('site', 'closed');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('closed');
+    });
+
+    it('should not clear the forced-open field when a different field’s selector closes', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['openFilterField']('site');
+      fixture.componentInstance['onFieldPopoverStateChanged']('responsible', 'closed');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('open');
+    });
+
+    describe('display order', () => {
+      let originalScrollIntoView: (options?: boolean | ScrollIntoViewOptions) => void;
+
+      beforeEach(() => {
+        originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = vi.fn();
+      });
+
+      afterEach(() => {
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      });
+
+      it('should render a field picked from the "+ Filter" menu last, after the narrowings the URL already carried', async () => {
+        fixture = await createPage({ priority: 'high', status: 'planned' });
+
+        fixture.componentInstance['openFilterField']('type');
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance['renderedFilterKeys']()).toEqual([
+          'status',
+          'priority',
+          'type',
+        ]);
+      });
+
+      it('should order picked fields by when they were picked, not by the catalog', async () => {
+        fixture = await createPage({ status: 'planned', type: 'inventory' });
+
+        fixture.componentInstance['openFilterField']('type');
+        fixture.componentInstance['openFilterField']('status');
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance['renderedFilterKeys']()).toEqual(['type', 'status']);
+      });
+
+      it('should send a re-picked field back to the end rather than to its earlier position', async () => {
+        fixture = await createPage({ status: 'planned', type: 'inventory' });
+
+        fixture.componentInstance['openFilterField']('status');
+        fixture.componentInstance['openFilterField']('type');
+        fixture.componentInstance['openFilterField']('status');
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance['renderedFilterKeys']()).toEqual(['type', 'status']);
+      });
     });
   });
 });

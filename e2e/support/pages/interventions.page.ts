@@ -7,14 +7,15 @@ import type { Locator, Page } from '@playwright/test';
  * Wraps the interventions list route (`/organizations/:organizationId/interventions`)
  * behind named locators and one method per user intent: navigating with a raw
  * query string (a shared/bookmarked filtered URL), reading a row, selecting
- * rows, driving the bulk-actions dropdown, picking a segmented view and
- * reading/removing a filter chip.
+ * rows, driving the bulk-actions dropdown, picking a segmented view, adding a
+ * filter from the "+ Filter" menu, and reading/changing/removing a filter
+ * chip.
  */
 export class InterventionsPage {
   public constructor(private readonly page: Page) {}
 
   public readonly root: Locator = this.page.locator('#interventions');
-  public readonly filtersTrigger: Locator = this.page.getByTestId('interventions-filters-trigger');
+  public readonly addFilterTrigger: Locator = this.page.getByTestId('interventions-filters-add');
   public readonly mineToggle: Locator = this.page.getByTestId('interventions-mine-toggle');
   public readonly rowCount: Locator = this.page.getByTestId('interventions-row-count');
   public readonly bulkActionsTrigger: Locator = this.page.getByTestId('interventions-bulk-actions');
@@ -37,9 +38,13 @@ export class InterventionsPage {
     await this.page.goto(`/organizations/${organizationId}/interventions`);
   }
 
-  /** The badge on the Filters trigger, or `null` when no narrowing is active. */
-  public async activeFilterCount(): Promise<string | null> {
-    return this.filtersTrigger.getByText(/^\d+$/).textContent();
+  /** Opens the "+ Filter" menu and picks the field named `fieldLabel`, e.g. `"Status"`. */
+  public async addFilter(fieldLabel: string): Promise<void> {
+    await this.addFilterTrigger.click();
+    await this.page
+      .getByTestId('interventions-filters-add-option')
+      .filter({ hasText: fieldLabel })
+      .click();
   }
 
   /** The `<tr>` for a row named `name` — every row-scoped locator below reads from here. */
@@ -95,7 +100,7 @@ export class InterventionsPage {
     return (await this.viewButton(label).getAttribute('aria-pressed')) === 'true';
   }
 
-  /** The removable filter chip naming `fieldLabel`, e.g. `"Status"`. */
+  /** The segmented filter chip naming `fieldLabel`, e.g. `"Status"`. */
   public filterChip(fieldLabel: string): Locator {
     return this.filterChips.filter({ hasText: fieldLabel });
   }
@@ -103,5 +108,10 @@ export class InterventionsPage {
   /** Removes the filter chip naming `fieldLabel`, clearing just that narrowing. */
   public async removeFilterChip(fieldLabel: string): Promise<void> {
     await this.filterChip(fieldLabel).getByTestId('interventions-filter-chip-remove').click();
+  }
+
+  /** Clicks a chip's value segment, reopening that field's selector without removing the chip. */
+  public async openFilterChipValue(fieldTestId: string): Promise<void> {
+    await this.page.getByTestId(fieldTestId).click();
   }
 }

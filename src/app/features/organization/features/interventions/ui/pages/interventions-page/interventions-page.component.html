@@ -153,265 +153,6 @@
         </hlm-dropdown-menu>
       </ng-template>
 
-      <hlm-popover sideOffset="5" align="start" class="max-sm:grow">
-        <button
-          hlmPopoverTrigger
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="w-full max-sm:min-h-11"
-          data-testid="interventions-filters-trigger"
-        >
-          <ng-icon name="lucideListFilter" aria-hidden="true" />
-          <span i18n="@@intervention.list.filtersButton">Filters</span>
-          @if (activeFilterCount() > 0) {
-            <hlm-badge variant="secondary" class="ms-1">{{ activeFilterCount() }}</hlm-badge>
-          }
-        </button>
-        <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
-          <div
-            class="grid w-56 grid-cols-1 gap-2 sm:w-[26rem] sm:grid-cols-2 lg:w-[39rem] lg:grid-cols-3"
-          >
-            <hlm-select
-              [value]="filters().status"
-              [itemToString]="statusLabelOf"
-              (valueChange)="applyFilter({ status: $event ?? null })"
-            >
-              <label
-                for="interventions-filter-status"
-                class="sr-only"
-                i18n="@@intervention.list.filterStatus"
-                >Status</label
-              >
-              <hlm-select-trigger
-                buttonId="interventions-filter-status"
-                class="w-full"
-                data-testid="interventions-filter-status"
-              >
-                @if (filters().status; as status) {
-                  <app-intervention-tag kind="status" [value]="status" asOption />
-                } @else {
-                  <hlm-select-value
-                    placeholder="Status"
-                    i18n-placeholder="@@intervention.list.filterStatus"
-                  />
-                }
-              </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal class="w-fit">
-                <hlm-select-group>
-                  @for (option of statusOptions; track option.value) {
-                    <hlm-select-item [value]="option.value">
-                      <app-intervention-tag kind="status" [value]="option.value" asOption />
-                    </hlm-select-item>
-                  }
-                </hlm-select-group>
-              </hlm-select-content>
-            </hlm-select>
-
-            <hlm-select
-              [value]="filters().type"
-              [itemToString]="typeLabelOf"
-              (valueChange)="applyFilter({ type: $event ?? null })"
-            >
-              <label
-                for="interventions-filter-type"
-                class="sr-only"
-                i18n="@@intervention.list.filterType"
-                >Type</label
-              >
-              <hlm-select-trigger
-                buttonId="interventions-filter-type"
-                class="w-full"
-                data-testid="interventions-filter-type"
-              >
-                @if (filters().type; as type) {
-                  <app-intervention-tag kind="type" [value]="type" asOption />
-                } @else {
-                  <hlm-select-value
-                    placeholder="Type"
-                    i18n-placeholder="@@intervention.list.filterType"
-                  />
-                }
-              </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal class="w-fit">
-                <hlm-select-group>
-                  @for (option of typeOptions; track option.value) {
-                    <hlm-select-item [value]="option.value">
-                      <app-intervention-tag kind="type" [value]="option.value" asOption />
-                    </hlm-select-item>
-                  }
-                </hlm-select-group>
-              </hlm-select-content>
-            </hlm-select>
-
-            <hlm-select
-              [value]="filters().priority"
-              [itemToString]="priorityLabelOf"
-              (valueChange)="applyFilter({ priority: $event ?? null })"
-            >
-              <label
-                for="interventions-filter-priority"
-                class="sr-only"
-                i18n="@@intervention.list.filterPriority"
-                >Priority</label
-              >
-              <hlm-select-trigger
-                buttonId="interventions-filter-priority"
-                class="w-full"
-                data-testid="interventions-filter-priority"
-              >
-                @if (filters().priority; as priority) {
-                  <app-intervention-tag kind="priority" [value]="priority" asOption />
-                } @else {
-                  <hlm-select-value
-                    placeholder="Priority"
-                    i18n-placeholder="@@intervention.list.filterPriority"
-                  />
-                }
-              </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal class="w-fit">
-                <hlm-select-group>
-                  @for (option of priorityOptions; track option.value) {
-                    <hlm-select-item [value]="option.value">
-                      <app-intervention-tag kind="priority" [value]="option.value" asOption />
-                    </hlm-select-item>
-                  }
-                </hlm-select-group>
-              </hlm-select-content>
-            </hlm-select>
-
-            <hlm-select
-              [value]="filters().site"
-              [itemToString]="siteLabelOf"
-              (valueChange)="applyFilter({ site: $event ?? null })"
-            >
-              <label
-                for="interventions-filter-site"
-                class="sr-only"
-                i18n="@@intervention.list.filterSite"
-                >Site</label
-              >
-              <hlm-select-trigger
-                buttonId="interventions-filter-site"
-                class="w-full"
-                data-testid="interventions-filter-site"
-              >
-                <hlm-select-value
-                  placeholder="Site"
-                  i18n-placeholder="@@intervention.list.filterSite"
-                />
-              </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal class="w-fit">
-                <hlm-select-group>
-                  @for (option of planningOptions.sites(); track option.value) {
-                    <hlm-select-item [value]="option.value">
-                      <span class="whitespace-nowrap">{{ option.label }}</span>
-                    </hlm-select-item>
-                  }
-                </hlm-select-group>
-              </hlm-select-content>
-            </hlm-select>
-
-            <hlm-select
-              [value]="filters().responsible"
-              [itemToString]="responsibleLabelOf"
-              (valueChange)="applyFilter({ responsible: $event ?? null })"
-            >
-              <label
-                for="interventions-filter-responsible"
-                class="sr-only"
-                i18n="@@intervention.list.filterResponsible"
-                >Responsible</label
-              >
-              <hlm-select-trigger
-                buttonId="interventions-filter-responsible"
-                class="w-full"
-                data-testid="interventions-filter-responsible"
-              >
-                <hlm-select-value
-                  placeholder="Responsible"
-                  i18n-placeholder="@@intervention.list.filterResponsible"
-                />
-              </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal class="w-fit">
-                <hlm-select-group>
-                  @for (option of planningOptions.members(); track option.value) {
-                    <hlm-select-item [value]="option.value">
-                      <span class="whitespace-nowrap">{{ option.label }}</span>
-                    </hlm-select-item>
-                  }
-                </hlm-select-group>
-              </hlm-select-content>
-            </hlm-select>
-
-            <hlm-select
-              [value]="filters().label"
-              [itemToString]="labelLabelOf"
-              (valueChange)="applyFilter({ label: $event ?? null })"
-            >
-              <label
-                for="interventions-filter-label"
-                class="sr-only"
-                i18n="@@intervention.list.filterLabel"
-                >Label</label
-              >
-              <hlm-select-trigger
-                buttonId="interventions-filter-label"
-                class="w-full"
-                data-testid="interventions-filter-label"
-              >
-                <hlm-select-value
-                  placeholder="Label"
-                  i18n-placeholder="@@intervention.list.filterLabel"
-                />
-              </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal class="w-fit">
-                <hlm-select-group>
-                  @for (option of labelOptions(); track option.value) {
-                    <hlm-select-item [value]="option.value">
-                      <span class="whitespace-nowrap">{{ option.label }}</span>
-                    </hlm-select-item>
-                  }
-                </hlm-select-group>
-              </hlm-select-content>
-            </hlm-select>
-
-            <hlm-select
-              [value]="filters().dueWindow"
-              [itemToString]="dueWindowLabelOf"
-              (valueChange)="applyFilter({ dueWindow: $event ?? null })"
-            >
-              <label
-                for="interventions-filter-due"
-                class="sr-only"
-                i18n="@@intervention.list.filterDue"
-                >Deadline</label
-              >
-              <hlm-select-trigger
-                buttonId="interventions-filter-due"
-                class="w-full"
-                data-testid="interventions-filter-due"
-              >
-                <hlm-select-value
-                  placeholder="Deadline"
-                  i18n-placeholder="@@intervention.list.filterDue"
-                />
-              </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal class="w-fit">
-                <hlm-select-group>
-                  @for (option of dueWindowOptions; track option.value) {
-                    <hlm-select-item [value]="option.value">
-                      <span class="whitespace-nowrap">{{ option.label }}</span>
-                    </hlm-select-item>
-                  }
-                </hlm-select-group>
-              </hlm-select-content>
-            </hlm-select>
-          </div>
-        </hlm-popover-content>
-      </hlm-popover>
-
       <button
         hlmBtn
         type="button"
@@ -477,31 +218,342 @@
     </hlm-dropdown-menu>
   </ng-template>
 
-  @if (activeFilterCount() > 0) {
-    <div
-      class="flex shrink-0 flex-wrap items-center gap-2"
-      data-testid="interventions-filter-chips"
-    >
-      @for (chip of filterChips(); track chip.key) {
-        <span
-          hlmBadge
-          variant="secondary"
-          class="inline-flex items-center gap-1 overflow-visible py-0.5 pe-1"
-          data-testid="interventions-filter-chip"
-        >
-          {{ chip.fieldLabel }}: {{ chip.valueLabel }}
-          <button
-            type="button"
-            class="inline-flex size-4 shrink-0 items-center justify-center rounded-full transition-colors outline-none hover:bg-foreground/10 focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:-my-3 max-sm:-me-1 max-sm:min-h-11 max-sm:min-w-11"
-            data-testid="interventions-filter-chip-remove"
-            [attr.aria-label]="removeFilterLabel(chip.fieldLabel)"
-            (click)="applyFilter(chip.patch)"
+  <div
+    class="-mt-2 flex shrink-0 flex-wrap items-center gap-2"
+    data-testid="interventions-filter-chips"
+  >
+    @for (key of renderedFilterKeys(); track key) {
+      @switch (key) {
+        @case ('status') {
+          <app-filter-chip
+            [fieldLabel]="filterFieldOption('status').fieldLabel"
+            [icon]="filterFieldOption('status').icon"
+            [removeLabel]="removeFilterLabel(filterFieldOption('status').fieldLabel)"
+            (removed)="applyFilter({ status: null })"
           >
-            <ng-icon name="lucideX" class="size-3" aria-hidden="true" />
-          </button>
-        </span>
-      }
+            <hlm-select
+              [value]="filters().status"
+              [itemToString]="statusLabelOf"
+              [state]="fieldPopoverState('status')"
+              (valueChange)="applyFilter({ status: $event ?? null })"
+              (stateChanged)="onFieldPopoverStateChanged('status', $event)"
+            >
+              <label for="interventions-filter-status" class="sr-only">{{
+                changeFilterLabel(filterFieldOption('status').fieldLabel)
+              }}</label>
+              <hlm-select-trigger
+                buttonId="interventions-filter-status"
+                class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+                data-testid="interventions-filter-status"
+              >
+                @if (filters().status; as status) {
+                  <app-intervention-tag kind="status" [value]="status" asOption />
+                } @else {
+                  <hlm-select-value
+                    placeholder="Status"
+                    i18n-placeholder="@@intervention.list.filterStatus"
+                  />
+                }
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of statusOptions; track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <app-intervention-tag kind="status" [value]="option.value" asOption />
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </app-filter-chip>
+        }
 
+        @case ('type') {
+          <app-filter-chip
+            [fieldLabel]="filterFieldOption('type').fieldLabel"
+            [icon]="filterFieldOption('type').icon"
+            [removeLabel]="removeFilterLabel(filterFieldOption('type').fieldLabel)"
+            (removed)="applyFilter({ type: null })"
+          >
+            <hlm-select
+              [value]="filters().type"
+              [itemToString]="typeLabelOf"
+              [state]="fieldPopoverState('type')"
+              (valueChange)="applyFilter({ type: $event ?? null })"
+              (stateChanged)="onFieldPopoverStateChanged('type', $event)"
+            >
+              <label for="interventions-filter-type" class="sr-only">{{
+                changeFilterLabel(filterFieldOption('type').fieldLabel)
+              }}</label>
+              <hlm-select-trigger
+                buttonId="interventions-filter-type"
+                class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+                data-testid="interventions-filter-type"
+              >
+                @if (filters().type; as type) {
+                  <app-intervention-tag kind="type" [value]="type" asOption />
+                } @else {
+                  <hlm-select-value
+                    placeholder="Type"
+                    i18n-placeholder="@@intervention.list.filterType"
+                  />
+                }
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of typeOptions; track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <app-intervention-tag kind="type" [value]="option.value" asOption />
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </app-filter-chip>
+        }
+
+        @case ('priority') {
+          <app-filter-chip
+            [fieldLabel]="filterFieldOption('priority').fieldLabel"
+            [icon]="filterFieldOption('priority').icon"
+            [removeLabel]="removeFilterLabel(filterFieldOption('priority').fieldLabel)"
+            (removed)="applyFilter({ priority: null })"
+          >
+            <hlm-select
+              [value]="filters().priority"
+              [itemToString]="priorityLabelOf"
+              [state]="fieldPopoverState('priority')"
+              (valueChange)="applyFilter({ priority: $event ?? null })"
+              (stateChanged)="onFieldPopoverStateChanged('priority', $event)"
+            >
+              <label for="interventions-filter-priority" class="sr-only">{{
+                changeFilterLabel(filterFieldOption('priority').fieldLabel)
+              }}</label>
+              <hlm-select-trigger
+                buttonId="interventions-filter-priority"
+                class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+                data-testid="interventions-filter-priority"
+              >
+                @if (filters().priority; as priority) {
+                  <app-intervention-tag kind="priority" [value]="priority" asOption />
+                } @else {
+                  <hlm-select-value
+                    placeholder="Priority"
+                    i18n-placeholder="@@intervention.list.filterPriority"
+                  />
+                }
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of priorityOptions; track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <app-intervention-tag kind="priority" [value]="option.value" asOption />
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </app-filter-chip>
+        }
+
+        @case ('site') {
+          <app-filter-chip
+            [fieldLabel]="filterFieldOption('site').fieldLabel"
+            [icon]="filterFieldOption('site').icon"
+            [removeLabel]="removeFilterLabel(filterFieldOption('site').fieldLabel)"
+            (removed)="applyFilter({ site: null })"
+          >
+            <hlm-select
+              [value]="filters().site"
+              [itemToString]="siteLabelOf"
+              [state]="fieldPopoverState('site')"
+              (valueChange)="applyFilter({ site: $event ?? null })"
+              (stateChanged)="onFieldPopoverStateChanged('site', $event)"
+            >
+              <label for="interventions-filter-site" class="sr-only">{{
+                changeFilterLabel(filterFieldOption('site').fieldLabel)
+              }}</label>
+              <hlm-select-trigger
+                buttonId="interventions-filter-site"
+                class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+                data-testid="interventions-filter-site"
+              >
+                <hlm-select-value
+                  placeholder="Site"
+                  i18n-placeholder="@@intervention.list.filterSite"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of planningOptions.sites(); track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <span class="whitespace-nowrap">{{ option.label }}</span>
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </app-filter-chip>
+        }
+
+        @case ('responsible') {
+          <app-filter-chip
+            [fieldLabel]="filterFieldOption('responsible').fieldLabel"
+            [icon]="filterFieldOption('responsible').icon"
+            [removeLabel]="removeFilterLabel(filterFieldOption('responsible').fieldLabel)"
+            (removed)="applyFilter({ responsible: null })"
+          >
+            <hlm-select
+              [value]="filters().responsible"
+              [itemToString]="responsibleLabelOf"
+              [state]="fieldPopoverState('responsible')"
+              (valueChange)="applyFilter({ responsible: $event ?? null })"
+              (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
+            >
+              <label for="interventions-filter-responsible" class="sr-only">{{
+                changeFilterLabel(filterFieldOption('responsible').fieldLabel)
+              }}</label>
+              <hlm-select-trigger
+                buttonId="interventions-filter-responsible"
+                class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+                data-testid="interventions-filter-responsible"
+              >
+                <hlm-select-value
+                  placeholder="Responsible"
+                  i18n-placeholder="@@intervention.list.filterResponsible"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of planningOptions.members(); track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <span class="whitespace-nowrap">{{ option.label }}</span>
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </app-filter-chip>
+        }
+
+        @case ('label') {
+          <app-filter-chip
+            [fieldLabel]="filterFieldOption('label').fieldLabel"
+            [icon]="filterFieldOption('label').icon"
+            [removeLabel]="removeFilterLabel(filterFieldOption('label').fieldLabel)"
+            (removed)="applyFilter({ label: null })"
+          >
+            <hlm-select
+              [value]="filters().label"
+              [itemToString]="labelLabelOf"
+              [state]="fieldPopoverState('label')"
+              (valueChange)="applyFilter({ label: $event ?? null })"
+              (stateChanged)="onFieldPopoverStateChanged('label', $event)"
+            >
+              <label for="interventions-filter-label" class="sr-only">{{
+                changeFilterLabel(filterFieldOption('label').fieldLabel)
+              }}</label>
+              <hlm-select-trigger
+                buttonId="interventions-filter-label"
+                class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+                data-testid="interventions-filter-label"
+              >
+                <hlm-select-value
+                  placeholder="Label"
+                  i18n-placeholder="@@intervention.list.filterLabel"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of labelOptions(); track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <span class="whitespace-nowrap">{{ option.label }}</span>
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </app-filter-chip>
+        }
+
+        @case ('dueWindow') {
+          <app-filter-chip
+            [fieldLabel]="filterFieldOption('dueWindow').fieldLabel"
+            [icon]="filterFieldOption('dueWindow').icon"
+            [removeLabel]="removeFilterLabel(filterFieldOption('dueWindow').fieldLabel)"
+            (removed)="applyFilter({ dueWindow: null })"
+          >
+            <hlm-select
+              [value]="filters().dueWindow"
+              [itemToString]="dueWindowLabelOf"
+              [state]="fieldPopoverState('dueWindow')"
+              (valueChange)="applyFilter({ dueWindow: $event ?? null })"
+              (stateChanged)="onFieldPopoverStateChanged('dueWindow', $event)"
+            >
+              <label for="interventions-filter-due" class="sr-only">{{
+                changeFilterLabel(filterFieldOption('dueWindow').fieldLabel)
+              }}</label>
+              <hlm-select-trigger
+                buttonId="interventions-filter-due"
+                class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+                data-testid="interventions-filter-due"
+              >
+                <hlm-select-value
+                  placeholder="Deadline"
+                  i18n-placeholder="@@intervention.list.filterDue"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal class="w-fit">
+                <hlm-select-group>
+                  @for (option of dueWindowOptions; track option.value) {
+                    <hlm-select-item [value]="option.value">
+                      <span class="whitespace-nowrap">{{ option.label }}</span>
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </app-filter-chip>
+        }
+      }
+    }
+
+    @if (unsetFilterFields().length > 0) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="border-dashed text-muted-foreground max-sm:min-h-11"
+        data-testid="interventions-filters-add"
+        [hlmDropdownMenuTrigger]="addFilterMenu"
+        align="start"
+      >
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+        <span i18n="@@intervention.list.addFilterButton">Filter</span>
+      </button>
+    }
+
+    <ng-template #addFilterMenu>
+      <hlm-dropdown-menu class="w-48">
+        <hlm-dropdown-menu-label i18n="@@intervention.list.addFilterMenuLabel"
+          >Filter by</hlm-dropdown-menu-label
+        >
+        <hlm-dropdown-menu-separator />
+        @for (field of unsetFilterFields(); track field.key) {
+          <button
+            hlmDropdownMenuItem
+            data-testid="interventions-filters-add-option"
+            (click)="openFilterField(field.key)"
+          >
+            <ng-icon [name]="field.icon" aria-hidden="true" />
+            {{ field.fieldLabel }}
+          </button>
+        }
+      </hlm-dropdown-menu>
+    </ng-template>
+
+    @if (activeFilterCount() > 0) {
       <button
         hlmBtn
         type="button"
@@ -513,8 +565,8 @@
         <ng-icon name="lucideX" aria-hidden="true" />
         <span i18n="@@common.clearFilters">Clear filters</span>
       </button>
-    </div>
-  }
+    }
+  </div>
 
   @if (hasError()) {
     <app-error-state

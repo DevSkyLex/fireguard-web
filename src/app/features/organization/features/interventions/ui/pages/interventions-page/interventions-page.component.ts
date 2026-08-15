@@ -18,19 +18,26 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCalendarClock,
   lucideCheck,
   lucideCircleAlert,
+  lucideCircleDot,
   lucideClipboardList,
   lucideDownload,
-  lucideListFilter,
+  lucideFlag,
+  lucideMapPin,
   lucidePlus,
   lucideSearch,
   lucideSettings2,
+  lucideTag,
   lucideTrash2,
+  lucideUser,
   lucideUserCog,
+  lucideWrench,
   lucideX,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -81,7 +88,6 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
-import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggle } from '@shared/ui/toggle';
@@ -101,9 +107,16 @@ import {
   type InterventionTableColumn,
   type InterventionTransitionRequest,
 } from '../../tables/intervention-table';
-import type { InterventionFilterChip, InterventionListItemViewModel } from './models';
+import { FilterChip } from './components/filter-chip';
+import type {
+  InterventionFilterChip,
+  InterventionFilterFieldKey,
+  InterventionFilterFieldOption,
+  InterventionListItemViewModel,
+} from './models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
+  INTERVENTION_FILTER_FIELDS,
   INTERVENTION_PRIORITY_FILTER_OPTIONS,
   INTERVENTION_STATUS_FILTER_OPTIONS,
   INTERVENTION_TYPE_FILTER_OPTIONS,
@@ -206,7 +219,24 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
  * header through `PageActionsService` instead of rendering its own title
  * band.
  *
- * @version 6.4.0
+ * The filter bar (6.5) is Linear-style segmented chips, not a popover: each
+ * active narrowing is an `app-filter-chip` whose value segment is the same
+ * `hlm-select` the old popover used, just restyled flush into the chip and
+ * made independently controllable through {@link openFilterKey} so clicking
+ * it reopens that one field without touching the others. A "+ Filter" menu
+ * lists the fields still unset; picking one sets {@link openFilterKey} and
+ * the field's own chip renders immediately, its select forced open. Both
+ * still resolve through {@link applyFilter} alone — there is no second copy
+ * of the narrowing, only of which selector is currently expanded. It reads as
+ * a second line of the toolbar rather than a band of its own, so it pulls
+ * itself half of the page's `gap-4` back up instead of sitting a full gap
+ * below the search row.
+ *
+ * `hlm-button-group` and `hlm-combobox` were both evaluated for this bar and
+ * both ruled out; `FEATURE.md` records why, so neither is reopened without
+ * new evidence.
+ *
+ * @version 6.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -215,6 +245,7 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
   imports: [
     NgIcon,
     ErrorState,
+    FilterChip,
     HlmBadge,
     HlmButton,
     HlmSpinner,
@@ -230,7 +261,6 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
     ...HlmDropdownMenuImports,
     ...HlmEmptyImports,
     ...HlmInputGroupImports,
-    ...HlmPopoverImports,
     ...HlmSelectImports,
     ...HlmToggleGroupImports,
   ],
@@ -238,16 +268,22 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
     InterventionPlanningOptionsStore,
     InterventionStatisticsStore,
     provideIcons({
+      lucideCalendarClock,
       lucideCheck,
       lucideCircleAlert,
+      lucideCircleDot,
       lucideClipboardList,
       lucideDownload,
-      lucideListFilter,
+      lucideFlag,
+      lucideMapPin,
       lucidePlus,
       lucideSearch,
       lucideSettings2,
+      lucideTag,
       lucideTrash2,
+      lucideUser,
       lucideUserCog,
+      lucideWrench,
       lucideX,
     }),
   ],
@@ -1098,12 +1134,12 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * One removable chip per active narrowing, in the popover's own field
+   * One segmented chip per active narrowing, in the filter bar's own field
    * order — everything {@link activeFilterCount} counts, `mine` excluded the
    * same way (it keeps its own toggle chip). Each chip's value label reuses
-   * the closed-select label resolvers the popover itself uses; the three
-   * IRI-valued fields fall back to the IRI's last path segment while their
-   * option list is still loading.
+   * the closed-value label resolvers the chip's own value control uses; the
+   * three IRI-valued fields fall back to the IRI's last path segment while
+   * their option list is still loading.
    *
    * @access protected
    * @since 6.3.0
@@ -1114,75 +1150,128 @@ export class InterventionsPage {
     readonly InterventionFilterChip[]
   >(() => {
     const filters: InterventionListFilters = this.filters();
-    const chips: InterventionFilterChip[] = [];
+    const order: readonly InterventionFilterFieldKey[] = this.filterOrder();
 
-    if (filters.status) {
-      chips.push({
-        key: 'status',
-        fieldLabel: $localize`:@@intervention.list.filterStatus:Status`,
-        valueLabel: this.statusLabelOf(filters.status),
-        patch: { status: null },
-      });
-    }
+    return INTERVENTION_FILTER_FIELDS.flatMap(
+      (field: InterventionFilterFieldOption): readonly InterventionFilterChip[] => {
+        const valueLabel: string | null = this.filterValueLabelOf(field.key, filters);
 
-    if (filters.type) {
-      chips.push({
-        key: 'type',
-        fieldLabel: $localize`:@@intervention.list.filterType:Type`,
-        valueLabel: this.typeLabelOf(filters.type),
-        patch: { type: null },
-      });
-    }
-
-    if (filters.priority) {
-      chips.push({
-        key: 'priority',
-        fieldLabel: $localize`:@@intervention.list.filterPriority:Priority`,
-        valueLabel: this.priorityLabelOf(filters.priority),
-        patch: { priority: null },
-      });
-    }
-
-    if (filters.site) {
-      chips.push({
-        key: 'site',
-        fieldLabel: $localize`:@@intervention.list.filterSite:Site`,
-        valueLabel: this.siteLabelOf(filters.site) || this.lastIriSegmentLabel(filters.site),
-        patch: { site: null },
-      });
-    }
-
-    if (filters.responsible) {
-      chips.push({
-        key: 'responsible',
-        fieldLabel: $localize`:@@intervention.list.filterResponsible:Responsible`,
-        valueLabel:
-          this.responsibleLabelOf(filters.responsible) ||
-          this.lastIriSegmentLabel(filters.responsible),
-        patch: { responsible: null },
-      });
-    }
-
-    if (filters.label) {
-      chips.push({
-        key: 'label',
-        fieldLabel: $localize`:@@intervention.list.filterLabel:Label`,
-        valueLabel: this.labelLabelOf(filters.label) || this.lastIriSegmentLabel(filters.label),
-        patch: { label: null },
-      });
-    }
-
-    if (filters.dueWindow) {
-      chips.push({
-        key: 'dueWindow',
-        fieldLabel: $localize`:@@intervention.list.filterDue:Deadline`,
-        valueLabel: this.dueWindowLabelOf(filters.dueWindow),
-        patch: { dueWindow: null },
-      });
-    }
-
-    return chips;
+        return valueLabel === null
+          ? []
+          : [
+              {
+                key: field.key,
+                icon: field.icon,
+                fieldLabel: field.fieldLabel,
+                valueLabel,
+                patch: this.filterClearPatchOf(field.key),
+              },
+            ];
+      },
+    ).toSorted(
+      (left: InterventionFilterChip, right: InterventionFilterChip): number =>
+        order.indexOf(left.key) - order.indexOf(right.key),
+    );
   });
+
+  /**
+   * Property filterOrder
+   * @readonly
+   *
+   * @description
+   * The fields the operator has picked this visit, oldest first, so a chip
+   * added from the "+ Filter" menu lands at the end of the bar rather than
+   * back in catalog order. Presentation only — a field the URL already
+   * carried is absent from it and sorts ahead of every picked one, which is
+   * what a shared or reloaded list shows.
+   *
+   * @access private
+   * @since 6.6.0
+   *
+   * @type {WritableSignal<readonly InterventionFilterFieldKey[]>}
+   */
+  private readonly filterOrder: WritableSignal<readonly InterventionFilterFieldKey[]> = signal<
+    readonly InterventionFilterFieldKey[]
+  >([]);
+
+  /**
+   * Property renderedFilterKeys
+   * @readonly
+   *
+   * @description
+   * Which chips the bar renders, in display order: every active narrowing
+   * from {@link filterChips}, then the field {@link openFilterKey} just
+   * opened for a first pick, which carries no value yet and so has no chip of
+   * its own.
+   *
+   * @access protected
+   * @since 6.6.0
+   *
+   * @type {Signal<readonly InterventionFilterFieldKey[]>}
+   */
+  protected readonly renderedFilterKeys: Signal<readonly InterventionFilterFieldKey[]> = computed<
+    readonly InterventionFilterFieldKey[]
+  >(() => {
+    const active: readonly InterventionFilterFieldKey[] = this.filterChips().map(
+      (chip: InterventionFilterChip): InterventionFilterFieldKey => chip.key,
+    );
+    const opening: InterventionFilterFieldKey | null = this.openFilterKey();
+
+    return opening === null || active.includes(opening) ? active : [...active, opening];
+  });
+
+  /**
+   * Property unsetFilterFields
+   * @readonly
+   *
+   * @description
+   * The fields the "+ Filter" menu offers: every entry of the catalog whose
+   * narrowing is not currently active and that is not already the field
+   * {@link openFilterKey} just opened for picking a first value. Empty once
+   * every field carries a value, which is when the trigger itself renders
+   * nothing.
+   *
+   * @access protected
+   * @since 6.5.0
+   *
+   * @type {Signal<readonly InterventionFilterFieldOption[]>}
+   */
+  protected readonly unsetFilterFields: Signal<readonly InterventionFilterFieldOption[]> = computed<
+    readonly InterventionFilterFieldOption[]
+  >(() => {
+    const activeKeys: ReadonlySet<InterventionFilterFieldKey> = new Set(
+      this.filterChips().map(
+        (chip: InterventionFilterChip): InterventionFilterFieldKey => chip.key,
+      ),
+    );
+    const opening: InterventionFilterFieldKey | null = this.openFilterKey();
+
+    return INTERVENTION_FILTER_FIELDS.filter(
+      (field: InterventionFilterFieldOption): boolean =>
+        !activeKeys.has(field.key) && field.key !== opening,
+    );
+  });
+
+  /**
+   * Property openFilterKey
+   * @readonly
+   *
+   * @description
+   * Which field's value selector the filter bar currently forces open —
+   * `null` when none is. Set by picking a not-yet-active field from the
+   * "+ Filter" menu, and kept in sync with a chip's own value control through
+   * {@link onFieldPopoverStateChanged} so clicking its value segment (or
+   * dismissing it) behaves the same way. This is UI-only: it decides which
+   * selector is expanded, never a narrowing's value — the URL stays the only
+   * place that lives.
+   *
+   * @access protected
+   * @since 6.5.0
+   *
+   * @type {WritableSignal<InterventionFilterFieldKey | null>}
+   */
+  protected readonly openFilterKey: WritableSignal<InterventionFilterFieldKey | null> =
+    signal<InterventionFilterFieldKey | null>(null);
 
   /**
    * Property subtitle
@@ -1290,6 +1379,11 @@ export class InterventionsPage {
   protected readonly removeFilterLabel: (fieldLabel: string) => string = (
     fieldLabel: string,
   ): string => $localize`:@@intervention.list.removeFilter:Remove filter: ${fieldLabel}:field:`;
+
+  /** Names a filter chip's value segment, so each is distinguishable by screen reader. */
+  protected readonly changeFilterLabel: (fieldLabel: string) => string = (
+    fieldLabel: string,
+  ): string => $localize`:@@intervention.list.changeFilter:Change filter: ${fieldLabel}:field:`;
 
   //#endregion
 
@@ -1464,6 +1558,103 @@ export class InterventionsPage {
   }
 
   /**
+   * Method filterFieldOption
+   *
+   * @description
+   * The catalog entry for one field, for the template to read a chip's
+   * label and icon by key without repeating {@link INTERVENTION_FILTER_FIELDS}
+   * lookups inline. Falls back to an empty label rather than throwing: every
+   * call site passes a literal key from the same catalog, so the fallback
+   * is unreachable in practice.
+   *
+   * @access protected
+   * @since 6.5.0
+   *
+   * @param {InterventionFilterFieldKey} key - The field to resolve.
+   *
+   * @returns {InterventionFilterFieldOption} Its catalog entry.
+   */
+  protected filterFieldOption(key: InterventionFilterFieldKey): InterventionFilterFieldOption {
+    return (
+      INTERVENTION_FILTER_FIELDS.find(
+        (field: InterventionFilterFieldOption): boolean => field.key === key,
+      ) ?? { key, fieldLabel: '', icon: 'lucideCircleDot' }
+    );
+  }
+
+  /**
+   * Method openFilterField
+   *
+   * @description
+   * Picks a field from the "+ Filter" menu: forces its value control open so
+   * the operator lands directly on the value picker instead of an empty
+   * chip, and moves it to the end of {@link filterOrder} so its chip renders
+   * last — re-picking a field that was removed earlier sends it to the end
+   * again rather than back to its old position.
+   *
+   * @access protected
+   * @since 6.5.0
+   *
+   * @param {InterventionFilterFieldKey} key - The field just picked.
+   *
+   * @returns {void}
+   */
+  protected openFilterField(key: InterventionFilterFieldKey): void {
+    this.openFilterKey.set(key);
+    this.filterOrder.update((order: readonly InterventionFilterFieldKey[]) => [
+      ...order.filter((entry: InterventionFilterFieldKey): boolean => entry !== key),
+      key,
+    ]);
+  }
+
+  /**
+   * Method fieldPopoverState
+   *
+   * @description
+   * Whether a field's value control should currently render open — true only
+   * for the one field {@link openFilterKey} names.
+   *
+   * @access protected
+   * @since 6.5.0
+   *
+   * @param {InterventionFilterFieldKey} key - The field to read.
+   *
+   * @returns {BrnOverlayState} `'open'` or `'closed'`.
+   */
+  protected fieldPopoverState(key: InterventionFilterFieldKey): BrnOverlayState {
+    return this.openFilterKey() === key ? 'open' : 'closed';
+  }
+
+  /**
+   * Method onFieldPopoverStateChanged
+   *
+   * @description
+   * Keeps {@link openFilterKey} in sync with a field's own value control:
+   * opening it (by its trigger, or by {@link openFilterField}) records which
+   * field is expanded; closing it — picking a value, Escape, or an outside
+   * click — clears the record, unless another field has since taken over.
+   *
+   * @access protected
+   * @since 6.5.0
+   *
+   * @param {InterventionFilterFieldKey} key - The field whose selector changed.
+   * @param {BrnOverlayState} state - Its next state.
+   *
+   * @returns {void}
+   */
+  protected onFieldPopoverStateChanged(
+    key: InterventionFilterFieldKey,
+    state: BrnOverlayState,
+  ): void {
+    if (state === 'open') {
+      this.openFilterKey.set(key);
+      return;
+    }
+
+    if (this.openFilterKey() === key) this.openFilterKey.set(null);
+  }
+
+  /**
    * Method onViewChanged
    * @method onViewChanged
    *
@@ -1536,6 +1727,7 @@ export class InterventionsPage {
    */
   protected clearFilters(): void {
     this.page.set(1);
+    this.filterOrder.set([]);
     this.navigateQuery(serializeInterventionListFilters(NO_FILTERS));
   }
 
@@ -1691,6 +1883,88 @@ export class InterventionsPage {
    */
   private lastIriSegmentLabel(iri: string): string {
     return iri.split('/').pop() ?? iri;
+  }
+
+  /**
+   * Method filterValueLabelOf
+   *
+   * @description
+   * One field's resolved value label for {@link filterChips}, `null` when
+   * the field is unset. The single place that pairs each
+   * {@link InterventionFilterFieldKey} with the closed-value resolver its
+   * own chip's value control uses.
+   *
+   * @access private
+   * @since 6.5.0
+   *
+   * @param {InterventionFilterFieldKey} key - The field to resolve.
+   * @param {InterventionListFilters} filters - The active narrowing.
+   *
+   * @returns {string | null} The resolved label, or `null` when unset.
+   */
+  private filterValueLabelOf(
+    key: InterventionFilterFieldKey,
+    filters: InterventionListFilters,
+  ): string | null {
+    switch (key) {
+      case 'status':
+        return filters.status ? this.statusLabelOf(filters.status) : null;
+      case 'type':
+        return filters.type ? this.typeLabelOf(filters.type) : null;
+      case 'priority':
+        return filters.priority ? this.priorityLabelOf(filters.priority) : null;
+      case 'site':
+        return filters.site
+          ? this.siteLabelOf(filters.site) || this.lastIriSegmentLabel(filters.site)
+          : null;
+      case 'responsible':
+        return filters.responsible
+          ? this.responsibleLabelOf(filters.responsible) ||
+              this.lastIriSegmentLabel(filters.responsible)
+          : null;
+      case 'label':
+        return filters.label
+          ? this.labelLabelOf(filters.label) || this.lastIriSegmentLabel(filters.label)
+          : null;
+      case 'dueWindow':
+        return filters.dueWindow ? this.dueWindowLabelOf(filters.dueWindow) : null;
+    }
+  }
+
+  /**
+   * Method filterClearPatchOf
+   *
+   * @description
+   * The `applyFilter` patch that clears one field back to `null` — what a
+   * chip's remove button and the "+ Filter" catalog both key off, typed
+   * exhaustively rather than an indexed `{ [key]: null }` so a new field
+   * added to {@link InterventionFilterFieldKey} fails to compile here until
+   * it is handled.
+   *
+   * @access private
+   * @since 6.5.0
+   *
+   * @param {InterventionFilterFieldKey} key - The field to clear.
+   *
+   * @returns {Partial<InterventionListFilters>} The clearing patch.
+   */
+  private filterClearPatchOf(key: InterventionFilterFieldKey): Partial<InterventionListFilters> {
+    switch (key) {
+      case 'status':
+        return { status: null };
+      case 'type':
+        return { type: null };
+      case 'priority':
+        return { priority: null };
+      case 'site':
+        return { site: null };
+      case 'responsible':
+        return { responsible: null };
+      case 'label':
+        return { label: null };
+      case 'dueWindow':
+        return { dueWindow: null };
+    }
   }
 
   /**

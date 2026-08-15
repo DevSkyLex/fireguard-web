@@ -1,0 +1,42 @@
+<span
+  class="inline-flex h-8 items-center overflow-visible rounded-md border border-border bg-secondary/40 text-sm text-foreground max-sm:h-11 dark:bg-secondary/20"
+  data-testid="interventions-filter-chip"
+>
+  <span class="inline-flex items-center gap-1.5 px-2 whitespace-nowrap text-muted-foreground">
+    <ng-icon [name]="icon()" class="size-3.5 shrink-0" aria-hidden="true" />
+    {{ fieldLabel() }}
+  </span>
+
+  <span class="flex h-4 items-center">
+    <hlm-separator orientation="vertical" />
+  </span>
+
+  <span
+    class="px-2 whitespace-nowrap text-muted-foreground"
+    i18n="@@intervention.list.filterOperatorIs"
+  >
+    is
+  </span>
+
+  <span class="flex h-4 items-center">
+    <hlm-separator orientation="vertical" />
+  </span>
+
+  <span class="inline-flex items-center">
+    <ng-content />
+  </span>
+
+  <span class="flex h-4 items-center">
+    <hlm-separator orientation="vertical" />
+  </span>
+
+  <button
+    type="button"
+    class="inline-flex h-full shrink-0 items-center justify-center rounded-e-[calc(var(--radius-md)-1px)] px-2 text-muted-foreground transition-colors outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:min-w-11"
+    data-testid="interventions-filter-chip-remove"
+    [attr.aria-label]="removeLabel()"
+    (click)="removed.emit()"
+  >
+    <ng-icon name="lucideX" class="size-3" aria-hidden="true" />
+  </button>
+</span>

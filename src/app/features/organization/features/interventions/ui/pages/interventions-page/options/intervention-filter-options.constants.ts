@@ -7,6 +7,7 @@ import {
   type InterventionType,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
+import type { InterventionFilterFieldOption } from '../models';
 
 /**
  * Constant INTERVENTION_STATUS_FILTER_OPTIONS
@@ -90,4 +91,54 @@ export const INTERVENTION_SORT_OPTIONS: SelectOption<InterventionSortField>[] = 
   { value: 'createdAt', label: $localize`:@@intervention.list.sortCreatedAt:Creation date` },
   { value: 'updatedAt', label: $localize`:@@intervention.list.sortUpdatedAt:Last update` },
   { value: 'priority', label: $localize`:@@intervention.list.sortPriority:Priority` },
+];
+
+/**
+ * Constant INTERVENTION_FILTER_FIELDS
+ *
+ * @description
+ * The filter bar's field catalog, in the toolbar's fixed display order —
+ * what a chip's field segment renders, and what the "+ Filter" menu lists
+ * once a field's own narrowing is cleared. Labels reuse the same `@@` ids the
+ * select placeholders already carry, so nothing here duplicates translation
+ * work.
+ *
+ * @since 6.5.0
+ */
+export const INTERVENTION_FILTER_FIELDS: readonly InterventionFilterFieldOption[] = [
+  {
+    key: 'status',
+    fieldLabel: $localize`:@@intervention.list.filterStatus:Status`,
+    icon: 'lucideCircleDot',
+  },
+  {
+    key: 'type',
+    fieldLabel: $localize`:@@intervention.list.filterType:Type`,
+    icon: 'lucideWrench',
+  },
+  {
+    key: 'priority',
+    fieldLabel: $localize`:@@intervention.list.filterPriority:Priority`,
+    icon: 'lucideFlag',
+  },
+  {
+    key: 'site',
+    fieldLabel: $localize`:@@intervention.list.filterSite:Site`,
+    icon: 'lucideMapPin',
+  },
+  {
+    key: 'responsible',
+    fieldLabel: $localize`:@@intervention.list.filterResponsible:Responsible`,
+    icon: 'lucideUser',
+  },
+  {
+    key: 'label',
+    fieldLabel: $localize`:@@intervention.list.filterLabel:Label`,
+    icon: 'lucideTag',
+  },
+  {
+    key: 'dueWindow',
+    fieldLabel: $localize`:@@intervention.list.filterDue:Deadline`,
+    icon: 'lucideCalendarClock',
+  },
 ];

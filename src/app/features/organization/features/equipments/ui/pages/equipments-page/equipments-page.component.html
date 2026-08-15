@@ -174,14 +174,14 @@
   @if (canCreate()) {
     <a
       hlmBtn
-      class="max-sm:min-h-11"
+      class="min-w-0 shrink max-sm:min-h-11"
       data-testid="equipments-new"
       i18n-aria-label="@@equipment.newButton"
       aria-label="New equipment"
       [routerLink]="[...listRouteBase(), 'create']"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>
+      <span class="truncate max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>
     </a>
   }
 </ng-template>

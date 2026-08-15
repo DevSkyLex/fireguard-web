@@ -41,28 +41,28 @@
         hlmBtn
         type="button"
         variant="outline"
-        class="max-sm:min-h-11"
+        class="min-w-0 shrink max-sm:min-h-11"
         data-testid="account-otp-code-cancel"
         [disabled]="pending()"
         (click)="cancelled.emit()"
       >
-        <span i18n="@@account.otp.cancel">Cancel</span>
+        <span class="truncate" i18n="@@account.otp.cancel">Cancel</span>
       </button>
 
       <button
         hlmBtn
         type="submit"
         [variant]="destructive() ? 'destructive' : 'default'"
-        class="max-sm:min-h-11"
+        class="min-w-0 shrink max-sm:min-h-11"
         data-testid="account-otp-code-submit"
         [disabled]="pending()"
         [attr.aria-busy]="pending() ? 'true' : null"
         aria-live="polite"
       >
         @if (pending()) {
-          <span i18n="@@account.otp.submitting">Checking…</span>
+          <span class="truncate" i18n="@@account.otp.submitting">Checking…</span>
         } @else {
-          <span>{{ submitLabel() }}</span>
+          <span class="truncate">{{ submitLabel() }}</span>
         }
       </button>
     </hlm-field>

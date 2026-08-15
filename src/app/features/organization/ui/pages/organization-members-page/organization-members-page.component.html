@@ -55,11 +55,12 @@
             type="button"
             variant="destructive"
             size="sm"
+            class="min-w-0 shrink"
             data-testid="organization-members-bulk-remove"
             (click)="requestBulkRemove()"
           >
             <ng-icon name="lucideTrash2" aria-hidden="true" />
-            {{ bulkRemoveLabel() }}
+            <span class="truncate">{{ bulkRemoveLabel() }}</span>
           </button>
         }
       </div>
@@ -336,14 +337,14 @@
   @if (canManageMembers()) {
     <button
       hlmBtn
-      class="max-sm:min-h-11"
+      class="min-w-0 shrink max-sm:min-h-11"
       data-testid="organization-members-invite"
       i18n-aria-label="@@org.members.inviteButton"
       aria-label="Invite member"
       (click)="openInviteDialog()"
     >
       <ng-icon name="lucideMailPlus" aria-hidden="true" />
-      <span class="max-sm:hidden" i18n="@@org.members.inviteButton">Invite member</span>
+      <span class="truncate max-sm:hidden" i18n="@@org.members.inviteButton">Invite member</span>
     </button>
   }
 </ng-template>

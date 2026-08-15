@@ -669,13 +669,15 @@
 <ng-template #pageActions>
   <button
     hlmBtn
-    class="max-sm:min-h-11"
+    class="min-w-0 shrink max-sm:min-h-11"
     data-testid="interventions-new"
     i18n-aria-label="@@intervention.list.newButton"
     aria-label="New intervention"
     (click)="openCreate()"
   >
     <ng-icon name="lucidePlus" aria-hidden="true" />
-    <span class="max-sm:hidden" i18n="@@intervention.list.newButton">New intervention</span>
+    <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
+      >New intervention</span
+    >
   </button>
 </ng-template>

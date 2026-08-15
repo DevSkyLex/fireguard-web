@@ -625,7 +625,7 @@
       type="button"
       variant="outline"
       size="sm"
-      class="max-sm:size-11"
+      class="min-w-0 shrink max-sm:size-11"
       data-testid="intervention-detail-discussion-trigger"
       aria-controls="intervention-discussion-sheet"
       i18n-aria-label="@@intervention.discussion.trigger"
@@ -634,7 +634,9 @@
       (click)="discussionSheetVisible.set(true)"
     >
       <ng-icon name="lucideMessagesSquare" class="text-base" aria-hidden="true" />
-      <span class="max-sm:hidden" i18n="@@intervention.discussion.trigger">Discussion</span>
+      <span class="truncate max-sm:hidden" i18n="@@intervention.discussion.trigger"
+        >Discussion</span
+      >
     </button>
   }
 

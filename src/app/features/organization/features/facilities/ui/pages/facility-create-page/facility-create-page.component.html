@@ -22,9 +22,10 @@
     type="button"
     variant="outline"
     size="sm"
+    class="min-w-0 shrink"
     data-testid="facility-create-back"
     [routerLink]="['/organizations', organizationId(), 'facilities']"
   >
-    <span i18n="@@facility.detail.backToList">Back to facilities</span>
+    <span class="truncate" i18n="@@facility.detail.backToList">Back to facilities</span>
   </a>
 </ng-template>

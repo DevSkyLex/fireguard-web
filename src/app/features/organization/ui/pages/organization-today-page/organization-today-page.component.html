@@ -368,13 +368,15 @@
     <button
       hlmBtn
       size="sm"
-      class="shrink-0 gap-2 max-sm:min-h-11"
+      class="min-w-0 shrink gap-2 max-sm:min-h-11"
       i18n-aria-label="@@org.today.newIntervention"
       aria-label="New intervention"
       (click)="startIntervention()"
     >
       <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
-      <span class="max-sm:hidden" i18n="@@org.today.newIntervention">New intervention</span>
+      <span class="truncate max-sm:hidden" i18n="@@org.today.newIntervention"
+        >New intervention</span
+      >
     </button>
   }
 </ng-template>

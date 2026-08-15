@@ -102,19 +102,19 @@
           hlmBtn
           type="button"
           variant="outline"
-          class="max-sm:min-h-11"
+          class="min-w-0 shrink max-sm:min-h-11"
           data-testid="inspection-cancel"
           [disabled]="store.isChangingLifecycle()"
           (click)="requestCancel()"
         >
           <ng-icon name="lucideBan" aria-hidden="true" />
-          <span i18n="@@inspection.cancel">Cancel</span>
+          <span class="truncate" i18n="@@inspection.cancel">Cancel</span>
         </button>
 
         <button
           hlmBtn
           type="button"
-          class="max-sm:min-h-11"
+          class="min-w-0 shrink max-sm:min-h-11"
           data-testid="inspection-submit"
           [disabled]="store.isChangingLifecycle()"
           (click)="onSubmit()"
@@ -122,7 +122,7 @@
           @if (store.isChangingLifecycle()) {
             <hlm-spinner class="size-3.5" aria-hidden="true" />
           }
-          <span i18n="@@inspection.submit">Submit</span>
+          <span class="truncate" i18n="@@inspection.submit">Submit</span>
         </button>
       }
 
@@ -130,7 +130,7 @@
         <button
           hlmBtn
           type="button"
-          class="max-sm:min-h-11"
+          class="min-w-0 shrink max-sm:min-h-11"
           data-testid="inspection-close"
           [disabled]="store.isChangingLifecycle()"
           (click)="onClose()"
@@ -138,7 +138,7 @@
           @if (store.isChangingLifecycle()) {
             <hlm-spinner class="size-3.5" aria-hidden="true" />
           }
-          <span i18n="@@inspection.close">Close</span>
+          <span class="truncate" i18n="@@inspection.close">Close</span>
         </button>
       }
     </div>

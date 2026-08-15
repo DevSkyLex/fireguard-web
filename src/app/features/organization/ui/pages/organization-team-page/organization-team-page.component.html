@@ -89,12 +89,12 @@
     <button
       hlmBtn
       type="button"
-      class="max-sm:min-h-11"
+      class="min-w-0 shrink max-sm:min-h-11"
       data-testid="organization-team-create-role"
       (click)="openCreateDialog()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span i18n="@@org.team.createRole">New role</span>
+      <span class="truncate" i18n="@@org.team.createRole">New role</span>
     </button>
   }
 </ng-template>

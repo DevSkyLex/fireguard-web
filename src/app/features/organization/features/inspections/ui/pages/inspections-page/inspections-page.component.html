@@ -16,7 +16,7 @@
         }
       </button>
       <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
-        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div class="grid w-56 grid-cols-1 gap-2 sm:w-[26rem] sm:grid-cols-2">
           <hlm-select
             [value]="filters().status"
             (valueChange)="applyFilter({ status: $event ?? null })"

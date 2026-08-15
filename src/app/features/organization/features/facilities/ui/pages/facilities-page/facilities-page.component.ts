@@ -36,7 +36,7 @@ import {
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ListPagination } from '@features/organization/ui/components';
+import { ListPagination, ListToolbar } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -92,6 +92,7 @@ type FacilityLayout = 'list' | 'grid';
     FacilityGrid,
     FacilityTable,
     ListPagination,
+    ListToolbar,
     HlmBadge,
     HlmButton,
     HlmCheckbox,

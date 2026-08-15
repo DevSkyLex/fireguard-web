@@ -44,7 +44,9 @@
         } @else {
           @for (row of rows(); track row.invitation.id) {
             <tr hlmTableRow data-testid="organization-invitation-table-row">
-              <td hlmTableCell class="font-medium text-foreground">{{ row.invitation.email }}</td>
+              <td hlmTableCell class="max-w-56 truncate font-medium text-foreground">
+                {{ row.invitation.email }}
+              </td>
 
               <td hlmTableCell class="text-muted-foreground">
                 @if (row.roleNames.length > 0) {

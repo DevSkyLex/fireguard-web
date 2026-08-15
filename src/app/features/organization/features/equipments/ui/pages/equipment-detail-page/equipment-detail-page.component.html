@@ -60,7 +60,7 @@
         <button
           hlmBtn
           type="button"
-          class="max-sm:min-h-11"
+          class="min-w-0 shrink max-sm:min-h-11"
           data-testid="equipment-primary-action"
           [disabled]="store.isChangingLifecycle()"
           (click)="action.run()"
@@ -68,7 +68,7 @@
           @if (store.isChangingLifecycle()) {
             <hlm-spinner class="size-3.5" aria-hidden="true" />
           }
-          {{ action.label }}
+          <span class="truncate">{{ action.label }}</span>
         </button>
       }
 
@@ -77,12 +77,12 @@
           hlmBtn
           type="button"
           variant="outline"
-          class="max-sm:min-h-11"
+          class="min-w-0 shrink max-sm:min-h-11"
           data-testid="equipment-decommission"
           [disabled]="store.isChangingLifecycle()"
           (click)="onDecommission()"
         >
-          <span i18n="@@equipment.decommission">Decommission</span>
+          <span class="truncate" i18n="@@equipment.decommission">Decommission</span>
         </button>
       }
     </div>

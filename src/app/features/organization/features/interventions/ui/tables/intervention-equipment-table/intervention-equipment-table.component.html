@@ -1,33 +1,35 @@
 @if (loading() && items().length === 0) {
   <span class="sr-only" role="status" i18n="@@intervention.linked.loading">Loading…</span>
-  <div hlmTableContainer>
-    <table hlmTable data-testid="intervention-equipment-table">
-      <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.equipment.caption">
-        The equipment linked to this intervention.
-      </caption>
+  <div class="w-full overflow-hidden rounded-md border border-border">
+    <div hlmTableContainer class="overflow-y-auto">
+      <table hlmTable data-testid="intervention-equipment-table">
+        <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.equipment.caption">
+          The equipment linked to this intervention.
+        </caption>
 
-      <thead hlmTableHeader>
-        <tr hlmTableRow>
-          <th hlmTableHead i18n="@@intervention.linked.equipment.columnType">Type</th>
-          <th hlmTableHead i18n="@@intervention.linked.equipment.columnBrandModel">
-            Brand / model
-          </th>
-          <th hlmTableHead i18n="@@intervention.linked.equipment.columnStatus">Status</th>
-          <th hlmTableHead i18n="@@intervention.linked.equipment.columnLocation">Location</th>
-        </tr>
-      </thead>
-
-      <tbody hlmTableBody>
-        @for (row of skeletonRows; track row) {
-          <tr hlmTableRow aria-hidden="true">
-            <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+          <tr hlmTableRow>
+            <th hlmTableHead i18n="@@intervention.linked.equipment.columnType">Type</th>
+            <th hlmTableHead i18n="@@intervention.linked.equipment.columnBrandModel">
+              Brand / model
+            </th>
+            <th hlmTableHead i18n="@@intervention.linked.equipment.columnStatus">Status</th>
+            <th hlmTableHead i18n="@@intervention.linked.equipment.columnLocation">Location</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+
+        <tbody hlmTableBody>
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
 } @else if (error(); as message) {
   <app-empty-state
@@ -40,45 +42,47 @@
     data-testid="intervention-equipment-error"
   />
 } @else if (items().length > 0) {
-  <div hlmTableContainer>
-    <table hlmTable data-testid="intervention-equipment-table">
-      <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.equipment.caption">
-        The equipment linked to this intervention.
-      </caption>
+  <div class="w-full overflow-hidden rounded-md border border-border">
+    <div hlmTableContainer class="overflow-y-auto">
+      <table hlmTable data-testid="intervention-equipment-table">
+        <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.equipment.caption">
+          The equipment linked to this intervention.
+        </caption>
 
-      <thead hlmTableHeader>
-        <tr hlmTableRow>
-          <th hlmTableHead i18n="@@intervention.linked.equipment.columnType">Type</th>
-          <th hlmTableHead i18n="@@intervention.linked.equipment.columnBrandModel">
-            Brand / model
-          </th>
-          <th hlmTableHead i18n="@@intervention.linked.equipment.columnStatus">Status</th>
-          <th hlmTableHead i18n="@@intervention.linked.equipment.columnLocation">Location</th>
-        </tr>
-      </thead>
-
-      <tbody hlmTableBody>
-        @for (item of items(); track item.id) {
-          <tr hlmTableRow data-testid="intervention-equipment-table-row">
-            <td hlmTableCell class="whitespace-normal">
-              <span class="font-medium text-foreground">{{ typeLabelOf(item) }}</span>
-              @if (item.serialNumber) {
-                <span class="block text-sm text-muted-foreground">{{ item.serialNumber }}</span>
-              }
-            </td>
-            <td hlmTableCell class="whitespace-normal">
-              {{ brandModelOf(item) }}
-            </td>
-            <td hlmTableCell>
-              <app-intervention-tag kind="equipmentStatus" [value]="item.status" />
-            </td>
-            <td hlmTableCell class="whitespace-normal">
-              {{ item.locationLabel }}
-            </td>
+        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+          <tr hlmTableRow>
+            <th hlmTableHead i18n="@@intervention.linked.equipment.columnType">Type</th>
+            <th hlmTableHead i18n="@@intervention.linked.equipment.columnBrandModel">
+              Brand / model
+            </th>
+            <th hlmTableHead i18n="@@intervention.linked.equipment.columnStatus">Status</th>
+            <th hlmTableHead i18n="@@intervention.linked.equipment.columnLocation">Location</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+
+        <tbody hlmTableBody>
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="intervention-equipment-table-row">
+              <td hlmTableCell class="whitespace-normal">
+                <span class="font-medium text-foreground">{{ typeLabelOf(item) }}</span>
+                @if (item.serialNumber) {
+                  <span class="block text-sm text-muted-foreground">{{ item.serialNumber }}</span>
+                }
+              </td>
+              <td hlmTableCell class="whitespace-normal">
+                {{ brandModelOf(item) }}
+              </td>
+              <td hlmTableCell>
+                <app-intervention-tag kind="equipmentStatus" [value]="item.status" />
+              </td>
+              <td hlmTableCell class="whitespace-normal">
+                {{ item.locationLabel }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
 } @else {
   <app-empty-state

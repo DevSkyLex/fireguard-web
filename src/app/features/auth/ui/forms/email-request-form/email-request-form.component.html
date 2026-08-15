@@ -27,12 +27,12 @@
     <button
       hlmBtn
       type="submit"
-      class="w-full max-sm:min-h-11"
+      class="w-full min-w-0 shrink max-sm:min-h-11"
       data-testid="email-request-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"
     >
-      {{ submitLabel() }}
+      <span class="truncate">{{ submitLabel() }}</span>
     </button>
   </hlm-field-group>
 </form>

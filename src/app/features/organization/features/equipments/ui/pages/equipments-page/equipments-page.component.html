@@ -1,6 +1,6 @@
 <div id="equipments" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-    <hlm-input-group class="w-full sm:w-72">
+  <app-list-toolbar>
+    <hlm-input-group toolbarStart class="w-full sm:w-72">
       <hlm-input-group-addon>
         <ng-icon name="lucideSearch" />
       </hlm-input-group-addon>
@@ -17,7 +17,7 @@
       />
     </hlm-input-group>
 
-    <hlm-popover sideOffset="5" align="start">
+    <hlm-popover toolbarEnd sideOffset="5" align="end">
       <button
         hlmPopoverTrigger
         hlmBtn
@@ -33,7 +33,7 @@
         }
       </button>
       <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="grid w-56 grid-cols-1 gap-2 sm:w-[26rem] sm:grid-cols-2">
           <hlm-select
             [value]="filters().type"
             [itemToString]="typeLabelOf"
@@ -44,7 +44,7 @@
             >
             <hlm-select-trigger
               buttonId="equipments-filter-type"
-              class="min-w-36"
+              class="w-full"
               data-testid="equipments-filter-type"
             >
               <hlm-select-value
@@ -73,7 +73,7 @@
             >
             <hlm-select-trigger
               buttonId="equipments-filter-status"
-              class="min-w-36"
+              class="w-full"
               data-testid="equipments-filter-status"
             >
               @if (filters().status; as status) {
@@ -112,7 +112,7 @@
         </div>
       </hlm-popover-content>
     </hlm-popover>
-  </div>
+  </app-list-toolbar>
 
   @if (store.listCallState().status === 'error') {
     <app-error-state
@@ -174,14 +174,14 @@
   @if (canCreate()) {
     <a
       hlmBtn
-      class="max-sm:min-h-11"
+      class="min-w-0 shrink max-sm:min-h-11"
       data-testid="equipments-new"
       i18n-aria-label="@@equipment.newButton"
       aria-label="New equipment"
       [routerLink]="[...listRouteBase(), 'create']"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>
+      <span class="truncate max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>
     </a>
   }
 </ng-template>

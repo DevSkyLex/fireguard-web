@@ -275,12 +275,12 @@
       hlmBtn
       type="button"
       variant="destructive"
-      class="max-sm:min-h-11"
+      class="min-w-0 shrink max-sm:min-h-11"
       data-testid="facility-detail-delete"
       (click)="requestDelete()"
     >
       <ng-icon name="lucideTrash2" aria-hidden="true" />
-      <span i18n="@@facility.detail.delete">Delete</span>
+      <span class="truncate" i18n="@@facility.detail.delete">Delete</span>
     </button>
   }
 </ng-template>

@@ -33,7 +33,11 @@ const DEFAULT_PAGE_SIZES: readonly number[] = [30, 60, 100];
  * indicator, and first/previous/next/last navigation built on the vendored
  * `hlmPagination` primitives. Presentational (`ARCHITECTURE.md` §10.3) — it
  * injects no store and calls no service; the host page owns pagination state
- * and reacts to `pageChanged`/`pageSizeChanged`.
+ * and reacts to `pageChanged`/`pageSizeChanged`. Kept on the vendored
+ * `hlmPagination`/`hlmPaginationItem` composition with event-emitting buttons
+ * rather than `hlm-pagination-link`/`hlm-numbered-pagination`, which are
+ * anchor- and query-param-oriented and do not fit page state living in a
+ * `SignalStore`.
  *
  * @version 1.0.0
  *
@@ -200,6 +204,28 @@ export class ListPagination {
 
   /** The "last page" button's accessible name. */
   protected readonly ariaLast: string = $localize`:@@org.listPagination.ariaLast:Last page`;
+
+  /**
+   * Property canGoBack
+   * @readonly
+   * @description Whether {@link page} is past the first page.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canGoBack: Signal<boolean> = computed<boolean>(() => this.page() > 1);
+
+  /**
+   * Property canGoForward
+   * @readonly
+   * @description Whether {@link page} is before the last page. `false` when {@link pageCount} is `0`.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canGoForward: Signal<boolean> = computed<boolean>(
+    () => this.pageCount() > 0 && this.page() < this.pageCount(),
+  );
   //#endregion
 
   //#region Methods
@@ -217,14 +243,21 @@ export class ListPagination {
 
   /**
    * Method goToPage
-   * @description Emits {@link pageChanged} for the given target page.
+   * @description
+   * Clamps `target` to `[1, max(pageCount(), 1)]` and emits {@link pageChanged}
+   * with the clamped value, unless it equals the current {@link page}.
    * @access protected
    * @since 1.0.0
    * @param {number} target - The page to navigate to.
    * @returns {void}
    */
   protected goToPage(target: number): void {
-    this.pageChanged.emit(target);
+    const upper: number = Math.max(this.pageCount(), 1);
+    const clamped: number = Math.min(Math.max(target, 1), upper);
+
+    if (clamped !== this.page()) {
+      this.pageChanged.emit(clamped);
+    }
   }
 
   /**

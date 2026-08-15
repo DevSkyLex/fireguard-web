@@ -2,7 +2,7 @@
   <button
     hlmBtn
     type="button"
-    class="max-sm:min-h-11"
+    class="min-w-0 shrink max-sm:min-h-11"
     [class.w-full]="block()"
     data-testid="intervention-detail-command"
     [disabled]="action.disabled || action.loading || busy()"
@@ -15,6 +15,6 @@
     } @else {
       <ng-icon [name]="action.icon" aria-hidden="true" />
     }
-    <span>{{ action.label }}</span>
+    <span class="truncate">{{ action.label }}</span>
   </button>
 }

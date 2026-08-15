@@ -21,15 +21,18 @@
     }
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button hlmAlertDialogCancel class="min-w-0 shrink">
+        <span class="truncate" i18n="@@common.cancel">Cancel</span>
+      </button>
       <button
         hlmAlertDialogAction
         variant="destructive"
+        class="min-w-0 shrink"
         data-testid="intervention-detail-confirm-accept"
         [disabled]="!canAccept()"
         (click)="accept()"
       >
-        {{ acceptLabel() }}
+        <span class="truncate">{{ acceptLabel() }}</span>
       </button>
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>

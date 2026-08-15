@@ -1,31 +1,35 @@
 @if (loading() && items().length === 0) {
   <span class="sr-only" role="status" i18n="@@intervention.linked.loading">Loading…</span>
-  <div hlmTableContainer>
-    <table hlmTable data-testid="intervention-inspections-table">
-      <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.inspections.caption">
-        The inspections linked to this intervention.
-      </caption>
+  <div class="w-full overflow-hidden rounded-md border border-border">
+    <div hlmTableContainer class="overflow-y-auto">
+      <table hlmTable data-testid="intervention-inspections-table">
+        <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.inspections.caption">
+          The inspections linked to this intervention.
+        </caption>
 
-      <thead hlmTableHeader>
-        <tr hlmTableRow>
-          <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">Performed</th>
-          <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
-          <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
-          <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
-        </tr>
-      </thead>
-
-      <tbody hlmTableBody>
-        @for (row of skeletonRows; track row) {
-          <tr hlmTableRow aria-hidden="true">
-            <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-            <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+          <tr hlmTableRow>
+            <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">
+              Performed
+            </th>
+            <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
+            <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
+            <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+
+        <tbody hlmTableBody>
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
 } @else if (error(); as message) {
   <app-empty-state
@@ -38,52 +42,56 @@
     data-testid="intervention-inspections-error"
   />
 } @else if (items().length > 0) {
-  <div hlmTableContainer>
-    <table hlmTable data-testid="intervention-inspections-table">
-      <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.inspections.caption">
-        The inspections linked to this intervention.
-      </caption>
+  <div class="w-full overflow-hidden rounded-md border border-border">
+    <div hlmTableContainer class="overflow-y-auto">
+      <table hlmTable data-testid="intervention-inspections-table">
+        <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.inspections.caption">
+          The inspections linked to this intervention.
+        </caption>
 
-      <thead hlmTableHeader>
-        <tr hlmTableRow>
-          <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">Performed</th>
-          <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
-          <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
-          <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
-        </tr>
-      </thead>
-
-      <tbody hlmTableBody>
-        @for (item of items(); track item.id) {
-          <tr hlmTableRow data-testid="intervention-inspections-table-row">
-            <td hlmTableCell>
-              {{ item.performedAt | date: 'mediumDate' }}
-            </td>
-            <td hlmTableCell>
-              <app-intervention-tag kind="inspectionResult" [value]="item.result" />
-            </td>
-            <td hlmTableCell>
-              <app-intervention-tag kind="inspectionStatus" [value]="item.status" />
-            </td>
-            <td hlmTableCell>
-              @if (item.inspector; as inspector) {
-                <div class="flex items-center gap-2">
-                  <hlm-avatar size="sm" class="shrink-0">
-                    @if (inspector.avatarUrl; as avatarUrl) {
-                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
-                    }
-                    <span hlmAvatarFallback class="text-[10px]">{{
-                      inspectorInitialsOf(item)
-                    }}</span>
-                  </hlm-avatar>
-                  <span class="truncate text-foreground">{{ inspector.displayName }}</span>
-                </div>
-              }
-            </td>
+        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+          <tr hlmTableRow>
+            <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">
+              Performed
+            </th>
+            <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
+            <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
+            <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+
+        <tbody hlmTableBody>
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="intervention-inspections-table-row">
+              <td hlmTableCell>
+                {{ item.performedAt | date: 'mediumDate' }}
+              </td>
+              <td hlmTableCell>
+                <app-intervention-tag kind="inspectionResult" [value]="item.result" />
+              </td>
+              <td hlmTableCell>
+                <app-intervention-tag kind="inspectionStatus" [value]="item.status" />
+              </td>
+              <td hlmTableCell>
+                @if (item.inspector; as inspector) {
+                  <div class="flex items-center gap-2">
+                    <hlm-avatar size="sm" class="shrink-0">
+                      @if (inspector.avatarUrl; as avatarUrl) {
+                        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                      }
+                      <span hlmAvatarFallback class="text-[10px]">{{
+                        inspectorInitialsOf(item)
+                      }}</span>
+                    </hlm-avatar>
+                    <span class="truncate text-foreground">{{ inspector.displayName }}</span>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
 } @else {
   <app-empty-state

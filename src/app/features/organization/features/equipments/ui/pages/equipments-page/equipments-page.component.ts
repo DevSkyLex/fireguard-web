@@ -39,7 +39,7 @@ import {
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ListPagination } from '@features/organization/ui/components';
+import { ListPagination, ListToolbar } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -95,6 +95,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     EquipmentStatusTag,
     EquipmentTable,
     ListPagination,
+    ListToolbar,
     HlmBadge,
     HlmButton,
     ...HlmEmptyImports,

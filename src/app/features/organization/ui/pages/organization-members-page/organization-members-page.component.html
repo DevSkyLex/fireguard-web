@@ -55,17 +55,18 @@
             type="button"
             variant="destructive"
             size="sm"
+            class="min-w-0 shrink"
             data-testid="organization-members-bulk-remove"
             (click)="requestBulkRemove()"
           >
             <ng-icon name="lucideTrash2" aria-hidden="true" />
-            {{ bulkRemoveLabel() }}
+            <span class="truncate">{{ bulkRemoveLabel() }}</span>
           </button>
         }
       </div>
 
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <hlm-input-group class="w-full sm:w-72">
+      <app-list-toolbar>
+        <hlm-input-group toolbarStart class="w-full sm:w-72">
           <hlm-input-group-addon>
             <ng-icon name="lucideSearch" />
           </hlm-input-group-addon>
@@ -83,6 +84,7 @@
         </hlm-input-group>
 
         <hlm-toggle-group
+          toolbarEnd
           type="single"
           [nullable]="false"
           variant="outline"
@@ -121,7 +123,7 @@
             Inactive
           </button>
         </hlm-toggle-group>
-      </div>
+      </app-list-toolbar>
 
       @if (store.loadCallState().status === 'error') {
         <app-error-state
@@ -335,14 +337,14 @@
   @if (canManageMembers()) {
     <button
       hlmBtn
-      class="max-sm:min-h-11"
+      class="min-w-0 shrink max-sm:min-h-11"
       data-testid="organization-members-invite"
       i18n-aria-label="@@org.members.inviteButton"
       aria-label="Invite member"
       (click)="openInviteDialog()"
     >
       <ng-icon name="lucideMailPlus" aria-hidden="true" />
-      <span class="max-sm:hidden" i18n="@@org.members.inviteButton">Invite member</span>
+      <span class="truncate max-sm:hidden" i18n="@@org.members.inviteButton">Invite member</span>
     </button>
   }
 </ng-template>

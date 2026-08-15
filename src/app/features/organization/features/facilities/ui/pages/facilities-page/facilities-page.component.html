@@ -130,14 +130,16 @@
     </hlm-empty>
   } @else {
     @if (layout() === 'list') {
-      <app-facility-table
-        [items]="items()"
-        [loading]="store.isLoadingRootFacilities() && items().length === 0"
-        [canWrite]="canWrite()"
-        [detailRouteBase]="listRouteBase()"
-        (archiveRequested)="onArchiveRequested($event)"
-        (restoreRequested)="onRestoreRequested($event)"
-      />
+      <div class="min-h-0 flex-1 overflow-hidden">
+        <app-facility-table
+          [items]="items()"
+          [loading]="store.isLoadingRootFacilities() && items().length === 0"
+          [canWrite]="canWrite()"
+          [detailRouteBase]="listRouteBase()"
+          (archiveRequested)="onArchiveRequested($event)"
+          (restoreRequested)="onRestoreRequested($event)"
+        />
+      </div>
     } @else {
       <div
         class="min-h-0 flex-1 overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"

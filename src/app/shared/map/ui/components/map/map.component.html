@@ -1,0 +1,13 @@
+@if (isBrowser) {
+  <div class="relative h-full min-h-64 w-full">
+    <div #mapContainer class="h-full min-h-64 w-full"></div>
+    @if (!loaded()) {
+      <hlm-skeleton
+        class="pointer-events-none absolute inset-0 block"
+        [attr.aria-label]="regionLabel"
+      />
+    }
+  </div>
+} @else {
+  <hlm-skeleton class="block h-full min-h-64 w-full" [attr.aria-label]="regionLabel" />
+}

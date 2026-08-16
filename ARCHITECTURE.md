@@ -47,9 +47,11 @@ styling helpers `clsx` / `tailwind-merge` / `class-variance-authority` that spar
 against, `@signality/core` (browser-signal helpers — `mediaQuery`, `online`, `pageVisibility`),
 the icon set `@ng-icons/core` / `@ng-icons/lucide`, the self-hosted variable fonts
 `@fontsource-variable/geist` / `@fontsource-variable/geist-mono`, the charting pair
-`@swimlane/ngx-charts` / `d3-shape` wrapped exclusively by `src/app/shared/chart/`, and
+`@swimlane/ngx-charts` / `d3-shape` wrapped exclusively by `src/app/shared/chart/`,
 **`qrcode`**, imported dynamically and browser-only by a single component (the
-account TOTP panel — see `features/account/FEATURE.md`). Adding another is a documented decision,
+account TOTP panel — see `features/account/FEATURE.md`), and **`maplibre-gl`**, imported
+dynamically and browser-only by the single `shared/map` map primitive (see
+`features/organization/features/facilities/FEATURE.md`). Adding another is a documented decision,
 recorded in the owning `FEATURE.md` and here in the same change (section 14.3).
 
 Do not introduce new dependencies or architectural patterns unless the task requires it and no existing pattern fits.

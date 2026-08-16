@@ -73,6 +73,16 @@ import {
 export class Tree<T = unknown> {
   //#region Inputs
   /**
+   * Property ariaLabel
+   * @readonly
+   * @description The accessible name announced for the tree as a whole.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string>}
+   */
+  public readonly ariaLabel: InputSignal<string> = input.required<string>();
+
+  /**
    * Property nodes
    * @readonly
    * @description The tree's top-level nodes.
@@ -183,6 +193,9 @@ export class Tree<T = unknown> {
 
   /** The rendered row elements, in display order, for programmatic focus moves. */
   private readonly itemRefs: Signal<readonly ElementRef<HTMLElement>[]> = viewChildren('treeitem');
+
+  /** The localized announcement for a row whose children are loading. */
+  protected readonly loadingLabel: string = $localize`:@@tree.loadingChildren:Loading…`;
 
   /** The localized label for a collapsed node's disclosure control. */
   protected readonly expandLabel: string = $localize`:@@tree.expand:Expand`;

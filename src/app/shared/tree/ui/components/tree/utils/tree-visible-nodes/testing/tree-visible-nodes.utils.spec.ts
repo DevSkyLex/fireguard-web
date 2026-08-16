@@ -15,8 +15,8 @@ describe('buildVisibleTreeNodes', () => {
     const rows = buildVisibleTreeNodes(roots, {}, new Set());
 
     expect(rows).toEqual([
-      { node: roots[0], level: 1, parentId: null },
-      { node: roots[1], level: 1, parentId: null },
+      { node: roots[0], level: 1, parentId: null, setSize: 2, posInSet: 1 },
+      { node: roots[1], level: 1, parentId: null, setSize: 2, posInSet: 2 },
     ]);
   });
 
@@ -27,7 +27,28 @@ describe('buildVisibleTreeNodes', () => {
     const rows = buildVisibleTreeNodes(roots, childrenByParent, new Set(['a']));
 
     expect(rows.map((row) => row.node.id)).toEqual(['a', 'a1', 'a2', 'b']);
-    expect(rows[1]).toEqual({ node: childrenByParent.a[0], level: 2, parentId: 'a' });
+    expect(rows[1]).toEqual({
+      node: childrenByParent.a[0],
+      level: 2,
+      parentId: 'a',
+      setSize: 2,
+      posInSet: 1,
+    });
+  });
+
+  it('should size each sibling group independently', () => {
+    const roots = [node('a', true), node('b')];
+    const childrenByParent = { a: [node('a1'), node('a2'), node('a3')] };
+
+    const rows = buildVisibleTreeNodes(roots, childrenByParent, new Set(['a']));
+
+    expect(rows.map((row) => [row.node.id, row.setSize, row.posInSet])).toEqual([
+      ['a', 2, 1],
+      ['a1', 3, 1],
+      ['a2', 3, 2],
+      ['a3', 3, 3],
+      ['b', 2, 2],
+    ]);
   });
 
   it('should contribute no rows for an expanded branch with no loaded children yet', () => {

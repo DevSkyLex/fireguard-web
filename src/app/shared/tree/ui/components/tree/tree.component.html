@@ -1,4 +1,4 @@
-<ul role="tree" class="flex flex-col gap-0.5" data-testid="tree">
+<ul role="tree" class="flex flex-col gap-0.5" data-testid="tree" [attr.aria-label]="ariaLabel()">
   @for (row of visible(); track row.node.id) {
     @let node = row.node;
     @let isExpanded = expanded().has(node.id);
@@ -15,6 +15,8 @@
         [attr.data-tree-id]="node.id"
         [attr.data-selected]="isSelected ? 'true' : null"
         [attr.aria-level]="row.level"
+        [attr.aria-setsize]="row.setSize"
+        [attr.aria-posinset]="row.posInSet"
         [attr.aria-expanded]="node.hasChildren ? isExpanded : null"
         [attr.aria-selected]="isSelected"
         [attr.aria-busy]="isLoading ? true : null"
@@ -29,7 +31,7 @@
             hlmBtn
             variant="ghost"
             size="icon-sm"
-            class="size-6 shrink-0"
+            class="size-6 shrink-0 max-sm:size-8"
             tabindex="-1"
             data-testid="tree-toggle"
             [attr.aria-label]="isExpanded ? collapseLabel : expandLabel"
@@ -53,12 +55,11 @@
         </span>
 
         @if (isLoading) {
-          <hlm-spinner class="size-4 shrink-0" aria-hidden="true" />
-          <span class="sr-only" i18n="@@tree.loadingChildren">Loading…</span>
+          <hlm-spinner class="size-4 shrink-0" [aria-label]="loadingLabel" />
         }
 
         @if (isFailed) {
-          <span class="shrink-0 text-xs text-destructive" i18n="@@tree.loadFailed"
+          <span role="alert" class="shrink-0 text-xs text-destructive" i18n="@@tree.loadFailed"
             >Couldn't load</span
           >
           <button

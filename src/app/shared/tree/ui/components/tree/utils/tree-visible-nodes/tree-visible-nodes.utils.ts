@@ -22,6 +22,12 @@ export interface VisibleTreeNode<T> {
 
   /** The parent node's id, or `null` at the root. */
   readonly parentId: string | null;
+
+  /** The number of siblings in the node's group, mapped onto `aria-setsize`. */
+  readonly setSize: number;
+
+  /** The node's 1-based position among its siblings, mapped onto `aria-posinset`. */
+  readonly posInSet: number;
   //#endregion
 }
 
@@ -52,8 +58,8 @@ export function buildVisibleTreeNodes<T>(
   const rows: VisibleTreeNode<T>[] = [];
 
   const walk = (nodes: readonly TreeNode<T>[], level: number, parentId: string | null): void => {
-    for (const node of nodes) {
-      rows.push({ node, level, parentId });
+    for (const [index, node] of nodes.entries()) {
+      rows.push({ node, level, parentId, setSize: nodes.length, posInSet: index + 1 });
 
       if (node.hasChildren && expandedIds.has(node.id)) {
         const children: readonly TreeNode<T>[] = childrenByParent[node.id] ?? [];

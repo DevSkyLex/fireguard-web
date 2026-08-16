@@ -34,6 +34,7 @@ describe('Tree', () => {
   ): Promise<void> => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
     fixture = TestBed.createComponent(Tree<null>);
+    fixture.componentRef.setInput('ariaLabel', 'Test tree');
     fixture.componentRef.setInput('nodes', roots);
     fixture.componentRef.setInput('childrenByParent', overrides.childrenByParent ?? {});
     fixture.componentRef.setInput('loadingIds', overrides.loadingIds ?? new Set());
@@ -46,10 +47,24 @@ describe('Tree', () => {
     await create([node('a', true), node('b')]);
 
     expect(root().querySelector('[role="tree"]')).not.toBeNull();
+    expect(root().querySelector('[role="tree"]')?.getAttribute('aria-label')).toBe('Test tree');
     expect(item('a')?.getAttribute('role')).toBe('treeitem');
     expect(item('a')?.getAttribute('aria-level')).toBe('1');
     expect(item('a')?.getAttribute('aria-expanded')).toBe('false');
     expect(item('b')?.getAttribute('aria-expanded')).toBeNull();
+  });
+
+  it('should expose each row position with aria-setsize and aria-posinset', async () => {
+    await create([node('a', true), node('b')], { childrenByParent: { a: [node('a1')] } });
+
+    await press('a', 'ArrowRight');
+
+    expect(item('a')?.getAttribute('aria-setsize')).toBe('2');
+    expect(item('a')?.getAttribute('aria-posinset')).toBe('1');
+    expect(item('b')?.getAttribute('aria-setsize')).toBe('2');
+    expect(item('b')?.getAttribute('aria-posinset')).toBe('2');
+    expect(item('a1')?.getAttribute('aria-setsize')).toBe('1');
+    expect(item('a1')?.getAttribute('aria-posinset')).toBe('1');
   });
 
   it('should keep a single tab stop and move it with the arrow keys', async () => {
@@ -149,6 +164,9 @@ describe('Tree', () => {
     await create([node('a', true)], { failedIds: new Set(['a']) });
     const emitted: TreeNode<null>[] = [];
     fixture.componentInstance.retryRequested.subscribe((n: TreeNode<null>) => emitted.push(n));
+
+    const alert = root().querySelector<HTMLElement>('[role="alert"]');
+    expect(alert).not.toBeNull();
 
     const retry = root().querySelector<HTMLButtonElement>('[data-testid="tree-retry"]');
     expect(retry).not.toBeNull();

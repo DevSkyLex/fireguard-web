@@ -14,14 +14,14 @@ answered by grep alone is a review finding, not a shortcut.
 
 ## The reflexes that are not optional
 
-| Situation | First tool |
-| --- | --- |
-| Changing a signature, input/output, store member, model field, or token | `findReferences` on the symbol — the change is complete when every reference in the list has been visited, not when grep stops matching. No aliased import missed, no barrel re-export lost |
-| "Who provides / consumes this port" | `findReferences` on the **injection token** (`THEME_PORT`, not the interface — see below) |
-| Creating a file that mirrors an exemplar | `workspaceSymbol` to find the exemplar, `documentSymbol` to read its shape |
-| "Where does X live" across `@core` / `@shared` / `@features` | `goToDefinition` / `workspaceSymbol` — never globbing for the file |
-| Long file or template, only its structure needed | `documentSymbol` — on a template it returns the real control-flow tree (`@if`, `@for`, `as` aliases), not raw markup |
-| Tailwind class strings, i18n ids in `.xlf`, anything not a resolvable symbol | Grep — that is its lane |
+| Situation                                                                    | First tool                                                                                                                                                                                  |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Changing a signature, input/output, store member, model field, or token      | `findReferences` on the symbol — the change is complete when every reference in the list has been visited, not when grep stops matching. No aliased import missed, no barrel re-export lost |
+| "Who provides / consumes this port"                                          | `findReferences` on the **injection token** (`THEME_PORT`, not the interface — see below)                                                                                                   |
+| Creating a file that mirrors an exemplar                                     | `workspaceSymbol` to find the exemplar, `documentSymbol` to read its shape                                                                                                                  |
+| "Where does X live" across `@core` / `@shared` / `@features`                 | `goToDefinition` / `workspaceSymbol` — never globbing for the file                                                                                                                          |
+| Long file or template, only its structure needed                             | `documentSymbol` — on a template it returns the real control-flow tree (`@if`, `@for`, `as` aliases), not raw markup                                                                        |
+| Tailwind class strings, i18n ids in `.xlf`, anything not a resolvable symbol | Grep — that is its lane                                                                                                                                                                     |
 
 ## Worktrees: which diagnostics to trust
 

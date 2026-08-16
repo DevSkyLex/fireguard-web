@@ -2527,6 +2527,86 @@
         <source>Status</source>
         <target>Statut</target>
       </trans-unit>
+      <trans-unit id="org.assets.tab.compliance" datatype="html">
+        <source>Compliance</source>
+        <target>Conformité</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.treeLabel" datatype="html">
+        <source>Compliance hierarchy</source>
+        <target>Hiérarchie de conformité</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.treeError" datatype="html">
+        <source>Couldn't load the compliance hierarchy.</source>
+        <target>Impossible de charger la hiérarchie de conformité.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.selectPrompt.title" datatype="html">
+        <source>Select a site</source>
+        <target>Sélectionnez un site</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.selectPrompt.desc" datatype="html">
+        <source>Pick a facility from the hierarchy to see its compliance summary.</source>
+        <target>Choisissez un établissement dans la hiérarchie pour voir sa synthèse de conformité.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.summaryTitle" datatype="html">
+        <source>Compliance summary</source>
+        <target>Synthèse de conformité</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.summaryError" datatype="html">
+        <source>Couldn't load the compliance summary.</source>
+        <target>Impossible de charger la synthèse de conformité.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.summaryLoading" datatype="html">
+        <source>Loading compliance summary…</source>
+        <target>Chargement de la synthèse de conformité…</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.export" datatype="html">
+        <source>Export safety register</source>
+        <target>Exporter le registre de sécurité</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.exporting" datatype="html">
+        <source>Exporting…</source>
+        <target>Export en cours…</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.exportError" datatype="html">
+        <source>Couldn't export the safety register.</source>
+        <target>Impossible d'exporter le registre de sécurité.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.totalEquipment" datatype="html">
+        <source>Total equipment</source>
+        <target>Total des équipements</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.upToDate" datatype="html">
+        <source>Up to date</source>
+        <target>À jour</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Bientôt dû</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>En retard</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.openNonConformities" datatype="html">
+        <source>Open non-conformities</source>
+        <target>Non-conformités ouvertes</target>
+      </trans-unit>
+      <trans-unit id="complianceBucket.ok" datatype="html">
+        <source>Compliant</source>
+        <target>Conforme</target>
+      </trans-unit>
+      <trans-unit id="complianceBucket.attention" datatype="html">
+        <source>Needs attention</source>
+        <target>Nécessite une attention</target>
+      </trans-unit>
+      <trans-unit id="complianceBucket.critical" datatype="html">
+        <source>Critical</source>
+        <target>Critique</target>
+      </trans-unit>
+      <trans-unit id="complianceBucket.unknown" datatype="html">
+        <source>No tracked equipment</source>
+        <target>Aucun équipement suivi</target>
+      </trans-unit>
       <trans-unit id="equipmentStatus.inStock" datatype="html">
         <source>In Stock</source>
         <target>En stock</target>

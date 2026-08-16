@@ -27,6 +27,10 @@ import type {
   MessageOutputFixture,
 } from '../fixtures/channel-fixtures';
 import type {
+  ComplianceFacilityTreeOutputFixture,
+  ComplianceSummaryOutputFixture,
+} from '../fixtures/compliance-fixtures';
+import type {
   OrganizationDashboardOutputFixture,
   OrganizationDashboardTrendOutputFixture,
 } from '../fixtures/dashboard-fixtures';
@@ -483,6 +487,43 @@ export class ApiMock {
       ),
       async (route) => {
         await fulfillJson(route, 200, hydraCollection(options.inspections ?? []));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/facility-tree` — the
+   * Compliance module's enriched facility hierarchy the assets explorer's
+   * compliance axis loads on first activation (`ComplianceExplorerStore`).
+   */
+  public async mockComplianceFacilityTree(
+    organizationId: string,
+    tree: ComplianceFacilityTreeOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facility-tree`,
+      async (route) => {
+        await fulfillJson(route, 200, tree);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/facilities/{facilityId}/compliance` —
+   * the single-facility compliance summary the assets explorer's compliance
+   * axis loads when a tree node is selected.
+   */
+  public async mockFacilityCompliance(
+    organizationId: string,
+    facilityId: string,
+    summary: ComplianceSummaryOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${facilityId}/compliance`,
+      async (route) => {
+        await fulfillJson(route, 200, summary);
       },
     );
   }

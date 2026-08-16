@@ -4,6 +4,11 @@ import { provideRouter } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityTreeStore } from '@features/organization/features/facilities/state';
+import type {
+  ComplianceFacilityTreeNodeOutput,
+  ComplianceSummaryOutput,
+} from '@features/organization/models';
+import { ComplianceExplorerStore } from '@features/organization/state/compliance-explorer';
 import { OrganizationAssetsPaneStore } from '@features/organization/state/organization-assets-pane';
 import { OrganizationAssetsPage } from '../organization-assets-page.component';
 
@@ -23,6 +28,44 @@ const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
     updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
   }) as FacilityOutput;
+
+const complianceNode = (
+  overrides: Partial<ComplianceFacilityTreeNodeOutput> = {},
+): ComplianceFacilityTreeNodeOutput => ({
+  id: 'facility-1',
+  name: 'Headquarters',
+  type: 'building',
+  parentFacilityId: null,
+  equipmentCount: 3,
+  status: 'active',
+  complianceRate: 95,
+  children: [],
+  ...overrides,
+});
+
+const complianceSummary = (): ComplianceSummaryOutput =>
+  ({
+    '@id': '/api/organizations/org-1/compliance',
+    '@type': 'ComplianceSummary',
+    organizationId: 'org-1',
+    generatedAt: '2026-08-16T00:00:00+00:00',
+    organizationStatus: 'compliant',
+    totals: {
+      totalEquipmentCount: 3,
+      activeEquipmentCount: 3,
+      upToDateEquipmentCount: 2,
+      dueSoonEquipmentCount: 1,
+      overdueEquipmentCount: 0,
+      unscheduledEquipmentCount: 0,
+      trackedEquipmentCount: 3,
+      complianceRate: 95,
+      openLowNonConformityCount: 0,
+      openMediumNonConformityCount: 0,
+      openHighNonConformityCount: 0,
+      openCriticalNonConformityCount: 0,
+    },
+    facilities: [],
+  }) as ComplianceSummaryOutput;
 
 const createPage = async (
   inputs: Readonly<Record<string, unknown>> = { organizationId: 'org-1' },
@@ -44,7 +87,12 @@ describe('OrganizationAssetsPage', () => {
   let move: ReturnType<typeof vi.fn>;
   let loadEquipment: ReturnType<typeof vi.fn>;
   let loadInspections: ReturnType<typeof vi.fn>;
+  let loadTree: ReturnType<typeof vi.fn>;
+  let loadSummary: ReturnType<typeof vi.fn>;
+  let exportSafetyRegister: ReturnType<typeof vi.fn>;
   let rootsSignal: WritableSignal<readonly FacilityOutput[]>;
+  let summarySignal: WritableSignal<ComplianceSummaryOutput | null>;
+  let isExportingSignal: WritableSignal<boolean>;
 
   beforeEach(() => {
     loadRoots = vi.fn();
@@ -52,7 +100,12 @@ describe('OrganizationAssetsPage', () => {
     move = vi.fn();
     loadEquipment = vi.fn();
     loadInspections = vi.fn();
+    loadTree = vi.fn();
+    loadSummary = vi.fn();
+    exportSafetyRegister = vi.fn();
     rootsSignal = signal<readonly FacilityOutput[]>([facility()]);
+    summarySignal = signal<ComplianceSummaryOutput | null>(null);
+    isExportingSignal = signal<boolean>(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -82,6 +135,23 @@ describe('OrganizationAssetsPage', () => {
             hasInspectionsError: signal(false),
             loadEquipment,
             loadInspections,
+          },
+        },
+        {
+          provide: ComplianceExplorerStore,
+          useValue: {
+            roots: signal([]),
+            childrenByParent: signal({}),
+            isLoadingTree: signal(false),
+            hasTreeError: signal(false),
+            summary: summarySignal,
+            isLoadingSummary: signal(false),
+            hasSummaryError: signal(false),
+            isExporting: isExportingSignal,
+            hasExportError: signal(false),
+            loadTree,
+            loadSummary,
+            exportSafetyRegister,
           },
         },
         {
@@ -212,5 +282,157 @@ describe('OrganizationAssetsPage', () => {
 
     expect(move).not.toHaveBeenCalled();
     expect(fixture.componentInstance['moveTarget']()).toBeNull();
+  });
+
+  it('does not touch the equipment/inspection pane on the "Compliance" axis', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    await fixture.whenStable();
+
+    expect(loadEquipment).not.toHaveBeenCalled();
+    expect(loadInspections).not.toHaveBeenCalled();
+  });
+
+  it('loads the compliance tree once, on first activation of the "Compliance" axis', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onAxisActivated']('site');
+    fixture.componentInstance['onAxisActivated']('compliance');
+    await fixture.whenStable();
+
+    expect(loadTree).toHaveBeenCalledTimes(1);
+    expect(loadTree).toHaveBeenCalledWith('org-1');
+  });
+
+  it('loads the selected facility compliance summary on node selection', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    expect(loadSummary).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
+  });
+
+  it('exports the selected facility safety register', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    fixture.componentInstance['onExportSafetyRegister']();
+    await fixture.whenStable();
+
+    expect(exportSafetyRegister).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      fileName: 'safety-register.pdf',
+    });
+  });
+
+  it('does nothing when export is requested with no facility selected', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onExportSafetyRegister']();
+    await fixture.whenStable();
+
+    expect(exportSafetyRegister).not.toHaveBeenCalled();
+  });
+
+  it('ignores an export request while an export is already running', async () => {
+    fixture = await createPage();
+    isExportingSignal.set(true);
+
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    fixture.componentInstance['onExportSafetyRegister']();
+    await fixture.whenStable();
+
+    expect(exportSafetyRegister).not.toHaveBeenCalled();
+  });
+
+  it('switches the export button live-region label while exporting', async () => {
+    fixture = await createPage();
+    summarySignal.set(complianceSummary());
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    const liveRegion = (): HTMLElement | null =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="assets-compliance-export"] [role="status"]',
+      );
+    expect(liveRegion()?.getAttribute('aria-live')).toBe('polite');
+    expect(liveRegion()?.textContent).toContain('Export safety register');
+
+    isExportingSignal.set(true);
+    await fixture.whenStable();
+
+    expect(liveRegion()?.textContent).toContain('Exporting…');
+  });
+
+  it('keeps the export button in the accessibility tree while exporting', async () => {
+    fixture = await createPage();
+    summarySignal.set(complianceSummary());
+    isExportingSignal.set(true);
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    const button: HTMLButtonElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="assets-compliance-export"]',
+    );
+    expect(button?.disabled).toBe(false);
+    expect(button?.getAttribute('aria-disabled')).toBe('true');
+    expect(button?.getAttribute('aria-busy')).toBe('true');
+  });
+
+  it('labels the compliance summary pane with a visible heading', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    const pane: HTMLElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+      'section[data-testid="assets-compliance-summary-pane"]',
+    );
+    const heading: HTMLElement | null =
+      pane?.querySelector('h2#assets-compliance-summary-title') ?? null;
+    expect(pane?.getAttribute('aria-labelledby')).toBe('assets-compliance-summary-title');
+    expect(heading?.textContent).toContain('Compliance summary');
   });
 });

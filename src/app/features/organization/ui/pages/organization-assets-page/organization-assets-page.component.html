@@ -7,7 +7,7 @@
   >
     <hlm-tabs-list
       variant="line"
-      class="w-full max-w-sm"
+      class="w-full max-w-md"
       aria-label="Estate axis"
       i18n-aria-label="@@org.assets.tabsAriaLabel"
     >
@@ -22,6 +22,14 @@
       >
         <ng-icon name="lucideLayoutGrid" aria-hidden="true" />
         <span i18n="@@org.assets.tab.everything">Everything</span>
+      </button>
+      <button
+        hlmTabsTrigger="compliance"
+        class="max-sm:min-h-11"
+        data-testid="assets-tab-compliance"
+      >
+        <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+        <span i18n="@@org.assets.tab.compliance">Compliance</span>
       </button>
     </hlm-tabs-list>
 
@@ -71,6 +79,57 @@
     <div hlmTabsContent="everything" class="min-h-0 flex-1">
       <ng-template hlmTabsContentLazy>
         <ng-container *ngTemplateOutlet="assetPanes" />
+      </ng-template>
+    </div>
+
+    <div hlmTabsContent="compliance" class="min-h-0 flex-1">
+      <ng-template hlmTabsContentLazy>
+        <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
+          <div
+            class="min-h-0 overflow-y-auto rounded-md border border-border p-2 lg:max-h-[calc(100vh-14rem)]"
+            data-testid="assets-compliance-tree-panel"
+          >
+            @if (compliance.hasTreeError()) {
+              <p class="p-2 text-sm text-destructive" data-testid="assets-compliance-tree-error">
+                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                <span i18n="@@org.assets.compliance.treeError">
+                  Couldn't load the compliance hierarchy.
+                </span>
+              </p>
+            } @else {
+              <app-tree
+                ariaLabel="Compliance hierarchy"
+                i18n-ariaLabel="@@org.assets.compliance.treeLabel"
+                [nodes]="compliance.roots()"
+                [childrenByParent]="compliance.childrenByParent()"
+                [selectedId]="selectedComplianceFacilityId()"
+                [nodeTemplate]="complianceTreeNode"
+                (expandRequested)="onComplianceExpandRequested()"
+                (selected)="onComplianceNodeSelected($event)"
+              />
+            }
+          </div>
+
+          <div class="min-h-0 flex-1">
+            @if (selectedComplianceFacilityId() === null) {
+              <hlm-empty class="border border-dashed">
+                <hlm-empty-header>
+                  <hlm-empty-media variant="icon">
+                    <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+                  </hlm-empty-media>
+                  <div hlmEmptyTitle i18n="@@org.assets.compliance.selectPrompt.title">
+                    Select a site
+                  </div>
+                  <div hlmEmptyDescription i18n="@@org.assets.compliance.selectPrompt.desc">
+                    Pick a facility from the hierarchy to see its compliance summary.
+                  </div>
+                </hlm-empty-header>
+              </hlm-empty>
+            } @else {
+              <ng-container *ngTemplateOutlet="complianceSummaryPane" />
+            }
+          </div>
+        </div>
       </ng-template>
     </div>
   </hlm-tabs>
@@ -231,4 +290,203 @@
       </section>
     }
   </div>
+</ng-template>
+
+<ng-template #complianceTreeNode let-node="node">
+  <div class="flex min-w-0 flex-1 items-center gap-2">
+    <span class="min-w-0 flex-1 truncate">{{ node.label }}</span>
+    <span
+      hlmBadge
+      variant="outline"
+      class="shrink-0 gap-1 px-1.5 leading-none text-muted-foreground"
+      data-testid="assets-compliance-node-badge"
+    >
+      <ng-icon
+        [name]="resolveComplianceBucketTag(resolveComplianceBucket(node.data.complianceRate)).icon"
+        [class]="
+          complianceBucketIconClass[
+            resolveComplianceBucketTag(resolveComplianceBucket(node.data.complianceRate)).severity
+          ]
+        "
+        class="shrink-0"
+        aria-hidden="true"
+      />
+      <span class="whitespace-nowrap">
+        @if (node.data.complianceRate !== null) {
+          {{ node.data.complianceRate }}%
+        }
+        {{ resolveComplianceBucketTag(resolveComplianceBucket(node.data.complianceRate)).label }}
+      </span>
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #complianceSummaryPane>
+  <section
+    aria-labelledby="assets-compliance-summary-title"
+    class="flex min-h-0 flex-col gap-4 overflow-y-auto lg:max-h-[calc(100vh-14rem)]"
+    data-testid="assets-compliance-summary-pane"
+  >
+    <h2 id="assets-compliance-summary-title" class="text-sm font-medium text-foreground">
+      <ng-icon name="lucideShieldCheck" class="me-1 align-text-bottom" aria-hidden="true" />
+      <span i18n="@@org.assets.compliance.summaryTitle">Compliance summary</span>
+    </h2>
+
+    @if (compliance.hasSummaryError()) {
+      <p class="text-sm text-destructive" data-testid="assets-compliance-summary-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <span i18n="@@org.assets.compliance.summaryError">
+          Couldn't load the compliance summary.
+        </span>
+      </p>
+    } @else if (compliance.isLoadingSummary() && compliance.summary() === null) {
+      <p class="text-sm text-muted-foreground" i18n="@@org.assets.compliance.summaryLoading">
+        Loading compliance summary…
+      </p>
+    } @else if (compliance.summary(); as summary) {
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span
+          hlmBadge
+          variant="outline"
+          class="gap-1 px-1.5 leading-none text-muted-foreground"
+          data-testid="assets-compliance-summary-badge"
+        >
+          <ng-icon
+            [name]="
+              resolveComplianceBucketTag(resolveComplianceBucket(summary.totals.complianceRate))
+                .icon
+            "
+            [class]="
+              complianceBucketIconClass[
+                resolveComplianceBucketTag(resolveComplianceBucket(summary.totals.complianceRate))
+                  .severity
+              ]
+            "
+            class="shrink-0"
+            aria-hidden="true"
+          />
+          <span class="whitespace-nowrap">
+            @if (summary.totals.complianceRate !== null) {
+              {{ summary.totals.complianceRate }}%
+            }
+            {{
+              resolveComplianceBucketTag(resolveComplianceBucket(summary.totals.complianceRate))
+                .label
+            }}
+          </span>
+        </span>
+
+        <button
+          type="button"
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11 max-sm:px-3"
+          data-testid="assets-compliance-export"
+          [attr.aria-disabled]="compliance.isExporting()"
+          [attr.aria-busy]="compliance.isExporting()"
+          (click)="onExportSafetyRegister()"
+        >
+          <ng-icon name="lucideDownload" aria-hidden="true" />
+          <span role="status" aria-live="polite">
+            @if (compliance.isExporting()) {
+              <span i18n="@@org.assets.compliance.exporting">Exporting…</span>
+            } @else {
+              <span i18n="@@org.assets.compliance.export">Export safety register</span>
+            }
+          </span>
+        </button>
+      </div>
+
+      @if (compliance.hasExportError()) {
+        <p
+          role="alert"
+          class="text-sm text-destructive"
+          data-testid="assets-compliance-export-error"
+        >
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <span i18n="@@org.assets.compliance.exportError">
+            Couldn't export the safety register.
+          </span>
+        </p>
+      }
+
+      <div hlmTableContainer class="rounded-md border border-border">
+        <table hlmTable data-testid="assets-compliance-totals-table">
+          <tbody hlmTableBody>
+            <tr hlmTableRow>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.totalEquipment"
+              >
+                Total equipment
+              </th>
+              <td hlmTableCell class="text-end tabular-nums">
+                {{ summary.totals.totalEquipmentCount }}
+              </td>
+            </tr>
+            <tr hlmTableRow>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.upToDate"
+              >
+                Up to date
+              </th>
+              <td hlmTableCell class="text-end tabular-nums">
+                {{ summary.totals.upToDateEquipmentCount }}
+              </td>
+            </tr>
+            <tr hlmTableRow>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.dueSoon"
+              >
+                Due soon
+              </th>
+              <td hlmTableCell class="text-end tabular-nums">
+                {{ summary.totals.dueSoonEquipmentCount }}
+              </td>
+            </tr>
+            <tr hlmTableRow>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.overdue"
+              >
+                Overdue
+              </th>
+              <td hlmTableCell class="text-end tabular-nums">
+                {{ summary.totals.overdueEquipmentCount }}
+              </td>
+            </tr>
+            <tr hlmTableRow>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.openNonConformities"
+              >
+                Open non-conformities
+              </th>
+              <td hlmTableCell class="text-end tabular-nums">
+                {{
+                  summary.totals.openLowNonConformityCount +
+                    summary.totals.openMediumNonConformityCount +
+                    summary.totals.openHighNonConformityCount +
+                    summary.totals.openCriticalNonConformityCount
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
 </ng-template>

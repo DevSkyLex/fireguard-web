@@ -55,15 +55,25 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId` — the "Today" landing page; the landing guard
   redirects a member who can read neither interventions nor the dashboard to their
   first permitted destination
-- `/organizations/:organizationId/assets` — the estate explorer, on two
+- `/organizations/:organizationId/assets` — the estate explorer, on three
   first-level axes: **by site** (the facility hierarchy on the left, via
   `shared/tree`'s `Tree` primitive and the facilities subfeature's
   `FacilityTreeStore`, with the selected site's equipment and inspections on
-  the right) and **everything** (the same panes unscoped, so an operator
-  holding a serial number and no site can still find it). It is now the
-  single navigation entry for the estate, replacing the "Facilities" and
-  "Equipments" pair below; both route trees stay mounted regardless so
-  records, creation forms and deep links keep resolving. Operators holding
+  the right), **everything** (the same panes unscoped, so an operator
+  holding a serial number and no site can still find it), and **compliance**
+  (the backend Compliance module's own enriched hierarchy — same `Tree`
+  primitive, eager: the whole tree arrives nested in one call, so this
+  page's own `ComplianceExplorerStore` maps it to a fully-populated
+  `childrenByParent` up front and `Tree`'s lazy `expandRequested` never
+  fires. Each node badges its compliance rate and severity bucket — icon and
+  label together, never colour alone. Selecting a node loads that facility's
+  compliance summary on the right, with an "Export safety register" button
+  streaming the PDF through this page's own `BrowserDownloadService`). The
+  compliance tree loads only on the axis's first activation, per the
+  secondary-UI loading rule. It is now the single navigation entry for the
+  estate, replacing the "Facilities" and "Equipments" pair below; both route
+  trees stay mounted regardless so records, creation forms and deep links
+  keep resolving. Operators holding
   `FACILITIES_WRITE` can re-parent a site by dragging it onto another —
   `Tree`'s optional pointer drag-drop, calling `FacilityTreeStore.move`. The
   tree row menu's "Move to…" action opens `FacilityMoveDialog` for the same
@@ -124,6 +134,7 @@ Primary stores:
 - `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped separately by both the landing page — which reads the overview counts, the alert feed and the recent-interventions list, but none of the trend slices or the comparison block the statistics page's KPI deltas need — and the statistics page, each fetching its own copy of the aggregate `/dashboard` payload)
 - `FacilityTreeStore` (owned by the facilities subfeature, component-scoped to the assets explorer; the site hierarchy, loaded one branch at a time)
 - `OrganizationAssetsPaneStore` (component-scoped to the assets explorer; the right pane's equipment and inspections, facility-scoped or organization-wide depending on the active axis. Reuses `EquipmentService`/`InspectionService` from the equipments/inspections subfeatures' `data-access` barrels rather than duplicating transport — it is a read-only preview, not the surface those subfeatures own)
+- `ComplianceExplorerStore` (component-scoped to the assets explorer's compliance axis; three named `CallState` fields — the tree, the selected/organization-wide summary, and the safety-register export — since the three are unrelated requests. Owns the `flattenComplianceTree` mapping onto the shared `Tree` shape, exposed as `roots`/`childrenByParent` computeds)
 - `OrganizationTodayStore` (component-scoped to the landing page; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations, logo upload and removal, and the danger-zone actions — archive, restore, suspend, ownership transfer and leaving the organization. One named `CallState` per action, since several are offered side by side and a shared one would leak an error between controls. Refreshes `ActiveOrganizationStore` on every mutation that returns an organization)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map. `loadMembers` re-issues the server-side roster query with the page's search and status filters, so `membersTotal` — the "Total members" KPI — tracks the current filter, while `membersActiveTotal` — the "Active" KPI — is a fixed organization-wide snapshot fetched once per `load`; keep that split when touching either)
@@ -138,6 +149,7 @@ Primary services:
 - `OrganizationInvitationService`
 - `OrganizationMemberService`
 - `OrganizationRoleService`
+- `ComplianceService` (the backend Compliance module's read-only surface: the enriched facility tree, the organization/facility compliance summary, and the safety-register PDF export — `services/browser-download`'s `BrowserDownloadService` saves the exported blob to the visitor's device, mirroring `features/interventions/services/browser-download` rather than importing it: two small, single-purpose classes, not yet a third consumer that would justify lifting one to a shared location)
 
 Access helpers (`access/`):
 
@@ -360,3 +372,4 @@ dropped rather than kept as dead weight.
 - Layouts and sibling features consume organization behavior through the published port, not through direct store injection.
 - Resolvers that load organization context belong to this feature.
 - A mutating confirm dialog stays open, busy-locked, until the write settles — the members remove confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome inline, so the operator sees it exactly where they took the action and can retry without reopening the dialog, rather than the failure surfacing only as a page-level toast.
+- **The compliance axis is gated on `FACILITIES_READ`, standing in for a not-yet-published backend `organization.compliance.read`/`organization.compliance.export` permission pair.** The backend's `FacilityTreeResource`, `ComplianceSummaryResource` and `SafetyRegisterExportResource` all currently accept any `ROLE_USER`, so no frontend permission constant exists to check against yet; `FACILITIES_READ` is reused because the whole `/assets` route already requires it. Widening this to a real compliance permission means adding it to `ORGANIZATION_PERMISSION` first and is not a silent no-op — say so explicitly when the backend publishes one.

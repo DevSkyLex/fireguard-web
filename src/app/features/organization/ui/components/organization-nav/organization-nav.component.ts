@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideBuilding2,
   lucideCalendarDays,
   lucideChartColumn,
   lucideClipboardList,
@@ -11,9 +10,9 @@ import {
   lucideIdCard,
   lucideInbox,
   lucideMessageSquare,
+  lucideNetwork,
   lucideSettings,
   lucideUsers,
-  lucideWrench,
 } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -79,7 +78,6 @@ import {
   ],
   providers: [
     provideIcons({
-      lucideBuilding2,
       lucideCalendarDays,
       lucideChartColumn,
       lucideClipboardList,
@@ -88,9 +86,9 @@ import {
       lucideIdCard,
       lucideInbox,
       lucideMessageSquare,
+      lucideNetwork,
       lucideSettings,
       lucideUsers,
-      lucideWrench,
     }),
   ],
   templateUrl: './organization-nav.component.html',

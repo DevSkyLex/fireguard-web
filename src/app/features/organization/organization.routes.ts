@@ -1,4 +1,5 @@
 import type { Routes } from '@angular/router';
+import { FacilityTreeStore } from './features/facilities/state';
 import {
   organizationAccessGuard,
   organizationGuard,
@@ -6,6 +7,7 @@ import {
 } from './http/guards';
 import { organizationResolver, organizationTitleResolver } from './http/resolvers';
 import { ORGANIZATION_PERMISSION } from './models';
+import { OrganizationAssetsPaneStore } from './state/organization-assets-pane';
 
 /**
  * Constant ORGANIZATION_ROUTES
@@ -24,11 +26,11 @@ import { ORGANIZATION_PERMISSION } from './models';
  * child renders, so a page never has to reason about a half-known workspace.
  *
  * The landing page, the conversational surfaces (direct messages and
- * channels), the administration pages (members, team, settings) and a member's
- * profile are mounted today; the remaining destinations named in `FEATURE.md`
- * (assets, statistics, checklists) return under `:organizationId` one at a
- * time as their pages are rebuilt, and the sidebar navigation already lists
- * them behind their permissions.
+ * channels), the estate explorer (`assets`), the administration pages
+ * (members, team, settings) and a member's profile are mounted today; the
+ * remaining destinations named in `FEATURE.md` (statistics, checklists)
+ * return under `:organizationId` one at a time as their pages are rebuilt,
+ * and the sidebar navigation already lists them behind their permissions.
  *
  * `messages` and `channels` load the collaboration subfeature's route files
  * directly rather than its barrel, which also exports the offline sync
@@ -77,6 +79,21 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./features/interventions/interventions.routes').then(
             (m) => m.INTERVENTION_ROUTES,
           ),
+      },
+      {
+        path: 'assets',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
+          }),
+        ],
+        providers: [FacilityTreeStore, OrganizationAssetsPaneStore],
+        loadComponent: () =>
+          import('./ui/pages/organization-assets-page/organization-assets-page.component').then(
+            (m) => m.OrganizationAssetsPage,
+          ),
+        title: $localize`:@@route.assets:Assets`,
+        data: { breadcrumb: $localize`:@@route.assets:Assets` },
       },
       {
         path: 'equipments',

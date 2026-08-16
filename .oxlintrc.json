@@ -207,6 +207,52 @@
       }
     },
     {
+      "files": [
+        "src/app/features/organization/ui/pages/organization-assets-page/**/*.ts",
+        "src/app/features/organization/state/organization-assets-pane/**/*.ts",
+        "src/app/features/organization/utils/facility-to-tree-node/**/*.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@features/organization/features/facilities/**",
+                  "!@features/organization/features/facilities/state",
+                  "!@features/organization/features/facilities/state/**",
+                  "!@features/organization/features/facilities/models",
+                  "!@features/organization/features/facilities/models/**"
+                ],
+                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the facilities subfeature only through its state barrel (FacilityTreeStore) and models (FacilityOutput), the surfaces facilities/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+              },
+              {
+                "group": [
+                  "@features/organization/features/equipments/**",
+                  "!@features/organization/features/equipments/data-access",
+                  "!@features/organization/features/equipments/data-access/**",
+                  "!@features/organization/features/equipments/models",
+                  "!@features/organization/features/equipments/models/**"
+                ],
+                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the equipments subfeature only through its data-access and models barrels (EquipmentService, EquipmentOutput), the surfaces organization/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+              },
+              {
+                "group": [
+                  "@features/organization/features/inspections/**",
+                  "!@features/organization/features/inspections/data-access",
+                  "!@features/organization/features/inspections/data-access/**",
+                  "!@features/organization/features/inspections/models",
+                  "!@features/organization/features/inspections/models/**"
+                ],
+                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the inspections subfeature only through its data-access and models barrels (InspectionService, InspectionOutput), the surfaces organization/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/**/*.spec.ts", "src/**/*.test.ts"],
       "plugins": ["typescript", "unicorn", "oxc", "vitest"],
       "env": {

@@ -197,4 +197,33 @@ describe('FacilityTreeStore', () => {
       expect(store.hasLoadedChildren('unknown-parent')).toBe(false);
     });
   });
+
+  describe('ensureChildrenLoaded', () => {
+    it('loads a branch on the first call', async () => {
+      store.ensureChildrenLoaded({ organizationId: 'org-1', facilityId: 'facility-root' });
+      await flushEffects();
+
+      expect(mockFacilityService.listChildren).toHaveBeenCalledTimes(1);
+      expect(store.hasLoadedChildren('facility-root')).toBe(true);
+    });
+
+    it('does not re-fetch an already-loaded branch', async () => {
+      store.ensureChildrenLoaded({ organizationId: 'org-1', facilityId: 'facility-root' });
+      await flushEffects();
+
+      store.ensureChildrenLoaded({ organizationId: 'org-1', facilityId: 'facility-root' });
+      await flushEffects();
+
+      expect(mockFacilityService.listChildren).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not issue a second request while the branch is already in flight', () => {
+      mockFacilityService.listChildren.mockReturnValue(of(childrenCollection));
+
+      store.ensureChildrenLoaded({ organizationId: 'org-1', facilityId: 'facility-root' });
+      store.ensureChildrenLoaded({ organizationId: 'org-1', facilityId: 'facility-root' });
+
+      expect(mockFacilityService.listChildren).toHaveBeenCalledTimes(1);
+    });
+  });
 });

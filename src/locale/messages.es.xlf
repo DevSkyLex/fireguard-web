@@ -2450,6 +2450,86 @@
         <source>Equipments</source>
         <target>Equipos</target>
       </trans-unit>
+      <trans-unit id="route.assets" datatype="html">
+        <source>Assets</source>
+        <target>Activos</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tabsAriaLabel" datatype="html">
+        <source>Estate axis</source>
+        <target>Eje del patrimonio</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tab.site" datatype="html">
+        <source>By site</source>
+        <target>Por sitio</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tab.everything" datatype="html">
+        <source>Everything</source>
+        <target>Todo</target>
+      </trans-unit>
+      <trans-unit id="org.assets.selectPrompt.title" datatype="html">
+        <source>Select a site</source>
+        <target>Seleccione un sitio</target>
+      </trans-unit>
+      <trans-unit id="org.assets.selectPrompt.desc" datatype="html">
+        <source>Pick a facility from the hierarchy to see its equipment and inspections.</source>
+        <target>Elija una instalación en la jerarquía para ver su equipo e inspecciones.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tree.nodeMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Abrir menú</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tree.openRecord" datatype="html">
+        <source>Open record</source>
+        <target>Abrir ficha</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.title" datatype="html">
+        <source>Equipment</source>
+        <target>Equipos</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.error" datatype="html">
+        <source>Couldn't load equipment.</source>
+        <target>No se pudieron cargar los equipos.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.empty" datatype="html">
+        <source>No equipment in view.</source>
+        <target>No hay equipos en esta vista.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.columnName" datatype="html">
+        <source>Equipment</source>
+        <target>Equipo</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.columnFacility" datatype="html">
+        <source>Facility</source>
+        <target>Instalación</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.title" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.error" datatype="html">
+        <source>Couldn't load inspections.</source>
+        <target>No se pudieron cargar las inspecciones.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.empty" datatype="html">
+        <source>No inspections in view.</source>
+        <target>No hay inspecciones en esta vista.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.columnDate" datatype="html">
+        <source>Performed</source>
+        <target>Realizada</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.columnResult" datatype="html">
+        <source>Result</source>
+        <target>Resultado</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
       <trans-unit id="equipmentStatus.inStock" datatype="html">
         <source>In Stock</source>
         <target>En stock</target>

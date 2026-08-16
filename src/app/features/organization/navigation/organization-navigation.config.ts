@@ -157,20 +157,18 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
   },
   {
-    id: 'facilities',
-    label: $localize`:@@route.facilities:Facilities`,
-    icon: 'lucideBuilding2',
-    path: 'facilities',
+    /**
+     * The estate explorer is the sidebar's single assets entry, replacing the
+     * interim `facilities`/`equipments` pair (`organization/FEATURE.md`
+     * "assets"). Both route trees stay mounted regardless, so records,
+     * creation forms and deep links keep resolving.
+     */
+    id: 'assets',
+    label: $localize`:@@route.assets:Assets`,
+    icon: 'lucideNetwork',
+    path: 'assets',
     group: 'assets',
     permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
-  },
-  {
-    id: 'equipments',
-    label: $localize`:@@route.equipments:Equipments`,
-    icon: 'lucideWrench',
-    path: 'equipments',
-    group: 'assets',
-    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
   },
   {
     id: 'statistics',

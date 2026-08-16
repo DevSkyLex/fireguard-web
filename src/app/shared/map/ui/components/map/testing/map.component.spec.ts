@@ -21,8 +21,17 @@ class FakeMap {
   public addControl = vi.fn();
   public easeTo = vi.fn();
   public queriedFeatures: unknown[] = [];
+  public canvas: HTMLCanvasElement;
 
-  public constructor(public options: Record<string, unknown>) {}
+  public constructor(public options: Record<string, unknown>) {
+    this.canvas = document.createElement('canvas');
+    this.canvas.tabIndex = 0;
+    (options['container'] as HTMLElement).appendChild(this.canvas);
+  }
+
+  public getCanvas(): HTMLCanvasElement {
+    return this.canvas;
+  }
 
   public on(event: string, handler: (payload?: unknown) => void): this {
     (this.handlers[event] ??= []).push(handler);
@@ -76,8 +85,17 @@ class FakeMarker {
     return this;
   }
 
+  public getElement(): HTMLElement {
+    return this.element;
+  }
+
+  public getLngLat(): { lng: number; lat: number } {
+    return { lng: this.lngLat?.[0] ?? 0, lat: this.lngLat?.[1] ?? 0 };
+  }
+
   public remove(): this {
     this.removed = true;
+    this.element.remove();
     return this;
   }
 }
@@ -149,6 +167,10 @@ describe('Map', () => {
     };
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   describe('server platform', () => {
     it('renders the skeleton and never imports maplibre', async () => {
       const fixture = createFixture('server');
@@ -161,12 +183,30 @@ describe('Map', () => {
   });
 
   describe('browser platform', () => {
-    it('mounts the map and renders no skeleton', async () => {
+    it('overlays the skeleton until the map fires load, then removes it', async () => {
       const fixture = createFixture('browser');
       fixture.componentRef.setInput('markers', MARKERS);
-      await mountedFakeMap(fixture);
+      const map = await mountedFakeMap(fixture);
+
+      expect(fixture.nativeElement.querySelector('hlm-skeleton')).not.toBeNull();
+
+      map.fire('load');
+      await fixture.whenStable();
 
       expect(fixture.nativeElement.querySelector('hlm-skeleton')).toBeNull();
+    });
+
+    it('delegates the region landmark to maplibre via localized locale strings', async () => {
+      const fixture = createFixture('browser');
+      const map = await mountedFakeMap(fixture);
+
+      expect(fixture.nativeElement.querySelector('[role="region"]')).toBeNull();
+      expect(map.options['locale']).toEqual({
+        'Map.Title': 'Map',
+        'NavigationControl.ZoomIn': 'Zoom in',
+        'NavigationControl.ZoomOut': 'Zoom out',
+        'AttributionControl.ToggleAttribution': 'Toggle attribution',
+      });
     });
 
     it('places a marker button carrying the marker label and emits markerSelected on click', async () => {
@@ -215,6 +255,66 @@ describe('Map', () => {
       });
 
       expect(map.easeTo).toHaveBeenCalledWith({ center: [2.3522, 48.8566], zoom: 10 });
+    });
+
+    it('expands a cluster without animation when reduced motion is preferred', async () => {
+      vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true } as MediaQueryList));
+
+      const fixture = createFixture('browser');
+      fixture.componentRef.setInput('markers', MARKERS);
+      const map = await mountedFakeMap(fixture);
+
+      map.queriedFeatures = [
+        {
+          geometry: { type: 'Point', coordinates: [2.3522, 48.8566] },
+          properties: { cluster: true, cluster_id: 7, point_count: 3 },
+        },
+      ];
+      map.fire('load');
+
+      const button = fixture.nativeElement.querySelector('button[aria-label*="3"]');
+      (button as HTMLButtonElement).click();
+
+      await vi.waitFor(() => {
+        expect(map.easeTo).toHaveBeenCalledWith({
+          center: [2.3522, 48.8566],
+          zoom: 10,
+          duration: 0,
+        });
+      });
+    });
+
+    it('moves focus to the nearest marker button when a focused cluster dissolves', async () => {
+      const fixture = createFixture('browser');
+      fixture.componentRef.setInput('markers', MARKERS);
+      const map = await mountedFakeMap(fixture);
+
+      map.queriedFeatures = [
+        {
+          geometry: { type: 'Point', coordinates: [2.3522, 48.8566] },
+          properties: { cluster: true, cluster_id: 7, point_count: 3 },
+        },
+      ];
+      map.fire('load');
+
+      const clusterButton = fixture.nativeElement.querySelector(
+        'button[aria-label*="3"]',
+      ) as HTMLButtonElement;
+      clusterButton.focus();
+      expect(document.activeElement).toBe(clusterButton);
+
+      map.queriedFeatures = [
+        {
+          geometry: { type: 'Point', coordinates: [2.3522, 48.8566] },
+          properties: { markerId: 'a' },
+        },
+      ];
+      map.fire('moveend');
+
+      const markerButton = fixture.nativeElement.querySelector('button[aria-label="Site A"]');
+      expect(markerButton).not.toBeNull();
+      expect(document.activeElement).toBe(markerButton);
+      expect(document.activeElement).not.toBe(document.body);
     });
 
     it('emits mapClicked only when interactive', async () => {

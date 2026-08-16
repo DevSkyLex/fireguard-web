@@ -12,12 +12,14 @@ import {
   input,
   output,
   PLATFORM_ID,
+  signal,
   untracked,
   viewChild,
   type InputSignal,
   type InputSignalWithTransform,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import type {
   GeoJSONSource,
@@ -125,7 +127,7 @@ function styleUrlFor(theme: 'light' | 'dark'): string {
  * whole style document on change rather than restyling individual layers,
  * since the light/dark style JSONs already diverge on every layer's colors.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -243,6 +245,19 @@ export class Map {
   protected readonly isBrowser: boolean = isPlatformBrowser(this.platformId);
 
   /**
+   * Property animationsEnabled
+   * @readonly
+   * @description Whether camera moves may animate — same `prefers-reduced-motion`
+   * guard as `bar-chart`/`line-chart`'s `animationsEnabled`.
+   * @access private
+   * @since 1.1.0
+   * @type {boolean}
+   */
+  private readonly animationsEnabled: boolean =
+    this.isBrowser &&
+    !(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
+
+  /**
    * Property themePort
    * @readonly
    * @description The app-wide appearance contract driving the style swap.
@@ -321,6 +336,34 @@ export class Map {
    * @type {string}
    */
   protected readonly regionLabel: string = $localize`:@@map.region.label:Map`;
+
+  /**
+   * Property mapLocale
+   * @readonly
+   * @description Localized strings MapLibre applies to its own DOM — the canvas
+   * region title and the built-in control labels — replacing its hardcoded
+   * English defaults.
+   * @access private
+   * @since 1.1.0
+   * @type {Record<string, string>}
+   */
+  private readonly mapLocale: Record<string, string> = {
+    'Map.Title': this.regionLabel,
+    'NavigationControl.ZoomIn': $localize`:@@map.control.zoomIn:Zoom in`,
+    'NavigationControl.ZoomOut': $localize`:@@map.control.zoomOut:Zoom out`,
+    'AttributionControl.ToggleAttribution': $localize`:@@map.control.toggleAttribution:Toggle attribution`,
+  };
+
+  /**
+   * Property loaded
+   * @readonly
+   * @description Whether the mounted map has fired its `load` event; the template
+   * overlays the skeleton until it does.
+   * @access protected
+   * @since 1.1.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly loaded: WritableSignal<boolean> = signal<boolean>(false);
   //#endregion
 
   //#region Constructor
@@ -385,6 +428,7 @@ export class Map {
       center: [initialCenter.longitude, initialCenter.latitude],
       zoom: this.zoom() ?? DEFAULT_ZOOM,
       attributionControl: { compact: true },
+      locale: this.mapLocale,
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     map.on('load', (): void => this.onLoad(map, maplibregl.Marker));
@@ -429,6 +473,7 @@ export class Map {
    * @returns {void}
    */
   private onLoad(map: MapLibreMap, markerCtor: typeof import('maplibre-gl').Marker): void {
+    this.loaded.set(true);
     map.addSource(SOURCE_ID, {
       type: 'geojson',
       cluster: true,
@@ -502,18 +547,70 @@ export class Map {
       this.upsertMarker(map, markerCtor, marker, [longitude, latitude]);
     }
 
+    let removedFocusAt: [number, number] | null = null;
     for (const [id, marker] of Object.entries(this.markerElements)) {
       if (!seenMarkerIds.has(id)) {
+        removedFocusAt ??= this.focusedPosition(marker);
         marker.remove();
         delete this.markerElements[id];
       }
     }
     for (const [id, marker] of Object.entries(this.clusterElements)) {
       if (!seenClusterIds.has(Number(id))) {
+        removedFocusAt ??= this.focusedPosition(marker);
         marker.remove();
         delete this.clusterElements[Number(id)];
       }
     }
+    if (removedFocusAt) this.restoreFocus(map, removedFocusAt);
+  }
+
+  /**
+   * Method focusedPosition
+   * @description The marker's `[longitude, latitude]` when its button currently
+   * holds focus, `null` otherwise — captured before the button leaves the DOM.
+   * @access private
+   * @since 1.1.0
+   * @param {MapLibreMarker} marker - The DOM marker about to be removed.
+   * @returns {[number, number] | null} The focused marker's position, or `null`.
+   */
+  private focusedPosition(marker: MapLibreMarker): [number, number] | null {
+    if (!marker.getElement().contains(this.document.activeElement)) return null;
+
+    const { lng, lat } = marker.getLngLat();
+    return [lng, lat];
+  }
+
+  /**
+   * Method restoreFocus
+   * @description Moves focus to the surviving marker/cluster button nearest the
+   * removed, focused one — or the map canvas when none survives — so a keyboard
+   * user is not dropped to `<body>` when clustering rerenders the buttons.
+   * @access private
+   * @since 1.1.0
+   * @param {MapLibreMap} map - The mounted map.
+   * @param {[number, number]} lngLat - Where the focused button was.
+   * @returns {void}
+   */
+  private restoreFocus(map: MapLibreMap, [lng, lat]: [number, number]): void {
+    let nearest: MapLibreMarker | null = null;
+    let nearestDistance: number = Number.POSITIVE_INFINITY;
+
+    const survivors: MapLibreMarker[] = [
+      ...Object.values(this.markerElements),
+      ...Object.values(this.clusterElements),
+    ];
+    for (const survivor of survivors) {
+      const position = survivor.getLngLat();
+      const distance: number = (position.lng - lng) ** 2 + (position.lat - lat) ** 2;
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = survivor;
+      }
+    }
+
+    if (nearest) nearest.getElement().focus();
+    else map.getCanvas().focus();
   }
 
   /**
@@ -580,7 +677,9 @@ export class Map {
       event.preventDefault();
       const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
       void source?.getClusterExpansionZoom(clusterId).then((zoom: number): void => {
-        map.easeTo({ center: lngLat, zoom });
+        map.easeTo(
+          this.animationsEnabled ? { center: lngLat, zoom } : { center: lngLat, zoom, duration: 0 },
+        );
       });
     });
 

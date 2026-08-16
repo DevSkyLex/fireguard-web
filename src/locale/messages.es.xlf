@@ -11613,6 +11613,18 @@
         <source><x id="count" equiv-text="count"/> markers at this location</source>
         <target><x id="count" equiv-text="count"/> marcadores en esta ubicación</target>
       </trans-unit>
+      <trans-unit id="map.control.zoomIn" datatype="html">
+        <source>Zoom in</source>
+        <target>Acercar</target>
+      </trans-unit>
+      <trans-unit id="map.control.zoomOut" datatype="html">
+        <source>Zoom out</source>
+        <target>Alejar</target>
+      </trans-unit>
+      <trans-unit id="map.control.toggleAttribution" datatype="html">
+        <source>Toggle attribution</source>
+        <target>Mostrar u ocultar la atribución</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

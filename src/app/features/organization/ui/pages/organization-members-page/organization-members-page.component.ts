@@ -60,11 +60,11 @@ import {
 import { StatTile } from '@features/organization/ui/components';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { OrganizationInviteDialog } from '../../dialogs/organization-invite-dialog';
 import {
@@ -136,7 +136,7 @@ type OrganizationMembersKpiTile = {
  * top, and "Invite member" registers on the shell header through
  * `PageActionsService`.
  *
- * @version 1.4.0
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -144,6 +144,7 @@ type OrganizationMembersKpiTile = {
   selector: 'app-organization-members-page',
   imports: [
     NgIcon,
+    EmptyState,
     ErrorState,
     HlmButton,
     CollectionPagination,
@@ -156,7 +157,6 @@ type OrganizationMembersKpiTile = {
     StatTile,
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
-    ...HlmEmptyImports,
     ...HlmToggleGroupImports,
   ],
   providers: [

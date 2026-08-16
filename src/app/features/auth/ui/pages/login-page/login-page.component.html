@@ -1,12 +1,10 @@
 <div id="login-page" class="flex w-full flex-col gap-6">
-  <header class="flex flex-col gap-1.5">
-    <h1 class="text-2xl font-semibold tracking-tight text-foreground" i18n="@@auth.login.title">
-      Sign in
-    </h1>
-    <p class="text-sm text-muted-foreground" i18n="@@auth.login.subtitle">
-      Access your FireGuard workspace.
-    </p>
-  </header>
+  <app-page-heading
+    heading="Sign in"
+    i18n-heading="@@auth.login.title"
+    description="Access your FireGuard workspace."
+    i18n-description="@@auth.login.subtitle"
+  />
 
   <app-login-form [pending]="authStore.isLoggingIn()" (submitted)="login($event)" />
 

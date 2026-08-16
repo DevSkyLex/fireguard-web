@@ -88,13 +88,13 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSeparatorImports } from '@shared/ui/separator';
@@ -253,7 +253,7 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
  * only a single surface for what was previously reachable only through a
  * column header click.
  *
- * @version 6.7.0
+ * @version 6.8.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -261,6 +261,7 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
   selector: 'app-interventions-page',
   imports: [
     NgIcon,
+    EmptyState,
     ErrorState,
     HlmBadge,
     HlmButton,
@@ -279,7 +280,6 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
     ...HlmAlertDialogImports,
     ...HlmCheckboxImports,
     ...HlmDropdownMenuImports,
-    ...HlmEmptyImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
     ...HlmSeparatorImports,

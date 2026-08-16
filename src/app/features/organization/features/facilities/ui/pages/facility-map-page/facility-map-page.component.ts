@@ -1,17 +1,21 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMap, lucideNetwork } from '@ng-icons/lucide';
+import { lucideMap } from '@ng-icons/lucide';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityMapStore } from '@features/organization/features/facilities/state';
 import {
@@ -57,7 +61,11 @@ import { FacilityComplianceWorstSites } from '../../components/facility-complian
  * programmatically on a later selection is not something it supports today
  * (`FEATURE.md` "Compliance layer").
  *
- * @version 1.1.0
+ * Its "Back to list" link registers on the shell header through
+ * `PageActionsService`, per `DESIGN.md`'s page grammar — the content column
+ * carries no back-link of its own.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -75,7 +83,7 @@ import { FacilityComplianceWorstSites } from '../../components/facility-complian
     ...HlmToggleGroupImports,
     ...HlmFieldImports,
   ],
-  providers: [FacilityMapStore, provideIcons({ lucideMap, lucideNetwork })],
+  providers: [FacilityMapStore, provideIcons({ lucideMap })],
   templateUrl: './facility-map-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -136,17 +144,30 @@ export class FacilityMapPage {
     this.organizationId(),
     'facilities',
   ]);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "Back to list" link, registered on the shell header instead of the content column. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
   /**
    * Constructor
    * @constructor
-   * @description Loads the located facilities and the unplaced count whenever the organization changes.
+   *
+   * @description
+   * Loads the located facilities and the unplaced count whenever the
+   * organization changes. Also registers {@link pageActions}.
+   *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
 

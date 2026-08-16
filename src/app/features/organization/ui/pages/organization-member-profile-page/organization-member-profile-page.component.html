@@ -51,7 +51,13 @@
         i18n-description="@@org.memberProfile.missingDescription"
       />
     } @else {
-      <div class="flex flex-col gap-4" aria-hidden="true">
+      <div
+        class="flex flex-col gap-4"
+        role="status"
+        aria-label="Loading member"
+        i18n-aria-label="@@org.memberProfile.loadingAria"
+        data-testid="organization-member-profile-loading"
+      >
         <div class="flex items-center gap-3">
           <hlm-skeleton class="size-14 shrink-0 rounded-full" />
           <div class="flex flex-col gap-2">

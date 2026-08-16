@@ -120,29 +120,24 @@
       </button>
     </app-error-state>
   } @else if (!store.isLoadingInspections() && items().length === 0) {
-    <hlm-empty class="border border-dashed">
-      <hlm-empty-header>
-        <hlm-empty-media variant="icon">
-          <ng-icon [name]="hasSearchOrFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'" />
-        </hlm-empty-media>
-        <div hlmEmptyTitle i18n="@@inspection.table.emptyTitle">No inspections found</div>
-        <div hlmEmptyDescription i18n="@@inspection.table.emptyDesc">
-          Adjust your filters, or open the inspections your team carries out.
-        </div>
-      </hlm-empty-header>
-      <hlm-empty-content>
-        @if (hasSearchOrFilters()) {
-          <button hlmBtn variant="outline" (click)="clearFilters()">
-            <span i18n="@@common.clearFilters">Clear filters</span>
-          </button>
-        } @else if (canCreate()) {
-          <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
-            <ng-icon name="lucidePlus" aria-hidden="true" />
-            <span i18n="@@inspection.newButton">New inspection</span>
-          </a>
-        }
-      </hlm-empty-content>
-    </hlm-empty>
+    <app-empty-state
+      [icon]="hasSearchOrFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'"
+      title="No inspections found"
+      i18n-title="@@inspection.table.emptyTitle"
+      description="Adjust your filters, or open the inspections your team carries out."
+      i18n-description="@@inspection.table.emptyDesc"
+    >
+      @if (hasSearchOrFilters()) {
+        <button hlmBtn variant="outline" (click)="clearFilters()">
+          <span i18n="@@common.clearFilters">Clear filters</span>
+        </button>
+      } @else if (canCreate()) {
+        <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span i18n="@@inspection.newButton">New inspection</span>
+        </a>
+      }
+    </app-empty-state>
   } @else {
     <app-inspection-table
       [items]="items()"

@@ -34,6 +34,7 @@ import {
   type SetupInviteMemberInput,
   type SetupOrganizationRole,
 } from '@features/organization/setup';
+import { PageHeading } from '@shared/page-heading';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSpinner } from '@shared/ui/spinner';
 import type { OnboardingWizardActionState } from './models';
@@ -94,6 +95,7 @@ export function redirectToStripe(documentRef: Document, url: string): void {
     OnboardingMembersForm,
     OnboardingOrganizationForm,
     OnboardingPlanForm,
+    PageHeading,
   ],
   templateUrl: './onboarding-wizard-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -51,9 +51,9 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSelectImports } from '@shared/ui/select';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentTable } from '../../tables/equipment-table';
@@ -91,7 +91,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * Its title lives in the shell breadcrumb; "New equipment" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -100,6 +100,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
   imports: [
     RouterLink,
     NgIcon,
+    EmptyState,
     ErrorState,
     EquipmentStatusTag,
     EquipmentTable,
@@ -109,7 +110,6 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
-    ...HlmEmptyImports,
     ...HlmSelectImports,
   ],
   providers: [

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@
 import { Router } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
 import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/forms';
+import { PageHeading } from '@shared/page-heading';
 
 /**
  * Component NewPasswordPage
@@ -21,7 +22,7 @@ import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/f
  */
 @Component({
   selector: 'app-new-password-page',
-  imports: [NewPasswordForm],
+  imports: [NewPasswordForm, PageHeading],
   templateUrl: './new-password-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

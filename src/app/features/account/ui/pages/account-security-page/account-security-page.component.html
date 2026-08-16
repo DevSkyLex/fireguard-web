@@ -13,9 +13,15 @@
         </button>
       </app-error-state>
     } @else if (!profileReady()) {
-      <div class="flex flex-col gap-4" aria-hidden="true">
+      <div
+        class="flex flex-col gap-4"
+        role="status"
+        aria-label="Loading your security settings"
+        i18n-aria-label="@@account.security.loadingAria"
+        data-testid="account-security-loading"
+      >
         @for (placeholder of [1, 2]; track placeholder) {
-          <div class="flex flex-col gap-3 rounded-lg border border-border p-4">
+          <div class="flex flex-col gap-3 border-t border-border pt-5">
             <hlm-skeleton class="h-5 w-36" />
             <hlm-skeleton class="h-4 w-48" />
             <hlm-skeleton class="h-9 w-24" />
@@ -35,13 +41,10 @@
         (cancelled)="totpStore.cancelSetup()"
       />
 
-      <section
-        id="account-password"
-        class="flex flex-col gap-4 rounded-lg border border-border p-4"
-      >
+      <section id="account-password" class="flex flex-col gap-3 border-t border-border pt-5">
         <header class="flex min-w-0 flex-col gap-1">
           <h3
-            class="text-base font-semibold tracking-tight text-foreground"
+            class="text-sm font-semibold tracking-tight text-foreground"
             i18n="@@account.password.title"
           >
             Password

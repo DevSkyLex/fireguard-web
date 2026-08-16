@@ -105,6 +105,8 @@ describe('FacilityDetailPage', () => {
   let setTitle: ReturnType<typeof vi.fn>;
   let selectedFacility: WritableSignal<FacilityOutput | null>;
   let getError: WritableSignal<StoreError | null>;
+  let isLoadingFacility: WritableSignal<boolean>;
+  let resolveFacility: ReturnType<typeof vi.fn>;
   let updateCallState: WritableSignal<CallState<FacilityOutput | null>>;
   let deleteCallState: WritableSignal<CallState>;
   let hasPermission: ReturnType<typeof vi.fn>;
@@ -164,6 +166,8 @@ describe('FacilityDetailPage', () => {
     setTitle = vi.fn();
     selectedFacility = signal<FacilityOutput | null>(facility());
     getError = signal<StoreError | null>(null);
+    isLoadingFacility = signal<boolean>(false);
+    resolveFacility = vi.fn();
     updateCallState = signal<CallState<FacilityOutput | null>>(idleCallState());
     deleteCallState = signal<CallState>(idleCallState());
     hasPermission = vi.fn().mockReturnValue(true);
@@ -208,7 +212,10 @@ describe('FacilityDetailPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        { provide: ActiveFacilityStore, useValue: { selectedFacility, getError } },
+        {
+          provide: ActiveFacilityStore,
+          useValue: { selectedFacility, getError, isLoadingFacility, resolveFacility },
+        },
         { provide: TitleService, useValue: { setTitle } },
         {
           provide: FacilityStore,
@@ -299,6 +306,7 @@ describe('FacilityDetailPage', () => {
 
   it('should show a loading state before the facility resolves', async () => {
     selectedFacility.set(null);
+    isLoadingFacility.set(true);
     await createPage();
 
     expect(root().querySelector('[role="status"]')).not.toBeNull();
@@ -324,14 +332,19 @@ describe('FacilityDetailPage', () => {
     expect(setTitle).toHaveBeenCalledWith('Headquarters');
   });
 
-  it('should return to the organization landing page when the load fails', async () => {
+  it('should show the load-failed state with a retry when the load fails', async () => {
     selectedFacility.set(null);
+    getError.set({ error: null, message: 'down', code: 500, retryable: false, timestamp: 0 });
     await createPage();
 
-    getError.set({ error: null, message: 'down', code: 500, retryable: false, timestamp: 0 });
-    await fixture.whenStable();
+    expect(byTestId('facility-detail-load-failed')).not.toBeNull();
 
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1']);
+    byTestId('facility-detail-retry')?.dispatchEvent(new MouseEvent('click'));
+
+    expect(resolveFacility).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
   });
 
   it('should load the overview summary once the facility resolves', async () => {

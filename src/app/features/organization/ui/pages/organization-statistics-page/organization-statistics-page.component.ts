@@ -56,6 +56,7 @@ import {
   mapAlignedDashboardTrendSeriesToChartSeries,
 } from '@features/organization/utils';
 import { LineChart, type ChartSeries } from '@shared/chart';
+import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -165,6 +166,7 @@ type OrganizationStatisticsSeverityEntry = {
   selector: 'app-organization-statistics-page',
   imports: [
     NgIcon,
+    EmptyState,
     ErrorState,
     LineChart,
     OrganizationTrendChartNotice,

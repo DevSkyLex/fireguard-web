@@ -16,14 +16,12 @@ import {
   lucideChevronRight,
   lucideCircleCheck,
   lucideCloudUpload,
+  lucideCompass,
   lucideEye,
   lucideMailWarning,
-  lucideMinus,
   lucideOctagonAlert,
   lucidePlus,
   lucideRefreshCw,
-  lucideTrendingDown,
-  lucideTrendingUp,
   lucideTriangleAlert,
   lucideUndo2,
   lucideWrench,
@@ -48,6 +46,7 @@ import { OrganizationTodayStore } from '@features/organization/state/organizatio
 import {
   OrganizationPageHeader,
   OrganizationTodayQueue,
+  StatTile,
   type StatTileDelta,
   type StatTileDeltaDirection,
   type StatTileLink,
@@ -58,6 +57,7 @@ import {
 } from '@features/organization/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
+import { PageSection } from '@shared/page-section';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
@@ -80,6 +80,7 @@ type OrganizationTodayKpiTile = {
   readonly id: string;
   readonly label: string;
   readonly value: string | number;
+  readonly icon: string;
   readonly link: StatTileLink | null;
   readonly delta: StatTileDelta | null;
 };
@@ -121,18 +122,20 @@ type OrganizationTodayAlertRow = {
  * rather than surfacing a second error state; the work queues below are the
  * page's primary content and stay usable regardless.
  *
- * Below the header, the KPI strip is a single row of label/value pairs
- * (`text-base font-semibold`, never the 24px reserved for the page title) so
- * it reads as a snapshot rather than a second headline. A two-column layout
- * then pairs the work queues (the primary column) with a rail holding the
- * alert strip and the "Recently updated" list, collapsing to one stacked
- * column under `lg`. The four named queues render as one borderless "Your
- * work queues" section: a divider list where each row (icon, label, count) is
- * itself the link to the deep-linked interventions view — chrome comes from
- * rhythm, not from a card per queue. The unsynced queue is the one exception:
- * its content is local-only and reachable nowhere else, so its row stays
- * un-linked and keeps `OrganizationTodayQueue` rendered in `embedded` mode
- * underneath it as the page's one remaining in-page preview.
+ * Below the header, the KPI strip is a row of `app-stat-tile` cards — the
+ * same primitive `OrganizationTeamPage` and `OrganizationStatisticsPage`
+ * already compose, so a third usage retires the page's earlier hand-rolled
+ * `divide-x` strip (`DESIGN.md` § Page Grammar, Working Surface Rule; a stat
+ * tile is a sanctioned card use). A two-column layout then pairs the work
+ * queues (the primary column) with a rail holding the alert strip and the
+ * "Recently updated" list, collapsing to one stacked column under `lg`. The
+ * four named queues render under one `app-page-section` "Your work queues"
+ * heading: a divider list where each row (icon, label, count) is itself the
+ * link to the deep-linked interventions view — chrome comes from rhythm, not
+ * from a card per queue. The unsynced queue is the one exception: its content
+ * is local-only and reachable nowhere else, so its row stays un-linked and
+ * keeps `OrganizationTodayQueue` rendered in `embedded` mode underneath it as
+ * the page's one remaining in-page preview.
  *
  * The deliberate exception to the shell-header migration: `app-organization-
  * page-header` still renders here, carrying the org identity (avatar, plan,
@@ -163,6 +166,8 @@ type OrganizationTodayAlertRow = {
     InterventionTag,
     OrganizationPageHeader,
     OrganizationTodayQueue,
+    PageSection,
+    StatTile,
     ...HlmAlertImports,
   ],
   providers: [
@@ -173,14 +178,12 @@ type OrganizationTodayAlertRow = {
       lucideChevronRight,
       lucideCircleCheck,
       lucideCloudUpload,
+      lucideCompass,
       lucideEye,
       lucideMailWarning,
-      lucideMinus,
       lucideOctagonAlert,
       lucidePlus,
       lucideRefreshCw,
-      lucideTrendingDown,
-      lucideTrendingUp,
       lucideTriangleAlert,
       lucideUndo2,
       lucideWrench,
@@ -440,6 +443,7 @@ export class OrganizationTodayPage {
         label: $localize`:@@org.today.kpi.openInterventions:Open interventions`,
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'interventions', 'open') ?? '—',
+        icon: 'lucideCompass',
         link: interventionsLink,
         delta: null,
       });
@@ -451,6 +455,7 @@ export class OrganizationTodayPage {
         label: $localize`:@@org.today.kpi.openNonConformities:Open non-conformities`,
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'nonConformities', 'open') ?? '—',
+        icon: 'lucideTriangleAlert',
         link: inspectionsLink,
         delta: null,
       },
@@ -459,6 +464,7 @@ export class OrganizationTodayPage {
         label: $localize`:@@org.today.kpi.inspectionsCompleted:Inspections completed`,
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'inspections', 'closed') ?? '—',
+        icon: 'lucideCircleCheck',
         link: inspectionsLink,
         delta: this.toComparisonDelta(this.dashboardStore.inspectionsComparison(), true),
       },
@@ -468,6 +474,7 @@ export class OrganizationTodayPage {
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'equipment', 'underMaintenance') ??
           '—',
+        icon: 'lucideWrench',
         link: equipmentsLink,
         delta: null,
       },
@@ -646,72 +653,6 @@ export class OrganizationTodayPage {
       : '';
   }
 
-  /**
-   * Method kpiDeltaIcon
-   * @method kpiDeltaIcon
-   *
-   * @description
-   * The arrow matching a KPI delta's literal direction — never its sentiment.
-   * Mirrors `StatTile.deltaIcon`; not shared, since the strip renders its own
-   * compact delta rather than composing `app-stat-tile` (`ARCHITECTURE.md`
-   * rule of three).
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @param {StatTileDelta} delta - The KPI cell's delta.
-   *
-   * @returns {string} A registered lucide icon name.
-   */
-  protected kpiDeltaIcon(delta: StatTileDelta): string {
-    if (delta.direction === 'up') return 'lucideTrendingUp';
-    if (delta.direction === 'down') return 'lucideTrendingDown';
-
-    return 'lucideMinus';
-  }
-
-  /**
-   * Method kpiDeltaGood
-   * @method kpiDeltaGood
-   *
-   * @description
-   * Whether a KPI delta's direction is the desirable one, `null` when flat.
-   * Drives the icon's foreground-vs-muted weight — the only tone the strip
-   * spends on a trend, chroma being reserved for status glyphs (`DESIGN.md`).
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @param {StatTileDelta} delta - The KPI cell's delta.
-   *
-   * @returns {boolean | null} Whether the direction is desirable, or `null` when flat.
-   */
-  protected kpiDeltaGood(delta: StatTileDelta): boolean | null {
-    if (delta.direction === 'flat') return null;
-
-    return (delta.direction === 'up') === delta.positiveIsGood;
-  }
-
-  /**
-   * Method kpiDeltaText
-   * @method kpiDeltaText
-   *
-   * @description
-   * The signed magnitude shown beside a KPI delta's arrow.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @param {StatTileDelta} delta - The KPI cell's delta.
-   *
-   * @returns {string} The signed magnitude.
-   */
-  protected kpiDeltaText(delta: StatTileDelta): string {
-    if (delta.direction === 'up') return `+${delta.value}`;
-    if (delta.direction === 'down') return `−${delta.value}`;
-
-    return `${delta.value}`;
-  }
   //#endregion
 
   //#region Internals

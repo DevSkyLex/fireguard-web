@@ -9,7 +9,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -79,10 +79,11 @@ describe('EquipmentDetailPage', () => {
   let commission: ReturnType<typeof vi.fn>;
   let maintenance: ReturnType<typeof vi.fn>;
   let decommission: ReturnType<typeof vi.fn>;
-  let navigate: ReturnType<typeof vi.fn>;
   let setTitle: ReturnType<typeof vi.fn>;
   let selectedEquipment: WritableSignal<EquipmentOutput | null>;
   let getError: WritableSignal<StoreError | null>;
+  let isLoadingEquipment: WritableSignal<boolean>;
+  let resolveEquipment: ReturnType<typeof vi.fn>;
   let updateCallState: WritableSignal<CallState<EquipmentOutput | null>>;
   let isChangingLifecycle: WritableSignal<boolean>;
 
@@ -101,6 +102,8 @@ describe('EquipmentDetailPage', () => {
     setTitle = vi.fn();
     selectedEquipment = signal<EquipmentOutput | null>(equipment());
     getError = signal<StoreError | null>(null);
+    isLoadingEquipment = signal<boolean>(false);
+    resolveEquipment = vi.fn();
     updateCallState = signal<CallState<EquipmentOutput | null>>(idleCallState());
     isChangingLifecycle = signal<boolean>(false);
 
@@ -108,7 +111,10 @@ describe('EquipmentDetailPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        { provide: ActiveEquipmentStore, useValue: { selectedEquipment, getError } },
+        {
+          provide: ActiveEquipmentStore,
+          useValue: { selectedEquipment, getError, isLoadingEquipment, resolveEquipment },
+        },
         { provide: TitleService, useValue: { setTitle } },
         {
           provide: EquipmentStore,
@@ -128,8 +134,6 @@ describe('EquipmentDetailPage', () => {
         },
       ],
     });
-
-    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
 
   it('should resolve the equipment title once the record lands', async () => {
@@ -140,6 +144,7 @@ describe('EquipmentDetailPage', () => {
 
   it('should show a loading state before the equipment resolves', async () => {
     selectedEquipment.set(null);
+    isLoadingEquipment.set(true);
     await createPage();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('[role="status"]')).not.toBeNull();
@@ -157,14 +162,22 @@ describe('EquipmentDetailPage', () => {
     expect(setTitle).toHaveBeenCalledWith('Fire extinguisher — Kidde Pro 210');
   });
 
-  it('should return to the index when the load fails', async () => {
+  it('should show the load-failed state with a retry when the load fails', async () => {
     selectedEquipment.set(null);
+    getError.set({ error: null, message: 'down', code: 500, retryable: false, timestamp: 0 });
     await createPage();
 
-    getError.set({ error: null, message: 'down', code: 500, retryable: false, timestamp: 0 });
-    await fixture.whenStable();
+    const root: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="equipment-detail-load-failed"]')).not.toBeNull();
 
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'equipments']);
+    root
+      .querySelector<HTMLButtonElement>('[data-testid="equipment-detail-retry"]')
+      ?.dispatchEvent(new MouseEvent('click'));
+
+    expect(resolveEquipment).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      equipmentId: 'equipment-1',
+    });
   });
 
   it.each([

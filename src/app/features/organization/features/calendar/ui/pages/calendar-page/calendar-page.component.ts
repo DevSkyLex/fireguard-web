@@ -26,9 +26,9 @@ import {
   type CalendarFeedStoreType,
 } from '@features/organization/features/calendar/state';
 import { Calendar, toIsoDay, type CalendarDisplayEvent } from '@shared/calendar';
+import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { CalendarEntryList } from '../../components/calendar-entry-list';
 
@@ -68,7 +68,7 @@ type CalendarPageAgendaGroup = {
  * loading: the feed is a dated, authenticated read that would immediately
  * refetch after hydration (ARCHITECTURE.md §12.5-3).
  *
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -78,10 +78,10 @@ type CalendarPageAgendaGroup = {
     Calendar,
     CalendarEntryList,
     NgIcon,
+    ErrorState,
     HlmButton,
     HlmSkeleton,
     ...HlmCardImports,
-    ...HlmEmptyImports,
   ],
   providers: [
     CalendarFeedStore,

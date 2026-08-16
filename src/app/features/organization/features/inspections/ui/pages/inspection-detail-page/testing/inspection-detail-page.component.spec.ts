@@ -80,6 +80,8 @@ describe('InspectionDetailPage', () => {
   let setTitle: ReturnType<typeof vi.fn>;
   let selectedInspection: WritableSignal<InspectionOutput | null>;
   let getError: WritableSignal<StoreError | null>;
+  let isLoadingInspection: WritableSignal<boolean>;
+  let resolveInspection: ReturnType<typeof vi.fn>;
   let updateCallState: WritableSignal<CallState<InspectionOutput | null>>;
   let cancelCallState: WritableSignal<CallState<string | null>>;
   let isChangingLifecycle: WritableSignal<boolean>;
@@ -99,6 +101,8 @@ describe('InspectionDetailPage', () => {
     setTitle = vi.fn();
     selectedInspection = signal<InspectionOutput | null>(inspection());
     getError = signal<StoreError | null>(null);
+    isLoadingInspection = signal<boolean>(false);
+    resolveInspection = vi.fn();
     updateCallState = signal<CallState<InspectionOutput | null>>(idleCallState());
     cancelCallState = signal<CallState<string | null>>(idleCallState());
     isChangingLifecycle = signal<boolean>(false);
@@ -107,7 +111,10 @@ describe('InspectionDetailPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        { provide: ActiveInspectionStore, useValue: { selectedInspection, getError } },
+        {
+          provide: ActiveInspectionStore,
+          useValue: { selectedInspection, getError, isLoadingInspection, resolveInspection },
+        },
         { provide: TitleService, useValue: { setTitle } },
         {
           provide: InspectionStore,
@@ -140,6 +147,7 @@ describe('InspectionDetailPage', () => {
 
   it('should show a loading state before the inspection resolves', async () => {
     selectedInspection.set(null);
+    isLoadingInspection.set(true);
     await createPage();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('[role="status"]')).not.toBeNull();
@@ -157,14 +165,22 @@ describe('InspectionDetailPage', () => {
     expect(setTitle).toHaveBeenCalledWith('Inspection 2026-08-10');
   });
 
-  it('should return to the index when the load fails', async () => {
+  it('should show the load-failed state with a retry when the load fails', async () => {
     selectedInspection.set(null);
+    getError.set({ error: null, message: 'down', code: 500, retryable: false, timestamp: 0 });
     await createPage();
 
-    getError.set({ error: null, message: 'down', code: 500, retryable: false, timestamp: 0 });
-    await fixture.whenStable();
+    const root: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="inspection-detail-load-failed"]')).not.toBeNull();
 
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'inspections']);
+    root
+      .querySelector<HTMLButtonElement>('[data-testid="inspection-detail-retry"]')
+      ?.dispatchEvent(new MouseEvent('click'));
+
+    expect(resolveInspection).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      inspectionId: 'inspection-1',
+    });
   });
 
   it('should offer Submit and Cancel while draft', async () => {

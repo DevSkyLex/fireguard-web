@@ -1,4 +1,3 @@
-import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,7 +7,6 @@ import {
   inject,
   input,
   LOCALE_ID,
-  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
@@ -17,9 +15,10 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
-import { isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -35,6 +34,7 @@ import {
 } from '@features/organization/features/equipments/state';
 import { buildEquipmentTitle } from '@features/organization/features/equipments/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
@@ -66,9 +66,11 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  *
  * `equipmentResolver` (route `resolve`) seeds {@link ActiveEquipmentStore}
  * fire-and-forget, so this page always renders immediately: the full-page
- * skeleton shows from the store's pending state until the record lands, the
- * document title follows through `TitleService`, and a load failure returns
- * to the index. A route-scoped {@link EquipmentStore} carries the update and
+ * skeleton shows from the store's pending state until the record lands, and
+ * a load failure shows `app-error-state` with a retry that re-runs
+ * {@link ActiveEquipmentStore}'s resolve (`DESIGN.md` "Detail-page gating")
+ * rather than leaving the operator on an eternal skeleton or navigating them
+ * away silently. A route-scoped {@link EquipmentStore} carries the update and
  * lifecycle writes.
  *
  * The record's name is the shell breadcrumb's title, resolved by
@@ -76,7 +78,7 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * group at content top, and the lifecycle band registers on the shell header
  * through `PageActionsService`.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -85,10 +87,12 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
   imports: [
     EquipmentInformationPanel,
     EquipmentStatusTag,
+    ErrorState,
     HlmButton,
     HlmSkeleton,
     ...HlmSpinnerImports,
   ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './equipment-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -124,14 +128,8 @@ export class EquipmentDetailPage {
   /** The route-scoped store carrying the update and lifecycle writes. */
   protected readonly store: EquipmentStoreType = inject<EquipmentStoreType>(EquipmentStore);
 
-  /** Router used to return to the index when the record fails to load. */
-  private readonly router: Router = inject<Router>(Router);
-
   /** Document title channel, kept in sync with the loaded record. */
   private readonly titleService: TitleService = inject<TitleService>(TitleService);
-
-  /** Whether this instance runs in the browser — the failure redirect never fires during SSR. */
-  private readonly isBrowser: boolean = isPlatformBrowser(inject<object>(PLATFORM_ID));
 
   /** Organization permission checks gating every write on this page. */
   private readonly permissions: OrganizationPermissionService = inject(
@@ -255,9 +253,10 @@ export class EquipmentDetailPage {
    * @description
    * Settles the open in-place field once its own write clears, re-sets the
    * document title once the seeded record lands (the title resolver only
-   * returned the neutral section label), returns to the index when the
-   * load fails — the global feedback listener already toasts the failure —
-   * and registers {@link pageActions}.
+   * returned the neutral section label) — a load failure is left to the
+   * template's `app-error-state` branch and {@link retryLoad}, the global
+   * feedback listener already toasts the failure — and registers
+   * {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
@@ -277,15 +276,6 @@ export class EquipmentDetailPage {
 
       untracked((): void => this.titleService.setTitle(title));
     });
-
-    effect((): void => {
-      const error: StoreError | null = this.activeEquipmentStore.getError();
-      if (error === null || !this.isBrowser) return;
-
-      untracked((): void => {
-        void this.router.navigate(['/organizations', this.organizationId(), 'equipments']);
-      });
-    });
   }
   //#endregion
 
@@ -300,6 +290,20 @@ export class EquipmentDetailPage {
    */
   protected onEditTargetChanged(target: EquipmentEditTarget | null): void {
     this.editState.set({ open: target, saving: null, failed: null, failure: null });
+  }
+
+  /**
+   * Method retryLoad
+   * @description The load-failed state's retry — re-runs {@link ActiveEquipmentStore}'s resolve for this record.
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected retryLoad(): void {
+    this.activeEquipmentStore.resolveEquipment({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+    });
   }
 
   /**

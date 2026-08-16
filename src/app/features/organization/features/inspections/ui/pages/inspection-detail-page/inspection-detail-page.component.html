@@ -32,7 +32,7 @@
         (editTargetChanged)="onEditTargetChanged($event)"
       />
     </section>
-  } @else {
+  } @else if (activeInspectionStore.isLoadingInspection()) {
     <div
       class="flex flex-col gap-4"
       role="status"
@@ -44,6 +44,25 @@
       <hlm-skeleton class="h-4 w-40" />
       <hlm-skeleton class="h-64 w-full max-w-2xl" />
     </div>
+  } @else {
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="This inspection could not be opened"
+      i18n-title="@@inspection.detail.loadFailedTitle"
+      [description]="activeInspectionStore.getError()?.message ?? null"
+      data-testid="inspection-detail-load-failed"
+    >
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="inspection-detail-retry"
+        (click)="retryLoad()"
+        i18n="@@common.tryAgain"
+      >
+        Try again
+      </button>
+    </app-error-state>
   }
 </div>
 

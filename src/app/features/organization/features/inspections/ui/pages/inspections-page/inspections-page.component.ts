@@ -52,9 +52,9 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSelectImports } from '@shared/ui/select';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 import { InspectionTable } from '../../tables/inspection-table';
@@ -96,7 +96,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
  * Its title lives in the shell breadcrumb; "New inspection" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.4.0
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -105,6 +105,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
   imports: [
     RouterLink,
     NgIcon,
+    EmptyState,
     ErrorState,
     InspectionStatusTag,
     InspectionTable,
@@ -114,7 +115,6 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
-    ...HlmEmptyImports,
     ...HlmSelectImports,
   ],
   providers: [

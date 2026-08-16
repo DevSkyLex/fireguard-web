@@ -11,6 +11,7 @@ import type { LoginInput } from '@features/auth/models';
 import { AuthStore } from '@features/auth/state';
 import { LoginForm, type LoginFormValues } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';
+import { PageHeading } from '@shared/page-heading';
 
 /**
  * Component LoginPage
@@ -32,7 +33,7 @@ import { resolveReturnUrl } from '@features/auth/utils';
  */
 @Component({
   selector: 'app-login-page',
-  imports: [RouterLink, LoginForm],
+  imports: [RouterLink, LoginForm, PageHeading],
   templateUrl: './login-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

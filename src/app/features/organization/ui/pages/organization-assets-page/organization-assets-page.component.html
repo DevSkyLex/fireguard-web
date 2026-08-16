@@ -58,17 +58,13 @@
 
         <div class="min-h-0 flex-1">
           @if (selectedFacilityId() === null) {
-            <hlm-empty class="border border-dashed">
-              <hlm-empty-header>
-                <hlm-empty-media variant="icon">
-                  <ng-icon name="lucideNetwork" aria-hidden="true" />
-                </hlm-empty-media>
-                <div hlmEmptyTitle i18n="@@org.assets.selectPrompt.title">Select a site</div>
-                <div hlmEmptyDescription i18n="@@org.assets.selectPrompt.desc">
-                  Pick a facility from the hierarchy to see its equipment and inspections.
-                </div>
-              </hlm-empty-header>
-            </hlm-empty>
+            <app-empty-state
+              icon="lucideNetwork"
+              title="Select a site"
+              i18n-title="@@org.assets.selectPrompt.title"
+              description="Pick a facility from the hierarchy to see its equipment and inspections."
+              i18n-description="@@org.assets.selectPrompt.desc"
+            />
           } @else {
             <ng-container *ngTemplateOutlet="assetPanes" />
           }
@@ -112,19 +108,13 @@
 
           <div class="min-h-0 flex-1">
             @if (selectedComplianceFacilityId() === null) {
-              <hlm-empty class="border border-dashed">
-                <hlm-empty-header>
-                  <hlm-empty-media variant="icon">
-                    <ng-icon name="lucideShieldCheck" aria-hidden="true" />
-                  </hlm-empty-media>
-                  <div hlmEmptyTitle i18n="@@org.assets.compliance.selectPrompt.title">
-                    Select a site
-                  </div>
-                  <div hlmEmptyDescription i18n="@@org.assets.compliance.selectPrompt.desc">
-                    Pick a facility from the hierarchy to see its compliance summary.
-                  </div>
-                </hlm-empty-header>
-              </hlm-empty>
+              <app-empty-state
+                icon="lucideShieldCheck"
+                title="Select a site"
+                i18n-title="@@org.assets.compliance.selectPrompt.title"
+                description="Pick a facility from the hierarchy to see its compliance summary."
+                i18n-description="@@org.assets.compliance.selectPrompt.desc"
+              />
             } @else {
               <ng-container *ngTemplateOutlet="complianceSummaryPane" />
             }

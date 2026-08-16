@@ -49,10 +49,10 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmLabel } from '@shared/ui/label';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { FacilityGrid } from '../../dataviews/facility-grid';
@@ -92,7 +92,7 @@ type FacilityLayout = 'list' | 'grid';
  * Its title lives in the shell breadcrumb; "New facility" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -101,6 +101,7 @@ type FacilityLayout = 'list' | 'grid';
   imports: [
     RouterLink,
     NgIcon,
+    EmptyState,
     ErrorState,
     FacilityGrid,
     FacilityTable,
@@ -112,7 +113,6 @@ type FacilityLayout = 'list' | 'grid';
     HlmButton,
     HlmCheckbox,
     HlmLabel,
-    ...HlmEmptyImports,
     ...HlmToggleGroupImports,
   ],
   providers: [

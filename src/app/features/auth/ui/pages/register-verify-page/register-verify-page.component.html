@@ -1,15 +1,10 @@
 <div id="register-verify-page" class="flex w-full flex-col gap-6">
-  <header class="flex flex-col gap-1.5">
-    <h1
-      class="text-2xl font-semibold tracking-tight text-foreground"
-      i18n="@@auth.registerVerify.title"
-    >
-      Confirm your email
-    </h1>
-    <p class="text-sm text-muted-foreground" i18n="@@auth.registerVerify.subtitle">
-      Enter the code we just sent you.
-    </p>
-  </header>
+  <app-page-heading
+    heading="Confirm your email"
+    i18n-heading="@@auth.registerVerify.title"
+    description="Enter the code we just sent you."
+    i18n-description="@@auth.registerVerify.subtitle"
+  />
 
   <app-otp-form
     [pending]="registerStore.isVerifying()"

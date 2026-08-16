@@ -20,10 +20,10 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
-import { isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -47,6 +47,7 @@ import {
 import type { InspectionResult } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 import { PlanViewer } from '@shared/plan-viewer';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
@@ -110,15 +111,18 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * `facilityResolver` (route `resolve`) seeds {@link ActiveFacilityStore}
  * fire-and-forget, so this page always renders immediately: the full-page
  * skeleton shows from the store's pending state until the record lands, the
- * document title follows through `TitleService`, and a load failure returns
- * to the organization landing page. A route-scoped {@link FacilityStore}
+ * document title follows through `TitleService`, and a load failure shows
+ * `app-error-state` with a retry that re-runs {@link ActiveFacilityStore}'s
+ * resolve (`DESIGN.md` "Detail-page gating") rather than leaving the operator
+ * on an eternal skeleton or navigating them away silently. A route-scoped
+ * {@link FacilityStore}
  * carries the update, archive/restore and delete writes, a route-scoped
  * {@link FacilityOverviewStore} carries the Overview tab's summary data, and
  * a tab-scoped {@link FacilityPlansStore} carries the Plans tab's floor
  * plans. The record's name is the shell breadcrumb's title, resolved by
  * `facilityTitleResolver`.
  *
- * @version 1.5.0
+ * @version 1.6.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -128,6 +132,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     DatePipe,
     NgIcon,
     EmptyState,
+    ErrorState,
     FacilityHierarchyChart,
     FacilityInformationPanel,
     FacilityPlanEditor,
@@ -149,7 +154,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
   providers: [
     FacilityOverviewStore,
     FacilityPlansStore,
-    provideIcons({ lucideMap, lucideQrCode, lucideTrash2 }),
+    provideIcons({ lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 }),
   ],
   templateUrl: './facility-detail-page.component.html',
   host: { class: 'block' },
@@ -186,7 +191,7 @@ export class FacilityDetailPage {
   /** Document title channel, kept in sync with the loaded record. */
   private readonly titleService: TitleService = inject<TitleService>(TitleService);
 
-  /** Whether this instance runs in the browser — the failure redirect never fires during SSR. */
+  /** Whether this instance runs in the browser — the Plans tab's first load only fires there. */
   private readonly isBrowser: boolean = isPlatformBrowser(inject<object>(PLATFORM_ID));
 
   /** The route-scoped store carrying the update, archive/restore and delete writes. */
@@ -407,9 +412,10 @@ export class FacilityDetailPage {
    * Settles the open in-place field once its own write clears; once the
    * seeded record lands, re-sets the document title and loads the Overview
    * tab's summary plus (when the facility has children) its descendant
-   * subtree; returns to the organization landing page when the load fails —
-   * the global feedback listener already toasts the failure — returns to the
-   * list once a delete write succeeds — and registers {@link pageActions}.
+   * subtree; a load failure is left to the template's `app-error-state`
+   * branch and {@link retryLoad} — the global feedback listener already
+   * toasts the failure — returns to the list once a delete write succeeds —
+   * and registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
@@ -439,15 +445,6 @@ export class FacilityDetailPage {
             facilityId: facility.id,
           });
         }
-      });
-    });
-
-    effect((): void => {
-      const error: StoreError | null = this.activeFacilityStore.getError();
-      if (error === null || !this.isBrowser) return;
-
-      untracked((): void => {
-        void this.router.navigate(['/organizations', this.organizationId()]);
       });
     });
 
@@ -870,6 +867,20 @@ export class FacilityDetailPage {
     if (facility.id === this.facilityId()) return;
 
     void this.router.navigate(['/organizations', this.organizationId(), 'facilities', facility.id]);
+  }
+
+  /**
+   * Method retryLoad
+   * @description The load-failed state's retry — re-runs {@link ActiveFacilityStore}'s resolve for this record.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected retryLoad(): void {
+    this.activeFacilityStore.resolveFacility({
+      organizationId: this.organizationId(),
+      facilityId: this.facilityId(),
+    });
   }
 
   /**

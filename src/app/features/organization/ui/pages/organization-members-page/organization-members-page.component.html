@@ -138,42 +138,40 @@
           </button>
         </app-error-state>
       } @else if (!store.isLoading() && store.members().length === 0) {
-        <hlm-empty class="border border-dashed">
-          <hlm-empty-header>
-            <hlm-empty-media variant="icon">
-              <ng-icon [name]="hasRosterFilters() ? 'lucideSearch' : 'lucideUsersRound'" />
-            </hlm-empty-media>
-            @if (hasRosterFilters()) {
-              <div hlmEmptyTitle i18n="@@org.members.emptyFilteredTitle">No members match</div>
-              <div hlmEmptyDescription i18n="@@org.members.emptyFilteredText">
-                Adjust your search or the status filter.
-              </div>
-            } @else {
-              <div hlmEmptyTitle i18n="@@org.members.emptyTitle">No members yet</div>
-              <div hlmEmptyDescription i18n="@@org.members.emptyText">
-                Invite someone to give them access to this organization.
-              </div>
-            }
-          </hlm-empty-header>
-          <hlm-empty-content>
-            @if (hasRosterFilters()) {
-              <button
-                hlmBtn
-                variant="outline"
-                class="max-sm:min-h-11"
-                data-testid="organization-members-clear-filters"
-                (click)="clearRosterFilters()"
-              >
-                <span i18n="@@common.clearFilters">Clear filters</span>
-              </button>
-            } @else if (canManageMembers()) {
+        @if (hasRosterFilters()) {
+          <app-empty-state
+            icon="lucideSearch"
+            title="No members match"
+            i18n-title="@@org.members.emptyFilteredTitle"
+            description="Adjust your search or the status filter."
+            i18n-description="@@org.members.emptyFilteredText"
+          >
+            <button
+              hlmBtn
+              variant="outline"
+              class="max-sm:min-h-11"
+              data-testid="organization-members-clear-filters"
+              (click)="clearRosterFilters()"
+            >
+              <span i18n="@@common.clearFilters">Clear filters</span>
+            </button>
+          </app-empty-state>
+        } @else {
+          <app-empty-state
+            icon="lucideUsersRound"
+            title="No members yet"
+            i18n-title="@@org.members.emptyTitle"
+            description="Invite someone to give them access to this organization."
+            i18n-description="@@org.members.emptyText"
+          >
+            @if (canManageMembers()) {
               <button hlmBtn class="max-sm:min-h-11" (click)="openInviteDialog()">
                 <ng-icon name="lucideMailPlus" aria-hidden="true" />
                 <span i18n="@@org.members.inviteButton">Invite member</span>
               </button>
             }
-          </hlm-empty-content>
-        </hlm-empty>
+          </app-empty-state>
+        }
       } @else {
         <app-organization-member-table
           [items]="store.members()"
@@ -225,17 +223,13 @@
             </button>
           </app-error-state>
         } @else if (!store.isLoading() && store.activeInvitations().length === 0) {
-          <hlm-empty class="border border-dashed">
-            <hlm-empty-header>
-              <hlm-empty-media variant="icon">
-                <ng-icon name="lucideMailQuestion" />
-              </hlm-empty-media>
-              <div hlmEmptyTitle i18n="@@org.invitations.emptyTitle">No pending invitations</div>
-              <div hlmEmptyDescription i18n="@@org.invitations.emptyText">
-                Invitations you send will appear here until they are accepted, revoked or expire.
-              </div>
-            </hlm-empty-header>
-          </hlm-empty>
+          <app-empty-state
+            icon="lucideMailQuestion"
+            title="No pending invitations"
+            i18n-title="@@org.invitations.emptyTitle"
+            description="Invitations you send will appear here until they are accepted, revoked or expire."
+            i18n-description="@@org.invitations.emptyText"
+          />
         } @else {
           <app-organization-invitation-table
             [items]="store.activeInvitations()"

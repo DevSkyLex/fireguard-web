@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthStore } from '@features/auth/state';
 import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';
+import { PageHeading } from '@shared/page-heading';
 
 /**
  * Component MfaVerifyPage
@@ -23,7 +24,9 @@ import { resolveReturnUrl } from '@features/auth/utils';
  *
  * A TOTP challenge hides the resend control: an authenticator code is generated
  * on the device, so there is no delivery to repeat, and the backend rejects the
- * resend outright (`FEATURE.md`, auth).
+ * resend outright (`FEATURE.md`, auth). The same absent destination also has no
+ * "sent to" to name, so the template's projected lead falls back to a generic
+ * sentence instead of an empty one.
  *
  * @version 1.0.0
  *
@@ -31,7 +34,7 @@ import { resolveReturnUrl } from '@features/auth/utils';
  */
 @Component({
   selector: 'app-mfa-verify-page',
-  imports: [OtpForm],
+  imports: [OtpForm, PageHeading],
   templateUrl: './mfa-verify-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

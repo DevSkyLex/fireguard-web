@@ -134,6 +134,14 @@
         <source>Failed to load notifications. Please try again later.</source>
         <target>No se pudieron cargar las notificaciones. Inténtalo de nuevo más tarde.</target>
       </trans-unit>
+      <trans-unit id="account.profile.loadingAria" datatype="html">
+        <source>Loading your account</source>
+        <target>Cargando tu cuenta</target>
+      </trans-unit>
+      <trans-unit id="account.security.loadingAria" datatype="html">
+        <source>Loading your security settings</source>
+        <target>Cargando tu configuración de seguridad</target>
+      </trans-unit>
       <trans-unit id="common.retry" datatype="html">
         <source>Retry</source>
         <target>Reintentar</target>
@@ -1846,6 +1854,10 @@
         <source>Retry</source>
         <target>Reintentar</target>
       </trans-unit>
+      <trans-unit id="org.memberProfile.loadingAria" datatype="html">
+        <source>Loading member</source>
+        <target>Cargando miembro</target>
+      </trans-unit>
       <trans-unit id="org.plan.cadenceAria" datatype="html">
         <source>Billing cadence</source>
         <target>Periodicidad de facturación</target>
@@ -3110,6 +3122,10 @@
         <source>Loading…</source>
         <target>Cargando…</target>
       </trans-unit>
+      <trans-unit id="equipment.detail.loadFailedTitle" datatype="html">
+        <source>This equipment could not be opened</source>
+        <target>No se ha podido abrir este equipo</target>
+      </trans-unit>
       <trans-unit id="equipment.detail.loadingAria" datatype="html">
         <source>Loading equipment</source>
         <target>Cargando equipo</target>
@@ -3349,6 +3365,10 @@
       <trans-unit id="facility.detail.loading" datatype="html">
         <source>Loading…</source>
         <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.loadFailedTitle" datatype="html">
+        <source>This facility could not be opened</source>
+        <target>No se ha podido abrir esta instalación</target>
       </trans-unit>
       <trans-unit id="facility.detail.loadingAria" datatype="html">
         <source>Loading facility</source>
@@ -9321,6 +9341,10 @@
         <source>Not available with your permissions.</source>
         <target>No disponible con tus permisos.</target>
       </trans-unit>
+      <trans-unit id="org.statistics.forbiddenTitle" datatype="html">
+        <source>Not available with your permissions</source>
+        <target>No disponible con tus permisos</target>
+      </trans-unit>
       <trans-unit id="org.statistics.error.title" datatype="html">
         <source>Couldn&apos;t load statistics</source>
         <target>No se pudieron cargar las estadísticas</target>
@@ -10276,6 +10300,10 @@
       <trans-unit id="inspection.detail.loading" datatype="html">
         <source>Loading…</source>
         <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.loadFailedTitle" datatype="html">
+        <source>This inspection could not be opened</source>
+        <target>No se ha podido abrir esta inspección</target>
       </trans-unit>
       <trans-unit id="inspection.detail.loadingAria" datatype="html">
         <source>Loading inspection</source>

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@
 import { Router } from '@angular/router';
 import { AuthStore, RegisterStore } from '@features/auth/state';
 import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
+import { PageHeading } from '@shared/page-heading';
 
 /**
  * Component RegisterVerifyPage
@@ -21,7 +22,7 @@ import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
  */
 @Component({
   selector: 'app-register-verify-page',
-  imports: [OtpForm],
+  imports: [OtpForm, PageHeading],
   templateUrl: './register-verify-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

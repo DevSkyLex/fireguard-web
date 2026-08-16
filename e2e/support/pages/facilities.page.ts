@@ -86,6 +86,51 @@ export class FacilitiesPage {
     'facility-plan-overlay-equipment',
   );
 
+  public readonly editorToolbar: Locator = this.page.getByTestId('facility-plan-editor-toolbar');
+  public readonly drawZonePicker: Locator = this.page.getByTestId(
+    'facility-plan-editor-draw-zone-picker',
+  );
+  public readonly placePinPicker: Locator = this.page.getByTestId(
+    'facility-plan-editor-place-pin-picker',
+  );
+  public readonly editorStatus: Locator = this.page.getByTestId('facility-plan-editor-status');
+  public readonly editorUndo: Locator = this.page.getByTestId('facility-plan-editor-undo');
+  public readonly editorClosePolygon: Locator = this.page.getByTestId(
+    'facility-plan-editor-close-polygon',
+  );
+  public readonly editorCancel: Locator = this.page.getByTestId('facility-plan-editor-cancel');
+  public readonly editorStage: Locator = this.page.getByTestId('facility-plan-editor-stage');
+  public readonly zoneList: Locator = this.page.getByTestId('facility-plan-zone-list');
+  public readonly zoneEditButton: Locator = this.page.getByTestId('facility-plan-zone-edit');
+  public readonly equipmentList: Locator = this.page.getByTestId('facility-plan-equipment-list');
+  public readonly pinEditButton: Locator = this.page.getByTestId('facility-plan-pin-edit');
+  public readonly pinRemoveButton: Locator = this.page.getByTestId('facility-plan-pin-remove');
+
+  public readonly zoneGeometryDialog: Locator = this.page.getByTestId(
+    'facility-plan-zone-geometry-dialog',
+  );
+  public readonly zoneGeometryRows: Locator = this.page.getByTestId(
+    'facility-plan-zone-geometry-row',
+  );
+  public readonly zoneGeometrySubmit: Locator = this.page.getByTestId(
+    'facility-plan-zone-geometry-submit',
+  );
+  public readonly zoneGeometryClear: Locator = this.page.getByTestId(
+    'facility-plan-zone-geometry-clear',
+  );
+
+  public readonly pinPositionDialog: Locator = this.page.getByTestId(
+    'facility-plan-pin-position-dialog',
+  );
+  public readonly pinPositionX: Locator = this.page.getByTestId('facility-plan-pin-position-x');
+  public readonly pinPositionY: Locator = this.page.getByTestId('facility-plan-pin-position-y');
+  public readonly pinPositionSubmit: Locator = this.page.getByTestId(
+    'facility-plan-pin-position-submit',
+  );
+  public readonly pinPositionRemove: Locator = this.page.getByTestId(
+    'facility-plan-pin-position-remove',
+  );
+
   public async gotoList(organizationId: string, query = ''): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/facilities${query}`);
   }
@@ -121,5 +166,25 @@ export class FacilitiesPage {
     await this.page
       .locator('[data-testid="facility-plan-list"] input[type="file"]')
       .setInputFiles(file);
+  }
+
+  /** Clicks the editor stage at a fractional position of its rendered box — `(0.5, 0.5)` is its center. */
+  public async clickPlanPoint(fractionX: number, fractionY: number): Promise<void> {
+    const box = await this.editorStage.boundingBox();
+    if (!box) throw new Error('The plan editor stage is not visible.');
+
+    await this.page.mouse.click(box.x + box.width * fractionX, box.y + box.height * fractionY);
+  }
+
+  /** Opens the `draw-zone` picker and selects the given candidate by its visible name. */
+  public async pickDrawZoneTarget(name: string): Promise<void> {
+    await this.drawZonePicker.click();
+    await this.page.getByRole('option', { name }).click();
+  }
+
+  /** Opens the `place-pin` picker and selects the given candidate by its visible name. */
+  public async pickPlaceEquipment(name: string): Promise<void> {
+    await this.placePinPicker.click();
+    await this.page.getByRole('option', { name }).click();
   }
 }

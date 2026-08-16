@@ -11,7 +11,7 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
  * FeedbackEventPayload, picked up by the app-wide feedback listener and
  * rendered as a toast.
  *
- * @version 1.2.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -36,5 +36,17 @@ export const facilityPlansStoreEvents = eventGroup({
     imageLoadFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when fetching the selected plan's overlay fails. */
     overlayLoadFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when saving (drawing/clearing) a zone outline fails. */
+    zoneGeometrySaveFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when a zone outline is drawn or cleared. */
+    zoneGeometrySaveSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when saving (placing/moving/removing) an equipment pin fails. */
+    pinPositionSaveFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when an equipment pin is placed, moved, or removed. */
+    pinPositionSaveSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when fetching the `draw-zone` facility candidates fails. */
+    zoneCandidatesFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when fetching the `place-pin` equipment candidates fails. */
+    facilityEquipmentFailed: type<StoreFailureEventPayload>(),
   },
 });

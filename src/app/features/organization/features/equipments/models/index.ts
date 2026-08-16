@@ -6,6 +6,7 @@ export type {
 export type { CreateEquipmentInput } from './equipment/create-equipment-input.interface';
 export type { UpdateEquipmentInput } from './equipment/update-equipment-input.interface';
 export type { AssignToFacilityInput } from './equipment/assign-to-facility-input.interface';
+export type { SetPlanPositionInput } from './equipment/set-plan-position-input.interface';
 export type { EquipmentMaintenanceDueStatus } from './equipment/equipment-maintenance-due-status.type';
 export type { EquipmentAttachmentOutput } from './equipment-attachment/equipment-attachment-output.interface';
 export type { AddAttachmentInput } from './equipment-attachment/add-attachment-input.interface';

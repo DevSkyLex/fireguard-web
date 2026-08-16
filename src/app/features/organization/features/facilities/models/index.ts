@@ -25,6 +25,7 @@ export type { FacilityAttachmentOutput } from './facility-attachment/facility-at
 export type { FacilityMoveRequest } from './facility-move/facility-move-request.interface';
 export type { FacilityMoveSubmittedEvent } from './facility-move/facility-move-submitted-event.interface';
 export type { FacilityPlanGeometry } from './facility/facility-plan-geometry.interface';
+export type { SetPlanGeometryInput } from './facility/set-plan-geometry-input.interface';
 export type {
   FacilityPlanOverlayOutput,
   FacilityPlanOverlayZone,

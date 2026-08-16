@@ -1,1 +1,1 @@
-export type { FacilityPlansState } from './state.interface';
+export type { FacilityPlansState, FacilityPlanEditMode } from './state.interface';

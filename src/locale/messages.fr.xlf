@@ -11730,6 +11730,130 @@
         <source>Floor plan deleted</source>
         <target>Plan de sol supprimé</target>
       </trans-unit>
+      <trans-unit id="facility.plans.editor.toast.zoneCleared" datatype="html">
+        <source>Zone outline cleared</source>
+        <target>Contour de zone effacé</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.toast.zoneSaved" datatype="html">
+        <source>Zone outline saved</source>
+        <target>Contour de zone enregistré</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.error.zoneConflict" datatype="html">
+        <source>This floor plan is not part of this zone&apos;s facility ancestry.</source>
+        <target>Ce plan de sol ne fait pas partie de l'arborescence de cette zone.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.error.zoneSaveFailed" datatype="html">
+        <source>Failed to save the zone outline</source>
+        <target>Échec de l'enregistrement du contour de zone</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.toast.pinRemoved" datatype="html">
+        <source>Equipment removed from plan</source>
+        <target>Équipement retiré du plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.toast.pinSaved" datatype="html">
+        <source>Equipment position saved</source>
+        <target>Position de l'équipement enregistrée</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.error.pinConflict" datatype="html">
+        <source>This equipment is not assigned to a facility.</source>
+        <target>Cet équipement n'est affecté à aucun établissement.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.error.pinSaveFailed" datatype="html">
+        <source>Failed to save the equipment position</source>
+        <target>Échec de l'enregistrement de la position de l'équipement</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.dragHandleAria" datatype="html">
+        <source>Move <x id="name" equiv-text="name"/>&apos;s pin</source>
+        <target>Déplacer l'épingle de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.pinDialog.title" datatype="html">
+        <source>Edit position</source>
+        <target>Modifier la position</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.pinDialog.xLabel" datatype="html">
+        <source>X (%)</source>
+        <target>X (%)</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.pinDialog.yLabel" datatype="html">
+        <source>Y (%)</source>
+        <target>Y (%)</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.pinDialog.remove" datatype="html">
+        <source>Remove from plan</source>
+        <target>Retirer du plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.title" datatype="html">
+        <source>Edit coordinates</source>
+        <target>Modifier les coordonnées</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.xLabel" datatype="html">
+        <source>X (%)</source>
+        <target>X (%)</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.yLabel" datatype="html">
+        <source>Y (%)</source>
+        <target>Y (%)</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.removeVertexAria" datatype="html">
+        <source>Remove vertex</source>
+        <target>Supprimer le sommet</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.addVertex" datatype="html">
+        <source>Add vertex</source>
+        <target>Ajouter un sommet</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.minVertices" datatype="html">
+        <source>A zone outline needs at least three vertices.</source>
+        <target>Un contour de zone nécessite au moins trois sommets.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.clear" datatype="html">
+        <source>Clear geometry</source>
+        <target>Effacer le contour</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.drawZonePlaceholder" datatype="html">
+        <source>Draw a zone…</source>
+        <target>Dessiner une zone…</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.placePinPlaceholder" datatype="html">
+        <source>Place equipment…</source>
+        <target>Placer un équipement…</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.undo" datatype="html">
+        <source>Undo last vertex</source>
+        <target>Annuler le dernier sommet</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.closePolygon" datatype="html">
+        <source>Close polygon</source>
+        <target>Fermer le polygone</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneListTitle" datatype="html">
+        <source>Zones on this plan</source>
+        <target>Zones sur ce plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.editCoordinates" datatype="html">
+        <source>Edit coordinates</source>
+        <target>Modifier les coordonnées</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.equipmentListTitle" datatype="html">
+        <source>Equipment on this plan</source>
+        <target>Équipements sur ce plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.editPosition" datatype="html">
+        <source>Edit position</source>
+        <target>Modifier la position</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.removeFromPlan" datatype="html">
+        <source>Remove from plan</source>
+        <target>Retirer du plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.status.drawZone" datatype="html">
+        <source>Click the plan to add a vertex (<x id="count" equiv-text="count"/> placed)</source>
+        <target>Cliquez sur le plan pour ajouter un sommet (<x id="count" equiv-text="count"/> placé(s))</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.status.placePin" datatype="html">
+        <source>Click the plan to place the equipment</source>
+        <target>Cliquez sur le plan pour placer l'équipement</target>
+      </trans-unit>
       <trans-unit id="facility.plans.listTitle" datatype="html">
         <source>Floor plans</source>
         <target>Plans</target>

@@ -224,6 +224,43 @@ describe('EquipmentService', () => {
     });
   });
 
+  // ── setPlanPosition ────────────────────────────────────────────────────────
+
+  describe('setPlanPosition', () => {
+    it('should send PUT request with the position body', () => {
+      service
+        .setPlanPosition(orgId, equipmentId, { attachmentId: 'plan-1', x: 0.4, y: 0.6 })
+        .subscribe();
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/${equipmentId}/plan-position`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.body).toEqual({ attachmentId: 'plan-1', x: 0.4, y: 0.6 });
+      req.flush(null);
+    });
+
+    it('should send null fields to clear the position', () => {
+      service
+        .setPlanPosition(orgId, equipmentId, { attachmentId: null, x: null, y: null })
+        .subscribe();
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/${equipmentId}/plan-position`);
+      expect(req.request.body).toEqual({ attachmentId: null, x: null, y: null });
+      req.flush(null);
+    });
+
+    it('should propagate a conflict error', () => {
+      service
+        .setPlanPosition(orgId, equipmentId, { attachmentId: 'plan-1', x: 0.1, y: 0.1 })
+        .subscribe({
+          error: (error: ApiError) => expect(error.status).toBe(409),
+        });
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/${equipmentId}/plan-position`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
+    });
+  });
+
   // ── unassignFromFacility ───────────────────────────────────────────────────
 
   describe('unassignFromFacility', () => {

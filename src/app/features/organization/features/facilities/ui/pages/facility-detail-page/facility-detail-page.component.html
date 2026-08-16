@@ -289,6 +289,125 @@
                 </div>
               }
 
+              @if (canWrite() || canEditEquipment()) {
+                <div
+                  class="flex flex-col gap-2 rounded-md border border-border p-2"
+                  data-testid="facility-plan-editor-toolbar"
+                >
+                  <div class="flex flex-wrap items-center gap-2">
+                    @if (canWrite()) {
+                      <hlm-select
+                        [value]="null"
+                        [disabled]="plans.editMode() !== 'none'"
+                        (valueChange)="onZoneDrawTargetPicked($event)"
+                      >
+                        <hlm-select-trigger
+                          class="w-56"
+                          data-testid="facility-plan-editor-draw-zone-picker"
+                          (click)="onZonePickerOpened()"
+                        >
+                          <hlm-select-value
+                            i18n-placeholder="@@facility.plans.editor.drawZonePlaceholder"
+                            placeholder="Draw a zone…"
+                          />
+                        </hlm-select-trigger>
+                        <hlm-select-content *hlmSelectPortal class="w-56">
+                          <hlm-select-group>
+                            @for (
+                              candidate of plans.availableZoneCandidates();
+                              track candidate.id
+                            ) {
+                              <hlm-select-item [value]="candidate.id">{{
+                                candidate.name
+                              }}</hlm-select-item>
+                            }
+                          </hlm-select-group>
+                        </hlm-select-content>
+                      </hlm-select>
+                    }
+
+                    @if (canEditEquipment()) {
+                      <hlm-select
+                        [value]="null"
+                        [disabled]="plans.editMode() !== 'none'"
+                        (valueChange)="onPlaceEquipmentPicked($event)"
+                      >
+                        <hlm-select-trigger
+                          class="w-56"
+                          data-testid="facility-plan-editor-place-pin-picker"
+                          (click)="onEquipmentPickerOpened()"
+                        >
+                          <hlm-select-value
+                            i18n-placeholder="@@facility.plans.editor.placePinPlaceholder"
+                            placeholder="Place equipment…"
+                          />
+                        </hlm-select-trigger>
+                        <hlm-select-content *hlmSelectPortal class="w-56">
+                          <hlm-select-group>
+                            @for (
+                              candidate of plans.availableEquipmentCandidates();
+                              track candidate.id
+                            ) {
+                              <hlm-select-item [value]="candidate.id">{{
+                                candidate.locationLabel ?? candidate.type
+                              }}</hlm-select-item>
+                            }
+                          </hlm-select-group>
+                        </hlm-select-content>
+                      </hlm-select>
+                    }
+                  </div>
+
+                  @if (plans.editMode() !== 'none') {
+                    <div
+                      class="flex flex-wrap items-center gap-2 text-sm"
+                      role="status"
+                      data-testid="facility-plan-editor-status"
+                    >
+                      <span>{{ editModeStatusLabel() }}</span>
+                      @if (plans.editMode() === 'draw-zone') {
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          data-testid="facility-plan-editor-undo"
+                          [disabled]="plans.draftPoints().length === 0"
+                          (click)="plans.undoDraftVertex()"
+                          i18n="@@facility.plans.editor.undo"
+                        >
+                          Undo last vertex
+                        </button>
+                        <button
+                          hlmBtn
+                          type="button"
+                          size="sm"
+                          data-testid="facility-plan-editor-close-polygon"
+                          [disabled]="
+                            plans.draftPoints().length < 3 || plans.isSavingZoneGeometry()
+                          "
+                          (click)="onPolygonCloseRequested()"
+                          i18n="@@facility.plans.editor.closePolygon"
+                        >
+                          Close polygon
+                        </button>
+                      }
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        data-testid="facility-plan-editor-cancel"
+                        (click)="plans.cancelEditing()"
+                        i18n="@@common.cancel"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+
               <div
                 class="h-[32rem] min-h-0 rounded-md border border-border"
                 data-testid="facility-plan-viewer"
@@ -304,13 +423,20 @@
                       [overlayTemplate]="planOverlayTemplate"
                     />
                     <ng-template #planOverlayTemplate let-scale="scale">
-                      <app-facility-plan-overlay
+                      <app-facility-plan-editor
                         [overlay]="plans.overlay()"
                         [scale]="scale"
                         [showZones]="plans.showZones()"
                         [showEquipment]="plans.showEquipment()"
+                        [editMode]="plans.editMode()"
+                        [draftPoints]="plans.draftPoints()"
+                        [canEditEquipment]="canEditEquipment()"
                         (zoneActivated)="onPlanZoneActivated($event)"
                         (equipmentActivated)="onPlanEquipmentActivated($event)"
+                        (vertexAdded)="onVertexAdded($event)"
+                        (polygonCloseRequested)="onPolygonCloseRequested()"
+                        (pinPlaced)="onPinPlaced($event)"
+                        (pinMoved)="onPinMoved($event)"
                       />
                     </ng-template>
                   } @else {
@@ -325,6 +451,76 @@
                   }
                 }
               </div>
+
+              @if (canWrite() && (plans.overlay()?.zones?.length ?? 0) > 0) {
+                <div class="flex flex-col gap-1" data-testid="facility-plan-zone-list">
+                  <h3
+                    class="text-xs font-medium text-muted-foreground"
+                    i18n="@@facility.plans.editor.zoneListTitle"
+                  >
+                    Zones on this plan
+                  </h3>
+                  @for (zone of plans.overlay()?.zones ?? []; track zone.facilityId) {
+                    <div class="flex items-center justify-between gap-2 text-sm">
+                      <span>{{ zone.name }}</span>
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        data-testid="facility-plan-zone-edit"
+                        [disabled]="plans.editMode() !== 'none'"
+                        (click)="openZoneGeometryDialog(zone.facilityId)"
+                        i18n="@@facility.plans.editor.editCoordinates"
+                      >
+                        Edit coordinates
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+
+              @if (canEditEquipment() && (plans.overlay()?.equipment?.length ?? 0) > 0) {
+                <div class="flex flex-col gap-1" data-testid="facility-plan-equipment-list">
+                  <h3
+                    class="text-xs font-medium text-muted-foreground"
+                    i18n="@@facility.plans.editor.equipmentListTitle"
+                  >
+                    Equipment on this plan
+                  </h3>
+                  @for (pin of plans.overlay()?.equipment ?? []; track pin.equipmentId) {
+                    <div class="flex items-center justify-between gap-2 text-sm">
+                      <span>{{ pin.name }}</span>
+                      <div class="flex items-center gap-2">
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          data-testid="facility-plan-pin-edit"
+                          [disabled]="plans.editMode() !== 'none'"
+                          (click)="openPinPositionDialog(pin.equipmentId)"
+                          i18n="@@facility.plans.editor.editPosition"
+                        >
+                          Edit position
+                        </button>
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          data-testid="facility-plan-pin-remove"
+                          [disabled]="plans.editMode() !== 'none'"
+                          (click)="onPinPositionRemoved(pin.equipmentId)"
+                          i18n="@@facility.plans.editor.removeFromPlan"
+                        >
+                          Remove from plan
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
             </div>
           </div>
         }
@@ -345,6 +541,27 @@
     </div>
   }
 </div>
+
+<app-facility-plan-zone-geometry-dialog
+  [visible]="zoneGeometryDialogFacilityId() !== null"
+  [zoneName]="zoneGeometryDialogZone()?.name ?? ''"
+  [points]="zoneGeometryDialogZone()?.points ?? []"
+  [pending]="plans.isSavingZoneGeometry()"
+  (visibleChange)="onZoneGeometryDialogVisibleChanged($event)"
+  (submitted)="onZoneGeometrySubmitted($event)"
+  (cleared)="onZoneGeometryCleared()"
+/>
+
+<app-facility-plan-pin-position-dialog
+  [visible]="pinPositionDialogEquipmentId() !== null"
+  [equipmentName]="pinPositionDialogPin()?.name ?? ''"
+  [x]="pinPositionDialogPin()?.x ?? 0.5"
+  [y]="pinPositionDialogPin()?.y ?? 0.5"
+  [pending]="plans.isSavingPinPosition()"
+  (visibleChange)="onPinPositionDialogVisibleChanged($event)"
+  (submitted)="onPinPositionSubmitted($event)"
+  (removed)="onPinPositionRemoved(pinPositionDialogEquipmentId() ?? '')"
+/>
 
 <hlm-alert-dialog
   [state]="deleteDialogState()"

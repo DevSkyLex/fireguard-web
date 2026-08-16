@@ -1,0 +1,117 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-md"
+    data-testid="facility-plan-zone-geometry-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@facility.plans.editor.zoneDialog.title">Edit coordinates</h3>
+      <p hlmDialogDescription>{{ zoneName() }}</p>
+    </hlm-dialog-header>
+
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-xs text-muted-foreground">
+        <span class="flex-1" i18n="@@facility.plans.editor.zoneDialog.xLabel">X (%)</span>
+        <span class="flex-1" i18n="@@facility.plans.editor.zoneDialog.yLabel">Y (%)</span>
+        <span class="w-9"></span>
+      </div>
+      @for (row of rows(); track $index) {
+        <div class="flex items-center gap-2" data-testid="facility-plan-zone-geometry-row">
+          <input
+            hlmInput
+            type="number"
+            step="0.1"
+            min="0"
+            max="100"
+            class="flex-1"
+            data-testid="facility-plan-zone-geometry-row-x"
+            i18n-aria-label="@@facility.plans.editor.zoneDialog.xLabel"
+            aria-label="X (%)"
+            [value]="row.x"
+            [disabled]="pending()"
+            (input)="updateRow($index, 'x', $any($event.target).value)"
+          />
+          <input
+            hlmInput
+            type="number"
+            step="0.1"
+            min="0"
+            max="100"
+            class="flex-1"
+            data-testid="facility-plan-zone-geometry-row-y"
+            i18n-aria-label="@@facility.plans.editor.zoneDialog.yLabel"
+            aria-label="Y (%)"
+            [value]="row.y"
+            [disabled]="pending()"
+            (input)="updateRow($index, 'y', $any($event.target).value)"
+          />
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            data-testid="facility-plan-zone-geometry-row-remove"
+            i18n-aria-label="@@facility.plans.editor.zoneDialog.removeVertexAria"
+            aria-label="Remove vertex"
+            [disabled]="pending()"
+            (click)="removeRow($index)"
+          >
+            <ng-icon name="lucideTrash2" aria-hidden="true" />
+          </button>
+        </div>
+      }
+
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="self-start"
+        data-testid="facility-plan-zone-geometry-add-row"
+        [disabled]="pending()"
+        (click)="addRow()"
+      >
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+        <span i18n="@@facility.plans.editor.zoneDialog.addVertex">Add vertex</span>
+      </button>
+
+      @if (rows().length > 0 && rows().length < 3) {
+        <p
+          class="text-xs text-destructive"
+          role="alert"
+          i18n="@@facility.plans.editor.zoneDialog.minVertices"
+        >
+          A zone outline needs at least three vertices.
+        </p>
+      }
+    </div>
+
+    <hlm-dialog-footer class="justify-between">
+      <button
+        hlmBtn
+        type="button"
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="facility-plan-zone-geometry-clear"
+        [disabled]="pending() || rows().length === 0"
+        (click)="requestClear()"
+        i18n="@@facility.plans.editor.zoneDialog.clear"
+      >
+        Clear geometry
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="facility-plan-zone-geometry-submit"
+        [disabled]="pending() || !canSubmit()"
+        (click)="submit()"
+      >
+        @if (pending()) {
+          <hlm-spinner class="size-3.5" aria-hidden="true" />
+        }
+        <span i18n="@@common.save">Save</span>
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

@@ -149,7 +149,7 @@ browser object URL (`planImageUrl`), revoking the previous one on every
 change and on destroy; `app-plan-viewer`'s `src` is fed `planImageUrl`, not
 the attachment record.
 
-## Plan Overlay (Read-Only)
+## Plan Overlay (Read Side)
 
 The same `withHooks` effect that fetches `planImageUrl` also fetches the
 selected plan's **read-only** zone/equipment overlay through
@@ -199,6 +199,86 @@ and outputs only, no store or service — and the page owns the navigation on
 `hlm-switch` chips above the viewer, shown only when
 `FacilityPlansStore.overlayHasContent()` — no zones and no equipment renders
 no toggle chrome at all.
+
+## Plan Editor (Write Side)
+
+`FacilityService.setPlanGeometry` (`PUT
+/api/organizations/{organizationId}/facilities/{facilityId}/plan-geometry`)
+and `EquipmentService.setPlanPosition` (`PUT
+/api/organizations/{organizationId}/equipment/{equipmentId}/plan-position`,
+the sibling `equipments` feature's transport — this feature already depends
+on its data-access for `FacilityOverviewStore`'s equipment summary, extended
+here for the same reason: equipment placement is organization-scoped
+equipment data, not facility data) write or clear a zone outline / an
+equipment pin. Both bodies pass `null` fields to clear rather than delete
+through a separate endpoint. `FacilityPlansStore` owns the write: named
+`saveZoneGeometryCallState`/`savePinPositionCallState`, an `editMode: 'none'
+| 'draw-zone' | 'place-pin'` with an in-progress `draftPoints` draft, and two
+lazily-loaded, guarded candidate lists — `zoneCandidates` (this facility's
+direct children of type `zone`/`area`, via `FacilityService.listChildren`)
+and `facilityEquipment` (this facility's assigned equipment, via
+`EquipmentService.listByFacility`) — each narrowed by a computed
+(`availableZoneCandidates`/`availableEquipmentCandidates`) to the ones the
+loaded overlay does not already show. A successful write reloads the
+overlay (`loadOverlay`, the same rxMethod the `withHooks` effect uses) so
+the plan reflects the change without a page refresh; a 409 is reworded
+client-side into the ancestry ("this floor plan is not part of this zone's
+facility ancestry") or assignment ("this equipment is not assigned to a
+facility") constraint the backend enforces, since the raw `detail` is not
+guaranteed to be member-facing.
+
+`ui/components/facility-plan-editor` (`FacilityPlanEditor`) wraps the
+read-only `FacilityPlanOverlay` unchanged — that component stays exactly as
+documented above, still presentational, still never navigating itself — and
+adds the pointer affordances on top: an image-sized `#stage` element doubles
+as the tap surface for `draw-zone`/`place-pin` (pointer-events toggled by
+`editMode`) and as the geometry reference every screen-to-normalized
+conversion reads (its rendered `getBoundingClientRect` already reflects the
+current zoom, since it sits inside the same transformed stage). A tap is
+distinguished from the plan viewer's own drag-pan by travel distance
+(`utils/draft-polygon`'s `isTapGesture`) rather than by suppressing the
+viewer's `pointerdown` — a stationary click produces a zero-delta pan the
+viewer already no-ops, so both coexist. Double-click closes a `draw-zone`
+outline at three or more vertices; the "Close polygon" toolbar button is the
+same action without timing-sensitive gesture recognition, and is what the
+e2e suite drives. Drag-to-move renders one transparent handle per existing
+equipment pin (only when `canEditEquipment` and `editMode` is `'none'`); its
+`pointerup` reinterprets a tap with no intervening `pointermove` as
+`equipmentActivated` — the click the read pin button underneath would have
+handled had the handle not intercepted it — so plain navigation still works
+for equipment-write members, and only an actual drag emits `pinMoved`.
+`FacilityPlanEditor` is presentational like its wrapped overlay: inputs and
+outputs only, the page owns every store call.
+
+The **non-pointer path** — required, not an afterthought — is two dialogs:
+`ui/dialogs/facility-plan-zone-geometry-dialog` (`FacilityPlanZoneGeometryDialog`,
+a table of percent x/y rows with add/remove, prefilled from the zone's
+current outline, plus a "Clear geometry" action) and
+`ui/dialogs/facility-plan-pin-position-dialog`
+(`FacilityPlanPinPositionDialog`, two percent x/y fields plus "Remove from
+plan"). Coordinates display as **percent (0–100%, one decimal step)** rather
+than the wire format's raw `[0, 1]` — more legible for a member checking a
+vertex by eye — converted at the dialog's input/output boundary; the
+conversion is a same-file private function in each dialog rather than a
+shared util (rule of three, `ARCHITECTURE.md` §2.9: two call sites so far).
+Both dialogs hold their draft rows as plain `WritableSignal`s rather than
+Signal Forms — a dynamic add/remove row list has no array-field precedent
+elsewhere in this app, and the two-field/list-of-pairs shape did not
+obviously fit the schema-per-fixed-record model `form()` is built for; this
+is a deliberate, flagged deviation from `ARCHITECTURE.md` §10.4, revisit if
+a real precedent for a dynamic Signal Forms array appears.
+
+Every editor entry point is permission-gated: `canWrite`
+(`FACILITIES_WRITE`) for drawing/editing/clearing a zone outline, a second
+`canEditEquipment` (`EQUIPMENT_WRITE`) computed on the page for
+placing/dragging/editing/removing an equipment pin — the toolbar, the picker
+selects, the per-row "Edit coordinates"/"Edit position"/"Remove from plan"
+buttons and the drag handles all read one or the other; a read-only member
+sees no editor affordance at all, only the read overlay from the section
+above. Escape (cancel) and Backspace (undo the last `draw-zone` vertex) are
+listened globally on the page (`@HostListener('document:keydown', …)`)
+rather than on the plan viewer stage, so they work regardless of which
+control currently holds focus while a mode is active.
 
 ## Facility Listing (Roots-Only DataView)
 
@@ -343,6 +423,10 @@ Primary services:
 - Depends on organization route context from the parent organization feature.
 - The Plans tab consumes `@shared/plan-viewer`'s `app-plan-viewer` (pan/zoom
   raster viewer, domain-agnostic) for the selected floor plan's image.
+- `FacilityPlansStore` injects `equipments`' `EquipmentService` directly
+  (`listByFacility`, `setPlanPosition`) — the same cross-feature dependency
+  `FacilityOverviewStore` already takes on that data-access, extended here
+  since equipment placement is equipment data, not facility data.
 - Consumes `ListPagination` from the parent `features/organization` feature
   (`@features/organization/ui/components`) for the list page's shared pagination band — see
   `organization/FEATURE.md` § UI Conventions.
@@ -401,5 +485,7 @@ organization-scoped read never carries `revision`, then sends the required
 - Facility resolvers and facility page orchestration belong here, not in the parent feature or layouts.
 - At most one floor plan is primary per facility; setting a new primary must reflect the swap on both plans without a re-fetch (mirrors the backend's atomic unset).
 - The Plans tab loads only when activated and only in the browser — it is secondary content, never part of the resolver's seeded fetch.
-- The plan overlay is read-only in this pass; editing zone/equipment placement is a separate, later stacked branch.
+- `FacilityPlanOverlay` stays read-only and presentational — it never gains a store, a service, or navigation of its own; every editor affordance lives in `FacilityPlanEditor` (which wraps it) and the page.
+- Drawing a zone outline requires at least three vertices, mirrored client-side (`isClosablePolygon`) ahead of the backend's own check.
+- Every editor write is permission-gated: `FACILITIES_WRITE` for a zone outline, `EQUIPMENT_WRITE` for an equipment pin — never inferred from the other.
 - `FacilityPlanOverlay` never injects a store or service, and never navigates itself — it emits, the page navigates.

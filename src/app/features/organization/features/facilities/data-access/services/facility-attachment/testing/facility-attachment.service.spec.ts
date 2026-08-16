@@ -36,7 +36,6 @@ describe('FacilityAttachmentService', () => {
     fileName: 'ground-floor.png',
     mimeType: 'image/png',
     size: 2048,
-    url: '/api/facility-attachments/attachment-1/download',
     kind: 'floor_plan',
     isPrimaryPlan: false,
     imageWidth: 1200,
@@ -137,6 +136,20 @@ describe('FacilityAttachmentService', () => {
       expect(request.request.method).toBe('DELETE');
       expect(request.request.headers.get('If-Match')).toBe('"revision-3"');
       request.flush(null);
+    });
+  });
+
+  describe('download', () => {
+    it('reads the attachment bytes as a blob', () => {
+      const bytes = new Blob(['plan-bytes'], { type: 'image/png' });
+
+      service.download(mockAttachment.id).subscribe((result) => expect(result).toEqual(bytes));
+
+      const request = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/facility-attachments/${mockAttachment.id}/download`,
+      );
+      expect(request.request.method).toBe('GET');
+      request.flush(bytes);
     });
   });
 });

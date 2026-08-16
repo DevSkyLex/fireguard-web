@@ -137,6 +137,18 @@ setting a new primary can flip both the previous and the new plan's
 re-fetch. `selectedPlan` defaults to the primary plan, then the first
 uploaded one, until a row is explicitly selected.
 
+`FacilityAttachmentOutput` carries no download URL — bytes are only ever
+served at `GET /api/facility-attachments/{id}/download`
+(`Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`,
+bearer-authenticated), never as a resource field, mirroring
+`InterventionAttachmentOutput`/`InterventionService.downloadAttachment`.
+`FacilityAttachmentService.download` reads that route with `responseType:
+'blob'`. `FacilityPlansStore` reacts to `selectedPlan` changing (a
+`withHooks` effect) by fetching that plan's bytes and republishing them as a
+browser object URL (`planImageUrl`), revoking the previous one on every
+change and on destroy; `app-plan-viewer`'s `src` is fed `planImageUrl`, not
+the attachment record.
+
 ## Facility Listing (Roots-Only DataView)
 
 The facility list page presents the organization's **root** facilities as a

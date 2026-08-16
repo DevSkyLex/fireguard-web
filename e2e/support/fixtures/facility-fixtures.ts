@@ -133,12 +133,11 @@ export function complianceTreeNodeOutput(
 export const E2E_FACILITY_PLAN_ID = 'e2e-facility-plan-1';
 
 /**
- * The e2e build's mocked backend origin (mirrors `ApiMock.API_BASE_URL`).
- * `FacilityAttachmentOutput.url` is absolute, like every other backend-served
- * asset URL in this app (`AvatarUrls`) — the image loads directly from it.
+ * `FacilityAttachmentOutputFixture` carries no download URL — like the real
+ * backend DTO, the bytes are only ever read through `GET
+ * /api/facility-attachments/{id}/download`
+ * (`ApiMock.mockFacilityPlans`), never a field on the resource itself.
  */
-const E2E_API_BASE_URL = 'http://localhost:8000';
-
 export interface FacilityAttachmentOutputFixture {
   readonly '@id': string;
   readonly '@type': string;
@@ -147,7 +146,6 @@ export interface FacilityAttachmentOutputFixture {
   readonly fileName: string;
   readonly mimeType: string;
   readonly size: number;
-  readonly url: string;
   readonly kind: string;
   readonly isPrimaryPlan: boolean;
   readonly imageWidth: number | null;
@@ -170,7 +168,6 @@ export function facilityAttachmentOutput(
     fileName: 'ground-floor.png',
     mimeType: 'image/png',
     size: 4096,
-    url: `${E2E_API_BASE_URL}/api/facility-attachments/${id}/download`,
     kind: 'floor_plan',
     isPrimaryPlan: true,
     imageWidth: 1200,

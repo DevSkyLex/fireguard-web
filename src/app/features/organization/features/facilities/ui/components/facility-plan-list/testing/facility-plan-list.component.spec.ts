@@ -11,7 +11,6 @@ const plan = (overrides: Partial<FacilityAttachmentOutput> = {}): FacilityAttach
   fileName: 'ground-floor.png',
   mimeType: 'image/png',
   size: 2048,
-  url: '/api/facility-attachments/plan-1/download',
   kind: 'floor_plan',
   isPrimaryPlan: false,
   imageWidth: 1200,

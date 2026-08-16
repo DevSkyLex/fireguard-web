@@ -10,9 +10,13 @@ import type { FacilityAttachmentKind } from './facility-attachment-kind.type';
  * `FacilityAttachmentOutput`. A `floor_plan` carries `imageWidth`/
  * `imageHeight` when the backend could probe them (null for an SVG or a
  * probe failure); a `document` never does. At most one `floor_plan` per
- * facility has `isPrimaryPlan: true`.
+ * facility has `isPrimaryPlan: true`. Carries no download URL of its own —
+ * the bearer-authenticated `GET /api/facility-attachments/{id}/download`
+ * route (`Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`)
+ * is read through `FacilityAttachmentService.download`, mirroring
+ * `InterventionAttachmentOutput`.
  *
- * @since 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -32,9 +36,6 @@ export interface FacilityAttachmentOutput extends HydraItem {
 
   /** Size in bytes. */
   readonly size: number;
-
-  /** Absolute, cookie-authenticated URL serving the file's binary content — usable directly as an `<img src>`. */
-  readonly url: string;
 
   /** `document` (default) or `floor_plan`. */
   readonly kind: FacilityAttachmentKind;

@@ -6,6 +6,15 @@ import { FacilityAttachmentService } from '@features/organization/features/facil
 import type { FacilityAttachmentOutput } from '@features/organization/features/facilities/models';
 import { FacilityPlansStore, type FacilityPlansStoreType } from '../facility-plans.store';
 
+const flushEffects = async (): Promise<void> => {
+  const testBedWithFlush = TestBed as typeof TestBed & {
+    flushEffects?: () => void;
+  };
+
+  testBedWithFlush.flushEffects?.();
+  await Promise.resolve();
+};
+
 const apiError = (status: number, detail: string): ApiError => ({
   '@id': '',
   '@type': 'Error',
@@ -23,7 +32,6 @@ const plan = (overrides: Partial<FacilityAttachmentOutput> = {}): FacilityAttach
   fileName: 'ground-floor.png',
   mimeType: 'image/png',
   size: 2048,
-  url: '/api/facility-attachments/plan-1/download',
   kind: 'floor_plan',
   isPrimaryPlan: false,
   imageWidth: 1200,
@@ -40,6 +48,7 @@ describe('FacilityPlansStore', () => {
     upload: ReturnType<typeof vi.fn>;
     setPrimary: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
+    download: ReturnType<typeof vi.fn>;
   };
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
 
@@ -49,8 +58,14 @@ describe('FacilityPlansStore', () => {
       upload: vi.fn(),
       setPrimary: vi.fn(),
       remove: vi.fn(),
+      download: vi.fn().mockReturnValue(of(new Blob(['plan'], { type: 'image/png' }))),
     };
     mockDispatcher = { dispatch: vi.fn() };
+
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(
+      (): string => `blob:${Math.random().toString(36).slice(2)}`,
+    );
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation((): void => undefined);
 
     TestBed.configureTestingModule({
       providers: [
@@ -67,6 +82,7 @@ describe('FacilityPlansStore', () => {
     expect(store.orderedPlans()).toEqual([]);
     expect(store.selectedPlan()).toBeNull();
     expect(store.isLoading()).toBe(false);
+    expect(store.planImageUrl()).toBeNull();
   });
 
   describe('load', () => {
@@ -203,6 +219,69 @@ describe('FacilityPlansStore', () => {
       store.selectPlan('plan-2');
 
       expect(store.selectedPlan()?.id).toBe('plan-2');
+    });
+  });
+
+  describe('image loading', () => {
+    it('fetches the selected plan bytes and republishes them as an object URL', async () => {
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan({ id: 'plan-1', isPrimaryPlan: true })],
+          totalItems: 1,
+        }),
+      );
+
+      store.load({ facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(mockService.download).toHaveBeenCalledWith('plan-1');
+      expect(store.planImageUrl()).toMatch(/^blob:/);
+      expect(store.imageCallState().status).toBe('success');
+    });
+
+    it('revokes the previous object URL when the selection changes', async () => {
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [
+            plan({ id: 'plan-1', isPrimaryPlan: true }),
+            plan({ id: 'plan-2', fileName: 'level-2.png' }),
+          ],
+          totalItems: 2,
+        }),
+      );
+      store.load({ facilityId: 'facility-1' });
+      await flushEffects();
+      const firstUrl = store.planImageUrl();
+
+      store.selectPlan('plan-2');
+      await flushEffects();
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(firstUrl);
+      expect(mockService.download).toHaveBeenCalledWith('plan-2');
+      expect(store.planImageUrl()).not.toBe(firstUrl);
+    });
+
+    it('surfaces the image download error without touching the plan list', async () => {
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan({ id: 'plan-1', isPrimaryPlan: true })],
+          totalItems: 1,
+        }),
+      );
+      mockService.download.mockReturnValue(throwError(() => apiError(404, 'not found')));
+
+      store.load({ facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(store.imageCallState().status).toBe('error');
+      expect(store.planImageUrl()).toBeNull();
+      expect(mockDispatcher.dispatch).toHaveBeenCalled();
     });
   });
 });

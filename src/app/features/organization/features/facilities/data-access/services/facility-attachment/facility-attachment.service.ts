@@ -129,4 +129,31 @@ export class FacilityAttachmentService extends HydraApiService {
       headers: { 'If-Match': `"revision-${revision}"` },
     });
   }
+
+  /**
+   * Method download
+   * @method download
+   *
+   * @description
+   * Reads one attachment's binary content
+   * (`GET /api/facility-attachments/{id}/download`). The route is
+   * bearer-authenticated and forces `Content-Disposition: attachment`, so a
+   * bare `<a href>` or `<img src>` cannot carry it — the caller reads the
+   * resulting `Blob` and derives an object URL. Calls `this.http` directly,
+   * like `upload`, for a response shape (`responseType: 'blob'`) the base
+   * class does not support — mirrors `InterventionService.downloadAttachment`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} attachmentId - attachment Id value.
+   *
+   * @return {Observable<Blob>} The attachment's binary content.
+   */
+  public download(attachmentId: string): Observable<Blob> {
+    return this.http.get(this.buildUrl(`/api/facility-attachments/${attachmentId}/download`), {
+      responseType: 'blob',
+      withCredentials: true,
+    });
+  }
 }

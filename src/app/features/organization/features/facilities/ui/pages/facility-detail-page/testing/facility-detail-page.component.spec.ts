@@ -84,7 +84,6 @@ const plan = (overrides: Partial<FacilityAttachmentOutput> = {}): FacilityAttach
   fileName: 'ground-floor.png',
   mimeType: 'image/png',
   size: 2048,
-  url: '/api/facility-attachments/plan-1/download',
   kind: 'floor_plan',
   isPrimaryPlan: false,
   imageWidth: 1200,
@@ -114,6 +113,7 @@ describe('FacilityDetailPage', () => {
   let planSelectPlan: ReturnType<typeof vi.fn>;
   let orderedPlans: WritableSignal<readonly FacilityAttachmentOutput[]>;
   let selectedPlan: WritableSignal<FacilityAttachmentOutput | null>;
+  let planImageUrl: WritableSignal<string | null>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(FacilityDetailPage);
@@ -144,6 +144,7 @@ describe('FacilityDetailPage', () => {
     planSelectPlan = vi.fn();
     orderedPlans = signal<readonly FacilityAttachmentOutput[]>([]);
     selectedPlan = signal<FacilityAttachmentOutput | null>(null);
+    planImageUrl = signal<string | null>(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -192,6 +193,7 @@ describe('FacilityDetailPage', () => {
             useValue: {
               orderedPlans,
               selectedPlan,
+              planImageUrl,
               isLoading: signal(false),
               isUploading: signal(false),
               settingPrimaryId: signal<string | null>(null),
@@ -451,6 +453,7 @@ describe('FacilityDetailPage', () => {
     it('should show the plan viewer and the plan list once a plan exists', async () => {
       orderedPlans.set([plan({ isPrimaryPlan: true })]);
       selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
       await createPage();
 
       byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));

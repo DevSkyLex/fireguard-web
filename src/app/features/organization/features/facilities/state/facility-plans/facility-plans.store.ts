@@ -1,6 +1,15 @@
-import { computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntity,
   removeEntity,
@@ -34,8 +43,8 @@ import type { FacilityPlansState } from './models';
  * @const INITIAL_STATE
  *
  * @description
- * Seeds {@link FacilityPlansState}. Entity state (`planEntities`,
- * `planEntityMap`, `planIds`) is initialised by `withEntities`.
+ * Seeds {@link FacilityPlansState}. Entity state (planEntities,
+ * planEntityMap, planIds) is initialised by withEntities.
  *
  * @since 1.0.0
  */
@@ -44,9 +53,11 @@ const INITIAL_STATE: FacilityPlansState = {
   uploadCallState: idleCallState(),
   setPrimaryCallState: idleCallState(),
   deleteCallState: idleCallState(),
+  imageCallState: idleCallState(),
   settingPrimaryId: null,
   deletingId: null,
   selectedPlanId: null,
+  planImageUrl: null,
 };
 //#endregion
 
@@ -56,20 +67,23 @@ const INITIAL_STATE: FacilityPlansState = {
  *
  * @description
  * Component-scoped store for the facility detail page's Plans tab: the
- * floor-plan attachments (`kind: 'floor_plan'`) of one facility, their
+ * floor-plan attachments (kind: 'floor_plan') of one facility, their
  * upload, primary selection and deletion. Provided on the tab, not the
  * route, since the data is secondary content loaded only once the tab opens
- * (`ARCHITECTURE.md` §12.4).
+ * (ARCHITECTURE.md section 12.4).
  *
- * @example
- * ```typescript
- * @Component({ providers: [FacilityPlansStore] })
- * export class FacilityDetailPage {
- *   readonly plans = inject(FacilityPlansStore);
- * }
- * ```
+ * The selected plan's image bytes are neither in the attachment's output DTO
+ * nor reachable from a plain img src: GET
+ * /api/facility-attachments/{id}/download is bearer-authenticated and
+ * forces Content-Disposition: attachment. withHooks therefore fetches the
+ * selected plan's bytes as a Blob whenever selectedPlan changes, and
+ * exposes them to app-plan-viewer as a browser object URL (planImageUrl),
+ * revoking the previous one on every change and on destroy. Browser-only:
+ * URL.createObjectURL has no server counterpart, and the effect never fires
+ * during SSR since load (the only way planEntities stops being empty) is
+ * itself only ever called from the page once isBrowser is true.
  *
- * @since 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -126,14 +140,15 @@ export const FacilityPlansStore = signalStore(
       store,
       service: FacilityAttachmentService = inject(FacilityAttachmentService),
       dispatcher: Dispatcher = inject(Dispatcher),
+      platformId: object = inject(PLATFORM_ID),
     ) => ({
       /**
        * Method load
        * @method load
        *
        * @description
-       * Fetches the facility's floor plans (`kind=floor_plan`). Cancels any
-       * in-flight request via `switchMap`.
+       * Fetches the facility's floor plans (kind=floor_plan). Cancels any
+       * in-flight request via switchMap.
        *
        * @since 1.0.0
        *
@@ -172,7 +187,7 @@ export const FacilityPlansStore = signalStore(
        * @method upload
        *
        * @description
-       * Uploads one image as a floor plan (`kind: 'floor_plan'`).
+       * Uploads one image as a floor plan (kind: 'floor_plan').
        *
        * @since 1.0.0
        *
@@ -350,8 +365,94 @@ export const FacilityPlansStore = signalStore(
       selectPlan(planId: string): void {
         patchState(store, { selectedPlanId: planId });
       },
+
+      /**
+       * Method loadImage
+       * @method loadImage
+       *
+       * @description
+       * Fetches one plan's binary content (GET
+       * /api/facility-attachments/{id}/download) and republishes it as a
+       * browser object URL in planImageUrl, revoking whichever object URL
+       * was there before. A no-op outside the browser platform, since
+       * URL.createObjectURL has no server counterpart.
+       *
+       * @since 1.1.0
+       *
+       * @type {RxMethod<{ attachmentId: string }>}
+       */
+      loadImage: rxMethod<{ attachmentId: string }>(
+        pipe(
+          tap((): void => {
+            patchState(store, { imageCallState: pendingCallState() });
+          }),
+          switchMap(({ attachmentId }) =>
+            service.download(attachmentId).pipe(
+              tapResponse({
+                next: (blob: Blob): void => {
+                  if (!isPlatformBrowser(platformId)) return;
+
+                  const previous: string | null = store.planImageUrl();
+                  if (previous) URL.revokeObjectURL(previous);
+
+                  patchState(store, {
+                    planImageUrl: URL.createObjectURL(blob),
+                    imageCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { imageCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.imageLoadFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load the floor plan image'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
     }),
   ),
+
+  withHooks((store) => {
+    let previousSelectedId: string | null = null;
+
+    return {
+      /**
+       * Reacts to `selectedPlan` changes by fetching that plan's image
+       * bytes and republishing them as an object URL, revoking whichever
+       * object URL preceded it.
+       */
+      onInit(): void {
+        effect((): void => {
+          const selected: FacilityAttachmentOutput | null = store.selectedPlan();
+          const nextId: string | null = selected?.id ?? null;
+          if (nextId === previousSelectedId) return;
+
+          previousSelectedId = nextId;
+          untracked((): void => {
+            if (nextId) {
+              store.loadImage({ attachmentId: nextId });
+
+              return;
+            }
+
+            const previous: string | null = store.planImageUrl();
+            if (previous) URL.revokeObjectURL(previous);
+            patchState(store, { planImageUrl: null, imageCallState: idleCallState() });
+          });
+        });
+      },
+      /** Revokes the last live object URL so the store never leaks one. */
+      onDestroy(): void {
+        const url: string | null = store.planImageUrl();
+        if (url) URL.revokeObjectURL(url);
+      },
+    };
+  }),
 );
 
 /**
@@ -359,7 +460,7 @@ export const FacilityPlansStore = signalStore(
  * @type FacilityPlansStoreType
  *
  * @description
- * Instance type of the {@link FacilityPlansStore} signal store.
+ * Instance type of the FacilityPlansStore signal store.
  *
  * @since 1.0.0
  */

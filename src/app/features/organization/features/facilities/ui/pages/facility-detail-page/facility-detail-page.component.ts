@@ -48,6 +48,7 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { FacilityHierarchyChart } from '../../components/facility-hierarchy-chart';
 import { FacilityInformationPanel } from '../../components/facility-information-panel';
@@ -109,6 +110,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     PlanViewer,
     HlmButton,
     HlmSkeleton,
+    ...HlmSpinnerImports,
     ...HlmAlertDialogImports,
     ...HlmCardImports,
     ...HlmTabsImports,

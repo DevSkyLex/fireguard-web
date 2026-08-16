@@ -592,9 +592,10 @@ export class ApiMock {
    * one route, matching on method the way `mockFacilityPlanDelete` matches
    * `DELETE` — the Plans tab's list and its own upload response. `uploaded`,
    * when given, is returned for the upload; otherwise a fixed fixture is
-   * used. Every plan's `url` (and the upload response's) is also mocked with
-   * a tiny inline PNG, so `PlanViewer`'s `<img>` actually loads instead of
-   * settling into its error state.
+   * used. `GET /api/facility-attachments/{id}/download` is also mocked with
+   * a tiny inline PNG for every attachment id, so `FacilityPlansStore`'s
+   * `loadImage` — the only source of `PlanViewer`'s `src` — actually
+   * resolves instead of settling into the viewer's error state.
    */
   public async mockFacilityPlans(
     facilityId: string,

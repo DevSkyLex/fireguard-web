@@ -8,10 +8,10 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
  *
  * @description
  * Facility plans store events. Failure and success events both carry a
- * `FeedbackEventPayload`, picked up by the app-wide feedback listener and
+ * FeedbackEventPayload, picked up by the app-wide feedback listener and
  * rendered as a toast.
  *
- * @since 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -32,5 +32,7 @@ export const facilityPlansStoreEvents = eventGroup({
     deleteFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when a plan is deleted. */
     deleteSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when fetching the selected plan's image bytes fails. */
+    imageLoadFailed: type<StoreFailureEventPayload>(),
   },
 });

@@ -8,9 +8,10 @@ import type { FacilityAttachmentOutput } from '@features/organization/features/f
  * @description
  * Auxiliary state for {@link FacilityPlansStore}. The plan entities
  * themselves are managed by `withEntities` — this interface only covers the
- * per-action call states and the selection.
+ * per-action call states, the selection, and the selected plan's decoded
+ * image bytes.
  *
- * @since 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -27,6 +28,9 @@ export interface FacilityPlansState {
   /** Tracks the delete request. */
   readonly deleteCallState: CallState;
 
+  /** Tracks the selected plan's image download. */
+  readonly imageCallState: CallState;
+
   /** Id of the plan whose set-primary write is in flight, so only that row locks. */
   readonly settingPrimaryId: string | null;
 
@@ -35,4 +39,12 @@ export interface FacilityPlansState {
 
   /** The plan the tab is showing; null defers to the primary-first default. */
   readonly selectedPlanId: string | null;
+
+  /**
+   * The selected plan's decoded image bytes as a browser object URL, fed to
+   * `app-plan-viewer`'s `src`; null while unloaded, loading, or the platform
+   * is not the browser. Revoked whenever the selection changes and on
+   * destroy — see `withHooks` in {@link FacilityPlansStore}.
+   */
+  readonly planImageUrl: string | null;
 }

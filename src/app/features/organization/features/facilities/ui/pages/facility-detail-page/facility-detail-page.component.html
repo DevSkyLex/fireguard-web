@@ -253,13 +253,19 @@
               data-testid="facility-plan-viewer"
             >
               @if (plans.selectedPlan(); as selected) {
-                <app-plan-viewer
-                  [src]="selected.url"
-                  alt="Floor plan: {{ selected.fileName }}"
-                  i18n-alt="@@facility.plans.viewerAlt"
-                  [naturalWidth]="selected.imageWidth"
-                  [naturalHeight]="selected.imageHeight"
-                />
+                @if (plans.planImageUrl(); as imageUrl) {
+                  <app-plan-viewer
+                    [src]="imageUrl"
+                    alt="Floor plan: {{ selected.fileName }}"
+                    i18n-alt="@@facility.plans.viewerAlt"
+                    [naturalWidth]="selected.imageWidth"
+                    [naturalHeight]="selected.imageHeight"
+                  />
+                } @else {
+                  <div class="flex h-full items-center justify-center">
+                    <hlm-spinner size="lg" aria-hidden="true" />
+                  </div>
+                }
               }
             </div>
           </div>

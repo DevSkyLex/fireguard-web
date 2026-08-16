@@ -93,11 +93,25 @@
       </div>
 
       @if (store.complianceVisible()) {
-        <app-facility-compliance-worst-sites
-          class="md:w-72 md:shrink-0"
-          [facilities]="store.worstFacilities()"
-          (selected)="onWorstSiteSelected($event)"
-        />
+        @if (store.isLoadingCompliance()) {
+          <div
+            class="flex flex-col gap-3 md:w-72 md:shrink-0"
+            role="status"
+            aria-label="Loading compliance data"
+            i18n-aria-label="@@facility.map.compliance.loadingAria"
+            data-testid="facility-map-compliance-loading"
+          >
+            <hlm-skeleton class="h-3 w-full" />
+            <hlm-skeleton class="h-3 w-full" />
+            <hlm-skeleton class="h-3 w-full" />
+          </div>
+        } @else {
+          <app-facility-compliance-worst-sites
+            class="md:w-72 md:shrink-0"
+            [facilities]="store.worstFacilities()"
+            (selected)="onWorstSiteSelected($event)"
+          />
+        }
       }
     </div>
   }

@@ -11677,6 +11677,10 @@
         <source>Compliance</source>
         <target>Cumplimiento</target>
       </trans-unit>
+      <trans-unit id="facility.map.compliance.loadingAria" datatype="html">
+        <source>Loading compliance data</source>
+        <target>Cargando los datos de cumplimiento</target>
+      </trans-unit>
       <trans-unit id="facility.map.compliance.worstSitesTitle" datatype="html">
         <source>Worst performing sites</source>
         <target>Instalaciones con peor rendimiento</target>

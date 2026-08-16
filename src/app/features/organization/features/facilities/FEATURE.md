@@ -188,7 +188,15 @@ While the layer is on:
   re-center an already-mounted instance — so "click a worst site to focus
   the map" was not achievable as a live camera move; navigating to the
   record was chosen instead, and re-centering support is a `@shared/map`
-  follow-up, not a defect here.
+  follow-up, not a defect here. While the tree load is pending, the ranking
+  slot renders skeletons in a `role="status"` region instead of the
+  confirmed-empty message.
+
+**Known limitation:** during that fetch the map pins themselves stay in the
+muted/"no data" state — the markers are a pure computed over
+`complianceMap`, which is empty until the response lands, and the map
+primitive has no per-layer pending state to show instead. Documented, not
+fixed.
 
 **Merge note:** a sibling branch (`feat/compliance-explorer`) is building its
 own, richer compliance transport and models for a dedicated explorer surface.

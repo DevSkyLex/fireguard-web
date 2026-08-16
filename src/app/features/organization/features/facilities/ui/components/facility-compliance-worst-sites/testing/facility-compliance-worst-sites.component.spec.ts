@@ -58,6 +58,14 @@ describe('FacilityComplianceWorstSites', () => {
     expect(rows[1].textContent).toContain('15');
   });
 
+  it('gives each row an accessible name separating the facility name from its rate', async () => {
+    await render([{ facility: facility({ name: 'North Building' }), complianceRate: 42 }]);
+
+    expect(
+      root().querySelector('[data-testid="facility-map-worst-site"]')?.getAttribute('aria-label'),
+    ).toBe('North Building — 42% compliant');
+  });
+
   it('emits the selected facility when a row is activated', async () => {
     const target = facility({ id: 'facility-2', name: 'South Depot' });
     await render([{ facility: target, complianceRate: 15 }]);

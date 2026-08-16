@@ -22,6 +22,7 @@ import { EmptyState } from '@shared/empty-state';
 import { Map, type MapMarker } from '@shared/map';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { FacilityComplianceWorstSites } from '../../components/facility-compliance-worst-sites';
@@ -48,7 +49,9 @@ import { FacilityComplianceWorstSites } from '../../components/facility-complian
  * never colour/glyph-only. Switching it on for the first time lazily loads
  * the Compliance-owned facility tree (`FacilityMapStore.loadCompliance`,
  * browser-only) and reveals the "worst sites" ranking
- * (`FacilityComplianceWorstSites`); selecting a marker or a ranked entry both
+ * (`FacilityComplianceWorstSites`) — announced as skeletons in a
+ * `role="status"` region while that load is pending, so the confirmed-empty
+ * message never shows mid-fetch; selecting a marker or a ranked entry both
  * navigate to the facility's record — `@shared/map`'s `Map` primitive only
  * ever sets its camera center once, at mount, so re-centering it
  * programmatically on a later selection is not something it supports today
@@ -66,6 +69,7 @@ import { FacilityComplianceWorstSites } from '../../components/facility-complian
     EmptyState,
     Map,
     HlmButton,
+    HlmSkeleton,
     HlmSwitch,
     FacilityComplianceWorstSites,
     ...HlmToggleGroupImports,

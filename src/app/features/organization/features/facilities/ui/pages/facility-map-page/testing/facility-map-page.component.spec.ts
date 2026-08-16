@@ -69,6 +69,7 @@ describe('FacilityMapPage', () => {
   let complianceMap: WritableSignal<ReadonlyMap<string, number | null>>;
   let worstFacilities: WritableSignal<readonly WorstFacility[]>;
   let hasLoadedCompliance: WritableSignal<boolean>;
+  let isLoadingCompliance: WritableSignal<boolean>;
   let navigate: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -83,6 +84,7 @@ describe('FacilityMapPage', () => {
     complianceMap = signal<ReadonlyMap<string, number | null>>(new Map());
     worstFacilities = signal<readonly WorstFacility[]>([]);
     hasLoadedCompliance = signal<boolean>(false);
+    isLoadingCompliance = signal<boolean>(false);
 
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), provideRouter([])],
@@ -106,7 +108,7 @@ describe('FacilityMapPage', () => {
               complianceMap,
               worstFacilities,
               hasLoadedCompliance,
-              isLoadingCompliance: signal(false),
+              isLoadingCompliance,
               hasComplianceError: signal(false),
               setComplianceVisible,
               loadCompliance,
@@ -231,6 +233,38 @@ describe('FacilityMapPage', () => {
     worstFacilities.set([{ facility: facility(), complianceRate: 20 }]);
     fixture = await createPage();
 
+    expect(
+      fixture.nativeElement.querySelector('app-facility-compliance-worst-sites'),
+    ).not.toBeNull();
+  });
+
+  it('announces a loading status instead of the ranking while compliance data is loading', async () => {
+    mappedFacilities.set([facility()]);
+    complianceVisible.set(true);
+    isLoadingCompliance.set(true);
+    fixture = await createPage();
+
+    const status = fixture.nativeElement.querySelector(
+      '[data-testid="facility-map-compliance-loading"]',
+    ) as HTMLElement | null;
+    expect(status).not.toBeNull();
+    expect(status?.getAttribute('role')).toBe('status');
+    expect(status?.getAttribute('aria-label')).toBe('Loading compliance data');
+    expect(fixture.nativeElement.querySelector('app-facility-compliance-worst-sites')).toBeNull();
+  });
+
+  it('swaps the loading status for the ranking once compliance data has loaded', async () => {
+    mappedFacilities.set([facility()]);
+    complianceVisible.set(true);
+    isLoadingCompliance.set(true);
+    fixture = await createPage();
+
+    isLoadingCompliance.set(false);
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="facility-map-compliance-loading"]'),
+    ).toBeNull();
     expect(
       fixture.nativeElement.querySelector('app-facility-compliance-worst-sites'),
     ).not.toBeNull();

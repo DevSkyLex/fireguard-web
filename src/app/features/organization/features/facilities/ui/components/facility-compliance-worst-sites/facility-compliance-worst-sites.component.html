@@ -20,6 +20,7 @@
             type="button"
             class="w-full rounded-md text-left"
             data-testid="facility-map-worst-site"
+            [attr.aria-label]="row.ariaLabel"
             [attr.data-facility-id]="row.entry.facility.id"
             (click)="onEntrySelected(row.entry.facility)"
           >

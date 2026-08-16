@@ -93,20 +93,22 @@ export class FacilityComplianceWorstSites {
   /**
    * Property rows
    * @readonly
-   * @description Each entry paired with the badge variant its bucket resolves to.
+   * @description Each entry paired with the badge variant its bucket resolves to, and an accessible name that keeps a separator between the facility name and its rate — the visible name+badge concatenate without one. Reuses the marker label's i18n unit (`utils/facility-compliance-marker`) so both surfaces share one translation.
    * @access protected
    * @since 1.0.0
-   * @type {Signal<ReadonlyArray<{ readonly entry: WorstFacility; readonly badgeVariant: 'default' | 'destructive' | 'outline' | 'secondary' }>>}
+   * @type {Signal<ReadonlyArray<{ readonly entry: WorstFacility; readonly badgeVariant: 'default' | 'destructive' | 'outline' | 'secondary'; readonly ariaLabel: string }>>}
    */
   protected readonly rows: Signal<
     ReadonlyArray<{
       readonly entry: WorstFacility;
       readonly badgeVariant: 'default' | 'destructive' | 'outline' | 'secondary';
+      readonly ariaLabel: string;
     }>
   > = computed(() =>
     this.facilities().map((entry) => ({
       entry,
       badgeVariant: WORST_SITE_BADGE_VARIANT[resolveComplianceBucket(entry.complianceRate)],
+      ariaLabel: $localize`:@@facility.map.compliance.markerLabel:${entry.facility.name}:facilityName: — ${entry.complianceRate}:rate:% compliant`,
     })),
   );
   //#endregion

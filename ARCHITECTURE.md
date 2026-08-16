@@ -44,7 +44,11 @@ The application is an **Angular 22** SPA with SSR and hydration:
 
 The only non-Angular runtime dependencies are `rxjs`, `luxon`, `express` (the SSR host), the
 styling helpers `clsx` / `tailwind-merge` / `class-variance-authority` that spartan generates
-against, and **`qrcode`**, imported dynamically and browser-only by a single component (the
+against, `@signality/core` (browser-signal helpers — `mediaQuery`, `online`, `pageVisibility`),
+the icon set `@ng-icons/core` / `@ng-icons/lucide`, the self-hosted variable fonts
+`@fontsource-variable/geist` / `@fontsource-variable/geist-mono`, the charting pair
+`@swimlane/ngx-charts` / `d3-shape` wrapped exclusively by `src/app/shared/chart/`, and
+**`qrcode`**, imported dynamically and browser-only by a single component (the
 account TOTP panel — see `features/account/FEATURE.md`). Adding another is a documented decision,
 recorded in the owning `FEATURE.md` and here in the same change (section 14.3).
 

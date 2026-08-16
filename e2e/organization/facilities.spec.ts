@@ -677,6 +677,48 @@ test.describe('Facility Plan Editor', () => {
     expect(requestBody).toMatchObject({ attachmentId: E2E_FACILITY_PLAN_ID });
   });
 
+  test('creates a zone outline keyboard-only through the "Enter coordinates" path', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    let requestBody: unknown;
+    await api.mockFacilityPlanGeometry(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_PLAN_NEW_ZONE_ID,
+      (body) => {
+        requestBody = body;
+      },
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await facilities.pickDrawZoneTarget('Break Room');
+
+    await facilities.editorEnterCoordinates.click();
+    await expect(facilities.zoneGeometryDialog).toBeVisible();
+    await expect(facilities.zoneGeometryRows).toHaveCount(3);
+    await expect(facilities.zoneGeometrySubmit).toBeDisabled();
+
+    await facilities.fillZoneVertex(0, '10', '10');
+    await facilities.fillZoneVertex(1, '10', '40');
+    await facilities.fillZoneVertex(2, '40', '40');
+    await expect(facilities.zoneGeometrySubmit).toBeEnabled();
+
+    await facilities.zoneGeometrySubmit.click();
+
+    await expect(facilities.zoneGeometryDialog).toBeHidden();
+    expect(requestBody).toMatchObject({
+      attachmentId: E2E_FACILITY_PLAN_ID,
+      points: [
+        [0.1, 0.1],
+        [0.1, 0.4],
+        [0.4, 0.4],
+      ],
+    });
+  });
+
   test('edits a zone outline through the non-pointer "Edit coordinates" dialog', async ({
     page,
   }) => {

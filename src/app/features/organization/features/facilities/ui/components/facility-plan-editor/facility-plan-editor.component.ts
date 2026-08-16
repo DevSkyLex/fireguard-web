@@ -57,7 +57,12 @@ const MIN_CLOSABLE_POLYGON_VERTICES = 3;
  * whole issue.
  *
  * Drag-to-move renders one transparent handle per existing equipment pin,
- * matching the read overlay's own pin position/counter-scale math. Its
+ * matching the read overlay's own pin position/counter-scale math. The
+ * handle is a pure pointer affordance, deliberately excluded from the
+ * accessibility tree (`aria-hidden`, `tabindex="-1"`): the read overlay's
+ * pin button already owns the tab stop at the same spot, and the keyboard
+ * path for moving a pin is the equipment list's "Edit position" button on
+ * the page, which opens the numeric position dialog. Its
  * `pointerdown` calls `stopPropagation` (unlike the stage's) so the plan
  * viewer never also starts panning underneath a pin drag — a pin's own
  * gesture is not gated by `editMode`, so there is no mode-driven reason to
@@ -183,7 +188,6 @@ export class FacilityPlanEditor {
   protected readonly draggablePins: Signal<
     ReadonlyArray<{
       readonly equipmentId: string;
-      readonly name: string;
       readonly x: number;
       readonly y: number;
     }>
@@ -193,7 +197,6 @@ export class FacilityPlanEditor {
 
     return data.equipment.map((pin) => ({
       equipmentId: pin.equipmentId,
-      name: pin.name,
       x: pin.x * data.imageWidth,
       y: pin.y * data.imageHeight,
     }));
@@ -294,18 +297,6 @@ export class FacilityPlanEditor {
     if (this.draftPoints().length < MIN_CLOSABLE_POLYGON_VERTICES) return;
 
     this.polygonCloseRequested.emit();
-  }
-
-  /**
-   * Method dragHandleLabel
-   * @description Localizes a drag handle's accessible name.
-   * @access protected
-   * @since 1.4.0
-   * @param {string} name - The pin's equipment name.
-   * @returns {string} "Move {name}'s pin".
-   */
-  protected dragHandleLabel(name: string): string {
-    return $localize`:@@facility.plans.editor.dragHandleAria:Move ${name}:name:'s pin`;
   }
 
   /**

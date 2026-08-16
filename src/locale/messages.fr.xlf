@@ -11822,6 +11822,30 @@
         <source>Undo last vertex</source>
         <target>Annuler le dernier sommet</target>
       </trans-unit>
+      <trans-unit id="facility.plans.editor.enterCoordinates" datatype="html">
+        <source> Enter coordinates </source>
+        <target>Saisir les coordonnées</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.enterPosition" datatype="html">
+        <source> Enter position </source>
+        <target>Saisir la position</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.invalidPercent" datatype="html">
+        <source> Enter a value between 0 and 100 </source>
+        <target> Saisissez une valeur entre 0 et 100 </target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.vertexXAria" datatype="html">
+        <source>Vertex <x id="index" equiv-text="index"/> X (%)</source>
+        <target>Sommet <x id="index" equiv-text="index"/> X (%)</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.vertexYAria" datatype="html">
+        <source>Vertex <x id="index" equiv-text="index"/> Y (%)</source>
+        <target>Sommet <x id="index" equiv-text="index"/> Y (%)</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.removeVertexIndexedAria" datatype="html">
+        <source>Remove vertex <x id="index" equiv-text="index"/></source>
+        <target>Supprimer le sommet <x id="index" equiv-text="index"/></target>
+      </trans-unit>
       <trans-unit id="facility.plans.editor.closePolygon" datatype="html">
         <source>Close polygon</source>
         <target>Fermer le polygone</target>

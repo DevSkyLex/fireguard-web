@@ -99,6 +99,12 @@ export class FacilitiesPage {
     'facility-plan-editor-close-polygon',
   );
   public readonly editorCancel: Locator = this.page.getByTestId('facility-plan-editor-cancel');
+  public readonly editorEnterCoordinates: Locator = this.page.getByTestId(
+    'facility-plan-editor-enter-coordinates',
+  );
+  public readonly editorEnterPosition: Locator = this.page.getByTestId(
+    'facility-plan-editor-enter-position',
+  );
   public readonly editorStage: Locator = this.page.getByTestId('facility-plan-editor-stage');
   public readonly zoneList: Locator = this.page.getByTestId('facility-plan-zone-list');
   public readonly zoneEditButton: Locator = this.page.getByTestId('facility-plan-zone-edit');
@@ -174,6 +180,13 @@ export class FacilitiesPage {
     if (!box) throw new Error('The plan editor stage is not visible.');
 
     await this.page.mouse.click(box.x + box.width * fractionX, box.y + box.height * fractionY);
+  }
+
+  /** Fills one vertex row of the zone geometry dialog with percent values. */
+  public async fillZoneVertex(index: number, xPercent: string, yPercent: string): Promise<void> {
+    const row = this.zoneGeometryRows.nth(index);
+    await row.getByTestId('facility-plan-zone-geometry-row-x').fill(xPercent);
+    await row.getByTestId('facility-plan-zone-geometry-row-y').fill(yPercent);
   }
 
   /** Opens the `draw-zone` picker and selects the given candidate by its visible name. */

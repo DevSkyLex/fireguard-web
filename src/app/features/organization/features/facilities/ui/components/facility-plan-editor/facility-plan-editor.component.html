@@ -44,11 +44,12 @@
     @for (pin of draggablePins(); track pin.equipmentId) {
       <button
         type="button"
-        class="absolute size-8 -translate-x-1/2 -translate-y-full cursor-grab touch-none rounded-full bg-transparent"
+        tabindex="-1"
+        aria-hidden="true"
+        class="absolute size-11 -translate-x-1/2 -translate-y-full cursor-grab touch-none rounded-full bg-transparent"
         [style.left.px]="pin.x"
         [style.top.px]="pin.y"
         [style.transform]="'translate(-50%, -100%) scale(' + pinScale() + ')'"
-        [attr.aria-label]="dragHandleLabel(pin.name)"
         data-testid="facility-plan-editor-pin-handle"
         (pointerdown)="onPinHandlePointerDown($event, pin.equipmentId)"
       ></button>

@@ -11829,6 +11829,30 @@
         <source>Undo last vertex</source>
         <target>Deshacer el último vértice</target>
       </trans-unit>
+      <trans-unit id="facility.plans.editor.enterCoordinates" datatype="html">
+        <source> Enter coordinates </source>
+        <target>Introducir coordenadas</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.enterPosition" datatype="html">
+        <source> Enter position </source>
+        <target>Introducir posición</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.invalidPercent" datatype="html">
+        <source> Enter a value between 0 and 100 </source>
+        <target> Introduzca un valor entre 0 y 100 </target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.vertexXAria" datatype="html">
+        <source>Vertex <x id="index" equiv-text="index"/> X (%)</source>
+        <target>Vértice <x id="index" equiv-text="index"/> X (%)</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.vertexYAria" datatype="html">
+        <source>Vertex <x id="index" equiv-text="index"/> Y (%)</source>
+        <target>Vértice <x id="index" equiv-text="index"/> Y (%)</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zoneDialog.removeVertexIndexedAria" datatype="html">
+        <source>Remove vertex <x id="index" equiv-text="index"/></source>
+        <target>Eliminar el vértice <x id="index" equiv-text="index"/></target>
+      </trans-unit>
       <trans-unit id="facility.plans.editor.closePolygon" datatype="html">
         <source>Close polygon</source>
         <target>Cerrar polígono</target>

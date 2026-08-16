@@ -26,10 +26,25 @@
           class="w-full"
           id="facility-plan-pin-position-x"
           data-testid="facility-plan-pin-position-x"
+          [attr.aria-invalid]="isInvalidValue(xDraft()) ? 'true' : null"
+          [attr.aria-describedby]="
+            isInvalidValue(xDraft()) ? 'facility-plan-pin-position-x-error' : null
+          "
           [value]="xDraft()"
           [disabled]="pending()"
           (input)="xDraft.set($any($event.target).value)"
         />
+        @if (isInvalidValue(xDraft())) {
+          <p
+            class="text-xs text-destructive"
+            role="alert"
+            id="facility-plan-pin-position-x-error"
+            data-testid="facility-plan-pin-position-x-error"
+            i18n="@@facility.plans.editor.invalidPercent"
+          >
+            Enter a value between 0 and 100
+          </p>
+        }
       </div>
       <div class="flex-1">
         <label
@@ -47,10 +62,25 @@
           class="w-full"
           id="facility-plan-pin-position-y"
           data-testid="facility-plan-pin-position-y"
+          [attr.aria-invalid]="isInvalidValue(yDraft()) ? 'true' : null"
+          [attr.aria-describedby]="
+            isInvalidValue(yDraft()) ? 'facility-plan-pin-position-y-error' : null
+          "
           [value]="yDraft()"
           [disabled]="pending()"
           (input)="yDraft.set($any($event.target).value)"
         />
+        @if (isInvalidValue(yDraft())) {
+          <p
+            class="text-xs text-destructive"
+            role="alert"
+            id="facility-plan-pin-position-y-error"
+            data-testid="facility-plan-pin-position-y-error"
+            i18n="@@facility.plans.editor.invalidPercent"
+          >
+            Enter a value between 0 and 100
+          </p>
+        }
       </div>
     </div>
 

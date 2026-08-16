@@ -33,8 +33,11 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
  * The non-pointer "Edit position" path for one equipment pin — two percent
  * x/y fields (0–100%, one decimal step, matching
  * `FacilityPlanZoneGeometryDialog`'s coordinate unit), prefilled from
- * {@link x}/{@link y} on every open. Submits the normalized position via
- * {@link submitted}; {@link removed} is the "Remove from plan" action.
+ * {@link x}/{@link y} on every open — 50%/50% when the pin is not on the
+ * plan yet, making the dialog a keyboard placement path too. A field with an
+ * out-of-range value gets `aria-invalid` plus a `role="alert"` message it is
+ * described by. Submits the normalized position via {@link submitted};
+ * {@link removed} is the "Remove from plan" action.
  *
  * Presentational: it owns only its own draft, not the write — the page owns
  * `FacilityPlansStore` (`ARCHITECTURE.md` §10.5).
@@ -142,6 +145,18 @@ export class FacilityPlanPinPositionDialog {
     if (isOpen === this.visible()) return;
 
     this.visibleChange.emit(isOpen);
+  }
+
+  /**
+   * Method isInvalidValue
+   * @description Whether an entered draft value is out of range — blank means "not yet entered", not invalid.
+   * @access protected
+   * @since 1.4.1
+   * @param {string} value - The raw draft string.
+   * @returns {boolean} `true` when `value` is non-blank and not a percent in `[0, 100]`.
+   */
+  protected isInvalidValue(value: string): boolean {
+    return value.trim() !== '' && !isValidPercent(value);
   }
 
   /**

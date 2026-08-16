@@ -25,8 +25,11 @@
             max="100"
             class="flex-1"
             data-testid="facility-plan-zone-geometry-row-x"
-            i18n-aria-label="@@facility.plans.editor.zoneDialog.xLabel"
-            aria-label="X (%)"
+            [attr.aria-label]="vertexXLabel($index + 1)"
+            [attr.aria-invalid]="isInvalidValue(row.x) ? 'true' : null"
+            [attr.aria-describedby]="
+              isInvalidValue(row.x) ? 'facility-plan-zone-geometry-row-error-' + $index : null
+            "
             [value]="row.x"
             [disabled]="pending()"
             (input)="updateRow($index, 'x', $any($event.target).value)"
@@ -39,8 +42,11 @@
             max="100"
             class="flex-1"
             data-testid="facility-plan-zone-geometry-row-y"
-            i18n-aria-label="@@facility.plans.editor.zoneDialog.yLabel"
-            aria-label="Y (%)"
+            [attr.aria-label]="vertexYLabel($index + 1)"
+            [attr.aria-invalid]="isInvalidValue(row.y) ? 'true' : null"
+            [attr.aria-describedby]="
+              isInvalidValue(row.y) ? 'facility-plan-zone-geometry-row-error-' + $index : null
+            "
             [value]="row.y"
             [disabled]="pending()"
             (input)="updateRow($index, 'y', $any($event.target).value)"
@@ -51,14 +57,24 @@
             variant="ghost"
             size="icon-sm"
             data-testid="facility-plan-zone-geometry-row-remove"
-            i18n-aria-label="@@facility.plans.editor.zoneDialog.removeVertexAria"
-            aria-label="Remove vertex"
+            [attr.aria-label]="removeVertexLabel($index + 1)"
             [disabled]="pending()"
             (click)="removeRow($index)"
           >
             <ng-icon name="lucideTrash2" aria-hidden="true" />
           </button>
         </div>
+        @if (isInvalidValue(row.x) || isInvalidValue(row.y)) {
+          <p
+            class="text-xs text-destructive"
+            role="alert"
+            [id]="'facility-plan-zone-geometry-row-error-' + $index"
+            data-testid="facility-plan-zone-geometry-row-error"
+            i18n="@@facility.plans.editor.invalidPercent"
+          >
+            Enter a value between 0 and 100
+          </p>
+        }
       }
 
       <button

@@ -57,6 +57,30 @@ describe('FacilityPlanPinPositionDialog', () => {
     );
   });
 
+  it('marks an out-of-range value invalid and describes it by an alert', async () => {
+    await open();
+    const input = byTestId('facility-plan-pin-position-x') as HTMLInputElement;
+    input.value = '150';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(input.getAttribute('aria-describedby')).toBe('facility-plan-pin-position-x-error');
+    const alert = byTestId('facility-plan-pin-position-x-error');
+    expect(alert).not.toBeNull();
+    expect(alert?.getAttribute('role')).toBe('alert');
+  });
+
+  it('shows no error markup while both values are in range', async () => {
+    await open();
+
+    expect(
+      (byTestId('facility-plan-pin-position-x') as HTMLInputElement).getAttribute('aria-invalid'),
+    ).toBeNull();
+    expect(byTestId('facility-plan-pin-position-x-error')).toBeNull();
+    expect(byTestId('facility-plan-pin-position-y-error')).toBeNull();
+  });
+
   it('emits submitted with the position converted back to normalized coordinates', async () => {
     await open(0.25, 0.75);
 

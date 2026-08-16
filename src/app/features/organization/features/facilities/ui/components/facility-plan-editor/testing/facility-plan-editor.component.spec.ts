@@ -180,6 +180,16 @@ describe('FacilityPlanEditor', () => {
       expect(allByTestId('facility-plan-editor-pin-handle').length).toBe(1);
     });
 
+    it('keeps the handle out of the accessibility tree — a pure pointer affordance', async () => {
+      fixture.componentRef.setInput('canEditEquipment', true);
+      await fixture.whenStable();
+
+      const handle = byTestId('facility-plan-editor-pin-handle') as HTMLButtonElement;
+      expect(handle.getAttribute('aria-hidden')).toBe('true');
+      expect(handle.getAttribute('tabindex')).toBe('-1');
+      expect(handle.classList.contains('size-11')).toBe(true);
+    });
+
     it('emits equipmentActivated on a plain tap of the handle, not pinMoved', async () => {
       fixture.componentRef.setInput('canEditEquipment', true);
       await fixture.whenStable();

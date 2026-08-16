@@ -67,20 +67,95 @@ describe('FacilityPlanZoneGeometryDialog', () => {
     expect(rows().length).toBe(3);
   });
 
+  it('seeds three blank rows when the zone has no geometry yet — the creation path', async () => {
+    await open([]);
+
+    expect(rows().length).toBe(3);
+    for (const row of rows()) {
+      expect(
+        (row.querySelector('[data-testid="facility-plan-zone-geometry-row-x"]') as HTMLInputElement)
+          .value,
+      ).toBe('');
+      expect(
+        (row.querySelector('[data-testid="facility-plan-zone-geometry-row-y"]') as HTMLInputElement)
+          .value,
+      ).toBe('');
+    }
+  });
+
   it('adds and removes rows', async () => {
     await open([]);
-    expect(rows().length).toBe(0);
+    expect(rows().length).toBe(3);
 
     (byTestId('facility-plan-zone-geometry-add-row') as HTMLButtonElement).click();
-    (byTestId('facility-plan-zone-geometry-add-row') as HTMLButtonElement).click();
     await fixture.whenStable();
-    expect(rows().length).toBe(2);
+    expect(rows().length).toBe(4);
 
     rows()[0]
       .querySelector<HTMLButtonElement>('[data-testid="facility-plan-zone-geometry-row-remove"]')
       ?.click();
     await fixture.whenStable();
-    expect(rows().length).toBe(1);
+    expect(rows().length).toBe(3);
+  });
+
+  it('carries the 1-based vertex index in every row label', async () => {
+    await open([
+      [0, 0],
+      [0.5, 0],
+      [0.5, 0.5],
+    ]);
+
+    const second = rows()[1];
+    expect(
+      second
+        .querySelector('[data-testid="facility-plan-zone-geometry-row-x"]')
+        ?.getAttribute('aria-label'),
+    ).toBe('Vertex 2 X (%)');
+    expect(
+      second
+        .querySelector('[data-testid="facility-plan-zone-geometry-row-y"]')
+        ?.getAttribute('aria-label'),
+    ).toBe('Vertex 2 Y (%)');
+    expect(
+      second
+        .querySelector('[data-testid="facility-plan-zone-geometry-row-remove"]')
+        ?.getAttribute('aria-label'),
+    ).toBe('Remove vertex 2');
+  });
+
+  it('marks an out-of-range value invalid and describes it by a row alert', async () => {
+    await open([
+      [0, 0],
+      [0.5, 0],
+      [0.5, 0.5],
+    ]);
+
+    const input = rows()[0].querySelector(
+      '[data-testid="facility-plan-zone-geometry-row-x"]',
+    ) as HTMLInputElement;
+    input.value = '150';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(input.getAttribute('aria-describedby')).toBe('facility-plan-zone-geometry-row-error-0');
+    const alert = byTestId('facility-plan-zone-geometry-row-error');
+    expect(alert).not.toBeNull();
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.id).toBe('facility-plan-zone-geometry-row-error-0');
+    expect((byTestId('facility-plan-zone-geometry-submit') as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it('does not flag a still-blank field as invalid', async () => {
+    await open([]);
+
+    const input = rows()[0].querySelector(
+      '[data-testid="facility-plan-zone-geometry-row-x"]',
+    ) as HTMLInputElement;
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+    expect(byTestId('facility-plan-zone-geometry-row-error')).toBeNull();
   });
 
   it('disables submit below three valid rows', async () => {

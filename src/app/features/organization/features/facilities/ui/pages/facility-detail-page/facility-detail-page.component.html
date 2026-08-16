@@ -391,6 +391,30 @@
                         >
                           Close polygon
                         </button>
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          data-testid="facility-plan-editor-enter-coordinates"
+                          (click)="onEnterCoordinatesRequested()"
+                          i18n="@@facility.plans.editor.enterCoordinates"
+                        >
+                          Enter coordinates
+                        </button>
+                      }
+                      @if (plans.editMode() === 'place-pin') {
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          data-testid="facility-plan-editor-enter-position"
+                          (click)="onEnterPositionRequested()"
+                          i18n="@@facility.plans.editor.enterPosition"
+                        >
+                          Enter position
+                        </button>
                       }
                       <button
                         hlmBtn
@@ -544,7 +568,7 @@
 
 <app-facility-plan-zone-geometry-dialog
   [visible]="zoneGeometryDialogFacilityId() !== null"
-  [zoneName]="zoneGeometryDialogZone()?.name ?? ''"
+  [zoneName]="zoneGeometryDialogName()"
   [points]="zoneGeometryDialogZone()?.points ?? []"
   [pending]="plans.isSavingZoneGeometry()"
   (visibleChange)="onZoneGeometryDialogVisibleChanged($event)"
@@ -554,7 +578,7 @@
 
 <app-facility-plan-pin-position-dialog
   [visible]="pinPositionDialogEquipmentId() !== null"
-  [equipmentName]="pinPositionDialogPin()?.name ?? ''"
+  [equipmentName]="pinPositionDialogName()"
   [x]="pinPositionDialogPin()?.x ?? 0.5"
   [y]="pinPositionDialogPin()?.y ?? 0.5"
   [pending]="plans.isSavingPinPosition()"

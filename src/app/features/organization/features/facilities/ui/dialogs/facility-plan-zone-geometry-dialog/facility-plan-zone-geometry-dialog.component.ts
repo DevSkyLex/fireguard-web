@@ -44,9 +44,14 @@ const MIN_POLYGON_VERTICES = 3;
  * The non-pointer "Edit coordinates" path for a zone's outline — a small
  * table of percent x/y rows (0–100%, one decimal step; normalized `[0, 1]`
  * is one division away and less legible for a member checking a vertex by
- * eye) with add/remove, prefilled from {@link points} on every open. Submits
- * the normalized polygon via {@link submitted}; {@link cleared} is the
- * dialog's "Clear geometry" action, wiping the outline entirely.
+ * eye) with add/remove, prefilled from {@link points} on every open. When
+ * {@link points} is empty — a zone with no geometry yet — the draft seeds
+ * three blank rows instead, making the dialog a full keyboard creation path,
+ * not only an edit surface. Row labels carry the 1-based vertex index, and a
+ * row with an out-of-range value gets `aria-invalid` plus a `role="alert"`
+ * message it is described by. Submits the normalized polygon via
+ * {@link submitted}; {@link cleared} is the dialog's "Clear geometry"
+ * action, wiping the outline entirely.
  *
  * Presentational: it owns only its own draft rows and their validity, not
  * the write — the page decides whether that means drawing/saving or
@@ -135,7 +140,7 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Method constructor
    * @constructor
-   * @description Reseeds the draft rows from {@link points} every time the dialog opens.
+   * @description Reseeds the draft rows from {@link points} every time the dialog opens, or with three blank rows when the zone has no geometry yet.
    * @access public
    * @since 1.4.0
    */
@@ -144,7 +149,11 @@ export class FacilityPlanZoneGeometryDialog {
       if (!this.visible()) return;
 
       const seeded: ReadonlyArray<readonly [number, number]> = this.points();
-      this.rows.set(seeded.map(([x, y]) => ({ x: toPercentString(x), y: toPercentString(y) })));
+      this.rows.set(
+        seeded.length > 0
+          ? seeded.map(([x, y]) => ({ x: toPercentString(x), y: toPercentString(y) }))
+          : Array.from({ length: MIN_POLYGON_VERTICES }, () => ({ x: '', y: '' })),
+      );
     });
   }
   //#endregion
@@ -165,6 +174,54 @@ export class FacilityPlanZoneGeometryDialog {
     if (isOpen === this.visible()) return;
 
     this.visibleChange.emit(isOpen);
+  }
+
+  /**
+   * Method isInvalidValue
+   * @description Whether an entered draft value is out of range — blank means "not yet entered", not invalid.
+   * @access protected
+   * @since 1.4.1
+   * @param {string} value - The raw draft string.
+   * @returns {boolean} `true` when `value` is non-blank and not a percent in `[0, 100]`.
+   */
+  protected isInvalidValue(value: string): boolean {
+    return value.trim() !== '' && !isValidPercent(value);
+  }
+
+  /**
+   * Method vertexXLabel
+   * @description Localizes a row's X input accessible name, carrying its 1-based vertex index.
+   * @access protected
+   * @since 1.4.1
+   * @param {number} index - The 1-based vertex index.
+   * @returns {string} "Vertex {index} X (%)".
+   */
+  protected vertexXLabel(index: number): string {
+    return $localize`:@@facility.plans.editor.zoneDialog.vertexXAria:Vertex ${index}:index: X (%)`;
+  }
+
+  /**
+   * Method vertexYLabel
+   * @description Localizes a row's Y input accessible name, carrying its 1-based vertex index.
+   * @access protected
+   * @since 1.4.1
+   * @param {number} index - The 1-based vertex index.
+   * @returns {string} "Vertex {index} Y (%)".
+   */
+  protected vertexYLabel(index: number): string {
+    return $localize`:@@facility.plans.editor.zoneDialog.vertexYAria:Vertex ${index}:index: Y (%)`;
+  }
+
+  /**
+   * Method removeVertexLabel
+   * @description Localizes a row's remove button accessible name, carrying its 1-based vertex index.
+   * @access protected
+   * @since 1.4.1
+   * @param {number} index - The 1-based vertex index.
+   * @returns {string} "Remove vertex {index}".
+   */
+  protected removeVertexLabel(index: number): string {
+    return $localize`:@@facility.plans.editor.zoneDialog.removeVertexIndexedAria:Remove vertex ${index}:index:`;
   }
 
   /**

@@ -97,7 +97,10 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * two save rxMethods. Editor entry (the "Draw zone"/"Place equipment"
  * pickers, each zone/pin row's dialog triggers) is gated on `canWrite`
  * (`FACILITIES_WRITE`) for zones and `canEditEquipment`
- * (`EQUIPMENT_WRITE`) for equipment. A
+ * (`EQUIPMENT_WRITE`) for equipment. Each active mode also offers a
+ * keyboard alternative to tapping the plan — "Enter coordinates" / "Enter
+ * position" open the numeric dialogs for the picked target, making zone and
+ * pin creation possible without a pointer. A
  * danger, confirm-gated **Delete** action registers on the shell header
  * through `PageActionsService` (`FEATURE.md` "Deletion").
  *
@@ -278,6 +281,49 @@ export class FacilityDetailPage {
   );
 
   /**
+   * Property zoneGeometryDialogName
+   * @readonly
+   * @description The zone dialog's display name — the overlay zone's when it exists, else the picked draw candidate's (a zone with no geometry yet).
+   * @access protected
+   * @since 1.4.1
+   * @type {Signal<string>}
+   */
+  protected readonly zoneGeometryDialogName: Signal<string> = computed<string>(() => {
+    const existing: FacilityPlanOverlayZone | null = this.zoneGeometryDialogZone();
+    if (existing) return existing.name;
+
+    const facilityId: string | null = this.zoneGeometryDialogFacilityId();
+    if (!facilityId) return '';
+
+    return (
+      this.plans.availableZoneCandidates().find((candidate) => candidate.id === facilityId)?.name ??
+      ''
+    );
+  });
+
+  /**
+   * Property pinPositionDialogName
+   * @readonly
+   * @description The pin dialog's display name — the overlay pin's when it exists, else the picked place candidate's (equipment not on the plan yet).
+   * @access protected
+   * @since 1.4.1
+   * @type {Signal<string>}
+   */
+  protected readonly pinPositionDialogName: Signal<string> = computed<string>(() => {
+    const existing: FacilityPlanOverlayEquipment | null = this.pinPositionDialogPin();
+    if (existing) return existing.name;
+
+    const equipmentId: string | null = this.pinPositionDialogEquipmentId();
+    if (!equipmentId) return '';
+
+    const candidate = this.plans
+      .availableEquipmentCandidates()
+      .find((item) => item.id === equipmentId);
+
+    return candidate ? (candidate.locationLabel ?? candidate.type) : '';
+  });
+
+  /**
    * Property deleteDialogState
    * @readonly
    * @description The confirm dialog's open/closed state, derived from {@link pendingDelete}.
@@ -409,7 +455,7 @@ export class FacilityDetailPage {
   //#region Methods
   /**
    * Method onLinkedTabActivated
-   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing {@link activeTab}.
+   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing {@link activeTab}; leaving the Plans tab also cancels any active editor mode, so its global shortcuts cannot fire from another tab.
    * @access protected
    * @since 1.0.0
    * @param {string} tab - The `hlm-tabs` id that just activated.
@@ -419,6 +465,9 @@ export class FacilityDetailPage {
     if (tab !== 'overview' && tab !== 'information' && tab !== 'plans') return;
 
     this.activeTab.set(tab);
+    if (tab !== 'plans' && this.plans.editMode() !== 'none') {
+      this.plans.cancelEditing();
+    }
     if (tab === 'plans' && this.isBrowser && !this.plansLoadRequested) {
       this.plansLoadRequested = true;
       this.plans.load({ facilityId: this.facilityId(), organizationId: this.organizationId() });
@@ -528,7 +577,11 @@ export class FacilityDetailPage {
    * The editor's keyboard shortcuts, listened globally rather than on the
    * plan viewer stage so they work regardless of which control has focus
    * while a mode is active: Escape cancels, Backspace undoes the last
-   * `draw-zone` vertex (and is prevented from also navigating back).
+   * `draw-zone` vertex (and is prevented from also navigating back). Scoped
+   * twice: an active mode is cancelled when the Plans tab is left (see
+   * {@link onLinkedTabActivated}), and a key event whose target is a text
+   * entry surface — input, textarea, select, contenteditable — is left
+   * alone, so the coordinate dialogs' fields keep their own Backspace.
    *
    * @access protected
    * @since 1.4.0
@@ -538,7 +591,7 @@ export class FacilityDetailPage {
   @HostListener('document:keydown', ['$event'])
   protected onEditorKeydown(event: KeyboardEvent): void {
     const mode: FacilityPlanEditMode = this.plans.editMode();
-    if (mode === 'none') return;
+    if (mode === 'none' || isTextEntryTarget(event.target)) return;
 
     if (event.key === 'Escape') {
       this.plans.cancelEditing();
@@ -649,6 +702,34 @@ export class FacilityDetailPage {
   }
 
   /**
+   * Method onEnterCoordinatesRequested
+   * @description The `draw-zone` mode's keyboard alternative — opens the coordinate dialog for the picked draw target instead of tapping the plan.
+   * @access protected
+   * @since 1.4.1
+   * @returns {void}
+   */
+  protected onEnterCoordinatesRequested(): void {
+    const facilityId: string | null = this.plans.drawTargetFacilityId();
+    if (!facilityId) return;
+
+    this.zoneGeometryDialogFacilityId.set(facilityId);
+  }
+
+  /**
+   * Method onEnterPositionRequested
+   * @description The `place-pin` mode's keyboard alternative — opens the position dialog for the picked equipment instead of tapping the plan.
+   * @access protected
+   * @since 1.4.1
+   * @returns {void}
+   */
+  protected onEnterPositionRequested(): void {
+    const equipmentId: string | null = this.plans.placeEquipmentId();
+    if (!equipmentId) return;
+
+    this.pinPositionDialogEquipmentId.set(equipmentId);
+  }
+
+  /**
    * Method openZoneGeometryDialog
    * @description Opens the non-pointer "Edit coordinates" dialog for the given zone.
    * @access protected
@@ -733,7 +814,7 @@ export class FacilityDetailPage {
 
   /**
    * Method onPinPositionSubmitted
-   * @description The "Edit position" dialog's submit path.
+   * @description The "Edit position" dialog's submit path — a first placement while `place-pin` mode targets this equipment routes through the store's placement write, a reposition through the move write.
    * @access protected
    * @since 1.4.0
    * @param {readonly [number, number]} point - The submitted position.
@@ -743,7 +824,11 @@ export class FacilityDetailPage {
     const equipmentId: string | null = this.pinPositionDialogEquipmentId();
     if (!equipmentId) return;
 
-    this.plans.movePin(equipmentId, point);
+    if (this.plans.editMode() === 'place-pin' && this.plans.placeEquipmentId() === equipmentId) {
+      this.plans.placePin(point);
+    } else {
+      this.plans.movePin(equipmentId, point);
+    }
     this.pinPositionDialogEquipmentId.set(null);
   }
 
@@ -887,4 +972,22 @@ export class FacilityDetailPage {
     this.editState.set({ open: state.saving, saving: null, failed: state.saving, failure });
   }
   //#endregion
+}
+
+/**
+ * Function isTextEntryTarget
+ * @access private
+ * @since 1.4.1
+ * @param {EventTarget | null} target - A key event's target.
+ * @returns {boolean} `true` when the target is a text entry surface the editor shortcuts must not steal keys from.
+ */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target.isContentEditable
+  );
 }

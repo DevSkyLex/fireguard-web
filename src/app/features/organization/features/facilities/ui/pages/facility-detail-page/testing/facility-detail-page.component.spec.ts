@@ -124,6 +124,8 @@ describe('FacilityDetailPage', () => {
   let planSetShowZones: ReturnType<typeof vi.fn>;
   let planSetShowEquipment: ReturnType<typeof vi.fn>;
   let planEditMode: WritableSignal<'none' | 'draw-zone' | 'place-pin'>;
+  let planDrawTargetFacilityId: WritableSignal<string | null>;
+  let planPlaceEquipmentId: WritableSignal<string | null>;
   let planDraftPoints: WritableSignal<ReadonlyArray<readonly [number, number]>>;
   let planIsSavingZoneGeometry: WritableSignal<boolean>;
   let planIsSavingPinPosition: WritableSignal<boolean>;
@@ -181,6 +183,8 @@ describe('FacilityDetailPage', () => {
     planSetShowZones = vi.fn();
     planSetShowEquipment = vi.fn();
     planEditMode = signal<'none' | 'draw-zone' | 'place-pin'>('none');
+    planDrawTargetFacilityId = signal<string | null>(null);
+    planPlaceEquipmentId = signal<string | null>(null);
     planDraftPoints = signal<ReadonlyArray<readonly [number, number]>>([]);
     planIsSavingZoneGeometry = signal(false);
     planIsSavingPinPosition = signal(false);
@@ -264,6 +268,8 @@ describe('FacilityDetailPage', () => {
               setShowZones: planSetShowZones,
               setShowEquipment: planSetShowEquipment,
               editMode: planEditMode,
+              drawTargetFacilityId: planDrawTargetFacilityId,
+              placeEquipmentId: planPlaceEquipmentId,
               draftPoints: planDraftPoints,
               isSavingZoneGeometry: planIsSavingZoneGeometry,
               isSavingPinPosition: planIsSavingPinPosition,
@@ -814,6 +820,81 @@ describe('FacilityDetailPage', () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace' }));
 
       expect(planUndoDraftVertex).not.toHaveBeenCalled();
+    });
+
+    it('should leave Backspace alone when it targets a text entry field', async () => {
+      planEditMode.set('draw-zone');
+      await createPage();
+
+      const field: HTMLInputElement = document.createElement('input');
+      document.body.appendChild(field);
+      const event = new KeyboardEvent('keydown', {
+        key: 'Backspace',
+        cancelable: true,
+        bubbles: true,
+      });
+      field.dispatchEvent(event);
+      field.remove();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(planUndoDraftVertex).not.toHaveBeenCalled();
+    });
+
+    it('should cancel an active editor mode when leaving the Plans tab', async () => {
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+      planEditMode.set('draw-zone');
+
+      byTestId('facility-tab-overview')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(planCancelEditing).toHaveBeenCalled();
+    });
+
+    it('should not cancel when leaving the Plans tab with no mode active', async () => {
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+      byTestId('facility-tab-overview')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(planCancelEditing).not.toHaveBeenCalled();
+    });
+
+    it('should open the coordinate dialog for the picked draw target — the keyboard creation path', async () => {
+      planEditMode.set('draw-zone');
+      planDrawTargetFacilityId.set('zone-1');
+      await createPage();
+
+      fixture.componentInstance['onEnterCoordinatesRequested']();
+
+      expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBe('zone-1');
+    });
+
+    it('should open the position dialog for the picked equipment — the keyboard placement path', async () => {
+      planEditMode.set('place-pin');
+      planPlaceEquipmentId.set('equipment-1');
+      await createPage();
+
+      fixture.componentInstance['onEnterPositionRequested']();
+
+      expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBe('equipment-1');
+    });
+
+    it('should route a first placement submitted from the dialog through placePin', async () => {
+      planEditMode.set('place-pin');
+      planPlaceEquipmentId.set('equipment-1');
+      await createPage();
+
+      fixture.componentInstance['onEnterPositionRequested']();
+      fixture.componentInstance['onPinPositionSubmitted']([0.5, 0.5]);
+
+      expect(planPlacePin).toHaveBeenCalledWith([0.5, 0.5]);
+      expect(planMovePin).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBeNull();
     });
 
     it('should open the zone geometry dialog and submit through saveZoneGeometryFromDialog', async () => {

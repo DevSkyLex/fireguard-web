@@ -63,7 +63,12 @@ This feature does not own generic shell composition or account-level user identi
   holding a serial number and no site can still find it). It is now the
   single navigation entry for the estate, replacing the "Facilities" and
   "Equipments" pair below; both route trees stay mounted regardless so
-  records, creation forms and deep links keep resolving
+  records, creation forms and deep links keep resolving. Operators holding
+  `FACILITIES_WRITE` can re-parent a site by dragging it onto another —
+  `Tree`'s optional pointer drag-drop, calling `FacilityTreeStore.move`. The
+  tree row menu's "Move to…" action opens `FacilityMoveDialog` for the same
+  operation and is the keyboard/AT path: drag-drop is pointer-only by
+  construction and is never the only way to re-parent a site
 - `/organizations/:organizationId/messages` — the direct-messages workspace, owned by the
   `collaboration` subfeature, gated by `organization.messaging.read`. `messages/:conversationId`
   opens one. Reached from the shell's bottom navigation, not from the organization sections

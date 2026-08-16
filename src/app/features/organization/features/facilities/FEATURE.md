@@ -128,7 +128,9 @@ Primary stores:
 - `FacilityTreeStore` — the site hierarchy for the parent feature's assets
   explorer. Roots once, then one branch per expansion, each fetched exactly
   once; collapsing and re-expanding is a navigation gesture, not a reason to
-  ask the server again.
+  ask the server again. `move` re-parents a site optimistically over the
+  loaded roots/branches, with rollback on failure — the flow behind both the
+  explorer's `Tree` drag-drop and its `FacilityMoveDialog` "Move to…" action.
 
 Primary service:
 
@@ -148,11 +150,14 @@ Primary service:
   (`@features/organization/ui/components`) for the list page's shared pagination band — see
   `organization/FEATURE.md` § UI Conventions.
 - The parent feature consumes this subfeature's `state` barrel
-  (`FacilityTreeStore`), `models` barrel (`FacilityOutput`) and `utils`
-  barrel (`facilityToTreeNode`) for the assets explorer at
-  `/organizations/:organizationId/assets` (ARCHITECTURE.md §4). Read-only —
-  the parent browses the hierarchy, this subfeature keeps ownership of
-  sites. `facilityToTreeNode` moved here from the parent's own `utils/`
+  (`FacilityTreeStore`), `models` barrel (`FacilityOutput`), `utils` barrel
+  (`facilityToTreeNode`) and `ui/dialogs` barrel (`FacilityMoveDialog`) for
+  the assets explorer at `/organizations/:organizationId/assets`
+  (ARCHITECTURE.md §4). Mostly read-only — the parent browses the hierarchy
+  and this subfeature keeps ownership of sites — except the re-parent flow:
+  the parent calls `FacilityTreeStore.move` from both `Tree`'s drag-drop and
+  `FacilityMoveDialog`, so the write itself still lives in this subfeature's
+  store. `facilityToTreeNode` moved here from the parent's own `utils/`
   because both the parent's assets explorer and this subfeature's
   `FacilityHierarchyChart` need it, and its lowest common scope is this
   subfeature (ARCHITECTURE.md §2.8).

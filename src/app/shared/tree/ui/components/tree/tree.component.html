@@ -7,13 +7,16 @@
     @let isSelected = node.id === selectedId();
 
     <li role="none">
+      @let isDragOver = draggable() && dragOverId() === node.id;
+
       <div
         #treeitem
         role="treeitem"
-        class="flex min-h-9 items-center gap-1 rounded-md px-2 py-1.5 text-sm text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:bg-muted data-[selected=true]:font-medium"
+        class="flex min-h-9 items-center gap-1 rounded-md px-2 py-1.5 text-sm text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[drag-over=invalid]:cursor-not-allowed data-[drag-over=invalid]:ring-2 data-[drag-over=invalid]:ring-destructive data-[drag-over=valid]:ring-2 data-[drag-over=valid]:ring-primary data-[selected=true]:bg-muted data-[selected=true]:font-medium"
         data-testid="tree-item"
         [attr.data-tree-id]="node.id"
         [attr.data-selected]="isSelected ? 'true' : null"
+        [attr.data-drag-over]="isDragOver ? (isDragOverValid() ? 'valid' : 'invalid') : null"
         [attr.aria-level]="row.level"
         [attr.aria-setsize]="row.setSize"
         [attr.aria-posinset]="row.posInSet"
@@ -21,10 +24,24 @@
         [attr.aria-selected]="isSelected"
         [attr.aria-busy]="isLoading ? true : null"
         [attr.tabindex]="node.id === focusedId() ? 0 : -1"
+        [attr.draggable]="draggable() ? true : null"
         [style.padding-inline-start.px]="(row.level - 1) * 20"
         (click)="onItemClick(node)"
         (keydown)="onKeydown($event, row)"
+        (dragstart)="onDragStart($event, node)"
+        (dragover)="onDragOver($event, node)"
+        (dragleave)="onDragLeave($event, node)"
+        (drop)="onDrop($event, node)"
+        (dragend)="onDragEnd()"
       >
+        @if (draggable()) {
+          <ng-icon
+            name="lucideGripVertical"
+            class="shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
+        }
+
         @if (node.hasChildren) {
           <button
             type="button"
@@ -53,6 +70,16 @@
             {{ node.label }}
           }
         </span>
+
+        @if (isDragOver) {
+          <ng-icon
+            [name]="isDragOverValid() ? 'lucideCornerDownRight' : 'lucideBan'"
+            class="shrink-0"
+            [class.text-primary]="isDragOverValid()"
+            [class.text-destructive]="!isDragOverValid()"
+            [attr.aria-label]="isDragOverValid() ? dropHereLabel : dropNotAllowedLabel"
+          />
+        }
 
         @if (isLoading) {
           <hlm-spinner class="size-4 shrink-0" [aria-label]="loadingLabel" />

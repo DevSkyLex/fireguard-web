@@ -30,6 +30,7 @@ describe('Tree', () => {
       loadingIds?: ReadonlySet<string>;
       failedIds?: ReadonlySet<string>;
       selectedId?: string | null;
+      draggable?: boolean;
     } = {},
   ): Promise<void> => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
@@ -40,6 +41,23 @@ describe('Tree', () => {
     fixture.componentRef.setInput('loadingIds', overrides.loadingIds ?? new Set());
     fixture.componentRef.setInput('failedIds', overrides.failedIds ?? new Set());
     fixture.componentRef.setInput('selectedId', overrides.selectedId ?? null);
+    fixture.componentRef.setInput('draggable', overrides.draggable ?? false);
+    await fixture.whenStable();
+  };
+
+  const dragEventOn = (id: string, type: string): DragEvent => {
+    const event = new Event(type, { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'currentTarget', { value: item(id), configurable: true });
+    Object.defineProperty(event, 'dataTransfer', { value: null, configurable: true });
+    Object.defineProperty(event, 'clientY', { value: 0, configurable: true });
+    Object.defineProperty(event, 'relatedTarget', { value: null, configurable: true });
+    return event as unknown as DragEvent;
+  };
+
+  const drag = async (fromId: string, toId: string): Promise<void> => {
+    item(fromId)?.dispatchEvent(dragEventOn(fromId, 'dragstart'));
+    item(toId)?.dispatchEvent(dragEventOn(toId, 'dragover'));
+    item(toId)?.dispatchEvent(dragEventOn(toId, 'drop'));
     await fixture.whenStable();
   };
 
@@ -183,5 +201,114 @@ describe('Tree', () => {
 
     expect(item('a')?.getAttribute('aria-selected')).toBe('false');
     expect(item('b')?.getAttribute('aria-selected')).toBe('true');
+  });
+
+  describe('drag-drop', () => {
+    it('should render no draggable rows when draggable() is false', async () => {
+      await create([node('a'), node('b')]);
+
+      expect(item('a')?.getAttribute('draggable')).toBeNull();
+    });
+
+    it('should render draggable rows when draggable() is true', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+
+      expect(item('a')?.getAttribute('draggable')).toBe('true');
+    });
+
+    it('should emit nodeDropped with the dragged node, the target and position "inside" on a valid drop', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+      const emitted: Array<{
+        dragged: TreeNode<null>;
+        target: TreeNode<null>;
+        position: 'inside';
+      }> = [];
+      fixture.componentInstance.nodeDropped.subscribe((e) => emitted.push(e));
+
+      await drag('a', 'b');
+
+      expect(emitted).toHaveLength(1);
+      expect(emitted[0]?.dragged.id).toBe('a');
+      expect(emitted[0]?.target.id).toBe('b');
+      expect(emitted[0]?.position).toBe('inside');
+    });
+
+    it('should not emit when dropping a node onto itself', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+      const emitted: unknown[] = [];
+      fixture.componentInstance.nodeDropped.subscribe((e) => emitted.push(e));
+
+      await drag('a', 'a');
+
+      expect(emitted).toHaveLength(0);
+    });
+
+    it('should not emit and should show the not-allowed cue when dropping onto an already-loaded descendant', async () => {
+      await create([node('a', true)], {
+        childrenByParent: { a: [node('a1')] },
+        draggable: true,
+      });
+      await press('a', 'ArrowRight');
+      const emitted: unknown[] = [];
+      fixture.componentInstance.nodeDropped.subscribe((e) => emitted.push(e));
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+      item('a1')?.dispatchEvent(dragEventOn('a1', 'dragover'));
+      await fixture.whenStable();
+
+      expect(item('a1')?.getAttribute('data-drag-over')).toBe('invalid');
+
+      item('a1')?.dispatchEvent(dragEventOn('a1', 'drop'));
+      await fixture.whenStable();
+
+      expect(emitted).toHaveLength(0);
+    });
+
+    it('should mark a valid hovered row with the valid drop cue', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragover'));
+      await fixture.whenStable();
+
+      expect(item('b')?.getAttribute('data-drag-over')).toBe('valid');
+    });
+
+    it('should auto-expand a collapsed branch hovered long enough, without re-emitting on an already-loaded one', async () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      try {
+        await create([node('a', true), node('b', true)], {
+          childrenByParent: { b: [node('b1')] },
+          draggable: true,
+        });
+        const emitted: TreeNode<null>[] = [];
+        fixture.componentInstance.expandRequested.subscribe((n) => emitted.push(n));
+
+        item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+        item('b')?.dispatchEvent(dragEventOn('b', 'dragover'));
+        await vi.advanceTimersByTimeAsync(600);
+        await fixture.whenStable();
+
+        expect(item('b')?.getAttribute('aria-expanded')).toBe('true');
+        expect(item('b1')).not.toBeNull();
+        expect(emitted).toHaveLength(0);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('should clear drag state on dragend', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragover'));
+      await fixture.whenStable();
+      expect(item('b')?.getAttribute('data-drag-over')).toBe('valid');
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragend'));
+      await fixture.whenStable();
+
+      expect(item('b')?.getAttribute('data-drag-over')).toBeNull();
+    });
   });
 });

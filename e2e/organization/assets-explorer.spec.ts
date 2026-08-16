@@ -5,6 +5,7 @@ import {
   E2E_FACILITY_ID,
   facilityChildOutput,
   facilityOutput,
+  facilitySiblingOutput,
 } from '../support/fixtures/facility-fixtures';
 import { inspectionOutput } from '../support/fixtures/inspection-fixtures';
 import {
@@ -43,6 +44,56 @@ test.describe('Assets explorer', () => {
     await explorer.treeToggle.first().click();
 
     await expect(explorer.treeItems).toHaveCount(2);
+  });
+
+  test('drags a site onto another to re-parent it', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    const siteA = facilityOutput();
+    const siteB = facilitySiblingOutput();
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [siteA, siteB]);
+    await api.mockFacilityMove(E2E_ORGANIZATION_ID, siteA.id, {
+      ...siteA,
+      parentFacilityId: siteB.id,
+    });
+    const explorer = new AssetsExplorerPage(page);
+
+    await explorer.goto(E2E_ORGANIZATION_ID);
+    await expect(explorer.treeItems).toHaveCount(2);
+
+    const moveRequest = page.waitForRequest(
+      (request) =>
+        request.url().includes(`/facilities/${siteA.id}/move`) && request.method() === 'POST',
+    );
+    await explorer.dragNodeOnto(siteA.id, siteB.id);
+    await moveRequest;
+
+    await expect(explorer.treeItems).toHaveCount(1);
+    await expect(explorer.treeItems).toContainText(siteB.name);
+  });
+
+  test('does not move a site dropped onto its own already-loaded child', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    const parent = facilityOutput({ hasChildren: true });
+    const child = facilityChildOutput();
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [parent]);
+    await api.mockFacilityChildren(E2E_ORGANIZATION_ID, parent.id, [child]);
+    const explorer = new AssetsExplorerPage(page);
+
+    let moveRequested = false;
+    page.on('request', (request) => {
+      if (request.url().includes('/move')) moveRequested = true;
+    });
+
+    await explorer.goto(E2E_ORGANIZATION_ID);
+    await explorer.treeToggle.first().click();
+    await expect(explorer.treeItems).toHaveCount(2);
+
+    await explorer.dragNodeOnto(parent.id, child.id);
+
+    await expect(explorer.treeItems).toHaveCount(2);
+    expect(moveRequested).toBe(false);
   });
 
   test('selecting a site loads its equipment into the right pane', async ({ page }) => {

@@ -29,5 +29,8 @@ export interface FacilityTreeState {
 
   /** Identifiers of the parents whose children failed to load. */
   readonly failedParentIds: readonly string[];
+
+  /** The last drag-drop re-parent request, tracked so the primitive can be locked while one is in flight. */
+  readonly moveCallState: CallState<FacilityOutput>;
   //#endregion
 }

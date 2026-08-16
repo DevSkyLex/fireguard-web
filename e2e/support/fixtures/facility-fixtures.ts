@@ -13,6 +13,9 @@ export const E2E_FACILITY_ID = 'e2e-facility-1';
 /** A second, child facility used to exercise the hierarchy chart. */
 export const E2E_FACILITY_CHILD_ID = 'e2e-facility-2';
 
+/** A second root facility, used as a drag-drop move target. */
+export const E2E_FACILITY_SIBLING_ID = 'e2e-facility-3';
+
 export interface FacilityOutputFixture {
   readonly '@id': string;
   readonly '@type': string;
@@ -71,6 +74,21 @@ export function facilityChildOutput(
     type: 'floor',
     name: 'Ground Floor',
     code: 'BLD-001-GF',
+    ...overrides,
+  });
+}
+
+/** A second root facility — a sibling of {@link facilityOutput}, used as a drag-drop move target. */
+export function facilitySiblingOutput(
+  overrides: Partial<FacilityOutputFixture> = {},
+): FacilityOutputFixture {
+  return facilityOutput({
+    id: E2E_FACILITY_SIBLING_ID,
+    '@id': `/api/facilities/${E2E_FACILITY_SIBLING_ID}`,
+    parentFacilityId: null,
+    type: 'building',
+    name: 'South Building',
+    code: 'BLD-002',
     ...overrides,
   });
 }

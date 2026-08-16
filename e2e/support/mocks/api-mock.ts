@@ -397,6 +397,64 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `POST /api/organizations/{organizationId}/facilities/{facilityId}/move`
+   * — `FacilityTreeStore.move`, called from both the assets explorer tree's
+   * pointer drag-drop and its `FacilityMoveDialog` "Move to…" action. Pass
+   * the fixture as the server would return it post-move (updated
+   * `parentFacilityId`).
+   */
+  public async mockFacilityMove(
+    organizationId: string,
+    facilityId: string,
+    moved: FacilityOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${facilityId}/move`,
+      async (route) => {
+        if (route.request().method() !== 'POST') {
+          await route.fallback();
+          return;
+        }
+        await fulfillJson(route, 200, moved);
+      },
+    );
+  }
+
+  /**
+   * Mocks a failing `POST …/facilities/{facilityId}/move` — the backend
+   * refuses the re-parent (e.g. the target is a descendant, or a
+   * permission/conflict error). `FacilityTreeStore.move` rolls the
+   * optimistic re-parent back and dispatches `moveFailed` for the app-wide
+   * feedback listener to toast.
+   */
+  public async mockFacilityMoveError(
+    organizationId: string,
+    facilityId: string,
+    error: Partial<ApiErrorFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${facilityId}/move`,
+      async (route) => {
+        if (route.request().method() !== 'POST') {
+          await route.fallback();
+          return;
+        }
+        await fulfillJson(route, error.status ?? 409, {
+          '@id': '/errors/facility-move-failed',
+          '@type': 'Error',
+          status: 409,
+          type: 'about:blank',
+          title: 'The facility could not be moved.',
+          detail: 'The facility could not be moved.',
+          ...error,
+        });
+      },
+    );
+  }
+
+  /**
    * Mocks the facility-scoped equipment and inspection previews the detail
    * page's Overview tab reads (`FacilityOverviewStore`). Both `EquipmentService.list`
    * and `InspectionService.list` route a `facilityId` filter to these

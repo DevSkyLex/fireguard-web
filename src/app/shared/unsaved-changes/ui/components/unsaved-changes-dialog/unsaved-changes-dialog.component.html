@@ -1,0 +1,22 @@
+<hlm-alert-dialog [state]="state()" [disableClose]="true" (stateChanged)="onStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="unsaved-changes-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@shared.unsavedChanges.title">Discard unsaved changes?</h2>
+      <p hlmAlertDialogDescription i18n="@@shared.unsavedChanges.description">
+        Your changes have not been saved. Leaving now discards them.
+      </p>
+    </hlm-alert-dialog-header>
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="unsaved-changes-discard"
+        (click)="discard()"
+      >
+        <span i18n="@@shared.unsavedChanges.discardAction">Discard</span>
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

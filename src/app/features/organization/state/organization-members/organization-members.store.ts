@@ -11,7 +11,18 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, catchError, exhaustMap, forkJoin, map, of, pipe, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  exhaustMap,
+  forkJoin,
+  map,
+  of,
+  pipe,
+  switchMap,
+  tap,
+  type Observable,
+} from 'rxjs';
 import {
   errorCallState,
   errorFeedback,
@@ -31,6 +42,7 @@ import type {
   AssignOrganizationRoleInput,
   InviteOrganizationMemberInput,
   OrganizationInvitationOutput,
+  OrganizationMemberListSort,
   OrganizationMemberOutput,
   OrganizationMemberStatusFilter,
 } from '@features/organization/models';
@@ -49,6 +61,24 @@ import type {
 export const MEMBERS_PAGE_SIZE = 30;
 
 /**
+ * Server-side page size for the pending-invitations table's own pagination.
+ * Kept independent from {@link MEMBERS_PAGE_SIZE}: invitation volumes run far
+ * lower than membership rosters, and the invitations query is a two-status
+ * fetch (see {@link fetchActiveInvitations}) rather than a single page.
+ */
+export const INVITATIONS_PAGE_SIZE = 30;
+
+/**
+ * Ordering used when nothing narrower is asked for — the members endpoint's
+ * own default (`order[joinedAt]=asc`), mirrored by
+ * `OrganizationMemberListPreferencesService`'s fallback.
+ */
+export const DEFAULT_MEMBERS_SORT: OrganizationMemberListSort = {
+  field: 'joinedAt',
+  direction: 'asc',
+};
+
+/**
  * Initial organization members workflow state. Members and invitations are held
  * in `withEntities` collections; only roles, the link map and call states live
  * in plain state.
@@ -60,12 +90,59 @@ const INITIAL_STATE: OrganizationMembersState = {
   membersPageSize: MEMBERS_PAGE_SIZE,
   membersSearch: '',
   membersStatus: 'all',
+  membersSort: DEFAULT_MEMBERS_SORT,
   membersActiveTotal: 0,
   invitationLinks: {},
+  invitationsTotal: 0,
+  invitationsPage: 1,
+  invitationsPageSize: INVITATIONS_PAGE_SIZE,
   loadCallState: idleCallState(),
   mutationCallState: idleCallState(),
   lastMutationCanExceedQuota: false,
 };
+
+/**
+ * Fetches the pending-invitations table's full universe — pending and expired
+ * invitations only — as one combined, id-deduplicated page.
+ *
+ * The invitations endpoint's `status` filter accepts exactly one value, so
+ * "pending or expired" cannot be asked for in a single request. The
+ * pending-invitations section only ever renders those two statuses (accepted
+ * and revoked invitations belong to history, not to this card), so this
+ * issues the paginated `pending` query the section's own pager drives,
+ * alongside one unpaginated `expired` query — expired invitations are a
+ * comparatively small, bounded set (they age out and stop being actionable),
+ * so a single "cheap" fetch of up to 100 is combined in rather than given its
+ * own page.
+ */
+function fetchActiveInvitations(
+  invitationService: OrganizationInvitationService,
+  organizationId: string,
+  page: number,
+  pageSize: number,
+): Observable<{ items: OrganizationInvitationOutput[]; total: number }> {
+  const EXPIRED_ITEMS_PER_PAGE = 100;
+
+  return forkJoin({
+    pending: invitationService.list(
+      organizationId,
+      { page, itemsPerPage: pageSize },
+      {
+        status: 'pending',
+      },
+    ),
+    expired: invitationService.list(
+      organizationId,
+      { page: 1, itemsPerPage: EXPIRED_ITEMS_PER_PAGE },
+      { status: 'expired' },
+    ),
+  }).pipe(
+    map(({ pending, expired }) => ({
+      items: [...pending.member, ...expired.member],
+      total: pending.totalItems + expired.totalItems,
+    })),
+  );
+}
 
 /**
  * Captures the fresh accept link returned by an invite/resend response into the
@@ -137,90 +214,64 @@ export const OrganizationMembersStore = signalStore(
       load: rxMethod<OrganizationMembersLoadOptions>(
         pipe(
           tap(() => patchState(store, { loadCallState: pendingCallState() })),
-          switchMap(({ organizationId, includeMembers, includeInvitations, includeRoles }) =>
-            forkJoin({
-              members: includeMembers
-                ? memberService
-                    .list(organizationId, { page: 1, itemsPerPage: MEMBERS_PAGE_SIZE })
-                    .pipe(
-                      map((response) => ({
-                        items: [...response.member],
-                        total: response.totalItems,
-                      })),
+          switchMap(
+            ({
+              organizationId,
+              includeMembers,
+              includeInvitations,
+              includeRoles,
+              sort = DEFAULT_MEMBERS_SORT,
+            }) =>
+              forkJoin({
+                members: includeMembers
+                  ? memberService
+                      .list(
+                        organizationId,
+                        { page: 1, itemsPerPage: MEMBERS_PAGE_SIZE },
+                        { sortBy: sort.field, sortDirection: sort.direction },
+                      )
+                      .pipe(
+                        map((response) => ({
+                          items: [...response.member],
+                          total: response.totalItems,
+                        })),
+                      )
+                  : of({ items: [] as OrganizationMemberOutput[], total: 0 }),
+                membersActiveTotal: includeMembers
+                  ? memberService
+                      .list(organizationId, { page: 1, itemsPerPage: 1 }, { status: 'active' })
+                      .pipe(map((response) => response.totalItems))
+                  : of(0),
+                invitations: includeInvitations
+                  ? fetchActiveInvitations(
+                      invitationService,
+                      organizationId,
+                      1,
+                      INVITATIONS_PAGE_SIZE,
                     )
-                : of({ items: [] as OrganizationMemberOutput[], total: 0 }),
-              membersActiveTotal: includeMembers
-                ? memberService
-                    .list(organizationId, { page: 1, itemsPerPage: 1 }, { status: 'active' })
-                    .pipe(map((response) => response.totalItems))
-                : of(0),
-              invitations: includeInvitations
-                ? invitationService
-                    .list(organizationId, { itemsPerPage: 100 })
-                    .pipe(map((response) => [...response.member]))
-                : of([]),
-              roles: includeRoles
-                ? roleService.listAll(organizationId).pipe(map((roles) => [...roles]))
-                : of([]),
-            }).pipe(
-              tapResponse({
-                next: ({ members, membersActiveTotal, invitations, roles }) =>
-                  patchState(
-                    store,
-                    setAllEntities(members.items, { collection: 'member' }),
-                    setAllEntities(invitations, { collection: 'invitation' }),
-                    {
-                      roles,
-                      membersTotal: members.total,
-                      membersActiveTotal,
-                      membersPage: 1,
-                      membersPageSize: MEMBERS_PAGE_SIZE,
-                      membersSearch: '',
-                      membersStatus: 'all',
-                      loadCallState: successCallState(null),
-                    },
-                  ),
-                error: (error: unknown) =>
-                  patchState(store, { loadCallState: errorCallState(toStoreError(error)) }),
-              }),
-            ),
-          ),
-        ),
-      ),
-      /**
-       * Loads a single members page for the given search term, status filter
-       * and page size (server-side). `pageSize` defaults to
-       * {@link MEMBERS_PAGE_SIZE} so an existing caller that predates the
-       * rows-per-page select keeps its prior behavior.
-       */
-      loadMembers: rxMethod<{
-        organizationId: string;
-        page: number;
-        search: string;
-        status: OrganizationMemberStatusFilter;
-        pageSize?: number;
-      }>(
-        pipe(
-          tap(() => patchState(store, { loadCallState: pendingCallState() })),
-          switchMap(({ organizationId, page, search, status, pageSize = MEMBERS_PAGE_SIZE }) =>
-            memberService
-              .list(
-                organizationId,
-                { page, itemsPerPage: pageSize },
-                { search: search || undefined, status: status === 'all' ? undefined : status },
-              )
-              .pipe(
+                  : of({ items: [] as OrganizationInvitationOutput[], total: 0 }),
+                roles: includeRoles
+                  ? roleService.listAll(organizationId).pipe(map((roles) => [...roles]))
+                  : of([]),
+              }).pipe(
                 tapResponse({
-                  next: (response) =>
+                  next: ({ members, membersActiveTotal, invitations, roles }) =>
                     patchState(
                       store,
-                      setAllEntities([...response.member], { collection: 'member' }),
+                      setAllEntities(members.items, { collection: 'member' }),
+                      setAllEntities(invitations.items, { collection: 'invitation' }),
                       {
-                        membersTotal: response.totalItems,
-                        membersPage: page,
-                        membersPageSize: pageSize,
-                        membersSearch: search,
-                        membersStatus: status,
+                        roles,
+                        membersTotal: members.total,
+                        membersActiveTotal,
+                        membersPage: 1,
+                        membersPageSize: MEMBERS_PAGE_SIZE,
+                        membersSearch: '',
+                        membersStatus: 'all',
+                        membersSort: sort,
+                        invitationsTotal: invitations.total,
+                        invitationsPage: 1,
+                        invitationsPageSize: INVITATIONS_PAGE_SIZE,
                         loadCallState: successCallState(null),
                       },
                     ),
@@ -228,6 +279,94 @@ export const OrganizationMembersStore = signalStore(
                     patchState(store, { loadCallState: errorCallState(toStoreError(error)) }),
                 }),
               ),
+          ),
+        ),
+      ),
+      /**
+       * Loads a single members page for the given search term, status filter,
+       * page size and ordering (server-side). `pageSize` defaults to
+       * {@link MEMBERS_PAGE_SIZE} and `sort` to {@link DEFAULT_MEMBERS_SORT} so
+       * an existing caller that predates either keeps its prior behavior.
+       */
+      loadMembers: rxMethod<{
+        organizationId: string;
+        page: number;
+        search: string;
+        status: OrganizationMemberStatusFilter;
+        pageSize?: number;
+        sort?: OrganizationMemberListSort;
+      }>(
+        pipe(
+          tap(() => patchState(store, { loadCallState: pendingCallState() })),
+          switchMap(
+            ({
+              organizationId,
+              page,
+              search,
+              status,
+              pageSize = MEMBERS_PAGE_SIZE,
+              sort = DEFAULT_MEMBERS_SORT,
+            }) =>
+              memberService
+                .list(
+                  organizationId,
+                  { page, itemsPerPage: pageSize },
+                  {
+                    search: search || undefined,
+                    status: status === 'all' ? undefined : status,
+                    sortBy: sort.field,
+                    sortDirection: sort.direction,
+                  },
+                )
+                .pipe(
+                  tapResponse({
+                    next: (response) =>
+                      patchState(
+                        store,
+                        setAllEntities([...response.member], { collection: 'member' }),
+                        {
+                          membersTotal: response.totalItems,
+                          membersPage: page,
+                          membersPageSize: pageSize,
+                          membersSearch: search,
+                          membersStatus: status,
+                          membersSort: sort,
+                          loadCallState: successCallState(null),
+                        },
+                      ),
+                    error: (error: unknown) =>
+                      patchState(store, { loadCallState: errorCallState(toStoreError(error)) }),
+                  }),
+                ),
+          ),
+        ),
+      ),
+      /**
+       * Loads a single pending-invitations page for the given page and page
+       * size, through {@link fetchActiveInvitations}'s combined pending/expired
+       * fetch. `pageSize` defaults to {@link INVITATIONS_PAGE_SIZE}.
+       */
+      loadInvitations: rxMethod<{
+        organizationId: string;
+        page: number;
+        pageSize?: number;
+      }>(
+        pipe(
+          tap(() => patchState(store, { loadCallState: pendingCallState() })),
+          switchMap(({ organizationId, page, pageSize = INVITATIONS_PAGE_SIZE }) =>
+            fetchActiveInvitations(invitationService, organizationId, page, pageSize).pipe(
+              tapResponse({
+                next: ({ items, total }) =>
+                  patchState(store, setAllEntities(items, { collection: 'invitation' }), {
+                    invitationsTotal: total,
+                    invitationsPage: page,
+                    invitationsPageSize: pageSize,
+                    loadCallState: successCallState(null),
+                  }),
+                error: (error: unknown) =>
+                  patchState(store, { loadCallState: errorCallState(toStoreError(error)) }),
+              }),
+            ),
           ),
         ),
       ),
@@ -322,6 +461,7 @@ export const OrganizationMembersStore = signalStore(
                 next: (invitation) => {
                   patchState(store, addEntity(invitation, { collection: 'invitation' }), {
                     invitationLinks: withCapturedLink(store.invitationLinks(), invitation),
+                    invitationsTotal: store.invitationsTotal() + 1,
                     mutationCallState: successCallState(null),
                   });
                   dispatcher.dispatch(
@@ -351,6 +491,7 @@ export const OrganizationMembersStore = signalStore(
               tapResponse({
                 next: () => {
                   patchState(store, removeEntity(invitationId, { collection: 'invitation' }), {
+                    invitationsTotal: Math.max(0, store.invitationsTotal() - 1),
                     mutationCallState: successCallState(null),
                   });
                   dispatcher.dispatch(

@@ -70,3 +70,26 @@ export interface OrganizationMemberListQuery {
   readonly sortDirection?: OrganizationMemberSortDirection;
   //#endregion
 }
+
+/**
+ * Interface OrganizationMemberListSort
+ * @interface OrganizationMemberListSort
+ *
+ * @description
+ * How the members roster is ordered: which field, and which way. Carried
+ * separately from {@link OrganizationMemberListQuery} because it is what the
+ * table's sortable heads and `OrganizationMemberListPreferencesService`
+ * operate on, while the query interface is the wire-serialization shape.
+ *
+ * @since 1.6.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+export interface OrganizationMemberListSort {
+  //#region Properties
+  /** @type {OrganizationMemberSortField} */
+  readonly field: OrganizationMemberSortField;
+  /** @type {OrganizationMemberSortDirection} */
+  readonly direction: OrganizationMemberSortDirection;
+  //#endregion
+}

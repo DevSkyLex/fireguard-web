@@ -37,16 +37,23 @@ import {
   ORGANIZATION_QUOTA_RESOURCE,
   type InviteOrganizationMemberInput,
   type OrganizationInvitationOutput,
+  type OrganizationMemberListSort,
   type OrganizationMemberOutput,
+  type OrganizationMemberSortField,
   type OrganizationMemberStatusFilter,
   type OrganizationQuotaItemOutput,
 } from '@features/organization/models';
-import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
+import {
+  OrganizationMemberListPreferencesService,
+  SubmissionGateService,
+  type SubmissionGate,
+} from '@features/organization/services';
 import {
   OrganizationQuotaStore,
   type OrganizationQuotaStoreType,
 } from '@features/organization/state';
 import {
+  INVITATIONS_PAGE_SIZE,
   MEMBERS_PAGE_SIZE,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
@@ -197,6 +204,10 @@ export class OrganizationMembersPage {
   private readonly submissionGates: SubmissionGateService =
     inject<SubmissionGateService>(SubmissionGateService);
 
+  /** The cookie-backed memory of how the roster was last ordered. */
+  private readonly preferences: OrganizationMemberListPreferencesService =
+    inject<OrganizationMemberListPreferencesService>(OrganizationMemberListPreferencesService);
+
   /**
    * Property quotaStore
    * @readonly
@@ -232,6 +243,23 @@ export class OrganizationMembersPage {
   /** The roster's active status filter. */
   protected readonly statusFilter: WritableSignal<OrganizationMemberStatusFilter> =
     signal<OrganizationMemberStatusFilter>('all');
+
+  /**
+   * Property sortOrder
+   * @readonly
+   * @description The roster's active ordering, restored from the preferences cookie.
+   * @access protected
+   * @since 1.5.0
+   * @type {WritableSignal<OrganizationMemberListSort>}
+   */
+  protected readonly sortOrder: WritableSignal<OrganizationMemberListSort> =
+    signal<OrganizationMemberListSort>(this.preferences.readSort());
+
+  /** The pending-invitations page window, one-based. */
+  protected readonly invitationsPage: WritableSignal<number> = signal<number>(1);
+
+  /** Rows per invitations page — fixed; the section offers no rows-per-page choice. */
+  protected readonly invitationsPageSize: number = INVITATIONS_PAGE_SIZE;
 
   /** Whether the invite dialog is open. */
   protected readonly inviteDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -327,6 +355,18 @@ export class OrganizationMembersPage {
    */
   protected readonly membersPageCount: Signal<number> = computed<number>(() =>
     Math.max(1, Math.ceil(this.store.membersTotal() / this.pageSize())),
+  );
+
+  /**
+   * Property invitationsPageCount
+   * @readonly
+   * @description How many invitation pages the current total spans, at least one.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<number>}
+   */
+  protected readonly invitationsPageCount: Signal<number> = computed<number>(() =>
+    Math.max(1, Math.ceil(this.store.invitationsTotal() / this.invitationsPageSize)),
   );
 
   /** Where a member row's link points. */
@@ -569,7 +609,14 @@ export class OrganizationMembersPage {
         this.selectedIds.set(new Set<string>());
         this.searchTerm.set('');
         this.statusFilter.set('all');
-        this.store.load({ organizationId, includeMembers, includeInvitations, includeRoles });
+        this.invitationsPage.set(1);
+        this.store.load({
+          organizationId,
+          includeMembers,
+          includeInvitations,
+          includeRoles,
+          sort: this.sortOrder(),
+        });
       });
     });
 
@@ -598,11 +645,13 @@ export class OrganizationMembersPage {
    * @returns {void}
    */
   protected reload(): void {
+    this.invitationsPage.set(1);
     this.store.load({
       organizationId: this.organizationId(),
       includeMembers: this.canReadMembers(),
       includeInvitations: this.canManageMembers(),
       includeRoles: this.canReadRoles(),
+      sort: this.sortOrder(),
     });
   }
 
@@ -672,6 +721,52 @@ export class OrganizationMembersPage {
     this.searchTerm.set('');
     this.statusFilter.set('all');
     this.queryMembers(1);
+  }
+
+  /**
+   * Method applySortField
+   *
+   * @description
+   * Orders the roster by a column head. Re-picking the active field reverses
+   * it, which is what a second click on a sorted column means everywhere
+   * else in this codebase (`EquipmentsPage`). Persists the choice to
+   * {@link preferences} and resets to the first page like every other
+   * roster-narrowing entry point.
+   *
+   * @access protected
+   * @since 1.5.0
+   *
+   * @param {OrganizationMemberSortField} field - The column's field.
+   *
+   * @returns {void}
+   */
+  protected applySortField(field: OrganizationMemberSortField): void {
+    this.sortOrder.update((current: OrganizationMemberListSort) =>
+      current.field === field
+        ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { field, direction: current.direction },
+    );
+    this.preferences.write(this.sortOrder());
+    this.queryMembers(1);
+  }
+
+  /**
+   * Method goToInvitationsPage
+   * @description Loads another pending-invitations page.
+   * @access protected
+   * @since 1.5.0
+   * @param {number} target - The requested one-based page.
+   * @returns {void}
+   */
+  protected goToInvitationsPage(target: number): void {
+    const clamped: number = Math.min(Math.max(1, target), this.invitationsPageCount());
+
+    this.invitationsPage.set(clamped);
+    this.store.loadInvitations({
+      organizationId: this.organizationId(),
+      page: clamped,
+      pageSize: this.invitationsPageSize,
+    });
   }
 
   /**
@@ -912,10 +1007,10 @@ export class OrganizationMembersPage {
    *
    * @description
    * Re-issues the server-side roster query for the given page with the
-   * current search term, status filter and page size, clearing the row
-   * selection — the shared tail of every roster-narrowing entry point
+   * current search term, status filter, page size and ordering, clearing the
+   * row selection — the shared tail of every roster-narrowing entry point
    * (pagination, the rows-per-page select, the debounced search, the status
-   * toggle).
+   * toggle, a sortable head).
    *
    * @access private
    * @since 1.1.0
@@ -933,6 +1028,7 @@ export class OrganizationMembersPage {
       search: this.searchTerm().trim(),
       status: this.statusFilter(),
       pageSize: this.pageSize(),
+      sort: this.sortOrder(),
     });
   }
   //#endregion

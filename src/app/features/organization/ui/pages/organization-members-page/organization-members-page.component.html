@@ -182,9 +182,11 @@
           [canRemove]="canManageMembers()"
           [canAssignRoles]="canManageRoles()"
           [detailRouteBase]="memberDetailRouteBase()"
+          [sortOrder]="sortOrder()"
           (selectionChanged)="onSelectionChanged($event)"
           (manageRolesRequested)="openRolesDialog($event)"
           (removeRequested)="requestRemove($event)"
+          (sortChanged)="applySortField($event)"
         />
 
         <app-collection-pagination
@@ -246,6 +248,19 @@
             (resendRequested)="resendInvitation($event)"
             (revokeRequested)="revokeInvitation($event)"
           />
+
+          @if (store.invitationsTotal() > invitationsPageSize) {
+            <app-collection-pagination
+              [page]="invitationsPage()"
+              [pageCount]="invitationsPageCount()"
+              [pageSize]="invitationsPageSize"
+              [pageSizes]="[invitationsPageSize]"
+              [total]="store.invitationsTotal()"
+              [shown]="store.activeInvitations().length"
+              testIdPrefix="organization-invitations"
+              (pageChanged)="goToInvitationsPage($event)"
+            />
+          }
         }
       </section>
     }

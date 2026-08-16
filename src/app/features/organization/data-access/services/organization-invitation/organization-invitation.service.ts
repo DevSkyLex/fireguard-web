@@ -5,6 +5,7 @@ import type { HydraCollection } from '@core/api/models';
 import type {
   AcceptOrganizationInvitationInput,
   InviteOrganizationMemberInput,
+  OrganizationInvitationListQuery,
   OrganizationInvitationOutput,
   OrganizationInvitationPreviewOutput,
   OrganizationMemberOutput,
@@ -25,6 +26,30 @@ import type {
  */
 @Service()
 export class OrganizationInvitationService extends HydraApiService {
+  //#region Private Methods
+  /**
+   * Method toListParams
+   * @method toListParams
+   *
+   * @description
+   * Serializes the typed status filter into the query parameter the
+   * invitations endpoint expects. The endpoint accepts exactly one `status`
+   * value — there is no way to ask for "pending or expired" in one request.
+   *
+   * @access private
+   * @since 1.4.0
+   *
+   * @param {OrganizationInvitationListQuery} [query] - The typed filter, if any.
+   *
+   * @return {RequestOptions['params'] | undefined} The parameter map, or undefined when nothing is filtered.
+   */
+  private toListParams(
+    query?: OrganizationInvitationListQuery,
+  ): RequestOptions['params'] | undefined {
+    return query?.status ? { status: query.status } : undefined;
+  }
+  //#endregion
+
   //#region Public Methods
   /**
    * Method accept
@@ -88,16 +113,22 @@ export class OrganizationInvitationService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {RequestOptions} [options] - Optional pagination parameters.
+   * @param {OrganizationInvitationListQuery} [query] - Optional status filter. Filters from `query` are merged over `options.params`, so a caller passing both wins with the typed one.
    *
    * @return {Observable<HydraCollection<OrganizationInvitationOutput>>} An observable emitting the invitations collection.
    */
   public list(
     organizationId: string,
     options?: RequestOptions,
+    query?: OrganizationInvitationListQuery,
   ): Observable<HydraCollection<OrganizationInvitationOutput>> {
+    const filters: RequestOptions['params'] | undefined = this.toListParams(query);
+    const merged: RequestOptions | undefined =
+      filters === undefined ? options : { ...options, params: { ...options?.params, ...filters } };
+
     return this.getCollection<OrganizationInvitationOutput>(
       `/api/organizations/${organizationId}/invitations`,
-      options,
+      merged,
     );
   }
 

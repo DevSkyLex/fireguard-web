@@ -1,5 +1,6 @@
 import type { CallState } from '@core/request-state';
 import type {
+  OrganizationMemberListSort,
   OrganizationMemberStatusFilter,
   OrganizationRoleOutput,
 } from '@features/organization/models';
@@ -17,6 +18,12 @@ export interface OrganizationMembersLoadOptions {
   readonly includeInvitations: boolean;
   /** Whether to load roles (for chips and role assignment). */
   readonly includeRoles: boolean;
+  /**
+   * The roster ordering to seed the initial members query with, restored
+   * from `OrganizationMemberListPreferencesService`. Defaults to
+   * `DEFAULT_MEMBERS_SORT` when omitted.
+   */
+  readonly sort?: OrganizationMemberListSort;
 }
 
 /**
@@ -38,6 +45,8 @@ export interface OrganizationMembersState {
   readonly membersSearch: string;
   /** Active server-side member status filter. */
   readonly membersStatus: OrganizationMemberStatusFilter;
+  /** Active server-side member ordering. */
+  readonly membersSort: OrganizationMemberListSort;
   /**
    * Organization-wide count of active memberships, fetched once alongside the
    * initial load and independent of {@link membersSearch} / {@link membersStatus}
@@ -50,6 +59,15 @@ export interface OrganizationMembersState {
    * responses (the raw token is never recoverable from a listed invitation).
    */
   readonly invitationLinks: Record<string, string>;
+  /**
+   * Total pending/expired invitations matching the invitations page's own
+   * two-query fetch (see {@link OrganizationMembersStore}), for pagination.
+   */
+  readonly invitationsTotal: number;
+  /** One-based current invitations page. */
+  readonly invitationsPage: number;
+  /** Rows per invitations page. */
+  readonly invitationsPageSize: number;
   /** Request state for the initial resource load. */
   readonly loadCallState: CallState;
   /** Request state for member/invitation mutations. */

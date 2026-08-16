@@ -4,6 +4,8 @@ import { provideRouter } from '@angular/router';
 import type { OrganizationMemberOutput } from '@features/organization/models';
 import { OrganizationMemberTable } from '../organization-member-table.component';
 
+const DEFAULT_SORT_ORDER = { field: 'joinedAt' as const, direction: 'asc' as const };
+
 function member(overrides: Partial<OrganizationMemberOutput> = {}): OrganizationMemberOutput {
   return {
     id: 'member-1',
@@ -39,6 +41,7 @@ describe('OrganizationMemberTable', () => {
     fixture = TestBed.createComponent(OrganizationMemberTable);
     fixture.componentRef.setInput('items', items);
     fixture.componentRef.setInput('detailRouteBase', ['/organizations', 'org-1', 'members']);
+    fixture.componentRef.setInput('sortOrder', DEFAULT_SORT_ORDER);
     await fixture.whenStable();
 
     selectionChanges = [];
@@ -233,7 +236,7 @@ describe('OrganizationMemberTable', () => {
       const firstRowCells: number =
         root().querySelector('tbody tr')?.querySelectorAll('td').length ?? 0;
 
-      expect(firstRowCells).toBe(6);
+      expect(firstRowCells).toBe(7);
     });
   });
 
@@ -246,7 +249,7 @@ describe('OrganizationMemberTable', () => {
       const cell: HTMLTableCellElement | null = root().querySelector('tbody td');
 
       expect(root().textContent).toContain('No results.');
-      expect(cell?.getAttribute('colspan')).toBe('5');
+      expect(cell?.getAttribute('colspan')).toBe('6');
     });
 
     it('should span the checkbox column too once canRemove is granted', async () => {
@@ -257,7 +260,7 @@ describe('OrganizationMemberTable', () => {
       const cell: HTMLTableCellElement | null = root().querySelector('tbody td');
 
       expect(root().textContent).toContain('No results.');
-      expect(cell?.getAttribute('colspan')).toBe('6');
+      expect(cell?.getAttribute('colspan')).toBe('7');
     });
 
     it('should never render the empty message while loading', async () => {
@@ -266,6 +269,52 @@ describe('OrganizationMemberTable', () => {
       await fixture.whenStable();
 
       expect(root().textContent).not.toContain('No results.');
+    });
+  });
+
+  describe('sorting', () => {
+    let sortChanges: string[];
+
+    beforeEach(() => {
+      sortChanges = [];
+    });
+
+    it('should announce the active field ascending and mark the other head none', async () => {
+      await createTable([member({ id: 'a' })]);
+
+      const memberHead: HTMLElement | null = root()
+        .querySelector('[data-testid="organization-member-table-sort-member"]')
+        ?.closest('th') as HTMLElement | null;
+      const joinedHead: HTMLElement | null = root()
+        .querySelector('[data-testid="organization-member-table-sort-joined"]')
+        ?.closest('th') as HTMLElement | null;
+
+      expect(joinedHead?.getAttribute('aria-sort')).toBe('ascending');
+      expect(memberHead?.getAttribute('aria-sort')).toBe('none');
+    });
+
+    it('should announce descending once the active direction is desc', async () => {
+      await createTable([member({ id: 'a' })]);
+      fixture.componentRef.setInput('sortOrder', { field: 'joinedAt', direction: 'desc' });
+      await fixture.whenStable();
+
+      const joinedHead: HTMLElement | null = root()
+        .querySelector('[data-testid="organization-member-table-sort-joined"]')
+        ?.closest('th') as HTMLElement | null;
+
+      expect(joinedHead?.getAttribute('aria-sort')).toBe('descending');
+    });
+
+    it('should emit sortChanged with the clicked head field', async () => {
+      await createTable([member({ id: 'a' })]);
+      fixture.componentInstance.sortChanged.subscribe((field) => sortChanges.push(field));
+
+      root()
+        .querySelector<HTMLButtonElement>('[data-testid="organization-member-table-sort-member"]')
+        ?.click();
+      await fixture.whenStable();
+
+      expect(sortChanges).toEqual(['displayName']);
     });
   });
 

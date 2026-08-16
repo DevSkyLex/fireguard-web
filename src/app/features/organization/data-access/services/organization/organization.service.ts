@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { type Observable, catchError } from 'rxjs';
+import { EMPTY, expand, reduce, type Observable, catchError } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
@@ -654,6 +654,50 @@ export class OrganizationService extends HydraApiService {
     return this.getCollection<OrganizationPermissionOutput>(
       `${OrganizationService.BASE_PATH}/${organizationId}/permissions`,
       options,
+    );
+  }
+
+  /**
+   * Method listAllPermissions
+   * @method listAllPermissions
+   *
+   * @description
+   * Lists the complete permission catalog by walking the server-paginated
+   * `permissions` collection page by page — the catalog feeds the "Permissions
+   * in catalog" KPI, the create-role dialog checkbox list, and the
+   * role-permissions sheet, all of which need every entry, never one page.
+   *
+   * @access public
+   * @since 1.6.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {RequestOptions} [options] - Optional extra request parameters.
+   *
+   * @return {Observable<readonly OrganizationPermissionOutput[]>} An observable emitting the complete permission catalog.
+   */
+  public listAllPermissions(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<readonly OrganizationPermissionOutput[]> {
+    const pageSize = 100;
+    return this.listPermissions(organizationId, {
+      ...options,
+      page: 1,
+      itemsPerPage: pageSize,
+    }).pipe(
+      expand((collection, pageIndex) =>
+        (pageIndex + 1) * pageSize < collection.totalItems
+          ? this.listPermissions(organizationId, {
+              ...options,
+              page: pageIndex + 2,
+              itemsPerPage: pageSize,
+            })
+          : EMPTY,
+      ),
+      reduce(
+        (items, collection) => [...items, ...collection.member],
+        [] as readonly OrganizationPermissionOutput[],
+      ),
     );
   }
   //#endregion

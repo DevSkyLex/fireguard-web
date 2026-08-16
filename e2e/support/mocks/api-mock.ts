@@ -40,6 +40,7 @@ import type {
   ComplianceTreeNodeOutputFixture,
   FacilityAttachmentOutputFixture,
   FacilityOutputFixture,
+  FacilityPlanOverlayOutputFixture,
 } from '../fixtures/facility-fixtures';
 import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
 import type {
@@ -622,6 +623,27 @@ export class ApiMock {
     await this.page.route(/\/api\/facility-attachments\/.+\/download$/, async (route) => {
       await route.fulfill({ status: 200, contentType: 'image/png', body: TINY_PNG_BUFFER });
     });
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/facilities/{facilityId}/plan-overlay` —
+   * the selected plan's read-only zone/equipment overlay, fetched by
+   * `FacilityPlansStore` alongside the plan image.
+   */
+  public async mockFacilityPlanOverlay(
+    organizationId: string,
+    facilityId: string,
+    overlay: FacilityPlanOverlayOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/facilities/${facilityId}/plan-overlay(\\?.*)?$`,
+      ),
+      async (route) => {
+        await fulfillJson(route, 200, overlay);
+      },
+    );
   }
 
   /**

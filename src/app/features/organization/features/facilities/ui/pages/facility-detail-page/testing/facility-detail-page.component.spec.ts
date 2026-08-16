@@ -23,6 +23,7 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   FacilityAttachmentOutput,
   FacilityOutput,
+  FacilityPlanOverlayOutput,
 } from '@features/organization/features/facilities/models';
 import {
   ActiveFacilityStore,
@@ -115,6 +116,12 @@ describe('FacilityDetailPage', () => {
   let selectedPlan: WritableSignal<FacilityAttachmentOutput | null>;
   let planImageUrl: WritableSignal<string | null>;
   let plansLoading: WritableSignal<boolean>;
+  let planOverlay: WritableSignal<FacilityPlanOverlayOutput | null>;
+  let planOverlayHasContent: WritableSignal<boolean>;
+  let planShowZones: WritableSignal<boolean>;
+  let planShowEquipment: WritableSignal<boolean>;
+  let planSetShowZones: ReturnType<typeof vi.fn>;
+  let planSetShowEquipment: ReturnType<typeof vi.fn>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(FacilityDetailPage);
@@ -147,6 +154,12 @@ describe('FacilityDetailPage', () => {
     selectedPlan = signal<FacilityAttachmentOutput | null>(null);
     planImageUrl = signal<string | null>(null);
     plansLoading = signal<boolean>(false);
+    planOverlay = signal<FacilityPlanOverlayOutput | null>(null);
+    planOverlayHasContent = signal<boolean>(false);
+    planShowZones = signal<boolean>(true);
+    planShowEquipment = signal<boolean>(true);
+    planSetShowZones = vi.fn();
+    planSetShowEquipment = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -200,11 +213,17 @@ describe('FacilityDetailPage', () => {
               isUploading: signal(false),
               settingPrimaryId: signal<string | null>(null),
               deletingId: signal<string | null>(null),
+              overlay: planOverlay,
+              overlayHasContent: planOverlayHasContent,
+              showZones: planShowZones,
+              showEquipment: planShowEquipment,
               load: planLoad,
               upload: planUpload,
               setPrimary: planSetPrimary,
               remove: planRemove,
               selectPlan: planSelectPlan,
+              setShowZones: planSetShowZones,
+              setShowEquipment: planSetShowEquipment,
             },
           },
         ],
@@ -430,7 +449,10 @@ describe('FacilityDetailPage', () => {
       await fixture.whenStable();
 
       expect(planLoad).toHaveBeenCalledTimes(1);
-      expect(planLoad).toHaveBeenCalledWith({ facilityId: 'facility-1' });
+      expect(planLoad).toHaveBeenCalledWith({
+        facilityId: 'facility-1',
+        organizationId: 'org-1',
+      });
     });
 
     it('should announce a skeleton loading state while the first plans load is in flight', async () => {
@@ -525,6 +547,81 @@ describe('FacilityDetailPage', () => {
       fixture.componentInstance['onPlanSelected']('plan-2');
 
       expect(planSelectPlan).toHaveBeenCalledWith('plan-2');
+    });
+  });
+
+  describe('plan overlay', () => {
+    it('should not show the layer toggles when the overlay has no content', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
+      planOverlayHasContent.set(false);
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plan-overlay-toggles')).toBeNull();
+    });
+
+    it('should show the layer toggles and project the overlay once it has content', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
+      planOverlayHasContent.set(true);
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plan-overlay-toggles')).not.toBeNull();
+      expect(root().querySelector('app-facility-plan-overlay')).not.toBeNull();
+    });
+
+    it('should route a zone toggle change to the store', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
+      planOverlayHasContent.set(true);
+      await createPage();
+
+      fixture.componentInstance['onShowZonesChanged'](false);
+
+      expect(planSetShowZones).toHaveBeenCalledWith(false);
+    });
+
+    it('should route an equipment toggle change to the store', async () => {
+      await createPage();
+
+      fixture.componentInstance['onShowEquipmentChanged'](false);
+
+      expect(planSetShowEquipment).toHaveBeenCalledWith(false);
+    });
+
+    it('should navigate to the zone facility when a plan overlay zone is activated', async () => {
+      await createPage();
+
+      fixture.componentInstance['onPlanZoneActivated']('facility-zone-1');
+
+      expect(navigate).toHaveBeenCalledWith([
+        '/organizations',
+        'org-1',
+        'facilities',
+        'facility-zone-1',
+      ]);
+    });
+
+    it('should navigate to the equipment record when a plan overlay pin is activated', async () => {
+      await createPage();
+
+      fixture.componentInstance['onPlanEquipmentActivated']('equipment-1');
+
+      expect(navigate).toHaveBeenCalledWith([
+        '/organizations',
+        'org-1',
+        'equipments',
+        'equipment-1',
+      ]);
     });
   });
 

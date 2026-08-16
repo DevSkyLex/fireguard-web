@@ -242,6 +242,48 @@ describe('FacilityService', () => {
     });
   });
 
+  // ── getPlanOverlay ─────────────────────────────────────────────────────────
+
+  describe('getPlanOverlay', () => {
+    const overlay = {
+      attachmentId: 'plan-1',
+      imageWidth: 1200,
+      imageHeight: 800,
+      zones: [],
+      equipment: [],
+    };
+
+    it('should send GET request without attachmentId when omitted', () => {
+      service.getPlanOverlay(orgId, facilityId).subscribe((response) => {
+        expect(response).toEqual(overlay);
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/plan-overlay`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(overlay);
+    });
+
+    it('should forward attachmentId as a query param', () => {
+      service.getPlanOverlay(orgId, facilityId, 'plan-1').subscribe();
+
+      const req = httpMock.expectOne(
+        `${facilityBaseUrl}/${facilityId}/plan-overlay?attachmentId=plan-1`,
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(overlay);
+    });
+
+    it('should handle a not found error', () => {
+      service.getPlanOverlay(orgId, facilityId).subscribe({
+        error: (error: ApiError) => expect(error.status).toBe(404),
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/plan-overlay`);
+      req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
+  });
+
   // ── create ─────────────────────────────────────────────────────────────────
 
   describe('create', () => {

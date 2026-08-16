@@ -49,10 +49,12 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { FacilityHierarchyChart } from '../../components/facility-hierarchy-chart';
 import { FacilityInformationPanel } from '../../components/facility-information-panel';
 import { FacilityPlanList } from '../../components/facility-plan-list';
+import { FacilityPlanOverlay } from '../../components/facility-plan-overlay';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
 import type { FacilityDetailTabId } from './models';
 
@@ -78,7 +80,11 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * writable property (`FEATURE.md` "The record is the edit surface" — there
  * is no separate edit page); **Plans** renders {@link FacilityPlanList} and
  * `PlanViewer` over {@link FacilityPlansStore}, loaded browser-only on first
- * activation since it is secondary content (`ARCHITECTURE.md` §12.4). A
+ * activation since it is secondary content (`ARCHITECTURE.md` §12.4). The
+ * selected plan's read-only zone/equipment overlay renders through
+ * `FacilityPlanOverlay`, projected into `PlanViewer`'s `overlayTemplate`; a
+ * zone or equipment pin activation navigates to that record, and this page
+ * owns the navigation, not the overlay. A
  * danger, confirm-gated **Delete** action registers on the shell header
  * through `PageActionsService` (`FEATURE.md` "Deletion").
  *
@@ -93,7 +99,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * plans. The record's name is the shell breadcrumb's title, resolved by
  * `facilityTitleResolver`.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -106,10 +112,12 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     FacilityHierarchyChart,
     FacilityInformationPanel,
     FacilityPlanList,
+    FacilityPlanOverlay,
     FacilityStatusTag,
     PlanViewer,
     HlmButton,
     HlmSkeleton,
+    HlmSwitch,
     ...HlmSpinnerImports,
     ...HlmAlertDialogImports,
     ...HlmCardImports,
@@ -323,7 +331,7 @@ export class FacilityDetailPage {
     this.activeTab.set(tab);
     if (tab === 'plans' && this.isBrowser && !this.plansLoadRequested) {
       this.plansLoadRequested = true;
-      this.plans.load({ facilityId: this.facilityId() });
+      this.plans.load({ facilityId: this.facilityId(), organizationId: this.organizationId() });
     }
   }
 
@@ -373,6 +381,54 @@ export class FacilityDetailPage {
    */
   protected onPlanDeleteRequested(plan: FacilityAttachmentOutput): void {
     this.plans.remove({ attachmentId: plan.id, revision: plan.revision });
+  }
+
+  /**
+   * Method onPlanZoneActivated
+   * @description A plan overlay zone was activated; navigates to that facility's record.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} facilityId - The activated zone's facility id.
+   * @returns {void}
+   */
+  protected onPlanZoneActivated(facilityId: string): void {
+    void this.router.navigate(['/organizations', this.organizationId(), 'facilities', facilityId]);
+  }
+
+  /**
+   * Method onPlanEquipmentActivated
+   * @description A plan overlay equipment pin was activated; navigates to that equipment's record.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} equipmentId - The activated pin's equipment id.
+   * @returns {void}
+   */
+  protected onPlanEquipmentActivated(equipmentId: string): void {
+    void this.router.navigate(['/organizations', this.organizationId(), 'equipments', equipmentId]);
+  }
+
+  /**
+   * Method onShowZonesChanged
+   * @description Toggles the plan overlay's zone-polygon layer.
+   * @access protected
+   * @since 1.3.0
+   * @param {boolean} value - The switch's new checked state.
+   * @returns {void}
+   */
+  protected onShowZonesChanged(value: boolean): void {
+    this.plans.setShowZones(value);
+  }
+
+  /**
+   * Method onShowEquipmentChanged
+   * @description Toggles the plan overlay's equipment-pin layer.
+   * @access protected
+   * @since 1.3.0
+   * @param {boolean} value - The switch's new checked state.
+   * @returns {void}
+   */
+  protected onShowEquipmentChanged(value: boolean): void {
+    this.plans.setShowEquipment(value);
   }
 
   /**

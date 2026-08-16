@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
+import { catchError, EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
@@ -8,6 +8,7 @@ import type {
   FacilityListOptions,
   FacilityChildrenOptions,
   FacilityDescendantsOptions,
+  FacilityPlanOverlayOutput,
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
@@ -280,6 +281,47 @@ export class FacilityService extends HydraApiService {
     return this.getOne<FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}`,
     );
+  }
+
+  /**
+   * Method getPlanOverlay
+   * @method getPlanOverlay
+   *
+   * @description
+   * Reads one floor plan's read-only overlay — its zone polygons and
+   * equipment pins (`GET /api/organizations/{organizationId}/facilities/{facilityId}/plan-overlay`).
+   * Omitting `attachmentId` resolves the facility's primary plan
+   * server-side. Calls `this.http` directly, like
+   * `FacilityAttachmentService.download`: the response is a computed
+   * projection, not a stored Hydra item, so it carries no `@id`/`@type` and
+   * cannot satisfy `getOne`'s `T extends HydraItem` bound.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the facility owning the plan.
+   * @param {string} [attachmentId] - The plan to read; defaults to the facility's primary plan.
+   *
+   * @return {Observable<FacilityPlanOverlayOutput>} An observable emitting the overlay.
+   */
+  public getPlanOverlay(
+    organizationId: string,
+    facilityId: string,
+    attachmentId?: string,
+  ): Observable<FacilityPlanOverlayOutput> {
+    return this.http
+      .get<FacilityPlanOverlayOutput>(
+        this.buildUrl(
+          `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/plan-overlay`,
+        ),
+        {
+          headers: this.buildHeaders(),
+          params: this.buildParams(attachmentId ? { params: { attachmentId } } : undefined),
+          withCredentials: true,
+        },
+      )
+      .pipe(catchError(this.handleError));
   }
 
   /**

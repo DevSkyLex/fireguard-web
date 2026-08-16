@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
-import { equipmentOutput, inStockEquipmentOutput } from '../support/fixtures/equipment-fixtures';
+import {
+  E2E_EQUIPMENT_ID,
+  equipmentOutput,
+  inStockEquipmentOutput,
+} from '../support/fixtures/equipment-fixtures';
 import {
   E2E_FACILITY_CHILD_ID,
   E2E_FACILITY_ID,
@@ -8,6 +12,7 @@ import {
   facilityAttachmentOutput,
   facilityChildOutput,
   facilityOutput,
+  facilityPlanOverlayOutput,
 } from '../support/fixtures/facility-fixtures';
 import { inspectionOutput } from '../support/fixtures/inspection-fixtures';
 import {
@@ -428,6 +433,11 @@ test.describe('Facility Plans tab', () => {
     await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
     await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
     await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockFacilityPlanOverlay(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_ID,
+      facilityPlanOverlayOutput(),
+    );
     const facilities = new FacilitiesPage(page);
 
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
@@ -437,6 +447,128 @@ test.describe('Facility Plans tab', () => {
     await expect(facilities.planViewer).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/facility-plans-tab-dark-mobile.png` });
+    expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+  });
+});
+
+test.describe('Facility Plan Overlay', () => {
+  test('renders the zone polygons and equipment pins from the plan overlay', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockFacilityPlanOverlay(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_ID,
+      facilityPlanOverlayOutput(),
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+
+    await expect(facilities.overlayToggles).toBeVisible();
+    await expect(facilities.overlayZones).toHaveCount(2);
+    await expect(facilities.overlayEquipment).toHaveCount(2);
+  });
+
+  test('reaches a zone and a pin by keyboard, and activating either navigates to its record', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityChildOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_CHILD_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockEquipmentDetail(E2E_ORGANIZATION_ID, equipmentOutput());
+    await api.mockFacilityPlanOverlay(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_ID,
+      facilityPlanOverlayOutput({
+        equipment: [
+          {
+            equipmentId: E2E_EQUIPMENT_ID,
+            name: 'Extinguisher A',
+            status: 'operational',
+            x: 0.2,
+            y: 0.2,
+          },
+        ],
+      }),
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.overlayZones.first()).toBeVisible();
+
+    await facilities.overlayZones.first().focus();
+    await expect(facilities.overlayZones.first()).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(new RegExp(`/facilities/${E2E_FACILITY_CHILD_ID}$`));
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await facilities.overlayEquipment.first().focus();
+    await expect(facilities.overlayEquipment.first()).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(new RegExp(`/equipments/${E2E_EQUIPMENT_ID}$`));
+  });
+
+  test('hides the zone layer when the zones toggle is switched off', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockFacilityPlanOverlay(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_ID,
+      facilityPlanOverlayOutput(),
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.overlayZones).toHaveCount(2);
+
+    await facilities.overlayToggleZones.click();
+
+    await expect(facilities.overlayZones).toHaveCount(0);
+    await expect(facilities.overlayEquipment).toHaveCount(2);
+  });
+
+  test('renders the plan overlay at 375px in dark mode with no console errors', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    const consoleErrors = collectConsoleErrors(page);
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 800 });
+
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockFacilityPlanOverlay(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_ID,
+      facilityPlanOverlayOutput(),
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(facilities.overlayToggles).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/facility-plan-overlay-dark-mobile.png` });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 });

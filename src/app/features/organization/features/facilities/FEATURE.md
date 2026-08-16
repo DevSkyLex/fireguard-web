@@ -149,6 +149,57 @@ browser object URL (`planImageUrl`), revoking the previous one on every
 change and on destroy; `app-plan-viewer`'s `src` is fed `planImageUrl`, not
 the attachment record.
 
+## Plan Overlay (Read-Only)
+
+The same `withHooks` effect that fetches `planImageUrl` also fetches the
+selected plan's **read-only** zone/equipment overlay through
+`FacilityService.getPlanOverlay` (`GET
+/api/organizations/{organizationId}/facilities/{facilityId}/plan-overlay?attachmentId=…`),
+kept on `FacilityService` rather than `FacilityAttachmentService` because the
+route is organization-scoped like the rest of that service, not part of the
+attachment URL family. Not a Hydra item (no `@id`/`@type`), so the service
+reads it directly through `HttpClient`, mirroring
+`FacilityAttachmentService.download`. `FacilityPlansStore` now also holds
+`organizationId` (set by `load`) purely so this effect — triggered
+internally, not from a page call — can build the URL.
+
+`FacilityPlanOverlayOutput` (`models/facility-plan-overlay/`) carries the
+plan's `imageWidth`/`imageHeight` and two collections in **normalized 0–1
+image coordinates**: `zones` (a child facility's polygon outline, `points`
+in order) and `equipment` (a pinned equipment's `x`/`y`). `FacilityOutput`
+separately gains an optional `planGeometry` (`models/facility/`) — one
+facility's own outline on its parent's plan, detail-read only; not yet
+consumed by any UI in this pass.
+
+`ui/components/facility-plan-overlay` (`FacilityPlanOverlay`) renders the
+overlay, projected into `app-plan-viewer`'s `overlayTemplate` from the Plans
+tab so it inherits pan/zoom through the DOM. Zones are hatch-filled SVG
+polygons (achromatic per `PRODUCT.md` — zones carry no status colour) with a
+name label at the polygon centroid (`utils/polygon-centroid`, a pure area-
+weighted formula with a vertex-average fallback for a degenerate shape);
+each is a focusable, keyboard-activatable SVG `<a role="button">` (Enter/Space)
+since it navigates via an emitted output, not a real `href`. Equipment pins
+are positioned `<button>`s, `utils/normalized-point` converting the wire
+format to image-pixel coordinates; each pin is counter-scaled by
+`1 / scale` (`scale` from `PlanViewerOverlayContext`) so it keeps a constant
+on-screen size while the plan is zoomed, and coloured by status through a
+**feature-owned** `models/equipment-status-tag/` registry — the equipment
+status enum belongs to the sibling `equipments` feature, but this is the
+only place this feature renders it, so it is duplicated locally rather than
+imported, mirroring `interventions`' own `equipmentStatus` kind on
+`intervention-tag.util.ts` (same `$localize` ids, three call sites, no
+cross-feature registry import). The component is presentational — inputs
+and outputs only, no store or service — and the page owns the navigation on
+`zoneActivated`/`equipmentActivated` (absolute paths, to
+`/organizations/:organizationId/facilities/:facilityId` and
+`/organizations/:organizationId/equipments/:equipmentId`).
+
+`showZones`/`showEquipment` are store-held visibility toggles (both default
+`true`, `FacilityPlansStore.setShowZones`/`setShowEquipment`), rendered as
+`hlm-switch` chips above the viewer, shown only when
+`FacilityPlansStore.overlayHasContent()` — no zones and no equipment renders
+no toggle chrome at all.
+
 ## Facility Listing (Roots-Only DataView)
 
 The facility list page presents the organization's **root** facilities as a
@@ -350,3 +401,5 @@ organization-scoped read never carries `revision`, then sends the required
 - Facility resolvers and facility page orchestration belong here, not in the parent feature or layouts.
 - At most one floor plan is primary per facility; setting a new primary must reflect the swap on both plans without a re-fetch (mirrors the backend's atomic unset).
 - The Plans tab loads only when activated and only in the browser — it is secondary content, never part of the resolver's seeded fetch.
+- The plan overlay is read-only in this pass; editing zone/equipment placement is a separate, later stacked branch.
+- `FacilityPlanOverlay` never injects a store or service, and never navigates itself — it emits, the page navigates.

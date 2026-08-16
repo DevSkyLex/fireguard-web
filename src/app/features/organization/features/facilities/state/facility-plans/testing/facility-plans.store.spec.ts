@@ -2,8 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import type { ApiError } from '@core/api/models';
-import { FacilityAttachmentService } from '@features/organization/features/facilities/data-access';
-import type { FacilityAttachmentOutput } from '@features/organization/features/facilities/models';
+import {
+  FacilityAttachmentService,
+  FacilityService,
+} from '@features/organization/features/facilities/data-access';
+import type {
+  FacilityAttachmentOutput,
+  FacilityPlanOverlayOutput,
+} from '@features/organization/features/facilities/models';
 import { FacilityPlansStore, type FacilityPlansStoreType } from '../facility-plans.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -41,6 +47,17 @@ const plan = (overrides: Partial<FacilityAttachmentOutput> = {}): FacilityAttach
   ...overrides,
 });
 
+const overlay = (
+  overrides: Partial<FacilityPlanOverlayOutput> = {},
+): FacilityPlanOverlayOutput => ({
+  attachmentId: 'plan-1',
+  imageWidth: 1200,
+  imageHeight: 800,
+  zones: [],
+  equipment: [],
+  ...overrides,
+});
+
 describe('FacilityPlansStore', () => {
   let store: FacilityPlansStoreType;
   let mockService: {
@@ -50,6 +67,7 @@ describe('FacilityPlansStore', () => {
     remove: ReturnType<typeof vi.fn>;
     download: ReturnType<typeof vi.fn>;
   };
+  let mockFacilityService: { getPlanOverlay: ReturnType<typeof vi.fn> };
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
@@ -59,6 +77,9 @@ describe('FacilityPlansStore', () => {
       setPrimary: vi.fn(),
       remove: vi.fn(),
       download: vi.fn().mockReturnValue(of(new Blob(['plan'], { type: 'image/png' }))),
+    };
+    mockFacilityService = {
+      getPlanOverlay: vi.fn().mockReturnValue(of(overlay())),
     };
     mockDispatcher = { dispatch: vi.fn() };
 
@@ -71,6 +92,7 @@ describe('FacilityPlansStore', () => {
       providers: [
         FacilityPlansStore,
         { provide: FacilityAttachmentService, useValue: mockService },
+        { provide: FacilityService, useValue: mockFacilityService },
         { provide: Dispatcher, useValue: mockDispatcher },
       ],
     });
@@ -83,6 +105,9 @@ describe('FacilityPlansStore', () => {
     expect(store.selectedPlan()).toBeNull();
     expect(store.isLoading()).toBe(false);
     expect(store.planImageUrl()).toBeNull();
+    expect(store.overlay()).toBeNull();
+    expect(store.showZones()).toBe(true);
+    expect(store.showEquipment()).toBe(true);
   });
 
   describe('load', () => {
@@ -93,7 +118,7 @@ describe('FacilityPlansStore', () => {
         of({ '@id': '', '@type': 'Collection', member: [secondary, primary], totalItems: 2 }),
       );
 
-      store.load({ facilityId: 'facility-1' });
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
 
       expect(mockService.list).toHaveBeenCalledWith('facility-1', 'floor_plan');
       expect(store.orderedPlans().map((item: FacilityAttachmentOutput) => item.id)).toEqual([
@@ -107,7 +132,7 @@ describe('FacilityPlansStore', () => {
     it('carries the normalized error on failure', () => {
       mockService.list.mockReturnValue(throwError(() => apiError(500, 'boom')));
 
-      store.load({ facilityId: 'facility-1' });
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
 
       expect(store.listCallState().status).toBe('error');
       expect(store.listCallState().error?.message).toBe('boom');
@@ -158,7 +183,7 @@ describe('FacilityPlansStore', () => {
           totalItems: 2,
         }),
       );
-      store.load({ facilityId: 'facility-1' });
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
 
       mockService.setPrimary.mockReturnValue(of(plan({ id: 'plan-2', isPrimaryPlan: true })));
       store.setPrimary({ attachmentId: 'plan-2' });
@@ -180,7 +205,7 @@ describe('FacilityPlansStore', () => {
           totalItems: 1,
         }),
       );
-      store.load({ facilityId: 'facility-1' });
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
 
       mockService.remove.mockReturnValue(of(undefined));
       store.remove({ attachmentId: 'plan-1', revision: 1 });
@@ -214,7 +239,7 @@ describe('FacilityPlansStore', () => {
           totalItems: 2,
         }),
       );
-      store.load({ facilityId: 'facility-1' });
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
 
       store.selectPlan('plan-2');
 
@@ -233,7 +258,7 @@ describe('FacilityPlansStore', () => {
         }),
       );
 
-      store.load({ facilityId: 'facility-1' });
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
       await flushEffects();
 
       expect(mockService.download).toHaveBeenCalledWith('plan-1');
@@ -253,7 +278,7 @@ describe('FacilityPlansStore', () => {
           totalItems: 2,
         }),
       );
-      store.load({ facilityId: 'facility-1' });
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
       await flushEffects();
       const firstUrl = store.planImageUrl();
 
@@ -276,12 +301,109 @@ describe('FacilityPlansStore', () => {
       );
       mockService.download.mockReturnValue(throwError(() => apiError(404, 'not found')));
 
-      store.load({ facilityId: 'facility-1' });
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
       await flushEffects();
 
       expect(store.imageCallState().status).toBe('error');
       expect(store.planImageUrl()).toBeNull();
       expect(mockDispatcher.dispatch).toHaveBeenCalled();
+    });
+  });
+
+  describe('overlay loading', () => {
+    it('fetches the selected plan overlay alongside its image', async () => {
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan({ id: 'plan-1', isPrimaryPlan: true })],
+          totalItems: 1,
+        }),
+      );
+      const loaded = overlay({
+        zones: [
+          {
+            facilityId: 'facility-zone-1',
+            name: 'Zone A',
+            type: 'zone',
+            status: 'active',
+            points: [
+              [0, 0],
+              [1, 0],
+              [1, 1],
+            ],
+          },
+        ],
+        equipment: [
+          {
+            equipmentId: 'equipment-1',
+            name: 'Extinguisher',
+            status: 'operational',
+            x: 0.5,
+            y: 0.5,
+          },
+        ],
+      });
+      mockFacilityService.getPlanOverlay.mockReturnValue(of(loaded));
+
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      await flushEffects();
+
+      expect(mockFacilityService.getPlanOverlay).toHaveBeenCalledWith(
+        'org-1',
+        'facility-1',
+        'plan-1',
+      );
+      expect(store.overlay()).toEqual(loaded);
+      expect(store.overlayCallState().status).toBe('success');
+      expect(store.overlayHasContent()).toBe(true);
+    });
+
+    it('surfaces the overlay load error and dispatches a failure event', async () => {
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan({ id: 'plan-1', isPrimaryPlan: true })],
+          totalItems: 1,
+        }),
+      );
+      mockFacilityService.getPlanOverlay.mockReturnValue(throwError(() => apiError(404, 'gone')));
+
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      await flushEffects();
+
+      expect(store.overlayCallState().status).toBe('error');
+      expect(store.overlay()).toBeNull();
+      expect(mockDispatcher.dispatch).toHaveBeenCalled();
+    });
+
+    it('reports no content for an overlay with neither zones nor equipment', async () => {
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan({ id: 'plan-1', isPrimaryPlan: true })],
+          totalItems: 1,
+        }),
+      );
+      mockFacilityService.getPlanOverlay.mockReturnValue(of(overlay()));
+
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      await flushEffects();
+
+      expect(store.overlayHasContent()).toBe(false);
+    });
+  });
+
+  describe('layer toggles', () => {
+    it('sets showZones and showEquipment independently', () => {
+      store.setShowZones(false);
+      expect(store.showZones()).toBe(false);
+      expect(store.showEquipment()).toBe(true);
+
+      store.setShowEquipment(false);
+      expect(store.showEquipment()).toBe(false);
     });
   });
 });

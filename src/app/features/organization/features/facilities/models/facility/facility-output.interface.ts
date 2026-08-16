@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/api/models';
+import type { FacilityPlanGeometry } from './facility-plan-geometry.interface';
 
 /**
  * Type FacilityType
@@ -174,6 +175,20 @@ export interface FacilityOutput extends HydraItem {
    * @type {number | null | undefined}
    */
   readonly longitude?: number | null;
+
+  /**
+   * Property planGeometry
+   * @readonly
+   *
+   * @description
+   * This facility's own zone outline on one of its parent's floor plans,
+   * present only on the detail read (`FacilityService.get`); absent
+   * (`undefined`) on the organization-scoped list/children/descendants
+   * collections, and `null` when the facility has no outline drawn yet.
+   *
+   * @type {FacilityPlanGeometry | null | undefined}
+   */
+  readonly planGeometry?: FacilityPlanGeometry | null;
 
   /**
    * Property createdAt

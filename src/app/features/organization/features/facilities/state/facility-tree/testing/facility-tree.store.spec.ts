@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { Dispatcher } from '@ngrx/signals/events';
 import { Subject, of, throwError } from 'rxjs';
 import type { ApiError, HydraCollection } from '@core/api/models';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import { facilityTreeStoreEvents } from '../events';
 import { FacilityTreeStore, type FacilityTreeStoreType } from '../facility-tree.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -23,7 +25,9 @@ describe('FacilityTreeStore', () => {
   let mockFacilityService: {
     list: ReturnType<typeof vi.fn>;
     listChildren: ReturnType<typeof vi.fn>;
+    move: ReturnType<typeof vi.fn>;
   };
+  let dispatch: ReturnType<typeof vi.fn>;
 
   const root = { id: 'facility-root', name: 'HQ' } as unknown as FacilityOutput;
   const child = { id: 'facility-child', name: 'Floor 1' } as unknown as FacilityOutput;
@@ -45,10 +49,16 @@ describe('FacilityTreeStore', () => {
     mockFacilityService = {
       list: vi.fn().mockReturnValue(of(rootsCollection)),
       listChildren: vi.fn().mockReturnValue(of(childrenCollection)),
+      move: vi.fn(),
     };
+    dispatch = vi.fn();
 
     TestBed.configureTestingModule({
-      providers: [FacilityTreeStore, { provide: FacilityService, useValue: mockFacilityService }],
+      providers: [
+        FacilityTreeStore,
+        { provide: Dispatcher, useValue: { dispatch } },
+        { provide: FacilityService, useValue: mockFacilityService },
+      ],
     });
 
     store = TestBed.inject(FacilityTreeStore);
@@ -224,6 +234,71 @@ describe('FacilityTreeStore', () => {
       store.ensureChildrenLoaded({ organizationId: 'org-1', facilityId: 'facility-root' });
 
       expect(mockFacilityService.listChildren).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('move', () => {
+    const facilityA = {
+      id: 'facility-a',
+      name: 'A',
+      parentFacilityId: null,
+    } as unknown as FacilityOutput;
+    const facilityB = {
+      id: 'facility-b',
+      name: 'B',
+      parentFacilityId: null,
+    } as unknown as FacilityOutput;
+
+    beforeEach(async () => {
+      mockFacilityService.list.mockReturnValue(
+        of({ '@id': '', '@type': 'Collection', totalItems: 2, member: [facilityA, facilityB] }),
+      );
+      mockFacilityService.listChildren.mockReturnValue(
+        of({ '@id': '', '@type': 'Collection', totalItems: 0, member: [] }),
+      );
+
+      store.loadRoots('org-1');
+      await flushEffects();
+      store.ensureChildrenLoaded({ organizationId: 'org-1', facilityId: 'facility-b' });
+      await flushEffects();
+    });
+
+    it('optimistically re-parents the facility and confirms it on success', async () => {
+      const moved = { ...facilityA, parentFacilityId: 'facility-b' } as FacilityOutput;
+      mockFacilityService.move.mockReturnValue(of(moved));
+
+      store.move({
+        organizationId: 'org-1',
+        facilityId: 'facility-a',
+        parentFacilityId: 'facility-b',
+      });
+      await flushEffects();
+
+      expect(mockFacilityService.move).toHaveBeenCalledWith('org-1', 'facility-a', {
+        parentFacilityId: 'facility-b',
+      });
+      expect(store.roots().map((f) => f.id)).toEqual(['facility-b']);
+      expect(store.childrenByParent()['facility-b']?.map((f) => f.id)).toEqual(['facility-a']);
+      expect(dispatch).toHaveBeenCalledWith(
+        facilityTreeStoreEvents.moveSucceeded(expect.objectContaining({ severity: 'success' })),
+      );
+    });
+
+    it('rolls back the optimistic re-parent and dispatches moveFailed on error', async () => {
+      mockFacilityService.move.mockReturnValue(throwError(() => new Error('boom')));
+
+      store.move({
+        organizationId: 'org-1',
+        facilityId: 'facility-a',
+        parentFacilityId: 'facility-b',
+      });
+      await flushEffects();
+
+      expect(store.roots().map((f) => f.id)).toEqual(['facility-a', 'facility-b']);
+      expect(store.childrenByParent()['facility-b']).toEqual([]);
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: facilityTreeStoreEvents.moveFailed.type }),
+      );
     });
   });
 });

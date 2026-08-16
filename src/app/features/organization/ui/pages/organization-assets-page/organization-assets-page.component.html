@@ -40,9 +40,11 @@
             [failedIds]="failedIds()"
             [selectedId]="selectedFacilityId()"
             [nodeTemplate]="assetTreeNode"
+            [draggable]="canMoveFacilities()"
             (expandRequested)="onExpandRequested($event)"
             (selected)="onNodeSelected($event)"
             (retryRequested)="onExpandRequested($event)"
+            (nodeDropped)="onNodeDropped($event)"
           />
         </div>
 
@@ -82,7 +84,7 @@
       hlmBtn
       variant="ghost"
       size="icon-sm"
-      class="size-6 shrink-0 max-sm:size-8"
+      class="size-6 shrink-0 max-sm:size-11"
       data-testid="assets-tree-node-menu"
       [hlmDropdownMenuTrigger]="nodeMenu"
       (click)="$event.stopPropagation()"
@@ -101,10 +103,29 @@
           <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
           <span i18n="@@org.assets.tree.openRecord">Open record</span>
         </a>
+        @if (canMoveFacilities()) {
+          <button
+            hlmDropdownMenuItem
+            type="button"
+            data-testid="assets-tree-node-move"
+            (click)="onMoveRequested(node)"
+          >
+            <ng-icon name="lucideMove" aria-hidden="true" />
+            <span i18n="@@org.assets.tree.move">Move to…</span>
+          </button>
+        }
       </hlm-dropdown-menu>
     </ng-template>
   </div>
 </ng-template>
+
+<app-facility-move-dialog
+  [request]="moveTarget()"
+  [options]="moveOptions()"
+  [busy]="tree.isMoving()"
+  (submitted)="onMoveSubmitted($event)"
+  (dismissed)="onMoveDismissed()"
+/>
 
 <ng-template #assetPanes>
   <div class="flex min-h-0 flex-col gap-6 overflow-y-auto lg:max-h-[calc(100vh-14rem)]">

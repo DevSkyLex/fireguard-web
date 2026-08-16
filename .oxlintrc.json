@@ -224,9 +224,11 @@
                   "!@features/organization/features/facilities/models",
                   "!@features/organization/features/facilities/models/**",
                   "!@features/organization/features/facilities/utils",
-                  "!@features/organization/features/facilities/utils/**"
+                  "!@features/organization/features/facilities/utils/**",
+                  "!@features/organization/features/facilities/ui/dialogs",
+                  "!@features/organization/features/facilities/ui/dialogs/**"
                 ],
-                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the facilities subfeature only through its state barrel (FacilityTreeStore), models (FacilityOutput) and utils (facilityToTreeNode), the surfaces facilities/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the facilities subfeature only through its state barrel (FacilityTreeStore), models (FacilityOutput), utils (facilityToTreeNode) and ui/dialogs (FacilityMoveDialog) barrels, the surfaces facilities/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
               },
               {
                 "group": [

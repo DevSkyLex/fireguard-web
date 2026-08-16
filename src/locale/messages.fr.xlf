@@ -11470,6 +11470,54 @@
         <source>Retry</source>
         <target>Réessayer</target>
       </trans-unit>
+      <trans-unit id="tree.dropHere" datatype="html">
+        <source>Drop here</source>
+        <target>Déposer ici</target>
+      </trans-unit>
+      <trans-unit id="tree.dropNotAllowed" datatype="html">
+        <source>Can't drop here</source>
+        <target>Dépôt impossible ici</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tree.move" datatype="html">
+        <source>Move to…</source>
+        <target>Déplacer vers…</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.header" datatype="html">
+        <source>Move facility</source>
+        <target>Déplacer l'établissement</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.message" datatype="html">
+        <source>Choose the new parent for <x id="facilityName" equiv-text="facilityName"/>.</source>
+        <target>Choisissez le nouveau parent de <x id="facilityName" equiv-text="facilityName"/>.</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.parentLabel" datatype="html">
+        <source>New parent</source>
+        <target>Nouveau parent</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.parentPlaceholder" datatype="html">
+        <source>Search a facility, or leave empty for the root level</source>
+        <target>Rechercher un établissement, ou laisser vide pour le niveau racine</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.rootOption" datatype="html">
+        <source>No parent (root level)</source>
+        <target>Aucun parent (niveau racine)</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.noMatch" datatype="html">
+        <source>No facility matches.</source>
+        <target>Aucun établissement ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.submit" datatype="html">
+        <source>Move</source>
+        <target>Déplacer</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.submitting" datatype="html">
+        <source>Moving…</source>
+        <target>Déplacement…</target>
+      </trans-unit>
+      <trans-unit id="facility.moveDialog.submittingStatus" datatype="html">
+        <source>Moving, please wait…</source>
+        <target>Déplacement en cours, veuillez patienter…</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

@@ -41,6 +41,7 @@ describe('OrganizationAssetsPage', () => {
   let fixture: ComponentFixture<OrganizationAssetsPage>;
   let loadRoots: ReturnType<typeof vi.fn>;
   let ensureChildrenLoaded: ReturnType<typeof vi.fn>;
+  let move: ReturnType<typeof vi.fn>;
   let loadEquipment: ReturnType<typeof vi.fn>;
   let loadInspections: ReturnType<typeof vi.fn>;
   let rootsSignal: WritableSignal<readonly FacilityOutput[]>;
@@ -48,6 +49,7 @@ describe('OrganizationAssetsPage', () => {
   beforeEach(() => {
     loadRoots = vi.fn();
     ensureChildrenLoaded = vi.fn();
+    move = vi.fn();
     loadEquipment = vi.fn();
     loadInspections = vi.fn();
     rootsSignal = signal<readonly FacilityOutput[]>([facility()]);
@@ -63,8 +65,10 @@ describe('OrganizationAssetsPage', () => {
             childrenByParent: signal({}),
             expandingParentIds: signal([]),
             failedParentIds: signal([]),
+            isMoving: signal(false),
             loadRoots,
             ensureChildrenLoaded,
+            move,
           },
         },
         {
@@ -146,5 +150,67 @@ describe('OrganizationAssetsPage', () => {
       organizationId: 'org-1',
       facilityId: 'facility-1',
     });
+  });
+
+  it('moves a facility to the dropped target on nodeDropped', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onNodeDropped']({
+      dragged: { id: 'facility-2', label: 'Wing', hasChildren: false, data: facility() },
+      target: { id: 'facility-1', label: 'Headquarters', hasChildren: false, data: facility() },
+      position: 'inside',
+    });
+
+    expect(move).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-2',
+      parentFacilityId: 'facility-1',
+    });
+  });
+
+  it('opens the move dialog with the requested node, and calls the same move flow on submit', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onMoveRequested']({
+      id: 'facility-2',
+      label: 'Wing',
+      hasChildren: false,
+      data: facility(),
+    });
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['moveTarget']()).toEqual({
+      facilityId: 'facility-2',
+      facilityName: 'Wing',
+    });
+
+    fixture.componentInstance['onMoveSubmitted']({
+      facilityId: 'facility-2',
+      parentFacilityId: 'facility-1',
+    });
+    await fixture.whenStable();
+
+    expect(move).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-2',
+      parentFacilityId: 'facility-1',
+    });
+    expect(fixture.componentInstance['moveTarget']()).toBeNull();
+  });
+
+  it('closes the move dialog without moving anything on dismiss', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onMoveRequested']({
+      id: 'facility-2',
+      label: 'Wing',
+      hasChildren: false,
+      data: facility(),
+    });
+    fixture.componentInstance['onMoveDismissed']();
+    await fixture.whenStable();
+
+    expect(move).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['moveTarget']()).toBeNull();
   });
 });

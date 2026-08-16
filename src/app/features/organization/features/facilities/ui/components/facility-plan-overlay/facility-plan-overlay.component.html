@@ -55,7 +55,7 @@
     @for (pin of equipmentViews(); track pin.equipmentId) {
       <button
         type="button"
-        class="pointer-events-auto absolute flex size-7 items-center justify-center rounded-full border-2 border-background bg-background shadow focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        class="group pointer-events-auto absolute flex size-11 items-end justify-center rounded-full focus-visible:outline-none"
         [style.left.px]="pin.position.x"
         [style.top.px]="pin.position.y"
         [style.transform]="'translate(-50%, -100%) scale(' + pinScale() + ')'"
@@ -63,7 +63,11 @@
         data-testid="facility-plan-overlay-equipment"
         (click)="onEquipmentActivate(pin.equipmentId)"
       >
-        <ng-icon [name]="pin.descriptor.icon" [class]="pin.iconClass" aria-hidden="true" />
+        <span
+          class="flex size-7 items-center justify-center rounded-full border-2 border-background bg-background shadow group-focus-visible:ring-2 group-focus-visible:ring-ring"
+        >
+          <ng-icon [name]="pin.descriptor.icon" [class]="pin.iconClass" aria-hidden="true" />
+        </span>
       </button>
     }
   }

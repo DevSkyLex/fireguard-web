@@ -39,6 +39,7 @@ export class FacilitiesPage {
   public readonly overviewTab: Locator = this.page.getByTestId('facility-tab-overview');
   public readonly informationTab: Locator = this.page.getByTestId('facility-tab-information');
   public readonly hierarchyNodes: Locator = this.page.getByTestId('facility-hierarchy-node');
+  public readonly hierarchyToggles: Locator = this.page.getByTestId('tree-toggle');
   public readonly nameField: Locator = this.page.getByTestId('facility-field-name');
   public readonly typeField: Locator = this.page.getByTestId('facility-field-type');
   public readonly parentField: Locator = this.page.getByTestId('facility-field-parent');
@@ -62,5 +63,10 @@ export class FacilitiesPage {
   /** Submits the create form empty, so only the required `type`/`name` rules fire. */
   public async submitEmptyCreateForm(): Promise<void> {
     await this.createSubmit.click();
+  }
+
+  /** Expands the hierarchy chart's root node, revealing its already-loaded children. */
+  public async expandHierarchyRoot(): Promise<void> {
+    await this.hierarchyToggles.first().click();
   }
 }

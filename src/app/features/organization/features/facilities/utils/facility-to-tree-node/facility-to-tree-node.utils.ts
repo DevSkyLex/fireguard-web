@@ -8,8 +8,7 @@ import type { TreeNode } from '@shared/tree';
  * Maps a `FacilityOutput` onto the generic `TreeNode<FacilityOutput>` shape
  * the shared `Tree` primitive renders: the facility's name becomes the
  * label, `hasChildren` carries over as-is, and the record itself rides
- * along as `data` for the assets explorer's node template and selection
- * handlers.
+ * along as `data` for node templates and selection handlers.
  *
  * @access public
  * @since 1.0.0

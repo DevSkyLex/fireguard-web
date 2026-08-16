@@ -147,9 +147,12 @@ test.describe('Facility detail', () => {
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
 
     await expect(facilities.detailRoot).toBeVisible();
-    await expect(facilities.hierarchyNodes).toHaveCount(2);
+    await expect(facilities.hierarchyNodes).toHaveCount(1);
     await expect(page.getByText('Equipment status')).toBeVisible();
     await expect(page.getByText('Recent inspections')).toBeVisible();
+
+    await facilities.expandHierarchyRoot();
+    await expect(facilities.hierarchyNodes).toHaveCount(2);
 
     await facilities.hierarchyNodes.nth(1).click();
     await expect(page).toHaveURL(new RegExp(`/facilities/${E2E_FACILITY_CHILD_ID}$`));

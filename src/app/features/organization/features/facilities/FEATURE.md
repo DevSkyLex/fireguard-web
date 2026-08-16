@@ -55,8 +55,9 @@ folder per `ARCHITECTURE.md` §8.5.
   code, address and coordinates are optional here and remain editable on the
   record afterward.
 - `ui/pages/facility-detail-page` (`FacilityDetailPage`) — two tabs.
-  **Overview** (default) renders `ui/components/facility-hierarchy-chart`
-  (only when `hasChildren`) plus the `FacilityOverviewStore` summary
+  **Overview** (default) renders `ui/components/facility-hierarchy-chart`,
+  built on the shared `shared/tree` `Tree` primitive (only when
+  `hasChildren`), plus the `FacilityOverviewStore` summary
   (compliance rate, equipment count/breakdown, next inspection, recent
   inspections). **Information** renders
   `ui/components/facility-information-panel`, the in-place edit surface for
@@ -94,8 +95,11 @@ Archive/Restore.
 ## Facility Hierarchy (Detail Overview)
 
 The facility detail page's **Overview** tab renders the descendant hierarchy
-with an organization chart (`FacilityHierarchyChart`). Loading is
-based on the backend descendants endpoint:
+through `FacilityHierarchyChart`, built on the shared `shared/tree` `Tree`
+primitive (`utils/facility-to-tree-node`'s `facilityToTreeNode` maps
+`FacilityOutput` onto `TreeNode`; each row projects the facility's icon, name
+and `FacilityStatusTag` through `Tree`'s `nodeTemplate`). Loading is based on
+the backend descendants endpoint, not on `Tree`'s own lazy expansion:
 
 - all descendants are auto-loaded once the facility resolves (only when
   `facility.hasChildren` is `true`), via an `effect` calling
@@ -104,6 +108,9 @@ based on the backend descendants endpoint:
   `GET /organizations/{orgId}/facilities/{facilityId}/descendants`, then the
   store groups the flat Hydra `member` collection by `parentFacilityId` for
   `FacilityHierarchyChart`,
+- because the whole subtree is already resolved before `Tree` renders,
+  `Tree`'s `expandRequested` never fires in practice and is wired to a no-op;
+  `loadingIds`/`failedIds` stay empty,
 - `FacilityStore.loadChildFacilities` remains available for direct-child
   loading flows, but the detail overview uses `/descendants`,
 - all secondary fetches are **browser-only** (no `TransferState`), and node
@@ -141,10 +148,14 @@ Primary service:
   (`@features/organization/ui/components`) for the list page's shared pagination band — see
   `organization/FEATURE.md` § UI Conventions.
 - The parent feature consumes this subfeature's `state` barrel
-  (`FacilityTreeStore`) and `models` barrel (`FacilityOutput`) for the assets
-  explorer at `/organizations/:organizationId/assets` (ARCHITECTURE.md §4).
-  Read-only — the parent browses the hierarchy, this subfeature keeps
-  ownership of sites.
+  (`FacilityTreeStore`), `models` barrel (`FacilityOutput`) and `utils`
+  barrel (`facilityToTreeNode`) for the assets explorer at
+  `/organizations/:organizationId/assets` (ARCHITECTURE.md §4). Read-only —
+  the parent browses the hierarchy, this subfeature keeps ownership of
+  sites. `facilityToTreeNode` moved here from the parent's own `utils/`
+  because both the parent's assets explorer and this subfeature's
+  `FacilityHierarchyChart` need it, and its lowest common scope is this
+  subfeature (ARCHITECTURE.md §2.8).
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
 
 ### Deferred, not built

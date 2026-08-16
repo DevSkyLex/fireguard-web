@@ -11,6 +11,8 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBuilding2 } from '@ng-icons/lucide';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import { facilityToTreeNode } from '@features/organization/features/facilities/utils';
+import { Tree, type TreeNode } from '@shared/tree';
 import { FacilityStatusTag } from '../facility-status-tag';
 
 /**
@@ -18,27 +20,24 @@ import { FacilityStatusTag } from '../facility-status-tag';
  * @class FacilityHierarchyChart
  *
  * @description
- * Renders one facility and, recursively, every descendant already resolved
+ * Renders a facility and, beneath it, every descendant already resolved
  * into {@link childrenByParent} — the whole subtree loads at once
  * (`FacilityStore.ensureFacilityDescendantsLoaded`), so this component never
- * fetches and never lazily expands a branch (`FEATURE.md` "Facility
- * Hierarchy (Detail Overview)").
+ * fetches — over the shared `shared/tree` primitive. Expansion is purely
+ * local (every branch is already present), so `Tree`'s `expandRequested` is
+ * a no-op and `loadingIds`/`failedIds` stay empty. Each row projects the
+ * facility's icon, name and {@link FacilityStatusTag} through `Tree`'s
+ * `nodeTemplate`; selecting a row asks the page to navigate rather than
+ * navigating itself, keeping this component presentational
+ * (`ARCHITECTURE.md` §10.3).
  *
- * Hand-rolled: the catalog has no tree or org-chart primitive (checked
- * `@spartan-ng/brain` and `src/app/shared/ui`), and a full WAI-ARIA
- * `treeitem` widget needs roving-tabindex arrow-key navigation this feature
- * does not ask for — adding the role without that behaviour would be a false
- * accessibility promise. Each node is instead a plain, fully keyboard-usable
- * button; selecting one asks the page to navigate rather than navigating
- * itself, keeping this component presentational (`ARCHITECTURE.md` §10.3).
- *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-facility-hierarchy-chart',
-  imports: [NgIcon, FacilityStatusTag, FacilityHierarchyChart],
+  imports: [NgIcon, Tree, FacilityStatusTag],
   providers: [provideIcons({ lucideBuilding2 })],
   templateUrl: './facility-hierarchy-chart.component.html',
   host: { class: 'block' },
@@ -49,7 +48,7 @@ export class FacilityHierarchyChart {
   /**
    * Property facility
    * @readonly
-   * @description The node this level of the chart renders.
+   * @description The root this chart renders.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<FacilityOutput>}
@@ -59,7 +58,7 @@ export class FacilityHierarchyChart {
   /**
    * Property childrenByParent
    * @readonly
-   * @description The whole resolved subtree, grouped by parent id, shared unchanged down every recursion level.
+   * @description The whole resolved subtree, grouped by parent id.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<Readonly<Record<string, ReadonlyArray<FacilityOutput>>>>}
@@ -83,7 +82,7 @@ export class FacilityHierarchyChart {
   /**
    * Property selected
    * @readonly
-   * @description A node was activated — this level's own facility, or one bubbled up from a descendant.
+   * @description A node was activated.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<FacilityOutput>}
@@ -92,42 +91,49 @@ export class FacilityHierarchyChart {
   //#endregion
 
   //#region Properties
-  /**
-   * Property children
-   * @readonly
-   * @description This node's direct children, resolved from the shared subtree map.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<ReadonlyArray<FacilityOutput>>}
-   */
-  protected readonly children: Signal<ReadonlyArray<FacilityOutput>> = computed<
-    ReadonlyArray<FacilityOutput>
-  >(() => this.childrenByParent()[this.facility().id] ?? []);
+  /** The chart's single root, mapped onto `Tree`'s generic node shape. */
+  protected readonly nodes: Signal<readonly TreeNode<FacilityOutput>[]> = computed(() => [
+    facilityToTreeNode(this.facility()),
+  ]);
 
-  /**
-   * Property isActive
-   * @readonly
-   * @description Whether this node is the facility the record currently shows.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<boolean>}
-   */
-  protected readonly isActive: Signal<boolean> = computed<boolean>(
-    () => this.facility().id === this.activeFacilityId(),
-  );
+  /** The already-loaded subtree, mapped onto `Tree`'s generic node shape. */
+  protected readonly treeChildrenByParent: Signal<
+    Readonly<Record<string, readonly TreeNode<FacilityOutput>[]>>
+  > = computed(() => {
+    const result: Record<string, readonly TreeNode<FacilityOutput>[]> = {};
+    const entries: ReadonlyArray<[string, ReadonlyArray<FacilityOutput>]> = Object.entries(
+      this.childrenByParent(),
+    );
+    for (const [parentId, children] of entries) {
+      result[parentId] = children.map(facilityToTreeNode);
+    }
+    return result;
+  });
+
+  /** No branch is ever loading — the whole subtree is fetched up front. */
+  protected readonly emptyIds: ReadonlySet<string> = new Set<string>();
   //#endregion
 
   //#region Methods
   /**
-   * Method onChildSelected
-   * @description Forwards a descendant's selection up unchanged, so only the page at the top ever navigates.
+   * Method onNodeSelected
+   * @description Unwraps the tree node's facility and forwards it as selected.
    * @access protected
    * @since 1.0.0
-   * @param {FacilityOutput} facility - The selected descendant.
+   * @param {TreeNode<FacilityOutput>} node - The selected tree node.
    * @returns {void}
    */
-  protected onChildSelected(facility: FacilityOutput): void {
-    this.selected.emit(facility);
+  protected onNodeSelected(node: TreeNode<FacilityOutput>): void {
+    this.selected.emit(node.data);
   }
+
+  /**
+   * Method onExpandRequested
+   * @description No-op: {@link childrenByParent} already holds the whole subtree, so `Tree` never actually needs to fetch a branch.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected onExpandRequested(): void {}
   //#endregion
 }

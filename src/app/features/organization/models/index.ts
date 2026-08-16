@@ -103,3 +103,13 @@ export type { PlanPricingOutput } from './billing/plan-pricing-output.interface'
 export type { CheckoutSessionInput } from './billing/checkout-session-input.interface';
 export type { CheckoutSessionOutput } from './billing/checkout-session-output.interface';
 export type { PortalSessionOutput } from './billing/portal-session-output.interface';
+export type { ComplianceStatus } from './compliance/compliance-status.type';
+export type { ComplianceBucket } from './compliance/compliance-bucket.type';
+export type { ComplianceFacilityTreeNodeOutput } from './compliance/compliance-facility-tree-node-output.interface';
+export type { ComplianceFacilityTreeOutput } from './compliance/compliance-facility-tree-output.interface';
+export type { FlattenedComplianceTree } from './compliance/flattened-compliance-tree.interface';
+export type { ComplianceSummaryTotals } from './compliance/compliance-summary-totals.interface';
+export type { ComplianceFacilitySummary } from './compliance/compliance-facility-summary.interface';
+export type { ComplianceSummaryOutput } from './compliance/compliance-summary-output.interface';
+export type { ComplianceBucketTagDescriptor } from './compliance-bucket-tag/compliance-bucket-tag-descriptor.interface';
+export { resolveComplianceBucketTag } from './compliance-bucket-tag/compliance-bucket-tag.util';

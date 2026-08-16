@@ -4,6 +4,8 @@ import { provideRouter } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityTreeStore } from '@features/organization/features/facilities/state';
+import type { ComplianceFacilityTreeNodeOutput } from '@features/organization/models';
+import { ComplianceExplorerStore } from '@features/organization/state/compliance-explorer';
 import { OrganizationAssetsPaneStore } from '@features/organization/state/organization-assets-pane';
 import { OrganizationAssetsPage } from '../organization-assets-page.component';
 
@@ -23,6 +25,20 @@ const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
     updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
   }) as FacilityOutput;
+
+const complianceNode = (
+  overrides: Partial<ComplianceFacilityTreeNodeOutput> = {},
+): ComplianceFacilityTreeNodeOutput => ({
+  id: 'facility-1',
+  name: 'Headquarters',
+  type: 'building',
+  parentFacilityId: null,
+  equipmentCount: 3,
+  status: 'active',
+  complianceRate: 95,
+  children: [],
+  ...overrides,
+});
 
 const createPage = async (
   inputs: Readonly<Record<string, unknown>> = { organizationId: 'org-1' },
@@ -44,6 +60,9 @@ describe('OrganizationAssetsPage', () => {
   let move: ReturnType<typeof vi.fn>;
   let loadEquipment: ReturnType<typeof vi.fn>;
   let loadInspections: ReturnType<typeof vi.fn>;
+  let loadTree: ReturnType<typeof vi.fn>;
+  let loadSummary: ReturnType<typeof vi.fn>;
+  let exportSafetyRegister: ReturnType<typeof vi.fn>;
   let rootsSignal: WritableSignal<readonly FacilityOutput[]>;
 
   beforeEach(() => {
@@ -52,6 +71,9 @@ describe('OrganizationAssetsPage', () => {
     move = vi.fn();
     loadEquipment = vi.fn();
     loadInspections = vi.fn();
+    loadTree = vi.fn();
+    loadSummary = vi.fn();
+    exportSafetyRegister = vi.fn();
     rootsSignal = signal<readonly FacilityOutput[]>([facility()]);
 
     TestBed.configureTestingModule({
@@ -82,6 +104,23 @@ describe('OrganizationAssetsPage', () => {
             hasInspectionsError: signal(false),
             loadEquipment,
             loadInspections,
+          },
+        },
+        {
+          provide: ComplianceExplorerStore,
+          useValue: {
+            roots: signal([]),
+            childrenByParent: signal({}),
+            isLoadingTree: signal(false),
+            hasTreeError: signal(false),
+            summary: signal(null),
+            isLoadingSummary: signal(false),
+            hasSummaryError: signal(false),
+            isExporting: signal(false),
+            hasExportError: signal(false),
+            loadTree,
+            loadSummary,
+            exportSafetyRegister,
           },
         },
         {
@@ -212,5 +251,72 @@ describe('OrganizationAssetsPage', () => {
 
     expect(move).not.toHaveBeenCalled();
     expect(fixture.componentInstance['moveTarget']()).toBeNull();
+  });
+
+  it('does not touch the equipment/inspection pane on the "Compliance" axis', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    await fixture.whenStable();
+
+    expect(loadEquipment).not.toHaveBeenCalled();
+    expect(loadInspections).not.toHaveBeenCalled();
+  });
+
+  it('loads the compliance tree once, on first activation of the "Compliance" axis', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onAxisActivated']('site');
+    fixture.componentInstance['onAxisActivated']('compliance');
+    await fixture.whenStable();
+
+    expect(loadTree).toHaveBeenCalledTimes(1);
+    expect(loadTree).toHaveBeenCalledWith('org-1');
+  });
+
+  it('loads the selected facility compliance summary on node selection', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    expect(loadSummary).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
+  });
+
+  it('exports the selected facility safety register', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    fixture.componentInstance['onExportSafetyRegister']();
+    await fixture.whenStable();
+
+    expect(exportSafetyRegister).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      fileName: 'safety-register.pdf',
+    });
+  });
+
+  it('does nothing when export is requested with no facility selected', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onExportSafetyRegister']();
+    await fixture.whenStable();
+
+    expect(exportSafetyRegister).not.toHaveBeenCalled();
   });
 });

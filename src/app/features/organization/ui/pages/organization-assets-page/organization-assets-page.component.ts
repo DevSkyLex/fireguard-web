@@ -16,15 +16,21 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
+  lucideCircleCheck,
+  lucideCircleHelp,
   lucideClipboardList,
+  lucideDownload,
   lucideEllipsis,
   lucideLayoutGrid,
   lucideMove,
   lucideNetwork,
+  lucideShieldCheck,
   lucideSquareArrowOutUpRight,
+  lucideTriangleAlert,
   lucideWrench,
 } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constants';
 import type {
   FacilityMoveRequest,
   FacilityMoveSubmittedEvent,
@@ -36,11 +42,20 @@ import {
 } from '@features/organization/features/facilities/state';
 import { FacilityMoveDialog } from '@features/organization/features/facilities/ui/dialogs';
 import { facilityToTreeNode } from '@features/organization/features/facilities/utils';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  ORGANIZATION_PERMISSION,
+  resolveComplianceBucketTag,
+  type ComplianceFacilityTreeNodeOutput,
+} from '@features/organization/models';
+import {
+  ComplianceExplorerStore,
+  type ComplianceExplorerStoreType,
+} from '@features/organization/state/compliance-explorer';
 import {
   OrganizationAssetsPaneStore,
   type OrganizationAssetsPaneStoreType,
 } from '@features/organization/state/organization-assets-pane';
+import { resolveComplianceBucket } from '@features/organization/utils';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -49,8 +64,8 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmTabsImports } from '@shared/ui/tabs';
 
-/** The explorer's two first-level axes (`organization/FEATURE.md` "Assets"). */
-type OrganizationAssetsAxis = 'site' | 'everything';
+/** The explorer's first-level axes (`organization/FEATURE.md` "Assets"). */
+type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
 
 /**
  * Component OrganizationAssetsPage
@@ -77,6 +92,15 @@ type OrganizationAssetsAxis = 'site' | 'everything';
  * action is what keeps the operation reachable without a pointer
  * (`ARCHITECTURE.md` §10.3, `shared/tree`'s `Tree` a11y contract).
  *
+ * A third "Compliance" axis renders the same `Tree` primitive over the
+ * Compliance module's own enriched hierarchy (`ComplianceExplorerStore`,
+ * eager — the whole tree arrives nested in one call, so `childrenByParent`
+ * is fully populated up front and `Tree`'s lazy `expandRequested` never
+ * fires). It loads only on first activation, per the secondary-UI loading
+ * rule (`ARCHITECTURE.md` §12). Selecting a node loads that facility's
+ * compliance summary into the right pane; "Export safety register" streams
+ * the register PDF through `BrowserDownloadService`.
+ *
  * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -99,12 +123,17 @@ type OrganizationAssetsAxis = 'site' | 'everything';
   providers: [
     provideIcons({
       lucideCircleAlert,
+      lucideCircleCheck,
+      lucideCircleHelp,
       lucideClipboardList,
+      lucideDownload,
       lucideEllipsis,
       lucideLayoutGrid,
       lucideMove,
       lucideNetwork,
+      lucideShieldCheck,
       lucideSquareArrowOutUpRight,
+      lucideTriangleAlert,
       lucideWrench,
     }),
   ],
@@ -133,6 +162,22 @@ export class OrganizationAssetsPage {
   protected readonly pane: OrganizationAssetsPaneStoreType =
     inject<OrganizationAssetsPaneStoreType>(OrganizationAssetsPaneStore);
 
+  /** The compliance hierarchy, selected facility summary and safety-register export. */
+  protected readonly compliance: ComplianceExplorerStoreType =
+    inject<ComplianceExplorerStoreType>(ComplianceExplorerStore);
+
+  /** Resolves a compliance rate into its severity bucket. */
+  protected readonly resolveComplianceBucket: typeof resolveComplianceBucket =
+    resolveComplianceBucket;
+
+  /** Resolves a severity bucket into its badge label/severity/icon. */
+  protected readonly resolveComplianceBucketTag: typeof resolveComplianceBucketTag =
+    resolveComplianceBucketTag;
+
+  /** The colour each badge severity puts on the icon alone. */
+  protected readonly complianceBucketIconClass: typeof COMPLIANCE_BUCKET_TAG_ICON_CLASS =
+    COMPLIANCE_BUCKET_TAG_ICON_CLASS;
+
   /** Organization permission checks gating the equipment pane. */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
@@ -146,6 +191,14 @@ export class OrganizationAssetsPage {
   protected readonly selectedFacilityId: WritableSignal<string | null> = signal<string | null>(
     null,
   );
+
+  /** The facility currently scoping the compliance summary, on the "Compliance" axis. */
+  protected readonly selectedComplianceFacilityId: WritableSignal<string | null> = signal<
+    string | null
+  >(null);
+
+  /** Whether the compliance tree has been requested at least once — first-activation gate. */
+  private readonly hasRequestedComplianceTree: WritableSignal<boolean> = signal(false);
 
   /** The tree roots, mapped onto the shared `Tree` primitive's generic shape. */
   protected readonly treeNodes: Signal<readonly TreeNode<FacilityOutput>[]> = computed(() =>
@@ -229,6 +282,16 @@ export class OrganizationAssetsPage {
   protected readonly canReadInspections: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ),
   );
+
+  /**
+   * Whether the member may read compliance data, gating the compliance axis.
+   * The route already requires `FACILITIES_READ` to reach this page at all,
+   * so this stands in for a not-yet-published `organization.compliance.read`
+   * backend permission (`organization/FEATURE.md` records the decision).
+   */
+  protected readonly canReadCompliance: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ),
+  );
   //#endregion
 
   //#region Constructor
@@ -261,6 +324,7 @@ export class OrganizationAssetsPage {
       const canReadInspections: boolean = this.canReadInspections();
 
       untracked((): void => {
+        if (axis === 'compliance') return;
         if (axis === 'site' && facilityId === null) return;
 
         const scope = axis === 'site' && facilityId !== null ? { facilityId } : {};
@@ -275,14 +339,61 @@ export class OrganizationAssetsPage {
   //#region Methods
   /**
    * Method onAxisActivated
-   * @description Switches the active axis from the tab bar.
+   *
+   * @description
+   * Switches the active axis from the tab bar. Requests the compliance tree
+   * once, on the axis's first activation — a hidden tab loads browser-only,
+   * on user action (`ARCHITECTURE.md` §12).
+   *
    * @access protected
    * @since 1.0.0
    * @param {string} tab - The activated tab id.
    * @returns {void}
    */
   protected onAxisActivated(tab: string): void {
-    this.axis.set(tab === 'everything' ? 'everything' : 'site');
+    const axis: OrganizationAssetsAxis =
+      tab === 'everything' ? 'everything' : tab === 'compliance' ? 'compliance' : 'site';
+    this.axis.set(axis);
+
+    if (axis === 'compliance' && !this.hasRequestedComplianceTree()) {
+      this.hasRequestedComplianceTree.set(true);
+      this.compliance.loadTree(this.organizationId());
+    }
+  }
+
+  /**
+   * Method onComplianceNodeSelected
+   * @description Scopes the compliance summary to the selected facility.
+   * @access protected
+   * @since 1.0.0
+   * @param {TreeNode<ComplianceFacilityTreeNodeOutput>} node - The selected tree node.
+   * @returns {void}
+   */
+  protected onComplianceNodeSelected(node: TreeNode<ComplianceFacilityTreeNodeOutput>): void {
+    this.selectedComplianceFacilityId.set(node.id);
+    this.compliance.loadSummary({ organizationId: this.organizationId(), facilityId: node.id });
+  }
+
+  /**
+   * Method onExportSafetyRegister
+   *
+   * @description
+   * Exports the selected facility's safety-register PDF and saves it to the
+   * visitor's device. Only reachable once a facility is selected.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected onExportSafetyRegister(): void {
+    const facilityId: string | null = this.selectedComplianceFacilityId();
+    if (facilityId === null) return;
+
+    this.compliance.exportSafetyRegister({
+      organizationId: this.organizationId(),
+      facilityId,
+      fileName: 'safety-register.pdf',
+    });
   }
 
   /**
@@ -308,6 +419,21 @@ export class OrganizationAssetsPage {
   protected onExpandRequested(node: TreeNode<FacilityOutput>): void {
     this.tree.ensureChildrenLoaded({ organizationId: this.organizationId(), facilityId: node.id });
   }
+
+  /**
+   * Method onComplianceExpandRequested
+   *
+   * @description
+   * No-op: the compliance tree arrives fully nested in one call, so
+   * `childrenByParent` is already populated for the whole tree and this
+   * never fires in practice — mirrored from
+   * `FacilityHierarchyChart`'s own eager-tree wiring.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected onComplianceExpandRequested(): void {}
 
   /**
    * Method onNodeDropped

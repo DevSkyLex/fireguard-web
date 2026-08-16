@@ -14,6 +14,7 @@ export class AssetsExplorerPage {
 
   public readonly siteTab: Locator = this.page.getByTestId('assets-tab-site');
   public readonly everythingTab: Locator = this.page.getByTestId('assets-tab-everything');
+  public readonly complianceTab: Locator = this.page.getByTestId('assets-tab-compliance');
 
   public readonly treePanel: Locator = this.page.getByTestId('assets-tree-panel');
   public readonly treeItems: Locator = this.page.getByTestId('tree-item');
@@ -27,6 +28,20 @@ export class AssetsExplorerPage {
   public readonly nodeMenu: Locator = this.page.getByTestId('assets-tree-node-menu');
   public readonly moveDialog: Locator = this.page.getByTestId('facility-move-dialog');
   public readonly moveSubmit: Locator = this.page.getByTestId('facility-move-submit');
+
+  public readonly complianceTreePanel: Locator = this.page.getByTestId(
+    'assets-compliance-tree-panel',
+  );
+  public readonly complianceTreeItems: Locator = this.complianceTreePanel.getByTestId('tree-item');
+  public readonly complianceBadges: Locator = this.complianceTreePanel.getByTestId(
+    'assets-compliance-node-badge',
+  );
+  public readonly complianceSummaryBadge: Locator = this.page.getByTestId(
+    'assets-compliance-summary-badge',
+  );
+  public readonly complianceExportButton: Locator = this.page.getByTestId(
+    'assets-compliance-export',
+  );
 
   public async goto(organizationId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/assets`);
@@ -78,5 +93,13 @@ export class AssetsExplorerPage {
   public async openMoveDialog(nodeIndex: number): Promise<void> {
     await this.nodeMenu.nth(nodeIndex).click();
     await this.page.getByTestId('assets-tree-node-move').click();
+  }
+
+  public async openComplianceAxis(): Promise<void> {
+    await this.complianceTab.click();
+  }
+
+  public async selectComplianceSite(name: string): Promise<void> {
+    await this.complianceTreeItems.filter({ hasText: name }).first().click();
   }
 }

@@ -7,6 +7,7 @@ import {
 } from './http/guards';
 import { organizationResolver, organizationTitleResolver } from './http/resolvers';
 import { ORGANIZATION_PERMISSION } from './models';
+import { ComplianceExplorerStore } from './state/compliance-explorer';
 import { OrganizationAssetsPaneStore } from './state/organization-assets-pane';
 
 /**
@@ -87,7 +88,7 @@ export const ORGANIZATION_ROUTES: Routes = [
             permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
           }),
         ],
-        providers: [FacilityTreeStore, OrganizationAssetsPaneStore],
+        providers: [FacilityTreeStore, OrganizationAssetsPaneStore, ComplianceExplorerStore],
         loadComponent: () =>
           import('./ui/pages/organization-assets-page/organization-assets-page.component').then(
             (m) => m.OrganizationAssetsPage,

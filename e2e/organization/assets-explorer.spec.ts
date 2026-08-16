@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
+import {
+  complianceFacilityTreeOutput,
+  complianceSummaryOutput,
+} from '../support/fixtures/compliance-fixtures';
 import { equipmentOutput } from '../support/fixtures/equipment-fixtures';
 import {
   E2E_FACILITY_ID,
@@ -131,6 +135,47 @@ test.describe('Assets explorer', () => {
 
     await expect(explorer.equipmentRows).toHaveCount(1);
     await expect(explorer.inspectionsRows).toHaveCount(1);
+  });
+
+  test('the "Compliance" axis renders the tree with a compliance badge on each node', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    await api.mockComplianceFacilityTree(E2E_ORGANIZATION_ID, complianceFacilityTreeOutput());
+    const explorer = new AssetsExplorerPage(page);
+
+    await explorer.goto(E2E_ORGANIZATION_ID);
+    await explorer.openComplianceAxis();
+
+    await expect(explorer.complianceTreePanel).toBeVisible();
+    await expect(explorer.complianceTreeItems).toHaveCount(1);
+    await expect(explorer.complianceBadges).toHaveCount(1);
+    await expect(explorer.complianceBadges.first()).toContainText('92%');
+  });
+
+  test('selecting a compliance node shows the facility summary and an export control', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    await api.mockComplianceFacilityTree(E2E_ORGANIZATION_ID, complianceFacilityTreeOutput());
+    await api.mockFacilityCompliance(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_ID,
+      complianceSummaryOutput(),
+    );
+    const explorer = new AssetsExplorerPage(page);
+
+    await explorer.goto(E2E_ORGANIZATION_ID);
+    await explorer.openComplianceAxis();
+    await explorer.selectComplianceSite('North Building');
+
+    await expect(explorer.complianceSummaryBadge).toBeVisible();
+    await expect(explorer.complianceExportButton).toBeVisible();
+    await expect(explorer.complianceExportButton).toBeEnabled();
   });
 
   test('renders at 375px in dark mode with no console errors and no horizontal overflow', async ({

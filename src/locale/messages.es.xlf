@@ -6294,6 +6294,14 @@
         <source>Due date</source>
         <target>Fecha límite</target>
       </trans-unit>
+      <trans-unit id="intervention.list.sortAscending" datatype="html">
+        <source>Ascending</source>
+        <target>Ascendente</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortDescending" datatype="html">
+        <source>Descending</source>
+        <target>Descendente</target>
+      </trans-unit>
       <trans-unit id="intervention.list.sortCreatedAt" datatype="html">
         <source>Creation date</source>
         <target>Fecha de creación</target>
@@ -9557,6 +9565,18 @@
         <source>Columns</source>
         <target>Columnas</target>
       </trans-unit>
+      <trans-unit id="intervention.list.displayButton" datatype="html">
+        <source>Display</source>
+        <target>Vista</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.displaySortLabel" datatype="html">
+        <source> Sort by </source>
+        <target> Ordenar por </target>
+      </trans-unit>
+      <trans-unit id="intervention.list.displayColumnsLabel" datatype="html">
+        <source> Columns </source>
+        <target> Columnas </target>
+      </trans-unit>
       <trans-unit id="intervention.list.exportButton" datatype="html">
         <source>Export</source>
         <target>Exportar</target>
@@ -12028,6 +12048,18 @@
       <trans-unit id="facility.plans.overlay.toggleEquipmentLabel" datatype="html">
         <source>Equipment</source>
         <target>Equipo</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
+        <source>Filter</source>
+        <target>Filtrar</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.addFilterMenuLabel" datatype="html">
+        <source>Filter by</source>
+        <target>Filtrar por</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.removeFilter" datatype="html">
+        <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
+        <target>Quitar filtro: <x id="field" equiv-text="fieldLabel"/></target>
       </trans-unit>
 </body>
   </file>

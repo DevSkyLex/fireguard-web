@@ -15,6 +15,7 @@ export class InterventionsPage {
   public constructor(private readonly page: Page) {}
 
   public readonly root: Locator = this.page.locator('#interventions');
+  public readonly filtersToggle: Locator = this.page.getByTestId('interventions-filters-toggle');
   public readonly addFilterTrigger: Locator = this.page.getByTestId('interventions-filters-add');
   public readonly mineToggle: Locator = this.page.getByTestId('interventions-mine-toggle');
   public readonly rowCount: Locator = this.page.getByTestId('interventions-row-count');
@@ -36,6 +37,12 @@ export class InterventionsPage {
 
   public async goto(organizationId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/interventions`);
+  }
+
+  /** Expands the filter bar via the toolbar's "Filters" toggle, when it is not already open. */
+  public async openFilters(): Promise<void> {
+    if ((await this.filtersToggle.getAttribute('aria-expanded')) === 'true') return;
+    await this.filtersToggle.click();
   }
 
   /** Opens the "+ Filter" menu and picks the field named `fieldLabel`, e.g. `"Status"`. */

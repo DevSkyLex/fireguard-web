@@ -16,7 +16,9 @@ export class FacilitiesPage {
   public readonly detailRoot: Locator = this.page.locator('#facility-detail');
 
   public readonly search: Locator = this.page.getByTestId('facilities-search');
-  public readonly filtersTrigger: Locator = this.page.getByTestId('facilities-filters-trigger');
+  public readonly filtersToggle: Locator = this.page.getByTestId('facilities-filters-toggle');
+  public readonly addFilterTrigger: Locator = this.page.getByTestId('facilities-filters-add');
+  public readonly clearFiltersButton: Locator = this.page.getByTestId('facilities-clear-filters');
   public readonly archivedCheckbox: Locator = this.page.getByTestId('facilities-filter-archived');
   public readonly newLink: Locator = this.page.getByTestId('facilities-new');
   public readonly layoutToggle: Locator = this.page.getByTestId('facilities-layout-toggle');
@@ -203,5 +205,20 @@ export class FacilitiesPage {
   public async pickPlaceEquipment(name: string): Promise<void> {
     await this.placePinPicker.click();
     await this.page.getByRole('option', { name }).click();
+  }
+
+  /** Expands the filter bar via the toolbar's "Filters" toggle, when it is not already open. */
+  public async openFilters(): Promise<void> {
+    if ((await this.filtersToggle.getAttribute('aria-expanded')) === 'true') return;
+    await this.filtersToggle.click();
+  }
+
+  /** Opens the "+ Filter" menu and picks the field named `fieldLabel`, e.g. `"Show archived facilities"`. */
+  public async addFilter(fieldLabel: string): Promise<void> {
+    await this.addFilterTrigger.click();
+    await this.page
+      .getByTestId('facilities-filters-add-option')
+      .filter({ hasText: fieldLabel })
+      .click();
   }
 }

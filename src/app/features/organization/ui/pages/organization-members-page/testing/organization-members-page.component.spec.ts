@@ -469,9 +469,7 @@ describe('OrganizationMembersPage', () => {
   it('re-queries the roster on a debounced search keystroke, resetting to page one', async () => {
     await createPage();
 
-    fixture.componentInstance['onSearchInput']({
-      target: { value: 'amelie' },
-    } as unknown as Event);
+    fixture.componentInstance['onSearchQueryChanged']('amelie');
     await new Promise<void>((resolve) => setTimeout(resolve, 350));
     await fixture.whenStable();
 

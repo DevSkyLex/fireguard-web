@@ -1,109 +1,100 @@
 <div id="inspections" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <app-list-toolbar>
-    <hlm-popover toolbarEnd sideOffset="5" align="end">
-      <button
-        hlmPopoverTrigger
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="inspections-filters-trigger"
+  <app-collection-toolbar>
+    <app-collection-filter-toggle
+      toolbarEnd
+      [visible]="filtersVisible()"
+      [activeCount]="activeFilterKeys().length"
+      label="Filters"
+      i18n-label="@@inspection.table.filtersButton"
+      testIdPrefix="inspections"
+      (visibleChange)="toggleFiltersVisible($event)"
+    />
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="chipTemplates()"
+      testIdPrefix="inspections"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved($event)"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #statusChip>
+    <hlm-select
+      [value]="filters().status"
+      [state]="fieldPopoverState('status')"
+      (valueChange)="applyFilter({ status: $event ?? null })"
+      (stateChanged)="onFieldPopoverStateChanged('status', $event)"
+    >
+      <label for="inspections-filter-status" class="sr-only" i18n="@@inspection.list.filterStatus"
+        >Status</label
       >
-        <ng-icon name="lucideListFilter" aria-hidden="true" />
-        <span i18n="@@inspection.table.filtersButton">Filters</span>
-        @if (activeFilterCount() > 0) {
-          <hlm-badge variant="secondary" class="ms-1">{{ activeFilterCount() }}</hlm-badge>
+      <hlm-select-trigger
+        buttonId="inspections-filter-status"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="inspections-filter-status"
+      >
+        @if (filters().status; as status) {
+          <app-inspection-status-tag kind="status" [value]="status" asOption />
+        } @else {
+          <hlm-select-value
+            placeholder="Any status"
+            i18n-placeholder="@@inspection.table.filterStatusPlaceholder"
+          />
         }
-      </button>
-      <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
-        <div class="grid w-56 grid-cols-1 gap-2 sm:w-[26rem] sm:grid-cols-2">
-          <hlm-select
-            [value]="filters().status"
-            (valueChange)="applyFilter({ status: $event ?? null })"
-          >
-            <label
-              for="inspections-filter-status"
-              class="sr-only"
-              i18n="@@inspection.list.filterStatus"
-              >Status</label
-            >
-            <hlm-select-trigger
-              buttonId="inspections-filter-status"
-              class="w-full"
-              data-testid="inspections-filter-status"
-            >
-              @if (filters().status; as status) {
-                <app-inspection-status-tag kind="status" [value]="status" asOption />
-              } @else {
-                <hlm-select-value
-                  placeholder="Any status"
-                  i18n-placeholder="@@inspection.table.filterStatusPlaceholder"
-                />
-              }
-            </hlm-select-trigger>
-            <hlm-select-content *hlmSelectPortal class="w-fit">
-              <hlm-select-group>
-                @for (status of statusValues; track status) {
-                  <hlm-select-item [value]="status">
-                    <app-inspection-status-tag kind="status" [value]="status" asOption />
-                  </hlm-select-item>
-                }
-              </hlm-select-group>
-            </hlm-select-content>
-          </hlm-select>
-
-          <hlm-select
-            [value]="filters().result"
-            (valueChange)="applyFilter({ result: $event ?? null })"
-          >
-            <label
-              for="inspections-filter-result"
-              class="sr-only"
-              i18n="@@inspection.list.filterResult"
-              >Result</label
-            >
-            <hlm-select-trigger
-              buttonId="inspections-filter-result"
-              class="w-full"
-              data-testid="inspections-filter-result"
-            >
-              @if (filters().result; as result) {
-                <app-inspection-status-tag kind="result" [value]="result" asOption />
-              } @else {
-                <hlm-select-value
-                  placeholder="Any result"
-                  i18n-placeholder="@@inspection.table.filterResultPlaceholder"
-                />
-              }
-            </hlm-select-trigger>
-            <hlm-select-content *hlmSelectPortal class="w-fit">
-              <hlm-select-group>
-                @for (result of resultValues; track result) {
-                  <hlm-select-item [value]="result">
-                    <app-inspection-status-tag kind="result" [value]="result" asOption />
-                  </hlm-select-item>
-                }
-              </hlm-select-group>
-            </hlm-select-content>
-          </hlm-select>
-
-          @if (activeFilterCount() > 0) {
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              data-testid="inspections-clear-filters"
-              (click)="clearFilters()"
-            >
-              <ng-icon name="lucideX" aria-hidden="true" />
-              <span i18n="@@common.clearFilters">Clear filters</span>
-            </button>
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (status of statusValues; track status) {
+            <hlm-select-item [value]="status">
+              <app-inspection-status-tag kind="status" [value]="status" asOption />
+            </hlm-select-item>
           }
-        </div>
-      </hlm-popover-content>
-    </hlm-popover>
-  </app-list-toolbar>
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
+
+  <ng-template #resultChip>
+    <hlm-select
+      [value]="filters().result"
+      [state]="fieldPopoverState('result')"
+      (valueChange)="applyFilter({ result: $event ?? null })"
+      (stateChanged)="onFieldPopoverStateChanged('result', $event)"
+    >
+      <label for="inspections-filter-result" class="sr-only" i18n="@@inspection.list.filterResult"
+        >Result</label
+      >
+      <hlm-select-trigger
+        buttonId="inspections-filter-result"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="inspections-filter-result"
+      >
+        @if (filters().result; as result) {
+          <app-inspection-status-tag kind="result" [value]="result" asOption />
+        } @else {
+          <hlm-select-value
+            placeholder="Any result"
+            i18n-placeholder="@@inspection.table.filterResultPlaceholder"
+          />
+        }
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (result of resultValues; track result) {
+            <hlm-select-item [value]="result">
+              <app-inspection-status-tag kind="result" [value]="result" asOption />
+            </hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
 
   @if (store.listCallState().status === 'error') {
     <app-error-state
@@ -148,7 +139,7 @@
       [detailRouteBase]="listRouteBase()"
     />
 
-    <app-list-pagination
+    <app-collection-pagination
       [page]="page()"
       [pageCount]="pageCount()"
       [pageSize]="pageSize()"

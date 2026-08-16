@@ -16,7 +16,9 @@ export class EquipmentsPage {
   public readonly detailRoot: Locator = this.page.locator('#equipment-detail');
 
   public readonly search: Locator = this.page.getByTestId('equipments-search');
-  public readonly filtersTrigger: Locator = this.page.getByTestId('equipments-filters-trigger');
+  public readonly filtersToggle: Locator = this.page.getByTestId('equipments-filters-toggle');
+  public readonly addFilterTrigger: Locator = this.page.getByTestId('equipments-filters-add');
+  public readonly clearFiltersButton: Locator = this.page.getByTestId('equipments-clear-filters');
   public readonly typeFilter: Locator = this.page.getByTestId('equipments-filter-type');
   public readonly statusFilter: Locator = this.page.getByTestId('equipments-filter-status');
   public readonly newLink: Locator = this.page.getByTestId('equipments-new');
@@ -50,5 +52,20 @@ export class EquipmentsPage {
   /** Submits the create form empty, so only the required `type` rule fires. */
   public async submitEmptyCreateForm(): Promise<void> {
     await this.createSubmit.click();
+  }
+
+  /** Expands the filter bar via the toolbar's "Filters" toggle, when it is not already open. */
+  public async openFilters(): Promise<void> {
+    if ((await this.filtersToggle.getAttribute('aria-expanded')) === 'true') return;
+    await this.filtersToggle.click();
+  }
+
+  /** Opens the "+ Filter" menu and picks the field named `fieldLabel`, e.g. `"Type"`. */
+  public async addFilter(fieldLabel: string): Promise<void> {
+    await this.addFilterTrigger.click();
+    await this.page
+      .getByTestId('equipments-filters-add-option')
+      .filter({ hasText: fieldLabel })
+      .click();
   }
 }

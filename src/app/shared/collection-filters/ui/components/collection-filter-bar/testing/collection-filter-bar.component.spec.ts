@@ -1,0 +1,202 @@
+import {
+  Component,
+  computed,
+  provideZonelessChangeDetection,
+  signal,
+  viewChild,
+  type Signal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import type { CollectionFilterField } from '../../../../models';
+import { CollectionFilterBar } from '../collection-filter-bar.component';
+
+const FIELDS: readonly CollectionFilterField[] = [
+  { key: 'status', fieldLabel: 'Status', icon: 'lucideCircleDot' },
+  { key: 'type', fieldLabel: 'Type', icon: 'lucideWrench' },
+  { key: 'priority', fieldLabel: 'Priority', icon: 'lucideFlag' },
+];
+
+/** Reads which chip a `[data-testid$="-value"]` marker belongs to, in current DOM order. */
+function renderedChipMarkers(): readonly string[] {
+  return Array.from(document.querySelectorAll('[data-testid="widgets-filter-chip"]')).map(
+    (chip) => chip.querySelector('[data-testid$="-value"]')?.getAttribute('data-testid') ?? '',
+  );
+}
+
+@Component({
+  selector: 'app-collection-filter-bar-host',
+  imports: [CollectionFilterBar],
+  template: `
+    <app-collection-filter-bar
+      [fields]="fields"
+      [activeKeys]="activeKeys()"
+      [pendingKey]="pendingKey()"
+      [templates]="templates()"
+      testIdPrefix="widgets"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="removed.push($event)"
+      (filtersCleared)="cleared = cleared + 1"
+    />
+
+    <ng-template #statusValue><span data-testid="status-value">Planned</span></ng-template>
+    <ng-template #typeValue><span data-testid="type-value">Inspection</span></ng-template>
+  `,
+})
+class CollectionFilterBarHost {
+  public readonly fields: readonly CollectionFilterField[] = FIELDS;
+  public readonly activeKeys: WritableSignal<readonly string[]> = signal<readonly string[]>([
+    'status',
+  ]);
+  public readonly pendingKey: WritableSignal<string | null> = signal<string | null>(null);
+  public readonly picked: string[] = [];
+  public readonly removed: string[] = [];
+  public cleared = 0;
+
+  /** Mirrors a real page's `fieldPicked` handler: opens the picked field's own selector. */
+  public onFieldPicked(key: string): void {
+    this.picked.push(key);
+    this.pendingKey.set(key);
+  }
+
+  private readonly statusValue = viewChild<TemplateRef<unknown>>('statusValue');
+  private readonly typeValue = viewChild<TemplateRef<unknown>>('typeValue');
+
+  public readonly templates: Signal<Readonly<Record<string, TemplateRef<unknown>>>> = computed(
+    () => {
+      const record: Record<string, TemplateRef<unknown>> = {};
+      const status = this.statusValue();
+      const type = this.typeValue();
+      if (status) record['status'] = status;
+      if (type) record['type'] = type;
+      return record;
+    },
+  );
+}
+
+describe('CollectionFilterBar', () => {
+  let fixture: ComponentFixture<CollectionFilterBarHost>;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [CollectionFilterBarHost],
+      providers: [provideZonelessChangeDetection()],
+    });
+
+    fixture = TestBed.createComponent(CollectionFilterBarHost);
+    await fixture.whenStable();
+  });
+
+  function byTestId(testId: string): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`);
+  }
+
+  it('renders one chip per active key, projecting the matching template', () => {
+    expect(byTestId('status-value')).not.toBeNull();
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(1);
+  });
+
+  it('offers only the unset fields in the "+ Filter" menu', async () => {
+    byTestId('widgets-filters-add')?.click();
+    await fixture.whenStable();
+
+    const options = document.querySelectorAll('[data-testid="widgets-filters-add-option"]');
+    expect(options.length).toBe(2);
+    expect(Array.from(options).map((el) => el.textContent?.trim())).toEqual(['Type', 'Priority']);
+  });
+
+  it('emits fieldPicked and renders the pending chip once a field is picked from the menu', async () => {
+    fixture.componentInstance.pendingKey.set('priority');
+    await fixture.whenStable();
+
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(2);
+  });
+
+  it('emits fieldRemoved with the chip’s key when its remove button is activated', async () => {
+    document
+      .querySelector<HTMLButtonElement>('[data-testid="widgets-filter-chip-remove"]')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.removed).toEqual(['status']);
+  });
+
+  it('hides "Clear filters" with no active narrowing, and shows it once one is set', () => {
+    expect(byTestId('widgets-clear-filters')).not.toBeNull();
+
+    fixture.componentInstance.activeKeys.set([]);
+    fixture.detectChanges();
+
+    expect(byTestId('widgets-clear-filters')).toBeNull();
+  });
+
+  it('emits filtersCleared when "Clear filters" is activated', async () => {
+    byTestId('widgets-clear-filters')?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.cleared).toBe(1);
+  });
+
+  describe('display order', () => {
+    async function pickFieldByLabel(label: string): Promise<void> {
+      byTestId('widgets-filters-add')?.click();
+      await fixture.whenStable();
+      Array.from(
+        document.querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filters-add-option"]'),
+      )
+        .find((button) => button.textContent?.trim() === label)
+        ?.click();
+      await fixture.whenStable();
+    }
+
+    it('renders a field picked from the "+ Filter" menu last, after the narrowings already active', async () => {
+      fixture.componentInstance.activeKeys.set(['status']);
+      await fixture.whenStable();
+
+      await pickFieldByLabel('Type');
+
+      expect(renderedChipMarkers()).toEqual(['status-value', 'type-value']);
+    });
+
+    it('orders picked fields by when they were picked, not by the catalog', async () => {
+      fixture.componentInstance.activeKeys.set([]);
+      await fixture.whenStable();
+
+      await pickFieldByLabel('Type');
+      fixture.componentInstance.activeKeys.set(['type']);
+      fixture.componentInstance.pendingKey.set(null);
+      await fixture.whenStable();
+
+      await pickFieldByLabel('Status');
+
+      expect(renderedChipMarkers()).toEqual(['type-value', 'status-value']);
+    });
+
+    it('sends a re-picked field back to the end rather than to its earlier catalog position', async () => {
+      // 'status' picked first, then 'type' — establishes pick order [status, type].
+      fixture.componentInstance.activeKeys.set([]);
+      await fixture.whenStable();
+      await pickFieldByLabel('Status');
+      fixture.componentInstance.activeKeys.set(['status']);
+      fixture.componentInstance.pendingKey.set(null);
+      await fixture.whenStable();
+      await pickFieldByLabel('Type');
+      fixture.componentInstance.activeKeys.set(['status', 'type']);
+      fixture.componentInstance.pendingKey.set(null);
+      await fixture.whenStable();
+
+      expect(renderedChipMarkers()).toEqual(['status-value', 'type-value']);
+
+      // Removing and re-picking 'status' — despite leading the catalog — sends it to the end.
+      fixture.componentInstance.activeKeys.set(['type']);
+      await fixture.whenStable();
+      await pickFieldByLabel('Status');
+      fixture.componentInstance.activeKeys.set(['status', 'type']);
+      fixture.componentInstance.pendingKey.set(null);
+      await fixture.whenStable();
+
+      expect(renderedChipMarkers()).toEqual(['type-value', 'status-value']);
+    });
+  });
+});

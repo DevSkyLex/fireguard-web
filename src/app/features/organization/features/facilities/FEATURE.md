@@ -82,7 +82,9 @@ This subfeature is the primitive's first consumer, in two places:
 ## UI (this pass)
 
 - `ui/pages/facilities-page` (`FacilitiesPage`) — the roots-only list:
-  search, an "include archived" filter, a list/grid/map toggle
+  search, an "include archived" filter chip (`app-collection-filter-bar`,
+  `@shared/collection-filters`, replacing the earlier popover — its lone
+  field's value control is a checkbox, not a select), a list/grid/map toggle
   (`ui/tables/facility-table` / `ui/dataviews/facility-grid`), and a "New
   facility" link. Row actions are limited to Archive/Restore. `map` is not a
   rendering mode of this page — it is page-local view state (`layout`, not
@@ -453,9 +455,11 @@ Primary services:
   (`listByFacility`, `setPlanPosition`) — the same cross-feature dependency
   `FacilityOverviewStore` already takes on that data-access, extended here
   since equipment placement is equipment data, not facility data.
-- Consumes `ListPagination` from the parent `features/organization` feature
-  (`@features/organization/ui/components`) for the list page's shared pagination band — see
-  `organization/FEATURE.md` § UI Conventions.
+- Consumes `CollectionPagination`, `CollectionToolbar`, `CollectionSearchBox`,
+  `CollectionFilterBar` and `CollectionFilterToggle` from `@shared/collection-pagination`,
+  `@shared/collection-toolbar` and `@shared/collection-filters` for the list page's shared
+  pagination band, toolbar shell, search box, "Filters" toggle and "include archived" filter
+  chip — see `organization/FEATURE.md` § UI Conventions.
 - The parent feature consumes this subfeature's `state` barrel
   (`FacilityTreeStore`), `models` barrel (`FacilityOutput`), `utils` barrel
   (`facilityToTreeNode`) and `ui/dialogs` barrel (`FacilityMoveDialog`) for

@@ -76,6 +76,9 @@ test.describe('Interventions list — shared filtered URL', () => {
 
     await expect(interventions.filterChip('Status')).toBeVisible();
     await expect(interventions.mineToggle).toHaveAttribute('aria-pressed', 'true');
+
+    await expect(interventions.filtersToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(interventions.filtersToggle.locator('hlm-badge')).toHaveText('1');
   });
 
   test('renders only the matching fixture for a shared label URL', async ({ page }) => {
@@ -145,6 +148,25 @@ test.describe('Interventions list — segmented views and filter chips', () => {
     await expect(interventions.viewButton('Overdue')).toHaveAttribute('aria-pressed', 'true');
   });
 
+  test('renders the filter bar collapsed with no badge when arriving with no active filter', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockListPage(api);
+    const interventions = new InterventionsPage(page);
+
+    await interventions.goto(E2E_ORGANIZATION_ID);
+
+    await expect(interventions.filtersToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(interventions.filtersToggle.locator('hlm-badge')).toHaveCount(0);
+    await expect(interventions.filterChips).toHaveCount(0);
+
+    await interventions.openFilters();
+
+    await expect(interventions.filtersToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(interventions.addFilterTrigger).toBeVisible();
+  });
+
   test('adding a status filter from the "+ Filter" menu shows an editable chip, and removing it clears the param', async ({
     page,
   }) => {
@@ -153,6 +175,7 @@ test.describe('Interventions list — segmented views and filter chips', () => {
     const interventions = new InterventionsPage(page);
 
     await interventions.goto(E2E_ORGANIZATION_ID);
+    await interventions.openFilters();
     await interventions.addFilter('Status');
     await page.getByRole('option', { name: 'Planned' }).click();
 

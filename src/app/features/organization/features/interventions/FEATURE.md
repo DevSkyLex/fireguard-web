@@ -61,32 +61,56 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
 
   **The filter bar (6.5) replaced the earlier popover-plus-read-only-chips
   pair with editable, Linear-style segmented chips** — the popover is gone.
-  Each active narrowing renders as one `app-filter-chip` (page-local,
-  `ui/pages/interventions-page/components/filter-chip/`): a field segment
-  (icon + label), a static "is" operator, the field's own `hlm-select` —
-  restyled flush into the chip, unchanged in behaviour — as the value
-  segment, and a remove button, each separated by a hairline `border-border`.
-  **Clicking the value segment reopens that field's selector in place**,
-  which is the gain over the old popover: changing a value no longer means
-  removing the chip and reopening a grid of seven selects to find the field
-  again. A "+ Filter" menu (`hlm-dropdown-menu`) lists only the fields not
-  yet active; picking one calls `openFilterField`, which sets the page's
-  `openFilterKey` and renders that field's chip with its selector already
-  open. `openFilterKey` is UI-only — which selector is expanded, never a
-  narrowing's value — kept in sync with each chip's own `hlm-select` through
-  `onFieldPopoverStateChanged`, so the URL via `applyFilter` remains the only
-  place a filter's value lives. **Chips render in the order the operator
-  picked them**, newest last, tracked by the page's `filterOrder` and applied
-  by `renderedFilterKeys`, which the template loops over — the DOM order is
-  the display order, never a CSS reordering that would desynchronise the tab
-  sequence. `filterOrder` is presentation state and deliberately not in the
-  URL: a field a shared or reloaded URL already carried has no entry and
-  sorts ahead of every picked one, in catalog order. `mine` keeps its own toggle chip outside this
-  bar, as before (it was already excluded from `activeFilterCount`), and the
-  "Clear filters" button stays at the end of the bar. Every field is
+  Since the phase-2 `collection-*` migration (`ARCHITECTURE.md` §8.5), the
+  chip row itself is `app-collection-filter-bar` and its chip shell is
+  `app-filter-chip`, both `@shared/collection-filters` — this feature was the
+  reference implementation the shared bar generalized from, so the split
+  below is what stayed feature-owned versus what moved. Each active
+  narrowing still renders as one `app-filter-chip`: a field segment (icon +
+  label), a static "is" operator, the field's own `hlm-select` — restyled
+  flush into the chip, unchanged in behaviour — as the value segment
+  (projected via `ng-content`, so `shared/` never imports
+  `app-intervention-tag` or any intervention model), and a remove button,
+  each separated by a hairline `border-border`. **Clicking the value segment
+  reopens that field's selector in place**, which is the gain over the old
+  popover: changing a value no longer means removing the chip and reopening
+  a grid of seven selects to find the field again.
+  A "+ Filter" menu lists only the fields not yet active and is now the
+  bar's own concern; picking one fires the bar's `fieldPicked` output, which
+  this page's `onFieldPicked` reacts to by setting `openFilterKey` — still
+  page-owned, since it also gates which of this page's seven `ng-template`
+  value controls (`#statusChip`, `#typeChip`, …) currently forces its own
+  `hlm-select` open. `openFilterKey` is UI-only — which selector is
+  expanded, never a narrowing's value — kept in sync with each template's
+  own `hlm-select` through `onFieldPopoverStateChanged`, so the URL via
+  `applyFilter` remains the only place a filter's value lives, and is also
+  what the bar's `pendingKey` input reads to still render an empty chip for
+  a field mid-pick. **Chips render in the order the operator picked them**,
+  newest last — that memory (`filterOrder` before the move) is now internal
+  to `CollectionFilterBar` itself, driven only by this page's `activeKeys`
+  (`activeFilterKeys`, the seven fields currently non-null) and `pendingKey`
+  inputs: a field a shared or reloaded URL already carried has no pick-order
+  entry and sorts ahead of every picked one, in catalog order. `mine` keeps
+  its own toggle chip outside this bar, as before, and the "Clear filters"
+  button — the bar's own, generic — stays at the end. Every field is
   single-valued end to end — the API filters one value per field
   (`InterventionListFilters`'s own JSDoc) — so the chip's operator segment is
   a fixed, read-only "is" label, never a multi-select or a negated operator.
+
+  **The bar is collapsible, toggled by a "Filters" button beside "Columns"
+  in the toolbar's `toolbarEnd`** (`app-collection-filter-toggle`,
+  `@shared/collection-filters`) — the same reference implementation the
+  other three collection pages' toggle now shares. The button carries an
+  `hlm-badge` count of `activeFilterKeys().length`, exactly the shape the
+  earlier popover trigger's badge used, and `filtersVisible` (seeded by
+  `initialCollectionFilterBarVisibility`) defaults to expanded the moment
+  the page mounts with at least one URL-carried filter, so a shared
+  `?status=…` link is never silently narrowed behind a collapsed bar — once
+  the operator has toggled it, later filter changes never force it open or
+  shut again. `filtersVisible` is presentation-only, never serialized: the
+  bar itself mounts or does not exist, exactly like `openFilterKey`, never a
+  CSS-hidden instance. The toggle button is unrelated to the "+ Filter" menu
+  inside the bar, which still only ever adds a field to the narrowing.
 
   **Two catalog primitives were evaluated for this bar and rejected; do not
   reopen either without new evidence.** `hlm-button-group` cannot back the
@@ -381,9 +405,11 @@ Internal code imports deep paths directly.
   `@features/organization/ui/components`) instead of hand-rolling stat cards — read-only
   presentational reuse through the parent's `ui/components` barrel, so the two stat surfaces
   cannot drift apart.
-- Consumes `ListPagination` from the parent `features/organization` feature
-  (`@features/organization/ui/components`) for the list page's shared pagination band — see
-  `organization/FEATURE.md` § UI Conventions.
+- Consumes `CollectionPagination`, `CollectionToolbar`, `CollectionSearchBox` and
+  `CollectionFilterBar` from `@shared/collection-pagination`, `@shared/collection-toolbar` and
+  `@shared/collection-filters` for the list page's shared pagination band, toolbar shell, search
+  box and filter chip row — see `organization/FEATURE.md` § UI Conventions. This feature's own
+  `interventions-page` was the reference implementation the shared filter bar generalized from.
 - The parent feature consumes this feature's public API for its landing page's work queues
   (ARCHITECTURE.md §4): the root barrel's `InterventionService` plus the `models`, `utils`,
   `data-access` and `ui/components` concern barrels listed above. Read-only — the parent lists

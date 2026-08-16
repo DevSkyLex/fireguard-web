@@ -19,12 +19,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
-  lucideListFilter,
+  lucideCircleDot,
   lucidePackage,
   lucidePlus,
   lucideSearch,
-  lucideX,
+  lucideTag,
 } from '@ng-icons/lucide';
+import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -39,13 +40,17 @@ import {
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ListPagination, ListToolbar } from '@features/organization/ui/components';
+import {
+  CollectionFilterBar,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+} from '@shared/collection-filters';
+import { CollectionPagination } from '@shared/collection-pagination';
+import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { ErrorState } from '@shared/error-state';
-import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmInputGroupImports } from '@shared/ui/input-group';
-import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentTable } from '../../tables/equipment-table';
@@ -69,10 +74,11 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * @class EquipmentsPage
  *
  * @description
- * Route entry page for the organization's equipment: a search box and a
- * type/status filter popover above the grid, in its bordered shell, and a
+ * Route entry page for the organization's equipment: a search box and an
+ * editable type/status filter chip row (`app-collection-filter-bar`,
+ * `@shared/collection-filters`) above the grid, in its bordered shell, and a
  * footer carrying the row count, the page size and the pager — the same
- * shell `InterventionsPage` draws.
+ * shell `InterventionsPage` draws, whose filter bar this one now shares.
  *
  * It owns the query the table renders — search, filters, paging — and the
  * "New equipment" affordance; the record itself is where every property is
@@ -82,7 +88,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * Its title lives in the shell breadcrumb; "New equipment" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.1.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -94,23 +100,23 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     ErrorState,
     EquipmentStatusTag,
     EquipmentTable,
-    ListPagination,
-    ListToolbar,
-    HlmBadge,
+    CollectionFilterBar,
+    CollectionFilterToggle,
+    CollectionPagination,
+    CollectionSearchBox,
+    CollectionToolbar,
     HlmButton,
     ...HlmEmptyImports,
-    ...HlmInputGroupImports,
-    ...HlmPopoverImports,
     ...HlmSelectImports,
   ],
   providers: [
     provideIcons({
       lucideCircleAlert,
-      lucideListFilter,
+      lucideCircleDot,
       lucidePackage,
       lucidePlus,
       lucideSearch,
-      lucideX,
+      lucideTag,
     }),
   ],
   templateUrl: './equipments-page.component.html',
@@ -200,19 +206,73 @@ export class EquipmentsPage {
     return this.searchTerm() !== '' || filters.type !== null || filters.status !== null;
   });
 
-  /**
-   * Property activeFilterCount
-   * @readonly
-   * @description How many narrowings are in force, for the badge on the Filters button.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<number>}
-   */
-  protected readonly activeFilterCount: Signal<number> = computed<number>(() => {
-    const filters = this.filters();
+  /** The filter bar's field catalog: type, then status. */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'type',
+      fieldLabel: $localize`:@@equipment.list.filterType:Type`,
+      icon: 'lucideTag',
+    },
+    {
+      key: 'status',
+      fieldLabel: $localize`:@@equipment.list.filterStatus:Status`,
+      icon: 'lucideCircleDot',
+    },
+  ];
 
-    return (filters.type !== null ? 1 : 0) + (filters.status !== null ? 1 : 0);
-  });
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   * @description Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => {
+      const filters = this.filters();
+
+      return [
+        ...(filters.type !== null ? ['type'] : []),
+        ...(filters.status !== null ? ['status'] : []),
+      ];
+    },
+  );
+
+  /** Which field's value selector currently renders forced open — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<'type' | 'status' | null> = signal<
+    'type' | 'status' | null
+  >(null);
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
+  );
+
+  /** The "Type" chip's value control, projected into the filter bar. */
+  private readonly typeChipTemplate = viewChild<TemplateRef<unknown>>('typeChip');
+
+  /** The "Status" chip's value control, projected into the filter bar. */
+  private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
+
+  /**
+   * Property chipTemplates
+   * @readonly
+   * @description Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
+   */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({ type: this.typeChipTemplate(), status: this.statusChipTemplate() }));
 
   /** The rows the table currently renders. */
   protected readonly items: Signal<readonly EquipmentOutput[]> = computed<
@@ -311,15 +371,15 @@ export class EquipmentsPage {
 
   //#region Methods
   /**
-   * Method onSearchInput
+   * Method onSearchQueryChanged
    * @description Records a keystroke into the draft term the debounce watches.
    * @access protected
-   * @since 1.0.0
-   * @param {Event} event - The input event.
+   * @since 1.1.0
+   * @param {string} term - The search box's current value.
    * @returns {void}
    */
-  protected onSearchInput(event: Event): void {
-    this.draftSearch.set((event.target as HTMLInputElement).value);
+  protected onSearchQueryChanged(term: string): void {
+    this.draftSearch.set(term);
   }
 
   /**
@@ -364,6 +424,72 @@ export class EquipmentsPage {
     this.page.set(1);
     this.filters.set({ type: null, status: null });
     this.clearSearch();
+  }
+
+  /**
+   * Method onFieldPicked
+   * @description Reacts to the filter bar's `fieldPicked` output by forcing the picked field's value control open.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   * @returns {void}
+   */
+  protected onFieldPicked(key: string): void {
+    this.openFilterKey.set(key as 'type' | 'status');
+  }
+
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} key - The field key a chip's remove button cleared.
+   * @returns {void}
+   */
+  protected onFieldRemoved(key: string): void {
+    this.applyFilter(key === 'type' ? { type: null } : { status: null });
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @access protected
+   * @since 1.4.0
+   * @param {boolean} visible - The toggle button's intended next state.
+   * @returns {void}
+   */
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
+  }
+
+  /**
+   * Method fieldPopoverState
+   * @description Whether a field's value control should currently render open — true only for {@link openFilterKey}.
+   * @access protected
+   * @since 1.3.0
+   * @param {'type' | 'status'} key - The field to read.
+   * @returns {BrnOverlayState} `'open'` or `'closed'`.
+   */
+  protected fieldPopoverState(key: 'type' | 'status'): BrnOverlayState {
+    return this.openFilterKey() === key ? 'open' : 'closed';
+  }
+
+  /**
+   * Method onFieldPopoverStateChanged
+   * @description Keeps {@link openFilterKey} in sync with a field's own value control.
+   * @access protected
+   * @since 1.3.0
+   * @param {'type' | 'status'} key - The field whose selector changed.
+   * @param {BrnOverlayState} state - Its next state.
+   * @returns {void}
+   */
+  protected onFieldPopoverStateChanged(key: 'type' | 'status', state: BrnOverlayState): void {
+    if (state === 'open') {
+      this.openFilterKey.set(key);
+      return;
+    }
+
+    if (this.openFilterKey() === key) this.openFilterKey.set(null);
   }
 
   /**

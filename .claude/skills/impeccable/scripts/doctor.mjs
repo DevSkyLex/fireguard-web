@@ -41,6 +41,7 @@ import {
   loadKnownRuleIds,
 } from './lib/staleness-deep.mjs';
 import {
+  checkBuildPathUnset,
   checkConfig,
   checkDesignSidecar,
   checkNativePlatformEvidence,
@@ -120,6 +121,7 @@ async function collect(cwd, targetOptions) {
     ...checkDesignDrift({ designPath: absDesignPath, projectRoot }),
     ...checkDesignCoverage({ design: ctx.design, designPath: ctx.designPath, parseDesignMd }),
     ...checkConfig({ projectRoot, repoRoot: ctx.repoRoot }),
+    ...checkBuildPathUnset({ projectRoot, repoRoot: ctx.repoRoot, product: ctx.product }),
     ...checkDetectorIgnores({ projectRoot, knownRuleIds }),
     ...checkSurfaceBriefs({ candidates: ctx.surfaceBriefCandidates, projectRoot }),
     ...checkHookInstallation({

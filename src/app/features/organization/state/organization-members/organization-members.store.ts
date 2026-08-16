@@ -43,8 +43,8 @@ import type {
 /**
  * Default server-side page size for the members table — the same
  * `[30, 60, 100]` family the other organization list pages offer through
- * `ListPagination`, so the roster's rows-per-page select opens on a value one
- * of its own options actually matches.
+ * `CollectionPagination`, so the roster's rows-per-page select opens on a
+ * value one of its own options actually matches.
  */
 export const MEMBERS_PAGE_SIZE = 30;
 

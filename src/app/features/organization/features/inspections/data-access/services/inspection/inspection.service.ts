@@ -166,14 +166,18 @@ export class InspectionService extends HydraApiService {
    * @method list
    *
    * @description
-   * Retrieves a paginated list of inspections belonging
-   * to the given organization.
+   * Retrieves a paginated list of inspections belonging to the given
+   * organization. `search` and `sort` are forwarded through `RequestOptions`'
+   * typed fields, so `HydraApiService.buildParams` serializes them natively
+   * (`search=` and `order[<field>]=<direction>`) rather than through the
+   * hand-built `params` bag, which still carries the feature's own filters
+   * (`equipmentId`, `result`, `status`).
    *
    * @access public
    * @since 1.0.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {RequestOptions} [options] - Optional pagination parameters.
+   * @param {InspectionListOptions} [options] - Optional pagination, sort, search and filter parameters.
    *
    * @return {Observable<HydraCollection<InspectionOutput>>} An observable emitting the inspections collection.
    */
@@ -190,19 +194,22 @@ export class InspectionService extends HydraApiService {
     if (options?.result) params['result'] = options.result;
     if (options?.status) params['status'] = options.status;
 
-    if (facilityId) {
-      return this.listByFacility(organizationId, facilityId, {
-        page: options?.page,
-        itemsPerPage: options?.itemsPerPage,
-        params,
-      });
-    }
-
-    return this.getCollection<InspectionOutput>(this.inspectionPath(organizationId), {
+    const requestOptions: RequestOptions = {
       page: options?.page,
       itemsPerPage: options?.itemsPerPage,
+      search: options?.search,
+      sort: options?.sort,
       params,
-    });
+    };
+
+    if (facilityId) {
+      return this.listByFacility(organizationId, facilityId, requestOptions);
+    }
+
+    return this.getCollection<InspectionOutput>(
+      this.inspectionPath(organizationId),
+      requestOptions,
+    );
   }
 
   /**

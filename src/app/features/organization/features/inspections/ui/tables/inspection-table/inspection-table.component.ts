@@ -1,6 +1,20 @@
-import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideArrowDown, lucideArrowUp, lucideChevronsUpDown } from '@ng-icons/lucide';
+import type {
+  InspectionListSort,
+  InspectionOutput,
+  InspectionSortField,
+} from '@features/organization/features/inspections/models';
+import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
@@ -21,17 +35,24 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * carries only a bare `equipmentId`, and a raw id is worse than omitting the
  * column — the detail record links to the equipment's own name instead.
  *
- * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
- * no service. The page decides what to load, filter and paginate; this
- * component only renders the page it is handed.
+ * "Performed on", "Result" and "Status" are sortable heads, the same ghost-
+ * button-with-glyph pattern `InterventionTable` uses — the backend's own
+ * whitelist (`result`, `status`, `performedAt`, `createdAt`) also allows
+ * `createdAt`, but this table renders no column for it, so no head offers it.
  *
- * @version 1.1.0
+ * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
+ * no service. The page decides what to load, filter, sort and paginate;
+ * this component only renders the page it is handed and emits
+ * {@link sortChanged} when a head is activated.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-inspection-table',
-  imports: [RouterLink, InspectionStatusTag, HlmSkeleton, ...HlmTableImports],
+  imports: [RouterLink, NgIcon, HlmButton, InspectionStatusTag, HlmSkeleton, ...HlmTableImports],
+  providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown })],
   templateUrl: './inspection-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +90,39 @@ export class InspectionTable {
    */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
     input.required<readonly string[]>();
+
+  /**
+   * Property sortOrder
+   * @readonly
+   *
+   * @description
+   * The active ordering, deciding what each sortable head announces and
+   * which direction glyph it shows.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {InputSignal<InspectionListSort>}
+   */
+  public readonly sortOrder: InputSignal<InspectionListSort> = input.required<InspectionListSort>();
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property sortChanged
+   * @readonly
+   *
+   * @description
+   * A sortable head was activated; carries the field. Re-emitting the active
+   * field means "reverse it" — the page owns the direction.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {OutputEmitterRef<InspectionSortField>}
+   */
+  public readonly sortChanged: OutputEmitterRef<InspectionSortField> =
+    output<InspectionSortField>();
   //#endregion
 
   //#region Properties
@@ -86,6 +140,51 @@ export class InspectionTable {
    */
   protected columnCount(): number {
     return 5;
+  }
+
+  /**
+   * Method ariaSort
+   * @method ariaSort
+   *
+   * @description
+   * What a sortable head announces for the active ordering.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {InspectionSortField} field - The head's field.
+   *
+   * @returns {'ascending' | 'descending' | 'none'} The `aria-sort` value.
+   */
+  protected ariaSort(field: InspectionSortField): 'ascending' | 'descending' | 'none' {
+    const active: InspectionListSort = this.sortOrder();
+
+    if (active.field !== field) return 'none';
+
+    return active.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
+  /**
+   * Method sortIcon
+   * @method sortIcon
+   *
+   * @description
+   * The glyph a sortable head shows: a direction when it is the active one, a
+   * neutral pair otherwise.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {InspectionSortField} field - The head's field.
+   *
+   * @returns {string} A registered lucide name.
+   */
+  protected sortIcon(field: InspectionSortField): string {
+    const active: InspectionListSort = this.sortOrder();
+
+    if (active.field !== field) return 'lucideChevronsUpDown';
+
+    return active.direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown';
   }
   //#endregion
 }

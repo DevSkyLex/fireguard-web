@@ -1,5 +1,16 @@
 <div id="inspections" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
   <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="inspections"
+      placeholder="Search inspections..."
+      i18n-placeholder="@@inspection.table.searchPlaceholder"
+      ariaLabel="Search inspections..."
+      i18n-ariaLabel="@@inspection.table.searchPlaceholder"
+      [value]="draftSearch()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
+
     <app-collection-filter-toggle
       toolbarEnd
       [visible]="filtersVisible()"
@@ -112,7 +123,7 @@
     <hlm-empty class="border border-dashed">
       <hlm-empty-header>
         <hlm-empty-media variant="icon">
-          <ng-icon [name]="hasFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'" />
+          <ng-icon [name]="hasSearchOrFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'" />
         </hlm-empty-media>
         <div hlmEmptyTitle i18n="@@inspection.table.emptyTitle">No inspections found</div>
         <div hlmEmptyDescription i18n="@@inspection.table.emptyDesc">
@@ -120,7 +131,7 @@
         </div>
       </hlm-empty-header>
       <hlm-empty-content>
-        @if (hasFilters()) {
+        @if (hasSearchOrFilters()) {
           <button hlmBtn variant="outline" (click)="clearFilters()">
             <span i18n="@@common.clearFilters">Clear filters</span>
           </button>
@@ -137,6 +148,8 @@
       [items]="items()"
       [loading]="store.isLoadingInspections() && items().length === 0"
       [detailRouteBase]="listRouteBase()"
+      [sortOrder]="sortOrder()"
+      (sortChanged)="applySortField($event)"
     />
 
     <app-collection-pagination

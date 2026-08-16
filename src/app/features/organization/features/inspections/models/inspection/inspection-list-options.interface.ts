@@ -1,4 +1,4 @@
-import type { PaginationOptions, RequestOptions } from '@core/api/models';
+import type { RequestOptions } from '@core/api/models';
 import type { InspectionResult, InspectionStatus } from './inspection-output.interface';
 
 /**
@@ -18,7 +18,7 @@ export interface InspectionListFilter {
   readonly result?: InspectionResult;
   /** @type {InspectionStatus} */
   readonly status?: InspectionStatus;
-  /** Additional API query parameters such as order[field]. */
+  /** Additional API query parameters not covered by a typed field. */
   readonly params?: RequestOptions['params'];
   //#endregion
 }
@@ -27,7 +27,8 @@ export interface InspectionListFilter {
  * Type InspectionListOptions
  *
  * @description
- * Complete query options supported by the inspections
- * listing endpoint.
+ * Complete query options supported by the inspections listing endpoint:
+ * the feature's own filters composed with the typed pagination, sorting and
+ * search options `RequestOptions` (`@core/api`) exposes.
  */
-export type InspectionListOptions = InspectionListFilter & PaginationOptions;
+export type InspectionListOptions = InspectionListFilter & RequestOptions;

@@ -9,7 +9,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { CookieService } from '@core/cookie';
 import { PageActionsService } from '@core/page-actions';
 import {
   idleCallState,
@@ -85,16 +86,33 @@ describe('InspectionsPage', () => {
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
+        {
+          provide: CookieService,
+          useValue: { getCookie: vi.fn().mockReturnValue(null), setCookie: vi.fn() },
+        },
+        { provide: ActivatedRoute, useValue: {} },
       ],
     });
+
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
 
-  it('should load the list for the workspace on arrival', async () => {
+  it('should load the list for the workspace on arrival, sorted by performed date descending', async () => {
     fixture = await createPage();
 
     expect(load).toHaveBeenCalledTimes(1);
     expect(load.mock.calls[0][0]).toMatchObject({ organizationId: 'org-1' });
-    expect(load.mock.calls[0][0].options).toMatchObject({ page: 1, itemsPerPage: 30, params: {} });
+    expect(load.mock.calls[0][0].options).toMatchObject({
+      page: 1,
+      itemsPerPage: 30,
+      sort: { field: 'performedAt', direction: 'desc' },
+    });
+  });
+
+  it('should send the search term as the typed search option', async () => {
+    fixture = await createPage({ q: '  gauge  ' });
+
+    expect(load.mock.calls.at(-1)?.[0].options).toMatchObject({ search: 'gauge' });
   });
 
   it('should narrow the query when a filter is picked, and return to the first page', async () => {
@@ -103,26 +121,58 @@ describe('InspectionsPage', () => {
     fixture.componentInstance['applyFilter']({ status: 'draft' });
     await fixture.whenStable();
 
-    expect(load.mock.calls.at(-1)?.[0].options.params).toMatchObject({ status: 'draft' });
+    expect(load.mock.calls.at(-1)?.[0].options).toMatchObject({ status: 'draft' });
     expect(fixture.componentInstance['page']()).toBe(1);
   });
 
-  it('should never send an unset filter as an empty value', async () => {
+  it('should never send an unset filter as a value', async () => {
     fixture = await createPage();
 
-    expect(load.mock.calls[0][0].options.params).not.toHaveProperty('status');
-    expect(load.mock.calls[0][0].options.params).not.toHaveProperty('result');
+    expect(load.mock.calls[0][0].options.status).toBeUndefined();
+    expect(load.mock.calls[0][0].options.result).toBeUndefined();
   });
 
   it('should drop every narrowing at once when filters are cleared', async () => {
-    fixture = await createPage();
+    fixture = await createPage({ q: 'gauge' });
 
     fixture.componentInstance['applyFilter']({ result: 'fail' });
     await fixture.whenStable();
     fixture.componentInstance['clearFilters']();
     await fixture.whenStable();
 
-    expect(load.mock.calls.at(-1)?.[0].options.params).toEqual({});
+    const options = load.mock.calls.at(-1)?.[0].options;
+    expect(options.status).toBeUndefined();
+    expect(options.result).toBeUndefined();
+    expect(TestBed.inject(Router).navigate).toHaveBeenLastCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { q: null } }),
+    );
+  });
+
+  it('should reverse direction when the same field is picked again, and reload from the first page', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['page'].set(3);
+
+    fixture.componentInstance['applySortField']('performedAt');
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options.sort).toEqual({
+      field: 'performedAt',
+      direction: 'asc',
+    });
+    expect(fixture.componentInstance['page']()).toBe(1);
+  });
+
+  it('should switch field and keep the current direction when a different field is picked', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['applySortField']('result');
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options.sort).toEqual({
+      field: 'result',
+      direction: 'desc',
+    });
   });
 
   it('should not offer "New inspection" without the write permission', async () => {

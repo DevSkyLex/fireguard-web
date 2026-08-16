@@ -14,7 +14,8 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -23,15 +24,21 @@ import {
   lucideGauge,
   lucideListFilter,
   lucidePlus,
+  lucideSearch,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
+  InspectionListOptions,
+  InspectionListSort,
   InspectionOutput,
   InspectionResult,
+  InspectionSortField,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
+import { InspectionListPreferencesService } from '@features/organization/features/inspections/services';
 import {
   InspectionStore,
   type InspectionStoreType,
@@ -44,13 +51,16 @@ import {
   type CollectionFilterField,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionToolbar } from '@shared/collection-toolbar';
+import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSelectImports } from '@shared/ui/select';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 import { InspectionTable } from '../../tables/inspection-table';
+
+/** How long typing settles before the search reaches the wire. */
+const SEARCH_DEBOUNCE_MS: number = 300;
 
 /** The page sizes offered under the table — the server default first. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
@@ -66,24 +76,27 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
  * @class InspectionsPage
  *
  * @description
- * Route entry page for the organization's inspections: a toolbar carrying
- * only the "Filters" toggle (`app-collection-filter-toggle`), an editable
+ * Route entry page for the organization's inspections: a toolbar carrying a
+ * URL-synced search box (`app-collection-search-box`, `?q=`) and the
+ * "Filters" toggle (`app-collection-filter-toggle`), an editable
  * status/result filter chip row (`app-collection-filter-bar`,
  * `@shared/collection-filters`) mounted below it once expanded, the grid in
  * its bordered shell, and a footer carrying the row count, the page size and
- * the pager — the same shell `EquipmentsPage` draws. Inspections carry no
- * searchable text field, so unlike its siblings this page's toolbar has no
- * search box.
+ * the pager — the same shell `EquipmentsPage` draws.
  *
- * It owns the query the table renders — filters and paging — and the "New
- * inspection" affordance; the record itself is where every property is
- * edited (`FEATURE.md` "The record is the edit surface"), so this page has
- * no row menu and no bulk actions to orchestrate.
+ * It owns the query the table renders — search, filters, sort and paging —
+ * and the "New inspection" affordance; the record itself is where every
+ * property is edited (`FEATURE.md` "The record is the edit surface"), so
+ * this page has no row menu and no bulk actions to orchestrate. The active
+ * ordering ({@link sortOrder}) is remembered across visits through
+ * `InspectionListPreferencesService`, the same cookie-backed pattern
+ * `InterventionsPage` established; unlike that page, page size is not
+ * remembered here.
  *
  * Its title lives in the shell breadcrumb; "New inspection" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -98,6 +111,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     CollectionFilterBar,
     CollectionFilterToggle,
     CollectionPagination,
+    CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
     ...HlmEmptyImports,
@@ -111,6 +125,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
       lucideGauge,
       lucideListFilter,
       lucidePlus,
+      lucideSearch,
     }),
   ],
   templateUrl: './inspections-page.component.html',
@@ -128,6 +143,16 @@ export class InspectionsPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property q
+   * @readonly
+   * @description The search term the URL carries, so a filtered list survives a reload.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly q: InputSignal<string | undefined> = input<string | undefined>(undefined);
   //#endregion
 
   //#region Properties
@@ -139,16 +164,34 @@ export class InspectionsPage {
     OrganizationPermissionService,
   );
 
+  /** Remembers the active ordering across visits. */
+  private readonly preferences: InspectionListPreferencesService =
+    inject<InspectionListPreferencesService>(InspectionListPreferencesService);
+
+  /** Router used to round-trip the `?q=` query param. */
+  private readonly router: Router = inject(Router);
+
+  /** Current route, anchoring the relative query-param navigation. */
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+
   /** The active narrowing. Questions asked now, so never persisted. */
   protected readonly filters: WritableSignal<{
     readonly status: InspectionStatus | null;
     readonly result: InspectionResult | null;
   }> = signal({ status: null, result: null });
 
+  /** What the search box holds, before the debounce settles. */
+  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
+
+  /** The active ordering, restored from the preferences cookie. */
+  protected readonly sortOrder: WritableSignal<InspectionListSort> = signal<InspectionListSort>(
+    this.preferences.readSort(),
+  );
+
   /** The page window, one-based. */
   protected readonly page: WritableSignal<number> = signal<number>(1);
 
-  /** How many rows a page holds. */
+  /** How many rows a page holds. Not remembered — a per-visit preference. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
   /** Status choices offered in the filter bar. */
@@ -158,17 +201,27 @@ export class InspectionsPage {
   protected readonly resultValues: readonly InspectionResult[] = RESULT_VALUES;
 
   /**
-   * Property hasFilters
+   * Property searchTerm
+   * @readonly
+   * @description The search as everything downstream reads it: trimmed, never `undefined`.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<string>}
+   */
+  protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
+
+  /**
+   * Property hasSearchOrFilters
    * @readonly
    * @description Whether the current view is narrowed at all, deciding what the empty state offers.
    * @access protected
    * @since 1.0.0
    * @type {Signal<boolean>}
    */
-  protected readonly hasFilters: Signal<boolean> = computed<boolean>(() => {
+  protected readonly hasSearchOrFilters: Signal<boolean> = computed<boolean>(() => {
     const filters = this.filters();
 
-    return filters.status !== null || filters.result !== null;
+    return this.searchTerm() !== '' || filters.status !== null || filters.result !== null;
   });
 
   /** The filter bar's field catalog: status, then result. */
@@ -286,8 +339,14 @@ export class InspectionsPage {
   //#region Constructor
   /**
    * Constructor
-   * @constructor
-   * @description Wires the load effect, re-running on every filter, page or page-size change, and registers {@link pageActions}.
+   *
+   * @description
+   * Wires the search round-trip and the load effect, the same shape
+   * `EquipmentsPage` uses: a settled (debounced) search resets the page
+   * synchronously with the query navigation so the load effect fires once,
+   * already on the first page of the new result set. Re-runs on every
+   * filter, sort, page or page-size change. Also registers {@link pageActions}.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -295,13 +354,32 @@ export class InspectionsPage {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
 
     effect((): void => {
+      const term: string = this.searchTerm();
+      untracked((): void => {
+        if (term !== this.draftSearch()) this.draftSearch.set(term);
+      });
+    });
+
+    toObservable(this.draftSearch)
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((term: string): void => {
+        if (term !== this.searchTerm()) {
+          this.page.set(1);
+          this.navigateQuery(term === '' ? null : term);
+        }
+      });
+
+    effect((): void => {
       const organizationId: string = this.organizationId();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
-      const params: Record<string, string> = this.buildListParams();
+      const options: InspectionListOptions = this.buildListOptions();
 
       untracked((): void => {
-        this.store.load({ organizationId, options: { params, page, itemsPerPage: pageSize } });
+        this.store.load({
+          organizationId,
+          options: { ...options, page, itemsPerPage: pageSize },
+        });
       });
     });
   }
@@ -328,7 +406,7 @@ export class InspectionsPage {
 
   /**
    * Method clearFilters
-   * @description Drops every narrowing at once.
+   * @description Drops every narrowing at once, including the search term.
    * @access protected
    * @since 1.0.0
    * @returns {void}
@@ -336,6 +414,32 @@ export class InspectionsPage {
   protected clearFilters(): void {
     this.page.set(1);
     this.filters.set({ status: null, result: null });
+    this.clearSearch();
+  }
+
+  /**
+   * Method onSearchQueryChanged
+   * @description Records a keystroke into the draft term the debounce watches.
+   * @access protected
+   * @since 1.4.0
+   * @param {string} term - The search box's current value.
+   * @returns {void}
+   */
+  protected onSearchQueryChanged(term: string): void {
+    this.draftSearch.set(term);
+  }
+
+  /**
+   * Method clearSearch
+   * @description Drops the search from the URL.
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected clearSearch(): void {
+    this.draftSearch.set('');
+    this.page.set(1);
+    this.navigateQuery(null);
   }
 
   /**
@@ -430,6 +534,31 @@ export class InspectionsPage {
   }
 
   /**
+   * Method applySortField
+   *
+   * @description
+   * Orders by a column head. Re-picking the active field reverses it, which
+   * is what a second click on a sorted column means everywhere else. Also
+   * persists the choice to the preferences cookie.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @param {InspectionSortField} field - The column's field.
+   *
+   * @returns {void}
+   */
+  protected applySortField(field: InspectionSortField): void {
+    this.page.set(1);
+    this.sortOrder.update((current: InspectionListSort) =>
+      current.field === field
+        ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { field, direction: current.direction },
+    );
+    this.preferences.writeSort(this.sortOrder());
+  }
+
+  /**
    * Method reload
    * @description Re-runs the current query, for the error state's retry.
    * @access protected
@@ -440,7 +569,7 @@ export class InspectionsPage {
     this.store.load({
       organizationId: this.organizationId(),
       options: {
-        params: this.buildListParams(),
+        ...this.buildListOptions(),
         page: this.page(),
         itemsPerPage: this.pageSize(),
       },
@@ -448,26 +577,47 @@ export class InspectionsPage {
   }
 
   /**
-   * Method buildListParams
+   * Method buildListOptions
    *
    * @description
-   * Folds the active narrowing into the query params the collection
-   * receives. A filter left unset is omitted, never sent empty — the API
-   * treats an empty `status`/`result` as a value, not as "any".
+   * Folds the active search, narrowing and ordering into the typed options
+   * the collection receives. A filter left unset is omitted, never sent
+   * empty — the API treats an empty `status`/`result` as a value, not as
+   * "any". `search` and `sort` are the typed `RequestOptions` fields
+   * `HydraApiService.buildParams` serializes natively.
    *
    * @access private
    * @since 1.0.0
    *
-   * @returns {Record<string, string>} The params to send alongside pagination.
+   * @returns {InspectionListOptions} The options to send alongside pagination.
    */
-  private buildListParams(): Record<string, string> {
+  private buildListOptions(): InspectionListOptions {
     const filters = this.filters();
-    const params: Record<string, string> = {};
+    const search: string = this.searchTerm();
 
-    if (filters.status) params['status'] = filters.status;
-    if (filters.result) params['result'] = filters.result;
+    return {
+      status: filters.status ?? undefined,
+      result: filters.result ?? undefined,
+      search: search === '' ? undefined : search,
+      sort: this.sortOrder(),
+    };
+  }
 
-    return params;
+  /**
+   * Method navigateQuery
+   * @description Round-trips `?q=` without disturbing the rest of the URL.
+   * @access private
+   * @since 1.4.0
+   * @param {string | null} term - The search term to set, or `null` to remove it.
+   * @returns {void}
+   */
+  private navigateQuery(term: string | null): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: term },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
   //#endregion
 }

@@ -9,17 +9,28 @@ paths:
 Two servers are running — typescript-language-server on `.ts`, `@angular/language-server` on
 `.html`. They are wired for you; the reflex is not.
 
-**Ask the LSP a question about a symbol. Grep a question about text.**
+**Ask the LSP a question about a symbol. Grep a question about text.** A symbol question
+answered by grep alone is a review finding, not a shortcut.
 
-- `findReferences` before `Grep` for "who uses this". Grep matches a string, the LSP matches
-  the symbol: no aliased import missed, no barrel re-export lost, no unrelated same-named
-  member counted.
-- `goToDefinition` before guessing a path across `@core` / `@shared` / `@features`.
-  `workspaceSymbol` before globbing for a component or store file.
-- `documentSymbol` before reading a long file whole — on a template it returns the real
-  control-flow tree (`@if`, `@else if`, `@for`, `as` aliases) rather than raw markup.
-- Grep stays right for Tailwind class strings, i18n ids in `.xlf`, and anything that is not a
-  resolvable symbol.
+## The reflexes that are not optional
+
+| Situation | First tool |
+| --- | --- |
+| Changing a signature, input/output, store member, model field, or token | `findReferences` on the symbol — the change is complete when every reference in the list has been visited, not when grep stops matching. No aliased import missed, no barrel re-export lost |
+| "Who provides / consumes this port" | `findReferences` on the **injection token** (`THEME_PORT`, not the interface — see below) |
+| Creating a file that mirrors an exemplar | `workspaceSymbol` to find the exemplar, `documentSymbol` to read its shape |
+| "Where does X live" across `@core` / `@shared` / `@features` | `goToDefinition` / `workspaceSymbol` — never globbing for the file |
+| Long file or template, only its structure needed | `documentSymbol` — on a template it returns the real control-flow tree (`@if`, `@for`, `as` aliases), not raw markup |
+| Tailwind class strings, i18n ids in `.xlf`, anything not a resolvable symbol | Grep — that is its lane |
+
+## Worktrees: which diagnostics to trust
+
+The servers resolve modules from the checkout they index. A secondary worktree without
+`node_modules/` installed floods "cannot find module" diagnostics that mean nothing — run
+`npm ci` first, or ignore that worktree's diagnostics entirely and let the gates decide.
+Diagnostics arriving for files in a worktree you are **not** currently editing are stale
+snapshots of another branch's mid-edit state; never "fix" one without reading the file
+first. `npm run quality` remains the decision.
 
 Positions are **1-based on both line and character**, as shown in the editor gutter.
 

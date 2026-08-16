@@ -9071,7 +9071,7 @@
         <target> Sites </target>
       </trans-unit>
       <trans-unit id="org.assets.treeLabel" datatype="html">
-        <source>Site hierarchy</source>
+        <source>Facility hierarchy</source>
         <target>Arborescence des sites</target>
       </trans-unit>
       <trans-unit id="org.assets.openRecord" datatype="html">

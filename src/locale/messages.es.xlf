@@ -11701,6 +11701,26 @@
         <source><x id="facilityName" equiv-text="facility.name"/> — no compliance data</source>
         <target><x id="facilityName" equiv-text="facility.name"/> — sin datos de cumplimiento</target>
       </trans-unit>
+      <trans-unit id="planViewer.zoomIn" datatype="html">
+        <source>Zoom in</source>
+        <target>Acercar</target>
+      </trans-unit>
+      <trans-unit id="planViewer.zoomOut" datatype="html">
+        <source>Zoom out</source>
+        <target>Alejar</target>
+      </trans-unit>
+      <trans-unit id="planViewer.resetZoom" datatype="html">
+        <source>Reset zoom</source>
+        <target>Restablecer el zoom</target>
+      </trans-unit>
+      <trans-unit id="planViewer.roleDescription" datatype="html">
+        <source>floor plan viewer</source>
+        <target>visor de plano</target>
+      </trans-unit>
+      <trans-unit id="planViewer.loadError" datatype="html">
+        <source>The floor plan image could not be loaded.</source>
+        <target>No se pudo cargar la imagen del plano.</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

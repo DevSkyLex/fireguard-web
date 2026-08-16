@@ -150,50 +150,71 @@
         >
       }
 
-      <div fieldEditor class="flex gap-2">
-        <div class="flex-1">
-          <label
-            [attr.for]="coordinatesField.editorId + '-lat'"
-            class="sr-only"
-            i18n="@@facility.info.latitude"
-            >Latitude</label
+      <div fieldEditor class="flex flex-col gap-2">
+        <div class="flex justify-end">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="facility-pick-on-map"
+            (click)="mapPickerVisible.set(true)"
           >
-          <input
-            hlmInput
-            type="number"
-            step="any"
-            min="-90"
-            max="90"
-            class="w-full"
-            placeholder="Latitude"
-            i18n-placeholder="@@facility.info.latitude"
-            [id]="coordinatesField.editorId + '-lat'"
-            [value]="latitudeDraft()"
-            (input)="latitudeDraft.set($any($event.target).value)"
-          />
+            <span i18n="@@facility.map.pickOnMap">Pick on map</span>
+          </button>
         </div>
-        <div class="flex-1">
-          <label
-            [attr.for]="coordinatesField.editorId + '-lng'"
-            class="sr-only"
-            i18n="@@facility.info.longitude"
-            >Longitude</label
-          >
-          <input
-            hlmInput
-            type="number"
-            step="any"
-            min="-180"
-            max="180"
-            class="w-full"
-            placeholder="Longitude"
-            i18n-placeholder="@@facility.info.longitude"
-            [id]="coordinatesField.editorId + '-lng'"
-            [value]="longitudeDraft()"
-            (input)="longitudeDraft.set($any($event.target).value)"
-          />
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label
+              [attr.for]="coordinatesField.editorId + '-lat'"
+              class="sr-only"
+              i18n="@@facility.info.latitude"
+              >Latitude</label
+            >
+            <input
+              hlmInput
+              type="number"
+              step="any"
+              min="-90"
+              max="90"
+              class="w-full"
+              placeholder="Latitude"
+              i18n-placeholder="@@facility.info.latitude"
+              [id]="coordinatesField.editorId + '-lat'"
+              [value]="latitudeDraft()"
+              (input)="latitudeDraft.set($any($event.target).value)"
+            />
+          </div>
+          <div class="flex-1">
+            <label
+              [attr.for]="coordinatesField.editorId + '-lng'"
+              class="sr-only"
+              i18n="@@facility.info.longitude"
+              >Longitude</label
+            >
+            <input
+              hlmInput
+              type="number"
+              step="any"
+              min="-180"
+              max="180"
+              class="w-full"
+              placeholder="Longitude"
+              i18n-placeholder="@@facility.info.longitude"
+              [id]="coordinatesField.editorId + '-lng'"
+              [value]="longitudeDraft()"
+              (input)="longitudeDraft.set($any($event.target).value)"
+            />
+          </div>
         </div>
       </div>
     </app-inplace-field>
   </div>
 </div>
+
+<app-facility-map-picker-dialog
+  [visible]="mapPickerVisible()"
+  [center]="pickerCenter()"
+  (visibleChange)="mapPickerVisible.set($event)"
+  (picked)="onMapPicked($event)"
+/>

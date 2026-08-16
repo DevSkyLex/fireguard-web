@@ -1,0 +1,77 @@
+<div id="facility-map" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  <div class="flex items-center justify-between gap-2">
+    <a
+      hlmBtn
+      variant="outline"
+      size="sm"
+      data-testid="facility-map-back"
+      [routerLink]="listRouteBase()"
+    >
+      <ng-icon name="lucideNetwork" aria-hidden="true" />
+      <span i18n="@@facility.map.backToList">Back to list</span>
+    </a>
+
+    <hlm-toggle-group
+      type="single"
+      [nullable]="false"
+      variant="outline"
+      size="sm"
+      value="map"
+      data-testid="facility-map-layout-toggle"
+    >
+      <button
+        hlmToggleGroupItem
+        value="list"
+        data-testid="facility-map-layout-list"
+        [routerLink]="listRouteBase()"
+        i18n-aria-label="@@facility.list.layoutList"
+        aria-label="List view"
+      >
+        <span i18n="@@facility.map.layoutListLabel">List</span>
+      </button>
+      <button
+        hlmToggleGroupItem
+        value="map"
+        data-testid="facility-map-layout-map"
+        i18n-aria-label="@@facility.map.layoutMap"
+        aria-label="Map view"
+      >
+        <ng-icon name="lucideMap" aria-hidden="true" />
+        <span i18n="@@facility.map.layoutMapLabel">Map</span>
+      </button>
+    </hlm-toggle-group>
+  </div>
+
+  @if (store.mappedFacilities().length === 0 && !store.isLoadingMapped()) {
+    <app-empty-state
+      class="flex-1"
+      icon="lucideMap"
+      title="No facilities on the map yet"
+      i18n-title="@@facility.map.emptyTitle"
+      description="The map fills in as facilities get placed. Add coordinates from a facility's Information tab or when creating one."
+      i18n-description="@@facility.map.emptyDesc"
+    />
+  } @else {
+    @if (store.unplacedCount() > 0) {
+      <p
+        class="rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground"
+        data-testid="facility-map-unplaced-banner"
+      >
+        <span i18n="@@facility.map.unplacedBanner"
+          >{{ store.unplacedCount() }} facilities have no coordinates yet.</span
+        >
+        <a class="font-medium underline" [routerLink]="listRouteBase()">
+          <span i18n="@@facility.map.unplacedLink">View the list</span>
+        </a>
+      </p>
+    }
+
+    <div class="min-h-0 flex-1 overflow-hidden rounded-md">
+      <app-map
+        class="block h-full"
+        [markers]="markers()"
+        (markerSelected)="onMarkerSelected($event)"
+      />
+    </div>
+  }
+</div>

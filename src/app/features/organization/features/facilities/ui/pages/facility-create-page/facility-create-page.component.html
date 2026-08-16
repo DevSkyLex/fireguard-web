@@ -9,6 +9,7 @@
         [pending]="store.isCreating()"
         [serverError]="store.createError()"
         [parentOptions]="parentOptions()"
+        [mapCenter]="mapCenter()"
         (submitted)="onSubmitted($event)"
         (cancelled)="onCancelled()"
       />

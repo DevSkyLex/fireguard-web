@@ -1,4 +1,11 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  provideZonelessChangeDetection,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type {
@@ -7,7 +14,20 @@ import type {
   FacilityOutput,
   UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
+import type { MapClickEvent, MapCoordinates } from '@shared/map';
+import { Map } from '@shared/map';
+import { FacilityMapPickerDialog } from '../../../dialogs/facility-map-picker-dialog';
 import { FacilityInformationPanel } from '../facility-information-panel.component';
+
+/** Stands in for `@shared/map`'s `Map`, so no spec ever mounts MapLibre. */
+@Component({ selector: 'app-map', template: '' })
+class MapStub {
+  public readonly interactive: InputSignal<boolean> = input<boolean>(false);
+  public readonly center: InputSignal<MapCoordinates | undefined> = input<
+    MapCoordinates | undefined
+  >(undefined);
+  public readonly mapClicked: OutputEmitterRef<MapClickEvent> = output<MapClickEvent>();
+}
 
 const IDLE_EDIT_STATE: FacilityEditState = {
   open: null,
@@ -56,6 +76,11 @@ describe('FacilityInformationPanel', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
+
+    TestBed.overrideComponent(FacilityMapPickerDialog, {
+      remove: { imports: [Map] },
+      add: { imports: [MapStub] },
     });
 
     fixture = TestBed.createComponent(FacilityInformationPanel);
@@ -117,11 +142,11 @@ describe('FacilityInformationPanel', () => {
     fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'code' });
     await fixture.whenStable();
 
-    const input: HTMLInputElement | null | undefined =
+    const control: HTMLInputElement | null | undefined =
       byTestId('facility-field-code')?.querySelector<HTMLInputElement>('input');
-    if (input) {
-      input.value = '   ';
-      input.dispatchEvent(new Event('input'));
+    if (control) {
+      control.value = '   ';
+      control.dispatchEvent(new Event('input'));
     }
     await fixture.whenStable();
 
@@ -135,11 +160,11 @@ describe('FacilityInformationPanel', () => {
     fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'name' });
     await fixture.whenStable();
 
-    const input: HTMLInputElement | null | undefined =
+    const control: HTMLInputElement | null | undefined =
       byTestId('facility-field-name')?.querySelector<HTMLInputElement>('input');
-    if (input) {
-      input.value = '   ';
-      input.dispatchEvent(new Event('input'));
+    if (control) {
+      control.value = '   ';
+      control.dispatchEvent(new Event('input'));
     }
     await fixture.whenStable();
 
@@ -225,6 +250,41 @@ describe('FacilityInformationPanel', () => {
       saveButton()?.click();
 
       expect(patches).toEqual([{ latitude: null, longitude: null }]);
+    });
+  });
+
+  describe('the "Pick on map" picker', () => {
+    const openCoordinatesOn = async (facility: FacilityOutput): Promise<void> => {
+      fixture.componentRef.setInput('facility', facility);
+      await fixture.whenStable();
+      byTestId('facility-field-coordinates')?.querySelector<HTMLButtonElement>('button')?.click();
+      fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'coordinates' });
+      await fixture.whenStable();
+    };
+
+    it('should open the picker dialog from the coordinates editor', async () => {
+      await openCoordinatesOn({ ...FACILITY, latitude: null, longitude: null });
+
+      byTestId('facility-pick-on-map')?.click();
+      await fixture.whenStable();
+
+      expect(document.querySelector('[data-testid="facility-map-picker-dialog"]')).not.toBeNull();
+    });
+
+    it('should fill both coordinate drafts from a pick, leaving Save to commit them', async () => {
+      await openCoordinatesOn({ ...FACILITY, latitude: null, longitude: null });
+
+      (
+        fixture.componentInstance as unknown as {
+          onMapPicked(coordinates: MapCoordinates): void;
+        }
+      ).onMapPicked({ latitude: 10, longitude: 20 });
+      await fixture.whenStable();
+
+      const [latitude, longitude] = coordinateInputs();
+      expect(latitude.value).toBe('10');
+      expect(longitude.value).toBe('20');
+      expect(patches).toEqual([]);
     });
   });
 });

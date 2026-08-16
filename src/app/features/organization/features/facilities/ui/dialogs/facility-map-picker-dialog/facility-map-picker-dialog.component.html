@@ -1,0 +1,29 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-2xl"
+    data-testid="facility-map-picker-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@facility.map.picker.header">Pick a location on the map</h3>
+      <p hlmDialogDescription i18n="@@facility.map.picker.description">
+        Click anywhere on the map to set the coordinates.
+      </p>
+    </hlm-dialog-header>
+
+    <div class="h-80 overflow-hidden rounded-md" data-testid="facility-map-picker-map">
+      <app-map
+        class="block h-full"
+        interactive
+        [center]="center()"
+        (mapClicked)="onMapClicked($event)"
+      />
+    </div>
+
+    <hlm-dialog-footer>
+      <button hlmDialogClose hlmBtn type="button" variant="outline">
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

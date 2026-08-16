@@ -338,6 +338,35 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/organizations/{organizationId}/facilities` for the map
+   * surface's two shapes of the same collection: `hasCoordinates=true`
+   * (`FacilityMapStore.loadMapped`, read as the full member list) and
+   * `hasCoordinates=false` (`FacilityMapStore.loadUnplacedCount`, read only
+   * for `totalItems` off a single-item page). A request carrying neither
+   * query param falls through to a 404 via the safety net, matching this
+   * page's actual traffic.
+   */
+  public async mockFacilityMap(
+    organizationId: string,
+    located: ReadonlyArray<FacilityOutputFixture>,
+    unplacedCount = 0,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/facilities\\?.*hasCoordinates=true`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(located));
+      },
+    );
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/facilities\\?.*hasCoordinates=false`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection([], { totalItems: unplacedCount }));
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/facilities/{facility.id}` —
    * the resource seeded by `facilityResolver` for the facility detail route.
    * Pass `holdUntil` to keep the response pending until the promise resolves,

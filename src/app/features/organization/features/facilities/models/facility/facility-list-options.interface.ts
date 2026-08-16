@@ -64,6 +64,19 @@ export interface FacilityListFilter {
   readonly status?: FacilityStatus;
 
   /**
+   * Property hasCoordinates
+   * @readonly
+   *
+   * @description
+   * Tri-state filter on whether a facility has been located: `true` returns
+   * only facilities with both `latitude`/`longitude` set, `false` only those
+   * missing either. Omit to leave the collection unfiltered on location.
+   *
+   * @type {boolean}
+   */
+  readonly hasCoordinates?: boolean;
+
+  /**
    * Property search
    * @readonly
    *

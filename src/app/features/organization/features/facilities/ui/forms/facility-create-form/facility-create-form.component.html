@@ -116,6 +116,19 @@
       />
     </hlm-field>
 
+    <div class="flex justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="facility-create-pick-on-map"
+        (click)="mapPickerVisible.set(true)"
+      >
+        <span i18n="@@facility.map.pickOnMap">Pick on map</span>
+      </button>
+    </div>
+
     <div class="grid gap-4 sm:grid-cols-2">
       <hlm-field>
         <label hlmFieldLabel for="facility-create-latitude" i18n="@@facility.info.latitude"
@@ -183,3 +196,10 @@
     </hlm-field>
   </hlm-field-group>
 </form>
+
+<app-facility-map-picker-dialog
+  [visible]="mapPickerVisible()"
+  [center]="pickerCenter()"
+  (visibleChange)="mapPickerVisible.set($event)"
+  (picked)="onMapPicked($event)"
+/>

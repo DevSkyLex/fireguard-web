@@ -77,7 +77,10 @@ const DRAG_EDGE_THRESHOLD_PX = 32;
  * consumer must keep a keyboard/AT path (a menu action, a dialog) that calls
  * the same move operation. This primitive does not enforce that pairing —
  * it cannot see the consumer's other affordances — so it is a contract the
- * consumer must uphold.
+ * consumer must uphold. The drop-cue icon carries a literal
+ * `aria-hidden="false"` in the template because `@ng-icons/core` force-sets
+ * `aria-hidden="true"` at construction unless a static attribute already
+ * exists — without it the cue's `aria-label` is never exposed.
  *
  * @version 1.1.0
  *

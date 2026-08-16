@@ -77,6 +77,7 @@
             class="shrink-0"
             [class.text-primary]="isDragOverValid()"
             [class.text-destructive]="!isDragOverValid()"
+            aria-hidden="false"
             [attr.aria-label]="isDragOverValid() ? dropHereLabel : dropNotAllowedLabel"
           />
         }

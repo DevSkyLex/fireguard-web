@@ -274,6 +274,19 @@ describe('Tree', () => {
       expect(item('b')?.getAttribute('data-drag-over')).toBe('valid');
     });
 
+    it('should expose the drop cue icon to assistive tech while a row is dragged over', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragover'));
+      await fixture.whenStable();
+
+      const cue = item('b')?.querySelector('ng-icon[aria-label]');
+      expect(cue).not.toBeNull();
+      expect(cue?.getAttribute('aria-hidden')).toBe('false');
+      expect(cue?.getAttribute('aria-label')).not.toBe('');
+    });
+
     it('should auto-expand a collapsed branch hovered long enough, without re-emitting on an already-loaded one', async () => {
       vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
       try {

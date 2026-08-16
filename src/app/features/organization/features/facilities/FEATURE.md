@@ -435,8 +435,6 @@ Primary services:
   facility tree the map's compliance layer reads (see above).
 - `FacilityAttachmentService`
 
-> > > > > > > 0aecceb8 (feat(facilities): add the floor plans tab with upload and primary selection)
-
 ## Cross-Feature Dependencies
 
 - **The record is the edit surface.** Every writable property of a site opens

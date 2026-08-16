@@ -11598,6 +11598,14 @@
         <source>Moving, please wait…</source>
         <target>Déplacement en cours, veuillez patienter…</target>
       </trans-unit>
+      <trans-unit id="map.region.label" datatype="html">
+        <source>Map</source>
+        <target>Carte</target>
+      </trans-unit>
+      <trans-unit id="map.cluster.label" datatype="html">
+        <source><x id="count" equiv-text="count"/> markers at this location</source>
+        <target><x id="count" equiv-text="count"/> marqueurs à cet endroit</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

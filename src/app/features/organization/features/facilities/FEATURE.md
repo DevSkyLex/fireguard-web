@@ -40,9 +40,17 @@ Facility coordinates come from the backend `latitude`/`longitude` fields
 (optional on `FacilityOutput`), enforced both-or-neither. They may be set at
 creation (`ui/forms/facility-create-form`) or afterward, in place, on the
 record's Information tab (`ui/components/facility-information-panel`) — there
-is no separate coordinates form. If a map surface is reintroduced, a generic,
-domain-agnostic map primitive would live as its own `shared/<concept>/`
-folder per `ARCHITECTURE.md` §8.5.
+is no separate coordinates form.
+
+A generic, domain-agnostic map primitive now exists at `shared/map/`
+(`ARCHITECTURE.md` §8.5): MapLibre GL JS over OpenFreeMap's public vector
+tiles, with self-hosted, achromatic (grayscale) light/dark style JSONs under
+`public/map/` built from OpenFreeMap's Positron style
+(`tools/map-style/build-map-styles.mjs`). No geocoding. `maplibre-gl` is
+imported dynamically and browser-only by that primitive's single component —
+the documented `ARCHITECTURE.md` §1.1 dependency addition. This subfeature
+does not yet consume it; a facilities map page is the planned next
+consumer.
 
 ## UI (this pass)
 

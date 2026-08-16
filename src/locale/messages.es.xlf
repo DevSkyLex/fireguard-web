@@ -11605,6 +11605,14 @@
         <source>Moving, please wait…</source>
         <target>Moviendo, por favor espere…</target>
       </trans-unit>
+      <trans-unit id="map.region.label" datatype="html">
+        <source>Map</source>
+        <target>Mapa</target>
+      </trans-unit>
+      <trans-unit id="map.cluster.label" datatype="html">
+        <source><x id="count" equiv-text="count"/> markers at this location</source>
+        <target><x id="count" equiv-text="count"/> marcadores en esta ubicación</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

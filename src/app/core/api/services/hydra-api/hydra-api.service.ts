@@ -13,7 +13,14 @@ import {
 } from '../../models';
 import { isApiError } from '../../utils';
 
-export type { ApiRequestOptions, PaginationOptions, RequestOptions } from '../../models';
+export type {
+  ApiRequestOptions,
+  PaginationOptions,
+  RequestOptions,
+  SearchOptions,
+  SortDirection,
+  SortingOptions,
+} from '../../models';
 
 /**
  * Service HydraApiService
@@ -114,12 +121,16 @@ export abstract class HydraApiService {
    * Method buildParams
    *
    * @description
-   * Builds HttpParams from options object including pagination parameters.
+   * Builds HttpParams from options object, including pagination, the
+   * single-field `order[<field>]` sort and the `search` term, alongside any
+   * hand-built `params` passthrough. A whitespace-only `search` is treated as
+   * unset. Callers still forwarding sort or search through `options.params`
+   * keep working unchanged — this method never deduplicates against it.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {RequestOptions} [options] - Request options including pagination.
+   * @param {RequestOptions} [options] - Request options including pagination, sort and search.
    *
    * @returns {HttpParams} HttpParams instance with all parameters set.
    */
@@ -131,6 +142,12 @@ export abstract class HydraApiService {
     }
     if (options?.itemsPerPage) {
       params = params.set('itemsPerPage', options.itemsPerPage.toString());
+    }
+    if (options?.sort) {
+      params = params.set(`order[${options.sort.field}]`, options.sort.direction);
+    }
+    if (options?.search?.trim()) {
+      params = params.set('search', options.search);
     }
     if (options?.params) {
       for (const [key, value] of Object.entries(options.params)) {

@@ -2,6 +2,9 @@
 export type { HydraContext } from './hydra-context.type';
 export type { ApiRequestOptions } from './api-request-options.interface';
 export type { PaginationOptions } from './pagination-options.interface';
+export type { SortDirection } from './sort-direction.type';
+export type { SortingOptions } from './sorting-options.interface';
+export type { SearchOptions } from './search-options.interface';
 export type { RequestOptions } from './request-options.type';
 export type { AvatarSize, AvatarUrls } from './avatar-urls.interface';
 

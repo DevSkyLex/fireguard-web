@@ -2547,6 +2547,10 @@
         <source>Pick a facility from the hierarchy to see its compliance summary.</source>
         <target>Choisissez un établissement dans la hiérarchie pour voir sa synthèse de conformité.</target>
       </trans-unit>
+      <trans-unit id="org.assets.compliance.summaryTitle" datatype="html">
+        <source>Compliance summary</source>
+        <target>Synthèse de conformité</target>
+      </trans-unit>
       <trans-unit id="org.assets.compliance.summaryError" datatype="html">
         <source>Couldn't load the compliance summary.</source>
         <target>Impossible de charger la synthèse de conformité.</target>

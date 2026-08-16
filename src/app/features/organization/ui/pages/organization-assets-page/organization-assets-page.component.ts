@@ -379,13 +379,18 @@ export class OrganizationAssetsPage {
    *
    * @description
    * Exports the selected facility's safety-register PDF and saves it to the
-   * visitor's device. Only reachable once a facility is selected.
+   * visitor's device. Only reachable once a facility is selected. A no-op
+   * while an export is already running — the button stays focusable
+   * (`aria-disabled`, not `disabled`) so this guard is what prevents a
+   * double request.
    *
    * @access protected
    * @since 1.0.0
    * @returns {void}
    */
   protected onExportSafetyRegister(): void {
+    if (this.compliance.isExporting()) return;
+
     const facilityId: string | null = this.selectedComplianceFacilityId();
     if (facilityId === null) return;
 

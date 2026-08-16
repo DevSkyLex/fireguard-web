@@ -4,7 +4,10 @@ import { provideRouter } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityTreeStore } from '@features/organization/features/facilities/state';
-import type { ComplianceFacilityTreeNodeOutput } from '@features/organization/models';
+import type {
+  ComplianceFacilityTreeNodeOutput,
+  ComplianceSummaryOutput,
+} from '@features/organization/models';
 import { ComplianceExplorerStore } from '@features/organization/state/compliance-explorer';
 import { OrganizationAssetsPaneStore } from '@features/organization/state/organization-assets-pane';
 import { OrganizationAssetsPage } from '../organization-assets-page.component';
@@ -40,6 +43,30 @@ const complianceNode = (
   ...overrides,
 });
 
+const complianceSummary = (): ComplianceSummaryOutput =>
+  ({
+    '@id': '/api/organizations/org-1/compliance',
+    '@type': 'ComplianceSummary',
+    organizationId: 'org-1',
+    generatedAt: '2026-08-16T00:00:00+00:00',
+    organizationStatus: 'compliant',
+    totals: {
+      totalEquipmentCount: 3,
+      activeEquipmentCount: 3,
+      upToDateEquipmentCount: 2,
+      dueSoonEquipmentCount: 1,
+      overdueEquipmentCount: 0,
+      unscheduledEquipmentCount: 0,
+      trackedEquipmentCount: 3,
+      complianceRate: 95,
+      openLowNonConformityCount: 0,
+      openMediumNonConformityCount: 0,
+      openHighNonConformityCount: 0,
+      openCriticalNonConformityCount: 0,
+    },
+    facilities: [],
+  }) as ComplianceSummaryOutput;
+
 const createPage = async (
   inputs: Readonly<Record<string, unknown>> = { organizationId: 'org-1' },
 ): Promise<ComponentFixture<OrganizationAssetsPage>> => {
@@ -64,6 +91,8 @@ describe('OrganizationAssetsPage', () => {
   let loadSummary: ReturnType<typeof vi.fn>;
   let exportSafetyRegister: ReturnType<typeof vi.fn>;
   let rootsSignal: WritableSignal<readonly FacilityOutput[]>;
+  let summarySignal: WritableSignal<ComplianceSummaryOutput | null>;
+  let isExportingSignal: WritableSignal<boolean>;
 
   beforeEach(() => {
     loadRoots = vi.fn();
@@ -75,6 +104,8 @@ describe('OrganizationAssetsPage', () => {
     loadSummary = vi.fn();
     exportSafetyRegister = vi.fn();
     rootsSignal = signal<readonly FacilityOutput[]>([facility()]);
+    summarySignal = signal<ComplianceSummaryOutput | null>(null);
+    isExportingSignal = signal<boolean>(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -113,10 +144,10 @@ describe('OrganizationAssetsPage', () => {
             childrenByParent: signal({}),
             isLoadingTree: signal(false),
             hasTreeError: signal(false),
-            summary: signal(null),
+            summary: summarySignal,
             isLoadingSummary: signal(false),
             hasSummaryError: signal(false),
-            isExporting: signal(false),
+            isExporting: isExportingSignal,
             hasExportError: signal(false),
             loadTree,
             loadSummary,
@@ -318,5 +349,90 @@ describe('OrganizationAssetsPage', () => {
     await fixture.whenStable();
 
     expect(exportSafetyRegister).not.toHaveBeenCalled();
+  });
+
+  it('ignores an export request while an export is already running', async () => {
+    fixture = await createPage();
+    isExportingSignal.set(true);
+
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    fixture.componentInstance['onExportSafetyRegister']();
+    await fixture.whenStable();
+
+    expect(exportSafetyRegister).not.toHaveBeenCalled();
+  });
+
+  it('switches the export button live-region label while exporting', async () => {
+    fixture = await createPage();
+    summarySignal.set(complianceSummary());
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    const liveRegion = (): HTMLElement | null =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="assets-compliance-export"] [role="status"]',
+      );
+    expect(liveRegion()?.getAttribute('aria-live')).toBe('polite');
+    expect(liveRegion()?.textContent).toContain('Export safety register');
+
+    isExportingSignal.set(true);
+    await fixture.whenStable();
+
+    expect(liveRegion()?.textContent).toContain('Exporting…');
+  });
+
+  it('keeps the export button in the accessibility tree while exporting', async () => {
+    fixture = await createPage();
+    summarySignal.set(complianceSummary());
+    isExportingSignal.set(true);
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    const button: HTMLButtonElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="assets-compliance-export"]',
+    );
+    expect(button?.disabled).toBe(false);
+    expect(button?.getAttribute('aria-disabled')).toBe('true');
+    expect(button?.getAttribute('aria-busy')).toBe('true');
+  });
+
+  it('labels the compliance summary pane with a visible heading', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    const pane: HTMLElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+      'section[data-testid="assets-compliance-summary-pane"]',
+    );
+    const heading: HTMLElement | null =
+      pane?.querySelector('h2#assets-compliance-summary-title') ?? null;
+    expect(pane?.getAttribute('aria-labelledby')).toBe('assets-compliance-summary-title');
+    expect(heading?.textContent).toContain('Compliance summary');
   });
 });

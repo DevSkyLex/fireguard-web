@@ -322,7 +322,16 @@
 </ng-template>
 
 <ng-template #complianceSummaryPane>
-  <div class="flex min-h-0 flex-col gap-4 overflow-y-auto lg:max-h-[calc(100vh-14rem)]">
+  <section
+    aria-labelledby="assets-compliance-summary-title"
+    class="flex min-h-0 flex-col gap-4 overflow-y-auto lg:max-h-[calc(100vh-14rem)]"
+    data-testid="assets-compliance-summary-pane"
+  >
+    <h2 id="assets-compliance-summary-title" class="text-sm font-medium text-foreground">
+      <ng-icon name="lucideShieldCheck" class="me-1 align-text-bottom" aria-hidden="true" />
+      <span i18n="@@org.assets.compliance.summaryTitle">Compliance summary</span>
+    </h2>
+
     @if (compliance.hasSummaryError()) {
       <p class="text-sm text-destructive" data-testid="assets-compliance-summary-error">
         <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -372,22 +381,29 @@
           hlmBtn
           variant="outline"
           size="sm"
+          class="max-sm:min-h-11 max-sm:px-3"
           data-testid="assets-compliance-export"
-          [disabled]="compliance.isExporting()"
+          [attr.aria-disabled]="compliance.isExporting()"
           [attr.aria-busy]="compliance.isExporting()"
           (click)="onExportSafetyRegister()"
         >
           <ng-icon name="lucideDownload" aria-hidden="true" />
-          @if (compliance.isExporting()) {
-            <span i18n="@@org.assets.compliance.exporting">Exporting…</span>
-          } @else {
-            <span i18n="@@org.assets.compliance.export">Export safety register</span>
-          }
+          <span role="status" aria-live="polite">
+            @if (compliance.isExporting()) {
+              <span i18n="@@org.assets.compliance.exporting">Exporting…</span>
+            } @else {
+              <span i18n="@@org.assets.compliance.export">Export safety register</span>
+            }
+          </span>
         </button>
       </div>
 
       @if (compliance.hasExportError()) {
-        <p class="text-sm text-destructive" data-testid="assets-compliance-export-error">
+        <p
+          role="alert"
+          class="text-sm text-destructive"
+          data-testid="assets-compliance-export-error"
+        >
           <ng-icon name="lucideCircleAlert" aria-hidden="true" />
           <span i18n="@@org.assets.compliance.exportError">
             Couldn't export the safety register.
@@ -399,33 +415,66 @@
         <table hlmTable data-testid="assets-compliance-totals-table">
           <tbody hlmTableBody>
             <tr hlmTableRow>
-              <td hlmTableCell i18n="@@org.assets.compliance.totalEquipment">Total equipment</td>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.totalEquipment"
+              >
+                Total equipment
+              </th>
               <td hlmTableCell class="text-end tabular-nums">
                 {{ summary.totals.totalEquipmentCount }}
               </td>
             </tr>
             <tr hlmTableRow>
-              <td hlmTableCell i18n="@@org.assets.compliance.upToDate">Up to date</td>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.upToDate"
+              >
+                Up to date
+              </th>
               <td hlmTableCell class="text-end tabular-nums">
                 {{ summary.totals.upToDateEquipmentCount }}
               </td>
             </tr>
             <tr hlmTableRow>
-              <td hlmTableCell i18n="@@org.assets.compliance.dueSoon">Due soon</td>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.dueSoon"
+              >
+                Due soon
+              </th>
               <td hlmTableCell class="text-end tabular-nums">
                 {{ summary.totals.dueSoonEquipmentCount }}
               </td>
             </tr>
             <tr hlmTableRow>
-              <td hlmTableCell i18n="@@org.assets.compliance.overdue">Overdue</td>
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.overdue"
+              >
+                Overdue
+              </th>
               <td hlmTableCell class="text-end tabular-nums">
                 {{ summary.totals.overdueEquipmentCount }}
               </td>
             </tr>
             <tr hlmTableRow>
-              <td hlmTableCell i18n="@@org.assets.compliance.openNonConformities">
+              <th
+                hlmTableHead
+                scope="row"
+                class="text-start font-normal"
+                i18n="@@org.assets.compliance.openNonConformities"
+              >
                 Open non-conformities
-              </td>
+              </th>
               <td hlmTableCell class="text-end tabular-nums">
                 {{
                   summary.totals.openLowNonConformityCount +
@@ -439,5 +488,5 @@
         </table>
       </div>
     }
-  </div>
+  </section>
 </ng-template>

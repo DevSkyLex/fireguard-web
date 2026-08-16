@@ -11,7 +11,7 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
  * FeedbackEventPayload, picked up by the app-wide feedback listener and
  * rendered as a toast.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -34,5 +34,7 @@ export const facilityPlansStoreEvents = eventGroup({
     deleteSucceeded: type<FeedbackEventPayload>(),
     /** Dispatched when fetching the selected plan's image bytes fails. */
     imageLoadFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when fetching the selected plan's overlay fails. */
+    overlayLoadFailed: type<StoreFailureEventPayload>(),
   },
 });

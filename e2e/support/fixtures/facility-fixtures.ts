@@ -177,3 +177,86 @@ export function facilityAttachmentOutput(
     ...overrides,
   };
 }
+
+/** A second facility, used as the plan overlay's zone target. */
+export const E2E_FACILITY_PLAN_ZONE_ID = 'e2e-facility-plan-zone-1';
+
+/** The equipment the plan overlay pins to. */
+export const E2E_FACILITY_PLAN_EQUIPMENT_ID = 'e2e-facility-plan-equipment-1';
+
+export interface FacilityPlanOverlayOutputFixture {
+  readonly attachmentId: string;
+  readonly imageWidth: number;
+  readonly imageHeight: number;
+  readonly zones: ReadonlyArray<{
+    readonly facilityId: string;
+    readonly name: string;
+    readonly type: string;
+    readonly status: string;
+    readonly points: ReadonlyArray<readonly [number, number]>;
+  }>;
+  readonly equipment: ReadonlyArray<{
+    readonly equipmentId: string;
+    readonly name: string;
+    readonly status: string;
+    readonly x: number;
+    readonly y: number;
+  }>;
+}
+
+/**
+ * Two zones and two equipment pins on {@link facilityAttachmentOutput}'s tiny
+ * 1×1 PNG — the `plan-overlay` e2e scenarios' overlay fixture.
+ */
+export function facilityPlanOverlayOutput(
+  overrides: Partial<FacilityPlanOverlayOutputFixture> = {},
+): FacilityPlanOverlayOutputFixture {
+  return {
+    attachmentId: E2E_FACILITY_PLAN_ID,
+    imageWidth: 1200,
+    imageHeight: 800,
+    zones: [
+      {
+        facilityId: E2E_FACILITY_CHILD_ID,
+        name: 'Server Room',
+        type: 'zone',
+        status: 'active',
+        points: [
+          [0.1, 0.1],
+          [0.4, 0.1],
+          [0.4, 0.4],
+          [0.1, 0.4],
+        ],
+      },
+      {
+        facilityId: E2E_FACILITY_PLAN_ZONE_ID,
+        name: 'Storage',
+        type: 'zone',
+        status: 'active',
+        points: [
+          [0.5, 0.5],
+          [0.8, 0.5],
+          [0.8, 0.8],
+          [0.5, 0.8],
+        ],
+      },
+    ],
+    equipment: [
+      {
+        equipmentId: E2E_FACILITY_PLAN_EQUIPMENT_ID,
+        name: 'Extinguisher A',
+        status: 'operational',
+        x: 0.2,
+        y: 0.2,
+      },
+      {
+        equipmentId: 'e2e-facility-plan-equipment-2',
+        name: 'Extinguisher B',
+        status: 'under_maintenance',
+        x: 0.6,
+        y: 0.6,
+      },
+    ],
+    ...overrides,
+  };
+}

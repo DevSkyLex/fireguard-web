@@ -11802,6 +11802,34 @@
         <source>Loading floor plan image</source>
         <target>Chargement de l'image du plan</target>
       </trans-unit>
+      <trans-unit id="facility.plans.overlay.zonesGroupLabel" datatype="html">
+        <source>Facility zones</source>
+        <target>Zones du site</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.overlay.zoneAria" datatype="html">
+        <source>Zone <x id="name" equiv-text="name"/></source>
+        <target>Zone <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="facility.plans.overlay.equipmentAria" datatype="html">
+        <source><x id="name" equiv-text="item.name"/> — <x id="status" equiv-text="descriptor.label"/></source>
+        <target><x id="name" equiv-text="item.name"/> — <x id="status" equiv-text="descriptor.label"/></target>
+      </trans-unit>
+      <trans-unit id="facility.plans.overlay.toggleZonesAria" datatype="html">
+        <source>Show zones</source>
+        <target>Afficher les zones</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.overlay.toggleZonesLabel" datatype="html">
+        <source>Zones</source>
+        <target>Zones</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.overlay.toggleEquipmentAria" datatype="html">
+        <source>Show equipment</source>
+        <target>Afficher les équipements</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.overlay.toggleEquipmentLabel" datatype="html">
+        <source>Equipment</source>
+        <target>Équipement</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

@@ -260,30 +260,71 @@
               (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
               (deleteRequested)="onPlanDeleteRequested($event)"
             />
-            <div
-              class="h-[32rem] min-h-0 rounded-md border border-border"
-              data-testid="facility-plan-viewer"
-            >
-              @if (plans.selectedPlan(); as selected) {
-                @if (plans.planImageUrl(); as imageUrl) {
-                  <app-plan-viewer
-                    [src]="imageUrl"
-                    alt="Floor plan: {{ selected.fileName }}"
-                    i18n-alt="@@facility.plans.viewerAlt"
-                    [naturalWidth]="selected.imageWidth"
-                    [naturalHeight]="selected.imageHeight"
-                  />
-                } @else {
-                  <div
-                    class="flex h-full items-center justify-center"
-                    role="status"
-                    aria-label="Loading floor plan image"
-                    i18n-aria-label="@@facility.plans.imageLoadingAria"
-                  >
-                    <hlm-spinner size="lg" aria-hidden="true" />
-                  </div>
-                }
+            <div class="flex min-h-0 flex-col gap-2">
+              @if (plans.overlayHasContent()) {
+                <div
+                  class="flex flex-wrap items-center gap-4"
+                  data-testid="facility-plan-overlay-toggles"
+                >
+                  <label class="flex items-center gap-2 text-sm">
+                    <hlm-switch
+                      [checked]="plans.showZones()"
+                      (checkedChange)="onShowZonesChanged($event)"
+                      i18n-aria-label="@@facility.plans.overlay.toggleZonesAria"
+                      aria-label="Show zones"
+                      data-testid="facility-plan-overlay-toggle-zones"
+                    />
+                    <span i18n="@@facility.plans.overlay.toggleZonesLabel">Zones</span>
+                  </label>
+                  <label class="flex items-center gap-2 text-sm">
+                    <hlm-switch
+                      [checked]="plans.showEquipment()"
+                      (checkedChange)="onShowEquipmentChanged($event)"
+                      i18n-aria-label="@@facility.plans.overlay.toggleEquipmentAria"
+                      aria-label="Show equipment"
+                      data-testid="facility-plan-overlay-toggle-equipment"
+                    />
+                    <span i18n="@@facility.plans.overlay.toggleEquipmentLabel">Equipment</span>
+                  </label>
+                </div>
               }
+
+              <div
+                class="h-[32rem] min-h-0 rounded-md border border-border"
+                data-testid="facility-plan-viewer"
+              >
+                @if (plans.selectedPlan(); as selected) {
+                  @if (plans.planImageUrl(); as imageUrl) {
+                    <app-plan-viewer
+                      [src]="imageUrl"
+                      alt="Floor plan: {{ selected.fileName }}"
+                      i18n-alt="@@facility.plans.viewerAlt"
+                      [naturalWidth]="selected.imageWidth"
+                      [naturalHeight]="selected.imageHeight"
+                      [overlayTemplate]="planOverlayTemplate"
+                    />
+                    <ng-template #planOverlayTemplate let-scale="scale">
+                      <app-facility-plan-overlay
+                        [overlay]="plans.overlay()"
+                        [scale]="scale"
+                        [showZones]="plans.showZones()"
+                        [showEquipment]="plans.showEquipment()"
+                        (zoneActivated)="onPlanZoneActivated($event)"
+                        (equipmentActivated)="onPlanEquipmentActivated($event)"
+                      />
+                    </ng-template>
+                  } @else {
+                    <div
+                      class="flex h-full items-center justify-center"
+                      role="status"
+                      aria-label="Loading floor plan image"
+                      i18n-aria-label="@@facility.plans.imageLoadingAria"
+                    >
+                      <hlm-spinner size="lg" aria-hidden="true" />
+                    </div>
+                  }
+                }
+              </div>
             </div>
           </div>
         }

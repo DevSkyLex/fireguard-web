@@ -32,8 +32,14 @@ import {
   toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
-import { FacilityAttachmentService } from '@features/organization/features/facilities/data-access';
-import type { FacilityAttachmentOutput } from '@features/organization/features/facilities/models';
+import {
+  FacilityAttachmentService,
+  FacilityService,
+} from '@features/organization/features/facilities/data-access';
+import type {
+  FacilityAttachmentOutput,
+  FacilityPlanOverlayOutput,
+} from '@features/organization/features/facilities/models';
 import { facilityPlansStoreEvents } from './events';
 import type { FacilityPlansState } from './models';
 
@@ -58,6 +64,11 @@ const INITIAL_STATE: FacilityPlansState = {
   deletingId: null,
   selectedPlanId: null,
   planImageUrl: null,
+  organizationId: null,
+  overlayCallState: idleCallState(),
+  overlay: null,
+  showZones: true,
+  showEquipment: true,
 };
 //#endregion
 
@@ -83,7 +94,12 @@ const INITIAL_STATE: FacilityPlansState = {
  * during SSR since load (the only way planEntities stops being empty) is
  * itself only ever called from the page once isBrowser is true.
  *
- * @version 1.1.0
+ * The same effect also fetches the selected plan's read-only overlay
+ * (zone polygons, equipment pins) via `FacilityService.getPlanOverlay`,
+ * exposed to `FacilityPlanOverlay` as `overlay`; `showZones`/`showEquipment`
+ * are page-driven visibility toggles for its two layers, both default true.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -133,12 +149,31 @@ export const FacilityPlansStore = signalStore(
 
       return store.primaryPlan() ?? store.orderedPlans()[0] ?? null;
     }),
+
+    /**
+     * Property overlayHasContent
+     * @readonly
+     *
+     * @description
+     * Whether the loaded overlay carries at least one zone or one equipment
+     * pin — gates the page's toggle chips and the overlay's own chrome so an
+     * empty overlay renders no noise.
+     *
+     * @since 1.2.0
+     * @type {Signal<boolean>}
+     */
+    overlayHasContent: computed<boolean>(() => {
+      const overlay: FacilityPlanOverlayOutput | null = store.overlay();
+
+      return overlay !== null && (overlay.zones.length > 0 || overlay.equipment.length > 0);
+    }),
   })),
 
   withMethods(
     (
       store,
       service: FacilityAttachmentService = inject(FacilityAttachmentService),
+      facilityService: FacilityService = inject(FacilityService),
       dispatcher: Dispatcher = inject(Dispatcher),
       platformId: object = inject(PLATFORM_ID),
     ) => ({
@@ -148,16 +183,18 @@ export const FacilityPlansStore = signalStore(
        *
        * @description
        * Fetches the facility's floor plans (kind=floor_plan). Cancels any
-       * in-flight request via switchMap.
+       * in-flight request via switchMap. Also records `organizationId`,
+       * which the overlay fetch needs and has no other way to learn (its
+       * own trigger is the `withHooks` effect below, not a page call).
        *
        * @since 1.0.0
        *
-       * @type {RxMethod<{ facilityId: string }>}
+       * @type {RxMethod<{ facilityId: string; organizationId: string }>}
        */
-      load: rxMethod<{ facilityId: string }>(
+      load: rxMethod<{ facilityId: string; organizationId: string }>(
         pipe(
-          tap((): void => {
-            patchState(store, { listCallState: pendingCallState() });
+          tap(({ organizationId }): void => {
+            patchState(store, { listCallState: pendingCallState(), organizationId });
           }),
           switchMap(({ facilityId }) =>
             service.list(facilityId, 'floor_plan').pipe(
@@ -414,6 +451,78 @@ export const FacilityPlansStore = signalStore(
           ),
         ),
       ),
+
+      /**
+       * Method loadOverlay
+       * @method loadOverlay
+       *
+       * @description
+       * Fetches one plan's read-only zone/equipment overlay
+       * (`FacilityService.getPlanOverlay`). Triggered from the same
+       * `withHooks` effect as `loadImage`, alongside it, since both are keyed
+       * on the selected plan.
+       *
+       * @since 1.2.0
+       *
+       * @type {RxMethod<{ organizationId: string; facilityId: string; attachmentId: string }>}
+       */
+      loadOverlay: rxMethod<{ organizationId: string; facilityId: string; attachmentId: string }>(
+        pipe(
+          tap((): void => {
+            patchState(store, { overlayCallState: pendingCallState() });
+          }),
+          switchMap(({ organizationId, facilityId, attachmentId }) =>
+            facilityService.getPlanOverlay(organizationId, facilityId, attachmentId).pipe(
+              tapResponse({
+                next: (overlay: FacilityPlanOverlayOutput): void => {
+                  patchState(store, { overlay, overlayCallState: successCallState(null) });
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, {
+                    overlay: null,
+                    overlayCallState: errorCallState(storeError),
+                  });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.overlayLoadFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        'Failed to load the floor plan overlay',
+                      ),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method setShowZones
+       * @method setShowZones
+       *
+       * @description Toggles the overlay's zone-polygon layer.
+       * @since 1.2.0
+       * @param {boolean} value - Whether zones should render.
+       * @returns {void}
+       */
+      setShowZones(value: boolean): void {
+        patchState(store, { showZones: value });
+      },
+
+      /**
+       * Method setShowEquipment
+       * @method setShowEquipment
+       *
+       * @description Toggles the overlay's equipment-pin layer.
+       * @since 1.2.0
+       * @param {boolean} value - Whether equipment pins should render.
+       * @returns {void}
+       */
+      setShowEquipment(value: boolean): void {
+        patchState(store, { showEquipment: value });
+      },
     }),
   ),
 
@@ -422,9 +531,9 @@ export const FacilityPlansStore = signalStore(
 
     return {
       /**
-       * Reacts to `selectedPlan` changes by fetching that plan's image
-       * bytes and republishing them as an object URL, revoking whichever
-       * object URL preceded it.
+       * Reacts to `selectedPlan` changes by fetching that plan's image bytes
+       * (republished as an object URL, revoking whichever preceded it) and
+       * its read-only overlay, keyed on the same selection.
        */
       onInit(): void {
         effect((): void => {
@@ -434,15 +543,29 @@ export const FacilityPlansStore = signalStore(
 
           previousSelectedId = nextId;
           untracked((): void => {
-            if (nextId) {
+            if (nextId && selected) {
               store.loadImage({ attachmentId: nextId });
+
+              const organizationId: string | null = store.organizationId();
+              if (organizationId) {
+                store.loadOverlay({
+                  organizationId,
+                  facilityId: selected.facilityId,
+                  attachmentId: nextId,
+                });
+              }
 
               return;
             }
 
             const previous: string | null = store.planImageUrl();
             if (previous) URL.revokeObjectURL(previous);
-            patchState(store, { planImageUrl: null, imageCallState: idleCallState() });
+            patchState(store, {
+              planImageUrl: null,
+              imageCallState: idleCallState(),
+              overlay: null,
+              overlayCallState: idleCallState(),
+            });
           });
         });
       },

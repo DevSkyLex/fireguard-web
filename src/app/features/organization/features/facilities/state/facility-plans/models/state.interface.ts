@@ -1,5 +1,8 @@
 import type { CallState } from '@core/request-state';
-import type { FacilityAttachmentOutput } from '@features/organization/features/facilities/models';
+import type {
+  FacilityAttachmentOutput,
+  FacilityPlanOverlayOutput,
+} from '@features/organization/features/facilities/models';
 
 /**
  * Interface FacilityPlansState
@@ -8,10 +11,10 @@ import type { FacilityAttachmentOutput } from '@features/organization/features/f
  * @description
  * Auxiliary state for {@link FacilityPlansStore}. The plan entities
  * themselves are managed by `withEntities` — this interface only covers the
- * per-action call states, the selection, and the selected plan's decoded
- * image bytes.
+ * per-action call states, the selection, the selected plan's decoded image
+ * bytes, and its read-only zone/equipment overlay.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -47,4 +50,24 @@ export interface FacilityPlansState {
    * destroy — see `withHooks` in {@link FacilityPlansStore}.
    */
   readonly planImageUrl: string | null;
+
+  /**
+   * The organization owning the facility, set by `load`. Held here because
+   * the overlay endpoint is organization-scoped and its fetch is triggered
+   * from the same `withHooks` effect as `loadImage`, not from a page-level
+   * call that could pass it directly.
+   */
+  readonly organizationId: string | null;
+
+  /** Tracks the selected plan's overlay (zones/equipment) request. */
+  readonly overlayCallState: CallState;
+
+  /** The selected plan's zone/equipment overlay; null while unloaded or loading. */
+  readonly overlay: FacilityPlanOverlayOutput | null;
+
+  /** Whether the overlay's zone polygons are shown. */
+  readonly showZones: boolean;
+
+  /** Whether the overlay's equipment pins are shown. */
+  readonly showEquipment: boolean;
 }

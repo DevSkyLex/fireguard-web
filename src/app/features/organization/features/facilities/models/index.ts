@@ -24,3 +24,12 @@ export type { FacilityAttachmentKind } from './facility-attachment/facility-atta
 export type { FacilityAttachmentOutput } from './facility-attachment/facility-attachment-output.interface';
 export type { FacilityMoveRequest } from './facility-move/facility-move-request.interface';
 export type { FacilityMoveSubmittedEvent } from './facility-move/facility-move-submitted-event.interface';
+export type { FacilityPlanGeometry } from './facility/facility-plan-geometry.interface';
+export type {
+  FacilityPlanOverlayOutput,
+  FacilityPlanOverlayZone,
+  FacilityPlanOverlayEquipment,
+} from './facility-plan-overlay/facility-plan-overlay-output.interface';
+export type { EquipmentStatusTagDescriptor } from './equipment-status-tag/equipment-status-tag-descriptor.interface';
+export type { EquipmentStatusTagSeverity } from './equipment-status-tag/equipment-status-tag-severity.type';
+export { resolveEquipmentStatusTag } from './equipment-status-tag/equipment-status-tag.util';

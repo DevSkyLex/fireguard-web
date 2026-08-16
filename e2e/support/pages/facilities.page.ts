@@ -74,6 +74,18 @@ export class FacilitiesPage {
     'facility-plan-delete-confirm',
   );
 
+  public readonly overlayToggles: Locator = this.page.getByTestId('facility-plan-overlay-toggles');
+  public readonly overlayToggleZones: Locator = this.page.getByTestId(
+    'facility-plan-overlay-toggle-zones',
+  );
+  public readonly overlayToggleEquipment: Locator = this.page.getByTestId(
+    'facility-plan-overlay-toggle-equipment',
+  );
+  public readonly overlayZones: Locator = this.page.getByTestId('facility-plan-overlay-zone');
+  public readonly overlayEquipment: Locator = this.page.getByTestId(
+    'facility-plan-overlay-equipment',
+  );
+
   public async gotoList(organizationId: string, query = ''): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/facilities${query}`);
   }

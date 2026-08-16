@@ -1,0 +1,70 @@
+@if (overlay(); as data) {
+  @if (showZones() && zoneViews().length > 0) {
+    <svg
+      class="pointer-events-none absolute top-0 left-0"
+      [attr.width]="data.imageWidth"
+      [attr.height]="data.imageHeight"
+      [attr.viewBox]="viewBox()"
+      role="group"
+      i18n-aria-label="@@facility.plans.overlay.zonesGroupLabel"
+      aria-label="Facility zones"
+      data-testid="facility-plan-overlay-zones"
+    >
+      <defs>
+        <pattern
+          [attr.id]="hatchPatternId"
+          patternUnits="userSpaceOnUse"
+          width="10"
+          height="10"
+          patternTransform="rotate(45)"
+        >
+          <line x1="0" y1="0" x2="0" y2="10" class="stroke-foreground/30" stroke-width="2" />
+        </pattern>
+      </defs>
+      @for (zone of zoneViews(); track zone.facilityId) {
+        <a
+          tabindex="0"
+          role="button"
+          class="pointer-events-auto cursor-pointer outline-offset-2 focus-visible:outline-2 focus-visible:outline-ring"
+          [attr.aria-label]="zoneAriaLabel(zone.name)"
+          data-testid="facility-plan-overlay-zone"
+          (click)="onZoneActivate(zone.facilityId)"
+          (keydown)="onZoneKeydown($event, zone.facilityId)"
+        >
+          <polygon
+            [attr.points]="zone.pointsAttr"
+            [attr.fill]="'url(#' + hatchPatternId + ')'"
+            class="stroke-foreground/70"
+            stroke-width="2"
+          />
+          <text
+            [attr.x]="zone.label.x"
+            [attr.y]="zone.label.y"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            class="pointer-events-none fill-foreground text-[10px] font-medium select-none"
+          >
+            {{ zone.name }}
+          </text>
+        </a>
+      }
+    </svg>
+  }
+
+  @if (showEquipment()) {
+    @for (pin of equipmentViews(); track pin.equipmentId) {
+      <button
+        type="button"
+        class="pointer-events-auto absolute flex size-7 items-center justify-center rounded-full border-2 border-background bg-background shadow focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        [style.left.px]="pin.position.x"
+        [style.top.px]="pin.position.y"
+        [style.transform]="'translate(-50%, -100%) scale(' + pinScale() + ')'"
+        [attr.aria-label]="pin.ariaLabel"
+        data-testid="facility-plan-overlay-equipment"
+        (click)="onEquipmentActivate(pin.equipmentId)"
+      >
+        <ng-icon [name]="pin.descriptor.icon" [class]="pin.iconClass" aria-hidden="true" />
+      </button>
+    }
+  }
+}

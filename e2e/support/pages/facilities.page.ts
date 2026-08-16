@@ -45,6 +45,11 @@ export class FacilitiesPage {
   public readonly mapMarkers: Locator = this.page.locator('[data-marker-id]');
   public readonly pickerDialog: Locator = this.page.getByTestId('facility-map-picker-dialog');
   public readonly pickerMap: Locator = this.page.getByTestId('facility-map-picker-map');
+  public readonly mapComplianceToggle: Locator = this.page
+    .getByTestId('facility-map-compliance-toggle')
+    .getByRole('switch');
+  public readonly mapWorstSites: Locator = this.page.getByTestId('facility-map-worst-sites');
+  public readonly mapWorstSiteRows: Locator = this.page.getByTestId('facility-map-worst-site');
 
   public readonly detailLoading: Locator = this.page.getByTestId('facility-detail-loading');
   public readonly deleteAction: Locator = this.page.getByTestId('facility-detail-delete');

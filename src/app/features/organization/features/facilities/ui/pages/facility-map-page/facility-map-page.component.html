@@ -1,5 +1,5 @@
 <div id="facility-map" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <div class="flex items-center justify-between gap-2">
+  <div class="flex flex-wrap items-center justify-between gap-2">
     <a
       hlmBtn
       variant="outline"
@@ -11,35 +11,52 @@
       <span i18n="@@facility.map.backToList">Back to list</span>
     </a>
 
-    <hlm-toggle-group
-      type="single"
-      [nullable]="false"
-      variant="outline"
-      size="sm"
-      value="map"
-      data-testid="facility-map-layout-toggle"
-    >
-      <button
-        hlmToggleGroupItem
-        value="list"
-        data-testid="facility-map-layout-list"
-        [routerLink]="listRouteBase()"
-        i18n-aria-label="@@facility.list.layoutList"
-        aria-label="List view"
-      >
-        <span i18n="@@facility.map.layoutListLabel">List</span>
-      </button>
-      <button
-        hlmToggleGroupItem
+    <div class="flex flex-wrap items-center gap-4">
+      <hlm-field orientation="horizontal" class="gap-2">
+        <label
+          hlmFieldLabel
+          for="facility-map-compliance-toggle"
+          i18n="@@facility.map.compliance.toggleLabel"
+          >Compliance</label
+        >
+        <hlm-switch
+          id="facility-map-compliance-toggle"
+          data-testid="facility-map-compliance-toggle"
+          [checked]="store.complianceVisible()"
+          (checkedChange)="onComplianceLayerToggled($event)"
+        />
+      </hlm-field>
+
+      <hlm-toggle-group
+        type="single"
+        [nullable]="false"
+        variant="outline"
+        size="sm"
         value="map"
-        data-testid="facility-map-layout-map"
-        i18n-aria-label="@@facility.map.layoutMap"
-        aria-label="Map view"
+        data-testid="facility-map-layout-toggle"
       >
-        <ng-icon name="lucideMap" aria-hidden="true" />
-        <span i18n="@@facility.map.layoutMapLabel">Map</span>
-      </button>
-    </hlm-toggle-group>
+        <button
+          hlmToggleGroupItem
+          value="list"
+          data-testid="facility-map-layout-list"
+          [routerLink]="listRouteBase()"
+          i18n-aria-label="@@facility.list.layoutList"
+          aria-label="List view"
+        >
+          <span i18n="@@facility.map.layoutListLabel">List</span>
+        </button>
+        <button
+          hlmToggleGroupItem
+          value="map"
+          data-testid="facility-map-layout-map"
+          i18n-aria-label="@@facility.map.layoutMap"
+          aria-label="Map view"
+        >
+          <ng-icon name="lucideMap" aria-hidden="true" />
+          <span i18n="@@facility.map.layoutMapLabel">Map</span>
+        </button>
+      </hlm-toggle-group>
+    </div>
   </div>
 
   @if (store.mappedFacilities().length === 0 && !store.isLoadingMapped()) {
@@ -66,12 +83,36 @@
       </p>
     }
 
-    <div class="min-h-0 flex-1 overflow-hidden rounded-md">
-      <app-map
-        class="block h-full"
-        [markers]="markers()"
-        (markerSelected)="onMarkerSelected($event)"
-      />
+    <div class="flex min-h-0 flex-1 flex-col gap-4 md:flex-row">
+      <div class="min-h-0 flex-1 overflow-hidden rounded-md">
+        <app-map
+          class="block h-full"
+          [markers]="markers()"
+          (markerSelected)="onMarkerSelected($event)"
+        />
+      </div>
+
+      @if (store.complianceVisible()) {
+        @if (store.isLoadingCompliance()) {
+          <div
+            class="flex flex-col gap-3 md:w-72 md:shrink-0"
+            role="status"
+            aria-label="Loading compliance data"
+            i18n-aria-label="@@facility.map.compliance.loadingAria"
+            data-testid="facility-map-compliance-loading"
+          >
+            <hlm-skeleton class="h-3 w-full" />
+            <hlm-skeleton class="h-3 w-full" />
+            <hlm-skeleton class="h-3 w-full" />
+          </div>
+        } @else {
+          <app-facility-compliance-worst-sites
+            class="md:w-72 md:shrink-0"
+            [facilities]="store.worstFacilities()"
+            (selected)="onWorstSiteSelected($event)"
+          />
+        }
+      }
     </div>
   }
 </div>

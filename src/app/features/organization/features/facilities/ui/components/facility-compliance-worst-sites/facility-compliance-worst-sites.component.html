@@ -1,0 +1,39 @@
+<section
+  class="flex flex-col gap-2"
+  role="region"
+  [attr.aria-label]="regionLabel"
+  data-testid="facility-map-worst-sites"
+>
+  <h2 class="text-sm font-medium text-foreground">{{ regionLabel }}</h2>
+
+  @if (rows().length === 0) {
+    <p class="text-sm text-muted-foreground" i18n="@@facility.map.compliance.worstSitesEmpty">
+      No facilities have compliance data yet.
+    </p>
+  } @else {
+    <ol class="flex flex-col gap-1">
+      @for (row of rows(); track row.entry.facility.id) {
+        <li>
+          <button
+            hlmItem
+            size="sm"
+            type="button"
+            class="w-full rounded-md text-left"
+            data-testid="facility-map-worst-site"
+            [attr.aria-label]="row.ariaLabel"
+            [attr.data-facility-id]="row.entry.facility.id"
+            (click)="onEntrySelected(row.entry.facility)"
+          >
+            <div hlmItemContent>
+              <span hlmItemTitle class="line-clamp-1">{{ row.entry.facility.name }}</span>
+            </div>
+            <span hlmBadge [variant]="row.badgeVariant"
+              >{{ row.entry.complianceRate
+              }}<span i18n="@@facility.map.compliance.percentSuffix">%</span></span
+            >
+          </button>
+        </li>
+      }
+    </ol>
+  }
+</section>

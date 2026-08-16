@@ -31,4 +31,22 @@ export interface FacilityMapState {
    * @type {CallState<number>}
    */
   readonly unplacedCallState: CallState<number>;
+
+  /**
+   * Property complianceCallState
+   * @readonly
+   * @description Tracks the load of the flattened `facilityId -> complianceRate` map, fetched lazily on the first toggle-on.
+   * @since 1.1.0
+   * @type {CallState<ReadonlyMap<string, number | null>>}
+   */
+  readonly complianceCallState: CallState<ReadonlyMap<string, number | null>>;
+
+  /**
+   * Property complianceVisible
+   * @readonly
+   * @description Whether the map's compliance layer is switched on. Off by default.
+   * @since 1.1.0
+   * @type {boolean}
+   */
+  readonly complianceVisible: boolean;
 }

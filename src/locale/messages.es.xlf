@@ -11673,6 +11673,34 @@
         <source>View the list</source>
         <target>Ver la lista</target>
       </trans-unit>
+      <trans-unit id="facility.map.compliance.toggleLabel" datatype="html">
+        <source>Compliance</source>
+        <target>Cumplimiento</target>
+      </trans-unit>
+      <trans-unit id="facility.map.compliance.loadingAria" datatype="html">
+        <source>Loading compliance data</source>
+        <target>Cargando los datos de cumplimiento</target>
+      </trans-unit>
+      <trans-unit id="facility.map.compliance.worstSitesTitle" datatype="html">
+        <source>Worst performing sites</source>
+        <target>Instalaciones con peor rendimiento</target>
+      </trans-unit>
+      <trans-unit id="facility.map.compliance.worstSitesEmpty" datatype="html">
+        <source>No facilities have compliance data yet.</source>
+        <target>Ninguna instalación tiene aún datos de cumplimiento.</target>
+      </trans-unit>
+      <trans-unit id="facility.map.compliance.percentSuffix" datatype="html">
+        <source>%</source>
+        <target>%</target>
+      </trans-unit>
+      <trans-unit id="facility.map.compliance.markerLabel" datatype="html">
+        <source><x id="facilityName" equiv-text="facility.name"/> — <x id="rate" equiv-text="complianceRate"/>% compliant</source>
+        <target><x id="facilityName" equiv-text="facility.name"/> — <x id="rate" equiv-text="complianceRate"/> % conforme</target>
+      </trans-unit>
+      <trans-unit id="facility.map.compliance.markerLabelNoData" datatype="html">
+        <source><x id="facilityName" equiv-text="facility.name"/> — no compliance data</source>
+        <target><x id="facilityName" equiv-text="facility.name"/> — sin datos de cumplimiento</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

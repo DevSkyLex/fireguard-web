@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
-import { facilityOutput } from '../support/fixtures/facility-fixtures';
+import { complianceTreeNodeOutput, facilityOutput } from '../support/fixtures/facility-fixtures';
 import {
   collectConsoleErrors,
   expectNoHorizontalOverflow,
@@ -126,6 +126,85 @@ test.describe('Facility map', () => {
 
     const unexpected = consoleErrors.filter((message) => !/tile|ajax|fetch|network/i.test(message));
     expect(unexpected, unexpected.join('\n')).toEqual([]);
+  });
+
+  test.describe('the compliance layer', () => {
+    /**
+     * Marker content (bucket colour, label text) is asserted only in the
+     * `FacilityMapPage` unit spec, for the same reason noted at the top of
+     * this file: the e2e dev/e2e build never finishes clustering the
+     * GeoJSON marker source in this environment. This suite covers what it
+     * can prove here — the toggle loads the compliance tree lazily and the
+     * "worst sites" ranking, a plain DOM list, renders and is interactive.
+     */
+    test('lazily loads the compliance tree and reveals the worst sites ranking on toggle-on', async ({
+      page,
+    }) => {
+      const api = new ApiMock(page);
+      await api.mockAuthenticatedSession();
+      await api.mockFacilityMap(E2E_ORGANIZATION_ID, [facilityOutput()]);
+      await api.mockComplianceTree(E2E_ORGANIZATION_ID, [
+        complianceTreeNodeOutput({ complianceRate: 28 }),
+      ]);
+      const facilities = new FacilitiesPage(page);
+
+      await facilities.gotoMap(E2E_ORGANIZATION_ID);
+      await expect(facilities.mapWorstSites).toBeHidden();
+
+      await facilities.mapComplianceToggle.click();
+
+      await expect(facilities.mapWorstSites).toBeVisible();
+      await expect(facilities.mapWorstSiteRows).toHaveCount(1);
+      await expect(facilities.mapWorstSiteRows.first()).toContainText('28');
+    });
+
+    test('navigates to the facility record when a worst-site entry is selected', async ({
+      page,
+    }) => {
+      const api = new ApiMock(page);
+      await api.mockAuthenticatedSession();
+      await api.mockFacilityMap(E2E_ORGANIZATION_ID, [facilityOutput()]);
+      await api.mockComplianceTree(E2E_ORGANIZATION_ID, [
+        complianceTreeNodeOutput({ complianceRate: 28 }),
+      ]);
+      const facilities = new FacilitiesPage(page);
+
+      await facilities.gotoMap(E2E_ORGANIZATION_ID);
+      await facilities.mapComplianceToggle.click();
+      await facilities.mapWorstSiteRows.first().click();
+
+      await expect(page).toHaveURL(new RegExp(`/facilities/${facilityOutput().id}$`));
+    });
+
+    test('renders the compliance layer at 375px in dark mode with no console errors beyond the blocked tiles', async ({
+      page,
+      context,
+      baseURL,
+    }) => {
+      const consoleErrors = collectConsoleErrors(page);
+      await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+      await page.setViewportSize({ width: 375, height: 800 });
+
+      const api = new ApiMock(page);
+      await api.mockAuthenticatedSession();
+      await api.mockFacilityMap(E2E_ORGANIZATION_ID, [facilityOutput()]);
+      await api.mockComplianceTree(E2E_ORGANIZATION_ID, [
+        complianceTreeNodeOutput({ complianceRate: 28 }),
+      ]);
+      const facilities = new FacilitiesPage(page);
+
+      await facilities.gotoMap(E2E_ORGANIZATION_ID);
+      await facilities.mapComplianceToggle.click();
+
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+      await expect(facilities.mapWorstSites).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+
+      const unexpected = consoleErrors.filter(
+        (message) => !/tile|ajax|fetch|network/i.test(message),
+      );
+      expect(unexpected, unexpected.join('\n')).toEqual([]);
+    });
   });
 
   test.describe('the "Pick on map" picker', () => {

@@ -11721,6 +11721,10 @@
         <source>The floor plan image could not be loaded.</source>
         <target>No se pudo cargar la imagen del plano.</target>
       </trans-unit>
+      <trans-unit id="planViewer.loading" datatype="html">
+        <source>Loading floor plan</source>
+        <target>Cargando el plano</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

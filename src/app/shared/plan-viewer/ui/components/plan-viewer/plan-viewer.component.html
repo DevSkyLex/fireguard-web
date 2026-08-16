@@ -5,6 +5,7 @@
       type="button"
       variant="outline"
       size="icon-sm"
+      class="max-sm:size-11"
       data-testid="plan-viewer-zoom-out"
       i18n-aria-label="@@planViewer.zoomOut"
       aria-label="Zoom out"
@@ -18,6 +19,7 @@
       type="button"
       variant="outline"
       size="icon-sm"
+      class="max-sm:size-11"
       data-testid="plan-viewer-zoom-reset"
       i18n-aria-label="@@planViewer.resetZoom"
       aria-label="Reset zoom"
@@ -31,6 +33,7 @@
       type="button"
       variant="outline"
       size="icon-sm"
+      class="max-sm:size-11"
       data-testid="plan-viewer-zoom-in"
       i18n-aria-label="@@planViewer.zoomIn"
       aria-label="Zoom in"
@@ -59,7 +62,14 @@
     (keydown)="onKeydown($event)"
   >
     @if (status() === 'loading') {
-      <div hlmSkeleton class="absolute inset-4" data-testid="plan-viewer-skeleton"></div>
+      <div
+        hlmSkeleton
+        class="absolute inset-4"
+        role="status"
+        i18n-aria-label="@@planViewer.loading"
+        aria-label="Loading floor plan"
+        data-testid="plan-viewer-skeleton"
+      ></div>
     }
 
     @if (status() === 'error') {

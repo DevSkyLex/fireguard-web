@@ -293,7 +293,14 @@ export class PlanViewer {
 
   /**
    * Method onWheel
-   * @description Zooms around the cursor position; the browser's own page-scroll is suppressed.
+   *
+   * @description
+   * Zooms around the cursor position — but only once the stage holds focus,
+   * so a wheel over an unengaged viewer keeps scrolling the page instead of
+   * being hijacked into zoom. The stage is focusable (`tabindex="0"`) and a
+   * click on it focuses it, so mouse users opt in with a single click; until
+   * then the event is left alone (no `preventDefault`).
+   *
    * @access protected
    * @since 1.0.0
    * @param {WheelEvent} event - The wheel event.
@@ -301,6 +308,7 @@ export class PlanViewer {
    */
   protected onWheel(event: WheelEvent): void {
     if (this.status() !== 'loaded') return;
+    if (document.activeElement !== this.viewportRef()?.nativeElement) return;
     event.preventDefault();
 
     const pointer: PlanPoint = this.pointerFromEvent(event);

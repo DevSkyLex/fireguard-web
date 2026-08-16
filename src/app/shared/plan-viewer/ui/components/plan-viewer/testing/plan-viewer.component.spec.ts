@@ -91,6 +91,8 @@ describe('PlanViewer', () => {
       );
 
       expect(skeleton).not.toBeNull();
+      expect(skeleton.getAttribute('role')).toBe('status');
+      expect(skeleton.getAttribute('aria-label')).not.toBeNull();
       expect(content.style.transform).toBe('');
       expect(content.style.width).toBe('');
     });
@@ -184,6 +186,7 @@ describe('PlanViewer', () => {
       const before = stage.querySelector('[data-testid="plan-viewer-content"]') as HTMLElement;
       expect(before.style.transform).toContain('scale(1)');
 
+      stage.focus();
       const event = new WheelEvent('wheel', { deltaY: -100, clientX: 600, clientY: 500 });
       stage.dispatchEvent(event);
       await fixture.whenStable();
@@ -198,6 +201,7 @@ describe('PlanViewer', () => {
       const stage: HTMLElement = fixture.nativeElement.querySelector(
         '[data-testid="plan-viewer-stage"]',
       );
+      stage.focus();
       const event = new WheelEvent('wheel', { deltaY: 100, clientX: 400, clientY: 300 });
       stage.dispatchEvent(event);
       await fixture.whenStable();
@@ -206,6 +210,43 @@ describe('PlanViewer', () => {
         '[data-testid="plan-viewer-content"]',
       );
       expect(content.style.transform).toContain(`scale(${1 / 1.1})`);
+    });
+
+    it('should leave the wheel event alone while the stage is not focused', async () => {
+      const stage: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-stage"]',
+      );
+      const event = new WheelEvent('wheel', {
+        deltaY: -100,
+        clientX: 600,
+        clientY: 500,
+        cancelable: true,
+      });
+      stage.dispatchEvent(event);
+      await fixture.whenStable();
+
+      const content: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-content"]',
+      );
+      expect(event.defaultPrevented).toBe(false);
+      expect(content.style.transform).toContain('scale(1)');
+    });
+
+    it('should consume the wheel event once the stage is focused', async () => {
+      const stage: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-stage"]',
+      );
+      stage.focus();
+      const event = new WheelEvent('wheel', {
+        deltaY: -100,
+        clientX: 600,
+        clientY: 500,
+        cancelable: true,
+      });
+      stage.dispatchEvent(event);
+      await fixture.whenStable();
+
+      expect(event.defaultPrevented).toBe(true);
     });
   });
 

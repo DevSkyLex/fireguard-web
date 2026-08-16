@@ -86,4 +86,40 @@ describe('EquipmentCreatePage', () => {
 
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'equipments']);
   });
+
+  it('should report nothing unsaved when the form is pristine', () => {
+    expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
+  });
+
+  it('should report unsaved work once the form reports dirty and no write is settled', () => {
+    fixture.componentInstance['formDirty'].set(true);
+
+    expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
+  });
+
+  it('should not report unsaved work once the create write has succeeded, even while dirty', () => {
+    fixture.componentInstance['formDirty'].set(true);
+    createCallState.set(successCallState(CREATED));
+
+    expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
+  });
+
+  it('should resolve confirmDeactivation true once the dialog reports confirmed', async () => {
+    const result = fixture.componentInstance.confirmDeactivation();
+
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+
+    fixture.componentInstance['onUnsavedChangesConfirmed']();
+
+    await expect(result).resolves.toBe(true);
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('closed');
+  });
+
+  it('should resolve confirmDeactivation false once the dialog reports dismissed', async () => {
+    const result = fixture.componentInstance.confirmDeactivation();
+
+    fixture.componentInstance['onUnsavedChangesDismissed']();
+
+    await expect(result).resolves.toBe(false);
+  });
 });

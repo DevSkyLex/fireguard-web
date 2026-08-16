@@ -21,7 +21,6 @@ import {
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
-import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
@@ -49,7 +48,6 @@ import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { PlanViewer } from '@shared/plan-viewer';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -62,6 +60,8 @@ import { FacilityInformationPanel } from '../../components/facility-information-
 import { FacilityPlanEditor } from '../../components/facility-plan-editor';
 import { FacilityPlanList } from '../../components/facility-plan-list';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
+import { FacilityDeleteDialog } from '../../dialogs/facility-delete-dialog';
+import { FacilityPlanDeleteDialog } from '../../dialogs/facility-plan-delete-dialog';
 import { FacilityPlanPinPositionDialog } from '../../dialogs/facility-plan-pin-position-dialog';
 import { FacilityPlanZoneGeometryDialog } from '../../dialogs/facility-plan-zone-geometry-dialog';
 import { FacilityQrDialog } from '../../dialogs/facility-qr-dialog';
@@ -103,7 +103,8 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * keyboard alternative to tapping the plan — "Enter coordinates" / "Enter
  * position" open the numeric dialogs for the picked target, making zone and
  * pin creation possible without a pointer. A
- * danger, confirm-gated **Delete** action and a read-level **QR code**
+ * danger, confirm-gated **Delete** action ({@link FacilityDeleteDialog},
+ * `DESIGN.md` § Action Surfaces rule 5) and a read-level **QR code**
  * action ({@link FacilityQrDialog}, `FEATURE.md` "Printable QR code")
  * register on the shell header through `PageActionsService` (`FEATURE.md`
  * "Deletion").
@@ -122,7 +123,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * plans. The record's name is the shell breadcrumb's title, resolved by
  * `facilityTitleResolver`.
  *
- * @version 1.6.0
+ * @version 1.7.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -133,8 +134,10 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     NgIcon,
     EmptyState,
     ErrorState,
+    FacilityDeleteDialog,
     FacilityHierarchyChart,
     FacilityInformationPanel,
+    FacilityPlanDeleteDialog,
     FacilityPlanEditor,
     FacilityPlanList,
     FacilityPlanPinPositionDialog,
@@ -147,7 +150,6 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     HlmSwitch,
     ...HlmSelectImports,
     ...HlmSpinnerImports,
-    ...HlmAlertDialogImports,
     ...HlmCardImports,
     ...HlmTabsImports,
   ],
@@ -228,6 +230,10 @@ export class FacilityDetailPage {
 
   /** Whether the Delete confirmation is open. */
   protected readonly pendingDelete: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The floor plan awaiting delete confirmation, if any. */
+  protected readonly planDeleteTarget: WritableSignal<FacilityAttachmentOutput | null> =
+    signal<FacilityAttachmentOutput | null>(null);
 
   /** Whether the QR code dialog is open. */
   protected readonly qrDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -338,18 +344,6 @@ export class FacilityDetailPage {
 
     return candidate ? (candidate.locationLabel ?? candidate.type) : '';
   });
-
-  /**
-   * Property deleteDialogState
-   * @readonly
-   * @description The confirm dialog's open/closed state, derived from {@link pendingDelete}.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<BrnDialogState>}
-   */
-  protected readonly deleteDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
-    this.pendingDelete() ? 'open' : 'closed',
-  );
 
   /**
    * Property metaLine
@@ -520,14 +514,40 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanDeleteRequested
-   * @description Deletes the given plan, pinned to its revision.
+   * @description Opens {@link FacilityPlanDeleteDialog} for the given plan.
    * @access protected
-   * @since 1.1.0
-   * @param {FacilityAttachmentOutput} plan - The plan to delete.
+   * @since 1.7.0
+   * @param {FacilityAttachmentOutput} plan - The plan whose deletion was requested.
    * @returns {void}
    */
   protected onPlanDeleteRequested(plan: FacilityAttachmentOutput): void {
+    this.planDeleteTarget.set(plan);
+  }
+
+  /**
+   * Method onPlanDeleteDismissed
+   * @description Closes {@link FacilityPlanDeleteDialog} without deleting.
+   * @access protected
+   * @since 1.7.0
+   * @returns {void}
+   */
+  protected onPlanDeleteDismissed(): void {
+    this.planDeleteTarget.set(null);
+  }
+
+  /**
+   * Method onPlanDeleteConfirmed
+   * @description Deletes the pending plan, pinned to its revision, and closes the dialog.
+   * @access protected
+   * @since 1.7.0
+   * @returns {void}
+   */
+  protected onPlanDeleteConfirmed(): void {
+    const plan: FacilityAttachmentOutput | null = this.planDeleteTarget();
+    if (!plan) return;
+
     this.plans.remove({ attachmentId: plan.id, revision: plan.revision });
+    this.planDeleteTarget.set(null);
   }
 
   /**
@@ -960,15 +980,15 @@ export class FacilityDetailPage {
   }
 
   /**
-   * Method onDeleteDialogStateChanged
+   * Method onDeleteDialogVisibleChanged
    * @description Clears the pending flag on any dismissal — Cancel, the backdrop or Escape.
    * @access protected
-   * @since 1.0.0
-   * @param {BrnDialogState} state - The overlay's new state.
+   * @since 1.7.0
+   * @param {boolean} visible - The dialog's new visibility.
    * @returns {void}
    */
-  protected onDeleteDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
+  protected onDeleteDialogVisibleChanged(visible: boolean): void {
+    if (visible) return;
 
     this.pendingDelete.set(false);
   }

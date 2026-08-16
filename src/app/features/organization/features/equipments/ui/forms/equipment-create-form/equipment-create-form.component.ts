@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -55,7 +57,11 @@ function trimmed(value: string): string | undefined {
  * is completed progressively afterward, in place, on the detail page
  * (`FEATURE.md` "The record is the edit surface").
  *
- * @version 1.0.0
+ * Reports its own dirtiness through {@link dirtyChanged} so the hosting page
+ * can implement `UnsavedChangesAware` (`DESIGN.md` § Action Surfaces)
+ * without owning the field tree itself.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -110,6 +116,16 @@ export class EquipmentCreateForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   * @description Emits whenever the field tree's dirtiness changes.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -166,6 +182,23 @@ export class EquipmentCreateForm {
   /** Names a type on the closed select trigger. */
   protected readonly typeLabelOf: (value: EquipmentType | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Relays the field tree's dirtiness through {@link dirtyChanged}.
+   * @access public
+   * @since 1.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const dirty: boolean = this.createForm().dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
+    });
+  }
   //#endregion
 
   //#region Methods

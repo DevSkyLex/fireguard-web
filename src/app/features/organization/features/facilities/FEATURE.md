@@ -25,7 +25,6 @@ This subfeature does not own top-level organization selection. That remains in `
 - `/organizations/:organizationId/facilities/map`
 - `/organizations/:organizationId/facilities/create`
 - `/organizations/:organizationId/facilities/:facilityId`
-- `/organizations/:organizationId/facilities/:facilityId/edit`
 
 `map` is listed ahead of `:facilityId` in `FACILITY_ROUTES` so it is never
 swallowed as a facility id.
@@ -460,8 +459,8 @@ Primary services:
   draft and the cancel path, the page owns the call (ARCHITECTURE.md §10.5).
   `type` and the parent stay read-only because `UpdateFacilityInput` accepts
   neither — the parent moves through its own action.
-- `/:facilityId/edit` is retired and **redirects onto the record**, so installed
-  applications and bookmarks still resolve.
+- The `/:facilityId/edit` redirect was removed as dead weight: the record
+  itself is the edit surface, and nothing in the app links to `/edit` anymore.
 - Depends on organization route context from the parent organization feature.
 - The Plans tab consumes `@shared/plan-viewer`'s `app-plan-viewer` (pan/zoom
   raster viewer, domain-agnostic) for the selected floor plan's image.

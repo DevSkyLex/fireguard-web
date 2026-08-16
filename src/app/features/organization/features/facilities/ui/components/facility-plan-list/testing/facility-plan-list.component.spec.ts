@@ -129,7 +129,7 @@ describe('FacilityPlanList', () => {
     expect(byTestId('facility-plans-pick-error')).not.toBeNull();
   });
 
-  it('emits deleteRequested only after the confirm dialog is accepted', async () => {
+  it('emits deleteRequested as soon as Delete is picked from the row menu', async () => {
     fixture.componentRef.setInput('plans', [plan({ id: 'plan-1' })]);
     fixture.componentRef.setInput('canManage', true);
     await fixture.whenStable();
@@ -137,15 +137,10 @@ describe('FacilityPlanList', () => {
     const deleted: FacilityAttachmentOutput[] = [];
     fixture.componentInstance.deleteRequested.subscribe((target) => deleted.push(target));
 
-    (
-      fixture.componentInstance as unknown as { pendingDelete: { set: (v: unknown) => void } }
-    ).pendingDelete.set(plan({ id: 'plan-1' }));
+    root().querySelector<HTMLButtonElement>('[data-testid="facility-plan-menu-trigger"]')?.click();
     await fixture.whenStable();
-    expect(document.querySelector('[data-testid="facility-plan-delete-dialog"]')).not.toBeNull();
 
-    document
-      .querySelector<HTMLButtonElement>('[data-testid="facility-plan-delete-confirm"]')
-      ?.click();
+    document.querySelector<HTMLButtonElement>('[data-testid="facility-plan-delete"]')?.click();
 
     expect(deleted.map((item) => item.id)).toEqual(['plan-1']);
   });

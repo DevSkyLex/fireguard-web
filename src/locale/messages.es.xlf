@@ -70,6 +70,18 @@
         <source>Cancel</source>
         <target>Cancelar</target>
       </trans-unit>
+      <trans-unit id="shared.unsavedChanges.title" datatype="html">
+        <source>Discard unsaved changes?</source>
+        <target>¿Descartar los cambios no guardados?</target>
+      </trans-unit>
+      <trans-unit id="shared.unsavedChanges.description" datatype="html">
+        <source>Your changes have not been saved. Leaving now discards them.</source>
+        <target>Sus cambios no se han guardado. Salir ahora los descartará.</target>
+      </trans-unit>
+      <trans-unit id="shared.unsavedChanges.discardAction" datatype="html">
+        <source>Discard</source>
+        <target>Descartar</target>
+      </trans-unit>
       <trans-unit id="common.required" datatype="html">
         <source> required</source>
         <target> obligatorio</target>
@@ -10553,6 +10565,10 @@
         <source>Delete</source>
         <target>Eliminar</target>
       </trans-unit>
+      <trans-unit id="org.team.deleteConfirmPending" datatype="html">
+        <source>Deleting…</source>
+        <target>Eliminando…</target>
+      </trans-unit>
       <trans-unit id="org.team.rowMenu" datatype="html">
         <source>Open menu</source>
         <target>Abrir menú</target>
@@ -10853,6 +10869,10 @@
         <source>Remove</source>
         <target>Quitar</target>
       </trans-unit>
+      <trans-unit id="org.members.removeConfirmPending" datatype="html">
+        <source>Removing…</source>
+        <target>Eliminando…</target>
+      </trans-unit>
       <trans-unit id="org.members.table.unnamed" datatype="html">
         <source>Member</source>
         <target>Miembro</target>
@@ -11052,6 +11072,22 @@
       <trans-unit id="org.invitations.table.rowRevoke" datatype="html">
         <source>Revoke</source>
         <target>Revocar</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.revokeConfirmTitle" datatype="html">
+        <source>Revoke this invitation?</source>
+        <target>¿Revocar esta invitación?</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.revokeConfirmDescription" datatype="html">
+        <source>This revokes the invitation sent to <x id="email" equiv-text="email"/>. It can no longer be accepted.</source>
+        <target>Esto revoca la invitación enviada a <x id="email" equiv-text="email"/>. Ya no podrá aceptarse.</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.revokeConfirmAction" datatype="html">
+        <source>Revoke</source>
+        <target>Revocar</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.revokeConfirmPending" datatype="html">
+        <source>Revoking…</source>
+        <target>Revocando…</target>
       </trans-unit>
       <trans-unit id="org.invitations.status.pending" datatype="html">
         <source>Pending</source>

@@ -18,7 +18,6 @@ import {
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBan, lucideCircleAlert } from '@ng-icons/lucide';
-import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
@@ -36,12 +35,12 @@ import {
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ErrorState } from '@shared/error-state';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InspectionInformationPanel } from '../../components/inspection-information-panel';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
+import { InspectionCancelDialog } from '../../dialogs/inspection-cancel-dialog';
 
 /** The inspection properties this page has open, writing or showing a rejection. */
 const IDLE_EDIT_STATE: InspectionEditState = {
@@ -82,9 +81,10 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * The record's name is the shell breadcrumb's title, resolved by
  * `inspectionTitleResolver`; the status tags, non-conformity count and meta
  * line stay as a lead group at content top, and the lifecycle band registers
- * on the shell header through `PageActionsService`.
+ * on the shell header through `PageActionsService`. The Cancel confirmation
+ * is {@link InspectionCancelDialog} (`DESIGN.md` § Action Surfaces rule 5).
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -92,12 +92,12 @@ const IDLE_EDIT_STATE: InspectionEditState = {
   selector: 'app-inspection-detail-page',
   imports: [
     NgIcon,
+    InspectionCancelDialog,
     InspectionInformationPanel,
     InspectionStatusTag,
     ErrorState,
     HlmButton,
     HlmSkeleton,
-    ...HlmAlertDialogImports,
     ...HlmSpinnerImports,
   ],
   providers: [provideIcons({ lucideBan, lucideCircleAlert })],
@@ -266,18 +266,6 @@ export class InspectionDetailPage {
     return $localize`:@@inspection.detail.metaUpdated:Updated ${when}:when:`;
   });
 
-  /**
-   * Property cancelDialogState
-   * @readonly
-   * @description The confirm dialog's open/closed state, derived from {@link pendingCancel}.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<BrnDialogState>}
-   */
-  protected readonly cancelDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
-    this.pendingCancel() ? 'open' : 'closed',
-  );
-
   /** Registers {@link pageActions} on the shell header. */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
@@ -427,15 +415,15 @@ export class InspectionDetailPage {
   }
 
   /**
-   * Method onCancelDialogStateChanged
-   * @description Clears the pending flag on any dismissal — Cancel, the backdrop or Escape.
+   * Method onCancelDialogVisibleChanged
+   * @description Clears the pending flag on any dismissal — "Keep it", the backdrop or Escape.
    * @access protected
-   * @since 1.0.0
-   * @param {BrnDialogState} state - The overlay's new state.
+   * @since 1.3.0
+   * @param {boolean} visible - The dialog's new visibility.
    * @returns {void}
    */
-  protected onCancelDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
+  protected onCancelDialogVisibleChanged(visible: boolean): void {
+    if (visible) return;
 
     this.pendingCancel.set(false);
   }

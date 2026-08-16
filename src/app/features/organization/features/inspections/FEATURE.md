@@ -26,7 +26,6 @@ This subfeature does not own facility, equipment, or checklist data, even when i
 - `/organizations/:organizationId/inspections`
 - `/organizations/:organizationId/inspections/create`
 - `/organizations/:organizationId/inspections/:inspectionId`
-- `/organizations/:organizationId/inspections/:inspectionId/edit`
 
 Inspection detail routes **seed** active inspection context without blocking
 activation: `inspectionResolver` fires the fetch into `ActiveInspectionStore`
@@ -138,8 +137,8 @@ workflow actually needs to set the field.
   `UpdateInspectionInput` accepts all three, but the detail page carries none
   of their option lists, and opening a picker with nothing to pick from would
   be worse than a plain value.
-- `/:inspectionId/edit` is retired and **redirects onto the record**, so
-  installed applications and bookmarks still resolve.
+- The `/:inspectionId/edit` redirect was removed as dead weight: the record
+  itself is the edit surface, and nothing in the app links to `/edit` anymore.
 - Depends on organization route context from the parent feature.
 - Consumes `CollectionPagination` from `@shared/collection-pagination`, `CollectionFilterBar` and
   `CollectionFilterToggle` from `@shared/collection-filters`, and `CollectionSearchBox` and

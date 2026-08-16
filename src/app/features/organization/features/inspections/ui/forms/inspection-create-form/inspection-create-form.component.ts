@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -60,7 +62,11 @@ const INSPECTOR_TYPE_VALUES: ReadonlyArray<InspectorType> = ['user', 'external']
  * (`FEATURE.md` "The record is the edit surface"). Facility and checklist
  * are deliberately not offered — see the feature's `FEATURE.md` for why.
  *
- * @version 1.0.0
+ * Reports its own dirtiness through {@link dirtyChanged} so the hosting page
+ * can implement `UnsavedChangesAware` (`DESIGN.md` § Action Surfaces)
+ * without owning the field tree itself.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -136,6 +142,16 @@ export class InspectionCreateForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   * @description Emits whenever the field tree's dirtiness changes.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -213,6 +229,23 @@ export class InspectionCreateForm {
     value === 'user'
       ? $localize`:@@inspection.form.inspectorTypeUser:Team member`
       : $localize`:@@inspection.form.inspectorTypeExternal:External inspector`;
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Relays the field tree's dirtiness through {@link dirtyChanged}.
+   * @access public
+   * @since 1.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const dirty: boolean = this.createForm().dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
+    });
+  }
   //#endregion
 
   //#region Methods

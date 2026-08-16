@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { equipmentResolver, equipmentTitleResolver } from './http/resolvers';
 import { EquipmentStore } from './state';
 
@@ -30,6 +31,8 @@ import { EquipmentStore } from './state';
  * pending state, and redirects back to the index itself if the load fails.
  * {@link equipmentTitleResolver} titles the route synchronously from the same
  * state, falling back to a neutral section label until the record lands.
+ * `create` also carries `unsavedChangesGuard`, confirming before the
+ * operator loses an in-progress registration.
  *
  * @since 1.0.0
  *
@@ -60,6 +63,7 @@ export const EQUIPMENT_ROUTES: Routes = [
         canActivate: [
           organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_WRITE] }),
         ],
+        canDeactivate: [unsavedChangesGuard],
         loadComponent: () =>
           import('./ui/pages/equipment-create-page/equipment-create-page.component').then(
             (m) => m.EquipmentCreatePage,

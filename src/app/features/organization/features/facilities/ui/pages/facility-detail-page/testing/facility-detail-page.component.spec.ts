@@ -610,12 +610,33 @@ describe('FacilityDetailPage', () => {
       expect(planSetPrimary).toHaveBeenCalledWith({ attachmentId: 'plan-2' });
     });
 
-    it('should route a delete request to the store with the plan revision', async () => {
+    it('should open the plan delete confirmation without calling the store yet', async () => {
       await createPage();
 
       fixture.componentInstance['onPlanDeleteRequested'](plan({ id: 'plan-2', revision: 4 }));
 
+      expect(planRemove).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['planDeleteTarget']()?.id).toBe('plan-2');
+    });
+
+    it('should route the delete to the store with the plan revision once confirmed', async () => {
+      await createPage();
+
+      fixture.componentInstance['onPlanDeleteRequested'](plan({ id: 'plan-2', revision: 4 }));
+      fixture.componentInstance['onPlanDeleteConfirmed']();
+
       expect(planRemove).toHaveBeenCalledWith({ attachmentId: 'plan-2', revision: 4 });
+      expect(fixture.componentInstance['planDeleteTarget']()).toBeNull();
+    });
+
+    it('should clear the plan delete target on dismissal without calling the store', async () => {
+      await createPage();
+
+      fixture.componentInstance['onPlanDeleteRequested'](plan({ id: 'plan-2', revision: 4 }));
+      fixture.componentInstance['onPlanDeleteDismissed']();
+
+      expect(planRemove).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['planDeleteTarget']()).toBeNull();
     });
 
     it('should route a selection to the store', async () => {

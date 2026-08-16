@@ -257,6 +257,18 @@ describe('FacilityCreateForm', () => {
     expect(nameInput?.getAttribute('aria-invalid')).not.toBe('true');
   });
 
+  it('should report dirtiness through dirtyChanged as the field tree is touched', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    await fill('facility-create-name', 'Headquarters');
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+  });
+
   it('should place cancel before the submit control in the DOM', () => {
     const buttons: HTMLButtonElement[] = Array.from(element.querySelectorAll('button[type]'));
     const cancelIndex: number = buttons.findIndex(

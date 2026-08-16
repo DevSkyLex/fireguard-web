@@ -116,4 +116,16 @@ describe('EquipmentCreateForm', () => {
     expect(button?.disabled).toBe(true);
     expect(button?.textContent).toContain('Registering…');
   });
+
+  it('should report dirtiness through dirtyChanged as the field tree is touched', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    await fill('equipment-create-subtype', 'CO2');
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+  });
 });

@@ -22,7 +22,10 @@ import type {
 } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
 import { InplaceField } from '@shared/inplace-field';
+import type { MapCoordinates } from '@shared/map';
+import { HlmButton } from '@shared/ui/button';
 import { HlmInput } from '@shared/ui/input';
+import { FacilityMapPickerDialog } from '../../dialogs/facility-map-picker-dialog';
 
 /** Parses a coordinate draft, returning `null` for a blank string and `NaN` for anything unparsable. */
 function parseCoordinate(value: string): number | null {
@@ -57,7 +60,7 @@ function parseCoordinate(value: string): number | null {
  */
 @Component({
   selector: 'app-facility-information-panel',
-  imports: [RouterLink, InplaceField, HlmInput],
+  imports: [RouterLink, InplaceField, FacilityMapPickerDialog, HlmButton, HlmInput],
   templateUrl: './facility-information-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -206,6 +209,38 @@ export class FacilityInformationPanel {
   /** Names a facility type for the read-only type row. */
   protected readonly typeLabelOf: (value: string) => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? value.replace(/_/g, ' ');
+
+  /** Whether the "Pick on map" dialog is open. */
+  protected readonly mapPickerVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property pickerCenter
+   * @readonly
+   * @description Where the picker opens: the coordinate draft once both fields are filled, else the record's own stored coordinates, else the primitive's neutral default.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<MapCoordinates | undefined>}
+   */
+  protected readonly pickerCenter: Signal<MapCoordinates | undefined> = computed<
+    MapCoordinates | undefined
+  >(() => {
+    const latitude: number | null = parseCoordinate(this.latitudeDraft());
+    const longitude: number | null = parseCoordinate(this.longitudeDraft());
+    if (
+      latitude !== null &&
+      longitude !== null &&
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude)
+    ) {
+      return { latitude, longitude };
+    }
+
+    const facility: FacilityOutput = this.facility();
+
+    return facility.latitude != null && facility.longitude != null
+      ? { latitude: facility.latitude, longitude: facility.longitude }
+      : undefined;
+  });
   //#endregion
 
   //#region Methods
@@ -314,6 +349,19 @@ export class FacilityInformationPanel {
     const longitude: number | null = parseCoordinate(this.longitudeDraft());
 
     this.detailsChanged.emit({ latitude, longitude });
+  }
+
+  /**
+   * Method onMapPicked
+   * @description Fills both coordinate drafts from the picker's click; Save still commits them, so a mis-click is never sent unreviewed.
+   * @access protected
+   * @since 1.1.0
+   * @param {MapCoordinates} coordinates - The picked position.
+   * @returns {void}
+   */
+  protected onMapPicked(coordinates: MapCoordinates): void {
+    this.latitudeDraft.set(String(coordinates.latitude));
+    this.longitudeDraft.set(String(coordinates.longitude));
   }
 
   /**

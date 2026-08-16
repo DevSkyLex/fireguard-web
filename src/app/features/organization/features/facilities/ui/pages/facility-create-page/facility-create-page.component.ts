@@ -23,6 +23,8 @@ import {
   FacilityStore,
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
+import { resolveFacilityMapCenter } from '@features/organization/features/facilities/utils';
+import type { MapCoordinates } from '@shared/map';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { FacilityCreateForm } from '../../forms/facility-create-form';
@@ -89,6 +91,18 @@ export class FacilityCreatePage {
       value: facility.id,
       label: facility.name,
     })),
+  );
+
+  /**
+   * Property mapCenter
+   * @readonly
+   * @description Where the create form's "Pick on map" picker opens by default, averaged from the already-loaded parent-facility candidates — no extra fetch for this alone.
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<MapCoordinates | undefined>}
+   */
+  protected readonly mapCenter: Signal<MapCoordinates | undefined> = computed(() =>
+    resolveFacilityMapCenter(null, this.store.facilities()),
   );
 
   /** Registers {@link pageActions} on the shell header. */

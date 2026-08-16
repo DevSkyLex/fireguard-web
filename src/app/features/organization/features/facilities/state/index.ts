@@ -11,3 +11,7 @@ export { FacilityOverviewStore } from './facility-overview';
 export { facilityTreeStoreEvents } from './facility-tree';
 export { FacilityTreeStore } from './facility-tree';
 export type { FacilityTreeState, FacilityTreeStoreType } from './facility-tree';
+export type { FacilityMapState } from './facility-map';
+export { facilityMapStoreEvents } from './facility-map';
+export { FacilityMapStore } from './facility-map';
+export type { FacilityMapStoreType } from './facility-map';

@@ -22,9 +22,13 @@ This subfeature does not own top-level organization selection. That remains in `
 ## Routes
 
 - `/organizations/:organizationId/facilities`
+- `/organizations/:organizationId/facilities/map`
 - `/organizations/:organizationId/facilities/create`
 - `/organizations/:organizationId/facilities/:facilityId`
 - `/organizations/:organizationId/facilities/:facilityId/edit`
+
+`map` is listed ahead of `:facilityId` in `FACILITY_ROUTES` so it is never
+swallowed as a facility id.
 
 Facility detail routes **seed** facility context without blocking activation:
 `facilityResolver` fires the fetch into `ActiveFacilityStore` and returns
@@ -42,22 +46,48 @@ creation (`ui/forms/facility-create-form`) or afterward, in place, on the
 record's Information tab (`ui/components/facility-information-panel`) — there
 is no separate coordinates form.
 
-A generic, domain-agnostic map primitive now exists at `shared/map/`
+A generic, domain-agnostic map primitive exists at `shared/map/`
 (`ARCHITECTURE.md` §8.5): MapLibre GL JS over OpenFreeMap's public vector
 tiles, with self-hosted, achromatic (grayscale) light/dark style JSONs under
 `public/map/` built from OpenFreeMap's Positron style
 (`tools/map-style/build-map-styles.mjs`). No geocoding. `maplibre-gl` is
 imported dynamically and browser-only by that primitive's single component —
-the documented `ARCHITECTURE.md` §1.1 dependency addition. This subfeature
-does not yet consume it; a facilities map page is the planned next
-consumer.
+the documented `ARCHITECTURE.md` §1.1 dependency addition.
+
+This subfeature is the primitive's first consumer, in two places:
+
+- **`ui/pages/facility-map-page`** (`FacilityMapPage`,
+  `facilities/map`) renders every facility with both coordinates set
+  (`FacilityMapStore.loadMapped`, `hasCoordinates: true`) as a marker;
+  selecting one navigates to that facility's record. A discreet banner names
+  how many facilities still lack coordinates (`loadUnplacedCount`, read from
+  a single-item page's `totalItems` rather than a second full fetch) and
+  links back to the list; when no facility has coordinates at all, an
+  `app-empty-state` replaces the map entirely. `facility.status` maps onto
+  the primitive's severity-free vocabulary — `active` as `neutral`,
+  `archived` as `muted` (`utils/facility-marker`) — since a facility carries
+  no severity of its own.
+- **`ui/dialogs/facility-map-picker-dialog`** (`FacilityMapPickerDialog`) is
+  the "Pick on map" affordance shared by `FacilityCreateForm` and
+  `FacilityInformationPanel`'s coordinates editor: an `hlm-dialog` hosting an
+  interactive `app-map`; a click patches the caller's latitude/longitude
+  drafts and closes the dialog. The numeric inputs remain the field of
+  record — they stay editable and are what actually gets submitted; the
+  picker only ever pre-fills them. `utils/facility-map-center` resolves
+  where it opens: the draft's own coordinates once both are filled, else (on
+  the create form only, since the data is already loaded for the parent
+  combobox) the average of the organization's other located facilities, else
+  the primitive's own neutral default — never a fetch made just for this.
 
 ## UI (this pass)
 
 - `ui/pages/facilities-page` (`FacilitiesPage`) — the roots-only list:
-  search, an "include archived" filter, a list/grid toggle
+  search, an "include archived" filter, a list/grid/map toggle
   (`ui/tables/facility-table` / `ui/dataviews/facility-grid`), and a "New
-  facility" link. Row actions are limited to Archive/Restore.
+  facility" link. Row actions are limited to Archive/Restore. `map` is not a
+  rendering mode of this page — it is page-local view state (`layout`, not
+  URL-synced), too light a mechanism for an interactive map, so selecting it
+  navigates to the dedicated `facilities/map` route instead.
 - `ui/pages/facility-create-page` (`FacilityCreatePage`) —
   `ui/forms/facility-create-form`, requiring only `type` and `name`; parent,
   code, address and coordinates are optional here and remain editable on the
@@ -139,6 +169,10 @@ Primary stores:
   ask the server again. `move` re-parents a site optimistically over the
   loaded roots/branches, with rollback on failure — the flow behind both the
   explorer's `Tree` drag-drop and its `FacilityMoveDialog` "Move to…" action.
+- `FacilityMapStore` — the `facilities/map` route's own slice
+  (`state/facility-map`). `FacilityStore`'s roots-only, entity-keyed shape
+  does not fit this flat, location-scoped read, so it sits beside it rather
+  than inside it (`ARCHITECTURE.md` §10.11).
 
 Primary service:
 

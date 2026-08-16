@@ -1,19 +1,40 @@
-import { provideZonelessChangeDetection, type WritableSignal } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  provideZonelessChangeDetection,
+  type InputSignal,
+  type OutputEmitterRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
+import type { MapClickEvent, MapCoordinates } from '@shared/map';
+import { Map } from '@shared/map';
+import { FacilityMapPickerDialog } from '../../../dialogs/facility-map-picker-dialog';
 import { FacilityCreateForm } from '../facility-create-form.component';
 import type { FacilityCreateFormDraft } from '../models';
+
+/** Stands in for `@shared/map`'s `Map`, so no spec ever mounts MapLibre. */
+@Component({ selector: 'app-map', template: '' })
+class MapStub {
+  public readonly interactive: InputSignal<boolean> = input<boolean>(false);
+  public readonly center: InputSignal<MapCoordinates | undefined> = input<
+    MapCoordinates | undefined
+  >(undefined);
+  public readonly mapClicked: OutputEmitterRef<MapClickEvent> = output<MapClickEvent>();
+}
 
 describe('FacilityCreateForm', () => {
   let fixture: ComponentFixture<FacilityCreateForm>;
   let element: HTMLElement;
 
   const fill = async (testId: string, value: string): Promise<void> => {
-    const input: HTMLInputElement = element.querySelector<HTMLInputElement>(
+    const control: HTMLInputElement = element.querySelector<HTMLInputElement>(
       `[data-testid="${testId}"]`,
     ) as HTMLInputElement;
-    input.value = value;
-    input.dispatchEvent(new Event('input'));
+    control.value = value;
+    control.dispatchEvent(new Event('input'));
     await fixture.whenStable();
   };
 
@@ -43,6 +64,11 @@ describe('FacilityCreateForm', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+
+    TestBed.overrideComponent(FacilityMapPickerDialog, {
+      remove: { imports: [Map] },
+      add: { imports: [MapStub] },
+    });
 
     fixture = TestBed.createComponent(FacilityCreateForm);
     await fixture.whenStable();
@@ -242,5 +268,37 @@ describe('FacilityCreateForm', () => {
 
     expect(cancelIndex).toBeGreaterThanOrEqual(0);
     expect(cancelIndex).toBeLessThan(submitIndex);
+  });
+
+  describe('the "Pick on map" picker', () => {
+    it('should open the picker dialog when Pick on map is clicked', async () => {
+      element
+        .querySelector<HTMLButtonElement>('[data-testid="facility-create-pick-on-map"]')
+        ?.click();
+      await fixture.whenStable();
+
+      expect(document.querySelector('[data-testid="facility-map-picker-dialog"]')).not.toBeNull();
+    });
+
+    it('should fill the latitude/longitude inputs from a pick, leaving them editable', async () => {
+      (
+        fixture.componentInstance as unknown as {
+          onMapPicked(coordinates: MapCoordinates): void;
+        }
+      ).onMapPicked({ latitude: 48.8566, longitude: 2.3522 });
+      await fixture.whenStable();
+
+      const latitude: HTMLInputElement | null = element.querySelector(
+        '[data-testid="facility-create-latitude"]',
+      );
+      const longitude: HTMLInputElement | null = element.querySelector(
+        '[data-testid="facility-create-longitude"]',
+      );
+
+      expect(latitude?.value).toBe('48.8566');
+      expect(longitude?.value).toBe('2.3522');
+      expect(latitude?.disabled).toBe(false);
+      expect(longitude?.disabled).toBe(false);
+    });
   });
 });

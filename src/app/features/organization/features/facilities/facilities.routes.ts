@@ -10,8 +10,9 @@ import { FacilityStore } from './state';
  *
  * @description
  * Organization-scoped facility workflows: the roots-only index at
- * `/organizations/:organizationId/facilities`, a creation page, and one
- * facility record under it.
+ * `/organizations/:organizationId/facilities`, a map surface over every
+ * located facility, a creation page, and one facility record under it. `map`
+ * is listed ahead of `:facilityId` so it never matches as a facility id.
  *
  * The read permission guard sits on the pathless parent, as it does in
  * `EQUIPMENT_ROUTES`: it re-runs on an organization switch because the
@@ -55,6 +56,15 @@ export const FACILITY_ROUTES: Routes = [
           ),
         title: $localize`:@@route.facilities:Facilities`,
         data: { breadcrumb: false },
+      },
+      {
+        path: 'map',
+        loadComponent: () =>
+          import('./ui/pages/facility-map-page/facility-map-page.component').then(
+            (m) => m.FacilityMapPage,
+          ),
+        title: $localize`:@@route.facility.map:Facilities Map`,
+        data: { breadcrumb: $localize`:@@route.facility.map:Facilities Map` },
       },
       {
         path: 'create',

@@ -22,6 +22,7 @@ import {
   lucideLayoutGrid,
   lucideList,
   lucideListFilter,
+  lucideMap,
   lucideNetwork,
   lucidePlus,
   lucideSearch,
@@ -65,8 +66,11 @@ type FacilityLayout = 'list' | 'grid';
  * @description
  * Route entry page for the organization's root facilities
  * (`/organizations/:organizationId/facilities`): a search box and a "show
- * archived" filter popover above a list/grid layout toggle, paginated
- * server-side (`FEATURE.md` "Facility Listing (Roots-Only DataView)").
+ * archived" filter popover above a list/grid/map layout toggle, paginated
+ * server-side (`FEATURE.md` "Facility Listing (Roots-Only DataView)"). `map`
+ * is not a rendering mode of this page — it navigates to the dedicated
+ * `facilities/map` route, since an interactive map is a heavier surface than
+ * a per-visit view-state toggle should carry in-page.
  *
  * The list is **roots-only** — hierarchy navigation lives on the facility
  * detail page's Overview tab, not here — and the `?page=` query param is
@@ -108,6 +112,7 @@ type FacilityLayout = 'list' | 'grid';
       lucideLayoutGrid,
       lucideList,
       lucideListFilter,
+      lucideMap,
       lucideNetwork,
       lucidePlus,
       lucideSearch,
@@ -327,13 +332,27 @@ export class FacilitiesPage {
   //#region Methods
   /**
    * Method onLayoutChanged
-   * @description Narrows `hlm-toggle-group`'s single/multi-select payload before writing {@link layout}.
+   *
+   * @description
+   * Narrows `hlm-toggle-group`'s single/multi-select payload. `list`/`grid`
+   * are page-local view state (`layout`); `map` is not a rendering mode of
+   * this page but a dedicated route (`FEATURE.md`), so it navigates there
+   * instead of writing {@link layout}.
+   *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
+   *
    * @param {string | readonly string[] | null | undefined} value - The toggle group's new value.
+   *
    * @returns {void}
    */
   protected onLayoutChanged(value: string | readonly string[] | null | undefined): void {
+    if (value === 'map') {
+      void this.router.navigate([...this.listRouteBase(), 'map']);
+
+      return;
+    }
+
     this.layout.set(value === 'grid' ? 'grid' : 'list');
   }
 

@@ -28,11 +28,23 @@ export class FacilitiesPage {
   public readonly tableRows: Locator = this.page.getByTestId('facility-table-row');
   public readonly rowMenu: Locator = this.page.getByTestId('facility-table-row-menu');
 
+  public readonly listMapToggle: Locator = this.page.getByTestId('facilities-layout-map');
+
   public readonly createTypeSelect: Locator = this.page.getByTestId('facility-create-type');
   public readonly createName: Locator = this.page.getByTestId('facility-create-name');
   public readonly createLatitude: Locator = this.page.getByTestId('facility-create-latitude');
   public readonly createLongitude: Locator = this.page.getByTestId('facility-create-longitude');
   public readonly createSubmit: Locator = this.page.getByTestId('facility-create-submit');
+  public readonly createPickOnMap: Locator = this.page.getByTestId('facility-create-pick-on-map');
+
+  public readonly mapRoot: Locator = this.page.locator('#facility-map');
+  public readonly mapUnplacedBanner: Locator = this.page.getByTestId(
+    'facility-map-unplaced-banner',
+  );
+  public readonly mapBackToList: Locator = this.page.getByTestId('facility-map-back');
+  public readonly mapMarkers: Locator = this.page.locator('[data-marker-id]');
+  public readonly pickerDialog: Locator = this.page.getByTestId('facility-map-picker-dialog');
+  public readonly pickerMap: Locator = this.page.getByTestId('facility-map-picker-map');
 
   public readonly detailLoading: Locator = this.page.getByTestId('facility-detail-loading');
   public readonly deleteAction: Locator = this.page.getByTestId('facility-detail-delete');
@@ -54,6 +66,10 @@ export class FacilitiesPage {
 
   public async gotoDetail(organizationId: string, facilityId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/facilities/${facilityId}`);
+  }
+
+  public async gotoMap(organizationId: string): Promise<void> {
+    await this.page.goto(`/organizations/${organizationId}/facilities/map`);
   }
 
   public async gotoEdit(organizationId: string, facilityId: string): Promise<void> {

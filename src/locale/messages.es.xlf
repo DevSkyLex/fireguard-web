@@ -3182,6 +3182,10 @@
         <source>Facilities</source>
         <target>Instalaciones</target>
       </trans-unit>
+      <trans-unit id="route.facility.map" datatype="html">
+        <source>Facilities Map</source>
+        <target>Mapa de instalaciones</target>
+      </trans-unit>
       <trans-unit id="facility.cf.createFailed" datatype="html">
         <source>The facility could not be created.</source>
         <target>No se pudo crear la instalación.</target>
@@ -11624,6 +11628,50 @@
       <trans-unit id="map.control.toggleAttribution" datatype="html">
         <source>Toggle attribution</source>
         <target>Mostrar u ocultar la atribución</target>
+      </trans-unit>
+      <trans-unit id="facility.map.pickOnMap" datatype="html">
+        <source>Pick on map</source>
+        <target>Elegir en el mapa</target>
+      </trans-unit>
+      <trans-unit id="facility.map.picker.header" datatype="html">
+        <source>Pick a location on the map</source>
+        <target>Elegir una ubicación en el mapa</target>
+      </trans-unit>
+      <trans-unit id="facility.map.picker.description" datatype="html">
+        <source> Click anywhere on the map to set the coordinates, or cancel and enter latitude and longitude directly. </source>
+        <target> Haga clic en cualquier punto del mapa para definir las coordenadas, o cancele e introduzca directamente la latitud y la longitud. </target>
+      </trans-unit>
+      <trans-unit id="facility.map.layoutMap" datatype="html">
+        <source>Map view</source>
+        <target>Vista de mapa</target>
+      </trans-unit>
+      <trans-unit id="facility.map.backToList" datatype="html">
+        <source>Back to list</source>
+        <target>Volver a la lista</target>
+      </trans-unit>
+      <trans-unit id="facility.map.layoutListLabel" datatype="html">
+        <source>List</source>
+        <target>Lista</target>
+      </trans-unit>
+      <trans-unit id="facility.map.layoutMapLabel" datatype="html">
+        <source>Map</source>
+        <target>Mapa</target>
+      </trans-unit>
+      <trans-unit id="facility.map.emptyTitle" datatype="html">
+        <source>No facilities on the map yet</source>
+        <target>Todavía no hay instalaciones en el mapa</target>
+      </trans-unit>
+      <trans-unit id="facility.map.emptyDesc" datatype="html">
+        <source>The map fills in as facilities get placed. Add coordinates from a facility&apos;s Information tab or when creating one.</source>
+        <target>El mapa se completa a medida que se ubican las instalaciones. Añada coordenadas desde la pestaña Información de una instalación o al crearla.</target>
+      </trans-unit>
+      <trans-unit id="facility.map.unplacedBanner" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ store.unplacedCount() }}"/> facilities have no coordinates yet.</source>
+        <target><x id="INTERPOLATION"/> instalaciones aún no tienen coordenadas.</target>
+      </trans-unit>
+      <trans-unit id="facility.map.unplacedLink" datatype="html">
+        <source>View the list</source>
+        <target>Ver la lista</target>
       </trans-unit>
 </body>
   </file>

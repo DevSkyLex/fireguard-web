@@ -24,11 +24,13 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
+import type { MapCoordinates } from '@shared/map';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { FacilityMapPickerDialog } from '../../dialogs/facility-map-picker-dialog';
 import type { FacilityCreateFormDraft } from './models';
 
 /** A blank draft. */
@@ -95,6 +97,7 @@ function isCoordinateInRange(value: string, bounds: readonly [number, number]): 
   selector: 'app-facility-create-form',
   imports: [
     FormField,
+    FacilityMapPickerDialog,
     HlmButton,
     HlmInput,
     ...HlmComboboxImports,
@@ -138,6 +141,18 @@ export class FacilityCreateForm {
   public readonly parentOptions: InputSignal<
     ReadonlyArray<{ readonly value: string; readonly label: string }>
   > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+
+  /**
+   * Property mapCenter
+   * @readonly
+   * @description Where the "Pick on map" picker opens when the draft has no coordinates of its own yet, resolved by the page from its already-loaded facilities.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<MapCoordinates | undefined>}
+   */
+  public readonly mapCenter: InputSignal<MapCoordinates | undefined> = input<
+    MapCoordinates | undefined
+  >(undefined);
   //#endregion
 
   //#region Outputs
@@ -262,6 +277,32 @@ export class FacilityCreateForm {
   /** Names a picked parent on the closed combobox trigger. */
   protected readonly parentLabelOf: (value: string) => string = (value) =>
     this.parentOptions().find((option) => option.value === value)?.label ?? '';
+
+  /** Whether the "Pick on map" dialog is open. */
+  protected readonly mapPickerVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property pickerCenter
+   * @readonly
+   * @description Where the picker opens: the draft's own coordinates once both are filled, else {@link mapCenter}.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<MapCoordinates | undefined>}
+   */
+  protected readonly pickerCenter: Signal<MapCoordinates | undefined> = computed<
+    MapCoordinates | undefined
+  >(() => {
+    const draft: FacilityCreateFormDraft = this.model();
+    const latitude: number | undefined = parsedCoordinate(draft.latitude);
+    const longitude: number | undefined = parsedCoordinate(draft.longitude);
+
+    return latitude !== undefined &&
+      longitude !== undefined &&
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude)
+      ? { latitude, longitude }
+      : this.mapCenter();
+  });
   //#endregion
 
   //#region Methods
@@ -300,6 +341,22 @@ export class FacilityCreateForm {
       latitude: parsedCoordinate(draft.latitude),
       longitude: parsedCoordinate(draft.longitude),
     });
+  }
+
+  /**
+   * Method onMapPicked
+   * @description Fills the latitude/longitude drafts from the picker's click, leaving them editable.
+   * @access protected
+   * @since 1.1.0
+   * @param {MapCoordinates} coordinates - The picked position.
+   * @returns {void}
+   */
+  protected onMapPicked(coordinates: MapCoordinates): void {
+    this.model.update((draft) => ({
+      ...draft,
+      latitude: String(coordinates.latitude),
+      longitude: String(coordinates.longitude),
+    }));
   }
   //#endregion
 }

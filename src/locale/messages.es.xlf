@@ -11373,6 +11373,26 @@
         <source>Last page</source>
         <target>Última página</target>
       </trans-unit>
+      <trans-unit id="tree.expand" datatype="html">
+        <source>Expand</source>
+        <target>Expandir</target>
+      </trans-unit>
+      <trans-unit id="tree.collapse" datatype="html">
+        <source>Collapse</source>
+        <target>Contraer</target>
+      </trans-unit>
+      <trans-unit id="tree.loadingChildren" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="tree.loadFailed" datatype="html">
+        <source>Couldn't load</source>
+        <target>No se pudo cargar</target>
+      </trans-unit>
+      <trans-unit id="tree.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

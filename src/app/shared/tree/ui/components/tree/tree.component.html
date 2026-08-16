@@ -1,0 +1,80 @@
+<ul role="tree" class="flex flex-col gap-0.5" data-testid="tree" [attr.aria-label]="ariaLabel()">
+  @for (row of visible(); track row.node.id) {
+    @let node = row.node;
+    @let isExpanded = expanded().has(node.id);
+    @let isLoading = loadingIds().has(node.id);
+    @let isFailed = failedIds().has(node.id);
+    @let isSelected = node.id === selectedId();
+
+    <li role="none">
+      <div
+        #treeitem
+        role="treeitem"
+        class="flex min-h-9 items-center gap-1 rounded-md px-2 py-1.5 text-sm text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:bg-muted data-[selected=true]:font-medium"
+        data-testid="tree-item"
+        [attr.data-tree-id]="node.id"
+        [attr.data-selected]="isSelected ? 'true' : null"
+        [attr.aria-level]="row.level"
+        [attr.aria-setsize]="row.setSize"
+        [attr.aria-posinset]="row.posInSet"
+        [attr.aria-expanded]="node.hasChildren ? isExpanded : null"
+        [attr.aria-selected]="isSelected"
+        [attr.aria-busy]="isLoading ? true : null"
+        [attr.tabindex]="node.id === focusedId() ? 0 : -1"
+        [style.padding-inline-start.px]="(row.level - 1) * 20"
+        (click)="onItemClick(node)"
+        (keydown)="onKeydown($event, row)"
+      >
+        @if (node.hasChildren) {
+          <button
+            type="button"
+            hlmBtn
+            variant="ghost"
+            size="icon-sm"
+            class="size-6 shrink-0 max-sm:size-8"
+            tabindex="-1"
+            data-testid="tree-toggle"
+            [attr.aria-label]="isExpanded ? collapseLabel : expandLabel"
+            (click)="onToggleClick($event, node)"
+          >
+            <ng-icon
+              [name]="isExpanded ? 'lucideChevronDown' : 'lucideChevronRight'"
+              aria-hidden="true"
+            />
+          </button>
+        } @else {
+          <span class="size-6 shrink-0" aria-hidden="true"></span>
+        }
+
+        <span class="min-w-0 flex-1 truncate">
+          @if (nodeTemplate(); as template) {
+            <ng-container *ngTemplateOutlet="template; context: { $implicit: node, node: node }" />
+          } @else {
+            {{ node.label }}
+          }
+        </span>
+
+        @if (isLoading) {
+          <hlm-spinner class="size-4 shrink-0" [aria-label]="loadingLabel" />
+        }
+
+        @if (isFailed) {
+          <span role="alert" class="shrink-0 text-xs text-destructive" i18n="@@tree.loadFailed"
+            >Couldn't load</span
+          >
+          <button
+            type="button"
+            hlmBtn
+            variant="outline"
+            size="sm"
+            class="shrink-0"
+            data-testid="tree-retry"
+            (click)="onRetryClick($event, node)"
+          >
+            <span i18n="@@tree.retry">Retry</span>
+          </button>
+        }
+      </div>
+    </li>
+  }
+</ul>

@@ -366,7 +366,7 @@ describe('OrganizationMembersPage', () => {
     expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
   });
 
-  it('should resend and revoke through the store, scoped to the routed organization', async () => {
+  it('should resend through the store, scoped to the routed organization', async () => {
     await createPage();
 
     fixture.componentInstance['resendInvitation'](invitation());
@@ -374,12 +374,44 @@ describe('OrganizationMembersPage', () => {
       organizationId: 'org-1',
       invitationId: 'invitation-1',
     });
+  });
 
-    fixture.componentInstance['revokeInvitation'](invitation());
+  it('should open the revoke confirmation and send the revoke through the store on confirm', async () => {
+    await createPage();
+
+    fixture.componentInstance['requestRevoke'](invitation());
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['pendingRevoke']()).toEqual(invitation());
+    expect(revokeInvitation).not.toHaveBeenCalled();
+
+    fixture.componentInstance['confirmRevoke']();
     expect(revokeInvitation).toHaveBeenCalledWith({
       organizationId: 'org-1',
       invitationId: 'invitation-1',
     });
+  });
+
+  it('should close the revoke confirmation once the store reports success', async () => {
+    await createPage();
+    fixture.componentInstance['requestRevoke'](invitation());
+    fixture.componentInstance['confirmRevoke']();
+
+    mutationCallState.set(successCallState(null));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['pendingRevoke']()).toBeNull();
+  });
+
+  it('should clear the pending revoke target on dismissal', async () => {
+    await createPage();
+    fixture.componentInstance['requestRevoke'](invitation());
+    await fixture.whenStable();
+
+    fixture.componentInstance['onRevokeDialogVisibleChange'](false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['pendingRevoke']()).toBeNull();
   });
 
   it('should show a page-level action error for a non-invite mutation failure, hidden while the invite dialog is open', async () => {

@@ -63,10 +63,11 @@ import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolb
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { OrganizationInvitationRevokeDialog } from '../../dialogs/organization-invitation-revoke-dialog';
 import { OrganizationInviteDialog } from '../../dialogs/organization-invite-dialog';
+import { OrganizationMemberRemoveDialog } from '../../dialogs/organization-member-remove-dialog';
 import {
   OrganizationMemberRolesDialog,
   type OrganizationMemberRoleToggle,
@@ -113,15 +114,15 @@ type OrganizationMembersKpiTile = {
  * `organization.roles.read` for the role catalog and `organization.roles.manage`
  * for role assignment — assigning a role is not gated by `members.manage`,
  * it is a distinct permission the backend checks on its own endpoint), the
- * members page window, the invite/role-assignment dialogs and the shared
- * remove-confirmation (`ARCHITECTURE.md` §10.5).
+ * members page window, the invite/role-assignment dialogs and the
+ * remove/revoke confirmations (`ARCHITECTURE.md` §10.5).
  *
  * The store exposes one shared `mutationCallState` across every write
  * action, so a stale error from an earlier action must never leak into a
- * dialog opened afterwards: the invite dialog and the remove confirmation
- * each hold their own `SubmissionGate` over it, and the page-level banner
- * clears itself the moment a new error lands and hides while either of them
- * is showing its own copy.
+ * dialog opened afterwards: the invite dialog, the remove confirmation and
+ * the revoke confirmation each hold their own `SubmissionGate` over it, and
+ * the page-level banner clears itself the moment a new error lands and
+ * hides while any of them is showing its own copy.
  *
  * The roster's search and status filter are server-side: a debounced search
  * keystroke and an immediate status change both re-issue
@@ -136,7 +137,7 @@ type OrganizationMembersKpiTile = {
  * top, and "Invite member" registers on the shell header through
  * `PageActionsService`.
  *
- * @version 1.5.0
+ * @version 1.6.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -150,12 +151,13 @@ type OrganizationMembersKpiTile = {
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
+    OrganizationInvitationRevokeDialog,
     OrganizationInvitationTable,
     OrganizationInviteDialog,
+    OrganizationMemberRemoveDialog,
     OrganizationMemberRolesDialog,
     OrganizationMemberTable,
     StatTile,
-    ...HlmAlertDialogImports,
     ...HlmAlertImports,
     ...HlmToggleGroupImports,
   ],
@@ -292,6 +294,16 @@ export class OrganizationMembersPage {
         this.pendingBulkRemoveIds.set(null);
       },
     },
+  );
+
+  /** The invitation a row's menu asked to revoke, pending confirmation. */
+  protected readonly pendingRevoke: WritableSignal<OrganizationInvitationOutput | null> =
+    signal<OrganizationInvitationOutput | null>(null);
+
+  /** The revoke-confirm dialog's own claim, clearing its pending target once its own revoke lands. */
+  private readonly revokeGate: SubmissionGate = this.submissionGates.create(
+    this.store.mutationCallState,
+    { onSuccess: (): void => this.pendingRevoke.set(null) },
   );
 
   /** Whether the page-level action-error banner was dismissed for the error currently in state. */
@@ -524,16 +536,27 @@ export class OrganizationMembersPage {
   /** The invite dialog's error banner, scoped to an invite actually attempted this session. */
   protected readonly inviteServerError: Signal<StoreError | null> = this.inviteGate.error;
 
+  /** Whether the revoke-confirm dialog's own write is in flight — busy-disables its footer and blocks Escape/backdrop dismissal. */
+  protected readonly revokeDialogBusy: Signal<boolean> = this.revokeGate.isBusy;
+
+  /** The revoke-confirm dialog's own error, scoped to a revoke actually attempted this session — never a stale or unrelated mutation's failure. */
+  protected readonly revokeDialogError: Signal<StoreError | null> = this.revokeGate.error;
+
   /**
    * Property actionError
    * @readonly
-   * @description A resend/revoke/role-toggle mutation's error, shown as a page-level banner and hidden while the invite dialog or the remove-confirm dialog is showing its own copy.
+   * @description A resend/role-toggle mutation's error, shown as a page-level banner and hidden while the invite, remove-confirm or revoke-confirm dialog is showing its own copy.
    * @access protected
    * @since 1.0.0
    * @type {Signal<StoreError | null>}
    */
   protected readonly actionError: Signal<StoreError | null> = computed<StoreError | null>(() => {
-    if (this.actionErrorDismissed() || this.inviteDialogVisible() || this.removeGate.isSubmitted())
+    if (
+      this.actionErrorDismissed() ||
+      this.inviteDialogVisible() ||
+      this.removeGate.isSubmitted() ||
+      this.revokeGate.isSubmitted()
+    )
       return null;
 
     const state: CallState<null, StoreError> = this.store.mutationCallState();
@@ -551,34 +574,6 @@ export class OrganizationMembersPage {
 
   /** The remove-confirm dialog's own error, scoped to a remove actually attempted this session — never a stale or unrelated mutation's failure. */
   protected readonly removeDialogError: Signal<StoreError | null> = this.removeGate.error;
-
-  /** The remove-confirm dialog's title, naming the count for a bulk removal. */
-  protected readonly removeDialogTitle: Signal<string> = computed<string>(() => {
-    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkRemoveIds();
-
-    if (bulkIds && bulkIds.length > 1) {
-      return $localize`:@@org.members.removeConfirmTitleMany:Remove ${bulkIds.length}:count: members?`;
-    }
-
-    return $localize`:@@org.members.removeConfirmTitleOne:Remove member?`;
-  });
-
-  /** The remove-confirm dialog's body: names the member for a single row, counts them for a bulk selection. */
-  protected readonly removeDialogDescription: Signal<string> = computed<string>(() => {
-    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkRemoveIds();
-
-    if (bulkIds) {
-      return bulkIds.length > 1
-        ? $localize`:@@org.members.removeConfirmDescriptionMany:This will remove ${bulkIds.length}:count: members from the organization. This action cannot be undone.`
-        : $localize`:@@org.members.removeConfirmDescriptionOne:This will remove this member from the organization. This action cannot be undone.`;
-    }
-
-    const single: OrganizationMemberOutput | null = this.pendingRemove();
-
-    return single
-      ? $localize`:@@org.members.removeConfirmDescriptionSingle:This will remove "${single.email ?? single.displayName ?? single.id}:name:" from the organization. This action cannot be undone.`
-      : '';
-  });
   //#endregion
 
   //#region Constructor
@@ -932,15 +927,15 @@ export class OrganizationMembersPage {
   }
 
   /**
-   * Method onRemoveDialogStateChanged
+   * Method onRemoveDialogVisibleChange
    * @description Clears both pending-remove signals on any dismissal — Cancel, the backdrop or Escape.
    * @access protected
    * @since 1.0.0
-   * @param {BrnDialogState} state - The overlay's new state.
+   * @param {boolean} visible - The dialog's next visibility.
    * @returns {void}
    */
-  protected onRemoveDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
+  protected onRemoveDialogVisibleChange(visible: boolean): void {
+    if (visible) return;
 
     this.pendingRemove.set(null);
     this.pendingBulkRemoveIds.set(null);
@@ -975,18 +970,55 @@ export class OrganizationMembersPage {
   }
 
   /**
-   * Method revokeInvitation
-   * @description Revokes a pending invitation.
+   * Method requestRevoke
+   * @description Opens the confirm dialog for a row's Revoke entry.
    * @access protected
    * @since 1.0.0
    * @param {OrganizationInvitationOutput} invitation - The row's invitation.
    * @returns {void}
    */
-  protected revokeInvitation(invitation: OrganizationInvitationOutput): void {
+  protected requestRevoke(invitation: OrganizationInvitationOutput): void {
+    this.revokeGate.reset();
+    this.pendingRevoke.set(invitation);
+  }
+
+  /**
+   * Method confirmRevoke
+   *
+   * @description
+   * Sends the pending invitation to the store. The dialog stays open,
+   * busy-disabled, until `mutationCallState` settles — the gate's own
+   * success watcher closes it; a failure surfaces inline via
+   * {@link revokeDialogError} instead of closing under the operator.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected confirmRevoke(): void {
+    const invitation: OrganizationInvitationOutput | null = this.pendingRevoke();
+    if (invitation === null) return;
+
+    this.revokeGate.submit();
     this.store.revokeInvitation({
       organizationId: this.organizationId(),
       invitationId: invitation.id,
     });
+  }
+
+  /**
+   * Method onRevokeDialogVisibleChange
+   * @description Clears the pending invitation on any dismissal — Cancel, the backdrop or Escape.
+   * @access protected
+   * @since 1.0.0
+   * @param {boolean} visible - The dialog's next visibility.
+   * @returns {void}
+   */
+  protected onRevokeDialogVisibleChange(visible: boolean): void {
+    if (visible) return;
+
+    this.pendingRevoke.set(null);
+    this.revokeGate.reset();
   }
 
   /**

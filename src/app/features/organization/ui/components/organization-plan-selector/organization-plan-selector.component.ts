@@ -18,15 +18,14 @@ import {
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck } from '@ng-icons/lucide';
-import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { StoreError } from '@core/request-state';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { OrganizationPlanChangeDialog } from '../../dialogs/organization-plan-change-dialog';
 import type { OrganizationPlanRow } from './models';
 
 /**
@@ -78,9 +77,13 @@ function priceLabelOf(
  * (`ARCHITECTURE.md` §2.7): it is a self-contained, feature-owned widget that
  * loads its own catalog and drives its own mutation, so the page only feeds
  * it identity ({@link organizationId}, {@link currentPlanId}) and the pricing
- * catalog it does not itself own.
+ * catalog it does not itself own. The switch confirm is
+ * {@link OrganizationPlanChangeDialog}, still hosted here rather than by the
+ * page — `DESIGN.md`'s Action Surfaces rule lets a documented container
+ * component host an overlay and talk to a store, and this component is that
+ * documented owner of `OrganizationPlanStore`.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -95,7 +98,14 @@ function priceLabelOf(
  */
 @Component({
   selector: 'app-organization-plan-selector',
-  imports: [NgIcon, HlmBadge, HlmButton, HlmSkeleton, ...HlmAlertDialogImports, ...HlmCardImports],
+  imports: [
+    NgIcon,
+    HlmBadge,
+    HlmButton,
+    HlmSkeleton,
+    OrganizationPlanChangeDialog,
+    ...HlmCardImports,
+  ],
   providers: [OrganizationPlanStore, provideIcons({ lucideCheck })],
   templateUrl: './organization-plan-selector.component.html',
   host: { class: 'block' },
@@ -283,39 +293,6 @@ export class OrganizationPlanSelector implements OnInit {
     signal<OrganizationPlanRow | null>(null);
 
   /**
-   * Property dialogState
-   * @readonly
-   * @description The confirmation dialog's open/closed state, derived from {@link pendingPlan}.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<BrnDialogState>}
-   */
-  protected readonly dialogState: Signal<BrnDialogState> = computed((): BrnDialogState =>
-    this.pendingPlan() !== null ? 'open' : 'closed',
-  );
-
-  /**
-   * Property confirmText
-   * @readonly
-   *
-   * @description
-   * The confirmation dialog's body, naming the pending plan. Built here
-   * rather than interpolated straight into the template: a named
-   * `$localize` placeholder extracts as a single translatable sentence,
-   * where an interpolation left in the template would extract as a
-   * positional `INTERPOLATION` placeholder a translator cannot reorder.
-   *
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<string>}
-   */
-  protected readonly confirmText: Signal<string> = computed((): string => {
-    const planName: string = this.pendingPlan()?.name ?? '';
-
-    return $localize`:@@org.settings.plan.confirmText:The organization will move to ${planName}:planName: immediately. Resource limits and billing update right away.`;
-  });
-
-  /**
    * Property emitCurrentPlanKey
    * @readonly
    *
@@ -376,8 +353,8 @@ export class OrganizationPlanSelector implements OnInit {
   }
 
   /**
-   * Method onDialogStateChanged
-   * @method onDialogStateChanged
+   * Method onDialogVisibleChange
+   * @method onDialogVisibleChange
    *
    * @description
    * Mirrors an overlay-initiated close back into the pending target.
@@ -385,12 +362,12 @@ export class OrganizationPlanSelector implements OnInit {
    * @access protected
    * @since 1.0.0
    *
-   * @param {BrnDialogState} state - The overlay's new state.
+   * @param {boolean} visible - The dialog's next visibility.
    *
    * @returns {void}
    */
-  protected onDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'closed') this.pendingPlan.set(null);
+  protected onDialogVisibleChange(visible: boolean): void {
+    if (!visible) this.pendingPlan.set(null);
   }
 
   /**

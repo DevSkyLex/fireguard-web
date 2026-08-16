@@ -1,0 +1,37 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-team-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.team.deleteConfirmTitle">Delete this role?</h2>
+      <p hlmAlertDialogDescription i18n="@@org.team.deleteConfirmDescription">
+        Every member holding only this role loses the permissions it grants. This cannot be undone.
+      </p>
+    </hlm-alert-dialog-header>
+
+    @if (error(); as message) {
+      <p role="alert" class="text-sm text-destructive" data-testid="organization-team-delete-error">
+        {{ message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@org.team.deleteConfirmCancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-team-delete-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.team.deleteConfirmPending">Deleting…</span>
+        } @else {
+          <span i18n="@@org.team.deleteConfirmAction">Delete</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

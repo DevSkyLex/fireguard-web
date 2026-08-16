@@ -1,0 +1,44 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content
+    *hlmAlertDialogPortal
+    data-testid="organization-invitation-revoke-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.invitations.revokeConfirmTitle">
+        Revoke this invitation?
+      </h2>
+      <p hlmAlertDialogDescription>{{ description() }}</p>
+    </hlm-alert-dialog-header>
+
+    @if (error(); as message) {
+      <p
+        role="alert"
+        class="text-sm text-destructive"
+        data-testid="organization-invitation-revoke-error"
+      >
+        {{ message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-invitation-revoke-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.invitations.revokeConfirmPending">Revoking…</span>
+        } @else {
+          <span i18n="@@org.invitations.revokeConfirmAction">Revoke</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

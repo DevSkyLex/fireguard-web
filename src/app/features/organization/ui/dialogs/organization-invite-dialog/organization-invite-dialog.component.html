@@ -1,4 +1,8 @@
-<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
   <hlm-dialog-content class="sm:max-w-md" data-testid="organization-invite-dialog" *hlmDialogPortal>
     <hlm-dialog-header>
       <h3 hlmDialogTitle i18n="@@org.inviteDialog.title">Invite a member</h3>

@@ -1,0 +1,68 @@
+<app-facility-plan-overlay
+  [overlay]="overlay()"
+  [scale]="scale()"
+  [showZones]="showZones()"
+  [showEquipment]="showEquipment()"
+  (zoneActivated)="zoneActivated.emit($event)"
+  (equipmentActivated)="equipmentActivated.emit($event)"
+/>
+
+@if (overlay(); as data) {
+  <div
+    #stage
+    class="absolute top-0 left-0"
+    [class.pointer-events-none]="!captureActive()"
+    [class.cursor-crosshair]="captureActive()"
+    [style.width.px]="data.imageWidth"
+    [style.height.px]="data.imageHeight"
+    data-testid="facility-plan-editor-stage"
+    (pointerdown)="onStagePointerDown($event)"
+    (dblclick)="onStageDoubleClick()"
+  ></div>
+
+  @if (editMode() === 'draw-zone' && draftPixelPoints().length > 0) {
+    <svg
+      class="pointer-events-none absolute top-0 left-0"
+      [attr.width]="data.imageWidth"
+      [attr.height]="data.imageHeight"
+      [attr.viewBox]="'0 0 ' + data.imageWidth + ' ' + data.imageHeight"
+      data-testid="facility-plan-editor-draft"
+    >
+      <polyline
+        [attr.points]="draftPolylineAttr()"
+        fill="none"
+        class="stroke-primary"
+        stroke-width="2"
+      />
+      @for (point of draftPixelPoints(); track $index) {
+        <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4" class="fill-primary" />
+      }
+    </svg>
+  }
+
+  @if (canEditEquipment() && editMode() === 'none') {
+    @for (pin of draggablePins(); track pin.equipmentId) {
+      <button
+        type="button"
+        tabindex="-1"
+        aria-hidden="true"
+        class="absolute size-11 -translate-x-1/2 -translate-y-full cursor-grab touch-none rounded-full bg-transparent"
+        [style.left.px]="pin.x"
+        [style.top.px]="pin.y"
+        [style.transform]="'translate(-50%, -100%) scale(' + pinScale() + ')'"
+        data-testid="facility-plan-editor-pin-handle"
+        (pointerdown)="onPinHandlePointerDown($event, pin.equipmentId)"
+      ></button>
+    }
+
+    @if (dragPreview(); as preview) {
+      <div
+        class="pointer-events-none absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/50"
+        [style.left.px]="preview.x"
+        [style.top.px]="preview.y"
+        [style.transform]="'translate(-50%, -50%) scale(' + pinScale() + ')'"
+        data-testid="facility-plan-editor-drag-preview"
+      ></div>
+    }
+  }
+}

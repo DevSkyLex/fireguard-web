@@ -284,6 +284,55 @@ describe('FacilityService', () => {
     });
   });
 
+  // ── setPlanGeometry ────────────────────────────────────────────────────────
+
+  describe('setPlanGeometry', () => {
+    it('should send PUT request with the geometry body', () => {
+      service
+        .setPlanGeometry(orgId, facilityId, {
+          attachmentId: 'plan-1',
+          points: [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+          ],
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/plan-geometry`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.body).toEqual({
+        attachmentId: 'plan-1',
+        points: [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+        ],
+      });
+      req.flush(null);
+    });
+
+    it('should send null attachmentId and points to clear the geometry', () => {
+      service.setPlanGeometry(orgId, facilityId, { attachmentId: null, points: null }).subscribe();
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/plan-geometry`);
+      expect(req.request.body).toEqual({ attachmentId: null, points: null });
+      req.flush(null);
+    });
+
+    it('should propagate a conflict error', () => {
+      service
+        .setPlanGeometry(orgId, facilityId, { attachmentId: 'plan-1', points: null })
+        .subscribe({
+          error: (error: ApiError) => expect(error.status).toBe(409),
+        });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/plan-geometry`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
+    });
+  });
+
   // ── create ─────────────────────────────────────────────────────────────────
 
   describe('create', () => {

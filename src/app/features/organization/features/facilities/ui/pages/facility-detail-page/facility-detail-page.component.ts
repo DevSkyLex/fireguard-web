@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  HostListener,
   computed,
   effect,
   inject,
@@ -30,6 +31,8 @@ import type {
   FacilityEditState,
   FacilityEditTarget,
   FacilityOutput,
+  FacilityPlanOverlayEquipment,
+  FacilityPlanOverlayZone,
   UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
 import {
@@ -37,6 +40,7 @@ import {
   FacilityOverviewStore,
   FacilityPlansStore,
   FacilityStore,
+  type FacilityPlanEditMode,
   type FacilityPlansStoreType,
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
@@ -47,15 +51,18 @@ import { PlanViewer } from '@shared/plan-viewer';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { FacilityHierarchyChart } from '../../components/facility-hierarchy-chart';
 import { FacilityInformationPanel } from '../../components/facility-information-panel';
+import { FacilityPlanEditor } from '../../components/facility-plan-editor';
 import { FacilityPlanList } from '../../components/facility-plan-list';
-import { FacilityPlanOverlay } from '../../components/facility-plan-overlay';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
+import { FacilityPlanPinPositionDialog } from '../../dialogs/facility-plan-pin-position-dialog';
+import { FacilityPlanZoneGeometryDialog } from '../../dialogs/facility-plan-zone-geometry-dialog';
 import type { FacilityDetailTabId } from './models';
 
 /** The facility properties this page has open, writing or showing a rejection. */
@@ -81,10 +88,19 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * is no separate edit page); **Plans** renders {@link FacilityPlanList} and
  * `PlanViewer` over {@link FacilityPlansStore}, loaded browser-only on first
  * activation since it is secondary content (`ARCHITECTURE.md` §12.4). The
- * selected plan's read-only zone/equipment overlay renders through
- * `FacilityPlanOverlay`, projected into `PlanViewer`'s `overlayTemplate`; a
+ * selected plan's zone/equipment overlay renders through
+ * `FacilityPlanEditor`, projected into `PlanViewer`'s `overlayTemplate`; a
  * zone or equipment pin activation navigates to that record, and this page
- * owns the navigation, not the overlay. A
+ * owns both that navigation and every editor write (draw/clear a zone
+ * outline, place/move/remove an equipment pin) — `FacilityPlanEditor` only
+ * emits, `FacilityPlansStore` (tab-scoped) owns the mode/draft state and the
+ * two save rxMethods. Editor entry (the "Draw zone"/"Place equipment"
+ * pickers, each zone/pin row's dialog triggers) is gated on `canWrite`
+ * (`FACILITIES_WRITE`) for zones and `canEditEquipment`
+ * (`EQUIPMENT_WRITE`) for equipment. Each active mode also offers a
+ * keyboard alternative to tapping the plan — "Enter coordinates" / "Enter
+ * position" open the numeric dialogs for the picked target, making zone and
+ * pin creation possible without a pointer. A
  * danger, confirm-gated **Delete** action registers on the shell header
  * through `PageActionsService` (`FEATURE.md` "Deletion").
  *
@@ -99,7 +115,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * plans. The record's name is the shell breadcrumb's title, resolved by
  * `facilityTitleResolver`.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -111,13 +127,16 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     EmptyState,
     FacilityHierarchyChart,
     FacilityInformationPanel,
+    FacilityPlanEditor,
     FacilityPlanList,
-    FacilityPlanOverlay,
+    FacilityPlanPinPositionDialog,
+    FacilityPlanZoneGeometryDialog,
     FacilityStatusTag,
     PlanViewer,
     HlmButton,
     HlmSkeleton,
     HlmSwitch,
+    ...HlmSelectImports,
     ...HlmSpinnerImports,
     ...HlmAlertDialogImports,
     ...HlmCardImports,
@@ -210,6 +229,101 @@ export class FacilityDetailPage {
   );
 
   /**
+   * Property canEditEquipment
+   * @readonly
+   * @description Whether the member may place, move, or remove an equipment pin on this facility's plans.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canEditEquipment: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
+  );
+
+  /** The zone (by facility id) whose "Edit coordinates" dialog is open; null when closed. */
+  protected readonly zoneGeometryDialogFacilityId: WritableSignal<string | null> = signal(null);
+
+  /** The equipment pin (by equipment id) whose "Edit position" dialog is open; null when closed. */
+  protected readonly pinPositionDialogEquipmentId: WritableSignal<string | null> = signal(null);
+
+  /**
+   * Property zoneGeometryDialogZone
+   * @readonly
+   * @description The zone the "Edit coordinates" dialog is showing, resolved from the loaded overlay.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<FacilityPlanOverlayZone | null>}
+   */
+  protected readonly zoneGeometryDialogZone: Signal<FacilityPlanOverlayZone | null> = computed(
+    () => {
+      const facilityId: string | null = this.zoneGeometryDialogFacilityId();
+      if (!facilityId) return null;
+
+      return this.plans.overlay()?.zones.find((zone) => zone.facilityId === facilityId) ?? null;
+    },
+  );
+
+  /**
+   * Property pinPositionDialogPin
+   * @readonly
+   * @description The equipment pin the "Edit position" dialog is showing, resolved from the loaded overlay.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<FacilityPlanOverlayEquipment | null>}
+   */
+  protected readonly pinPositionDialogPin: Signal<FacilityPlanOverlayEquipment | null> = computed(
+    () => {
+      const equipmentId: string | null = this.pinPositionDialogEquipmentId();
+      if (!equipmentId) return null;
+
+      return this.plans.overlay()?.equipment.find((pin) => pin.equipmentId === equipmentId) ?? null;
+    },
+  );
+
+  /**
+   * Property zoneGeometryDialogName
+   * @readonly
+   * @description The zone dialog's display name — the overlay zone's when it exists, else the picked draw candidate's (a zone with no geometry yet).
+   * @access protected
+   * @since 1.4.1
+   * @type {Signal<string>}
+   */
+  protected readonly zoneGeometryDialogName: Signal<string> = computed<string>(() => {
+    const existing: FacilityPlanOverlayZone | null = this.zoneGeometryDialogZone();
+    if (existing) return existing.name;
+
+    const facilityId: string | null = this.zoneGeometryDialogFacilityId();
+    if (!facilityId) return '';
+
+    return (
+      this.plans.availableZoneCandidates().find((candidate) => candidate.id === facilityId)?.name ??
+      ''
+    );
+  });
+
+  /**
+   * Property pinPositionDialogName
+   * @readonly
+   * @description The pin dialog's display name — the overlay pin's when it exists, else the picked place candidate's (equipment not on the plan yet).
+   * @access protected
+   * @since 1.4.1
+   * @type {Signal<string>}
+   */
+  protected readonly pinPositionDialogName: Signal<string> = computed<string>(() => {
+    const existing: FacilityPlanOverlayEquipment | null = this.pinPositionDialogPin();
+    if (existing) return existing.name;
+
+    const equipmentId: string | null = this.pinPositionDialogEquipmentId();
+    if (!equipmentId) return '';
+
+    const candidate = this.plans
+      .availableEquipmentCandidates()
+      .find((item) => item.id === equipmentId);
+
+    return candidate ? (candidate.locationLabel ?? candidate.type) : '';
+  });
+
+  /**
    * Property deleteDialogState
    * @readonly
    * @description The confirm dialog's open/closed state, derived from {@link pendingDelete}.
@@ -249,6 +363,28 @@ export class FacilityDetailPage {
   /** The Delete button, registered on the shell header instead of an in-page title band. */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
+
+  /**
+   * Property editModeStatusLabel
+   * @readonly
+   * @description The Plans tab editor's status line, naming the active mode and, in `draw-zone`, its vertex count.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<string>}
+   */
+  protected readonly editModeStatusLabel: Signal<string> = computed<string>(() => {
+    const mode: FacilityPlanEditMode = this.plans.editMode();
+    if (mode === 'draw-zone') {
+      const count: number = this.plans.draftPoints().length;
+
+      return $localize`:@@facility.plans.editor.status.drawZone:Click the plan to add a vertex (${count}:count: placed)`;
+    }
+    if (mode === 'place-pin') {
+      return $localize`:@@facility.plans.editor.status.placePin:Click the plan to place the equipment`;
+    }
+
+    return '';
+  });
   //#endregion
 
   //#region Constructor
@@ -319,7 +455,7 @@ export class FacilityDetailPage {
   //#region Methods
   /**
    * Method onLinkedTabActivated
-   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing {@link activeTab}.
+   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing {@link activeTab}; leaving the Plans tab also cancels any active editor mode, so its global shortcuts cannot fire from another tab.
    * @access protected
    * @since 1.0.0
    * @param {string} tab - The `hlm-tabs` id that just activated.
@@ -329,6 +465,9 @@ export class FacilityDetailPage {
     if (tab !== 'overview' && tab !== 'information' && tab !== 'plans') return;
 
     this.activeTab.set(tab);
+    if (tab !== 'plans' && this.plans.editMode() !== 'none') {
+      this.plans.cancelEditing();
+    }
     if (tab === 'plans' && this.isBrowser && !this.plansLoadRequested) {
       this.plansLoadRequested = true;
       this.plans.load({ facilityId: this.facilityId(), organizationId: this.organizationId() });
@@ -429,6 +568,283 @@ export class FacilityDetailPage {
    */
   protected onShowEquipmentChanged(value: boolean): void {
     this.plans.setShowEquipment(value);
+  }
+
+  /**
+   * Method onEditorKeydown
+   *
+   * @description
+   * The editor's keyboard shortcuts, listened globally rather than on the
+   * plan viewer stage so they work regardless of which control has focus
+   * while a mode is active: Escape cancels, Backspace undoes the last
+   * `draw-zone` vertex (and is prevented from also navigating back). Scoped
+   * twice: an active mode is cancelled when the Plans tab is left (see
+   * {@link onLinkedTabActivated}), and a key event whose target is a text
+   * entry surface — input, textarea, select, contenteditable — is left
+   * alone, so the coordinate dialogs' fields keep their own Backspace.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @param {KeyboardEvent} event - The key event.
+   * @returns {void}
+   */
+  @HostListener('document:keydown', ['$event'])
+  protected onEditorKeydown(event: KeyboardEvent): void {
+    const mode: FacilityPlanEditMode = this.plans.editMode();
+    if (mode === 'none' || isTextEntryTarget(event.target)) return;
+
+    if (event.key === 'Escape') {
+      this.plans.cancelEditing();
+    } else if (event.key === 'Backspace' && mode === 'draw-zone') {
+      event.preventDefault();
+      this.plans.undoDraftVertex();
+    }
+  }
+
+  /**
+   * Method onZonePickerOpened
+   * @description Loads the `draw-zone` picker's candidate list, guarded against a duplicate fetch.
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected onZonePickerOpened(): void {
+    this.plans.ensureZoneCandidatesLoaded();
+  }
+
+  /**
+   * Method onEquipmentPickerOpened
+   * @description Loads the `place-pin` picker's candidate list, guarded against a duplicate fetch.
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected onEquipmentPickerOpened(): void {
+    this.plans.ensureFacilityEquipmentLoaded();
+  }
+
+  /**
+   * Method onZoneDrawTargetPicked
+   * @description Starts drawing an outline for the picked child facility.
+   * @access protected
+   * @since 1.4.0
+   * @param {string | null | undefined} facilityId - The picked facility, or nullish when the selection cleared.
+   * @returns {void}
+   */
+  protected onZoneDrawTargetPicked(facilityId: string | null | undefined): void {
+    if (!facilityId) return;
+
+    this.plans.enterDrawZoneMode(facilityId);
+  }
+
+  /**
+   * Method onPlaceEquipmentPicked
+   * @description Starts placing the picked equipment item.
+   * @access protected
+   * @since 1.4.0
+   * @param {string | null | undefined} equipmentId - The picked equipment, or nullish when the selection cleared.
+   * @returns {void}
+   */
+  protected onPlaceEquipmentPicked(equipmentId: string | null | undefined): void {
+    if (!equipmentId) return;
+
+    this.plans.enterPlacePinMode(equipmentId);
+  }
+
+  /**
+   * Method onVertexAdded
+   * @description A `draw-zone` tap added this vertex.
+   * @access protected
+   * @since 1.4.0
+   * @param {readonly [number, number]} point - The vertex, in normalized `[0, 1]` image coordinates.
+   * @returns {void}
+   */
+  protected onVertexAdded(point: readonly [number, number]): void {
+    this.plans.addDraftVertex(point);
+  }
+
+  /**
+   * Method onPolygonCloseRequested
+   * @description A double-click requested closing the in-progress outline; submits it.
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected onPolygonCloseRequested(): void {
+    this.plans.finishDrawZone();
+  }
+
+  /**
+   * Method onPinPlaced
+   * @description A `place-pin` tap placed the pin here.
+   * @access protected
+   * @since 1.4.0
+   * @param {readonly [number, number]} point - The pin's position, in normalized `[0, 1]` image coordinates.
+   * @returns {void}
+   */
+  protected onPinPlaced(point: readonly [number, number]): void {
+    this.plans.placePin(point);
+  }
+
+  /**
+   * Method onPinMoved
+   * @description An existing pin was dragged and dropped.
+   * @access protected
+   * @since 1.4.0
+   * @param {{ equipmentId: string; point: readonly [number, number] }} event - The moved pin and its new position.
+   * @returns {void}
+   */
+  protected onPinMoved(event: {
+    readonly equipmentId: string;
+    readonly point: readonly [number, number];
+  }): void {
+    this.plans.movePin(event.equipmentId, event.point);
+  }
+
+  /**
+   * Method onEnterCoordinatesRequested
+   * @description The `draw-zone` mode's keyboard alternative — opens the coordinate dialog for the picked draw target instead of tapping the plan.
+   * @access protected
+   * @since 1.4.1
+   * @returns {void}
+   */
+  protected onEnterCoordinatesRequested(): void {
+    const facilityId: string | null = this.plans.drawTargetFacilityId();
+    if (!facilityId) return;
+
+    this.zoneGeometryDialogFacilityId.set(facilityId);
+  }
+
+  /**
+   * Method onEnterPositionRequested
+   * @description The `place-pin` mode's keyboard alternative — opens the position dialog for the picked equipment instead of tapping the plan.
+   * @access protected
+   * @since 1.4.1
+   * @returns {void}
+   */
+  protected onEnterPositionRequested(): void {
+    const equipmentId: string | null = this.plans.placeEquipmentId();
+    if (!equipmentId) return;
+
+    this.pinPositionDialogEquipmentId.set(equipmentId);
+  }
+
+  /**
+   * Method openZoneGeometryDialog
+   * @description Opens the non-pointer "Edit coordinates" dialog for the given zone.
+   * @access protected
+   * @since 1.4.0
+   * @param {string} facilityId - The zone to edit.
+   * @returns {void}
+   */
+  protected openZoneGeometryDialog(facilityId: string): void {
+    this.zoneGeometryDialogFacilityId.set(facilityId);
+  }
+
+  /**
+   * Method onZoneGeometryDialogVisibleChanged
+   * @description Closes the "Edit coordinates" dialog on any dismissal.
+   * @access protected
+   * @since 1.4.0
+   * @param {boolean} visible - The dialog's new visibility.
+   * @returns {void}
+   */
+  protected onZoneGeometryDialogVisibleChanged(visible: boolean): void {
+    if (visible) return;
+
+    this.zoneGeometryDialogFacilityId.set(null);
+  }
+
+  /**
+   * Method onZoneGeometrySubmitted
+   * @description The "Edit coordinates" dialog's submit path.
+   * @access protected
+   * @since 1.4.0
+   * @param {ReadonlyArray<readonly [number, number]>} points - The submitted outline.
+   * @returns {void}
+   */
+  protected onZoneGeometrySubmitted(points: ReadonlyArray<readonly [number, number]>): void {
+    const facilityId: string | null = this.zoneGeometryDialogFacilityId();
+    if (!facilityId) return;
+
+    this.plans.saveZoneGeometryFromDialog(facilityId, points);
+    this.zoneGeometryDialogFacilityId.set(null);
+  }
+
+  /**
+   * Method onZoneGeometryCleared
+   * @description The "Clear geometry" action, from either the dialog or a zone's row.
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected onZoneGeometryCleared(): void {
+    const facilityId: string | null = this.zoneGeometryDialogFacilityId();
+    if (!facilityId) return;
+
+    this.plans.clearZoneGeometry(facilityId);
+    this.zoneGeometryDialogFacilityId.set(null);
+  }
+
+  /**
+   * Method openPinPositionDialog
+   * @description Opens the non-pointer "Edit position" dialog for the given equipment pin.
+   * @access protected
+   * @since 1.4.0
+   * @param {string} equipmentId - The pin to edit.
+   * @returns {void}
+   */
+  protected openPinPositionDialog(equipmentId: string): void {
+    this.pinPositionDialogEquipmentId.set(equipmentId);
+  }
+
+  /**
+   * Method onPinPositionDialogVisibleChanged
+   * @description Closes the "Edit position" dialog on any dismissal.
+   * @access protected
+   * @since 1.4.0
+   * @param {boolean} visible - The dialog's new visibility.
+   * @returns {void}
+   */
+  protected onPinPositionDialogVisibleChanged(visible: boolean): void {
+    if (visible) return;
+
+    this.pinPositionDialogEquipmentId.set(null);
+  }
+
+  /**
+   * Method onPinPositionSubmitted
+   * @description The "Edit position" dialog's submit path — a first placement while `place-pin` mode targets this equipment routes through the store's placement write, a reposition through the move write.
+   * @access protected
+   * @since 1.4.0
+   * @param {readonly [number, number]} point - The submitted position.
+   * @returns {void}
+   */
+  protected onPinPositionSubmitted(point: readonly [number, number]): void {
+    const equipmentId: string | null = this.pinPositionDialogEquipmentId();
+    if (!equipmentId) return;
+
+    if (this.plans.editMode() === 'place-pin' && this.plans.placeEquipmentId() === equipmentId) {
+      this.plans.placePin(point);
+    } else {
+      this.plans.movePin(equipmentId, point);
+    }
+    this.pinPositionDialogEquipmentId.set(null);
+  }
+
+  /**
+   * Method onPinPositionRemoved
+   * @description The "Remove from plan" action, from either the dialog or a pin's row.
+   * @access protected
+   * @since 1.4.0
+   * @param {string} equipmentId - The pin to remove.
+   * @returns {void}
+   */
+  protected onPinPositionRemoved(equipmentId: string): void {
+    this.plans.removePinFromPlan(equipmentId);
+    if (this.pinPositionDialogEquipmentId() === equipmentId) {
+      this.pinPositionDialogEquipmentId.set(null);
+    }
   }
 
   /**
@@ -556,4 +972,22 @@ export class FacilityDetailPage {
     this.editState.set({ open: state.saving, saving: null, failed: state.saving, failure });
   }
   //#endregion
+}
+
+/**
+ * Function isTextEntryTarget
+ * @access private
+ * @since 1.4.1
+ * @param {EventTarget | null} target - A key event's target.
+ * @returns {boolean} `true` when the target is a text entry surface the editor shortcuts must not steal keys from.
+ */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target.isContentEditable
+  );
 }

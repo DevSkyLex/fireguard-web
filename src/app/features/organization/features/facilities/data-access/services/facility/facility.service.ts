@@ -12,6 +12,7 @@ import type {
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
+  SetPlanGeometryInput,
 } from '@features/organization/features/facilities/models';
 
 /**
@@ -320,6 +321,42 @@ export class FacilityService extends HydraApiService {
           params: this.buildParams(attachmentId ? { params: { attachmentId } } : undefined),
           withCredentials: true,
         },
+      )
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Method setPlanGeometry
+   * @method setPlanGeometry
+   *
+   * @description
+   * Draws or clears one facility's own outline on a parent floor plan
+   * (`PUT /api/organizations/{organizationId}/facilities/{facilityId}/plan-geometry`).
+   * Calls `this.http` directly, like {@link getPlanOverlay}: the endpoint
+   * echoes no stored Hydra item, so it cannot satisfy `this.put`'s
+   * `TOutput extends HydraItem` bound.
+   *
+   * @access public
+   * @since 1.4.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the facility whose outline is set.
+   * @param {SetPlanGeometryInput} input - The geometry to write, or nulls to clear it.
+   *
+   * @return {Observable<void>} An observable completing once the write lands.
+   */
+  public setPlanGeometry(
+    organizationId: string,
+    facilityId: string,
+    input: SetPlanGeometryInput,
+  ): Observable<void> {
+    return this.http
+      .put<void>(
+        this.buildUrl(
+          `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/plan-geometry`,
+        ),
+        input,
+        { headers: this.buildHeaders(), withCredentials: true },
       )
       .pipe(catchError(this.handleError));
   }

@@ -8,11 +8,14 @@ import {
 import {
   E2E_FACILITY_CHILD_ID,
   E2E_FACILITY_ID,
+  E2E_FACILITY_PLAN_EQUIPMENT_ID,
   E2E_FACILITY_PLAN_ID,
+  E2E_FACILITY_PLAN_NEW_ZONE_ID,
   facilityAttachmentOutput,
   facilityChildOutput,
   facilityOutput,
   facilityPlanOverlayOutput,
+  facilityZoneCandidateOutput,
 } from '../support/fixtures/facility-fixtures';
 import { inspectionOutput } from '../support/fixtures/inspection-fixtures';
 import {
@@ -570,5 +573,278 @@ test.describe('Facility Plan Overlay', () => {
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/facility-plan-overlay-dark-mobile.png` });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+  });
+});
+
+/** Mocks the read side (facility, overview, plans, overlay, candidates) common to every editor scenario. */
+async function mockEditorReads(api: ApiMock): Promise<void> {
+  await api.mockAuthenticatedSession();
+  await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput({ hasChildren: true }));
+  await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {
+    equipment: [equipmentOutput()],
+  });
+  await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+  await api.mockFacilityPlanOverlay(
+    E2E_ORGANIZATION_ID,
+    E2E_FACILITY_ID,
+    facilityPlanOverlayOutput(),
+  );
+  await api.mockFacilityChildren(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, [
+    facilityChildOutput(),
+    facilityZoneCandidateOutput(),
+  ]);
+  await api.mockFacilityDescendants(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, [facilityChildOutput()]);
+}
+
+test.describe('Facility Plan Editor', () => {
+  test('draws a zone outline by clicking three vertices and closing the polygon', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    let requestBody: unknown;
+    await api.mockFacilityPlanGeometry(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_PLAN_NEW_ZONE_ID,
+      (body) => {
+        requestBody = body;
+      },
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.editorToolbar).toBeVisible();
+
+    await facilities.pickDrawZoneTarget('Break Room');
+    await expect(facilities.editorStatus).toBeVisible();
+
+    await facilities.clickPlanPoint(0.05, 0.05);
+    await expect(facilities.editorStatus).toContainText('1');
+    await facilities.clickPlanPoint(0.05, 0.45);
+    await expect(facilities.editorStatus).toContainText('2');
+    await facilities.clickPlanPoint(0.45, 0.45);
+    await expect(facilities.editorStatus).toContainText('3');
+    await expect(facilities.editorClosePolygon).toBeEnabled();
+
+    await facilities.editorClosePolygon.click();
+
+    await expect(facilities.editorStatus).toHaveCount(0);
+    expect(requestBody).toMatchObject({
+      attachmentId: E2E_FACILITY_PLAN_ID,
+      points: [expect.any(Array), expect.any(Array), expect.any(Array)],
+    });
+  });
+
+  test('undoes the last vertex and cancels drawing', async ({ page }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await facilities.pickDrawZoneTarget('Break Room');
+
+    await facilities.clickPlanPoint(0.2, 0.2);
+    await facilities.clickPlanPoint(0.6, 0.2);
+    await expect(facilities.editorClosePolygon).toBeDisabled();
+
+    await facilities.editorUndo.click();
+    await expect(facilities.editorClosePolygon).toBeDisabled();
+
+    await facilities.editorCancel.click();
+    await expect(facilities.editorStatus).toHaveCount(0);
+  });
+
+  test('places an equipment pin with a single click', async ({ page }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    let requestBody: unknown;
+    await api.mockEquipmentPlanPosition(E2E_ORGANIZATION_ID, E2E_EQUIPMENT_ID, (body) => {
+      requestBody = body;
+    });
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+
+    await facilities.pickPlaceEquipment('Corridor A, 2nd floor');
+    await expect(facilities.editorStatus).toBeVisible();
+
+    await facilities.clickPlanPoint(0.7, 0.3);
+
+    await expect(facilities.editorStatus).toHaveCount(0);
+    expect(requestBody).toMatchObject({ attachmentId: E2E_FACILITY_PLAN_ID });
+  });
+
+  test('creates a zone outline keyboard-only through the "Enter coordinates" path', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    let requestBody: unknown;
+    await api.mockFacilityPlanGeometry(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_PLAN_NEW_ZONE_ID,
+      (body) => {
+        requestBody = body;
+      },
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await facilities.pickDrawZoneTarget('Break Room');
+
+    await facilities.editorEnterCoordinates.click();
+    await expect(facilities.zoneGeometryDialog).toBeVisible();
+    await expect(facilities.zoneGeometryRows).toHaveCount(3);
+    await expect(facilities.zoneGeometrySubmit).toBeDisabled();
+
+    await facilities.fillZoneVertex(0, '10', '10');
+    await facilities.fillZoneVertex(1, '10', '40');
+    await facilities.fillZoneVertex(2, '40', '40');
+    await expect(facilities.zoneGeometrySubmit).toBeEnabled();
+
+    await facilities.zoneGeometrySubmit.click();
+
+    await expect(facilities.zoneGeometryDialog).toBeHidden();
+    expect(requestBody).toMatchObject({
+      attachmentId: E2E_FACILITY_PLAN_ID,
+      points: [
+        [0.1, 0.1],
+        [0.1, 0.4],
+        [0.4, 0.4],
+      ],
+    });
+  });
+
+  test('edits a zone outline through the non-pointer "Edit coordinates" dialog', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    let requestBody: unknown;
+    await api.mockFacilityPlanGeometry(E2E_ORGANIZATION_ID, E2E_FACILITY_CHILD_ID, (body) => {
+      requestBody = body;
+    });
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.zoneList).toBeVisible();
+
+    await facilities.zoneEditButton.first().click();
+    await expect(facilities.zoneGeometryDialog).toBeVisible();
+    await expect(facilities.zoneGeometryRows).toHaveCount(4);
+
+    await facilities.zoneGeometrySubmit.click();
+
+    await expect(facilities.zoneGeometryDialog).toBeHidden();
+    expect(requestBody).toMatchObject({ attachmentId: E2E_FACILITY_PLAN_ID });
+  });
+
+  test('clears a zone outline from the "Edit coordinates" dialog', async ({ page }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    let requestBody: unknown;
+    await api.mockFacilityPlanGeometry(E2E_ORGANIZATION_ID, E2E_FACILITY_CHILD_ID, (body) => {
+      requestBody = body;
+    });
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+
+    await facilities.zoneEditButton.first().click();
+    await facilities.zoneGeometryClear.click();
+
+    await expect(facilities.zoneGeometryDialog).toBeHidden();
+    expect(requestBody).toEqual({ attachmentId: null, points: null });
+  });
+
+  test('edits an equipment pin position through the non-pointer "Edit position" dialog', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    let requestBody: unknown;
+    await api.mockEquipmentPlanPosition(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_PLAN_EQUIPMENT_ID,
+      (body) => {
+        requestBody = body;
+      },
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.equipmentList).toBeVisible();
+
+    await facilities.pinEditButton.first().click();
+    await expect(facilities.pinPositionDialog).toBeVisible();
+    await expect(facilities.pinPositionX).toHaveValue('20.0');
+
+    await facilities.pinPositionSubmit.click();
+
+    await expect(facilities.pinPositionDialog).toBeHidden();
+    expect(requestBody).toEqual({ attachmentId: E2E_FACILITY_PLAN_ID, x: 0.2, y: 0.2 });
+  });
+
+  test('removes an equipment pin from the plan', async ({ page }) => {
+    const api = new ApiMock(page);
+    await mockEditorReads(api);
+    let requestBody: unknown;
+    await api.mockEquipmentPlanPosition(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_PLAN_EQUIPMENT_ID,
+      (body) => {
+        requestBody = body;
+      },
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+
+    await facilities.pinRemoveButton.first().click();
+
+    expect(requestBody).toEqual({ attachmentId: null, x: null, y: null });
+  });
+
+  test('hides every editor affordance for a read-only member', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationAccess(E2E_ORGANIZATION_ID, {
+      permissions: [
+        'organization.read',
+        'organization.facilities.read',
+        'organization.equipment.read',
+      ],
+    });
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput({ hasChildren: true }));
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {
+      equipment: [equipmentOutput()],
+    });
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockFacilityPlanOverlay(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_ID,
+      facilityPlanOverlayOutput(),
+    );
+    await api.mockFacilityDescendants(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, [
+      facilityChildOutput(),
+    ]);
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.overlayZones).toHaveCount(2);
+
+    await expect(facilities.editorToolbar).toHaveCount(0);
+    await expect(facilities.zoneEditButton).toHaveCount(0);
+    await expect(facilities.pinEditButton).toHaveCount(0);
+    await expect(facilities.pinRemoveButton).toHaveCount(0);
   });
 });

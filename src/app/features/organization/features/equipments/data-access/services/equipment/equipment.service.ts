@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
+import { catchError, EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection, HydraItem, OptionOutput } from '@core/api/models';
 import type {
@@ -12,6 +12,7 @@ import type {
   AddAttachmentInput,
   EquipmentTagOutput,
   AddTagInput,
+  SetPlanPositionInput,
 } from '@features/organization/features/equipments/models';
 
 /**
@@ -399,6 +400,40 @@ export class EquipmentService extends HydraApiService {
       this.equipmentPath(organizationId, equipmentId),
       input,
     );
+  }
+
+  /**
+   * Method setPlanPosition
+   * @method setPlanPosition
+   *
+   * @description
+   * Pins or unpins one equipment item on its assigned facility's floor plan
+   * (`PUT /api/organizations/{organizationId}/equipment/{equipmentId}/plan-position`).
+   * Calls `this.http` directly, like `FacilityService.setPlanGeometry`: the
+   * endpoint echoes no stored Hydra item, so it cannot satisfy `this.put`'s
+   * `TOutput extends HydraItem` bound.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} equipmentId - The ID of the equipment whose pin is set.
+   * @param {SetPlanPositionInput} input - The position to write, or nulls to clear it.
+   *
+   * @return {Observable<void>} An observable completing once the write lands.
+   */
+  public setPlanPosition(
+    organizationId: string,
+    equipmentId: string,
+    input: SetPlanPositionInput,
+  ): Observable<void> {
+    return this.http
+      .put<void>(
+        this.buildUrl(`${this.equipmentPath(organizationId, equipmentId)}/plan-position`),
+        input,
+        { headers: this.buildHeaders(), withCredentials: true },
+      )
+      .pipe(catchError(this.handleError));
   }
 
   /**

@@ -1,0 +1,115 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-sm"
+    data-testid="facility-plan-pin-position-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@facility.plans.editor.pinDialog.title">Edit position</h3>
+      <p hlmDialogDescription>{{ equipmentName() }}</p>
+    </hlm-dialog-header>
+
+    <div class="flex gap-2">
+      <div class="flex-1">
+        <label
+          for="facility-plan-pin-position-x"
+          class="text-xs text-muted-foreground"
+          i18n="@@facility.plans.editor.pinDialog.xLabel"
+          >X (%)</label
+        >
+        <input
+          hlmInput
+          type="number"
+          step="0.1"
+          min="0"
+          max="100"
+          class="w-full"
+          id="facility-plan-pin-position-x"
+          data-testid="facility-plan-pin-position-x"
+          [attr.aria-invalid]="isInvalidValue(xDraft()) ? 'true' : null"
+          [attr.aria-describedby]="
+            isInvalidValue(xDraft()) ? 'facility-plan-pin-position-x-error' : null
+          "
+          [value]="xDraft()"
+          [disabled]="pending()"
+          (input)="xDraft.set($any($event.target).value)"
+        />
+        @if (isInvalidValue(xDraft())) {
+          <p
+            class="text-xs text-destructive"
+            role="alert"
+            id="facility-plan-pin-position-x-error"
+            data-testid="facility-plan-pin-position-x-error"
+            i18n="@@facility.plans.editor.invalidPercent"
+          >
+            Enter a value between 0 and 100
+          </p>
+        }
+      </div>
+      <div class="flex-1">
+        <label
+          for="facility-plan-pin-position-y"
+          class="text-xs text-muted-foreground"
+          i18n="@@facility.plans.editor.pinDialog.yLabel"
+          >Y (%)</label
+        >
+        <input
+          hlmInput
+          type="number"
+          step="0.1"
+          min="0"
+          max="100"
+          class="w-full"
+          id="facility-plan-pin-position-y"
+          data-testid="facility-plan-pin-position-y"
+          [attr.aria-invalid]="isInvalidValue(yDraft()) ? 'true' : null"
+          [attr.aria-describedby]="
+            isInvalidValue(yDraft()) ? 'facility-plan-pin-position-y-error' : null
+          "
+          [value]="yDraft()"
+          [disabled]="pending()"
+          (input)="yDraft.set($any($event.target).value)"
+        />
+        @if (isInvalidValue(yDraft())) {
+          <p
+            class="text-xs text-destructive"
+            role="alert"
+            id="facility-plan-pin-position-y-error"
+            data-testid="facility-plan-pin-position-y-error"
+            i18n="@@facility.plans.editor.invalidPercent"
+          >
+            Enter a value between 0 and 100
+          </p>
+        }
+      </div>
+    </div>
+
+    <hlm-dialog-footer class="justify-between">
+      <button
+        hlmBtn
+        type="button"
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="facility-plan-pin-position-remove"
+        [disabled]="pending()"
+        (click)="requestRemove()"
+        i18n="@@facility.plans.editor.pinDialog.remove"
+      >
+        Remove from plan
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="facility-plan-pin-position-submit"
+        [disabled]="pending() || !canSubmit()"
+        (click)="submit()"
+      >
+        @if (pending()) {
+          <hlm-spinner class="size-3.5" aria-hidden="true" />
+        }
+        <span i18n="@@common.save">Save</span>
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

@@ -125,6 +125,12 @@ Utility:
   `organization/FEATURE.md` § UI Conventions.
 - May be referenced by other organization subfeatures, but equipment ownership stays local to this subfeature.
 - Publishes the canonical `EQUIPMENT_TYPE_OPTIONS` through the feature public API (`index.ts`); the onboarding `create-equipment-form` consumes it so the equipment type catalog is not duplicated.
+- `EquipmentService` is depended on directly by the `facilities` subfeature's `FacilityPlansStore` (`listByFacility`, `setPlanPosition`) for the floor-plan editor's equipment-pin placement — the same cross-feature dependency `FacilityOverviewStore` already took on for the equipment status summary. `EquipmentService.setPlanPosition` (`PUT
+/api/organizations/{organizationId}/equipment/{equipmentId}/plan-position`)
+  places, moves, or clears (all-null body) one equipment item's pin on its
+  assigned facility's floor plan; the 409 the backend returns when the
+  equipment carries no facility assignment is reworded client-side by the
+  calling store, not here.
 
 ## Deletion (data-access only, no duplicate UI)
 

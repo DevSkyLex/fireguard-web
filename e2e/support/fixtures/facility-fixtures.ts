@@ -181,6 +181,24 @@ export function facilityAttachmentOutput(
 /** A second facility, used as the plan overlay's zone target. */
 export const E2E_FACILITY_PLAN_ZONE_ID = 'e2e-facility-plan-zone-1';
 
+/** A third, undrawn child facility — the plan editor's `draw-zone` picker candidate. */
+export const E2E_FACILITY_PLAN_NEW_ZONE_ID = 'e2e-facility-plan-zone-new';
+
+/** A `zone`-type direct child not yet drawn on the plan, offered by the `draw-zone` picker. */
+export function facilityZoneCandidateOutput(
+  overrides: Partial<FacilityOutputFixture> = {},
+): FacilityOutputFixture {
+  return facilityOutput({
+    id: E2E_FACILITY_PLAN_NEW_ZONE_ID,
+    '@id': `/api/facilities/${E2E_FACILITY_PLAN_NEW_ZONE_ID}`,
+    parentFacilityId: E2E_FACILITY_ID,
+    type: 'zone',
+    name: 'Break Room',
+    code: null,
+    ...overrides,
+  });
+}
+
 /** The equipment the plan overlay pins to. */
 export const E2E_FACILITY_PLAN_EQUIPMENT_ID = 'e2e-facility-plan-equipment-1';
 

@@ -443,7 +443,9 @@ export class ApiMock {
   /**
    * Mocks `GET /api/organizations/{organizationId}/facilities/{facility.id}/children` —
    * the one-branch-at-a-time collection the assets explorer's `FacilityTreeStore`
-   * fetches when a tree node is expanded.
+   * fetches when a tree node is expanded, and the direct-children collection
+   * `FacilityPlansStore.ensureZoneCandidatesLoaded` fetches for the plan
+   * editor's `draw-zone` picker.
    */
   public async mockFacilityChildren(
     organizationId: string,
@@ -485,6 +487,29 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `PUT /api/organizations/{organizationId}/facilities/{facilityId}/plan-geometry` —
+   * the plan editor's zone-outline write. `onRequestBody`, when given, is
+   * invoked with the parsed request body so a spec can assert what
+   * `FacilityService.setPlanGeometry` sent.
+   */
+  public async mockFacilityPlanGeometry(
+    organizationId: string,
+    facilityId: string,
+    onRequestBody?: (body: unknown) => void,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/facilities/${facilityId}/plan-geometry(\\?.*)?$`,
+      ),
+      async (route) => {
+        onRequestBody?.(route.request().postDataJSON());
+        await route.fulfill({ status: 204 });
+      },
+    );
+  }
+
+  /**
    * Mocks a failing `POST …/facilities/{facilityId}/move` — the backend
    * refuses the re-parent (e.g. the target is a descendant, or a
    * permission/conflict error). `FacilityTreeStore.move` rolls the
@@ -513,6 +538,29 @@ export class ApiMock {
           detail: 'The facility could not be moved.',
           ...error,
         });
+      },
+    );
+  }
+
+  /**
+   * Mocks `PUT /api/organizations/{organizationId}/equipment/{equipmentId}/plan-position` —
+   * the plan editor's equipment-pin write. `onRequestBody`, when given, is
+   * invoked with the parsed request body so a spec can assert what
+   * `EquipmentService.setPlanPosition` sent.
+   */
+  public async mockEquipmentPlanPosition(
+    organizationId: string,
+    equipmentId: string,
+    onRequestBody?: (body: unknown) => void,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/equipment/${equipmentId}/plan-position(\\?.*)?$`,
+      ),
+      async (route) => {
+        onRequestBody?.(route.request().postDataJSON());
+        await route.fulfill({ status: 204 });
       },
     );
   }

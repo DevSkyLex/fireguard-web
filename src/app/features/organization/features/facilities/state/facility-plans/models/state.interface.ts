@@ -1,8 +1,21 @@
 import type { CallState } from '@core/request-state';
+import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type {
   FacilityAttachmentOutput,
+  FacilityOutput,
   FacilityPlanOverlayOutput,
 } from '@features/organization/features/facilities/models';
+
+/**
+ * Type FacilityPlanEditMode
+ *
+ * @description
+ * The Plans tab's current pointer-editing mode: drawing a new zone outline,
+ * placing an unplaced equipment item, or neither.
+ *
+ * @since 1.4.0
+ */
+export type FacilityPlanEditMode = 'none' | 'draw-zone' | 'place-pin';
 
 /**
  * Interface FacilityPlansState
@@ -10,11 +23,12 @@ import type {
  *
  * @description
  * Auxiliary state for {@link FacilityPlansStore}. The plan entities
- * themselves are managed by `withEntities` — this interface only covers the
+ * themselves are managed by `withEntities` — this interface covers the
  * per-action call states, the selection, the selected plan's decoded image
- * bytes, and its read-only zone/equipment overlay.
+ * bytes, its read-only zone/equipment overlay, and the editor's in-progress
+ * draw/place state.
  *
- * @version 1.2.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -59,6 +73,9 @@ export interface FacilityPlansState {
    */
   readonly organizationId: string | null;
 
+  /** The facility owning the Plans tab, set by `load`; the editor's write scope. */
+  readonly facilityId: string | null;
+
   /** Tracks the selected plan's overlay (zones/equipment) request. */
   readonly overlayCallState: CallState;
 
@@ -70,4 +87,34 @@ export interface FacilityPlansState {
 
   /** Whether the overlay's equipment pins are shown. */
   readonly showEquipment: boolean;
+
+  /** The editor's current pointer-editing mode. */
+  readonly editMode: FacilityPlanEditMode;
+
+  /** The facility a `draw-zone` outline is being drawn for; null outside that mode. */
+  readonly drawTargetFacilityId: string | null;
+
+  /** The in-progress `draw-zone` outline's vertices, in normalized `[0, 1]` image coordinates. */
+  readonly draftPoints: ReadonlyArray<readonly [number, number]>;
+
+  /** The equipment a `place-pin` placement is for; null outside that mode. */
+  readonly placeEquipmentId: string | null;
+
+  /** Tracks a zone outline's save (draw finish or clear) request. */
+  readonly saveZoneGeometryCallState: CallState;
+
+  /** Tracks an equipment pin's save (place, drag-move, or remove) request. */
+  readonly savePinPositionCallState: CallState;
+
+  /** This facility's direct children of type `zone`/`area`, candidates for `draw-zone`. */
+  readonly zoneCandidates: ReadonlyArray<FacilityOutput>;
+
+  /** Tracks the `zoneCandidates` request. */
+  readonly zoneCandidatesCallState: CallState;
+
+  /** This facility's assigned equipment, candidates for `place-pin`. */
+  readonly facilityEquipment: ReadonlyArray<EquipmentOutput>;
+
+  /** Tracks the `facilityEquipment` request. */
+  readonly facilityEquipmentCallState: CallState;
 }

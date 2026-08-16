@@ -1,0 +1,114 @@
+<div class="flex h-full min-h-0 w-full flex-col gap-2" data-testid="plan-viewer">
+  <div class="flex items-center justify-end gap-1">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="icon-sm"
+      class="max-sm:size-11"
+      data-testid="plan-viewer-zoom-out"
+      i18n-aria-label="@@planViewer.zoomOut"
+      aria-label="Zoom out"
+      [disabled]="status() !== 'loaded'"
+      (click)="zoomOut()"
+    >
+      <ng-icon name="lucideZoomOut" aria-hidden="true" />
+    </button>
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="icon-sm"
+      class="max-sm:size-11"
+      data-testid="plan-viewer-zoom-reset"
+      i18n-aria-label="@@planViewer.resetZoom"
+      aria-label="Reset zoom"
+      [disabled]="status() !== 'loaded'"
+      (click)="resetView()"
+    >
+      <ng-icon name="lucideRotateCcw" aria-hidden="true" />
+    </button>
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="icon-sm"
+      class="max-sm:size-11"
+      data-testid="plan-viewer-zoom-in"
+      i18n-aria-label="@@planViewer.zoomIn"
+      aria-label="Zoom in"
+      [disabled]="status() !== 'loaded'"
+      (click)="zoomIn()"
+    >
+      <ng-icon name="lucideZoomIn" aria-hidden="true" />
+    </button>
+  </div>
+
+  <div
+    #viewport
+    class="relative min-h-0 flex-1 touch-none overflow-hidden rounded-lg border border-border bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    role="group"
+    [attr.aria-label]="alt()"
+    i18n-aria-roledescription="@@planViewer.roleDescription"
+    aria-roledescription="floor plan viewer"
+    tabindex="0"
+    data-testid="plan-viewer-stage"
+    (wheel)="onWheel($event)"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+    (pointerleave)="onPointerUp($event)"
+    (keydown)="onKeydown($event)"
+  >
+    @if (status() === 'loading') {
+      <div
+        hlmSkeleton
+        class="absolute inset-4"
+        role="status"
+        i18n-aria-label="@@planViewer.loading"
+        aria-label="Loading floor plan"
+        data-testid="plan-viewer-skeleton"
+      ></div>
+    }
+
+    @if (status() === 'error') {
+      <p
+        class="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-destructive"
+        role="alert"
+        data-testid="plan-viewer-error"
+        i18n="@@planViewer.loadError"
+      >
+        The floor plan image could not be loaded.
+      </p>
+    }
+
+    <div
+      #frame
+      class="absolute inset-1 flex items-center justify-center"
+      data-testid="plan-viewer-frame"
+      [class.invisible]="status() !== 'loaded'"
+    >
+      <div
+        class="relative h-full w-full"
+        data-testid="plan-viewer-content"
+        [style.width.px]="contentSize()?.width ?? null"
+        [style.height.px]="contentSize()?.height ?? null"
+        [style.transform]="stageTransform()"
+      >
+        <img
+          [src]="src()"
+          [alt]="alt()"
+          class="block h-full w-full object-contain select-none"
+          draggable="false"
+          (load)="onImageLoad($event)"
+          (error)="onImageError()"
+        />
+
+        @if (overlayTemplate(); as tpl) {
+          <ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="overlayContext()" />
+        }
+      </div>
+    </div>
+  </div>
+</div>

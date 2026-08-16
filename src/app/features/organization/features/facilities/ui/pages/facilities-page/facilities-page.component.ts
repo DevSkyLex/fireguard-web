@@ -30,7 +30,12 @@ import {
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import type {
+  FacilityListSort,
+  FacilityOutput,
+  FacilitySortField,
+} from '@features/organization/features/facilities/models';
+import { FacilityListPreferencesService } from '@features/organization/features/facilities/services';
 import {
   FacilityStore,
   type FacilityStoreType,
@@ -174,8 +179,24 @@ export class FacilitiesPage {
   /** Current route, anchoring the relative query-param navigation. */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
+  /** The cookie-backed memory of how this list was left ordered. */
+  private readonly preferences: FacilityListPreferencesService =
+    inject<FacilityListPreferencesService>(FacilityListPreferencesService);
+
   /** Whether the roots render as a table or as cards. Not URL-synced — a per-visit preference. */
   protected readonly layout: WritableSignal<FacilityLayout> = signal<FacilityLayout>('list');
+
+  /**
+   * Property sortOrder
+   * @readonly
+   * @description The active ordering, restored from the preferences cookie. Applies to the shared dataset — the grid dataview reflects it, and sorting controls live only in the table's heads (`FEATURE.md`).
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<FacilityListSort>}
+   */
+  protected readonly sortOrder: WritableSignal<FacilityListSort> = signal<FacilityListSort>(
+    this.preferences.readSort(),
+  );
 
   /** Whether archived facilities are included in the current page. */
   protected readonly includeArchived: WritableSignal<boolean> = signal<boolean>(false);
@@ -369,6 +390,7 @@ export class FacilitiesPage {
       const pageSize: number = this.pageSize();
       const search: string = this.searchTerm();
       const includeArchived: boolean = this.includeArchived();
+      const sort: FacilityListSort = this.sortOrder();
 
       untracked((): void => {
         this.store.loadRootFacilities({
@@ -378,6 +400,7 @@ export class FacilitiesPage {
             itemsPerPage: pageSize,
             search: search === '' ? undefined : search,
             includeArchived: includeArchived || undefined,
+            sort,
           },
         });
       });
@@ -563,8 +586,27 @@ export class FacilitiesPage {
         itemsPerPage: this.pageSize(),
         search: this.searchTerm() === '' ? undefined : this.searchTerm(),
         includeArchived: this.includeArchived() || undefined,
+        sort: this.sortOrder(),
       },
     });
+  }
+
+  /**
+   * Method applySortField
+   * @description Orders by a column head. Re-picking the active field reverses it, which is what a second click on a sorted column means everywhere else. Resets to the first page like every other narrowing change.
+   * @access protected
+   * @since 1.4.0
+   * @param {FacilitySortField} field - The column's field.
+   * @returns {void}
+   */
+  protected applySortField(field: FacilitySortField): void {
+    this.sortOrder.update((current: FacilityListSort) =>
+      current.field === field
+        ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { field, direction: current.direction },
+    );
+    this.preferences.write(this.sortOrder());
+    this.navigateQuery({ page: null });
   }
 
   /**

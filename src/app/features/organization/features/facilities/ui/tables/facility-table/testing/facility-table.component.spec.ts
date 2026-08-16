@@ -32,6 +32,7 @@ describe('FacilityTable', () => {
     fixture.componentRef.setInput('items', items);
     fixture.componentRef.setInput('loading', loading);
     fixture.componentRef.setInput('detailRouteBase', ['/organizations', 'org-1', 'facilities']);
+    fixture.componentRef.setInput('sortOrder', { field: 'name', direction: 'asc' });
     await fixture.whenStable();
   };
 
@@ -168,6 +169,35 @@ describe('FacilityTable', () => {
       ?.click();
 
     expect(emitted).toEqual([facility({ id: 'facility-9', status: 'archived' })]);
+  });
+
+  it('should mark the active sort field with aria-sort and hide it from the rest', async () => {
+    await render([facility()]);
+    fixture.componentRef.setInput('sortOrder', { field: 'code', direction: 'desc' });
+    await fixture.whenStable();
+
+    const heads: HTMLElement[] = [...root().querySelectorAll<HTMLElement>('th[aria-sort]')];
+    const codeHead = heads.find((head) =>
+      head.querySelector('[data-testid="facility-table-sort-code"]'),
+    );
+    const nameHead = heads.find((head) =>
+      head.querySelector('[data-testid="facility-table-sort-name"]'),
+    );
+
+    expect(codeHead?.getAttribute('aria-sort')).toBe('descending');
+    expect(nameHead?.getAttribute('aria-sort')).toBe('none');
+  });
+
+  it('should emit the field when a sortable head is activated', async () => {
+    const emitted: string[] = [];
+    fixture.componentInstance.sortChanged.subscribe((field: string): void => {
+      emitted.push(field);
+    });
+
+    await render([facility()]);
+    root().querySelector<HTMLButtonElement>('[data-testid="facility-table-sort-status"]')?.click();
+
+    expect(emitted).toEqual(['status']);
   });
 
   it('should carry an accessible caption', async () => {

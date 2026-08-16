@@ -336,6 +336,19 @@ param is synced for roots). Row actions are Open (into the record, which is
 also the edit surface — there is no separate row-level edit action) and
 Archive/Restore.
 
+`FacilityTable`'s Name, Type, Code and Status heads are sortable — the
+backend's own `order[<field>]` whitelist (`name`, `type`, `status`,
+`createdAt`, `updatedAt`, `code`; `ListFacilitiesProvider`) intersected with
+the columns this table renders. `FacilitiesPage.sortOrder` is sent through
+the typed `RequestOptions.sort` option (`@core/api`, `HydraApiService.buildParams`
+serializes it as `order[<field>]=<direction>`) rather than a hand-built params
+entry, and is remembered across visits by
+`FacilityListPreferencesService` (`fg-facility-list` cookie) — the same
+cookie-preference shape `InterventionListPreferencesService` uses, kept
+feature-local rather than shared (`ARCHITECTURE.md` §2.9). Sorting applies to
+the one server-side dataset both the table and `FacilityGrid` read; the grid
+has no sort controls of its own — sorting lives in the table's heads only.
+
 ## Facility Hierarchy (Detail Overview)
 
 The facility detail page's **Overview** tab renders the descendant hierarchy

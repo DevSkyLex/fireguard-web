@@ -132,6 +132,8 @@
           [loading]="store.isLoadingRootFacilities() && items().length === 0"
           [canWrite]="canWrite()"
           [detailRouteBase]="listRouteBase()"
+          [sortOrder]="sortOrder()"
+          (sortChanged)="applySortField($event)"
           (archiveRequested)="onArchiveRequested($event)"
           (restoreRequested)="onRestoreRequested($event)"
         />

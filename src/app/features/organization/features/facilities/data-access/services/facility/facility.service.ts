@@ -102,8 +102,9 @@ export class FacilityService extends HydraApiService {
    *
    * Mirrors the backend contract for the hierarchical TreeTable:
    * - `rootsOnly: true` returns only root facilities (no parent),
-   * - `includeArchived`, `status`, `hasCoordinates`, `search` and `order` are
-   *   forwarded as query parameters,
+   * - `includeArchived`, `status`, `hasCoordinates` and `search` are
+   *   forwarded as query parameters, and the typed `sort` option is
+   *   serialized by `HydraApiService.buildParams` as `order[<field>]=<direction>`,
    * - direct children are fetched separately via {@link listChildren}.
    *
    * @param {string} organizationId - The ID of the organization.
@@ -125,17 +126,13 @@ export class FacilityService extends HydraApiService {
     if (options?.status) params['status'] = options.status;
     if (options?.hasCoordinates !== undefined) params['hasCoordinates'] = options.hasCoordinates;
     if (options?.search) params['search'] = options.search;
-    if (options?.order) {
-      for (const [field, direction] of Object.entries(options.order)) {
-        params[`order[${field}]`] = direction;
-      }
-    }
 
     return this.getCollection<FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities`,
       {
         page: options?.page,
         itemsPerPage: options?.itemsPerPage,
+        sort: options?.sort,
         params,
       },
     );

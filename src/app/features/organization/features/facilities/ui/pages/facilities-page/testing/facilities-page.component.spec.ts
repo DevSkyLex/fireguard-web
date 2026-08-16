@@ -265,6 +265,43 @@ describe('FacilitiesPage', () => {
     );
   });
 
+  it('should default the ordering to name/asc and toggle its direction on a re-picked field', async () => {
+    fixture = await createPage();
+
+    expect(loadRootFacilities.mock.calls[0][0].options.sort).toEqual({
+      field: 'name',
+      direction: 'asc',
+    });
+
+    fixture.componentInstance['applySortField']('status');
+    await fixture.whenStable();
+
+    expect(loadRootFacilities.mock.calls.at(-1)?.[0].options.sort).toEqual({
+      field: 'status',
+      direction: 'asc',
+    });
+
+    fixture.componentInstance['applySortField']('status');
+    await fixture.whenStable();
+
+    expect(loadRootFacilities.mock.calls.at(-1)?.[0].options.sort).toEqual({
+      field: 'status',
+      direction: 'desc',
+    });
+  });
+
+  it('should return to the first page when the ordering changes', async () => {
+    fixture = await createPage({ page: '3' });
+
+    fixture.componentInstance['applySortField']('type');
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { page: null } }),
+    );
+  });
+
   it('should send an archive request for the requested facility', async () => {
     fixture = await createPage();
 

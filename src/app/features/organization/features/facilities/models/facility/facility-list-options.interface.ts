@@ -1,14 +1,5 @@
-import type { PaginationOptions, RequestOptions } from '@core/api/models';
+import type { PaginationOptions, RequestOptions, SortingOptions } from '@core/api/models';
 import type { FacilityStatus } from './facility-output.interface';
-
-/**
- * Type FacilityOrderDirection
- *
- * @description
- * Sort direction accepted by the API Platform ordering parameters
- * (e.g. `order[name]=asc`).
- */
-export type FacilityOrderDirection = 'asc' | 'desc';
 
 /**
  * Interface FacilityListFilter
@@ -88,18 +79,6 @@ export interface FacilityListFilter {
   readonly search?: string;
 
   /**
-   * Property order
-   * @readonly
-   *
-   * @description
-   * API Platform ordering map serialized as `order[field]=direction`
-   * query parameters (e.g. `{ name: 'asc' }` → `order[name]=asc`).
-   *
-   * @type {Readonly<Record<string, FacilityOrderDirection>>}
-   */
-  readonly order?: Readonly<Record<string, FacilityOrderDirection>>;
-
-  /**
    * Property params
    * @readonly
    *
@@ -119,9 +98,11 @@ export interface FacilityListFilter {
  *
  * @description
  * Complete query options supported by the facilities listing endpoint,
- * combining root filters with pagination.
+ * combining root filters with pagination and the typed `sort` option
+ * (`SortingOptions`, `@core/api`), serialized by `HydraApiService.buildParams`
+ * as `order[<field>]=<direction>`.
  */
-export type FacilityListOptions = FacilityListFilter & PaginationOptions;
+export type FacilityListOptions = FacilityListFilter & PaginationOptions & SortingOptions;
 
 /**
  * Type FacilityChildrenOptions

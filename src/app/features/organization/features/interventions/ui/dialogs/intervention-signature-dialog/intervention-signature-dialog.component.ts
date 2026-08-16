@@ -36,9 +36,10 @@ import { HlmDialogImports } from '@shared/ui/dialog';
  * dialog's own content is not in the DOM until {@link visible} is `true`.
  * The pad is inherently pointer-driven and offers no keyboard drawing
  * simulation; the dialog copy states its purpose and the surrounding
- * `hlm-dialog` still gives it a focus trap and Escape-to-dismiss.
+ * `hlm-dialog` still gives it a focus trap and Escape-to-dismiss, blocked
+ * only while {@link busy} — the confirmed signature's upload — is in flight.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html

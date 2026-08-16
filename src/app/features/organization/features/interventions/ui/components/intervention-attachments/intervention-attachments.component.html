@@ -198,7 +198,7 @@
                 aria-label="Delete this file"
                 [disabled]="!online() || isRowPending(attachment)"
                 [attr.aria-busy]="isRowPending(attachment) ? 'true' : null"
-                (click)="pendingDelete.set(attachment)"
+                (click)="deleteRequested.emit(attachment)"
               >
                 @if (isRowPending(attachment)) {
                   <hlm-spinner size="xs" aria-hidden="true" />
@@ -213,32 +213,3 @@
     </ul>
   }
 </div>
-
-<hlm-alert-dialog
-  [state]="pendingDelete() !== null ? 'open' : 'closed'"
-  (stateChanged)="onDeleteDialogStateChanged($event)"
->
-  <hlm-alert-dialog-content
-    *hlmAlertDialogPortal
-    data-testid="intervention-attachment-delete-dialog"
-  >
-    <hlm-alert-dialog-header>
-      <h2 hlmAlertDialogTitle i18n="@@intervention.attachments.deleteTitle">Delete this file?</h2>
-      <p hlmAlertDialogDescription i18n="@@intervention.attachments.deleteText">
-        {{ pendingDelete()?.fileName }} will be permanently removed from this intervention.
-      </p>
-    </hlm-alert-dialog-header>
-    <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
-      <button
-        hlmAlertDialogAction
-        variant="destructive"
-        data-testid="intervention-attachment-delete-confirm"
-        (click)="confirmDelete()"
-        i18n="@@intervention.attachments.deleteConfirm"
-      >
-        Delete
-      </button>
-    </hlm-alert-dialog-footer>
-  </hlm-alert-dialog-content>
-</hlm-alert-dialog>

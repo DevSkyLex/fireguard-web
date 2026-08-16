@@ -1,8 +1,8 @@
-<hlm-sheet side="right" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
+<hlm-sheet [side]="side()" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
   <hlm-sheet-content
     *hlmSheetPortal
     id="intervention-discussion-sheet"
-    class="w-full! overflow-y-auto sm:w-[560px]! sm:max-w-none!"
+    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[560px]! sm:max-w-none!"
     data-testid="intervention-discussion-sheet"
   >
     <hlm-sheet-header>

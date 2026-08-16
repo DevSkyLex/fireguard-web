@@ -37,9 +37,10 @@ import { HlmFieldImports } from '@shared/ui/field';
  * its open state from {@link request} being non-null. The picked member is
  * this dialog's own draft, preselected from `currentResponsible` and reset
  * whenever {@link request} changes; the caller keeps every write and decides
- * what to dispatch from {@link submitted}.
+ * what to dispatch from {@link submitted}. `disableClose` stays bound to
+ * {@link busy} while the assignment write is in flight.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */

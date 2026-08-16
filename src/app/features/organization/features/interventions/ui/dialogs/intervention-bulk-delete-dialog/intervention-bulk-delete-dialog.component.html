@@ -1,0 +1,49 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="busy()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="interventions-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle>{{ title() }}</h2>
+      <p hlmAlertDialogDescription>{{ description() }}</p>
+    </hlm-alert-dialog-header>
+
+    @if (errorMessage(); as message) {
+      <p role="alert" class="text-sm text-destructive" data-testid="interventions-delete-error">
+        {{ message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="busy() ? 'true' : null"
+        [attr.aria-busy]="busy() ? 'true' : null"
+        [class.opacity-50]="busy()"
+        [class.pointer-events-none]="busy()"
+        (click)="busy() || dismissed.emit()"
+        i18n="@@intervention.list.deleteConfirmCancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="interventions-delete-confirm"
+        [attr.aria-disabled]="busy() ? 'true' : null"
+        [attr.aria-busy]="busy() ? 'true' : null"
+        [class.opacity-50]="busy()"
+        [class.pointer-events-none]="busy()"
+        (click)="busy() || confirmed.emit()"
+        i18n="@@intervention.list.deleteConfirmAction"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

@@ -1,0 +1,25 @@
+<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-sync-discard-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@intervention.sync.discardTitle">
+        Discard the blocked changes?
+      </h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.sync.discardText">
+        The changes that could not be replayed will be permanently lost. Work recorded on the server
+        is not affected.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="intervention-sync-discard-confirm"
+        (click)="confirmed.emit()"
+        i18n="@@intervention.sync.discardConfirm"
+      >
+        Discard
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

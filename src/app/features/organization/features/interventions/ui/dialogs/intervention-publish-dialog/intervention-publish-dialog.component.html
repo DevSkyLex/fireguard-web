@@ -1,0 +1,121 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="publishing()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content
+    class="sm:max-w-lg!"
+    *hlmAlertDialogPortal
+    data-testid="intervention-detail-publish-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@intervention.publish.header">Publish intervention</h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.publish.stake">
+        This writes the intervention to the compliance record. Once published it is locked and
+        cannot be edited.
+      </p>
+    </hlm-alert-dialog-header>
+
+    @if (intervention(); as intervention) {
+      <app-intervention-publication-summary
+        [pendingChanges]="pendingChangesCount()"
+        [inspections]="intervention.inspectionsCount"
+        [revision]="intervention.revision"
+        [signed]="intervention.hasSignature"
+      />
+    }
+
+    @if (publicationError(); as message) {
+      <div
+        hlmAlert
+        variant="destructive"
+        class="border-destructive/30 bg-destructive/5"
+        role="alert"
+        data-testid="intervention-detail-publish-error"
+      >
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle>{{ message }}</p>
+      </div>
+    }
+
+    @if (publicationTimedOut() || publishing()) {
+      <div class="flex flex-col gap-2">
+        <p
+          class="flex items-center gap-2 text-sm text-muted-foreground"
+          role="status"
+          data-testid="intervention-detail-publish-progress"
+        >
+          @if (publishing()) {
+            <hlm-spinner class="size-4" aria-hidden="true" />
+            @if (publicationLongRunning()) {
+              <span i18n="@@intervention.publish.stillRunning">
+                Still publishing — large interventions can take a couple of minutes.
+              </span>
+            } @else {
+              <span i18n="@@intervention.publish.inProgress">
+                Writing to the compliance record — do not close this window.
+              </span>
+            }
+          } @else {
+            <ng-icon name="lucideClock" aria-hidden="true" />
+            <span i18n="@@intervention.publish.timedOutMessage">
+              Publication is still running server-side — it will finish in the background.
+            </span>
+          }
+        </p>
+        @if (publicationTimedOut()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="self-start max-sm:min-h-11"
+            data-testid="intervention-detail-publish-recheck"
+            [attr.aria-disabled]="publishing() ? 'true' : null"
+            [attr.aria-busy]="publishing() ? 'true' : null"
+            [class.opacity-50]="publishing()"
+            [class.pointer-events-none]="publishing()"
+            (click)="publishing() || recheckRequested.emit()"
+          >
+            <span i18n="@@intervention.publish.recheck">Check again</span>
+          </button>
+        }
+      </div>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        [attr.aria-disabled]="publishing() ? 'true' : null"
+        [attr.aria-busy]="publishing() ? 'true' : null"
+        [class.opacity-50]="publishing()"
+        [class.pointer-events-none]="publishing()"
+        (click)="publishing() || dismissed.emit()"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
+      @if (!publicationTimedOut()) {
+        <button
+          hlmAlertDialogAction
+          class="max-sm:min-h-11"
+          data-testid="intervention-detail-publish-confirm"
+          [attr.aria-disabled]="publishing() ? 'true' : null"
+          [attr.aria-busy]="publishing() ? 'true' : null"
+          [class.opacity-50]="publishing()"
+          [class.pointer-events-none]="publishing()"
+          (click)="publishing() || confirmed.emit()"
+        >
+          @if (publishing()) {
+            <span i18n="@@intervention.publish.pending">Publishing…</span>
+          } @else {
+            <span i18n="@@intervention.publish.accept">Publish</span>
+          }
+        </button>
+      }
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

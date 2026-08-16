@@ -1,4 +1,4 @@
-<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+<hlm-dialog [state]="dialogState()" [disableClose]="busy()" (stateChanged)="onStateChanged($event)">
   <hlm-dialog-content class="sm:max-w-md" data-testid="intervention-assign-dialog" *hlmDialogPortal>
     <hlm-dialog-header>
       <h3 hlmDialogTitle i18n="@@intervention.assign.header">Assign a responsible</h3>

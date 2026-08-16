@@ -21,14 +21,12 @@ import {
   lucidePaperclip,
   lucideTrash2,
 } from '@ng-icons/lucide';
-import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import {
   resolveInterventionTag,
   type InterventionAttachmentOutput,
   type InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import { EmptyState } from '@shared/empty-state';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
@@ -69,17 +67,20 @@ const MAX_ATTACHMENTS = 25;
  * @description
  * The intervention's attached files: metadata rows (name, size, label,
  * upload date, a per-row download button), a file picker, a camera capture
- * button for field photo evidence, and a confirm-gated per-row delete that
- * locks only its own row. Picks are pre-checked against the backend's MIME
- * whitelist, 25-file cardinality cap, and — for non-image files only, since
- * the page compresses photos before upload — the 10 MiB ceiling, so an
- * invalid file fails fast; the server stays authoritative. A `n / 25`
- * counter appears once the list is half full and the pickers close at the
- * ceiling — the alternative is an enabled button that can only ever answer
- * 422. Presentational — the page owns the store calls, the photo
- * compression, and the fetch-then-save that a download requires.
+ * button for field photo evidence, and a per-row delete button that emits
+ * {@link deleteRequested} straight away — the page owns the confirmation
+ * (`app-intervention-attachment-delete-dialog`) and locks the row through
+ * the store's `pendingAttachmentIds` once accepted. Picks are pre-checked
+ * against the backend's MIME whitelist, 25-file cardinality cap, and — for
+ * non-image files only, since the page compresses photos before upload —
+ * the 10 MiB ceiling, so an invalid file fails fast; the server stays
+ * authoritative. A `n / 25` counter appears once the list is half full and
+ * the pickers close at the ceiling — the alternative is an enabled button
+ * that can only ever answer 422. Presentational — the page owns the store
+ * calls, the photo compression, and the fetch-then-save that a download
+ * requires.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @example
  * ```html
@@ -91,7 +92,7 @@ const MAX_ATTACHMENTS = 25;
  *   [uploading]="attachmentUploading()"
  *   [online]="online()"
  *   (filesPicked)="uploadAttachments($event)"
- *   (deleteRequested)="removeAttachment($event)"
+ *   (deleteRequested)="pendingAttachmentDelete.set($event)"
  *   (downloadRequested)="downloadAttachment($event)"
  * />
  * ```
@@ -104,7 +105,6 @@ const MAX_ATTACHMENTS = 25;
     NgIcon,
     HlmButton,
     EmptyState,
-    ...HlmAlertDialogImports,
     ...HlmBadgeImports,
     ...HlmItemImports,
     ...HlmSpinnerImports,
@@ -217,7 +217,7 @@ export class InterventionAttachments {
   /**
    * Property deleteRequested
    * @readonly
-   * @description Emits the attachment whose confirmed deletion the page should perform.
+   * @description Emits the row's attachment on a delete click; the page confirms and calls the store.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<InterventionAttachmentOutput>}
@@ -248,10 +248,6 @@ export class InterventionAttachments {
     [0, new Intl.NumberFormat(this.locale, { maximumFractionDigits: 0 })],
     [1, new Intl.NumberFormat(this.locale, { maximumFractionDigits: 1 })],
   ]);
-
-  /** The attachment awaiting delete confirmation, if any. */
-  protected readonly pendingDelete: WritableSignal<InterventionAttachmentOutput | null> =
-    signal<InterventionAttachmentOutput | null>(null);
 
   /** The last pick's local rejection, cleared on the next valid pick. */
   protected readonly pickError: WritableSignal<string | null> = signal<string | null>(null);
@@ -478,31 +474,6 @@ export class InterventionAttachments {
     const formatted: string = format?.format(Math.max(megabytes, 0.1)) ?? megabytes.toFixed(1);
 
     return `${formatted} MB`;
-  }
-
-  /**
-   * Method onDeleteDialogStateChanged
-   * @description Mirrors an overlay-initiated close back into the pending target.
-   * @access protected
-   * @since 1.0.0
-   * @param {BrnDialogState} state - The overlay's new state.
-   * @returns {void}
-   */
-  protected onDeleteDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'closed') this.pendingDelete.set(null);
-  }
-
-  /**
-   * Method confirmDelete
-   * @description Emits the confirmed deletion and closes the dialog.
-   * @access protected
-   * @since 1.0.0
-   * @returns {void}
-   */
-  protected confirmDelete(): void {
-    const target: InterventionAttachmentOutput | null = this.pendingDelete();
-    this.pendingDelete.set(null);
-    if (target) this.deleteRequested.emit(target);
   }
   //#endregion
 }

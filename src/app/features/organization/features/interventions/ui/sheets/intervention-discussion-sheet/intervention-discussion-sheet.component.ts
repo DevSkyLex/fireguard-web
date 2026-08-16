@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
+import { sheetSide } from '@shared/sheet-side';
 import { HlmSheetImports } from '@shared/ui/sheet';
 
 /**
@@ -27,7 +28,11 @@ import { HlmSheetImports } from '@shared/ui/sheet';
  * (it provides its own `MessageThreadStore`), so composing it here mirrors how
  * {@link InterventionWorkItemSheet} composes its form.
  *
- * @since 1.0.0
+ * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
+ * instead of a right-hand panel, so the thread's own composer lands in the
+ * thumb zone.
+ *
+ * @since 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -94,6 +99,16 @@ export class InterventionDiscussionSheet {
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
+
+  /**
+   * Property side
+   * @readonly
+   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#endregion
 
   //#region Methods

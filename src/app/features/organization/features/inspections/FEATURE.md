@@ -42,11 +42,15 @@ the UI.
 ## UI (this pass)
 
 - `ui/pages/inspections-page` (`InspectionsPage`) — an `hlmTable` of the
-  organization's inspections (`InspectionTable`), a status/result filter
-  popover, paginated server-side, and a "New inspection" link
-  (`INSPECTION_WRITE`-gated). No search box: unlike facilities/equipments,
-  `InspectionOutput` carries no searchable text field. No row menu and no
-  bulk actions — the record itself is where every property is edited.
+  organization's inspections (`InspectionTable`), a status/result editable
+  filter chip row (`app-collection-filter-bar`, `@shared/collection-filters`,
+  replacing the earlier popover), paginated server-side, and a "New
+  inspection" link (`INSPECTION_WRITE`-gated). No search box: unlike
+  facilities/equipments, `InspectionOutput` carries no searchable text field,
+  so this page also renders no `app-collection-toolbar` — with neither a
+  search box nor a toolbar-end control left to hold, the toolbar shell would
+  be empty. No row menu and no bulk actions — the record itself is where
+  every property is edited.
 - `ui/pages/inspection-create-page` (`InspectionCreatePage`) —
   `ui/forms/inspection-create-form`, asking only for what
   `CreateInspectionInput` requires: `equipmentId` (a combobox sourced from
@@ -122,9 +126,13 @@ workflow actually needs to set the field.
 - `/:inspectionId/edit` is retired and **redirects onto the record**, so
   installed applications and bookmarks still resolve.
 - Depends on organization route context from the parent feature.
-- Consumes `ListPagination` from the parent `features/organization` feature
-  (`@features/organization/ui/components`) for the list page's shared pagination band — see
-  `organization/FEATURE.md` § UI Conventions.
+- Consumes `CollectionPagination` from `@shared/collection-pagination`, `CollectionFilterBar` and
+  `CollectionFilterToggle` from `@shared/collection-filters`, and `CollectionToolbar` from
+  `@shared/collection-toolbar`, for the list page's shared pagination band, editable
+  status/result filter chip row and its "Filters" toggle — see `organization/FEATURE.md` § UI
+  Conventions. Inspections carry no searchable text field (`InspectionStore` exposes no search
+  filter), so this page renders no `app-collection-search-box`; its `app-collection-toolbar`
+  carries the "Filters" toggle alone.
 - May compose facility, equipment, and checklist data as supporting inputs for inspection workflows.
 - Must not absorb ownership of those sibling subfeatures just because the create flow depends on them.
 

@@ -1,30 +1,30 @@
 import { ChangeDetectionStrategy, Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { ListToolbar } from '../list-toolbar.component';
+import { CollectionToolbar } from '../collection-toolbar.component';
 
 @Component({
-  selector: 'app-list-toolbar-host',
-  imports: [ListToolbar],
+  selector: 'app-collection-toolbar-host',
+  imports: [CollectionToolbar],
   template: `
-    <app-list-toolbar>
+    <app-collection-toolbar>
       <span toolbarStart data-testid="start-content">start</span>
       <span toolbarEnd data-testid="end-content">end</span>
-    </app-list-toolbar>
+    </app-collection-toolbar>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-class ListToolbarHost {}
+class CollectionToolbarHost {}
 
-describe('ListToolbar', () => {
-  let fixture: ComponentFixture<ListToolbarHost>;
+describe('CollectionToolbar', () => {
+  let fixture: ComponentFixture<CollectionToolbarHost>;
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [ListToolbarHost],
+      imports: [CollectionToolbarHost],
       providers: [provideZonelessChangeDetection()],
     });
 
-    fixture = TestBed.createComponent(ListToolbarHost);
+    fixture = TestBed.createComponent(CollectionToolbarHost);
     await fixture.whenStable();
   });
 
@@ -34,7 +34,7 @@ describe('ListToolbar', () => {
 
   it('should project toolbarStart content into the start slot', () => {
     const startSlot: HTMLElement | null = fixture.nativeElement.querySelector(
-      'app-list-toolbar > div > div:first-child',
+      'app-collection-toolbar > div > div:first-child',
     );
 
     expect(startSlot?.querySelector('[data-testid="start-content"]')).not.toBeNull();
@@ -42,7 +42,7 @@ describe('ListToolbar', () => {
 
   it('should project toolbarEnd content into the end slot', () => {
     const endSlot: HTMLElement | null = fixture.nativeElement.querySelector(
-      'app-list-toolbar > div > div:last-child',
+      'app-collection-toolbar > div > div:last-child',
     );
 
     expect(endSlot?.querySelector('[data-testid="end-content"]')).not.toBeNull();

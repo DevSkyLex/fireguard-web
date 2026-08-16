@@ -18,11 +18,13 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
+  lucideCircleDot,
   lucideClipboardCheck,
+  lucideGauge,
   lucideListFilter,
   lucidePlus,
-  lucideX,
 } from '@ng-icons/lucide';
+import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -35,12 +37,17 @@ import {
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ListPagination, ListToolbar } from '@features/organization/ui/components';
+import {
+  CollectionFilterBar,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+} from '@shared/collection-filters';
+import { CollectionPagination } from '@shared/collection-pagination';
+import { CollectionToolbar } from '@shared/collection-toolbar';
 import { ErrorState } from '@shared/error-state';
-import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 import { InspectionTable } from '../../tables/inspection-table';
@@ -59,11 +66,14 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
  * @class InspectionsPage
  *
  * @description
- * Route entry page for the organization's inspections: a status/result
- * filter popover above the grid, in its bordered shell, and a footer
- * carrying the row count, the page size and the pager — the same shell
- * `EquipmentsPage` draws. Inspections carry no searchable text field, so
- * unlike its siblings this page offers no search box.
+ * Route entry page for the organization's inspections: a toolbar carrying
+ * only the "Filters" toggle (`app-collection-filter-toggle`), an editable
+ * status/result filter chip row (`app-collection-filter-bar`,
+ * `@shared/collection-filters`) mounted below it once expanded, the grid in
+ * its bordered shell, and a footer carrying the row count, the page size and
+ * the pager — the same shell `EquipmentsPage` draws. Inspections carry no
+ * searchable text field, so unlike its siblings this page's toolbar has no
+ * search box.
  *
  * It owns the query the table renders — filters and paging — and the "New
  * inspection" affordance; the record itself is where every property is
@@ -73,7 +83,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
  * Its title lives in the shell breadcrumb; "New inspection" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.1.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -85,21 +95,22 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     ErrorState,
     InspectionStatusTag,
     InspectionTable,
-    ListPagination,
-    ListToolbar,
-    HlmBadge,
+    CollectionFilterBar,
+    CollectionFilterToggle,
+    CollectionPagination,
+    CollectionToolbar,
     HlmButton,
     ...HlmEmptyImports,
-    ...HlmPopoverImports,
     ...HlmSelectImports,
   ],
   providers: [
     provideIcons({
       lucideCircleAlert,
+      lucideCircleDot,
       lucideClipboardCheck,
+      lucideGauge,
       lucideListFilter,
       lucidePlus,
-      lucideX,
     }),
   ],
   templateUrl: './inspections-page.component.html',
@@ -160,19 +171,73 @@ export class InspectionsPage {
     return filters.status !== null || filters.result !== null;
   });
 
-  /**
-   * Property activeFilterCount
-   * @readonly
-   * @description How many narrowings are in force, for the badge on the Filters button.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<number>}
-   */
-  protected readonly activeFilterCount: Signal<number> = computed<number>(() => {
-    const filters = this.filters();
+  /** The filter bar's field catalog: status, then result. */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'status',
+      fieldLabel: $localize`:@@inspection.list.filterStatus:Status`,
+      icon: 'lucideCircleDot',
+    },
+    {
+      key: 'result',
+      fieldLabel: $localize`:@@inspection.list.filterResult:Result`,
+      icon: 'lucideGauge',
+    },
+  ];
 
-    return (filters.status !== null ? 1 : 0) + (filters.result !== null ? 1 : 0);
-  });
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   * @description Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => {
+      const filters = this.filters();
+
+      return [
+        ...(filters.status !== null ? ['status'] : []),
+        ...(filters.result !== null ? ['result'] : []),
+      ];
+    },
+  );
+
+  /** Which field's value selector currently renders forced open — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<'status' | 'result' | null> = signal<
+    'status' | 'result' | null
+  >(null);
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
+  );
+
+  /** The "Status" chip's value control, projected into the filter bar. */
+  private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
+
+  /** The "Result" chip's value control, projected into the filter bar. */
+  private readonly resultChipTemplate = viewChild<TemplateRef<unknown>>('resultChip');
+
+  /**
+   * Property chipTemplates
+   * @readonly
+   * @description Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
+   */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({ status: this.statusChipTemplate(), result: this.resultChipTemplate() }));
 
   /** The rows the table currently renders. */
   protected readonly items: Signal<readonly InspectionOutput[]> = computed<
@@ -271,6 +336,72 @@ export class InspectionsPage {
   protected clearFilters(): void {
     this.page.set(1);
     this.filters.set({ status: null, result: null });
+  }
+
+  /**
+   * Method onFieldPicked
+   * @description Reacts to the filter bar's `fieldPicked` output by forcing the picked field's value control open.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   * @returns {void}
+   */
+  protected onFieldPicked(key: string): void {
+    this.openFilterKey.set(key as 'status' | 'result');
+  }
+
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} key - The field key a chip's remove button cleared.
+   * @returns {void}
+   */
+  protected onFieldRemoved(key: string): void {
+    this.applyFilter(key === 'status' ? { status: null } : { result: null });
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @access protected
+   * @since 1.4.0
+   * @param {boolean} visible - The toggle button's intended next state.
+   * @returns {void}
+   */
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
+  }
+
+  /**
+   * Method fieldPopoverState
+   * @description Whether a field's value control should currently render open — true only for {@link openFilterKey}.
+   * @access protected
+   * @since 1.3.0
+   * @param {'status' | 'result'} key - The field to read.
+   * @returns {BrnOverlayState} `'open'` or `'closed'`.
+   */
+  protected fieldPopoverState(key: 'status' | 'result'): BrnOverlayState {
+    return this.openFilterKey() === key ? 'open' : 'closed';
+  }
+
+  /**
+   * Method onFieldPopoverStateChanged
+   * @description Keeps {@link openFilterKey} in sync with a field's own value control.
+   * @access protected
+   * @since 1.3.0
+   * @param {'status' | 'result'} key - The field whose selector changed.
+   * @param {BrnOverlayState} state - Its next state.
+   * @returns {void}
+   */
+  protected onFieldPopoverStateChanged(key: 'status' | 'result', state: BrnOverlayState): void {
+    if (state === 'open') {
+      this.openFilterKey.set(key);
+      return;
+    }
+
+    if (this.openFilterKey() === key) this.openFilterKey.set(null);
   }
 
   /**

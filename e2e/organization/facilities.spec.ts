@@ -49,9 +49,16 @@ test.describe('Facility list', () => {
     await expect(facilities.search).toBeVisible();
     await expect(facilities.newLink).toBeVisible();
 
-    await facilities.filtersTrigger.click();
+    await expect(facilities.filtersToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(facilities.filtersToggle.locator('hlm-badge')).toHaveCount(0);
+
+    await facilities.openFilters();
+    await expect(facilities.filtersToggle).toHaveAttribute('aria-expanded', 'true');
+
+    await facilities.addFilter('Show archived facilities');
     await expect(facilities.archivedCheckbox).toBeVisible();
-    await page.keyboard.press('Escape');
+    await facilities.archivedCheckbox.click();
+    await expect(facilities.filtersToggle.locator('hlm-badge')).toHaveText('1');
 
     await expect(facilities.listViewToggle).toBeVisible();
     await expect(facilities.gridViewToggle).toBeVisible();

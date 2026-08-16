@@ -1018,8 +1018,62 @@ describe('InterventionsPage', () => {
     });
   });
 
+  describe('filters visibility', () => {
+    function toggleButton(): HTMLButtonElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="interventions-filters-toggle"]',
+      );
+    }
+
+    function filterBar(): HTMLElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector('#interventions-filter-bar');
+    }
+
+    it('should render collapsed with no badge when no filter is active on arrival', async () => {
+      fixture = await createPage();
+
+      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+      expect(filterBar()).toBeNull();
+      expect(toggleButton()?.querySelector('hlm-badge')).toBeNull();
+    });
+
+    it('should mount the filter bar already expanded, with a badge count, when the URL carries an active filter', async () => {
+      fixture = await createPage({ status: 'planned', priority: 'high' });
+
+      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('true');
+      expect(filterBar()).not.toBeNull();
+      expect(toggleButton()?.querySelector('hlm-badge')?.textContent?.trim()).toBe('2');
+    });
+
+    it('should mount and unmount the bar as the toggle button is activated', async () => {
+      fixture = await createPage();
+      expect(filterBar()).toBeNull();
+
+      toggleButton()?.click();
+      await fixture.whenStable();
+      expect(filterBar()).not.toBeNull();
+      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('true');
+
+      toggleButton()?.click();
+      await fixture.whenStable();
+      expect(filterBar()).toBeNull();
+      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should stay expanded once auto-opened by a URL filter, even after that filter is cleared', async () => {
+      fixture = await createPage({ status: 'planned' });
+      expect(filterBar()).not.toBeNull();
+
+      fixture.componentInstance['applyFilter']({ status: null });
+      fixture.componentRef.setInput('status', undefined);
+      await fixture.whenStable();
+
+      expect(filterBar()).not.toBeNull();
+    });
+  });
+
   describe('filter chips', () => {
-    it('should render one chip per active filter, resolving IRI-valued fields against the loaded options', async () => {
+    it('should list every active field as an activeKey, in the catalog’s own keys', async () => {
       TestBed.overrideComponent(InterventionsPage, {
         remove: { providers: [InterventionPlanningOptionsStore] },
         add: {
@@ -1071,46 +1125,38 @@ describe('InterventionsPage', () => {
         due: 'today',
       });
 
-      expect(fixture.componentInstance['filterChips']()).toEqual([
-        {
-          key: 'status',
-          fieldLabel: 'Status',
-          valueLabel: 'Changes requested',
-          patch: { status: null },
-        },
-        { key: 'type', fieldLabel: 'Type', valueLabel: 'Inventory', patch: { type: null } },
-        { key: 'priority', fieldLabel: 'Priority', valueLabel: 'High', patch: { priority: null } },
-        { key: 'site', fieldLabel: 'Site', valueLabel: 'Warehouse 9', patch: { site: null } },
-        {
-          key: 'responsible',
-          fieldLabel: 'Responsible',
-          valueLabel: 'Jordan Lee',
-          patch: { responsible: null },
-        },
-        { key: 'label', fieldLabel: 'Label', valueLabel: 'Compliance', patch: { label: null } },
-        {
-          key: 'dueWindow',
-          fieldLabel: 'Deadline',
-          valueLabel: 'Due today',
-          patch: { dueWindow: null },
-        },
+      expect(fixture.componentInstance['activeFilterKeys']()).toEqual([
+        'status',
+        'type',
+        'priority',
+        'site',
+        'responsible',
+        'label',
+        'dueWindow',
       ]);
+
+      const triggers = ['status', 'type', 'priority', 'site', 'responsible', 'dueWindow'].map(
+        (suffix: string) =>
+          (fixture.nativeElement as HTMLElement).querySelector(
+            `[data-testid="interventions-filter-${suffix === 'dueWindow' ? 'due' : suffix}"]`,
+          ),
+      );
+      expect(triggers.every((trigger) => trigger !== null)).toBe(true);
     });
 
-    it('should fall back to the IRI’s last path segment while sites, members and labels are still loading', async () => {
+    it('should still render an IRI-valued field’s chip while its option list is loading and its label cannot resolve yet', async () => {
       fixture = await createPage({ site: 'site-42', responsible: 'member-77', label: 'label-88' });
 
-      const chips = fixture.componentInstance['filterChips']();
-
-      expect(chips.find((chip: { key: string }) => chip.key === 'site')?.valueLabel).toBe(
-        'site-42',
-      );
-      expect(chips.find((chip: { key: string }) => chip.key === 'responsible')?.valueLabel).toBe(
-        'member-77',
-      );
-      expect(chips.find((chip: { key: string }) => chip.key === 'label')?.valueLabel).toBe(
-        'label-88',
-      );
+      expect(fixture.componentInstance['activeFilterKeys']()).toEqual([
+        'site',
+        'responsible',
+        'label',
+      ]);
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="interventions-filter-site"]',
+        ),
+      ).not.toBeNull();
     });
 
     it('should apply the chip’s own patch when its remove button is clicked', async () => {
@@ -1132,11 +1178,50 @@ describe('InterventionsPage', () => {
     });
 
     it('should name a chip’s remove button by its field label', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      const removeButton: HTMLButtonElement | null = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector('[data-testid="interventions-filter-chip-remove"]');
+
+      expect(removeButton?.getAttribute('aria-label')).toBe('Remove filter: Status');
+    });
+
+    it('should name a chip’s value segment by its field label, distinctly from the remove button', async () => {
       fixture = await createPage();
 
-      expect(fixture.componentInstance['removeFilterLabel']('Status')).toBe(
-        'Remove filter: Status',
+      expect(fixture.componentInstance['changeFilterLabel']('Status')).toBe(
+        'Change filter: Status',
       );
+    });
+
+    it('should force a field’s selector open when the bar reports it picked', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['onFieldPicked']('site');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('open');
+    });
+
+    it('should clear the forced-open field once its selector reports closed', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['onFieldPicked']('site');
+      fixture.componentInstance['onFieldPopoverStateChanged']('site', 'closed');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('closed');
+    });
+
+    it('should not clear the forced-open field when a different field’s selector closes', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['onFieldPicked']('site');
+      fixture.componentInstance['onFieldPopoverStateChanged']('responsible', 'closed');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('open');
     });
   });
 });

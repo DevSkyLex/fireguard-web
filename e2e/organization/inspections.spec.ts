@@ -19,7 +19,7 @@ const SCREENSHOT_DIR =
   'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard-fireguard-sso-web/f6620368-789f-4fb4-90d8-7b471cc33671/scratchpad/screenshots';
 
 test.describe('Inspection list', () => {
-  test('renders the status/result filter popover, pagination and New inspection', async ({
+  test('renders the status/result filter chip bar, pagination and New inspection', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -34,8 +34,17 @@ test.describe('Inspection list', () => {
     await expect(inspections.rowCount).toBeVisible();
     await expect(inspections.pageIndicator).toHaveText('Page 1 of 1');
 
-    await inspections.filtersTrigger.click();
+    await expect(inspections.filtersToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(inspections.filtersToggle.locator('hlm-badge')).toHaveCount(0);
+
+    await inspections.openFilters();
+    await expect(inspections.filtersToggle).toHaveAttribute('aria-expanded', 'true');
+
+    await inspections.addFilter('Status');
     await expect(inspections.statusFilter).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await inspections.addFilter('Result');
     await expect(inspections.resultFilter).toBeVisible();
     await page.keyboard.press('Escape');
   });

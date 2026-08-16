@@ -1,15 +1,15 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ListPagination } from '../list-pagination.component';
+import { CollectionPagination } from '../collection-pagination.component';
 
-describe('ListPagination', () => {
-  let fixture: ComponentFixture<ListPagination>;
+describe('CollectionPagination', () => {
+  let fixture: ComponentFixture<CollectionPagination>;
 
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(ListPagination);
+    fixture = TestBed.createComponent(CollectionPagination);
     fixture.componentRef.setInput('page', 2);
     fixture.componentRef.setInput('pageCount', 5);
     fixture.componentRef.setInput('pageSize', 30);

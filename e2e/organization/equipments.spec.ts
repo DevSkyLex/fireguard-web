@@ -17,7 +17,7 @@ const SCREENSHOT_DIR =
   'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard-fireguard-sso-web/f6620368-789f-4fb4-90d8-7b471cc33671/scratchpad/screenshots';
 
 test.describe('Equipment list', () => {
-  test('renders search, the type/status filter popover, pagination and a permission-gated New equipment link', async ({
+  test('renders search, the type/status filter chip bar, pagination and a permission-gated New equipment link', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -33,8 +33,17 @@ test.describe('Equipment list', () => {
     await expect(equipments.rowCount).toHaveText('2 of 2 row(s) shown');
     await expect(equipments.pageIndicator).toHaveText('Page 1 of 1');
 
-    await equipments.filtersTrigger.click();
+    await expect(equipments.filtersToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(equipments.filtersToggle.locator('hlm-badge')).toHaveCount(0);
+
+    await equipments.openFilters();
+    await expect(equipments.filtersToggle).toHaveAttribute('aria-expanded', 'true');
+
+    await equipments.addFilter('Type');
     await expect(equipments.typeFilter).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await equipments.addFilter('Status');
     await expect(equipments.statusFilter).toBeVisible();
     await equipments.statusFilter.click();
     const statusOption = page.getByRole('option').first();

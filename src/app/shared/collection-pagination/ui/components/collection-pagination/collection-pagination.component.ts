@@ -24,11 +24,11 @@ import { HlmSelectImports } from '@shared/ui/select';
 const DEFAULT_PAGE_SIZES: readonly number[] = [30, 60, 100];
 
 /**
- * Component ListPagination
- * @class ListPagination
+ * Component CollectionPagination
+ * @class CollectionPagination
  *
  * @description
- * The pagination band shared by the organization feature's list pages: a
+ * The pagination band shared by every collection surface's list page: a
  * "N of M row(s) shown" status, a rows-per-page `hlm-select`, a "Page X of Y"
  * indicator, and first/previous/next/last navigation built on the vendored
  * `hlmPagination` primitives. Presentational (`ARCHITECTURE.md` §10.3) — it
@@ -37,14 +37,17 @@ const DEFAULT_PAGE_SIZES: readonly number[] = [30, 60, 100];
  * `hlmPagination`/`hlmPaginationItem` composition with event-emitting buttons
  * rather than `hlm-pagination-link`/`hlm-numbered-pagination`, which are
  * anchor- and query-param-oriented and do not fit page state living in a
- * `SignalStore`.
+ * `SignalStore`. Moved from `features/organization` to `shared` as a
+ * deliberate uniformity bet, recorded in `organization/FEATURE.md` § UI
+ * Conventions — the folder held only organization consumers at the time of
+ * the move.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-list-pagination',
+  selector: 'app-collection-pagination',
   imports: [NgIcon, HlmButton, HlmLabel, ...HlmPaginationImports, ...HlmSelectImports],
   providers: [
     provideIcons({
@@ -54,10 +57,10 @@ const DEFAULT_PAGE_SIZES: readonly number[] = [30, 60, 100];
       lucideChevronsRight,
     }),
   ],
-  templateUrl: './list-pagination.component.html',
+  templateUrl: './collection-pagination.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ListPagination {
+export class CollectionPagination {
   //#region Inputs
   /**
    * Property page

@@ -1,118 +1,106 @@
 <div id="equipments" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <app-list-toolbar>
-    <hlm-input-group toolbarStart class="w-full sm:w-72">
-      <hlm-input-group-addon>
-        <ng-icon name="lucideSearch" />
-      </hlm-input-group-addon>
-      <input
-        hlmInputGroupInput
-        type="search"
-        data-testid="equipments-search"
-        placeholder="Search equipments..."
-        i18n-placeholder="@@equipment.table.searchPlaceholder"
-        aria-label="Search equipments..."
-        i18n-aria-label="@@equipment.table.searchPlaceholder"
-        [value]="draftSearch()"
-        (input)="onSearchInput($event)"
-      />
-    </hlm-input-group>
+  <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="equipments"
+      placeholder="Search equipments..."
+      i18n-placeholder="@@equipment.table.searchPlaceholder"
+      ariaLabel="Search equipments..."
+      i18n-ariaLabel="@@equipment.table.searchPlaceholder"
+      [value]="draftSearch()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
 
-    <hlm-popover toolbarEnd sideOffset="5" align="end">
-      <button
-        hlmPopoverTrigger
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="equipments-filters-trigger"
+    <app-collection-filter-toggle
+      toolbarEnd
+      [visible]="filtersVisible()"
+      [activeCount]="activeFilterKeys().length"
+      label="Filters"
+      i18n-label="@@equipment.table.filtersButton"
+      testIdPrefix="equipments"
+      (visibleChange)="toggleFiltersVisible($event)"
+    />
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="chipTemplates()"
+      testIdPrefix="equipments"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved($event)"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #typeChip>
+    <hlm-select
+      [value]="filters().type"
+      [itemToString]="typeLabelOf"
+      [state]="fieldPopoverState('type')"
+      (valueChange)="applyFilter({ type: $event ?? null })"
+      (stateChanged)="onFieldPopoverStateChanged('type', $event)"
+    >
+      <label for="equipments-filter-type" class="sr-only" i18n="@@equipment.list.filterType"
+        >Type</label
       >
-        <ng-icon name="lucideListFilter" aria-hidden="true" />
-        <span i18n="@@equipment.table.filtersButton">Filters</span>
-        @if (activeFilterCount() > 0) {
-          <hlm-badge variant="secondary" class="ms-1">{{ activeFilterCount() }}</hlm-badge>
-        }
-      </button>
-      <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
-        <div class="grid w-56 grid-cols-1 gap-2 sm:w-[26rem] sm:grid-cols-2">
-          <hlm-select
-            [value]="filters().type"
-            [itemToString]="typeLabelOf"
-            (valueChange)="applyFilter({ type: $event ?? null })"
-          >
-            <label for="equipments-filter-type" class="sr-only" i18n="@@equipment.list.filterType"
-              >Type</label
-            >
-            <hlm-select-trigger
-              buttonId="equipments-filter-type"
-              class="w-full"
-              data-testid="equipments-filter-type"
-            >
-              <hlm-select-value
-                placeholder="Any type"
-                i18n-placeholder="@@equipment.table.filterTypePlaceholder"
-              />
-            </hlm-select-trigger>
-            <hlm-select-content *hlmSelectPortal class="w-fit">
-              <hlm-select-group>
-                @for (option of typeOptions; track option.value) {
-                  <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-                }
-              </hlm-select-group>
-            </hlm-select-content>
-          </hlm-select>
-
-          <hlm-select
-            [value]="filters().status"
-            (valueChange)="applyFilter({ status: $event ?? null })"
-          >
-            <label
-              for="equipments-filter-status"
-              class="sr-only"
-              i18n="@@equipment.list.filterStatus"
-              >Status</label
-            >
-            <hlm-select-trigger
-              buttonId="equipments-filter-status"
-              class="w-full"
-              data-testid="equipments-filter-status"
-            >
-              @if (filters().status; as status) {
-                <app-equipment-status-tag kind="status" [value]="status" asOption />
-              } @else {
-                <hlm-select-value
-                  placeholder="Any status"
-                  i18n-placeholder="@@equipment.table.filterStatusPlaceholder"
-                />
-              }
-            </hlm-select-trigger>
-            <hlm-select-content *hlmSelectPortal class="w-fit">
-              <hlm-select-group>
-                @for (status of statusValues; track status) {
-                  <hlm-select-item [value]="status">
-                    <app-equipment-status-tag kind="status" [value]="status" asOption />
-                  </hlm-select-item>
-                }
-              </hlm-select-group>
-            </hlm-select-content>
-          </hlm-select>
-
-          @if (activeFilterCount() > 0) {
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              data-testid="equipments-clear-filters"
-              (click)="clearFilters()"
-            >
-              <ng-icon name="lucideX" aria-hidden="true" />
-              <span i18n="@@common.clearFilters">Clear filters</span>
-            </button>
+      <hlm-select-trigger
+        buttonId="equipments-filter-type"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="equipments-filter-type"
+      >
+        <hlm-select-value
+          placeholder="Any type"
+          i18n-placeholder="@@equipment.table.filterTypePlaceholder"
+        />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (option of typeOptions; track option.value) {
+            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
           }
-        </div>
-      </hlm-popover-content>
-    </hlm-popover>
-  </app-list-toolbar>
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
+
+  <ng-template #statusChip>
+    <hlm-select
+      [value]="filters().status"
+      [state]="fieldPopoverState('status')"
+      (valueChange)="applyFilter({ status: $event ?? null })"
+      (stateChanged)="onFieldPopoverStateChanged('status', $event)"
+    >
+      <label for="equipments-filter-status" class="sr-only" i18n="@@equipment.list.filterStatus"
+        >Status</label
+      >
+      <hlm-select-trigger
+        buttonId="equipments-filter-status"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="equipments-filter-status"
+      >
+        @if (filters().status; as status) {
+          <app-equipment-status-tag kind="status" [value]="status" asOption />
+        } @else {
+          <hlm-select-value
+            placeholder="Any status"
+            i18n-placeholder="@@equipment.table.filterStatusPlaceholder"
+          />
+        }
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (status of statusValues; track status) {
+            <hlm-select-item [value]="status">
+              <app-equipment-status-tag kind="status" [value]="status" asOption />
+            </hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
 
   @if (store.listCallState().status === 'error') {
     <app-error-state
@@ -157,7 +145,7 @@
       [detailRouteBase]="listRouteBase()"
     />
 
-    <app-list-pagination
+    <app-collection-pagination
       [page]="page()"
       [pageCount]="pageCount()"
       [pageSize]="pageSize()"

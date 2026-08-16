@@ -65,23 +65,17 @@
         }
       </div>
 
-      <app-list-toolbar>
-        <hlm-input-group toolbarStart class="w-full sm:w-72">
-          <hlm-input-group-addon>
-            <ng-icon name="lucideSearch" />
-          </hlm-input-group-addon>
-          <input
-            hlmInputGroupInput
-            type="search"
-            data-testid="organization-members-search"
-            placeholder="Search by name or email..."
-            i18n-placeholder="@@org.members.searchPlaceholder"
-            aria-label="Search by name or email..."
-            i18n-aria-label="@@org.members.searchPlaceholder"
-            [value]="searchTerm()"
-            (input)="onSearchInput($event)"
-          />
-        </hlm-input-group>
+      <app-collection-toolbar>
+        <app-collection-search-box
+          toolbarStart
+          testIdPrefix="organization-members"
+          placeholder="Search by name or email..."
+          i18n-placeholder="@@org.members.searchPlaceholder"
+          ariaLabel="Search by name or email..."
+          i18n-ariaLabel="@@org.members.searchPlaceholder"
+          [value]="searchTerm()"
+          (queryChanged)="onSearchQueryChanged($event)"
+        />
 
         <hlm-toggle-group
           toolbarEnd
@@ -123,7 +117,7 @@
             Inactive
           </button>
         </hlm-toggle-group>
-      </app-list-toolbar>
+      </app-collection-toolbar>
 
       @if (store.loadCallState().status === 'error') {
         <app-error-state
@@ -193,7 +187,7 @@
           (removeRequested)="requestRemove($event)"
         />
 
-        <app-list-pagination
+        <app-collection-pagination
           [page]="page()"
           [pageCount]="membersPageCount()"
           [pageSize]="pageSize()"

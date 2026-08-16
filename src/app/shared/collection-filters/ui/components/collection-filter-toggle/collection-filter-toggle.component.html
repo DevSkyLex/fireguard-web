@@ -1,0 +1,17 @@
+<button
+  hlmBtn
+  type="button"
+  variant="outline"
+  size="sm"
+  class="max-sm:min-h-11"
+  [attr.data-testid]="testId()"
+  [attr.aria-expanded]="visible()"
+  [attr.aria-controls]="controlsId()"
+  (click)="toggle()"
+>
+  <ng-icon name="lucideListFilter" aria-hidden="true" />
+  <span>{{ label() }}</span>
+  @if (activeCount() > 0) {
+    <hlm-badge variant="secondary" class="ms-1">{{ activeCount() }}</hlm-badge>
+  }
+</button>

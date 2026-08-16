@@ -295,4 +295,51 @@ describe('FacilitiesPage', () => {
     expect(element.querySelector('[data-testid="facility-table-row"]')).toBeNull();
     expect(element.querySelector('[data-testid="facility-grid-card"]')).not.toBeNull();
   });
+
+  describe('filters visibility', () => {
+    function toggleButton(): HTMLButtonElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="facilities-filters-toggle"]',
+      );
+    }
+
+    function filterBar(): HTMLElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector('#facilities-filter-bar');
+    }
+
+    it('should render collapsed with no badge when nothing is filtered on arrival', async () => {
+      fixture = await createPage();
+
+      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+      expect(filterBar()).toBeNull();
+      expect(toggleButton()?.querySelector('hlm-badge')).toBeNull();
+    });
+
+    it('should mount the bar and show the active-filter count once the toggle is activated and archived facilities are included', async () => {
+      fixture = await createPage();
+
+      toggleButton()?.click();
+      await fixture.whenStable();
+      expect(filterBar()).not.toBeNull();
+
+      fixture.componentInstance['toggleIncludeArchived'](true);
+      await fixture.whenStable();
+
+      expect(toggleButton()?.querySelector('hlm-badge')?.textContent?.trim()).toBe('1');
+      expect(filterBar()).not.toBeNull();
+    });
+
+    it('should unmount the bar when the toggle is activated again', async () => {
+      fixture = await createPage();
+      toggleButton()?.click();
+      await fixture.whenStable();
+      expect(filterBar()).not.toBeNull();
+
+      toggleButton()?.click();
+      await fixture.whenStable();
+
+      expect(filterBar()).toBeNull();
+      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+    });
+  });
 });

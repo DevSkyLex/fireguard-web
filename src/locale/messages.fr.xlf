@@ -6291,6 +6291,14 @@
         <source>Due date</source>
         <target>Échéance</target>
       </trans-unit>
+      <trans-unit id="intervention.list.sortAscending" datatype="html">
+        <source>Ascending</source>
+        <target>Croissant</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.sortDescending" datatype="html">
+        <source>Descending</source>
+        <target>Décroissant</target>
+      </trans-unit>
       <trans-unit id="intervention.list.sortCreatedAt" datatype="html">
         <source>Creation date</source>
         <target>Date de création</target>
@@ -9550,6 +9558,18 @@
         <source>Columns</source>
         <target>Colonnes</target>
       </trans-unit>
+      <trans-unit id="intervention.list.displayButton" datatype="html">
+        <source>Display</source>
+        <target>Affichage</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.displaySortLabel" datatype="html">
+        <source> Sort by </source>
+        <target> Trier par </target>
+      </trans-unit>
+      <trans-unit id="intervention.list.displayColumnsLabel" datatype="html">
+        <source> Columns </source>
+        <target> Colonnes </target>
+      </trans-unit>
       <trans-unit id="intervention.list.exportButton" datatype="html">
         <source>Export</source>
         <target>Exporter</target>
@@ -9617,6 +9637,22 @@
       <trans-unit id="intervention.list.removeFilter" datatype="html">
         <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Retirer le filtre : <x id="field" equiv-text="fieldLabel"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.list.changeFilter" datatype="html">
+        <source>Change filter: <x id="field" equiv-text="fieldLabel"/></source>
+        <target>Modifier le filtre : <x id="field" equiv-text="fieldLabel"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterOperatorIs" datatype="html">
+        <source>is</source>
+        <target>est</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.addFilterButton" datatype="html">
+        <source>Filter</source>
+        <target>Filtrer</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.addFilterMenuLabel" datatype="html">
+        <source>Filter by</source>
+        <target>Filtrer par</target>
       </trans-unit>
           <trans-unit id="intervention.notice.folded" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ foldedCount() }}"/> more</source>
@@ -12005,6 +12041,18 @@
       <trans-unit id="facility.plans.overlay.toggleEquipmentLabel" datatype="html">
         <source>Equipment</source>
         <target>Équipement</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
+        <source>Filter</source>
+        <target>Filtrer</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.addFilterMenuLabel" datatype="html">
+        <source>Filter by</source>
+        <target>Filtrer par</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.removeFilter" datatype="html">
+        <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
+        <target>Retirer le filtre : <x id="field" equiv-text="fieldLabel"/></target>
       </trans-unit>
 </body>
   </file>

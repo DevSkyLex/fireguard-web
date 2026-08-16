@@ -176,4 +176,51 @@ describe('InspectionsPage', () => {
     fixture.componentInstance['goToPage'](-3);
     expect(fixture.componentInstance['page']()).toBe(1);
   });
+
+  describe('filters visibility', () => {
+    function toggleButton(): HTMLButtonElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="inspections-filters-toggle"]',
+      );
+    }
+
+    function filterBar(): HTMLElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector('#inspections-filter-bar');
+    }
+
+    it('should render collapsed with no badge when nothing is filtered on arrival', async () => {
+      fixture = await createPage();
+
+      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+      expect(filterBar()).toBeNull();
+      expect(toggleButton()?.querySelector('hlm-badge')).toBeNull();
+    });
+
+    it('should mount the bar and show the active-filter count once the toggle is activated and a field is picked', async () => {
+      fixture = await createPage();
+
+      toggleButton()?.click();
+      await fixture.whenStable();
+      expect(filterBar()).not.toBeNull();
+
+      fixture.componentInstance['applyFilter']({ status: 'draft', result: 'fail' });
+      await fixture.whenStable();
+
+      expect(toggleButton()?.querySelector('hlm-badge')?.textContent?.trim()).toBe('2');
+      expect(filterBar()).not.toBeNull();
+    });
+
+    it('should unmount the bar when the toggle is activated again', async () => {
+      fixture = await createPage();
+      toggleButton()?.click();
+      await fixture.whenStable();
+      expect(filterBar()).not.toBeNull();
+
+      toggleButton()?.click();
+      await fixture.whenStable();
+
+      expect(filterBar()).toBeNull();
+      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+    });
+  });
 });

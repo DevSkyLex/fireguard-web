@@ -283,13 +283,57 @@ store never calls the API without the permission — the request would be a guar
 ## UI Conventions
 
 List pages (roster, facilities, equipments, inspections, interventions) share one pagination
-recipe, `app-list-pagination` (`ui/components/list-pagination/`), one toolbar shell,
-`app-list-toolbar` (`ui/components/list-toolbar/`), and one boundary for the three
-empty/error idioms spartan offers: `hlm-empty` with a dashed border (`border border-dashed`) is a
-**page-level empty slot** (nothing loaded, no rows to show); `app-empty-state`
-(`@shared/empty-state`) is an **in-card or in-section empty slot** nested inside a larger page;
-`app-error-state` (`@shared/error-state`) is **every list's error state**, never `hlm-empty`
-re-tinted to look like a failure.
+recipe, `app-collection-pagination` (`@shared/collection-pagination`), one toolbar shell,
+`app-collection-toolbar` (`@shared/collection-toolbar`), one search box,
+`app-collection-search-box` (also `@shared/collection-toolbar`), one editable filter-chip row,
+`app-collection-filter-bar` and its `app-filter-chip` shell (`@shared/collection-filters`), and
+one boundary for the three empty/error idioms spartan offers: `hlm-empty` with a dashed border
+(`border border-dashed`) is a **page-level empty slot** (nothing loaded, no rows to show);
+`app-empty-state` (`@shared/empty-state`) is an **in-card or in-section empty slot** nested
+inside a larger page; `app-error-state` (`@shared/error-state`) is **every list's error state**,
+never `hlm-empty` re-tinted to look like a failure.
+
+**The five collection components moved to `shared/` on a deliberate uniformity bet, not on
+today's locality.** At the time of the move every consumer still lived under
+`features/organization/` (this feature's own roster page plus the four nested subfeatures'
+list pages), which by §2.8 usage locality alone would keep them at
+`features/organization/ui/components/`. They moved anyway because the goal driving the
+extraction was uniforming every list surface across the app, including ones this feature does
+not own — `shared/` is the bet that a sixth consumer outside `organization` is coming, not a
+conclusion the current five consumers force. `app-collection-search-box` takes the current
+draft value as an `input()` and emits one `output()` per keystroke; the debounce and the `?q=`
+round-trip stay page-owned (route orchestration, §10.3) — `InspectionStore` exposes no search
+filter, so `InspectionsPage` renders no search box rather than inventing one the backend cannot
+serve. Its `app-collection-toolbar` therefore carries only the "Filters" toggle in
+`toolbarEnd` and no `toolbarStart` content at all — a toolbar with one empty slot, not the
+absent toolbar the page rendered before the toggle existed.
+
+**`app-collection-filter-toggle` (`@shared/collection-filters`) is the "Filters" button every
+list page's toolbar now carries**, mounting or unmounting the sibling `app-collection-filter-bar`
+below it — a page's `filtersVisible` signal, seeded by `initialCollectionFilterBarVisibility`
+(same module) from that page's own `activeFilterKeys().length > 0` at construction, then purely
+toggle-driven. On `interventions-page` it sits beside "Columns" in `toolbarEnd`; on the other
+three it is `toolbarEnd`'s only control. The button carries an `hlm-badge` count of the active
+narrowing, and defaults open whenever the page mounts already filtered (only `interventions-page`
+persists filters in the URL, so it is the only one this is ever observable on) — a shared,
+filtered link must never render behind a collapsed bar. The toggle is deliberately not part of
+`app-collection-filter-bar` itself: the bar has no opinion on whether it is mounted, and the
+button has no opinion on the bar's own chip row or "+ Filter" menu.
+
+**`app-collection-filter-bar` replaced three divergent popovers (equipments, facilities,
+inspections) and interventions' own bespoke chip row with one component**, first proven inside
+`interventions-page` and then generalized. Its contract stays generic — a field is `{ key:
+string, fieldLabel: string, icon: string }` (`CollectionFilterField`) — and it owns the chip
+row's pick-order memory, the "+ Filter" menu, and the "Clear filters" button; a page still owns
+its own `filters` signal (URL-backed), which of its fields currently carry a value
+(`activeKeys`), and which field is mid-pick before a value lands (`pendingKey` /
+`openFilterKey`). **The value control is always projected**, one `ng-template` per field
+(resolved through `viewChild(TemplateRef)`, the same idiom already used for a page's
+`#pageActions` template), so `shared/` never imports a feature's tag component or model —
+`app-equipment-status-tag`, `app-inspection-status-tag` and `app-intervention-tag` all stay in
+their owning feature. A field's value control need not be a select either: facilities' lone
+`archived` field projects a plain `hlm-checkbox`, since "opening a selector" has no meaning for
+a boolean.
 
 **Create-surface placement** follows field count and navigation cost, not precedent: a form of
 **3 fields or fewer with no navigation cost** belongs in a dialog; **4 to 8 fields that should

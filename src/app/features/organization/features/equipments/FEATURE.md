@@ -25,11 +25,13 @@ This subfeature does not own top-level organization context or inspection workfl
 
 - `/organizations/:organizationId/equipments` — `EquipmentsPage`: an
   `hlmTable` of the organization's equipment (`EquipmentTable`), a debounced
-  search box (`?q=`, mapped to the backend `search` filter) and a filter
-  popover (type, status), paginated server-side. No row menu and no bulk
-  actions — the record itself is where every property is edited (see
-  below), so the list has nothing left to orchestrate beyond search, filter,
-  page and a "New equipment" link (`EQUIPMENT_WRITE`-gated) into `create`.
+  search box (`?q=`, mapped to the backend `search` filter) and an editable
+  type/status filter chip row (`app-collection-filter-bar`,
+  `@shared/collection-filters`, replacing the earlier popover), paginated
+  server-side. No row menu and no bulk actions — the record itself is where
+  every property is edited (see below), so the list has nothing left to
+  orchestrate beyond search, filter, page and a "New equipment" link
+  (`EQUIPMENT_WRITE`-gated) into `create`.
 - `/organizations/:organizationId/equipments/create` — `EquipmentCreatePage`:
   `EquipmentCreateForm` (Signal Forms) asking for the one required field,
   `type`; the five remaining editable properties are filled in afterward, in
@@ -120,9 +122,11 @@ Utility:
 ## Cross-Feature Dependencies
 
 - Depends on organization route context from the parent feature.
-- Consumes `ListPagination` from the parent `features/organization` feature
-  (`@features/organization/ui/components`) for the list page's shared pagination band — see
-  `organization/FEATURE.md` § UI Conventions.
+- Consumes `CollectionPagination`, `CollectionToolbar`, `CollectionSearchBox`,
+  `CollectionFilterBar` and `CollectionFilterToggle` from `@shared/collection-pagination`,
+  `@shared/collection-toolbar` and `@shared/collection-filters` for the list page's shared
+  pagination band, toolbar shell, search box, "Filters" toggle and editable type/status filter
+  chip row — see `organization/FEATURE.md` § UI Conventions.
 - May be referenced by other organization subfeatures, but equipment ownership stays local to this subfeature.
 - Publishes the canonical `EQUIPMENT_TYPE_OPTIONS` through the feature public API (`index.ts`); the onboarding `create-equipment-form` consumes it so the equipment type catalog is not duplicated.
 - `EquipmentService` is depended on directly by the `facilities` subfeature's `FacilityPlansStore` (`listByFacility`, `setPlanPosition`) for the floor-plan editor's equipment-pin placement — the same cross-feature dependency `FacilityOverviewStore` already took on for the equipment status summary. `EquipmentService.setPlanPosition` (`PUT

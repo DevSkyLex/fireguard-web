@@ -50,13 +50,14 @@ import {
   MEMBERS_PAGE_SIZE,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
-import { ListPagination, ListToolbar, StatTile } from '@features/organization/ui/components';
+import { StatTile } from '@features/organization/ui/components';
+import { CollectionPagination } from '@shared/collection-pagination';
+import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { OrganizationInviteDialog } from '../../dialogs/organization-invite-dialog';
 import {
@@ -128,7 +129,7 @@ type OrganizationMembersKpiTile = {
  * top, and "Invite member" registers on the shell header through
  * `PageActionsService`.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -138,8 +139,9 @@ type OrganizationMembersKpiTile = {
     NgIcon,
     ErrorState,
     HlmButton,
-    ListPagination,
-    ListToolbar,
+    CollectionPagination,
+    CollectionSearchBox,
+    CollectionToolbar,
     OrganizationInvitationTable,
     OrganizationInviteDialog,
     OrganizationMemberRolesDialog,
@@ -148,7 +150,6 @@ type OrganizationMembersKpiTile = {
     ...HlmAlertDialogImports,
     ...HlmAlertImports,
     ...HlmEmptyImports,
-    ...HlmInputGroupImports,
     ...HlmToggleGroupImports,
   ],
   providers: [
@@ -633,15 +634,15 @@ export class OrganizationMembersPage {
   }
 
   /**
-   * Method onSearchInput
+   * Method onSearchQueryChanged
    * @description Records a keystroke into the debounced roster search.
    * @access protected
-   * @since 1.1.0
-   * @param {Event} event - The input event.
+   * @since 1.4.0
+   * @param {string} term - The search box's current value.
    * @returns {void}
    */
-  protected onSearchInput(event: Event): void {
-    this.searchTerm.set((event.target as HTMLInputElement).value);
+  protected onSearchQueryChanged(term: string): void {
+    this.searchTerm.set(term);
   }
 
   /**

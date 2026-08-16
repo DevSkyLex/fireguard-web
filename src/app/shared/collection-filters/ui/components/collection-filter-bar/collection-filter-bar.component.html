@@ -1,0 +1,64 @@
+<div
+  class="-mt-2 flex shrink-0 flex-wrap items-center gap-2"
+  [attr.id]="testId('filter-bar')"
+  [attr.data-testid]="testId('filter-chips')"
+>
+  @for (key of renderedKeys(); track key) {
+    <app-filter-chip
+      [fieldLabel]="fieldOf(key).fieldLabel"
+      [icon]="fieldOf(key).icon"
+      [removeLabel]="removeLabelFor(fieldOf(key).fieldLabel)"
+      [testIdPrefix]="testIdPrefix()"
+      (removed)="fieldRemoved.emit(key)"
+    >
+      <ng-container *ngTemplateOutlet="templates()[key] ?? null" />
+    </app-filter-chip>
+  }
+
+  @if (unsetFields().length > 0) {
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="border-dashed text-muted-foreground max-sm:min-h-11"
+      [attr.data-testid]="testId('filters-add')"
+      [hlmDropdownMenuTrigger]="addFilterMenu"
+      align="start"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span>{{ addFilterLabel }}</span>
+    </button>
+  }
+
+  <ng-template #addFilterMenu>
+    <hlm-dropdown-menu class="w-48">
+      <hlm-dropdown-menu-label>{{ addFilterMenuLabel }}</hlm-dropdown-menu-label>
+      <hlm-dropdown-menu-separator />
+      @for (field of unsetFields(); track field.key) {
+        <button
+          hlmDropdownMenuItem
+          [attr.data-testid]="testId('filters-add-option')"
+          (click)="pickField(field.key)"
+        >
+          <ng-icon [name]="field.icon" aria-hidden="true" />
+          {{ field.fieldLabel }}
+        </button>
+      }
+    </hlm-dropdown-menu>
+  </ng-template>
+
+  @if (hasActiveFilters()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="sm"
+      [attr.data-testid]="testId('clear-filters')"
+      (click)="clearAll()"
+    >
+      <ng-icon name="lucideX" aria-hidden="true" />
+      <span>{{ clearFiltersLabel }}</span>
+    </button>
+  }
+</div>

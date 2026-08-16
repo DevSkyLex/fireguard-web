@@ -18,15 +18,14 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideArchive,
   lucideCircleAlert,
   lucideLayoutGrid,
   lucideList,
-  lucideListFilter,
   lucideMap,
   lucideNetwork,
   lucidePlus,
   lucideSearch,
-  lucideX,
 } from '@ng-icons/lucide';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -37,15 +36,19 @@ import {
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ListPagination, ListToolbar } from '@features/organization/ui/components';
+import {
+  CollectionFilterBar,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+} from '@shared/collection-filters';
+import { CollectionPagination } from '@shared/collection-pagination';
+import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { ErrorState } from '@shared/error-state';
-import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmLabel } from '@shared/ui/label';
-import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { FacilityGrid } from '../../dataviews/facility-grid';
 import { FacilityTable } from '../../tables/facility-table';
@@ -66,7 +69,8 @@ type FacilityLayout = 'list' | 'grid';
  * @description
  * Route entry page for the organization's root facilities
  * (`/organizations/:organizationId/facilities`): a search box and a "show
- * archived" filter popover above a list/grid/map layout toggle, paginated
+ * archived" filter chip (`app-collection-filter-bar`,
+ * `@shared/collection-filters`) above a list/grid/map layout toggle, paginated
  * server-side (`FEATURE.md` "Facility Listing (Roots-Only DataView)"). `map`
  * is not a rendering mode of this page — it navigates to the dedicated
  * `facilities/map` route, since an interactive map is a heavier surface than
@@ -83,7 +87,7 @@ type FacilityLayout = 'list' | 'grid';
  * Its title lives in the shell breadcrumb; "New facility" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.1.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -95,28 +99,27 @@ type FacilityLayout = 'list' | 'grid';
     ErrorState,
     FacilityGrid,
     FacilityTable,
-    ListPagination,
-    ListToolbar,
-    HlmBadge,
+    CollectionFilterBar,
+    CollectionFilterToggle,
+    CollectionPagination,
+    CollectionSearchBox,
+    CollectionToolbar,
     HlmButton,
     HlmCheckbox,
     HlmLabel,
     ...HlmEmptyImports,
-    ...HlmInputGroupImports,
-    ...HlmPopoverImports,
     ...HlmToggleGroupImports,
   ],
   providers: [
     provideIcons({
+      lucideArchive,
       lucideCircleAlert,
       lucideLayoutGrid,
       lucideList,
-      lucideListFilter,
       lucideMap,
       lucideNetwork,
       lucidePlus,
       lucideSearch,
-      lucideX,
     }),
   ],
   templateUrl: './facilities-page.component.html',
@@ -218,6 +221,59 @@ export class FacilitiesPage {
   protected readonly hasSearchOrFilters: Signal<boolean> = computed<boolean>(
     () => this.searchTerm() !== '' || this.includeArchived(),
   );
+
+  /** The filter bar's field catalog — a single "show archived" toggle. */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'archived',
+      fieldLabel: $localize`:@@facility.list.filterArchived:Show archived facilities`,
+      icon: 'lucideArchive',
+    },
+  ];
+
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   * @description The `archived` field, when {@link includeArchived} is set — the bar's `activeKeys` input.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => (this.includeArchived() ? ['archived'] : []),
+  );
+
+  /** Which field the filter bar currently renders mid-pick, before its checkbox is checked — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<'archived' | null> = signal<'archived' | null>(
+    null,
+  );
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
+  );
+
+  /** The "Show archived facilities" chip's checkbox, projected into the filter bar. */
+  private readonly archivedChipTemplate = viewChild<TemplateRef<unknown>>('archivedChip');
+
+  /**
+   * Property chipTemplates
+   * @readonly
+   * @description The `archived` field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
+   */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({ archived: this.archivedChipTemplate() }));
 
   /** The rows the current view currently renders. */
   protected readonly items: Signal<readonly FacilityOutput[]> = computed<readonly FacilityOutput[]>(
@@ -357,15 +413,15 @@ export class FacilitiesPage {
   }
 
   /**
-   * Method onSearchInput
+   * Method onSearchQueryChanged
    * @description Records a keystroke into the draft term the debounce watches.
    * @access protected
-   * @since 1.0.0
-   * @param {Event} event - The input event.
+   * @since 1.1.0
+   * @param {string} term - The search box's current value.
    * @returns {void}
    */
-  protected onSearchInput(event: Event): void {
-    this.draftSearch.set((event.target as HTMLInputElement).value);
+  protected onSearchQueryChanged(term: string): void {
+    this.draftSearch.set(term);
   }
 
   /**
@@ -390,7 +446,43 @@ export class FacilitiesPage {
    */
   protected toggleIncludeArchived(checked: boolean): void {
     this.includeArchived.set(checked);
+    if (checked && this.openFilterKey() === 'archived') this.openFilterKey.set(null);
     this.navigateQuery({ page: null });
+  }
+
+  /**
+   * Method onFieldPicked
+   * @description Reacts to the filter bar's `fieldPicked` output by rendering the "archived" chip before its checkbox is checked.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   * @returns {void}
+   */
+  protected onFieldPicked(key: string): void {
+    this.openFilterKey.set(key as 'archived');
+  }
+
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by turning "show archived" back off.
+   * @access protected
+   * @since 1.3.0
+   * @returns {void}
+   */
+  protected onFieldRemoved(): void {
+    this.toggleIncludeArchived(false);
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @access protected
+   * @since 1.4.0
+   * @param {boolean} visible - The toggle button's intended next state.
+   * @returns {void}
+   */
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
   }
 
   /**

@@ -15,7 +15,9 @@ export class InspectionsPage {
   public readonly createRoot: Locator = this.page.locator('#inspection-create');
   public readonly detailRoot: Locator = this.page.locator('#inspection-detail');
 
-  public readonly filtersTrigger: Locator = this.page.getByTestId('inspections-filters-trigger');
+  public readonly filtersToggle: Locator = this.page.getByTestId('inspections-filters-toggle');
+  public readonly addFilterTrigger: Locator = this.page.getByTestId('inspections-filters-add');
+  public readonly clearFiltersButton: Locator = this.page.getByTestId('inspections-clear-filters');
   public readonly statusFilter: Locator = this.page.getByTestId('inspections-filter-status');
   public readonly resultFilter: Locator = this.page.getByTestId('inspections-filter-result');
   public readonly newLink: Locator = this.page.getByTestId('inspections-new');
@@ -67,5 +69,20 @@ export class InspectionsPage {
   /** Submits the create form empty, so every required field's rule fires at once. */
   public async submitEmptyCreateForm(): Promise<void> {
     await this.createSubmit.click();
+  }
+
+  /** Expands the filter bar via the toolbar's "Filters" toggle, when it is not already open. */
+  public async openFilters(): Promise<void> {
+    if ((await this.filtersToggle.getAttribute('aria-expanded')) === 'true') return;
+    await this.filtersToggle.click();
+  }
+
+  /** Opens the "+ Filter" menu and picks the field named `fieldLabel`, e.g. `"Status"`. */
+  public async addFilter(fieldLabel: string): Promise<void> {
+    await this.addFilterTrigger.click();
+    await this.page
+      .getByTestId('inspections-filters-add-option')
+      .filter({ hasText: fieldLabel })
+      .click();
   }
 }

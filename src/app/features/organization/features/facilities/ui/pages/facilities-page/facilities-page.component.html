@@ -1,65 +1,25 @@
 <div id="facilities" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <app-list-toolbar>
-    <hlm-input-group toolbarStart class="w-full sm:w-72">
-      <hlm-input-group-addon>
-        <ng-icon name="lucideSearch" />
-      </hlm-input-group-addon>
-      <input
-        hlmInputGroupInput
-        type="search"
-        data-testid="facilities-search"
-        placeholder="Search facilities..."
-        i18n-placeholder="@@facility.list.searchPlaceholder"
-        aria-label="Search facilities..."
-        i18n-aria-label="@@facility.list.searchPlaceholder"
-        [value]="draftSearch()"
-        (input)="onSearchInput($event)"
-      />
-    </hlm-input-group>
+  <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="facilities"
+      placeholder="Search facilities..."
+      i18n-placeholder="@@facility.list.searchPlaceholder"
+      ariaLabel="Search facilities..."
+      i18n-ariaLabel="@@facility.list.searchPlaceholder"
+      [value]="draftSearch()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
 
-    <hlm-popover toolbarStart sideOffset="5" align="start">
-      <button
-        hlmPopoverTrigger
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="facilities-filters-trigger"
-      >
-        <ng-icon name="lucideListFilter" aria-hidden="true" />
-        <span i18n="@@facility.list.filtersButton">Filters</span>
-        @if (includeArchived()) {
-          <hlm-badge variant="secondary" class="ms-1">1</hlm-badge>
-        }
-      </button>
-      <hlm-popover-content *hlmPopoverPortal class="w-auto max-w-[calc(100vw-2rem)] p-3">
-        <div class="flex items-center gap-2">
-          <hlm-checkbox
-            id="facilities-filter-archived"
-            data-testid="facilities-filter-archived"
-            [checked]="includeArchived()"
-            (checkedChange)="toggleIncludeArchived($event)"
-          />
-          <label for="facilities-filter-archived" hlmLabel i18n="@@facility.list.filterArchived"
-            >Show archived facilities</label
-          >
-
-          @if (includeArchived()) {
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              data-testid="facilities-clear-filters"
-              (click)="clearFilters()"
-            >
-              <ng-icon name="lucideX" aria-hidden="true" />
-              <span i18n="@@common.clearFilters">Clear filters</span>
-            </button>
-          }
-        </div>
-      </hlm-popover-content>
-    </hlm-popover>
+    <app-collection-filter-toggle
+      toolbarEnd
+      [visible]="filtersVisible()"
+      [activeCount]="activeFilterKeys().length"
+      label="Filters"
+      i18n-label="@@facility.list.filtersButton"
+      testIdPrefix="facilities"
+      (visibleChange)="toggleFiltersVisible($event)"
+    />
 
     <hlm-toggle-group
       toolbarEnd
@@ -99,7 +59,34 @@
         <ng-icon name="lucideMap" aria-hidden="true" />
       </button>
     </hlm-toggle-group>
-  </app-list-toolbar>
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="chipTemplates()"
+      testIdPrefix="facilities"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved()"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #archivedChip>
+    <div class="flex items-center gap-2 px-2">
+      <hlm-checkbox
+        id="facilities-filter-archived"
+        data-testid="facilities-filter-archived"
+        [checked]="includeArchived()"
+        (checkedChange)="toggleIncludeArchived($event)"
+      />
+      <label for="facilities-filter-archived" hlmLabel i18n="@@facility.list.filterArchived"
+        >Show archived facilities</label
+      >
+    </div>
+  </ng-template>
 
   @if (store.rootListCallState().status === 'error') {
     <app-error-state
@@ -168,7 +155,7 @@
       </div>
     }
 
-    <app-list-pagination
+    <app-collection-pagination
       [page]="currentPage()"
       [pageCount]="pageCount()"
       [pageSize]="pageSize()"

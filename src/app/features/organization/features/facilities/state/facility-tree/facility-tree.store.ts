@@ -191,6 +191,40 @@ export const FacilityTreeStore = signalStore(
       return facilityId in store.childrenByParent();
     },
   })),
+
+  withMethods((store) => ({
+    /**
+     * Method ensureChildrenLoaded
+     *
+     * @description
+     * Guarded loader for a node's direct children, mirroring
+     * `FacilityStore.ensureChildFacilitiesLoaded`. No-ops when the branch is
+     * already loaded or is currently in flight, so the tree's `expandRequested`
+     * output can call this unconditionally without ever issuing a duplicate
+     * request on re-expansion.
+     *
+     * @access public
+     * @since 1.1.0
+     *
+     * @param {{ organizationId: string; facilityId: string }} params - Organization and parent facility identifiers.
+     *
+     * @returns {void}
+     */
+    ensureChildrenLoaded(params: {
+      readonly organizationId: string;
+      readonly facilityId: string;
+    }): void {
+      const { facilityId } = params;
+      if (
+        facilityId in store.childrenByParent() ||
+        store.expandingParentIds().includes(facilityId)
+      ) {
+        return;
+      }
+
+      store.loadChildren(params);
+    },
+  })),
   //#endregion
 );
 

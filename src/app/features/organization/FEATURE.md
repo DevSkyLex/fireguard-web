@@ -35,15 +35,16 @@ This feature does not own generic shell composition or account-level user identi
 ## Routes
 
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing page),
-> `messages`, `channels`, `interventions`, `equipments`, `facilities`, `inspections`, `calendar`,
-> `members`, `members/:memberId`, `team`, `settings`, and `/organizations/invitations/accept`
-> (mounted at the app root, outside this subtree — see below). `statistics` and `checklists` are the
-> feature's remaining contract and are already listed by the sidebar navigation behind their
-> permissions; each is remounted in `organization.routes.ts` as its page is rebuilt. A listed
-> destination whose route is absent is a rebuild in progress, not a deviation. `assets` (the estate
-> explorer) is future work and is **not yet listed by the sidebar**: the navigation's interim entries
-> are the two routes it will absorb, `facilities` and `equipments`, each gated on its own read
-> permission.
+> `messages`, `channels`, `interventions`, `assets`, `equipments`, `facilities`, `inspections`,
+> `calendar`, `members`, `members/:memberId`, `team`, `settings`, and
+> `/organizations/invitations/accept` (mounted at the app root, outside this subtree — see below).
+> `statistics` and `checklists` are the feature's remaining contract and are already listed by the
+> sidebar navigation behind their permissions; each is remounted in `organization.routes.ts` as its
+> page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
+> deviation. `assets` (the estate explorer) is now the sidebar's single navigation entry for the
+> estate, gated on `FACILITIES_READ`; `facilities` and `equipments` stay mounted and gated on their
+> own read permissions so records, creation forms and deep links keep resolving, but neither is
+> listed by the sidebar navigation anymore.
 
 - `/organizations` — redirect-only: `organizationGuard` forwards to the default
   workspace (the last organization persisted in the `last-organization` cookie
@@ -54,14 +55,15 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId` — the "Today" landing page; the landing guard
   redirects a member who can read neither interventions nor the dashboard to their
   first permitted destination
-- `/organizations/:organizationId/assets` — not yet mounted. The planned estate
-  explorer, on two first-level axes: **by site** (the hierarchy on the left, the
-  selected site's equipment and inspections on the right) and **everything**
-  (the same panes unscoped, so an operator holding a serial number and no site
-  can still find it). Once built it becomes the single navigation entry for the
-  estate, replacing the "Facilities" and "Equipments" pair below; both route
-  trees stay mounted regardless so records, creation forms and deep links keep
-  resolving
+- `/organizations/:organizationId/assets` — the estate explorer, on two
+  first-level axes: **by site** (the facility hierarchy on the left, via
+  `shared/tree`'s `Tree` primitive and the facilities subfeature's
+  `FacilityTreeStore`, with the selected site's equipment and inspections on
+  the right) and **everything** (the same panes unscoped, so an operator
+  holding a serial number and no site can still find it). It is now the
+  single navigation entry for the estate, replacing the "Facilities" and
+  "Equipments" pair below; both route trees stay mounted regardless so
+  records, creation forms and deep links keep resolving
 - `/organizations/:organizationId/messages` — the direct-messages workspace, owned by the
   `collaboration` subfeature, gated by `organization.messaging.read`. `messages/:conversationId`
   opens one. Reached from the shell's bottom navigation, not from the organization sections
@@ -116,6 +118,7 @@ Primary stores:
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
 - `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped separately by both the landing page — which reads the overview counts, the alert feed and the recent-interventions list, but none of the trend slices or the comparison block the statistics page's KPI deltas need — and the statistics page, each fetching its own copy of the aggregate `/dashboard` payload)
 - `FacilityTreeStore` (owned by the facilities subfeature, component-scoped to the assets explorer; the site hierarchy, loaded one branch at a time)
+- `OrganizationAssetsPaneStore` (component-scoped to the assets explorer; the right pane's equipment and inspections, facility-scoped or organization-wide depending on the active axis. Reuses `EquipmentService`/`InspectionService` from the equipments/inspections subfeatures' `data-access` barrels rather than duplicating transport — it is a read-only preview, not the surface those subfeatures own)
 - `OrganizationTodayStore` (component-scoped to the landing page; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations, logo upload and removal, and the danger-zone actions — archive, restore, suspend, ownership transfer and leaving the organization. One named `CallState` per action, since several are offered side by side and a shared one would leak an error between controls. Refreshes `ActiveOrganizationStore` on every mutation that returns an organization)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map. `loadMembers` re-issues the server-side roster query with the page's search and status filters, so `membersTotal` — the "Total members" KPI — tracks the current filter, while `membersActiveTotal` — the "Active" KPI — is a fixed organization-wide snapshot fetched once per `load`; keep that split when touching either)
@@ -329,9 +332,17 @@ dropped rather than kept as dead weight.
   and counts interventions and reads the local outbox, but owns no intervention state
   and takes no workflow decision.
 - Consumes the nested `features/facilities` public API for the assets explorer
-  (ARCHITECTURE.md §4): its `state` barrel for `FacilityTreeStore`, and its
-  `ui/components` barrel for the equipment and inspection tab panes the facility
-  record already uses. Read-only — the parent browses, the subfeature owns.
+  (ARCHITECTURE.md §4): its `state` barrel for `FacilityTreeStore` and its
+  `models` barrel for `FacilityOutput`. Read-only — the parent browses the
+  hierarchy, the subfeature owns it. `AssetEquipmentTab`/`AssetInspectionTab`,
+  named earlier as a possible shared pane shape, were not built: the explorer's
+  right pane is instead this feature's own `OrganizationAssetsPaneStore`
+  (see facilities/FEATURE.md "Deferred, not built").
+- Consumes the nested `features/equipments` and `features/inspections` public
+  APIs for the assets explorer's right pane: their `data-access` barrels
+  (`EquipmentService`, `InspectionService`) and `models` barrels
+  (`EquipmentOutput`, `InspectionOutput`). Read-only — the parent previews,
+  neither subfeature's own management surface or state is touched.
 - May expose organization context to shell composition through ports.
 - May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
 - May expose onboarding-approved setup workflows through `organization/setup`.

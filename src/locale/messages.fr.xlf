@@ -2447,6 +2447,86 @@
         <source>Equipments</source>
         <target>Équipements</target>
       </trans-unit>
+      <trans-unit id="route.assets" datatype="html">
+        <source>Assets</source>
+        <target>Actifs</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tabsAriaLabel" datatype="html">
+        <source>Estate axis</source>
+        <target>Axe du patrimoine</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tab.site" datatype="html">
+        <source>By site</source>
+        <target>Par site</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tab.everything" datatype="html">
+        <source>Everything</source>
+        <target>Tout</target>
+      </trans-unit>
+      <trans-unit id="org.assets.selectPrompt.title" datatype="html">
+        <source>Select a site</source>
+        <target>Sélectionnez un site</target>
+      </trans-unit>
+      <trans-unit id="org.assets.selectPrompt.desc" datatype="html">
+        <source>Pick a facility from the hierarchy to see its equipment and inspections.</source>
+        <target>Choisissez un établissement dans la hiérarchie pour voir ses équipements et inspections.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tree.nodeMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Ouvrir le menu</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tree.openRecord" datatype="html">
+        <source>Open record</source>
+        <target>Ouvrir la fiche</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.title" datatype="html">
+        <source>Equipment</source>
+        <target>Équipements</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.error" datatype="html">
+        <source>Couldn't load equipment.</source>
+        <target>Impossible de charger les équipements.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.empty" datatype="html">
+        <source>No equipment in view.</source>
+        <target>Aucun équipement dans cette vue.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.columnName" datatype="html">
+        <source>Equipment</source>
+        <target>Équipement</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.columnFacility" datatype="html">
+        <source>Facility</source>
+        <target>Établissement</target>
+      </trans-unit>
+      <trans-unit id="org.assets.equipment.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.title" datatype="html">
+        <source>Inspections</source>
+        <target>Inspections</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.error" datatype="html">
+        <source>Couldn't load inspections.</source>
+        <target>Impossible de charger les inspections.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.empty" datatype="html">
+        <source>No inspections in view.</source>
+        <target>Aucune inspection dans cette vue.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.columnDate" datatype="html">
+        <source>Performed</source>
+        <target>Réalisée</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.columnResult" datatype="html">
+        <source>Result</source>
+        <target>Résultat</target>
+      </trans-unit>
+      <trans-unit id="org.assets.inspections.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
       <trans-unit id="equipmentStatus.inStock" datatype="html">
         <source>In Stock</source>
         <target>En stock</target>
@@ -8991,7 +9071,7 @@
         <target> Sites </target>
       </trans-unit>
       <trans-unit id="org.assets.treeLabel" datatype="html">
-        <source>Site hierarchy</source>
+        <source>Facility hierarchy</source>
         <target>Arborescence des sites</target>
       </trans-unit>
       <trans-unit id="org.assets.openRecord" datatype="html">

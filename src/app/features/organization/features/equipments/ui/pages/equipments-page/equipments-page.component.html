@@ -143,6 +143,8 @@
       [items]="items()"
       [loading]="store.isLoadingEquipment() && items().length === 0"
       [detailRouteBase]="listRouteBase()"
+      [sortOrder]="sortOrder()"
+      (sortChanged)="applySortField($event)"
     />
 
     <app-collection-pagination

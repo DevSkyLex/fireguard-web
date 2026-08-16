@@ -30,11 +30,14 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
+  EquipmentListSort,
   EquipmentOutput,
+  EquipmentSortField,
   EquipmentStatus,
   EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
+import { EquipmentListPreferencesService } from '@features/organization/features/equipments/services';
 import {
   EquipmentStore,
   type EquipmentStoreType,
@@ -160,6 +163,22 @@ export class EquipmentsPage {
 
   /** Current route, anchoring the relative query-param navigation. */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
+
+  /** The cookie-backed memory of how this list was left ordered. */
+  private readonly preferences: EquipmentListPreferencesService =
+    inject<EquipmentListPreferencesService>(EquipmentListPreferencesService);
+
+  /**
+   * Property sortOrder
+   * @readonly
+   * @description The active ordering, restored from the preferences cookie.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<EquipmentListSort>}
+   */
+  protected readonly sortOrder: WritableSignal<EquipmentListSort> = signal<EquipmentListSort>(
+    this.preferences.readSort(),
+  );
 
   /** The active narrowing. Questions asked now, so never persisted. */
   protected readonly filters: WritableSignal<{
@@ -361,9 +380,13 @@ export class EquipmentsPage {
       const page: number = this.page();
       const pageSize: number = this.pageSize();
       const params: Record<string, string> = this.buildListParams();
+      const sort: EquipmentListSort = this.sortOrder();
 
       untracked((): void => {
-        this.store.load({ organizationId, options: { params, page, itemsPerPage: pageSize } });
+        this.store.load({
+          organizationId,
+          options: { params, page, itemsPerPage: pageSize, sort },
+        });
       });
     });
   }
@@ -531,8 +554,27 @@ export class EquipmentsPage {
         params: this.buildListParams(),
         page: this.page(),
         itemsPerPage: this.pageSize(),
+        sort: this.sortOrder(),
       },
     });
+  }
+
+  /**
+   * Method applySortField
+   * @description Orders by a column head. Re-picking the active field reverses it, which is what a second click on a sorted column means everywhere else. Resets to the first page like every other narrowing change.
+   * @access protected
+   * @since 1.4.0
+   * @param {EquipmentSortField} field - The column's field.
+   * @returns {void}
+   */
+  protected applySortField(field: EquipmentSortField): void {
+    this.page.set(1);
+    this.sortOrder.update((current: EquipmentListSort) =>
+      current.field === field
+        ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { field, direction: current.direction },
+    );
+    this.preferences.write(this.sortOrder());
   }
 
   /**

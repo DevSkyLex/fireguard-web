@@ -1,3 +1,4 @@
+export { facilityToTreeNode } from './facility-to-tree-node/facility-to-tree-node.utils';
 export { getOrganizationInitials } from './get-organization-initials/get-organization-initials.utils';
 export {
   getOrganizationDashboardHealthComparisonDelta,

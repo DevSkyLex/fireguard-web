@@ -378,6 +378,25 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/organizations/{organizationId}/facilities/{facility.id}/children` —
+   * the one-branch-at-a-time collection the assets explorer's `FacilityTreeStore`
+   * fetches when a tree node is expanded.
+   */
+  public async mockFacilityChildren(
+    organizationId: string,
+    facilityId: string,
+    children: ReadonlyArray<FacilityOutputFixture>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/facilities/${facilityId}/children(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(children));
+      },
+    );
+  }
+
+  /**
    * Mocks the facility-scoped equipment and inspection previews the detail
    * page's Overview tab reads (`FacilityOverviewStore`). Both `EquipmentService.list`
    * and `InspectionService.list` route a `facilityId` filter to these

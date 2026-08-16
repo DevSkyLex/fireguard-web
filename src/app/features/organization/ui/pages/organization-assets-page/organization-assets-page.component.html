@@ -1,0 +1,212 @@
+<div id="organization-assets" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  <hlm-tabs
+    [tab]="axis()"
+    orientation="horizontal"
+    class="flex min-h-0 flex-1 flex-col gap-4"
+    (tabActivated)="onAxisActivated($event)"
+  >
+    <hlm-tabs-list
+      variant="line"
+      class="w-full max-w-sm"
+      aria-label="Estate axis"
+      i18n-aria-label="@@org.assets.tabsAriaLabel"
+    >
+      <button hlmTabsTrigger="site" class="max-sm:min-h-11" data-testid="assets-tab-site">
+        <ng-icon name="lucideNetwork" aria-hidden="true" />
+        <span i18n="@@org.assets.tab.site">By site</span>
+      </button>
+      <button
+        hlmTabsTrigger="everything"
+        class="max-sm:min-h-11"
+        data-testid="assets-tab-everything"
+      >
+        <ng-icon name="lucideLayoutGrid" aria-hidden="true" />
+        <span i18n="@@org.assets.tab.everything">Everything</span>
+      </button>
+    </hlm-tabs-list>
+
+    <div hlmTabsContent="site" class="min-h-0 flex-1">
+      <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
+        <div
+          class="min-h-0 overflow-y-auto rounded-md border border-border p-2 lg:max-h-[calc(100vh-14rem)]"
+          data-testid="assets-tree-panel"
+        >
+          <app-tree
+            [nodes]="treeNodes()"
+            [childrenByParent]="childrenByParent()"
+            [loadingIds]="loadingIds()"
+            [failedIds]="failedIds()"
+            [selectedId]="selectedFacilityId()"
+            [nodeTemplate]="assetTreeNode"
+            (expandRequested)="onExpandRequested($event)"
+            (selected)="onNodeSelected($event)"
+            (retryRequested)="onExpandRequested($event)"
+          />
+        </div>
+
+        <div class="min-h-0 flex-1">
+          @if (selectedFacilityId() === null) {
+            <hlm-empty class="border border-dashed">
+              <hlm-empty-header>
+                <hlm-empty-media variant="icon">
+                  <ng-icon name="lucideNetwork" />
+                </hlm-empty-media>
+                <div hlmEmptyTitle i18n="@@org.assets.selectPrompt.title">Select a site</div>
+                <div hlmEmptyDescription i18n="@@org.assets.selectPrompt.desc">
+                  Pick a facility from the hierarchy to see its equipment and inspections.
+                </div>
+              </hlm-empty-header>
+            </hlm-empty>
+          } @else {
+            <ng-container *ngTemplateOutlet="assetPanes" />
+          }
+        </div>
+      </div>
+    </div>
+
+    <div hlmTabsContent="everything" class="min-h-0 flex-1">
+      <ng-template hlmTabsContentLazy>
+        <ng-container *ngTemplateOutlet="assetPanes" />
+      </ng-template>
+    </div>
+  </hlm-tabs>
+</div>
+
+<ng-template #assetTreeNode let-node="node">
+  <div class="flex min-w-0 flex-1 items-center gap-1">
+    <span class="min-w-0 flex-1 truncate">{{ node.label }}</span>
+    <button
+      type="button"
+      hlmBtn
+      variant="ghost"
+      size="icon-sm"
+      class="size-6 shrink-0"
+      tabindex="-1"
+      data-testid="assets-tree-node-menu"
+      [hlmDropdownMenuTrigger]="nodeMenu"
+      (click)="$event.stopPropagation()"
+    >
+      <ng-icon name="lucideEllipsis" aria-hidden="true" />
+      <span class="sr-only" i18n="@@org.assets.tree.nodeMenu">Open menu</span>
+    </button>
+
+    <ng-template #nodeMenu>
+      <hlm-dropdown-menu class="w-44">
+        <a
+          hlmDropdownMenuItem
+          data-testid="assets-tree-node-open"
+          [routerLink]="['/organizations', organizationId(), 'facilities', node.id]"
+        >
+          <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
+          <span i18n="@@org.assets.tree.openRecord">Open record</span>
+        </a>
+      </hlm-dropdown-menu>
+    </ng-template>
+  </div>
+</ng-template>
+
+<ng-template #assetPanes>
+  <div class="flex min-h-0 flex-col gap-6 overflow-y-auto lg:max-h-[calc(100vh-14rem)]">
+    @if (canReadEquipment()) {
+      <section aria-labelledby="assets-equipment-title" data-testid="assets-equipment-pane">
+        <h2 id="assets-equipment-title" class="mb-2 text-sm font-medium text-foreground">
+          <ng-icon name="lucideWrench" class="me-1 align-text-bottom" aria-hidden="true" />
+          <span i18n="@@org.assets.equipment.title">Equipment</span>
+          <span class="text-muted-foreground tabular-nums">({{ pane.equipment().length }})</span>
+        </h2>
+
+        @if (pane.hasEquipmentError()) {
+          <p class="text-sm text-destructive" data-testid="assets-equipment-error">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <span i18n="@@org.assets.equipment.error">Couldn't load equipment.</span>
+          </p>
+        } @else if (!pane.isLoadingEquipment() && pane.equipment().length === 0) {
+          <p class="text-sm text-muted-foreground" i18n="@@org.assets.equipment.empty">
+            No equipment in view.
+          </p>
+        } @else {
+          <div hlmTableContainer class="rounded-md border border-border">
+            <table hlmTable data-testid="assets-equipment-table">
+              <thead hlmTableHeader>
+                <tr hlmTableRow>
+                  <th hlmTableHead i18n="@@org.assets.equipment.columnName">Equipment</th>
+                  <th hlmTableHead i18n="@@org.assets.equipment.columnFacility">Facility</th>
+                  <th hlmTableHead i18n="@@org.assets.equipment.columnStatus">Status</th>
+                </tr>
+              </thead>
+              <tbody hlmTableBody>
+                @for (item of pane.equipment(); track item.id) {
+                  <tr hlmTableRow data-testid="assets-equipment-row">
+                    <td hlmTableCell>
+                      <a
+                        class="font-medium text-foreground hover:underline"
+                        [routerLink]="['/organizations', organizationId(), 'equipments', item.id]"
+                      >
+                        {{ item.serialNumber ?? item.brand ?? item.type }}
+                      </a>
+                    </td>
+                    <td hlmTableCell class="text-muted-foreground">{{ item.facilityName }}</td>
+                    <td hlmTableCell>
+                      <span hlmBadge variant="outline">{{ item.status }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+
+    @if (canReadInspections()) {
+      <section aria-labelledby="assets-inspections-title" data-testid="assets-inspections-pane">
+        <h2 id="assets-inspections-title" class="mb-2 text-sm font-medium text-foreground">
+          <ng-icon name="lucideClipboardList" class="me-1 align-text-bottom" aria-hidden="true" />
+          <span i18n="@@org.assets.inspections.title">Inspections</span>
+          <span class="text-muted-foreground tabular-nums">({{ pane.inspections().length }})</span>
+        </h2>
+
+        @if (pane.hasInspectionsError()) {
+          <p class="text-sm text-destructive" data-testid="assets-inspections-error">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <span i18n="@@org.assets.inspections.error">Couldn't load inspections.</span>
+          </p>
+        } @else if (!pane.isLoadingInspections() && pane.inspections().length === 0) {
+          <p class="text-sm text-muted-foreground" i18n="@@org.assets.inspections.empty">
+            No inspections in view.
+          </p>
+        } @else {
+          <div hlmTableContainer class="rounded-md border border-border">
+            <table hlmTable data-testid="assets-inspections-table">
+              <thead hlmTableHeader>
+                <tr hlmTableRow>
+                  <th hlmTableHead i18n="@@org.assets.inspections.columnDate">Performed</th>
+                  <th hlmTableHead i18n="@@org.assets.inspections.columnResult">Result</th>
+                  <th hlmTableHead i18n="@@org.assets.inspections.columnStatus">Status</th>
+                </tr>
+              </thead>
+              <tbody hlmTableBody>
+                @for (item of pane.inspections(); track item.id) {
+                  <tr hlmTableRow data-testid="assets-inspections-row">
+                    <td hlmTableCell>
+                      <a
+                        class="font-medium text-foreground hover:underline"
+                        [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
+                      >
+                        {{ item.performedAt | date: 'short' }}
+                      </a>
+                    </td>
+                    <td hlmTableCell>
+                      <span hlmBadge variant="outline">{{ item.result }}</span>
+                    </td>
+                    <td hlmTableCell class="text-muted-foreground">{{ item.status }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  </div>
+</ng-template>

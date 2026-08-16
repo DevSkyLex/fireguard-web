@@ -141,26 +141,28 @@ Primary service:
   (`@features/organization/ui/components`) for the list page's shared pagination band — see
   `organization/FEATURE.md` § UI Conventions.
 - The parent feature consumes this subfeature's `state` barrel
-  (`FacilityTreeStore`) for the assets explorer at
-  `/organizations/:organizationId/assets` (ARCHITECTURE.md §4). Read-only —
-  the parent browses the hierarchy, this subfeature keeps ownership of sites.
+  (`FacilityTreeStore`) and `models` barrel (`FacilityOutput`) for the assets
+  explorer at `/organizations/:organizationId/assets` (ARCHITECTURE.md §4).
+  Read-only — the parent browses the hierarchy, this subfeature keeps
+  ownership of sites.
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
 
 ### Deferred, not built
 
 `AssetEquipmentTab` / `AssetInspectionTab` — the shared equipment/inspection
 panes this document previously named for both the facility record and the
-assets explorer — are **not built in this pass**. `FacilityTreeStore` exists
-and the assets explorer route is not yet mounted (`organization/FEATURE.md`
-"Currently mounted"); the sibling `inspections` subfeature has no `ui/` of
-its own yet either. Building two composite panes ahead of the route and the
-sibling subfeature they would depend on was judged premature — the facility
-detail page's Overview tab instead reads its equipment/inspection summary
-directly from `FacilityOverviewStore` (`ARCHITECTURE.md` §10.10/§2.9). When
-the assets explorer route is built, revisit whether these panes are still the
-right shape; when they are, they take an **optional** `facilityId` and
-navigate by **absolute** path, for the same reason the rest of this
-document's cross-feature panes do.
+assets explorer — are still **not built**, now that the explorer route
+exists (`/organizations/:organizationId/assets`,
+`organization/FEATURE.md`). The explorer's right pane turned out not to need
+them: it is `organization`'s own `OrganizationAssetsPaneStore`, a read-only
+preview reusing `EquipmentService`/`InspectionService` directly rather than a
+shared presentational pane, and the `inspections` subfeature still has no
+`ui/` of its own. The facility detail page's Overview tab is unaffected — it
+still reads its equipment/inspection summary from `FacilityOverviewStore`
+(`ARCHITECTURE.md` §10.10/§2.9), not from the explorer's pane. If a shared
+pane component is built later (e.g. once `inspections` grows a `ui/`), it
+takes an **optional** `facilityId` and navigates by **absolute** path, for
+the same reason the rest of this document's cross-feature panes do.
 
 ## Deletion
 

@@ -22,9 +22,8 @@ export interface ChannelsState {
    * not a synonym for `false`.
    */
   readonly includeArchived: boolean | null;
-  /** Server-reported total, the only sound basis for paging. */
+  /** Count of every channel drained across all server pages, not one page's row count. */
   readonly total: number;
-  readonly page: number;
   /** `GET /api/channels`. */
   readonly listCallState: CallState;
   /** `GET /api/channels/{id}`, the only source of a trustworthy `unreadCount`. */

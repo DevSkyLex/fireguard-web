@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { EMPTY, expand, reduce, type Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
@@ -79,6 +79,38 @@ export class ChannelService extends HydraApiService {
         ...(query.isArchived === undefined ? {} : { isArchived: query.isArchived }),
       },
     });
+  }
+
+  /**
+   * Method listAll
+   * @method listAll
+   *
+   * @description
+   * Lists every channel the acting member participates in by walking the
+   * server-paginated collection page by page — the messaging API has no
+   * server-side search, so this is the sanctioned bounded drain (DESIGN.md
+   * § Collections' Server Rule) callers filter in memory over.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {ListChannelsQuery} query - Organization scope and archive filter.
+   *
+   * @returns {Observable<readonly ChannelOutput[]>} The complete channel list.
+   */
+  public listAll(query: ListChannelsQuery): Observable<readonly ChannelOutput[]> {
+    const pageSize = 100;
+    return this.list({ ...query, page: 1, itemsPerPage: pageSize }).pipe(
+      expand((collection, pageIndex) =>
+        (pageIndex + 1) * pageSize < collection.totalItems
+          ? this.list({ ...query, page: pageIndex + 2, itemsPerPage: pageSize })
+          : EMPTY,
+      ),
+      reduce(
+        (items, collection) => [...items, ...collection.member],
+        [] as readonly ChannelOutput[],
+      ),
+    );
   }
 
   /**

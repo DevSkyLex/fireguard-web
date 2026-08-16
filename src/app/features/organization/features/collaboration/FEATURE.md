@@ -527,3 +527,8 @@ the panel nor its toggle renders.
   header (the mobile back button lives there), and register nothing in `#pageActions` — the
   thread-owns-the-scroller layout above requires it. This exception covers the conversation
   pages only; other collaboration surfaces follow the standard page grammar.
+- **`ChannelsStore.load` is the sanctioned bounded drain of the Server Rule** (DESIGN.md
+  § Collections). `ChannelService.listAll` walks every server page at `itemsPerPage: 100` and
+  the store loads the full result in one go; the messaging API has no server-side search for
+  channels, so filtering happens in memory over the already-loaded set rather than through the
+  server. Do not read this as license to drain an unbounded collection elsewhere.

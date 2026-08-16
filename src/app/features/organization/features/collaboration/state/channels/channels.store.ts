@@ -15,7 +15,6 @@ import { setAllEntities, updateEntity, removeEntity, withEntities } from '@ngrx/
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
-import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
@@ -42,7 +41,6 @@ const INITIAL_STATE: ChannelsState = {
   organizationId: null,
   includeArchived: null,
   total: 0,
-  page: 1,
   listCallState: idleCallState(),
   detailCallState: idleCallState(),
   mutationCallState: idleCallState(),
@@ -57,7 +55,10 @@ const INITIAL_STATE: ChannelsState = {
  * Channel list and administration for one organization.
  *
  * Component-scoped: the sidebar and a channel-management page each want their
- * own paging and filters, and neither should disturb the other.
+ * own filters, and neither should disturb the other. `load` drains every
+ * server page up front (`ChannelService.listAll`) because the messaging API
+ * has no server-side search — consumers filter the full, already-loaded set
+ * in memory.
  *
  * Two contract hazards are handled here rather than left to callers:
  * rows are keyed off the scalar `id` because `@id` is a Skolem genid
@@ -98,7 +99,8 @@ export const ChannelsStore = signalStore(
 
   withMethods((store, service = inject(ChannelService), dispatcher = inject(Dispatcher)) => ({
     /**
-     * Loads one page of channels.
+     * Loads every channel the acting member participates in, walking the
+     * server-paginated collection to its end (`ChannelService.listAll`).
      */
     load: rxMethod<ListChannelsQuery>(
       pipe(
@@ -106,19 +108,17 @@ export const ChannelsStore = signalStore(
           patchState(store, {
             organizationId: query.organization,
             includeArchived: query.isArchived ?? null,
-            page: query.page ?? 1,
             listCallState: pendingCallState(),
           }),
         ),
         switchMap((query: ListChannelsQuery) =>
-          service.list(query).pipe(
+          service.listAll(query).pipe(
             tapResponse({
-              next: (collection: HydraCollection<ChannelOutput>): void => {
-                patchState(
-                  store,
-                  setAllEntities([...collection.member], { collection: 'channel' }),
-                  { total: collection.totalItems, listCallState: successCallState(null) },
-                );
+              next: (channels: readonly ChannelOutput[]): void => {
+                patchState(store, setAllEntities([...channels], { collection: 'channel' }), {
+                  total: channels.length,
+                  listCallState: successCallState(null),
+                });
               },
               error: (error: unknown): void => {
                 const storeError = toStoreError(error);

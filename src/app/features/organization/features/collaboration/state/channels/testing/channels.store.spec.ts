@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
-import type { HydraCollection } from '@core/api/models';
 import { ChannelService } from '@features/organization/features/collaboration/data-access';
 import type {
   ChannelOutput,
@@ -28,18 +27,14 @@ function channel(overrides: Partial<ChannelOutput> = {}): ChannelOutput {
   };
 }
 
-function collection(member: readonly ChannelOutput[]): HydraCollection<ChannelOutput> {
-  return {
-    '@id': '/api/channels',
-    '@type': 'Collection',
-    totalItems: member.length,
-    member,
-  } as HydraCollection<ChannelOutput>;
+/** Stubs the already-drained `listAll` — the store never sees a raw page. */
+function stubListAll(channels: readonly ChannelOutput[]): ReturnType<typeof vi.fn> {
+  return vi.fn().mockReturnValue(of(channels));
 }
 
 describe('ChannelsStore', () => {
   let service: {
-    list: ReturnType<typeof vi.fn>;
+    listAll: ReturnType<typeof vi.fn>;
     get: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
@@ -59,7 +54,7 @@ describe('ChannelsStore', () => {
 
   beforeEach(() => {
     service = {
-      list: vi.fn(),
+      listAll: stubListAll([]),
       get: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -79,37 +74,37 @@ describe('ChannelsStore', () => {
   });
 
   it('should key rows off the scalar id, not the regenerated @id', () => {
-    // `@id` is a Skolem genid the API mints afresh on every response, so two
-    // payloads for the same channel differ there while `id` stays stable.
-    service.list.mockReturnValue(of(collection([channel({ '@id': '/.well-known/genid/aaaa' })])));
+    // `@id` is a Skolem genid the API mints afresh on every response — `id` stays stable.
+    service.listAll = stubListAll([channel({ '@id': '/.well-known/genid/aaaa' })]);
 
     const store = createStore();
     store.load(query);
 
     expect(store.channelIds()).toEqual(['channel-1']);
 
-    service.list.mockReturnValue(
-      of(collection([channel({ '@id': '/.well-known/genid/bbbb', name: 'Renamed' })])),
-    );
+    service.listAll = stubListAll([channel({ '@id': '/.well-known/genid/bbbb', name: 'Renamed' })]);
     store.load(query);
 
     expect(store.channelIds()).toEqual(['channel-1']);
     expect(store.channelEntityMap()['channel-1'].name).toBe('Renamed');
   });
 
-  it('should record the server total rather than the row count', () => {
-    // itemsPerPage is clamped server-side, so member.length is not the total.
-    const page = collection([channel()]);
-    service.list.mockReturnValue(of({ ...page, totalItems: 87 }));
+  it('should drain a two-page collection into 31 entities and reflect that in total', () => {
+    // The page walk itself lives in ChannelService.listAll (specced there).
+    const channels = Array.from({ length: 31 }, (_unused, index) =>
+      channel({ id: `channel-${index + 1}` }),
+    );
+    service.listAll = stubListAll(channels);
 
     const store = createStore();
     store.load(query);
 
-    expect(store.total()).toBe(87);
+    expect(store.channelEntities()).toHaveLength(31);
+    expect(store.total()).toBe(31);
   });
 
   it('should treat an absent archive filter as a third state, not false', () => {
-    service.list.mockReturnValue(of(collection([])));
+    service.listAll = stubListAll([]);
 
     const store = createStore();
     store.load(query);
@@ -123,7 +118,7 @@ describe('ChannelsStore', () => {
   });
 
   it('should not let a write response clobber derived fields', () => {
-    service.list.mockReturnValue(of(collection([channel({ unreadCount: 7, isFavorite: true })])));
+    service.listAll = stubListAll([channel({ unreadCount: 7, isFavorite: true })]);
     // Every channel write answers with fabricated derived fields.
     service.update.mockReturnValue(
       of(channel({ name: 'Renamed', unreadCount: 0, isFavorite: false })),
@@ -141,7 +136,7 @@ describe('ChannelsStore', () => {
   });
 
   it('should drop the row locally on delete, since 204 carries no body', () => {
-    service.list.mockReturnValue(of(collection([channel(), channel({ id: 'channel-2' })])));
+    service.listAll = stubListAll([channel(), channel({ id: 'channel-2' })]);
     service.remove.mockReturnValue(of(undefined));
 
     const store = createStore();
@@ -153,9 +148,10 @@ describe('ChannelsStore', () => {
   });
 
   it('should expose an unread total for the navigation badge', () => {
-    service.list.mockReturnValue(
-      of(collection([channel({ unreadCount: 3 }), channel({ id: 'channel-2', unreadCount: 4 })])),
-    );
+    service.listAll = stubListAll([
+      channel({ unreadCount: 3 }),
+      channel({ id: 'channel-2', unreadCount: 4 }),
+    ]);
 
     const store = createStore();
     store.load(query);
@@ -164,9 +160,10 @@ describe('ChannelsStore', () => {
   });
 
   it('should separate root channels from nested ones', () => {
-    service.list.mockReturnValue(
-      of(collection([channel(), channel({ id: 'channel-2', parent: '/api/channels/channel-1' })])),
-    );
+    service.listAll = stubListAll([
+      channel(),
+      channel({ id: 'channel-2', parent: '/api/channels/channel-1' }),
+    ]);
 
     const store = createStore();
     store.load(query);
@@ -175,12 +172,12 @@ describe('ChannelsStore', () => {
   });
 
   it('should record a load failure without dropping cached rows', () => {
-    service.list.mockReturnValueOnce(of(collection([channel()])));
+    service.listAll = vi.fn().mockReturnValueOnce(of([channel()]));
 
     const store = createStore();
     store.load(query);
 
-    service.list.mockReturnValueOnce(throwError(() => new Error('offline')));
+    service.listAll.mockReturnValueOnce(throwError(() => new Error('offline')));
     store.load(query);
 
     expect(store.loadError()).not.toBeNull();
@@ -188,9 +185,10 @@ describe('ChannelsStore', () => {
   });
 
   it('should clear a channel unread badge when its conversation is marked read', () => {
-    service.list.mockReturnValue(
-      of(collection([channel({ unreadCount: 5 }), channel({ id: 'channel-2', unreadCount: 4 })])),
-    );
+    service.listAll = stubListAll([
+      channel({ unreadCount: 5 }),
+      channel({ id: 'channel-2', unreadCount: 4 }),
+    ]);
 
     const store = createStore();
     store.load(query);
@@ -203,7 +201,7 @@ describe('ChannelsStore', () => {
   });
 
   it('should keep hierarchy failures on their own call state', () => {
-    service.list.mockReturnValue(of(collection([channel()])));
+    service.listAll = stubListAll([channel()]);
     service.setParent.mockReturnValue(throwError(() => new Error('cycle')));
 
     const store = createStore();

@@ -128,3 +128,52 @@ export function complianceTreeNodeOutput(
     ...overrides,
   };
 }
+
+/** Floor plan attachment the Plans tab e2e scenarios deep-link into. */
+export const E2E_FACILITY_PLAN_ID = 'e2e-facility-plan-1';
+
+/**
+ * `FacilityAttachmentOutputFixture` carries no download URL — like the real
+ * backend DTO, the bytes are only ever read through `GET
+ * /api/facility-attachments/{id}/download`
+ * (`ApiMock.mockFacilityPlans`), never a field on the resource itself.
+ */
+export interface FacilityAttachmentOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly facilityId: string;
+  readonly fileName: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly kind: string;
+  readonly isPrimaryPlan: boolean;
+  readonly imageWidth: number | null;
+  readonly imageHeight: number | null;
+  readonly revision: number;
+  readonly uploadedAt: string;
+}
+
+/** A primary floor-plan attachment on {@link facilityOutput}. */
+export function facilityAttachmentOutput(
+  overrides: Partial<FacilityAttachmentOutputFixture> = {},
+): FacilityAttachmentOutputFixture {
+  const id = overrides.id ?? E2E_FACILITY_PLAN_ID;
+
+  return {
+    '@id': `/api/facility-attachments/${id}`,
+    '@type': 'FacilityAttachment',
+    id,
+    facilityId: E2E_FACILITY_ID,
+    fileName: 'ground-floor.png',
+    mimeType: 'image/png',
+    size: 4096,
+    kind: 'floor_plan',
+    isPrimaryPlan: true,
+    imageWidth: 1200,
+    imageHeight: 800,
+    revision: 1,
+    uploadedAt: '2026-08-01T00:00:00+00:00',
+    ...overrides,
+  };
+}

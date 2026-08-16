@@ -35,8 +35,10 @@ import type {
   OrganizationDashboardTrendOutputFixture,
 } from '../fixtures/dashboard-fixtures';
 import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
+import { facilityAttachmentOutput } from '../fixtures/facility-fixtures';
 import type {
   ComplianceTreeNodeOutputFixture,
+  FacilityAttachmentOutputFixture,
   FacilityOutputFixture,
 } from '../fixtures/facility-fixtures';
 import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
@@ -62,6 +64,12 @@ import type {
  * requests to this origin at the network layer, so no backend needs to run.
  */
 export const API_BASE_URL = 'http://localhost:8000';
+
+/** A 1×1 transparent PNG, served for every mocked facility attachment download. */
+const TINY_PNG_BUFFER = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64',
+);
 
 /**
  * Fulfils a Playwright route with a JSON body and default JSON-LD headers.
@@ -576,6 +584,75 @@ export class ApiMock {
         await fulfillJson(route, 200, summary);
       },
     );
+  }
+
+  /**
+   * Mocks `GET /api/facilities/{facilityId}/attachments` (list, filtered by
+   * `kind`) and `POST /api/facilities/{facilityId}/attachments` (upload) in
+   * one route, matching on method the way `mockFacilityPlanDelete` matches
+   * `DELETE` — the Plans tab's list and its own upload response. `uploaded`,
+   * when given, is returned for the upload; otherwise a fixed fixture is
+   * used. `GET /api/facility-attachments/{id}/download` is also mocked with
+   * a tiny inline PNG for every attachment id, so `FacilityPlansStore`'s
+   * `loadImage` — the only source of `PlanViewer`'s `src` — actually
+   * resolves instead of settling into the viewer's error state.
+   */
+  public async mockFacilityPlans(
+    facilityId: string,
+    plans: ReadonlyArray<FacilityAttachmentOutputFixture>,
+    uploaded?: FacilityAttachmentOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    const uploadResponse =
+      uploaded ?? facilityAttachmentOutput({ id: 'e2e-facility-plan-uploaded' });
+
+    await this.page.route(
+      new RegExp(`/api/facilities/${facilityId}/attachments(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() === 'POST') {
+          await fulfillJson(route, 201, uploadResponse);
+
+          return;
+        }
+
+        await fulfillJson(route, 200, hydraCollection(plans));
+      },
+    );
+
+    await this.page.route(/\/api\/facility-attachments\/.+\/download$/, async (route) => {
+      await route.fulfill({ status: 200, contentType: 'image/png', body: TINY_PNG_BUFFER });
+    });
+  }
+
+  /**
+   * Mocks `POST /api/facility-attachments/{planId}/primary` — the Plans
+   * tab's set-primary action.
+   */
+  public async mockFacilityPlanSetPrimary(
+    planId: string,
+    response: FacilityAttachmentOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/facility-attachments/${planId}/primary`, (route) =>
+      fulfillJson(route, 200, response),
+    );
+  }
+
+  /**
+   * Mocks `DELETE /api/facility-attachments/{planId}` — the Plans tab's
+   * per-row delete action.
+   */
+  public async mockFacilityPlanDelete(planId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/facility-attachments/${planId}`, async (route) => {
+      if (route.request().method() !== 'DELETE') {
+        await route.continue();
+
+        return;
+      }
+
+      await route.fulfill({ status: 204 });
+    });
   }
 
   /**

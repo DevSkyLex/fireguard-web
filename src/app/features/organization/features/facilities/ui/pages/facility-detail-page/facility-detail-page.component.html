@@ -32,6 +32,9 @@
         >
           <span i18n="@@facility.detail.tabs.information">Information</span>
         </button>
+        <button hlmTabsTrigger="plans" class="max-sm:min-h-11" data-testid="facility-tab-plans">
+          <span i18n="@@facility.detail.tabs.plans">Plans</span>
+        </button>
       </hlm-tabs-list>
 
       <div hlmTabsContent="overview" class="flex flex-col gap-6">
@@ -203,6 +206,87 @@
             (editTargetChanged)="onEditTargetChanged($event)"
           />
         </section>
+      </div>
+
+      <div hlmTabsContent="plans" class="flex flex-col gap-4">
+        @if (plans.isLoading() && plans.orderedPlans().length === 0) {
+          <div
+            class="flex flex-col gap-4"
+            role="status"
+            aria-label="Loading floor plans"
+            i18n-aria-label="@@facility.plans.loadingAria"
+            data-testid="facility-plans-loading"
+          >
+            <hlm-skeleton class="h-8 w-40" />
+            <hlm-skeleton class="h-24 w-full" />
+            <hlm-skeleton class="h-24 w-full" />
+          </div>
+        } @else if (plans.orderedPlans().length === 0 && !plans.isLoading()) {
+          <app-empty-state
+            icon="lucideMap"
+            class="rounded-md border border-dashed border-border p-6"
+            title="No floor plan yet"
+            i18n-title="@@facility.plans.emptyTitle"
+            description="Upload an image to give this facility a floor plan."
+            i18n-description="@@facility.plans.emptyDescription"
+            data-testid="facility-plans-empty"
+          >
+            @if (canWrite()) {
+              <app-facility-plan-list
+                [plans]="plans.orderedPlans()"
+                [selectedPlanId]="plans.selectedPlan()?.id ?? null"
+                [canManage]="canWrite()"
+                [uploading]="plans.isUploading()"
+                [settingPrimaryId]="plans.settingPrimaryId()"
+                [deletingId]="plans.deletingId()"
+                (planSelected)="onPlanSelected($event)"
+                (filePicked)="onPlanFilePicked($event)"
+                (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
+                (deleteRequested)="onPlanDeleteRequested($event)"
+              />
+            }
+          </app-empty-state>
+        } @else {
+          <div class="grid grid-cols-1 gap-4 lg:grid-cols-[20rem_1fr]">
+            <app-facility-plan-list
+              [plans]="plans.orderedPlans()"
+              [selectedPlanId]="plans.selectedPlan()?.id ?? null"
+              [canManage]="canWrite()"
+              [uploading]="plans.isUploading()"
+              [settingPrimaryId]="plans.settingPrimaryId()"
+              [deletingId]="plans.deletingId()"
+              (planSelected)="onPlanSelected($event)"
+              (filePicked)="onPlanFilePicked($event)"
+              (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
+              (deleteRequested)="onPlanDeleteRequested($event)"
+            />
+            <div
+              class="h-[32rem] min-h-0 rounded-md border border-border"
+              data-testid="facility-plan-viewer"
+            >
+              @if (plans.selectedPlan(); as selected) {
+                @if (plans.planImageUrl(); as imageUrl) {
+                  <app-plan-viewer
+                    [src]="imageUrl"
+                    alt="Floor plan: {{ selected.fileName }}"
+                    i18n-alt="@@facility.plans.viewerAlt"
+                    [naturalWidth]="selected.imageWidth"
+                    [naturalHeight]="selected.imageHeight"
+                  />
+                } @else {
+                  <div
+                    class="flex h-full items-center justify-center"
+                    role="status"
+                    aria-label="Loading floor plan image"
+                    i18n-aria-label="@@facility.plans.imageLoadingAria"
+                  >
+                    <hlm-spinner size="lg" aria-hidden="true" />
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
       </div>
     </hlm-tabs>
   } @else {

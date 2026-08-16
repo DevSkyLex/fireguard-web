@@ -11718,6 +11718,90 @@
         <source>Loading floor plan</source>
         <target>Chargement du plan</target>
       </trans-unit>
+      <trans-unit id="facility.plans.toast.uploaded" datatype="html">
+        <source>Floor plan uploaded</source>
+        <target>Plan de sol téléversé</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.toast.primarySet" datatype="html">
+        <source>Primary plan updated</source>
+        <target>Plan principal mis à jour</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.toast.deleted" datatype="html">
+        <source>Floor plan deleted</source>
+        <target>Plan de sol supprimé</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.listTitle" datatype="html">
+        <source>Floor plans</source>
+        <target>Plans</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.upload" datatype="html">
+        <source>Upload plan</source>
+        <target>Téléverser un plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.primaryBadge" datatype="html">
+        <source>Primary</source>
+        <target>Principal</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.rowMenu" datatype="html">
+        <source>Plan actions</source>
+        <target>Actions du plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.view" datatype="html">
+        <source>View</source>
+        <target>Afficher</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.setPrimary" datatype="html">
+        <source>Set as primary</source>
+        <target>Définir comme principal</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.delete" datatype="html">
+        <source>Delete</source>
+        <target>Supprimer</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.deleteTitle" datatype="html">
+        <source>Delete this floor plan?</source>
+        <target>Supprimer ce plan ?</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.deleteText" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ pendingDelete()?.fileName }}"/> will be permanently removed from this facility. </source>
+        <target> <x id="INTERPOLATION" equiv-text="{{ pendingDelete()?.fileName }}"/> sera définitivement supprimé de cet établissement. </target>
+      </trans-unit>
+      <trans-unit id="facility.plans.deleteConfirm" datatype="html">
+        <source> Delete </source>
+        <target> Supprimer </target>
+      </trans-unit>
+      <trans-unit id="facility.plans.unsupported" datatype="html">
+        <source>&quot;<x id="name" equiv-text="file.name"/>&quot; is not an accepted image format (PNG, JPEG, WebP or SVG).</source>
+        <target>&quot;<x id="name" equiv-text="file.name"/>&quot; n'est pas un format d'image accepté (PNG, JPEG, WebP ou SVG).</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.dimensions" datatype="html">
+        <source><x id="width" equiv-text="plan.imageWidth"/> × <x id="height" equiv-text="plan.imageHeight"/> px</source>
+        <target><x id="width" equiv-text="plan.imageWidth"/> × <x id="height" equiv-text="plan.imageHeight"/> px</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.tabs.plans" datatype="html">
+        <source>Plans</source>
+        <target>Plans</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.emptyTitle" datatype="html">
+        <source>No floor plan yet</source>
+        <target>Aucun plan pour le moment</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.emptyDescription" datatype="html">
+        <source>Upload an image to give this facility a floor plan.</source>
+        <target>Téléversez une image pour donner un plan à cet établissement.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.viewerAlt" datatype="html">
+        <source>Floor plan: <x id="INTERPOLATION" equiv-text="{{ selected.fileName }}"/></source>
+        <target>Plan : <x id="INTERPOLATION" equiv-text="{{ selected.fileName }}"/></target>
+      </trans-unit>
+      <trans-unit id="facility.plans.loadingAria" datatype="html">
+        <source>Loading floor plans</source>
+        <target>Chargement des plans</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.imageLoadingAria" datatype="html">
+        <source>Loading floor plan image</source>
+        <target>Chargement de l'image du plan</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

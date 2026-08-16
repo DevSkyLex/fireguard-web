@@ -15,3 +15,7 @@ export type { FacilityMapState, WorstFacility } from './facility-map';
 export { facilityMapStoreEvents } from './facility-map';
 export { FacilityMapStore } from './facility-map';
 export type { FacilityMapStoreType } from './facility-map';
+export type { FacilityPlansState } from './facility-plans';
+export { facilityPlansStoreEvents } from './facility-plans';
+export { FacilityPlansStore } from './facility-plans';
+export type { FacilityPlansStoreType } from './facility-plans';

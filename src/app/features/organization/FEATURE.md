@@ -141,6 +141,16 @@ Primary stores:
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
 - `OrganizationInvitationAcceptStore` (page-scoped; loads the public invitation preview and accepts an invitation token)
 
+Sanctioned bounded drains (DESIGN.md § Collections' Server Rule): three of
+these stores deliberately fetch without user-facing pagination —
+`OrganizationRoleListStore` drains every role (a role catalog is small and the
+grid groups it client-side), `MemberDirectoryStore` drains the roster (a
+capped single page would silently misattribute members past the cap), and
+`OrganizationAssetsPaneStore` caps at 50 per axis because the pane is a
+preview that links to the owning subfeature's full list, not a browsing
+surface. Any other collection in this feature paginates, sorts and filters
+server-side.
+
 Primary services:
 
 - `OrganizationService` (includes `changePlan` and `getQuota`)

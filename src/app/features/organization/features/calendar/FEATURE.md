@@ -49,6 +49,10 @@ from, to)`, the only call. Read-only in this pass.
 - **The feed window is one week wider than the visible month on each side**:
   the shared grid shows leading/trailing filler days, and their chips must
   not silently vanish.
+- **The feed is a date-window fetch, not a paginated collection** — a
+  sanctioned bounded drain under DESIGN.md § Collections' Server Rule. The
+  server bounds the payload by `from`/`to`; the client's only in-memory
+  slice is the selected-day panel over the already-loaded window.
 - **Loading is browser-only** (ARCHITECTURE.md §12.5-3): a dated,
   authenticated read that would immediately refetch after hydration.
 - **Only an intervention entry links anywhere** (its workspace). The other

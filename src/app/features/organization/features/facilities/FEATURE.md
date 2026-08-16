@@ -58,8 +58,11 @@ This subfeature is the primitive's first consumer, in two places:
 
 - **`ui/pages/facility-map-page`** (`FacilityMapPage`,
   `facilities/map`) renders every facility with both coordinates set
-  (`FacilityMapStore.loadMapped`, `hasCoordinates: true`) as a marker;
-  selecting one navigates to that facility's record. A discreet banner names
+  (`FacilityMapStore.loadMapped`, `hasCoordinates: true`) as a marker — a
+  sanctioned full drain under DESIGN.md § Collections' Server Rule: a map
+  needs every marker at once, so the store drains all pages server-filtered
+  on `hasCoordinates` rather than paginating. Selecting a marker navigates
+  to that facility's record. A discreet banner names
   how many facilities still lack coordinates (`loadUnplacedCount`, read from
   a single-item page's `totalItems` rather than a second full fetch) and
   links back to the list; when no facility has coordinates at all, an

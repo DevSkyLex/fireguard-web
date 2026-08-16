@@ -425,6 +425,150 @@ states are the same composition with a destructive tint and `role="alert"`.
 Neither is bespoke markup — they exist to make three inputs stand in for a
 six-element composition, and to guarantee a failure announces itself.
 
+## Page Grammar
+
+How a page is assembled. The visual system above says what things look like;
+this section says which things a page is made of, and it is deliberately
+narrow: three wrappers, one heading rank, one subtitle form, one state
+vocabulary.
+
+### The shell contract (DashboardLayout pages)
+
+The page's `<h1>` is the shell breadcrumb's current crumb — a page never
+renders its own title band (`organization-today-page` is the single sanctioned
+exception). Page-level actions are contributed through
+`<ng-template #pageActions>` + `registerPageActions()` and render in the shell
+header. Split/Focused pages (auth, onboarding, 404, invitation accept) sit
+outside the shell and own their in-page `<h1>` through the shared
+`app-page-heading` primitive.
+
+### Three root wrappers — chosen by page kind, never freely
+
+- **Collection page** (list + toolbar + pager):
+  `flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6`
+- **Record page** (create/detail, scrolling content):
+  `flex w-full flex-col gap-4 p-4 md:p-6`
+- **Settings/account page** (stacked sections):
+  `flex h-full flex-col gap-6 p-4 md:p-6`
+
+Every page root carries a stable `id` — e2e selectors rely on it.
+
+### Headings and lead
+
+- The only subtitle form is the lead paragraph:
+  `<p class="shrink-0 text-sm text-muted-foreground">`, directly under the
+  header.
+- Sections have exactly one `<h2>` style — `text-base font-semibold` — carried
+  by the shared `app-page-section` primitive (`<section aria-labelledby>` +
+  heading + description/action slots). The muted variant
+  `text-sm font-medium text-muted-foreground` is reserved for sub-groups
+  inside a section.
+
+### The Working Surface Rule (when a card is right)
+
+A card wraps a **self-contained working surface** — a form, the calendar's day
+panel, a stat tile. It never wraps an ordinary page section: sections are
+borderless or divider-separated, per "hierarchy from rhythm".
+
+### Back-links
+
+Create pages put an outline back-link in `#pageActions`; detail pages rely on
+the breadcrumb alone; nothing else places a back-link in the content column.
+
+### State vocabulary
+
+- **Empty** → `<app-empty-state>` only. No hand-composed `hlm-empty` in feature
+  templates.
+- **Blocking error** → `<app-error-state>` (it guarantees `role="alert"`) with
+  a retry action.
+- **Non-blocking action error** → inline `hlm-alert variant="destructive"`.
+- **Loading** → `hlm-skeleton` blocks inside a container with `role="status"`
+  and an i18n `aria-label` — never `aria-hidden`. Spinners belong to pending
+  buttons only.
+- **Detail-page gating** — one model: skeleton while `loading && !record`,
+  then `<app-error-state>` + retry when the load failed. A gate that shows a
+  skeleton for any absent record turns a failed load into an eternal skeleton.
+
+### Sanctioned exception
+
+Conversation pages (collaboration) are full-bleed: no root wrapper, their own
+48px header, no `#pageActions`. The exception is recorded in
+`collaboration/FEATURE.md`; it does not spread.
+
+## Action Surfaces
+
+Which surface an action gets is a decision rule, not a taste. The rule is
+contextual — the deciding question is what the operator must keep, leave, or
+confirm.
+
+1. **Dedicated route page** — creating a record entity (rich form, navigates
+   to the created record): facility, equipment, inspection. Card-wrapped
+   `max-w-xl` form, back-link in `#pageActions`, navigate on success.
+2. **Sheet (right drawer)** — creating or acting **without leaving a working
+   context** (a filtered list, a workspace): intervention create, work item,
+   request-changes, role permissions, participants. Named widths
+   (`sm:w-[480px]`, `sm:w-[540px]`, wider for the message thread); the form
+   owns its footer, Cancel then primary. Below `sm` a sheet presents as a
+   **bottom drawer** (`side="bottom"`, driven by a breakpoint signal;
+   `max-h-[85svh]` with internal scroll) so the footer lands in the thumb
+   zone. No drag-to-dismiss, no snap points — the primitives do not provide
+   them and we do not hand-roll them.
+3. **Dialog** — a light, focal action (≤ ~5 fields, no navigation after):
+   invitation, role create, channel create/edit, pickers. Dialogs and
+   alert-dialogs stay centered at every width.
+4. **In place** — record editing happens on the detail page through
+   `@shared/inplace-field` ("the record is the edit surface"). No edit route,
+   no edit modal for a record.
+5. **Alert-dialog** — every destructive or irreversible action confirms.
+   Type-to-confirm is reserved for cascade deletions. Each confirm is a
+   **feature-local component under `ui/dialogs/`** (the
+   `organization-delete-dialog` model) — never inline markup in a page
+   template, and never a generic shared confirm wrapper: per-case wording and
+   composition are the point.
+
+Cross-cutting rules:
+
+- An overlay that carries a form delegates to a `*-form` component; only a
+  page (or a documented container component) hosts an overlay and talks to a
+  store.
+- `disableClose` on every overlay that contains a form.
+- **Unsaved work confirms before it is lost**: the shared `CanDeactivate`
+  guard covers create pages and the wizard; a dirty overlay confirms before
+  closing. One shared abandon-confirmation dialog serves both — a distinct,
+  single-purpose primitive, exempt from rule 5's ban: that ban covers generic
+  wrappers for destructive-action confirms, whose per-case wording is the
+  point, not this one fixed "discard your edits?" question.
+- Settings forms save through an explicit dirty-gated "Save changes"; auto-save
+  is the documented exception for single-toggle preference lists.
+- Labels: one `@@common.cancel`; primary labels are sentence-case verb-object
+  ("Create equipment"); pending labels are the same verb in progressive form
+  ("Creating…"); footers run Cancel → primary.
+- Pending state is `[disabled]="pending()"` — no hand-rolled
+  `aria-disabled`/`pointer-events-none` stacks.
+
+## Collections
+
+- **The Server Rule.** Any collection that is not bounded by nature paginates,
+  sorts and filters **through the API**. In-memory filtering is legitimate
+  only for bounded, documented collections (roles, member directory, facility
+  map, assets pane preview, the calendar's date window, offline work items) —
+  each such drain is recorded in its owning `FEATURE.md`.
+- **Collection page skeleton**: `collection-toolbar` (search box + filter
+  toggle) → `collection-filter-bar` (editable chips) → table/dataview →
+  `collection-pagination` (30/60/100). The interventions list is the reference
+  implementation.
+- **Tables**: `hlmTable` inside `hlmTableContainer`; sortable heads follow the
+  `intervention-table` sortable-head pattern (the head emits `sortChanged`,
+  the server sorts); row actions in an `hlmDropdownMenu`; bulk checkboxes only
+  where bulk actions exist. The spartan `data-table` recipe
+  (`@tanstack/angular-table`) is **excluded**: its row models are client-side,
+  which the Server Rule forbids.
+- **URL and persistence**: search and filters sync to the URL (questions asked
+  now); sort and page size persist in a cookie (preferences).
+- **Detail sub-collections** show a compact pager or "Show more" as soon as
+  `totalItems > itemsPerPage` — a silently truncated list reads as complete
+  and is therefore wrong.
+
 ## Do's and Don'ts
 
 ### Do:

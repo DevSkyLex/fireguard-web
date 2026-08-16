@@ -522,3 +522,8 @@ the panel nor its toggle renders.
   confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome
   inline, so the operator sees it exactly where they took the action and can retry without reopening
   the dialog, rather than the failure surfacing only as a page-level toast.
+- **Conversation pages are the sanctioned full-bleed exception to the Page Grammar**
+  (DESIGN.md § Page Grammar). They render no canonical root wrapper, own their 48px in-page
+  header (the mobile back button lives there), and register nothing in `#pageActions` — the
+  thread-owns-the-scroller layout above requires it. This exception covers the conversation
+  pages only; other collaboration surfaces follow the standard page grammar.

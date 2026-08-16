@@ -1088,6 +1088,19 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   or restructuring the sticky-footer-inside-the-form layout the paragraph
   above documents. Cross-referenced from `organization/FEATURE.md` § UI
   Conventions, where the create-surface placement rule lives.
+- **Overlay dismissal**: the app-wide rule (DESIGN.md § Action Surfaces) is
+  that a **dirty** overlay confirms before closing, via the shared
+  abandon-confirmation primitive. This supersedes the earlier "Cancel always
+  closes: the guard is against losing work by accident, never against leaving
+  deliberately" doctrine still quoted in the create/request-changes sheet
+  docblocks — those docblocks are updated when the shared guard lands. A
+  pristine overlay still closes freely; `disableClose` continues to cover
+  in-flight requests.
+- **Work items filter client-side by design** (all/remaining/done/skipped,
+  mine-first): the workspace drains every page via `listAllWorkItems` because
+  the offline scene needs the complete checklist in IndexedDB regardless of
+  filter. This is a sanctioned bounded drain under DESIGN.md § Collections'
+  Server Rule; the API's server-side work-item filters stay unused on purpose.
 
 ## Invariants
 

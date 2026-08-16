@@ -64,6 +64,9 @@ describe('FacilityHierarchyChart', () => {
 
     expect(root().textContent).toContain('Headquarters');
     expect(root().querySelector('app-facility-status-tag')).not.toBeNull();
+    expect(root().querySelector('[role="tree"]')?.getAttribute('aria-label')).toBe(
+      'Facility hierarchy chart',
+    );
   });
 
   it('should mark the active node selected, and no other node', async () => {

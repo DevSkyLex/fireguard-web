@@ -11638,8 +11638,8 @@
         <target>Elegir una ubicación en el mapa</target>
       </trans-unit>
       <trans-unit id="facility.map.picker.description" datatype="html">
-        <source> Click anywhere on the map to set the coordinates. </source>
-        <target> Haga clic en cualquier punto del mapa para definir las coordenadas. </target>
+        <source> Click anywhere on the map to set the coordinates, or cancel and enter latitude and longitude directly. </source>
+        <target> Haga clic en cualquier punto del mapa para definir las coordenadas, o cancele e introduzca directamente la latitud y la longitud. </target>
       </trans-unit>
       <trans-unit id="facility.map.layoutMap" datatype="html">
         <source>Map view</source>

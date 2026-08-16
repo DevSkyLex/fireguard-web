@@ -11631,8 +11631,8 @@
         <target>Choisir un emplacement sur la carte</target>
       </trans-unit>
       <trans-unit id="facility.map.picker.description" datatype="html">
-        <source> Click anywhere on the map to set the coordinates. </source>
-        <target> Cliquez n'importe où sur la carte pour définir les coordonnées. </target>
+        <source> Click anywhere on the map to set the coordinates, or cancel and enter latitude and longitude directly. </source>
+        <target> Cliquez n'importe où sur la carte pour définir les coordonnées, ou annulez et saisissez directement la latitude et la longitude. </target>
       </trans-unit>
       <trans-unit id="facility.map.layoutMap" datatype="html">
         <source>Map view</source>

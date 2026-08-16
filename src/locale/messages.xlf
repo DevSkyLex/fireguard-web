@@ -4197,7 +4197,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="facility.map.picker.description" datatype="html">
-        <source> Click anywhere on the map to set the coordinates. </source>
+        <source> Click anywhere on the map to set the coordinates, or cancel and enter latitude and longitude directly. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-map-picker-dialog/facility-map-picker-dialog.component.html</context>
           <context context-type="linenumber">10,14</context>

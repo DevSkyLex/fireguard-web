@@ -84,7 +84,9 @@
     }
 
     <div
-      class="absolute inset-0 flex items-center justify-center overflow-hidden"
+      #frame
+      class="absolute inset-1 flex items-center justify-center"
+      data-testid="plan-viewer-frame"
       [class.invisible]="status() !== 'loaded'"
     >
       <div

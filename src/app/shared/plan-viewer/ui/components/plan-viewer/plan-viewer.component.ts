@@ -95,7 +95,11 @@ interface PlanPinchOrigin {
  * rendered *inside* the transformed stage, so it inherits pan and zoom
  * through the DOM automatically. Its context is `{ scale }` (see
  * {@link PlanViewerOverlayContext}), the minimum a future zone-polygon or
- * equipment-pin layer (Phase 4) needs to counter-scale itself.
+ * equipment-pin layer (Phase 4) needs to counter-scale itself. The stage sits
+ * in an unclipped inner frame inset 4px from the clipping viewport, so an
+ * overlay item's focus ring still paints at the plan's edges instead of being
+ * cut by `overflow-hidden`; all fit/pan/pointer geometry is measured against
+ * that frame to keep the gutter out of the math.
  *
  * SSR-safe: before the image loads, the stage carries no inline size or
  * transform, so it renders as a plain `object-contain` `<img>` — no
@@ -201,9 +205,13 @@ export class PlanViewer {
   //#endregion
 
   //#region Properties
-  /** The interactive surface pointer, wheel and keyboard events are read against. */
+  /** The focusable interactive surface pointer, wheel and keyboard events attach to. */
   private readonly viewportRef: Signal<ElementRef<HTMLDivElement> | undefined> =
     viewChild<ElementRef<HTMLDivElement>>('viewport');
+
+  /** The unclipped inner frame all fit, pan and pointer geometry is measured against. */
+  private readonly frameRef: Signal<ElementRef<HTMLDivElement> | undefined> =
+    viewChild<ElementRef<HTMLDivElement>>('frame');
 
   /** Pointers currently down on the stage, keyed by `pointerId`. */
   private readonly activePointers = new Map<number, PlanPoint>();
@@ -533,14 +541,14 @@ export class PlanViewer {
 
   /**
    * Method pointerFromEvent
-   * @description A pointer or wheel event's position, relative to the viewport's top-left.
+   * @description A pointer or wheel event's position, relative to the inner frame's top-left.
    * @access private
    * @since 1.0.0
    * @param {PointerEvent | WheelEvent} event - The source event.
-   * @returns {PlanPoint} The viewport-relative position.
+   * @returns {PlanPoint} The frame-relative position.
    */
   private pointerFromEvent(event: PointerEvent | WheelEvent): PlanPoint {
-    const rect: DOMRect | undefined = this.viewportRef()?.nativeElement.getBoundingClientRect();
+    const rect: DOMRect | undefined = this.frameRef()?.nativeElement.getBoundingClientRect();
 
     return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) };
   }
@@ -560,13 +568,13 @@ export class PlanViewer {
 
   /**
    * Method currentViewportSize
-   * @description The viewport element's current size, read live rather than cached.
+   * @description The inner frame's current size, read live rather than cached.
    * @access private
    * @since 1.0.0
-   * @returns {PlanViewportSize} The viewport's size.
+   * @returns {PlanViewportSize} The frame's size.
    */
   private currentViewportSize(): PlanViewportSize {
-    const rect: DOMRect | undefined = this.viewportRef()?.nativeElement.getBoundingClientRect();
+    const rect: DOMRect | undefined = this.frameRef()?.nativeElement.getBoundingClientRect();
 
     return { width: rect?.width ?? 0, height: rect?.height ?? 0 };
   }

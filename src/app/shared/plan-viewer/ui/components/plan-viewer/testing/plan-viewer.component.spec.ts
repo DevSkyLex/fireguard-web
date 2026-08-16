@@ -23,14 +23,14 @@ const VIEWPORT_RECT: DOMRect = {
 };
 
 /**
- * Stubs the stage's `getBoundingClientRect`, since jsdom never lays anything
- * out — every zoom/pan calculation reads the viewport's live size.
+ * Stubs the inner frame's `getBoundingClientRect`, since jsdom never lays
+ * anything out — every zoom/pan calculation reads the frame's live size.
  */
 function stubViewportRect(fixture: ComponentFixture<PlanViewer>): void {
-  const stage: HTMLElement = fixture.nativeElement.querySelector(
-    '[data-testid="plan-viewer-stage"]',
+  const frame: HTMLElement = fixture.nativeElement.querySelector(
+    '[data-testid="plan-viewer-frame"]',
   );
-  stage.getBoundingClientRect = (): DOMRect => VIEWPORT_RECT;
+  frame.getBoundingClientRect = (): DOMRect => VIEWPORT_RECT;
 }
 
 /**
@@ -120,6 +120,19 @@ describe('PlanViewer', () => {
       );
       expect(error).not.toBeNull();
       expect(error.getAttribute('role')).toBe('alert');
+    });
+
+    it('should clip on the outer viewport only, leaving the inner frame unclipped for focus rings', () => {
+      const stage: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-stage"]',
+      );
+      const frame: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-frame"]',
+      );
+
+      expect(stage.classList.contains('overflow-hidden')).toBe(true);
+      expect(frame.classList.contains('overflow-hidden')).toBe(false);
+      expect(frame.classList.contains('inset-1')).toBe(true);
     });
   });
 
@@ -312,10 +325,10 @@ describe('PlanViewer overlay projection', () => {
   });
 
   it('should render the projected overlay inside the transformed stage, with the current scale', async () => {
-    const stage: HTMLElement = fixture.nativeElement.querySelector(
-      '[data-testid="plan-viewer-stage"]',
+    const frame: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="plan-viewer-frame"]',
     );
-    stage.getBoundingClientRect = (): DOMRect => VIEWPORT_RECT;
+    frame.getBoundingClientRect = (): DOMRect => VIEWPORT_RECT;
 
     const image: HTMLImageElement = fixture.nativeElement.querySelector('img');
     Object.defineProperty(image, 'naturalWidth', { value: 800, configurable: true });

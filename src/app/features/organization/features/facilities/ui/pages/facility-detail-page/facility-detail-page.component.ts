@@ -20,7 +20,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMap, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState, type StoreError } from '@core/request-state';
@@ -63,6 +63,7 @@ import { FacilityPlanList } from '../../components/facility-plan-list';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
 import { FacilityPlanPinPositionDialog } from '../../dialogs/facility-plan-pin-position-dialog';
 import { FacilityPlanZoneGeometryDialog } from '../../dialogs/facility-plan-zone-geometry-dialog';
+import { FacilityQrDialog } from '../../dialogs/facility-qr-dialog';
 import type { FacilityDetailTabId } from './models';
 
 /** The facility properties this page has open, writing or showing a rejection. */
@@ -101,8 +102,10 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * keyboard alternative to tapping the plan — "Enter coordinates" / "Enter
  * position" open the numeric dialogs for the picked target, making zone and
  * pin creation possible without a pointer. A
- * danger, confirm-gated **Delete** action registers on the shell header
- * through `PageActionsService` (`FEATURE.md` "Deletion").
+ * danger, confirm-gated **Delete** action and a read-level **QR code**
+ * action ({@link FacilityQrDialog}, `FEATURE.md` "Printable QR code")
+ * register on the shell header through `PageActionsService` (`FEATURE.md`
+ * "Deletion").
  *
  * `facilityResolver` (route `resolve`) seeds {@link ActiveFacilityStore}
  * fire-and-forget, so this page always renders immediately: the full-page
@@ -115,7 +118,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * plans. The record's name is the shell breadcrumb's title, resolved by
  * `facilityTitleResolver`.
  *
- * @version 1.4.0
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -131,6 +134,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     FacilityPlanList,
     FacilityPlanPinPositionDialog,
     FacilityPlanZoneGeometryDialog,
+    FacilityQrDialog,
     FacilityStatusTag,
     PlanViewer,
     HlmButton,
@@ -142,7 +146,11 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     ...HlmCardImports,
     ...HlmTabsImports,
   ],
-  providers: [FacilityOverviewStore, FacilityPlansStore, provideIcons({ lucideMap, lucideTrash2 })],
+  providers: [
+    FacilityOverviewStore,
+    FacilityPlansStore,
+    provideIcons({ lucideMap, lucideQrCode, lucideTrash2 }),
+  ],
   templateUrl: './facility-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -215,6 +223,9 @@ export class FacilityDetailPage {
 
   /** Whether the Delete confirmation is open. */
   protected readonly pendingDelete: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the QR code dialog is open. */
+  protected readonly qrDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property canWrite
@@ -902,6 +913,28 @@ export class FacilityDetailPage {
    */
   protected requestDelete(): void {
     this.pendingDelete.set(true);
+  }
+
+  /**
+   * Method openQrDialog
+   * @description Opens the printable QR code dialog.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected openQrDialog(): void {
+    this.qrDialogVisible.set(true);
+  }
+
+  /**
+   * Method onQrDialogDismissed
+   * @description Closes the QR code dialog.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected onQrDialogDismissed(): void {
+    this.qrDialogVisible.set(false);
   }
 
   /**

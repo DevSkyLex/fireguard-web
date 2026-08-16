@@ -1,0 +1,64 @@
+<hlm-dialog [state]="visible() ? 'open' : 'closed'" (stateChanged)="onDialogStateChanged($event)">
+  <hlm-dialog-content class="sm:max-w-sm" data-testid="facility-qr-dialog" *hlmDialogPortal>
+    <hlm-dialog-header class="print:hidden">
+      <h3 hlmDialogTitle i18n="@@facility.qr.title">Facility QR code</h3>
+      <p hlmDialogDescription i18n="@@facility.qr.description">
+        Scan this code, or print it as a door sticker, to open this facility's record from a phone.
+      </p>
+    </hlm-dialog-header>
+
+    @if (facility(); as facility) {
+      <div class="flex flex-col items-center gap-3 py-2" data-testid="facility-qr-printable">
+        @if (qrDataUrl(); as qr) {
+          <img
+            [src]="qr"
+            [alt]="altText()"
+            width="240"
+            height="240"
+            class="rounded-md border border-border bg-white p-2"
+          />
+        } @else {
+          <div
+            class="flex h-60 w-60 items-center justify-center rounded-md border border-border text-sm text-muted-foreground"
+            role="status"
+          >
+            <span i18n="@@facility.qr.generating">Generating…</span>
+          </div>
+        }
+
+        <div class="flex flex-col items-center gap-1 text-center">
+          <p class="font-semibold text-foreground">{{ facility.name }}</p>
+          @if (facility.code; as code) {
+            <p class="text-sm text-muted-foreground tabular-nums">{{ code }}</p>
+          }
+        </div>
+      </div>
+    }
+
+    <hlm-dialog-footer class="print:hidden">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="facility-qr-print"
+        [disabled]="!qrDataUrl()"
+        (click)="print()"
+      >
+        <ng-icon name="lucidePrinter" aria-hidden="true" />
+        <span i18n="@@facility.qr.print">Print</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="facility-qr-download"
+        [disabled]="!qrDataUrl()"
+        (click)="download()"
+      >
+        <ng-icon name="lucideDownload" aria-hidden="true" />
+        <span i18n="@@facility.qr.download">Download PNG</span>
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

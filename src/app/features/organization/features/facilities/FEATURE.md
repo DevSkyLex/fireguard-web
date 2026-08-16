@@ -108,6 +108,32 @@ This subfeature is the primitive's first consumer, in two places:
   `FACILITIES_WRITE`-gated.
 - `ui/components/facility-status-tag` — the `FacilityOutput.status` registry
   (`active`/`archived`), the only appearance of the enum in this feature.
+- `ui/dialogs/facility-qr-dialog` (`FacilityQrDialog`) — see "Printable QR
+  code" below.
+
+## Printable QR code
+
+A read-level header action ("QR code", ungated by `FACILITIES_WRITE`) opens
+`ui/dialogs/facility-qr-dialog`, a purely presentational dialog encoding the
+facility's absolute record URL
+(`{origin}/organizations/{organizationId}/facilities/{facilityId}`) as a QR
+image. Rendering mirrors `features/account`'s `AccountMfaPanel`: `qrcode` is
+imported dynamically, browser-only, so the library never enters the server
+bundle for a dialog behind a click — this is the second component to import
+it (`ARCHITECTURE.md` §1.1). The image carries an alt text naming the
+facility; the facility name and code print beneath it.
+
+"Print" calls `window.print()`. Because no component may carry
+`styles`/`styleUrl`, the print stylesheet cannot be scoped inside this
+dialog's own template — it is a small `@media print` block in the app-wide
+`src/styles.css`, keyed off the CDK overlay container rather than any class
+this feature owns: everything outside the open overlay is hidden, the
+backdrop is hidden, and the overlay pane is unpinned from its fixed
+position so it flows as a normal printed page. This dialog is the app's
+first print surface; if a second one appears, revisit whether the rule
+still belongs in the global stylesheet or should move to a shared,
+domain-agnostic `shared/print/` concern. "Download PNG" is a plain
+`toDataURL` → anchor-click download, no upload of its own.
 
 ## Facility Attachments and Floor Plans (Plans Tab)
 

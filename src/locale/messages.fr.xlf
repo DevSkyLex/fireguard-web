@@ -3263,6 +3263,34 @@
         <source>Delete</source>
         <target>Supprimer</target>
       </trans-unit>
+      <trans-unit id="facility.detail.qr" datatype="html">
+        <source>QR code</source>
+        <target>Code QR</target>
+      </trans-unit>
+      <trans-unit id="facility.qr.title" datatype="html">
+        <source>Facility QR code</source>
+        <target>Code QR de l'établissement</target>
+      </trans-unit>
+      <trans-unit id="facility.qr.description" datatype="html">
+        <source>Scan this code, or print it as a door sticker, to open this facility's record from a phone.</source>
+        <target>Scannez ce code, ou imprimez-le en autocollant de porte, pour ouvrir la fiche de cet établissement depuis un téléphone.</target>
+      </trans-unit>
+      <trans-unit id="facility.qr.alt" datatype="html">
+        <source>QR code linking to <x id="facilityName" equiv-text="facilityName"/></source>
+        <target>Code QR menant à <x id="facilityName" equiv-text="facilityName"/></target>
+      </trans-unit>
+      <trans-unit id="facility.qr.generating" datatype="html">
+        <source>Generating…</source>
+        <target>Génération en cours…</target>
+      </trans-unit>
+      <trans-unit id="facility.qr.print" datatype="html">
+        <source>Print</source>
+        <target>Imprimer</target>
+      </trans-unit>
+      <trans-unit id="facility.qr.download" datatype="html">
+        <source>Download PNG</source>
+        <target>Télécharger le PNG</target>
+      </trans-unit>
       <trans-unit id="facility.detail.tabsAriaLabel" datatype="html">
         <source>Facility sections</source>
         <target>Sections de l'établissement</target>

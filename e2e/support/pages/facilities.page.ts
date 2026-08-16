@@ -53,6 +53,10 @@ export class FacilitiesPage {
 
   public readonly detailLoading: Locator = this.page.getByTestId('facility-detail-loading');
   public readonly deleteAction: Locator = this.page.getByTestId('facility-detail-delete');
+  public readonly qrAction: Locator = this.page.getByTestId('facility-detail-qr');
+  public readonly qrDialog: Locator = this.page.getByTestId('facility-qr-dialog');
+  public readonly qrPrint: Locator = this.page.getByTestId('facility-qr-print');
+  public readonly qrDownload: Locator = this.page.getByTestId('facility-qr-download');
   public readonly overviewTab: Locator = this.page.getByTestId('facility-tab-overview');
   public readonly informationTab: Locator = this.page.getByTestId('facility-tab-information');
   public readonly plansTab: Locator = this.page.getByTestId('facility-tab-plans');

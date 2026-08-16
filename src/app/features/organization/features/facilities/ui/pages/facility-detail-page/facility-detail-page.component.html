@@ -636,6 +636,17 @@
 </hlm-alert-dialog>
 
 <ng-template #pageActions>
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    class="min-w-0 shrink max-sm:min-h-11"
+    data-testid="facility-detail-qr"
+    (click)="openQrDialog()"
+  >
+    <ng-icon name="lucideQrCode" aria-hidden="true" />
+    <span class="truncate" i18n="@@facility.detail.qr">QR code</span>
+  </button>
   @if (canWrite()) {
     <button
       hlmBtn
@@ -650,3 +661,10 @@
     </button>
   }
 </ng-template>
+
+<app-facility-qr-dialog
+  [visible]="qrDialogVisible()"
+  [organizationId]="organizationId()"
+  [facility]="activeFacilityStore.selectedFacility()"
+  (dismissed)="onQrDialogDismissed()"
+/>

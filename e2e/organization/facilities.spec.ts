@@ -274,6 +274,54 @@ test.describe('Facility detail', () => {
     }
   });
 
+  test('opens the QR code dialog from the detail header, showing a scannable code', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.qrAction.click();
+
+    await expect(facilities.qrDialog).toBeVisible();
+    const qrImage = facilities.qrDialog.locator('img');
+    await expect(qrImage).toBeVisible();
+    await expect(qrImage).toHaveAttribute('alt', /QR code linking to/);
+    await expect(facilities.qrPrint).toBeEnabled();
+    await expect(facilities.qrDownload).toBeEnabled();
+
+    await page.keyboard.press('Escape');
+    await expect(facilities.qrDialog).toBeHidden();
+  });
+
+  test('renders the QR dialog at 375px in dark mode with no console errors', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    const consoleErrors = collectConsoleErrors(page);
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 800 });
+
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.qrAction.click();
+
+    await expect(facilities.qrDialog).toBeVisible();
+    await expect(facilities.qrDialog.locator('img')).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/facility-qr-dialog-dark-mobile.png` });
+    expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+  });
+
   test('paints the full-page skeleton immediately on a slow deep link, then swaps in the record', async ({
     page,
   }) => {

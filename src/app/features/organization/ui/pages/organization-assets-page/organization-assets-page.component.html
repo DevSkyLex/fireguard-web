@@ -32,6 +32,8 @@
           data-testid="assets-tree-panel"
         >
           <app-tree
+            ariaLabel="Facility hierarchy"
+            i18n-ariaLabel="@@org.assets.treeLabel"
             [nodes]="treeNodes()"
             [childrenByParent]="childrenByParent()"
             [loadingIds]="loadingIds()"
@@ -49,7 +51,7 @@
             <hlm-empty class="border border-dashed">
               <hlm-empty-header>
                 <hlm-empty-media variant="icon">
-                  <ng-icon name="lucideNetwork" />
+                  <ng-icon name="lucideNetwork" aria-hidden="true" />
                 </hlm-empty-media>
                 <div hlmEmptyTitle i18n="@@org.assets.selectPrompt.title">Select a site</div>
                 <div hlmEmptyDescription i18n="@@org.assets.selectPrompt.desc">
@@ -80,8 +82,7 @@
       hlmBtn
       variant="ghost"
       size="icon-sm"
-      class="size-6 shrink-0"
-      tabindex="-1"
+      class="size-6 shrink-0 max-sm:size-8"
       data-testid="assets-tree-node-menu"
       [hlmDropdownMenuTrigger]="nodeMenu"
       (click)="$event.stopPropagation()"

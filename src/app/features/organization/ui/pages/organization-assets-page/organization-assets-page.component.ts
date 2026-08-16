@@ -29,12 +29,12 @@ import {
   FacilityTreeStore,
   type FacilityTreeStoreType,
 } from '@features/organization/features/facilities/state';
+import { facilityToTreeNode } from '@features/organization/features/facilities/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   OrganizationAssetsPaneStore,
   type OrganizationAssetsPaneStoreType,
 } from '@features/organization/state/organization-assets-pane';
-import { facilityToTreeNode } from '@features/organization/utils';
 import { Tree, type TreeNode } from '@shared/tree';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';

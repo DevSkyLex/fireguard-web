@@ -209,8 +209,7 @@
     {
       "files": [
         "src/app/features/organization/ui/pages/organization-assets-page/**/*.ts",
-        "src/app/features/organization/state/organization-assets-pane/**/*.ts",
-        "src/app/features/organization/utils/facility-to-tree-node/**/*.ts"
+        "src/app/features/organization/state/organization-assets-pane/**/*.ts"
       ],
       "rules": {
         "no-restricted-imports": [
@@ -223,9 +222,11 @@
                   "!@features/organization/features/facilities/state",
                   "!@features/organization/features/facilities/state/**",
                   "!@features/organization/features/facilities/models",
-                  "!@features/organization/features/facilities/models/**"
+                  "!@features/organization/features/facilities/models/**",
+                  "!@features/organization/features/facilities/utils",
+                  "!@features/organization/features/facilities/utils/**"
                 ],
-                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the facilities subfeature only through its state barrel (FacilityTreeStore) and models (FacilityOutput), the surfaces facilities/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the facilities subfeature only through its state barrel (FacilityTreeStore), models (FacilityOutput) and utils (facilityToTreeNode), the surfaces facilities/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
               },
               {
                 "group": [

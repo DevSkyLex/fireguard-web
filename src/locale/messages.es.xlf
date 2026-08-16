@@ -3410,6 +3410,10 @@
         <source> No hierarchy to display. </source>
         <target>No hay jerarquía que mostrar.</target>
       </trans-unit>
+      <trans-unit id="facility.hierarchy.treeLabel" datatype="html">
+        <source>Facility hierarchy chart</source>
+        <target>Jerarquía de la instalación</target>
+      </trans-unit>
       <trans-unit id="facility.info.title" datatype="html">
         <source> Site information </source>
         <target>Información del sitio</target>

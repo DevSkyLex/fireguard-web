@@ -1,28 +1,20 @@
-<div class="flex flex-col gap-1">
-  <button
-    type="button"
-    class="flex min-h-9 w-fit items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-start ring-ring outline-none hover:bg-accent/50 focus-visible:ring-2"
-    [attr.aria-current]="isActive() ? 'true' : null"
-    data-testid="facility-hierarchy-node"
-    (click)="selected.emit(facility())"
-  >
-    <ng-icon name="lucideBuilding2" class="shrink-0 text-muted-foreground" aria-hidden="true" />
-    <span class="truncate text-sm font-medium" [class.underline]="isActive()">{{
-      facility().name
-    }}</span>
-    <app-facility-status-tag [value]="facility().status" />
-  </button>
+<app-tree
+  ariaLabel="Facility hierarchy chart"
+  i18n-ariaLabel="@@facility.hierarchy.treeLabel"
+  [nodes]="nodes()"
+  [childrenByParent]="treeChildrenByParent()"
+  [loadingIds]="emptyIds"
+  [failedIds]="emptyIds"
+  [selectedId]="activeFacilityId()"
+  [nodeTemplate]="hierarchyNode"
+  (expandRequested)="onExpandRequested()"
+  (selected)="onNodeSelected($event)"
+/>
 
-  @if (children().length > 0) {
-    <div class="ms-4 flex flex-col gap-1 border-s border-border ps-3">
-      @for (child of children(); track child.id) {
-        <app-facility-hierarchy-chart
-          [facility]="child"
-          [childrenByParent]="childrenByParent()"
-          [activeFacilityId]="activeFacilityId()"
-          (selected)="onChildSelected($event)"
-        />
-      }
-    </div>
-  }
-</div>
+<ng-template #hierarchyNode let-node="node">
+  <div class="flex min-w-0 flex-1 items-center gap-2" data-testid="facility-hierarchy-node">
+    <ng-icon name="lucideBuilding2" class="shrink-0 text-muted-foreground" aria-hidden="true" />
+    <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ node.data.name }}</span>
+    <app-facility-status-tag [value]="node.data.status" />
+  </div>
+</ng-template>

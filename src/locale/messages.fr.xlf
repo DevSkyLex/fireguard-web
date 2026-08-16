@@ -3407,6 +3407,10 @@
         <source> No hierarchy to display. </source>
         <target>Aucune hiérarchie à afficher.</target>
       </trans-unit>
+      <trans-unit id="facility.hierarchy.treeLabel" datatype="html">
+        <source>Facility hierarchy chart</source>
+        <target>Arborescence de l'établissement</target>
+      </trans-unit>
       <trans-unit id="facility.info.title" datatype="html">
         <source> Site information </source>
         <target>Informations du site</target>

@@ -27,6 +27,10 @@ describe('FacilityHierarchyChart', () => {
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
+  const nodes = (): readonly HTMLElement[] => [
+    ...root().querySelectorAll<HTMLElement>('[data-testid="facility-hierarchy-node"]'),
+  ];
+
   const render = async (
     node: FacilityOutput,
     childrenByParent: Readonly<Record<string, ReadonlyArray<FacilityOutput>>>,
@@ -36,6 +40,17 @@ describe('FacilityHierarchyChart', () => {
     fixture.componentRef.setInput('childrenByParent', childrenByParent);
     fixture.componentRef.setInput('activeFacilityId', activeFacilityId);
     await fixture.whenStable();
+  };
+
+  const expandAll = async (): Promise<void> => {
+    const toggle: HTMLButtonElement | null = root().querySelector<HTMLButtonElement>(
+      '[data-testid="tree-toggle"]:not([aria-label="Collapse"])',
+    );
+    if (!toggle) return;
+
+    toggle.click();
+    await fixture.whenStable();
+    await expandAll();
   };
 
   beforeEach(() => {
@@ -49,74 +64,58 @@ describe('FacilityHierarchyChart', () => {
 
     expect(root().textContent).toContain('Headquarters');
     expect(root().querySelector('app-facility-status-tag')).not.toBeNull();
+    expect(root().querySelector('[role="tree"]')?.getAttribute('aria-label')).toBe(
+      'Facility hierarchy chart',
+    );
   });
 
-  it('should mark the active node with aria-current, and no other node', async () => {
-    const parent: FacilityOutput = facility({ id: 'root', name: 'Root' });
+  it('should mark the active node selected, and no other node', async () => {
+    const parent: FacilityOutput = facility({ id: 'root', name: 'Root', hasChildren: true });
     const child: FacilityOutput = facility({ id: 'child-1', name: 'Child' });
     await render(parent, { root: [child] }, 'child-1');
+    await expandAll();
 
-    const nodes: readonly HTMLElement[] = [
-      ...root().querySelectorAll<HTMLElement>('[data-testid="facility-hierarchy-node"]'),
+    const rows: readonly HTMLElement[] = [
+      ...root().querySelectorAll<HTMLElement>('[data-testid="tree-item"]'),
     ];
 
-    expect(nodes[0]?.getAttribute('aria-current')).toBeNull();
-    expect(nodes[1]?.getAttribute('aria-current')).toBe('true');
+    expect(rows[0]?.getAttribute('aria-selected')).toBe('false');
+    expect(rows[1]?.getAttribute('aria-selected')).toBe('true');
   });
 
-  it('should render no child branch when the map holds nothing for this node', async () => {
+  it('should render no descendant row when the map holds nothing for the root', async () => {
     await render(facility({ id: 'leaf' }), {});
 
-    expect(root().querySelector('[data-testid="facility-hierarchy-node"] + div')).toBeNull();
+    expect(nodes()).toHaveLength(1);
   });
 
-  it('should recurse into every level the map resolves', async () => {
-    const rootNode: FacilityOutput = facility({ id: 'root', name: 'Root' });
-    const child: FacilityOutput = facility({ id: 'child-1', name: 'Child' });
+  it('should render every level the map resolves', async () => {
+    const rootNode: FacilityOutput = facility({ id: 'root', name: 'Root', hasChildren: true });
+    const child: FacilityOutput = facility({ id: 'child-1', name: 'Child', hasChildren: true });
     const grandchild: FacilityOutput = facility({ id: 'grandchild-1', name: 'Grandchild' });
     await render(rootNode, { root: [child], 'child-1': [grandchild] });
+    await expandAll();
 
-    const nodes: readonly HTMLElement[] = [
-      ...root().querySelectorAll<HTMLElement>('[data-testid="facility-hierarchy-node"]'),
-    ];
-
-    expect(nodes.map((node: HTMLElement): string => node.textContent?.trim() ?? '')).toEqual([
+    expect(nodes().map((node: HTMLElement): string => node.textContent?.trim() ?? '')).toEqual([
       expect.stringContaining('Root'),
       expect.stringContaining('Child'),
       expect.stringContaining('Grandchild'),
     ]);
   });
 
-  it('should emit its own facility when this level’s node is activated', async () => {
+  it('should emit the clicked facility, unwrapped from the tree node', async () => {
     const emitted: FacilityOutput[] = [];
     fixture.componentInstance.selected.subscribe((value: FacilityOutput): void => {
       emitted.push(value);
     });
 
-    const own: FacilityOutput = facility({ id: 'root', name: 'Root' });
-    await render(own, {});
-
-    root().querySelector<HTMLButtonElement>('[data-testid="facility-hierarchy-node"]')?.click();
-
-    expect(emitted).toEqual([own]);
-  });
-
-  it('should forward a descendant’s selection unchanged, so only the top page navigates', async () => {
-    const emitted: FacilityOutput[] = [];
-    fixture.componentInstance.selected.subscribe((value: FacilityOutput): void => {
-      emitted.push(value);
-    });
-
-    const rootNode: FacilityOutput = facility({ id: 'root', name: 'Root' });
+    const rootNode: FacilityOutput = facility({ id: 'root', name: 'Root', hasChildren: true });
     const child: FacilityOutput = facility({ id: 'child-1', name: 'Child' });
-    const grandchild: FacilityOutput = facility({ id: 'grandchild-1', name: 'Grandchild' });
-    await render(rootNode, { root: [child], 'child-1': [grandchild] });
+    await render(rootNode, { root: [child] });
+    await expandAll();
 
-    const nodes: readonly HTMLButtonElement[] = [
-      ...root().querySelectorAll<HTMLButtonElement>('[data-testid="facility-hierarchy-node"]'),
-    ];
-    nodes[nodes.length - 1]?.click();
+    nodes()[1]?.click();
 
-    expect(emitted).toEqual([grandchild]);
+    expect(emitted).toEqual([child]);
   });
 });

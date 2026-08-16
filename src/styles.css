@@ -26,6 +26,24 @@ router-outlet {
   display: none;
 }
 
+/* No component may carry `styles`/`styleUrl` (CLAUDE.md rule 3), so an
+   app-wide print concern — printing only the open CDK overlay, e.g. the
+   facility QR dialog — lives here instead of scoped to one component. */
+@media print {
+  body > *:not(.cdk-overlay-container) {
+    display: none;
+  }
+
+  body .cdk-overlay-backdrop {
+    display: none;
+  }
+
+  body .cdk-overlay-pane {
+    position: static;
+    max-width: none;
+  }
+}
+
 :root {
   color-scheme: light;
 

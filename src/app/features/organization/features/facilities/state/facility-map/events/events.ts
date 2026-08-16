@@ -20,5 +20,7 @@ export const facilityMapStoreEvents = eventGroup({
     mappedFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when loading the unplaced-facility count fails. */
     unplacedFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when loading the compliance tree fails. */
+    complianceFailed: type<StoreFailureEventPayload>(),
   },
 });

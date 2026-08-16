@@ -92,3 +92,39 @@ export function facilitySiblingOutput(
     ...overrides,
   });
 }
+
+export interface ComplianceTreeNodeOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly name: string;
+  readonly type: string;
+  readonly parentFacilityId: string | null;
+  readonly equipmentCount: number;
+  readonly status: string;
+  readonly complianceRate: number | null;
+  readonly children: ReadonlyArray<ComplianceTreeNodeOutputFixture>;
+}
+
+/**
+ * A Compliance-owned facility tree node for the map's compliance layer,
+ * carrying the same id as {@link facilityOutput} so the map surface can join
+ * the two by id.
+ */
+export function complianceTreeNodeOutput(
+  overrides: Partial<ComplianceTreeNodeOutputFixture> = {},
+): ComplianceTreeNodeOutputFixture {
+  return {
+    '@id': `/api/facilities/${E2E_FACILITY_ID}`,
+    '@type': 'Facility',
+    id: E2E_FACILITY_ID,
+    name: 'North Building',
+    type: 'building',
+    parentFacilityId: null,
+    equipmentCount: 4,
+    status: 'active',
+    complianceRate: 42,
+    children: [],
+    ...overrides,
+  };
+}

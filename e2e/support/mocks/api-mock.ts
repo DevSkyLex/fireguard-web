@@ -35,7 +35,10 @@ import type {
   OrganizationDashboardTrendOutputFixture,
 } from '../fixtures/dashboard-fixtures';
 import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
-import type { FacilityOutputFixture } from '../fixtures/facility-fixtures';
+import type {
+  ComplianceTreeNodeOutputFixture,
+  FacilityOutputFixture,
+} from '../fixtures/facility-fixtures';
 import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
 import type {
   InterventionIssueOutputFixture,
@@ -362,6 +365,24 @@ export class ApiMock {
       new RegExp(`/api/organizations/${organizationId}/facilities\\?.*hasCoordinates=false`),
       async (route) => {
         await fulfillJson(route, 200, hydraCollection([], { totalItems: unplacedCount }));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/facility-tree` — the
+   * Compliance-owned tree the facility map's compliance layer loads lazily
+   * on the first toggle-on (`FacilityMapStore.loadCompliance`).
+   */
+  public async mockComplianceTree(
+    organizationId: string,
+    nodes: ReadonlyArray<ComplianceTreeNodeOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facility-tree`,
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(nodes));
       },
     );
   }

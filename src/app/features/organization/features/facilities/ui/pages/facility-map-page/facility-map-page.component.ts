@@ -14,11 +14,17 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMap, lucideNetwork } from '@ng-icons/lucide';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityMapStore } from '@features/organization/features/facilities/state';
-import { facilityToMapMarker } from '@features/organization/features/facilities/utils';
+import {
+  facilityToComplianceMapMarker,
+  facilityToMapMarker,
+} from '@features/organization/features/facilities/utils';
 import { EmptyState } from '@shared/empty-state';
 import { Map, type MapMarker } from '@shared/map';
 import { HlmButton } from '@shared/ui/button';
+import { HlmFieldImports } from '@shared/ui/field';
+import { HlmSwitch } from '@shared/ui/switch';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { FacilityComplianceWorstSites } from '../../components/facility-compliance-worst-sites';
 
 /**
  * Component FacilityMapPage
@@ -36,13 +42,35 @@ import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
  * itself is replaced by an `app-empty-state` explaining that it fills in as
  * facilities get placed (`FEATURE.md` "Unplaced facilities affordance").
  *
- * @version 1.0.0
+ * An optional, off-by-default **compliance layer** (`FacilityMapStore.complianceVisible`)
+ * swaps each pin's bucket from the facility's lifecycle status to its
+ * compliance rate, and folds the rate into the pin's label so the signal is
+ * never colour/glyph-only. Switching it on for the first time lazily loads
+ * the Compliance-owned facility tree (`FacilityMapStore.loadCompliance`,
+ * browser-only) and reveals the "worst sites" ranking
+ * (`FacilityComplianceWorstSites`); selecting a marker or a ranked entry both
+ * navigate to the facility's record — `@shared/map`'s `Map` primitive only
+ * ever sets its camera center once, at mount, so re-centering it
+ * programmatically on a later selection is not something it supports today
+ * (`FEATURE.md` "Compliance layer").
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-facility-map-page',
-  imports: [RouterLink, NgIcon, EmptyState, Map, HlmButton, ...HlmToggleGroupImports],
+  imports: [
+    RouterLink,
+    NgIcon,
+    EmptyState,
+    Map,
+    HlmButton,
+    HlmSwitch,
+    FacilityComplianceWorstSites,
+    ...HlmToggleGroupImports,
+    ...HlmFieldImports,
+  ],
   providers: [FacilityMapStore, provideIcons({ lucideMap, lucideNetwork })],
   templateUrl: './facility-map-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -70,18 +98,33 @@ export class FacilityMapPage {
 
   /**
    * Property markers
+   *
    * @readonly
-   * @description Every located facility, mapped onto the map primitive's generic shape.
+   * @description
+   * Every located facility, mapped onto the map primitive's generic shape.
+   * While the compliance layer is on, each marker's bucket and label come
+   * from its compliance rate instead of the facility's lifecycle status.
+   *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    * @type {Signal<readonly MapMarker[]>}
    */
-  protected readonly markers: Signal<readonly MapMarker[]> = computed<readonly MapMarker[]>(() =>
-    this.store
-      .mappedFacilities()
+  protected readonly markers: Signal<readonly MapMarker[]> = computed<readonly MapMarker[]>(() => {
+    const facilities: readonly FacilityOutput[] = this.store.mappedFacilities();
+
+    if (this.store.complianceVisible()) {
+      const complianceMap: ReadonlyMap<string, number | null> = this.store.complianceMap();
+      return facilities
+        .map((facility: FacilityOutput): MapMarker | null =>
+          facilityToComplianceMapMarker(facility, complianceMap.get(facility.id) ?? null),
+        )
+        .filter((marker): marker is MapMarker => marker !== null);
+    }
+
+    return facilities
       .map((facility: FacilityOutput): MapMarker | null => facilityToMapMarker(facility))
-      .filter((marker): marker is MapMarker => marker !== null),
-  );
+      .filter((marker): marker is MapMarker => marker !== null);
+  });
 
   /** Where the "Back to list" link and the layout toggle's list/grid entries point. */
   protected readonly listRouteBase: Signal<readonly string[]> = computed<readonly string[]>(() => [
@@ -122,6 +165,38 @@ export class FacilityMapPage {
    */
   protected onMarkerSelected(marker: MapMarker): void {
     void this.router.navigate([...this.listRouteBase(), marker.id]);
+  }
+
+  /**
+   * Method onComplianceLayerToggled
+   *
+   * @description
+   * Flips the compliance layer, lazily triggering the tree load the first
+   * time it is switched on (`FacilityMapStore.loadCompliance`) — never on
+   * every toggle, and never on page init.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @param {boolean} visible - Whether the compliance layer was switched on.
+   * @returns {void}
+   */
+  protected onComplianceLayerToggled(visible: boolean): void {
+    this.store.setComplianceVisible(visible);
+    if (visible && !this.store.hasLoadedCompliance()) {
+      this.store.loadCompliance({ organizationId: this.organizationId() });
+    }
+  }
+
+  /**
+   * Method onWorstSiteSelected
+   * @description Opens the record for a facility picked from the "worst sites" ranking.
+   * @access protected
+   * @since 1.1.0
+   * @param {FacilityOutput} facility - The selected facility.
+   * @returns {void}
+   */
+  protected onWorstSiteSelected(facility: FacilityOutput): void {
+    void this.router.navigate([...this.listRouteBase(), facility.id]);
   }
   //#endregion
 }

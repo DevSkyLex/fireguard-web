@@ -157,6 +157,47 @@ the backend descendants endpoint, not on `Tree`'s own lazy expansion:
 The list page stays **roots-only**; hierarchy navigation lives here in the
 detail Overview.
 
+## Compliance Layer (Facility Map)
+
+`ui/pages/facility-map-page` carries an optional, off-by-default
+**compliance layer** (`FacilityMapStore.complianceVisible`), a switch beside
+the list/map layout toggle. Switching it on the first time lazily loads the
+Compliance-owned facility tree (`GET /api/organizations/{organizationId}/facility-tree`,
+browser-only, never on page init) via a small local
+`data-access/services/compliance-tree/ComplianceTreeService` — `FacilityService`
+is the org-scoped-facilities family, but this route belongs to the Compliance
+module and returns a different, recursive shape, so a dedicated,
+narrowly-scoped service was judged cheaper than teaching `FacilityService` a
+foreign resource. `utils/facility-tree-flatten` flattens the response into a
+`facilityId -> complianceRate` map, joined onto `FacilityMapStore.mappedFacilities`
+by id.
+
+While the layer is on:
+
+- each marker's bucket comes from `utils/compliance-bucket` (`≥90` positive,
+  `60–89` warning, `<60` critical, no data muted — thresholds in
+  `constants/compliance-bucket-thresholds.constants.ts`) instead of the
+  facility's lifecycle status, and the rate is folded into the marker's label
+  (`"{name} — {rate}% compliant"`, `utils/facility-compliance-marker`) so the
+  signal is never colour/glyph-only,
+- a compact **"worst sites"** ranking (`ui/components/facility-compliance-worst-sites`,
+  fed by `FacilityMapStore.worstFacilities`, the five lowest-rate located
+  facilities) renders beside the map; selecting a marker or a ranked entry
+  both navigate to the facility's record. `@shared/map`'s `Map` primitive
+  only ever reads its `center` input once, at mount — it has no way to
+  re-center an already-mounted instance — so "click a worst site to focus
+  the map" was not achievable as a live camera move; navigating to the
+  record was chosen instead, and re-centering support is a `@shared/map`
+  follow-up, not a defect here.
+
+**Merge note:** a sibling branch (`feat/compliance-explorer`) is building its
+own, richer compliance transport and models for a dedicated explorer surface.
+This layer's `ComplianceTreeService`, `ComplianceTreeNodeOutput` and the
+bucket thresholds were deliberately kept small and facilities-map-scoped
+rather than shared with a branch not yet merged; consolidating them with the
+explorer's compliance slice (a single transport, a single set of bucket
+thresholds) is expected work at merge time, not a gap in this pass.
+
 ## State and Data Access
 
 Primary stores:
@@ -172,11 +213,15 @@ Primary stores:
 - `FacilityMapStore` — the `facilities/map` route's own slice
   (`state/facility-map`). `FacilityStore`'s roots-only, entity-keyed shape
   does not fit this flat, location-scoped read, so it sits beside it rather
-  than inside it (`ARCHITECTURE.md` §10.11).
+  than inside it (`ARCHITECTURE.md` §10.11). Also owns the optional
+  compliance layer's state (`complianceCallState`, `complianceVisible`,
+  `worstFacilities`) — see "Compliance Layer (Facility Map)" above.
 
-Primary service:
+Primary services:
 
 - `FacilityService`
+- `ComplianceTreeService` — minimal transport for the Compliance-owned
+  facility tree the map's compliance layer reads (see above).
 
 ## Cross-Feature Dependencies
 

@@ -11725,6 +11725,82 @@
         <source>Loading floor plan</source>
         <target>Cargando el plano</target>
       </trans-unit>
+      <trans-unit id="facility.plans.toast.uploaded" datatype="html">
+        <source>Floor plan uploaded</source>
+        <target>Plano subido</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.toast.primarySet" datatype="html">
+        <source>Primary plan updated</source>
+        <target>Plano principal actualizado</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.toast.deleted" datatype="html">
+        <source>Floor plan deleted</source>
+        <target>Plano eliminado</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.listTitle" datatype="html">
+        <source>Floor plans</source>
+        <target>Planos</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.upload" datatype="html">
+        <source>Upload plan</source>
+        <target>Subir plano</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.primaryBadge" datatype="html">
+        <source>Primary</source>
+        <target>Principal</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.rowMenu" datatype="html">
+        <source>Plan actions</source>
+        <target>Acciones del plano</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.view" datatype="html">
+        <source>View</source>
+        <target>Ver</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.setPrimary" datatype="html">
+        <source>Set as primary</source>
+        <target>Establecer como principal</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.delete" datatype="html">
+        <source>Delete</source>
+        <target>Eliminar</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.deleteTitle" datatype="html">
+        <source>Delete this floor plan?</source>
+        <target>¿Eliminar este plano?</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.deleteText" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ pendingDelete()?.fileName }}"/> will be permanently removed from this facility. </source>
+        <target> <x id="INTERPOLATION" equiv-text="{{ pendingDelete()?.fileName }}"/> se eliminará permanentemente de esta instalación. </target>
+      </trans-unit>
+      <trans-unit id="facility.plans.deleteConfirm" datatype="html">
+        <source> Delete </source>
+        <target> Eliminar </target>
+      </trans-unit>
+      <trans-unit id="facility.plans.unsupported" datatype="html">
+        <source>&quot;<x id="name" equiv-text="file.name"/>&quot; is not an accepted image format (PNG, JPEG, WebP or SVG).</source>
+        <target>«<x id="name" equiv-text="file.name"/>» no es un formato de imagen aceptado (PNG, JPEG, WebP o SVG).</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.dimensions" datatype="html">
+        <source><x id="width" equiv-text="plan.imageWidth"/> × <x id="height" equiv-text="plan.imageHeight"/> px</source>
+        <target><x id="width" equiv-text="plan.imageWidth"/> × <x id="height" equiv-text="plan.imageHeight"/> px</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.tabs.plans" datatype="html">
+        <source>Plans</source>
+        <target>Planos</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.emptyTitle" datatype="html">
+        <source>No floor plan yet</source>
+        <target>Aún no hay ningún plano</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.emptyDescription" datatype="html">
+        <source>Upload an image to give this facility a floor plan.</source>
+        <target>Sube una imagen para asignar un plano a esta instalación.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.viewerAlt" datatype="html">
+        <source>Floor plan: <x id="INTERPOLATION" equiv-text="{{ selected.fileName }}"/></source>
+        <target>Plano: <x id="INTERPOLATION" equiv-text="{{ selected.fileName }}"/></target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

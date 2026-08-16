@@ -55,11 +55,24 @@ export class FacilitiesPage {
   public readonly deleteAction: Locator = this.page.getByTestId('facility-detail-delete');
   public readonly overviewTab: Locator = this.page.getByTestId('facility-tab-overview');
   public readonly informationTab: Locator = this.page.getByTestId('facility-tab-information');
+  public readonly plansTab: Locator = this.page.getByTestId('facility-tab-plans');
   public readonly hierarchyNodes: Locator = this.page.getByTestId('facility-hierarchy-node');
   public readonly hierarchyToggles: Locator = this.page.getByTestId('tree-toggle');
   public readonly nameField: Locator = this.page.getByTestId('facility-field-name');
   public readonly typeField: Locator = this.page.getByTestId('facility-field-type');
   public readonly parentField: Locator = this.page.getByTestId('facility-field-parent');
+
+  public readonly plansEmpty: Locator = this.page.getByTestId('facility-plans-empty');
+  public readonly plansUpload: Locator = this.page.getByTestId('facility-plans-upload');
+  public readonly planViewer: Locator = this.page.getByTestId('facility-plan-viewer');
+  public readonly planRows: Locator = this.page.getByTestId('facility-plan-row');
+  public readonly planPrimaryBadge: Locator = this.page.getByTestId('facility-plan-primary-badge');
+  public readonly planMenuTrigger: Locator = this.page.getByTestId('facility-plan-menu-trigger');
+  public readonly planSetPrimary: Locator = this.page.getByTestId('facility-plan-set-primary');
+  public readonly planDelete: Locator = this.page.getByTestId('facility-plan-delete');
+  public readonly planDeleteConfirm: Locator = this.page.getByTestId(
+    'facility-plan-delete-confirm',
+  );
 
   public async gotoList(organizationId: string, query = ''): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/facilities${query}`);
@@ -89,5 +102,12 @@ export class FacilitiesPage {
   /** Expands the hierarchy chart's root node, revealing its already-loaded children. */
   public async expandHierarchyRoot(): Promise<void> {
     await this.hierarchyToggles.first().click();
+  }
+
+  /** Sets a file on the Plans tab's hidden upload input, bypassing the picker dialog. */
+  public async uploadPlan(file: { name: string; mimeType: string; buffer: Buffer }): Promise<void> {
+    await this.page
+      .locator('[data-testid="facility-plan-list"] input[type="file"]')
+      .setInputFiles(file);
   }
 }

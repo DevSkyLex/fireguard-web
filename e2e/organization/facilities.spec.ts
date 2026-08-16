@@ -4,6 +4,8 @@ import { equipmentOutput, inStockEquipmentOutput } from '../support/fixtures/equ
 import {
   E2E_FACILITY_CHILD_ID,
   E2E_FACILITY_ID,
+  E2E_FACILITY_PLAN_ID,
+  facilityAttachmentOutput,
   facilityChildOutput,
   facilityOutput,
 } from '../support/fixtures/facility-fixtures';
@@ -18,6 +20,11 @@ import { FacilitiesPage } from '../support/pages/facilities.page';
 
 const SCREENSHOT_DIR =
   'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard-fireguard-sso-web/f6620368-789f-4fb4-90d8-7b471cc33671/scratchpad/screenshots';
+
+/** A 1×1 transparent PNG, small enough to inline as the Plans tab's upload fixture. */
+const TINY_PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+const TINY_PNG_BUFFER = Buffer.from(TINY_PNG_BASE64, 'base64');
 
 test.describe('Facility list', () => {
   test('renders search, the archived filter, the list/grid toggle, a row menu and New facility', async ({
@@ -281,5 +288,155 @@ test.describe('Facility detail', () => {
 
     await expect(facilities.overviewTab).toBeVisible();
     await expect(facilities.detailLoading).toHaveCount(0);
+  });
+});
+
+test.describe('Facility Plans tab', () => {
+  test('shows the empty state and the upload CTA when the facility has no floor plan', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, []);
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+
+    await expect(facilities.plansEmpty).toBeVisible();
+    await expect(facilities.plansUpload).toBeVisible();
+    await expect(facilities.planRows).toHaveCount(0);
+  });
+
+  test('uploads a floor plan and shows it in the list and the viewer', async ({ page }) => {
+    const uploaded = facilityAttachmentOutput({
+      id: 'e2e-facility-plan-uploaded',
+      fileName: 'new-plan.png',
+    });
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [], uploaded);
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.plansEmpty).toBeVisible();
+
+    await facilities.uploadPlan({
+      name: 'new-plan.png',
+      mimeType: 'image/png',
+      buffer: TINY_PNG_BUFFER,
+    });
+
+    await expect(facilities.planRows).toHaveCount(1);
+    await expect(page.getByText('new-plan.png')).toBeVisible();
+    await expect(facilities.planViewer).toBeVisible();
+  });
+
+  test('moves the primary badge to the plan set as primary', async ({ page }) => {
+    const primary = facilityAttachmentOutput({ id: E2E_FACILITY_PLAN_ID, isPrimaryPlan: true });
+    const secondary = facilityAttachmentOutput({
+      id: 'e2e-facility-plan-2',
+      fileName: 'level-2.png',
+      isPrimaryPlan: false,
+    });
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [primary, secondary]);
+    await api.mockFacilityPlanSetPrimary(
+      secondary.id,
+      facilityAttachmentOutput({
+        id: secondary.id,
+        fileName: secondary.fileName,
+        isPrimaryPlan: true,
+      }),
+    );
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.planRows).toHaveCount(2);
+    await expect(facilities.planPrimaryBadge).toHaveCount(1);
+
+    await facilities.planMenuTrigger.nth(1).click();
+    await facilities.planSetPrimary.click();
+
+    await expect(facilities.planPrimaryBadge).toHaveCount(1);
+    await expect(page.getByText('level-2.png').locator('..')).toContainText('Primary');
+  });
+
+  test('deletes a floor plan after confirmation', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockFacilityPlanDelete(E2E_FACILITY_PLAN_ID);
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+    await expect(facilities.planRows).toHaveCount(1);
+
+    await facilities.planMenuTrigger.click();
+    await facilities.planDelete.click();
+    await facilities.planDeleteConfirm.click();
+
+    await expect(facilities.planRows).toHaveCount(0);
+    await expect(facilities.plansEmpty).toBeVisible();
+  });
+
+  test('the plan viewer mounts and its zoom controls respond', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+
+    await expect(facilities.planViewer).toBeVisible();
+    const zoomIn = facilities.planViewer.getByRole('button', { name: /zoom in/i });
+    await expect(zoomIn).toBeVisible();
+    await zoomIn.click();
+    await zoomIn.click();
+
+    const zoomOut = facilities.planViewer.getByRole('button', { name: /zoom out/i });
+    await expect(zoomOut).toBeVisible();
+    await zoomOut.click();
+  });
+
+  test('renders the Plans tab at 375px in dark mode with no console errors', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    const consoleErrors = collectConsoleErrors(page);
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 800 });
+
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
+    await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    const facilities = new FacilitiesPage(page);
+
+    await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
+    await facilities.plansTab.click();
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(facilities.planViewer).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/facility-plans-tab-dark-mobile.png` });
+    expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 });

@@ -2,10 +2,11 @@
  * Type FacilityDetailTabId
  *
  * @description
- * Which of the facility record's two tabs is showing: `overview` (the
- * hierarchy chart and the equipment/inspection summary) or `information`
- * (the editable identification fields, `FacilityInformationPanel`).
+ * Which of the facility record's three tabs is showing: `overview` (the
+ * hierarchy chart and the equipment/inspection summary), `information` (the
+ * editable identification fields, `FacilityInformationPanel`), or `plans`
+ * (the floor plans, `FacilityPlanList` + `PlanViewer`).
  *
- * @since 1.0.0
+ * @since 1.1.0
  */
-export type FacilityDetailTabId = 'overview' | 'information';
+export type FacilityDetailTabId = 'overview' | 'information' | 'plans';

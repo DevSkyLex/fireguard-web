@@ -19,13 +19,14 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideTrash2 } from '@ng-icons/lucide';
+import { lucideMap, lucideTrash2 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
+  FacilityAttachmentOutput,
   FacilityEditState,
   FacilityEditTarget,
   FacilityOutput,
@@ -34,11 +35,15 @@ import type {
 import {
   ActiveFacilityStore,
   FacilityOverviewStore,
+  FacilityPlansStore,
   FacilityStore,
+  type FacilityPlansStoreType,
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { EmptyState } from '@shared/empty-state';
+import { PlanViewer } from '@shared/plan-viewer';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -46,6 +51,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { FacilityHierarchyChart } from '../../components/facility-hierarchy-chart';
 import { FacilityInformationPanel } from '../../components/facility-information-panel';
+import { FacilityPlanList } from '../../components/facility-plan-list';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
 import type { FacilityDetailTabId } from './models';
 
@@ -63,27 +69,30 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  *
  * @description
  * Route entry page for one facility record
- * (`/organizations/:organizationId/facilities/:facilityId`). Two tabs:
+ * (`/organizations/:organizationId/facilities/:facilityId`). Three tabs:
  * **Overview** (default) renders the descendant hierarchy through
  * {@link FacilityHierarchyChart} plus the equipment/inspection summary from
  * {@link FacilityOverviewStore}; **Information** renders
  * {@link FacilityInformationPanel}, the in-place edit surface for every
  * writable property (`FEATURE.md` "The record is the edit surface" — there
- * is no separate edit page). A danger, confirm-gated **Delete** action
- * registers on the shell header through `PageActionsService` (`FEATURE.md`
- * "Deletion").
+ * is no separate edit page); **Plans** renders {@link FacilityPlanList} and
+ * `PlanViewer` over {@link FacilityPlansStore}, loaded browser-only on first
+ * activation since it is secondary content (`ARCHITECTURE.md` §12.4). A
+ * danger, confirm-gated **Delete** action registers on the shell header
+ * through `PageActionsService` (`FEATURE.md` "Deletion").
  *
  * `facilityResolver` (route `resolve`) seeds {@link ActiveFacilityStore}
  * fire-and-forget, so this page always renders immediately: the full-page
  * skeleton shows from the store's pending state until the record lands, the
  * document title follows through `TitleService`, and a load failure returns
  * to the organization landing page. A route-scoped {@link FacilityStore}
- * carries the update, archive/restore and delete writes, and a route-scoped
- * {@link FacilityOverviewStore} carries the Overview tab's summary data. The
- * record's name is the shell breadcrumb's title, resolved by
+ * carries the update, archive/restore and delete writes, a route-scoped
+ * {@link FacilityOverviewStore} carries the Overview tab's summary data, and
+ * a tab-scoped {@link FacilityPlansStore} carries the Plans tab's floor
+ * plans. The record's name is the shell breadcrumb's title, resolved by
  * `facilityTitleResolver`.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -92,16 +101,19 @@ const IDLE_EDIT_STATE: FacilityEditState = {
   imports: [
     DatePipe,
     NgIcon,
+    EmptyState,
     FacilityHierarchyChart,
     FacilityInformationPanel,
+    FacilityPlanList,
     FacilityStatusTag,
+    PlanViewer,
     HlmButton,
     HlmSkeleton,
     ...HlmAlertDialogImports,
     ...HlmCardImports,
     ...HlmTabsImports,
   ],
-  providers: [FacilityOverviewStore, provideIcons({ lucideTrash2 })],
+  providers: [FacilityOverviewStore, FacilityPlansStore, provideIcons({ lucideMap, lucideTrash2 })],
   templateUrl: './facility-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -146,6 +158,13 @@ export class FacilityDetailPage {
   /** The route-scoped store carrying the Overview tab's equipment/inspection summary. */
   protected readonly overview: FacilityOverviewStore = inject(FacilityOverviewStore);
 
+  /** The tab-scoped store carrying the Plans tab's floor plans. */
+  protected readonly plans: FacilityPlansStoreType =
+    inject<FacilityPlansStoreType>(FacilityPlansStore);
+
+  /** Whether the Plans tab has already requested its list — loaded once, on first activation. */
+  private plansLoadRequested = false;
+
   /** Organization permission checks gating every write on this page. */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
@@ -161,7 +180,7 @@ export class FacilityDetailPage {
   protected readonly editState: WritableSignal<FacilityEditState> =
     signal<FacilityEditState>(IDLE_EDIT_STATE);
 
-  /** Which of the record's two tabs is showing. Page-local UI state, `overview` by default. */
+  /** Which of the record's three tabs is showing. Page-local UI state, `overview` by default. */
   protected readonly activeTab: WritableSignal<FacilityDetailTabId> =
     signal<FacilityDetailTabId>('overview');
 
@@ -297,7 +316,61 @@ export class FacilityDetailPage {
    * @returns {void}
    */
   protected onLinkedTabActivated(tab: string): void {
-    if (tab === 'overview' || tab === 'information') this.activeTab.set(tab);
+    if (tab !== 'overview' && tab !== 'information' && tab !== 'plans') return;
+
+    this.activeTab.set(tab);
+    if (tab === 'plans' && this.isBrowser && !this.plansLoadRequested) {
+      this.plansLoadRequested = true;
+      this.plans.load({ facilityId: this.facilityId() });
+    }
+  }
+
+  /**
+   * Method onPlanSelected
+   * @description Shows the given plan in the viewer.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} planId - The plan to show.
+   * @returns {void}
+   */
+  protected onPlanSelected(planId: string): void {
+    this.plans.selectPlan(planId);
+  }
+
+  /**
+   * Method onPlanFilePicked
+   * @description Uploads the picked image as a new floor plan.
+   * @access protected
+   * @since 1.1.0
+   * @param {File} file - The picked image.
+   * @returns {void}
+   */
+  protected onPlanFilePicked(file: File): void {
+    this.plans.upload({ facilityId: this.facilityId(), file });
+  }
+
+  /**
+   * Method onPlanSetPrimaryRequested
+   * @description Sets the given plan as the facility's primary plan.
+   * @access protected
+   * @since 1.1.0
+   * @param {FacilityAttachmentOutput} plan - The plan to set primary.
+   * @returns {void}
+   */
+  protected onPlanSetPrimaryRequested(plan: FacilityAttachmentOutput): void {
+    this.plans.setPrimary({ attachmentId: plan.id });
+  }
+
+  /**
+   * Method onPlanDeleteRequested
+   * @description Deletes the given plan, pinned to its revision.
+   * @access protected
+   * @since 1.1.0
+   * @param {FacilityAttachmentOutput} plan - The plan to delete.
+   * @returns {void}
+   */
+  protected onPlanDeleteRequested(plan: FacilityAttachmentOutput): void {
+    this.plans.remove({ attachmentId: plan.id, revision: plan.revision });
   }
 
   /**

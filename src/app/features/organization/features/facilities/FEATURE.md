@@ -92,7 +92,7 @@ This subfeature is the primitive's first consumer, in two places:
   `ui/forms/facility-create-form`, requiring only `type` and `name`; parent,
   code, address and coordinates are optional here and remain editable on the
   record afterward.
-- `ui/pages/facility-detail-page` (`FacilityDetailPage`) — two tabs.
+- `ui/pages/facility-detail-page` (`FacilityDetailPage`) — three tabs.
   **Overview** (default) renders `ui/components/facility-hierarchy-chart`,
   built on the shared `shared/tree` `Tree` primitive (only when
   `hasChildren`), plus the `FacilityOverviewStore` summary
@@ -100,10 +100,42 @@ This subfeature is the primitive's first consumer, in two places:
   inspections). **Information** renders
   `ui/components/facility-information-panel`, the in-place edit surface for
   `name`/`code`/`address`/coordinates; `type` and the parent render as
-  read-only rows. A header **Delete** action is danger, confirm-gated
-  (`hlm-alert-dialog`), and `FACILITIES_WRITE`-gated.
+  read-only rows. **Plans** renders `ui/components/facility-plan-list`
+  (upload, primary badge, per-row View/Set as primary/Delete menu) beside
+  `@shared/plan-viewer`'s `app-plan-viewer` over `FacilityPlansStore`, with
+  `@shared/empty-state` when the facility has no floor plan yet. A header
+  **Delete** action is danger, confirm-gated (`hlm-alert-dialog`), and
+  `FACILITIES_WRITE`-gated.
 - `ui/components/facility-status-tag` — the `FacilityOutput.status` registry
   (`active`/`archived`), the only appearance of the enum in this feature.
+
+## Facility Attachments and Floor Plans (Plans Tab)
+
+`FacilityAttachmentService` (`data-access/services/facility-attachment/`) owns
+the attachment resources — `/api/facilities/{id}/attachments` (list, scoped
+by `kind`; upload, multipart with an optional `kind` field) and
+`/api/facility-attachments/{id}` (read, delete with `If-Match`) plus the
+`/primary` action. It is a separate service from `FacilityService`: a
+different, non-organization-scoped URL family, following the interventions
+subfeature's `InterventionService.uploadAttachment`/`listAttachments`
+precedent for the multipart shape.
+
+`FacilityAttachmentOutput` (`models/facility-attachment/`) carries `kind`
+(`'document' | 'floor_plan'`), `isPrimaryPlan`, and nullable
+`imageWidth`/`imageHeight` — probed server-side for a `floor_plan`, null for
+a `document`, an SVG, or a failed probe.
+
+The Plans tab (`FacilityPlansStore`, `state/facility-plans/`) is
+**tab-scoped**, provided on `FacilityDetailPage` alongside
+`FacilityOverviewStore`, and loads only on first activation of the tab
+(browser-only — secondary content, `ARCHITECTURE.md` §12.4). It lists
+`kind=floor_plan` attachments only; plain documents are out of scope for this
+pass. Named `CallState` fields track list/upload/setPrimary/delete
+independently; `withEntities` (`collection: 'plan'`) backs the list so
+setting a new primary can flip both the previous and the new plan's
+`isPrimaryPlan` locally, mirroring the backend's atomic swap without a
+re-fetch. `selectedPlan` defaults to the primary plan, then the first
+uploaded one, until a row is explicitly selected.
 
 ## Facility Listing (Roots-Only DataView)
 
@@ -224,12 +256,17 @@ Primary stores:
   than inside it (`ARCHITECTURE.md` §10.11). Also owns the optional
   compliance layer's state (`complianceCallState`, `complianceVisible`,
   `worstFacilities`) — see "Compliance Layer (Facility Map)" above.
+- `FacilityPlansStore` — tab-scoped, the Plans tab's floor plans (see
+  "Facility Attachments and Floor Plans" above).
 
 Primary services:
 
 - `FacilityService`
 - `ComplianceTreeService` — minimal transport for the Compliance-owned
   facility tree the map's compliance layer reads (see above).
+- `FacilityAttachmentService`
+
+> > > > > > > 0aecceb8 (feat(facilities): add the floor plans tab with upload and primary selection)
 
 ## Cross-Feature Dependencies
 
@@ -241,6 +278,8 @@ Primary services:
 - `/:facilityId/edit` is retired and **redirects onto the record**, so installed
   applications and bookmarks still resolve.
 - Depends on organization route context from the parent organization feature.
+- The Plans tab consumes `@shared/plan-viewer`'s `app-plan-viewer` (pan/zoom
+  raster viewer, domain-agnostic) for the selected floor plan's image.
 - Consumes `ListPagination` from the parent `features/organization` feature
   (`@features/organization/ui/components`) for the list page's shared pagination band — see
   `organization/FEATURE.md` § UI Conventions.
@@ -297,3 +336,5 @@ organization-scoped read never carries `revision`, then sends the required
 - Active facility state belongs to this subfeature.
 - Archived facilities can be restored.
 - Facility resolvers and facility page orchestration belong here, not in the parent feature or layouts.
+- At most one floor plan is primary per facility; setting a new primary must reflect the swap on both plans without a re-fetch (mirrors the backend's atomic unset).
+- The Plans tab loads only when activated and only in the browser — it is secondary content, never part of the resolver's seeded fetch.

@@ -1,0 +1,158 @@
+<div class="flex flex-col gap-3" data-testid="facility-plan-list">
+  <div class="flex items-center justify-between gap-2">
+    <h3 class="text-sm font-semibold" i18n="@@facility.plans.listTitle">Floor plans</h3>
+    @if (canManage()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="max-sm:min-h-11"
+        [disabled]="uploading()"
+        [attr.aria-busy]="uploading() ? 'true' : null"
+        data-testid="facility-plans-upload"
+        (click)="pick(planInput)"
+      >
+        @if (uploading()) {
+          <hlm-spinner size="xs" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+        }
+        <span i18n="@@facility.plans.upload">Upload plan</span>
+      </button>
+      <input
+        #planInput
+        type="file"
+        class="sr-only"
+        tabindex="-1"
+        [accept]="acceptedTypes"
+        [disabled]="uploading()"
+        (change)="onFileSelected($event)"
+      />
+    }
+  </div>
+
+  @if (pickError(); as message) {
+    <p class="text-xs text-destructive" role="alert" data-testid="facility-plans-pick-error">
+      {{ message }}
+    </p>
+  }
+
+  @if (plans().length > 0) {
+    <ul hlmItemGroup>
+      @for (plan of plans(); track plan.id) {
+        <li
+          hlmItem
+          variant="outline"
+          size="sm"
+          class="cursor-pointer rounded-md transition-colors hover:bg-muted/50"
+          [class.bg-muted]="selectedPlanId() === plan.id"
+          data-testid="facility-plan-row"
+          (click)="planSelected.emit(plan.id)"
+        >
+          <div hlmItemMedia variant="icon" class="text-muted-foreground">
+            <ng-icon name="lucideMap" aria-hidden="true" />
+          </div>
+          <div hlmItemContent>
+            <span hlmItemTitle class="line-clamp-1">{{ plan.fileName }}</span>
+            <span hlmItemDescription>
+              @if (dimensionsLabelOf(plan); as dimensions) {
+                {{ dimensions }}
+              }
+              @if (plan.isPrimaryPlan) {
+                ·
+                <span
+                  hlmBadge
+                  variant="secondary"
+                  class="align-middle"
+                  data-testid="facility-plan-primary-badge"
+                >
+                  <ng-icon name="lucideCheck" size="xs" aria-hidden="true" />
+                  <span i18n="@@facility.plans.primaryBadge">Primary</span>
+                </span>
+              }
+            </span>
+          </div>
+          <div hlmItemActions>
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              class="text-muted-foreground max-sm:size-11"
+              i18n-aria-label="@@facility.plans.rowMenu"
+              aria-label="Plan actions"
+              data-testid="facility-plan-menu-trigger"
+              [hlmDropdownMenuTrigger]="menu"
+              (click)="$event.stopPropagation()"
+            >
+              @if (isRowSettingPrimary(plan) || isRowDeleting(plan)) {
+                <hlm-spinner size="xs" aria-hidden="true" />
+              } @else {
+                <ng-icon name="lucideEllipsisVertical" aria-hidden="true" />
+              }
+            </button>
+            <ng-template #menu>
+              <div hlmDropdownMenu>
+                <button
+                  hlmDropdownMenuItem
+                  type="button"
+                  data-testid="facility-plan-view"
+                  (triggered)="planSelected.emit(plan.id)"
+                >
+                  <span i18n="@@facility.plans.view">View</span>
+                </button>
+                @if (canManage()) {
+                  <button
+                    hlmDropdownMenuItem
+                    type="button"
+                    [disabled]="plan.isPrimaryPlan"
+                    data-testid="facility-plan-set-primary"
+                    (triggered)="setPrimaryRequested.emit(plan)"
+                  >
+                    <span i18n="@@facility.plans.setPrimary">Set as primary</span>
+                  </button>
+                  <button
+                    hlmDropdownMenuItem
+                    type="button"
+                    variant="destructive"
+                    data-testid="facility-plan-delete"
+                    (triggered)="pendingDelete.set(plan)"
+                  >
+                    <span i18n="@@facility.plans.delete">Delete</span>
+                  </button>
+                }
+              </div>
+            </ng-template>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<hlm-alert-dialog
+  [state]="pendingDelete() !== null ? 'open' : 'closed'"
+  (stateChanged)="onDeleteDialogStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="facility-plan-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@facility.plans.deleteTitle">Delete this floor plan?</h2>
+      <p hlmAlertDialogDescription i18n="@@facility.plans.deleteText">
+        {{ pendingDelete()?.fileName }} will be permanently removed from this facility.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="facility-plan-delete-confirm"
+        (click)="confirmDelete()"
+        i18n="@@facility.plans.deleteConfirm"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

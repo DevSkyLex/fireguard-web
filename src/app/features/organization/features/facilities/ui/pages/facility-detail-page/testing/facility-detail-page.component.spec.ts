@@ -20,10 +20,14 @@ import {
 } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import type {
+  FacilityAttachmentOutput,
+  FacilityOutput,
+} from '@features/organization/features/facilities/models';
 import {
   ActiveFacilityStore,
   FacilityOverviewStore,
+  FacilityPlansStore,
   FacilityStore,
 } from '@features/organization/features/facilities/state';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
@@ -72,6 +76,24 @@ const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
     ...overrides,
   }) as FacilityOutput;
 
+const plan = (overrides: Partial<FacilityAttachmentOutput> = {}): FacilityAttachmentOutput => ({
+  '@id': `/api/facility-attachments/${overrides.id ?? 'plan-1'}`,
+  '@type': 'FacilityAttachment',
+  id: 'plan-1',
+  facilityId: 'facility-1',
+  fileName: 'ground-floor.png',
+  mimeType: 'image/png',
+  size: 2048,
+  url: '/api/facility-attachments/plan-1/download',
+  kind: 'floor_plan',
+  isPrimaryPlan: false,
+  imageWidth: 1200,
+  imageHeight: 800,
+  revision: 1,
+  uploadedAt: '2026-08-01T00:00:00+00:00',
+  ...overrides,
+});
+
 describe('FacilityDetailPage', () => {
   let fixture: ComponentFixture<FacilityDetailPage>;
   let update: ReturnType<typeof vi.fn>;
@@ -85,6 +107,13 @@ describe('FacilityDetailPage', () => {
   let updateCallState: WritableSignal<CallState<FacilityOutput | null>>;
   let deleteCallState: WritableSignal<CallState>;
   let hasPermission: ReturnType<typeof vi.fn>;
+  let planLoad: ReturnType<typeof vi.fn>;
+  let planUpload: ReturnType<typeof vi.fn>;
+  let planSetPrimary: ReturnType<typeof vi.fn>;
+  let planRemove: ReturnType<typeof vi.fn>;
+  let planSelectPlan: ReturnType<typeof vi.fn>;
+  let orderedPlans: WritableSignal<readonly FacilityAttachmentOutput[]>;
+  let selectedPlan: WritableSignal<FacilityAttachmentOutput | null>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(FacilityDetailPage);
@@ -108,6 +137,13 @@ describe('FacilityDetailPage', () => {
     updateCallState = signal<CallState<FacilityOutput | null>>(idleCallState());
     deleteCallState = signal<CallState>(idleCallState());
     hasPermission = vi.fn().mockReturnValue(true);
+    planLoad = vi.fn();
+    planUpload = vi.fn();
+    planSetPrimary = vi.fn();
+    planRemove = vi.fn();
+    planSelectPlan = vi.fn();
+    orderedPlans = signal<readonly FacilityAttachmentOutput[]>([]);
+    selectedPlan = signal<FacilityAttachmentOutput | null>(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -134,7 +170,7 @@ describe('FacilityDetailPage', () => {
     });
 
     TestBed.overrideComponent(FacilityDetailPage, {
-      remove: { providers: [FacilityOverviewStore] },
+      remove: { providers: [FacilityOverviewStore, FacilityPlansStore] },
       add: {
         providers: [
           {
@@ -149,6 +185,22 @@ describe('FacilityDetailPage', () => {
               isLoadingEquipment: signal(false),
               isLoadingInspections: signal(false),
               load: overviewLoad,
+            },
+          },
+          {
+            provide: FacilityPlansStore,
+            useValue: {
+              orderedPlans,
+              selectedPlan,
+              isLoading: signal(false),
+              isUploading: signal(false),
+              settingPrimaryId: signal<string | null>(null),
+              deletingId: signal<string | null>(null),
+              load: planLoad,
+              upload: planUpload,
+              setPrimary: planSetPrimary,
+              remove: planRemove,
+              selectPlan: planSelectPlan,
             },
           },
         ],
@@ -353,6 +405,94 @@ describe('FacilityDetailPage', () => {
       await fixture.whenStable();
 
       expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'facilities']);
+    });
+  });
+
+  describe('plans tab', () => {
+    it('should not load plans before the tab is activated', async () => {
+      await createPage();
+
+      expect(planLoad).not.toHaveBeenCalled();
+    });
+
+    it('should load plans once, on first activation', async () => {
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+      byTestId('facility-tab-overview')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(planLoad).toHaveBeenCalledTimes(1);
+      expect(planLoad).toHaveBeenCalledWith({ facilityId: 'facility-1' });
+    });
+
+    it('should show the empty state when there is no floor plan', async () => {
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plans-empty')).not.toBeNull();
+    });
+
+    it('should hide the upload control without the write permission', async () => {
+      hasPermission.mockReturnValue(false);
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plans-upload')).toBeNull();
+    });
+
+    it('should show the plan viewer and the plan list once a plan exists', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plan-viewer')).not.toBeNull();
+      expect(root().querySelector('app-facility-plan-list')).not.toBeNull();
+    });
+
+    it('should route the picked file to the store as an upload', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      await createPage();
+
+      const file = new File(['plan'], 'floor.png', { type: 'image/png' });
+      fixture.componentInstance['onPlanFilePicked'](file);
+
+      expect(planUpload).toHaveBeenCalledWith({ facilityId: 'facility-1', file });
+    });
+
+    it('should route a set-primary request to the store', async () => {
+      await createPage();
+
+      fixture.componentInstance['onPlanSetPrimaryRequested'](plan({ id: 'plan-2' }));
+
+      expect(planSetPrimary).toHaveBeenCalledWith({ attachmentId: 'plan-2' });
+    });
+
+    it('should route a delete request to the store with the plan revision', async () => {
+      await createPage();
+
+      fixture.componentInstance['onPlanDeleteRequested'](plan({ id: 'plan-2', revision: 4 }));
+
+      expect(planRemove).toHaveBeenCalledWith({ attachmentId: 'plan-2', revision: 4 });
+    });
+
+    it('should route a selection to the store', async () => {
+      await createPage();
+
+      fixture.componentInstance['onPlanSelected']('plan-2');
+
+      expect(planSelectPlan).toHaveBeenCalledWith('plan-2');
     });
   });
 

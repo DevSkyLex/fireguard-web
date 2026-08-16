@@ -93,6 +93,26 @@
       </table>
     </div>
   </div>
+
+  @if (totalItems() > items().length) {
+    <div class="flex justify-center pt-4">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="intervention-inspections-load-more"
+        [disabled]="loadingMore()"
+        (click)="loadMoreRequested.emit()"
+      >
+        @if (loadingMore()) {
+          <span i18n="@@intervention.linked.inspections.loadingMore">Loading…</span>
+        } @else {
+          <span i18n="@@intervention.linked.inspections.loadMore">Show more</span>
+        }
+      </button>
+    </div>
+  }
 } @else {
   <app-empty-state
     icon="lucideClipboardCheck"

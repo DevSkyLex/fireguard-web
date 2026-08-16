@@ -283,6 +283,20 @@ Stores:
   different intervention (prev/next) resets all three to idle so the next
   activation refetches. See `### The rail is not the retired workspace tabs`
   below.
+
+  `listByIntervention` is always called with an explicit `{ page, itemsPerPage:
+LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
+  back to the server's own default page size of 30, which silently truncated
+  any intervention linking more than 30 facilities, pieces of equipment, or
+  inspections with no indication to the user that more existed. Each resource
+  tracks its own `<resource>Page`, `<resource>TotalItems` and
+  `<resource>LoadingMore`; `<resource>HasMore` compares the two to drive the
+  tab's "Show more" button. `loadMoreFacilities`/`loadMoreEquipment`/
+  `loadMoreInspections` fetch the next page and **append** it onto the rows
+  already in the call state rather than replacing them, a no-op while that
+  resource's own page is already in flight; a failed `loadMore` leaves the
+  rows already on screen untouched.
+
 - `InterventionPublicationStore` — component-scoped (provided in
   `InterventionDetailPage`); the publication request+poll flow, one named
   `publishCallState`. The store is a thin wrapper: `InterventionPublicationService`

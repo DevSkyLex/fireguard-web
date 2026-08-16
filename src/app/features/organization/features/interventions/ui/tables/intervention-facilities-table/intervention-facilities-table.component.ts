@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideMapPin } from '@ng-icons/lucide';
 import type {
@@ -7,6 +14,7 @@ import type {
 } from '@features/organization/features/facilities/models';
 import { EmptyState } from '@shared/empty-state';
 import { HlmBadge } from '@shared/ui/badge';
+import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
@@ -35,18 +43,18 @@ const FACILITY_TYPE_LABEL: Readonly<Record<FacilityType, string>> = {
  * @description
  * The Facilities tab of the intervention detail page's "Linked" surface: a
  * read-only `hlmTable` of the facilities scoped to this intervention through
- * the backend's canonical `intervention` search filter. No pagination, no
- * search, no row actions — the linked set a single intervention holds is
- * small, and this is a lookup, not a management surface (that stays in the
- * facilities feature's own upcoming pages).
+ * the backend's canonical `intervention` search filter, with a "Show more"
+ * button appending further pages. No search, no row actions — the linked set
+ * is a lookup, not a management surface (that stays in the facilities
+ * feature's own upcoming pages).
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-facilities-table',
-  imports: [EmptyState, HlmBadge, HlmSkeleton, InterventionTag, ...HlmTableImports],
+  imports: [EmptyState, HlmBadge, HlmButton, HlmSkeleton, InterventionTag, ...HlmTableImports],
   providers: [provideIcons({ lucideCircleAlert, lucideMapPin })],
   templateUrl: './intervention-facilities-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,6 +91,38 @@ export class InterventionFacilitiesTable {
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property totalItems
+   * @readonly
+   * @description Total linked facilities the server reports, across all pages.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<number>}
+   */
+  public readonly totalItems: InputSignal<number> = input<number>(0);
+
+  /**
+   * Property loadingMore
+   * @readonly
+   * @description Whether the next page of linked facilities is being fetched.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loadingMore: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property loadMoreRequested
+   * @readonly
+   * @description Emits when the user asks for the next page of linked facilities.
+   * @access public
+   * @since 1.2.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly loadMoreRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties

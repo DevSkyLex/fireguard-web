@@ -1,8 +1,16 @@
-import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucidePackage } from '@ng-icons/lucide';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EmptyState } from '@shared/empty-state';
+import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
@@ -17,16 +25,16 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
  * @description
  * The Equipment tab of the intervention detail page's "Linked" surface: a
  * read-only `hlmTable` of the equipment scoped to this intervention through
- * the backend's canonical `intervention` search filter. No pagination, no
- * search, no row actions.
+ * the backend's canonical `intervention` search filter, with a "Show more"
+ * button appending further pages. No search, no row actions.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-equipment-table',
-  imports: [EmptyState, HlmSkeleton, InterventionTag, ...HlmTableImports],
+  imports: [EmptyState, HlmButton, HlmSkeleton, InterventionTag, ...HlmTableImports],
   providers: [provideIcons({ lucideCircleAlert, lucidePackage })],
   templateUrl: './intervention-equipment-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,6 +71,38 @@ export class InterventionEquipmentTable {
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property totalItems
+   * @readonly
+   * @description Total linked equipment the server reports, across all pages.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<number>}
+   */
+  public readonly totalItems: InputSignal<number> = input<number>(0);
+
+  /**
+   * Property loadingMore
+   * @readonly
+   * @description Whether the next page of linked equipment is being fetched.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loadingMore: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property loadMoreRequested
+   * @readonly
+   * @description Emits when the user asks for the next page of linked equipment.
+   * @access public
+   * @since 1.2.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly loadMoreRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties

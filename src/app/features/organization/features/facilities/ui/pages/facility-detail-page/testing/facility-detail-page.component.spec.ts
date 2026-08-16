@@ -114,6 +114,7 @@ describe('FacilityDetailPage', () => {
   let orderedPlans: WritableSignal<readonly FacilityAttachmentOutput[]>;
   let selectedPlan: WritableSignal<FacilityAttachmentOutput | null>;
   let planImageUrl: WritableSignal<string | null>;
+  let plansLoading: WritableSignal<boolean>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(FacilityDetailPage);
@@ -145,6 +146,7 @@ describe('FacilityDetailPage', () => {
     orderedPlans = signal<readonly FacilityAttachmentOutput[]>([]);
     selectedPlan = signal<FacilityAttachmentOutput | null>(null);
     planImageUrl = signal<string | null>(null);
+    plansLoading = signal<boolean>(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -194,7 +196,7 @@ describe('FacilityDetailPage', () => {
               orderedPlans,
               selectedPlan,
               planImageUrl,
-              isLoading: signal(false),
+              isLoading: plansLoading,
               isUploading: signal(false),
               settingPrimaryId: signal<string | null>(null),
               deletingId: signal<string | null>(null),
@@ -429,6 +431,33 @@ describe('FacilityDetailPage', () => {
 
       expect(planLoad).toHaveBeenCalledTimes(1);
       expect(planLoad).toHaveBeenCalledWith({ facilityId: 'facility-1' });
+    });
+
+    it('should announce a skeleton loading state while the first plans load is in flight', async () => {
+      plansLoading.set(true);
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      const loading: HTMLElement | null = byTestId('facility-plans-loading');
+      expect(loading).not.toBeNull();
+      expect(loading?.getAttribute('role')).toBe('status');
+      expect(byTestId('facility-plans-empty')).toBeNull();
+    });
+
+    it('should announce the image spinner while the selected plan image resolves', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set(null);
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      const spinner: HTMLElement | null =
+        byTestId('facility-plan-viewer')?.querySelector('[role="status"]') ?? null;
+      expect(spinner).not.toBeNull();
     });
 
     it('should show the empty state when there is no floor plan', async () => {

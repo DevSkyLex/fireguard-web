@@ -209,7 +209,19 @@
       </div>
 
       <div hlmTabsContent="plans" class="flex flex-col gap-4">
-        @if (plans.orderedPlans().length === 0 && !plans.isLoading()) {
+        @if (plans.isLoading() && plans.orderedPlans().length === 0) {
+          <div
+            class="flex flex-col gap-4"
+            role="status"
+            aria-label="Loading floor plans"
+            i18n-aria-label="@@facility.plans.loadingAria"
+            data-testid="facility-plans-loading"
+          >
+            <hlm-skeleton class="h-8 w-40" />
+            <hlm-skeleton class="h-24 w-full" />
+            <hlm-skeleton class="h-24 w-full" />
+          </div>
+        } @else if (plans.orderedPlans().length === 0 && !plans.isLoading()) {
           <app-empty-state
             icon="lucideMap"
             class="rounded-md border border-dashed border-border p-6"
@@ -262,7 +274,12 @@
                     [naturalHeight]="selected.imageHeight"
                   />
                 } @else {
-                  <div class="flex h-full items-center justify-center">
+                  <div
+                    class="flex h-full items-center justify-center"
+                    role="status"
+                    aria-label="Loading floor plan image"
+                    i18n-aria-label="@@facility.plans.imageLoadingAria"
+                  >
                     <hlm-spinner size="lg" aria-hidden="true" />
                   </div>
                 }

@@ -11794,6 +11794,14 @@
         <source>Floor plan: <x id="INTERPOLATION" equiv-text="{{ selected.fileName }}"/></source>
         <target>Plan : <x id="INTERPOLATION" equiv-text="{{ selected.fileName }}"/></target>
       </trans-unit>
+      <trans-unit id="facility.plans.loadingAria" datatype="html">
+        <source>Loading floor plans</source>
+        <target>Chargement des plans</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.imageLoadingAria" datatype="html">
+        <source>Loading floor plan image</source>
+        <target>Chargement de l'image du plan</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

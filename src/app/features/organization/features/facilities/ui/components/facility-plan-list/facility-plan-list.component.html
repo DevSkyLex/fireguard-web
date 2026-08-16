@@ -45,34 +45,41 @@
           hlmItem
           variant="outline"
           size="sm"
-          class="cursor-pointer rounded-md transition-colors hover:bg-muted/50"
+          class="rounded-md transition-colors hover:bg-muted/50 motion-reduce:transition-none"
           [class.bg-muted]="selectedPlanId() === plan.id"
           data-testid="facility-plan-row"
-          (click)="planSelected.emit(plan.id)"
         >
-          <div hlmItemMedia variant="icon" class="text-muted-foreground">
-            <ng-icon name="lucideMap" aria-hidden="true" />
-          </div>
-          <div hlmItemContent>
-            <span hlmItemTitle class="line-clamp-1">{{ plan.fileName }}</span>
-            <span hlmItemDescription>
-              @if (dimensionsLabelOf(plan); as dimensions) {
-                {{ dimensions }}
-              }
-              @if (plan.isPrimaryPlan) {
-                ·
-                <span
-                  hlmBadge
-                  variant="secondary"
-                  class="align-middle"
-                  data-testid="facility-plan-primary-badge"
-                >
-                  <ng-icon name="lucideCheck" size="xs" aria-hidden="true" />
-                  <span i18n="@@facility.plans.primaryBadge">Primary</span>
-                </span>
-              }
-            </span>
-          </div>
+          <button
+            type="button"
+            class="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            [attr.aria-current]="selectedPlanId() === plan.id ? 'true' : null"
+            data-testid="facility-plan-select"
+            (click)="planSelected.emit(plan.id)"
+          >
+            <div hlmItemMedia variant="icon" class="text-muted-foreground">
+              <ng-icon name="lucideMap" aria-hidden="true" />
+            </div>
+            <div hlmItemContent>
+              <span hlmItemTitle class="line-clamp-1">{{ plan.fileName }}</span>
+              <span hlmItemDescription>
+                @if (dimensionsLabelOf(plan); as dimensions) {
+                  {{ dimensions }}
+                }
+                @if (plan.isPrimaryPlan) {
+                  ·
+                  <span
+                    hlmBadge
+                    variant="secondary"
+                    class="align-middle"
+                    data-testid="facility-plan-primary-badge"
+                  >
+                    <ng-icon name="lucideCheck" size="xs" aria-hidden="true" />
+                    <span i18n="@@facility.plans.primaryBadge">Primary</span>
+                  </span>
+                }
+              </span>
+            </div>
+          </button>
           <div hlmItemActions>
             <button
               hlmBtn
@@ -84,7 +91,6 @@
               aria-label="Plan actions"
               data-testid="facility-plan-menu-trigger"
               [hlmDropdownMenuTrigger]="menu"
-              (click)="$event.stopPropagation()"
             >
               @if (isRowSettingPrimary(plan) || isRowDeleting(plan)) {
                 <hlm-spinner size="xs" aria-hidden="true" />

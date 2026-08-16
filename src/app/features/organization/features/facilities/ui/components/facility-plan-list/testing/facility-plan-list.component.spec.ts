@@ -54,7 +54,7 @@ describe('FacilityPlanList', () => {
     expect(byTestId('facility-plan-primary-badge')).not.toBeNull();
   });
 
-  it('emits planSelected when a row is clicked', async () => {
+  it('emits planSelected when the row button is clicked', async () => {
     fixture.componentRef.setInput('plans', [plan({ id: 'plan-1' })]);
     fixture.componentRef.setInput('canManage', true);
     await fixture.whenStable();
@@ -62,9 +62,25 @@ describe('FacilityPlanList', () => {
     const selected: string[] = [];
     fixture.componentInstance.planSelected.subscribe((id) => selected.push(id));
 
-    root().querySelector<HTMLElement>('[data-testid="facility-plan-row"]')?.click();
+    root().querySelector<HTMLButtonElement>('[data-testid="facility-plan-select"]')?.click();
 
     expect(selected).toEqual(['plan-1']);
+  });
+
+  it('marks the selected row button with aria-current', async () => {
+    fixture.componentRef.setInput('plans', [
+      plan({ id: 'plan-1' }),
+      plan({ id: 'plan-2', fileName: 'level-2.png' }),
+    ]);
+    fixture.componentRef.setInput('canManage', true);
+    fixture.componentRef.setInput('selectedPlanId', 'plan-1');
+    await fixture.whenStable();
+
+    const buttons = root().querySelectorAll<HTMLButtonElement>(
+      '[data-testid="facility-plan-select"]',
+    );
+    expect(buttons[0].getAttribute('aria-current')).toBe('true');
+    expect(buttons[1].getAttribute('aria-current')).toBeNull();
   });
 
   it('emits filePicked for an accepted image MIME type', async () => {

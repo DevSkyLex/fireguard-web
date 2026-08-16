@@ -206,7 +206,8 @@ export class NewDirectMessageDialog {
    *
    * @description
    * Reports a dismissal — escape, the backdrop, the close button — back to the
-   * page, which owns the flag this is derived from.
+   * page, which owns the flag this is derived from. Ignored while a
+   * conversation is being opened, matching the bound `disableClose`.
    *
    * @access protected
    * @since 1.0.0
@@ -216,6 +217,8 @@ export class NewDirectMessageDialog {
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
+    if (this.pending()) return;
+
     const isOpen: boolean = state === 'open';
 
     if (isOpen === this.visible()) return;

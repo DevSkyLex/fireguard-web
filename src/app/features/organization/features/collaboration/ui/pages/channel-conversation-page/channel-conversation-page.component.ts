@@ -61,7 +61,6 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import {
   HlmDropdownMenu,
@@ -71,6 +70,7 @@ import {
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
 import { MessageThread } from '../../components/message-thread';
+import { ChannelDeleteDialog } from '../../dialogs/channel-delete-dialog';
 import { EditChannelDialog, type EditChannelDraft } from '../../dialogs/edit-channel-dialog';
 import { MessageComposer } from '../../forms/message-composer';
 import {
@@ -120,6 +120,7 @@ import {
   imports: [
     NgIcon,
     RouterLink,
+    ChannelDeleteDialog,
     ChannelParticipantsSheet,
     EditChannelDialog,
     HlmButton,
@@ -130,7 +131,6 @@ import {
     HlmDropdownMenuTrigger,
     MessageComposer,
     MessageThread,
-    ...HlmAlertDialogImports,
   ],
   providers: [
     MessageThreadStore,
@@ -587,22 +587,6 @@ export class ChannelConversationPage {
   private readonly deleteGate: SubmissionGate = inject<SubmissionGateService>(
     SubmissionGateService,
   ).create(this.channels.mutationCallState);
-
-  /**
-   * Property deleteDialogState
-   * @readonly
-   *
-   * @description
-   * The confirm dialog's open/closed state, derived from {@link deletePending}.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<BrnDialogState>}
-   */
-  protected readonly deleteDialogState: Signal<BrnDialogState> = computed((): BrnDialogState =>
-    this.deletePending() ? 'open' : 'closed',
-  );
 
   /**
    * Property deleteDialogBusy

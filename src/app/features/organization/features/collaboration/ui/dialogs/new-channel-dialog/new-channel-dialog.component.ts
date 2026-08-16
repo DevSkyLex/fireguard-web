@@ -4,22 +4,11 @@ import {
   computed,
   input,
   output,
-  signal,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
-  type WritableSignal,
 } from '@angular/core';
-import {
-  form,
-  FormField,
-  maxLength,
-  minLength,
-  required,
-  type FieldTree,
-} from '@angular/forms/signals';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { HlmButton } from '@shared/ui/button';
 import {
   HlmDialog,
   HlmDialogContent,
@@ -27,39 +16,25 @@ import {
   HlmDialogPortal,
   HlmDialogTitle,
 } from '@shared/ui/dialog';
-import { HlmFieldImports } from '@shared/ui/field';
-import { HlmInput } from '@shared/ui/input';
-import { HlmSelectImports } from '@shared/ui/select';
-import type { NewChannelDraft, NewChannelFormDraft } from './models';
-
-/** Matches `CreateChannelInput.name`'s server-side bounds. */
-const CHANNEL_NAME_MIN_LENGTH = 2;
-const CHANNEL_NAME_MAX_LENGTH = 80;
-
-/** A blank draft. */
-const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
+import { ChannelCreateForm, type NewChannelDraft } from '../../forms/channel-create-form';
 
 /**
  * Component NewChannelDialog
  * @class NewChannelDialog
  *
  * @description
- * Names a new channel and, optionally, nests it under an existing root
- * channel.
+ * The spartan dialog hosting {@link ChannelCreateForm}, the same shape
+ * `OrganizationInviteDialog` wraps `OrganizationInviteForm` in.
  *
- * Presentational: it validates and emits {@link submitted}; the page calls
- * `ChannelsStore.create` and, if a parent was chosen, `setParent`
- * (`ARCHITECTURE.md` §10.5). The parent options are supplied already
- * narrowed to root channels — a channel that already has a parent cannot
- * itself be one, which keeps the hierarchy at the two levels the backend
- * allows without this dialog having to reason about depth itself.
+ * Purely presentational: it owns the overlay chrome, forwards
+ * `visible`/`visibleChange` to the form and re-emits {@link submitted},
+ * closing itself the moment the form validates — the page's own success
+ * event is what actually navigates, and a failure is already surfaced by
+ * the app-wide feedback listener (`core/feedback`), so there is nothing
+ * this dialog needs to wait for. Dismissal is blocked while a request is in
+ * flight (`ARCHITECTURE.md` §10.5).
  *
- * Closes the moment the form validates, the way `NewDirectMessageDialog`
- * does: the page's own success event is what actually navigates, and a
- * failure is already surfaced by the app-wide feedback listener
- * (`core/feedback`), so there is nothing this dialog needs to wait for.
- *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -75,16 +50,12 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
 @Component({
   selector: 'app-new-channel-dialog',
   imports: [
-    FormField,
-    HlmButton,
+    ChannelCreateForm,
     HlmDialog,
     HlmDialogContent,
     HlmDialogHeader,
     HlmDialogPortal,
     HlmDialogTitle,
-    HlmInput,
-    ...HlmFieldImports,
-    ...HlmSelectImports,
   ],
   templateUrl: './new-channel-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,7 +81,7 @@ export class NewChannelDialog {
    * @readonly
    *
    * @description
-   * Root channels the new one may be nested under.
+   * Root channels the new one may be nested under, forwarded to the form.
    *
    * @access public
    * @since 1.0.0
@@ -126,8 +97,8 @@ export class NewChannelDialog {
    * @readonly
    *
    * @description
-   * Whether a previous submission is still in flight, which locks the
-   * submit control against a double press.
+   * Whether a previous submission is still in flight, forwarded to the form
+   * and blocking dismissal.
    *
    * @access public
    * @since 1.0.0
@@ -157,7 +128,7 @@ export class NewChannelDialog {
    * @readonly
    *
    * @description
-   * Emits the validated name and optional parent.
+   * The form's validated name and optional parent, forwarded untouched.
    *
    * @access public
    * @since 1.0.0
@@ -168,35 +139,6 @@ export class NewChannelDialog {
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
-  protected readonly model: WritableSignal<NewChannelFormDraft> =
-    signal<NewChannelFormDraft>(EMPTY_VALUES);
-
-  /**
-   * Property createForm
-   * @readonly
-   *
-   * @description
-   * The field tree and its rules, matching `CreateChannelInput.name`'s
-   * server-side bounds.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {FieldTree<NewChannelFormDraft>}
-   */
-  protected readonly createForm: FieldTree<NewChannelFormDraft> = form(this.model, (path): void => {
-    required(path.name, {
-      message: $localize`:@@channels.newDialog.nameRequired:Give the channel a name`,
-    });
-    minLength(path.name, CHANNEL_NAME_MIN_LENGTH, {
-      message: $localize`:@@channels.newDialog.nameLength:Use between 2 and 80 characters.`,
-    });
-    maxLength(path.name, CHANNEL_NAME_MAX_LENGTH, {
-      message: $localize`:@@channels.newDialog.nameLength:Use between 2 and 80 characters.`,
-    });
-  });
-
   /**
    * Property dialogState
    * @readonly
@@ -213,10 +155,6 @@ export class NewChannelDialog {
   protected readonly dialogState: Signal<BrnDialogState> = computed((): BrnDialogState =>
     this.visible() ? 'open' : 'closed',
   );
-
-  /** Names a picked parent on the closed select trigger. */
-  protected readonly parentLabelOf: (value: string) => string = (value) =>
-    this.parentOptions().find((option) => option.value === value)?.label ?? '';
   //#endregion
 
   //#region Methods
@@ -226,8 +164,8 @@ export class NewChannelDialog {
    *
    * @description
    * Reports a dismissal — escape, the backdrop, the close button — back to
-   * the page, which owns the flag this is derived from. Clears the draft on
-   * close, so the next open starts blank rather than resuming a discarded one.
+   * the page, which owns the flag this is derived from. Ignored while a
+   * request is in flight, matching the bound `disableClose`.
    *
    * @access protected
    * @since 1.0.0
@@ -237,48 +175,31 @@ export class NewChannelDialog {
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
+    if (this.pending()) return;
+
     const isOpen: boolean = state === 'open';
 
     if (isOpen === this.visible()) return;
-
-    if (!isOpen) {
-      this.model.set(EMPTY_VALUES);
-      this.createForm().reset();
-    }
 
     this.visibleChange.emit(isOpen);
   }
 
   /**
-   * Method submit
-   * @method submit
+   * Method onFormSubmitted
+   * @method onFormSubmitted
    *
    * @description
-   * Marks the tree touched so every unmet rule shows at once, then emits and
-   * closes once the form is valid.
+   * Re-emits the form's validated draft and closes the dialog.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @param {Event} event - The submit event.
+   * @param {NewChannelDraft} draft - The validated name and optional parent.
    *
    * @returns {void}
    */
-  protected submit(event: Event): void {
-    event.preventDefault();
-
-    this.createForm().markAsTouched();
-
-    if (this.createForm().invalid() || this.pending()) return;
-
-    const draft: NewChannelFormDraft = this.model();
-
-    this.submitted.emit({
-      name: draft.name.trim(),
-      parentChannelId: draft.parentChannelId === '' ? null : draft.parentChannelId,
-    });
-    this.model.set(EMPTY_VALUES);
-    this.createForm().reset();
+  protected onFormSubmitted(draft: NewChannelDraft): void {
+    this.submitted.emit(draft);
     this.visibleChange.emit(false);
   }
   //#endregion

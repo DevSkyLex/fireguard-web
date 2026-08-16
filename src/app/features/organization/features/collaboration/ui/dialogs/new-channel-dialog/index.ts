@@ -1,2 +1,2 @@
 export { NewChannelDialog } from './new-channel-dialog.component';
-export type { NewChannelDraft } from './models';
+export type { NewChannelDraft } from '../../forms/channel-create-form';

@@ -2,7 +2,7 @@
  * Interface NewChannelDraft
  *
  * @description
- * What {@link NewChannelDialog} emits once the form is valid: a name and an
+ * What {@link ChannelCreateForm} emits once the form is valid: a name and an
  * optional parent to nest the new channel under.
  *
  * @since 1.0.0

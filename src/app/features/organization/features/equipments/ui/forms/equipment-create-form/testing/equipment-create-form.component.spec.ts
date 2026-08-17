@@ -114,7 +114,7 @@ describe('EquipmentCreateForm', () => {
     );
 
     expect(button?.disabled).toBe(true);
-    expect(button?.textContent).toContain('Registering…');
+    expect(button?.textContent).toContain('Creating…');
   });
 
   it('should report dirtiness through dirtyChanged as the field tree is touched', async () => {

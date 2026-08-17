@@ -53,36 +53,13 @@
   (permissionsChanged)="updatePermissions($event)"
 />
 
-<hlm-alert-dialog [state]="deleteDialogState()" (stateChanged)="onDeleteDialogStateChanged($event)">
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-team-delete-dialog">
-    <hlm-alert-dialog-header>
-      <h2 hlmAlertDialogTitle i18n="@@org.team.deleteConfirmTitle">Delete this role?</h2>
-      <p hlmAlertDialogDescription i18n="@@org.team.deleteConfirmDescription">
-        Every member holding only this role loses the permissions it grants. This cannot be undone.
-      </p>
-    </hlm-alert-dialog-header>
-
-    @if (deleteDialogError(); as error) {
-      <p role="alert" class="text-sm text-destructive" data-testid="organization-team-delete-error">
-        {{ error.message }}
-      </p>
-    }
-
-    <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@org.team.deleteConfirmCancel">Cancel</button>
-      <button
-        hlmAlertDialogAction
-        variant="destructive"
-        data-testid="organization-team-delete-confirm"
-        [disabled]="store.isMutating()"
-        (click)="confirmDelete()"
-        i18n="@@org.team.deleteConfirmAction"
-      >
-        Delete
-      </button>
-    </hlm-alert-dialog-footer>
-  </hlm-alert-dialog-content>
-</hlm-alert-dialog>
+<app-organization-role-delete-dialog
+  [visible]="deleteDialogState() === 'open'"
+  [pending]="store.isMutating()"
+  [error]="deleteDialogError()?.message ?? null"
+  (visibleChange)="onDeleteDialogVisibleChange($event)"
+  (confirmed)="confirmDelete()"
+/>
 
 <ng-template #pageActions>
   @if (canManage()) {

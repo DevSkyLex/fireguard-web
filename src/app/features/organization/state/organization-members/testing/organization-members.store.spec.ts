@@ -12,7 +12,11 @@ import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { MEMBERS_PAGE_SIZE, OrganizationMembersStore } from '../organization-members.store';
+import {
+  INVITATIONS_PAGE_SIZE,
+  MEMBERS_PAGE_SIZE,
+  OrganizationMembersStore,
+} from '../organization-members.store';
 
 const flush = async (): Promise<void> => {
   await Promise.resolve();
@@ -143,7 +147,7 @@ describe('OrganizationMembersStore', () => {
     expect(memberService.list).toHaveBeenCalledWith(
       'org-1',
       { page: 2, itemsPerPage: MEMBERS_PAGE_SIZE },
-      { search: 'ali', status: undefined },
+      { search: 'ali', status: undefined, sortBy: 'joinedAt', sortDirection: 'asc' },
     );
   });
 
@@ -156,7 +160,7 @@ describe('OrganizationMembersStore', () => {
     expect(memberService.list).toHaveBeenCalledWith(
       'org-1',
       { page: 1, itemsPerPage: MEMBERS_PAGE_SIZE },
-      { search: undefined, status: 'inactive' },
+      { search: undefined, status: 'inactive', sortBy: 'joinedAt', sortDirection: 'asc' },
     );
   });
 
@@ -175,7 +179,7 @@ describe('OrganizationMembersStore', () => {
     expect(memberService.list).toHaveBeenCalledWith(
       'org-1',
       { page: 1, itemsPerPage: 60 },
-      { search: undefined, status: undefined },
+      { search: undefined, status: undefined, sortBy: 'joinedAt', sortDirection: 'asc' },
     );
   });
 
@@ -194,6 +198,49 @@ describe('OrganizationMembersStore', () => {
 
     expect(store.invitations()).toHaveLength(3);
     expect(store.activeInvitations().map((i) => i.id)).toEqual(['i1', 'i3']);
+  });
+
+  it('loads members ordered by the default sort and seeds the invitations page from a combined pending/expired fetch', async () => {
+    store.load(ALL);
+    await flush();
+
+    expect(memberService.list).toHaveBeenCalledWith(
+      'org-1',
+      { page: 1, itemsPerPage: MEMBERS_PAGE_SIZE },
+      { sortBy: 'joinedAt', sortDirection: 'asc' },
+    );
+    expect(invitationService.list).toHaveBeenNthCalledWith(
+      1,
+      'org-1',
+      { page: 1, itemsPerPage: INVITATIONS_PAGE_SIZE },
+      { status: 'pending' },
+    );
+    expect(invitationService.list).toHaveBeenNthCalledWith(
+      2,
+      'org-1',
+      { page: 1, itemsPerPage: 100 },
+      { status: 'expired' },
+    );
+    expect(store.invitationsTotal()).toBe(2);
+    expect(store.invitationsPage()).toBe(1);
+    expect(store.invitationsPageSize()).toBe(INVITATIONS_PAGE_SIZE);
+  });
+
+  it('loads a single invitations page through the combined pending/expired fetch', async () => {
+    invitationService.list.mockReturnValue(of(collection([invitation('i2', 'pending')])));
+
+    store.loadInvitations({ organizationId: 'org-1', page: 2 });
+    await flush();
+
+    expect(invitationService.list).toHaveBeenNthCalledWith(
+      1,
+      'org-1',
+      { page: 2, itemsPerPage: INVITATIONS_PAGE_SIZE },
+      { status: 'pending' },
+    );
+    expect(store.invitationsPage()).toBe(2);
+    expect(store.invitationsPageSize()).toBe(INVITATIONS_PAGE_SIZE);
+    expect(store.invitationsTotal()).toBe(2);
   });
 
   it('captures the accept link and adds the invitation on invite', async () => {
@@ -236,6 +283,21 @@ describe('OrganizationMembersStore', () => {
     await flush();
 
     expect(store.invitations()).toHaveLength(0);
+  });
+
+  it('increments invitationsTotal on invite and decrements it on revoke', async () => {
+    store.load(ALL);
+    await flush();
+    expect(store.invitationsTotal()).toBe(2);
+
+    invitationService.invite.mockReturnValue(of(invitation('new')));
+    store.invite({ organizationId: 'org-1', input: { email: 'new@example.com', roleIds: [] } });
+    await flush();
+    expect(store.invitationsTotal()).toBe(3);
+
+    store.revokeInvitation({ organizationId: 'org-1', invitationId: 'i1' });
+    await flush();
+    expect(store.invitationsTotal()).toBe(2);
   });
 
   it('replaces an invitation on resend', async () => {

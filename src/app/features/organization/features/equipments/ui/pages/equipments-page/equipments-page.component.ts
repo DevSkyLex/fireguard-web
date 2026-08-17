@@ -30,11 +30,14 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
+  EquipmentListSort,
   EquipmentOutput,
+  EquipmentSortField,
   EquipmentStatus,
   EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
+import { EquipmentListPreferencesService } from '@features/organization/features/equipments/services';
 import {
   EquipmentStore,
   type EquipmentStoreType,
@@ -48,9 +51,9 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSelectImports } from '@shared/ui/select';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentTable } from '../../tables/equipment-table';
@@ -88,7 +91,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * Its title lives in the shell breadcrumb; "New equipment" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -97,6 +100,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
   imports: [
     RouterLink,
     NgIcon,
+    EmptyState,
     ErrorState,
     EquipmentStatusTag,
     EquipmentTable,
@@ -106,7 +110,6 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
-    ...HlmEmptyImports,
     ...HlmSelectImports,
   ],
   providers: [
@@ -160,6 +163,22 @@ export class EquipmentsPage {
 
   /** Current route, anchoring the relative query-param navigation. */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
+
+  /** The cookie-backed memory of how this list was left ordered. */
+  private readonly preferences: EquipmentListPreferencesService =
+    inject<EquipmentListPreferencesService>(EquipmentListPreferencesService);
+
+  /**
+   * Property sortOrder
+   * @readonly
+   * @description The active ordering, restored from the preferences cookie.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<EquipmentListSort>}
+   */
+  protected readonly sortOrder: WritableSignal<EquipmentListSort> = signal<EquipmentListSort>(
+    this.preferences.readSort(),
+  );
 
   /** The active narrowing. Questions asked now, so never persisted. */
   protected readonly filters: WritableSignal<{
@@ -361,9 +380,13 @@ export class EquipmentsPage {
       const page: number = this.page();
       const pageSize: number = this.pageSize();
       const params: Record<string, string> = this.buildListParams();
+      const sort: EquipmentListSort = this.sortOrder();
 
       untracked((): void => {
-        this.store.load({ organizationId, options: { params, page, itemsPerPage: pageSize } });
+        this.store.load({
+          organizationId,
+          options: { params, page, itemsPerPage: pageSize, sort },
+        });
       });
     });
   }
@@ -531,8 +554,27 @@ export class EquipmentsPage {
         params: this.buildListParams(),
         page: this.page(),
         itemsPerPage: this.pageSize(),
+        sort: this.sortOrder(),
       },
     });
+  }
+
+  /**
+   * Method applySortField
+   * @description Orders by a column head. Re-picking the active field reverses it, which is what a second click on a sorted column means everywhere else. Resets to the first page like every other narrowing change.
+   * @access protected
+   * @since 1.4.0
+   * @param {EquipmentSortField} field - The column's field.
+   * @returns {void}
+   */
+  protected applySortField(field: EquipmentSortField): void {
+    this.page.set(1);
+    this.sortOrder.update((current: EquipmentListSort) =>
+      current.field === field
+        ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { field, direction: current.direction },
+    );
+    this.preferences.write(this.sortOrder());
   }
 
   /**

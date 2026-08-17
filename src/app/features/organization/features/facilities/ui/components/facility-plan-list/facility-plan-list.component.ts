@@ -16,9 +16,7 @@ import {
   lucidePlus,
   lucideTrash2,
 } from '@ng-icons/lucide';
-import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { FacilityAttachmentOutput } from '@features/organization/features/facilities/models';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
@@ -41,9 +39,11 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
  * The facility's floor plans: an upload button, a row per plan (file name,
  * pixel dimensions when known, a primary badge with both a label and an
  * icon), and a per-row menu (View, Set as primary, Delete). Presentational —
- * the page owns the store calls; this component only picks and confirms.
+ * the page owns both the store calls and the Delete confirmation
+ * (`FacilityPlanDeleteDialog`, `ARCHITECTURE.md` §10.3): this component only
+ * requests a delete from the row menu through {@link deleteRequested}.
  *
- * @since 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -52,7 +52,6 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
   imports: [
     NgIcon,
     HlmButton,
-    ...HlmAlertDialogImports,
     ...HlmBadgeImports,
     ...HlmDropdownMenuImports,
     ...HlmItemImports,
@@ -98,7 +97,7 @@ export class FacilityPlanList {
   public readonly setPrimaryRequested: OutputEmitterRef<FacilityAttachmentOutput> =
     output<FacilityAttachmentOutput>();
 
-  /** Emits the plan whose confirmed deletion the page should perform. */
+  /** Emits the plan whose deletion was requested from the row menu; the host confirms and calls the store. */
   public readonly deleteRequested: OutputEmitterRef<FacilityAttachmentOutput> =
     output<FacilityAttachmentOutput>();
   //#endregion
@@ -109,10 +108,6 @@ export class FacilityPlanList {
 
   /** The last pick's local rejection, cleared on the next valid pick. */
   protected readonly pickError: WritableSignal<string | null> = signal<string | null>(null);
-
-  /** The plan awaiting delete confirmation, if any. */
-  protected readonly pendingDelete: WritableSignal<FacilityAttachmentOutput | null> =
-    signal<FacilityAttachmentOutput | null>(null);
   //#endregion
 
   //#region Methods
@@ -190,31 +185,6 @@ export class FacilityPlanList {
    */
   protected isRowDeleting(plan: FacilityAttachmentOutput): boolean {
     return this.deletingId() === plan.id;
-  }
-
-  /**
-   * Method onDeleteDialogStateChanged
-   * @description Mirrors an overlay-initiated close back into the pending target.
-   * @access protected
-   * @since 1.0.0
-   * @param {BrnDialogState} state - The overlay's new state.
-   * @returns {void}
-   */
-  protected onDeleteDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'closed') this.pendingDelete.set(null);
-  }
-
-  /**
-   * Method confirmDelete
-   * @description Emits the confirmed deletion and closes the dialog.
-   * @access protected
-   * @since 1.0.0
-   * @returns {void}
-   */
-  protected confirmDelete(): void {
-    const target: FacilityAttachmentOutput | null = this.pendingDelete();
-    this.pendingDelete.set(null);
-    if (target) this.deleteRequested.emit(target);
   }
   //#endregion
 }

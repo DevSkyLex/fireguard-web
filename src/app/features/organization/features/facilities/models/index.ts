@@ -8,8 +8,8 @@ export type {
   FacilityListOptions,
   FacilityChildrenOptions,
   FacilityDescendantsOptions,
-  FacilityOrderDirection,
 } from './facility/facility-list-options.interface';
+export type { FacilitySortField, FacilityListSort } from './facility/facility-list-sort.interface';
 export type { CreateFacilityInput } from './facility/create-facility-input.interface';
 export type { UpdateFacilityInput } from './facility/update-facility-input.interface';
 export type { MoveFacilityInput } from './facility/move-facility-input.interface';

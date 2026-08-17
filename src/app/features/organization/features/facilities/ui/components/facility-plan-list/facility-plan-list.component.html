@@ -123,7 +123,7 @@
                     type="button"
                     variant="destructive"
                     data-testid="facility-plan-delete"
-                    (triggered)="pendingDelete.set(plan)"
+                    (triggered)="deleteRequested.emit(plan)"
                   >
                     <span i18n="@@facility.plans.delete">Delete</span>
                   </button>
@@ -136,29 +136,3 @@
     </ul>
   }
 </div>
-
-<hlm-alert-dialog
-  [state]="pendingDelete() !== null ? 'open' : 'closed'"
-  (stateChanged)="onDeleteDialogStateChanged($event)"
->
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="facility-plan-delete-dialog">
-    <hlm-alert-dialog-header>
-      <h2 hlmAlertDialogTitle i18n="@@facility.plans.deleteTitle">Delete this floor plan?</h2>
-      <p hlmAlertDialogDescription i18n="@@facility.plans.deleteText">
-        {{ pendingDelete()?.fileName }} will be permanently removed from this facility.
-      </p>
-    </hlm-alert-dialog-header>
-    <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
-      <button
-        hlmAlertDialogAction
-        variant="destructive"
-        data-testid="facility-plan-delete-confirm"
-        (click)="confirmDelete()"
-        i18n="@@facility.plans.deleteConfirm"
-      >
-        Delete
-      </button>
-    </hlm-alert-dialog-footer>
-  </hlm-alert-dialog-content>
-</hlm-alert-dialog>

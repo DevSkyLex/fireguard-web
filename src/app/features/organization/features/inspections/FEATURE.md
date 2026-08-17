@@ -26,7 +26,6 @@ This subfeature does not own facility, equipment, or checklist data, even when i
 - `/organizations/:organizationId/inspections`
 - `/organizations/:organizationId/inspections/create`
 - `/organizations/:organizationId/inspections/:inspectionId`
-- `/organizations/:organizationId/inspections/:inspectionId/edit`
 
 Inspection detail routes **seed** active inspection context without blocking
 activation: `inspectionResolver` fires the fetch into `ActiveInspectionStore`
@@ -42,15 +41,15 @@ the UI.
 ## UI (this pass)
 
 - `ui/pages/inspections-page` (`InspectionsPage`) — an `hlmTable` of the
-  organization's inspections (`InspectionTable`), a status/result editable
-  filter chip row (`app-collection-filter-bar`, `@shared/collection-filters`,
-  replacing the earlier popover), paginated server-side, and a "New
-  inspection" link (`INSPECTION_WRITE`-gated). No search box: unlike
-  facilities/equipments, `InspectionOutput` carries no searchable text field,
-  so this page also renders no `app-collection-toolbar` — with neither a
-  search box nor a toolbar-end control left to hold, the toolbar shell would
-  be empty. No row menu and no bulk actions — the record itself is where
-  every property is edited.
+  organization's inspections (`InspectionTable`), a URL-synced search box
+  (`app-collection-search-box`, `?q=`), a status/result editable filter chip
+  row (`app-collection-filter-bar`, `@shared/collection-filters`), sortable
+  "Performed on"/"Result"/"Status" table heads, paginated server-side, and a
+  "New inspection" link (`INSPECTION_WRITE`-gated). No row menu and no bulk
+  actions — the record itself is where every property is edited. The active
+  ordering is remembered across visits (`InspectionListPreferencesService`,
+  `services/inspection-list-preferences/`, cookie `fg-inspection-list`); page
+  size is not.
 - `ui/pages/inspection-create-page` (`InspectionCreatePage`) —
   `ui/forms/inspection-create-form`, asking only for what
   `CreateInspectionInput` requires: `equipmentId` (a combobox sourced from
@@ -87,7 +86,22 @@ Primary stores:
 
 Primary service:
 
-- `InspectionService`
+- `InspectionService` — list search and sort are forwarded through
+  `RequestOptions`' typed `search`/`sort` fields (`@core/api`), serialized by
+  `HydraApiService.buildParams`, not through hand-built params. Search is a
+  trigram match against `result`, `status`, `inspectorName`, `equipmentId`,
+  `facilityId` and `checklistId` (`InspectionRepository`). The list's
+  sortable fields (`result`, `status`, `performedAt`, `createdAt`) mirror the
+  backend's `ListInspectionsProvider` whitelist exactly; `createdAt` is
+  whitelisted server-side but has no corresponding table column, so
+  `InspectionTable` exposes no head for it.
+
+Behavioral service:
+
+- `InspectionListPreferencesService`
+  (`services/inspection-list-preferences/`) — cookie-backed memory of the
+  list's active ordering only, mirroring `InterventionListPreferencesService`
+  minimally (no hidden columns, no page size — this list has neither).
 
 ## Deferred, not built
 
@@ -123,16 +137,14 @@ workflow actually needs to set the field.
   `UpdateInspectionInput` accepts all three, but the detail page carries none
   of their option lists, and opening a picker with nothing to pick from would
   be worse than a plain value.
-- `/:inspectionId/edit` is retired and **redirects onto the record**, so
-  installed applications and bookmarks still resolve.
+- The `/:inspectionId/edit` redirect was removed as dead weight: the record
+  itself is the edit surface, and nothing in the app links to `/edit` anymore.
 - Depends on organization route context from the parent feature.
 - Consumes `CollectionPagination` from `@shared/collection-pagination`, `CollectionFilterBar` and
-  `CollectionFilterToggle` from `@shared/collection-filters`, and `CollectionToolbar` from
-  `@shared/collection-toolbar`, for the list page's shared pagination band, editable
-  status/result filter chip row and its "Filters" toggle — see `organization/FEATURE.md` § UI
-  Conventions. Inspections carry no searchable text field (`InspectionStore` exposes no search
-  filter), so this page renders no `app-collection-search-box`; its `app-collection-toolbar`
-  carries the "Filters" toggle alone.
+  `CollectionFilterToggle` from `@shared/collection-filters`, and `CollectionSearchBox` and
+  `CollectionToolbar` from `@shared/collection-toolbar`, for the list page's shared pagination
+  band, editable status/result filter chip row, its "Filters" toggle and its search box — see
+  `organization/FEATURE.md` § UI Conventions.
 - May compose facility, equipment, and checklist data as supporting inputs for inspection workflows.
 - Must not absorb ownership of those sibling subfeatures just because the create flow depends on them.
 

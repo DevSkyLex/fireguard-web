@@ -31,7 +31,17 @@ This subfeature does not own top-level organization context or inspection workfl
   server-side. No row menu and no bulk actions — the record itself is where
   every property is edited (see below), so the list has nothing left to
   orchestrate beyond search, filter, page and a "New equipment" link
-  (`EQUIPMENT_WRITE`-gated) into `create`.
+  (`EQUIPMENT_WRITE`-gated) into `create`. `EquipmentTable`'s Equipment
+  (type), Brand / model (brand) and Status heads are sortable — the
+  backend's own `order[<field>]` whitelist (`type`, `status`, `brand`,
+  `model`, `createdAt`, `updatedAt`; `ListEquipmentsProvider`) intersected
+  with the columns this table renders; `model` and the two timestamps have
+  no dedicated column and carry no sortable head. `EquipmentsPage.sortOrder`
+  is sent through the typed `RequestOptions.sort` option (`@core/api`), and
+  remembered across visits by `EquipmentListPreferencesService`
+  (`fg-equipment-list` cookie) — the third feature-local occurrence of the
+  cookie-preference shape `InterventionListPreferencesService` introduced;
+  kept local rather than shared (`ARCHITECTURE.md` §2.9).
 - `/organizations/:organizationId/equipments/create` — `EquipmentCreatePage`:
   `EquipmentCreateForm` (Signal Forms) asking for the one required field,
   `type`; the five remaining editable properties are filled in afterward, in

@@ -188,6 +188,37 @@ describe('EquipmentsPage', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No equipment found');
   });
 
+  it('should default the ordering to createdAt/asc and toggle its direction on a re-picked field', async () => {
+    fixture = await createPage();
+
+    expect(load.mock.calls[0][0].options.sort).toEqual({ field: 'createdAt', direction: 'asc' });
+
+    fixture.componentInstance['applySortField']('brand');
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options.sort).toEqual({ field: 'brand', direction: 'asc' });
+
+    fixture.componentInstance['applySortField']('brand');
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options.sort).toEqual({
+      field: 'brand',
+      direction: 'desc',
+    });
+  });
+
+  it('should return to the first page when the ordering changes', async () => {
+    fixture = await createPage();
+
+    (fixture.componentInstance['page'] as WritableSignal<number>).set(2);
+    await fixture.whenStable();
+
+    fixture.componentInstance['applySortField']('status');
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['page']()).toBe(1);
+  });
+
   it('should keep a requested page within bounds', async () => {
     fixture = await createPage();
 

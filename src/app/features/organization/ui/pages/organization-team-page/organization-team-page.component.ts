@@ -37,10 +37,10 @@ import {
 } from '@features/organization/state/organization-team';
 import { StatTile } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { OrganizationRoleGrid } from '../../dataviews/organization-role-grid';
 import { OrganizationRoleCreateDialog } from '../../dialogs/organization-role-create-dialog';
+import { OrganizationRoleDeleteDialog } from '../../dialogs/organization-role-delete-dialog';
 import { OrganizationRolePermissionsSheet } from '../../sheets/organization-role-permissions-sheet';
 
 /** Which surface's write is currently attributed the shared mutation state, so a stale error from one dialog cannot leak into another. */
@@ -76,8 +76,7 @@ type OrganizationTeamKpiTile = {
  * holding `organization.roles.manage` can create a role
  * ({@link OrganizationRoleCreateDialog}), edit a custom role's permissions
  * ({@link OrganizationRolePermissionsSheet}), or delete a custom role
- * (a page-owned `hlm-alert-dialog`, the only overlay of the three simple
- * enough not to earn its own component — `ARCHITECTURE.md` §2.9).
+ * ({@link OrganizationRoleDeleteDialog}).
  *
  * `OrganizationTeamStore` is component-scoped and asks only for roles and
  * the permission catalog (`includeMembers`/`includeInvitations: false`) —
@@ -92,7 +91,7 @@ type OrganizationTeamKpiTile = {
  * page only). "New role" registers on the shell header through
  * `PageActionsService`.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @example
  * ```typescript
@@ -107,11 +106,11 @@ type OrganizationTeamKpiTile = {
     NgIcon,
     ErrorState,
     OrganizationRoleCreateDialog,
+    OrganizationRoleDeleteDialog,
     OrganizationRoleGrid,
     OrganizationRolePermissionsSheet,
     StatTile,
     HlmButton,
-    ...HlmAlertDialogImports,
   ],
   providers: [
     OrganizationTeamStore,
@@ -440,15 +439,15 @@ export class OrganizationTeamPage {
   }
 
   /**
-   * Method onDeleteDialogStateChanged
+   * Method onDeleteDialogVisibleChange
    * @description Clears the pending role on any dismissal — Cancel, the backdrop or Escape.
    * @access protected
    * @since 1.0.0
-   * @param {BrnDialogState} state - The overlay's new state.
+   * @param {boolean} visible - The dialog's next visibility.
    * @returns {void}
    */
-  protected onDeleteDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
+  protected onDeleteDialogVisibleChange(visible: boolean): void {
+    if (visible) return;
 
     this.pendingDeleteRole.set(null);
   }

@@ -3,4 +3,9 @@ export type {
   OrganizationMembersLoadOptions,
 } from './models/state.interface';
 export { organizationMembersStoreEvents } from './events';
-export { MEMBERS_PAGE_SIZE, OrganizationMembersStore } from './organization-members.store';
+export {
+  DEFAULT_MEMBERS_SORT,
+  INVITATIONS_PAGE_SIZE,
+  MEMBERS_PAGE_SIZE,
+  OrganizationMembersStore,
+} from './organization-members.store';

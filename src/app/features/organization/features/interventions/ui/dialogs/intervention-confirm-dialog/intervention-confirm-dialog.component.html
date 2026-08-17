@@ -1,4 +1,8 @@
-<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="busy()"
+  (stateChanged)="onStateChanged($event)"
+>
   <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="intervention-detail-confirm-dialog">
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle>{{ title() }}</h2>

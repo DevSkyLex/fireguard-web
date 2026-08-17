@@ -1,5 +1,16 @@
 <div id="inspections" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
   <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="inspections"
+      placeholder="Search inspections..."
+      i18n-placeholder="@@inspection.table.searchPlaceholder"
+      ariaLabel="Search inspections..."
+      i18n-ariaLabel="@@inspection.table.searchPlaceholder"
+      [value]="draftSearch()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
+
     <app-collection-filter-toggle
       toolbarEnd
       [visible]="filtersVisible()"
@@ -109,38 +120,35 @@
       </button>
     </app-error-state>
   } @else if (!store.isLoadingInspections() && items().length === 0) {
-    <hlm-empty class="border border-dashed">
-      <hlm-empty-header>
-        <hlm-empty-media variant="icon">
-          <ng-icon [name]="hasFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'" />
-        </hlm-empty-media>
-        <div hlmEmptyTitle i18n="@@inspection.table.emptyTitle">No inspections found</div>
-        <div hlmEmptyDescription i18n="@@inspection.table.emptyDesc">
-          Adjust your filters, or open the inspections your team carries out.
-        </div>
-      </hlm-empty-header>
-      <hlm-empty-content>
-        @if (hasFilters()) {
-          <button hlmBtn variant="outline" (click)="clearFilters()">
-            <span i18n="@@common.clearFilters">Clear filters</span>
-          </button>
-        } @else if (canCreate()) {
-          <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
-            <ng-icon name="lucidePlus" aria-hidden="true" />
-            <span i18n="@@inspection.newButton">New inspection</span>
-          </a>
-        }
-      </hlm-empty-content>
-    </hlm-empty>
+    <app-empty-state
+      [icon]="hasSearchOrFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'"
+      title="No inspections found"
+      i18n-title="@@inspection.table.emptyTitle"
+      description="Adjust your filters, or open the inspections your team carries out."
+      i18n-description="@@inspection.table.emptyDesc"
+    >
+      @if (hasSearchOrFilters()) {
+        <button hlmBtn variant="outline" (click)="clearFilters()">
+          <span i18n="@@common.clearFilters">Clear filters</span>
+        </button>
+      } @else if (canCreate()) {
+        <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span i18n="@@inspection.newButton">New inspection</span>
+        </a>
+      }
+    </app-empty-state>
   } @else {
     <app-inspection-table
       [items]="items()"
       [loading]="store.isLoadingInspections() && items().length === 0"
       [detailRouteBase]="listRouteBase()"
+      [sortOrder]="sortOrder()"
+      (sortChanged)="applySortField($event)"
     />
 
     <app-collection-pagination
-      [page]="page()"
+      [page]="currentPage()"
       [pageCount]="pageCount()"
       [pageSize]="pageSize()"
       [total]="store.totalInspections()"

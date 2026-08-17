@@ -1,0 +1,27 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="facility-plan-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@facility.plans.deleteTitle">Delete this floor plan?</h2>
+      <p hlmAlertDialogDescription i18n="@@facility.plans.deleteText">
+        {{ plan()?.fileName }} will be permanently removed from this facility.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel [disabled]="pending()" i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="facility-plan-delete-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+        i18n="@@facility.plans.deleteConfirm"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

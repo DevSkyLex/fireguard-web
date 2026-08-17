@@ -1,4 +1,8 @@
-<hlm-dialog [state]="visible() ? 'open' : 'closed'" (stateChanged)="onDialogStateChanged($event)">
+<hlm-dialog
+  [state]="visible() ? 'open' : 'closed'"
+  [disableClose]="busy()"
+  (stateChanged)="onDialogStateChanged($event)"
+>
   <hlm-dialog-content
     class="sm:max-w-md"
     data-testid="intervention-signature-dialog"

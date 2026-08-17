@@ -61,7 +61,7 @@ describe('OrganizationTeamStore', () => {
   };
   const invitationService = { invite: vi.fn(), list: vi.fn(), revoke: vi.fn() };
   const organizationService = {
-    listPermissions: vi.fn(),
+    listAllPermissions: vi.fn(),
   };
 
   beforeEach(() => {
@@ -70,7 +70,7 @@ describe('OrganizationTeamStore', () => {
     roleService.list.mockReturnValue(of(collection([role])));
     roleService.listAll.mockReturnValue(of([role]));
     invitationService.list.mockReturnValue(of(collection([invitation])));
-    organizationService.listPermissions.mockReturnValue(of(collection([permission])));
+    organizationService.listAllPermissions.mockReturnValue(of([permission]));
     memberService.remove.mockReturnValue(of(undefined));
 
     TestBed.configureTestingModule({
@@ -128,8 +128,22 @@ describe('OrganizationTeamStore', () => {
     expect(memberService.list).not.toHaveBeenCalled();
     expect(roleService.listAll).toHaveBeenCalled();
     expect(invitationService.list).not.toHaveBeenCalled();
-    expect(organizationService.listPermissions).not.toHaveBeenCalled();
+    expect(organizationService.listAllPermissions).not.toHaveBeenCalled();
     expect(store.roles()).toEqual([role]);
+  });
+
+  it('should drain the permission catalog via listAllPermissions', async () => {
+    store.load({
+      organizationId: 'org-1',
+      includeMembers: false,
+      includeRoles: false,
+      includeInvitations: false,
+      includePermissions: true,
+    });
+    await flushEffects();
+
+    expect(organizationService.listAllPermissions).toHaveBeenCalledWith('org-1');
+    expect(store.permissions()).toEqual([permission]);
   });
 
   it('should expose an error on load failure', async () => {

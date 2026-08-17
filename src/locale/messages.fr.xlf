@@ -70,6 +70,18 @@
         <source>Cancel</source>
         <target>Annuler</target>
       </trans-unit>
+      <trans-unit id="shared.unsavedChanges.title" datatype="html">
+        <source>Discard unsaved changes?</source>
+        <target>Abandonner les modifications non enregistrées ?</target>
+      </trans-unit>
+      <trans-unit id="shared.unsavedChanges.description" datatype="html">
+        <source>Your changes have not been saved. Leaving now discards them.</source>
+        <target>Vos modifications n&apos;ont pas été enregistrées. Quitter maintenant les abandonnera.</target>
+      </trans-unit>
+      <trans-unit id="shared.unsavedChanges.discardAction" datatype="html">
+        <source>Discard</source>
+        <target>Abandonner</target>
+      </trans-unit>
       <trans-unit id="common.required" datatype="html">
         <source> required</source>
         <target> obligatoire</target>
@@ -133,6 +145,14 @@
       <trans-unit id="account.notifications.loadError" datatype="html">
         <source>Failed to load notifications. Please try again later.</source>
         <target>Échec du chargement des notifications. Veuillez réessayer plus tard.</target>
+      </trans-unit>
+      <trans-unit id="account.profile.loadingAria" datatype="html">
+        <source>Loading your account</source>
+        <target>Chargement de votre compte</target>
+      </trans-unit>
+      <trans-unit id="account.security.loadingAria" datatype="html">
+        <source>Loading your security settings</source>
+        <target>Chargement de vos paramètres de sécurité</target>
       </trans-unit>
       <trans-unit id="common.retry" datatype="html">
         <source>Retry</source>
@@ -1843,6 +1863,10 @@
         <source>Retry</source>
         <target>Réessayer</target>
       </trans-unit>
+      <trans-unit id="org.memberProfile.loadingAria" datatype="html">
+        <source>Loading member</source>
+        <target>Chargement du membre</target>
+      </trans-unit>
       <trans-unit id="org.plan.cadenceAria" datatype="html">
         <source>Billing cadence</source>
         <target>Cadence de facturation</target>
@@ -2872,7 +2896,7 @@
         <target>Étage 2 — Près de l'ascenseur</target>
       </trans-unit>
       <trans-unit id="equipment.form.submit" datatype="html">
-        <source>Create Equipment</source>
+        <source>Create equipment</source>
         <target>Créer l'équipement</target>
       </trans-unit>
       <trans-unit id="equipment.create.title" datatype="html">
@@ -3100,12 +3124,16 @@
         <target>L'équipement n'a pas pu être enregistré.</target>
       </trans-unit>
       <trans-unit id="equipment.cf.submitting" datatype="html">
-        <source>Registering…</source>
-        <target>Enregistrement…</target>
+        <source>Creating…</source>
+        <target>Création…</target>
       </trans-unit>
       <trans-unit id="equipment.detail.loading" datatype="html">
         <source>Loading…</source>
         <target>Chargement…</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.loadFailedTitle" datatype="html">
+        <source>This equipment could not be opened</source>
+        <target>Cet équipement n'a pas pu être ouvert</target>
       </trans-unit>
       <trans-unit id="equipment.detail.loadingAria" datatype="html">
         <source>Loading equipment</source>
@@ -3346,6 +3374,10 @@
       <trans-unit id="facility.detail.loading" datatype="html">
         <source>Loading…</source>
         <target>Chargement…</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.loadFailedTitle" datatype="html">
+        <source>This facility could not be opened</source>
+        <target>Cet établissement n'a pas pu être ouvert</target>
       </trans-unit>
       <trans-unit id="facility.detail.loadingAria" datatype="html">
         <source>Loading facility</source>
@@ -9314,6 +9346,10 @@
         <source>Not available with your permissions.</source>
         <target>Non disponible avec vos autorisations.</target>
       </trans-unit>
+      <trans-unit id="org.statistics.forbiddenTitle" datatype="html">
+        <source>Not available with your permissions</source>
+        <target>Non disponible avec vos autorisations</target>
+      </trans-unit>
       <trans-unit id="org.statistics.error.title" datatype="html">
         <source>Couldn&apos;t load statistics</source>
         <target>Impossible de charger les statistiques</target>
@@ -9445,10 +9481,6 @@
       <trans-unit id="messages.nav.empty" datatype="html">
         <source>No conversations yet.</source>
         <target>Aucune conversation pour le moment.</target>
-      </trans-unit>
-      <trans-unit id="intervention.cf.cancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="intervention.cf.createFailed" datatype="html">
         <source>The intervention could not be created.</source>
@@ -10270,6 +10302,10 @@
         <source>Loading…</source>
         <target>Chargement…</target>
       </trans-unit>
+      <trans-unit id="inspection.detail.loadFailedTitle" datatype="html">
+        <source>This inspection could not be opened</source>
+        <target>Cette inspection n'a pas pu être ouverte</target>
+      </trans-unit>
       <trans-unit id="inspection.detail.loadingAria" datatype="html">
         <source>Loading inspection</source>
         <target>Chargement de l'inspection</target>
@@ -10510,13 +10546,13 @@
         <source>Every member holding only this role loses the permissions it grants. This cannot be undone.</source>
         <target>Tout membre ne détenant que ce rôle perd les permissions qu'il accorde. Cette action est irréversible.</target>
       </trans-unit>
-      <trans-unit id="org.team.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
-      </trans-unit>
       <trans-unit id="org.team.deleteConfirmAction" datatype="html">
         <source>Delete</source>
         <target>Supprimer</target>
+      </trans-unit>
+      <trans-unit id="org.team.deleteConfirmPending" datatype="html">
+        <source>Deleting…</source>
+        <target>Suppression…</target>
       </trans-unit>
       <trans-unit id="org.team.rowMenu" datatype="html">
         <source>Open menu</source>
@@ -10818,6 +10854,10 @@
         <source>Remove</source>
         <target>Retirer</target>
       </trans-unit>
+      <trans-unit id="org.members.removeConfirmPending" datatype="html">
+        <source>Removing…</source>
+        <target>Suppression…</target>
+      </trans-unit>
       <trans-unit id="org.members.table.unnamed" datatype="html">
         <source>Member</source>
         <target>Membre</target>
@@ -11017,6 +11057,22 @@
       <trans-unit id="org.invitations.table.rowRevoke" datatype="html">
         <source>Revoke</source>
         <target>Révoquer</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.revokeConfirmTitle" datatype="html">
+        <source>Revoke this invitation?</source>
+        <target>Révoquer cette invitation ?</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.revokeConfirmDescription" datatype="html">
+        <source>This revokes the invitation sent to <x id="email" equiv-text="email"/>. It can no longer be accepted.</source>
+        <target>Cela révoque l&apos;invitation envoyée à <x id="email" equiv-text="email"/>. Elle ne pourra plus être acceptée.</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.revokeConfirmAction" datatype="html">
+        <source>Revoke</source>
+        <target>Révoquer</target>
+      </trans-unit>
+      <trans-unit id="org.invitations.revokeConfirmPending" datatype="html">
+        <source>Revoking…</source>
+        <target>Révocation…</target>
       </trans-unit>
       <trans-unit id="org.invitations.status.pending" datatype="html">
         <source>Pending</source>

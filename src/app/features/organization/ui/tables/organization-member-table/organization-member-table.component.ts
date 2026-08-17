@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,8 +11,19 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEllipsis, lucideShieldCheck, lucideTrash2 } from '@ng-icons/lucide';
-import type { OrganizationMemberOutput } from '@features/organization/models';
+import {
+  lucideArrowDown,
+  lucideArrowUp,
+  lucideChevronsUpDown,
+  lucideEllipsis,
+  lucideShieldCheck,
+  lucideTrash2,
+} from '@ng-icons/lucide';
+import type {
+  OrganizationMemberListSort,
+  OrganizationMemberOutput,
+  OrganizationMemberSortField,
+} from '@features/organization/models';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -44,13 +56,19 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * when `canRemove` is granted, since selection exists solely to feed the
  * page's bulk-remove action.
  *
- * @version 1.1.0
+ * "Member" (`displayName`) and "Joined" (`joinedAt`) are sortable heads,
+ * mirroring `InterventionTable`'s ghost-button + direction-glyph pattern —
+ * the backend's own sort whitelist (`ListOrganizationMembersProvider`) has
+ * no other orderable field.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-member-table',
   imports: [
+    DatePipe,
     RouterLink,
     NgIcon,
     HlmAvatar,
@@ -63,7 +81,16 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
   ],
-  providers: [provideIcons({ lucideEllipsis, lucideShieldCheck, lucideTrash2 })],
+  providers: [
+    provideIcons({
+      lucideArrowDown,
+      lucideArrowUp,
+      lucideChevronsUpDown,
+      lucideEllipsis,
+      lucideShieldCheck,
+      lucideTrash2,
+    }),
+  ],
   templateUrl: './organization-member-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -133,6 +160,17 @@ export class OrganizationMemberTable {
    */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
     input.required<readonly string[]>();
+
+  /**
+   * Property sortOrder
+   * @readonly
+   * @description The active ordering, deciding what each sortable head announces and which direction glyph it shows.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<OrganizationMemberListSort>}
+   */
+  public readonly sortOrder: InputSignal<OrganizationMemberListSort> =
+    input.required<OrganizationMemberListSort>();
   //#endregion
 
   //#region Outputs
@@ -168,6 +206,17 @@ export class OrganizationMemberTable {
    */
   public readonly removeRequested: OutputEmitterRef<OrganizationMemberOutput> =
     output<OrganizationMemberOutput>();
+
+  /**
+   * Property sortChanged
+   * @readonly
+   * @description A sortable head was activated; carries the field. Re-emitting the active field means "reverse it" — the page owns the direction.
+   * @access public
+   * @since 1.2.0
+   * @type {OutputEmitterRef<OrganizationMemberSortField>}
+   */
+  public readonly sortChanged: OutputEmitterRef<OrganizationMemberSortField> =
+    output<OrganizationMemberSortField>();
   //#endregion
 
   //#region Properties
@@ -310,11 +359,43 @@ export class OrganizationMemberTable {
    * Method columnCount
    * @description How many cells a row currently has, so the empty-state message can span the full width. The leading checkbox column only renders when `canRemove` is granted.
    * @access protected
-   * @since 1.1.0
+   * @since 1.2.0
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
-    return this.canRemove() ? 6 : 5;
+    return this.canRemove() ? 7 : 6;
+  }
+
+  /**
+   * Method ariaSort
+   * @description What a sortable head announces for the active ordering.
+   * @access protected
+   * @since 1.2.0
+   * @param {OrganizationMemberSortField} field - The head's field.
+   * @returns {'ascending' | 'descending' | 'none'} The `aria-sort` value.
+   */
+  protected ariaSort(field: OrganizationMemberSortField): 'ascending' | 'descending' | 'none' {
+    const active: OrganizationMemberListSort = this.sortOrder();
+
+    if (active.field !== field) return 'none';
+
+    return active.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
+  /**
+   * Method sortIcon
+   * @description The glyph a sortable head shows: a direction when it is the active one, a neutral pair otherwise.
+   * @access protected
+   * @since 1.2.0
+   * @param {OrganizationMemberSortField} field - The head's field.
+   * @returns {string} A registered lucide name.
+   */
+  protected sortIcon(field: OrganizationMemberSortField): string {
+    const active: OrganizationMemberListSort = this.sortOrder();
+
+    if (active.field !== field) return 'lucideChevronsUpDown';
+
+    return active.direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown';
   }
   //#endregion
 }

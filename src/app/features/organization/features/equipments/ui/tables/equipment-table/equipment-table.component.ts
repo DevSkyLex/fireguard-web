@@ -1,10 +1,22 @@
-import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideArrowDown, lucideArrowUp, lucideChevronsUpDown } from '@ng-icons/lucide';
 import type {
+  EquipmentListSort,
   EquipmentOutput,
+  EquipmentSortField,
   EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
+import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
@@ -25,15 +37,21 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter and paginate; this
- * component only renders the page it is handed.
+ * component only renders the page it is handed. Type, Brand and Status are
+ * the columns the backend's own sort whitelist (`ListEquipmentsProvider`)
+ * covers that this table also renders — "Model" and the two timestamp
+ * fields have no dedicated column, so they carry no sortable head. Each head
+ * is a ghost button carrying the direction glyph, mirroring
+ * `InterventionTable`'s sortable-head pattern.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-equipment-table',
-  imports: [RouterLink, EquipmentStatusTag, HlmSkeleton, ...HlmTableImports],
+  imports: [RouterLink, NgIcon, EquipmentStatusTag, HlmButton, HlmSkeleton, ...HlmTableImports],
+  providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown })],
   templateUrl: './equipment-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,6 +80,16 @@ export class EquipmentTable {
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property sortOrder
+   * @readonly
+   * @description The active ordering, deciding what each sortable head announces and which direction glyph it shows.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<EquipmentListSort>}
+   */
+  public readonly sortOrder: InputSignal<EquipmentListSort> = input.required<EquipmentListSort>();
+
+  /**
    * Property detailRouteBase
    * @readonly
    * @description Path segments the row link appends the equipment id to.
@@ -71,6 +99,18 @@ export class EquipmentTable {
    */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
     input.required<readonly string[]>();
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property sortChanged
+   * @readonly
+   * @description A sortable head was activated; carries the field. Re-emitting the active field means "reverse it" — the page owns the direction.
+   * @access public
+   * @since 1.2.0
+   * @type {OutputEmitterRef<EquipmentSortField>}
+   */
+  public readonly sortChanged: OutputEmitterRef<EquipmentSortField> = output<EquipmentSortField>();
   //#endregion
 
   //#region Properties
@@ -119,6 +159,38 @@ export class EquipmentTable {
    */
   protected columnCount(): number {
     return 5;
+  }
+
+  /**
+   * Method ariaSort
+   * @description What a sortable head announces for the active ordering.
+   * @access protected
+   * @since 1.2.0
+   * @param {EquipmentSortField} field - The head's field.
+   * @returns {'ascending' | 'descending' | 'none'} The `aria-sort` value.
+   */
+  protected ariaSort(field: EquipmentSortField): 'ascending' | 'descending' | 'none' {
+    const active: EquipmentListSort = this.sortOrder();
+
+    if (active.field !== field) return 'none';
+
+    return active.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
+  /**
+   * Method sortIcon
+   * @description The glyph a sortable head shows: a direction when it is the active one, a neutral pair otherwise.
+   * @access protected
+   * @since 1.2.0
+   * @param {EquipmentSortField} field - The head's field.
+   * @returns {string} A registered lucide name.
+   */
+  protected sortIcon(field: EquipmentSortField): string {
+    const active: EquipmentListSort = this.sortOrder();
+
+    if (active.field !== field) return 'lucideChevronsUpDown';
+
+    return active.direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown';
   }
   //#endregion
 }

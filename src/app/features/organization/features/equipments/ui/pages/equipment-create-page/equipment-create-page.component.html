@@ -10,10 +10,17 @@
         [serverError]="store.createError()"
         (submitted)="onSubmitted($event)"
         (cancelled)="onCancelled()"
+        (dirtyChanged)="formDirty.set($event)"
       />
     </div>
   </div>
 </div>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>
 
 <ng-template #pageActions>
   <a

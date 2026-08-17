@@ -34,9 +34,10 @@ import { HlmTextareaImports } from '@shared/ui/textarea';
  * Purely presentational (`ARCHITECTURE.md` §10.5): it owns no store and takes
  * its open state from {@link request} being non-null. The caller keeps every
  * write — `accepted` carries what was confirmed, with the typed reason on the
- * skip variant, and the caller decides what to dispatch.
+ * skip variant, and the caller decides what to dispatch. `disableClose` stays
+ * bound to {@link busy} while that write is in flight.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */

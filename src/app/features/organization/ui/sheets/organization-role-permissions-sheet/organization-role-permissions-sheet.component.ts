@@ -14,6 +14,7 @@ import type {
   OrganizationPermissionOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { sheetSide } from '@shared/sheet-side';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmSheetImports } from '@shared/ui/sheet';
 
@@ -115,7 +116,10 @@ function permissionDomainLabelOf(domain: string): string {
  * permission list from a toggle and emits it; the page decides how to apply
  * it (`updateRole`) and owns the resulting request state.
  *
- * @version 1.0.0
+ * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
+ * instead of a right-hand panel, so its footer lands in the thumb zone.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -216,6 +220,16 @@ export class OrganizationRolePermissionsSheet {
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
+
+  /**
+   * Property side
+   * @readonly
+   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
 
   /**
    * Property readOnly

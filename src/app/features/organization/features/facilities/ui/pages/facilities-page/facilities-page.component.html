@@ -101,29 +101,24 @@
       </button>
     </app-error-state>
   } @else if (!store.isLoadingRootFacilities() && items().length === 0) {
-    <hlm-empty class="border border-dashed">
-      <hlm-empty-header>
-        <hlm-empty-media variant="icon">
-          <ng-icon [name]="hasSearchOrFilters() ? 'lucideSearch' : 'lucideNetwork'" />
-        </hlm-empty-media>
-        <div hlmEmptyTitle i18n="@@facility.list.emptyTitle">No facilities found</div>
-        <div hlmEmptyDescription i18n="@@facility.list.emptyDesc">
-          Adjust your search or filters, or register the sites you track.
-        </div>
-      </hlm-empty-header>
-      <hlm-empty-content>
-        @if (hasSearchOrFilters()) {
-          <button hlmBtn variant="outline" (click)="clearFilters()">
-            <span i18n="@@common.clearFilters">Clear filters</span>
-          </button>
-        } @else if (canCreate()) {
-          <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
-            <ng-icon name="lucidePlus" aria-hidden="true" />
-            <span i18n="@@facility.newButton">New facility</span>
-          </a>
-        }
-      </hlm-empty-content>
-    </hlm-empty>
+    <app-empty-state
+      [icon]="hasSearchOrFilters() ? 'lucideSearch' : 'lucideNetwork'"
+      title="No facilities found"
+      i18n-title="@@facility.list.emptyTitle"
+      description="Adjust your search or filters, or register the sites you track."
+      i18n-description="@@facility.list.emptyDesc"
+    >
+      @if (hasSearchOrFilters()) {
+        <button hlmBtn variant="outline" (click)="clearFilters()">
+          <span i18n="@@common.clearFilters">Clear filters</span>
+        </button>
+      } @else if (canCreate()) {
+        <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span i18n="@@facility.newButton">New facility</span>
+        </a>
+      }
+    </app-empty-state>
   } @else {
     @if (layout() === 'list') {
       <div class="min-h-0 flex-1 overflow-hidden">
@@ -132,6 +127,8 @@
           [loading]="store.isLoadingRootFacilities() && items().length === 0"
           [canWrite]="canWrite()"
           [detailRouteBase]="listRouteBase()"
+          [sortOrder]="sortOrder()"
+          (sortChanged)="applySortField($event)"
           (archiveRequested)="onArchiveRequested($event)"
           (restoreRequested)="onRestoreRequested($event)"
         />

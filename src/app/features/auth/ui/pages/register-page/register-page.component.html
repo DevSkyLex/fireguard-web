@@ -1,12 +1,10 @@
 <div id="register-page" class="flex w-full flex-col gap-6">
-  <header class="flex flex-col gap-1.5">
-    <h1 class="text-2xl font-semibold tracking-tight text-foreground" i18n="@@auth.register.title">
-      Create your account
-    </h1>
-    <p class="text-sm text-muted-foreground" i18n="@@auth.register.subtitle">
-      We will email you a code to confirm the address.
-    </p>
-  </header>
+  <app-page-heading
+    heading="Create your account"
+    i18n-heading="@@auth.register.title"
+    description="We will email you a code to confirm the address."
+    i18n-description="@@auth.register.subtitle"
+  />
 
   <app-register-form [pending]="registerStore.isRegistering()" (submitted)="register($event)" />
 

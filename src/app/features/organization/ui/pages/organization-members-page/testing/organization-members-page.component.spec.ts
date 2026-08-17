@@ -94,6 +94,7 @@ describe('OrganizationMembersPage', () => {
   let activeInvitations: WritableSignal<readonly OrganizationInvitationOutput[]>;
   let membersTotal: WritableSignal<number>;
   let membersActiveTotal: WritableSignal<number>;
+  let invitationsTotal: WritableSignal<number>;
   let loadCallState: WritableSignal<CallState>;
   let mutationCallState: WritableSignal<CallState>;
   let mutationError: Signal<StoreError | null>;
@@ -101,6 +102,7 @@ describe('OrganizationMembersPage', () => {
   let permissions: WritableSignal<ReadonlyArray<string>>;
   let load: ReturnType<typeof vi.fn>;
   let loadMembers: ReturnType<typeof vi.fn>;
+  let loadInvitations: ReturnType<typeof vi.fn>;
   let invite: ReturnType<typeof vi.fn>;
   let assignRole: ReturnType<typeof vi.fn>;
   let removeRoleFromMember: ReturnType<typeof vi.fn>;
@@ -158,6 +160,7 @@ describe('OrganizationMembersPage', () => {
               invitationLinks: signal({}),
               membersTotal,
               membersActiveTotal,
+              invitationsTotal,
               membersSearch: signal(''),
               isLoading: signal(false),
               isMutating,
@@ -167,6 +170,7 @@ describe('OrganizationMembersPage', () => {
               mutationCallState,
               load,
               loadMembers,
+              loadInvitations,
               invite,
               assignRole,
               removeRoleFromMember,
@@ -190,6 +194,7 @@ describe('OrganizationMembersPage', () => {
     activeInvitations = signal<readonly OrganizationInvitationOutput[]>([invitation()]);
     membersTotal = signal<number>(1);
     membersActiveTotal = signal<number>(1);
+    invitationsTotal = signal<number>(1);
     loadCallState = signal<CallState>(idleCallState());
     mutationCallState = signal<CallState>(idleCallState());
     mutationError = computed(() => mutationCallState().error);
@@ -202,6 +207,7 @@ describe('OrganizationMembersPage', () => {
     ]);
     load = vi.fn();
     loadMembers = vi.fn();
+    loadInvitations = vi.fn();
     invite = vi.fn();
     assignRole = vi.fn();
     removeRoleFromMember = vi.fn();
@@ -221,6 +227,7 @@ describe('OrganizationMembersPage', () => {
       includeMembers: true,
       includeInvitations: true,
       includeRoles: true,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
   });
 
@@ -233,6 +240,7 @@ describe('OrganizationMembersPage', () => {
       includeMembers: true,
       includeInvitations: false,
       includeRoles: false,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
   });
 
@@ -358,7 +366,7 @@ describe('OrganizationMembersPage', () => {
     expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
   });
 
-  it('should resend and revoke through the store, scoped to the routed organization', async () => {
+  it('should resend through the store, scoped to the routed organization', async () => {
     await createPage();
 
     fixture.componentInstance['resendInvitation'](invitation());
@@ -366,12 +374,44 @@ describe('OrganizationMembersPage', () => {
       organizationId: 'org-1',
       invitationId: 'invitation-1',
     });
+  });
 
-    fixture.componentInstance['revokeInvitation'](invitation());
+  it('should open the revoke confirmation and send the revoke through the store on confirm', async () => {
+    await createPage();
+
+    fixture.componentInstance['requestRevoke'](invitation());
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['pendingRevoke']()).toEqual(invitation());
+    expect(revokeInvitation).not.toHaveBeenCalled();
+
+    fixture.componentInstance['confirmRevoke']();
     expect(revokeInvitation).toHaveBeenCalledWith({
       organizationId: 'org-1',
       invitationId: 'invitation-1',
     });
+  });
+
+  it('should close the revoke confirmation once the store reports success', async () => {
+    await createPage();
+    fixture.componentInstance['requestRevoke'](invitation());
+    fixture.componentInstance['confirmRevoke']();
+
+    mutationCallState.set(successCallState(null));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['pendingRevoke']()).toBeNull();
+  });
+
+  it('should clear the pending revoke target on dismissal', async () => {
+    await createPage();
+    fixture.componentInstance['requestRevoke'](invitation());
+    await fixture.whenStable();
+
+    fixture.componentInstance['onRevokeDialogVisibleChange'](false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['pendingRevoke']()).toBeNull();
   });
 
   it('should show a page-level action error for a non-invite mutation failure, hidden while the invite dialog is open', async () => {
@@ -423,6 +463,7 @@ describe('OrganizationMembersPage', () => {
       search: '',
       status: 'all',
       pageSize: 30,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
     expect(previous.disabled).toBe(false);
 
@@ -435,6 +476,7 @@ describe('OrganizationMembersPage', () => {
       search: '',
       status: 'all',
       pageSize: 30,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
     expect(next.disabled).toBe(true);
 
@@ -447,6 +489,7 @@ describe('OrganizationMembersPage', () => {
       search: '',
       status: 'all',
       pageSize: 30,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
   });
 
@@ -463,6 +506,7 @@ describe('OrganizationMembersPage', () => {
       search: '',
       status: 'all',
       pageSize: 60,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
   });
 
@@ -479,6 +523,7 @@ describe('OrganizationMembersPage', () => {
       search: 'amelie',
       status: 'all',
       pageSize: 30,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
   });
 
@@ -493,6 +538,7 @@ describe('OrganizationMembersPage', () => {
       search: '',
       status: 'inactive',
       pageSize: 30,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
   });
 
@@ -511,6 +557,7 @@ describe('OrganizationMembersPage', () => {
       search: '',
       status: 'all',
       pageSize: 30,
+      sort: { field: 'joinedAt', direction: 'asc' },
     });
   });
 

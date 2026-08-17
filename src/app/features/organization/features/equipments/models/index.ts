@@ -13,6 +13,10 @@ export type { AddAttachmentInput } from './equipment-attachment/add-attachment-i
 export type { EquipmentTagOutput } from './equipment-tag/equipment-tag-output.interface';
 export type { AddTagInput } from './equipment-tag/add-tag-input.interface';
 export type { EquipmentMaintenanceLogOutput } from './equipment/equipment-maintenance-log-output.interface';
+export type {
+  EquipmentListSort,
+  EquipmentSortField,
+} from './equipment/equipment-list-sort.interface';
 export type { EquipmentStatusTagDescriptor } from './equipment-status-tag/equipment-status-tag-descriptor.interface';
 export type { EquipmentStatusTagKind } from './equipment-status-tag/equipment-status-tag-kind.type';
 export type { EquipmentStatusTagSeverity } from './equipment-status-tag/equipment-status-tag-severity.type';

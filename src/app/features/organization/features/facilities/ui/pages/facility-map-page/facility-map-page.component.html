@@ -1,16 +1,5 @@
 <div id="facility-map" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <div class="flex flex-wrap items-center justify-between gap-2">
-    <a
-      hlmBtn
-      variant="outline"
-      size="sm"
-      data-testid="facility-map-back"
-      [routerLink]="listRouteBase()"
-    >
-      <ng-icon name="lucideNetwork" aria-hidden="true" />
-      <span i18n="@@facility.map.backToList">Back to list</span>
-    </a>
-
+  <div class="flex flex-wrap items-center justify-end gap-2">
     <div class="flex flex-wrap items-center gap-4">
       <hlm-field orientation="horizontal" class="gap-2">
         <label
@@ -116,3 +105,17 @@
     </div>
   }
 </div>
+
+<ng-template #pageActions>
+  <a
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="sm"
+    class="min-w-0 shrink"
+    data-testid="facility-map-back"
+    [routerLink]="listRouteBase()"
+  >
+    <span class="truncate" i18n="@@facility.map.backToList">Back to list</span>
+  </a>
+</ng-template>

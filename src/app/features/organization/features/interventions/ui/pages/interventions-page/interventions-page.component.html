@@ -528,38 +528,32 @@
       </button>
     </app-error-state>
   } @else if (!store.isLoadingInterventions() && items().length === 0) {
-    <hlm-empty class="border border-dashed">
-      <hlm-empty-header>
-        <hlm-empty-media variant="icon">
-          <ng-icon [name]="hasSearch() ? 'lucideSearch' : 'lucideClipboardList'" />
-        </hlm-empty-media>
-        @if (hasSearch()) {
-          <div hlmEmptyTitle i18n="@@intervention.list.searchEmptyHeading">
-            No matching intervention
-          </div>
-          <div hlmEmptyDescription i18n="@@intervention.list.searchEmptyDescription">
-            Try a different search term, or clear the search to see every intervention.
-          </div>
-        } @else {
-          <div hlmEmptyTitle i18n="@@intervention.list.emptyTitle">No interventions yet</div>
-          <div hlmEmptyDescription i18n="@@intervention.list.emptyDescription">
-            Create your first intervention to start planning field work.
-          </div>
-        }
-      </hlm-empty-header>
-      <hlm-empty-content>
-        @if (hasSearch()) {
-          <button hlmBtn variant="outline" (click)="clearSearch()">
-            <span i18n="@@intervention.list.clearSearch">Clear search</span>
-          </button>
-        } @else {
-          <button hlmBtn (click)="openCreate()">
-            <ng-icon name="lucidePlus" aria-hidden="true" />
-            <span i18n="@@intervention.list.newButtonShort">New</span>
-          </button>
-        }
-      </hlm-empty-content>
-    </hlm-empty>
+    @if (hasSearch()) {
+      <app-empty-state
+        icon="lucideSearch"
+        title="No matching intervention"
+        i18n-title="@@intervention.list.searchEmptyHeading"
+        description="Try a different search term, or clear the search to see every intervention."
+        i18n-description="@@intervention.list.searchEmptyDescription"
+      >
+        <button hlmBtn variant="outline" (click)="clearSearch()">
+          <span i18n="@@intervention.list.clearSearch">Clear search</span>
+        </button>
+      </app-empty-state>
+    } @else {
+      <app-empty-state
+        icon="lucideClipboardList"
+        title="No interventions yet"
+        i18n-title="@@intervention.list.emptyTitle"
+        description="Create your first intervention to start planning field work."
+        i18n-description="@@intervention.list.emptyDescription"
+      >
+        <button hlmBtn (click)="openCreate()">
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span i18n="@@intervention.list.newButtonShort">New</span>
+        </button>
+      </app-empty-state>
+    }
   } @else {
     <app-intervention-table
       [items]="items()"
@@ -609,55 +603,15 @@
   (templateInstantiated)="instantiateFromTemplate($event)"
 />
 
-<hlm-alert-dialog
-  [state]="deleteDialogState()"
-  [disableClose]="store.isDeleting()"
-  (stateChanged)="onDeleteDialogStateChanged($event)"
->
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="interventions-delete-dialog">
-    <hlm-alert-dialog-header>
-      <h2 hlmAlertDialogTitle>{{ deleteDialogTitle() }}</h2>
-      <p hlmAlertDialogDescription>{{ deleteDialogDescription() }}</p>
-    </hlm-alert-dialog-header>
-
-    @if (store.deleteError(); as error) {
-      <p role="alert" class="text-sm text-destructive" data-testid="interventions-delete-error">
-        {{ error.message }}
-      </p>
-    }
-
-    <hlm-alert-dialog-footer>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        [attr.aria-disabled]="store.isDeleting() ? 'true' : null"
-        [attr.aria-busy]="store.isDeleting() ? 'true' : null"
-        [class.opacity-50]="store.isDeleting()"
-        [class.pointer-events-none]="store.isDeleting()"
-        (click)="store.isDeleting() || onDeleteDialogStateChanged('closed')"
-        i18n="@@intervention.list.deleteConfirmCancel"
-      >
-        Cancel
-      </button>
-      <button
-        hlmAlertDialogAction
-        variant="destructive"
-        class="max-sm:min-h-11"
-        data-testid="interventions-delete-confirm"
-        [attr.aria-disabled]="store.isDeleting() ? 'true' : null"
-        [attr.aria-busy]="store.isDeleting() ? 'true' : null"
-        [class.opacity-50]="store.isDeleting()"
-        [class.pointer-events-none]="store.isDeleting()"
-        (click)="store.isDeleting() || confirmDelete()"
-        i18n="@@intervention.list.deleteConfirmAction"
-      >
-        Delete
-      </button>
-    </hlm-alert-dialog-footer>
-  </hlm-alert-dialog-content>
-</hlm-alert-dialog>
+<app-intervention-bulk-delete-dialog
+  [visible]="deleteDialogState() === 'open'"
+  [title]="deleteDialogTitle()"
+  [description]="deleteDialogDescription()"
+  [errorMessage]="store.deleteError()?.message ?? null"
+  [busy]="store.isDeleting()"
+  (confirmed)="confirmDelete()"
+  (dismissed)="onDeleteDialogStateChanged('closed')"
+/>
 
 <app-intervention-assign-dialog
   [request]="assignRequest()"

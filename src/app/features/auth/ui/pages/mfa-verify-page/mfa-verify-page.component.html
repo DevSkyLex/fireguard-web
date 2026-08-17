@@ -1,12 +1,5 @@
 <div id="mfa-verify-page" class="flex w-full flex-col gap-6">
-  <header class="flex flex-col gap-1.5">
-    <h1 class="text-2xl font-semibold tracking-tight text-foreground" i18n="@@auth.mfa.title">
-      Two-factor verification
-    </h1>
-    <!--
-      An authenticator challenge has no destination to name, so the generic
-      sentence stands in rather than an empty "sent to".
-    -->
+  <app-page-heading heading="Two-factor verification" i18n-heading="@@auth.mfa.title">
     @if (destination(); as sentTo) {
       <p class="text-sm text-muted-foreground">
         <span i18n="@@auth.mfa.sentTo">We sent a code to</span>
@@ -17,7 +10,7 @@
         Enter the code from your authenticator app.
       </p>
     }
-  </header>
+  </app-page-heading>
 
   <app-otp-form
     [pending]="authStore.isVerifyingMfa()"

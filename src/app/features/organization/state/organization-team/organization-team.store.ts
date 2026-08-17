@@ -94,8 +94,8 @@ export const OrganizationTeamStore = signalStore(
                   : of([]),
                 permissions: includePermissions
                   ? organizationService
-                      .listPermissions(organizationId, { itemsPerPage: 30 })
-                      .pipe(map((response) => [...response.member]))
+                      .listAllPermissions(organizationId)
+                      .pipe(map((permissions) => [...permissions]))
                   : of([]),
               }).pipe(
                 tapResponse({

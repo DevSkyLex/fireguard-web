@@ -18,10 +18,49 @@
 
       <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
         <tr hlmTableRow>
-          <th hlmTableHead i18n="@@inspection.table.colPerformedAt">Performed on</th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('performedAt')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="inspection-table-sort-performed-at"
+              (click)="sortChanged.emit('performedAt')"
+            >
+              <span i18n="@@inspection.table.colPerformedAt">Performed on</span>
+              <ng-icon [name]="sortIcon('performedAt')" aria-hidden="true" />
+            </button>
+          </th>
           <th hlmTableHead i18n="@@inspection.table.colInspector">Inspector</th>
-          <th hlmTableHead i18n="@@inspection.table.colResult">Result</th>
-          <th hlmTableHead i18n="@@inspection.table.colStatus">Status</th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('result')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="inspection-table-sort-result"
+              (click)="sortChanged.emit('result')"
+            >
+              <span i18n="@@inspection.table.colResult">Result</span>
+              <ng-icon [name]="sortIcon('result')" aria-hidden="true" />
+            </button>
+          </th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="inspection-table-sort-status"
+              (click)="sortChanged.emit('status')"
+            >
+              <span i18n="@@inspection.table.colStatus">Status</span>
+              <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
+            </button>
+          </th>
           <th hlmTableHead i18n="@@inspection.table.colNonConformities">Non-conformities</th>
         </tr>
       </thead>

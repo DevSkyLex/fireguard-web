@@ -15,6 +15,7 @@ import { lucideUserMinus, lucideUserPlus, lucideUsers } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { EmptyState } from '@shared/empty-state';
+import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmInput } from '@shared/ui/input';
@@ -42,7 +43,10 @@ import type { ChannelParticipantView } from './models';
  * nested inside this one, which spartan's dialog primitives do not support
  * cleanly.
  *
- * @version 1.0.0
+ * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
+ * instead of a right-hand panel, so its footer lands in the thumb zone.
+ *
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -226,6 +230,16 @@ export class ChannelParticipantsSheet {
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
+
+  /**
+   * Property side
+   * @readonly
+   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#endregion
 
   //#region Methods

@@ -1,0 +1,35 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="inspection-cancel-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@inspection.detail.cancelConfirmTitle">Cancel inspection?</h2>
+      <p hlmAlertDialogDescription i18n="@@inspection.detail.cancelConfirmDescription">
+        This removes the draft inspection. This action cannot be undone.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button
+        hlmAlertDialogCancel
+        class="max-sm:min-h-11"
+        [disabled]="pending()"
+        i18n="@@inspection.detail.cancelConfirmDismiss"
+      >
+        Keep it
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="inspection-cancel-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+        i18n="@@inspection.detail.cancelConfirmAction"
+      >
+        Cancel inspection
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

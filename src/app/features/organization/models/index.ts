@@ -4,11 +4,13 @@ export type { InviteOrganizationMemberInput } from './member/invite-organization
 export type { OrganizationInvitationOutput } from './member/organization-invitation-output.interface';
 export type { OrganizationInvitationPreviewOutput } from './member/organization-invitation-preview-output.interface';
 export type { OrganizationInvitationStatus } from './member/organization-invitation-status.type';
+export type { OrganizationInvitationListQuery } from './member/organization-invitation-list-query.interface';
 export type { MemberDirectoryEntry } from './member/member-directory-entry.interface';
 export type { OrganizationMemberOutput } from './member/organization-member-output.interface';
 export type { CurrentOrganizationMemberProfileOutput } from './member/current-organization-member-profile-output.interface';
 export type {
   OrganizationMemberListQuery,
+  OrganizationMemberListSort,
   OrganizationMemberSortDirection,
   OrganizationMemberSortField,
   OrganizationMemberStatusFilter,

@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import type { RegisterInput } from '@features/auth/models';
 import { RegisterStore } from '@features/auth/state';
 import { RegisterForm, type RegisterFormValues } from '@features/auth/ui/forms';
+import { PageHeading } from '@shared/page-heading';
 
 /**
  * Component RegisterPage
@@ -20,7 +21,7 @@ import { RegisterForm, type RegisterFormValues } from '@features/auth/ui/forms';
  */
 @Component({
   selector: 'app-register-page',
-  imports: [RouterLink, RegisterForm],
+  imports: [RouterLink, RegisterForm, PageHeading],
   templateUrl: './register-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@
 import { Router, RouterLink } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
 import { EmailRequestForm, type EmailRequestFormValues } from '@features/auth/ui/forms';
+import { PageHeading } from '@shared/page-heading';
 
 /**
  * Component ForgotPasswordPage
@@ -17,7 +18,7 @@ import { EmailRequestForm, type EmailRequestFormValues } from '@features/auth/ui
  */
 @Component({
   selector: 'app-forgot-password-page',
-  imports: [RouterLink, EmailRequestForm],
+  imports: [RouterLink, EmailRequestForm, PageHeading],
   templateUrl: './forgot-password-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

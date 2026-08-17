@@ -1,4 +1,8 @@
-<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
   <hlm-dialog-content
     class="sm:max-w-lg"
     data-testid="organization-role-create-dialog"

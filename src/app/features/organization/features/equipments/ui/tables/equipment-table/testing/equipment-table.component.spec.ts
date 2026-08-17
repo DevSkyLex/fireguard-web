@@ -37,6 +37,7 @@ describe('EquipmentTable', () => {
     fixture.componentRef.setInput('items', items);
     fixture.componentRef.setInput('loading', loading);
     fixture.componentRef.setInput('detailRouteBase', ['/organizations', 'org-1', 'equipments']);
+    fixture.componentRef.setInput('sortOrder', { field: 'type', direction: 'asc' });
     await fixture.whenStable();
   };
 
@@ -99,6 +100,35 @@ describe('EquipmentTable', () => {
     await render([], false);
 
     expect(root().textContent).toContain('No results.');
+  });
+
+  it('should mark the active sort field with aria-sort and hide it from the rest', async () => {
+    await render([equipment()]);
+    fixture.componentRef.setInput('sortOrder', { field: 'status', direction: 'desc' });
+    await fixture.whenStable();
+
+    const heads: HTMLElement[] = [...root().querySelectorAll<HTMLElement>('th[aria-sort]')];
+    const statusHead = heads.find((head) =>
+      head.querySelector('[data-testid="equipment-table-sort-status"]'),
+    );
+    const typeHead = heads.find((head) =>
+      head.querySelector('[data-testid="equipment-table-sort-type"]'),
+    );
+
+    expect(statusHead?.getAttribute('aria-sort')).toBe('descending');
+    expect(typeHead?.getAttribute('aria-sort')).toBe('none');
+  });
+
+  it('should emit the field when a sortable head is activated', async () => {
+    const emitted: string[] = [];
+    fixture.componentInstance.sortChanged.subscribe((field: string): void => {
+      emitted.push(field);
+    });
+
+    await render([equipment()]);
+    root().querySelector<HTMLButtonElement>('[data-testid="equipment-table-sort-brand"]')?.click();
+
+    expect(emitted).toEqual(['brand']);
   });
 
   it('should name the scrolling region from the table caption', async () => {

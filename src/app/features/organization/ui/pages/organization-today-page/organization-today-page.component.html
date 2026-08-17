@@ -7,55 +7,20 @@
 
   @if (!dashboardStore.queryHasError()) {
     <section
-      class="flex flex-wrap divide-x divide-border"
+      class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
       data-testid="org-today-kpis"
       aria-live="polite"
     >
       @for (tile of kpiTiles(); track tile.id) {
-        <div
-          class="flex flex-col gap-0.5 px-4 py-1 first:ps-0"
-          [attr.data-testid]="'org-today-kpi-' + tile.id"
-        >
-          <span class="text-sm text-muted-foreground">{{ tile.label }}</span>
-
-          @if (dashboardStore.isQueryLoading()) {
-            <hlm-skeleton class="h-5 w-10" />
-          } @else if (tile.link; as link) {
-            <a
-              [routerLink]="link"
-              class="-mx-1 inline-flex min-h-11 w-fit items-center rounded-sm px-1 text-base font-semibold text-foreground tabular-nums hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              ><span class="sr-only">{{ tile.label }}: </span>{{ tile.value }}</a
-            >
-          } @else {
-            <span class="text-base font-semibold text-foreground tabular-nums">{{
-              tile.value
-            }}</span>
-          }
-
-          @if (!dashboardStore.isQueryLoading() && tile.delta; as d) {
-            <span
-              class="flex items-center gap-1 text-xs"
-              [class]="
-                kpiDeltaGood(d) === false ? 'text-muted-foreground' : 'font-medium text-foreground'
-              "
-            >
-              <ng-icon [name]="kpiDeltaIcon(d)" aria-hidden="true" />
-              <span class="sr-only">
-                @switch (d.direction) {
-                  @case ('up') {
-                    <ng-container i18n="@@org.statTile.deltaUp">Increase</ng-container>
-                  }
-                  @case ('down') {
-                    <ng-container i18n="@@org.statTile.deltaDown">Decrease</ng-container>
-                  }
-                  @default {
-                    <ng-container i18n="@@org.statTile.deltaFlat">No change</ng-container>
-                  }
-                }
-              </span>
-              {{ kpiDeltaText(d) }}
-            </span>
-          }
+        <div [attr.data-testid]="'org-today-kpi-' + tile.id">
+          <app-stat-tile
+            [label]="tile.label"
+            [value]="tile.value"
+            [icon]="tile.icon"
+            [delta]="tile.delta"
+            [link]="tile.link"
+            [loading]="dashboardStore.isQueryLoading()"
+          />
         </div>
       }
     </section>
@@ -101,12 +66,12 @@
           }
         </app-empty-state>
       } @else if (canReadInterventions()) {
-        <section class="flex flex-col gap-3" data-testid="org-today-queues-card">
-          <h2 class="text-base font-semibold text-foreground" i18n="@@org.today.queues.title">
-            Your work queues
-          </h2>
-
-          <ul class="divide-y divide-border" aria-live="polite">
+        <app-page-section
+          heading="Your work queues"
+          i18n-heading="@@org.today.queues.title"
+          data-testid="org-today-queues-card"
+        >
+          <ul class="mt-3 divide-y divide-border" aria-live="polite">
             <li data-testid="org-today-queue-overdue">
               <a
                 [routerLink]="[
@@ -234,7 +199,7 @@
               />
             </li>
           </ul>
-        </section>
+        </app-page-section>
       }
     </div>
 
@@ -243,50 +208,51 @@
         !dashboardStore.queryHasError() &&
         (dashboardStore.isQueryLoading() || alertRows().length > 0)
       ) {
-        <section class="flex flex-col gap-2" data-testid="org-today-alerts">
-          <h2 class="text-sm font-medium text-muted-foreground" i18n="@@org.today.alerts.title">
-            Also worth a look
-          </h2>
-
-          @if (dashboardStore.isQueryLoading()) {
-            <div
-              class="flex flex-col gap-2"
-              role="status"
-              aria-label="Loading what else needs attention"
-              i18n-aria-label="@@org.today.alerts.loadingAria"
-            >
-              <hlm-skeleton class="h-10 w-full" />
-              <hlm-skeleton class="h-10 w-full" />
-            </div>
-          } @else {
-            @for (alert of alertRows(); track alert.code) {
-              @if (alert.link; as link) {
-                <a
-                  [routerLink]="link"
-                  class="group/alert relative flex w-full items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-start text-sm text-card-foreground transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
-                  [attr.data-testid]="'org-today-alert-' + alert.code"
-                >
-                  <ng-icon [name]="alert.icon" [class]="alert.iconClass" aria-hidden="true" />
-                  <p hlmAlertTitle class="flex-1">{{ alert.message }}</p>
-                  <ng-icon
-                    name="lucideChevronRight"
-                    class="shrink-0 text-sm text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                </a>
-              } @else {
-                <div
-                  hlmAlert
-                  class="flex items-center gap-3"
-                  [attr.data-testid]="'org-today-alert-' + alert.code"
-                >
-                  <ng-icon [name]="alert.icon" [class]="alert.iconClass" aria-hidden="true" />
-                  <p hlmAlertTitle class="flex-1">{{ alert.message }}</p>
-                </div>
+        <app-page-section
+          heading="Also worth a look"
+          i18n-heading="@@org.today.alerts.title"
+          data-testid="org-today-alerts"
+        >
+          <div class="mt-2 flex flex-col gap-2">
+            @if (dashboardStore.isQueryLoading()) {
+              <div
+                role="status"
+                aria-label="Loading what else needs attention"
+                i18n-aria-label="@@org.today.alerts.loadingAria"
+              >
+                <hlm-skeleton class="h-10 w-full" />
+                <hlm-skeleton class="mt-2 h-10 w-full" />
+              </div>
+            } @else {
+              @for (alert of alertRows(); track alert.code) {
+                @if (alert.link; as link) {
+                  <a
+                    [routerLink]="link"
+                    class="group/alert relative flex w-full items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-start text-sm text-card-foreground transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
+                    [attr.data-testid]="'org-today-alert-' + alert.code"
+                  >
+                    <ng-icon [name]="alert.icon" [class]="alert.iconClass" aria-hidden="true" />
+                    <p hlmAlertTitle class="flex-1">{{ alert.message }}</p>
+                    <ng-icon
+                      name="lucideChevronRight"
+                      class="shrink-0 text-sm text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                  </a>
+                } @else {
+                  <div
+                    hlmAlert
+                    class="flex items-center gap-3"
+                    [attr.data-testid]="'org-today-alert-' + alert.code"
+                  >
+                    <ng-icon [name]="alert.icon" [class]="alert.iconClass" aria-hidden="true" />
+                    <p hlmAlertTitle class="flex-1">{{ alert.message }}</p>
+                  </div>
+                }
               }
             }
-          }
-        </section>
+          </div>
+        </app-page-section>
       }
 
       @if (
@@ -294,14 +260,14 @@
         !dashboardStore.queryHasError() &&
         (dashboardStore.isQueryLoading() || recentInterventions().length > 0)
       ) {
-        <section class="flex flex-col gap-3" data-testid="org-today-recent-interventions">
-          <h2 class="text-base font-semibold text-foreground" i18n="@@org.today.recent.title">
-            Recently updated
-          </h2>
-
+        <app-page-section
+          heading="Recently updated"
+          i18n-heading="@@org.today.recent.title"
+          data-testid="org-today-recent-interventions"
+        >
           @if (dashboardStore.isQueryLoading()) {
             <div
-              class="flex flex-col gap-2"
+              class="mt-3 flex flex-col gap-2"
               role="status"
               aria-label="Loading recently updated interventions"
               i18n-aria-label="@@org.today.recent.loadingAria"
@@ -311,7 +277,7 @@
               <hlm-skeleton class="h-12 w-full" />
             </div>
           } @else {
-            <ul class="divide-y divide-border">
+            <ul class="mt-3 divide-y divide-border">
               @for (intervention of recentInterventions(); track intervention.id) {
                 <li>
                   <a
@@ -357,7 +323,7 @@
               }
             </ul>
           }
-        </section>
+        </app-page-section>
       }
     </div>
   </div>

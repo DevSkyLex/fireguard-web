@@ -550,7 +550,7 @@
         }
       </div>
     </hlm-tabs>
-  } @else {
+  } @else if (activeFacilityStore.isLoadingFacility()) {
     <div
       class="flex flex-col gap-4"
       role="status"
@@ -563,6 +563,25 @@
       <hlm-skeleton class="h-9 w-full max-w-md" />
       <hlm-skeleton class="h-64 w-full" />
     </div>
+  } @else {
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="This facility could not be opened"
+      i18n-title="@@facility.detail.loadFailedTitle"
+      [description]="activeFacilityStore.getError()?.message ?? null"
+      data-testid="facility-detail-load-failed"
+    >
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="facility-detail-retry"
+        (click)="retryLoad()"
+        i18n="@@common.tryAgain"
+      >
+        Try again
+      </button>
+    </app-error-state>
   }
 </div>
 
@@ -587,53 +606,19 @@
   (removed)="onPinPositionRemoved(pinPositionDialogEquipmentId() ?? '')"
 />
 
-<hlm-alert-dialog
-  [state]="deleteDialogState()"
-  [disableClose]="store.deleteCallState().status === 'pending'"
-  (stateChanged)="onDeleteDialogStateChanged($event)"
->
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="facility-delete-dialog">
-    <hlm-alert-dialog-header>
-      <h2 hlmAlertDialogTitle i18n="@@facility.detail.deleteConfirmTitle">Delete facility?</h2>
-      <p hlmAlertDialogDescription i18n="@@facility.detail.deleteConfirmDescription">
-        A published facility is archived and can be restored; a draft facility is permanently
-        removed. This cannot be undone from here.
-      </p>
-    </hlm-alert-dialog-header>
-    <hlm-alert-dialog-footer>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        [attr.aria-disabled]="store.deleteCallState().status === 'pending' ? 'true' : null"
-        [attr.aria-busy]="store.deleteCallState().status === 'pending' ? 'true' : null"
-        [class.opacity-50]="store.deleteCallState().status === 'pending'"
-        [class.pointer-events-none]="store.deleteCallState().status === 'pending'"
-        (click)="
-          store.deleteCallState().status === 'pending' || onDeleteDialogStateChanged('closed')
-        "
-        i18n="@@facility.detail.deleteConfirmCancel"
-      >
-        Cancel
-      </button>
-      <button
-        hlmAlertDialogAction
-        variant="destructive"
-        class="max-sm:min-h-11"
-        data-testid="facility-delete-confirm"
-        [attr.aria-disabled]="store.deleteCallState().status === 'pending' ? 'true' : null"
-        [attr.aria-busy]="store.deleteCallState().status === 'pending' ? 'true' : null"
-        [class.opacity-50]="store.deleteCallState().status === 'pending'"
-        [class.pointer-events-none]="store.deleteCallState().status === 'pending'"
-        (click)="store.deleteCallState().status === 'pending' || confirmDelete()"
-        i18n="@@facility.detail.deleteConfirmAction"
-      >
-        Delete
-      </button>
-    </hlm-alert-dialog-footer>
-  </hlm-alert-dialog-content>
-</hlm-alert-dialog>
+<app-facility-delete-dialog
+  [visible]="pendingDelete()"
+  [pending]="store.deleteCallState().status === 'pending'"
+  (visibleChange)="onDeleteDialogVisibleChanged($event)"
+  (confirmed)="confirmDelete()"
+/>
+
+<app-facility-plan-delete-dialog
+  [plan]="planDeleteTarget()"
+  [pending]="plans.deletingId() === planDeleteTarget()?.id"
+  (dismissed)="onPlanDeleteDismissed()"
+  (confirmed)="onPlanDeleteConfirmed()"
+/>
 
 <ng-template #pageActions>
   <button

@@ -115,34 +115,31 @@
       </button>
     </app-error-state>
   } @else if (!store.isLoadingEquipment() && items().length === 0) {
-    <hlm-empty class="border border-dashed">
-      <hlm-empty-header>
-        <hlm-empty-media variant="icon">
-          <ng-icon [name]="hasSearchOrFilters() ? 'lucideSearch' : 'lucidePackage'" />
-        </hlm-empty-media>
-        <div hlmEmptyTitle i18n="@@equipment.table.emptyTitle">No equipment found</div>
-        <div hlmEmptyDescription i18n="@@equipment.table.emptyDesc">
-          Adjust your search or filters, or register the assets you track.
-        </div>
-      </hlm-empty-header>
-      <hlm-empty-content>
-        @if (hasSearchOrFilters()) {
-          <button hlmBtn variant="outline" (click)="clearFilters()">
-            <span i18n="@@common.clearFilters">Clear filters</span>
-          </button>
-        } @else if (canCreate()) {
-          <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
-            <ng-icon name="lucidePlus" aria-hidden="true" />
-            <span i18n="@@equipment.newButton">New equipment</span>
-          </a>
-        }
-      </hlm-empty-content>
-    </hlm-empty>
+    <app-empty-state
+      [icon]="hasSearchOrFilters() ? 'lucideSearch' : 'lucidePackage'"
+      title="No equipment found"
+      i18n-title="@@equipment.table.emptyTitle"
+      description="Adjust your search or filters, or register the assets you track."
+      i18n-description="@@equipment.table.emptyDesc"
+    >
+      @if (hasSearchOrFilters()) {
+        <button hlmBtn variant="outline" (click)="clearFilters()">
+          <span i18n="@@common.clearFilters">Clear filters</span>
+        </button>
+      } @else if (canCreate()) {
+        <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span i18n="@@equipment.newButton">New equipment</span>
+        </a>
+      }
+    </app-empty-state>
   } @else {
     <app-equipment-table
       [items]="items()"
       [loading]="store.isLoadingEquipment() && items().length === 0"
       [detailRouteBase]="listRouteBase()"
+      [sortOrder]="sortOrder()"
+      (sortChanged)="applySortField($event)"
     />
 
     <app-collection-pagination

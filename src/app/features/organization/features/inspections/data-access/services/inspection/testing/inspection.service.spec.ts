@@ -180,6 +180,22 @@ describe('InspectionService', () => {
       req.flush(mockCollection([]));
     });
 
+    it('should forward the typed search term as the `search` query param', () => {
+      service.list(orgId, { search: 'gauge' }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === inspectionsBaseUrl);
+      expect(req.request.params.get('search')).toBe('gauge');
+      req.flush(mockCollection([]));
+    });
+
+    it('should forward the typed sort as `order[field]`', () => {
+      service.list(orgId, { sort: { field: 'performedAt', direction: 'desc' } }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === inspectionsBaseUrl);
+      expect(req.request.params.get('order[performedAt]')).toBe('desc');
+      req.flush(mockCollection([]));
+    });
+
     it('should handle forbidden error', () => {
       service.list(orgId).subscribe({
         error: (error: ApiError) => expect(error.status).toBe(403),

@@ -25,7 +25,6 @@ This subfeature does not own top-level organization selection. That remains in `
 - `/organizations/:organizationId/facilities/map`
 - `/organizations/:organizationId/facilities/create`
 - `/organizations/:organizationId/facilities/:facilityId`
-- `/organizations/:organizationId/facilities/:facilityId/edit`
 
 `map` is listed ahead of `:facilityId` in `FACILITY_ROUTES` so it is never
 swallowed as a facility id.
@@ -58,8 +57,11 @@ This subfeature is the primitive's first consumer, in two places:
 
 - **`ui/pages/facility-map-page`** (`FacilityMapPage`,
   `facilities/map`) renders every facility with both coordinates set
-  (`FacilityMapStore.loadMapped`, `hasCoordinates: true`) as a marker;
-  selecting one navigates to that facility's record. A discreet banner names
+  (`FacilityMapStore.loadMapped`, `hasCoordinates: true`) as a marker — a
+  sanctioned full drain under DESIGN.md § Collections' Server Rule: a map
+  needs every marker at once, so the store drains all pages server-filtered
+  on `hasCoordinates` rather than paginating. Selecting a marker navigates
+  to that facility's record. A discreet banner names
   how many facilities still lack coordinates (`loadUnplacedCount`, read from
   a single-item page's `totalItems` rather than a second full fetch) and
   links back to the list; when no facility has coordinates at all, an
@@ -333,6 +335,19 @@ param is synced for roots). Row actions are Open (into the record, which is
 also the edit surface — there is no separate row-level edit action) and
 Archive/Restore.
 
+`FacilityTable`'s Name, Type, Code and Status heads are sortable — the
+backend's own `order[<field>]` whitelist (`name`, `type`, `status`,
+`createdAt`, `updatedAt`, `code`; `ListFacilitiesProvider`) intersected with
+the columns this table renders. `FacilitiesPage.sortOrder` is sent through
+the typed `RequestOptions.sort` option (`@core/api`, `HydraApiService.buildParams`
+serializes it as `order[<field>]=<direction>`) rather than a hand-built params
+entry, and is remembered across visits by
+`FacilityListPreferencesService` (`fg-facility-list` cookie) — the same
+cookie-preference shape `InterventionListPreferencesService` uses, kept
+feature-local rather than shared (`ARCHITECTURE.md` §2.9). Sorting applies to
+the one server-side dataset both the table and `FacilityGrid` read; the grid
+has no sort controls of its own — sorting lives in the table's heads only.
+
 ## Facility Hierarchy (Detail Overview)
 
 The facility detail page's **Overview** tab renders the descendant hierarchy
@@ -444,8 +459,8 @@ Primary services:
   draft and the cancel path, the page owns the call (ARCHITECTURE.md §10.5).
   `type` and the parent stay read-only because `UpdateFacilityInput` accepts
   neither — the parent moves through its own action.
-- `/:facilityId/edit` is retired and **redirects onto the record**, so installed
-  applications and bookmarks still resolve.
+- The `/:facilityId/edit` redirect was removed as dead weight: the record
+  itself is the edit surface, and nothing in the app links to `/edit` anymore.
 - Depends on organization route context from the parent organization feature.
 - The Plans tab consumes `@shared/plan-viewer`'s `app-plan-viewer` (pan/zoom
   raster viewer, domain-agnostic) for the selected floor plan's image.

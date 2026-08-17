@@ -2,25 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   input,
   output,
-  signal,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
-  type WritableSignal,
 } from '@angular/core';
-import {
-  form,
-  FormField,
-  maxLength,
-  minLength,
-  required,
-  type FieldTree,
-} from '@angular/forms/signals';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { HlmButton } from '@shared/ui/button';
 import {
   HlmDialog,
   HlmDialogContent,
@@ -29,37 +17,25 @@ import {
   HlmDialogPortal,
   HlmDialogTitle,
 } from '@shared/ui/dialog';
-import { HlmFieldImports } from '@shared/ui/field';
-import { HlmInput } from '@shared/ui/input';
-import { HlmSelectImports } from '@shared/ui/select';
-import type { EditChannelDraft, EditChannelFormDraft } from './models';
-
-/** Matches `UpdateChannelInput`'s underlying `ChannelResource.name` bounds. */
-const CHANNEL_NAME_MIN_LENGTH = 2;
-const CHANNEL_NAME_MAX_LENGTH = 80;
+import { ChannelEditForm, type EditChannelDraft } from '../../forms/channel-edit-form';
 
 /**
  * Component EditChannelDialog
  * @class EditChannelDialog
  *
  * @description
- * Renames a channel and, optionally, moves it under a different root
- * channel — or detaches it back to the top level.
+ * The spartan dialog hosting {@link ChannelEditForm}, the same shape
+ * `OrganizationInviteDialog` wraps `OrganizationInviteForm` in.
  *
- * Presentational: it seeds its draft from {@link name} and
- * {@link parentChannelId} every time it opens, validates, and emits
- * {@link submitted}; the page decides which of `ChannelsStore.update` and
- * `.setParent` to call, since only a genuinely changed value is worth a
- * request (`ARCHITECTURE.md` §10.5). The parent options are supplied already
- * narrowed to root channels other than this one — nesting under a channel
- * that already has a parent, or under itself, is not offered rather than
- * refused after the fact.
+ * Purely presentational: it owns the overlay chrome, forwards
+ * `visible`/`visibleChange` plus the seeding inputs to the form, and
+ * re-emits {@link submitted}, closing itself the moment the form validates —
+ * the entity updates in place through the shared `ChannelsStore`, so the
+ * header and the list both pick up the change reactively without this
+ * dialog waiting on the request. Dismissal is blocked while a request is in
+ * flight (`ARCHITECTURE.md` §10.5).
  *
- * Closes the moment the form validates: the entity updates in place through
- * the shared `ChannelsStore`, so the header and the list both pick up the
- * change reactively without this dialog waiting on the request.
- *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -77,17 +53,13 @@ const CHANNEL_NAME_MAX_LENGTH = 80;
 @Component({
   selector: 'app-edit-channel-dialog',
   imports: [
-    FormField,
-    HlmButton,
+    ChannelEditForm,
     HlmDialog,
     HlmDialogContent,
     HlmDialogDescription,
     HlmDialogHeader,
     HlmDialogPortal,
     HlmDialogTitle,
-    HlmInput,
-    ...HlmFieldImports,
-    ...HlmSelectImports,
   ],
   templateUrl: './edit-channel-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,7 +85,7 @@ export class EditChannelDialog {
    * @readonly
    *
    * @description
-   * The channel's current name, seeding the draft on every open.
+   * The channel's current name, forwarded to the form to seed the draft.
    *
    * @access public
    * @since 1.0.0
@@ -141,7 +113,8 @@ export class EditChannelDialog {
    * @readonly
    *
    * @description
-   * Root channels other than this one, offered as candidate parents.
+   * Root channels other than this one, forwarded to the form as candidate
+   * parents.
    *
    * @access public
    * @since 1.0.0
@@ -158,7 +131,7 @@ export class EditChannelDialog {
    *
    * @description
    * Whether a write this dialog's submit triggered — a rename or a move — is
-   * still in flight, disabling the submit button against a double click.
+   * still in flight, forwarded to the form and blocking dismissal.
    *
    * @access public
    * @since 1.1.0
@@ -188,7 +161,7 @@ export class EditChannelDialog {
    * @readonly
    *
    * @description
-   * Emits the validated name and parent.
+   * The form's validated name and parent, forwarded untouched.
    *
    * @access public
    * @since 1.0.0
@@ -199,37 +172,6 @@ export class EditChannelDialog {
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
-  protected readonly model: WritableSignal<EditChannelFormDraft> = signal<EditChannelFormDraft>({
-    name: '',
-    parentChannelId: '',
-  });
-
-  /**
-   * Property editForm
-   * @readonly
-   *
-   * @description
-   * The field tree and its rules, matching the channel name's server-side
-   * bounds.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {FieldTree<EditChannelFormDraft>}
-   */
-  protected readonly editForm: FieldTree<EditChannelFormDraft> = form(this.model, (path): void => {
-    required(path.name, {
-      message: $localize`:@@channels.editDialog.nameRequired:Give the channel a name`,
-    });
-    minLength(path.name, CHANNEL_NAME_MIN_LENGTH, {
-      message: $localize`:@@channels.editDialog.nameLength:Use between 2 and 80 characters.`,
-    });
-    maxLength(path.name, CHANNEL_NAME_MAX_LENGTH, {
-      message: $localize`:@@channels.editDialog.nameLength:Use between 2 and 80 characters.`,
-    });
-  });
-
   /**
    * Property dialogState
    * @readonly
@@ -246,36 +188,6 @@ export class EditChannelDialog {
   protected readonly dialogState: Signal<BrnDialogState> = computed((): BrnDialogState =>
     this.visible() ? 'open' : 'closed',
   );
-
-  /** Names a picked parent on the closed select trigger. */
-  protected readonly parentLabelOf: (value: string) => string = (value) =>
-    this.parentOptions().find((option) => option.value === value)?.label ?? '';
-  //#endregion
-
-  //#region Lifecycle
-  /**
-   * Method constructor
-   * @constructor
-   *
-   * @description
-   * Reseeds the draft from {@link name} and {@link parentChannelId} every
-   * time the dialog opens, so a previous edit — this channel's or another
-   * one's, since the page may reuse this dialog across channels — never
-   * bleeds into the next.
-   *
-   * @access public
-   * @since 1.0.0
-   */
-  public constructor() {
-    effect((): void => {
-      if (!this.visible()) return;
-
-      const name: string = this.name();
-      const parentChannelId: string | null = this.parentChannelId();
-
-      this.model.set({ name, parentChannelId: parentChannelId ?? '' });
-    });
-  }
   //#endregion
 
   //#region Methods
@@ -285,7 +197,8 @@ export class EditChannelDialog {
    *
    * @description
    * Reports a dismissal — escape, the backdrop, the close button — back to
-   * the page, which owns the flag this is derived from.
+   * the page, which owns the flag this is derived from. Ignored while a
+   * request is in flight, matching the bound `disableClose`.
    *
    * @access protected
    * @since 1.0.0
@@ -295,6 +208,8 @@ export class EditChannelDialog {
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
+    if (this.pending()) return;
+
     const isOpen: boolean = state === 'open';
 
     if (isOpen === this.visible()) return;
@@ -303,38 +218,21 @@ export class EditChannelDialog {
   }
 
   /**
-   * Method submit
-   * @method submit
+   * Method onFormSubmitted
+   * @method onFormSubmitted
    *
    * @description
-   * Marks the tree touched so every unmet rule shows at once, then emits and
-   * closes once the form is valid. Guards on {@link pending} itself — the
-   * submit button carries no native `disabled` (its own busy-driven disabling
-   * would drop focus to `<body>` mid-dialog), so a stray Enter-triggered
-   * resubmission while a save is already in flight is refused here instead.
+   * Re-emits the form's validated draft and closes the dialog.
    *
    * @access protected
-   * @since 1.1.0
+   * @since 2.0.0
    *
-   * @param {Event} event - The submit event.
+   * @param {EditChannelDraft} draft - The validated name and parent.
    *
    * @returns {void}
    */
-  protected submit(event: Event): void {
-    event.preventDefault();
-
-    if (this.pending()) return;
-
-    this.editForm().markAsTouched();
-
-    if (this.editForm().invalid()) return;
-
-    const draft: EditChannelFormDraft = this.model();
-
-    this.submitted.emit({
-      name: draft.name.trim(),
-      parentChannelId: draft.parentChannelId === '' ? null : draft.parentChannelId,
-    });
+  protected onFormSubmitted(draft: EditChannelDraft): void {
+    this.submitted.emit(draft);
     this.visibleChange.emit(false);
   }
   //#endregion

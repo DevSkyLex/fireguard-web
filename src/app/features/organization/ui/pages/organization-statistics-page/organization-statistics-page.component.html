@@ -1,10 +1,10 @@
 <div id="organization-statistics" class="flex h-full flex-col gap-6 p-4 md:p-6">
   @if (dashboardStore.queryHasError() && isForbidden(dashboardStore.queryError())) {
-    <div hlmCard class="border-dashed">
-      <div hlmCardContent class="py-10 text-center text-sm text-muted-foreground">
-        <p i18n="@@org.statistics.forbidden">Not available with your permissions.</p>
-      </div>
-    </div>
+    <app-empty-state
+      icon="lucideLock"
+      title="Not available with your permissions"
+      i18n-title="@@org.statistics.forbiddenTitle"
+    />
   } @else if (dashboardStore.queryHasError()) {
     <app-error-state
       icon="lucideTriangleAlert"

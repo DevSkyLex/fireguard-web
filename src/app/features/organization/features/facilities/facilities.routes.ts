@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { facilityResolver, facilityTitleResolver } from './http/resolvers';
 import { FacilityStore } from './state';
 
@@ -30,9 +31,8 @@ import { FacilityStore } from './state';
  * pending state, and redirects to the organization landing page itself if the
  * load fails. {@link facilityTitleResolver} titles the route synchronously
  * from the same state, falling back to a neutral section label until the
- * record lands. `/:facilityId/edit` is retired: the record itself is the edit
- * surface (`FEATURE.md` "The record is the edit surface"), so installed
- * applications and bookmarks are redirected onto it.
+ * record lands. `create` also carries `unsavedChangesGuard`, confirming
+ * before the operator loses an in-progress registration.
  *
  * @since 1.0.0
  *
@@ -72,6 +72,7 @@ export const FACILITY_ROUTES: Routes = [
         canActivate: [
           organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE] }),
         ],
+        canDeactivate: [unsavedChangesGuard],
         loadComponent: () =>
           import('./ui/pages/facility-create-page/facility-create-page.component').then(
             (m) => m.FacilityCreatePage,
@@ -87,10 +88,6 @@ export const FACILITY_ROUTES: Routes = [
           import('./ui/pages/facility-detail-page/facility-detail-page.component').then(
             (m) => m.FacilityDetailPage,
           ),
-      },
-      {
-        path: ':facilityId/edit',
-        redirectTo: ':facilityId',
       },
     ],
   },

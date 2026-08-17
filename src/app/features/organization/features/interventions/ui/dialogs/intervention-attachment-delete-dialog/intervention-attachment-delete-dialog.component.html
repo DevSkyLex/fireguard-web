@@ -1,0 +1,25 @@
+<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-alert-dialog-content
+    *hlmAlertDialogPortal
+    data-testid="intervention-attachment-delete-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@intervention.attachments.deleteTitle">Delete this file?</h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.attachments.deleteText">
+        {{ request()?.fileName }} will be permanently removed from this intervention.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="intervention-attachment-delete-confirm"
+        (click)="confirm()"
+        i18n="@@intervention.attachments.deleteConfirm"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

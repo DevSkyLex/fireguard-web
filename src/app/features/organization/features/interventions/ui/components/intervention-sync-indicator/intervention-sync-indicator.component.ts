@@ -16,16 +16,15 @@ import {
   lucideRefreshCw,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
-import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { ConnectivityService } from '@core/connectivity';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { formatInterventionRelativeTime } from '@features/organization/features/interventions/utils';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { InterventionSyncDiscardDialog } from '../../dialogs/intervention-sync-discard-dialog';
 
 /**
  * Type InterventionSyncIndicatorState
@@ -75,7 +74,7 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
     NgIcon,
     HlmBadge,
     HlmButton,
-    ...HlmAlertDialogImports,
+    InterventionSyncDiscardDialog,
     ...HlmPopoverImports,
     ...HlmSpinnerImports,
   ],
@@ -298,18 +297,6 @@ export class InterventionSyncIndicator {
    */
   protected retry(): void {
     void this.sync.retryBlocked();
-  }
-
-  /**
-   * Method onDiscardDialogStateChanged
-   * @description Mirrors an overlay-initiated close back into the local flag.
-   * @access protected
-   * @since 1.0.0
-   * @param {BrnDialogState} state - The overlay's new state.
-   * @returns {void}
-   */
-  protected onDiscardDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'closed') this.discardConfirmVisible.set(false);
   }
 
   /**

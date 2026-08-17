@@ -137,9 +137,23 @@ Primary stores:
 - `ComplianceExplorerStore` (component-scoped to the assets explorer's compliance axis; three named `CallState` fields — the tree, the selected/organization-wide summary, and the safety-register export — since the three are unrelated requests. Owns the `flattenComplianceTree` mapping onto the shared `Tree` shape, exposed as `roots`/`childrenByParent` computeds)
 - `OrganizationTodayStore` (component-scoped to the landing page; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations, logo upload and removal, and the danger-zone actions — archive, restore, suspend, ownership transfer and leaving the organization. One named `CallState` per action, since several are offered side by side and a shared one would leak an error between controls. Refreshes `ActiveOrganizationStore` on every mutation that returns an organization)
-- `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map. `loadMembers` re-issues the server-side roster query with the page's search and status filters, so `membersTotal` — the "Total members" KPI — tracks the current filter, while `membersActiveTotal` — the "Active" KPI — is a fixed organization-wide snapshot fetched once per `load`; keep that split when touching either)
+- `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map. `loadMembers` re-issues the server-side roster query with the page's search, status filter and ordering (`joinedAt`/`displayName`, restored from `OrganizationMemberListPreferencesService`'s cookie), so `membersTotal` — the "Total members" KPI — tracks the current filter, while `membersActiveTotal` — the "Active" KPI — is a fixed organization-wide snapshot fetched once per `load`; keep that split when touching either. Pending invitations are paginated server-side (`INVITATIONS_PAGE_SIZE`, `loadInvitations`): the invitations endpoint's `status` filter accepts exactly one value, so the pending-invitations card's own universe — pending and expired only — is fetched as a paginated `pending` query plus one unpaginated, "cheap" `expired` query (`fetchActiveInvitations`), combined into one page and one `invitationsTotal`; `invitationsTotal` is adjusted locally on invite/revoke rather than refetched)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
 - `OrganizationInvitationAcceptStore` (page-scoped; loads the public invitation preview and accepts an invitation token)
+
+Sanctioned bounded drains (DESIGN.md § Collections' Server Rule): four of
+these stores deliberately fetch without user-facing pagination —
+`OrganizationRoleListStore` drains every role (a role catalog is small and the
+grid groups it client-side), `MemberDirectoryStore` drains the roster (a
+capped single page would silently misattribute members past the cap),
+`OrganizationAssetsPaneStore` caps at 50 per axis because the pane is a
+preview that links to the owning subfeature's full list, not a browsing
+surface, and `OrganizationTeamStore` drains the permission catalog via
+`listAllPermissions` (a checkbox-selection catalog feeding the "Permissions in
+catalog" KPI, the create-role dialog and the role-permissions sheet, never a
+browsing list — a bounded page risks silently truncating the set a role can
+be granted). Any other collection in this feature paginates, sorts and
+filters server-side.
 
 Primary services:
 

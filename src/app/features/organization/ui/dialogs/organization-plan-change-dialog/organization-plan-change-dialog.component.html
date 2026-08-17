@@ -1,0 +1,23 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-plan-confirm-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.settings.plan.confirmTitle">Switch subscription plan?</h2>
+      <p hlmAlertDialogDescription>{{ confirmText() }}</p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        data-testid="organization-plan-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        <span i18n="@@org.settings.plan.confirmAction">Switch plan</span>
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

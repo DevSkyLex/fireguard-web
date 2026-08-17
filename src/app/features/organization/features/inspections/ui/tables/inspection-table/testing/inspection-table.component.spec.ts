@@ -42,6 +42,7 @@ describe('InspectionTable', () => {
     fixture.componentRef.setInput('items', items);
     fixture.componentRef.setInput('loading', loading);
     fixture.componentRef.setInput('detailRouteBase', ['/organizations', 'org-1', 'inspections']);
+    fixture.componentRef.setInput('sortOrder', { field: 'performedAt', direction: 'desc' });
     await fixture.whenStable();
   };
 
@@ -117,5 +118,31 @@ describe('InspectionTable', () => {
 
     expect(region?.getAttribute('aria-labelledby')).toBe(caption?.id);
     expect(caption?.id).toBeTruthy();
+  });
+
+  it('should announce the active ordering on its head and none on the others', async () => {
+    await render([inspection()]);
+
+    const performedAtHead: HTMLElement | null = root().querySelector(
+      '[data-testid="inspection-table-sort-performed-at"]',
+    )?.parentElement as HTMLElement | null;
+    const resultHead: HTMLElement | null = root().querySelector(
+      '[data-testid="inspection-table-sort-result"]',
+    )?.parentElement as HTMLElement | null;
+
+    expect(performedAtHead?.getAttribute('aria-sort')).toBe('descending');
+    expect(resultHead?.getAttribute('aria-sort')).toBe('none');
+  });
+
+  it('should emit sortChanged with the field when a sortable head is activated', async () => {
+    await render([inspection()]);
+    const emitted: string[] = [];
+    fixture.componentInstance.sortChanged.subscribe((field: string) => emitted.push(field));
+
+    (
+      root().querySelector('[data-testid="inspection-table-sort-result"]') as HTMLButtonElement
+    ).click();
+
+    expect(emitted).toEqual(['result']);
   });
 });

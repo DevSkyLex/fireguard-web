@@ -5,7 +5,10 @@ export type {
   ConstraintViolation,
   PaginationOptions,
   RequestOptions,
+  SearchOptions,
   ServerFieldErrors,
+  SortDirection,
+  SortingOptions,
   Violation,
 } from './models';
 export {

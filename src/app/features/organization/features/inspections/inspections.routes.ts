@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { inspectionResolver, inspectionTitleResolver } from './http/resolvers';
 import { InspectionStore } from './state';
 
@@ -30,9 +31,8 @@ import { InspectionStore } from './state';
  * pending state, and redirects back to the index itself if the load fails.
  * {@link inspectionTitleResolver} titles the route synchronously from the
  * same state, falling back to a neutral section label until the record lands.
- * `/:inspectionId/edit` is retired: the record itself is the edit surface
- * (`FEATURE.md` "The record is the edit surface"), so installed
- * applications and bookmarks are redirected onto it.
+ * `create` also carries `unsavedChangesGuard`, confirming before the
+ * operator loses an in-progress registration.
  *
  * @since 1.0.0
  *
@@ -63,6 +63,7 @@ export const INSPECTION_ROUTES: Routes = [
         canActivate: [
           organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INSPECTION_WRITE] }),
         ],
+        canDeactivate: [unsavedChangesGuard],
         loadComponent: () =>
           import('./ui/pages/inspection-create-page/inspection-create-page.component').then(
             (m) => m.InspectionCreatePage,
@@ -78,10 +79,6 @@ export const INSPECTION_ROUTES: Routes = [
           import('./ui/pages/inspection-detail-page/inspection-detail-page.component').then(
             (m) => m.InspectionDetailPage,
           ),
-      },
-      {
-        path: ':inspectionId/edit',
-        redirectTo: ':inspectionId',
       },
     ],
   },

@@ -1,0 +1,36 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="facility-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@facility.detail.deleteConfirmTitle">Delete facility?</h2>
+      <p hlmAlertDialogDescription i18n="@@facility.detail.deleteConfirmDescription">
+        A published facility is archived and can be restored; a draft facility is permanently
+        removed. This cannot be undone from here.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button
+        hlmAlertDialogCancel
+        class="max-sm:min-h-11"
+        [disabled]="pending()"
+        i18n="@@facility.detail.deleteConfirmCancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="facility-delete-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+        i18n="@@facility.detail.deleteConfirmAction"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

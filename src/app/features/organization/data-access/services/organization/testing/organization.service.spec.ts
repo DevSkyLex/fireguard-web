@@ -494,6 +494,63 @@ describe('OrganizationService', () => {
       req.flush(mockCollection([mockPermission]));
     });
   });
+  // ── listAllPermissions ─────────────────────────────────────────────────────
+
+  describe('listAllPermissions', () => {
+    const mockPermission: OrganizationPermissionOutput = {
+      '@id': '/api/organizations/org-uuid-1/permissions/perm-uuid-1',
+      '@type': 'Permission',
+      id: 'perm-uuid-1',
+      name: 'facility:read',
+      description: 'Read facilities',
+    };
+
+    it('should walk every server page and emit the concatenated permission catalog', () => {
+      const second: OrganizationPermissionOutput = {
+        ...mockPermission,
+        id: 'perm-uuid-2',
+        name: 'facility:write',
+      };
+      let result: readonly OrganizationPermissionOutput[] = [];
+      const permissionsUrl = `${baseUrl}/org-uuid-1/permissions`;
+
+      service.listAllPermissions('org-uuid-1').subscribe((permissions) => {
+        result = permissions;
+      });
+
+      const firstRequest = httpMock.expectOne(
+        (request) =>
+          request.url === permissionsUrl &&
+          request.params.get('page') === '1' &&
+          request.params.get('itemsPerPage') === '100',
+      );
+      firstRequest.flush({ ...mockCollection([mockPermission]), totalItems: 101 });
+
+      const secondRequest = httpMock.expectOne(
+        (request) => request.url === permissionsUrl && request.params.get('page') === '2',
+      );
+      secondRequest.flush({ ...mockCollection([second]), totalItems: 101 });
+
+      expect(result).toEqual([mockPermission, second]);
+    });
+
+    it('should stop after a single page when the catalog fits in it', () => {
+      let result: readonly OrganizationPermissionOutput[] = [];
+      const permissionsUrl = `${baseUrl}/org-uuid-1/permissions`;
+
+      service.listAllPermissions('org-uuid-1').subscribe((permissions) => {
+        result = permissions;
+      });
+
+      const req = httpMock.expectOne(
+        (request) => request.url === permissionsUrl && request.params.get('page') === '1',
+      );
+      req.flush(mockCollection([mockPermission]));
+
+      expect(result).toEqual([mockPermission]);
+    });
+  });
+
   // ── remove ─────────────────────────────────────────────────────────────────
 
   describe('remove', () => {

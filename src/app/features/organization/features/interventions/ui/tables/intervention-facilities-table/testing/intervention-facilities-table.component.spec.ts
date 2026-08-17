@@ -86,4 +86,45 @@ describe('InterventionFacilitiesTable', () => {
       'No facility is linked to this intervention yet.',
     );
   });
+
+  it('should show the "Show more" button when the server holds more facilities than are loaded', async () => {
+    fixture.componentRef.setInput('items', [facility()]);
+    fixture.componentRef.setInput('totalItems', 2);
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-facilities-load-more')).not.toBeNull();
+  });
+
+  it('should hide the "Show more" button once every facility is loaded', async () => {
+    fixture.componentRef.setInput('items', [facility()]);
+    fixture.componentRef.setInput('totalItems', 1);
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-facilities-load-more')).toBeNull();
+  });
+
+  it('should emit loadMoreRequested when the "Show more" button is pressed', async () => {
+    fixture.componentRef.setInput('items', [facility()]);
+    fixture.componentRef.setInput('totalItems', 2);
+    await fixture.whenStable();
+
+    const requested = vi.fn();
+    fixture.componentInstance.loadMoreRequested.subscribe(requested);
+    byTestId('intervention-facilities-load-more')?.dispatchEvent(new Event('click'));
+    await fixture.whenStable();
+
+    expect(requested).toHaveBeenCalledTimes(1);
+  });
+
+  it('should disable the "Show more" button and show the spinner label while loading more', async () => {
+    fixture.componentRef.setInput('items', [facility()]);
+    fixture.componentRef.setInput('totalItems', 2);
+    fixture.componentRef.setInput('loadingMore', true);
+    await fixture.whenStable();
+
+    const button = byTestId('intervention-facilities-load-more') as HTMLButtonElement;
+
+    expect(button.disabled).toBe(true);
+    expect(button.textContent).toContain('Loading…');
+  });
 });

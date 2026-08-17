@@ -1,12 +1,12 @@
 <hlm-sheet
-  side="right"
+  [side]="side()"
   [state]="sheetState()"
   [disableClose]="pending()"
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-sheet-content
     *hlmSheetPortal
-    class="flex w-full! flex-col overflow-y-auto sm:w-[480px]! sm:max-w-none!"
+    class="flex w-full! flex-col overflow-y-auto max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
     data-testid="channel-participants-sheet"
   >
     <hlm-sheet-header>

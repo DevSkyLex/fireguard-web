@@ -145,6 +145,14 @@ dependency, record it here first, then extend that rule (`ARCHITECTURE.md` §4.1
   stepper (below `lg`).
 - The wizard page is the route-entry orchestrator; step bodies delegate creation
   to `@features/organization/setup` and confirm via the store.
+- **No `unsavedChangesGuard` on `/onboarding`.** Each step persists to the
+  backend the moment its form is submitted — `OnboardingWizardPage.confirmStep`
+  creates the resource and confirms the step in the same call, with no batched
+  or locally-drafted state that a navigation away could lose beyond what the
+  create pages already guard (`DESIGN.md` § Action Surfaces). There is
+  therefore nothing for the guard to protect once a step has advanced; an
+  in-progress, not-yet-submitted step is unaffected by leaving, since nothing
+  was ever written for it.
 
 ## Deferred
 

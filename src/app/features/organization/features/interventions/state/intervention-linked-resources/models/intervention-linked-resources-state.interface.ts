@@ -20,9 +20,36 @@ export interface InterventionLinkedResourcesState {
   /** Lifecycle of the linked-facilities fetch. */
   readonly facilitiesCallState: CallState<readonly FacilityOutput[]>;
 
+  /** One-based page of linked facilities currently loaded. */
+  readonly facilitiesPage: number;
+
+  /** Total linked facilities reported by the server, across all pages. */
+  readonly facilitiesTotalItems: number;
+
+  /** Whether an additional page of linked facilities is being fetched. */
+  readonly facilitiesLoadingMore: boolean;
+
   /** Lifecycle of the linked-equipment fetch. */
   readonly equipmentCallState: CallState<readonly EquipmentOutput[]>;
 
+  /** One-based page of linked equipment currently loaded. */
+  readonly equipmentPage: number;
+
+  /** Total linked equipment reported by the server, across all pages. */
+  readonly equipmentTotalItems: number;
+
+  /** Whether an additional page of linked equipment is being fetched. */
+  readonly equipmentLoadingMore: boolean;
+
   /** Lifecycle of the linked-inspections fetch. */
   readonly inspectionsCallState: CallState<readonly InspectionOutput[]>;
+
+  /** One-based page of linked inspections currently loaded. */
+  readonly inspectionsPage: number;
+
+  /** Total linked inspections reported by the server, across all pages. */
+  readonly inspectionsTotalItems: number;
+
+  /** Whether an additional page of linked inspections is being fetched. */
+  readonly inspectionsLoadingMore: boolean;
 }

@@ -247,7 +247,7 @@ describe('InterventionAttachments', () => {
     expect(deleteButton1?.getAttribute('aria-busy')).toBeNull();
   });
 
-  it('should emit a delete only once the confirmation is accepted', async () => {
+  it('should emit a delete request straight away, leaving confirmation to the host', async () => {
     const deletions: InterventionAttachmentOutput[] = [];
     await create(1);
     fixture.componentInstance.deleteRequested.subscribe((target) => deletions.push(target));
@@ -256,33 +256,8 @@ describe('InterventionAttachments', () => {
       root().querySelector('[data-testid="intervention-attachment-delete"]') as HTMLButtonElement
     ).click();
     await fixture.whenStable();
-
-    expect(deletions).toEqual([]);
-
-    document
-      .querySelector<HTMLButtonElement>('[data-testid="intervention-attachment-delete-confirm"]')
-      ?.click();
 
     expect(deletions).toEqual([attachment(0)]);
-  });
-
-  it('should not delete anything when the confirmation is dismissed', async () => {
-    const deletions: InterventionAttachmentOutput[] = [];
-    await create(1);
-    fixture.componentInstance.deleteRequested.subscribe((target) => deletions.push(target));
-
-    (
-      root().querySelector('[data-testid="intervention-attachment-delete"]') as HTMLButtonElement
-    ).click();
-    await fixture.whenStable();
-
-    document
-      .querySelector<HTMLButtonElement>(
-        '[data-testid="intervention-attachment-delete-dialog"] button',
-      )
-      ?.click();
-
-    expect(deletions).toEqual([]);
   });
 
   it('should offer a download button on every row regardless of manage permission', async () => {

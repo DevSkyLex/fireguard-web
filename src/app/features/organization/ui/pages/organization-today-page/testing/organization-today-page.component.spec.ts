@@ -206,7 +206,7 @@ describe('OrganizationTodayPage', () => {
     expect(text).toContain('2');
   });
 
-  it('should render the KPI strip as label/value pairs sized as a snapshot, not the page headline', async () => {
+  it('should render the KPI strip as app-stat-tile cards with the resolved values', async () => {
     dashboardQueryData.set({
       overview: {
         interventions: { summary: [{ key: 'open', value: 5 }] },
@@ -224,20 +224,16 @@ describe('OrganizationTodayPage', () => {
       'equipment-under-maintenance',
     ]) {
       expect(
-        fixture.nativeElement.querySelector(`[data-testid="org-today-kpi-${id}"]`),
+        fixture.nativeElement.querySelector(`[data-testid="org-today-kpi-${id}"] app-stat-tile`),
       ).not.toBeNull();
     }
 
     const tile: HTMLElement | null = fixture.nativeElement.querySelector(
       '[data-testid="org-today-kpi-open-interventions"]',
     );
-    const value: HTMLElement | null | undefined = tile?.querySelector('.tabular-nums');
 
     expect(tile?.textContent).toContain('Open interventions');
-    expect(value?.querySelector('.sr-only')?.textContent).toContain('Open interventions');
-    expect(value?.textContent?.replace('Open interventions:', '').trim()).toBe('5');
-    expect(value?.className).toContain('tabular-nums');
-    expect(value?.className).not.toContain('text-2xl');
+    expect(tile?.textContent).toContain('5');
   });
 
   it('should link the equipment-under-maintenance KPI tile to the equipments route', async () => {
@@ -246,12 +242,12 @@ describe('OrganizationTodayPage', () => {
     } as unknown as OrganizationDashboardOutput);
     await fixture.whenStable();
 
-    const value: HTMLElement | null = fixture.nativeElement.querySelector(
-      '[data-testid="org-today-kpi-equipment-under-maintenance"] .tabular-nums',
+    const link: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="org-today-kpi-equipment-under-maintenance"] a',
     );
 
-    expect(value?.tagName).toBe('A');
-    expect(value?.getAttribute('href')).toBe('/organizations/org-1/equipments');
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/equipments');
   });
 
   it('should attach the matching comparison delta only to the inspections-completed tile', async () => {

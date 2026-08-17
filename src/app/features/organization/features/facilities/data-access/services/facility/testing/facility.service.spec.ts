@@ -147,14 +147,14 @@ describe('FacilityService', () => {
       req.flush(mockCollection([]));
     });
 
-    it('should forward includeArchived, status, search and order params', () => {
+    it('should forward includeArchived, status, search and the typed sort option', () => {
       service
         .list(orgId, {
           rootsOnly: true,
           includeArchived: true,
           status: 'active',
           search: 'tower',
-          order: { name: 'asc' },
+          sort: { field: 'name', direction: 'asc' },
         })
         .subscribe();
 

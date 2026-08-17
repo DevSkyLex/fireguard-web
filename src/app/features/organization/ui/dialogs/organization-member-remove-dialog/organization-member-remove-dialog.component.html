@@ -1,0 +1,39 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-members-remove-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle>{{ title() }}</h2>
+      <p hlmAlertDialogDescription>{{ description() }}</p>
+    </hlm-alert-dialog-header>
+
+    @if (error(); as message) {
+      <p
+        role="alert"
+        class="text-sm text-destructive"
+        data-testid="organization-members-remove-error"
+      >
+        {{ message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@org.members.removeConfirmCancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-members-remove-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.members.removeConfirmPending">Removing…</span>
+        } @else {
+          <span i18n="@@org.members.removeConfirmAction">Remove</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

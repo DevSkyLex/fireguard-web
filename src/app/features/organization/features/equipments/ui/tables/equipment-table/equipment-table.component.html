@@ -18,9 +18,48 @@
 
       <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
         <tr hlmTableRow>
-          <th hlmTableHead i18n="@@equipment.table.colEquipment">Equipment</th>
-          <th hlmTableHead i18n="@@equipment.table.colBrandModel">Brand / model</th>
-          <th hlmTableHead i18n="@@equipment.table.colStatus">Status</th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('type')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="equipment-table-sort-type"
+              (click)="sortChanged.emit('type')"
+            >
+              <span i18n="@@equipment.table.colEquipment">Equipment</span>
+              <ng-icon [name]="sortIcon('type')" aria-hidden="true" />
+            </button>
+          </th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('brand')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="equipment-table-sort-brand"
+              (click)="sortChanged.emit('brand')"
+            >
+              <span i18n="@@equipment.table.colBrandModel">Brand / model</span>
+              <ng-icon [name]="sortIcon('brand')" aria-hidden="true" />
+            </button>
+          </th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="equipment-table-sort-status"
+              (click)="sortChanged.emit('status')"
+            >
+              <span i18n="@@equipment.table.colStatus">Status</span>
+              <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
+            </button>
+          </th>
           <th hlmTableHead i18n="@@equipment.table.colMaintenance">Maintenance</th>
           <th hlmTableHead i18n="@@equipment.table.colLocation">Location</th>
         </tr>

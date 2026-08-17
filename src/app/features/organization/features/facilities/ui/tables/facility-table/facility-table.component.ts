@@ -11,12 +11,17 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArchive,
   lucideArchiveRestore,
+  lucideArrowDown,
+  lucideArrowUp,
+  lucideChevronsUpDown,
   lucideEllipsis,
   lucideNetwork,
   lucideSquareArrowOutUpRight,
 } from '@ng-icons/lucide';
 import type {
+  FacilityListSort,
   FacilityOutput,
+  FacilitySortField,
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
@@ -42,9 +47,13 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter and paginate; a menu
- * choice only asks for the write through an `output()`.
+ * choice only asks for the write through an `output()`. Name, Type, Status
+ * and Code are the four columns the backend's own sort whitelist
+ * (`ListFacilitiesProvider`) covers that this table also renders — each
+ * head is a ghost button carrying the direction glyph, mirroring
+ * `InterventionTable`'s sortable-head pattern.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -63,6 +72,9 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
     provideIcons({
       lucideArchive,
       lucideArchiveRestore,
+      lucideArrowDown,
+      lucideArrowUp,
+      lucideChevronsUpDown,
       lucideEllipsis,
       lucideNetwork,
       lucideSquareArrowOutUpRight,
@@ -96,6 +108,16 @@ export class FacilityTable {
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property sortOrder
+   * @readonly
+   * @description The active ordering, deciding what each sortable head announces and which direction glyph it shows.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<FacilityListSort>}
+   */
+  public readonly sortOrder: InputSignal<FacilityListSort> = input.required<FacilityListSort>();
+
+  /**
    * Property canWrite
    * @readonly
    * @description Whether the row menu may offer Archive/Restore. False hides both rather than showing controls that would be refused.
@@ -118,6 +140,16 @@ export class FacilityTable {
   //#endregion
 
   //#region Outputs
+  /**
+   * Property sortChanged
+   * @readonly
+   * @description A sortable head was activated; carries the field. Re-emitting the active field means "reverse it" — the page owns the direction.
+   * @access public
+   * @since 1.2.0
+   * @type {OutputEmitterRef<FacilitySortField>}
+   */
+  public readonly sortChanged: OutputEmitterRef<FacilitySortField> = output<FacilitySortField>();
+
   /**
    * Property archiveRequested
    * @readonly
@@ -169,6 +201,38 @@ export class FacilityTable {
    */
   protected columnCount(): number {
     return 5;
+  }
+
+  /**
+   * Method ariaSort
+   * @description What a sortable head announces for the active ordering.
+   * @access protected
+   * @since 1.2.0
+   * @param {FacilitySortField} field - The head's field.
+   * @returns {'ascending' | 'descending' | 'none'} The `aria-sort` value.
+   */
+  protected ariaSort(field: FacilitySortField): 'ascending' | 'descending' | 'none' {
+    const active: FacilityListSort = this.sortOrder();
+
+    if (active.field !== field) return 'none';
+
+    return active.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
+  /**
+   * Method sortIcon
+   * @description The glyph a sortable head shows: a direction when it is the active one, a neutral pair otherwise.
+   * @access protected
+   * @since 1.2.0
+   * @param {FacilitySortField} field - The head's field.
+   * @returns {string} A registered lucide name.
+   */
+  protected sortIcon(field: FacilitySortField): string {
+    const active: FacilityListSort = this.sortOrder();
+
+    if (active.field !== field) return 'lucideChevronsUpDown';
+
+    return active.direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown';
   }
   //#endregion
 }

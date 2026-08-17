@@ -18,10 +18,62 @@
 
       <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
         <tr hlmTableRow>
-          <th hlmTableHead i18n="@@facility.list.columnName">Name</th>
-          <th hlmTableHead i18n="@@facility.list.columnType">Type</th>
-          <th hlmTableHead i18n="@@facility.list.columnCode">Code</th>
-          <th hlmTableHead i18n="@@facility.list.columnStatus">Status</th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('name')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="facility-table-sort-name"
+              (click)="sortChanged.emit('name')"
+            >
+              <span i18n="@@facility.list.columnName">Name</span>
+              <ng-icon [name]="sortIcon('name')" aria-hidden="true" />
+            </button>
+          </th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('type')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="facility-table-sort-type"
+              (click)="sortChanged.emit('type')"
+            >
+              <span i18n="@@facility.list.columnType">Type</span>
+              <ng-icon [name]="sortIcon('type')" aria-hidden="true" />
+            </button>
+          </th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('code')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="facility-table-sort-code"
+              (click)="sortChanged.emit('code')"
+            >
+              <span i18n="@@facility.list.columnCode">Code</span>
+              <ng-icon [name]="sortIcon('code')" aria-hidden="true" />
+            </button>
+          </th>
+          <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="-ms-2 h-8 px-2 max-sm:min-h-11"
+              data-testid="facility-table-sort-status"
+              (click)="sortChanged.emit('status')"
+            >
+              <span i18n="@@facility.list.columnStatus">Status</span>
+              <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
+            </button>
+          </th>
           <th hlmTableHead class="w-[52px]">
             <span class="sr-only" i18n="@@facility.list.columnActions">Actions</span>
           </th>

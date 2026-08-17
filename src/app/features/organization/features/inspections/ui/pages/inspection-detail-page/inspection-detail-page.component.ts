@@ -1,4 +1,3 @@
-import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,7 +7,6 @@ import {
   inject,
   input,
   LOCALE_ID,
-  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
@@ -19,10 +17,9 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBan } from '@ng-icons/lucide';
-import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { lucideBan, lucideCircleAlert } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
-import { isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -37,12 +34,13 @@ import {
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
+import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InspectionInformationPanel } from '../../components/inspection-information-panel';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
+import { InspectionCancelDialog } from '../../dialogs/inspection-cancel-dialog';
 
 /** The inspection properties this page has open, writing or showing a rejection. */
 const IDLE_EDIT_STATE: InspectionEditState = {
@@ -74,16 +72,19 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * `inspectionResolver` (route `resolve`) seeds {@link ActiveInspectionStore}
  * fire-and-forget, so this page always renders immediately: the full-page
  * skeleton shows from the store's pending state until the record lands, the
- * document title follows through `TitleService`, and a load failure returns
- * to the index. A route-scoped {@link InspectionStore} carries the update
- * and lifecycle writes.
+ * document title follows through `TitleService`, and a load failure shows
+ * `app-error-state` with a retry that re-runs {@link ActiveInspectionStore}'s
+ * resolve (`DESIGN.md` "Detail-page gating") rather than leaving the operator
+ * on an eternal skeleton or navigating them away silently. A route-scoped
+ * {@link InspectionStore} carries the update and lifecycle writes.
  *
  * The record's name is the shell breadcrumb's title, resolved by
  * `inspectionTitleResolver`; the status tags, non-conformity count and meta
  * line stay as a lead group at content top, and the lifecycle band registers
- * on the shell header through `PageActionsService`.
+ * on the shell header through `PageActionsService`. The Cancel confirmation
+ * is {@link InspectionCancelDialog} (`DESIGN.md` § Action Surfaces rule 5).
  *
- * @version 1.1.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -91,14 +92,15 @@ const IDLE_EDIT_STATE: InspectionEditState = {
   selector: 'app-inspection-detail-page',
   imports: [
     NgIcon,
+    InspectionCancelDialog,
     InspectionInformationPanel,
     InspectionStatusTag,
+    ErrorState,
     HlmButton,
     HlmSkeleton,
-    ...HlmAlertDialogImports,
     ...HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideBan })],
+  providers: [provideIcons({ lucideBan, lucideCircleAlert })],
   templateUrl: './inspection-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -133,9 +135,6 @@ export class InspectionDetailPage {
 
   /** Document title channel, kept in sync with the loaded record. */
   private readonly titleService: TitleService = inject<TitleService>(TitleService);
-
-  /** Whether this instance runs in the browser — the failure redirect never fires during SSR. */
-  private readonly isBrowser: boolean = isPlatformBrowser(inject<object>(PLATFORM_ID));
 
   /** The route-scoped store carrying the update and lifecycle writes. */
   protected readonly store: InspectionStoreType = inject<InspectionStoreType>(InspectionStore);
@@ -267,18 +266,6 @@ export class InspectionDetailPage {
     return $localize`:@@inspection.detail.metaUpdated:Updated ${when}:when:`;
   });
 
-  /**
-   * Property cancelDialogState
-   * @readonly
-   * @description The confirm dialog's open/closed state, derived from {@link pendingCancel}.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<BrnDialogState>}
-   */
-  protected readonly cancelDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
-    this.pendingCancel() ? 'open' : 'closed',
-  );
-
   /** Registers {@link pageActions} on the shell header. */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
@@ -295,11 +282,11 @@ export class InspectionDetailPage {
    * @description
    * Settles the open in-place field once its own write clears, re-sets the
    * document title once the seeded record lands (the title resolver only
-   * returned the neutral section label), returns to the index when the load
-   * fails — the global feedback listener already toasts the failure —
-   * returns to the list once a cancellation succeeds —
-   * `InspectionStore.cancel` removes the record, so there is nothing left
-   * here to show — and registers {@link pageActions}.
+   * returned the neutral section label) — a load failure is left to the
+   * template's `app-error-state` branch and {@link retryLoad}, the global
+   * feedback listener already toasts the failure — returns to the list once
+   * a cancellation succeeds — `InspectionStore.cancel` removes the record,
+   * so there is nothing left here to show — and registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
@@ -318,15 +305,6 @@ export class InspectionDetailPage {
       if (!title) return;
 
       untracked((): void => this.titleService.setTitle(title));
-    });
-
-    effect((): void => {
-      const error: StoreError | null = this.activeInspectionStore.getError();
-      if (error === null || !this.isBrowser) return;
-
-      untracked((): void => {
-        void this.router.navigate(['/organizations', this.organizationId(), 'inspections']);
-      });
     });
 
     effect((): void => {
@@ -352,6 +330,20 @@ export class InspectionDetailPage {
    */
   protected onEditTargetChanged(target: InspectionEditTarget | null): void {
     this.editState.set({ open: target, saving: null, failed: null, failure: null });
+  }
+
+  /**
+   * Method retryLoad
+   * @description The load-failed state's retry — re-runs {@link ActiveInspectionStore}'s resolve for this record.
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected retryLoad(): void {
+    this.activeInspectionStore.resolveInspection({
+      organizationId: this.organizationId(),
+      inspectionId: this.inspectionId(),
+    });
   }
 
   /**
@@ -423,15 +415,15 @@ export class InspectionDetailPage {
   }
 
   /**
-   * Method onCancelDialogStateChanged
-   * @description Clears the pending flag on any dismissal — Cancel, the backdrop or Escape.
+   * Method onCancelDialogVisibleChanged
+   * @description Clears the pending flag on any dismissal — "Keep it", the backdrop or Escape.
    * @access protected
-   * @since 1.0.0
-   * @param {BrnDialogState} state - The overlay's new state.
+   * @since 1.3.0
+   * @param {boolean} visible - The dialog's new visibility.
    * @returns {void}
    */
-  protected onCancelDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
+  protected onCancelDialogVisibleChanged(visible: boolean): void {
+    if (visible) return;
 
     this.pendingCancel.set(false);
   }

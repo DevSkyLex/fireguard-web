@@ -5,13 +5,16 @@ import {
   effect,
   inject,
   input,
+  signal,
   untracked,
   viewChild,
   type InputSignal,
   type Signal,
+  type WritableSignal,
   type TemplateRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import type {
@@ -24,6 +27,7 @@ import {
 } from '@features/organization/features/equipments/state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { UnsavedChangesDialog, type UnsavedChangesAware } from '@shared/unsaved-changes';
 import { EquipmentCreateForm } from '../../forms/equipment-create-form';
 
 /**
@@ -42,18 +46,23 @@ import { EquipmentCreateForm } from '../../forms/equipment-create-form';
  * Its title lives in the shell breadcrumb (the route's static title); "Back
  * to equipment" registers on the shell header through `PageActionsService`.
  *
- * @version 1.1.0
+ * Implements `UnsavedChangesAware` so `unsavedChangesGuard`
+ * (`equipments.routes.ts`) can stop navigation while the form holds unsaved
+ * work, hosting the shared {@link UnsavedChangesDialog} to resolve its own
+ * confirmation.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-equipment-create-page',
-  imports: [RouterLink, EquipmentCreateForm, HlmButton, ...HlmCardImports],
+  imports: [RouterLink, EquipmentCreateForm, UnsavedChangesDialog, HlmButton, ...HlmCardImports],
   templateUrl: './equipment-create-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EquipmentCreatePage {
+export class EquipmentCreatePage implements UnsavedChangesAware {
   //#region Inputs
   /**
    * Property organizationId
@@ -72,6 +81,16 @@ export class EquipmentCreatePage {
 
   /** Router used to open the new record once it exists. */
   private readonly router: Router = inject(Router);
+
+  /** Whether {@link EquipmentCreateForm}'s field tree currently holds unsaved work. */
+  protected readonly formDirty: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The shared "discard your edits?" dialog's open/closed state. */
+  protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
+    signal<BrnDialogState>('closed');
+
+  /** Resolves the promise {@link confirmDeactivation} handed to `unsavedChangesGuard`. */
+  private confirmDeactivationResolve: ((confirmed: boolean) => void) | null = null;
 
   /** Registers {@link pageActions} on the shell header. */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
@@ -133,6 +152,60 @@ export class EquipmentCreatePage {
    */
   protected onCancelled(): void {
     void this.router.navigate(['/organizations', this.organizationId(), 'equipments']);
+  }
+
+  /**
+   * Method hasUnsavedChanges
+   * @description `UnsavedChangesAware`: unsaved work is a dirty field tree with no write in flight or already settled.
+   * @access public
+   * @since 1.2.0
+   * @returns {boolean} Whether leaving now would discard work.
+   */
+  public hasUnsavedChanges(): boolean {
+    const status: CallState<EquipmentOutput | null>['status'] = this.store.createCallState().status;
+
+    return this.formDirty() && status !== 'pending' && status !== 'success';
+  }
+
+  /**
+   * Method confirmDeactivation
+   * @description `UnsavedChangesAware`: opens the hosted {@link UnsavedChangesDialog} and resolves once the reader picks Cancel or Discard.
+   * @access public
+   * @since 1.2.0
+   * @returns {Promise<boolean>} Resolves `true` when the reader confirms leaving.
+   */
+  public confirmDeactivation(): Promise<boolean> {
+    this.unsavedChangesDialogState.set('open');
+
+    return new Promise<boolean>((resolve: (confirmed: boolean) => void): void => {
+      this.confirmDeactivationResolve = resolve;
+    });
+  }
+
+  /**
+   * Method onUnsavedChangesConfirmed
+   * @description Resolves the pending deactivation as confirmed.
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected onUnsavedChangesConfirmed(): void {
+    this.unsavedChangesDialogState.set('closed');
+    this.confirmDeactivationResolve?.(true);
+    this.confirmDeactivationResolve = null;
+  }
+
+  /**
+   * Method onUnsavedChangesDismissed
+   * @description Resolves the pending deactivation as cancelled.
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected onUnsavedChangesDismissed(): void {
+    this.unsavedChangesDialogState.set('closed');
+    this.confirmDeactivationResolve?.(false);
+    this.confirmDeactivationResolve = null;
   }
   //#endregion
 }

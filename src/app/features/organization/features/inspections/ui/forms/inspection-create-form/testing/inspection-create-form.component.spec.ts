@@ -109,4 +109,16 @@ describe('InspectionCreateForm', () => {
     expect(button?.disabled).toBe(true);
     expect(button?.textContent).toContain('Creating…');
   });
+
+  it('should report dirtiness through dirtyChanged as the field tree is touched', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    await fill('inspection-create-inspector-name', 'Ada Lovelace');
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+  });
 });

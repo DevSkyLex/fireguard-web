@@ -13,6 +13,7 @@ import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import { sheetSide } from '@shared/sheet-side';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import {
   InterventionWorkItemForm,
@@ -32,7 +33,10 @@ import {
  * than held locally, so the page stays the single owner and the two cannot
  * drift.
  *
- * @version 1.0.0
+ * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
+ * instead of a right-hand panel, so its footer lands in the thumb zone.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -144,6 +148,16 @@ export class InterventionWorkItemSheet {
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
+
+  /**
+   * Property side
+   * @readonly
+   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#endregion
 
   //#region Methods

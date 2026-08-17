@@ -283,6 +283,20 @@ Stores:
   different intervention (prev/next) resets all three to idle so the next
   activation refetches. See `### The rail is not the retired workspace tabs`
   below.
+
+  `listByIntervention` is always called with an explicit `{ page, itemsPerPage:
+LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
+  back to the server's own default page size of 30, which silently truncated
+  any intervention linking more than 30 facilities, pieces of equipment, or
+  inspections with no indication to the user that more existed. Each resource
+  tracks its own `<resource>Page`, `<resource>TotalItems` and
+  `<resource>LoadingMore`; `<resource>HasMore` compares the two to drive the
+  tab's "Show more" button. `loadMoreFacilities`/`loadMoreEquipment`/
+  `loadMoreInspections` fetch the next page and **append** it onto the rows
+  already in the call state rather than replacing them, a no-op while that
+  resource's own page is already in flight; a failed `loadMore` leaves the
+  rows already on screen untouched.
+
 - `InterventionPublicationStore` — component-scoped (provided in
   `InterventionDetailPage`); the publication request+poll flow, one named
   `publishCallState`. The store is a thin wrapper: `InterventionPublicationService`
@@ -862,6 +876,14 @@ dashboard shell's own bundle, the same trade-off `withAssistantToggle()`
 already accepts for the assistant — accepted here because the indicator now
 being permanent means that graph loads for every dashboard visit regardless.
 
+The discard confirm is `app-intervention-sync-discard-dialog`
+(`ui/dialogs/intervention-sync-discard-dialog/`), a purely presentational
+component the indicator still hosts itself: DESIGN.md's ban on inline
+page-level confirm markup names the _page_ as the alternative host, but this
+widget has none — it is the "documented container component" the rule
+reserves for a non-page overlay host, the same exception that already lets it
+inject its own collaborators.
+
 The indicator's trigger deliberately keeps the retired component's
 `data-testid="intervention-sync-status"` rather than minting a new one, so
 every existing sync locator — e2e specs and page objects included — survives
@@ -899,9 +921,12 @@ are pre-checked against the backend's MIME whitelist (images + PDF), the
 (`AttachmentConstraints::MAX_ATTACHMENTS_PER_PARENT`) and — for non-image
 files only — its 10 MiB ceiling: a multi-megabyte camera capture is exactly
 what the compression pipeline exists for, so images skip the local size check
-and the server stays authoritative on the final size; rows delete
-confirm-gated and lock on their own write via the store's
-`pendingAttachmentIds`. The cap surfaces as a `n / 25` badge that appears once
+and the server stays authoritative on the final size; a row's delete button
+emits a request event straight away — `app-intervention-attachments` owns no
+confirm of its own — and the detail page hosts the confirmation
+(`ui/dialogs/intervention-attachment-delete-dialog/`) and locks the row on
+its own write via the store's `pendingAttachmentIds` once accepted. The cap
+surfaces as a `n / 25` badge that appears once
 the list is half full and turns destructive at the ceiling, a hint line, and
 disabled pickers — an enabled button that can only answer 422 is worse than no
 button. A multi-file pick that would overflow the remaining slots is rejected
@@ -1078,6 +1103,17 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   every breakpoint (WCAG 2.4.3), so Cancel-first-in-DOM already puts Submit
   last — nearest the thumb on a bottom-anchored mobile sheet — without a
   reversed row.
+- **All four sheets are bottom drawers below `sm`.** `[side]="side()"` on the
+  `hlm-sheet` host, `side` bound to `@shared/sheet-side`'s `sheetSide()` — an
+  SSR-safe `Signal<'right' | 'bottom'>` reading a `(max-width: 639px)`
+  `matchMedia`, defaulting to `'right'` on the server and until the browser
+  check resolves. `hlm-sheet-content` adds `max-sm:max-h-[85svh]` (plus
+  `max-sm:overflow-y-auto` for the three form-sheets, whose `hlm-field-group`
+  already owns the scroll region described above; the discussion sheet keeps
+  its existing unconditional `overflow-y-auto`) so the sticky footer — the
+  form's own, or the thread's composer — stays inside the viewport and in the
+  thumb zone. No drag-to-dismiss, no snap points: the brain primitive
+  supplies neither and this feature does not hand-roll them.
 - **Padding ownership**: these same three form-sheets keep `px-4` on their
   own `hlm-field-group` rather than moving it to the sheet host, unlike the
   page/dialog-hosted create forms elsewhere in `organization` (which inherit
@@ -1088,22 +1124,41 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   or restructuring the sticky-footer-inside-the-form layout the paragraph
   above documents. Cross-referenced from `organization/FEATURE.md` § UI
   Conventions, where the create-surface placement rule lives.
+- **Overlay dismissal**: the app-wide rule (DESIGN.md § Action Surfaces) is
+  that a **dirty** overlay confirms before closing, via the shared
+  abandon-confirmation primitive. This supersedes the earlier "Cancel always
+  closes: the guard is against losing work by accident, never against leaving
+  deliberately" doctrine still quoted in the create/request-changes sheet
+  docblocks — those docblocks are updated when the shared guard lands. A
+  pristine overlay still closes freely; `disableClose` continues to cover
+  in-flight requests.
+- **Work items filter client-side by design** (all/remaining/done/skipped,
+  mine-first): the workspace drains every page via `listAllWorkItems` because
+  the offline scene needs the complete checklist in IndexedDB regardless of
+  filter. This is a sanctioned bounded drain under DESIGN.md § Collections'
+  Server Rule; the API's server-side work-item filters stay unused on purpose.
 
 ## Invariants
 
 - **Publication is confirm-gated, and the confirmation _is_ the recap.** The phase
-  command in `review` only opens the dialog; `publishIntervention()` is `private`
-  and reachable solely from its accept handler. `app-intervention-publication-summary`
-  now renders in exactly one place — the publish confirmation — fed from the
-  same signals the status band's forward action reads, so what the dialog
-  recaps and what the band's disabled reason implies cannot drift.
+  command in `review` only opens the dialog; `confirmPublish()` on the detail
+  page is reachable solely from `app-intervention-publish-dialog`'s
+  `confirmed` output — the confirmation itself lives in
+  `ui/dialogs/intervention-publish-dialog/`, a purely presentational component
+  (DESIGN.md § Action Surfaces rule 5: a destructive/irreversible confirm is a
+  feature-local `ui/dialogs/` unit, never inline page markup).
+  `app-intervention-publication-summary` renders inside that one dialog, fed
+  the same signals the status band's forward action reads, so what the
+  dialog recaps and what the band's disabled reason implies cannot drift.
   Publication is the one step that writes to the compliance record.
 - **A mutating confirm dialog stays open, busy-locked, until the write
-  settles.** The interventions delete confirm mirrors the publish
-  confirmation's own rule: it stays open on failure and shows the outcome
-  inline, so the operator sees it exactly where they took the action and can
-  retry without reopening the dialog, rather than the failure surfacing only
-  as a page-level toast.
+  settles.** `app-intervention-publish-dialog` and
+  `app-intervention-bulk-delete-dialog` (the latter serving both the
+  row-level and the bulk-selection delete flow, also extracted to
+  `ui/dialogs/`) both stay open on failure and show the outcome inline, so the
+  operator sees it exactly where they took the action and can retry without
+  reopening the dialog, rather than the failure surfacing only as a
+  page-level toast.
 - **The phase's forward action has exactly one _live_ address, and one
   implementation, at every viewport.** `app-intervention-command-button` is
   the only markup; `app-intervention-status-band` is its only host, sticky

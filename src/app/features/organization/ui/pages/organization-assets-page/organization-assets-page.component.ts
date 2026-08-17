@@ -56,11 +56,11 @@ import {
   type OrganizationAssetsPaneStoreType,
 } from '@features/organization/state/organization-assets-pane';
 import { resolveComplianceBucket } from '@features/organization/utils';
+import { EmptyState } from '@shared/empty-state';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmTabsImports } from '@shared/ui/tabs';
 
@@ -101,7 +101,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
  * compliance summary into the right pane; "Export safety register" streams
  * the register PDF through `BrowserDownloadService`.
  *
- * @version 1.1.0
+ * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -111,12 +111,12 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
     NgTemplateOutlet,
     RouterLink,
     NgIcon,
+    EmptyState,
     Tree,
     FacilityMoveDialog,
     HlmBadge,
     HlmButton,
     ...HlmDropdownMenuImports,
-    ...HlmEmptyImports,
     ...HlmTableImports,
     ...HlmTabsImports,
   ],

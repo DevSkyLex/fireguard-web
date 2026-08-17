@@ -333,7 +333,7 @@ describe('ChannelConversationPage', () => {
 
     fixture.componentInstance['requestDelete']();
     await fixture.whenStable();
-    expect(fixture.componentInstance['deleteDialogState']()).toBe('open');
+    expect(fixture.componentInstance['deletePending']()).toBe(true);
 
     fixture.componentInstance['confirmDelete']();
 

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, type OnInit } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
 import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
+import { PageHeading } from '@shared/page-heading';
 
 /**
  * Component PasswordResetVerifyPage
@@ -23,7 +24,7 @@ import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
  */
 @Component({
   selector: 'app-password-reset-verify-page',
-  imports: [OtpForm],
+  imports: [OtpForm, PageHeading],
   templateUrl: './password-reset-verify-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

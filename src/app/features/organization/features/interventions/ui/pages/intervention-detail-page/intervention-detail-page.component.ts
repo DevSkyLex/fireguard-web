@@ -25,7 +25,6 @@ import {
   lucideChevronLeft,
   lucideChevronRight,
   lucideCircleAlert,
-  lucideClock,
   lucideCompass,
   lucideCopy,
   lucideEllipsis,
@@ -106,12 +105,10 @@ import {
 } from '@features/organization/state';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
-import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { InterventionAbout } from '../../components/intervention-about';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
@@ -120,10 +117,11 @@ import { InterventionChangeList } from '../../components/intervention-change-lis
 import { InterventionGettingStarted } from '../../components/intervention-getting-started';
 import { InterventionIssuesChecklist } from '../../components/intervention-issues-checklist';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
-import { InterventionPublicationSummary } from '../../components/intervention-publication-summary';
 import { InterventionStatusBand } from '../../components/intervention-status-band';
 import { InterventionTag } from '../../components/intervention-tag';
+import { InterventionAttachmentDeleteDialog } from '../../dialogs/intervention-attachment-delete-dialog';
 import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
+import { InterventionPublishDialog } from '../../dialogs/intervention-publish-dialog';
 import { InterventionSignatureDialog } from '../../dialogs/intervention-signature-dialog';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
@@ -204,16 +202,16 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     HlmButton,
     HlmSeparator,
     HlmSkeleton,
-    ...HlmAlertDialogImports,
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
-    ...HlmSpinnerImports,
     InterventionAbout,
     InterventionActivityThread,
+    InterventionAttachmentDeleteDialog,
     InterventionAttachments,
     InterventionChangeList,
     InterventionConfirmDialog,
     InterventionDiscussionSheet,
+    InterventionPublishDialog,
     InterventionSignatureDialog,
     InterventionStatusBand,
     InterventionCommentForm,
@@ -223,7 +221,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionFacilitiesTable,
     InterventionInspectionsTable,
     InterventionPropertiesGrid,
-    InterventionPublicationSummary,
     InterventionRequestChangesSheet,
     InterventionTag,
     InterventionWorkItemSheet,
@@ -240,7 +237,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideChevronLeft,
       lucideChevronRight,
       lucideCircleAlert,
-      lucideClock,
       lucideCompass,
       lucideCopy,
       lucideEllipsis,
@@ -661,6 +657,10 @@ export class InterventionDetailPage {
 
   /** Whether the publish confirmation is open. */
   protected readonly publishConfirmOpen: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** What the attachment delete confirmation is asking about, if anything. */
+  protected readonly pendingAttachmentDelete: WritableSignal<InterventionAttachmentOutput | null> =
+    signal<InterventionAttachmentOutput | null>(null);
 
   /**
    * Property offlineBlockReason
@@ -1337,10 +1337,6 @@ export class InterventionDetailPage {
     return index < 0 ? null : (this.listStore.orderedIds()[index + 1] ?? null);
   });
 
-  /** Whether the publish confirmation is showing. */
-  protected readonly publishDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
-    this.publishConfirmOpen() ? 'open' : 'closed',
-  );
   //#endregion
 
   //#region Methods
@@ -1571,11 +1567,12 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Method removeAttachment
+   * Method confirmAttachmentDelete
    *
    * @description
-   * Deletes one attachment the component already confirmed; the row locks
-   * itself through the store's `pendingAttachmentIds`.
+   * Deletes the confirmed attachment and closes
+   * `app-intervention-attachment-delete-dialog`; the row locks itself through
+   * the store's `pendingAttachmentIds`.
    *
    * @access protected
    * @since 4.4.0
@@ -1584,7 +1581,8 @@ export class InterventionDetailPage {
    *
    * @returns {void}
    */
-  protected removeAttachment(attachment: InterventionAttachmentOutput): void {
+  protected confirmAttachmentDelete(attachment: InterventionAttachmentOutput): void {
+    this.pendingAttachmentDelete.set(null);
     this.store.removeAttachment({ attachmentId: attachment.id, revision: attachment.revision });
   }
 

@@ -38,7 +38,7 @@
         (editTargetChanged)="onEditTargetChanged($event)"
       />
     </section>
-  } @else {
+  } @else if (activeEquipmentStore.isLoadingEquipment()) {
     <div
       class="flex flex-col gap-4"
       role="status"
@@ -50,6 +50,25 @@
       <hlm-skeleton class="h-4 w-40" />
       <hlm-skeleton class="h-64 w-full max-w-2xl" />
     </div>
+  } @else {
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="This equipment could not be opened"
+      i18n-title="@@equipment.detail.loadFailedTitle"
+      [description]="activeEquipmentStore.getError()?.message ?? null"
+      data-testid="equipment-detail-load-failed"
+    >
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="equipment-detail-retry"
+        (click)="retryLoad()"
+        i18n="@@common.tryAgain"
+      >
+        Try again
+      </button>
+    </app-error-state>
   }
 </div>
 

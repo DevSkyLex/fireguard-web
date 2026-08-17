@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-8">
+<div id="onboarding-wizard-page" class="flex flex-col gap-8">
   @if (currentStep(); as step) {
     <div class="lg:hidden" data-testid="onboarding-wizard-step-rail">
       <app-onboarding-step-rail
@@ -9,10 +9,7 @@
     </div>
 
     @if (stepPresentation(); as presentation) {
-      <header class="flex flex-col gap-2">
-        <h1 class="text-2xl font-semibold tracking-tight">{{ presentation.label }}</h1>
-        <p class="text-sm text-muted-foreground">{{ presentation.description }}</p>
-      </header>
+      <app-page-heading [heading]="presentation.label" [description]="presentation.description" />
     }
 
     @switch (step.key) {

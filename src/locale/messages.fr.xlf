@@ -9674,10 +9674,6 @@
         <source>Change filter: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Modifier le filtre : <x id="field" equiv-text="fieldLabel"/></target>
       </trans-unit>
-      <trans-unit id="intervention.list.filterOperatorIs" datatype="html">
-        <source>is</source>
-        <target>est</target>
-      </trans-unit>
       <trans-unit id="intervention.list.addFilterButton" datatype="html">
         <source>Filter</source>
         <target>Filtrer</target>
@@ -12109,6 +12105,82 @@
       <trans-unit id="shared.collectionFilterBar.removeFilter" datatype="html">
         <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Retirer le filtre : <x id="field" equiv-text="fieldLabel"/></target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.changeOperator" datatype="html">
+        <source>Change operator: <x id="field" equiv-text="fieldLabel"/></source>
+        <target>Modifier l'opérateur : <x id="field" equiv-text="fieldLabel"/></target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorEquals" datatype="html">
+        <source>is</source>
+        <target>est</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorNotEquals" datatype="html">
+        <source>is not</source>
+        <target>n'est pas</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorContains" datatype="html">
+        <source>contains</source>
+        <target>contient</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorNotContains" datatype="html">
+        <source>does not contain</source>
+        <target>ne contient pas</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorStartsWith" datatype="html">
+        <source>starts with</source>
+        <target>commence par</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorEndsWith" datatype="html">
+        <source>ends with</source>
+        <target>se termine par</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorGreaterThan" datatype="html">
+        <source>greater than</source>
+        <target>supérieur à</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorLessThan" datatype="html">
+        <source>less than</source>
+        <target>inférieur à</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorBetween" datatype="html">
+        <source>between</source>
+        <target>entre</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorIsEmpty" datatype="html">
+        <source>is empty</source>
+        <target>est vide</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorIsNotEmpty" datatype="html">
+        <source>is not empty</source>
+        <target>n'est pas vide</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorIsAnyOf" datatype="html">
+        <source>is any of</source>
+        <target>est l'un de</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilters.operatorIsNoneOf" datatype="html">
+        <source>is none of</source>
+        <target>n'est aucun de</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterDateRangeAfter" datatype="html">
+        <source>after</source>
+        <target>après</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterDateRangeBefore" datatype="html">
+        <source>before</source>
+        <target>avant</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterDatePlaceholder" datatype="html">
+        <source>Pick a date</source>
+        <target>Choisir une date</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterDateRangePlaceholder" datatype="html">
+        <source>Pick start and end dates</source>
+        <target>Choisir les dates de début et de fin</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterPlannedStart" datatype="html">
+        <source>Planned start</source>
+        <target>Début planifié</target>
       </trans-unit>
 </body>
   </file>

@@ -9,13 +9,16 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { CollectionFilterField } from '../../../../models';
+import type {
+  CollectionFilterField,
+  CollectionFilterOperatorChangedEvent,
+} from '../../../../models';
 import { CollectionFilterBar } from '../collection-filter-bar.component';
 
 const FIELDS: readonly CollectionFilterField[] = [
-  { key: 'status', fieldLabel: 'Status', icon: 'lucideCircleDot' },
-  { key: 'type', fieldLabel: 'Type', icon: 'lucideWrench' },
-  { key: 'priority', fieldLabel: 'Priority', icon: 'lucideFlag' },
+  { key: 'status', fieldLabel: 'Status', icon: 'lucideCircleDot', operators: ['equals'] },
+  { key: 'type', fieldLabel: 'Type', icon: 'lucideWrench', operators: ['equals', 'notEquals'] },
+  { key: 'priority', fieldLabel: 'Priority', icon: 'lucideFlag', operators: ['equals'] },
 ];
 
 /** Reads which chip a `[data-testid$="-value"]` marker belongs to, in current DOM order. */
@@ -38,6 +41,7 @@ function renderedChipMarkers(): readonly string[] {
       (fieldPicked)="onFieldPicked($event)"
       (fieldRemoved)="removed.push($event)"
       (filtersCleared)="cleared = cleared + 1"
+      (operatorChanged)="operatorChanges.push($event)"
     />
 
     <ng-template #statusValue><span data-testid="status-value">Planned</span></ng-template>
@@ -52,6 +56,7 @@ class CollectionFilterBarHost {
   public readonly pendingKey: WritableSignal<string | null> = signal<string | null>(null);
   public readonly picked: string[] = [];
   public readonly removed: string[] = [];
+  public readonly operatorChanges: CollectionFilterOperatorChangedEvent[] = [];
   public cleared = 0;
 
   /** Mirrors a real page's `fieldPicked` handler: opens the picked field's own selector. */
@@ -75,8 +80,23 @@ class CollectionFilterBarHost {
   );
 }
 
+/**
+ * Minimal ResizeObserver stand-in: the operator select's popover observes
+ * its anchor, and the test environment provides no implementation.
+ */
+class ResizeObserverStub {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+}
+
 describe('CollectionFilterBar', () => {
   let fixture: ComponentFixture<CollectionFilterBarHost>;
+
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+    HTMLElement.prototype.scrollIntoView ??= (): void => {};
+  });
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
@@ -136,6 +156,35 @@ describe('CollectionFilterBar', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance.cleared).toBe(1);
+  });
+
+  describe('operator segment', () => {
+    it('defaults an active field with no activeOperators entry to its own first declared operator', () => {
+      const operatorSegment: HTMLElement | null = document.querySelector(
+        '[data-testid="widgets-filter-chip-operator"]',
+      );
+
+      expect(operatorSegment?.textContent?.trim()).toBe('is');
+    });
+
+    it('emits operatorChanged carrying the field key alongside the picked operator', async () => {
+      fixture.componentInstance.activeKeys.set(['type']);
+      await fixture.whenStable();
+
+      document
+        .querySelector<HTMLButtonElement>('[data-testid="widgets-filter-chip-operator"] button')
+        ?.click();
+      await fixture.whenStable();
+
+      Array.from(document.querySelectorAll<HTMLElement>('[role="option"]'))
+        .find((option) => option.textContent?.trim() === 'is not')
+        ?.click();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.operatorChanges).toEqual([
+        { key: 'type', operator: 'notEquals' },
+      ]);
+    });
   });
 
   describe('display order', () => {

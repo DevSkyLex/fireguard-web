@@ -277,10 +277,12 @@
       [activeKeys]="activeFilterKeys()"
       [pendingKey]="openFilterKey()"
       [templates]="chipTemplates()"
+      [activeOperators]="filterOperators()"
       testIdPrefix="interventions"
       (fieldPicked)="onFieldPicked($event)"
       (fieldRemoved)="onFieldRemoved($event)"
       (filtersCleared)="clearFilters()"
+      (operatorChanged)="onFilterOperatorChanged($event)"
     />
   }
 
@@ -485,34 +487,114 @@
     </hlm-select>
   </ng-template>
 
-  <ng-template #dueWindowChip>
-    <hlm-select
-      [value]="filters().dueWindow"
-      [itemToString]="dueWindowLabelOf"
-      [state]="fieldPopoverState('dueWindow')"
-      (valueChange)="applyFilter({ dueWindow: $event ?? null })"
-      (stateChanged)="onFieldPopoverStateChanged('dueWindow', $event)"
-    >
-      <label for="interventions-filter-due" class="sr-only">{{
-        changeFilterLabel(filterFieldOption('dueWindow').fieldLabel)
-      }}</label>
-      <hlm-select-trigger
-        buttonId="interventions-filter-due"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-        data-testid="interventions-filter-due"
-      >
-        <hlm-select-value placeholder="Deadline" i18n-placeholder="@@intervention.list.filterDue" />
-      </hlm-select-trigger>
-      <hlm-select-content *hlmSelectPortal class="w-fit">
-        <hlm-select-group>
-          @for (option of dueWindowOptions; track option.value) {
-            <hlm-select-item [value]="option.value">
-              <span class="whitespace-nowrap">{{ option.label }}</span>
-            </hlm-select-item>
-          }
-        </hlm-select-group>
-      </hlm-select-content>
-    </hlm-select>
+  <ng-template #dueRangeChip>
+    @switch (dueRangeOperator()) {
+      @case ('greaterThan') {
+        <hlm-date-picker [date]="dueRangeAfter() ?? undefined" (dateChange)="pickDueAfter($event)">
+          <label for="interventions-filter-due" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('dueRange').fieldLabel)
+          }}</label>
+          <hlm-date-picker-trigger
+            buttonId="interventions-filter-due"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-due"
+          >
+            <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
+          </hlm-date-picker-trigger>
+        </hlm-date-picker>
+      }
+      @case ('lessThan') {
+        <hlm-date-picker
+          [date]="dueRangeBefore() ?? undefined"
+          (dateChange)="pickDueBefore($event)"
+        >
+          <label for="interventions-filter-due" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('dueRange').fieldLabel)
+          }}</label>
+          <hlm-date-picker-trigger
+            buttonId="interventions-filter-due"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-due"
+          >
+            <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
+          </hlm-date-picker-trigger>
+        </hlm-date-picker>
+      }
+      @case ('between') {
+        <hlm-date-range-picker [date]="dueRangeBetween()" (dateChange)="pickDueBetween($event)">
+          <label for="interventions-filter-due" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('dueRange').fieldLabel)
+          }}</label>
+          <hlm-date-picker-trigger
+            buttonId="interventions-filter-due"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-due"
+          >
+            <span i18n="@@intervention.list.filterDateRangePlaceholder"
+              >Pick start and end dates</span
+            >
+          </hlm-date-picker-trigger>
+        </hlm-date-range-picker>
+      }
+    }
+  </ng-template>
+
+  <ng-template #plannedStartRangeChip>
+    @switch (plannedStartRangeOperator()) {
+      @case ('greaterThan') {
+        <hlm-date-picker
+          [date]="plannedStartRangeAfter() ?? undefined"
+          (dateChange)="pickPlannedStartAfter($event)"
+        >
+          <label for="interventions-filter-planned-start" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('plannedStartRange').fieldLabel)
+          }}</label>
+          <hlm-date-picker-trigger
+            buttonId="interventions-filter-planned-start"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-planned-start"
+          >
+            <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
+          </hlm-date-picker-trigger>
+        </hlm-date-picker>
+      }
+      @case ('lessThan') {
+        <hlm-date-picker
+          [date]="plannedStartRangeBefore() ?? undefined"
+          (dateChange)="pickPlannedStartBefore($event)"
+        >
+          <label for="interventions-filter-planned-start" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('plannedStartRange').fieldLabel)
+          }}</label>
+          <hlm-date-picker-trigger
+            buttonId="interventions-filter-planned-start"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-planned-start"
+          >
+            <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
+          </hlm-date-picker-trigger>
+        </hlm-date-picker>
+      }
+      @case ('between') {
+        <hlm-date-range-picker
+          [date]="plannedStartRangeBetween()"
+          (dateChange)="pickPlannedStartBetween($event)"
+        >
+          <label for="interventions-filter-planned-start" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('plannedStartRange').fieldLabel)
+          }}</label>
+          <hlm-date-picker-trigger
+            buttonId="interventions-filter-planned-start"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-planned-start"
+          >
+            <span i18n="@@intervention.list.filterDateRangePlaceholder"
+              >Pick start and end dates</span
+            >
+          </hlm-date-picker-trigger>
+        </hlm-date-range-picker>
+      }
+    }
   </ng-template>
 
   @if (hasError()) {

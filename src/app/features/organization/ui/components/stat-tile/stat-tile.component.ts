@@ -34,7 +34,13 @@ import type { StatTileDelta, StatTileLink, StatTileTone } from './models';
  * simply in a bad state rather than trending one way or another (an overdue
  * count, say): it colours the icon alone, per the Glyph Rule (`DESIGN.md`).
  *
- * @version 1.2.0
+ * {@link icon} sits in an `hlmCardAction` slot rather than a hand-laid-out
+ * flex row: `hlmCardHeader` is a CSS grid that only gains a second column
+ * for a `data-slot=card-action` child, so an icon placed any other way
+ * drops to its own grid row and makes that one tile taller than its
+ * siblings in a KPI strip.
+ *
+ * @version 1.2.1
  *
  * @example
  * ```html

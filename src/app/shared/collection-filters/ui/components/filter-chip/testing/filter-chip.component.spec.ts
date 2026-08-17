@@ -1,5 +1,11 @@
-import { Component, provideZonelessChangeDetection } from '@angular/core';
+import {
+  Component,
+  provideZonelessChangeDetection,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import type { CollectionFilterOperator } from '../../../../models';
 import { FilterChip } from '../filter-chip.component';
 
 @Component({
@@ -11,7 +17,11 @@ import { FilterChip } from '../filter-chip.component';
       icon="lucideX"
       removeLabel="Remove filter: Status"
       testIdPrefix="interventions"
+      [operator]="operator()"
+      [operatorOptions]="operatorOptions()"
+      changeOperatorLabel="Change operator: Status"
       (removed)="removedCount = removedCount + 1"
+      (operatorChanged)="lastOperatorChange = $event"
     >
       <button type="button" data-testid="value-slot">Planned</button>
     </app-filter-chip>
@@ -19,6 +29,12 @@ import { FilterChip } from '../filter-chip.component';
 })
 class FilterChipHost {
   public removedCount = 0;
+  public lastOperatorChange: CollectionFilterOperator | null = null;
+  public readonly operator: WritableSignal<CollectionFilterOperator> =
+    signal<CollectionFilterOperator>('equals');
+  public readonly operatorOptions: WritableSignal<readonly CollectionFilterOperator[]> = signal<
+    readonly CollectionFilterOperator[]
+  >(['equals']);
 }
 
 describe('FilterChip', () => {
@@ -53,5 +69,28 @@ describe('FilterChip', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance.removedCount).toBe(1);
+  });
+
+  it('renders a single-operator field as a fixed, non-interactive label', () => {
+    const element: HTMLElement = fixture.nativeElement as HTMLElement;
+    const operatorSegment: HTMLElement | null = element.querySelector(
+      '[data-testid="interventions-filter-chip-operator"]',
+    );
+
+    expect(operatorSegment?.tagName).toBe('SPAN');
+    expect(operatorSegment?.textContent?.trim()).toBe('is');
+  });
+
+  it('renders a multi-operator field as a select offering every declared operator', async () => {
+    fixture.componentInstance.operatorOptions.set(['equals', 'contains']);
+    await fixture.whenStable();
+
+    const element: HTMLElement = fixture.nativeElement as HTMLElement;
+    const operatorSegment: HTMLElement | null = element.querySelector(
+      '[data-testid="interventions-filter-chip-operator"]',
+    );
+
+    expect(operatorSegment?.querySelector('button')).not.toBeNull();
+    expect(operatorSegment?.textContent?.trim()).toBe('is');
   });
 });

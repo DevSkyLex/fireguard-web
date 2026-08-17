@@ -110,35 +110,56 @@ export const INTERVENTION_FILTER_FIELDS: readonly InterventionFilterFieldOption[
     key: 'status',
     fieldLabel: $localize`:@@intervention.list.filterStatus:Status`,
     icon: 'lucideCircleDot',
+    operators: ['equals'],
   },
   {
     key: 'type',
     fieldLabel: $localize`:@@intervention.list.filterType:Type`,
     icon: 'lucideWrench',
+    operators: ['equals'],
   },
   {
     key: 'priority',
     fieldLabel: $localize`:@@intervention.list.filterPriority:Priority`,
     icon: 'lucideFlag',
+    operators: ['equals'],
   },
   {
     key: 'site',
     fieldLabel: $localize`:@@intervention.list.filterSite:Site`,
     icon: 'lucideMapPin',
+    operators: ['equals'],
   },
   {
     key: 'responsible',
     fieldLabel: $localize`:@@intervention.list.filterResponsible:Responsible`,
     icon: 'lucideUser',
+    operators: ['equals'],
   },
   {
     key: 'label',
     fieldLabel: $localize`:@@intervention.list.filterLabel:Label`,
     icon: 'lucideTag',
+    operators: ['equals'],
   },
   {
-    key: 'dueWindow',
+    key: 'dueRange',
     fieldLabel: $localize`:@@intervention.list.filterDue:Deadline`,
     icon: 'lucideCalendarClock',
+    operators: ['greaterThan', 'lessThan', 'between'],
+    operatorLabels: {
+      greaterThan: $localize`:@@intervention.list.filterDateRangeAfter:after`,
+      lessThan: $localize`:@@intervention.list.filterDateRangeBefore:before`,
+    },
+  },
+  {
+    key: 'plannedStartRange',
+    fieldLabel: $localize`:@@intervention.list.filterPlannedStart:Planned start`,
+    icon: 'lucideCalendarDays',
+    operators: ['greaterThan', 'lessThan', 'between'],
+    operatorLabels: {
+      greaterThan: $localize`:@@intervention.list.filterDateRangeAfter:after`,
+      lessThan: $localize`:@@intervention.list.filterDateRangeBefore:before`,
+    },
   },
 ];

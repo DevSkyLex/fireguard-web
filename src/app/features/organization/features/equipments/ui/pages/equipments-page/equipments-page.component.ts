@@ -231,11 +231,13 @@ export class EquipmentsPage {
       key: 'type',
       fieldLabel: $localize`:@@equipment.list.filterType:Type`,
       icon: 'lucideTag',
+      operators: ['equals'],
     },
     {
       key: 'status',
       fieldLabel: $localize`:@@equipment.list.filterStatus:Status`,
       icon: 'lucideCircleDot',
+      operators: ['equals'],
     },
   ];
 

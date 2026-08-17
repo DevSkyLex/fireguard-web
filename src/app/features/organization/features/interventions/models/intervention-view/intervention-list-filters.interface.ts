@@ -1,6 +1,8 @@
 import type { InterventionPriority } from '../intervention/intervention-priority.type';
 import type { InterventionStatus } from '../intervention/intervention-status.type';
 import type { InterventionType } from '../intervention/intervention-type.type';
+import type { InterventionDueRangeFilter } from './intervention-due-range-filter.type';
+import type { InterventionPlannedStartRangeFilter } from './intervention-planned-start-range-filter.type';
 
 /**
  * Interface InterventionListFilters
@@ -44,8 +46,31 @@ export interface InterventionListFilters {
    */
   readonly mine: boolean;
 
-  /** Named due-date window, resolved to `dueAtAfter`/`dueAtBefore` bounds. */
+  /**
+   * Named due-date window, resolved to `dueAtAfter`/`dueAtBefore` bounds.
+   * Legacy-preset only: the segmented views and the Today page's deep link
+   * are its only writers now — the filter bar's "Deadline" chip narrows
+   * through {@link dueRange} instead (`FEATURE.md`).
+   */
   readonly dueWindow: InterventionDueWindow | null;
+
+  /**
+   * The filter bar's "Deadline" chip narrowing — a real `greaterThan` /
+   * `lessThan` / `between` date bound, independent of {@link dueWindow}.
+   * Both resolve into the same `dueAtAfter`/`dueAtBefore` API bounds and
+   * combine (tightened, never widened) when both happen to be active at
+   * once.
+   */
+  readonly dueRange: InterventionDueRangeFilter | null;
+
+  /**
+   * The filter bar's "Planned start" chip narrowing — the same
+   * `greaterThan`/`lessThan`/`between` shape as {@link dueRange}, mapped to
+   * `plannedStartAtAfter`/`plannedStartAtBefore` instead. No legacy preset
+   * writes this field — unlike {@link dueWindow}, nothing else narrows by
+   * planned start today, so the mapping is direct.
+   */
+  readonly plannedStartRange: InterventionPlannedStartRangeFilter | null;
   //#endregion
 }
 

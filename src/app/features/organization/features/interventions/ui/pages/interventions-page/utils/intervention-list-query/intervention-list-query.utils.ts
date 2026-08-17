@@ -1,8 +1,10 @@
 import type {
+  InterventionDueRangeFilter,
   InterventionDueWindow,
   InterventionListFilters,
   InterventionListOptions,
   InterventionListSort,
+  InterventionPlannedStartRangeFilter,
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import {
@@ -104,7 +106,44 @@ export function buildInterventionListOptions(
     if (bounds.dueAtBefore) options.dueAtBefore = bounds.dueAtBefore;
   }
 
+  if (filters.dueRange) {
+    const range: InterventionDueRangeFilter = filters.dueRange;
+    if (range.operator === 'greaterThan' || range.operator === 'between') {
+      options.dueAtAfter = laterOf(options.dueAtAfter, range.after.toISOString());
+    }
+    if (range.operator === 'lessThan' || range.operator === 'between') {
+      options.dueAtBefore = earlierOf(options.dueAtBefore, range.before.toISOString());
+    }
+  }
+
+  if (filters.plannedStartRange) {
+    const range: InterventionPlannedStartRangeFilter = filters.plannedStartRange;
+    if (range.operator === 'greaterThan' || range.operator === 'between') {
+      options.plannedStartAtAfter = range.after.toISOString();
+    }
+    if (range.operator === 'lessThan' || range.operator === 'between') {
+      options.plannedStartAtBefore = range.before.toISOString();
+    }
+  }
+
   return options;
+}
+
+/**
+ * The later (more restrictive as a lower bound) of an already-set
+ * `dueAtAfter` and a newly resolved one — ISO 8601 instants compare
+ * chronologically as plain strings. Lets `dueWindow` (the segmented views'
+ * legacy preset) and `dueRange` (the filter bar's own operator) combine into
+ * the tightest bound when both happen to be active at once, rather than one
+ * silently overwriting the other.
+ */
+function laterOf(existing: string | undefined, next: string): string {
+  return existing && existing > next ? existing : next;
+}
+
+/** The earlier of an already-set `dueAtBefore` and a newly resolved one. See {@link laterOf}. */
+function earlierOf(existing: string | undefined, next: string): string {
+  return existing && existing < next ? existing : next;
 }
 
 /**
@@ -121,6 +160,72 @@ function parseOption<T extends string>(
 /** The last path segment of an IRI, null in and null out. */
 function lastIriSegment(iri: string | null): string | null {
   return iri === null ? null : (iri.split('/').pop() ?? null);
+}
+
+/** A `YYYY-MM-DD` query param parsed to a `Date`, `null` for an absent or unparseable value — a tampered date param is dropped rather than sent to the API. */
+function parseIsoDate(raw: string | undefined): Date | null {
+  if (!raw) return null;
+  const date: Date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Function parseDueRange
+ *
+ * @description
+ * Rebuilds the filter bar's "Deadline" narrowing from its own
+ * `dueAfter`/`dueBefore` query params: both present resolves `between`,
+ * either alone resolves the matching one-sided operator, neither resolves
+ * unfiltered.
+ *
+ * @param {string | undefined} after - The raw `dueAfter` param.
+ * @param {string | undefined} before - The raw `dueBefore` param.
+ *
+ * @returns {InterventionDueRangeFilter | null} The narrowing the params express.
+ *
+ * @since 8.1.0
+ */
+function parseDueRange(
+  after: string | undefined,
+  before: string | undefined,
+): InterventionDueRangeFilter | null {
+  const afterDate: Date | null = parseIsoDate(after);
+  const beforeDate: Date | null = parseIsoDate(before);
+
+  if (afterDate && beforeDate) return { operator: 'between', after: afterDate, before: beforeDate };
+  if (afterDate) return { operator: 'greaterThan', after: afterDate };
+  if (beforeDate) return { operator: 'lessThan', before: beforeDate };
+  return null;
+}
+
+/**
+ * Function parsePlannedStartRange
+ *
+ * @description
+ * Rebuilds the filter bar's "Planned start" narrowing from its own
+ * `plannedStartAfter`/`plannedStartBefore` query params — the same shape as
+ * {@link parseDueRange}, kept as its own function per field rather than a
+ * shared generic parser (`ARCHITECTURE.md` §2.9: two consumers do not yet
+ * justify that abstraction).
+ *
+ * @param {string | undefined} after - The raw `plannedStartAfter` param.
+ * @param {string | undefined} before - The raw `plannedStartBefore` param.
+ *
+ * @returns {InterventionPlannedStartRangeFilter | null} The narrowing the params express.
+ *
+ * @since 8.2.0
+ */
+function parsePlannedStartRange(
+  after: string | undefined,
+  before: string | undefined,
+): InterventionPlannedStartRangeFilter | null {
+  const afterDate: Date | null = parseIsoDate(after);
+  const beforeDate: Date | null = parseIsoDate(before);
+
+  if (afterDate && beforeDate) return { operator: 'between', after: afterDate, before: beforeDate };
+  if (afterDate) return { operator: 'greaterThan', after: afterDate };
+  if (beforeDate) return { operator: 'lessThan', before: beforeDate };
+  return null;
 }
 
 /**
@@ -149,6 +254,10 @@ export function parseInterventionListFilters(
     readonly label?: string;
     readonly mine?: string;
     readonly due?: string;
+    readonly dueAfter?: string;
+    readonly dueBefore?: string;
+    readonly plannedStartAfter?: string;
+    readonly plannedStartBefore?: string;
   },
   organizationId: string,
 ): InterventionListFilters {
@@ -163,6 +272,8 @@ export function parseInterventionListFilters(
     label: raw.label ? `/api/intervention-labels/${raw.label}` : null,
     mine: raw.mine === '1',
     dueWindow: parseOption(raw.due, INTERVENTION_DUE_WINDOW_OPTIONS),
+    dueRange: parseDueRange(raw.dueAfter, raw.dueBefore),
+    plannedStartRange: parsePlannedStartRange(raw.plannedStartAfter, raw.plannedStartBefore),
   };
 }
 
@@ -172,7 +283,9 @@ export function parseInterventionListFilters(
  * @description
  * Turns the active narrowing into the query params that express it — null
  * removes the param from the URL, so a cleared filter leaves no residue. The
- * reverse of {@link parseInterventionListFilters}.
+ * reverse of {@link parseInterventionListFilters}. `dueRange`'s bounds
+ * serialize to plain `YYYY-MM-DD` dates (`.toISOString().slice(0, 10)`), kept
+ * separate from `dueWindow`'s own `due=` preset param.
  *
  * @param {InterventionListFilters} filters - Active narrowing.
  *
@@ -183,6 +296,9 @@ export function parseInterventionListFilters(
 export function serializeInterventionListFilters(
   filters: InterventionListFilters,
 ): Record<string, string | null> {
+  const range: InterventionDueRangeFilter | null = filters.dueRange;
+  const plannedStartRange: InterventionPlannedStartRangeFilter | null = filters.plannedStartRange;
+
   return {
     status: filters.status,
     type: filters.type,
@@ -192,6 +308,24 @@ export function serializeInterventionListFilters(
     label: lastIriSegment(filters.label),
     mine: filters.mine ? '1' : null,
     due: filters.dueWindow,
+    dueAfter:
+      range && (range.operator === 'greaterThan' || range.operator === 'between')
+        ? range.after.toISOString().slice(0, 10)
+        : null,
+    dueBefore:
+      range && (range.operator === 'lessThan' || range.operator === 'between')
+        ? range.before.toISOString().slice(0, 10)
+        : null,
+    plannedStartAfter:
+      plannedStartRange &&
+      (plannedStartRange.operator === 'greaterThan' || plannedStartRange.operator === 'between')
+        ? plannedStartRange.after.toISOString().slice(0, 10)
+        : null,
+    plannedStartBefore:
+      plannedStartRange &&
+      (plannedStartRange.operator === 'lessThan' || plannedStartRange.operator === 'between')
+        ? plannedStartRange.before.toISOString().slice(0, 10)
+        : null,
   };
 }
 

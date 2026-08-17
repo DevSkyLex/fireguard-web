@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
   untracked,
   viewChild,
@@ -21,6 +22,7 @@ import {
   lucideArrowDown,
   lucideArrowUp,
   lucideCalendarClock,
+  lucideCalendarDays,
   lucideCheck,
   lucideCircleAlert,
   lucideCircleDot,
@@ -49,11 +51,12 @@ import {
   resolveInterventionTag,
   type InterventionAssignRequest,
   type InterventionAssignSubmittedEvent,
-  type InterventionDueWindow,
+  type InterventionDueRangeFilter,
   type InterventionDuplicatePrefill,
   type InterventionListFilters,
   type InterventionListSort,
   type InterventionOutput,
+  type InterventionPlannedStartRangeFilter,
   type InterventionPriority,
   type InterventionSortField,
   type InterventionStatus,
@@ -85,6 +88,8 @@ import {
   CollectionFilterBar,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
+  type CollectionFilterOperator,
+  type CollectionFilterOperatorChangedEvent,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
@@ -93,6 +98,7 @@ import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
+import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -122,7 +128,6 @@ import type {
   InterventionListItemViewModel,
 } from './models';
 import {
-  INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_FILTER_FIELDS,
   INTERVENTION_PRIORITY_FILTER_OPTIONS,
   INTERVENTION_SORT_OPTIONS,
@@ -162,6 +167,8 @@ const NO_FILTERS: InterventionListFilters = {
   label: null,
   mine: false,
   dueWindow: null,
+  dueRange: null,
+  plannedStartRange: null,
 };
 
 /**
@@ -176,6 +183,33 @@ const NO_FILTERS: InterventionListFilters = {
  * @since 6.3.0
  */
 type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
+
+/**
+ * Type InterventionDueRangeOperator
+ *
+ * @description
+ * The three operators the "Deadline" chip's own `dueRange` field declares —
+ * the discriminant of {@link InterventionDueRangeFilter}, named locally so
+ * {@link InterventionsPage.dueRangeOperator} and its value-control methods
+ * stay narrowly typed instead of the wider `CollectionFilterOperator`.
+ *
+ * @since 8.1.0
+ */
+type InterventionDueRangeOperator = 'greaterThan' | 'lessThan' | 'between';
+
+/**
+ * Type InterventionPlannedStartRangeOperator
+ *
+ * @description
+ * The three operators the "Planned start" chip's own `plannedStartRange`
+ * field declares — the discriminant of
+ * {@link InterventionPlannedStartRangeFilter}, named locally for the same
+ * reason as {@link InterventionDueRangeOperator}, not shared with it (rule
+ * of three, `FEATURE.md`).
+ *
+ * @since 8.2.0
+ */
+type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'between';
 
 /**
  * Component InterventionsPage
@@ -279,6 +313,7 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
     CollectionSearchBox,
     CollectionToolbar,
     ...HlmCheckboxImports,
+    ...HlmDatePickerImports,
     ...HlmDropdownMenuImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
@@ -292,6 +327,7 @@ type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
       lucideArrowDown,
       lucideArrowUp,
       lucideCalendarClock,
+      lucideCalendarDays,
       lucideCheck,
       lucideCircleAlert,
       lucideCircleDot,
@@ -399,8 +435,24 @@ export class InterventionsPage {
   /** `?mine=1` narrows to the signed-in member (responsible OR participant). */
   public readonly mine: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The named due-date window the URL carries. See {@link status}. */
+  /** The named due-date window the URL carries — the segmented views' and the Today page's own legacy preset. See {@link status}. */
   public readonly due: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The filter bar's "Deadline" chip lower bound, `YYYY-MM-DD`. See {@link status}. */
+  public readonly dueAfter: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The filter bar's "Deadline" chip upper bound, `YYYY-MM-DD`. See {@link status}. */
+  public readonly dueBefore: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The filter bar's "Planned start" chip lower bound, `YYYY-MM-DD`. See {@link status}. */
+  public readonly plannedStartAfter: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+  );
+
+  /** The filter bar's "Planned start" chip upper bound, `YYYY-MM-DD`. See {@link status}. */
+  public readonly plannedStartBefore: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+  );
   //#endregion
 
   //#region Properties
@@ -571,6 +623,10 @@ export class InterventionsPage {
           label: this.label(),
           mine: this.mine(),
           due: this.due(),
+          dueAfter: this.dueAfter(),
+          dueBefore: this.dueBefore(),
+          plannedStartAfter: this.plannedStartAfter(),
+          plannedStartBefore: this.plannedStartBefore(),
         },
         this.organizationId(),
       ),
@@ -684,10 +740,6 @@ export class InterventionsPage {
   /** Priority choices offered in the filter bar. */
   protected readonly priorityOptions: SelectOption<InterventionPriority>[] =
     INTERVENTION_PRIORITY_FILTER_OPTIONS;
-
-  /** Deadline windows offered in the filter bar. */
-  protected readonly dueWindowOptions: SelectOption<InterventionDueWindow>[] =
-    INTERVENTION_DUE_WINDOW_OPTIONS;
 
   /** Every hideable column, for the Display popover's column list. */
   protected readonly allColumns: ReadonlyArray<InterventionTableColumn> =
@@ -1228,7 +1280,11 @@ export class InterventionsPage {
   private readonly labelChipTemplate = viewChild<TemplateRef<unknown>>('labelChip');
 
   /** The "Deadline" chip's value control, projected into the filter bar. */
-  private readonly dueWindowChipTemplate = viewChild<TemplateRef<unknown>>('dueWindowChip');
+  private readonly dueRangeChipTemplate = viewChild<TemplateRef<unknown>>('dueRangeChip');
+
+  /** The "Planned start" chip's value control, projected into the filter bar. */
+  private readonly plannedStartRangeChipTemplate =
+    viewChild<TemplateRef<unknown>>('plannedStartRangeChip');
 
   /**
    * Property chipTemplates
@@ -1247,8 +1303,178 @@ export class InterventionsPage {
     site: this.siteChipTemplate(),
     responsible: this.responsibleChipTemplate(),
     label: this.labelChipTemplate(),
-    dueWindow: this.dueWindowChipTemplate(),
+    dueRange: this.dueRangeChipTemplate(),
+    plannedStartRange: this.plannedStartRangeChipTemplate(),
   }));
+
+  /**
+   * Property dueRangeOperator
+   * @readonly
+   *
+   * @description
+   * The "Deadline" chip's own currently-selected operator — a
+   * `linkedSignal` over {@link filters}' own `dueRange`, so a shared or
+   * reloaded `?dueAfter=…`/`?dueBefore=…` URL shows the right operator
+   * immediately, while picking a different operator from the chip's own
+   * select (before a new date is chosen) still updates this signal directly
+   * without waiting for a URL round-trip. Defaults to `greaterThan` — the
+   * field's first declared operator — the moment "Deadline" is picked from
+   * the "+ Filter" menu and carries no value yet.
+   *
+   * @access protected
+   * @since 8.1.0
+   *
+   * @type {WritableSignal<InterventionDueRangeOperator>}
+   */
+  protected readonly dueRangeOperator: WritableSignal<InterventionDueRangeOperator> = linkedSignal<
+    InterventionDueRangeFilter | null,
+    InterventionDueRangeOperator
+  >({
+    source: () => this.filters().dueRange,
+    computation: (
+      dueRange: InterventionDueRangeFilter | null,
+      previous,
+    ): InterventionDueRangeOperator => dueRange?.operator ?? previous?.value ?? 'greaterThan',
+  });
+
+  /**
+   * Property dueRangeAfter
+   * @readonly
+   * @description The applied `dueRange`'s lower bound, when its operator carries one — read by the "after"/"between" value controls.
+   * @access protected
+   * @since 8.1.0
+   * @type {Signal<Date | null>}
+   */
+  protected readonly dueRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
+    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
+
+    return dueRange && (dueRange.operator === 'greaterThan' || dueRange.operator === 'between')
+      ? dueRange.after
+      : null;
+  });
+
+  /**
+   * Property dueRangeBefore
+   * @readonly
+   * @description The applied `dueRange`'s upper bound, when its operator carries one — read by the "before"/"between" value controls.
+   * @access protected
+   * @since 8.1.0
+   * @type {Signal<Date | null>}
+   */
+  protected readonly dueRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
+    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
+
+    return dueRange && (dueRange.operator === 'lessThan' || dueRange.operator === 'between')
+      ? dueRange.before
+      : null;
+  });
+
+  /**
+   * Property dueRangeBetween
+   * @readonly
+   * @description The applied `dueRange`'s bound pair, only while its operator is `between` — read by `hlm-date-range-picker`, which needs both ends or neither.
+   * @access protected
+   * @since 8.1.0
+   * @type {Signal<[Date, Date] | undefined>}
+   */
+  protected readonly dueRangeBetween: Signal<[Date, Date] | undefined> = computed<
+    [Date, Date] | undefined
+  >(() => {
+    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
+
+    return dueRange && dueRange.operator === 'between'
+      ? [dueRange.after, dueRange.before]
+      : undefined;
+  });
+
+  /**
+   * Property plannedStartRangeOperator
+   * @readonly
+   * @description The "Planned start" chip's own currently-selected operator — the same `linkedSignal` pattern as {@link dueRangeOperator}, over `filters()`' own `plannedStartRange`.
+   * @access protected
+   * @since 8.2.0
+   * @type {WritableSignal<InterventionPlannedStartRangeOperator>}
+   */
+  protected readonly plannedStartRangeOperator: WritableSignal<InterventionPlannedStartRangeOperator> =
+    linkedSignal<InterventionPlannedStartRangeFilter | null, InterventionPlannedStartRangeOperator>(
+      {
+        source: () => this.filters().plannedStartRange,
+        computation: (
+          plannedStartRange: InterventionPlannedStartRangeFilter | null,
+          previous,
+        ): InterventionPlannedStartRangeOperator =>
+          plannedStartRange?.operator ?? previous?.value ?? 'greaterThan',
+      },
+    );
+
+  /**
+   * Property plannedStartRangeAfter
+   * @readonly
+   * @description The applied `plannedStartRange`'s lower bound, when its operator carries one. See {@link dueRangeAfter}.
+   * @access protected
+   * @since 8.2.0
+   * @type {Signal<Date | null>}
+   */
+  protected readonly plannedStartRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
+    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
+      this.filters().plannedStartRange;
+
+    return plannedStartRange &&
+      (plannedStartRange.operator === 'greaterThan' || plannedStartRange.operator === 'between')
+      ? plannedStartRange.after
+      : null;
+  });
+
+  /**
+   * Property plannedStartRangeBefore
+   * @readonly
+   * @description The applied `plannedStartRange`'s upper bound, when its operator carries one. See {@link dueRangeBefore}.
+   * @access protected
+   * @since 8.2.0
+   * @type {Signal<Date | null>}
+   */
+  protected readonly plannedStartRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
+    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
+      this.filters().plannedStartRange;
+
+    return plannedStartRange &&
+      (plannedStartRange.operator === 'lessThan' || plannedStartRange.operator === 'between')
+      ? plannedStartRange.before
+      : null;
+  });
+
+  /**
+   * Property plannedStartRangeBetween
+   * @readonly
+   * @description The applied `plannedStartRange`'s bound pair, only while its operator is `between`. See {@link dueRangeBetween}.
+   * @access protected
+   * @since 8.2.0
+   * @type {Signal<[Date, Date] | undefined>}
+   */
+  protected readonly plannedStartRangeBetween: Signal<[Date, Date] | undefined> = computed<
+    [Date, Date] | undefined
+  >(() => {
+    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
+      this.filters().plannedStartRange;
+
+    return plannedStartRange && plannedStartRange.operator === 'between'
+      ? [plannedStartRange.after, plannedStartRange.before]
+      : undefined;
+  });
+
+  /**
+   * Property filterOperators
+   * @readonly
+   * @description The currently active operator per field key, for `app-collection-filter-bar`'s `activeOperators` input — only "Deadline" and "Planned start" ever need an entry, the other six fields have exactly one declared operator each.
+   * @access protected
+   * @since 8.1.0
+   * @type {Signal<Readonly<Record<string, CollectionFilterOperator>>>}
+   */
+  protected readonly filterOperators: Signal<Readonly<Record<string, CollectionFilterOperator>>> =
+    computed<Readonly<Record<string, CollectionFilterOperator>>>(() => ({
+      dueRange: this.dueRangeOperator(),
+      plannedStartRange: this.plannedStartRangeOperator(),
+    }));
 
   /**
    * Property subtitle
@@ -1326,14 +1552,6 @@ export class InterventionsPage {
   protected readonly typeLabelOf: (value: InterventionType) => string = (
     value: InterventionType,
   ): string => resolveInterventionTag('type', value).label;
-
-  /** Names a deadline window on a closed select trigger. */
-  protected readonly dueWindowLabelOf: (value: InterventionDueWindow) => string = (
-    value: InterventionDueWindow,
-  ): string =>
-    this.dueWindowOptions.find(
-      (option: SelectOption<InterventionDueWindow>): boolean => option.value === value,
-    )?.label ?? '';
 
   /** Names a priority on a closed select trigger. */
   protected readonly priorityLabelOf: (value: InterventionPriority) => string = (
@@ -1577,7 +1795,7 @@ export class InterventionsPage {
     return (
       INTERVENTION_FILTER_FIELDS.find(
         (field: InterventionFilterFieldOption): boolean => field.key === key,
-      ) ?? { key, fieldLabel: '', icon: 'lucideCircleDot' }
+      ) ?? { key, fieldLabel: '', icon: 'lucideCircleDot', operators: ['equals'] }
     );
   }
 
@@ -1611,6 +1829,139 @@ export class InterventionsPage {
    */
   protected onFieldRemoved(key: string): void {
     this.applyFilter(this.filterClearPatchOf(key as InterventionFilterFieldKey));
+  }
+
+  /**
+   * Method onFilterOperatorChanged
+   * @description Reacts to the filter bar's `operatorChanged` output. Only "Deadline" (`dueRange`) and "Planned start" (`plannedStartRange`) currently declare more than one operator, so this only ever routes to one of {@link onDueRangeOperatorPicked} / {@link onPlannedStartRangeOperatorPicked}.
+   * @access protected
+   * @since 8.1.0
+   * @param {CollectionFilterOperatorChangedEvent} event - The field key whose operator segment changed and the operator it now reads.
+   * @returns {void}
+   */
+  protected onFilterOperatorChanged(event: CollectionFilterOperatorChangedEvent): void {
+    if (event.key === 'dueRange') this.onDueRangeOperatorPicked(event.operator);
+    if (event.key === 'plannedStartRange') this.onPlannedStartRangeOperatorPicked(event.operator);
+  }
+
+  /**
+   * Method onDueRangeOperatorPicked
+   *
+   * @description
+   * Switches the "Deadline" chip's value control to the picked operator's
+   * own shape (one date for `greaterThan`/`lessThan`, two for `between`) and
+   * drops any already-applied `dueRange` narrowing — its bound(s) were
+   * chosen under the previous operator and no longer mean the same thing,
+   * so the URL stays honest rather than keeping a stale filter active under
+   * a value control that no longer shows it.
+   *
+   * @access private
+   * @since 8.1.0
+   *
+   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
+   *
+   * @returns {void}
+   */
+  private onDueRangeOperatorPicked(operator: CollectionFilterOperator): void {
+    if (operator !== 'greaterThan' && operator !== 'lessThan' && operator !== 'between') return;
+
+    this.dueRangeOperator.set(operator);
+    if (this.filters().dueRange !== null) this.applyFilter({ dueRange: null });
+  }
+
+  /**
+   * Method pickDueAfter
+   * @description Applies the "Deadline" chip's `greaterThan` narrowing.
+   * @access protected
+   * @since 8.1.0
+   * @param {Date | null | undefined} date - The picked lower bound, `null`/`undefined` while the picker is cleared.
+   * @returns {void}
+   */
+  protected pickDueAfter(date: Date | null | undefined): void {
+    if (!date) return;
+    this.applyFilter({ dueRange: { operator: 'greaterThan', after: date } });
+  }
+
+  /**
+   * Method pickDueBefore
+   * @description Applies the "Deadline" chip's `lessThan` narrowing.
+   * @access protected
+   * @since 8.1.0
+   * @param {Date | null | undefined} date - The picked upper bound, `null`/`undefined` while the picker is cleared.
+   * @returns {void}
+   */
+  protected pickDueBefore(date: Date | null | undefined): void {
+    if (!date) return;
+    this.applyFilter({ dueRange: { operator: 'lessThan', before: date } });
+  }
+
+  /**
+   * Method pickDueBetween
+   * @description Applies the "Deadline" chip's `between` narrowing — the range picker emits once both ends are chosen, never one end at a time.
+   * @access protected
+   * @since 8.1.0
+   * @param {[Date, Date] | null | undefined} range - The picked [after, before] pair, `null`/`undefined` while incomplete or cleared.
+   * @returns {void}
+   */
+  protected pickDueBetween(range: [Date, Date] | null | undefined): void {
+    if (!range) return;
+    const [after, before] = range;
+    this.applyFilter({ dueRange: { operator: 'between', after, before } });
+  }
+
+  /**
+   * Method onPlannedStartRangeOperatorPicked
+   * @description Switches the "Planned start" chip's value control and drops any already-applied `plannedStartRange` narrowing. See {@link onDueRangeOperatorPicked}.
+   * @access private
+   * @since 8.2.0
+   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
+   * @returns {void}
+   */
+  private onPlannedStartRangeOperatorPicked(operator: CollectionFilterOperator): void {
+    if (operator !== 'greaterThan' && operator !== 'lessThan' && operator !== 'between') return;
+
+    this.plannedStartRangeOperator.set(operator);
+    if (this.filters().plannedStartRange !== null) this.applyFilter({ plannedStartRange: null });
+  }
+
+  /**
+   * Method pickPlannedStartAfter
+   * @description Applies the "Planned start" chip's `greaterThan` narrowing.
+   * @access protected
+   * @since 8.2.0
+   * @param {Date | null | undefined} date - The picked lower bound, `null`/`undefined` while the picker is cleared.
+   * @returns {void}
+   */
+  protected pickPlannedStartAfter(date: Date | null | undefined): void {
+    if (!date) return;
+    this.applyFilter({ plannedStartRange: { operator: 'greaterThan', after: date } });
+  }
+
+  /**
+   * Method pickPlannedStartBefore
+   * @description Applies the "Planned start" chip's `lessThan` narrowing.
+   * @access protected
+   * @since 8.2.0
+   * @param {Date | null | undefined} date - The picked upper bound, `null`/`undefined` while the picker is cleared.
+   * @returns {void}
+   */
+  protected pickPlannedStartBefore(date: Date | null | undefined): void {
+    if (!date) return;
+    this.applyFilter({ plannedStartRange: { operator: 'lessThan', before: date } });
+  }
+
+  /**
+   * Method pickPlannedStartBetween
+   * @description Applies the "Planned start" chip's `between` narrowing — the range picker emits once both ends are chosen, never one end at a time.
+   * @access protected
+   * @since 8.2.0
+   * @param {[Date, Date] | null | undefined} range - The picked [after, before] pair, `null`/`undefined` while incomplete or cleared.
+   * @returns {void}
+   */
+  protected pickPlannedStartBetween(range: [Date, Date] | null | undefined): void {
+    if (!range) return;
+    const [after, before] = range;
+    this.applyFilter({ plannedStartRange: { operator: 'between', after, before } });
   }
 
   /**
@@ -1956,8 +2307,10 @@ export class InterventionsPage {
         return { responsible: null };
       case 'label':
         return { label: null };
-      case 'dueWindow':
-        return { dueWindow: null };
+      case 'dueRange':
+        return { dueRange: null };
+      case 'plannedStartRange':
+        return { plannedStartRange: null };
     }
   }
 

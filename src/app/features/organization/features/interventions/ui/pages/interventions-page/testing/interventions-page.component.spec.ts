@@ -932,6 +932,10 @@ describe('InterventionsPage', () => {
             label: null,
             mine: null,
             due: null,
+            dueAfter: null,
+            dueBefore: null,
+            plannedStartAfter: null,
+            plannedStartBefore: null,
           },
           queryParamsHandling: 'merge',
         }),
@@ -958,6 +962,10 @@ describe('InterventionsPage', () => {
             label: null,
             mine: null,
             due: 'overdue',
+            dueAfter: null,
+            dueBefore: null,
+            plannedStartAfter: null,
+            plannedStartBefore: null,
           },
           queryParamsHandling: 'merge',
         }),
@@ -984,6 +992,10 @@ describe('InterventionsPage', () => {
             label: null,
             mine: null,
             due: null,
+            dueAfter: null,
+            dueBefore: null,
+            plannedStartAfter: null,
+            plannedStartBefore: null,
           },
           queryParamsHandling: 'merge',
         }),
@@ -1010,6 +1022,10 @@ describe('InterventionsPage', () => {
             label: null,
             mine: null,
             due: null,
+            dueAfter: null,
+            dueBefore: null,
+            plannedStartAfter: null,
+            plannedStartBefore: null,
           },
           queryParamsHandling: 'merge',
         }),
@@ -1122,7 +1138,8 @@ describe('InterventionsPage', () => {
         site: 'site-9',
         responsible: 'member-9',
         label: 'label-9',
-        due: 'today',
+        dueAfter: '2026-08-01',
+        plannedStartAfter: '2026-08-01',
       });
 
       expect(fixture.componentInstance['activeFilterKeys']()).toEqual([
@@ -1132,15 +1149,25 @@ describe('InterventionsPage', () => {
         'site',
         'responsible',
         'label',
-        'dueWindow',
+        'dueRange',
+        'plannedStartRange',
       ]);
 
-      const triggers = ['status', 'type', 'priority', 'site', 'responsible', 'dueWindow'].map(
-        (suffix: string) =>
-          (fixture.nativeElement as HTMLElement).querySelector(
-            `[data-testid="interventions-filter-${suffix === 'dueWindow' ? 'due' : suffix}"]`,
-          ),
-      );
+      const triggers = [
+        'status',
+        'type',
+        'priority',
+        'site',
+        'responsible',
+        'dueRange',
+        'plannedStartRange',
+      ].map((suffix: string) => {
+        const testId =
+          suffix === 'dueRange' ? 'due' : suffix === 'plannedStartRange' ? 'planned-start' : suffix;
+        return (fixture.nativeElement as HTMLElement).querySelector(
+          `[data-testid="interventions-filter-${testId}"]`,
+        );
+      });
       expect(triggers.every((trigger) => trigger !== null)).toBe(true);
     });
 

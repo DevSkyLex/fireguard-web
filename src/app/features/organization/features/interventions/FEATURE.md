@@ -21,9 +21,10 @@ This subfeature is responsible for:
 
 - `/organizations/:organizationId/interventions` — the index page: a spartan
   `hlmTable` of the organization's interventions, grouped and paginated, with a
-  debounced search box synced to `?q=` (a server-side `name` filter), a
-  Linear-style filter bar of segmented chips (status, type, priority, site,
-  responsible, label, deadline window), a "my interventions" toggle chip
+  debounced search box synced to `?q=` (a server-side `name` filter, `contains`
+  server-side — "Case-insensitive partial match"), a Linear-style filter bar of
+  segmented chips (status, type, priority, site, responsible, label, deadline,
+  planned start), a "my interventions" toggle chip
   (`?mine=1`, the API's `member`
   responsible-OR-participant filter), a column menu, row selection, and
   permission-gated bulk actions. `?create=1` opens the creation sheet on
@@ -67,7 +68,7 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   reference implementation the shared bar generalized from, so the split
   below is what stayed feature-owned versus what moved. Each active
   narrowing still renders as one `app-filter-chip`: a field segment (icon +
-  label), a static "is" operator, the field's own `hlm-select` — restyled
+  label), an operator segment, the field's own `hlm-select` — restyled
   flush into the chip, unchanged in behaviour — as the value segment
   (projected via `ng-content`, so `shared/` never imports
   `app-intervention-tag` or any intervention model), and a remove button,
@@ -78,9 +79,12 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   A "+ Filter" menu lists only the fields not yet active and is now the
   bar's own concern; picking one fires the bar's `fieldPicked` output, which
   this page's `onFieldPicked` reacts to by setting `openFilterKey` — still
-  page-owned, since it also gates which of this page's seven `ng-template`
+  page-owned, since it also gates which of this page's eight `ng-template`
   value controls (`#statusChip`, `#typeChip`, …) currently forces its own
-  `hlm-select` open. `openFilterKey` is UI-only — which selector is
+  `hlm-select` open — `#dueRangeChip` and `#plannedStartRangeChip` are the
+  two exceptions, since `hlm-date-picker`/`hlm-date-range-picker` carry no
+  `[state]`/`(stateChanged)` pair to force open (8.1's documented gap).
+  `openFilterKey` is UI-only — which selector is
   expanded, never a narrowing's value — kept in sync with each template's
   own `hlm-select` through `onFieldPopoverStateChanged`, so the URL via
   `applyFilter` remains the only place a filter's value lives, and is also
@@ -88,14 +92,115 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   a field mid-pick. **Chips render in the order the operator picked them**,
   newest last — that memory (`filterOrder` before the move) is now internal
   to `CollectionFilterBar` itself, driven only by this page's `activeKeys`
-  (`activeFilterKeys`, the seven fields currently non-null) and `pendingKey`
+  (`activeFilterKeys`, the eight fields currently non-null) and `pendingKey`
   inputs: a field a shared or reloaded URL already carried has no pick-order
   entry and sorts ahead of every picked one, in catalog order. `mine` keeps
   its own toggle chip outside this bar, as before, and the "Clear filters"
-  button — the bar's own, generic — stays at the end. Every field is
-  single-valued end to end — the API filters one value per field
-  (`InterventionListFilters`'s own JSDoc) — so the chip's operator segment is
-  a fixed, read-only "is" label, never a multi-select or a negated operator.
+  button — the bar's own, generic — stays at the end.
+
+  **Every chip's operator segment (8.0) is driven by
+  `CollectionFilterField.operators` (`@shared/collection-filters`), the
+  generic vocabulary a field declares from — `equals`, `notEquals`,
+  `contains`, `greaterThan`, `between`, `isAnyOf`, … (`CollectionFilterOperator`).**
+  `INTERVENTION_FILTER_FIELDS` (`ui/pages/interventions-page/options/`)
+  declares `operators: ['equals']` for six fields — `status`, `type`,
+  `priority`, `site`, `responsible` and `label` — so each of those six chips'
+  operator segments still renders as a fixed, read-only label, unchanged in
+  appearance.
+
+  **This is now backend-verified, not merely unconfirmed (8.2).** Read
+  against `fireguard-sso-api`'s `InterventionResource`/`InterventionProvider`
+  (separate repo, read-only): `isAnyOf`, `notEquals`, `isEmpty`/`isNotEmpty`
+  and `contains` on any of these six enum/IRI fields are confirmed
+  **unsupported without a backend change** — the provider reads every filter
+  as a single value (`$query->get()`) and the gateway matches by equality
+  only. None of the six is declared beyond `equals` for exactly that reason;
+  this is the authoritative answer, not a placeholder pending verification.
+  `name` is the one field already confirmed `contains` server-side
+  ("Case-insensitive partial match" — `InterventionListOptions`'s own JSDoc),
+  but it is not a filter-bar field: it is `app-collection-search-box`'s own
+  free-text `?q=` narrowing (`toolbarStart`), a distinct UI element with its
+  own debounce and its own visible input, so there is no chip whose operator
+  label to correct — see 6.5's opening paragraph for that split.
+
+  **`dueRange` (8.1) is the framework's first genuinely multi-operator,
+  fully-wired field** — real proof, not a modeled-but-inert vocabulary.
+  It replaced the legacy preset select as this catalog entry's own field
+  (key renamed `dueWindow` → `dueRange`, same `fieldLabel`/icon), declaring
+  `operators: ['greaterThan', 'lessThan', 'between']`, each mapped to the
+  API's own already-existing `dueAtAfter`/`dueAtBefore` bounds
+  (`ui/pages/interventions-page/utils/intervention-list-query/`,
+  `InterventionListOptions`'s own JSDoc) — no backend change, no unverified
+  param. `greaterThan` sends `dueAtAfter` alone, `lessThan` sends
+  `dueAtBefore` alone, `between` sends both.
+
+  The chip's operator select therefore actually renders (`FilterChip` only
+  offers a picker once a field declares more than one operator) — the first
+  one to. Its labels read "after"/"before"/"between" rather than the generic
+  registry's "greater than"/"less than", through the per-field
+  `operatorLabels` override `CollectionFilterField` now also carries
+  (`@shared/collection-filters`, opt-in, every other field unaffected): a
+  date-flavoured operator wording without a second label registry to keep in
+  sync with the generic one.
+
+  The value control switches shape with the operator — `InterventionsPage`
+  keeps a `dueRangeOperator` `linkedSignal` over `filters().dueRange`'s own
+  operator (defaulting to `greaterThan`, the field's first declared entry,
+  the moment "Deadline" is picked and carries no value yet) and a `@switch`
+  in `#dueRangeChip` renders one `hlm-date-picker` for `greaterThan`/`lessThan`
+  or one `hlm-date-range-picker` for `between` (`@shared/ui/date-picker`,
+  the same imperative `[date]`/`(dateChange)` idiom `intervention-properties-grid`
+  already uses — no vendored code touched, no hand-rolled calendar).
+  Picking a different operator before a value is chosen only swaps the
+  control; picking one **after** a `dueRange` narrowing is already applied
+  drops it (`InterventionsPage.onDueRangeOperatorPicked`) rather than
+  keeping a stale bound active under a control that no longer shows it.
+  One known gap: unlike the six `hlm-select`-backed fields, `hlm-date-picker`
+  exposes no `[state]`/`(stateChanged)` pair, so picking "Deadline" from the
+  "+ Filter" menu does not auto-open its calendar popover the way the other
+  six auto-open their select — an accepted, documented UX gap rather than a
+  vendored-code change.
+
+  **`dueRange` is independent of the legacy `dueWindow` preset the segmented
+  views and the Today page's deep link still drive** (`?due=overdue` and
+  friends, `resolveDueWindow`, `INTERVENTION_DUE_WINDOW_OPTIONS` — all
+  unchanged). Both resolve into the same `dueAtAfter`/`dueAtBefore` API
+  bounds and, on the rare occasion both are active at once (e.g. the
+  "Overdue" segmented view plus a manually narrowed "Deadline" chip),
+  `buildInterventionListOptions` **tightens rather than overwrites** —
+  the later `dueAtAfter` and the earlier `dueAtBefore` win, so the two
+  narrowings combine instead of one silently discarding the other.
+  `dueWindow` was deliberately left out of `dueRange`'s own operator set:
+  collapsing "Overdue"'s live, request-time-resolved bound into a frozen
+  `dueBefore=<timestamp>` URL param would make a bookmarked "Overdue" link
+  stop tracking "now" on reload — a real regression the segmented views'
+  own e2e coverage (`e2e/organization/interventions-list-filters.spec.ts`)
+  would have caught. Keeping the two fields separate cost nothing: neither
+  the segmented views nor the Today page needed to change.
+
+  **`plannedStartRange` ("Planned start", 8.2) is the second wired
+  multi-operator field, an exact mirror of `dueRange`'s shape** — same
+  `operators: ['greaterThan', 'lessThan', 'between']`, same `operatorLabels`
+  override (reusing the same "after"/"before" ids, `intervention.list.filterDateRangeAfter`/`filterDateRangeBefore`,
+  since the wording is field-agnostic — `between` needs no override either),
+  same `hlm-date-picker`/`hlm-date-range-picker` value control switched by a
+  `plannedStartRangeOperator` `linkedSignal`. It maps to the API's own
+  already-existing `plannedStartAtAfter`/`plannedStartAtBefore` bounds
+  (confirmed read by `InterventionProvider`, no backend change), serialized
+  as `?plannedStartAfter=`/`?plannedStartBefore=` — distinct URL params from
+  `dueRange`'s `dueAfter`/`dueBefore`, since the two narrow different
+  timestamps and must combine (not collide) when both are active.
+  **Deliberately not generalized into a shared type or a shared parser**:
+  `InterventionPlannedStartRangeFilter`
+  (`models/intervention-view/intervention-planned-start-range-filter.type.ts`)
+  duplicates `InterventionDueRangeFilter`'s shape verbatim rather than
+  deriving from a common generic, and `parsePlannedStartRange` duplicates
+  `parseDueRange` rather than sharing one parametrized function — two
+  consumers do not yet justify that abstraction (`ARCHITECTURE.md` §2.9); a
+  third date-range field would. Unlike `dueRange`, no legacy preset ever
+  wrote `plannedStartAt*` bounds, so `buildInterventionListOptions` sets them
+  directly — no `laterOf`/`earlierOf` tightening applies here, because there
+  is nothing to tighten against.
 
   **The bar is collapsible, toggled by a "Filters" button beside "Columns"
   in the toolbar's `toolbarEnd`** (`app-collection-filter-toggle`,

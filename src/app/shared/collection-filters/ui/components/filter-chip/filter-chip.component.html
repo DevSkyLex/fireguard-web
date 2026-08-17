@@ -11,12 +11,38 @@
     <hlm-separator orientation="vertical" />
   </span>
 
-  <span
-    class="px-2 whitespace-nowrap text-muted-foreground"
-    i18n="@@intervention.list.filterOperatorIs"
-  >
-    is
-  </span>
+  @if (hasOperatorChoice()) {
+    <hlm-select
+      [value]="operator()"
+      [itemToString]="operatorLabelOf"
+      (valueChange)="onOperatorPicked($event)"
+    >
+      <label [attr.for]="operatorTriggerId" class="sr-only">{{ changeOperatorLabel() }}</label>
+      <hlm-select-trigger
+        [buttonId]="operatorTriggerId"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+        [attr.data-testid]="operatorTestId()"
+      >
+        <span class="whitespace-nowrap text-muted-foreground">{{
+          operatorLabelOf(operator())
+        }}</span>
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (choice of operatorOptions(); track choice) {
+            <hlm-select-item [value]="choice">{{ operatorLabelOf(choice) }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  } @else {
+    <span
+      class="px-2 whitespace-nowrap text-muted-foreground"
+      [attr.data-testid]="operatorTestId()"
+    >
+      {{ operatorLabelOf(operator()) }}
+    </span>
+  }
 
   <span class="flex h-4 items-center">
     <hlm-separator orientation="vertical" />

@@ -16,7 +16,11 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideX } from '@ng-icons/lucide';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import type { CollectionFilterField } from '../../../models';
+import type {
+  CollectionFilterField,
+  CollectionFilterOperator,
+  CollectionFilterOperatorChangedEvent,
+} from '../../../models';
 import { FilterChip } from '../filter-chip';
 
 /**
@@ -56,7 +60,14 @@ import { FilterChip } from '../filter-chip';
  * itself is the owning page's concern, this component only ever renders or
  * does not exist.
  *
- * @version 1.1.0
+ * Each chip's operator segment reads its field's own
+ * `CollectionFilterField.operators` catalog: {@link activeOperators} carries
+ * which one is currently picked per key (defaulting to a field's first
+ * declared operator through {@link operatorOf}), and a pick re-emits
+ * {@link operatorChanged} for the page to resolve — this bar never
+ * interprets an operator itself, only routes the pick.
+ *
+ * @version 8.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -114,6 +125,17 @@ export class CollectionFilterBar {
   > = input.required<Readonly<Record<string, TemplateRef<unknown> | undefined>>>();
 
   /**
+   * Property activeOperators
+   * @readonly
+   * @description The operator currently active per field key. A key absent — a field the page has not yet resolved an operator for — reads as that field's own first declared operator (its default).
+   * @access public
+   * @since 8.0.0
+   * @type {InputSignal<Readonly<Record<string, CollectionFilterOperator>>>}
+   */
+  public readonly activeOperators: InputSignal<Readonly<Record<string, CollectionFilterOperator>>> =
+    input<Readonly<Record<string, CollectionFilterOperator>>>({});
+
+  /**
    * Property testIdPrefix
    * @readonly
    * @description The owning list page's `data-testid` prefix. Forwarded to each `app-filter-chip` and this bar's own controls.
@@ -144,6 +166,17 @@ export class CollectionFilterBar {
    * @type {OutputEmitterRef<string>}
    */
   public readonly fieldRemoved: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property operatorChanged
+   * @readonly
+   * @description A chip's operator select picked a different entry. The page reacts by re-resolving that field's narrowing under the new operator.
+   * @access public
+   * @since 8.0.0
+   * @type {OutputEmitterRef<CollectionFilterOperatorChangedEvent>}
+   */
+  public readonly operatorChanged: OutputEmitterRef<CollectionFilterOperatorChangedEvent> =
+    output<CollectionFilterOperatorChangedEvent>();
 
   /**
    * Property filtersCleared
@@ -254,6 +287,36 @@ export class CollectionFilterBar {
   }
 
   /**
+   * Method changeOperatorLabelFor
+   * @description The generic "Change operator: {field}" accessible name for one field's operator select.
+   * @access protected
+   * @since 8.0.0
+   * @param {string} fieldLabel - The field's own label.
+   * @returns {string} The operator select's accessible name.
+   */
+  protected changeOperatorLabelFor(fieldLabel: string): string {
+    return $localize`:@@shared.collectionFilterBar.changeOperator:Change operator: ${fieldLabel}:field:`;
+  }
+
+  /**
+   * Method operatorOf
+   *
+   * @description
+   * The operator currently active for one field: {@link activeOperators}'
+   * own entry when present, otherwise that field's first declared operator
+   * — its default, read the moment a field is picked and has not yet had an
+   * operator chosen for it.
+   *
+   * @access protected
+   * @since 8.0.0
+   * @param {string} key - The field key to resolve.
+   * @returns {CollectionFilterOperator} Its currently active operator.
+   */
+  protected operatorOf(key: string): CollectionFilterOperator {
+    return this.activeOperators()[key] ?? this.fieldOf(key).operators[0];
+  }
+
+  /**
    * Method fieldOf
    * @description Looks up a rendered key's catalog entry, falling back to an empty label rather than throwing — every rendered key traces back to {@link fields} or {@link pendingKey}, both page-controlled.
    * @access protected
@@ -267,6 +330,7 @@ export class CollectionFilterBar {
         key,
         fieldLabel: '',
         icon: 'lucideCircleDot',
+        operators: ['equals'],
       }
     );
   }

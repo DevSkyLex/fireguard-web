@@ -8,8 +8,13 @@
       [fieldLabel]="fieldOf(key).fieldLabel"
       [icon]="fieldOf(key).icon"
       [removeLabel]="removeLabelFor(fieldOf(key).fieldLabel)"
+      [operator]="operatorOf(key)"
+      [operatorOptions]="fieldOf(key).operators"
+      [operatorLabels]="fieldOf(key).operatorLabels ?? {}"
+      [changeOperatorLabel]="changeOperatorLabelFor(fieldOf(key).fieldLabel)"
       [testIdPrefix]="testIdPrefix()"
       (removed)="fieldRemoved.emit(key)"
+      (operatorChanged)="operatorChanged.emit({ key, operator: $event })"
     >
       <ng-container *ngTemplateOutlet="templates()[key] ?? null" />
     </app-filter-chip>

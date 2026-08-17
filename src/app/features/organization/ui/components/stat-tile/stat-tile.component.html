@@ -1,21 +1,21 @@
 <ng-template #tileContent>
-  <div hlmCardHeader class="flex-row items-start justify-between gap-3">
-    <div class="flex min-w-0 flex-col gap-1">
-      <p hlmCardDescription class="truncate">{{ label() }}</p>
-      @if (loading()) {
-        <hlm-skeleton class="h-7 w-16" />
-      } @else {
-        <p hlmCardTitle class="text-2xl leading-none font-semibold tabular-nums">{{ value() }}</p>
-      }
-    </div>
+  <div hlmCardHeader>
+    <p hlmCardDescription class="min-w-0 truncate">{{ label() }}</p>
+    @if (loading()) {
+      <hlm-skeleton class="h-7 w-16" />
+    } @else {
+      <p hlmCardTitle class="text-2xl leading-none font-semibold tabular-nums">{{ value() }}</p>
+    }
     @if (icon(); as iconName) {
-      <ng-icon
-        [name]="iconName"
-        class="shrink-0 text-lg"
-        [class.text-destructive]="tone() === 'destructive'"
-        [class.text-muted-foreground]="tone() !== 'destructive'"
-        aria-hidden="true"
-      />
+      <div hlmCardAction>
+        <ng-icon
+          [name]="iconName"
+          class="text-lg"
+          [class.text-destructive]="tone() === 'destructive'"
+          [class.text-muted-foreground]="tone() !== 'destructive'"
+          aria-hidden="true"
+        />
+      </div>
     }
   </div>
 

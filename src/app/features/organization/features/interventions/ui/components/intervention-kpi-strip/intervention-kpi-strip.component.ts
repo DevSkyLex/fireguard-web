@@ -41,7 +41,15 @@ type InterventionKpiTile = {
  * when the backend reports a value: an organization with no published
  * interventions yet has nothing to average.
  *
- * @version 1.1.0
+ * The strip's tile count therefore varies (four or five), unlike every
+ * other `app-stat-tile` consumer in the app, which always renders a fixed
+ * count and can size its wrapper with a plain `grid-cols-N` breakpoint
+ * ladder. A fixed ladder sized for five tiles leaves one dead column
+ * whenever the average-publication tile is absent, so the wrapper instead
+ * uses `grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]`: populated tracks
+ * always stretch to fill the row, at four tiles or five, at any width.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */

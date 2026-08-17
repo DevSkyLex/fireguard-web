@@ -337,17 +337,40 @@ button has no opinion on the bar's own chip row or "+ Filter" menu.
 **`app-collection-filter-bar` replaced three divergent popovers (equipments, facilities,
 inspections) and interventions' own bespoke chip row with one component**, first proven inside
 `interventions-page` and then generalized. Its contract stays generic — a field is `{ key:
-string, fieldLabel: string, icon: string }` (`CollectionFilterField`) — and it owns the chip
-row's pick-order memory, the "+ Filter" menu, and the "Clear filters" button; a page still owns
-its own `filters` signal (URL-backed), which of its fields currently carry a value
-(`activeKeys`), and which field is mid-pick before a value lands (`pendingKey` /
-`openFilterKey`). **The value control is always projected**, one `ng-template` per field
-(resolved through `viewChild(TemplateRef)`, the same idiom already used for a page's
-`#pageActions` template), so `shared/` never imports a feature's tag component or model —
-`app-equipment-status-tag`, `app-inspection-status-tag` and `app-intervention-tag` all stay in
-their owning feature. A field's value control need not be a select either: facilities' lone
-`archived` field projects a plain `hlm-checkbox`, since "opening a selector" has no meaning for
-a boolean.
+string, fieldLabel: string, icon: string, operators: readonly CollectionFilterOperator[] }`
+(`CollectionFilterField`) — and it owns the chip row's pick-order memory, the "+ Filter" menu,
+and the "Clear filters" button; a page still owns its own `filters` signal (URL-backed), which
+of its fields currently carry a value (`activeKeys`), and which field is mid-pick before a value
+lands (`pendingKey` / `openFilterKey`). **The value control is always projected**, one
+`ng-template` per field (resolved through `viewChild(TemplateRef)`, the same idiom already used
+for a page's `#pageActions` template), so `shared/` never imports a feature's tag component or
+model — `app-equipment-status-tag`, `app-inspection-status-tag` and `app-intervention-tag` all
+stay in their owning feature. A field's value control need not be a select either: facilities'
+lone `archived` field projects a plain `hlm-checkbox`, since "opening a selector" has no meaning
+for a boolean.
+
+**The chip's operator segment (8.0) is generic, never a hardcoded "is".** `CollectionFilterOperator`
+(`@shared/collection-filters/models`) is the full comparison vocabulary — `equals`, `notEquals`,
+`contains`, `notContains`, `startsWith`, `endsWith`, `greaterThan`, `lessThan`, `between`,
+`isEmpty`, `isNotEmpty`, `isAnyOf`, `isNoneOf` — and a field declares only the subset its own
+data-access layer actually maps to a real query param through `operators`; `FilterChip` renders
+that subset as a fixed label when it has exactly one entry (every field but two across all four
+migrated pages today) and as an `hlm-select` once a field declares more than one. **A feature owns
+the operator→query-param mapping**, never `shared/` — `equals` maps to a field's exact-match param,
+and interventions' "Deadline" and "Planned start" fields (`dueRange`/`plannedStartRange`, 8.1/8.2)
+are the framework's first fields genuinely wired to more than one: `greaterThan`/`lessThan`/`between`
+map to the `dueAtAfter`/`dueAtBefore` and `plannedStartAtAfter`/`plannedStartAtBefore` bounds
+`InterventionListOptions` already served (`features/interventions/FEATURE.md`) — no backend
+change, confirmed by reading the backend `InterventionResource`/`InterventionProvider` directly.
+That same read confirmed the reverse too: `isAnyOf`, `notEquals`, `isEmpty`/`isNotEmpty` and
+`contains` stay undeclared on every enum/IRI field because the provider reads each filter as a
+single value and the gateway matches by equality only — a verified "no", not an unconfirmed one.
+Both date-range fields' operator selects also prove `CollectionFilterField.operatorLabels`
+(`@shared/collection-filters`), the optional per-field label override this round added: a
+date field reads "after"/"before", not the generic registry's "greater than"/"less than", while
+every field that sets no override stays on the shared wording. An operator a field does not
+declare is simply never offered — this bar never sends a param unverified against the real
+backend.
 
 **Create-surface placement** follows field count and navigation cost, not precedent: a form of
 **3 fields or fewer with no navigation cost** belongs in a dialog; **4 to 8 fields that should

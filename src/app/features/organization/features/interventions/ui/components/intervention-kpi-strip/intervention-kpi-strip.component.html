@@ -1,4 +1,4 @@
-<div class="flex flex-wrap gap-3">
+<div class="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-4">
   @if (loading()) {
     <span
       class="sr-only"
@@ -9,7 +9,7 @@
     >
   }
   @for (tile of tiles(); track tile.id) {
-    <div class="min-w-36 flex-1 basis-36" [attr.data-testid]="'intervention-kpi-strip-' + tile.id">
+    <div [attr.data-testid]="'intervention-kpi-strip-' + tile.id">
       <app-stat-tile
         [label]="tile.label"
         [value]="tile.value"

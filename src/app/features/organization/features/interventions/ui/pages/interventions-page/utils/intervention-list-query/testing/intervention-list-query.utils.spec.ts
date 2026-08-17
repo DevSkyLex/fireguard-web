@@ -21,6 +21,8 @@ const NO_FILTERS: InterventionListFilters = {
   label: null,
   mine: false,
   dueWindow: null,
+  dueRange: null,
+  plannedStartRange: null,
 };
 
 const DUE_ASC: InterventionListSort = { field: 'dueAt', direction: 'asc' };
@@ -78,6 +80,8 @@ describe('buildInterventionListOptions', () => {
           label: '/api/intervention-labels/l-1',
           mine: false,
           dueWindow: 'overdue',
+          dueRange: null,
+          plannedStartRange: null,
         },
         { field: 'priority', direction: 'desc' },
         'roof',
@@ -123,6 +127,114 @@ describe('buildInterventionListOptions', () => {
   it('should omit an empty search term', () => {
     expect('name' in buildInterventionListOptions(NO_FILTERS, DUE_ASC, '', NOW)).toBe(false);
   });
+
+  it('should resolve a greaterThan dueRange to dueAtAfter alone', () => {
+    expect(
+      buildInterventionListOptions(
+        { ...NO_FILTERS, dueRange: { operator: 'greaterThan', after: new Date('2026-08-10') } },
+        DUE_ASC,
+        '',
+        NOW,
+      ),
+    ).toEqual({ order: { dueAt: 'asc' }, dueAtAfter: '2026-08-10T00:00:00.000Z' });
+  });
+
+  it('should resolve a lessThan dueRange to dueAtBefore alone', () => {
+    expect(
+      buildInterventionListOptions(
+        { ...NO_FILTERS, dueRange: { operator: 'lessThan', before: new Date('2026-08-20') } },
+        DUE_ASC,
+        '',
+        NOW,
+      ),
+    ).toEqual({ order: { dueAt: 'asc' }, dueAtBefore: '2026-08-20T00:00:00.000Z' });
+  });
+
+  it('should resolve a between dueRange to both bounds', () => {
+    expect(
+      buildInterventionListOptions(
+        {
+          ...NO_FILTERS,
+          dueRange: {
+            operator: 'between',
+            after: new Date('2026-08-10'),
+            before: new Date('2026-08-20'),
+          },
+        },
+        DUE_ASC,
+        '',
+        NOW,
+      ),
+    ).toEqual({
+      order: { dueAt: 'asc' },
+      dueAtAfter: '2026-08-10T00:00:00.000Z',
+      dueAtBefore: '2026-08-20T00:00:00.000Z',
+    });
+  });
+
+  it('should tighten rather than overwrite when the legacy dueWindow and the new dueRange are both active', () => {
+    expect(
+      buildInterventionListOptions(
+        {
+          ...NO_FILTERS,
+          dueWindow: 'overdue',
+          dueRange: { operator: 'lessThan', before: new Date('2026-08-01') },
+        },
+        DUE_ASC,
+        '',
+        NOW,
+      ),
+    ).toEqual({
+      order: { dueAt: 'asc' },
+      dueAtBefore: '2026-08-01T00:00:00.000Z',
+    });
+  });
+
+  it('should resolve each plannedStartRange operator to the matching plannedStartAt bound(s), with no legacy preset to tighten against', () => {
+    expect(
+      buildInterventionListOptions(
+        {
+          ...NO_FILTERS,
+          plannedStartRange: { operator: 'greaterThan', after: new Date('2026-08-10') },
+        },
+        DUE_ASC,
+        '',
+        NOW,
+      ),
+    ).toEqual({ order: { dueAt: 'asc' }, plannedStartAtAfter: '2026-08-10T00:00:00.000Z' });
+
+    expect(
+      buildInterventionListOptions(
+        {
+          ...NO_FILTERS,
+          plannedStartRange: { operator: 'lessThan', before: new Date('2026-08-20') },
+        },
+        DUE_ASC,
+        '',
+        NOW,
+      ),
+    ).toEqual({ order: { dueAt: 'asc' }, plannedStartAtBefore: '2026-08-20T00:00:00.000Z' });
+
+    expect(
+      buildInterventionListOptions(
+        {
+          ...NO_FILTERS,
+          plannedStartRange: {
+            operator: 'between',
+            after: new Date('2026-08-10'),
+            before: new Date('2026-08-20'),
+          },
+        },
+        DUE_ASC,
+        '',
+        NOW,
+      ),
+    ).toEqual({
+      order: { dueAt: 'asc' },
+      plannedStartAtAfter: '2026-08-10T00:00:00.000Z',
+      plannedStartAtBefore: '2026-08-20T00:00:00.000Z',
+    });
+  });
 });
 
 describe('countActiveFilters', () => {
@@ -167,6 +279,8 @@ describe('parseInterventionListFilters', () => {
       label: '/api/intervention-labels/l-1',
       mine: true,
       dueWindow: 'week',
+      dueRange: null,
+      plannedStartRange: null,
     });
   });
 
@@ -182,6 +296,48 @@ describe('parseInterventionListFilters', () => {
   it('should parse an empty query to no filters', () => {
     expect(parseInterventionListFilters({}, 'org-1')).toEqual(NO_FILTERS);
   });
+
+  it('should resolve dueAfter/dueBefore into the matching dueRange operator', () => {
+    expect(parseInterventionListFilters({ dueAfter: '2026-08-10' }, 'org-1').dueRange).toEqual({
+      operator: 'greaterThan',
+      after: new Date('2026-08-10'),
+    });
+    expect(parseInterventionListFilters({ dueBefore: '2026-08-20' }, 'org-1').dueRange).toEqual({
+      operator: 'lessThan',
+      before: new Date('2026-08-20'),
+    });
+    expect(
+      parseInterventionListFilters({ dueAfter: '2026-08-10', dueBefore: '2026-08-20' }, 'org-1')
+        .dueRange,
+    ).toEqual({
+      operator: 'between',
+      after: new Date('2026-08-10'),
+      before: new Date('2026-08-20'),
+    });
+  });
+
+  it('should drop an unparseable dueAfter/dueBefore rather than send a bad date to the API', () => {
+    expect(parseInterventionListFilters({ dueAfter: 'not-a-date' }, 'org-1').dueRange).toBeNull();
+  });
+
+  it('should resolve plannedStartAfter/plannedStartBefore into the matching plannedStartRange operator', () => {
+    expect(
+      parseInterventionListFilters({ plannedStartAfter: '2026-08-10' }, 'org-1').plannedStartRange,
+    ).toEqual({ operator: 'greaterThan', after: new Date('2026-08-10') });
+    expect(
+      parseInterventionListFilters({ plannedStartBefore: '2026-08-20' }, 'org-1').plannedStartRange,
+    ).toEqual({ operator: 'lessThan', before: new Date('2026-08-20') });
+    expect(
+      parseInterventionListFilters(
+        { plannedStartAfter: '2026-08-10', plannedStartBefore: '2026-08-20' },
+        'org-1',
+      ).plannedStartRange,
+    ).toEqual({
+      operator: 'between',
+      after: new Date('2026-08-10'),
+      before: new Date('2026-08-20'),
+    });
+  });
 });
 
 describe('serializeInterventionListFilters', () => {
@@ -195,6 +351,8 @@ describe('serializeInterventionListFilters', () => {
       label: '/api/intervention-labels/l-1',
       mine: true,
       dueWindow: 'overdue',
+      dueRange: null,
+      plannedStartRange: null,
     };
 
     expect(serializeInterventionListFilters(filters)).toEqual({
@@ -206,6 +364,10 @@ describe('serializeInterventionListFilters', () => {
       label: 'l-1',
       mine: '1',
       due: 'overdue',
+      dueAfter: null,
+      dueBefore: null,
+      plannedStartAfter: null,
+      plannedStartBefore: null,
     });
   });
 
@@ -219,6 +381,57 @@ describe('serializeInterventionListFilters', () => {
       label: null,
       mine: null,
       due: null,
+      dueAfter: null,
+      dueBefore: null,
+      plannedStartAfter: null,
+      plannedStartBefore: null,
     });
+  });
+
+  it('should round-trip each dueRange operator to its own dueAfter/dueBefore params', () => {
+    expect(
+      serializeInterventionListFilters({
+        ...NO_FILTERS,
+        dueRange: { operator: 'greaterThan', after: new Date('2026-08-10') },
+      }),
+    ).toEqual(expect.objectContaining({ dueAfter: '2026-08-10', dueBefore: null }));
+
+    expect(
+      serializeInterventionListFilters({
+        ...NO_FILTERS,
+        dueRange: { operator: 'lessThan', before: new Date('2026-08-20') },
+      }),
+    ).toEqual(expect.objectContaining({ dueAfter: null, dueBefore: '2026-08-20' }));
+
+    expect(
+      serializeInterventionListFilters({
+        ...NO_FILTERS,
+        dueRange: {
+          operator: 'between',
+          after: new Date('2026-08-10'),
+          before: new Date('2026-08-20'),
+        },
+      }),
+    ).toEqual(expect.objectContaining({ dueAfter: '2026-08-10', dueBefore: '2026-08-20' }));
+  });
+
+  it('should round-trip each plannedStartRange operator to its own plannedStartAfter/plannedStartBefore params', () => {
+    expect(
+      serializeInterventionListFilters({
+        ...NO_FILTERS,
+        plannedStartRange: { operator: 'greaterThan', after: new Date('2026-08-10') },
+      }),
+    ).toEqual(
+      expect.objectContaining({ plannedStartAfter: '2026-08-10', plannedStartBefore: null }),
+    );
+
+    expect(
+      serializeInterventionListFilters({
+        ...NO_FILTERS,
+        plannedStartRange: { operator: 'lessThan', before: new Date('2026-08-20') },
+      }),
+    ).toEqual(
+      expect.objectContaining({ plannedStartAfter: null, plannedStartBefore: '2026-08-20' }),
+    );
   });
 });

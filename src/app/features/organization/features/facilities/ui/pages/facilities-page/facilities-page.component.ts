@@ -249,6 +249,7 @@ export class FacilitiesPage {
       key: 'archived',
       fieldLabel: $localize`:@@facility.list.filterArchived:Show archived facilities`,
       icon: 'lucideArchive',
+      operators: ['equals'],
     },
   ];
 

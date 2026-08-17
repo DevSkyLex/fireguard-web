@@ -8,10 +8,12 @@ export type { InterventionStatisticsOutput } from './intervention-statistics/int
 export type { InterventionSiteStatisticOutput } from './intervention-statistics/intervention-site-statistic-output.interface';
 export type { InterventionResponsibleStatisticOutput } from './intervention-statistics/intervention-responsible-statistic-output.interface';
 export type { InterventionCalendarFilters } from './intervention-view/intervention-calendar-filters.interface';
+export type { InterventionDueRangeFilter } from './intervention-view/intervention-due-range-filter.type';
 export type {
   InterventionDueWindow,
   InterventionListFilters,
 } from './intervention-view/intervention-list-filters.interface';
+export type { InterventionPlannedStartRangeFilter } from './intervention-view/intervention-planned-start-range-filter.type';
 export type {
   InterventionListSort,
   InterventionSortField,

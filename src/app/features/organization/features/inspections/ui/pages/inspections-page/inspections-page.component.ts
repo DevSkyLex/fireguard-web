@@ -254,11 +254,13 @@ export class InspectionsPage {
       key: 'status',
       fieldLabel: $localize`:@@inspection.list.filterStatus:Status`,
       icon: 'lucideCircleDot',
+      operators: ['equals'],
     },
     {
       key: 'result',
       fieldLabel: $localize`:@@inspection.list.filterResult:Result`,
       icon: 'lucideGauge',
+      operators: ['equals'],
     },
   ];
 

@@ -61,14 +61,17 @@ const renderPageActions = (): HTMLElement => {
 describe('InspectionsPage', () => {
   let fixture: ComponentFixture<InspectionsPage>;
   let load: ReturnType<typeof vi.fn>;
+  let navigate: ReturnType<typeof vi.fn>;
   let inspectionList: WritableSignal<readonly InspectionOutput[]>;
   let listCallState: WritableSignal<CallState>;
+  let totalInspections: WritableSignal<number>;
   let hasPermission: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     load = vi.fn();
     inspectionList = signal<readonly InspectionOutput[]>([]);
     listCallState = signal<CallState>(idleCallState());
+    totalInspections = signal<number>(0);
     hasPermission = vi.fn().mockReturnValue(true);
 
     TestBed.configureTestingModule({
@@ -81,7 +84,7 @@ describe('InspectionsPage', () => {
             load,
             inspections: inspectionList,
             listCallState,
-            totalInspections: signal(0),
+            totalInspections,
             isLoadingInspections: signal(false),
           },
         },
@@ -94,7 +97,7 @@ describe('InspectionsPage', () => {
       ],
     });
 
-    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
 
   it('should load the list for the workspace on arrival, sorted by performed date descending', async () => {
@@ -109,6 +112,12 @@ describe('InspectionsPage', () => {
     });
   });
 
+  it('should seed the pager from the `?page=` query param on arrival', async () => {
+    fixture = await createPage({ page: '3' });
+
+    expect(load.mock.calls[0][0].options).toMatchObject({ page: 3 });
+  });
+
   it('should send the search term as the typed search option', async () => {
     fixture = await createPage({ q: '  gauge  ' });
 
@@ -116,13 +125,16 @@ describe('InspectionsPage', () => {
   });
 
   it('should narrow the query when a filter is picked, and return to the first page', async () => {
-    fixture = await createPage();
+    fixture = await createPage({ page: '3' });
 
     fixture.componentInstance['applyFilter']({ status: 'draft' });
     await fixture.whenStable();
 
     expect(load.mock.calls.at(-1)?.[0].options).toMatchObject({ status: 'draft' });
-    expect(fixture.componentInstance['page']()).toBe(1);
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { page: null } }),
+    );
   });
 
   it('should never send an unset filter as a value', async () => {
@@ -143,15 +155,14 @@ describe('InspectionsPage', () => {
     const options = load.mock.calls.at(-1)?.[0].options;
     expect(options.status).toBeUndefined();
     expect(options.result).toBeUndefined();
-    expect(TestBed.inject(Router).navigate).toHaveBeenLastCalledWith(
+    expect(navigate).toHaveBeenLastCalledWith(
       [],
-      expect.objectContaining({ queryParams: { q: null } }),
+      expect.objectContaining({ queryParams: { q: null, page: null } }),
     );
   });
 
   it('should reverse direction when the same field is picked again, and reload from the first page', async () => {
-    fixture = await createPage();
-    fixture.componentInstance['page'].set(3);
+    fixture = await createPage({ page: '3' });
 
     fixture.componentInstance['applySortField']('performedAt');
     await fixture.whenStable();
@@ -160,7 +171,10 @@ describe('InspectionsPage', () => {
       field: 'performedAt',
       direction: 'asc',
     });
-    expect(fixture.componentInstance['page']()).toBe(1);
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { page: null } }),
+    );
   });
 
   it('should switch field and keep the current direction when a different field is picked', async () => {
@@ -224,7 +238,36 @@ describe('InspectionsPage', () => {
     fixture = await createPage();
 
     fixture.componentInstance['goToPage'](-3);
-    expect(fixture.componentInstance['page']()).toBe(1);
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { page: null } }),
+    );
+  });
+
+  it('should round-trip a page navigation above the first page as the `?page=` param', async () => {
+    totalInspections.set(100);
+    fixture = await createPage();
+
+    fixture.componentInstance['goToPage'](2);
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { page: '2' } }),
+    );
+  });
+
+  it('should return to the first page when the page size changes', async () => {
+    fixture = await createPage({ page: '3' });
+
+    fixture.componentInstance['setPageSize'](60);
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options).toMatchObject({ itemsPerPage: 60 });
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { page: null } }),
+    );
   });
 
   describe('filters visibility', () => {

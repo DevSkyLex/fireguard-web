@@ -91,12 +91,15 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
  * ordering ({@link sortOrder}) is remembered across visits through
  * `InspectionListPreferencesService`, the same cookie-backed pattern
  * `InterventionsPage` established; unlike that page, page size is not
- * remembered here.
+ * remembered here. The `?page=` query param is synced the same way
+ * `FacilitiesPage` does it, so a reload or a shared link lands back on the
+ * same page; any narrowing change (search, filters, sort) resets to the
+ * first page.
  *
  * Its title lives in the shell breadcrumb; "New inspection" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.5.0
+ * @version 1.6.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -153,6 +156,16 @@ export class InspectionsPage {
    * @type {InputSignal<string | undefined>}
    */
   public readonly q: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /**
+   * Property page
+   * @readonly
+   * @description The page number the URL carries, so a reload or a shared link lands back on the same page.
+   * @access public
+   * @since 1.6.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly page: InputSignal<string | undefined> = input<string | undefined>(undefined);
   //#endregion
 
   //#region Properties
@@ -168,7 +181,7 @@ export class InspectionsPage {
   private readonly preferences: InspectionListPreferencesService =
     inject<InspectionListPreferencesService>(InspectionListPreferencesService);
 
-  /** Router used to round-trip the `?q=` query param. */
+  /** Router used to round-trip `?q=` and `?page=`. */
   private readonly router: Router = inject(Router);
 
   /** Current route, anchoring the relative query-param navigation. */
@@ -188,9 +201,6 @@ export class InspectionsPage {
     this.preferences.readSort(),
   );
 
-  /** The page window, one-based. */
-  protected readonly page: WritableSignal<number> = signal<number>(1);
-
   /** How many rows a page holds. Not remembered — a per-visit preference. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
@@ -209,6 +219,20 @@ export class InspectionsPage {
    * @type {Signal<string>}
    */
   protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
+
+  /**
+   * Property currentPage
+   * @readonly
+   * @description The URL's `?page=` as a bounded positive integer, defaulting to the first page.
+   * @access protected
+   * @since 1.6.0
+   * @type {Signal<number>}
+   */
+  protected readonly currentPage: Signal<number> = computed<number>(() => {
+    const parsed: number = Number(this.page());
+
+    return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 1;
+  });
 
   /**
    * Property hasSearchOrFilters
@@ -364,14 +388,13 @@ export class InspectionsPage {
       .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((term: string): void => {
         if (term !== this.searchTerm()) {
-          this.page.set(1);
-          this.navigateQuery(term === '' ? null : term);
+          this.navigateQuery({ q: term === '' ? null : term, page: null });
         }
       });
 
     effect((): void => {
       const organizationId: string = this.organizationId();
-      const page: number = this.page();
+      const page: number = this.currentPage();
       const pageSize: number = this.pageSize();
       const options: InspectionListOptions = this.buildListOptions();
 
@@ -400,8 +423,8 @@ export class InspectionsPage {
       readonly result: InspectionResult | null;
     }>,
   ): void {
-    this.page.set(1);
     this.filters.update((current) => ({ ...current, ...patch }));
+    this.navigateQuery({ page: null });
   }
 
   /**
@@ -412,7 +435,6 @@ export class InspectionsPage {
    * @returns {void}
    */
   protected clearFilters(): void {
-    this.page.set(1);
     this.filters.set({ status: null, result: null });
     this.clearSearch();
   }
@@ -438,8 +460,7 @@ export class InspectionsPage {
    */
   protected clearSearch(): void {
     this.draftSearch.set('');
-    this.page.set(1);
-    this.navigateQuery(null);
+    this.navigateQuery({ q: null, page: null });
   }
 
   /**
@@ -517,20 +538,22 @@ export class InspectionsPage {
    * @returns {void}
    */
   protected setPageSize(size: number): void {
-    this.page.set(1);
     this.pageSize.set(size);
+    this.navigateQuery({ page: null });
   }
 
   /**
    * Method goToPage
-   * @description Moves to a page within bounds.
+   * @description Moves to a page within bounds, round-tripped through `?page=`.
    * @access protected
    * @since 1.0.0
    * @param {number} target - The requested page.
    * @returns {void}
    */
   protected goToPage(target: number): void {
-    this.page.set(Math.min(Math.max(1, target), this.pageCount()));
+    const bounded: number = Math.min(Math.max(1, target), this.pageCount());
+
+    this.navigateQuery({ page: bounded === 1 ? null : String(bounded) });
   }
 
   /**
@@ -549,13 +572,13 @@ export class InspectionsPage {
    * @returns {void}
    */
   protected applySortField(field: InspectionSortField): void {
-    this.page.set(1);
     this.sortOrder.update((current: InspectionListSort) =>
       current.field === field
         ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
         : { field, direction: current.direction },
     );
     this.preferences.writeSort(this.sortOrder());
+    this.navigateQuery({ page: null });
   }
 
   /**
@@ -570,7 +593,7 @@ export class InspectionsPage {
       organizationId: this.organizationId(),
       options: {
         ...this.buildListOptions(),
-        page: this.page(),
+        page: this.currentPage(),
         itemsPerPage: this.pageSize(),
       },
     });
@@ -605,16 +628,16 @@ export class InspectionsPage {
 
   /**
    * Method navigateQuery
-   * @description Round-trips `?q=` without disturbing the rest of the URL.
+   * @description Round-trips a patch of query params without disturbing the rest of the URL.
    * @access private
    * @since 1.4.0
-   * @param {string | null} term - The search term to set, or `null` to remove it.
+   * @param {Record<string, string | null>} patch - The params to set, `null` removing one.
    * @returns {void}
    */
-  private navigateQuery(term: string | null): void {
+  private navigateQuery(patch: Readonly<Record<string, string | null>>): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { q: term },
+      queryParams: patch,
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

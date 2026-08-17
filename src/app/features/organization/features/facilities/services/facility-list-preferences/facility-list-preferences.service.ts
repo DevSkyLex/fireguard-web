@@ -4,17 +4,16 @@ import type {
   FacilityListSort,
   FacilitySortField,
 } from '@features/organization/features/facilities/models';
+import {
+  buildListSortCookieOptions,
+  decodeListSortCookie,
+  resolvePersistedListSort,
+} from '@shared/list-sort-preferences';
 
 /**
  * Cookie holding the facilities list's remembered shape.
  */
 const PREFERENCES_COOKIE_NAME = 'fg-facility-list';
-
-/**
- * One year. A working preference should outlive a session; nothing here is
- * sensitive — a sort field and a direction.
- */
-const PREFERENCES_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /**
  * Ordering used when nothing has been remembered — the backend's own default
@@ -32,6 +31,20 @@ interface PersistedPreferences {
 }
 
 /**
+ * Narrows a decoded sort field to one this build's facilities list supports.
+ */
+function isFacilitySortField(field: string): field is FacilitySortField {
+  return (
+    field === 'name' ||
+    field === 'type' ||
+    field === 'status' ||
+    field === 'createdAt' ||
+    field === 'updatedAt' ||
+    field === 'code'
+  );
+}
+
+/**
  * Service FacilityListPreferencesService
  * @class FacilityListPreferencesService
  *
@@ -43,11 +56,10 @@ interface PersistedPreferences {
  *
  * A behavioral service rather than a util (`ARCHITECTURE.md` §10.7): it needs
  * `CookieService`, and a util may not inject. `CookieService` already no-ops
- * on the server, so every method here is safe during SSR.
- *
- * Every read is defensive: a cookie is user-editable and survives
- * deployments, so a malformed or retired field falls back to the default
- * instead of propagating into the query.
+ * on the server, so every method here is safe during SSR. The persisted-shape
+ * codec (decode/validate/serialize) is shared with the other feature-local
+ * list-sort preference services through `@shared/list-sort-preferences`; only
+ * the cookie name, field whitelist, and default stay local here.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -85,22 +97,13 @@ export class FacilityListPreferencesService {
    */
   public readSort(): FacilityListSort {
     const stored: PersistedPreferences = this.read();
-    const field: string | undefined = stored.sortField;
 
-    if (
-      field !== 'name' &&
-      field !== 'type' &&
-      field !== 'status' &&
-      field !== 'createdAt' &&
-      field !== 'updatedAt' &&
-      field !== 'code'
-    )
-      return DEFAULT_SORT;
-
-    return {
-      field: field satisfies FacilitySortField,
-      direction: stored.sortDirection === 'desc' ? 'desc' : 'asc',
-    };
+    return resolvePersistedListSort(
+      stored.sortField,
+      stored.sortDirection,
+      isFacilitySortField,
+      DEFAULT_SORT,
+    );
   }
 
   /**
@@ -117,13 +120,12 @@ export class FacilityListPreferencesService {
    * @returns {void}
    */
   public write(sort: FacilityListSort): void {
-    this.cookies.setCookie<string>({
-      name: PREFERENCES_COOKIE_NAME,
-      value: JSON.stringify({ sortField: sort.field, sortDirection: sort.direction }),
-      path: '/',
-      maxAge: PREFERENCES_COOKIE_MAX_AGE,
-      sameSite: 'Lax',
-    });
+    this.cookies.setCookie<string>(
+      buildListSortCookieOptions(
+        PREFERENCES_COOKIE_NAME,
+        JSON.stringify({ sortField: sort.field, sortDirection: sort.direction }),
+      ),
+    );
   }
 
   /**
@@ -140,15 +142,8 @@ export class FacilityListPreferencesService {
    */
   private read(): PersistedPreferences {
     const raw: string | null = this.cookies.getCookie<string>(PREFERENCES_COOKIE_NAME);
-    if (!raw) return {};
 
-    try {
-      const parsed: unknown = JSON.parse(raw);
-
-      return typeof parsed === 'object' && parsed !== null ? (parsed as PersistedPreferences) : {};
-    } catch {
-      return {};
-    }
+    return decodeListSortCookie(raw) as PersistedPreferences;
   }
   //#endregion
 }

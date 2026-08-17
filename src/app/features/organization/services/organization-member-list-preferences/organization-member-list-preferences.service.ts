@@ -1,17 +1,16 @@
 import { inject, Service } from '@angular/core';
 import { CookieService } from '@core/cookie';
 import type { OrganizationMemberListSort } from '@features/organization/models';
+import {
+  buildListSortCookieOptions,
+  decodeListSortCookie,
+  resolvePersistedListSort,
+} from '@shared/list-sort-preferences';
 
 /**
  * Cookie holding the members roster's remembered ordering.
  */
 const PREFERENCES_COOKIE_NAME = 'fg-organization-member-list';
-
-/**
- * One year. A working preference should outlive a session; nothing here is
- * sensitive — a sort field and a direction.
- */
-const PREFERENCES_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /**
  * Ordering used when nothing has been remembered — the API's own default.
@@ -28,6 +27,15 @@ interface PersistedSort {
 }
 
 /**
+ * Narrows a decoded sort field to one this build's members roster supports.
+ */
+function isOrganizationMemberSortField(
+  field: string,
+): field is OrganizationMemberListSort['field'] {
+  return field === 'joinedAt' || field === 'displayName';
+}
+
+/**
  * Service OrganizationMemberListPreferencesService
  * @class OrganizationMemberListPreferencesService
  *
@@ -39,7 +47,10 @@ interface PersistedSort {
  *
  * A behavioral service rather than a util (`ARCHITECTURE.md` §10.7): it needs
  * `CookieService`, and a util may not inject. `CookieService` already no-ops
- * on the server, so every method here is safe during SSR.
+ * on the server, so every method here is safe during SSR. The persisted-shape
+ * codec (decode/validate/serialize) is shared with the other feature-local
+ * list-sort preference services through `@shared/list-sort-preferences`; only
+ * the cookie name, field whitelist, and default stay local here.
  *
  * @since 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -66,14 +77,13 @@ export class OrganizationMemberListPreferencesService {
    */
   public readSort(): OrganizationMemberListSort {
     const stored: PersistedSort = this.read();
-    const field: string | undefined = stored.field;
 
-    if (field !== 'joinedAt' && field !== 'displayName') return DEFAULT_SORT;
-
-    return {
-      field,
-      direction: stored.direction === 'desc' ? 'desc' : 'asc',
-    };
+    return resolvePersistedListSort(
+      stored.field,
+      stored.direction,
+      isOrganizationMemberSortField,
+      DEFAULT_SORT,
+    );
   }
 
   /**
@@ -89,16 +99,15 @@ export class OrganizationMemberListPreferencesService {
    * @returns {void}
    */
   public write(sort: OrganizationMemberListSort): void {
-    this.cookies.setCookie<string>({
-      name: PREFERENCES_COOKIE_NAME,
-      value: JSON.stringify({
-        field: sort.field,
-        direction: sort.direction,
-      } satisfies PersistedSort),
-      path: '/',
-      maxAge: PREFERENCES_COOKIE_MAX_AGE,
-      sameSite: 'Lax',
-    });
+    this.cookies.setCookie<string>(
+      buildListSortCookieOptions(
+        PREFERENCES_COOKIE_NAME,
+        JSON.stringify({
+          field: sort.field,
+          direction: sort.direction,
+        } satisfies PersistedSort),
+      ),
+    );
   }
 
   /**
@@ -115,15 +124,8 @@ export class OrganizationMemberListPreferencesService {
    */
   private read(): PersistedSort {
     const raw: string | null = this.cookies.getCookie<string>(PREFERENCES_COOKIE_NAME);
-    if (!raw) return {};
 
-    try {
-      const parsed: unknown = JSON.parse(raw);
-
-      return typeof parsed === 'object' && parsed !== null ? (parsed as PersistedSort) : {};
-    } catch {
-      return {};
-    }
+    return decodeListSortCookie(raw) as PersistedSort;
   }
   //#endregion
 }

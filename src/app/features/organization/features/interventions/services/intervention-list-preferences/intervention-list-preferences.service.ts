@@ -4,17 +4,16 @@ import type {
   InterventionListSort,
   InterventionSortField,
 } from '@features/organization/features/interventions/models';
+import {
+  buildListSortCookieOptions,
+  decodeListSortCookie,
+  resolvePersistedListSort,
+} from '@shared/list-sort-preferences';
 
 /**
  * Cookie holding the interventions list's remembered shape.
  */
 const PREFERENCES_COOKIE_NAME = 'fg-intervention-list';
-
-/**
- * One year. A working preference should outlive a session; nothing here is
- * sensitive — a sort field, a set of hidden columns and a page size.
- */
-const PREFERENCES_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /**
  * Ordering used when nothing has been remembered: soonest deadline first, which
@@ -40,6 +39,20 @@ interface PersistedPreferences {
 }
 
 /**
+ * Narrows a decoded sort field to one this build's interventions list supports.
+ */
+function isInterventionSortField(field: string): field is InterventionSortField {
+  return (
+    field === 'name' ||
+    field === 'dueAt' ||
+    field === 'plannedStartAt' ||
+    field === 'createdAt' ||
+    field === 'updatedAt' ||
+    field === 'priority'
+  );
+}
+
+/**
  * Service InterventionListPreferencesService
  * @class InterventionListPreferencesService
  *
@@ -53,7 +66,10 @@ interface PersistedPreferences {
  * `CookieService`, and a util may not inject. Cookies are the only persistence
  * this application uses — there is no `localStorage` anywhere — and
  * `CookieService` already no-ops on the server, so every method here is safe
- * during SSR.
+ * during SSR. The persisted-shape codec's decode/validate step for the sort
+ * field reuses `@shared/list-sort-preferences` unchanged — the hidden-column
+ * and page-size handling below has no equivalent in the other list-sort
+ * preference services and stays local.
  *
  * Every read is defensive. A cookie is user-editable and survives deployments,
  * so a malformed or outdated value falls back to the default instead of
@@ -96,22 +112,13 @@ export class InterventionListPreferencesService {
    */
   public readSort(): InterventionListSort {
     const stored: PersistedPreferences = this.read();
-    const field: string | undefined = stored.sortField;
 
-    if (
-      field !== 'name' &&
-      field !== 'dueAt' &&
-      field !== 'plannedStartAt' &&
-      field !== 'createdAt' &&
-      field !== 'updatedAt' &&
-      field !== 'priority'
-    )
-      return DEFAULT_SORT;
-
-    return {
-      field: field satisfies InterventionSortField,
-      direction: stored.sortDirection === 'desc' ? 'desc' : 'asc',
-    };
+    return resolvePersistedListSort(
+      stored.sortField,
+      stored.sortDirection,
+      isInterventionSortField,
+      DEFAULT_SORT,
+    );
   }
 
   /**
@@ -197,13 +204,9 @@ export class InterventionListPreferencesService {
    * @returns {void}
    */
   private persist(payload: PersistedPreferences): void {
-    this.cookies.setCookie<string>({
-      name: PREFERENCES_COOKIE_NAME,
-      value: JSON.stringify(payload),
-      path: '/',
-      maxAge: PREFERENCES_COOKIE_MAX_AGE,
-      sameSite: 'Lax',
-    });
+    this.cookies.setCookie<string>(
+      buildListSortCookieOptions(PREFERENCES_COOKIE_NAME, JSON.stringify(payload)),
+    );
   }
 
   /**
@@ -220,15 +223,8 @@ export class InterventionListPreferencesService {
    */
   private read(): PersistedPreferences {
     const raw: string | null = this.cookies.getCookie<string>(PREFERENCES_COOKIE_NAME);
-    if (!raw) return {};
 
-    try {
-      const parsed: unknown = JSON.parse(raw);
-
-      return typeof parsed === 'object' && parsed !== null ? (parsed as PersistedPreferences) : {};
-    } catch {
-      return {};
-    }
+    return decodeListSortCookie(raw) as PersistedPreferences;
   }
   //#endregion
 }

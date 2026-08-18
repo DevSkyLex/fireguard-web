@@ -1,0 +1,103 @@
+<div id="approvals" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  <app-collection-toolbar>
+    <hlm-toggle-group
+      toolbarStart
+      type="single"
+      variant="outline"
+      size="sm"
+      [value]="status()"
+      data-testid="approvals-filter-status"
+      aria-label="Filter by status"
+      i18n-aria-label="@@approvals.filter.statusAriaLabel"
+      (valueChange)="applyStatus($event)"
+    >
+      @for (value of statusValues; track value) {
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          [value]="value"
+          [attr.data-testid]="'approvals-filter-status-' + value"
+        >
+          <app-approval-status-tag [value]="value" asOption />
+        </button>
+      }
+    </hlm-toggle-group>
+
+    <div class="flex flex-col gap-1" toolbarEnd>
+      <hlm-select
+        [value]="actionType()"
+        [itemToString]="actionTypeLabelOf"
+        (valueChange)="applyActionType($event)"
+      >
+        <hlm-select-trigger
+          buttonId="approvals-filter-action-type"
+          class="w-52 max-sm:min-h-11"
+          data-testid="approvals-filter-action-type"
+        >
+          <hlm-select-value
+            placeholder="Any action"
+            i18n-placeholder="@@approvals.filter.anyAction"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (option of actionTypeOptions(); track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </div>
+  </app-collection-toolbar>
+
+  @if (store.hasListError()) {
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="Couldn't load approval requests"
+      i18n-title="@@approvals.list.errorTitle"
+      description="The requests could not be loaded. Check your connection and try again."
+      i18n-description="@@approvals.list.errorText"
+    >
+      <button hlmBtn variant="outline" data-testid="approvals-retry" (click)="reload()">
+        <span i18n="@@approvals.list.retry">Retry</span>
+      </button>
+    </app-error-state>
+  } @else if (!store.isLoading() && items().length === 0) {
+    <app-empty-state
+      icon="lucideShieldCheck"
+      title="No approval requests"
+      i18n-title="@@approvals.list.emptyTitle"
+      description="Nothing is waiting on a decision for this filter."
+      i18n-description="@@approvals.list.emptyDesc"
+    />
+  } @else {
+    <app-approval-request-table
+      [items]="items()"
+      [loading]="store.isLoading() && items().length === 0"
+      [canDecide]="canDecide()"
+      [organizationId]="organizationId()"
+      [actionTypeLabelOf]="actionTypeLabelOf"
+      (approveRequested)="openApprove($event)"
+      (rejectRequested)="openReject($event)"
+    />
+
+    <app-collection-pagination
+      [page]="page()"
+      [pageCount]="pageCount()"
+      [pageSize]="pageSize()"
+      [total]="store.totalRequests()"
+      [shown]="items().length"
+      testIdPrefix="approvals"
+      (pageChanged)="goToPage($event)"
+      (pageSizeChanged)="setPageSize($event)"
+    />
+  }
+</div>
+
+<app-approval-decision-dialog
+  [target]="decisionTarget()"
+  [pending]="store.isDeciding()"
+  [errorText]="store.decideErrorText()"
+  (decided)="submitDecision($event)"
+  (dismissed)="closeDecisionDialog()"
+/>

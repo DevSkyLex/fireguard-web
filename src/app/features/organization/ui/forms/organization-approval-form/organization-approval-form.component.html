@@ -1,0 +1,155 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <section class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
+        <h3
+          class="text-sm font-semibold tracking-tight text-foreground"
+          i18n="@@org.settings.approval.rulesTitle"
+        >
+          Gated actions
+        </h3>
+        <p class="text-sm text-muted-foreground" i18n="@@org.settings.approval.rulesDescription">
+          Actions requiring a second authorized member's decision before they run.
+        </p>
+      </div>
+
+      @for (entry of approvalForm.actionRules; track entry[0]) {
+        <div class="flex flex-col gap-3 rounded-md border border-border p-3">
+          <hlm-field orientation="horizontal" class="justify-between">
+            <label
+              [attr.for]="'org-approval-enabled-' + entry[0]"
+              hlmFieldLabel
+              class="font-medium text-foreground"
+            >
+              {{ actionTypeLabelOf(entry[0]) }}
+            </label>
+            <hlm-switch
+              [id]="'org-approval-enabled-' + entry[0]"
+              [attr.data-testid]="'org-approval-enabled-' + entry[0]"
+              [formField]="entry[1].enabled"
+            />
+          </hlm-field>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <hlm-field>
+              <label
+                [attr.for]="'org-approval-role-' + entry[0]"
+                hlmFieldLabel
+                i18n="@@org.settings.approval.minApproverRoleLabel"
+                >Minimum approver role</label
+              >
+              <hlm-select [formField]="entry[1].minApproverRole">
+                <hlm-select-trigger
+                  [buttonId]="'org-approval-role-' + entry[0]"
+                  class="w-full"
+                  [attr.data-testid]="'org-approval-role-' + entry[0]"
+                >
+                  <hlm-select-value />
+                </hlm-select-trigger>
+                <hlm-select-content *hlmSelectPortal>
+                  <hlm-select-group>
+                    @for (option of roleOptions; track option.value) {
+                      <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                    }
+                  </hlm-select-group>
+                </hlm-select-content>
+              </hlm-select>
+            </hlm-field>
+
+            @if (entry[0] === severityGatedActionType) {
+              <hlm-field>
+                <label
+                  [attr.for]="'org-approval-severity-' + entry[0]"
+                  hlmFieldLabel
+                  i18n="@@org.settings.approval.minSeverityLabel"
+                  >Minimum severity</label
+                >
+                <hlm-select [formField]="entry[1].minSeverity">
+                  <hlm-select-trigger
+                    [buttonId]="'org-approval-severity-' + entry[0]"
+                    class="w-full"
+                    [attr.data-testid]="'org-approval-severity-' + entry[0]"
+                  >
+                    <hlm-select-value />
+                  </hlm-select-trigger>
+                  <hlm-select-content *hlmSelectPortal>
+                    <hlm-select-group>
+                      <hlm-select-item
+                        [value]="noMinimumSeverity"
+                        i18n="@@org.settings.approval.noMinimumSeverity"
+                        >No minimum</hlm-select-item
+                      >
+                      @for (option of severityOptions; track option.value) {
+                        <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                      }
+                    </hlm-select-group>
+                  </hlm-select-content>
+                </hlm-select>
+              </hlm-field>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <section class="flex flex-col gap-3 border-t border-border pt-5">
+      <hlm-field orientation="horizontal" class="justify-between">
+        <div class="flex flex-col gap-1">
+          <label
+            hlmFieldLabel
+            for="org-approval-self-approval"
+            i18n="@@org.settings.approval.selfApprovalEditLabel"
+            >Allow self-approval</label
+          >
+          <p hlmFieldDescription i18n="@@org.settings.approval.selfApprovalEditDescription">
+            Let the requester decide on their own request.
+          </p>
+        </div>
+        <hlm-switch
+          id="org-approval-self-approval"
+          data-testid="org-approval-self-approval"
+          [formField]="approvalForm.allowSelfApproval"
+        />
+      </hlm-field>
+
+      <hlm-field class="max-w-xs">
+        <label hlmFieldLabel for="org-approval-ttl" i18n="@@org.settings.approval.ttlEditLabel"
+          >Request expiry (days)</label
+        >
+        <input
+          hlmInput
+          id="org-approval-ttl"
+          type="number"
+          data-testid="org-approval-ttl"
+          [formField]="approvalForm.approvalTtlDays"
+          [attr.aria-invalid]="
+            approvalForm.approvalTtlDays().touched() && approvalForm.approvalTtlDays().invalid()
+          "
+        />
+        @if (approvalForm.approvalTtlDays().touched() && approvalForm.approvalTtlDays().invalid()) {
+          <hlm-field-error>{{
+            approvalForm.approvalTtlDays().errors()[0].message
+          }}</hlm-field-error>
+        }
+      </hlm-field>
+    </section>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="org-approval-submit"
+        [disabled]="!canSubmit()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.approval.submitting">Saving…</span>
+        } @else {
+          <span i18n="@@org.settings.approval.submit">Save changes</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

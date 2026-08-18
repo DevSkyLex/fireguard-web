@@ -26,7 +26,8 @@ This feature is responsible for:
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures: facilities, equipments, inspections, interventions,
-  maintenance-schedules, checklists and collaboration (the conversational surface),
+  maintenance-schedules, approvals (the four-eyes decision surface) and collaboration (the
+  conversational surface); checklists returns once its page is rebuilt,
 - publishing organization context to layouts and approved consumers.
 
 This feature does not own generic shell composition or account-level user identity.
@@ -41,7 +42,7 @@ This feature does not own generic shell composition or account-level user identi
 
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing
 > Dashboard page), `messages`, `channels`, `interventions`, `assets`, `equipments`, `facilities`,
-> `inspections`, `maintenance`, `calendar`, `statistics` (a permanent redirect to the landing page, kept for old
+> `inspections`, `maintenance`, `approvals`, `calendar`, `statistics` (a permanent redirect to the landing page, kept for old
 > bookmarks and deep links — see Dashboard below), `members`, `members/:memberId`, `team`,
 > `settings`, and `/organizations/invitations/accept` (mounted at the app root, outside this
 > subtree — see below). `checklists` is the feature's remaining contract and is already listed by
@@ -97,6 +98,9 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
+- `/organizations/:organizationId/approvals` — the four-eyes approvals inbox, owned by the
+  `approvals` subfeature, gated by `organization.approvals.read`. Decision controls (approve/reject)
+  are additionally gated by `organization.approvals.decide`
 - `/organizations/:organizationId/statistics` — permanent redirect to `/organizations/:organizationId`
   (`pathMatch: 'full'`); the Trends section it used to be is one scroll away, on the same page
 - `/organizations/:organizationId/checklists`
@@ -140,10 +144,14 @@ the API names which keys are customized (`customizedSlaSeverities`,
 a hard-coded severity or equipment-type list, save for the periodicity picker's five-option
 duration catalog (`P1M`/`P3M`/`P6M`/`P1Y`/`P2Y`). The assistant's `model` override renders as
 read-only text — there is no operator-published model catalog for a picker yet. **The four-eyes
-approval policy (`OrganizationSettings.approval`) is read-only on this page**
-(`OrganizationApprovalSummaryCard`, bottom of the Compliance tab): the approvals inbox that would
-let a reader act on a gated request does not exist yet, so this page never sends an `approval`
-PATCH. Revisit once that surface exists.
+approval policy (`OrganizationSettings.approval`) is now editable**, through
+`OrganizationApprovalForm` at the bottom of the Compliance tab — one rule row per action type from
+the `approvals` subfeature's action-type catalog (enabled, minimum approver role, and — `nc_waiver`
+only — a minimum severity), self-approval, and the request TTL, all saved through
+`OrganizationSettingsStore.save` with only the `approval` section. This was read-only
+(`OrganizationApprovalSummaryCard`) until the `approvals` subfeature's inbox gave a reader a
+surface to act on a gated request — activating a policy nothing could act on would have stranded
+requests. That invariant is now retired; see `features/approvals/FEATURE.md`.
 
 ## State and Data Access
 
@@ -507,6 +515,10 @@ weight.
   (`EquipmentService`, `InspectionService`) and `models` barrels
   (`EquipmentOutput`, `InspectionOutput`). Read-only — the parent previews,
   neither subfeature's own management surface or state is touched.
+- Consumes the nested `features/approvals` subfeature's `data-access` barrel
+  (`ApprovalRequestService.listActionTypes()`) for the settings Compliance
+  tab's approval-policy form. Read-only — the parent takes no approval
+  decision and owns no `ApprovalRequestOutput` state.
 - May expose organization context to shell composition through ports.
 - May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
 - May expose onboarding-approved setup workflows through `organization/setup`.
@@ -520,4 +532,7 @@ weight.
 - Resolvers that load organization context belong to this feature.
 - A mutating confirm dialog stays open, busy-locked, until the write settles — the members remove confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome inline, so the operator sees it exactly where they took the action and can retry without reopening the dialog, rather than the failure surfacing only as a page-level toast.
 - **The compliance axis is gated on `COMPLIANCE_READ` and the safety-register export button on `COMPLIANCE_EXPORT`** — the same `organization.compliance.read`/`organization.compliance.export` pair the backend asserts (the read permission is held by the system member role; export is admin/manager-only). The backend additionally gates the export on the organization's plan tier (pro/max): that refusal is backend-owned and surfaces through the export error state — the frontend never re-derives the plan rule.
-- **The four-eyes approval policy is read-only on the settings page until the approvals inbox exists.** No form in this feature sends an `approval` PATCH; activating an undecidable policy — one nothing can act on — would strand requests. `OrganizationApprovalSummaryCard` renders the effective policy for visibility only.
+- **The four-eyes approval policy is editable now that the `approvals` subfeature's inbox exists** — the
+  invariant that kept it read-only (activating an undecidable policy would strand requests) is retired.
+  `OrganizationApprovalForm` is the only writer of `UpdateOrganizationInput.approval`, section-scoped
+  through `OrganizationSettingsStore.save`, matching every other settings section.

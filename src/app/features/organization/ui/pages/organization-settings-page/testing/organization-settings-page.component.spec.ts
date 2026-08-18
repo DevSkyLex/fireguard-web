@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 import {
   idleCallState,
   pendingCallState,
@@ -9,6 +10,7 @@ import {
   type StoreError,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
 import { ORGANIZATION_PERMISSION, type OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
@@ -89,6 +91,10 @@ describe('OrganizationSettingsPage', () => {
         {
           provide: OrganizationQuotaStore,
           useValue: { items: signal([]), isLoadingQuota: signal(false) },
+        },
+        {
+          provide: ApprovalRequestService,
+          useValue: { listActionTypes: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
         },
       ],
     });

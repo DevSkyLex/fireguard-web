@@ -11,6 +11,7 @@ import {
   lucideMessageSquare,
   lucideNetwork,
   lucideSettings,
+  lucideShieldCheck,
   lucideUsers,
   lucideWrench,
 } from '@ng-icons/lucide';
@@ -87,6 +88,7 @@ import {
       lucideMessageSquare,
       lucideNetwork,
       lucideSettings,
+      lucideShieldCheck,
       lucideUsers,
       lucideWrench,
     }),

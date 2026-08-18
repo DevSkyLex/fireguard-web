@@ -12866,6 +12866,230 @@
         <source><x id="type" equiv-text="type"/> at <x id="facility" equiv-text="facilityName"/></source>
         <target><x id="type" equiv-text="type"/> à <x id="facility" equiv-text="facilityName"/></target>
       </trans-unit>
+      <trans-unit id="route.approvals" datatype="html">
+        <source>Approvals</source>
+        <target>Approbations</target>
+      </trans-unit>
+      <trans-unit id="approvals.status.pending" datatype="html">
+        <source>Pending</source>
+        <target>En attente</target>
+      </trans-unit>
+      <trans-unit id="approvals.status.approved" datatype="html">
+        <source>Approved</source>
+        <target>Approuvée</target>
+      </trans-unit>
+      <trans-unit id="approvals.status.rejected" datatype="html">
+        <source>Rejected</source>
+        <target>Rejetée</target>
+      </trans-unit>
+      <trans-unit id="approvals.status.cancelled" datatype="html">
+        <source>Cancelled</source>
+        <target>Annulée</target>
+      </trans-unit>
+      <trans-unit id="approvals.status.expired" datatype="html">
+        <source>Expired</source>
+        <target>Expirée</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.subjectChanged" datatype="html">
+        <source>This request can no longer be applied — the item it gates has changed since it was requested. It has been cancelled; refresh to see the latest state.</source>
+        <target>Cette demande ne peut plus être appliquée — l&apos;élément qu&apos;elle concerne a changé depuis la demande. Elle a été annulée ; actualisez pour voir l&apos;état le plus récent.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.alreadyDecided" datatype="html">
+        <source>Someone else already decided this request. Refresh to see the outcome.</source>
+        <target>Quelqu&apos;un d&apos;autre a déjà statué sur cette demande. Actualisez pour voir le résultat.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.selfApproval" datatype="html">
+        <source>You cannot decide on a request you submitted yourself.</source>
+        <target>Vous ne pouvez pas statuer sur une demande que vous avez vous-même soumise.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.belowMinRole" datatype="html">
+        <source>Your role does not meet this action&apos;s minimum approver requirement.</source>
+        <target>Votre rôle ne satisfait pas l&apos;exigence minimale d&apos;approbateur pour cette action.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.generic" datatype="html">
+        <source>The decision could not be recorded. Try again.</source>
+        <target>La décision n&apos;a pas pu être enregistrée. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.noteLabel" datatype="html">
+        <source>Decision note (optional)</source>
+        <target>Note de décision (facultatif)</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.notePlaceholder" datatype="html">
+        <source>Add context for the record</source>
+        <target>Ajoutez un contexte pour l&apos;historique</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.rejectTitle" datatype="html">
+        <source>Reject approval request?</source>
+        <target>Rejeter la demande d&apos;approbation ?</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.approveTitle" datatype="html">
+        <source>Approve approval request?</source>
+        <target>Approuver la demande d&apos;approbation ?</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.rejectMessage" datatype="html">
+        <source>The gated action will never run. This cannot be undone.</source>
+        <target>L&apos;action concernée ne sera jamais exécutée. Cette opération est irréversible.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.approveMessage" datatype="html">
+        <source>Approving executes the gated action immediately — it does not queue for later. This cannot be undone.</source>
+        <target>Approuver exécute immédiatement l&apos;action concernée — elle n&apos;est pas mise en file d&apos;attente. Cette opération est irréversible.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.rejectAccept" datatype="html">
+        <source>Reject</source>
+        <target>Rejeter</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.approveAccept" datatype="html">
+        <source>Approve</source>
+        <target>Approuver</target>
+      </trans-unit>
+      <trans-unit id="approvals.filter.statusAriaLabel" datatype="html">
+        <source>Filter by status</source>
+        <target>Filtrer par statut</target>
+      </trans-unit>
+      <trans-unit id="approvals.filter.anyAction" datatype="html">
+        <source>Any action</source>
+        <target>N&apos;importe quelle action</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.errorTitle" datatype="html">
+        <source>Couldn&apos;t load approval requests</source>
+        <target>Impossible de charger les demandes d&apos;approbation</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.errorText" datatype="html">
+        <source>The requests could not be loaded. Check your connection and try again.</source>
+        <target>Les demandes n&apos;ont pas pu être chargées. Vérifiez votre connexion et réessayez.</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.emptyTitle" datatype="html">
+        <source>No approval requests</source>
+        <target>Aucune demande d&apos;approbation</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.emptyDesc" datatype="html">
+        <source>Nothing is waiting on a decision for this filter.</source>
+        <target>Rien n&apos;attend de décision pour ce filtre.</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.title" datatype="html">
+        <source> Approval requests </source>
+        <target> Demandes d&apos;approbation </target>
+      </trans-unit>
+      <trans-unit id="approvals.table.colActionType" datatype="html">
+        <source>Action</source>
+        <target>Action</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.colSubject" datatype="html">
+        <source>Subject</source>
+        <target>Sujet</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.colRequester" datatype="html">
+        <source>Requested by</source>
+        <target>Demandé par</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.colRequested" datatype="html">
+        <source>Requested</source>
+        <target>Demandé le</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.colExpires" datatype="html">
+        <source>Expires</source>
+        <target>Expire le</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.colStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.decidedBy" datatype="html">
+        <source>Decided by</source>
+        <target>Décidé par</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.approveAction" datatype="html">
+        <source>Approve request</source>
+        <target>Approuver la demande</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.rejectAction" datatype="html">
+        <source>Reject request</source>
+        <target>Rejeter la demande</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.noResults" datatype="html">
+        <source> No results. </source>
+        <target> Aucun résultat. </target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.roleMember" datatype="html">
+        <source>Member</source>
+        <target>Membre</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.roleAdmin" datatype="html">
+        <source>Admin</source>
+        <target>Administrateur</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.severityLow" datatype="html">
+        <source>Low</source>
+        <target>Faible</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.severityMedium" datatype="html">
+        <source>Medium</source>
+        <target>Moyenne</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.severityHigh" datatype="html">
+        <source>High</source>
+        <target>Élevée</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.severityCritical" datatype="html">
+        <source>Critical</source>
+        <target>Critique</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.rulesTitle" datatype="html">
+        <source> Gated actions </source>
+        <target> Actions soumises à approbation </target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.rulesDescription" datatype="html">
+        <source> Actions requiring a second authorized member&apos;s decision before they run. </source>
+        <target> Actions nécessitant la décision d&apos;un second membre autorisé avant leur exécution. </target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.minApproverRoleLabel" datatype="html">
+        <source>Minimum approver role</source>
+        <target>Rôle minimal de l&apos;approbateur</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.minSeverityLabel" datatype="html">
+        <source>Minimum severity</source>
+        <target>Gravité minimale</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.noMinimumSeverity" datatype="html">
+        <source>No minimum</source>
+        <target>Aucun minimum</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalEditLabel" datatype="html">
+        <source>Allow self-approval</source>
+        <target>Autoriser l&apos;auto-approbation</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalEditDescription" datatype="html">
+        <source> Let the requester decide on their own request. </source>
+        <target> Laisser le demandeur statuer sur sa propre demande. </target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlEditLabel" datatype="html">
+        <source>Request expiry (days)</source>
+        <target>Expiration des demandes (jours)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Enregistrement…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Enregistrer les modifications</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlTooLow" datatype="html">
+        <source>Enter at least <x id="min" equiv-text="MIN_APPROVAL_TTL_DAYS"/> day</source>
+        <target>Saisissez au moins <x id="min" equiv-text="MIN_APPROVAL_TTL_DAYS"/> jour</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlTooHigh" datatype="html">
+        <source>Enter at most <x id="max" equiv-text="MAX_APPROVAL_TTL_DAYS"/> days</source>
+        <target>Saisissez au plus <x id="max" equiv-text="MAX_APPROVAL_TTL_DAYS"/> jours</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.sectionTitle" datatype="html">
+        <source> Four-eyes approval policy </source>
+        <target> Politique d&apos;approbation à quatre yeux </target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

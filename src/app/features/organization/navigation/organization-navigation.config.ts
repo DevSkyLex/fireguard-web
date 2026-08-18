@@ -154,6 +154,19 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     /**
+     * The four-eyes decision surface for the backend Approval module. No
+     * nav counter badge: the backend navigation-counters endpoint has no
+     * approvals count, and this list does not fake one client-side.
+     */
+    id: 'approvals',
+    label: $localize`:@@route.approvals:Approvals`,
+    icon: 'lucideShieldCheck',
+    path: 'approvals',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.APPROVALS_READ],
+  },
+  {
+    /**
      * Group channels are organization workspaces — they belong to the
      * workspace, unlike direct messages, which follow the reader and therefore
      * live in the shell's bottom block beside the other utilities. The read

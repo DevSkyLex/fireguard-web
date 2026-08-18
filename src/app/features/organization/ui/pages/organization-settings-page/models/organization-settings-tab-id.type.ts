@@ -2,9 +2,11 @@
  * Type OrganizationSettingsTabId
  *
  * @description
- * Which of the settings page's six sections is showing, driven by the `?tab=`
- * query parameter: `general` (identity and logo), `subscription` (plan and
- * billing), `usage` (quota meters), `notifications`, `regional` (formats), or
+ * Which of the settings page's eight sections is showing, driven by the
+ * `?tab=` query parameter: `general` (identity and logo), `subscription`
+ * (plan and billing), `usage` (quota meters), `notifications`, `regional`
+ * (formats), `compliance` (SLAs, inspection periodicity, automation, and the
+ * read-only approval summary), `assistant` (AI-assistant policy), or
  * `danger` (deletion). `general` is the default a missing or unrecognized
  * value falls back to.
  *
@@ -16,4 +18,6 @@ export type OrganizationSettingsTabId =
   | 'usage'
   | 'notifications'
   | 'regional'
+  | 'compliance'
+  | 'assistant'
   | 'danger';

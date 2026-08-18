@@ -54,6 +54,22 @@
           <ng-icon name="lucideGlobe" aria-hidden="true" />
           <span i18n="@@org.settings.tabs.regional">Regional & formats</span>
         </button>
+        <button
+          hlmTabsTrigger="compliance"
+          class="max-sm:min-h-11"
+          data-testid="org-settings-tab-compliance"
+        >
+          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+          <span i18n="@@org.settings.tabs.compliance">Compliance</span>
+        </button>
+        <button
+          hlmTabsTrigger="assistant"
+          class="max-sm:min-h-11"
+          data-testid="org-settings-tab-assistant"
+        >
+          <ng-icon name="lucideBot" aria-hidden="true" />
+          <span i18n="@@org.settings.tabs.assistant">Assistant</span>
+        </button>
         @if (canDelete()) {
           <button
             hlmTabsTrigger="danger"
@@ -302,6 +318,44 @@
             [regional]="regionalSeed()"
             [pending]="settingsStore.isSaving()"
             (submitted)="saveRegional($event)"
+          />
+        </ng-template>
+      </div>
+
+      <div hlmTabsContent="compliance" class="max-w-3xl">
+        <ng-template hlmTabsContentLazy>
+          <div class="flex flex-col gap-8">
+            <app-organization-compliance-form
+              [compliance]="complianceSeed()"
+              [pending]="settingsStore.isSaving()"
+              (submitted)="saveCompliance($event)"
+            />
+
+            <section class="flex flex-col gap-3 border-t border-border pt-6">
+              <h3
+                class="text-sm font-semibold tracking-tight text-foreground"
+                i18n="@@org.settings.compliance.automationTitle"
+              >
+                Automation
+              </h3>
+              <app-organization-automation-form
+                [automation]="automationSeed()"
+                [pending]="settingsStore.isSaving()"
+                (submitted)="saveAutomation($event)"
+              />
+            </section>
+
+            <app-organization-approval-summary-card [approval]="approvalSeed()" />
+          </div>
+        </ng-template>
+      </div>
+
+      <div hlmTabsContent="assistant" class="max-w-3xl">
+        <ng-template hlmTabsContentLazy>
+          <app-organization-assistant-form
+            [assistant]="assistantSeed()"
+            [pending]="settingsStore.isSaving()"
+            (submitted)="saveAssistant($event)"
           />
         </ng-template>
       </div>

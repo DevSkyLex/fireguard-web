@@ -1,0 +1,59 @@
+<div hlmCard>
+  <div hlmCardHeader>
+    <h3 hlmCardTitle i18n="@@org.settings.approval.title">Four-eyes approval</h3>
+    <p hlmCardDescription i18n="@@org.settings.approval.description">
+      Read-only until the approvals inbox exists to act on a gated request.
+    </p>
+  </div>
+
+  <div hlmCardContent class="flex flex-col gap-4">
+    @if (actionRuleEntries().length === 0) {
+      <p class="text-sm text-muted-foreground" i18n="@@org.settings.approval.emptyRules">
+        No custom approval rules — every action type is unrestricted.
+      </p>
+    } @else {
+      <div hlmTableContainer>
+        <table hlmTable data-testid="org-approval-rules-table">
+          <thead hlmTHead>
+            <tr hlmTr>
+              <th hlmTh i18n="@@org.settings.approval.columnAction">Action</th>
+              <th hlmTh i18n="@@org.settings.approval.columnEnabled">Enabled</th>
+              <th hlmTh i18n="@@org.settings.approval.columnMinRole">Min. approver role</th>
+              <th hlmTh i18n="@@org.settings.approval.columnMinSeverity">Min. severity</th>
+            </tr>
+          </thead>
+          <tbody hlmTBody>
+            @for (entry of actionRuleEntries(); track entry[0]) {
+              <tr hlmTr data-testid="org-approval-rule-row">
+                <td hlmTd>{{ actionTypeLabel(entry[0]) }}</td>
+                <td hlmTd>
+                  @if (entry[1].enabled) {
+                    <span i18n="@@org.settings.approval.enabledYes">Yes</span>
+                  } @else {
+                    <span i18n="@@org.settings.approval.enabledNo">No</span>
+                  }
+                </td>
+                <td hlmTd>{{ entry[1].minApproverRole }}</td>
+                <td hlmTd>{{ entry[1].minSeverity ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <div class="flex flex-col gap-1 border-t border-border pt-4 text-sm">
+      <p data-testid="org-approval-self-approval">
+        <span class="text-muted-foreground" i18n="@@org.settings.approval.selfApprovalLabel"
+          >Self-approval allowed</span
+        >:
+        @if (approval().allowSelfApproval) {
+          <span i18n="@@org.settings.approval.selfApprovalYes">Yes</span>
+        } @else {
+          <span i18n="@@org.settings.approval.selfApprovalNo">No</span>
+        }
+      </p>
+      <p data-testid="org-approval-ttl">{{ ttlText() }}</p>
+    </div>
+  </div>
+</div>

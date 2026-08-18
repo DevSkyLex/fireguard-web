@@ -103,7 +103,7 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
 - `/organizations/:organizationId/members/:memberId` — another member's profile, read-only
 - `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)
-- `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, danger zone; gated by `organization.settings.write`)
+- `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, compliance, assistant, danger zone; gated by `organization.settings.write`)
 - `/organizations/invitations/accept` — public invitation landing page; the
   route is mounted at the **app root** (outside the auth-guarded dashboard
   shell, in `app.routes.ts`) so a logged-out invitee can preview the invitation
@@ -128,6 +128,22 @@ permission substitutes for that. Suspend and restore, by contrast, need only
 `organization.settings.write` — the same permission the legacy `isActive` toggle already required. Notification and regional preferences are persisted via the
 settings `PATCH` but are not yet enforced (notification dispatch and app-wide date/locale
 formatting consume them in follow-up work).
+
+**Compliance, automation and assistant policy** (`OrganizationSettings.compliance` /
+`.automation` / `.assistant`) are persisted the same way, through the Compliance and Assistant
+tabs' own `OrganizationComplianceForm`, `OrganizationAutomationForm` and
+`OrganizationAssistantForm`, each calling `OrganizationSettingsStore.save` with only its own
+section. The two `compliance` maps (`nonConformitySlaDays`, `inspectionPeriodicityDefaults`)
+carry EFFECTIVE values — catalog defaults overlaid with the organization's customizations — and
+the API names which keys are customized (`customizedSlaSeverities`,
+`customizedPeriodicityTypes`); the Compliance tab renders every key the seed returns rather than
+a hard-coded severity or equipment-type list, save for the periodicity picker's five-option
+duration catalog (`P1M`/`P3M`/`P6M`/`P1Y`/`P2Y`). The assistant's `model` override renders as
+read-only text — there is no operator-published model catalog for a picker yet. **The four-eyes
+approval policy (`OrganizationSettings.approval`) is read-only on this page**
+(`OrganizationApprovalSummaryCard`, bottom of the Compliance tab): the approvals inbox that would
+let a reader act on a gated request does not exist yet, so this page never sends an `approval`
+PATCH. Revisit once that surface exists.
 
 ## State and Data Access
 
@@ -503,3 +519,4 @@ weight.
 - Resolvers that load organization context belong to this feature.
 - A mutating confirm dialog stays open, busy-locked, until the write settles — the members remove confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome inline, so the operator sees it exactly where they took the action and can retry without reopening the dialog, rather than the failure surfacing only as a page-level toast.
 - **The compliance axis is gated on `COMPLIANCE_READ` and the safety-register export button on `COMPLIANCE_EXPORT`** — the same `organization.compliance.read`/`organization.compliance.export` pair the backend asserts (the read permission is held by the system member role; export is admin/manager-only). The backend additionally gates the export on the organization's plan tier (pro/max): that refusal is backend-owned and surfaces through the export error state — the frontend never re-derives the plan rule.
+- **The four-eyes approval policy is read-only on the settings page until the approvals inbox exists.** No form in this feature sends an `approval` PATCH; activating an undecidable policy — one nothing can act on — would strand requests. `OrganizationApprovalSummaryCard` renders the effective policy for visibility only.

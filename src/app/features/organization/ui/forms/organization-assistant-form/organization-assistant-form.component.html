@@ -1,0 +1,76 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label hlmFieldLabel for="org-assistant-enabled" i18n="@@org.settings.assistant.enabledLabel"
+        >AI assistant</label
+      >
+      <hlm-switch
+        id="org-assistant-enabled"
+        data-testid="org-assistant-enabled"
+        [formField]="assistantForm.enabled"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel i18n="@@org.settings.assistant.modelLabel">Model</label>
+      <p class="text-sm text-muted-foreground" data-testid="org-assistant-model">
+        {{ modelLabel() }}
+      </p>
+    </hlm-field>
+
+    <hlm-field class="max-w-xs">
+      <label
+        hlmFieldLabel
+        for="org-assistant-temperature"
+        i18n="@@org.settings.assistant.temperatureLabel"
+        >Sampling temperature</label
+      >
+      <input
+        hlmInput
+        id="org-assistant-temperature"
+        type="number"
+        step="0.1"
+        data-testid="org-assistant-temperature"
+        [formField]="assistantForm.temperature"
+        [attr.aria-invalid]="
+          assistantForm.temperature().touched() && assistantForm.temperature().invalid()
+        "
+      />
+      @if (assistantForm.temperature().touched() && assistantForm.temperature().invalid()) {
+        <hlm-field-error>{{ assistantForm.temperature().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label
+        hlmFieldLabel
+        for="org-assistant-business-context"
+        i18n="@@org.settings.assistant.includeBusinessContextLabel"
+        >Include business context</label
+      >
+      <hlm-switch
+        id="org-assistant-business-context"
+        data-testid="org-assistant-business-context"
+        [formField]="assistantForm.includeBusinessContext"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="org-assistant-submit"
+        [disabled]="!canSubmit()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.assistant.submitting">Saving…</span>
+        } @else {
+          <span i18n="@@org.settings.assistant.submit">Save changes</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

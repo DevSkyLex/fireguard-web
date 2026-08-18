@@ -1,0 +1,153 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <section class="flex flex-col gap-3">
+      <h3
+        class="text-sm font-semibold tracking-tight text-foreground"
+        i18n="@@org.settings.compliance.slaTitle"
+      >
+        Non-conformity resolution SLA
+      </h3>
+      <p class="text-sm text-muted-foreground" i18n="@@org.settings.compliance.slaDescription">
+        Days allowed to resolve a non-conformity, by severity.
+      </p>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        @for (entry of complianceForm.nonConformitySlaDays; track entry[0]) {
+          <hlm-field>
+            <label
+              [attr.for]="'org-compliance-sla-' + entry[0]"
+              hlmFieldLabel
+              class="flex items-center gap-2"
+            >
+              {{ severityLabel(entry[0]) }}
+              @if (isCustomizedSla(entry[0])) {
+                <span
+                  hlmBadge
+                  variant="outline"
+                  class="text-xs"
+                  i18n="@@org.settings.compliance.customizedBadge"
+                  >Customized</span
+                >
+              }
+            </label>
+            <input
+              hlmInput
+              type="number"
+              [id]="'org-compliance-sla-' + entry[0]"
+              [attr.data-testid]="'org-compliance-sla-' + entry[0]"
+              [formField]="entry[1]"
+            />
+          </hlm-field>
+        }
+      </div>
+    </section>
+
+    <section class="flex flex-col gap-3 border-t border-border pt-5">
+      <h3
+        class="text-sm font-semibold tracking-tight text-foreground"
+        i18n="@@org.settings.compliance.periodicityTitle"
+      >
+        Inspection periodicity
+      </h3>
+      <p
+        class="text-sm text-muted-foreground"
+        i18n="@@org.settings.compliance.periodicityDescription"
+      >
+        How often each equipment type must be inspected.
+      </p>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        @for (entry of complianceForm.inspectionPeriodicityDefaults; track entry[0]) {
+          <hlm-field>
+            <label
+              [attr.for]="'org-compliance-periodicity-' + entry[0]"
+              hlmFieldLabel
+              class="flex items-center gap-2"
+            >
+              {{ equipmentTypeLabel(entry[0]) }}
+              @if (isCustomizedPeriodicity(entry[0])) {
+                <span
+                  hlmBadge
+                  variant="outline"
+                  class="text-xs"
+                  i18n="@@org.settings.compliance.customizedBadge"
+                  >Customized</span
+                >
+              }
+            </label>
+            <hlm-select [itemToString]="periodicityLabel" [formField]="entry[1]">
+              <hlm-select-trigger
+                [buttonId]="'org-compliance-periodicity-' + entry[0]"
+                class="w-full"
+                [attr.data-testid]="'org-compliance-periodicity-' + entry[0]"
+              >
+                <hlm-select-value />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal>
+                <hlm-select-group>
+                  @for (option of periodicityOptions; track option.value) {
+                    <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </hlm-field>
+        }
+      </div>
+    </section>
+
+    <section class="flex flex-col gap-3 border-t border-border pt-5">
+      <h3
+        class="text-sm font-semibold tracking-tight text-foreground"
+        i18n="@@org.settings.compliance.reminderTitle"
+      >
+        Reminders
+      </h3>
+      <hlm-field class="max-w-xs">
+        <label
+          hlmFieldLabel
+          for="org-compliance-reminder-window"
+          i18n="@@org.settings.compliance.reminderWindowLabel"
+          >Reminder window (days)</label
+        >
+        <input
+          hlmInput
+          id="org-compliance-reminder-window"
+          type="number"
+          data-testid="org-compliance-reminder-window"
+          [formField]="complianceForm.reminderWindowDays"
+          [attr.aria-invalid]="
+            complianceForm.reminderWindowDays().touched() &&
+            complianceForm.reminderWindowDays().invalid()
+          "
+        />
+        @if (
+          complianceForm.reminderWindowDays().touched() &&
+          complianceForm.reminderWindowDays().invalid()
+        ) {
+          <hlm-field-error>{{
+            complianceForm.reminderWindowDays().errors()[0].message
+          }}</hlm-field-error>
+        }
+      </hlm-field>
+    </section>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="org-compliance-submit"
+        [disabled]="!canSubmit()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.compliance.submitting">Saving…</span>
+        } @else {
+          <span i18n="@@org.settings.compliance.submit">Save changes</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

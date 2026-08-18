@@ -43,6 +43,32 @@ export const ORGANIZATION_PERMISSION = {
   ASSISTANT_USE: 'organization.assistant.use',
   /** Permission required to manage organization settings (general, notifications, regional). */
   SETTINGS_WRITE: 'organization.settings.write',
+  /** Read access to the compliance rollup, facility tree and per-facility summaries. */
+  COMPLIANCE_READ: 'organization.compliance.read',
+  /** Permission required to export the safety-register PDF (the backend additionally gates it on plan tier). */
+  COMPLIANCE_EXPORT: 'organization.compliance.export',
+  /** Read access to the maintenance schedules. */
+  MAINTENANCE_READ: 'organization.maintenance.read',
+  /** Permission required to override maintenance intervals and generate campaigns. */
+  MAINTENANCE_MANAGE: 'organization.maintenance.manage',
+  /** Read access to teams and their membership. */
+  TEAMS_READ: 'organization.teams.read',
+  /** Permission required to create and edit teams. */
+  TEAMS_WRITE: 'organization.teams.write',
+  /** Permission required to manage team membership and deletion. */
+  TEAMS_MANAGE: 'organization.teams.manage',
+  /** Read access to the organization activity feed (audit events scoped to the organization). */
+  AUDIT_READ: 'organization.audit.read',
+  /** Read access to four-eyes approval requests. */
+  APPROVALS_READ: 'organization.approvals.read',
+  /** Permission required to submit an action for four-eyes approval. */
+  APPROVALS_REQUEST: 'organization.approvals.request',
+  /** Permission required to approve or reject a pending approval request. */
+  APPROVALS_DECIDE: 'organization.approvals.decide',
+  /** Read access to webhook subscriptions and their deliveries. */
+  WEBHOOKS_READ: 'organization.webhooks.read',
+  /** Permission required to manage webhook subscriptions. */
+  WEBHOOKS_MANAGE: 'organization.webhooks.manage',
   /** Permission required to permanently delete the organization. */
   DELETE: 'organization.delete',
   ALL: 'organization.*',

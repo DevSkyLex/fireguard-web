@@ -366,26 +366,28 @@
           </span>
         </span>
 
-        <button
-          type="button"
-          hlmBtn
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11 max-sm:px-3"
-          data-testid="assets-compliance-export"
-          [attr.aria-disabled]="compliance.isExporting()"
-          [attr.aria-busy]="compliance.isExporting()"
-          (click)="onExportSafetyRegister()"
-        >
-          <ng-icon name="lucideDownload" aria-hidden="true" />
-          <span role="status" aria-live="polite">
-            @if (compliance.isExporting()) {
-              <span i18n="@@org.assets.compliance.exporting">Exporting…</span>
-            } @else {
-              <span i18n="@@org.assets.compliance.export">Export safety register</span>
-            }
-          </span>
-        </button>
+        @if (canExportCompliance()) {
+          <button
+            type="button"
+            hlmBtn
+            variant="outline"
+            size="sm"
+            class="max-sm:min-h-11 max-sm:px-3"
+            data-testid="assets-compliance-export"
+            [attr.aria-disabled]="compliance.isExporting()"
+            [attr.aria-busy]="compliance.isExporting()"
+            (click)="onExportSafetyRegister()"
+          >
+            <ng-icon name="lucideDownload" aria-hidden="true" />
+            <span role="status" aria-live="polite">
+              @if (compliance.isExporting()) {
+                <span i18n="@@org.assets.compliance.exporting">Exporting…</span>
+              } @else {
+                <span i18n="@@org.assets.compliance.export">Export safety register</span>
+              }
+            </span>
+          </button>
+        }
       </div>
 
       @if (compliance.hasExportError()) {

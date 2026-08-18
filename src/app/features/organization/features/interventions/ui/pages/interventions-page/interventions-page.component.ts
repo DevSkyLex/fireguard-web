@@ -802,10 +802,10 @@ export class InterventionsPage {
    *
    * @description
    * Whether the member may delete an intervention, which decides if the row
-   * menu and the bulk toolbar offer Delete at all. Mirrors the permission
-   * `facilities`' own delete action gates on (`FEATURE.md` §"Facilities"):
-   * this feature has no dedicated delete permission either, so the write
-   * permission covers it.
+   * menu and the bulk toolbar offer Delete at all. The backend routes DELETE
+   * through the workflow handler's phase-derived gate — `plan` while draft,
+   * `execute` otherwise — so the pair mirrors the detail page's delete gate;
+   * `interventions.write` gates only the label catalog and never deletion.
    *
    * @access protected
    * @since 5.0.0
@@ -813,7 +813,10 @@ export class InterventionsPage {
    * @type {Signal<boolean>}
    */
   protected readonly canDelete: Signal<boolean> = computed<boolean>(() =>
-    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_WRITE),
+    this.permissions.hasAnyPermission([
+      ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN,
+      ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE,
+    ]),
   );
 
   /**

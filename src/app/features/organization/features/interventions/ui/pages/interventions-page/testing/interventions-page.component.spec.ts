@@ -903,7 +903,8 @@ describe('InterventionsPage', () => {
       expect(load).toHaveBeenCalledTimes(1);
       const options = load.mock.calls[0][0].options;
       expect(options.status).toBeUndefined();
-      expect(typeof options.dueAtBefore).toBe('string');
+      expect(options.due).toBe('overdue');
+      expect(options.dueAtBefore).toBeUndefined();
     });
 
     it("should load the submitted status when the URL carries ?status=submitted — the KPI strip's awaiting-review tile link", async () => {

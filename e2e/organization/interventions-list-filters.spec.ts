@@ -134,7 +134,7 @@ test.describe('Interventions list — shared filtered URL', () => {
 });
 
 test.describe('Interventions list — filter chips', () => {
-  test("a direct ?due=overdue link (the KPI strip's overdue tile) narrows the request to the overdue window", async ({
+  test("a direct ?due=overdue link (the KPI strip's overdue tile) narrows the request to the server-side overdue preset", async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -144,13 +144,13 @@ test.describe('Interventions list — filter chips', () => {
     const overdueRequest = page.waitForRequest(
       (request) =>
         /\/api\/interventions(\?.*)?$/.test(request.url()) &&
-        new URL(request.url()).searchParams.has('dueAtBefore'),
+        new URL(request.url()).searchParams.has('due'),
     );
 
     await interventions.gotoWithQuery(E2E_ORGANIZATION_ID, 'due=overdue');
 
     const request = await overdueRequest;
-    expect(new URL(request.url()).searchParams.get('dueAtBefore')).not.toBeNull();
+    expect(new URL(request.url()).searchParams.get('due')).toBe('overdue');
   });
 
   test("a direct ?status=submitted link (the KPI strip's awaiting-review tile) renders only the matching fixture", async ({

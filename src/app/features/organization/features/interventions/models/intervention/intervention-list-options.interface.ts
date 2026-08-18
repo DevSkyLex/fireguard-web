@@ -41,6 +41,16 @@ export type InterventionListOptions = PaginationOptions & {
   readonly priority?: InterventionPriority;
 
   /**
+   * Server-side due preset. `overdue` restricts to `dueAt` in the past AND a
+   * non-terminal status (not published, not abandoned) — the exact set the
+   * statistics endpoint counts as overdue, so the KPI tile and the list it
+   * opens agree. Composable with `dueAtAfter`/`dueAtBefore`.
+   *
+   * @type {'overdue'}
+   */
+  readonly due?: 'overdue';
+
+  /**
    * Inclusive lower bound (ISO 8601) applied to `dueAt`.
    *
    * @type {string}

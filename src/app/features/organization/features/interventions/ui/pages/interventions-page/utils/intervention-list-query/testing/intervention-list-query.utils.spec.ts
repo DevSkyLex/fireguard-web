@@ -28,8 +28,8 @@ const NO_FILTERS: InterventionListFilters = {
 const DUE_ASC: InterventionListSort = { field: 'dueAt', direction: 'asc' };
 
 describe('resolveDueWindow', () => {
-  it('should bound "overdue" from above only, so anything already past due matches', () => {
-    expect(resolveDueWindow('overdue', NOW)).toEqual({ dueAtBefore: '2026-08-04T12:00:00.000Z' });
+  it('should resolve "overdue" to the server-side preset, which pairs the past-due check with the status exclusion', () => {
+    expect(resolveDueWindow('overdue', NOW)).toEqual({ due: 'overdue' });
   });
 
   it('should bound the forward windows on both sides', () => {
@@ -96,7 +96,7 @@ describe('buildInterventionListOptions', () => {
       site: '/api/facilities/f-1',
       responsible: '/api/organization_members/m-1',
       label: '/api/intervention-labels/l-1',
-      dueAtBefore: '2026-08-04T12:00:00.000Z',
+      due: 'overdue',
     });
   });
 
@@ -172,7 +172,7 @@ describe('buildInterventionListOptions', () => {
     });
   });
 
-  it('should tighten rather than overwrite when the legacy dueWindow and the new dueRange are both active', () => {
+  it('should send the overdue preset alongside a dueRange bound and let the server compose them', () => {
     expect(
       buildInterventionListOptions(
         {
@@ -186,7 +186,27 @@ describe('buildInterventionListOptions', () => {
       ),
     ).toEqual({
       order: { dueAt: 'asc' },
+      due: 'overdue',
       dueAtBefore: '2026-08-01T00:00:00.000Z',
+    });
+  });
+
+  it('should tighten rather than overwrite when a forward dueWindow and the dueRange are both active', () => {
+    expect(
+      buildInterventionListOptions(
+        {
+          ...NO_FILTERS,
+          dueWindow: 'week',
+          dueRange: { operator: 'lessThan', before: new Date('2026-08-08') },
+        },
+        DUE_ASC,
+        '',
+        NOW,
+      ),
+    ).toEqual({
+      order: { dueAt: 'asc' },
+      dueAtAfter: '2026-08-04T12:00:00.000Z',
+      dueAtBefore: '2026-08-08T00:00:00.000Z',
     });
   });
 

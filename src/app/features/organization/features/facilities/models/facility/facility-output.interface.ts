@@ -18,6 +18,25 @@ export type FacilityType = 'site' | 'building' | 'floor' | 'zone' | 'area';
 export type FacilityStatus = 'active' | 'archived';
 
 /**
+ * Interface FacilityPathSegment
+ * @interface FacilityPathSegment
+ *
+ * @description
+ * One ancestor entry of a facility's breadcrumb, as served by the detail
+ * providers.
+ */
+export interface FacilityPathSegment {
+  //#region Properties
+  /** @type {string} */
+  readonly id: string;
+  /** @type {string} */
+  readonly name: string;
+  /** @type {FacilityType} */
+  readonly type: FacilityType;
+  //#endregion
+}
+
+/**
  * Interface FacilityOutput
  * @interface FacilityOutput
  *
@@ -189,6 +208,20 @@ export interface FacilityOutput extends HydraItem {
    * @type {FacilityPlanGeometry | null | undefined}
    */
   readonly planGeometry?: FacilityPlanGeometry | null;
+
+  /**
+   * Property path
+   * @readonly
+   *
+   * @description
+   * Ancestor breadcrumb ordered root first, direct parent last, excluding
+   * this facility. Empty for a root facility — and deliberately left empty
+   * by the list/children/descendants collection providers to avoid an N+1
+   * ancestor lookup per row: only the detail reads populate it.
+   *
+   * @type {ReadonlyArray<FacilityPathSegment>}
+   */
+  readonly path: ReadonlyArray<FacilityPathSegment>;
 
   /**
    * Property createdAt

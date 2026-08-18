@@ -15,8 +15,9 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert } from '@ng-icons/lucide';
+import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert, lucideMapPin } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
@@ -76,15 +77,21 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * The record's name is the shell breadcrumb's title, resolved by
  * `equipmentTitleResolver`; the status tags and meta line stay as a lead
  * group at content top, and the lifecycle band registers on the shell header
- * through `PageActionsService`.
+ * through `PageActionsService`. When `planPosition` is set — populated only
+ * on this detail read — a read-only "Pinned on floor plan" indicator sits
+ * beside the facility name, linking to the owning facility's own detail
+ * page; pin placement itself is edited from the facility's Plans tab, not
+ * here.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-equipment-detail-page',
   imports: [
+    NgIcon,
+    RouterLink,
     EquipmentInformationPanel,
     EquipmentStatusTag,
     ErrorState,
@@ -92,7 +99,7 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     HlmSkeleton,
     ...HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert })],
+  providers: [provideIcons({ lucideCircleAlert, lucideMapPin })],
   templateUrl: './equipment-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

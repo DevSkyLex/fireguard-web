@@ -3680,6 +3680,13 @@
           <context context-type="linenumber">31,33</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="equipment.detail.pinnedOnPlan" datatype="html">
+        <source>Pinned on floor plan</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.html</context>
+          <context context-type="linenumber">24,28</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="equipment.detail.loadingAria" datatype="html">
         <source>Loading equipment</source>
         <context-group purpose="location">
@@ -5026,6 +5033,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-create-page/facility-create-page.component.html</context>
           <context context-type="linenumber">37,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.detail.ancestorsAriaLabel" datatype="html">
+        <source>Facility ancestors</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
+          <context context-type="linenumber">6,7</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.tabsAriaLabel" datatype="html">

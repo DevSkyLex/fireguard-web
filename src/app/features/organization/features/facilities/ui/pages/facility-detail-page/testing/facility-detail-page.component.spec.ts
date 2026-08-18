@@ -24,6 +24,7 @@ import type { EquipmentOutput } from '@features/organization/features/equipments
 import type {
   FacilityAttachmentOutput,
   FacilityOutput,
+  FacilityPathSegment,
   FacilityPlanOverlayOutput,
 } from '@features/organization/features/facilities/models';
 import {
@@ -73,10 +74,18 @@ const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
     status: 'active',
     address: '1 Main Street',
     metadata: {},
+    path: [],
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
   }) as FacilityOutput;
+
+const segment = (overrides: Partial<FacilityPathSegment> = {}): FacilityPathSegment => ({
+  id: 'facility-0',
+  name: 'Headquarters Campus',
+  type: 'site',
+  ...overrides,
+});
 
 const plan = (overrides: Partial<FacilityAttachmentOutput> = {}): FacilityAttachmentOutput => ({
   '@id': `/api/facility-attachments/${overrides.id ?? 'plan-1'}`,
@@ -318,6 +327,39 @@ describe('FacilityDetailPage', () => {
     expect(root().textContent).toContain('HQ-01');
     expect(root().textContent).toContain('1 Main Street');
     expect(root().querySelector('app-facility-status-tag')).not.toBeNull();
+  });
+
+  describe('ancestor breadcrumb', () => {
+    it('should render nothing for an empty path', async () => {
+      await createPage();
+
+      expect(byTestId('facility-detail-ancestors')).toBeNull();
+    });
+
+    it('should render each ancestor as a link to its own facility record', async () => {
+      selectedFacility.set(
+        facility({
+          path: [
+            segment({ id: 'facility-0', name: 'Headquarters Campus' }),
+            segment({ id: 'facility-parent', name: 'Building A', type: 'building' }),
+          ],
+        }),
+      );
+      await createPage();
+
+      const nav: HTMLElement | null = byTestId('facility-detail-ancestors');
+      expect(nav).not.toBeNull();
+
+      const links: HTMLAnchorElement[] = Array.from(nav?.querySelectorAll('a') ?? []);
+      expect(links.map((link) => link.textContent?.trim())).toEqual([
+        'Headquarters Campus',
+        'Building A',
+      ]);
+      expect(links[0]?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-0');
+      expect(links[1]?.getAttribute('href')).toBe(
+        '/organizations/org-1/facilities/facility-parent',
+      );
+    });
   });
 
   it('should re-set the document title once the facility resolves', async () => {

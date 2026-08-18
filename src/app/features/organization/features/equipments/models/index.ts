@@ -1,5 +1,6 @@
 export type {
   EquipmentOutput,
+  EquipmentPlanPosition,
   EquipmentStatus,
   EquipmentType,
 } from './equipment/equipment-output.interface';

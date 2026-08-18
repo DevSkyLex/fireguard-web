@@ -1,5 +1,6 @@
 export type {
   FacilityOutput,
+  FacilityPathSegment,
   FacilityType,
   FacilityStatus,
 } from './facility/facility-output.interface';

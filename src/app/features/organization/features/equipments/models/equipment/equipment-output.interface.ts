@@ -34,6 +34,25 @@ export type EquipmentType =
   | 'other';
 
 /**
+ * Interface EquipmentPlanPosition
+ * @interface EquipmentPlanPosition
+ *
+ * @description
+ * The equipment's position pinned on one of its facility's floor-plan
+ * attachments, with normalized 0–1 coordinates.
+ */
+export interface EquipmentPlanPosition {
+  //#region Properties
+  /** @type {string} */
+  readonly attachmentId: string;
+  /** @type {number} */
+  readonly x: number;
+  /** @type {number} */
+  readonly y: number;
+  //#endregion
+}
+
+/**
  * Interface EquipmentOutput
  * @interface EquipmentOutput
  *
@@ -222,6 +241,20 @@ export interface EquipmentOutput extends HydraItem {
    * @type {EquipmentMaintenanceDueStatus}
    */
   readonly maintenanceDueStatus: EquipmentMaintenanceDueStatus;
+
+  /**
+   * Property planPosition
+   * @readonly
+   *
+   * @description
+   * Position pinned on a floor-plan attachment, populated on the detail read
+   * (`GET .../equipment/{id}`) and the plan-position mutation only — the
+   * list/collection endpoints deliberately leave it unset, so it arrives as
+   * `null` there and a list row can never tell whether it is pinned.
+   *
+   * @type {EquipmentPlanPosition | null | undefined}
+   */
+  readonly planPosition?: EquipmentPlanPosition | null;
 
   /**
    * Property createdAt

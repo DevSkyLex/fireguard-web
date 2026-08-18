@@ -9926,6 +9926,13 @@
           <context context-type="linenumber">392</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.members.toast.reactivated" datatype="html">
+        <source>Member reactivated</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-members/organization-members.store.ts</context>
+          <context context-type="linenumber">474</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="org.members.toast.bulkRemoved" datatype="html">
         <source>Members removed</source>
         <context-group purpose="location">
@@ -12861,6 +12868,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/tables/organization-member-table/organization-member-table.component.html</context>
           <context context-type="linenumber">175,177</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.table.rowReactivate" datatype="html">
+        <source>Reactivate</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/tables/organization-member-table/organization-member-table.component.html</context>
+          <context context-type="linenumber">190</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.table.rowRemove" datatype="html">

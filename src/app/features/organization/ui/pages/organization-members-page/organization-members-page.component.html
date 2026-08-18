@@ -181,8 +181,10 @@
           [canAssignRoles]="canManageRoles()"
           [detailRouteBase]="memberDetailRouteBase()"
           [sortOrder]="sortOrder()"
+          [pending]="store.isMutating()"
           (selectionChanged)="onSelectionChanged($event)"
           (manageRolesRequested)="openRolesDialog($event)"
+          (reactivateRequested)="reactivateMember($event)"
           (removeRequested)="requestRemove($event)"
           (sortChanged)="applySortField($event)"
         />

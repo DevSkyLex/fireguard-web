@@ -30,6 +30,7 @@ describe('OrganizationMemberTable', () => {
   let selectionChanges: ReadonlySet<string>[];
   let manageRolesRequests: OrganizationMemberOutput[];
   let removeRequests: OrganizationMemberOutput[];
+  let reactivateRequests: OrganizationMemberOutput[];
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
@@ -47,11 +48,15 @@ describe('OrganizationMemberTable', () => {
     selectionChanges = [];
     manageRolesRequests = [];
     removeRequests = [];
+    reactivateRequests = [];
     fixture.componentInstance.selectionChanged.subscribe((ids) => selectionChanges.push(ids));
     fixture.componentInstance.manageRolesRequested.subscribe((target) =>
       manageRolesRequests.push(target),
     );
     fixture.componentInstance.removeRequested.subscribe((target) => removeRequests.push(target));
+    fixture.componentInstance.reactivateRequested.subscribe((target) =>
+      reactivateRequests.push(target),
+    );
   }
 
   /** Opens a row's `…` menu and returns its overlay content, rendered outside `fixture.nativeElement`. */
@@ -375,6 +380,74 @@ describe('OrganizationMemberTable', () => {
       await fixture.whenStable();
 
       expect(manageRolesRequests).toEqual([target]);
+    });
+
+    it('should not offer Reactivate for an active member even with canRemove granted', async () => {
+      await createTable([member({ id: 'a', isActive: true })]);
+      fixture.componentRef.setInput('canRemove', true);
+      await fixture.whenStable();
+
+      const overlay = await openRowMenu();
+
+      expect(
+        overlay.querySelector('[data-testid="organization-member-table-row-reactivate"]'),
+      ).toBeNull();
+    });
+
+    it('should not offer Reactivate for an inactive member without canRemove', async () => {
+      await createTable([member({ id: 'a', isActive: false })]);
+      fixture.componentRef.setInput('canRemove', false);
+      fixture.componentRef.setInput('canAssignRoles', true);
+      await fixture.whenStable();
+
+      const overlay = await openRowMenu();
+
+      expect(
+        overlay.querySelector('[data-testid="organization-member-table-row-reactivate"]'),
+      ).toBeNull();
+    });
+
+    it('should offer Reactivate for an inactive member holding canRemove', async () => {
+      await createTable([member({ id: 'a', isActive: false })]);
+      fixture.componentRef.setInput('canRemove', true);
+      await fixture.whenStable();
+
+      const overlay = await openRowMenu();
+
+      expect(
+        overlay.querySelector('[data-testid="organization-member-table-row-reactivate"]'),
+      ).not.toBeNull();
+    });
+
+    it('should emit reactivateRequested with the row’s raw member on Reactivate', async () => {
+      const target = member({ id: 'target', isActive: false });
+      await createTable([target]);
+      fixture.componentRef.setInput('canRemove', true);
+      await fixture.whenStable();
+
+      const overlay = await openRowMenu();
+      (
+        overlay.querySelector(
+          '[data-testid="organization-member-table-row-reactivate"]',
+        ) as HTMLButtonElement | null
+      )?.click();
+      await fixture.whenStable();
+
+      expect(reactivateRequests).toEqual([target]);
+    });
+
+    it('should disable Reactivate while pending', async () => {
+      await createTable([member({ id: 'a', isActive: false })]);
+      fixture.componentRef.setInput('canRemove', true);
+      fixture.componentRef.setInput('pending', true);
+      await fixture.whenStable();
+
+      const overlay = await openRowMenu();
+      const reactivateButton = overlay.querySelector<HTMLButtonElement>(
+        '[data-testid="organization-member-table-row-reactivate"]',
+      );
+
+      expect(reactivateButton?.disabled).toBe(true);
     });
 
     it('should emit removeRequested with the row’s raw member on Remove, without removing it itself', async () => {

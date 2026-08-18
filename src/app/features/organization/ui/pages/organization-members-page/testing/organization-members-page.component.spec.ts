@@ -108,6 +108,7 @@ describe('OrganizationMembersPage', () => {
   let removeRoleFromMember: ReturnType<typeof vi.fn>;
   let removeMember: ReturnType<typeof vi.fn>;
   let removeMembers: ReturnType<typeof vi.fn>;
+  let reactivateMember: ReturnType<typeof vi.fn>;
   let resendInvitation: ReturnType<typeof vi.fn>;
   let revokeInvitation: ReturnType<typeof vi.fn>;
 
@@ -176,6 +177,7 @@ describe('OrganizationMembersPage', () => {
               removeRoleFromMember,
               removeMember,
               removeMembers,
+              reactivateMember,
               resendInvitation,
               revokeInvitation,
             },
@@ -213,6 +215,7 @@ describe('OrganizationMembersPage', () => {
     removeRoleFromMember = vi.fn();
     removeMember = vi.fn();
     removeMembers = vi.fn();
+    reactivateMember = vi.fn();
     resendInvitation = vi.fn();
     revokeInvitation = vi.fn();
   });
@@ -364,6 +367,53 @@ describe('OrganizationMembersPage', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
+  });
+
+  it('should reactivate a member through the store, scoped to the routed organization', async () => {
+    await createPage();
+
+    fixture.componentInstance['reactivateMember'](member({ id: 'member-2', isActive: false }));
+
+    expect(reactivateMember).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      memberId: 'member-2',
+    });
+  });
+
+  it('should offer Reactivate from the row menu of an inactive member, wired to the store', async () => {
+    members.set([member({ id: 'member-1', isActive: false })]);
+    await createPage();
+
+    byTestId('organization-member-table-row-menu')?.dispatchEvent(
+      new Event('click', { bubbles: true }),
+    );
+    await fixture.whenStable();
+
+    const reactivateButton: HTMLButtonElement | null = document.body.querySelector(
+      '[data-testid="organization-member-table-row-reactivate"]',
+    );
+    expect(reactivateButton).not.toBeNull();
+
+    reactivateButton?.click();
+    await fixture.whenStable();
+
+    expect(reactivateMember).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      memberId: 'member-1',
+    });
+  });
+
+  it('should not offer Reactivate from the row menu of an active member', async () => {
+    await createPage();
+
+    byTestId('organization-member-table-row-menu')?.dispatchEvent(
+      new Event('click', { bubbles: true }),
+    );
+    await fixture.whenStable();
+
+    expect(
+      document.body.querySelector('[data-testid="organization-member-table-row-reactivate"]'),
+    ).toBeNull();
   });
 
   it('should resend through the store, scoped to the routed organization', async () => {

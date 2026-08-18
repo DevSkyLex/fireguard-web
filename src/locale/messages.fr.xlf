@@ -6747,6 +6747,10 @@
         <source>Member removed</source>
         <target>Membre retiré</target>
       </trans-unit>
+      <trans-unit id="org.members.toast.reactivated" datatype="html">
+        <source>Member reactivated</source>
+        <target>Membre réactivé</target>
+      </trans-unit>
       <trans-unit id="org.members.toast.bulkRemoved" datatype="html">
         <source>Members removed</source>
         <target>Membres retirés</target>
@@ -11109,6 +11113,10 @@
       <trans-unit id="org.members.table.rowManageRoles" datatype="html">
         <source>Assign roles</source>
         <target>Attribuer des rôles</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.rowReactivate" datatype="html">
+        <source>Reactivate</source>
+        <target>Réactiver</target>
       </trans-unit>
       <trans-unit id="org.members.table.rowRemove" datatype="html">
         <source>Remove</source>

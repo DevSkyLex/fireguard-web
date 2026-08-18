@@ -137,7 +137,7 @@ type OrganizationMembersKpiTile = {
  * top, and "Invite member" registers on the shell header through
  * `PageActionsService`.
  *
- * @version 1.6.0
+ * @version 1.7.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -863,6 +863,18 @@ export class OrganizationMembersPage {
         roleId: toggle.roleId,
       });
     }
+  }
+
+  /**
+   * Method reactivateMember
+   * @description Reactivates an inactive member. No confirm step — unlike Remove, reactivation is not destructive, so the store call fires directly from the row menu.
+   * @access protected
+   * @since 1.7.0
+   * @param {OrganizationMemberOutput} member - The row's member.
+   * @returns {void}
+   */
+  protected reactivateMember(member: OrganizationMemberOutput): void {
+    this.store.reactivateMember({ organizationId: this.organizationId(), memberId: member.id });
   }
 
   /**

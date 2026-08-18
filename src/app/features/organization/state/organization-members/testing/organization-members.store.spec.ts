@@ -67,6 +67,7 @@ describe('OrganizationMembersStore', () => {
     list: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
     removeMany: ReturnType<typeof vi.fn>;
+    reactivate: ReturnType<typeof vi.fn>;
   };
   let roleService: {
     list: ReturnType<typeof vi.fn>;
@@ -87,6 +88,7 @@ describe('OrganizationMembersStore', () => {
       list: vi.fn().mockReturnValue(of(collection([member('m1')]))),
       remove: vi.fn().mockReturnValue(of(undefined)),
       removeMany: vi.fn().mockReturnValue(of({ removedIds: [], failedIds: [] })),
+      reactivate: vi.fn(),
     };
     roleService = {
       list: vi.fn().mockReturnValue(of(collection([role]))),
@@ -274,6 +276,32 @@ describe('OrganizationMembersStore', () => {
     expect(store.members().map((m) => m.id)).toEqual(['m2']);
     const lastPayload = dispatch.mock.calls.at(-1)?.[0]?.payload;
     expect(lastPayload?.severity).toBe('error');
+  });
+
+  it('replaces a member with the server response on reactivate', async () => {
+    memberService.list.mockReturnValue(of(collection([{ ...member('m1'), isActive: false }])));
+    store.load(ALL);
+    await flush();
+
+    memberService.reactivate.mockReturnValue(of({ ...member('m1'), isActive: true }));
+    store.reactivateMember({ organizationId: 'org-1', memberId: 'm1' });
+    await flush();
+
+    expect(store.members().find((m) => m.id === 'm1')?.isActive).toBe(true);
+    expect(store.isMutating()).toBe(false);
+    expect(dispatch).toHaveBeenCalled();
+  });
+
+  it('records a mutation error when reactivating a member fails', async () => {
+    store.load(ALL);
+    await flush();
+    memberService.reactivate.mockReturnValue(throwError(() => new Error('nope')));
+
+    store.reactivateMember({ organizationId: 'org-1', memberId: 'm1' });
+    await flush();
+
+    expect(store.mutationError()).not.toBeNull();
+    expect(store.isMutating()).toBe(false);
   });
 
   it('removes a revoked invitation', async () => {

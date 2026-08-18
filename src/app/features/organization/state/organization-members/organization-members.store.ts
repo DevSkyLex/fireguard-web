@@ -161,8 +161,8 @@ function withCapturedLink(
  *
  * @description
  * Component-scoped workflow store for the dedicated members page: loads members,
- * invitations and roles, and owns member/invitation mutations (remove, invite,
- * resend, revoke, role assignment). Members and invitations are kept as
+ * invitations and roles, and owns member/invitation mutations (remove,
+ * reactivate, invite, resend, revoke, role assignment). Members and invitations are kept as
  * `withEntities` collections for O(1) id-based updates; each successful mutation
  * dispatches a feedback event the app-wide listener renders as a confirmation
  * toast. Roles CRUD stays with the roles-only team page.
@@ -444,6 +444,43 @@ export const OrganizationMembersStore = signalStore(
               }),
             );
           }),
+        ),
+      ),
+      /**
+       * Reactivates a deactivated member, replacing the row with the
+       * server's response so its `isActive` flag and any other server-owned
+       * field stay in sync.
+       */
+      reactivateMember: rxMethod<{ organizationId: string; memberId: string }>(
+        pipe(
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: false,
+            }),
+          ),
+          exhaustMap(({ organizationId, memberId }) =>
+            memberService.reactivate(organizationId, memberId).pipe(
+              tapResponse({
+                next: (member) => {
+                  patchState(
+                    store,
+                    updateEntity({ id: member.id, changes: member }, { collection: 'member' }),
+                    { mutationCallState: successCallState(null) },
+                  );
+                  dispatcher.dispatch(
+                    organizationMembersStoreEvents.reactivateMemberSucceeded(
+                      successFeedback(
+                        $localize`:@@org.members.toast.reactivated:Member reactivated`,
+                      ),
+                    ),
+                  );
+                },
+                error: (error: unknown) =>
+                  patchState(store, { mutationCallState: errorCallState(toStoreError(error)) }),
+              }),
+            ),
+          ),
         ),
       ),
       /** Sends an organization invitation. */

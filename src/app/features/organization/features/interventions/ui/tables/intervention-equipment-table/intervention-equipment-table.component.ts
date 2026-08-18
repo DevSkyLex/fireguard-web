@@ -6,10 +6,12 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucidePackage } from '@ng-icons/lucide';
+import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert, lucideCircleDotDashed, lucidePackage } from '@ng-icons/lucide';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EmptyState } from '@shared/empty-state';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
@@ -26,21 +28,46 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
  * The Equipment tab of the intervention detail page's "Linked" surface: a
  * read-only `hlmTable` of the equipment scoped to this intervention through
  * the backend's canonical `intervention` search filter, with a "Show more"
- * button appending further pages. No search, no row actions.
+ * button appending further pages. No search, no row actions. A row's type
+ * links to the equipment's own record, with an accessible name folding in
+ * the serial number ({@link linkAriaLabelOf}) so repeated identical type
+ * labels across rows stay distinguishable to assistive tech — unless the
+ * row is still an intervention-scoped draft, which does not resolve on the
+ * canonical route yet and renders as plain text with an outline "Draft"
+ * badge instead (icon + label, never colour-only).
  *
- * @version 1.2.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-equipment-table',
-  imports: [EmptyState, HlmButton, HlmSkeleton, InterventionTag, ...HlmTableImports],
-  providers: [provideIcons({ lucideCircleAlert, lucidePackage })],
+  imports: [
+    NgIcon,
+    RouterLink,
+    EmptyState,
+    HlmBadge,
+    HlmButton,
+    HlmSkeleton,
+    InterventionTag,
+    ...HlmTableImports,
+  ],
+  providers: [provideIcons({ lucideCircleAlert, lucideCircleDotDashed, lucidePackage })],
   templateUrl: './intervention-equipment-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionEquipmentTable {
   //#region Inputs
+  /**
+   * Property organizationId
+   * @readonly
+   * @description The workspace owning the intervention, so a row can link into its equipment's own record.
+   * @access public
+   * @since 1.3.0
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   /**
    * Property items
    * @readonly
@@ -144,6 +171,51 @@ export class InterventionEquipmentTable {
     );
 
     return parts.length > 0 ? parts.join(' ') : null;
+  }
+
+  /**
+   * Method isDraftRecord
+   *
+   * @description
+   * Whether the row is an intervention-scoped draft, which does not resolve
+   * on the canonical `/equipments/:id` route — such a row renders as plain
+   * text instead of a broken link.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @param {EquipmentOutput} item - The equipment being rendered.
+   *
+   * @returns {boolean} `true` while the record is still a draft.
+   */
+  protected isDraftRecord(item: EquipmentOutput): boolean {
+    return item.recordStatus === 'draft';
+  }
+
+  /**
+   * Method linkAriaLabelOf
+   *
+   * @description
+   * The row's link accessible name, folding in the serial number so two
+   * rows sharing the same type — the link's own visible text — stay
+   * distinguishable to assistive tech. `null` when there is no serial to
+   * disambiguate with, which drops the attribute and falls back to the
+   * link's own text content.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @param {EquipmentOutput} item - The equipment being rendered.
+   *
+   * @returns {string | null} The accessible name, or `null`.
+   */
+  protected linkAriaLabelOf(item: EquipmentOutput): string | null {
+    if (!item.serialNumber) return null;
+
+    const type: string = this.typeLabelOf(item);
+    const serial: string = item.serialNumber;
+
+    return $localize`:@@intervention.linked.equipment.linkAriaLabel:${type}:type: (${serial}:serial:)`;
   }
   //#endregion
 }

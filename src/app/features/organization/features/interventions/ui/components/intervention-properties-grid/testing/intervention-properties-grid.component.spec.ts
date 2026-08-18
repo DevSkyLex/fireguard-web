@@ -1,9 +1,11 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import type {
   InterventionEditState,
   InterventionOutput,
   MemberSelectOption,
+  SelectOption,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
 import { InterventionPropertiesGrid } from '../intervention-properties-grid.component';
@@ -68,10 +70,13 @@ describe('InterventionPropertiesGrid', () => {
     root().querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
 
     fixture = TestBed.createComponent(InterventionPropertiesGrid);
     fixture.componentRef.setInput('intervention', intervention);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('memberOptions', members);
     fixture.componentRef.setInput('editState', IDLE_EDIT_STATE);
     fixture.componentRef.setInput('canEditSchedule', true);
@@ -103,5 +108,47 @@ describe('InterventionPropertiesGrid', () => {
 
   it('should show the participant count from the resolved member options', () => {
     expect(byTestId('intervention-field-participants')?.textContent).not.toContain('None');
+  });
+
+  it('should show the site name as plain text inside app-inplace-field, never inside a link', async () => {
+    const siteOptions: readonly SelectOption[] = [
+      { value: '/api/facilities/facility-1', label: 'Main warehouse' },
+    ];
+    fixture.componentRef.setInput('intervention', {
+      ...intervention,
+      site: '/api/facilities/facility-1',
+    });
+    fixture.componentRef.setInput('siteOptions', siteOptions);
+    await fixture.whenStable();
+
+    const inplaceField: HTMLElement = byTestId('intervention-field-site')?.querySelector(
+      'app-inplace-field',
+    ) as HTMLElement;
+
+    expect(inplaceField.textContent).toContain('Main warehouse');
+    expect(inplaceField.querySelector('a')).toBeNull();
+  });
+
+  it('should offer a sibling external-link anchor to the facility record when a site is set', async () => {
+    const siteOptions: readonly SelectOption[] = [
+      { value: '/api/facilities/facility-1', label: 'Main warehouse' },
+    ];
+    fixture.componentRef.setInput('intervention', {
+      ...intervention,
+      site: '/api/facilities/facility-1',
+    });
+    fixture.componentRef.setInput('siteOptions', siteOptions);
+    await fixture.whenStable();
+
+    const link: HTMLAnchorElement | null = byTestId('intervention-site-link') as HTMLAnchorElement;
+
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
+    expect(link.getAttribute('aria-label')).toBe('Open site facility');
+    expect(link.textContent?.trim()).toBe('');
+  });
+
+  it('should hide the external-link anchor when no site is set', () => {
+    expect(byTestId('intervention-site-link')).toBeNull();
   });
 });

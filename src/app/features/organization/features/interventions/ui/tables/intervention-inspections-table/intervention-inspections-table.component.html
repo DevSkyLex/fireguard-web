@@ -64,7 +64,28 @@
           @for (item of items(); track item.id) {
             <tr hlmTableRow data-testid="intervention-inspections-table-row">
               <td hlmTableCell>
-                {{ item.performedAt | date: 'mediumDate' }}
+                @if (isDraftRecord(item)) {
+                  <span class="font-medium text-foreground">
+                    {{ item.performedAt | date: 'mediumDate' }}
+                  </span>
+                  <span
+                    hlmBadge
+                    variant="outline"
+                    class="ms-1.5 gap-1 align-middle text-muted-foreground"
+                    data-testid="intervention-inspections-draft-badge"
+                  >
+                    <ng-icon name="lucideCircleDotDashed" size="12" aria-hidden="true" />
+                    <span i18n="@@intervention.linked.inspections.draftBadge">Draft</span>
+                  </span>
+                } @else {
+                  <a
+                    class="font-medium text-foreground hover:underline"
+                    [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
+                    [attr.aria-label]="linkAriaLabelOf(item)"
+                  >
+                    {{ item.performedAt | date: 'mediumDate' }}
+                  </a>
+                }
               </td>
               <td hlmTableCell>
                 <app-intervention-tag kind="inspectionResult" [value]="item.result" />

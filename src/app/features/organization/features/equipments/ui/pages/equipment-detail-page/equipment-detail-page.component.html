@@ -8,7 +8,17 @@
       />
       <span class="text-sm text-muted-foreground">
         @if (equipment.facilityName; as facility) {
-          {{ facility }}
+          @if (equipment.facilityId; as facilityId) {
+            <a
+              class="hover:underline"
+              data-testid="equipment-detail-facility-link"
+              [routerLink]="['/organizations', organizationId(), 'facilities', facilityId]"
+            >
+              {{ facility }}
+            </a>
+          } @else {
+            {{ facility }}
+          }
         } @else {
           <span i18n="@@equipment.unassigned">Unassigned</span>
         }
@@ -24,6 +34,19 @@
             <span i18n="@@equipment.detail.pinnedOnPlan">Pinned on floor plan</span>
           </a>
         }
+      }
+      @if (equipment.facilityId; as siteFacilityId) {
+        <a
+          class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          data-testid="equipment-detail-site-interventions"
+          [routerLink]="['/organizations', organizationId(), 'interventions']"
+          [queryParams]="{ site: siteFacilityId }"
+        >
+          <ng-icon name="lucideWrench" class="text-sm" aria-hidden="true" />
+          <span i18n="@@equipment.detail.siteInterventions">
+            Interventions on this equipment's site
+          </span>
+        </a>
       }
     </div>
     <p class="text-sm text-muted-foreground" data-testid="equipment-detail-meta">

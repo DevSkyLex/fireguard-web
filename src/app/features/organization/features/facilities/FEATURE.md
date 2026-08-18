@@ -375,6 +375,22 @@ the backend descendants endpoint, not on `Tree`'s own lazy expansion:
 The list page stays **roots-only**; hierarchy navigation lives here in the
 detail Overview.
 
+### Interventions on this site (Detail Overview)
+
+The Overview tab's `FacilityOverviewStore` also loads a compact preview of
+the interventions whose `site` is the open facility — the five most recently
+updated, newest first — through `InterventionService.list` cross-imported
+from `@features/organization/features/interventions` (see that feature's
+`FEATURE.md` § Cross-Feature Dependencies for the read-only contract). Each
+row links to the intervention's own record; a "See all" link opens
+`/organizations/:organizationId/interventions?site=:facilityId`, the
+canonical narrowing the interventions list page's own filter parsing already
+supports. An empty result renders a quiet line rather than hiding the
+section, unlike the equipment-status and recent-inspections cards above it.
+The equipment detail and inspection detail pages each carry a labelled proxy
+link into the same pre-filtered URL when the record has a facility, since
+neither record's own list page supports a facility-scoped query param yet.
+
 ## Compliance Layer (Facility Map)
 
 `ui/pages/facility-map-page` carries an optional, off-by-default
@@ -485,6 +501,15 @@ Primary services:
   because both the parent's assets explorer and this subfeature's
   `FacilityHierarchyChart` need it, and its lowest common scope is this
   subfeature (ARCHITECTURE.md §2.8).
+- `FacilityOverviewStore` cross-imports `InterventionService` from
+  `@features/organization/features/interventions` (root barrel) and
+  `InterventionOutput` from that feature's `models` concern barrel, for the
+  detail Overview tab's "Interventions on this site" preview (see above) —
+  the reverse of the pattern the interventions feature's own "Linked" tabs
+  already established for facilities/equipment/inspections
+  (`interventions/FEATURE.md` § Cross-Feature Dependencies). Read-only: no
+  new method was needed, `InterventionService.list`'s existing `site` filter
+  covers it.
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
 
 ### Deferred, not built

@@ -1,5 +1,7 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { MEMBER_DIRECTORY_PORT, ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationMemberProfilePage } from '../organization-member-profile-page.component';
@@ -19,12 +21,14 @@ describe('OrganizationMemberProfilePage', () => {
   let isLoading: WritableSignal<boolean>;
   let ensureLoaded: ReturnType<typeof vi.fn>;
   let selectedOrganizationId: WritableSignal<string | null>;
+  let hasPermission: ReturnType<typeof vi.fn>;
 
   async function render(memberId: string = 'member-1'): Promise<void> {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideRouter([]),
         {
           provide: MEMBER_DIRECTORY_PORT,
           useValue: { byId, isAvailable, isLoading, ensureLoaded, displayNameFor: vi.fn() },
@@ -37,6 +41,7 @@ describe('OrganizationMemberProfilePage', () => {
             isLoadingOrganization: signal(false),
           },
         },
+        { provide: OrganizationPermissionService, useValue: { hasPermission } },
       ],
     });
 
@@ -51,6 +56,7 @@ describe('OrganizationMemberProfilePage', () => {
     isLoading = signal(false);
     ensureLoaded = vi.fn();
     selectedOrganizationId = signal<string | null>('org-1');
+    hasPermission = vi.fn().mockReturnValue(true);
   });
 
   it('should show who the person is', async () => {
@@ -117,5 +123,31 @@ describe('OrganizationMemberProfilePage', () => {
 
     expect(fixture.nativeElement.textContent).not.toContain("We don't know who that is");
     expect(fixture.nativeElement.querySelector('hlm-skeleton')).not.toBeNull();
+  });
+
+  describe('interventions link', () => {
+    it('should link to interventions pre-filtered by this member as responsible', async () => {
+      await render();
+
+      const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="organization-member-profile-interventions"]',
+      );
+
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute('href')).toBe(
+        '/organizations/org-1/interventions?responsible=member-1',
+      );
+    });
+
+    it('should hide the link without organization.interventions.read', async () => {
+      hasPermission.mockReturnValue(false);
+      await render();
+
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="organization-member-profile-interventions"]',
+        ),
+      ).toBeNull();
+    });
   });
 });

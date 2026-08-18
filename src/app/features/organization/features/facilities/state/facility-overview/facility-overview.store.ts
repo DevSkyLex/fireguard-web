@@ -20,6 +20,8 @@ import type {
 } from '@features/organization/features/equipments/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import { InterventionService } from '@features/organization/features/interventions';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import type { FacilityEquipmentStatusRow, FacilityOverviewState } from './models';
 
 /**
@@ -40,6 +42,16 @@ const PREVIEW_ITEMS_PER_PAGE: number = 200;
 const RECENT_INSPECTIONS_LIMIT: number = 6;
 
 /**
+ * Constant RECENT_INTERVENTIONS_LIMIT
+ *
+ * @description
+ * Page size requested for the "Interventions on this site" preview — the
+ * section shows only the most recently touched few, with a "See all" link
+ * into the full, pre-filtered list for the rest.
+ */
+const RECENT_INTERVENTIONS_LIMIT: number = 5;
+
+/**
  * Constant MILLISECONDS_PER_DAY
  *
  * @description
@@ -56,8 +68,10 @@ const MILLISECONDS_PER_DAY: number = 86_400_000;
 const INITIAL_STATE: FacilityOverviewState = {
   inspections: [],
   equipment: [],
+  interventions: [],
   inspectionsCallState: idleCallState(),
   equipmentCallState: idleCallState(),
+  interventionsCallState: idleCallState(),
 };
 
 /**
@@ -66,15 +80,23 @@ const INITIAL_STATE: FacilityOverviewState = {
  *
  * @description
  * Component-scoped NgRx Signals store powering the facility detail overview
- * tab. Loads compact inspection and equipment previews for the active
- * facility and exposes derived KPI metrics (compliance, overdue, next
+ * tab. Loads compact inspection, equipment and intervention previews for the
+ * active facility and exposes derived KPI metrics (compliance, overdue, next
  * inspection, equipment counts) plus summary view models consumed by the
  * overview sub-components.
+ *
+ * The intervention preview reads `InterventionService.list` straight from
+ * the sibling interventions feature's root barrel, filtered by `site` and
+ * capped to {@link RECENT_INTERVENTIONS_LIMIT} — the mirror of the pattern
+ * `InterventionLinkedResourcesStore` already established in the other
+ * direction (`interventions/FEATURE.md` "Cross-Feature Dependencies").
+ * Read-only: this store lists interventions touching the facility and owns
+ * no intervention state.
  *
  * All loading is browser-triggered by the page; the store performs no work
  * on the server during SSR.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -92,6 +114,13 @@ export const FacilityOverviewStore = signalStore(
      * Whether the equipment preview request is in flight.
      */
     isLoadingEquipment: computed<boolean>(() => store.equipmentCallState().status === 'pending'),
+
+    /**
+     * Whether the intervention preview request is in flight.
+     */
+    isLoadingInterventions: computed<boolean>(
+      () => store.interventionsCallState().status === 'pending',
+    ),
 
     /**
      * Inspection pass rate as a whole percentage, or `null` when there is
@@ -254,6 +283,8 @@ export const FacilityOverviewStore = signalStore(
   withMethods((store) => {
     const inspectionService: InspectionService = inject<InspectionService>(InspectionService);
     const equipmentService: EquipmentService = inject<EquipmentService>(EquipmentService);
+    const interventionService: InterventionService =
+      inject<InterventionService>(InterventionService);
 
     const loadInspections = rxMethod<{ organizationId: string; facilityId: string }>(
       pipe(
@@ -307,11 +338,42 @@ export const FacilityOverviewStore = signalStore(
       ),
     );
 
+    const loadInterventions = rxMethod<{ organizationId: string; facilityId: string }>(
+      pipe(
+        tap(() => patchState(store, { interventionsCallState: pendingCallState() })),
+        switchMap(({ organizationId, facilityId }) =>
+          interventionService
+            .list(organizationId, {
+              site: `/api/facilities/${facilityId}`,
+              itemsPerPage: RECENT_INTERVENTIONS_LIMIT,
+              order: { updatedAt: 'desc' },
+            })
+            .pipe(
+              tapResponse({
+                next: (response: HydraCollection<InterventionOutput>) =>
+                  patchState(store, {
+                    interventions: [...response.member],
+                    interventionsCallState: successCallState(null),
+                  }),
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, {
+                    interventions: [],
+                    interventionsCallState: errorCallState(storeError),
+                  });
+                },
+              }),
+            ),
+        ),
+      ),
+    );
+
     return {
       loadInspections,
       loadEquipment,
+      loadInterventions,
       /**
-       * Loads both inspection and equipment previews for a facility.
+       * Loads the inspection, equipment and intervention previews for a facility.
        *
        * @param {{ organizationId: string; facilityId: string }} params
        * @returns {void}
@@ -319,6 +381,7 @@ export const FacilityOverviewStore = signalStore(
       load(params: { organizationId: string; facilityId: string }): void {
         loadInspections(params);
         loadEquipment(params);
+        loadInterventions(params);
       },
     };
   }),

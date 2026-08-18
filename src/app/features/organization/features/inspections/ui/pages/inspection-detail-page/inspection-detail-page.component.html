@@ -3,9 +3,16 @@
     <div class="flex flex-wrap items-center gap-2">
       <app-inspection-status-tag kind="status" [value]="inspection.status" />
       <app-inspection-status-tag kind="result" [value]="inspection.result" />
-      <span class="text-sm text-muted-foreground" data-testid="inspection-non-conformities-count">{{
-        nonConformitiesLabel()
-      }}</span>
+      <button
+        type="button"
+        class="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline max-sm:min-h-11"
+        data-testid="inspection-non-conformities-count"
+        [attr.aria-expanded]="nonConformitiesExpanded()"
+        aria-controls="inspection-non-conformities"
+        (click)="toggleNonConformities()"
+      >
+        {{ nonConformitiesLabel() }}
+      </button>
       @if (inspection.facilityId; as siteFacilityId) {
         <a
           class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -43,6 +50,57 @@
         (editTargetChanged)="onEditTargetChanged($event)"
       />
     </section>
+
+    @if (nonConformitiesExpanded()) {
+      <section
+        id="inspection-non-conformities"
+        class="flex max-w-2xl flex-col gap-2"
+        aria-labelledby="inspection-non-conformities-title"
+        data-testid="inspection-non-conformities"
+      >
+        <div class="flex items-center justify-between gap-2 px-2">
+          <h2
+            id="inspection-non-conformities-title"
+            class="text-base font-semibold"
+            i18n="@@inspection.nc.title"
+          >
+            Non-conformities
+          </h2>
+          @if (canAddNonConformity()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="max-sm:min-h-11"
+              data-testid="inspection-non-conformities-add"
+              (click)="openAddNonConformityDialog()"
+            >
+              <span i18n="@@inspection.nc.addButton">Add non-conformity</span>
+            </button>
+          } @else if (canWrite()) {
+            <p
+              class="text-xs text-muted-foreground"
+              data-testid="inspection-non-conformities-add-closed"
+              i18n="@@inspection.nc.addClosedExplanation"
+            >
+              A closed inspection can no longer record new non-conformities.
+            </p>
+          }
+        </div>
+
+        <app-non-conformity-list
+          [nonConformities]="store.nonConformities()"
+          [pendingApprovals]="store.nonConformityWaivePending()"
+          [loading]="store.isLoadingNonConformities()"
+          [canWrite]="canWrite()"
+          [organizationId]="organizationId()"
+          [updatingId]="pendingNonConformityId()"
+          [statusErrorText]="store.nonConformityStatusErrorText()"
+          (statusPicked)="onNonConformityStatusPicked($event)"
+        />
+      </section>
+    }
   } @else if (activeInspectionStore.isLoadingInspection()) {
     <div
       class="flex flex-col gap-4"
@@ -82,6 +140,14 @@
   [pending]="store.cancelCallState().status === 'pending'"
   (visibleChange)="onCancelDialogVisibleChanged($event)"
   (confirmed)="confirmCancel()"
+/>
+
+<app-non-conformity-add-dialog
+  [visible]="addNonConformityDialogOpen()"
+  [pending]="store.isAddingNonConformity()"
+  [serverError]="store.addNonConformityCallState().error"
+  (visibleChange)="$event ? openAddNonConformityDialog() : closeAddNonConformityDialog()"
+  (submitted)="onNonConformityAdded($event)"
 />
 
 <ng-template #pageActions>

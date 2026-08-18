@@ -1,4 +1,10 @@
-import { HttpClient, HttpHeaders, HttpParams, type HttpErrorResponse } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpHeaders,
+  HttpParams,
+  type HttpErrorResponse,
+  type HttpResponse,
+} from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { type Observable, catchError, map, throwError } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
@@ -338,6 +344,50 @@ export abstract class HydraApiService {
         headers,
         params: this.buildParams(options),
         withCredentials: true,
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Method patchWithStatus
+   *
+   * @description
+   * Performs a PATCH request identically to {@link patch}, but resolves the
+   * full `HttpResponse` instead of unwrapping the body. Reaches for this
+   * instead of {@link patch} only when a caller must distinguish two
+   * genuinely different success statuses for the same endpoint (e.g. a
+   * synchronous `200` versus an async-approval `202`) — `TOutput` is
+   * therefore left unconstrained, since the alternate-status body is not
+   * always a Hydra item.
+   *
+   * @access protected
+   * @since 1.5.0
+   *
+   * @template TInput - Type of the request body.
+   * @template TOutput - Type of the response body, for either status.
+   *
+   * @param {string} endpoint - API endpoint path.
+   * @param {Partial<TInput>} body - Partial request body with fields to update.
+   * @param {ApiRequestOptions} [options] - Request options.
+   *
+   * @returns {Observable<HttpResponse<TOutput>>} Observable emitting the full response.
+   */
+  protected patchWithStatus<TInput, TOutput>(
+    endpoint: string,
+    body: Partial<TInput>,
+    options?: ApiRequestOptions,
+  ): Observable<HttpResponse<TOutput>> {
+    const headers: HttpHeaders = this.buildHeaders(options).set(
+      'Content-Type',
+      'application/merge-patch+json',
+    );
+
+    return this.http
+      .patch<TOutput>(this.buildUrl(endpoint), body, {
+        headers,
+        params: this.buildParams(options),
+        withCredentials: true,
+        observe: 'response',
       })
       .pipe(catchError(this.handleError));
   }

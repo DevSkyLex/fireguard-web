@@ -1,0 +1,154 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content class="sm:max-w-lg" data-testid="non-conformity-add-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@inspection.nc.addDialog.title">Add non-conformity</h3>
+      <p hlmDialogDescription i18n="@@inspection.nc.addDialog.description">
+        Record a finding on this inspection, with its severity and an optional due date.
+      </p>
+    </hlm-dialog-header>
+
+    <form novalidate (submit)="submit($event)">
+      <hlm-field-group>
+        @if (serverMessage(); as message) {
+          <div role="alert" data-testid="non-conformity-add-error" class="text-sm text-destructive">
+            <p>{{ message }}</p>
+          </div>
+        }
+
+        <hlm-field>
+          <label hlmFieldLabel for="non-conformity-add-description"
+            ><span i18n="@@inspection.nc.addDialog.descriptionLabel">Description</span
+            ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+            ><span class="sr-only" i18n="@@common.required"> required</span></label
+          >
+          <textarea
+            hlmTextarea
+            id="non-conformity-add-description"
+            rows="3"
+            class="w-full"
+            data-testid="non-conformity-add-description"
+            placeholder="Fire extinguisher pressure gauge in the red zone"
+            i18n-placeholder="@@inspection.nc.addDialog.descriptionPlaceholder"
+            [formField]="addForm.description"
+            [attr.aria-required]="true"
+            [attr.aria-invalid]="addForm.description().touched() && addForm.description().invalid()"
+          ></textarea>
+          @if (addForm.description().touched() && addForm.description().invalid()) {
+            <hlm-field-error>{{ addForm.description().errors()[0].message }}</hlm-field-error>
+          }
+        </hlm-field>
+
+        <hlm-field>
+          <label hlmFieldLabel for="non-conformity-add-severity"
+            ><span i18n="@@inspection.nc.addDialog.severityLabel">Severity</span
+            ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+            ><span class="sr-only" i18n="@@common.required"> required</span></label
+          >
+          <hlm-select [formField]="addForm.severity">
+            <hlm-select-trigger
+              buttonId="non-conformity-add-severity"
+              class="w-full max-sm:min-h-11"
+              data-testid="non-conformity-add-severity"
+            >
+              @if (addForm.severity().value(); as severity) {
+                <app-inspection-status-tag
+                  kind="nonConformitySeverity"
+                  [value]="severity"
+                  asOption
+                />
+              } @else {
+                <hlm-select-value
+                  placeholder="Select a severity"
+                  i18n-placeholder="@@inspection.nc.addDialog.severityPlaceholder"
+                />
+              }
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (severity of severityValues; track severity) {
+                  <hlm-select-item [value]="severity">
+                    <app-inspection-status-tag
+                      kind="nonConformitySeverity"
+                      [value]="severity"
+                      asOption
+                    />
+                  </hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+          @if (addForm.severity().touched() && addForm.severity().invalid()) {
+            <hlm-field-error>{{ addForm.severity().errors()[0].message }}</hlm-field-error>
+          }
+        </hlm-field>
+
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="non-conformity-add-due-at"
+            i18n="@@inspection.nc.addDialog.dueAtLabel"
+            >Due date (optional)</label
+          >
+          <hlm-date-picker [formField]="addForm.dueAt">
+            <hlm-date-picker-trigger buttonId="non-conformity-add-due-at" class="w-full">
+              <span i18n="@@inspection.nc.addDialog.dueAtPlaceholder">Select a date</span>
+            </hlm-date-picker-trigger>
+          </hlm-date-picker>
+        </hlm-field>
+
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="non-conformity-add-notes"
+            i18n="@@inspection.nc.addDialog.notesLabel"
+            >Notes (optional)</label
+          >
+          <textarea
+            hlmTextarea
+            id="non-conformity-add-notes"
+            rows="3"
+            class="w-full"
+            data-testid="non-conformity-add-notes"
+            [formField]="addForm.notes"
+          ></textarea>
+          @if (addForm.notes().touched() && addForm.notes().invalid()) {
+            <hlm-field-error>{{ addForm.notes().errors()[0].message }}</hlm-field-error>
+          }
+        </hlm-field>
+
+        <hlm-field orientation="horizontal" class="justify-end">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="max-sm:min-h-11"
+            data-testid="non-conformity-add-cancel"
+            [disabled]="pending()"
+            (click)="visibleChange.emit(false)"
+          >
+            <span i18n="@@common.cancel">Cancel</span>
+          </button>
+          <button
+            hlmBtn
+            type="submit"
+            class="max-sm:min-h-11"
+            data-testid="non-conformity-add-submit"
+            [disabled]="pending()"
+            [attr.aria-busy]="pending() ? 'true' : null"
+            aria-live="polite"
+          >
+            @if (pending()) {
+              <span i18n="@@inspection.nc.addDialog.submitting">Recording…</span>
+            } @else {
+              <span i18n="@@inspection.nc.addDialog.submit">Add non-conformity</span>
+            }
+          </button>
+        </hlm-field>
+      </hlm-field-group>
+    </form>
+  </hlm-dialog-content>
+</hlm-dialog>

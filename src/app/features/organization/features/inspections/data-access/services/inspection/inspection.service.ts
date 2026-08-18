@@ -1,5 +1,6 @@
+import type { HttpResponse } from '@angular/common/http';
 import { Service } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
@@ -7,8 +8,10 @@ import type {
   CreateInspectionInput,
   UpdateInspectionInput,
   NonConformityOutput,
+  NonConformityWaivePendingOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
+  UpdateNonConformityStatusResult,
   InspectionListOptions,
   NonConformityListOptions,
 } from '@features/organization/features/inspections/models';
@@ -499,28 +502,51 @@ export class InspectionService extends HydraApiService {
    * @method updateNonConformityStatus
    *
    * @description
-   * Updates the resolution status of a non-conformity
-   * (open → in_progress → done | waived).
+   * Updates the resolution status of a non-conformity. Every transition
+   * from `open`/`in_progress` is legal, including back to `open`; `done` and
+   * `waived` are immutable server-side (a further status change on either
+   * answers `409`). Waiving a non-conformity above the organization's
+   * waiver-approval threshold does not resolve it synchronously: the backend
+   * answers **202** with `NonConformityWaivePendingOutput` instead of the
+   * usual **200** `NonConformityOutput`, and the record itself is left
+   * unchanged pending a four-eyes decision. `patchWithStatus` (not `patch`)
+   * is what exposes the distinction — the caller discriminates on
+   * `result.kind` rather than losing it to a single unwrapped body.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {string} inspectionId - The ID of the inspection.
    * @param {string} nonConformityId - The ID of the non-conformity to update.
    * @param {UpdateNonConformityStatusInput} input - Input containing the new status value.
    *
-   * @return {Observable<NonConformityOutput>} An observable emitting the updated non-conformity details.
+   * @return {Observable<UpdateNonConformityStatusResult>} The resolved status update, or the pending-approval outcome.
    */
   public updateNonConformityStatus(
     organizationId: string,
     inspectionId: string,
     nonConformityId: string,
     input: UpdateNonConformityStatusInput,
-  ): Observable<NonConformityOutput> {
-    return this.patch<UpdateNonConformityStatusInput, NonConformityOutput>(
+  ): Observable<UpdateNonConformityStatusResult> {
+    return this.patchWithStatus<
+      UpdateNonConformityStatusInput,
+      NonConformityOutput | NonConformityWaivePendingOutput
+    >(
       `${this.inspectionPath(organizationId, inspectionId)}/non-conformities/${nonConformityId}/status`,
       input,
+    ).pipe(
+      map(
+        (
+          response: HttpResponse<NonConformityOutput | NonConformityWaivePendingOutput>,
+        ): UpdateNonConformityStatusResult =>
+          response.status === 202
+            ? {
+                kind: 'pendingApproval',
+                pending: response.body as NonConformityWaivePendingOutput,
+              }
+            : { kind: 'updated', nonConformity: response.body as NonConformityOutput },
+      ),
     );
   }
   //#endregion

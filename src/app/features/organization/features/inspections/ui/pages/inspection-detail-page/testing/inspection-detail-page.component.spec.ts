@@ -14,13 +14,17 @@ import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
+  pendingCallState,
   successCallState,
   type CallState,
   type StoreError,
 } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import type {
+  InspectionOutput,
+  NonConformityOutput,
+} from '@features/organization/features/inspections/models';
 import {
   ActiveInspectionStore,
   InspectionStore,
@@ -85,6 +89,13 @@ describe('InspectionDetailPage', () => {
   let updateCallState: WritableSignal<CallState<InspectionOutput | null>>;
   let cancelCallState: WritableSignal<CallState<string | null>>;
   let isChangingLifecycle: WritableSignal<boolean>;
+  let loadNonConformities: ReturnType<typeof vi.fn>;
+  let addNonConformity: ReturnType<typeof vi.fn>;
+  let updateNonConformityStatus: ReturnType<typeof vi.fn>;
+  let resetAddNonConformityOperation: ReturnType<typeof vi.fn>;
+  let nonConformitiesListCallState: WritableSignal<CallState>;
+  let addNonConformityCallState: WritableSignal<CallState<NonConformityOutput | null>>;
+  let isUpdatingNonConformity: WritableSignal<boolean>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(InspectionDetailPage);
@@ -106,6 +117,13 @@ describe('InspectionDetailPage', () => {
     updateCallState = signal<CallState<InspectionOutput | null>>(idleCallState());
     cancelCallState = signal<CallState<string | null>>(idleCallState());
     isChangingLifecycle = signal<boolean>(false);
+    loadNonConformities = vi.fn();
+    addNonConformity = vi.fn();
+    updateNonConformityStatus = vi.fn();
+    resetAddNonConformityOperation = vi.fn();
+    nonConformitiesListCallState = signal<CallState>(idleCallState());
+    addNonConformityCallState = signal<CallState<NonConformityOutput | null>>(idleCallState());
+    isUpdatingNonConformity = signal<boolean>(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -127,6 +145,18 @@ describe('InspectionDetailPage', () => {
             cancelCallState,
             updateError: signal(null),
             isChangingLifecycle,
+            loadNonConformities,
+            addNonConformity,
+            updateNonConformityStatus,
+            resetAddNonConformityOperation,
+            nonConformities: signal<ReadonlyArray<NonConformityOutput>>([]),
+            nonConformityWaivePending: signal({}),
+            nonConformitiesListCallState,
+            addNonConformityCallState,
+            isLoadingNonConformities: signal<boolean>(false),
+            isAddingNonConformity: signal<boolean>(false),
+            isUpdatingNonConformity,
+            nonConformityStatusErrorText: signal<string | null>(null),
           },
         },
         {
@@ -311,6 +341,128 @@ describe('InspectionDetailPage', () => {
       saving: null,
       failed: 'notes',
       failure: 'Rejected',
+    });
+  });
+
+  describe('non-conformities section', () => {
+    it('should load non-conformities only on the first expansion', async () => {
+      await createPage();
+
+      fixture.componentInstance['toggleNonConformities']();
+      nonConformitiesListCallState.set(pendingCallState());
+      fixture.componentInstance['toggleNonConformities']();
+      fixture.componentInstance['toggleNonConformities']();
+
+      expect(loadNonConformities).toHaveBeenCalledTimes(1);
+      expect(loadNonConformities).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+      });
+    });
+
+    it('should not reload non-conformities on a later expansion once already loaded', async () => {
+      nonConformitiesListCallState.set(successCallState(null));
+      await createPage();
+
+      fixture.componentInstance['toggleNonConformities']();
+
+      expect(loadNonConformities).not.toHaveBeenCalled();
+    });
+
+    it('should hide the add entry point once the inspection is closed even for a writer', async () => {
+      selectedInspection.set(inspection({ status: 'closed' }));
+      await createPage();
+
+      expect(fixture.componentInstance['canAddNonConformity']()).toBe(false);
+    });
+
+    it('should allow adding on a non-closed inspection for a writer', async () => {
+      selectedInspection.set(inspection({ status: 'submitted' }));
+      await createPage();
+
+      expect(fixture.componentInstance['canAddNonConformity']()).toBe(true);
+    });
+
+    it('should reset the add operation and open the dialog', async () => {
+      await createPage();
+
+      fixture.componentInstance['openAddNonConformityDialog']();
+
+      expect(resetAddNonConformityOperation).toHaveBeenCalled();
+      expect(fixture.componentInstance['addNonConformityDialogOpen']()).toBe(true);
+    });
+
+    it('should close the add dialog once the add succeeds', async () => {
+      await createPage();
+      fixture.componentInstance['openAddNonConformityDialog']();
+
+      addNonConformityCallState.set(
+        successCallState({ id: 'nc-1' } as unknown as NonConformityOutput),
+      );
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['addNonConformityDialogOpen']()).toBe(false);
+    });
+
+    it('should send the add payload with the route ids folded in', async () => {
+      await createPage();
+
+      fixture.componentInstance['onNonConformityAdded']({
+        description: 'Gauge in the red',
+        severity: 'high',
+      });
+
+      expect(addNonConformity).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        input: { description: 'Gauge in the red', severity: 'high' },
+      });
+    });
+
+    it('should send a status write with the row and route ids', async () => {
+      await createPage();
+
+      fixture.componentInstance['onNonConformityStatusPicked']({
+        nonConformityId: 'nc-1',
+        status: 'in_progress',
+      });
+
+      expect(updateNonConformityStatus).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: { status: 'in_progress' },
+      });
+      expect(fixture.componentInstance['pendingNonConformityId']()).toBe('nc-1');
+    });
+
+    it('should refuse a second status write while one is already in flight', async () => {
+      isUpdatingNonConformity.set(true);
+      await createPage();
+
+      fixture.componentInstance['onNonConformityStatusPicked']({
+        nonConformityId: 'nc-1',
+        status: 'in_progress',
+      });
+
+      expect(updateNonConformityStatus).not.toHaveBeenCalled();
+    });
+
+    it('should clear the pending id once the status write settles', async () => {
+      await createPage();
+
+      fixture.componentInstance['onNonConformityStatusPicked']({
+        nonConformityId: 'nc-1',
+        status: 'in_progress',
+      });
+      expect(fixture.componentInstance['pendingNonConformityId']()).toBe('nc-1');
+
+      isUpdatingNonConformity.set(true);
+      await fixture.whenStable();
+      isUpdatingNonConformity.set(false);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['pendingNonConformityId']()).toBeNull();
     });
   });
 });

@@ -1,31 +1,26 @@
-import { ScaleType, type Color } from '@swimlane/ngx-charts';
 import { resolveChartColorScheme } from '../chart-color-scheme.utils';
 
 describe('chart-color-scheme utils', () => {
   describe('resolveChartColorScheme', () => {
-    it('returns an ordinal, unselectable scheme for the light appearance', () => {
-      const scheme: Color = resolveChartColorScheme('light');
+    it('returns a non-empty ordinal palette for the light appearance', () => {
+      const palette: readonly string[] = resolveChartColorScheme('light');
 
-      expect(scheme.name).toBe('fireguard-chart');
-      expect(scheme.selectable).toBe(false);
-      expect(scheme.group).toBe(ScaleType.Ordinal);
-      expect(scheme.domain.length).toBeGreaterThan(0);
+      expect(palette.length).toBeGreaterThan(0);
     });
 
-    it('returns a different domain for the dark appearance', () => {
-      const light: Color = resolveChartColorScheme('light');
-      const dark: Color = resolveChartColorScheme('dark');
+    it('returns a different palette for the dark appearance', () => {
+      const light: readonly string[] = resolveChartColorScheme('light');
+      const dark: readonly string[] = resolveChartColorScheme('dark');
 
-      expect(dark.domain).not.toEqual(light.domain);
-      expect(dark.domain.length).toBe(light.domain.length);
+      expect(dark).not.toEqual(light);
+      expect(dark.length).toBe(light.length);
     });
 
-    it('returns a fresh domain array each call rather than a shared reference', () => {
-      const first: Color = resolveChartColorScheme('light');
-      const second: Color = resolveChartColorScheme('light');
+    it('returns the same reference for repeated calls with the same appearance', () => {
+      const first: readonly string[] = resolveChartColorScheme('light');
+      const second: readonly string[] = resolveChartColorScheme('light');
 
-      expect(first.domain).toEqual(second.domain);
-      expect(first.domain).not.toBe(second.domain);
+      expect(first).toBe(second);
     });
   });
 });

@@ -4,9 +4,9 @@ import type { ChartPoint } from './chart-point.interface';
  * Interface ChartSeries
  *
  * @description
- * One named line, area, or bar group — the shape every `shared/chart`
- * component accepts, so a caller never has to build ngx-charts' own
- * `Series` / `DataItem` types directly.
+ * One named line or area — the shape every `shared/chart` component
+ * accepts, so a caller never has to build Chart.js' own dataset shape
+ * directly.
  *
  * @since 1.0.0
  */

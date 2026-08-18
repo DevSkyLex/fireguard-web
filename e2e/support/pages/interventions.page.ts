@@ -6,10 +6,10 @@ import type { Locator, Page } from '@playwright/test';
  * @description
  * Wraps the interventions list route (`/organizations/:organizationId/interventions`)
  * behind named locators and one method per user intent: navigating with a raw
- * query string (a shared/bookmarked filtered URL), reading a row, selecting
- * rows, driving the bulk-actions dropdown, picking a segmented view, adding a
- * filter from the "+ Filter" menu, and reading/changing/removing a filter
- * chip.
+ * query string (a shared/bookmarked filtered URL, including the KPI strip's
+ * own `?due=overdue`/`?status=submitted` tile links), reading a row,
+ * selecting rows, driving the bulk-actions dropdown, adding a filter from the
+ * "+ Filter" menu, and reading/changing/removing a filter chip.
  */
 export class InterventionsPage {
   public constructor(private readonly page: Page) {}
@@ -23,7 +23,6 @@ export class InterventionsPage {
   public readonly tableRows: Locator = this.page.getByTestId('intervention-table-row');
   public readonly createSheet: Locator = this.page.getByTestId('intervention-create-sheet');
   public readonly selectAll: Locator = this.page.getByTestId('intervention-table-select-all');
-  public readonly viewsRow: Locator = this.page.getByTestId('interventions-views');
   public readonly filterChips: Locator = this.page.getByTestId('interventions-filter-chip');
   public readonly clearFiltersButton: Locator = this.page.getByTestId(
     'interventions-clear-filters',
@@ -90,21 +89,6 @@ export class InterventionsPage {
   /** The app-wide toast deck's visible entries (spartan's sonner, `role="status"`). */
   public toast(text: string): Locator {
     return this.page.getByRole('status').filter({ hasText: text });
-  }
-
-  /** The views row's toggle button named `label`, e.g. `"Overdue"`. */
-  public viewButton(label: string): Locator {
-    return this.viewsRow.getByRole('button', { name: label });
-  }
-
-  /** Selects one of the views row's segmented views, applying its filter. */
-  public async selectView(label: string): Promise<void> {
-    await this.viewButton(label).click();
-  }
-
-  /** Whether the named view's toggle currently reads pressed. */
-  public async isViewActive(label: string): Promise<boolean> {
-    return (await this.viewButton(label).getAttribute('aria-pressed')) === 'true';
   }
 
   /** The segmented filter chip naming `fieldLabel`, e.g. `"Status"`. */

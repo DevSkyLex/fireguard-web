@@ -105,7 +105,6 @@ import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggle } from '@shared/ui/toggle';
-import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
@@ -172,19 +171,6 @@ const NO_FILTERS: InterventionListFilters = {
 };
 
 /**
- * Type InterventionListView
- *
- * @description
- * The Linear-style segmented views the toolbar's toggle group offers. Each
- * is a fixed `status`/`dueWindow` combination on top of the same
- * {@link InterventionListFilters} contract the popover edits — there is no
- * separate "view" state, only a derived read of the active narrowing.
- *
- * @since 6.3.0
- */
-type InterventionListView = 'all' | 'overdue' | 'sent-back' | 'awaiting-review';
-
-/**
  * Type InterventionDueRangeOperator
  *
  * @description
@@ -249,11 +235,13 @@ type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'betwe
  * server-side copy: it ends in the normal `create` call, and never carries
  * `status`, the planned window or the review note.
  *
- * The segmented views row above the toolbar and the removable filter chips
- * below it are both read-only projections of {@link filters}, never a second
- * copy of it: picking a view or removing a chip calls the same
+ * The removable filter chips below the toolbar are a read-only projection of
+ * {@link filters}, never a second copy of it: removing a chip calls the same
  * {@link applyFilter} path the popover's own selects use, so the URL stays
- * the single source of truth (`FEATURE.md`).
+ * the single source of truth (`FEATURE.md`). The KPI strip's own overdue and
+ * awaiting-review tiles link into that same `?due=`/`?status=` contract —
+ * the only way left to reach those two narrowings from the UI, now that the
+ * toolbar's segmented-views toggle group is gone.
  *
  * Its title lives in the shell breadcrumb, not in-page — the route's
  * `data.breadcrumb` supplies it. "New intervention" registers on the shell
@@ -287,7 +275,7 @@ type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'betwe
  * only a single surface for what was previously reachable only through a
  * column header click.
  *
- * @version 6.8.0
+ * @version 6.9.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -318,7 +306,6 @@ type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'betwe
     ...HlmPopoverImports,
     ...HlmSelectImports,
     ...HlmSeparatorImports,
-    ...HlmToggleGroupImports,
   ],
   providers: [
     InterventionPlanningOptionsStore,
@@ -631,35 +618,6 @@ export class InterventionsPage {
         this.organizationId(),
       ),
   );
-
-  /**
-   * Property activeView
-   * @readonly
-   *
-   * @description
-   * Which of the toggle group's four segmented views the active narrowing
-   * currently matches, `null` for any other combination — a custom mix from
-   * the popover highlights none of the four rather than a misleading nearest
-   * one. Derived from {@link filters}' `status`/`dueWindow` alone; `q`,
-   * `mine`, `type`, `priority`, `site`, `responsible` and `label` never
-   * affect it.
-   *
-   * @access protected
-   * @since 6.3.0
-   *
-   * @type {Signal<InterventionListView | null>}
-   */
-  protected readonly activeView: Signal<InterventionListView | null> =
-    computed<InterventionListView | null>(() => {
-      const filters: InterventionListFilters = this.filters();
-
-      if (filters.status === null && filters.dueWindow === null) return 'all';
-      if (filters.status === null && filters.dueWindow === 'overdue') return 'overdue';
-      if (filters.status === 'changes_requested' && filters.dueWindow === null) return 'sent-back';
-      if (filters.status === 'submitted' && filters.dueWindow === null) return 'awaiting-review';
-
-      return null;
-    });
 
   /** The active ordering, restored from the preferences cookie. */
   protected readonly sortOrder: WritableSignal<InterventionListSort> = signal<InterventionListSort>(
@@ -1477,40 +1435,6 @@ export class InterventionsPage {
     }));
 
   /**
-   * Property subtitle
-   * @readonly
-   *
-   * @description
-   * The count line under the title, naming the overdue work rather than
-   * leaving it to be found by scrolling. The total is the server's collection
-   * count — pagination is server-side, so the loaded page's length would
-   * undercount — while the overdue figure narrows to the rows on screen,
-   * which are the ones the line points at.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly subtitle: Signal<string> = computed<string>(() => {
-    const total: number = this.store.totalInterventions();
-    const overdue: number = this.items().filter(
-      (item: InterventionListItemViewModel): boolean => item.isOverdue,
-    ).length;
-
-    const counted: string =
-      total === 1
-        ? $localize`:@@intervention.list.countOne:1 intervention`
-        : $localize`:@@intervention.list.countMany:${total}:count: interventions`;
-
-    if (overdue === 0) return counted;
-
-    return overdue === 1
-      ? $localize`:@@intervention.list.countOverdueOne:${counted}:counted: · 1 overdue`
-      : $localize`:@@intervention.list.countOverdueMany:${counted}:counted: · ${overdue}:overdue: overdue`;
-  });
-
-  /**
    * Property hasSearch
    * @readonly
    *
@@ -2021,47 +1945,6 @@ export class InterventionsPage {
     }
 
     if (this.openFilterKey() === key) this.openFilterKey.set(null);
-  }
-
-  /**
-   * Method onViewChanged
-   * @method onViewChanged
-   *
-   * @description
-   * Narrows `hlm-toggle-group`'s single-select payload to a segmented view
-   * and applies the `status`/`dueWindow` pair it stands for through
-   * {@link applyFilter} — the same path a popover select uses, so a view is
-   * nothing but a shortcut into the one filter contract. `null` (every
-   * toggle deselected) is a no-op: the group only reaches it while
-   * {@link activeView} is already `null`, which the operator caused by
-   * picking a custom filter combination, not by clicking a view.
-   *
-   * @access protected
-   * @since 6.3.0
-   *
-   * @param {InterventionListView | readonly InterventionListView[] | null | undefined} value - The toggle group's emitted value.
-   *
-   * @returns {void}
-   */
-  protected onViewChanged(
-    value: InterventionListView | readonly InterventionListView[] | null | undefined,
-  ): void {
-    const view: InterventionListView | null = typeof value === 'string' ? value : null;
-
-    switch (view) {
-      case 'all':
-        this.applyFilter({ status: null, dueWindow: null });
-        break;
-      case 'overdue':
-        this.applyFilter({ status: null, dueWindow: 'overdue' });
-        break;
-      case 'sent-back':
-        this.applyFilter({ status: 'changes_requested', dueWindow: null });
-        break;
-      case 'awaiting-review':
-        this.applyFilter({ status: 'submitted', dueWindow: null });
-        break;
-    }
   }
 
   /**

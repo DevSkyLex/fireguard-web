@@ -13,6 +13,17 @@ import {
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
+import {
+  CategoryScale,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  Tooltip,
+} from 'chart.js';
+import { provideCharts } from 'ng2-charts';
 import { APP_ROUTES } from '@app/app.routes';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { provideFeedback } from '@core/feedback';
@@ -38,9 +49,11 @@ import { provideSpartanHlm } from '@shared/ui/utils';
  * This configuration is used to provide the
  * application with the necessary providers. Registers Angular's animation
  * engine as a no-op (`provideNoopAnimations`): nothing in this codebase
- * declares an `animations:` trigger, but a bundled dependency (ngx-charts)
- * does, and without any engine registered its `[@animationState]` binding
- * throws `NG05105` and the chart series never becomes visible.
+ * declares an `animations:` trigger, kept registered so a future CDK-based
+ * primitive that does needs no app-wide wiring change. Registers Chart.js'
+ * `provideCharts` with only the controllers/elements/scales/plugins
+ * `shared/chart`'s `LineChart` actually uses, rather than
+ * `withDefaultRegisterables()`'s full bundle.
  *
  * @version 1.0.0
  *
@@ -83,6 +96,18 @@ export const appConfig: ApplicationConfig = {
     provideServiceWorker('ngsw-worker.js', {
       enabled: environment.production,
       registrationStrategy: 'registerWhenStable:30000',
+    }),
+    provideCharts({
+      registerables: [
+        LineController,
+        LineElement,
+        PointElement,
+        LinearScale,
+        CategoryScale,
+        Filler,
+        Legend,
+        Tooltip,
+      ],
     }),
     provideOrganizationFeature(),
     provideInterventionsFeature(),

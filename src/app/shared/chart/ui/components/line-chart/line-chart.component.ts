@@ -14,13 +14,13 @@ import {
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideChartLine } from '@ng-icons/lucide';
-import { AreaChartModule, LegendPosition, LineChartModule, type Color } from '@swimlane/ngx-charts';
-import { curveLinear, curveMonotoneX, type CurveFactory } from 'd3-shape';
+import type { ChartData, ChartOptions } from 'chart.js';
+import { BaseChartDirective } from 'ng2-charts';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { EmptyState } from '@shared/empty-state';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import type { ChartSeries } from '../../../models';
-import { resolveChartColorScheme, toNgxMultiSeries } from '../../../utils';
+import { resolveChartColorScheme, resolveChartGridColors, toChartJsLineData } from '../../../utils';
 
 /**
  * Component LineChart
@@ -28,23 +28,35 @@ import { resolveChartColorScheme, toNgxMultiSeries } from '../../../utils';
  *
  * @description
  * A multi-series line or area chart over time — a thin typed wrapper over
- * ngx-charts so no caller touches `MultiSeries` or `ColorHelper` directly.
- * Generic by design: it names no domain and takes only `ChartSeries[]` plus
- * scalar display flags (`ARCHITECTURE.md` §6.4).
+ * Chart.js (through `ng2-charts`' `BaseChartDirective`) so no caller touches
+ * `ChartData`/`ChartOptions` directly. Generic by design: it names no domain
+ * and takes only `ChartSeries[]` plus scalar display flags (`ARCHITECTURE.md`
+ * §6.4). Replaces the retired `@swimlane/ngx-charts` wrapper of the same name
+ * (`organization/FEATURE.md` § Dashboard) — Chart.js takes gridline colour,
+ * tick typography and tooltip chrome as first-class options instead of
+ * ngx-charts' unreachable internal SVG classes, which is what motivated the
+ * move.
  *
- * SSR-safe: ngx-charts measures its host's `getBoundingClientRect()` and
- * subscribes a `ResizeObserver` in `ngAfterViewInit`, neither of which the
- * server platform provides, so the real element only mounts once
- * `isPlatformBrowser` is true. Until then — and while `loading` is set — a
- * `height`-sized skeleton holds the layout so hydration causes no shift.
+ * SSR-safe: a canvas element only mounts once `isPlatformBrowser` is true —
+ * `ng2-charts` itself guards its browser-only work the same way, but a
+ * height-sized skeleton is still rendered up front here so hydration causes
+ * no layout shift. Until then — and while `loading` is set — that skeleton
+ * holds the layout.
  *
  * Colour is resolved from `core/theme`'s `resolvedTheme` signal rather than
- * read off the DOM (`utils/chart-color-scheme`), so a live appearance
- * switch recolors an already-rendered chart the same way the rest of the
- * shell does. The legend renders series names as text, so colour is never
- * the only way a series is told apart.
+ * read off the DOM (`utils/chart-color-scheme`, `utils/chart-grid-colors`),
+ * so a live appearance switch recolors an already-rendered chart the same
+ * way the rest of the shell does — both the dataset palette and the
+ * gridline/tick/tooltip chrome are computed signals over that same source,
+ * and Chart.js is handed a fresh `data`/`options` object on every change, so
+ * `BaseChartDirective` redraws in place. The legend renders series names as
+ * compact centred pills with small circular swatches below the plot, so
+ * colour is never the only way a series is told apart. Points stay hidden
+ * at rest and reveal on hover with an enlarged hit radius, gridlines draw
+ * on the horizontal axis only, and the tooltip is a themed rounded card
+ * rather than Chart.js' default black box.
  *
- * @version 1.0.0
+ * @version 2.1.0
  *
  * @example
  * ```html
@@ -55,32 +67,13 @@ import { resolveChartColorScheme, toNgxMultiSeries } from '../../../utils';
  */
 @Component({
   selector: 'app-line-chart',
-  imports: [AreaChartModule, LineChartModule, EmptyState, HlmSkeleton],
+  imports: [BaseChartDirective, EmptyState, HlmSkeleton],
   providers: [provideIcons({ lucideChartLine })],
   host: { class: 'block' },
   templateUrl: './line-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LineChart {
-  //#region Constants
-  /**
-   * Property LEGEND_RESERVE_PX
-   * @readonly
-   * @static
-   *
-   * @description
-   * Extra host height reserved for a below-plot legend — see
-   * {@link totalHeight}. Sized for the single-row `horizontal-legend` this
-   * component's one or two series always produce.
-   *
-   * @access private
-   * @since 1.1.0
-   *
-   * @type {number}
-   */
-  private static readonly LEGEND_RESERVE_PX: number = 60;
-  //#endregion
-
   //#region Inputs
   /**
    * Property series
@@ -103,7 +96,7 @@ export class LineChart {
    *
    * @description
    * The chart's accessible name — what it plots, in one sentence. Set on the
-   * chart's `role="img"` wrapper since the rendered SVG is hidden from
+   * chart's `role="img"` wrapper since the rendered canvas is hidden from
    * assistive tech (`aria-hidden`) as too fine-grained to navigate usefully.
    *
    * @access public
@@ -118,7 +111,10 @@ export class LineChart {
    * @readonly
    *
    * @description
-   * The chart's height in pixels. Width fills the host.
+   * The chart's height in pixels. Width fills the host. Unlike the retired
+   * ngx-charts wrapper, Chart.js' built-in legend draws inside this box
+   * (shrinking the plot area to fit) rather than past it, so no extra
+   * height needs reserving for it.
    *
    * @access public
    * @since 1.0.0
@@ -149,10 +145,9 @@ export class LineChart {
    * @readonly
    *
    * @description
-   * Whether the line curves through its points (`curveMonotoneX`) instead of
-   * connecting them with straight segments. Defaults to off: a straight
-   * segment never implies a value between two real points that the data
-   * does not contain.
+   * Whether the line curves through its points instead of connecting them
+   * with straight segments. Defaults to off: a straight segment never
+   * implies a value between two real points that the data does not contain.
    *
    * @access public
    * @since 1.0.0
@@ -180,6 +175,47 @@ export class LineChart {
     boolean,
     BooleanInput
   >(false, { transform: booleanAttribute });
+
+  /**
+   * Property gradient
+   * @readonly
+   *
+   * @description
+   * Fades an {@link area} fill from its series colour to transparent instead
+   * of a flat tint, through a Chart.js scriptable `backgroundColor` reading
+   * the canvas' own gradient API (`utils/chart-series-mapper`). Has no
+   * effect without {@link area}. Defaults on.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly gradient: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(true, { transform: booleanAttribute });
+
+  /**
+   * Property showGridLines
+   * @readonly
+   *
+   * @description
+   * Whether Chart.js draws the horizontal (y-axis) gridlines. The vertical
+   * gridlines are always off — a full cage reads as dated, and the x-axis
+   * ticks already mark each category. Defaults on for legibility; a caller
+   * plotting a single, self-explanatory series may turn it off for a
+   * quieter card.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly showGridLines: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(true, { transform: booleanAttribute });
 
   /**
    * Property loading
@@ -221,7 +257,7 @@ export class LineChart {
    * @readonly
    *
    * @description
-   * Whether this instance runs on the browser platform. ngx-charts is
+   * Whether this instance runs on the browser platform. The canvas is
    * mounted only when true; the server render shows the skeleton instead.
    *
    * @access protected
@@ -236,8 +272,8 @@ export class LineChart {
    * @readonly
    *
    * @description
-   * Whether ngx-charts may animate its transitions. ngx-charts defaults its
-   * `animations` input to true and never consults `prefers-reduced-motion`
+   * Whether Chart.js may animate its transitions. Chart.js defaults its
+   * `animation` option to on and never consults `prefers-reduced-motion`
    * itself, so the wrapper reads the media query once (browser only) and
    * disables the transitions for users who asked for reduced motion.
    *
@@ -249,21 +285,6 @@ export class LineChart {
   protected readonly animationsEnabled: boolean =
     this.isBrowser &&
     !(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
-
-  /**
-   * Property legendPosition
-   * @readonly
-   *
-   * @description
-   * Fixed legend placement below the plot — the layout that keeps a narrow,
-   * tile-sized host from being squeezed by a side legend.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {LegendPosition}
-   */
-  protected readonly legendPosition: LegendPosition = LegendPosition.Below;
 
   /**
    * Property isEmpty
@@ -282,92 +303,129 @@ export class LineChart {
   );
 
   /**
-   * Property chartData
-   * @readonly
-   *
-   * @description
-   * The series mapped to ngx-charts' `MultiSeries` shape.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<ReturnType<typeof toNgxMultiSeries>>}
-   */
-  protected readonly chartData: Signal<ReturnType<typeof toNgxMultiSeries>> = computed(() =>
-    toNgxMultiSeries(this.series()),
-  );
-
-  /**
-   * Property curve
-   * @readonly
-   *
-   * @description
-   * The d3 curve factory backing {@link smooth}.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<CurveFactory>}
-   */
-  protected readonly curve: Signal<CurveFactory> = computed(() =>
-    this.smooth() ? curveMonotoneX : curveLinear,
-  );
-
-  /**
    * Property colorScheme
    * @readonly
    *
    * @description
-   * The ordinal palette for the currently resolved appearance, recomputed
-   * whenever the app's theme changes.
+   * The ordinal dataset palette for the currently resolved appearance,
+   * recomputed whenever the app's theme changes.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<Color>}
+   * @type {Signal<readonly string[]>}
    */
-  protected readonly colorScheme: Signal<Color> = computed<Color>(() =>
+  protected readonly colorScheme: Signal<readonly string[]> = computed<readonly string[]>(() =>
     resolveChartColorScheme(this.themePort.resolvedTheme()),
   );
 
   /**
-   * Property roundDomains
+   * Property gridColors
    * @readonly
    *
    * @description
-   * Whether ngx-charts may round axis domains to nice ticks. Only safe when
-   * the x values are `Date`s: with string labels ngx-charts builds a
-   * `scalePoint`, which has no `.nice()`, and rounding would throw at render.
+   * The resolved gridline/tick/tooltip chrome colours for the currently
+   * resolved appearance, recomputed whenever the app's theme changes.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {Signal<boolean>}
+   * @type {Signal<ReturnType<typeof resolveChartGridColors>>}
    */
-  protected readonly roundDomains: Signal<boolean> = computed<boolean>(() =>
-    this.series().some((entry) => entry.points.some((point) => point.label instanceof Date)),
+  protected readonly gridColors: Signal<ReturnType<typeof resolveChartGridColors>> = computed(() =>
+    resolveChartGridColors(this.themePort.resolvedTheme()),
   );
 
   /**
-   * Property totalHeight
+   * Property chartData
    * @readonly
    *
    * @description
-   * The pixel height reserved for the host: {@link height} plus, when the
-   * legend renders, {@link LEGEND_RESERVE_PX}. ngx-charts only subtracts
-   * legend space from its own layout for a *side* legend (`LegendPosition.Right`
-   * / `Left`); for `LegendPosition.Below` — this component's fixed choice —
-   * it measures the host at the full `height()` for the plot alone and
-   * renders the legend as extra content past it, which `hlmCard`'s
-   * `overflow-hidden` then clips unless the host reserves the room itself.
+   * The series mapped to Chart.js' `ChartData<'line'>` shape.
    *
    * @access protected
-   * @since 1.1.0
+   * @since 2.0.0
    *
-   * @type {Signal<number>}
+   * @type {Signal<ChartData<'line'>>}
    */
-  protected readonly totalHeight: Signal<number> = computed<number>(
-    () => this.height() + (this.showLegend() ? LineChart.LEGEND_RESERVE_PX : 0),
+  protected readonly chartData: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() =>
+    toChartJsLineData(this.series(), this.colorScheme(), this.area(), this.gradient()),
+  );
+
+  /**
+   * Property chartOptions
+   * @readonly
+   *
+   * @description
+   * The Chart.js options for this instance's current display flags and the
+   * resolved theme's chrome colours — grid lines, tick colour, legend and
+   * tooltip styling all live here instead of an unreachable stylesheet
+   * selector, which is the capability the move off ngx-charts was for
+   * (`organization/FEATURE.md` § Dashboard).
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<ChartOptions<'line'>>}
+   */
+  protected readonly chartOptions: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(
+    () => {
+      const grid = this.gridColors();
+
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: this.animationsEnabled ? { duration: 700, easing: 'easeOutQuart' } : false,
+        animations: { radius: { duration: 0 } },
+        interaction: { mode: 'index', intersect: false },
+        elements: {
+          line: { tension: this.smooth() ? 0.35 : 0, capBezierPoints: true },
+          point: { hoverBorderWidth: 2 },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: grid.tick, padding: 8, maxRotation: 0 },
+            border: { color: grid.border },
+          },
+          y: {
+            beginAtZero: true,
+            grid: { display: this.showGridLines(), color: grid.border, drawTicks: false },
+            ticks: { color: grid.tick, padding: 8, maxTicksLimit: 6 },
+            border: { display: false },
+          },
+        },
+        plugins: {
+          legend: {
+            display: this.showLegend(),
+            position: 'bottom',
+            align: 'center',
+            labels: {
+              color: grid.tick,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              boxWidth: 6,
+              boxHeight: 6,
+              padding: 16,
+              font: { size: 12, weight: 500 },
+            },
+          },
+          tooltip: {
+            backgroundColor: grid.tooltipBackground,
+            titleColor: grid.tooltipForeground,
+            bodyColor: grid.tooltipForeground,
+            borderColor: grid.border,
+            borderWidth: 1,
+            padding: 10,
+            cornerRadius: 10,
+            boxPadding: 6,
+            usePointStyle: true,
+            titleFont: { weight: 600 },
+            titleMarginBottom: 6,
+          },
+        },
+      };
+    },
   );
 
   /**

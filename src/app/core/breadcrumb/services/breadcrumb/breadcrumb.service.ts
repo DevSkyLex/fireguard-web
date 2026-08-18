@@ -56,7 +56,7 @@ interface BreadcrumbTrailResult {
  * The current-page marker is withheld when the deepest route in the tree
  * suppressed its own breadcrumb: an ancestor's node would otherwise stand in
  * as "current" and get overlaid with a live page title that is not its own
- * (`organization-today-page`'s route pattern — a title-resolved parent, a
+ * (`organization-dashboard-page`'s route pattern — a title-resolved parent, a
  * `data.breadcrumb: false` leaf).
  *
  * @version 2.2.0

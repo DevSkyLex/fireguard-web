@@ -2471,6 +2471,50 @@
         <source>Equipments</source>
         <target>Équipements</target>
       </trans-unit>
+      <trans-unit id="route.dashboard" datatype="html">
+        <source>Dashboard</source>
+        <target>Tableau de bord</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.pageTitle" datatype="html">
+        <source>Dashboard</source>
+        <target>Tableau de bord</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.tabsAriaLabel" datatype="html">
+        <source>Dashboard sections</source>
+        <target>Sections du tableau de bord</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.tab.overview" datatype="html">
+        <source>Overview</source>
+        <target>Aperçu</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.tab.trends" datatype="html">
+        <source>Trends</source>
+        <target>Tendances</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.error.title" datatype="html">
+        <source>Couldn&apos;t load the dashboard</source>
+        <target>Impossible de charger le tableau de bord</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.error.description" datatype="html">
+        <source>Summary figures, alerts and the severity breakdown couldn&apos;t be fetched.</source>
+        <target>Les chiffres de synthèse, les alertes et la répartition par gravité n'ont pas pu être récupérés.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.trends.title" datatype="html">
+        <source>Trends</source>
+        <target>Tendances</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.trends.scopeNote" datatype="html">
+        <source>Applies to the charts and figures below, not the summary above</source>
+        <target>S'applique aux graphiques et chiffres ci-dessous, pas à la synthèse ci-dessus</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.memberCountOne" datatype="html">
+        <source>1 member</source>
+        <target>1 membre</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.memberCountMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> members</source>
+        <target><x id="count" equiv-text="count"/> membres</target>
+      </trans-unit>
       <trans-unit id="route.assets" datatype="html">
         <source>Assets</source>
         <target>Actifs</target>
@@ -6195,6 +6239,10 @@
         <source>Due soon</source>
         <target>Échéance proche</target>
       </trans-unit>
+      <trans-unit id="intervention.kpi.awaitingReview" datatype="html">
+        <source>Awaiting review</source>
+        <target>En attente de révision</target>
+      </trans-unit>
       <trans-unit id="intervention.kpi.averagePublicationDays" datatype="html">
         <source>Avg. publication</source>
         <target>Publication moy.</target>
@@ -6202,6 +6250,62 @@
       <trans-unit id="intervention.kpi.averagePublicationDaysValue" datatype="html">
         <source><x id="days" equiv-text="averagePublication"/> d</source>
         <target><x id="days" equiv-text="averagePublication"/> j</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.open.badge" datatype="html">
+        <source><x id="percent" equiv-text="openSharePercent"/>% of total</source>
+        <target><x id="percent" equiv-text="openSharePercent"/>% du total</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.open.caption" datatype="html">
+        <source>In progress work</source>
+        <target>Travaux en cours</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.open.context" datatype="html">
+        <source>Planned, in progress, or sent back for changes</source>
+        <target>Planifiées, en cours ou renvoyées pour modification</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.overdue.badge.needsAttention" datatype="html">
+        <source>Needs attention</source>
+        <target>Nécessite une action</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.overdue.badge.onTrack" datatype="html">
+        <source>On track</source>
+        <target>À jour</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.overdue.caption.pastDue" datatype="html">
+        <source>Past due date</source>
+        <target>Échéance dépassée</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.overdue.caption.none" datatype="html">
+        <source>Nothing overdue</source>
+        <target>Aucun retard</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.overdue.context" datatype="html">
+        <source>Not yet submitted after their due date</source>
+        <target>Pas encore soumises après leur échéance</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.dueSoon.caption" datatype="html">
+        <source>Due within 48h</source>
+        <target>Échéance sous 48 h</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.dueSoon.context" datatype="html">
+        <source>Still open and approaching their due date</source>
+        <target>Encore ouvertes et proches de leur échéance</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.awaitingReview.badge.toReview" datatype="html">
+        <source>To review</source>
+        <target>À revoir</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.awaitingReview.badge.none" datatype="html">
+        <source>Nothing pending</source>
+        <target>Rien en attente</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.awaitingReview.caption" datatype="html">
+        <source>Submitted for review</source>
+        <target>Soumises pour révision</target>
+      </trans-unit>
+      <trans-unit id="intervention.kpi.awaitingReview.context" datatype="html">
+        <source>Waiting on your decision before publication</source>
+        <target>En attente de votre décision avant publication</target>
       </trans-unit>
       <trans-unit id="intervention.list.bulkActionsButton" datatype="html">
         <source>Actions</source>
@@ -8864,17 +8968,65 @@
         <source>Open interventions</source>
         <target>Interventions ouvertes</target>
       </trans-unit>
+      <trans-unit id="org.today.kpi.openInterventions.caption" datatype="html">
+        <source>Currently open</source>
+        <target>Actuellement ouvertes</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.openInterventions.context" datatype="html">
+        <source>Planned, in progress, or sent back for changes</source>
+        <target>Planifiées, en cours ou renvoyées pour modification</target>
+      </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities" datatype="html">
         <source>Open non-conformities</source>
         <target>Non-conformités ouvertes</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.openNonConformities.badge.overdue" datatype="html">
+        <source><x id="count" equiv-text="overdueNonConformities"/> overdue</source>
+        <target><x id="count" equiv-text="overdueNonConformities"/> en retard</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.openNonConformities.badge.onTrack" datatype="html">
+        <source>On track</source>
+        <target>À jour</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.openNonConformities.caption.pastDue" datatype="html">
+        <source>Past due date</source>
+        <target>Échéance dépassée</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.openNonConformities.caption.none" datatype="html">
+        <source>Nothing overdue</source>
+        <target>Aucun retard</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.openNonConformities.caption.default" datatype="html">
+        <source>Open findings</source>
+        <target>Constats ouverts</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.openNonConformities.context" datatype="html">
+        <source>From inspections, not yet resolved</source>
+        <target>Issues des inspections, non encore résolues</target>
       </trans-unit>
       <trans-unit id="org.today.kpi.inspectionsCompleted" datatype="html">
         <source>Inspections completed</source>
         <target>Inspections terminées</target>
       </trans-unit>
+      <trans-unit id="org.today.kpi.inspectionsCompleted.caption" datatype="html">
+        <source>Finished this period</source>
+        <target>Terminées sur la période</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.inspectionsCompleted.context" datatype="html">
+        <source>Closed inspections compared to the previous period</source>
+        <target>Inspections clôturées comparées à la période précédente</target>
+      </trans-unit>
       <trans-unit id="org.today.kpi.equipmentUnderMaintenance" datatype="html">
         <source>Equipment under maintenance</source>
         <target>Équipements en maintenance</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.equipmentUnderMaintenance.caption" datatype="html">
+        <source>Out of service</source>
+        <target>Hors service</target>
+      </trans-unit>
+      <trans-unit id="org.today.kpi.equipmentUnderMaintenance.context" datatype="html">
+        <source>Equipment currently flagged for maintenance</source>
+        <target>Équipements actuellement signalés pour maintenance</target>
       </trans-unit>
       <trans-unit id="org.today.subtitleOne" datatype="html">
         <source>One thing needs a decision from you.</source>
@@ -9434,13 +9586,37 @@
         <source>Facilities</source>
         <target>Établissements</target>
       </trans-unit>
+      <trans-unit id="org.statistics.kpi.facilities.caption" datatype="html">
+        <source>Registered facilities</source>
+        <target>Établissements enregistrés</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.facilities.context" datatype="html">
+        <source>Sites currently tracked across your organization</source>
+        <target>Sites actuellement suivis dans votre organisation</target>
+      </trans-unit>
       <trans-unit id="org.statistics.kpi.equipment" datatype="html">
         <source>Equipment</source>
         <target>Équipement</target>
       </trans-unit>
+      <trans-unit id="org.statistics.kpi.equipment.caption" datatype="html">
+        <source>Tracked equipment</source>
+        <target>Équipements suivis</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.equipment.context" datatype="html">
+        <source>Assets currently registered across your facilities</source>
+        <target>Actifs actuellement enregistrés dans vos établissements</target>
+      </trans-unit>
       <trans-unit id="org.statistics.kpi.inspectionsCompleted" datatype="html">
         <source>Inspections completed</source>
         <target>Inspections terminées</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.inspectionsCompleted.caption" datatype="html">
+        <source>Finished this period</source>
+        <target>Terminées sur la période</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.inspectionsCompleted.context" datatype="html">
+        <source>Closed inspections compared to the previous period</source>
+        <target>Inspections clôturées comparées à la période précédente</target>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.openNonConformities" datatype="html">
         <source>Open non-conformities</source>
@@ -9450,9 +9626,37 @@
         <source><x id="count" equiv-text="overdueNonConformities"/> overdue</source>
         <target><x id="count" equiv-text="overdueNonConformities"/> en retard</target>
       </trans-unit>
+      <trans-unit id="org.statistics.kpi.openNonConformities.badge.onTrack" datatype="html">
+        <source>On track</source>
+        <target>À jour</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.openNonConformities.caption.pastDue" datatype="html">
+        <source>Past due date</source>
+        <target>Échéance dépassée</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.openNonConformities.caption.none" datatype="html">
+        <source>Nothing overdue</source>
+        <target>Aucun retard</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.openNonConformities.caption.default" datatype="html">
+        <source>Open findings</source>
+        <target>Constats ouverts</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.openNonConformities.context" datatype="html">
+        <source>From inspections, not yet resolved</source>
+        <target>Issues des inspections, non encore résolues</target>
+      </trans-unit>
       <trans-unit id="org.statistics.kpi.resolutionRate" datatype="html">
         <source>Non-conformity resolution rate</source>
         <target>Taux de résolution des non-conformités</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.resolutionRate.caption" datatype="html">
+        <source>Resolution rate</source>
+        <target>Taux de résolution</target>
+      </trans-unit>
+      <trans-unit id="org.statistics.kpi.resolutionRate.context" datatype="html">
+        <source>Share of non-conformities resolved this period</source>
+        <target>Part des non-conformités résolues sur la période</target>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformitiesSummary" datatype="html">
         <source><x id="opened" equiv-text="openedTotal"/> opened, <x id="resolved" equiv-text="resolvedTotal"/> resolved this period</source>
@@ -9645,26 +9849,6 @@
       <trans-unit id="intervention.list.overdueLabel" datatype="html">
         <source>Overdue</source>
         <target>En retard</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.viewsAriaLabel" datatype="html">
-        <source>Views</source>
-        <target>Vues</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.viewAll" datatype="html">
-        <source>All</source>
-        <target>Toutes</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.viewOverdue" datatype="html">
-        <source>Overdue</source>
-        <target>En retard</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.viewSentBack" datatype="html">
-        <source>Sent back</source>
-        <target>Renvoyées</target>
-      </trans-unit>
-      <trans-unit id="intervention.list.viewAwaitingReview" datatype="html">
-        <source>Awaiting review</source>
-        <target>En attente de révision</target>
       </trans-unit>
       <trans-unit id="intervention.list.removeFilter" datatype="html">
         <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>

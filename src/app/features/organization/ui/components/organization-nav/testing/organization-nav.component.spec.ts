@@ -78,7 +78,7 @@ describe('OrganizationNav', () => {
     permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
     await fixture.whenStable();
 
-    expect(rows()).toEqual(['Today', 'Interventions']);
+    expect(rows()).toEqual(['Dashboard', 'Interventions']);
     expect(fixture.nativeElement.querySelectorAll('[aria-disabled="true"]').length).toBe(0);
   });
 

@@ -26,12 +26,14 @@ import { OrganizationAssetsPaneStore } from './state/organization-assets-pane';
  * `/organizations/:organizationId` resolves organization context before any
  * child renders, so a page never has to reason about a half-known workspace.
  *
- * The landing page, the conversational surfaces (direct messages and
- * channels), the estate explorer (`assets`), the administration pages
- * (members, team, settings) and a member's profile are mounted today; the
- * remaining destinations named in `FEATURE.md` (statistics, checklists)
- * return under `:organizationId` one at a time as their pages are rebuilt,
- * and the sidebar navigation already lists them behind their permissions.
+ * The landing page — the merged Dashboard, combining the retired Today and
+ * Statistics pages into one tabbed surface (`FEATURE.md`) — the
+ * conversational surfaces (direct messages and channels), the estate
+ * explorer (`assets`), the administration pages (members, team, settings)
+ * and a member's profile are mounted today; `checklists` returns under
+ * `:organizationId` once its page is rebuilt, and the sidebar navigation
+ * already lists it behind its permissions. `statistics` is a permanent
+ * redirect to the landing page for old bookmarks and deep links.
  *
  * `messages` and `channels` load the collaboration subfeature's route files
  * directly rather than its barrel, which also exports the offline sync
@@ -56,10 +58,10 @@ export const ORGANIZATION_ROUTES: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./ui/pages/organization-today-page/organization-today-page.component').then(
-            (m) => m.OrganizationTodayPage,
+          import('./ui/pages/organization-dashboard-page/organization-dashboard-page.component').then(
+            (m) => m.OrganizationDashboardPage,
           ),
-        title: $localize`:@@route.today:Today`,
+        title: $localize`:@@route.dashboard:Dashboard`,
         data: { breadcrumb: false },
       },
       {
@@ -118,17 +120,8 @@ export const ORGANIZATION_ROUTES: Routes = [
       },
       {
         path: 'statistics',
-        canActivate: [
-          organizationPermissionGuard({
-            permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
-          }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/organization-statistics-page/organization-statistics-page.component').then(
-            (m) => m.OrganizationStatisticsPage,
-          ),
-        title: $localize`:@@route.statistics:Statistics`,
-        data: { breadcrumb: $localize`:@@route.statistics:Statistics` },
+        pathMatch: 'full',
+        redirectTo: '',
       },
       {
         path: 'members',

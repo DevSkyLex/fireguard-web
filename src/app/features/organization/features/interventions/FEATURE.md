@@ -161,22 +161,34 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   six auto-open their select — an accepted, documented UX gap rather than a
   vendored-code change.
 
-  **`dueRange` is independent of the legacy `dueWindow` preset the segmented
-  views and the Today page's deep link still drive** (`?due=overdue` and
-  friends, `resolveDueWindow`, `INTERVENTION_DUE_WINDOW_OPTIONS` — all
-  unchanged). Both resolve into the same `dueAtAfter`/`dueAtBefore` API
-  bounds and, on the rare occasion both are active at once (e.g. the
-  "Overdue" segmented view plus a manually narrowed "Deadline" chip),
-  `buildInterventionListOptions` **tightens rather than overwrites** —
-  the later `dueAtAfter` and the earlier `dueAtBefore` win, so the two
-  narrowings combine instead of one silently discarding the other.
-  `dueWindow` was deliberately left out of `dueRange`'s own operator set:
-  collapsing "Overdue"'s live, request-time-resolved bound into a frozen
-  `dueBefore=<timestamp>` URL param would make a bookmarked "Overdue" link
-  stop tracking "now" on reload — a real regression the segmented views'
-  own e2e coverage (`e2e/organization/interventions-list-filters.spec.ts`)
-  would have caught. Keeping the two fields separate cost nothing: neither
-  the segmented views nor the Today page needed to change.
+  **`dueRange` is independent of the legacy `dueWindow` preset the KPI
+  strip's overdue tile link and the Today page's deep link still drive**
+  (`?due=overdue` and friends, `resolveDueWindow`,
+  `INTERVENTION_DUE_WINDOW_OPTIONS` — all unchanged). Both resolve into the
+  same `dueAtAfter`/`dueAtBefore` API bounds and, on the rare occasion both
+  are active at once (e.g. a shared `?due=overdue` link opened on top of a
+  manually narrowed "Deadline" chip), `buildInterventionListOptions`
+  **tightens rather than overwrites** — the later `dueAtAfter` and the
+  earlier `dueAtBefore` win, so the two narrowings combine instead of one
+  silently discarding the other. `dueWindow` was deliberately left out of
+  `dueRange`'s own operator set: collapsing "Overdue"'s live,
+  request-time-resolved bound into a frozen `dueBefore=<timestamp>` URL
+  param would make a bookmarked "Overdue" link stop tracking "now" on
+  reload — a real regression the `?due=overdue` e2e coverage
+  (`e2e/organization/interventions-list-filters.spec.ts`) would have
+  caught. Keeping the two fields separate cost nothing: neither the KPI
+  tile link nor the Today page needed to change.
+
+  The toolbar's own segmented-views toggle group (`hlm-toggle-group`,
+  "All"/"Overdue"/"Sent back"/"Awaiting review") was removed — the KPI
+  strip's overdue and awaiting-review tiles already link into the same
+  `?due=overdue`/`?status=submitted` contract, so the toggle group
+  duplicated a control the strip already offered. `dueWindow`,
+  `resolveDueWindow` and the `due=` query param are unaffected: they are
+  read from the URL exactly as before, only the in-page control that used
+  to write `status`/`dueWindow` from a click is gone. A custom combination
+  is still reachable through the filter bar's own "Status" and "Deadline"
+  chips.
 
   **`plannedStartRange` ("Planned start", 8.2) is the second wired
   multi-operator field, an exact mirror of `dueRange`'s shape** — same

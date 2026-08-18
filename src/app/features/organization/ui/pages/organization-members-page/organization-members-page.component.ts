@@ -131,9 +131,9 @@ type OrganizationMembersKpiTile = {
  * reflect. `OrganizationQuotaStore` (root-provided) supplies the "Seats
  * used" tile's used/limit reading, shared with the settings Usage tab.
  *
- * Its title lives in the shell breadcrumb; `app-organization-page-header` is
- * not rendered here (the org identity row stays on the Today landing page
- * only), {@link subtitle}'s member count stays as a lead line at content
+ * Its title lives in the shell's own `DashboardPageHeader`; this page
+ * renders no title band of its own. `app-organization-page-header` is
+ * retired — {@link subtitle}'s member count stays as a lead line at content
  * top, and "Invite member" registers on the shell header through
  * `PageActionsService`.
  *

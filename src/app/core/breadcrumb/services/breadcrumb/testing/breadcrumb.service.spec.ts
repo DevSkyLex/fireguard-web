@@ -175,7 +175,7 @@ describe('BreadcrumbService', () => {
   });
 
   /**
-   * `organization-today-page`'s own bug: the leaf suppresses its breadcrumb
+   * `organization-dashboard-page`'s own bug: the leaf suppresses its breadcrumb
    * (`data.breadcrumb: false`) under a title-only ancestor, which used to
    * leave that ancestor's node as the trail's last entry, marked `current`
    * and overlaid with the leaf's own live page title.

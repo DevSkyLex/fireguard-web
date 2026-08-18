@@ -1,0 +1,12 @@
+<div
+  id="dashboard-page-header"
+  class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-6"
+>
+  @if (title(); as pageTitle) {
+    <h1 class="min-w-0 truncate text-lg font-semibold text-foreground">{{ pageTitle }}</h1>
+  }
+
+  <div class="flex min-w-0 flex-wrap items-center gap-2 sm:ms-auto">
+    <app-dashboard-page-actions />
+  </div>
+</div>

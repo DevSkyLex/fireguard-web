@@ -26,6 +26,7 @@ import {
   HlmSidebarTrigger,
   HlmSidebarWrapper,
 } from '@shared/ui/sidebar';
+import { DashboardPageHeader } from './components';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
   DASHBOARD_HEADER_SLOT,
@@ -53,12 +54,14 @@ import {
  * The shell never scrolls: it is `overflow-hidden` and each column owns its own
  * scroller, so a pinned toolbar stays put while its content moves.
  *
- * The header is 48px, sized to the 32px control rhythm rather than to hold a
- * title band of its own: the breadcrumb's current crumb is the document's
- * `h1`, so no routed page repeats it. For the same reason the routed content
- * column carries no `container mx-auto` — a page's own density utilities
- * (`p-4 md:p-6`) now own its horizontal rhythm, and a page that wants the
- * shell's full width is free to take it.
+ * The 48px header is sized to the 32px control rhythm, not to hold a title:
+ * that lives in `DashboardPageHeader`, a second band beneath it carrying the
+ * activated route's title as the document's one `<h1>` and the page's own
+ * actions (`DashboardPageActions`) — the breadcrumb's current crumb is no
+ * longer a heading, since it would otherwise repeat the same text. For the
+ * same reason the routed content column carries no `container mx-auto` — a
+ * page's own density utilities (`p-4 md:p-6`) now own its horizontal rhythm,
+ * and a page that wants the shell's full width is free to take it.
  *
  * @version 1.0.0
  *
@@ -75,6 +78,7 @@ import {
     NgComponentOutlet,
     RouterOutlet,
     SlotOutlet,
+    DashboardPageHeader,
     HlmSeparator,
     HlmSidebar,
     HlmSidebarContent,

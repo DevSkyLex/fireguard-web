@@ -1,57 +1,10 @@
 <div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <p class="shrink-0 text-sm text-muted-foreground">{{ subtitle() }}</p>
-
   <app-intervention-kpi-strip
     class="shrink-0"
     [statistics]="statisticsStore.queryData()"
     [loading]="statisticsStore.isQueryLoading()"
+    [baseRoute]="detailRouteBase()"
   />
-
-  <hlm-toggle-group
-    type="single"
-    [nullable]="true"
-    variant="outline"
-    size="default"
-    class="max-w-full shrink-0 overflow-x-auto"
-    data-testid="interventions-views"
-    [value]="activeView()"
-    aria-label="Views"
-    i18n-aria-label="@@intervention.list.viewsAriaLabel"
-    (valueChange)="onViewChanged($event)"
-  >
-    <button
-      hlmToggleGroupItem
-      value="all"
-      class="max-sm:min-h-11"
-      i18n="@@intervention.list.viewAll"
-    >
-      All
-    </button>
-    <button
-      hlmToggleGroupItem
-      value="overdue"
-      class="max-sm:min-h-11"
-      i18n="@@intervention.list.viewOverdue"
-    >
-      Overdue
-    </button>
-    <button
-      hlmToggleGroupItem
-      value="sent-back"
-      class="max-sm:min-h-11"
-      i18n="@@intervention.list.viewSentBack"
-    >
-      Sent back
-    </button>
-    <button
-      hlmToggleGroupItem
-      value="awaiting-review"
-      class="max-sm:min-h-11"
-      i18n="@@intervention.list.viewAwaitingReview"
-    >
-      Awaiting review
-    </button>
-  </hlm-toggle-group>
 
   <app-collection-toolbar>
     <div toolbarStart class="flex items-center gap-2">

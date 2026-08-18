@@ -86,9 +86,10 @@ type OrganizationTeamKpiTile = {
  * to close the right dialog on success and show an error only where it
  * belongs, rather than trusting a bare "last call failed" signal.
  *
- * Its title lives in the shell breadcrumb; `app-organization-page-header`
- * is not rendered here (the org identity row stays on the Today landing
- * page only). "New role" registers on the shell header through
+ * Its title lives in the shell's own `DashboardPageHeader`; this page
+ * renders no title band of its own. `app-organization-page-header` is
+ * retired — the org identity it used to carry stays local to the dashboard
+ * page. "New role" registers on the shell header through
  * `PageActionsService`.
  *
  * @version 1.3.0

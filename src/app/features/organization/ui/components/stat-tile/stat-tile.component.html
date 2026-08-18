@@ -1,35 +1,47 @@
 <ng-template #tileContent>
   <div hlmCardHeader>
-    <p hlmCardDescription class="min-w-0 truncate">{{ label() }}</p>
+    <p hlmCardDescription class="line-clamp-2 min-w-0">{{ label() }}</p>
     @if (loading()) {
-      <hlm-skeleton class="h-7 w-16" />
+      <hlm-skeleton [class]="caption() ? 'h-9 w-20' : 'h-7 w-16'" />
     } @else {
-      <p hlmCardTitle class="text-2xl leading-none font-semibold tabular-nums">{{ value() }}</p>
+      <p
+        hlmCardTitle
+        [class]="
+          caption()
+            ? 'text-3xl leading-none font-bold tracking-tight tabular-nums'
+            : 'text-2xl leading-none font-semibold tabular-nums'
+        "
+      >
+        {{ value() }}
+      </p>
     }
-    @if (icon(); as iconName) {
+    @if (badge(); as b) {
       <div hlmCardAction>
-        <ng-icon
-          [name]="iconName"
-          class="text-lg"
-          [class.text-destructive]="tone() === 'destructive'"
-          [class.text-muted-foreground]="tone() !== 'destructive'"
-          aria-hidden="true"
-        />
+        <span hlmBadge variant="outline">
+          @if (b.icon) {
+            <ng-icon
+              [name]="b.icon"
+              data-icon="inline-start"
+              [class.text-destructive]="b.tone === 'destructive'"
+              [class.text-success]="b.tone === 'success'"
+              [class.text-muted-foreground]="b.tone !== 'destructive' && b.tone !== 'success'"
+              aria-hidden="true"
+            />
+          }
+          {{ b.label }}
+        </span>
       </div>
-    }
-  </div>
-
-  @if (loading()) {
-    <div hlmCardContent>
-      <hlm-skeleton class="h-4 w-20" />
-    </div>
-  } @else {
-    @if (delta(); as d) {
-      <div hlmCardContent class="flex items-center gap-1.5 text-sm">
-        <ng-icon [name]="deltaIcon()" class="shrink-0" aria-hidden="true" />
-        <span
-          [class]="deltaGood() === false ? 'text-muted-foreground' : 'font-medium text-foreground'"
-        >
+    } @else if (delta(); as d) {
+      <div hlmCardAction>
+        <span hlmBadge variant="outline">
+          <ng-icon
+            [name]="deltaIcon()"
+            data-icon="inline-start"
+            [class.text-destructive]="deltaTone() === 'destructive'"
+            [class.text-success]="deltaTone() === 'success'"
+            [class.text-muted-foreground]="deltaTone() === 'neutral'"
+            aria-hidden="true"
+          />
           <span class="sr-only">
             @switch (d.direction) {
               @case ('up') {
@@ -46,9 +58,33 @@
           {{ deltaText() }}
         </span>
       </div>
+    } @else if (icon(); as iconName) {
+      <div hlmCardAction>
+        <ng-icon
+          [name]="iconName"
+          class="text-lg"
+          [class.text-destructive]="tone() === 'destructive'"
+          [class.text-success]="tone() === 'success'"
+          [class.text-muted-foreground]="tone() !== 'destructive' && tone() !== 'success'"
+          aria-hidden="true"
+        />
+      </div>
     }
+  </div>
 
-    @if (description(); as hint) {
+  @if (loading()) {
+    <div hlmCardContent>
+      <hlm-skeleton class="h-4 w-20" />
+    </div>
+  } @else {
+    @if (caption(); as c) {
+      <div hlmCardFooter class="mt-auto flex-col items-start gap-0.5">
+        <p class="text-sm font-semibold text-foreground">{{ c }}</p>
+        @if (description(); as hint) {
+          <p class="text-xs text-muted-foreground">{{ hint }}</p>
+        }
+      </div>
+    } @else if (description(); as hint) {
       <div hlmCardContent>
         <p class="text-sm text-muted-foreground">{{ hint }}</p>
       </div>
@@ -68,12 +104,13 @@
   <a
     hlmCard
     [routerLink]="destination"
-    class="block transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
+    [queryParams]="queryParams()"
+    class="h-full transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
   >
     <ng-container [ngTemplateOutlet]="tileContent" />
   </a>
 } @else {
-  <div hlmCard>
+  <div hlmCard class="h-full">
     <ng-container [ngTemplateOutlet]="tileContent" />
   </div>
 }

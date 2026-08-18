@@ -1,0 +1,689 @@
+<div id="organization-dashboard" class="flex h-full flex-col gap-6 p-4 md:p-6">
+  <div class="flex items-center gap-3" data-testid="org-dashboard-identity">
+    @if (organizationContext.selectedOrganization(); as org) {
+      <hlm-avatar class="size-9 shrink-0 rounded-lg">
+        @if (org.logoUrl; as logoUrl) {
+          <img hlmAvatarImage [src]="logoUrl" [alt]="org.name" />
+        }
+        <span hlmAvatarFallback class="rounded-lg text-xs font-semibold">{{
+          organizationInitials()
+        }}</span>
+      </hlm-avatar>
+
+      <div class="flex min-w-0 flex-col gap-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="truncate text-sm font-medium text-foreground">{{ org.name }}</span>
+          @if (org.planName; as plan) {
+            <span hlmBadge variant="secondary">{{ plan }}</span>
+          }
+          @if (organizationStatusLabel(); as status) {
+            <span hlmBadge variant="outline">{{ status }}</span>
+          }
+        </div>
+
+        @if (organizationMemberCountLabel(); as members) {
+          <span class="text-sm text-muted-foreground">{{ members }}</span>
+        }
+      </div>
+    } @else {
+      <hlm-skeleton class="size-9 shrink-0 rounded-lg" />
+      <div class="flex flex-col gap-1">
+        <hlm-skeleton class="h-3.5 w-28" />
+        <hlm-skeleton class="h-3.5 w-20" />
+      </div>
+    }
+  </div>
+
+  @if (dashboardStore.queryHasError() && isForbidden(dashboardStore.queryError())) {
+    <app-empty-state
+      icon="lucideLock"
+      title="Not available with your permissions"
+      i18n-title="@@org.statistics.forbiddenTitle"
+    />
+  } @else if (dashboardStore.queryHasError()) {
+    <app-error-state
+      icon="lucideTriangleAlert"
+      title="Couldn't load the dashboard"
+      i18n-title="@@org.dashboard.error.title"
+      description="Summary figures, alerts and the severity breakdown couldn't be fetched."
+      i18n-description="@@org.dashboard.error.description"
+    >
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        class="gap-2 max-sm:min-h-11"
+        (click)="retryDashboard()"
+      >
+        <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+        <span i18n="@@org.statistics.retry">Retry</span>
+      </button>
+    </app-error-state>
+  } @else {
+    <section class="flex flex-wrap gap-4" data-testid="org-dashboard-kpis" aria-live="polite">
+      @for (tile of kpiTiles(); track tile.id) {
+        <div
+          class="min-w-0 grow basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]"
+          [attr.data-testid]="'org-dashboard-kpi-' + tile.id"
+        >
+          <app-stat-tile
+            class="block h-full"
+            [label]="tile.label"
+            [value]="tile.value"
+            [icon]="tile.icon"
+            [tone]="tile.tone"
+            [badge]="tile.badge"
+            [delta]="tile.delta"
+            [caption]="tile.caption"
+            [description]="tile.description"
+            [link]="tile.link"
+            [loading]="dashboardStore.isQueryLoading()"
+          />
+        </div>
+      }
+    </section>
+  }
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)]">
+    <div class="flex flex-col gap-6">
+      @if (store.hasError()) {
+        <app-error-state
+          icon="lucideTriangleAlert"
+          title="Couldn't load your work queues"
+          i18n-title="@@org.today.errorTitle"
+          description="The interventions waiting on you couldn't be fetched. Anything saved on this device is still listed below."
+          i18n-description="@@org.today.errorDescription"
+        >
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            class="gap-2 max-sm:min-h-11"
+            (click)="retryQueues()"
+          >
+            <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+            <span i18n="@@org.today.retry">Retry</span>
+          </button>
+        </app-error-state>
+      }
+
+      @if (store.isAllClear()) {
+        <app-empty-state
+          icon="lucideCircleCheck"
+          title="Nothing is blocking"
+          i18n-title="@@org.today.allClearTitle"
+          description="No intervention is overdue, none is waiting for review, and everything on this device is synced."
+          i18n-description="@@org.today.allClearDescription"
+        >
+          @if (nextUpcoming(); as next) {
+            <p class="text-sm text-muted-foreground">
+              <span i18n="@@org.today.nextDue">Next due</span>
+              <span class="ml-2 font-mono text-xs">FG-{{ next.number }}</span>
+              <span class="ml-2">{{ next.name }}</span>
+            </p>
+          }
+        </app-empty-state>
+      } @else if (canReadInterventions()) {
+        <div hlmCard data-testid="org-today-queues-card">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle i18n="@@org.today.queues.title">Your work queues</h3>
+          </div>
+          <ul hlmCardContent class="divide-y divide-border" aria-live="polite">
+            <li data-testid="org-today-queue-overdue">
+              <a
+                [routerLink]="[
+                  '/organizations',
+                  organizationContext.selectedOrganizationId(),
+                  'interventions',
+                ]"
+                [queryParams]="{ due: 'overdue' }"
+                class="flex min-h-11 items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
+              >
+                <ng-icon
+                  name="lucideTriangleAlert"
+                  class="size-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span class="text-sm font-medium text-foreground" i18n="@@org.today.overdue"
+                  >Overdue</span
+                >
+                @if (store.isLoading()) {
+                  <hlm-skeleton class="ms-auto h-4 w-6" />
+                } @else {
+                  <span class="ms-auto text-sm text-muted-foreground tabular-nums">{{
+                    store.overdue().total
+                  }}</span>
+                }
+                <ng-icon
+                  name="lucideChevronRight"
+                  class="shrink-0 text-sm text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </a>
+            </li>
+
+            <li data-testid="org-today-queue-changes-requested">
+              <a
+                [routerLink]="[
+                  '/organizations',
+                  organizationContext.selectedOrganizationId(),
+                  'interventions',
+                ]"
+                [queryParams]="{ status: 'changes_requested' }"
+                class="flex min-h-11 items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
+              >
+                <ng-icon
+                  name="lucideUndo2"
+                  class="size-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span
+                  class="text-sm font-medium text-foreground"
+                  i18n="@@org.today.changesRequested"
+                  >Sent back to you</span
+                >
+                @if (store.isLoading()) {
+                  <hlm-skeleton class="ms-auto h-4 w-6" />
+                } @else {
+                  <span class="ms-auto text-sm text-muted-foreground tabular-nums">{{
+                    store.changesRequested().total
+                  }}</span>
+                }
+                <ng-icon
+                  name="lucideChevronRight"
+                  class="shrink-0 text-sm text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </a>
+            </li>
+
+            <li data-testid="org-today-queue-awaiting-review">
+              <a
+                [routerLink]="[
+                  '/organizations',
+                  organizationContext.selectedOrganizationId(),
+                  'interventions',
+                ]"
+                [queryParams]="{ status: 'submitted' }"
+                class="flex min-h-11 items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
+              >
+                <ng-icon
+                  name="lucideEye"
+                  class="size-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span class="text-sm font-medium text-foreground" i18n="@@org.today.awaitingReview"
+                  >Awaiting your review</span
+                >
+                @if (store.isLoading()) {
+                  <hlm-skeleton class="ms-auto h-4 w-6" />
+                } @else {
+                  <span class="ms-auto text-sm text-muted-foreground tabular-nums">{{
+                    store.awaitingReview().total
+                  }}</span>
+                }
+                <ng-icon
+                  name="lucideChevronRight"
+                  class="shrink-0 text-sm text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </a>
+            </li>
+
+            <li data-testid="org-today-queue-unsynced">
+              <div class="flex min-h-11 items-center gap-3 px-2 py-2">
+                <ng-icon
+                  name="lucideCloudUpload"
+                  class="size-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span class="text-sm font-medium text-foreground" i18n="@@org.today.unsynced"
+                  >Waiting to sync</span
+                >
+                <span class="ms-auto text-sm text-muted-foreground tabular-nums">{{
+                  unsynced().length
+                }}</span>
+              </div>
+              <app-organization-today-queue
+                embedded
+                label="Waiting to sync"
+                i18n-label="@@org.today.unsynced"
+                class="mb-2 block px-2"
+                [total]="unsynced().length"
+                [interventions]="unsynced()"
+                [notes]="unsyncedNotes()"
+                (opened)="openIntervention($event)"
+              />
+            </li>
+          </ul>
+        </div>
+      }
+    </div>
+
+    <div class="flex flex-col gap-6">
+      @if (
+        !dashboardStore.queryHasError() &&
+        (dashboardStore.isQueryLoading() || alertRows().length > 0)
+      ) {
+        <div hlmCard data-testid="org-today-alerts">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle i18n="@@org.today.alerts.title">Also worth a look</h3>
+          </div>
+          <div hlmCardContent class="flex flex-col gap-2">
+            @if (dashboardStore.isQueryLoading()) {
+              <div
+                role="status"
+                aria-label="Loading what else needs attention"
+                i18n-aria-label="@@org.today.alerts.loadingAria"
+              >
+                <hlm-skeleton class="h-10 w-full" />
+                <hlm-skeleton class="mt-2 h-10 w-full" />
+              </div>
+            } @else {
+              @for (alert of alertRows(); track alert.code) {
+                @if (alert.link; as link) {
+                  <a
+                    [routerLink]="link"
+                    class="group/alert relative flex w-full items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-start text-sm text-card-foreground transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
+                    [attr.data-testid]="'org-today-alert-' + alert.code"
+                  >
+                    <ng-icon [name]="alert.icon" [class]="alert.iconClass" aria-hidden="true" />
+                    <p hlmAlertTitle class="flex-1">{{ alert.message }}</p>
+                    <ng-icon
+                      name="lucideChevronRight"
+                      class="shrink-0 text-sm text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                  </a>
+                } @else {
+                  <div
+                    hlmAlert
+                    class="flex items-center gap-3"
+                    [attr.data-testid]="'org-today-alert-' + alert.code"
+                  >
+                    <ng-icon [name]="alert.icon" [class]="alert.iconClass" aria-hidden="true" />
+                    <p hlmAlertTitle class="flex-1">{{ alert.message }}</p>
+                  </div>
+                }
+              }
+            }
+          </div>
+        </div>
+      }
+
+      @if (
+        canReadInterventions() &&
+        !dashboardStore.queryHasError() &&
+        (dashboardStore.isQueryLoading() || recentInterventions().length > 0)
+      ) {
+        <div hlmCard data-testid="org-today-recent-interventions">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle i18n="@@org.today.recent.title">Recently updated</h3>
+          </div>
+          @if (dashboardStore.isQueryLoading()) {
+            <div
+              hlmCardContent
+              class="flex flex-col gap-2"
+              role="status"
+              aria-label="Loading recently updated interventions"
+              i18n-aria-label="@@org.today.recent.loadingAria"
+            >
+              <hlm-skeleton class="h-12 w-full" />
+              <hlm-skeleton class="h-12 w-full" />
+              <hlm-skeleton class="h-12 w-full" />
+            </div>
+          } @else {
+            <ul hlmCardContent class="divide-y divide-border">
+              @for (intervention of recentInterventions(); track intervention.id) {
+                <li>
+                  <a
+                    [routerLink]="[
+                      '/organizations',
+                      organizationContext.selectedOrganizationId(),
+                      'interventions',
+                      intervention.id,
+                    ]"
+                    class="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none max-sm:min-h-11"
+                    data-testid="org-today-recent-intervention"
+                  >
+                    <span class="shrink-0 font-mono text-xs text-muted-foreground"
+                      >FG-{{ intervention.number }}</span
+                    >
+
+                    <span class="flex min-w-0 flex-1 flex-col">
+                      <span class="truncate text-sm text-foreground">{{ intervention.name }}</span>
+                      <span class="truncate text-xs text-muted-foreground">
+                        @if (intervention.siteName; as site) {
+                          {{ site }}
+                        }
+                        @if (intervention.dueAt; as due) {
+                          · <time [attr.datetime]="due">{{ due | date: 'mediumDate' }}</time>
+                        }
+                      </span>
+                    </span>
+
+                    <app-intervention-tag kind="status" [value]="intervention.status" />
+
+                    @if (intervention.responsibleName; as responsibleName) {
+                      <hlm-avatar class="size-8 shrink-0">
+                        @if (intervention.responsibleAvatarUrl; as avatarUrl) {
+                          <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                        }
+                        <span hlmAvatarFallback class="text-[10px]">{{
+                          responsibleInitials(intervention)
+                        }}</span>
+                      </hlm-avatar>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <section class="flex flex-col gap-6" data-testid="org-dashboard-trends">
+    <div
+      class="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div>
+        <h2 class="text-lg font-semibold text-foreground" i18n="@@org.dashboard.trends.title">
+          Trends
+        </h2>
+        <p class="text-sm text-muted-foreground" i18n="@@org.dashboard.trends.scopeNote">
+          Applies to the charts and figures below, not the summary above
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <hlm-toggle-group
+          type="single"
+          [nullable]="false"
+          variant="outline"
+          size="sm"
+          [value]="selectedPeriod()"
+          data-testid="org-statistics-period-toggle"
+          aria-label="Time period"
+          i18n-aria-label="@@org.statistics.period.ariaLabel"
+          (valueChange)="onPeriodChanged($event)"
+        >
+          <button
+            hlmToggleGroupItem
+            class="max-sm:min-h-11"
+            value="7d"
+            i18n="@@org.statistics.period.7d"
+          >
+            7D
+          </button>
+          <button
+            hlmToggleGroupItem
+            class="max-sm:min-h-11"
+            value="30d"
+            i18n="@@org.statistics.period.30d"
+          >
+            30D
+          </button>
+          <button
+            hlmToggleGroupItem
+            class="max-sm:min-h-11"
+            value="90d"
+            i18n="@@org.statistics.period.90d"
+          >
+            90D
+          </button>
+          <button
+            hlmToggleGroupItem
+            class="max-sm:min-h-11"
+            value="12m"
+            i18n="@@org.statistics.period.12m"
+          >
+            12M
+          </button>
+        </hlm-toggle-group>
+
+        <hlm-field orientation="horizontal" class="gap-2">
+          <label
+            hlmFieldLabel
+            for="org-statistics-compare"
+            i18n="@@org.statistics.compareToggle.label"
+            >Compare to previous period</label
+          >
+          <hlm-switch
+            id="org-statistics-compare"
+            data-testid="org-statistics-compare-toggle"
+            [checked]="compareToPreviousPeriod()"
+            (checkedChange)="compareToPreviousPeriod.set($event)"
+          />
+        </hlm-field>
+      </div>
+    </div>
+
+    @if (!dashboardStore.queryHasError()) {
+      <div hlmCard>
+        <div hlmCardHeader>
+          <h3 hlmCardTitle i18n="@@org.statistics.severity.title">Non-conformities by severity</h3>
+          <p hlmCardDescription>{{ severitySummaryLine() }}</p>
+        </div>
+        <div hlmCardContent class="flex flex-col gap-4">
+          @if (dashboardStore.isQueryLoading()) {
+            <div
+              class="flex flex-col gap-4"
+              role="status"
+              aria-label="Loading severity breakdown…"
+              i18n-aria-label="@@org.statistics.severity.loadingAria"
+            >
+              @for (row of severitySkeletonRows; track row) {
+                <div class="flex flex-col gap-1.5">
+                  <hlm-skeleton class="h-4 w-24" />
+                  <hlm-skeleton class="h-1.5 w-full rounded-full" />
+                </div>
+              }
+            </div>
+          } @else if (severityTotal() === 0) {
+            <p class="text-sm text-muted-foreground" i18n="@@org.statistics.severity.empty">
+              No non-conformities recorded.
+            </p>
+          } @else {
+            @for (entry of severityBreakdown(); track entry.severity) {
+              <div
+                class="flex flex-col gap-1.5"
+                [attr.data-testid]="'org-statistics-severity-' + entry.severity"
+              >
+                <div class="flex items-center justify-between gap-3 text-sm">
+                  <span class="flex items-center gap-1.5 text-foreground">
+                    <ng-icon
+                      [name]="entry.descriptor.icon"
+                      class="shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    {{ entry.descriptor.label }}
+                  </span>
+                  <span class="font-medium text-foreground tabular-nums">{{ entry.count }}</span>
+                </div>
+                <hlm-progress [value]="entry.percent" [attr.aria-label]="entry.descriptor.label">
+                  <hlm-progress-indicator />
+                </hlm-progress>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div hlmCard data-testid="org-statistics-chart-inspections">
+        <div hlmCardHeader>
+          <h3 hlmCardTitle>{{ inspectionsSeriesName }}</h3>
+          @if (inspectionsSummaryLine(); as line) {
+            <p hlmCardDescription>{{ line }}</p>
+          }
+        </div>
+        <div hlmCardContent>
+          @if (overviewTrendStore.queryHasError() && isForbidden(overviewTrendStore.queryError())) {
+            <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
+          } @else if (overviewTrendStore.queryHasError()) {
+            <app-organization-trend-chart-notice
+              icon="lucideTriangleAlert"
+              variant="error"
+              [message]="trendLoadErrorMessage"
+            >
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="gap-2 max-sm:min-h-11"
+                (click)="retryOverviewTrend()"
+              >
+                <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+                <span i18n="@@org.statistics.retry">Retry</span>
+              </button>
+            </app-organization-trend-chart-notice>
+          } @else {
+            <app-line-chart
+              [series]="inspectionsChartSeries()"
+              [label]="inspectionsChartLabel"
+              [loading]="overviewTrendStore.isQueryLoading()"
+              smooth
+            />
+          }
+        </div>
+      </div>
+
+      <div hlmCard data-testid="org-statistics-chart-non-conformities">
+        <div hlmCardHeader>
+          <h3 hlmCardTitle>{{ nonConformitiesChartTitle }}</h3>
+          @if (nonConformitiesSummaryLine(); as line) {
+            <p hlmCardDescription>{{ line }}</p>
+          }
+        </div>
+        <div hlmCardContent>
+          @if (overviewTrendStore.queryHasError() && isForbidden(overviewTrendStore.queryError())) {
+            <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
+          } @else if (overviewTrendStore.queryHasError()) {
+            <app-organization-trend-chart-notice
+              icon="lucideTriangleAlert"
+              variant="error"
+              [message]="trendLoadErrorMessage"
+            >
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="gap-2 max-sm:min-h-11"
+                (click)="retryOverviewTrend()"
+              >
+                <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+                <span i18n="@@org.statistics.retry">Retry</span>
+              </button>
+            </app-organization-trend-chart-notice>
+          } @else {
+            <app-line-chart
+              [series]="nonConformitiesChartSeries()"
+              [label]="nonConformitiesChartLabel"
+              [loading]="overviewTrendStore.isQueryLoading()"
+              smooth
+            />
+          }
+        </div>
+      </div>
+
+      <div hlmCard data-testid="org-statistics-chart-equipment">
+        <div hlmCardHeader>
+          <h3 hlmCardTitle>{{ equipmentSeriesName }}</h3>
+          @if (equipmentSummaryLine(); as line) {
+            <p hlmCardDescription>{{ line }}</p>
+          }
+        </div>
+        <div hlmCardContent>
+          @if (!assetGrowthTrendStore.canReadEquipment()) {
+            <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
+          } @else if (assetGrowthTrendStore.queryHasError()) {
+            <app-organization-trend-chart-notice
+              icon="lucideTriangleAlert"
+              variant="error"
+              [message]="trendLoadErrorMessage"
+            >
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="gap-2 max-sm:min-h-11"
+                (click)="retryAssetGrowthTrend()"
+              >
+                <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+                <span i18n="@@org.statistics.retry">Retry</span>
+              </button>
+            </app-organization-trend-chart-notice>
+          } @else {
+            <app-line-chart
+              [series]="equipmentChartSeries()"
+              [label]="equipmentChartLabel"
+              [loading]="assetGrowthTrendStore.isQueryLoading()"
+              smooth
+              area
+            />
+          }
+        </div>
+      </div>
+
+      <div hlmCard data-testid="org-statistics-chart-facilities">
+        <div hlmCardHeader>
+          <h3 hlmCardTitle>{{ facilitiesSeriesName }}</h3>
+          @if (facilitiesSummaryLine(); as line) {
+            <p hlmCardDescription>{{ line }}</p>
+          }
+        </div>
+        <div hlmCardContent>
+          @if (!assetGrowthTrendStore.canReadFacilities()) {
+            <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
+          } @else if (assetGrowthTrendStore.queryHasError()) {
+            <app-organization-trend-chart-notice
+              icon="lucideTriangleAlert"
+              variant="error"
+              [message]="trendLoadErrorMessage"
+            >
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="gap-2 max-sm:min-h-11"
+                (click)="retryAssetGrowthTrend()"
+              >
+                <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+                <span i18n="@@org.statistics.retry">Retry</span>
+              </button>
+            </app-organization-trend-chart-notice>
+          } @else {
+            <app-line-chart
+              [series]="facilitiesChartSeries()"
+              [label]="facilitiesChartLabel"
+              [loading]="assetGrowthTrendStore.isQueryLoading()"
+              smooth
+              area
+            />
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<ng-template #pageActions>
+  @if (canCreateInterventions()) {
+    <button
+      hlmBtn
+      size="sm"
+      class="min-w-0 shrink gap-2 max-sm:min-h-11"
+      i18n-aria-label="@@org.today.newIntervention"
+      aria-label="New intervention"
+      (click)="startIntervention()"
+    >
+      <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@org.today.newIntervention"
+        >New intervention</span
+      >
+    </button>
+  }
+</ng-template>

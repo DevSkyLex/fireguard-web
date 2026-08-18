@@ -880,157 +880,30 @@ describe('InterventionsPage', () => {
     });
   });
 
-  describe('activeView', () => {
-    it('should read "all" for no status and no due window', async () => {
-      fixture = await createPage();
-
-      expect(fixture.componentInstance['activeView']()).toBe('all');
-    });
-
-    it('should read "overdue" for the overdue due window with no status', async () => {
+  describe('query-param filtering', () => {
+    it("should load the overdue due window when the URL carries ?due=overdue — the KPI strip's overdue tile link", async () => {
       fixture = await createPage({ due: 'overdue' });
 
-      expect(fixture.componentInstance['activeView']()).toBe('overdue');
+      expect(load).toHaveBeenCalledTimes(1);
+      const options = load.mock.calls[0][0].options;
+      expect(options.status).toBeUndefined();
+      expect(typeof options.dueAtBefore).toBe('string');
     });
 
-    it('should read "sent-back" for status changes_requested with no due window', async () => {
-      fixture = await createPage({ status: 'changes_requested' });
-
-      expect(fixture.componentInstance['activeView']()).toBe('sent-back');
-    });
-
-    it('should read "awaiting-review" for status submitted with no due window', async () => {
+    it("should load the submitted status when the URL carries ?status=submitted — the KPI strip's awaiting-review tile link", async () => {
       fixture = await createPage({ status: 'submitted' });
 
-      expect(fixture.componentInstance['activeView']()).toBe('awaiting-review');
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(load.mock.calls[0][0].options).toMatchObject({ status: 'submitted' });
     });
 
-    it('should read null for a custom combination matching none of the four views', async () => {
-      fixture = await createPage({ status: 'changes_requested', due: 'overdue' });
-
-      expect(fixture.componentInstance['activeView']()).toBeNull();
-    });
-  });
-
-  describe('onViewChanged', () => {
-    it('should navigate "all" to every filter cleared and reset the page', async () => {
+    it('should load an unfiltered list when neither query param is present', async () => {
       fixture = await createPage();
-      fixture.componentInstance['page'].set(3);
 
-      fixture.componentInstance['onViewChanged']('all');
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({
-          queryParams: {
-            status: null,
-            type: null,
-            priority: null,
-            site: null,
-            responsible: null,
-            label: null,
-            mine: null,
-            due: null,
-            dueAfter: null,
-            dueBefore: null,
-            plannedStartAfter: null,
-            plannedStartBefore: null,
-          },
-          queryParamsHandling: 'merge',
-        }),
-      );
-      expect(fixture.componentInstance['page']()).toBe(1);
-    });
-
-    it('should navigate "overdue" to the overdue due window with no status and reset the page', async () => {
-      fixture = await createPage();
-      fixture.componentInstance['page'].set(3);
-
-      fixture.componentInstance['onViewChanged']('overdue');
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({
-          queryParams: {
-            status: null,
-            type: null,
-            priority: null,
-            site: null,
-            responsible: null,
-            label: null,
-            mine: null,
-            due: 'overdue',
-            dueAfter: null,
-            dueBefore: null,
-            plannedStartAfter: null,
-            plannedStartBefore: null,
-          },
-          queryParamsHandling: 'merge',
-        }),
-      );
-      expect(fixture.componentInstance['page']()).toBe(1);
-    });
-
-    it('should navigate "sent-back" to status changes_requested with no due window and reset the page', async () => {
-      fixture = await createPage();
-      fixture.componentInstance['page'].set(3);
-
-      fixture.componentInstance['onViewChanged']('sent-back');
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({
-          queryParams: {
-            status: 'changes_requested',
-            type: null,
-            priority: null,
-            site: null,
-            responsible: null,
-            label: null,
-            mine: null,
-            due: null,
-            dueAfter: null,
-            dueBefore: null,
-            plannedStartAfter: null,
-            plannedStartBefore: null,
-          },
-          queryParamsHandling: 'merge',
-        }),
-      );
-      expect(fixture.componentInstance['page']()).toBe(1);
-    });
-
-    it('should navigate "awaiting-review" to status submitted with no due window and reset the page', async () => {
-      fixture = await createPage();
-      fixture.componentInstance['page'].set(3);
-
-      fixture.componentInstance['onViewChanged']('awaiting-review');
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({
-          queryParams: {
-            status: 'submitted',
-            type: null,
-            priority: null,
-            site: null,
-            responsible: null,
-            label: null,
-            mine: null,
-            due: null,
-            dueAfter: null,
-            dueBefore: null,
-            plannedStartAfter: null,
-            plannedStartBefore: null,
-          },
-          queryParamsHandling: 'merge',
-        }),
-      );
-      expect(fixture.componentInstance['page']()).toBe(1);
+      expect(load).toHaveBeenCalledTimes(1);
+      const options = load.mock.calls[0][0].options;
+      expect(options.status).toBeUndefined();
+      expect(options.dueAtBefore).toBeUndefined();
     });
   });
 

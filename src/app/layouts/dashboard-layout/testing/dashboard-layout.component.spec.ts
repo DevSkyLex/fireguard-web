@@ -1,6 +1,7 @@
 import { Component, signal, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { ExclusiveSlotContribution, SlotContribution } from '@shared/layout-slot';
 import { DashboardLayout } from '../dashboard-layout.component';
 import {
@@ -34,7 +35,11 @@ function panel(priority: number, active: boolean): ExclusiveSlotContribution {
 async function render(providers: unknown[] = []): Promise<ComponentFixture<DashboardLayout>> {
   await TestBed.configureTestingModule({
     imports: [DashboardLayout],
-    providers: [provideRouter([]), ...(providers as never[])],
+    providers: [
+      provideRouter([]),
+      { provide: ENV_CONFIG, useValue: { appName: 'FireGuard' } },
+      ...(providers as never[]),
+    ],
   }).compileComponents();
 
   const fixture: ComponentFixture<DashboardLayout> = TestBed.createComponent(DashboardLayout);

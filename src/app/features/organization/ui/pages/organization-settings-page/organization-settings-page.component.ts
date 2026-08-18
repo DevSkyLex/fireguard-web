@@ -131,9 +131,9 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
  * tab's content shares one `max-w-3xl` so the page does not visibly resize
  * as the reader switches tabs.
  *
- * Its title lives in the shell breadcrumb; `app-organization-page-header` is
- * not rendered here (the org identity row stays on the Today landing page
- * only), and this page has no header actions of its own to register.
+ * Its title lives in the shell's own `DashboardPageHeader`; this page
+ * renders no title band of its own. `app-organization-page-header` is
+ * retired, and this page has no header actions of its own to register.
  *
  * @version 1.3.0
  *

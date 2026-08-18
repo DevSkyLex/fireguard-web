@@ -10,14 +10,19 @@ This feature is responsible for:
 - organization member, invitation, role, and settings (general & branding) data,
 - organization subscription plan selection and plan-driven resource quotas (usage meters),
 - organization billing (Stripe-hosted Checkout / customer Portal and invoice history),
-- the organization landing page ("Today"): named work queues holding real
-  interventions — overdue, sent back, awaiting review, and waiting to sync (the
-  last read from the local outbox) — above them a fixed near-term KPI row and
-  the backend's alert feed (counts only), and below them a "Recently updated"
-  interventions list, all three sourced from the same `DashboardStore` copy
-  the queues do not depend on,
-- the organization statistics page: facility, member, equipment, and inspection KPI cards
-  and trend charts (overview, inspection quality, non-conformities opened/resolved, asset growth),
+- the organization landing page ("Dashboard"), merging the retired Today and
+  Statistics pages into one tabbed surface: an **Overview** tab with named
+  work queues holding real interventions — overdue, sent back, awaiting
+  review, and waiting to sync (the last read from the local outbox) — above
+  them a fixed near-term KPI row and the backend's alert feed (counts only),
+  and below them a "Recently updated" interventions list; and a **Trends**
+  tab with facility, equipment and inspection KPI cards, their
+  period-over-period deltas, a non-conformity severity breakdown, and four
+  trend charts (inspections, non-conformities opened/resolved, equipment
+  and facilities added). Both tabs read the **same** component-scoped
+  `DashboardStore` copy — merging the two source pages into one route
+  removed the second, duplicate fetch of the aggregate `/dashboard` payload
+  the two pages each held before,
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures: facilities, equipments, inspections, interventions,
@@ -34,13 +39,14 @@ This feature does not own generic shell composition or account-level user identi
 
 ## Routes
 
-> **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing page),
-> `messages`, `channels`, `interventions`, `assets`, `equipments`, `facilities`, `inspections`,
-> `calendar`, `members`, `members/:memberId`, `team`, `settings`, and
-> `/organizations/invitations/accept` (mounted at the app root, outside this subtree — see below).
-> `statistics` and `checklists` are the feature's remaining contract and are already listed by the
-> sidebar navigation behind their permissions; each is remounted in `organization.routes.ts` as its
-> page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
+> **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing
+> Dashboard page), `messages`, `channels`, `interventions`, `assets`, `equipments`, `facilities`,
+> `inspections`, `calendar`, `statistics` (a permanent redirect to the landing page, kept for old
+> bookmarks and deep links — see Dashboard below), `members`, `members/:memberId`, `team`,
+> `settings`, and `/organizations/invitations/accept` (mounted at the app root, outside this
+> subtree — see below). `checklists` is the feature's remaining contract and is already listed by
+> the sidebar navigation behind its permissions; it is remounted in `organization.routes.ts` once
+> its page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
 > deviation. `assets` (the estate explorer) is now the sidebar's single navigation entry for the
 > estate, gated on `FACILITIES_READ`; `facilities` and `equipments` stay mounted and gated on their
 > own read permissions so records, creation forms and deep links keep resolving, but neither is
@@ -52,9 +58,11 @@ This feature does not own generic shell composition or account-level user identi
   `/onboarding`). An `excluded` query parameter names an organization the guard
   must not pick again (redirect-loop breaker set by failing guards). There is
   no organization list page; switching happens through the sidebar switcher.
-- `/organizations/:organizationId` — the "Today" landing page; the landing guard
-  redirects a member who can read neither interventions nor the dashboard to their
-  first permitted destination
+- `/organizations/:organizationId` — the landing "Dashboard" page (`ui/pages/organization-dashboard-page`),
+  merging the retired Today and Statistics pages into an **Overview** tab (work queues, near-term
+  KPIs, alert feed, recent interventions) and a **Trends** tab (KPI deltas, severity breakdown,
+  trend charts), selected with `hlm-tabs`, `overview` by default. The landing guard redirects a
+  member who can read neither interventions nor the dashboard to their first permitted destination
 - `/organizations/:organizationId/assets` — the estate explorer, on three
   first-level axes: **by site** (the facility hierarchy on the left, via
   `shared/tree`'s `Tree` primitive and the facilities subfeature's
@@ -89,7 +97,8 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
-- `/organizations/:organizationId/statistics` (activity KPIs and trend charts; gated by `organization.dashboard.read`)
+- `/organizations/:organizationId/statistics` — permanent redirect to `/organizations/:organizationId`
+  (`pathMatch: 'full'`); the Trends section it used to be is one scroll away, on the same page
 - `/organizations/:organizationId/checklists`
 - `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
 - `/organizations/:organizationId/members/:memberId` — another member's profile, read-only
@@ -131,11 +140,12 @@ Primary stores:
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
-- `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped separately by both the landing page — which reads the overview counts, the alert feed and the recent-interventions list, but none of the trend slices or the comparison block the statistics page's KPI deltas need — and the statistics page, each fetching its own copy of the aggregate `/dashboard` payload)
+- `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped **once** to the landing Dashboard page, which reads it across the whole page — the overview counts, the alert feed and the recent-interventions list for the KPI strip and work-queue column, the health rates, comparison block and severity breakdown for the Trends section. Before the Today/Statistics merge each page held its own copy, fetching the aggregate `/dashboard` payload twice; one page now means one fetch)
 - `FacilityTreeStore` (owned by the facilities subfeature, component-scoped to the assets explorer; the site hierarchy, loaded one branch at a time)
 - `OrganizationAssetsPaneStore` (component-scoped to the assets explorer; the right pane's equipment and inspections, facility-scoped or organization-wide depending on the active axis. Reuses `EquipmentService`/`InspectionService` from the equipments/inspections subfeatures' `data-access` barrels rather than duplicating transport — it is a read-only preview, not the surface those subfeatures own)
 - `ComplianceExplorerStore` (component-scoped to the assets explorer's compliance axis; three named `CallState` fields — the tree, the selected/organization-wide summary, and the safety-register export — since the three are unrelated requests. Owns the `flattenComplianceTree` mapping onto the shared `Tree` shape, exposed as `roots`/`childrenByParent` computeds)
-- `OrganizationTodayStore` (component-scoped to the landing page; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
+- `OrganizationTodayStore` (component-scoped to the landing Dashboard page's work-queues column; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
+- `OverviewTrendStore`, `AssetGrowthTrendStore` (component-scoped to the landing Dashboard page's Trends section; combined trend datasets for the four charts — see `state/organization-dashboard/slices/`. Both load unconditionally on mount, correct now that the Trends section always renders on this single-scroll page)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations, logo upload and removal, and the danger-zone actions — archive, restore, suspend, ownership transfer and leaving the organization. One named `CallState` per action, since several are offered side by side and a shared one would leak an error between controls. Refreshes `ActiveOrganizationStore` on every mutation that returns an organization)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map. `loadMembers` re-issues the server-side roster query with the page's search, status filter and ordering (`joinedAt`/`displayName`, restored from `OrganizationMemberListPreferencesService`'s cookie), so `membersTotal` — the "Total members" KPI — tracks the current filter, while `membersActiveTotal` — the "Active" KPI — is a fixed organization-wide snapshot fetched once per `load`; keep that split when touching either. Pending invitations are paginated server-side (`INVITATIONS_PAGE_SIZE`, `loadInvitations`): the invitations endpoint's `status` filter accepts exactly one value, so the pending-invitations card's own universe — pending and expired only — is fetched as a paginated `pending` query plus one unpaginated, "cheap" `expired` query (`fetchActiveInvitations`), combined into one page and one `invitationsTotal`; `invitationsTotal` is adjusted locally on invite/revoke rather than refetched)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
@@ -296,6 +306,47 @@ store never calls the API without the permission — the request would be a guar
 
 ## UI Conventions
 
+**Dashboard (`organization-dashboard-page`) merges the retired Today and Statistics pages into one
+continuous scroll**, not `hlm-tabs` and not two route-level pages behind a redirect: an identity row,
+a single deduplicated KPI strip, the work queues, the alert feed and "Recently updated"
+interventions, then a Trends section with its own period preset / compare-to-previous-period header,
+a non-conformity severity breakdown and four trend charts. Every KPI tile reads `DashboardStore`
+alone, never the period-scoped `OverviewTrendStore`/`AssetGrowthTrendStore` the Trends section's
+period selector governs — the KPI strip therefore holds regardless of that selector's position on
+the page, and the header actions template (`PageActionsService`) carries only "New intervention"; the
+period toggle and compare switch sit in the Trends section's own header, next to the charts and
+"vs previous period" summary lines they actually scope, rather than in the shell header where they
+would imply filtering the whole page. `OverviewTrendStore` and `AssetGrowthTrendStore` load
+unconditionally on mount, which is correct now that the trend charts always render on this single
+page — the earlier tabbed layout carried the same unconditional load as a known defect, since it
+fetched behind a tab a visitor might never open. The old `/statistics` route survives only as a
+`redirectTo: ''`.
+
+**`shared/chart`'s `LineChart` moved off `@swimlane/ngx-charts` onto Chart.js**, wired through
+`ng2-charts`' `BaseChartDirective` (`canvas[baseChart]`) rather than a hand-rolled canvas
+integration — `ng2-charts`' peer range covers this app's Angular major, and its directive already
+guards its own browser-only work, matching this wrapper's own `isPlatformBrowser` skeleton fallback.
+This closes the gap the ngx-charts era could not: ngx-charts painted gridlines, tick typography and
+tooltip chrome through its own internal SVG/DOM classes, reachable only via a global CSS selector —
+closed on both sides, since `src/styles.css` is guarded to theme tokens only (`CLAUDE.md` rule 3)
+and a component `styleUrl` is banned outright (`ARCHITECTURE.md` §1.1). Chart.js takes all three as
+first-class `ChartOptions` (`scales.*.grid`, `scales.*.ticks`, `plugins.tooltip`), so
+`utils/chart-grid-colors` resolves them as literal, theme-appropriate colours the same way
+`utils/chart-color-scheme` already resolved the dataset palette — both read `ThemePort.resolvedTheme`
+rather than the DOM, so a live appearance switch recolors an already-rendered chart. The retired
+`BarChart` sibling had no consumer beyond its own spec and was deleted rather than ported. Chart.js'
+own controllers/scales/plugins are registered once, app-wide, in `app.config.ts`'s `provideCharts()` —
+only the subset `LineChart` uses (`LineController`, `LineElement`, `PointElement`, `LinearScale`,
+`CategoryScale`, `Filler`, `Legend`, `Tooltip`), not `withDefaultRegisterables()`'s full bundle.
+
+**Every card-shaped surface on the Dashboard is `hlmCard`** — "Your work queues", "Also worth a
+look" and "Recently updated", previously a bare `app-page-section` with no surface chrome, share the
+same `hlmCard`/`hlmCardHeader`/`hlmCardContent` primitives as the Trends section's severity breakdown
+and chart cards, and as `app-stat-tile` (`ui/components/stat-tile`) — the KPI card interventions' own
+`app-intervention-kpi-strip` already builds on. One card family across the whole page, matching the
+one the interventions list uses for its KPI row, rather than two different card idioms depending on
+scroll position.
+
 List pages (roster, facilities, equipments, inspections, interventions) share one pagination
 recipe, `app-collection-pagination` (`@shared/collection-pagination`), one toolbar shell,
 `app-collection-toolbar` (`@shared/collection-toolbar`), one search box,
@@ -401,21 +452,19 @@ swap, chosen over wrapping the swapped spans in a `role="status"` container beca
 extra element and the button already owns `[attr.aria-busy]`. This applies across every feature's
 forms, not only `organization`'s, since the pattern is form-wide rather than feature-owned.
 
-**Page header (shell contract).** The dashboard shell's 48px header carries every routed page's
-title and header actions now, not the page itself: the current breadcrumb crumb (`route.title` /
-`data.breadcrumb`) renders as the document's one `<h1>`, and a page contributes its right-side
-action buttons through a `<ng-template #pageActions>` registered on `PageActionsService`
-(`@core/page-actions`) — never an in-page title band. `app-organization-page-header` was removed
-from `organization-team-page`, `organization-statistics-page`, `organization-settings-page` and
-`organization-members-page` for exactly this reason: it duplicated the crumb's own `<h1>`.
-**`organization-today-page` is the deliberate exception** — it keeps
-`app-organization-page-header`, carrying the org identity (avatar, plan, status) no other page
-shows, because it is the one landing page where that identity belongs. Its route also opts out of
-the breadcrumb trail (`data.breadcrumb: false`), so the header's own `<h1>` stays the document's
-only one; "New intervention" still registers through `PageActionsService` like every other page's
-actions, for click-target consistency. A page's informative subtitle (a live count, e.g. members'
-"N members" line) stays as a lead paragraph at content top; a decorative, static subtitle is
-dropped rather than kept as dead weight.
+**Page header (shell contract).** `layouts/dashboard-layout`'s `DashboardPageHeader` carries every
+routed page's title and header actions now, not the page itself: it renders the activated route's
+`title` (via `TitleService`, kept in sync by `PageTitleStrategy`) as the document's one `<h1>`, and
+a page contributes its right-side action buttons through a `<ng-template #pageActions>` registered
+on `PageActionsService` (`@core/page-actions`) — never an in-page title band. The breadcrumb trail
+below it never carries a heading itself, so there is exactly one `<h1>` per route regardless of
+whether that route opts into the trail. `app-organization-page-header` is retired entirely,
+including from `organization-dashboard-page`, which was its last consumer: the org identity it
+carried (avatar, plan, status, member count) is shown nowhere else, so it now renders as a
+page-local lead row above `organization-dashboard-page`'s tabs, built from `organizationContext`.
+A page's informative subtitle (a live count, e.g. members' "N members" line) stays as a lead
+paragraph at content top; a decorative, static subtitle is dropped rather than kept as dead
+weight.
 
 ## Routing Notes
 

@@ -3,7 +3,6 @@ export {
   provideDashboardLayoutSlots,
   withDashboardBreadcrumb,
   withDashboardGlobalNav,
-  withDashboardPageActions,
   type DashboardLayoutSlotsConfig,
 } from './providers';
 export {

@@ -42,12 +42,20 @@ const labeledIntervention = interventionOutput({
   status: 'planned',
   labels: [labelIri],
 });
+const submittedIntervention = interventionOutput({
+  id: 'e2e-list-submitted',
+  '@id': '/api/interventions/e2e-list-submitted',
+  number: 205,
+  name: 'Kitchen suppression system check',
+  status: 'submitted',
+});
 
 const ALL_FIXTURES = [
   myPlannedIntervention,
   otherPlannedIntervention,
   inProgressIntervention,
   labeledIntervention,
+  submittedIntervention,
 ];
 
 /** Registers the session, the list itself and the planning-options burst the filter bar/create sheet both read. */
@@ -125,27 +133,39 @@ test.describe('Interventions list — shared filtered URL', () => {
   });
 });
 
-test.describe('Interventions list — segmented views and filter chips', () => {
-  test('selecting the Overdue view narrows the URL to due=overdue and stays highlighted after reload', async ({
+test.describe('Interventions list — filter chips', () => {
+  test("a direct ?due=overdue link (the KPI strip's overdue tile) narrows the request to the overdue window", async ({
     page,
   }) => {
     const api = new ApiMock(page);
     await mockListPage(api);
     const interventions = new InterventionsPage(page);
 
-    await interventions.goto(E2E_ORGANIZATION_ID);
+    const overdueRequest = page.waitForRequest(
+      (request) =>
+        /\/api\/interventions(\?.*)?$/.test(request.url()) &&
+        new URL(request.url()).searchParams.has('dueAtBefore'),
+    );
 
-    await expect(interventions.viewButton('All')).toHaveAttribute('aria-pressed', 'true');
+    await interventions.gotoWithQuery(E2E_ORGANIZATION_ID, 'due=overdue');
 
-    await interventions.selectView('Overdue');
+    const request = await overdueRequest;
+    expect(new URL(request.url()).searchParams.get('dueAtBefore')).not.toBeNull();
+  });
 
-    await expect(page).toHaveURL(/[?&]due=overdue(&|$)/);
-    await expect(interventions.viewButton('Overdue')).toHaveAttribute('aria-pressed', 'true');
+  test("a direct ?status=submitted link (the KPI strip's awaiting-review tile) renders only the matching fixture", async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockListPage(api);
+    const interventions = new InterventionsPage(page);
 
-    await page.reload();
+    await interventions.gotoWithQuery(E2E_ORGANIZATION_ID, 'status=submitted');
 
-    await expect(page).toHaveURL(/[?&]due=overdue(&|$)/);
-    await expect(interventions.viewButton('Overdue')).toHaveAttribute('aria-pressed', 'true');
+    await expect(interventions.row('Kitchen suppression system check')).toBeVisible();
+    await expect(interventions.row('Riser check assigned to me')).toHaveCount(0);
+    await expect(interventions.row('Sprinkler head replacement')).toHaveCount(0);
+    await expect(interventions.filterChip('Status')).toBeVisible();
   });
 
   test('renders the filter bar collapsed with no badge when arriving with no active filter', async ({

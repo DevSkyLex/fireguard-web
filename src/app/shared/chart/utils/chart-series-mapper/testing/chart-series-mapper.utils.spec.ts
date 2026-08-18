@@ -1,10 +1,12 @@
-import type { MultiSeries, SingleSeries } from '@swimlane/ngx-charts';
+import type { ChartData } from 'chart.js';
 import type { ChartSeries } from '@shared/chart';
-import { toNgxMultiSeries, toNgxSingleSeries } from '../chart-series-mapper.utils';
+import { toChartJsLineData } from '../chart-series-mapper.utils';
+
+const PALETTE: readonly string[] = ['oklch(0.58 0.10 230)', 'oklch(0.60 0.11 170)'];
 
 describe('chart-series-mapper utils', () => {
-  describe('toNgxMultiSeries', () => {
-    it('maps each series to its name and points', () => {
+  describe('toChartJsLineData', () => {
+    it('maps each series to a labelled dataset over the shared label axis', () => {
       const series: readonly ChartSeries[] = [
         {
           name: 'Inspections',
@@ -15,65 +17,75 @@ describe('chart-series-mapper utils', () => {
         },
         {
           name: 'Non-conformities',
-          points: [{ label: 'Jan', value: 1 }],
+          points: [
+            { label: 'Jan', value: 1 },
+            { label: 'Feb', value: 2 },
+          ],
         },
       ];
 
-      const result: MultiSeries = toNgxMultiSeries(series);
+      const result: ChartData<'line'> = toChartJsLineData(series, PALETTE, false, false);
 
-      expect(result).toEqual([
+      expect(result.labels).toEqual(['Jan', 'Feb']);
+      expect(result.datasets).toHaveLength(2);
+      expect(result.datasets[0]?.label).toBe('Inspections');
+      expect(result.datasets[0]?.data).toEqual([3, 5]);
+      expect(result.datasets[0]?.borderColor).toBe(PALETTE[0]);
+      expect(result.datasets[1]?.borderColor).toBe(PALETTE[1]);
+    });
+
+    it('maps an empty series list to an empty label axis and no datasets', () => {
+      const result: ChartData<'line'> = toChartJsLineData([], PALETTE, false, false);
+
+      expect(result.labels).toEqual([]);
+      expect(result.datasets).toEqual([]);
+    });
+
+    it('formats a Date label to a plain string', () => {
+      const series: readonly ChartSeries[] = [
         {
-          name: 'Inspections',
-          series: [
-            { name: 'Jan', value: 3 },
-            { name: 'Feb', value: 5 },
-          ],
+          name: 'Dated',
+          points: [{ label: new Date('2026-01-15T00:00:00Z'), value: 7 }],
         },
-        {
-          name: 'Non-conformities',
-          series: [{ name: 'Jan', value: 1 }],
-        },
-      ]);
+      ];
+
+      const result: ChartData<'line'> = toChartJsLineData(series, PALETTE, false, false);
+
+      expect(typeof result.labels?.[0]).toBe('string');
     });
 
-    it('maps an empty series list to an empty array', () => {
-      expect(toNgxMultiSeries([])).toEqual([]);
+    it('renders a flat translucent fill when area is set without gradient', () => {
+      const series: readonly ChartSeries[] = [
+        { name: 'Equipment', points: [{ label: 'Jan', value: 2 }] },
+      ];
+
+      const result: ChartData<'line'> = toChartJsLineData(series, PALETTE, true, false);
+
+      expect(result.datasets[0]?.fill).toBe(true);
+      expect(typeof result.datasets[0]?.backgroundColor).toBe('string');
+      expect(result.datasets[0]?.backgroundColor).toContain('/ 0.18');
     });
 
-    it('maps a series with no points to an empty inner series', () => {
-      const series: readonly ChartSeries[] = [{ name: 'Equipment', points: [] }];
+    it('renders a scriptable gradient fill when area and gradient are both set', () => {
+      const series: readonly ChartSeries[] = [
+        { name: 'Equipment', points: [{ label: 'Jan', value: 2 }] },
+      ];
 
-      expect(toNgxMultiSeries(series)).toEqual([{ name: 'Equipment', series: [] }]);
-    });
-  });
+      const result: ChartData<'line'> = toChartJsLineData(series, PALETTE, true, true);
 
-  describe('toNgxSingleSeries', () => {
-    it('maps one series points to name/value pairs', () => {
-      const series: ChartSeries = {
-        name: 'Facilities',
-        points: [
-          { label: 'Q1', value: 2 },
-          { label: 'Q2', value: 4 },
-        ],
-      };
-
-      const result: SingleSeries = toNgxSingleSeries(series);
-
-      expect(result).toEqual([
-        { name: 'Q1', value: 2 },
-        { name: 'Q2', value: 4 },
-      ]);
+      expect(result.datasets[0]?.fill).toBe(true);
+      expect(typeof result.datasets[0]?.backgroundColor).toBe('function');
     });
 
-    it('maps a series with no points to an empty array', () => {
-      expect(toNgxSingleSeries({ name: 'Empty', points: [] })).toEqual([]);
-    });
+    it('renders a flat, opaque colour with no fill when area is off', () => {
+      const series: readonly ChartSeries[] = [
+        { name: 'Equipment', points: [{ label: 'Jan', value: 2 }] },
+      ];
 
-    it('preserves a Date label rather than coercing it to a string', () => {
-      const date = new Date('2026-01-01T00:00:00Z');
-      const series: ChartSeries = { name: 'Dated', points: [{ label: date, value: 7 }] };
+      const result: ChartData<'line'> = toChartJsLineData(series, PALETTE, false, true);
 
-      expect(toNgxSingleSeries(series)).toEqual([{ name: date, value: 7 }]);
+      expect(result.datasets[0]?.fill).toBe(false);
+      expect(result.datasets[0]?.backgroundColor).toBe(PALETTE[0]);
     });
   });
 });

@@ -102,14 +102,16 @@ export interface OrganizationNavigationSection {
 export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigationItem> = [
   {
     /**
-     * The organization's home. It shows work queues to whoever can read
-     * interventions and the alert strip to whoever can read the dashboard, so
-     * either permission earns the entry — the landing route itself is guarded
-     * by membership, not by a permission.
+     * The organization's home: the merged Dashboard page, combining the
+     * retired Today and Statistics pages into one tabbed surface
+     * (`FEATURE.md`). It shows the Overview tab's work queues to whoever can
+     * read interventions and the Trends tab's KPIs/charts to whoever can
+     * read the dashboard, so either permission earns the entry — the
+     * landing route itself is guarded by membership, not by a permission.
      */
-    id: 'today',
-    label: $localize`:@@route.today:Today`,
-    icon: 'lucideInbox',
+    id: 'dashboard',
+    label: $localize`:@@route.dashboard:Dashboard`,
+    icon: 'lucideLayoutDashboard',
     path: '',
     group: 'operations',
     permissions: [
@@ -169,15 +171,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     path: 'assets',
     group: 'assets',
     permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
-  },
-  {
-    id: 'statistics',
-    label: $localize`:@@route.statistics:Statistics`,
-    icon: 'lucideChartColumn',
-    path: 'statistics',
-    group: 'assets',
-    permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
-    match: 'all',
   },
   {
     id: 'members',

@@ -1,4 +1,4 @@
-<div class="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-4">
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
   @if (loading()) {
     <span
       class="sr-only"
@@ -9,13 +9,19 @@
     >
   }
   @for (tile of tiles(); track tile.id) {
-    <div [attr.data-testid]="'intervention-kpi-strip-' + tile.id">
+    <div class="h-full" [attr.data-testid]="'intervention-kpi-strip-' + tile.id">
       <app-stat-tile
+        class="block h-full"
         [label]="tile.label"
         [value]="tile.value"
         [icon]="tile.icon"
         [tone]="tile.tone"
+        [badge]="tile.badge"
+        [caption]="tile.caption"
+        [description]="tile.context"
         [loading]="loading()"
+        [link]="tile.queryParams ? baseRoute() : null"
+        [queryParams]="tile.queryParams"
       />
     </div>
   }

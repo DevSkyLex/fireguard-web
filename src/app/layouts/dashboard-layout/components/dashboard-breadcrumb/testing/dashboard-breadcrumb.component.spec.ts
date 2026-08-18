@@ -96,26 +96,32 @@ describe('DashboardBreadcrumb', () => {
     expect(list.className).toContain('flex-nowrap');
   });
 
-  it('should render the current step as the document h1', async () => {
+  it('should render the current step as a non-heading, aria-current page marker', async () => {
     items.set([{ label: 'FG-101', current: true }]);
     await fixture.whenStable();
 
-    const heading = fixture.nativeElement.querySelector('h1');
+    const current = fixture.nativeElement.querySelector(
+      '[data-testid="dashboard-breadcrumb-current"]',
+    );
 
-    expect(heading?.textContent?.trim()).toBe('FG-101');
-    expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(1);
+    expect(current?.textContent?.trim()).toBe('FG-101');
+    expect(current?.tagName).toBe('SPAN');
+    expect(current?.getAttribute('aria-current')).toBe('page');
+    expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(0);
   });
 
   /**
    * `BreadcrumbService` never marks any item current when the deepest route
-   * suppressed its own breadcrumb (`organization-today-page`'s own case) —
-   * only an ordinary, linked ancestor renders, and never an `<h1>`, so the
-   * page's own title band stays the document's only heading.
+   * suppressed its own breadcrumb (`organization-dashboard-page`'s own case) —
+   * only an ordinary, linked ancestor renders. The trail never carries an
+   * `<h1>` at all; `DashboardPageHeader` is the document's only heading.
    */
-  it('should render no h1 at all when no step is current', async () => {
+  it('should render no current marker at all when no step is current', async () => {
     items.set([{ label: 'Acme Corp', routerLink: '/organizations/org-1', current: false }]);
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(0);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="dashboard-breadcrumb-current"]'),
+    ).toBeNull();
   });
 });

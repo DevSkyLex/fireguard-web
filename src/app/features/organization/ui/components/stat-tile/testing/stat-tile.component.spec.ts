@@ -43,6 +43,17 @@ describe('StatTile', () => {
     expect(fixture.nativeElement.querySelector('div[hlmCard]')).toBeNull();
   });
 
+  it('appends queryParams to the link destination', async () => {
+    await render();
+    fixture.componentRef.setInput('link', ['/organizations', 'org-1', 'interventions']);
+    fixture.componentRef.setInput('queryParams', { due: 'overdue' });
+    await fixture.whenStable();
+
+    const anchor: HTMLAnchorElement | null = fixture.nativeElement.querySelector('a');
+
+    expect(anchor?.getAttribute('href')).toBe('/organizations/org-1/interventions?due=overdue');
+  });
+
   it('shows skeletons instead of the value and description while loading', async () => {
     await render();
     fixture.componentRef.setInput('description', 'vs previous period');
@@ -95,18 +106,54 @@ describe('StatTile', () => {
     expect(fixture.nativeElement.textContent).toContain('No change');
   });
 
-  it('weighs an undesirable direction as muted rather than emphasized', async () => {
+  it('renders the delta as an outline pill in the header corner', async () => {
+    await render();
+    fixture.componentRef.setInput('delta', { value: 8, direction: 'up', positiveIsGood: true });
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const pill: HTMLElement | null = host.querySelector('[hlmCardAction] [hlmBadge]');
+
+    expect(pill).not.toBeNull();
+    expect(pill?.textContent).toContain('+8');
+  });
+
+  it('colours the delta arrow destructive for an undesirable direction, never the pill text', async () => {
     await render();
     fixture.componentRef.setInput('delta', { value: 8, direction: 'up', positiveIsGood: false });
     await fixture.whenStable();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    const magnitude: HTMLElement | undefined = Array.from(
-      host.querySelectorAll<HTMLElement>('span'),
-    ).find((span): boolean => span.textContent?.includes('+8') ?? false);
+    const arrow: HTMLElement | null = host.querySelector('[hlmCardAction] [hlmBadge] ng-icon');
+    const pill: HTMLElement | null = host.querySelector('[hlmCardAction] [hlmBadge]');
 
-    expect(magnitude?.className).toContain('text-muted-foreground');
-    expect(magnitude?.className).not.toContain('font-medium');
+    expect(arrow?.className).toContain('text-destructive');
+    expect(pill?.className).not.toContain('text-destructive');
+  });
+
+  it('colours the delta arrow success for a desirable direction', async () => {
+    await render();
+    fixture.componentRef.setInput('delta', { value: 3, direction: 'down', positiveIsGood: false });
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const arrow: HTMLElement | null = host.querySelector('[hlmCardAction] [hlmBadge] ng-icon');
+
+    expect(arrow?.className).toContain('text-success');
+    expect(arrow?.className).not.toContain('text-destructive');
+  });
+
+  it('colours the delta arrow neutral for a flat delta', async () => {
+    await render();
+    fixture.componentRef.setInput('delta', { value: 0, direction: 'flat', positiveIsGood: true });
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const arrow: HTMLElement | null = host.querySelector('[hlmCardAction] [hlmBadge] ng-icon');
+
+    expect(arrow?.className).toContain('text-muted-foreground');
+    expect(arrow?.className).not.toContain('text-success');
+    expect(arrow?.className).not.toContain('text-destructive');
   });
 
   it('renders no progress meter when none is given', async () => {
@@ -134,18 +181,32 @@ describe('StatTile', () => {
     expect(meter?.getAttribute('aria-valuenow')).toBe('42');
   });
 
-  it('weighs a desirable direction as emphasized rather than muted', async () => {
+  it('renders the delta pill instead of the plain icon when both are given', async () => {
     await render();
+    fixture.componentRef.setInput('icon', 'lucideMinus');
     fixture.componentRef.setInput('delta', { value: 8, direction: 'up', positiveIsGood: true });
     await fixture.whenStable();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    const magnitude: HTMLElement | undefined = Array.from(
-      host.querySelectorAll<HTMLElement>('span'),
-    ).find((span): boolean => span.textContent?.includes('+8') ?? false);
 
-    expect(magnitude?.className).toContain('font-medium');
-    expect(magnitude?.className).toContain('text-foreground');
+    expect(host.querySelector('[hlmCardAction] [hlmBadge]')).not.toBeNull();
+    expect(host.querySelector('[hlmCardAction] > ng-icon')).toBeNull();
+  });
+
+  it('renders the badge pill instead of the delta pill when both are given', async () => {
+    await render();
+    fixture.componentRef.setInput('delta', { value: 8, direction: 'up', positiveIsGood: true });
+    fixture.componentRef.setInput('badge', {
+      label: '3 overdue',
+      icon: null,
+      tone: 'destructive',
+    });
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('[hlmCardAction]')?.textContent).toContain('3 overdue');
+    expect(host.querySelector('[hlmCardAction]')?.textContent).not.toContain('+8');
   });
 
   it('keeps the icon on the neutral tone by default', async () => {
@@ -175,5 +236,83 @@ describe('StatTile', () => {
     expect(value?.className).not.toContain('text-destructive');
     expect(card?.className).not.toContain('text-destructive');
     expect(card?.className).not.toContain('border-destructive');
+  });
+
+  it('renders no badge and no footer by default', async () => {
+    await render();
+
+    expect(fixture.nativeElement.querySelector('[hlmBadge]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[hlmCardFooter]')).toBeNull();
+  });
+
+  it('renders the badge pill in the header instead of the plain icon when both are given', async () => {
+    await render();
+    fixture.componentRef.setInput('icon', 'lucideTrendingUp');
+    fixture.componentRef.setInput('badge', {
+      label: '31% of total',
+      icon: 'lucideTrendingUp',
+      tone: 'neutral',
+    });
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const badge: HTMLElement | null = host.querySelector('[hlmBadge]');
+
+    expect(badge).not.toBeNull();
+    expect(badge?.textContent).toContain('31% of total');
+    expect(host.querySelector('[hlmCardAction] > ng-icon')).toBeNull();
+  });
+
+  it('tints only the badge icon destructive for a destructive badge tone', async () => {
+    await render();
+    fixture.componentRef.setInput('badge', {
+      label: 'Needs attention',
+      icon: 'lucideTrendingUp',
+      tone: 'destructive',
+    });
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const badgeIcon: HTMLElement | null = host.querySelector('[hlmBadge] ng-icon');
+    const value: HTMLElement | null = host.querySelector('p[hlmCardTitle]');
+
+    expect(badgeIcon?.className).toContain('text-destructive');
+    expect(value?.className).not.toContain('text-destructive');
+  });
+
+  it('moves the description into a bordered footer alongside the caption headline when caption is given', async () => {
+    await render();
+    fixture.componentRef.setInput('description', 'Waiting on your decision');
+    fixture.componentRef.setInput('caption', 'Submitted for review');
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const footer: HTMLElement | null = host.querySelector('[hlmCardFooter]');
+
+    expect(footer).not.toBeNull();
+    expect(footer?.textContent).toContain('Submitted for review');
+    expect(footer?.textContent).toContain('Waiting on your decision');
+  });
+
+  it('promotes the value to its largest size once a caption is set', async () => {
+    await render();
+    fixture.componentRef.setInput('caption', 'Submitted for review');
+    await fixture.whenStable();
+
+    const value: HTMLElement | null = fixture.nativeElement.querySelector('p[hlmCardTitle]');
+
+    expect(value?.className).toContain('text-3xl');
+  });
+
+  it('renders no icon beside the footer caption even when icon is set, since the caption text already states it', async () => {
+    await render();
+    fixture.componentRef.setInput('icon', 'lucideTrendingUp');
+    fixture.componentRef.setInput('caption', 'Submitted for review');
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const footer: HTMLElement | null = host.querySelector('[hlmCardFooter]');
+
+    expect(footer?.querySelector('ng-icon')).toBeNull();
   });
 });

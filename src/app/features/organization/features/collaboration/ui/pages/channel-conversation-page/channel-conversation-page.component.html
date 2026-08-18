@@ -120,6 +120,7 @@
   [canReact]="canWrite()"
   (loadMore)="thread.loadOlder()"
   (retried)="thread.retryFailed($event)"
+  (loadRetried)="thread.load(channelId())"
   (reactionToggled)="toggleReaction($event)"
   (caughtUp)="markRead()"
 >

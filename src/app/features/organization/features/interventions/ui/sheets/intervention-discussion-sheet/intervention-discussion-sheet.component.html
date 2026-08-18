@@ -1,10 +1,30 @@
-<hlm-sheet [side]="side()" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
+<hlm-sheet
+  [side]="side()"
+  [state]="sheetState()"
+  [disableClose]="dirty()"
+  autoFocus="dialog"
+  (stateChanged)="onStateChanged($event)"
+>
   <hlm-sheet-content
     *hlmSheetPortal
     id="intervention-discussion-sheet"
-    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[560px]! sm:max-w-none!"
+    class="w-full! bg-background! max-sm:h-[85svh]! sm:w-[560px]! sm:max-w-none!"
     data-testid="intervention-discussion-sheet"
+    [showCloseButton]="false"
   >
+    <button
+      hlmBtn
+      variant="ghost"
+      size="icon-sm"
+      type="button"
+      class="absolute end-3 top-3 max-sm:size-11"
+      data-testid="intervention-discussion-sheet-close"
+      (click)="requestClose()"
+    >
+      <span class="sr-only" i18n="@@common.close">Close</span>
+      <ng-icon name="lucideX" aria-hidden="true" />
+    </button>
+
     <hlm-sheet-header>
       <h3 hlmSheetTitle i18n="@@intervention.discussion.title">Discussion</h3>
       <p hlmSheetDescription i18n="@@intervention.discussion.subtitle">
@@ -17,6 +37,14 @@
       [subjectId]="interventionId()"
       [organizationId]="organizationId()"
       [active]="visible()"
+      [composerAutoFocus]="visible()"
+      (dirtyChanged)="dirty.set($event)"
     />
   </hlm-sheet-content>
 </hlm-sheet>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

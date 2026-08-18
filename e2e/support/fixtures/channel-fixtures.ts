@@ -166,3 +166,54 @@ export function inspectorMessageOutput(
     ...overrides,
   });
 }
+
+/** Subject-thread conversation the intervention discussion sheet opens for one intervention. */
+export const E2E_INTERVENTION_CONVERSATION_ID = 'e2e-conv-intervention-1';
+
+export interface ConversationOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly organization: string;
+  readonly subjectType: string;
+  readonly subject?: string;
+  readonly subjectLabel?: string;
+  readonly visibility: string;
+  readonly lastMessageAt?: string;
+  readonly messagesCount: number;
+  readonly isArchived: boolean;
+  readonly unreadCount: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly isChannel: boolean;
+  readonly isFavorite: boolean;
+}
+
+/**
+ * A subject-thread's get-or-create response — `POST /api/conversations`
+ * (`ConversationService.openSubjectThread`), keyed by `subjectType`/`subject`
+ * rather than by a channel name. `visibility: 'subject'` mirrors the real
+ * contract: this thread's access defers to the attached record's own
+ * permission, not to a participant roster.
+ */
+export function subjectConversationOutput(
+  overrides: Partial<ConversationOutputFixture> = {},
+): ConversationOutputFixture {
+  return {
+    '@id': `/api/conversations/${E2E_INTERVENTION_CONVERSATION_ID}`,
+    '@type': 'Conversation',
+    id: E2E_INTERVENTION_CONVERSATION_ID,
+    organization: `/api/organizations/${E2E_ORGANIZATION_ID}`,
+    subjectType: 'intervention',
+    visibility: 'subject',
+    lastMessageAt: '2026-08-11T09:00:00+00:00',
+    messagesCount: 2,
+    isArchived: false,
+    unreadCount: 0,
+    createdAt: '2026-08-11T08:00:00+00:00',
+    updatedAt: '2026-08-11T09:00:00+00:00',
+    isChannel: false,
+    isFavorite: false,
+    ...overrides,
+  };
+}

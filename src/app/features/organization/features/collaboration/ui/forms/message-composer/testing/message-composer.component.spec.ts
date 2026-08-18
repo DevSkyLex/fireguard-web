@@ -144,6 +144,87 @@ describe('MessageComposer', () => {
     expect(sent).toEqual(['Bien reçu.']);
   });
 
+  describe('draftChanged', () => {
+    it('should report the draft dirty once something is written', async () => {
+      const dirty: boolean[] = [];
+      fixture.componentInstance.draftChanged.subscribe((value: boolean) => dirty.push(value));
+
+      await type('Bien reçu.');
+
+      expect(dirty).toContain(true);
+    });
+
+    it('should not consider whitespace alone a dirty draft', async () => {
+      const dirty: boolean[] = [];
+      fixture.componentInstance.draftChanged.subscribe((value: boolean) => dirty.push(value));
+
+      await type('   ');
+
+      expect(dirty).not.toContain(true);
+    });
+
+    it('should report the draft clean again once emptied', async () => {
+      await type('Bien reçu.');
+      const dirty: boolean[] = [];
+      fixture.componentInstance.draftChanged.subscribe((value: boolean) => dirty.push(value));
+
+      await type('');
+
+      expect(dirty).toContain(false);
+    });
+
+    it('should report the draft clean once it is sent', async () => {
+      await type('Bien reçu.');
+      const dirty: boolean[] = [];
+      fixture.componentInstance.draftChanged.subscribe((value: boolean) => dirty.push(value));
+
+      // The composer clears its own model synchronously; `pending` settles later.
+      sendButton()?.click();
+      await fixture.whenStable();
+
+      expect(dirty).toEqual([false]);
+    });
+  });
+
+  describe('autoFocus', () => {
+    it('should not take focus by default', () => {
+      expect(document.activeElement).not.toBe(textarea());
+    });
+
+    it('should focus the field once it is editable and autoFocus is set', async () => {
+      fixture.componentRef.setInput('autoFocus', true);
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(textarea());
+    });
+
+    it('should not focus a read-only field even with autoFocus set', async () => {
+      fixture.componentRef.setInput('readOnly', true);
+      fixture.componentRef.setInput('autoFocus', true);
+      await fixture.whenStable();
+
+      expect(document.activeElement?.tagName).not.toBe('TEXTAREA');
+    });
+  });
+
+  describe('pending', () => {
+    it('should not mark the send control busy while idle', () => {
+      expect(sendButton()?.getAttribute('aria-busy')).toBeNull();
+      expect(fixture.nativeElement.querySelector('hlm-spinner')).toBeNull();
+    });
+
+    it('should swap the send icon for a spinner and mark the control busy while pending', async () => {
+      await type('Bien reçu.');
+      fixture.componentRef.setInput('pending', true);
+      await fixture.whenStable();
+
+      expect(sendButton()?.getAttribute('aria-busy')).toBe('true');
+      expect(sendButton()?.querySelector('hlm-spinner')).not.toBeNull();
+      // The arrow icon is a direct child of the button; the spinner's own icon sits inside `hlm-spinner`.
+      expect(sendButton()?.querySelector(':scope > ng-icon')).toBeNull();
+    });
+  });
+
   describe('mentions', () => {
     it('should stay closed until an @ opens a term', async () => {
       await type('Bien reçu');

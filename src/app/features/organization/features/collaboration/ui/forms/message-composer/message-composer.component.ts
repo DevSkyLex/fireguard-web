@@ -3,9 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
   viewChild,
   type ElementRef,
   type InputSignal,
@@ -33,6 +35,7 @@ import {
 } from '@shared/ui/input-group';
 import { HlmItem, HlmItemContent, HlmItemMedia, HlmItemTitle } from '@shared/ui/item';
 import { HlmKbd } from '@shared/ui/kbd';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import {
   MENTION_SUGGESTION_LIMIT,
   MESSAGE_BODY_MAX_LENGTH,
@@ -71,10 +74,17 @@ import type { MessageComposerValues } from './models';
  * multiline draft — the query here is a function of caret and text together
  * (see {@link mentionQuery}) — and `popover` would take focus out of the
  * textarea the reader is still typing in. Its rows are `hlmItem` and its
- * surface mirrors `hlm-popover-content` token for token, so the deviation is
- * mechanical rather than visual.
+ * surface mirrors `hlm-popover-content` token for token.
  *
- * @version 2.0.0
+ * Reports its own draft state through {@link draftChanged} — non-empty body,
+ * independent of {@link pending} — so a host that would otherwise destroy
+ * this component on close (an overlay's content is a template, torn down
+ * with the panel) can gate that close on there being something to lose. It
+ * does not gate on `pending` itself: a send clears the draft before the
+ * request settles, so a caller that also cares about a write in flight reads
+ * that from its own store.
+ *
+ * @version 2.1.0
  *
  * @example
  * ```html
@@ -103,6 +113,7 @@ import type { MessageComposerValues } from './models';
     HlmItemMedia,
     HlmItemTitle,
     HlmKbd,
+    ...HlmSpinnerImports,
   ],
   providers: [provideIcons({ lucideArrowUp })],
   templateUrl: './message-composer.component.html',
@@ -169,6 +180,23 @@ export class MessageComposer {
   public readonly members: InputSignal<readonly MemberDirectoryEntry[]> = input<
     readonly MemberDirectoryEntry[]
   >([]);
+
+  /**
+   * Property autoFocus
+   * @readonly
+   *
+   * @description
+   * Whether the field should take focus as soon as it becomes editable.
+   * `false` by default — a routed conversation page already puts the field
+   * in the reader's path; an overlay that opens over other content is the
+   * case that wants this on.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly autoFocus: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -185,6 +213,21 @@ export class MessageComposer {
    * @type {OutputEmitterRef<string>}
    */
   public readonly sent: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property draftChanged
+   * @readonly
+   *
+   * @description
+   * Emits whenever the field holds a non-empty draft or stops holding one —
+   * see the class doc for why {@link pending} plays no part in it.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly draftChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -383,10 +426,13 @@ export class MessageComposer {
    * @constructor
    *
    * @description
-   * Keeps the field's height matched to its content. A textarea cannot size
-   * itself to its text, so the height is cleared and re-read from `scrollHeight`
-   * on every change — including the send that empties it, which is what returns
-   * the card to one line.
+   * Keeps the field's height matched to its content, relays {@link draftChanged}
+   * whenever the draft becomes empty or stops being empty, and — once
+   * {@link autoFocus} and the field are both ready — focuses it once.
+   *
+   * A textarea cannot size itself to its text, so the height is cleared and
+   * re-read from `scrollHeight` on every change — including the send that
+   * empties it, which is what returns the card to one line.
    *
    * @access public
    * @since 2.0.0
@@ -400,6 +446,18 @@ export class MessageComposer {
 
       element.style.height = 'auto';
       element.style.height = body.length === 0 ? '' : `${element.scrollHeight}px`;
+    });
+
+    effect((): void => {
+      const hasDraft: boolean = this.model().body.trim().length > 0;
+
+      untracked((): void => this.draftChanged.emit(hasDraft));
+    });
+
+    afterRenderEffect((): void => {
+      if (!this.autoFocus() || this.readOnly()) return;
+
+      this.field()?.nativeElement.focus();
     });
   }
   //#endregion

@@ -62,7 +62,11 @@ const BOTTOM_SLACK_PX = 64;
  * already at the bottom, and holds its place when older history is paged in
  * above. `overflow-anchor` cannot substitute — Safari does not implement it.
  *
- * @version 1.0.0
+ * The load-failure branch offers its own retry through {@link loadRetried},
+ * separate from {@link retried}, which retries one failed **send** rather
+ * than the thread's own read.
+ *
+ * @version 2.1.0
  *
  * @example
  * ```html
@@ -224,6 +228,22 @@ export class MessageThread {
    * @type {OutputEmitterRef<void>}
    */
   public readonly caughtUp: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property loadRetried
+   * @readonly
+   *
+   * @description
+   * The reader asked to retry after the thread itself failed to open or
+   * load — pressed from the retry action beside {@link errorMessage}.
+   * Distinct from {@link retried}, which retries one failed **send**.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly loadRetried: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties

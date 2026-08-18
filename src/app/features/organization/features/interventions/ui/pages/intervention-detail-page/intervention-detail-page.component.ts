@@ -151,10 +151,16 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * Overview, Changes, Attachments, then one lookup table each for Facilities /
  * Equipment / Inspections) beside the active tab's panel, and a second column
  * stacking the properties card above the desktop issues checklist,
- * tab-independent. At `lg` and up the second column is `sticky`; below `lg`
- * everything stacks and `linkedTabsOrientation` flips the rail horizontal
- * (`activeLinkedTab` drives which panel renders and lazy-loads a tab's data
- * on first activation).
+ * tab-independent. The two-track wrapper is a named Tailwind v4 container
+ * (`@container/detail`) rather than a viewport media query, because the
+ * shell sidebar is collapsible and shifts the wrapper's real width by
+ * roughly 200px at a fixed viewport: the second column breaks out at 896px
+ * of container width (`@4xl/detail`, `propertiesRailVisible`) and the rail
+ * itself turns vertical and `sticky` at 1152px (`@6xl/detail`,
+ * `linkedTabsOrientation`) — both thresholds measured by a `ResizeObserver`
+ * on the wrapper, not `matchMedia`. Below 896px everything stacks and the
+ * rail lays out horizontal (`activeLinkedTab` drives which panel renders and
+ * lazy-loads a tab's data on first activation).
  *
  * Four decisions a reviewer should know about.
  *
@@ -405,7 +411,7 @@ export class InterventionDetailPage {
   /** Document title channel — the title resolver only returned a neutral label until the workspace loads. */
   private readonly titleService: TitleService = inject<TitleService>(TitleService);
 
-  /** Unregisters the tab-rail orientation media query listener on teardown. */
+  /** Disconnects the detail-columns width `ResizeObserver` on teardown. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /** Registers {@link pageActions} on the shell header. */
@@ -466,16 +472,22 @@ export class InterventionDetailPage {
       });
     });
 
-    const desktopQuery: MediaQueryList | undefined = globalThis.matchMedia?.('(min-width: 1024px)');
-    if (desktopQuery) {
-      this.linkedTabsOrientation.set(desktopQuery.matches ? 'vertical' : 'horizontal');
-      const onDesktopQueryChange = (event: MediaQueryListEvent): void =>
-        this.linkedTabsOrientation.set(event.matches ? 'vertical' : 'horizontal');
-      desktopQuery.addEventListener('change', onDesktopQueryChange);
-      this.destroyRef.onDestroy(() =>
-        desktopQuery.removeEventListener('change', onDesktopQueryChange),
+    effect((onCleanup): void => {
+      const wrapper: HTMLElement | undefined = this.detailColumns()?.nativeElement;
+      const ResizeObserverCtor: typeof ResizeObserver | undefined = globalThis.ResizeObserver;
+      if (!wrapper || !ResizeObserverCtor) return;
+
+      this.applyDetailColumnsWidth(wrapper.getBoundingClientRect().width);
+
+      const observer: ResizeObserver = new ResizeObserverCtor(
+        (entries: ReadonlyArray<ResizeObserverEntry>): void => {
+          const entry: ResizeObserverEntry | undefined = entries[0];
+          if (entry) this.applyDetailColumnsWidth(entry.contentRect.width);
+        },
       );
-    }
+      observer.observe(wrapper);
+      onCleanup((): void => observer.disconnect());
+    });
 
     effect((): void => {
       const organizationId: string = this.organizationId();
@@ -533,6 +545,21 @@ export class InterventionDetailPage {
   //#endregion
 
   //#region Properties
+  /**
+   * Property detailColumns
+   * @readonly
+   * @description
+   * The `@container/detail` element wrapping the two-track grid, whose measured
+   * width drives {@link linkedTabsOrientation} and {@link propertiesRailVisible} —
+   * a separate parent of the grid because a container query never matches the
+   * element that declares the container. See the class doc for the thresholds.
+   * @access private
+   * @since 6.6.0
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  private readonly detailColumns: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('detailColumns');
+
   /** The field-work section, focused when the phase action sends the operator there. */
   private readonly workItemsSection: Signal<ElementRef<HTMLElement> | undefined> =
     viewChild<ElementRef<HTMLElement>>('workItemsSection');
@@ -540,7 +567,7 @@ export class InterventionDetailPage {
   /**
    * Property mobileIssuesSection
    * @readonly
-   * @description The Overview tab's issues checklist wrapper, visible below `lg`, which {@link revealBlockers} targets there.
+   * @description The Overview tab's issues checklist wrapper, visible while {@link propertiesRailVisible} is `false`, which {@link revealBlockers} targets there.
    * @access private
    * @since 5.0.0
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
@@ -551,7 +578,7 @@ export class InterventionDetailPage {
   /**
    * Property desktopIssuesSection
    * @readonly
-   * @description The second column's issues checklist wrapper, visible at `lg` and up, which {@link revealBlockers} targets there.
+   * @description The second column's issues checklist wrapper, visible while {@link propertiesRailVisible} is `true`, which {@link revealBlockers} targets there.
    * @access private
    * @since 5.0.0
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
@@ -600,16 +627,18 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * Whether the rail lays out as a `lg`-and-up side column (`vertical`,
+   * Whether the rail lays out as a wide side column (`vertical`,
    * `hlm-tabs-list`) or a horizontally-scrollable row above the tab content
-   * on narrower viewports (`horizontal`, `hlm-paginated-tabs-list` — brain's
-   * own overflow pattern for a tab row that doesn't fit, in place of
-   * wrapping) — driven by a `(min-width: 1024px)` media query so the same
-   * `data-orientation` attribute that already switches `hlm-tabs`' internal
-   * flex axis and keyboard handling drives the responsive collapse, rather
-   * than fighting its variant-scoped classes with an unconditional override.
-   * Starts `horizontal` (server/pre-hydration default) and upgrades once the
-   * browser evaluates the query.
+   * on narrower ones (`horizontal`, `hlm-paginated-tabs-list` — brain's own
+   * overflow pattern for a tab row that doesn't fit, in place of wrapping) —
+   * driven by {@link detailColumns}' measured width crossing 1152px
+   * (`@6xl/detail`), not a viewport media query: the shell sidebar is
+   * collapsible, so the wrapper's real width varies independently of the
+   * viewport. The same `data-orientation` attribute that already switches
+   * `hlm-tabs`' internal flex axis and keyboard handling drives the
+   * responsive collapse, rather than fighting its variant-scoped classes
+   * with an unconditional override. Starts `horizontal` (server/pre-hydration
+   * default) and upgrades once the browser measures the wrapper.
    *
    * @access protected
    * @since 4.5.0
@@ -619,6 +648,26 @@ export class InterventionDetailPage {
   protected readonly linkedTabsOrientation: WritableSignal<'horizontal' | 'vertical'> = signal<
     'horizontal' | 'vertical'
   >('horizontal');
+
+  /**
+   * Property propertiesRailVisible
+   * @readonly
+   *
+   * @description
+   * Whether {@link detailColumns} is wide enough (`@4xl/detail`, 896px of
+   * container inline size) to break the second column out as its own
+   * `sticky` rail. Between 896px and 1152px that rail is already visible
+   * while `linkedTabsOrientation` is still `horizontal`, which is why
+   * {@link focusIssuesChecklist} reads this signal instead. Starts `false`
+   * (server/pre-hydration default) and upgrades once the browser measures
+   * the wrapper.
+   *
+   * @access protected
+   * @since 6.6.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly propertiesRailVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /** What the text confirmation is asking about, if anything. */
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
@@ -2100,6 +2149,7 @@ export class InterventionDetailPage {
       return;
     if (this.signatureDialogVisible()) return;
     if (this.workItemSheetVisible()) return;
+    if (this.discussionSheetVisible() || this.pendingAttachmentDelete() !== null) return;
     if (this.editState().open !== null) return;
 
     const target: EventTarget | null = event.target;
@@ -2111,6 +2161,27 @@ export class InterventionDetailPage {
 
     if (event.key === 'j') this.navigateNext();
     else this.navigatePrev();
+  }
+
+  /**
+   * Method applyDetailColumnsWidth
+   *
+   * @description
+   * Applies the two-track wrapper's measured width to
+   * {@link linkedTabsOrientation} and {@link propertiesRailVisible} against
+   * the same thresholds as the template's `@4xl/detail` and `@6xl/detail`
+   * container queries (896px and 1152px).
+   *
+   * @access private
+   * @since 6.6.0
+   *
+   * @param {number} width - The wrapper's content-box width, in pixels.
+   *
+   * @returns {void}
+   */
+  private applyDetailColumnsWidth(width: number): void {
+    this.linkedTabsOrientation.set(width >= 1152 ? 'vertical' : 'horizontal');
+    this.propertiesRailVisible.set(width >= 896);
   }
 
   /**
@@ -2188,9 +2259,10 @@ export class InterventionDetailPage {
    * @description
    * Sends the operator to the issues checklist, where the blocker list the
    * status band can only summarize actually lives: the Overview tab's inline
-   * checklist below `lg`, the second column's own copy at `lg` and up. Switches
-   * the rail to Overview first, deferred one tick when that actually changed
-   * the active tab, mirroring {@link revealFieldWork}.
+   * checklist below 896px of container width, the second column's own copy
+   * from 896px up ({@link propertiesRailVisible}). Switches the rail to
+   * Overview first, deferred one tick when that actually changed the active
+   * tab, mirroring {@link revealFieldWork}.
    *
    * @access protected
    * @since 5.0.0
@@ -2207,14 +2279,34 @@ export class InterventionDetailPage {
     } else this.focusIssuesChecklist();
   }
 
-  /** Scrolls to and focuses whichever issues checklist the current viewport shows. */
+  /**
+   * Method focusIssuesChecklist
+   *
+   * @description
+   * Scrolls to and focuses whichever issues checklist copy
+   * {@link propertiesRailVisible} shows, switching to the other copy only when
+   * the preferred one is measurably display-hidden and the other measurably
+   * visible — the signal lags the CSS container query until the first
+   * `ResizeObserver` measurement, and focusing a hidden element would silently
+   * do nothing. The double check keeps layout-less environments (jsdom, where
+   * `offsetParent` is always `null`) on the signal's choice.
+   *
+   * @access private
+   * @since 5.0.0
+   *
+   * @returns {void}
+   */
   private focusIssuesChecklist(): void {
-    const section: HTMLElement | undefined =
-      this.linkedTabsOrientation() === 'vertical'
-        ? this.desktopIssuesSection()?.nativeElement
-        : this.mobileIssuesSection()?.nativeElement;
+    const desktop: HTMLElement | undefined = this.desktopIssuesSection()?.nativeElement;
+    const mobile: HTMLElement | undefined = this.mobileIssuesSection()?.nativeElement;
 
-    this.scrollToAndFocus(section);
+    const preferred: HTMLElement | undefined = this.propertiesRailVisible() ? desktop : mobile;
+    const fallback: HTMLElement | undefined = this.propertiesRailVisible() ? mobile : desktop;
+
+    const preferredHidden: boolean = preferred !== undefined && preferred.offsetParent === null;
+    const fallbackVisible: boolean = fallback !== undefined && fallback.offsetParent !== null;
+
+    this.scrollToAndFocus(preferredHidden && fallbackVisible ? fallback : (preferred ?? fallback));
   }
 
   /** Scrolls to and focuses the field-work section. */

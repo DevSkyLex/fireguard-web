@@ -6,12 +6,15 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   untracked,
   type InputSignal,
+  type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { ConnectivityService } from '@core/connectivity';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type {
   ConversationOutput,
@@ -74,6 +77,14 @@ import { MessageThread } from '../message-thread';
  * conversation, there is no participant roster to narrow against; the API
  * itself does not restrict who may be mentioned here.
  *
+ * Reports {@link dirtyChanged} so a host that destroys this component on
+ * close — an overlay's content is a template, torn down with the panel —
+ * can gate that close on there being something to lose: an unsent draft
+ * (the composer's own {@link MessageComposer.draftChanged}) or a send still
+ * in flight (`thread.isPosting()`, which a destroyed component-scoped store
+ * would cancel mid-request). This is UI state, not messaging state — the
+ * consumer still owns none of the latter.
+ *
  * @since 1.0.0
  *
  * @example
@@ -83,6 +94,7 @@ import { MessageThread } from '../message-thread';
  *   [subjectId]="interventionId()"
  *   [organizationId]="organizationId()"
  *   [active]="sheetOpen()"
+ *   (dirtyChanged)="discussionDirty.set($event)"
  * />
  * ```
  *
@@ -122,6 +134,41 @@ export class SubjectDiscussion {
    * @type {InputSignal<boolean>}
    */
   public readonly active: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property composerAutoFocus
+   * @readonly
+   *
+   * @description
+   * Forwarded to {@link MessageComposer.autoFocus} untouched. `false` by
+   * default; an overlay host binds it to its own open state so the field
+   * takes focus the moment it opens rather than leaving a keyboard user to
+   * traverse the whole thread first.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly composerAutoFocus: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property dirtyChanged
+   * @readonly
+   *
+   * @description
+   * Whether closing this surface right now would lose something — see the
+   * class doc. A host embedding this in a dismissible overlay reads it to
+   * gate that dismissal.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -233,6 +280,21 @@ export class SubjectDiscussion {
     (): string | null => this.openError() ?? this.thread.loadError()?.message ?? null,
   );
 
+  /**
+   * Property draftDirty
+   * @readonly
+   *
+   * @description
+   * Whether the composer currently holds a non-empty draft, set from its own
+   * {@link MessageComposer.draftChanged}.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly draftDirty: WritableSignal<boolean> = signal<boolean>(false);
+
   /** The resolved conversation, or `null` before the get-or-create resolves. */
   private readonly conversationId: WritableSignal<string | null> = signal<string | null>(null);
 
@@ -250,6 +312,10 @@ export class SubjectDiscussion {
 
   private readonly document: Document = inject<Document>(DOCUMENT);
 
+  /** Classifies an open failure as offline versus a genuine error. */
+  private readonly connectivity: ConnectivityService =
+    inject<ConnectivityService>(ConnectivityService);
+
   /** Stands in wherever a member cannot be named. Never a raw id. */
   private readonly unknownMemberLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
   //#endregion
@@ -263,7 +329,7 @@ export class SubjectDiscussion {
    * Opens the subject's thread once {@link active} is true, memoized by
    * `(organization, subjectType, subject)` so re-activating the same subject
    * — closing and reopening the caller's sheet — never repeats the
-   * get-or-create call.
+   * get-or-create call. Also relays {@link dirtyChanged} — see the class doc.
    *
    * @access public
    * @since 1.0.0
@@ -277,6 +343,12 @@ export class SubjectDiscussion {
       const subjectId: string = this.subjectId();
 
       untracked((): void => this.openThread(organizationId, subjectType, subjectId));
+    });
+
+    effect((): void => {
+      const dirty: boolean = this.draftDirty() || this.thread.isPosting();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
     });
   }
   //#endregion
@@ -346,12 +418,44 @@ export class SubjectDiscussion {
   }
 
   /**
+   * Method retryOpen
+   * @method retryOpen
+   *
+   * @description
+   * Wired to {@link MessageThread.loadRetried}. Retries whichever step
+   * actually failed: the get-or-create call itself when {@link openError}
+   * is set, otherwise the thread's own read of an already-resolved
+   * conversation.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected retryOpen(): void {
+    if (this.openError() !== null) {
+      this.openThread(this.organizationId(), this.subjectType(), this.subjectId());
+
+      return;
+    }
+
+    const conversationId: string | null = this.conversationId();
+
+    if (conversationId !== null) this.thread.load(conversationId);
+  }
+
+  /**
    * Method openThread
    * @method openThread
    *
    * @description
    * Runs the get-or-create call for one subject and wires the resolved
-   * conversation into the thread store.
+   * conversation into the thread store. {@link lastOpenedKey} is set only on
+   * success, so a failed attempt stays retryable — through {@link retryOpen}
+   * or a later re-activation — instead of being memoized as if it had
+   * opened. A failure is reported as offline specifically when
+   * {@link ConnectivityService} reports no connectivity, rather than the
+   * generic failure message.
    *
    * @access private
    * @since 1.0.0
@@ -371,7 +475,6 @@ export class SubjectDiscussion {
 
     if (key === this.lastOpenedKey) return;
 
-    this.lastOpenedKey = key;
     this.thread.reset();
     this.conversationId.set(null);
     this.openError.set(null);
@@ -381,6 +484,7 @@ export class SubjectDiscussion {
       .openSubjectThread({ organization: organizationId, subjectType, subject: subjectId })
       .subscribe({
         next: (conversation: ConversationOutput): void => {
+          this.lastOpenedKey = key;
           this.opening.set(false);
           this.conversationId.set(conversation.id);
           this.thread.load(conversation.id);
@@ -390,7 +494,9 @@ export class SubjectDiscussion {
         error: (): void => {
           this.opening.set(false);
           this.openError.set(
-            $localize`:@@messages.subjectDiscussion.openFailed:The discussion could not be opened.`,
+            this.connectivity.isOffline()
+              ? $localize`:@@messages.subjectDiscussion.offline:You're offline. Reconnect to see this discussion.`
+              : $localize`:@@messages.subjectDiscussion.openFailed:The discussion could not be opened.`,
           );
         },
       });

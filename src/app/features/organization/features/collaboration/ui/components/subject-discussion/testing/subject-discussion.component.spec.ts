@@ -1,6 +1,9 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
+import { ConnectivityService } from '@core/connectivity';
+import type { StoreError } from '@core/request-state';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
@@ -9,6 +12,7 @@ import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
+import { MessageComposer } from '../../../forms/message-composer';
 import { SubjectDiscussion } from '../subject-discussion.component';
 
 function conversation(overrides: Partial<ConversationOutput> = {}): ConversationOutput {
@@ -52,12 +56,14 @@ describe('SubjectDiscussion', () => {
   };
   let openSubjectThread: ReturnType<typeof vi.fn>;
   let permissions: ReturnType<typeof signal<ReadonlyArray<string>>>;
+  let isOffline: ReturnType<typeof vi.fn>;
 
   async function createComponent(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         { provide: ConversationService, useValue: { openSubjectThread } },
+        { provide: ConnectivityService, useValue: { isOffline } },
         {
           provide: MEMBER_DIRECTORY_PORT,
           useValue: {
@@ -113,6 +119,7 @@ describe('SubjectDiscussion', () => {
     };
     openSubjectThread = vi.fn().mockReturnValue(of(conversation()));
     permissions = signal<ReadonlyArray<string>>([ORGANIZATION_PERMISSION.MESSAGING_WRITE]);
+    isOffline = vi.fn(() => false);
   });
 
   afterEach(() => TestBed.resetTestingModule());
@@ -164,6 +171,144 @@ describe('SubjectDiscussion', () => {
 
     expect(fixture.componentInstance['loadErrorMessage']()).not.toBeNull();
     expect(thread.load).not.toHaveBeenCalled();
+  });
+
+  it('labels a failed open as offline when the browser has no connectivity', async () => {
+    openSubjectThread = vi.fn().mockReturnValue(throwError(() => new Error('boom')));
+    isOffline = vi.fn(() => true);
+
+    await createComponent();
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['loadErrorMessage']()).toContain("You're offline");
+  });
+
+  it('labels a failed open with a generic message while online', async () => {
+    openSubjectThread = vi.fn().mockReturnValue(throwError(() => new Error('boom')));
+    isOffline = vi.fn(() => false);
+
+    await createComponent();
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['loadErrorMessage']()).toBe(
+      'The discussion could not be opened.',
+    );
+  });
+
+  it('does not memoize a failed open, so re-activating the same subject retries the get-or-create call', async () => {
+    openSubjectThread = vi.fn().mockReturnValue(throwError(() => new Error('boom')));
+
+    await createComponent();
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+
+    expect(openSubjectThread).toHaveBeenCalledTimes(1);
+
+    fixture.componentRef.setInput('active', false);
+    await fixture.whenStable();
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+
+    expect(openSubjectThread).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries the get-or-create call when the reader presses retry after an open failure', async () => {
+    openSubjectThread = vi.fn().mockReturnValue(throwError(() => new Error('boom')));
+
+    await createComponent();
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+
+    expect(openSubjectThread).toHaveBeenCalledTimes(1);
+
+    openSubjectThread.mockReturnValue(of(conversation()));
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="message-thread-retry"]')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(openSubjectThread).toHaveBeenCalledTimes(2);
+    expect(thread.load).toHaveBeenCalledWith('conversation-1');
+  });
+
+  it('retries the thread read, not the get-or-create call, once the subject already opened', async () => {
+    const readFailure: StoreError = {
+      error: new Error('boom'),
+      message: 'Network unreachable',
+      code: null,
+      retryable: true,
+      timestamp: Date.now(),
+    };
+    thread.loadError = vi.fn(() => readFailure);
+
+    await createComponent();
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+
+    expect(openSubjectThread).toHaveBeenCalledTimes(1);
+    expect(thread.load).toHaveBeenCalledTimes(1);
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="message-thread-retry"]')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(openSubjectThread).toHaveBeenCalledTimes(1);
+    expect(thread.load).toHaveBeenCalledTimes(2);
+    expect(thread.load).toHaveBeenLastCalledWith('conversation-1');
+  });
+
+  it('forwards composerAutoFocus to the composer untouched', async () => {
+    await createComponent();
+    fixture.componentRef.setInput('composerAutoFocus', true);
+    await fixture.whenStable();
+
+    const composer = fixture.debugElement.query(By.directive(MessageComposer));
+
+    expect((composer.componentInstance as MessageComposer).autoFocus()).toBe(true);
+  });
+
+  it('reports dirty once the composer holds a draft', async () => {
+    await createComponent();
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+
+    const dirty: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((value: boolean) => dirty.push(value));
+
+    const field = (fixture.nativeElement as HTMLElement).querySelector<HTMLTextAreaElement>(
+      '[data-testid="message-composer-input"]',
+    );
+    if (field === null) throw new Error('The composer has no field.');
+    field.value = 'Bien reçu.';
+    field.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    expect(dirty).toContain(true);
+  });
+
+  it('reports dirty while a send is in flight, independent of the draft', async () => {
+    thread.isPosting = vi.fn(() => true);
+
+    await createComponent();
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+
+    const dirty: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((value: boolean) => dirty.push(value));
+
+    // The effect only re-reads `isPosting` when `draftDirty` changes, so a keystroke drives it.
+    const field = (fixture.nativeElement as HTMLElement).querySelector<HTMLTextAreaElement>(
+      '[data-testid="message-composer-input"]',
+    );
+    if (field === null) throw new Error('The composer has no field.');
+    field.value = 'x';
+    field.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    expect(dirty[dirty.length - 1]).toBe(true);
   });
 
   it('sends only once the conversation has resolved', async () => {

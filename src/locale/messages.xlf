@@ -2696,6 +2696,13 @@
           <context context-type="linenumber">50,52</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="messages.thread.retryLoad" datatype="html">
+        <source>Try again</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/message-thread/message-thread.component.html</context>
+          <context context-type="linenumber">28,28</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="messages.thread.newMessageAnnouncement" datatype="html">
         <source>New message from <x id="name" equiv-text="latest.authorName"/></source>
         <context-group purpose="location">
@@ -2715,6 +2722,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/subject-discussion/subject-discussion.component.ts</context>
           <context context-type="linenumber">393</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messages.subjectDiscussion.offline" datatype="html">
+        <source>You&apos;re offline. Reconnect to see this discussion.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/components/subject-discussion/subject-discussion.component.ts</context>
+          <context context-type="linenumber">392</context>
         </context-group>
       </trans-unit>
       <trans-unit id="channels.room.deleteConfirmTitle" datatype="html">

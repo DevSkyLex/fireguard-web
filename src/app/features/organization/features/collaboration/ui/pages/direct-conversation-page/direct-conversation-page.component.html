@@ -43,6 +43,7 @@
   [canReact]="canWrite()"
   (loadMore)="thread.loadOlder()"
   (retried)="thread.retryFailed($event)"
+  (loadRetried)="thread.load(conversationId())"
   (reactionToggled)="toggleReaction($event)"
   (caughtUp)="markRead()"
 >

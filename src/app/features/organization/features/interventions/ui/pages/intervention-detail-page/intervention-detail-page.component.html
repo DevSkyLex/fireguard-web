@@ -56,318 +56,325 @@
       </div>
     }
 
-    <div
-      class="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-12"
-    >
-      <hlm-tabs
-        [tab]="activeLinkedTab()"
-        [orientation]="linkedTabsOrientation()"
-        class="min-w-0 flex-col items-stretch gap-4 lg:flex-row lg:items-start lg:gap-12"
-        (tabActivated)="onLinkedTabActivated($event)"
+    <div #detailColumns class="@container/detail w-full">
+      <div
+        class="flex flex-col gap-4 @4xl/detail:grid @4xl/detail:grid-cols-[minmax(0,1fr)_19rem] @4xl/detail:items-start @4xl/detail:gap-8"
       >
-        <ng-template #linkedTabTriggers>
-          <button
-            hlmTabsTrigger="overview"
-            class="max-sm:min-h-11"
-            data-testid="intervention-tab-overview"
-          >
-            <span i18n="@@intervention.linked.tabs.overview">Overview</span>
-          </button>
-          <button
-            hlmTabsTrigger="changes"
-            class="max-sm:min-h-11"
-            data-testid="intervention-tab-changes"
-          >
-            <span i18n="@@intervention.linked.tabs.changes">Changes</span>
-            <span class="tabular-nums">{{ pendingChangesCount() }}</span>
-          </button>
-          <button
-            hlmTabsTrigger="attachments"
-            class="max-sm:min-h-11"
-            data-testid="intervention-tab-attachments"
-          >
-            <span i18n="@@intervention.attachments.title">Attachments</span>
-            <span class="tabular-nums">{{ store.attachments().length }}</span>
-          </button>
-          <button
-            hlmTabsTrigger="facilities"
-            class="max-sm:min-h-11"
-            data-testid="intervention-tab-facilities"
-          >
-            <span i18n="@@intervention.sidebar.facilities">Facilities</span>
-            <span class="tabular-nums">{{ intervention.facilitiesCount }}</span>
-          </button>
-          <button
-            hlmTabsTrigger="equipment"
-            class="max-sm:min-h-11"
-            data-testid="intervention-tab-equipment"
-          >
-            <span i18n="@@intervention.sidebar.equipment">Equipment</span>
-            <span class="tabular-nums">{{ intervention.equipmentCount }}</span>
-          </button>
-          <button
-            hlmTabsTrigger="inspections"
-            class="max-sm:min-h-11"
-            data-testid="intervention-tab-inspections"
-          >
-            <span i18n="@@intervention.sidebar.inspections">Inspections</span>
-            <span class="tabular-nums">{{ intervention.inspectionsCount }}</span>
-          </button>
-        </ng-template>
-
-        @if (linkedTabsOrientation() === 'vertical') {
-          <hlm-tabs-list
-            variant="line"
-            class="shrink-0 items-stretch lg:sticky lg:top-32"
-            aria-label="Intervention sections"
-            i18n-aria-label="@@intervention.linked.tabsAriaLabel"
-          >
-            <ng-container *ngTemplateOutlet="linkedTabTriggers" />
-          </hlm-tabs-list>
-        } @else {
-          <hlm-paginated-tabs-list
-            variant="line"
-            class="w-full"
-            data-testid="intervention-tabs-list"
-          >
-            <ng-container *ngTemplateOutlet="linkedTabTriggers" />
-          </hlm-paginated-tabs-list>
-        }
-
-        <div hlmTabsContent="overview" class="min-w-0">
-          <div class="flex min-w-0 flex-col gap-6">
-            @if (readinessItems().length > 0) {
-              <app-intervention-getting-started
-                [items]="readinessItems()"
-                (itemActivated)="onReadinessActivated($event)"
-              />
-            }
-
-            @if (phase() === 'execute' || phase() === 'review') {
-              <div
-                #mobileIssuesSection
-                tabindex="-1"
-                class="scroll-mt-72 outline-none md:scroll-mt-36 lg:hidden"
-              >
-                <app-intervention-issues-checklist
-                  [issues]="store.issues()"
-                  [phase]="phase()"
-                  (activated)="onIssueActivated($event)"
-                />
-              </div>
-            }
-
-            <div
-              #workItemsSection
-              tabindex="-1"
-              class="flex scroll-mt-72 flex-col gap-4 outline-none md:scroll-mt-36"
-              data-testid="intervention-detail-field-work"
+        <hlm-tabs
+          [tab]="activeLinkedTab()"
+          [orientation]="linkedTabsOrientation()"
+          class="min-w-0 flex-col items-stretch gap-4 @6xl/detail:flex-row @6xl/detail:items-start @6xl/detail:gap-8"
+          (tabActivated)="onLinkedTabActivated($event)"
+        >
+          <ng-template #linkedTabTriggers>
+            <button
+              hlmTabsTrigger="overview"
+              class="max-sm:min-h-11"
+              data-testid="intervention-tab-overview"
             >
-              @if (canScanWorkItem()) {
-                <div class="flex justify-end">
-                  <label hlmBtn variant="outline" size="sm" data-testid="intervention-detail-scan">
-                    <ng-icon name="lucideScanLine" aria-hidden="true" />
-                    <span i18n="@@intervention.scan.button">Scan a QR code</span>
-                    <input
-                      type="file"
-                      class="sr-only"
-                      accept="image/*"
-                      capture="environment"
-                      (change)="onScanFileSelected($event)"
-                    />
-                  </label>
+              <span i18n="@@intervention.linked.tabs.overview">Overview</span>
+            </button>
+            <button
+              hlmTabsTrigger="changes"
+              class="max-sm:min-h-11"
+              data-testid="intervention-tab-changes"
+            >
+              <span i18n="@@intervention.linked.tabs.changes">Changes</span>
+              <span class="tabular-nums">{{ pendingChangesCount() }}</span>
+            </button>
+            <button
+              hlmTabsTrigger="attachments"
+              class="max-sm:min-h-11"
+              data-testid="intervention-tab-attachments"
+            >
+              <span i18n="@@intervention.attachments.title">Attachments</span>
+              <span class="tabular-nums">{{ store.attachments().length }}</span>
+            </button>
+            <button
+              hlmTabsTrigger="facilities"
+              class="max-sm:min-h-11"
+              data-testid="intervention-tab-facilities"
+            >
+              <span i18n="@@intervention.sidebar.facilities">Facilities</span>
+              <span class="tabular-nums">{{ intervention.facilitiesCount }}</span>
+            </button>
+            <button
+              hlmTabsTrigger="equipment"
+              class="max-sm:min-h-11"
+              data-testid="intervention-tab-equipment"
+            >
+              <span i18n="@@intervention.sidebar.equipment">Equipment</span>
+              <span class="tabular-nums">{{ intervention.equipmentCount }}</span>
+            </button>
+            <button
+              hlmTabsTrigger="inspections"
+              class="max-sm:min-h-11"
+              data-testid="intervention-tab-inspections"
+            >
+              <span i18n="@@intervention.sidebar.inspections">Inspections</span>
+              <span class="tabular-nums">{{ intervention.inspectionsCount }}</span>
+            </button>
+          </ng-template>
+
+          @if (linkedTabsOrientation() === 'vertical') {
+            <hlm-tabs-list
+              variant="line"
+              class="shrink-0 items-stretch @6xl/detail:sticky @6xl/detail:top-32"
+              aria-label="Intervention sections"
+              i18n-aria-label="@@intervention.linked.tabsAriaLabel"
+            >
+              <ng-container *ngTemplateOutlet="linkedTabTriggers" />
+            </hlm-tabs-list>
+          } @else {
+            <hlm-paginated-tabs-list
+              variant="line"
+              class="w-full"
+              data-testid="intervention-tabs-list"
+            >
+              <ng-container *ngTemplateOutlet="linkedTabTriggers" />
+            </hlm-paginated-tabs-list>
+          }
+
+          <div hlmTabsContent="overview" class="min-w-0">
+            <div class="flex min-w-0 flex-col gap-6">
+              @if (readinessItems().length > 0) {
+                <app-intervention-getting-started
+                  [items]="readinessItems()"
+                  (itemActivated)="onReadinessActivated($event)"
+                />
+              }
+
+              @if (phase() === 'execute' || phase() === 'review') {
+                <div
+                  #mobileIssuesSection
+                  tabindex="-1"
+                  class="scroll-mt-72 outline-none md:scroll-mt-36 @4xl/detail:hidden"
+                >
+                  <app-intervention-issues-checklist
+                    [issues]="store.issues()"
+                    [phase]="phase()"
+                    (activated)="onIssueActivated($event)"
+                  />
                 </div>
               }
 
-              <app-intervention-work-item-table
-                [items]="store.workItems()"
-                [loading]="store.loading()"
-                [nextItemId]="nextWorkItemId()"
-                [pendingItemIds]="store.pendingWorkItemIds()"
-                [canToggle]="canExecute() && phase() === 'execute'"
-                [canSkip]="canSkipWorkItem()"
-                [canDelete]="canAddWorkItem()"
-                [canAdd]="canAddWorkItem()"
-                [busy]="store.saving()"
-                [currentMemberId]="currentMemberIri()"
-                [totalCount]="intervention.workItemsCount"
-                [completedCount]="intervention.completedWorkItemsCount"
-                [showProgress]="phase() === 'execute'"
-                [canAttachEvidence]="canManageAttachments()"
-                [evidencePendingItemIds]="evidenceUploadingWorkItemIds()"
-                (statusChanged)="onWorkItemStatusChanged($event)"
-                (skipRequested)="requestSkipWorkItem($event)"
-                (deleteRequested)="requestDeleteWorkItem($event)"
-                (addRequested)="workItemSheetVisible.set(true)"
-                (evidenceRequested)="onEvidenceRequested($event)"
-              />
-              <input
-                #evidenceInput
-                type="file"
-                class="sr-only"
+              <div
+                #workItemsSection
                 tabindex="-1"
-                accept="image/*"
-                capture="environment"
-                data-testid="intervention-work-item-evidence-input"
-                (change)="onEvidenceFileSelected($event)"
-              />
-            </div>
+                class="flex scroll-mt-72 flex-col gap-4 outline-none md:scroll-mt-36"
+                data-testid="intervention-detail-field-work"
+              >
+                @if (canScanWorkItem()) {
+                  <div class="flex justify-end">
+                    <label
+                      hlmBtn
+                      variant="outline"
+                      size="sm"
+                      data-testid="intervention-detail-scan"
+                    >
+                      <ng-icon name="lucideScanLine" aria-hidden="true" />
+                      <span i18n="@@intervention.scan.button">Scan a QR code</span>
+                      <input
+                        type="file"
+                        class="sr-only"
+                        accept="image/*"
+                        capture="environment"
+                        (change)="onScanFileSelected($event)"
+                      />
+                    </label>
+                  </div>
+                }
 
-            <app-intervention-activity-thread
-              [activities]="store.activities()"
-              [members]="planningOptions.members()"
-              [loading]="activitiesLoading()"
-              [error]="activitiesError()"
-              [hasOlder]="store.hasOlderActivities()"
-              (olderRequested)="loadOlderActivities()"
-              (retryRequested)="reloadActivities()"
-            />
+                <app-intervention-work-item-table
+                  [items]="store.workItems()"
+                  [loading]="store.loading()"
+                  [nextItemId]="nextWorkItemId()"
+                  [pendingItemIds]="store.pendingWorkItemIds()"
+                  [canToggle]="canExecute() && phase() === 'execute'"
+                  [canSkip]="canSkipWorkItem()"
+                  [canDelete]="canAddWorkItem()"
+                  [canAdd]="canAddWorkItem()"
+                  [busy]="store.saving()"
+                  [currentMemberId]="currentMemberIri()"
+                  [totalCount]="intervention.workItemsCount"
+                  [completedCount]="intervention.completedWorkItemsCount"
+                  [showProgress]="phase() === 'execute'"
+                  [canAttachEvidence]="canManageAttachments()"
+                  [evidencePendingItemIds]="evidenceUploadingWorkItemIds()"
+                  (statusChanged)="onWorkItemStatusChanged($event)"
+                  (skipRequested)="requestSkipWorkItem($event)"
+                  (deleteRequested)="requestDeleteWorkItem($event)"
+                  (addRequested)="workItemSheetVisible.set(true)"
+                  (evidenceRequested)="onEvidenceRequested($event)"
+                />
+                <input
+                  #evidenceInput
+                  type="file"
+                  class="sr-only"
+                  tabindex="-1"
+                  accept="image/*"
+                  capture="environment"
+                  data-testid="intervention-work-item-evidence-input"
+                  (change)="onEvidenceFileSelected($event)"
+                />
+              </div>
 
-            <div class="border-t border-border pt-4">
-              <app-intervention-comment-form
-                [pending]="commentPending()"
-                [serverError]="commentError()"
+              <app-intervention-activity-thread
+                [activities]="store.activities()"
                 [members]="planningOptions.members()"
-                (submitted)="postComment($event)"
+                [loading]="activitiesLoading()"
+                [error]="activitiesError()"
+                [hasOlder]="store.hasOlderActivities()"
+                (olderRequested)="loadOlderActivities()"
+                (retryRequested)="reloadActivities()"
               />
+
+              <div class="border-t border-border pt-4">
+                <app-intervention-comment-form
+                  [pending]="commentPending()"
+                  [serverError]="commentError()"
+                  [members]="planningOptions.members()"
+                  (submitted)="postComment($event)"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div hlmTabsContent="changes" class="min-w-0">
-          <ng-template hlmTabsContentLazy>
-            <app-intervention-change-list
-              [changes]="store.changes()"
-              [canReject]="canRejectChange()"
-              [pendingChangeIds]="store.pendingChangeIds()"
-              (rejected)="rejectChange($event)"
-            />
-          </ng-template>
-        </div>
-
-        <div hlmTabsContent="attachments" class="min-w-0">
-          <ng-template hlmTabsContentLazy>
-            <app-intervention-attachments
-              [attachments]="store.attachments()"
-              [workItems]="store.workItems()"
-              [canManage]="canManageAttachments()"
-              [pendingIds]="store.pendingAttachmentIds()"
-              [downloadingIds]="pendingDownloadIds()"
-              [uploading]="attachmentUploading()"
-              [online]="online()"
-              (filesPicked)="uploadAttachments($event)"
-              (deleteRequested)="pendingAttachmentDelete.set($event)"
-              (downloadRequested)="downloadAttachment($event)"
-            />
-          </ng-template>
-        </div>
-
-        <div hlmTabsContent="facilities" class="min-w-0">
-          <ng-template hlmTabsContentLazy>
-            <app-intervention-facilities-table
-              [items]="linkedResources.facilities()"
-              [loading]="linkedResources.facilitiesLoading()"
-              [error]="linkedResources.facilitiesError()?.message ?? null"
-              [totalItems]="linkedResources.facilitiesTotalItems()"
-              [loadingMore]="linkedResources.facilitiesLoadingMore()"
-              (loadMoreRequested)="linkedResources.loadMoreFacilities(interventionId())"
-            />
-          </ng-template>
-        </div>
-
-        <div hlmTabsContent="equipment" class="min-w-0">
-          <ng-template hlmTabsContentLazy>
-            <app-intervention-equipment-table
-              [items]="linkedResources.equipment()"
-              [loading]="linkedResources.equipmentLoading()"
-              [error]="linkedResources.equipmentError()?.message ?? null"
-              [totalItems]="linkedResources.equipmentTotalItems()"
-              [loadingMore]="linkedResources.equipmentLoadingMore()"
-              (loadMoreRequested)="linkedResources.loadMoreEquipment(interventionId())"
-            />
-          </ng-template>
-        </div>
-
-        <div hlmTabsContent="inspections" class="min-w-0">
-          <ng-template hlmTabsContentLazy>
-            <app-intervention-inspections-table
-              [items]="linkedResources.inspections()"
-              [loading]="linkedResources.inspectionsLoading()"
-              [error]="linkedResources.inspectionsError()?.message ?? null"
-              [totalItems]="linkedResources.inspectionsTotalItems()"
-              [loadingMore]="linkedResources.inspectionsLoadingMore()"
-              (loadMoreRequested)="linkedResources.loadMoreInspections(interventionId())"
-            />
-          </ng-template>
-        </div>
-      </hlm-tabs>
-
-      <div class="flex flex-col gap-6 lg:sticky lg:top-32">
-        <section
-          class="flex flex-col gap-1"
-          aria-labelledby="intervention-detail-about-title"
-          data-testid="intervention-detail-about"
-        >
-          <h2
-            id="intervention-detail-about-title"
-            class="px-2 text-base font-semibold"
-            i18n="@@intervention.detail.aboutTitle"
-          >
-            About
-          </h2>
-
-          <app-intervention-about
-            [intervention]="intervention"
-            [canEditDetails]="canEditDetails()"
-            [editState]="editState()"
-            (detailsChanged)="onDetailsChanged($event)"
-            (editTargetChanged)="onEditTargetChanged($event)"
-          />
-        </section>
-
-        <hlm-separator />
-
-        <section
-          class="flex flex-col gap-1"
-          aria-labelledby="intervention-detail-properties-title"
-          data-testid="intervention-detail-properties"
-        >
-          <h2
-            id="intervention-detail-properties-title"
-            class="px-2 text-base font-semibold"
-            i18n="@@intervention.sidebar.title"
-          >
-            Properties
-          </h2>
-
-          <app-intervention-properties-grid
-            [intervention]="intervention"
-            [siteOptions]="planningOptions.sites()"
-            [memberOptions]="planningOptions.members()"
-            [labelOptions]="planningOptions.labels()"
-            [canEditSchedule]="canEditSchedule()"
-            [canEditSite]="canEditSite()"
-            [canEditResponsible]="canEditResponsible()"
-            [canEditDetails]="canEditDetails()"
-            [editState]="editState()"
-            (detailsChanged)="onDetailsChanged($event)"
-            (editTargetChanged)="onEditTargetChanged($event)"
-          />
-        </section>
-
-        @if (phase() === 'execute' || phase() === 'review') {
-          <div
-            #desktopIssuesSection
-            tabindex="-1"
-            class="scroll-mt-72 outline-none max-lg:hidden md:scroll-mt-36"
-          >
-            <app-intervention-issues-checklist
-              [issues]="store.issues()"
-              [phase]="phase()"
-              (activated)="onIssueActivated($event)"
-            />
+          <div hlmTabsContent="changes" class="min-w-0">
+            <ng-template hlmTabsContentLazy>
+              <app-intervention-change-list
+                [changes]="store.changes()"
+                [canReject]="canRejectChange()"
+                [pendingChangeIds]="store.pendingChangeIds()"
+                (rejected)="rejectChange($event)"
+              />
+            </ng-template>
           </div>
-        }
+
+          <div hlmTabsContent="attachments" class="min-w-0">
+            <ng-template hlmTabsContentLazy>
+              <app-intervention-attachments
+                [attachments]="store.attachments()"
+                [workItems]="store.workItems()"
+                [canManage]="canManageAttachments()"
+                [pendingIds]="store.pendingAttachmentIds()"
+                [downloadingIds]="pendingDownloadIds()"
+                [uploading]="attachmentUploading()"
+                [online]="online()"
+                (filesPicked)="uploadAttachments($event)"
+                (deleteRequested)="pendingAttachmentDelete.set($event)"
+                (downloadRequested)="downloadAttachment($event)"
+              />
+            </ng-template>
+          </div>
+
+          <div hlmTabsContent="facilities" class="min-w-0">
+            <ng-template hlmTabsContentLazy>
+              <app-intervention-facilities-table
+                [items]="linkedResources.facilities()"
+                [loading]="linkedResources.facilitiesLoading()"
+                [error]="linkedResources.facilitiesError()?.message ?? null"
+                [totalItems]="linkedResources.facilitiesTotalItems()"
+                [loadingMore]="linkedResources.facilitiesLoadingMore()"
+                (loadMoreRequested)="linkedResources.loadMoreFacilities(interventionId())"
+              />
+            </ng-template>
+          </div>
+
+          <div hlmTabsContent="equipment" class="min-w-0">
+            <ng-template hlmTabsContentLazy>
+              <app-intervention-equipment-table
+                [items]="linkedResources.equipment()"
+                [loading]="linkedResources.equipmentLoading()"
+                [error]="linkedResources.equipmentError()?.message ?? null"
+                [totalItems]="linkedResources.equipmentTotalItems()"
+                [loadingMore]="linkedResources.equipmentLoadingMore()"
+                (loadMoreRequested)="linkedResources.loadMoreEquipment(interventionId())"
+              />
+            </ng-template>
+          </div>
+
+          <div hlmTabsContent="inspections" class="min-w-0">
+            <ng-template hlmTabsContentLazy>
+              <app-intervention-inspections-table
+                [items]="linkedResources.inspections()"
+                [loading]="linkedResources.inspectionsLoading()"
+                [error]="linkedResources.inspectionsError()?.message ?? null"
+                [totalItems]="linkedResources.inspectionsTotalItems()"
+                [loadingMore]="linkedResources.inspectionsLoadingMore()"
+                (loadMoreRequested)="linkedResources.loadMoreInspections(interventionId())"
+              />
+            </ng-template>
+          </div>
+        </hlm-tabs>
+
+        <div class="flex flex-col gap-6 @4xl/detail:sticky @4xl/detail:top-32">
+          <section
+            class="flex flex-col gap-1"
+            aria-labelledby="intervention-detail-about-title"
+            data-testid="intervention-detail-about"
+          >
+            <h2
+              id="intervention-detail-about-title"
+              class="px-2 text-base font-semibold"
+              i18n="@@intervention.detail.aboutTitle"
+            >
+              About
+            </h2>
+
+            <app-intervention-about
+              [intervention]="intervention"
+              [canEditDetails]="canEditDetails()"
+              [editState]="editState()"
+              (detailsChanged)="onDetailsChanged($event)"
+              (editTargetChanged)="onEditTargetChanged($event)"
+            />
+          </section>
+
+          <hlm-separator />
+
+          <section
+            class="flex flex-col gap-1"
+            aria-labelledby="intervention-detail-properties-title"
+            data-testid="intervention-detail-properties"
+          >
+            <h2
+              id="intervention-detail-properties-title"
+              class="px-2 text-base font-semibold"
+              i18n="@@intervention.sidebar.title"
+            >
+              Properties
+            </h2>
+
+            <app-intervention-properties-grid
+              [intervention]="intervention"
+              [siteOptions]="planningOptions.sites()"
+              [memberOptions]="planningOptions.members()"
+              [labelOptions]="planningOptions.labels()"
+              [canEditSchedule]="canEditSchedule()"
+              [canEditSite]="canEditSite()"
+              [canEditResponsible]="canEditResponsible()"
+              [canEditDetails]="canEditDetails()"
+              [editState]="editState()"
+              (detailsChanged)="onDetailsChanged($event)"
+              (editTargetChanged)="onEditTargetChanged($event)"
+            />
+          </section>
+
+          @if (phase() === 'execute' || phase() === 'review') {
+            <div
+              #desktopIssuesSection
+              tabindex="-1"
+              class="scroll-mt-72 outline-none md:scroll-mt-36 @max-4xl/detail:hidden"
+            >
+              <app-intervention-issues-checklist
+                [issues]="store.issues()"
+                [phase]="phase()"
+                (activated)="onIssueActivated($event)"
+              />
+            </div>
+          }
+        </div>
       </div>
     </div>
 

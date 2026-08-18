@@ -16,7 +16,18 @@
           title="Couldn't load this conversation"
           i18n-title="@@messages.thread.errorTitle"
           [description]="message"
-        />
+        >
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="message-thread-retry"
+            (click)="loadRetried.emit()"
+          >
+            <span i18n="@@messages.thread.retryLoad">Try again</span>
+          </button>
+        </app-error-state>
       </div>
     } @else if (loading() && entries().length === 0) {
       <div class="flex flex-1 flex-col justify-end gap-3 py-6" aria-hidden="true">

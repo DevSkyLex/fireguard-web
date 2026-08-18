@@ -6,15 +6,18 @@
   [canReact]="canWrite()"
   (loadMore)="thread.loadOlder()"
   (retried)="thread.retryFailed($event)"
+  (loadRetried)="retryOpen()"
   (reactionToggled)="toggleReaction($event)"
   (caughtUp)="markRead()"
 >
   <app-message-composer
     [pending]="thread.isPosting()"
     [readOnly]="!canWrite() || opening()"
+    [autoFocus]="composerAutoFocus()"
     i18n-placeholder="@@messages.subjectDiscussion.composerPlaceholder"
     placeholder="Message this discussion"
     [members]="mentionCandidates()"
     (sent)="send($event)"
+    (draftChanged)="draftDirty.set($event)"
   />
 </app-message-thread>

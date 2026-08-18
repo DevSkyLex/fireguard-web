@@ -21,10 +21,12 @@ import type {
   PlanOutputFixture,
   PlanPricingOutputFixture,
 } from '../fixtures/billing-fixtures';
-import type {
-  ChannelOutputFixture,
-  ChannelParticipantOutputFixture,
-  MessageOutputFixture,
+import {
+  messageOutput,
+  type ChannelOutputFixture,
+  type ChannelParticipantOutputFixture,
+  type ConversationOutputFixture,
+  type MessageOutputFixture,
 } from '../fixtures/channel-fixtures';
 import type {
   ComplianceFacilityTreeOutputFixture,
@@ -1073,6 +1075,60 @@ export class ApiMock {
       `${API_BASE_URL}/api/channels/${channelId}/participants`,
       async (route) => {
         await fulfillJson(route, 200, hydraCollection(participants));
+      },
+    );
+  }
+
+  /**
+   * Mocks `POST /api/conversations` — the get-or-create call
+   * `SubjectDiscussion` fires through `ConversationService.openSubjectThread`
+   * once its `active` input turns true, memoized client-side by
+   * `(organization, subjectType, subject)`. Matched on method only: the same
+   * collection path also carries `GET /api/conversations` (list, not yet
+   * exercised by this suite), which must keep falling through to the safety
+   * net rather than being swallowed here.
+   */
+  public async mockSubjectConversationOpen(conversation: ConversationOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/conversations`, async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 201, conversation);
+    });
+  }
+
+  /**
+   * Mocks `PUT /api/conversations/{conversationId}/messages/{clientId}` —
+   * `MessageThreadStore.send`'s actual write. `ConversationService`'s
+   * `POST /api/conversations` only opens the thread; a message is posted
+   * under an id the client mints itself (`crypto.randomUUID()`), so this
+   * matches any id under the conversation and echoes the request's body back
+   * on a `MessageOutput`, the way the real create-under-id endpoint would.
+   */
+  public async mockMessagePost(conversationId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/conversations/${conversationId}/messages/[^/?]+$`),
+      async (route) => {
+        if (route.request().method() !== 'PUT') {
+          await route.fallback();
+          return;
+        }
+        const clientId: string = route.request().url().split('/').pop() ?? 'e2e-message-sent';
+        const posted = route.request().postDataJSON() as { body: string };
+
+        await fulfillJson(
+          route,
+          200,
+          messageOutput({
+            id: clientId,
+            '@id': `/api/messages/${clientId}`,
+            conversation: `/api/conversations/${conversationId}`,
+            body: posted.body,
+          }),
+        );
       },
     );
   }

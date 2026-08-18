@@ -572,7 +572,18 @@ The detail page (`ui/pages/intervention-detail-page`) is **tabbed again**, on
 direct instruction after a same-session correction to the 4.5 redesign this
 document originally described (see `### The rail is not the retired
 workspace tabs` for why this is not a reopening of the 3.0/4.0 retirements).
-Three regions, left to right at `lg` and up:
+The two-track wrapper is a named Tailwind v4 container (`@container/detail`),
+not a viewport media query — the shell sidebar is collapsible
+(`collapsible="icon"`), so the wrapper's real width diverges from the
+viewport by roughly 200px at a fixed breakpoint. The second grid track
+breaks out beside the first once the wrapper reaches 896px of container
+width (`@4xl/detail`, `InterventionDetailPage.propertiesRailVisible`); the
+rail inside the first track turns into its own vertical column once the
+wrapper reaches 1152px (`@6xl/detail`, `linkedTabsOrientation`) — both
+thresholds measured by a single `ResizeObserver` on the wrapper
+(`InterventionDetailPage.detailColumns`). Below 896px everything stacks in
+document order. Three regions, left to right once both thresholds are
+crossed:
 
 1. **The rail** (`hlm-tabs-list`, `orientation="vertical"`, narrow, `w-fit`)
    — six triggers: Overview, Changes, Attachments, Facilities, Equipment,
@@ -600,14 +611,17 @@ Three regions, left to right at `lg` and up:
    properties card and, beneath it, the desktop issues checklist (`execute`
    and `review` phases only): `sticky` (`top-32`, tuned against the band's
    measured worst case — 117px with the `changes_requested` review-note strip
-   showing) at `lg` and up, in normal document flow below. Nothing here
+   showing) once the wrapper crosses 896px of container width
+   (`@4xl/detail:sticky`), in normal document flow below. Nothing here
    reacts to which of the six tabs is active — see `### The rail is not the
 retired workspace tabs` for why that is the invariant that matters.
 
-The outer grid is therefore still `lg:grid-cols-[minmax(0,1fr)_20rem]`,
-**unchanged** from before this rail existed — the rail-plus-panel split lives
-entirely inside `<hlm-tabs>`'s own flex layout in the first track, not in a
-new grid-template.
+The outer grid is `@4xl/detail:grid-cols-[minmax(0,1fr)_19rem]` — a container
+query, its own column 1rem narrower and its `gap-8` 1rem tighter than the
+wrapper's original `lg:grid-cols-[…_20rem] lg:gap-12`, reclaimed to widen the
+work-item table at the viewports the fixed breakpoint used to starve. The
+rail-plus-panel split still lives entirely inside `<hlm-tabs>`'s own flex
+layout in the first track, not in the outer grid-template.
 
 **The second track stays page-local — `DASHBOARD_PANEL_SLOT` was considered
 and declined (5.1).** The shell's panel slot is for shell-contextual rails; this
@@ -633,16 +647,26 @@ different injectors; the abandon/delete/skip confirmation is the presentational
 belong to `InterventionFieldExecutionService.scanToWorkItem` and
 `InterventionPhotoCompressorService.prepareAll`. The page keeps same-named
 protected aliases over the factory's signals, so the template contract never
-changed during the decomposition. Below `lg` the container drops to `flex flex-col`: `<hlm-
-tabs>` (rail, then whichever panel is active, in document order) stacks
-above the properties/issues-checklist column, same order as before; the
-status band sits above both, outside this container, at every width.
+changed during the decomposition. Below 896px of container width
+(`@4xl/detail`) the container drops to `flex flex-col`: `<hlm-tabs>` (rail,
+then whichever panel is active, in document order) stacks above the
+properties/issues-checklist column, same order as before; the status band
+sits above both, outside this container, at every width.
 
-`InterventionDetailPage.linkedTabsOrientation` mirrors a
-`(min-width: 1024px)` media query (`vertical` at `lg` and up, `horizontal`
-below) into `[orientation]` on `<hlm-tabs>`, driving the same signal that
-switches `hlm-tabs`' internal flex axis and keyboard handling. The same
-signal also picks which list component the template renders: `hlm-tabs-list`
+`InterventionDetailPage.linkedTabsOrientation` mirrors the wrapper's own
+measured width, not a viewport media query — a `ResizeObserver` on
+`#detailColumns` (`InterventionDetailPage.detailColumns`, attached from an
+`effect` reacting to the `viewChild` signal, since the wrapper only exists
+once the intervention has loaded; guarded on `globalThis.ResizeObserver` for
+SSR safety) flips it to `vertical` once the wrapper
+crosses 1152px (`@6xl/detail`) and to `horizontal` below, into `[orientation]`
+on `<hlm-tabs>`, driving the same signal that switches `hlm-tabs`' internal
+flex axis and keyboard handling. The same observer also drives
+`propertiesRailVisible` at the lower 896px threshold (`@4xl/detail`): the
+second grid track breaks out before the rail itself turns vertical, which is
+why `focusIssuesChecklist` reads `propertiesRailVisible`, not
+`linkedTabsOrientation`, to pick the visible checklist copy. `linkedTabsOrientation`
+also still picks which list component the template renders: `hlm-tabs-list`
 at `vertical`, brain's `hlm-paginated-tabs-list` (previous/next chevrons over
 a horizontally-scrolling row) at `horizontal` — its own overflow pattern for
 a tab row that doesn't fit its container, rather than letting the six
@@ -652,11 +676,10 @@ triggers wrap onto a second line and overlap the content below. The six
 so the two list shapes never duplicate the trigger markup or its i18n ids.
 `hlm-paginated-tabs-list` only shows its chevrons once the row's `scrollWidth`
 actually exceeds its container — otherwise the six triggers just fit and
-scroll natively. Trade-off, stated plainly: the media query only resolves
-client-side, so the very first paint (SSR and pre-hydration) always renders
-`horizontal`, upgrading to `vertical` once the browser evaluates the query —
-a one-time layout adjustment on desktop loads, accepted rather than adding
-`PLATFORM_ID`/`afterNextRender` machinery for a cosmetic first frame.
+scroll natively. Trade-off, stated plainly: the `ResizeObserver` only
+connects client-side, so the very first paint (SSR and pre-hydration) always
+renders `horizontal`/`false`, upgrading once the browser measures the
+wrapper — a one-time layout adjustment on desktop loads.
 
 1. **Header** — the intervention's name is the shell breadcrumb's `<h1>`
    (`interventionTitleResolver`, `data.title`), not an in-page band. Discussion
@@ -679,7 +702,7 @@ a one-time layout adjustment on desktop loads, accepted rather than adding
 4. **Page error alert** — the store's last unattributed failure.
 5. **Overview tab** — `app-intervention-getting-started` (rendered only in
    `prepare`, while a prerequisite is still missing), the mobile issues
-   checklist (`execute`/`review`, `lg:hidden`), the work-items block (scan
+   checklist (`execute`/`review`, `@4xl/detail:hidden`), the work-items block (scan
    button, `app-intervention-work-item-table`), `app-intervention-
 activity-thread`, and the comment-form block.
 
@@ -706,12 +729,14 @@ properties-grid` inside an `hlmCard`, always mounted, tab-independent.
    opens its in-place editor directly; there is no disclosure to expand
    first, because the card is never collapsed.
 9. **Desktop issues checklist** (second grid track, beneath the properties
-   card, `execute`/`review` only, `max-lg:hidden`) —
+   card, `execute`/`review` only, `@max-4xl/detail:hidden`) —
    `app-intervention-issues-checklist`, the same component the Overview
-   tab's mobile copy renders; each viewport sees exactly one of the two. The
-   second track as a whole — properties card and this checklist together —
-   is what stays `sticky` (`top-32`, tuned against the band's measured worst
-   case — 117px with the review-note strip showing) at `lg`.
+   tab's mobile copy renders; each viewport sees exactly one of the two,
+   picked by `propertiesRailVisible`. The second track as a whole —
+   properties card and this checklist together — is what stays `sticky`
+   (`top-32`, tuned against the band's measured worst case — 117px with the
+   review-note strip showing) once the wrapper crosses 896px of container
+   width (`@4xl/detail:sticky`).
 10. **Prev/next footer** — unchanged.
 
 Activating the getting-started item for missing scope (`workItems`) switches
@@ -1226,11 +1251,23 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   `matchMedia`, defaulting to `'right'` on the server and until the browser
   check resolves. `hlm-sheet-content` adds `max-sm:max-h-[85svh]` (plus
   `max-sm:overflow-y-auto` for the three form-sheets, whose `hlm-field-group`
-  already owns the scroll region described above; the discussion sheet keeps
-  its existing unconditional `overflow-y-auto`) so the sticky footer — the
-  form's own, or the thread's composer — stays inside the viewport and in the
-  thumb zone. No drag-to-dismiss, no snap points: the brain primitive
-  supplies neither and this feature does not hand-roll them.
+  already owns the scroll region described above) so the sticky footer — the
+  form's own — stays inside the viewport and in the thumb zone. **The
+  discussion sheet holds no scroll region of its own** — `MessageThread` is
+  documented as the app's only scroller — so it takes a real
+  `max-sm:h-[85svh]!` instead of a max-height, `!`-forced past
+  `HlmSheetContent`'s own `data-[side=bottom]:h-auto`; at `sm` and up it stays
+  the base classes' plain `h-full`. Either way the column is bounded, which is
+  what lets `SubjectDiscussion`'s `flex-1 min-h-0` host hand the thread a real
+  height to scroll inside instead of the sheet itself scrolling — the earlier
+  unconditional `overflow-y-auto` did the latter, and left the composer
+  un-stuck in the bottom-drawer case. Its surface is also forced to
+  `bg-background!`: `HlmSheetContent` is `bg-popover` by default, one shade
+  lighter than `bg-background` in dark mode, which read as a seam under the
+  thread's own `bg-background` composer footer; forcing the surface makes the
+  panel read as the same chat surface `ChannelConversationPage` and
+  `DirectConversationPage` render. No drag-to-dismiss, no snap points: the
+  brain primitive supplies neither and this feature does not hand-roll them.
 - **Padding ownership**: these same three form-sheets keep `px-4` on their
   own `hlm-field-group` rather than moving it to the sheet host, unlike the
   page/dialog-hosted create forms elsewhere in `organization` (which inherit
@@ -1248,7 +1285,24 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   deliberately" doctrine still quoted in the create/request-changes sheet
   docblocks — those docblocks are updated when the shared guard lands. A
   pristine overlay still closes freely; `disableClose` continues to cover
-  in-flight requests.
+  in-flight requests. **The discussion sheet is the first sheet to implement
+  this without a route to hang `unsavedChangesGuard` off** — there is no
+  `CanDeactivate` here, so `InterventionDiscussionSheet` hosts
+  `app-unsaved-changes-dialog` itself and gates it on `SubjectDiscussion`'s
+  own `dirtyChanged` (an unsent draft or a send still in flight — collaboration's
+  `FEATURE.md` documents that output). `[disableClose]` is bound to the same
+  signal, but cannot carry the guard alone: `BrnDialogRef` snapshots
+  `disableClose` once, at the moment the panel opens, and a draft is never
+  dirty at that exact instant — the composer has not been typed into yet.
+  The real enforcement is in `onStateChanged`: an Escape or outside-click
+  closing attempt that reaches it while dirty is undone through
+  `HlmSheet.open()` (the panel's own `viewChild`), which resolves to
+  `BrnDialogRef.reopen()` — a primitive the library exposes for exactly this
+  "undo an in-progress close" case — before the confirmation opens, so the
+  panel never actually disappears. The panel's vendored close button is
+  swapped for a plain one (`[showCloseButton]="false"` on
+  `hlm-sheet-content`) because it calls the dialog ref's `close()` directly
+  rather than through this same guarded path.
 - **Work items filter client-side by design** (all/remaining/done/skipped,
   mine-first): the workspace drains every page via `listAllWorkItems` because
   the offline scene needs the complete checklist in IndexedDB regardless of

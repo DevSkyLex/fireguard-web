@@ -83,6 +83,28 @@ describe('MessageThread', () => {
     expect(rowCount()).toBe(0);
   });
 
+  it('should ask to retry the load rather than one failed send', async () => {
+    fixture.componentRef.setInput('errorMessage', 'Network unreachable');
+    await fixture.whenStable();
+
+    const loadRetried: number[] = [];
+    const retried: string[] = [];
+    fixture.componentInstance.loadRetried.subscribe(() => loadRetried.push(1));
+    fixture.componentInstance.retried.subscribe((id: string) => retried.push(id));
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="message-thread-retry"]')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(loadRetried).toHaveLength(1);
+    expect(retried).toEqual([]);
+  });
+
+  it('should not offer a load retry once the thread has loaded', () => {
+    expect(fixture.nativeElement.querySelector('[data-testid="message-thread-retry"]')).toBeNull();
+  });
+
   it('should offer to page in older history only when there is some', async () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="message-thread-load-more"]'),

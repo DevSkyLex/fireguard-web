@@ -256,12 +256,19 @@ slices use plain `CallState` fields.
 ## Published Contracts
 
 `SubjectDiscussion` (`ui/components/subject-discussion/`) is a self-contained, store-owning
-widget: `organizationId`, `subjectType`, `subjectId` and `active` in, nothing out. On activation
-it resolves its own conversation through `ConversationService.openSubjectThread` (get-or-create,
-memoized per `(organization, subjectType, subject)` triple so re-activating the same subject never
-repeats the call) and renders `MessageThread` + `MessageComposer` itself. A consumer embeds it
-inside its own sheet or panel and supplies the subject's identity; it owns no messaging state and
-injects nothing from this feature beyond the component.
+widget: `organizationId`, `subjectType`, `subjectId`, `active` and `composerAutoFocus` in,
+`dirtyChanged` out. On activation it resolves its own conversation through
+`ConversationService.openSubjectThread` (get-or-create, memoized per
+`(organization, subjectType, subject)` triple so re-activating the same subject never repeats the
+call) and renders `MessageThread` + `MessageComposer` itself. A consumer embeds it inside its own
+sheet or panel and supplies the subject's identity; it owns no messaging state and injects nothing
+from this feature beyond the component. `dirtyChanged` is the one exception to "nothing out", and
+stays consistent with that rule in spirit: it reports whether closing the host overlay right now
+would lose something — an unsent draft, or a send still in flight against this component's own
+component-scoped `MessageThreadStore` — which is UI state the _consumer's_ overlay needs to gate
+its own dismissal on, not messaging state this component resolves for itself.
+`features/interventions` is the first consumer to wire it, into its discussion sheet's own
+`disableClose` and abandon-confirmation (see that feature's `FEATURE.md`).
 
 **Exported from `ui/components/index.ts`, never from the root `index.ts`.** The root barrel already
 carries `MessagingSyncCoordinatorService` for the app initializer that starts it, and

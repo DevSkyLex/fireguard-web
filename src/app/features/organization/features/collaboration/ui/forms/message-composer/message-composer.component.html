@@ -93,13 +93,18 @@
           size="icon-sm"
           variant="default"
           type="submit"
-          class="shrink-0 rounded-full"
+          class="shrink-0 rounded-full max-sm:size-11"
           data-testid="message-composer-send"
           i18n-aria-label="@@messages.composer.send"
           aria-label="Send message"
+          [attr.aria-busy]="pending() ? 'true' : null"
           [disabled]="!canSend()"
         >
-          <ng-icon name="lucideArrowUp" class="text-base" aria-hidden="true" />
+          @if (pending()) {
+            <hlm-spinner class="size-4" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideArrowUp" class="text-base" aria-hidden="true" />
+          }
         </button>
       </div>
     </div>

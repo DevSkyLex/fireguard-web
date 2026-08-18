@@ -1209,9 +1209,21 @@
         <source>The discussion could not be opened.</source>
         <target>La discussion n'a pas pu être ouverte.</target>
       </trans-unit>
+      <trans-unit id="messages.subjectDiscussion.offline" datatype="html">
+        <source>You&apos;re offline. Reconnect to see this discussion.</source>
+        <target>Vous êtes hors ligne. Reconnectez-vous pour voir cette discussion.</target>
+      </trans-unit>
+      <trans-unit id="messages.composer.mentionsLabel" datatype="html">
+        <source>Members you can mention</source>
+        <target>Membres que vous pouvez mentionner</target>
+      </trans-unit>
       <trans-unit id="messages.thread.newMessageAnnouncement" datatype="html">
         <source>New message from <x id="name" equiv-text="latest.authorName"/></source>
         <target>Nouveau message de <x id="name" equiv-text="latest.authorName"/></target>
+      </trans-unit>
+      <trans-unit id="messages.thread.retryLoad" datatype="html">
+        <source>Try again</source>
+        <target>Réessayer</target>
       </trans-unit>
       <trans-unit id="channels.participants.title" datatype="html">
         <source>Participants</source>

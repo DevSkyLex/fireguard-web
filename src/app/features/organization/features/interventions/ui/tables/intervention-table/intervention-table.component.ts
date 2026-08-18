@@ -81,7 +81,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * `overflow-auto` shell scrolls inside that (`DESIGN.md`'s independent-
  * columns rule).
  *
- * @version 6.2.0
+ * @version 6.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -192,6 +192,22 @@ export class InterventionTable {
    * @type {InputSignal<boolean>}
    */
   public readonly canTransition: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property transitioningIds
+   * @readonly
+   *
+   * @description
+   * Ids of the rows whose status transition is currently in flight. Such a
+   * row's cached `allowedTransitions` still describe its pre-transition
+   * state, so its "Move to" entries are withheld until the server confirms.
+   *
+   * @access public
+   * @since 6.3.0
+   *
+   * @type {InputSignal<readonly string[]>}
+   */
+  public readonly transitioningIds: InputSignal<readonly string[]> = input<readonly string[]>([]);
 
   /**
    * Property canDelete
@@ -510,7 +526,9 @@ export class InterventionTable {
    *
    * @description
    * The status moves a row may offer — the backend's own list, or none when
-   * the member cannot transition.
+   * the member cannot transition or the row's own transition is still in
+   * flight (its cached `allowedTransitions` describe the pre-transition
+   * state until the server entity lands).
    *
    * @access protected
    * @since 4.0.0
@@ -520,7 +538,9 @@ export class InterventionTable {
    * @returns {readonly InterventionStatus[]} The offered targets.
    */
   protected transitionsFor(intervention: InterventionOutput): readonly InterventionStatus[] {
-    return this.canTransition() ? intervention.allowedTransitions : [];
+    if (!this.canTransition() || this.transitioningIds().includes(intervention.id)) return [];
+
+    return intervention.allowedTransitions;
   }
 
   /**

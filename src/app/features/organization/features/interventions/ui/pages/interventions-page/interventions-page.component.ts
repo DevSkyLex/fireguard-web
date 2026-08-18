@@ -1040,7 +1040,9 @@ export class InterventionsPage {
    * @description
    * Every status the current selection could move to, as the union of each
    * selected row's own `allowedTransitions` — the bulk "Move to" menu's own
-   * entries, each further narrowed by {@link transitionableSelectedIds}.
+   * entries, each further narrowed by {@link transitionableSelectedIds}. A
+   * row whose own transition is still in flight is skipped: its cached
+   * `allowedTransitions` describe the pre-transition state.
    *
    * @access protected
    * @since 6.0.0
@@ -1050,10 +1052,12 @@ export class InterventionsPage {
   protected readonly bulkTransitionTargets: Signal<readonly InterventionStatus[]> = computed(
     (): readonly InterventionStatus[] => {
       const selected: ReadonlySet<string> = this.selectedIds();
+      const transitioning: readonly string[] = this.store.transitioningInterventionIds();
       const targets: Set<InterventionStatus> = new Set<InterventionStatus>();
 
       for (const item of this.items()) {
         if (!selected.has(item.intervention.id)) continue;
+        if (transitioning.includes(item.intervention.id)) continue;
         for (const target of item.intervention.allowedTransitions) targets.add(target);
       }
 
@@ -2535,7 +2539,9 @@ export class InterventionsPage {
    *
    * @description
    * Ids of the current selection that may actually move to `target`: the
-   * row's own `allowedTransitions` must include it, and — mirroring
+   * row's own transition must not be in flight (its cached
+   * `allowedTransitions`/`revision` are stale until the server confirms),
+   * its `allowedTransitions` must include the target, and — mirroring
    * `InterventionDetailPage`'s `canSubmit` identity gate — submitting or
    * withdrawing a submission is reserved to the row's own responsible.
    *
@@ -2548,10 +2554,15 @@ export class InterventionsPage {
    */
   protected transitionableSelectedIds(target: InterventionStatus): ReadonlyArray<string> {
     const selected: ReadonlySet<string> = this.selectedIds();
+    const transitioning: readonly string[] = this.store.transitioningInterventionIds();
     const currentMemberIri: string | null = this.memberIri();
 
     return this.items()
       .filter((item: InterventionListItemViewModel): boolean => selected.has(item.intervention.id))
+      .filter(
+        (item: InterventionListItemViewModel): boolean =>
+          !transitioning.includes(item.intervention.id),
+      )
       .filter((item: InterventionListItemViewModel): boolean =>
         item.intervention.allowedTransitions.includes(target),
       )

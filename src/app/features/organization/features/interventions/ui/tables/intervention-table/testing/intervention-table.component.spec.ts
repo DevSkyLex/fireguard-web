@@ -188,6 +188,23 @@ describe('InterventionTable', () => {
     expect(targets).toEqual(['In progress', 'Abandoned']);
   });
 
+  it('should withhold the transition entries of a row whose transition is in flight', async () => {
+    fixture.componentRef.setInput('canTransition', true);
+    fixture.componentRef.setInput('transitioningIds', ['i-9']);
+    fixture.componentRef.setInput('items', [
+      row({
+        intervention: intervention({ id: 'i-9', allowedTransitions: ['in_progress', 'abandoned'] }),
+      }),
+    ]);
+    await fixture.whenStable();
+    await openRowMenu();
+
+    expect(
+      document.querySelectorAll('[data-testid="intervention-table-row-transition"]').length,
+    ).toBe(0);
+    expect(document.body.textContent).toContain('Copy reference');
+  });
+
   it('should emit the transition with the row it was opened on', async () => {
     const emitted: InterventionTransitionRequest[] = [];
     fixture.componentInstance.transitionRequested.subscribe(

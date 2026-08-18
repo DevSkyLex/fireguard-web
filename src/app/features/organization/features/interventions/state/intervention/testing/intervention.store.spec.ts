@@ -233,6 +233,32 @@ describe('InterventionStore', () => {
       );
     });
 
+    it('should track the id as transitioning while the request is in flight', () => {
+      mockInterventionService.update.mockReturnValue(NEVER);
+
+      store.transition({ id: 'intervention-1', status: 'planned', revision: 1 });
+
+      expect(store.transitioningInterventionIds()).toEqual(['intervention-1']);
+    });
+
+    it('should clear the transitioning id on success', () => {
+      mockInterventionService.update.mockReturnValue(
+        of({ ...draftIntervention, status: 'planned', revision: 2 } as InterventionOutput),
+      );
+
+      store.transition({ id: 'intervention-1', status: 'planned', revision: 1 });
+
+      expect(store.transitioningInterventionIds()).toEqual([]);
+    });
+
+    it('should clear the transitioning id on error', () => {
+      mockInterventionService.update.mockReturnValue(throwError(() => new Error('conflict')));
+
+      store.transition({ id: 'intervention-1', status: 'planned', revision: 1 });
+
+      expect(store.transitioningInterventionIds()).toEqual([]);
+    });
+
     it('should merge the fresh server entity on success', () => {
       const updated = {
         ...draftIntervention,

@@ -171,6 +171,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
   listCallState: idleCallState(),
   createCallState: idleCallState<InterventionOutput>(),
   transitionCallState: idleCallState<InterventionOutput>(),
+  transitioningInterventionIds: [],
   deleteCallState: idleCallState(),
   assignCallState: idleCallState<InterventionOutput>(),
   instantiateCallState: idleCallState<InterventionTemplateInstantiationOutput>(),
@@ -189,7 +190,7 @@ const INITIAL_INTERVENTION_STATE: InterventionState = {
  * the server page the caller asked for — pagination, filtering and sorting are
  * server-side, and the entities ARE the current page.
  *
- * @version 4.4.0
+ * @version 4.5.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InterventionStore = signalStore(
@@ -560,7 +561,12 @@ export const InterventionStore = signalStore(
          * each keyed by its own id with its own optimistic snapshot/rollback,
          * and `switchMap` would cancel an in-flight PATCH — dropping its
          * success/rollback handlers and leaving a card visually moved while the
-         * server never confirmed.
+         * server never confirmed. While a row's PATCH is in flight its id sits
+         * in `transitioningInterventionIds`: the optimistic patch writes only
+         * `status`, so the row's cached `allowedTransitions`/`revision` are
+         * stale until the server entity lands, and consumers withhold that
+         * row's transition controls rather than offer moves computed from the
+         * pre-transition state.
          *
          * ⚠️ Zoneless: this method reads and writes `transitionCallState`. Never
          * call it from inside a tracked `effect()` without wrapping the call in
@@ -583,7 +589,10 @@ export const InterventionStore = signalStore(
                   updateEntity({ id, changes: { status } }, { collection: 'intervention' }),
                 );
               }
-              patchState(store, { transitionCallState: pendingCallState<InterventionOutput>() });
+              patchState(store, {
+                transitionCallState: pendingCallState<InterventionOutput>(),
+                transitioningInterventionIds: [...store.transitioningInterventionIds(), id],
+              });
             }),
             mergeMap(({ id, status, revision }) =>
               interventionService.update(id, { status }, revision).pipe(
@@ -593,7 +602,12 @@ export const InterventionStore = signalStore(
                     patchState(
                       store,
                       updateEntity({ id, changes: updated }, { collection: 'intervention' }),
-                      { transitionCallState: successCallState(updated) },
+                      {
+                        transitionCallState: successCallState(updated),
+                        transitioningInterventionIds: store
+                          .transitioningInterventionIds()
+                          .filter((pending: string): boolean => pending !== id),
+                      },
                     );
                   },
                   error: (error: unknown) => {
@@ -606,7 +620,12 @@ export const InterventionStore = signalStore(
                       );
                     }
                     const storeError = toStoreError(error);
-                    patchState(store, { transitionCallState: errorCallState(storeError) });
+                    patchState(store, {
+                      transitionCallState: errorCallState(storeError),
+                      transitioningInterventionIds: store
+                        .transitioningInterventionIds()
+                        .filter((pending: string): boolean => pending !== id),
+                    });
                     dispatcher.dispatch(
                       interventionStoreEvents.transitionFailed(
                         toStoreFailureEventPayload(

@@ -3771,9 +3771,9 @@
         <source>Resolved</source>
         <target>Résolue</target>
       </trans-unit>
-      <trans-unit id="inspection.nc.statusLabel" datatype="html">
-        <source>Status</source>
-        <target>Statut</target>
+      <trans-unit id="inspection.nc.statusSelectLabel" datatype="html">
+        <source>Status for <x id="description" equiv-text="description"/></source>
+        <target>Statut de <x id="description" equiv-text="description"/></target>
       </trans-unit>
       <trans-unit id="inspection.nc.list.loadingAria" datatype="html">
         <source>Loading non-conformities</source>
@@ -3798,6 +3798,10 @@
       <trans-unit id="inspection.nc.pendingApproval.link" datatype="html">
         <source>View in approvals</source>
         <target>Voir dans les approbations</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.pendingApproval.linkLabel" datatype="html">
+        <source>View in approvals for <x id="description" equiv-text="description"/></source>
+        <target>Voir dans les approbations pour <x id="description" equiv-text="description"/></target>
       </trans-unit>
       <trans-unit id="inspection.nc.status.error.alreadyResolved" datatype="html">
         <source>This non-conformity is already resolved — the row has been refreshed.</source>

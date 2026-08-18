@@ -41,6 +41,33 @@ export interface NonConformityOutput extends HydraItem {
   readonly resolvedAt: string | null;
   /** @type {string | null} */
   readonly notes: string | null;
+
+  /**
+   * Property equipmentId
+   * @readonly
+   *
+   * @description
+   * Inspected equipment reference, resolved ONLY by the organization-wide
+   * register (`GET /organizations/{id}/non-conformities`) — the
+   * per-inspection endpoints leave it unset, so it arrives as `undefined`
+   * there, never `null`.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly equipmentId?: string | null;
+
+  /**
+   * Property equipmentSerialNumber
+   * @readonly
+   *
+   * @description
+   * Serial number of the inspected equipment — same resolution rule as
+   * {@link equipmentId}: organization-wide register only.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly equipmentSerialNumber?: string | null;
+
   /** @type {string} */
   readonly createdAt: string;
   /** @type {string} */

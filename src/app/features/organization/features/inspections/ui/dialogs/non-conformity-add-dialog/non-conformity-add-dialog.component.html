@@ -34,8 +34,6 @@
             placeholder="Fire extinguisher pressure gauge in the red zone"
             i18n-placeholder="@@inspection.nc.addDialog.descriptionPlaceholder"
             [formField]="addForm.description"
-            [attr.aria-required]="true"
-            [attr.aria-invalid]="addForm.description().touched() && addForm.description().invalid()"
           ></textarea>
           @if (addForm.description().touched() && addForm.description().invalid()) {
             <hlm-field-error>{{ addForm.description().errors()[0].message }}</hlm-field-error>
@@ -94,7 +92,10 @@
             >Due date (optional)</label
           >
           <hlm-date-picker [formField]="addForm.dueAt">
-            <hlm-date-picker-trigger buttonId="non-conformity-add-due-at" class="w-full">
+            <hlm-date-picker-trigger
+              buttonId="non-conformity-add-due-at"
+              class="w-full max-sm:min-h-11"
+            >
               <span i18n="@@inspection.nc.addDialog.dueAtPlaceholder">Select a date</span>
             </hlm-date-picker-trigger>
           </hlm-date-picker>

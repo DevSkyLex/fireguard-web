@@ -411,6 +411,92 @@ describe('InspectionStore', () => {
       );
     });
 
+    it('should attribute a failure to the row that caused it', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+      expect(store.nonConformityStatusErrorText()).not.toBeNull();
+    });
+
+    it('should clear the error id on a later success for the same row', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(
+        of({ kind: 'updated', nonConformity: updatedNonConformity }),
+      );
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformityStatusErrorId()).toBeNull();
+    });
+
+    it('should clear the error id the moment a new write starts on the same row', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(NEVER);
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformityStatusErrorId()).toBeNull();
+    });
+
+    it('should keep a row error while a different row is being written', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(NEVER);
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-2',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+    });
+
     it('should record the pending waiver and leave the entity untouched on a 202', async () => {
       store.loadNonConformities({ organizationId: 'org-1', inspectionId: 'inspection-1' });
       await flushEffects();

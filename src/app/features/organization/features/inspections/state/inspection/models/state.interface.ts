@@ -49,6 +49,19 @@ export interface InspectionState {
   /** Tracks the update non-conformity status operation state. */
   readonly updateNonConformityStatusCallState: CallState<NonConformityOutput | null>;
   /**
+   * Property nonConformityStatusErrorId
+   *
+   * @description
+   * The id of the non-conformity {@link updateNonConformityStatusCallState}'s
+   * last failure belongs to, or `null`. Lets a consumer attribute the
+   * failure to its own row instead of a page-wide banner nothing ties to a
+   * specific record. Cleared the moment a new status write starts on that
+   * same id, or on any status write success.
+   *
+   * @type {string | null}
+   */
+  readonly nonConformityStatusErrorId: string | null;
+  /**
    * Property nonConformityWaivePending
    *
    * @description

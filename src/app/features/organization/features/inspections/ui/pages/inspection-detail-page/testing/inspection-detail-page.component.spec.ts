@@ -157,6 +157,7 @@ describe('InspectionDetailPage', () => {
             isAddingNonConformity: signal<boolean>(false),
             isUpdatingNonConformity,
             nonConformityStatusErrorText: signal<string | null>(null),
+            nonConformityStatusErrorId: signal<string | null>(null),
           },
         },
         {

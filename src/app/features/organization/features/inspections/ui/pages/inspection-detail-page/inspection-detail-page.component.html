@@ -96,6 +96,7 @@
           [canWrite]="canWrite()"
           [organizationId]="organizationId()"
           [updatingId]="pendingNonConformityId()"
+          [statusErrorId]="store.nonConformityStatusErrorId()"
           [statusErrorText]="store.nonConformityStatusErrorText()"
           (statusPicked)="onNonConformityStatusPicked($event)"
         />

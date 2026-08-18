@@ -68,6 +68,7 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
   nonConformityGetCallState: idleCallState(),
   addNonConformityCallState: idleCallState(),
   updateNonConformityStatusCallState: idleCallState(),
+  nonConformityStatusErrorId: null,
   nonConformityWaivePending: {},
 } as const;
 //#endregion
@@ -92,7 +93,10 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
  * pending request in {@link InspectionState.nonConformityWaivePending}
  * instead, keyed by non-conformity id. A `409` (the `done`/`waived`
  * immutable-terminal-status conflict) refreshes the row rather than
- * dispatching a generic failure toast.
+ * dispatching a generic failure toast. Every status-write failure is
+ * attributed to its row through {@link InspectionState.nonConformityStatusErrorId},
+ * so a consumer can render the message inline under the offending row
+ * instead of a page-wide banner nothing ties to a specific record.
  *
  * @example
  * ```typescript
@@ -357,7 +361,11 @@ export const InspectionStore = signalStore(
        * instead. A `409` (the immutable-terminal-status conflict) refreshes
        * the row via {@link loadNonConformityFn} rather than dispatching the
        * generic failure toast — {@link InspectionStore.nonConformityStatusErrorText}
-       * carries the specific copy for it instead.
+       * carries the specific copy for it instead. A failure sets
+       * {@link InspectionState.nonConformityStatusErrorId} to the failed
+       * row's id, cleared on any success or the moment a new write starts
+       * on that same id — never on a write starting for a different row, so
+       * one row's error survives while another is edited.
        *
        * @since 1.1.0
        */
@@ -368,8 +376,14 @@ export const InspectionStore = signalStore(
         input: UpdateNonConformityStatusInput;
       }>(
         pipe(
-          tap((): void => {
-            patchState(store, { updateNonConformityStatusCallState: pendingCallState() });
+          tap(({ nonConformityId }): void => {
+            patchState(store, {
+              updateNonConformityStatusCallState: pendingCallState(),
+              nonConformityStatusErrorId:
+                store.nonConformityStatusErrorId() === nonConformityId
+                  ? null
+                  : store.nonConformityStatusErrorId(),
+            });
           }),
           exhaustMap(({ organizationId, inspectionId, nonConformityId, input }) =>
             inspectionService
@@ -383,6 +397,7 @@ export const InspectionStore = signalStore(
                           ...store.nonConformityWaivePending(),
                           [nonConformityId]: result.pending,
                         },
+                        nonConformityStatusErrorId: null,
                         updateNonConformityStatusCallState: successCallState(null),
                       });
 
@@ -399,6 +414,7 @@ export const InspectionStore = signalStore(
                       setEntity(result.nonConformity, { collection: 'nonConformity' }),
                       {
                         nonConformityWaivePending: remainingPending,
+                        nonConformityStatusErrorId: null,
                         updateNonConformityStatusCallState: successCallState(result.nonConformity),
                       },
                     );
@@ -407,6 +423,7 @@ export const InspectionStore = signalStore(
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, {
                       updateNonConformityStatusCallState: errorCallState(storeError),
+                      nonConformityStatusErrorId: nonConformityId,
                     });
 
                     if (storeError.code === 409) {

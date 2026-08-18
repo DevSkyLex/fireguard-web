@@ -106,15 +106,87 @@ describe('NonConformityList', () => {
     expect(link?.getAttribute('href')).toBe('/organizations/org-1/approvals');
   });
 
-  it('should render the status-write error text when set', async () => {
-    await createList([nonConformity()], { canWrite: true });
+  it('should give each row a distinct accessible name on its pending-approval link', async () => {
+    await createList(
+      [
+        nonConformity({ id: 'nc-1', description: 'Pressure gauge out of range' }),
+        nonConformity({ id: 'nc-2', description: 'Hose reel corroded at the coupling' }),
+      ],
+      { canWrite: true },
+    );
 
+    const pending: Readonly<Record<string, NonConformityWaivePendingOutput>> = {
+      'nc-1': {
+        status: 'pending_approval',
+        approvalRequestId: 'approval-1',
+        approvalStatus: 'pending',
+        expiresAt: '2026-04-01T00:00:00+00:00',
+      },
+      'nc-2': {
+        status: 'pending_approval',
+        approvalRequestId: 'approval-2',
+        approvalStatus: 'pending',
+        expiresAt: '2026-04-01T00:00:00+00:00',
+      },
+    };
+    fixture.componentRef.setInput('pendingApprovals', pending);
+    await fixture.whenStable();
+
+    const links = root().querySelectorAll<HTMLAnchorElement>(
+      '[data-testid="non-conformity-pending-approval-link"]',
+    );
+    expect(links.length).toBe(2);
+    const labels = Array.from(links).map((link) => link.getAttribute('aria-label'));
+    expect(new Set(labels).size).toBe(2);
+    expect(labels[0]).toContain('Pressure gauge out of range');
+    expect(labels[1]).toContain('Hose reel corroded');
+  });
+
+  it('should give each row a distinct accessible name on its status select', async () => {
+    await createList(
+      [
+        nonConformity({ id: 'nc-1', description: 'Pressure gauge out of range' }),
+        nonConformity({ id: 'nc-2', description: 'Hose reel corroded at the coupling' }),
+      ],
+      { canWrite: true },
+    );
+
+    const labels = root().querySelectorAll('label[for^="non-conformity-status-"]');
+    expect(labels.length).toBe(2);
+    const texts = Array.from(labels).map((label) => label.textContent?.trim());
+    expect(new Set(texts).size).toBe(2);
+    expect(texts[0]).toContain('Pressure gauge out of range');
+    expect(texts[1]).toContain('Hose reel corroded');
+  });
+
+  it('should render the status-write error inline under its own row only, described by the trigger', async () => {
+    await createList(
+      [nonConformity({ id: 'nc-1' }), nonConformity({ id: 'nc-2', description: 'Second' })],
+      { canWrite: true },
+    );
+
+    fixture.componentRef.setInput('statusErrorId', 'nc-1');
     fixture.componentRef.setInput('statusErrorText', 'This non-conformity is already resolved.');
     await fixture.whenStable();
 
-    expect(
-      root().querySelector('[data-testid="non-conformity-status-error"]')?.textContent,
-    ).toContain('already resolved');
+    const rows = root().querySelectorAll('[data-testid="non-conformity-row"]');
+    const firstError = rows[0].querySelector('[data-testid="non-conformity-status-error"]');
+    const secondError = rows[1].querySelector('[data-testid="non-conformity-status-error"]');
+    expect(firstError?.textContent).toContain('already resolved');
+    expect(secondError).toBeNull();
+
+    const trigger = rows[0].querySelector('[data-testid="non-conformity-status-select"]');
+    expect(trigger?.getAttribute('aria-describedby')).toBe(firstError?.id);
+  });
+
+  it('should not render an inline error for a row that is not the one that failed', async () => {
+    await createList([nonConformity({ id: 'nc-1' })], { canWrite: true });
+
+    fixture.componentRef.setInput('statusErrorId', 'nc-2');
+    fixture.componentRef.setInput('statusErrorText', 'This non-conformity is already resolved.');
+    await fixture.whenStable();
+
+    expect(root().querySelector('[data-testid="non-conformity-status-error"]')).toBeNull();
   });
 
   it('should emit statusPicked with the row id and the chosen status', async () => {

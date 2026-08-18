@@ -47,6 +47,16 @@ function formatDate(iso: string | null, locale: string): string | null {
   }).format(new Date(iso));
 }
 
+/** How much of a row's description folds into its per-row accessible names, before an ellipsis. */
+const LABEL_DESCRIPTION_MAX_LENGTH: number = 40;
+
+/** Truncates a row's description for reuse inside a per-row accessible name — every row otherwise shares the same generic label (WCAG 2.4.6, 4.1.2). */
+function truncateDescription(description: string): string {
+  return description.length > LABEL_DESCRIPTION_MAX_LENGTH
+    ? `${description.slice(0, LABEL_DESCRIPTION_MAX_LENGTH).trimEnd()}…`
+    : description;
+}
+
 /**
  * Component NonConformityList
  * @class NonConformityList
@@ -181,6 +191,22 @@ export class NonConformityList {
    * @type {InputSignal<string | null>}
    */
   public readonly statusErrorText: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property statusErrorId
+   * @readonly
+   *
+   * @description
+   * The id of the row {@link statusErrorText} belongs to
+   * (`InspectionStore.nonConformityStatusErrorId`), or `null`. The error
+   * renders inline under this specific row only — never as a page-wide
+   * banner a reader has to match to a row themselves.
+   *
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly statusErrorId: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs
@@ -280,6 +306,60 @@ export class NonConformityList {
     if (status === nonConformity.status) return;
 
     this.statusPicked.emit({ nonConformityId: nonConformity.id, status });
+  }
+
+  /**
+   * Method statusSelectLabelOf
+   *
+   * @description
+   * A distinct accessible name for one row's status select, so a screen
+   * reader announces which finding it is changing instead of the bare word
+   * "Status" repeated identically on every row.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {NonConformityOutput} nonConformity - The row the select belongs to.
+   *
+   * @returns {string} The row-specific label.
+   */
+  protected statusSelectLabelOf(nonConformity: NonConformityOutput): string {
+    const description: string = truncateDescription(nonConformity.description);
+
+    return $localize`:@@inspection.nc.statusSelectLabel:Status for ${description}:description:`;
+  }
+
+  /**
+   * Method statusErrorIdOf
+   * @description The inline error paragraph's DOM id for one row, whether or not it currently renders.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} nonConformityId - The row's id.
+   * @returns {string} The paragraph's id.
+   */
+  protected statusErrorIdOf(nonConformityId: string): string {
+    return `non-conformity-status-error-${nonConformityId}`;
+  }
+
+  /**
+   * Method pendingApprovalLinkLabelOf
+   *
+   * @description
+   * A distinct accessible name for one row's "View in approvals" link, so a
+   * screen reader distinguishes several pending rows instead of announcing
+   * the same generic link text repeatedly (WCAG 2.4.4).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {NonConformityOutput} nonConformity - The row the link belongs to.
+   *
+   * @returns {string} The row-specific label.
+   */
+  protected pendingApprovalLinkLabelOf(nonConformity: NonConformityOutput): string {
+    const description: string = truncateDescription(nonConformity.description);
+
+    return $localize`:@@inspection.nc.pendingApproval.linkLabel:View in approvals for ${description}:description:`;
   }
   //#endregion
 }

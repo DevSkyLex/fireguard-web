@@ -24,6 +24,12 @@
     </hlm-toggle-group>
 
     <div class="flex flex-col gap-1" toolbarEnd>
+      <label
+        for="approvals-filter-action-type"
+        class="text-xs font-medium text-muted-foreground"
+        i18n="@@approvals.filter.actionType"
+        >Action type</label
+      >
       <hlm-select
         [value]="actionType()"
         [itemToString]="actionTypeLabelOf"

@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { ApprovalDecisionTarget } from './models';
 
@@ -34,9 +35,13 @@ const DECISION_NOTE_MAX_LENGTH: number = 2000;
  * {@link target}'s `mode`. The approve variant states plainly that
  * approving **executes** the gated action immediately, since the backend
  * runs it synchronously on a successful approve, never queued. The optional
- * decision-note textarea carries a live character counter against the
- * backend's 2000-character bound, mirroring `InterventionConfirmDialog`'s
- * skip-reason textarea.
+ * decision-note textarea carries a character counter against the backend's
+ * 2000-character bound, mirroring `InterventionConfirmDialog`'s skip-reason
+ * textarea. The counter is an `hlm-field-description` inside the wrapping
+ * `hlm-field`, which auto-registers it with `BrnFieldA11yService` so the
+ * textarea's `aria-describedby` points at it without a manual attribute — a
+ * static description, deliberately not `aria-live`, since the count is
+ * read on focus rather than announced on every keystroke.
  *
  * Presentational (`ARCHITECTURE.md` §10.5): it owns no store and takes its
  * open state from {@link target} being non-null. The caller keeps every
@@ -62,7 +67,7 @@ const DECISION_NOTE_MAX_LENGTH: number = 2000;
  */
 @Component({
   selector: 'app-approval-decision-dialog',
-  imports: [...HlmAlertDialogImports, ...HlmTextareaImports],
+  imports: [...HlmAlertDialogImports, ...HlmFieldImports, ...HlmTextareaImports],
   templateUrl: './approval-decision-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -105,8 +105,7 @@
                         size="sm"
                         class="max-sm:min-h-11"
                         data-testid="approval-request-table-approve"
-                        aria-label="Approve request"
-                        i18n-aria-label="@@approvals.table.approveAction"
+                        [attr.aria-label]="approveAriaLabelOf(item)"
                         (click)="approveRequested.emit(item)"
                       >
                         <ng-icon name="lucideCheck" aria-hidden="true" />
@@ -118,8 +117,7 @@
                         size="sm"
                         class="max-sm:min-h-11"
                         data-testid="approval-request-table-reject"
-                        aria-label="Reject request"
-                        i18n-aria-label="@@approvals.table.rejectAction"
+                        [attr.aria-label]="rejectAriaLabelOf(item)"
                         (click)="rejectRequested.emit(item)"
                       >
                         <ng-icon name="lucideX" aria-hidden="true" />

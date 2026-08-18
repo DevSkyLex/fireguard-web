@@ -13090,6 +13090,26 @@
         <source> Four-eyes approval policy </source>
         <target> Politique d&apos;approbation à quatre yeux </target>
       </trans-unit>
+      <trans-unit id="approvals.filter.actionType" datatype="html">
+        <source>Action type</source>
+        <target>Type d&apos;action</target>
+      </trans-unit>
+      <trans-unit id="approvals.table.approveActionNamed" datatype="html">
+        <source>Approve <x id="actionType" equiv-text="actionType"/> request for <x id="subjectId" equiv-text="item.subjectId"/></source>
+        <target>Approuver la demande <x id="actionType" equiv-text="actionType"/> pour <x id="subjectId" equiv-text="item.subjectId"/></target>
+      </trans-unit>
+      <trans-unit id="approvals.table.rejectActionNamed" datatype="html">
+        <source>Reject <x id="actionType" equiv-text="actionType"/> request for <x id="subjectId" equiv-text="item.subjectId"/></source>
+        <target>Rejeter la demande <x id="actionType" equiv-text="actionType"/> pour <x id="subjectId" equiv-text="item.subjectId"/></target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.requireApprovalLabel" datatype="html">
+        <source> Require approval </source>
+        <target> Exiger une approbation </target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlHint" datatype="html">
+        <source> Between 1 and 90 days. </source>
+        <target> Entre 1 et 90 jours. </target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

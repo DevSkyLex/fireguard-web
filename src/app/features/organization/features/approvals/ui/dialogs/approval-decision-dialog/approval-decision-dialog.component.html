@@ -9,9 +9,10 @@
       <p hlmAlertDialogDescription>{{ description() }}</p>
     </hlm-alert-dialog-header>
 
-    <div class="flex flex-col gap-1">
+    <hlm-field class="gap-1">
       <label
         for="approval-decision-note"
+        hlmFieldLabel
         class="text-xs font-medium text-muted-foreground"
         i18n="@@approvals.decide.noteLabel"
         >Decision note (optional)</label
@@ -28,13 +29,14 @@
         [value]="noteDraft()"
         (input)="onNoteInput($event)"
       ></textarea>
-      <span
+      <hlm-field-description
+        id="approval-decision-note-counter"
         class="self-end text-xs text-muted-foreground"
         data-testid="approval-decision-note-counter"
       >
         {{ noteDraft().length }}/{{ maxLength }}
-      </span>
-    </div>
+      </hlm-field-description>
+    </hlm-field>
 
     @if (errorText(); as error) {
       <p class="text-sm text-destructive" role="alert" data-testid="approval-decision-error">

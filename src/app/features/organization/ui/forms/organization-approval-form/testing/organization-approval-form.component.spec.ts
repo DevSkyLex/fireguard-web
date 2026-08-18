@@ -62,6 +62,26 @@ describe('OrganizationApprovalForm', () => {
     expect(root().querySelector('[data-testid="org-approval-enabled-nc_waiver"]')).not.toBeNull();
   });
 
+  it('should group each row under a fieldset whose legend names the action type', async () => {
+    const fieldsets = root().querySelectorAll('fieldset');
+    expect(fieldsets.length).toBe(ACTION_TYPES.length);
+
+    const legend = root()
+      .querySelector('[data-testid="org-approval-enabled-nc_waiver"]')
+      ?.closest('fieldset')
+      ?.querySelector('legend');
+    expect(legend?.textContent).toContain('Non-conformity waiver');
+  });
+
+  it('should give the enabled switch its own accessible name distinct from the group legend', async () => {
+    const switchLabel = root()
+      .querySelector('[for="org-approval-enabled-nc_waiver"]')
+      ?.textContent?.trim();
+
+    expect(switchLabel).toBe('Require approval');
+    expect(switchLabel).not.toContain('Non-conformity waiver');
+  });
+
   it('should render a minimum-severity select only for nc_waiver', async () => {
     expect(root().querySelector('[data-testid="org-approval-severity-nc_waiver"]')).not.toBeNull();
     expect(
@@ -101,6 +121,12 @@ describe('OrganizationApprovalForm', () => {
 
   it('should keep the submit control disabled until the tree changes', async () => {
     expect(submitButton().disabled).toBe(true);
+  });
+
+  it('should proactively announce the TTL bound via a field description', async () => {
+    const ttlField = root().querySelector('[data-testid="org-approval-ttl"]')?.closest('hlm-field');
+
+    expect(ttlField?.textContent).toContain('Between 1 and 90 days.');
   });
 
   it('should reject a TTL outside the 1-90 day range and not submit', async () => {

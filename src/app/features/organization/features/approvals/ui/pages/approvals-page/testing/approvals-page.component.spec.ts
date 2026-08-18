@@ -96,6 +96,17 @@ describe('ApprovalsPage', () => {
     expect(loadActionTypes).toHaveBeenCalled();
   });
 
+  it('should give the action-type filter a persistent, associated label', async () => {
+    fixture = await createPage();
+
+    const label = fixture.nativeElement.querySelector(
+      'label[for="approvals-filter-action-type"]',
+    ) as HTMLLabelElement;
+
+    expect(label).not.toBeNull();
+    expect(label.textContent).toContain('Action type');
+  });
+
   it('should narrow the list to the picked status chip', async () => {
     fixture = await createPage();
     load.mockClear();

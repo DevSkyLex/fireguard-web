@@ -49,9 +49,12 @@ const SUBJECT_ROUTE_BUILDERS: Readonly<
  * no service. The page decides what to load, filter and paginate, and
  * whether the reader may decide; this component only renders the page it is
  * handed and emits {@link approveRequested} / {@link rejectRequested} for
- * the page to open the decision dialog.
+ * the page to open the decision dialog. Each row's Approve/Reject buttons
+ * carry a per-row accessible name ({@link approveAriaLabelOf} /
+ * {@link rejectAriaLabelOf}) rather than a static "Approve request" label
+ * repeated on every row.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -180,6 +183,47 @@ export class ApprovalRequestTable {
    */
   protected isDecided(item: ApprovalRequestOutput): boolean {
     return item.status !== 'pending';
+  }
+
+  /**
+   * Method approveAriaLabelOf
+   *
+   * @description
+   * The row's Approve button's accessible name, folding in the action-type
+   * label and the subject id so two rows never announce as the identical
+   * "Approve request" — mirrors `MaintenanceScheduleTable.equipmentLinkAriaLabelOf`.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {ApprovalRequestOutput} item - The rendered request.
+   *
+   * @returns {string} The accessible name.
+   */
+  protected approveAriaLabelOf(item: ApprovalRequestOutput): string {
+    const actionType: string = this.actionTypeLabelOf()(item.actionType);
+
+    return $localize`:@@approvals.table.approveActionNamed:Approve ${actionType}:actionType: request for ${item.subjectId}:subjectId:`;
+  }
+
+  /**
+   * Method rejectAriaLabelOf
+   *
+   * @description
+   * The row's Reject button's accessible name, folding in the action-type
+   * label and the subject id, matching {@link approveAriaLabelOf}.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {ApprovalRequestOutput} item - The rendered request.
+   *
+   * @returns {string} The accessible name.
+   */
+  protected rejectAriaLabelOf(item: ApprovalRequestOutput): string {
+    const actionType: string = this.actionTypeLabelOf()(item.actionType);
+
+    return $localize`:@@approvals.table.rejectActionNamed:Reject ${actionType}:actionType: request for ${item.subjectId}:subjectId:`;
   }
 
   /**

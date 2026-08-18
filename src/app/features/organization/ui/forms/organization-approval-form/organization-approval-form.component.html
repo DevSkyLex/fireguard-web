@@ -14,17 +14,21 @@
       </div>
 
       @for (entry of approvalForm.actionRules; track entry[0]) {
-        <div class="flex flex-col gap-3 rounded-md border border-border p-3">
+        <fieldset hlmFieldSet class="flex flex-col gap-3 rounded-md border border-border p-3">
+          <legend hlmFieldLegend class="font-medium text-foreground">
+            {{ actionTypeLabelOf(entry[0]) }}
+          </legend>
+
           <hlm-field orientation="horizontal" class="justify-between">
             <label
-              [attr.for]="'org-approval-enabled-' + entry[0]"
+              [for]="'org-approval-enabled-' + entry[0]"
               hlmFieldLabel
-              class="font-medium text-foreground"
+              i18n="@@org.settings.approval.requireApprovalLabel"
             >
-              {{ actionTypeLabelOf(entry[0]) }}
+              Require approval
             </label>
             <hlm-switch
-              [id]="'org-approval-enabled-' + entry[0]"
+              [inputId]="'org-approval-enabled-' + entry[0]"
               [attr.data-testid]="'org-approval-enabled-' + entry[0]"
               [formField]="entry[1].enabled"
             />
@@ -88,7 +92,7 @@
               </hlm-field>
             }
           </div>
-        </div>
+        </fieldset>
       }
     </section>
 
@@ -126,6 +130,9 @@
             approvalForm.approvalTtlDays().touched() && approvalForm.approvalTtlDays().invalid()
           "
         />
+        <hlm-field-description i18n="@@org.settings.approval.ttlHint">
+          Between 1 and 90 days.
+        </hlm-field-description>
         @if (approvalForm.approvalTtlDays().touched() && approvalForm.approvalTtlDays().invalid()) {
           <hlm-field-error>{{
             approvalForm.approvalTtlDays().errors()[0].message

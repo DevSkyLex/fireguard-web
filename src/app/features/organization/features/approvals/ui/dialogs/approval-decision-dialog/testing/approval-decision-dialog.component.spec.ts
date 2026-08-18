@@ -53,6 +53,13 @@ describe('ApprovalDecisionDialog', () => {
     expect(content()?.textContent).toContain('executes the gated action immediately');
   });
 
+  it('should point the note textarea at the character counter via a static aria-describedby', async () => {
+    await setTarget({ mode: 'approve', request });
+
+    expect(noteField().getAttribute('aria-describedby')).toBe('approval-decision-note-counter');
+    expect(inDialog('#approval-decision-note-counter')).not.toBeNull();
+  });
+
   it('should emit decided with the trimmed note on confirm', async () => {
     await setTarget({ mode: 'reject', request });
 

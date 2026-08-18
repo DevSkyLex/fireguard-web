@@ -75,6 +75,30 @@ describe('ApprovalRequestTable', () => {
     expect(element.querySelector('[data-testid="approval-request-table-approve"]')).toBeNull();
   });
 
+  it('should give each row a distinct, non-identical accessible name for its Approve and Reject buttons', async () => {
+    fixture.componentRef.setInput('items', [
+      request({ id: 'request-1', actionType: 'equipment_decommission', subjectId: 'equipment-1' }),
+      request({ id: 'request-2', actionType: 'nc_waiver', subjectId: 'nc-1' }),
+    ]);
+    fixture.componentRef.setInput('canDecide', true);
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const approveButtons = element.querySelectorAll(
+      '[data-testid="approval-request-table-approve"]',
+    );
+    const rejectButtons = element.querySelectorAll('[data-testid="approval-request-table-reject"]');
+
+    const firstApproveLabel = approveButtons[0].getAttribute('aria-label');
+    const secondApproveLabel = approveButtons[1].getAttribute('aria-label');
+    const firstRejectLabel = rejectButtons[0].getAttribute('aria-label');
+
+    expect(firstApproveLabel).toContain('equipment-1');
+    expect(secondApproveLabel).toContain('nc-1');
+    expect(firstApproveLabel).not.toBe(secondApproveLabel);
+    expect(firstApproveLabel).not.toBe(firstRejectLabel);
+  });
+
   it('should link the subject for a known action type and render a bare reference otherwise', async () => {
     fixture.componentRef.setInput('items', [
       request({ actionType: 'equipment_decommission' }),

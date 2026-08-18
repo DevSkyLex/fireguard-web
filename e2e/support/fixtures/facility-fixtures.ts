@@ -31,6 +31,11 @@ export interface FacilityOutputFixture {
   readonly metadata: Record<string, string | null>;
   readonly latitude?: number | null;
   readonly longitude?: number | null;
+  readonly path: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly type: string;
+  }>;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -57,6 +62,7 @@ export function facilityOutput(
     metadata: {},
     latitude: 48.8566,
     longitude: 2.3522,
+    path: [],
     createdAt: '2026-01-05T00:00:00+00:00',
     updatedAt: '2026-06-01T00:00:00+00:00',
     ...overrides,

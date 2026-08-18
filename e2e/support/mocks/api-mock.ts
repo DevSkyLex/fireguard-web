@@ -404,6 +404,12 @@ export class ApiMock {
    * Pass `holdUntil` to keep the response pending until the promise resolves,
    * simulating a slow connection deterministically (no sleeps): assert the
    * skeleton while held, release, then assert the content.
+   *
+   * Also stubs `GET /api/interventions` with an empty collection: the detail
+   * page's Overview tab always loads its "Interventions on this site"
+   * section, and an unmocked call would land on the 404 safety net. A spec
+   * exercising that section registers its own interventions route afterwards
+   * and wins by Playwright's last-registered-first matching.
    */
   public async mockFacilityDetail(
     organizationId: string,
@@ -418,6 +424,9 @@ export class ApiMock {
         await fulfillJson(route, 200, facility);
       },
     );
+    await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
   }
 
   /**

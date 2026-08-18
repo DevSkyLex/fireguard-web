@@ -186,6 +186,41 @@ describe('MaintenanceSchedulesPage', () => {
     expect(resetCampaignOperation).toHaveBeenCalled();
   });
 
+  it('should narrow the list to the picked due-status chip', async () => {
+    fixture = await createPage();
+    load.mockClear();
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="maintenance-filter-due-status-due_soon"]',
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+
+    expect(load).toHaveBeenCalledWith(expect.objectContaining({ dueStatus: 'due_soon' }));
+  });
+
+  it('should clear the due-status narrowing when the active chip is re-activated', async () => {
+    fixture = await createPage();
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="maintenance-filter-due-status-due_soon"]',
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+    load.mockClear();
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="maintenance-filter-due-status-due_soon"]',
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+
+    expect(load).toHaveBeenCalledWith(expect.objectContaining({ dueStatus: undefined }));
+  });
+
   it('should register the "Generate inspection campaign" action only when both permissions are held', async () => {
     hasPermission.mockReturnValue(false);
     fixture = await createPage();

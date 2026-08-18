@@ -1,18 +1,28 @@
 <div id="maintenance-schedules" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
   <app-collection-toolbar>
-    <div toolbarStart class="flex flex-wrap items-center gap-2">
+    <hlm-toggle-group
+      toolbarStart
+      type="single"
+      [nullable]="true"
+      variant="outline"
+      size="sm"
+      [value]="filters().dueStatus"
+      data-testid="maintenance-filter-due-status"
+      aria-label="Filter by due status"
+      i18n-aria-label="@@maintenance.filter.dueStatusAriaLabel"
+      (valueChange)="onDueStatusChanged($event)"
+    >
       @for (status of dueStatusValues; track status) {
         <button
-          type="button"
-          class="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring max-sm:min-h-11"
-          [attr.aria-pressed]="filters().dueStatus === status"
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          [value]="status"
           [attr.data-testid]="'maintenance-filter-due-status-' + status"
-          (click)="toggleDueStatus(status)"
         >
-          <app-maintenance-due-status-tag [value]="status" />
+          <app-maintenance-due-status-tag [value]="status" asOption />
         </button>
       }
-    </div>
+    </hlm-toggle-group>
   </app-collection-toolbar>
 
   <div class="flex flex-wrap items-end gap-3">
@@ -30,7 +40,7 @@
       >
         <hlm-select-trigger
           buttonId="maintenance-filter-facility"
-          class="w-48"
+          class="w-48 max-sm:min-h-11"
           data-testid="maintenance-filter-facility"
         >
           <hlm-select-value
@@ -62,7 +72,7 @@
       >
         <hlm-select-trigger
           buttonId="maintenance-filter-equipment-type"
-          class="w-48"
+          class="w-48 max-sm:min-h-11"
           data-testid="maintenance-filter-equipment-type"
         >
           <hlm-select-value
@@ -91,6 +101,7 @@
         hlmInput
         id="maintenance-filter-due-before"
         type="date"
+        class="max-sm:min-h-11"
         data-testid="maintenance-filter-due-before"
         [value]="filters().dueBefore ?? ''"
         (change)="applyFilter({ dueBefore: $any($event.target).value || null })"
@@ -145,6 +156,7 @@
       [canManage]="canManage()"
       [equipmentRouteBase]="equipmentRouteBase()"
       [facilityRouteBase]="facilityRouteBase()"
+      [facilityLabelOf]="tableFacilityLabelOf"
       (overrideRequested)="openOverrideDialog($event)"
     />
 
@@ -185,6 +197,8 @@
       type="button"
       class="min-w-0 shrink max-sm:min-h-11"
       data-testid="maintenance-generate-campaign"
+      i18n-aria-label="@@maintenance.generateCampaignButton"
+      aria-label="Generate inspection campaign"
       (click)="openCampaignDialog()"
     >
       <ng-icon name="lucideSparkles" aria-hidden="true" />

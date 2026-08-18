@@ -40,7 +40,13 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * component only renders the page it is handed and emits
  * {@link overrideRequested} for the page to open the override dialog.
  *
- * @version 1.0.0
+ * The facility cell and the equipment link's accessible name both resolve
+ * through {@link facilityLabelOf}, the page's own facility catalog, so two
+ * rows tracking the same equipment type at different facilities read as
+ * distinguishable rather than an identical "Fire extinguisher" /
+ * "View facility" pair pointing at different records.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -114,6 +120,26 @@ export class MaintenanceScheduleTable {
    */
   public readonly facilityRouteBase: InputSignal<readonly string[]> =
     input.required<readonly string[]>();
+
+  /**
+   * Property facilityLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves a facility id to its name, from the page's own facility
+   * catalog. Two rows tracking the same equipment type at different
+   * facilities otherwise render identical link text ("Fire extinguisher" /
+   * "View facility") pointing at different records; this disambiguates both
+   * the facility cell and the equipment link's accessible name. Defaults to
+   * always resolving `null`, which falls back to the generic labels.
+   *
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<(facilityId: string) => string | null>}
+   */
+  public readonly facilityLabelOf: InputSignal<(facilityId: string) => string | null> = input<
+    (facilityId: string) => string | null
+  >(() => null);
   //#endregion
 
   //#region Outputs
@@ -157,6 +183,35 @@ export class MaintenanceScheduleTable {
    */
   protected facilityIdOf(item: MaintenanceScheduleOutput): string | null {
     return item.facility ? iriId(item.facility) : null;
+  }
+
+  /**
+   * Method equipmentLinkAriaLabelOf
+   *
+   * @description
+   * The equipment link's accessible name, folding in the facility name so
+   * two rows sharing the same equipment type — the link's own visible text —
+   * stay distinguishable to assistive tech, mirroring
+   * `InterventionEquipmentTable.linkAriaLabelOf`. `null` when the schedule
+   * carries no facility or the facility name does not resolve, which drops
+   * the attribute and falls back to the link's own text content.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {MaintenanceScheduleOutput} item - The rendered schedule.
+   *
+   * @returns {string | null} The accessible name, or `null`.
+   */
+  protected equipmentLinkAriaLabelOf(item: MaintenanceScheduleOutput): string | null {
+    const facilityId: string | null = this.facilityIdOf(item);
+    const facilityName: string | null = facilityId ? this.facilityLabelOf()(facilityId) : null;
+
+    if (!facilityName) return null;
+
+    const type: string = this.equipmentTypeLabelOf(item.equipmentType);
+
+    return $localize`:@@maintenance.table.equipmentLinkAriaLabel:${type}:type: at ${facilityName}:facility:`;
   }
 
   /**

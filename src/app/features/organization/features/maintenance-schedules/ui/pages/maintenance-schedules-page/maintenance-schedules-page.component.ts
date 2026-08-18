@@ -31,6 +31,7 @@ import {
   MaintenanceSchedulesStore,
   type MaintenanceSchedulesStoreType,
 } from '@features/organization/features/maintenance-schedules/state';
+import { iriId } from '@features/organization/features/maintenance-schedules/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionToolbar } from '@shared/collection-toolbar';
@@ -39,6 +40,7 @@ import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status-tag';
 import { MaintenanceCampaignDialog } from '../../dialogs/maintenance-campaign-dialog';
 import { MaintenanceOverrideDialog } from '../../dialogs/maintenance-override-dialog';
@@ -78,19 +80,24 @@ interface MaintenanceScheduleFilters {
  *
  * @description
  * Route entry page for the organization's maintenance schedules: a
- * dueStatus chip row, facility/equipment-type selects and a due-before date
- * above the grid, an interval-override dialog gated
+ * dueStatus `hlm-toggle-group` row, facility/equipment-type selects and a
+ * due-before date above the grid, an interval-override dialog gated
  * `organization.maintenance.manage`, and a "Generate inspection campaign"
  * header action gated on that permission **and**
  * `organization.interventions.plan` together — a single 403 otherwise, so
- * the button only ever offers what the backend will actually accept.
+ * the button only ever offers what the backend will actually accept. The
+ * toggle group is `nullable`, mirroring `InterventionWorkItemTable`'s
+ * filter row, so re-activating the current chip clears the narrowing.
  *
  * Owns the query the table renders (filters, paging), the two dialogs'
  * visibility, and the campaign success reaction: the store already toasts
  * on success (`campaignSucceeded`), so this page's own job is closing the
- * dialog and navigating to the created intervention.
+ * dialog and navigating to the created intervention. Also resolves the
+ * table's `facilityLabelOf` input ({@link tableFacilityLabelOf}) from its
+ * own {@link facilityOptions}, so the grid can disambiguate rows sharing an
+ * equipment type across facilities.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -109,6 +116,7 @@ interface MaintenanceScheduleFilters {
     HlmButton,
     HlmInput,
     ...HlmSelectImports,
+    ...HlmToggleGroupImports,
   ],
   providers: [provideIcons({ lucideCircleAlert, lucidePackage, lucideSparkles })],
   templateUrl: './maintenance-schedules-page.component.html',
@@ -334,6 +342,27 @@ export class MaintenanceSchedulesPage {
     this.facilityOptions().find((option) => option.value === value)?.label ?? value;
 
   /**
+   * Method tableFacilityLabelOf
+   *
+   * @description
+   * Resolves a bare facility id — as {@link MaintenanceScheduleTable} reads
+   * it off `MaintenanceScheduleOutput.facility` — to its name from
+   * {@link facilityOptions}, whose own `value` is the full facility IRI.
+   * Passed to the table as its `facilityLabelOf` input so two rows sharing
+   * an equipment type at different facilities render distinguishable text
+   * and accessible names.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string} facilityId - The bare facility id.
+   *
+   * @returns {string | null} The facility's name, or `null` when it does not resolve.
+   */
+  protected tableFacilityLabelOf = (facilityId: string): string | null =>
+    this.facilityOptions().find((option) => iriId(option.value) === facilityId)?.label ?? null;
+
+  /**
    * Method equipmentTypeLabelOf
    * @description Names an equipment-type value on the closed filter select trigger.
    * @access protected
@@ -359,15 +388,31 @@ export class MaintenanceSchedulesPage {
   }
 
   /**
-   * Method toggleDueStatus
-   * @description Selects a due-status chip, or clears it when it is already active.
+   * Method onDueStatusChanged
+   *
+   * @description
+   * Narrows `hlm-toggle-group`'s single-select payload down to a known
+   * due-status, or `null` — the group is `nullable`, so re-clicking the
+   * active chip clears the narrowing rather than requiring a separate
+   * "Clear" action, mirroring `InterventionWorkItemTable.onFilterChanged`.
+   *
    * @access protected
-   * @since 1.0.0
-   * @param {MaintenanceDueStatus} value - The chip activated.
+   * @since 1.1.0
+   *
+   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   *
    * @returns {void}
    */
-  protected toggleDueStatus(value: MaintenanceDueStatus): void {
-    this.applyFilter({ dueStatus: this.filters().dueStatus === value ? null : value });
+  protected onDueStatusChanged(value: string | readonly string[] | null | undefined): void {
+    const dueStatus: MaintenanceDueStatus | null =
+      value === 'unscheduled' ||
+      value === 'up_to_date' ||
+      value === 'due_soon' ||
+      value === 'overdue'
+        ? value
+        : null;
+
+    this.applyFilter({ dueStatus });
   }
 
   /**

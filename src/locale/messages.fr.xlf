@@ -12858,6 +12858,14 @@
         <source>Maintenance</source>
         <target>Maintenance</target>
       </trans-unit>
+      <trans-unit id="maintenance.filter.dueStatusAriaLabel" datatype="html">
+        <source>Filter by due status</source>
+        <target>Filtrer par statut d&apos;échéance</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.equipmentLinkAriaLabel" datatype="html">
+        <source><x id="type" equiv-text="type"/> at <x id="facility" equiv-text="facilityName"/></source>
+        <target><x id="type" equiv-text="type"/> à <x id="facility" equiv-text="facilityName"/></target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

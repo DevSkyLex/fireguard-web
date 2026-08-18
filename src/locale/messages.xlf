@@ -3880,11 +3880,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">110,113</context>
+          <context context-type="linenumber">121,124</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">137,140</context>
+          <context context-type="linenumber">148,151</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
@@ -10154,81 +10154,92 @@
           <context context-type="linenumber">79,82</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="maintenance.filter.dueStatusAriaLabel" datatype="html">
+        <source>Filter by due status</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="maintenance.filter.facility" datatype="html">
         <source>Facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">24,27</context>
+          <context context-type="linenumber">34,37</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.filter.anyFacility" datatype="html">
         <source>Any facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">37,38</context>
+          <context context-type="linenumber">47,48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.filter.equipmentType" datatype="html">
         <source>Equipment type</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">56,59</context>
+          <context context-type="linenumber">66,69</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.filter.anyType" datatype="html">
         <source>Any type</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">69,70</context>
+          <context context-type="linenumber">79,80</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.filter.dueBefore" datatype="html">
         <source>Due before</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">88,91</context>
+          <context context-type="linenumber">98,101</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.list.errorTitle" datatype="html">
         <source>Couldn&apos;t load maintenance schedules</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">118,119</context>
+          <context context-type="linenumber">129,130</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.list.errorText" datatype="html">
         <source>The schedules could not be loaded. Check your connection and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">120,121</context>
+          <context context-type="linenumber">131,132</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.list.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">124,126</context>
+          <context context-type="linenumber">135,137</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.list.emptyTitle" datatype="html">
         <source>No maintenance schedules found</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">130,131</context>
+          <context context-type="linenumber">141,142</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.list.emptyDesc" datatype="html">
         <source>Adjust your filters, or track equipment to see its schedule here.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">132,133</context>
+          <context context-type="linenumber">143,144</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.generateCampaignButton" datatype="html">
         <source>Generate inspection campaign</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
-          <context context-type="linenumber">192,197</context>
+          <context context-type="linenumber">201,204</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
+          <context context-type="linenumber">206,211</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.table.title" datatype="html">
@@ -10284,42 +10295,49 @@
         <source>View facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.html</context>
-          <context context-type="linenumber">65,67</context>
+          <context context-type="linenumber">69,71</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.table.noFacility" datatype="html">
         <source>Unassigned</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.html</context>
-          <context context-type="linenumber">69,71</context>
+          <context context-type="linenumber">74,76</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.table.neverInspected" datatype="html">
         <source>Never inspected</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.html</context>
-          <context context-type="linenumber">79,81</context>
+          <context context-type="linenumber">84,86</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.table.defaultOverride" datatype="html">
         <source>—</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.html</context>
-          <context context-type="linenumber">95,97</context>
+          <context context-type="linenumber">100,102</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.table.editOverride" datatype="html">
         <source>Edit interval override</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.html</context>
-          <context context-type="linenumber">109,110</context>
+          <context context-type="linenumber">114,115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.table.noResults" datatype="html">
         <source> No results. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.html</context>
-          <context context-type="linenumber">126,128</context>
+          <context context-type="linenumber">131,133</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenance.table.equipmentLinkAriaLabel" datatype="html">
+        <source><x id="type" equiv-text="type"/> at <x id="facility" equiv-text="facilityName"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.ts</context>
+          <context context-type="linenumber">214</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.permission.deniedDetail" datatype="html">

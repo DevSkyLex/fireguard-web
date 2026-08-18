@@ -26,13 +26,20 @@ describe('MaintenanceScheduleTable', () => {
 
   const render = async (
     items: readonly MaintenanceScheduleOutput[],
-    overrides: Partial<{ loading: boolean; canManage: boolean }> = {},
+    overrides: Partial<{
+      loading: boolean;
+      canManage: boolean;
+      facilityLabelOf: (facilityId: string) => string | null;
+    }> = {},
   ): Promise<void> => {
     fixture.componentRef.setInput('items', items);
     fixture.componentRef.setInput('loading', overrides.loading ?? false);
     fixture.componentRef.setInput('canManage', overrides.canManage ?? false);
     fixture.componentRef.setInput('equipmentRouteBase', ['/organizations', 'org-1', 'equipments']);
     fixture.componentRef.setInput('facilityRouteBase', ['/organizations', 'org-1', 'facilities']);
+    if (overrides.facilityLabelOf) {
+      fixture.componentRef.setInput('facilityLabelOf', overrides.facilityLabelOf);
+    }
     await fixture.whenStable();
   };
 
@@ -108,6 +115,58 @@ describe('MaintenanceScheduleTable', () => {
     expect(
       Array.from(links).some((link) => link.getAttribute('href')?.includes('facility-1')),
     ).toBe(true);
+  });
+
+  it('should render the resolved facility name when facilityLabelOf resolves it', async () => {
+    await render([schedule({ facility: '/api/facilities/facility-1' })], {
+      facilityLabelOf: (facilityId) => (facilityId === 'facility-1' ? 'Building A' : null),
+    });
+
+    expect(root().textContent).toContain('Building A');
+    expect(root().textContent).not.toContain('View facility');
+  });
+
+  it('should fall back to the generic "View facility" label when facilityLabelOf cannot resolve it', async () => {
+    await render([schedule({ facility: '/api/facilities/facility-1' })]);
+
+    expect(root().textContent).toContain('View facility');
+  });
+
+  it('should disambiguate the equipment link accessible name by facility when two rows share a type', async () => {
+    await render(
+      [
+        schedule({ id: 'schedule-1', facility: '/api/facilities/facility-1' }),
+        schedule({ id: 'schedule-2', facility: '/api/facilities/facility-2' }),
+      ],
+      {
+        facilityLabelOf: (facilityId) =>
+          facilityId === 'facility-1'
+            ? 'Building A'
+            : facilityId === 'facility-2'
+              ? 'Building B'
+              : null,
+      },
+    );
+
+    const rows: NodeListOf<HTMLElement> = root().querySelectorAll(
+      '[data-testid="maintenance-schedule-table-row"]',
+    );
+    const equipmentLinks: HTMLAnchorElement[] = Array.from(rows).map(
+      (row) => row.querySelector('a') as HTMLAnchorElement,
+    );
+
+    expect(equipmentLinks[0].getAttribute('aria-label')).toBe('Fire extinguisher at Building A');
+    expect(equipmentLinks[1].getAttribute('aria-label')).toBe('Fire extinguisher at Building B');
+  });
+
+  it('should carry no equipment-link aria-label when the facility does not resolve', async () => {
+    await render([schedule()]);
+
+    const link: HTMLAnchorElement | null = root().querySelector(
+      '[data-testid="maintenance-schedule-table-row"] a',
+    );
+
+    expect(link?.hasAttribute('aria-label')).toBe(false);
   });
 
   it('should hide the actions column entirely when the operator cannot manage overrides', async () => {

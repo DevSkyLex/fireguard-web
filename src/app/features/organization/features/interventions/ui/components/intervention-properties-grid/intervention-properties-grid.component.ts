@@ -15,6 +15,9 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideExternalLink } from '@ng-icons/lucide';
 import type {
   InterventionEditState,
   InterventionEditTarget,
@@ -28,6 +31,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { InplaceField } from '@shared/inplace-field';
 import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -75,7 +79,16 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
  * `plannedStartAt` and `dueAt` are one card: they are picked together and
  * sent in one patch, which §10.5 admits as "a small coherent group".
  *
- * @version 1.0.0
+ * The site's facility record is reachable through a small external-link
+ * icon-anchor **beside** the site's `app-inplace-field`, not projected inside
+ * it: `InplaceField`'s trigger is itself a `<button>`, and an `<a>` nested
+ * inside a `<button>` is invalid interactive nesting — it would also fire
+ * the field's own open/close on every click and could leave the anchor
+ * unreachable to assistive tech. The sibling anchor stays visible whenever
+ * {@link siteFacilityId} resolves, independent of the field's edit state.
+ * `shared/inplace-field` is never modified for a single consumer's shape.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -83,6 +96,9 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
   selector: 'app-intervention-properties-grid',
   imports: [
     DatePipe,
+    NgIcon,
+    RouterLink,
+    HlmButton,
     InplaceField,
     InterventionTag,
     ...HlmAvatarImports,
@@ -90,6 +106,7 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
     ...HlmDatePickerImports,
     ...HlmSelectImports,
   ],
+  providers: [provideIcons({ lucideExternalLink })],
   templateUrl: './intervention-properties-grid.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -105,6 +122,16 @@ export class InterventionPropertiesGrid {
    */
   public readonly intervention: InputSignal<InterventionOutput> =
     input.required<InterventionOutput>();
+
+  /**
+   * Property organizationId
+   * @readonly
+   * @description The workspace owning the intervention, so the site row can link into the facility's own record.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
 
   /**
    * Property siteOptions
@@ -315,6 +342,20 @@ export class InterventionPropertiesGrid {
     return site === null
       ? null
       : (this.siteOptions().find((option) => option.value === site)?.label ?? site);
+  });
+
+  /**
+   * Property siteFacilityId
+   * @readonly
+   * @description The site's bare facility id, extracted from its IRI, driving the sibling external-link anchor beside the site field.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly siteFacilityId: Signal<string | null> = computed<string | null>(() => {
+    const site: string | null = this.intervention().site;
+
+    return site === null ? null : site.slice(site.lastIndexOf('/') + 1);
   });
 
   /**

@@ -15,9 +15,9 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBan, lucideCircleAlert } from '@ng-icons/lucide';
+import { lucideBan, lucideCircleAlert, lucideWrench } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
@@ -82,9 +82,13 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * `inspectionTitleResolver`; the status tags, non-conformity count and meta
  * line stay as a lead group at content top, and the lifecycle band registers
  * on the shell header through `PageActionsService`. The Cancel confirmation
- * is {@link InspectionCancelDialog} (`DESIGN.md` § Action Surfaces rule 5).
+ * is {@link InspectionCancelDialog} (`DESIGN.md` § Action Surfaces rule 5). A
+ * quiet "Interventions on this site" proxy link — shown only when the
+ * inspection carries a `facilityId` — points at the interventions list
+ * pre-filtered by that facility's `site`; it is a proxy by site, not a
+ * filter by inspection, and is labelled as such.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -92,6 +96,7 @@ const IDLE_EDIT_STATE: InspectionEditState = {
   selector: 'app-inspection-detail-page',
   imports: [
     NgIcon,
+    RouterLink,
     InspectionCancelDialog,
     InspectionInformationPanel,
     InspectionStatusTag,
@@ -100,7 +105,7 @@ const IDLE_EDIT_STATE: InspectionEditState = {
     HlmSkeleton,
     ...HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideBan, lucideCircleAlert })],
+  providers: [provideIcons({ lucideBan, lucideCircleAlert, lucideWrench })],
   templateUrl: './inspection-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

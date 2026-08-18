@@ -6,6 +6,17 @@
       <span class="text-sm text-muted-foreground" data-testid="inspection-non-conformities-count">{{
         nonConformitiesLabel()
       }}</span>
+      @if (inspection.facilityId; as siteFacilityId) {
+        <a
+          class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          data-testid="inspection-detail-site-interventions"
+          [routerLink]="['/organizations', organizationId(), 'interventions']"
+          [queryParams]="{ site: siteFacilityId }"
+        >
+          <ng-icon name="lucideWrench" class="text-sm" aria-hidden="true" />
+          <span i18n="@@inspection.detail.siteInterventions">Interventions on this site</span>
+        </a>
+      }
     </div>
     <p class="text-sm text-muted-foreground" data-testid="inspection-detail-meta">
       {{ metaLine() }}

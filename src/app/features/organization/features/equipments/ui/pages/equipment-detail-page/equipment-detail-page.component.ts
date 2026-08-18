@@ -17,7 +17,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideMapPin } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideMapPin, lucideWrench } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
@@ -77,13 +77,17 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * The record's name is the shell breadcrumb's title, resolved by
  * `equipmentTitleResolver`; the status tags and meta line stay as a lead
  * group at content top, and the lifecycle band registers on the shell header
- * through `PageActionsService`. When `planPosition` is set — populated only
- * on this detail read — a read-only "Pinned on floor plan" indicator sits
- * beside the facility name, linking to the owning facility's own detail
- * page; pin placement itself is edited from the facility's Plans tab, not
- * here.
+ * through `PageActionsService`. The facility name itself links to the
+ * owning facility's own record when one is assigned. When `planPosition` is
+ * set — populated only on this detail read — a read-only "Pinned on floor
+ * plan" indicator sits beside it, linking to the same facility; pin
+ * placement itself is edited from the facility's Plans tab, not here. A
+ * quiet "Interventions on this equipment's site" proxy link — shown only
+ * when a facility is assigned — points at the interventions list
+ * pre-filtered by that facility's `site`; it is a proxy by site, not a
+ * filter by equipment, and is labelled as such.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -99,7 +103,7 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     HlmSkeleton,
     ...HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideMapPin })],
+  providers: [provideIcons({ lucideCircleAlert, lucideMapPin, lucideWrench })],
   templateUrl: './equipment-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

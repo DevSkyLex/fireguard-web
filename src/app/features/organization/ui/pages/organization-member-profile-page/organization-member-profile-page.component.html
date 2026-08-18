@@ -42,6 +42,18 @@
           </dd>
         </div>
       </dl>
+
+      @if (canReadInterventions() && organizationId(); as orgId) {
+        <a
+          class="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground hover:underline sm:min-h-0"
+          data-testid="organization-member-profile-interventions"
+          [routerLink]="['/organizations', orgId, 'interventions']"
+          [queryParams]="{ responsible: memberId() }"
+          i18n="@@org.memberProfile.responsibleInterventions"
+        >
+          Interventions they are responsible for
+        </a>
+      }
     } @else if (isMissing()) {
       <app-empty-state
         icon="lucideUserRound"

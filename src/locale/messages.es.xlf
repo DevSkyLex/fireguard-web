@@ -1882,6 +1882,10 @@
         <source>Loading member</source>
         <target>Cargando miembro</target>
       </trans-unit>
+      <trans-unit id="org.memberProfile.responsibleInterventions" datatype="html">
+        <source>Interventions they are responsible for</source>
+        <target>Intervenciones de las que son responsables</target>
+      </trans-unit>
       <trans-unit id="org.plan.cadenceAria" datatype="html">
         <source>Billing cadence</source>
         <target>Periodicidad de facturación</target>
@@ -3198,6 +3202,10 @@
         <source>Pinned on floor plan</source>
         <target>Fijado en el plano</target>
       </trans-unit>
+      <trans-unit id="equipment.detail.siteInterventions" datatype="html">
+        <source> Interventions on this equipment&apos;s site </source>
+        <target> Intervenciones en el sitio de este equipo </target>
+      </trans-unit>
       <trans-unit id="equipment.detail.loadingAria" datatype="html">
         <source>Loading equipment</source>
         <target>Cargando equipo</target>
@@ -3437,6 +3445,26 @@
       <trans-unit id="facility.recentInspections.loadingAria" datatype="html">
         <source>Loading recent inspections</source>
         <target>Cargando las inspecciones recientes</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.title" datatype="html">
+        <source>Interventions on this site</source>
+        <target>Intervenciones en este sitio</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.seeAllAria" datatype="html">
+        <source>See all interventions on this site</source>
+        <target>Ver todas las intervenciones en este sitio</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.seeAll" datatype="html">
+        <source>See all</source>
+        <target>Ver todas</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.loadingAria" datatype="html">
+        <source>Loading interventions on this site</source>
+        <target>Cargando las intervenciones en este sitio</target>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.empty" datatype="html">
+        <source>No interventions on this site.</source>
+        <target>No hay intervenciones en este sitio.</target>
       </trans-unit>
       <trans-unit id="facility.detail.loading" datatype="html">
         <source>Loading…</source>
@@ -5877,6 +5905,10 @@
       <trans-unit id="intervention.prop.noSite" datatype="html">
         <source>No site</source>
         <target>Sin sitio</target>
+      </trans-unit>
+      <trans-unit id="intervention.prop.openSiteFacility" datatype="html">
+        <source>Open site facility</source>
+        <target>Abrir el sitio</target>
       </trans-unit>
       <trans-unit id="intervention.detail.editSite" datatype="html">
         <source>Edit site</source>
@@ -10365,6 +10397,26 @@
         <source>The facilities linked to this intervention.</source>
         <target>Las instalaciones vinculadas a esta intervención.</target>
       </trans-unit>
+      <trans-unit id="intervention.linked.facilities.draftBadge" datatype="html">
+        <source>Draft</source>
+        <target>Borrador</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.draftBadge" datatype="html">
+        <source>Draft</source>
+        <target>Borrador</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.linkAriaLabel" datatype="html">
+        <source><x id="type" equiv-text="type"/> (<x id="serial" equiv-text="serial"/>)</source>
+        <target><x id="type" equiv-text="type"/> (<x id="serial" equiv-text="serial"/>)</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.draftBadge" datatype="html">
+        <source>Draft</source>
+        <target>Borrador</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.linkAriaLabel" datatype="html">
+        <source>Inspection performed <x id="performed" equiv-text="performed"/>, <x id="result" equiv-text="result"/></source>
+        <target>Inspección realizada el <x id="performed" equiv-text="performed"/>, <x id="result" equiv-text="result"/></target>
+      </trans-unit>
       <trans-unit id="intervention.linked.facilities.columnName" datatype="html">
         <source>Name</source>
         <target>Nombre</target>
@@ -10524,6 +10576,10 @@
       <trans-unit id="inspection.detail.metaUpdated" datatype="html">
         <source>Updated <x id="when" equiv-text="when"/></source>
         <target>Actualizada <x id="when" equiv-text="when"/></target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.siteInterventions" datatype="html">
+        <source>Interventions on this site</source>
+        <target>Intervenciones en este sitio</target>
       </trans-unit>
       <trans-unit id="inspection.detail.nonConformitiesCountMany" datatype="html">
         <source><x id="count" equiv-text="count"/> non-conformities</source>

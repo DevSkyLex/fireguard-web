@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InterventionInspectionsTable } from '../intervention-inspections-table.component';
 
@@ -30,9 +31,12 @@ describe('InterventionInspectionsTable', () => {
     root().querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
 
     fixture = TestBed.createComponent(InterventionInspectionsTable);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('items', []);
     await fixture.whenStable();
   });
@@ -45,6 +49,31 @@ describe('InterventionInspectionsTable', () => {
 
     expect(row.textContent).toContain('Fail');
     expect(row.textContent).toContain('Closed');
+  });
+
+  it('should link a published inspection row to its detail route', async () => {
+    fixture.componentRef.setInput('items', [
+      inspection({ id: 'inspection-1', recordStatus: 'published' }),
+    ]);
+    await fixture.whenStable();
+
+    const link: HTMLAnchorElement | null = byTestId(
+      'intervention-inspections-table-row',
+    )?.querySelector('a') as HTMLAnchorElement | null;
+
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/inspections/inspection-1');
+  });
+
+  it('should render a draft-record row as plain text, not a link', async () => {
+    fixture.componentRef.setInput('items', [
+      inspection({ id: 'inspection-1', recordStatus: 'draft' }),
+    ]);
+    await fixture.whenStable();
+
+    const row: HTMLElement = byTestId('intervention-inspections-table-row') as HTMLElement;
+
+    expect(row.querySelector('a')).toBeNull();
   });
 
   it('should name the inspector when one is recorded', async () => {

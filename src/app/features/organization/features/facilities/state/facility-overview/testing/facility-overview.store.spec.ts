@@ -5,6 +5,8 @@ import { EquipmentService } from '@features/organization/features/equipments/dat
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import { InterventionService } from '@features/organization/features/interventions';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { FacilityOverviewStore } from '../facility-overview.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -24,6 +26,7 @@ describe('FacilityOverviewStore', () => {
   let store: FacilityOverviewStore;
   let mockInspectionService: { list: ReturnType<typeof vi.fn> };
   let mockEquipmentService: { list: ReturnType<typeof vi.fn> };
+  let mockInterventionService: { list: ReturnType<typeof vi.fn> };
 
   const passedInspection = {
     id: 'inspection-1',
@@ -70,15 +73,31 @@ describe('FacilityOverviewStore', () => {
     member: [operationalEquipment, maintenanceEquipment],
   };
 
+  const siteIntervention = {
+    id: 'intervention-1',
+    name: 'Annual fire check',
+    status: 'planned',
+    updatedAt: new Date().toISOString(),
+  } as unknown as InterventionOutput;
+
+  const interventionsCollection: HydraCollection<InterventionOutput> = {
+    '@id': '/api/interventions',
+    '@type': 'Collection',
+    totalItems: 1,
+    member: [siteIntervention],
+  };
+
   beforeEach(() => {
     mockInspectionService = { list: vi.fn().mockReturnValue(of(inspectionsCollection)) };
     mockEquipmentService = { list: vi.fn().mockReturnValue(of(equipmentCollection)) };
+    mockInterventionService = { list: vi.fn().mockReturnValue(of(interventionsCollection)) };
 
     TestBed.configureTestingModule({
       providers: [
         FacilityOverviewStore,
         { provide: InspectionService, useValue: mockInspectionService },
         { provide: EquipmentService, useValue: mockEquipmentService },
+        { provide: InterventionService, useValue: mockInterventionService },
       ],
     });
 
@@ -88,8 +107,10 @@ describe('FacilityOverviewStore', () => {
   it('starts idle with empty previews', () => {
     expect(store.inspections()).toEqual([]);
     expect(store.equipment()).toEqual([]);
+    expect(store.interventions()).toEqual([]);
     expect(store.isLoadingInspections()).toBe(false);
     expect(store.isLoadingEquipment()).toBe(false);
+    expect(store.isLoadingInterventions()).toBe(false);
     expect(store.complianceRate()).toBeNull();
     expect(store.complianceDisplay()).toBe('—');
     expect(store.equipmentCount()).toBe(0);
@@ -165,15 +186,44 @@ describe('FacilityOverviewStore', () => {
     });
   });
 
+  describe('loadInterventions', () => {
+    it('populates interventions on this site on success', async () => {
+      store.loadInterventions({ organizationId: 'org-1', facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', {
+        site: '/api/facilities/facility-1',
+        itemsPerPage: 5,
+        order: { updatedAt: 'desc' },
+      });
+      expect(store.interventions()).toHaveLength(1);
+      expect(store.isLoadingInterventions()).toBe(false);
+    });
+
+    it('clears interventions and reports a normalized error on failure', async () => {
+      mockInterventionService.list.mockReturnValueOnce(
+        throwError(() => apiError(500, 'Server error')),
+      );
+
+      store.loadInterventions({ organizationId: 'org-1', facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(store.interventions()).toEqual([]);
+      expect(store.isLoadingInterventions()).toBe(false);
+    });
+  });
+
   describe('load', () => {
-    it('triggers both inspection and equipment loads', async () => {
+    it('triggers the inspection, equipment and intervention loads', async () => {
       store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
       await flushEffects();
 
       expect(mockInspectionService.list).toHaveBeenCalledTimes(1);
       expect(mockEquipmentService.list).toHaveBeenCalledTimes(1);
+      expect(mockInterventionService.list).toHaveBeenCalledTimes(1);
       expect(store.inspections()).toHaveLength(3);
       expect(store.equipment()).toHaveLength(2);
+      expect(store.interventions()).toHaveLength(1);
     });
   });
 });

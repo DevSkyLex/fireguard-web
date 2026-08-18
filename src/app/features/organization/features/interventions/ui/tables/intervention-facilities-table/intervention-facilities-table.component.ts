@@ -6,8 +6,9 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideMapPin } from '@ng-icons/lucide';
+import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert, lucideCircleDotDashed, lucideMapPin } from '@ng-icons/lucide';
 import type {
   FacilityOutput,
   FacilityType,
@@ -46,21 +47,43 @@ const FACILITY_TYPE_LABEL: Readonly<Record<FacilityType, string>> = {
  * the backend's canonical `intervention` search filter, with a "Show more"
  * button appending further pages. No search, no row actions — the linked set
  * is a lookup, not a management surface (that stays in the facilities
- * feature's own upcoming pages).
+ * feature's own upcoming pages). A row's name links to the facility's own
+ * record, unless it is still an intervention-scoped draft — those do not
+ * resolve on the canonical route yet, so they render as plain text with an
+ * outline "Draft" badge beside it (icon + label, never colour-only).
  *
- * @version 1.2.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-facilities-table',
-  imports: [EmptyState, HlmBadge, HlmButton, HlmSkeleton, InterventionTag, ...HlmTableImports],
-  providers: [provideIcons({ lucideCircleAlert, lucideMapPin })],
+  imports: [
+    NgIcon,
+    RouterLink,
+    EmptyState,
+    HlmBadge,
+    HlmButton,
+    HlmSkeleton,
+    InterventionTag,
+    ...HlmTableImports,
+  ],
+  providers: [provideIcons({ lucideCircleAlert, lucideCircleDotDashed, lucideMapPin })],
   templateUrl: './intervention-facilities-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionFacilitiesTable {
   //#region Inputs
+  /**
+   * Property organizationId
+   * @readonly
+   * @description The workspace owning the intervention, so a row can link into its facility's own record.
+   * @access public
+   * @since 1.3.0
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+
   /**
    * Property items
    * @readonly
@@ -141,6 +164,25 @@ export class InterventionFacilitiesTable {
    */
   protected typeLabelOf(item: FacilityOutput): string {
     return FACILITY_TYPE_LABEL[item.type];
+  }
+
+  /**
+   * Method isDraftRecord
+   *
+   * @description
+   * Whether the row is an intervention-scoped draft, which does not resolve
+   * on the canonical `/facilities/:id` route — such a row renders as plain
+   * text instead of a broken link.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @param {FacilityOutput} item - The facility being rendered.
+   *
+   * @returns {boolean} `true` while the record is still a draft.
+   */
+  protected isDraftRecord(item: FacilityOutput): boolean {
+    return item.recordStatus === 'draft';
   }
   //#endregion
 }

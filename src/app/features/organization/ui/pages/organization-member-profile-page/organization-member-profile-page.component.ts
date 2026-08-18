@@ -8,7 +8,9 @@ import {
   type InputSignal,
   type Signal,
 } from '@angular/core';
-import type { MemberDirectoryEntry } from '@features/organization/models';
+import { RouterLink } from '@angular/router';
+import { OrganizationPermissionService } from '@features/organization/access';
+import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_CONTEXT_PORT,
@@ -39,7 +41,11 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * `organization.members.read`; without it the store never calls, so this says
  * so rather than showing an error the reader cannot act on.
  *
- * @version 1.0.0
+ * A "Interventions they are responsible for" link, gated on
+ * `organization.interventions.read`, points at the interventions list
+ * pre-filtered by `?responsible=`, which the list page already parses.
+ *
+ * @version 1.1.0
  *
  * @example
  * ```typescript
@@ -50,7 +56,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-organization-member-profile-page',
-  imports: [EmptyState, IdentitySummary, HlmBadge, HlmSkeleton],
+  imports: [RouterLink, EmptyState, IdentitySummary, HlmBadge, HlmSkeleton],
   templateUrl: './organization-member-profile-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -106,6 +112,35 @@ export class OrganizationMemberProfilePage implements OnInit {
    */
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  /** Gates the "Interventions they are responsible for" link on `organization.interventions.read`. */
+  private readonly permissions: OrganizationPermissionService = inject(
+    OrganizationPermissionService,
+  );
+
+  /**
+   * Property organizationId
+   * @readonly
+   * @description The organization currently open, for the responsibility link's route.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly organizationId: Signal<string | null> = computed((): string | null =>
+    this.organizationContext.selectedOrganizationId(),
+  );
+
+  /**
+   * Property canReadInterventions
+   * @readonly
+   * @description Whether the viewer may see the "Interventions they are responsible for" link.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadInterventions: Signal<boolean> = computed((): boolean =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
+  );
 
   /**
    * Property member

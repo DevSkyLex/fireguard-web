@@ -571,6 +571,15 @@ Internal code imports deep paths directly.
   supplies `organizationId`/`interventionId` and gates the trigger on
   `organization.messaging.read`; it owns no messaging state, injects no collaboration store or
   service directly, and the sheet's only wiring is the component's own inputs.
+- **The reverse direction also holds, since cross-navigation (7.0):** the facilities feature's
+  `FacilityOverviewStore` cross-imports `InterventionService` from this feature's root barrel
+  (`@features/organization/features/interventions`) and `InterventionOutput` from its `models`
+  concern barrel, to list the most recently updated interventions whose `site` is the open
+  facility ("Interventions on this site"). No new method was needed — `InterventionService.list`
+  already accepts a `site` IRI filter. Read-only, the mirror of the "Linked" tabs' own established
+  pattern above: facilities lists interventions touching one of its records and renders them
+  through its own template; it creates, edits and deletes nothing here, and owns no intervention
+  state.
 
 ## Detail workspace composition
 

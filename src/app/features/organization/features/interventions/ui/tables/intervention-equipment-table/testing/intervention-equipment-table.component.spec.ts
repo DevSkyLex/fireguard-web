@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { InterventionEquipmentTable } from '../intervention-equipment-table.component';
 
@@ -31,9 +32,12 @@ describe('InterventionEquipmentTable', () => {
     root().querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
 
     fixture = TestBed.createComponent(InterventionEquipmentTable);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('items', []);
     await fixture.whenStable();
   });
@@ -55,6 +59,27 @@ describe('InterventionEquipmentTable', () => {
     expect(row.textContent).toContain('Sicli CO2-6');
     expect(row.textContent).toContain('Operational');
     expect(row.textContent).toContain('Hall A');
+  });
+
+  it('should link a published equipment row to its detail route', async () => {
+    fixture.componentRef.setInput('items', [equipment({ id: 'eq-1', recordStatus: 'published' })]);
+    await fixture.whenStable();
+
+    const link: HTMLAnchorElement | null = byTestId(
+      'intervention-equipment-table-row',
+    )?.querySelector('a') as HTMLAnchorElement | null;
+
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/equipments/eq-1');
+  });
+
+  it('should render a draft-record row as plain text, not a link', async () => {
+    fixture.componentRef.setInput('items', [equipment({ id: 'eq-1', recordStatus: 'draft' })]);
+    await fixture.whenStable();
+
+    const row: HTMLElement = byTestId('intervention-equipment-table-row') as HTMLElement;
+
+    expect(row.querySelector('a')).toBeNull();
   });
 
   it('should draw skeleton rows while the tab fetch is in flight and nothing has loaded yet', async () => {

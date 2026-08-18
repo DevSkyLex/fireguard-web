@@ -34,6 +34,7 @@ import {
   FacilityStore,
 } from '@features/organization/features/facilities/state';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { FacilityDetailPage } from '../facility-detail-page.component';
 
 const inBody = (id: string): HTMLElement | null => document.querySelector(`[data-testid="${id}"]`);
@@ -80,6 +81,15 @@ const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
     ...overrides,
   }) as FacilityOutput;
 
+const intervention = (overrides: Partial<InterventionOutput> = {}): InterventionOutput =>
+  ({
+    id: 'intervention-1',
+    name: 'Annual fire check',
+    status: 'planned',
+    updatedAt: '2026-01-05T09:00:00Z',
+    ...overrides,
+  }) as InterventionOutput;
+
 const segment = (overrides: Partial<FacilityPathSegment> = {}): FacilityPathSegment => ({
   id: 'facility-0',
   name: 'Headquarters Campus',
@@ -110,6 +120,8 @@ describe('FacilityDetailPage', () => {
   let remove: ReturnType<typeof vi.fn>;
   let ensureFacilityDescendantsLoaded: ReturnType<typeof vi.fn>;
   let overviewLoad: ReturnType<typeof vi.fn>;
+  let overviewInterventions: WritableSignal<readonly InterventionOutput[]>;
+  let overviewIsLoadingInterventions: WritableSignal<boolean>;
   let navigate: ReturnType<typeof vi.fn>;
   let setTitle: ReturnType<typeof vi.fn>;
   let selectedFacility: WritableSignal<FacilityOutput | null>;
@@ -172,6 +184,8 @@ describe('FacilityDetailPage', () => {
     remove = vi.fn();
     ensureFacilityDescendantsLoaded = vi.fn();
     overviewLoad = vi.fn();
+    overviewInterventions = signal<readonly InterventionOutput[]>([]);
+    overviewIsLoadingInterventions = signal<boolean>(false);
     setTitle = vi.fn();
     selectedFacility = signal<FacilityOutput | null>(facility());
     getError = signal<StoreError | null>(null);
@@ -257,8 +271,10 @@ describe('FacilityDetailPage', () => {
               nextInspectionInDays: signal<number | null>(null),
               equipmentStatusRows: signal([]),
               recentInspections: signal([]),
+              interventions: overviewInterventions,
               isLoadingEquipment: signal(false),
               isLoadingInspections: signal(false),
+              isLoadingInterventions: overviewIsLoadingInterventions,
               load: overviewLoad,
             },
           },
@@ -1034,6 +1050,36 @@ describe('FacilityDetailPage', () => {
       fixture.componentInstance['onPinPositionRemoved']('equipment-1');
 
       expect(planRemovePinFromPlan).toHaveBeenCalledWith('equipment-1');
+    });
+  });
+
+  describe('interventions on this site', () => {
+    it('should show a quiet empty state when no intervention touches this site', async () => {
+      await createPage();
+
+      expect(byTestId('facility-detail-interventions-empty')?.textContent).toContain(
+        'No interventions on this site.',
+      );
+    });
+
+    it('should render each linked intervention as a link to its own record', async () => {
+      overviewInterventions.set([
+        intervention({ id: 'intervention-1', name: 'Annual fire check' }),
+      ]);
+      await createPage();
+
+      const row: HTMLElement | null = byTestId('facility-detail-intervention-row');
+
+      expect(row?.textContent).toContain('Annual fire check');
+      expect(row?.getAttribute('href')).toBe('/organizations/org-1/interventions/intervention-1');
+    });
+
+    it('should link "See all" to the list pre-filtered by this site', async () => {
+      await createPage();
+
+      const link: HTMLElement | null = byTestId('facility-detail-interventions-see-all');
+
+      expect(link?.getAttribute('href')).toBe('/organizations/org-1/interventions?site=facility-1');
     });
   });
 

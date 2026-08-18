@@ -11,9 +11,9 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
-import { EMPTY, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
@@ -275,7 +275,6 @@ describe('InterventionDetailPage', () => {
     listDelete = vi.fn();
     setPendingDuplicatePrefill = vi.fn();
     publish = vi.fn().mockResolvedValue({ status: 'completed', error: null });
-    navigate = vi.fn().mockResolvedValue(true);
     openSubjectThread = vi.fn().mockReturnValue(of({ id: 'conversation-1' } as ConversationOutput));
     downloadAttachment = vi
       .fn()
@@ -322,7 +321,7 @@ describe('InterventionDetailPage', () => {
         { provide: InterventionPublicationService, useValue: { publish } },
         { provide: FeedbackService, useValue: { success: vi.fn(), error: feedbackError } },
         { provide: TitleService, useValue: { setTitle: vi.fn() } },
-        { provide: Router, useValue: { navigate, events: EMPTY } },
+        provideRouter([]),
         { provide: ConversationService, useValue: { openSubjectThread } },
         {
           provide: MEMBER_DIRECTORY_PORT,
@@ -464,6 +463,8 @@ describe('InterventionDetailPage', () => {
         ],
       },
     });
+
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
 
   it('should load the workspace and its activity timeline on arrival', async () => {

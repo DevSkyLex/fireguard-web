@@ -57,7 +57,25 @@
           @for (item of items(); track item.id) {
             <tr hlmTableRow data-testid="intervention-facilities-table-row">
               <td hlmTableCell class="whitespace-normal">
-                <span class="font-medium text-foreground">{{ item.name }}</span>
+                @if (isDraftRecord(item)) {
+                  <span class="font-medium text-foreground">{{ item.name }}</span>
+                  <span
+                    hlmBadge
+                    variant="outline"
+                    class="ms-1.5 gap-1 align-middle text-muted-foreground"
+                    data-testid="intervention-facilities-draft-badge"
+                  >
+                    <ng-icon name="lucideCircleDotDashed" size="12" aria-hidden="true" />
+                    <span i18n="@@intervention.linked.facilities.draftBadge">Draft</span>
+                  </span>
+                } @else {
+                  <a
+                    class="font-medium text-foreground hover:underline"
+                    [routerLink]="['/organizations', organizationId(), 'facilities', item.id]"
+                  >
+                    {{ item.name }}
+                  </a>
+                }
                 @if (item.code) {
                   <span class="block text-sm text-muted-foreground">{{ item.code }}</span>
                 }

@@ -29,11 +29,12 @@ import { OrganizationAssetsPaneStore } from './state/organization-assets-pane';
  * The landing page — the merged Dashboard, combining the retired Today and
  * Statistics pages into one tabbed surface (`FEATURE.md`) — the
  * conversational surfaces (direct messages and channels), the estate
- * explorer (`assets`), the administration pages (members, team, settings)
- * and a member's profile are mounted today; `checklists` returns under
- * `:organizationId` once its page is rebuilt, and the sidebar navigation
- * already lists it behind its permissions. `statistics` is a permanent
- * redirect to the landing page for old bookmarks and deep links.
+ * explorer (`assets`), the maintenance schedule board (`maintenance`), the
+ * administration pages (members, team, settings) and a member's profile are
+ * mounted today; `checklists` returns under `:organizationId` once its page
+ * is rebuilt, and the sidebar navigation already lists it behind its
+ * permissions. `statistics` is a permanent redirect to the landing page for
+ * old bookmarks and deep links.
  *
  * `messages` and `channels` load the collaboration subfeature's route files
  * directly rather than its barrel, which also exports the offline sync
@@ -112,6 +113,13 @@ export const ORGANIZATION_ROUTES: Routes = [
         path: 'inspections',
         loadChildren: () =>
           import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
+      },
+      {
+        path: 'maintenance',
+        loadChildren: () =>
+          import('./features/maintenance-schedules/maintenance-schedules.routes').then(
+            (m) => m.MAINTENANCE_SCHEDULE_ROUTES,
+          ),
       },
       {
         path: 'calendar',

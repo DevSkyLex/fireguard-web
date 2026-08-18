@@ -1,0 +1,86 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content
+    class="sm:max-w-md"
+    data-testid="maintenance-override-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@maintenance.overrideDialog.title">Interval override</h3>
+      <p hlmDialogDescription i18n="@@maintenance.overrideDialog.description">
+        Override how often this equipment type is inspected, or follow the organization default.
+      </p>
+    </hlm-dialog-header>
+
+    <form novalidate (submit)="submit($event)">
+      <hlm-field-group>
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="maintenance-override-value"
+            i18n="@@maintenance.overrideDialog.label"
+            >Interval</label
+          >
+          <hlm-select
+            [value]="draft()"
+            [itemToString]="durationLabelOf"
+            (valueChange)="draft.set($event ?? organizationDefaultValue)"
+          >
+            <hlm-select-trigger
+              buttonId="maintenance-override-value"
+              class="w-full"
+              data-testid="maintenance-override-select"
+            >
+              <hlm-select-value />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                <hlm-select-item
+                  [value]="organizationDefaultValue"
+                  data-testid="maintenance-override-option-default"
+                  i18n="@@maintenance.overrideDialog.useDefault"
+                  >Use organization default</hlm-select-item
+                >
+                @for (option of durationOptions; track option.value) {
+                  <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        </hlm-field>
+
+        <hlm-field orientation="horizontal" class="justify-end">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="max-sm:min-h-11"
+            data-testid="maintenance-override-cancel"
+            [disabled]="pending()"
+            (click)="visibleChange.emit(false)"
+          >
+            <span i18n="@@common.cancel">Cancel</span>
+          </button>
+          <button
+            hlmBtn
+            type="submit"
+            class="max-sm:min-h-11"
+            data-testid="maintenance-override-submit"
+            [disabled]="pending()"
+            [attr.aria-busy]="pending() ? 'true' : null"
+            aria-live="polite"
+          >
+            @if (pending()) {
+              <span i18n="@@maintenance.overrideDialog.saving">Saving…</span>
+            } @else {
+              <span i18n="@@maintenance.overrideDialog.save">Save</span>
+            }
+          </button>
+        </hlm-field>
+      </hlm-field-group>
+    </form>
+  </hlm-dialog-content>
+</hlm-dialog>

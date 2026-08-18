@@ -145,6 +145,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
   },
   {
+    id: 'maintenance',
+    label: $localize`:@@route.maintenance:Maintenance`,
+    icon: 'lucideWrench',
+    path: 'maintenance',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.MAINTENANCE_READ],
+  },
+  {
     /**
      * Group channels are organization workspaces — they belong to the
      * workspace, unlike direct messages, which follow the reader and therefore

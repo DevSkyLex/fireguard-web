@@ -26,7 +26,7 @@ This feature is responsible for:
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures: facilities, equipments, inspections, interventions,
-  checklists and collaboration (the conversational surface),
+  maintenance-schedules, checklists and collaboration (the conversational surface),
 - publishing organization context to layouts and approved consumers.
 
 This feature does not own generic shell composition or account-level user identity.
@@ -41,7 +41,7 @@ This feature does not own generic shell composition or account-level user identi
 
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing
 > Dashboard page), `messages`, `channels`, `interventions`, `assets`, `equipments`, `facilities`,
-> `inspections`, `calendar`, `statistics` (a permanent redirect to the landing page, kept for old
+> `inspections`, `maintenance`, `calendar`, `statistics` (a permanent redirect to the landing page, kept for old
 > bookmarks and deep links — see Dashboard below), `members`, `members/:memberId`, `team`,
 > `settings`, and `/organizations/invitations/accept` (mounted at the app root, outside this
 > subtree — see below). `checklists` is the feature's remaining contract and is already listed by
@@ -216,8 +216,9 @@ limit quantities.
 
 Nested subfeatures under `features/organization/features/` own their own local routes, pages, and
 business flows while remaining under organization ownership. Each mirrors a top-level backend module
-(`Facility`, `Equipment`, `Inspection`, `Intervention`, `Messaging`) whose resources belong to an
-organization; the backend siblinghood is not what decides placement here, ownership of the data is.
+(`Facility`, `Equipment`, `Inspection`, `Intervention`, `Maintenance`, `Messaging`) whose resources
+belong to an organization; the backend siblinghood is not what decides placement here, ownership of
+the data is.
 
 ## Published Contracts
 

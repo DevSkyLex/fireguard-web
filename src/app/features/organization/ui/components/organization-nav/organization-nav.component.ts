@@ -12,6 +12,7 @@ import {
   lucideNetwork,
   lucideSettings,
   lucideUsers,
+  lucideWrench,
 } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -87,6 +88,7 @@ import {
       lucideNetwork,
       lucideSettings,
       lucideUsers,
+      lucideWrench,
     }),
   ],
   templateUrl: './organization-nav.component.html',

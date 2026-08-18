@@ -12638,6 +12638,226 @@
         <source>Requests expire after <x id="days" equiv-text="this.approval().approvalTtlDays"/> days</source>
         <target>Les demandes expirent après <x id="days"/> jours</target>
       </trans-unit>
+      <trans-unit id="maintenance.override.durationP28D" datatype="html">
+        <source>Every 4 weeks</source>
+        <target>Toutes les 4 semaines</target>
+      </trans-unit>
+      <trans-unit id="maintenance.override.durationP1M" datatype="html">
+        <source>Every month</source>
+        <target>Chaque mois</target>
+      </trans-unit>
+      <trans-unit id="maintenance.override.durationP3M" datatype="html">
+        <source>Every 3 months</source>
+        <target>Tous les 3 mois</target>
+      </trans-unit>
+      <trans-unit id="maintenance.override.durationP6M" datatype="html">
+        <source>Every 6 months</source>
+        <target>Tous les 6 mois</target>
+      </trans-unit>
+      <trans-unit id="maintenance.override.durationP1Y" datatype="html">
+        <source>Every year</source>
+        <target>Chaque année</target>
+      </trans-unit>
+      <trans-unit id="maintenance.override.durationP2Y" datatype="html">
+        <source>Every 2 years</source>
+        <target>Tous les 2 ans</target>
+      </trans-unit>
+      <trans-unit id="maintenance.override.durationP5Y" datatype="html">
+        <source>Every 5 years</source>
+        <target>Tous les 5 ans</target>
+      </trans-unit>
+      <trans-unit id="maintenance.override.durationP10Y" datatype="html">
+        <source>Every 10 years</source>
+        <target>Tous les 10 ans</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaign.toast.created" datatype="html">
+        <source>Campaign #<x id="number" equiv-text="result.number"/> created with <x id="count" equiv-text="result.workItemsCount"/> work item(s)</source>
+        <target>Campagne nº<x id="number" equiv-text="result.number"/> créée avec <x id="count" equiv-text="result.workItemsCount"/> tâche(s) de travail</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.title" datatype="html">
+        <source>Generate inspection campaign</source>
+        <target>Générer une campagne d&apos;inspection</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.description" datatype="html">
+        <source> Creates an intervention covering every schedule currently due, optionally narrowed to one facility or equipment type. </source>
+        <target> Crée une intervention couvrant tous les plannings actuellement dus, éventuellement limitée à un site ou un type d&apos;équipement. </target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.name" datatype="html">
+        <source>Name</source>
+        <target>Nom</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.namePlaceholder" datatype="html">
+        <source>Q1 fire extinguisher round</source>
+        <target>Tournée extincteurs T1</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.dueBefore" datatype="html">
+        <source>Due before</source>
+        <target>Échéance avant</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.facility" datatype="html">
+        <source>Facility</source>
+        <target>Site</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.everyFacility" datatype="html">
+        <source>Every facility</source>
+        <target>Tous les sites</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.equipmentType" datatype="html">
+        <source>Equipment type</source>
+        <target>Type d&apos;équipement</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.everyType" datatype="html">
+        <source>Every type</source>
+        <target>Tous les types</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.submitting" datatype="html">
+        <source>Generating…</source>
+        <target>Génération…</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.submit" datatype="html">
+        <source>Generate campaign</source>
+        <target>Générer la campagne</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.nameRequired" datatype="html">
+        <source>Name is required.</source>
+        <target>Le nom est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.nameTooShort" datatype="html">
+        <source>Enter at least 2 characters.</source>
+        <target>Saisissez au moins 2 caractères.</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.nameTooLong" datatype="html">
+        <source>This name is too long.</source>
+        <target>Ce nom est trop long.</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.dueBeforeRequired" datatype="html">
+        <source>A due-before date is required.</source>
+        <target>Une date d&apos;échéance est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="maintenance.campaignDialog.genericError" datatype="html">
+        <source>The campaign could not be generated.</source>
+        <target>La campagne n&apos;a pas pu être générée.</target>
+      </trans-unit>
+      <trans-unit id="maintenance.overrideDialog.title" datatype="html">
+        <source>Interval override</source>
+        <target>Substitution de l&apos;intervalle</target>
+      </trans-unit>
+      <trans-unit id="maintenance.overrideDialog.description" datatype="html">
+        <source> Override how often this equipment type is inspected, or follow the organization default. </source>
+        <target> Modifiez la fréquence d&apos;inspection de ce type d&apos;équipement, ou suivez la valeur par défaut de l&apos;organisation. </target>
+      </trans-unit>
+      <trans-unit id="maintenance.overrideDialog.label" datatype="html">
+        <source>Interval</source>
+        <target>Intervalle</target>
+      </trans-unit>
+      <trans-unit id="maintenance.overrideDialog.useDefault" datatype="html">
+        <source>Use organization default</source>
+        <target>Utiliser la valeur par défaut de l&apos;organisation</target>
+      </trans-unit>
+      <trans-unit id="maintenance.overrideDialog.saving" datatype="html">
+        <source>Saving…</source>
+        <target>Enregistrement…</target>
+      </trans-unit>
+      <trans-unit id="maintenance.overrideDialog.save" datatype="html">
+        <source>Save</source>
+        <target>Enregistrer</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.facility" datatype="html">
+        <source>Facility</source>
+        <target>Site</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.anyFacility" datatype="html">
+        <source>Any facility</source>
+        <target>Tous les sites</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.equipmentType" datatype="html">
+        <source>Equipment type</source>
+        <target>Type d&apos;équipement</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.anyType" datatype="html">
+        <source>Any type</source>
+        <target>Tous les types</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueBefore" datatype="html">
+        <source>Due before</source>
+        <target>Échéance avant</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.errorTitle" datatype="html">
+        <source>Couldn&apos;t load maintenance schedules</source>
+        <target>Impossible de charger les plannings de maintenance</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.errorText" datatype="html">
+        <source>The schedules could not be loaded. Check your connection and try again.</source>
+        <target>Les plannings n&apos;ont pas pu être chargés. Vérifiez votre connexion et réessayez.</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.emptyTitle" datatype="html">
+        <source>No maintenance schedules found</source>
+        <target>Aucun planning de maintenance trouvé</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.emptyDesc" datatype="html">
+        <source>Adjust your filters, or track equipment to see its schedule here.</source>
+        <target>Ajustez vos filtres, ou suivez des équipements pour voir leur planning ici.</target>
+      </trans-unit>
+      <trans-unit id="maintenance.generateCampaignButton" datatype="html">
+        <source>Generate inspection campaign</source>
+        <target>Générer une campagne d&apos;inspection</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.title" datatype="html">
+        <source> Maintenance schedules </source>
+        <target> Plannings de maintenance </target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.colEquipment" datatype="html">
+        <source>Equipment</source>
+        <target>Équipement</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.colFacility" datatype="html">
+        <source>Facility</source>
+        <target>Site</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.colNextDue" datatype="html">
+        <source>Next due</source>
+        <target>Prochaine échéance</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.colDueStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.colOverride" datatype="html">
+        <source>Interval override</source>
+        <target>Substitution de l&apos;intervalle</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.viewFacility" datatype="html">
+        <source>View facility</source>
+        <target>Voir le site</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.noFacility" datatype="html">
+        <source>Unassigned</source>
+        <target>Non assigné</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.neverInspected" datatype="html">
+        <source>Never inspected</source>
+        <target>Jamais inspecté</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.defaultOverride" datatype="html">
+        <source>—</source>
+        <target>—</target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.noResults" datatype="html">
+        <source> No results. </source>
+        <target> Aucun résultat. </target>
+      </trans-unit>
+      <trans-unit id="maintenance.table.editOverride" datatype="html">
+        <source>Edit interval override</source>
+        <target>Modifier la substitution de l&apos;intervalle</target>
+      </trans-unit>
+      <trans-unit id="route.maintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>Maintenance</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

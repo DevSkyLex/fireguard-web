@@ -1,0 +1,65 @@
+<div id="imports" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  @if (canUpload()) {
+    <section hlmCard data-testid="imports-upload-card">
+      <div hlmCardHeader>
+        <h2 hlmCardTitle i18n="@@imports.upload.title">Import from CSV</h2>
+        <p hlmCardDescription i18n="@@imports.upload.description">
+          Bulk-create equipment or facilities from a spreadsheet export.
+        </p>
+      </div>
+      <div hlmCardContent>
+        <app-import-upload-form
+          [kindOptions]="availableKindOptions()"
+          [pending]="store.isCreating()"
+          [error]="store.createError()"
+          (submitted)="upload($event)"
+        />
+      </div>
+    </section>
+  }
+
+  @if (store.hasListError()) {
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="Couldn't load import jobs"
+      i18n-title="@@imports.list.errorTitle"
+      description="The jobs could not be loaded. Check your connection and try again."
+      i18n-description="@@imports.list.errorText"
+    >
+      <button hlmBtn variant="outline" data-testid="imports-retry" (click)="reload()">
+        <span i18n="@@imports.list.retry">Retry</span>
+      </button>
+    </app-error-state>
+  } @else if (!store.isLoading() && items().length === 0) {
+    <app-empty-state
+      icon="lucideUpload"
+      title="No import jobs yet"
+      i18n-title="@@imports.list.emptyTitle"
+      description="Upload a CSV file above to bulk-create equipment or facilities."
+      i18n-description="@@imports.list.emptyDesc"
+    />
+  } @else {
+    <app-import-job-table
+      [items]="items()"
+      [loading]="store.isLoading() && items().length === 0"
+      (selected)="openReport($event)"
+    />
+
+    <app-collection-pagination
+      [page]="page()"
+      [pageCount]="pageCount()"
+      [pageSize]="pageSize()"
+      [total]="store.totalJobs()"
+      [shown]="items().length"
+      testIdPrefix="imports"
+      (pageChanged)="goToPage($event)"
+      (pageSizeChanged)="setPageSize($event)"
+    />
+  }
+</div>
+
+<app-import-job-detail-sheet
+  [visible]="detailVisible()"
+  [job]="selectedJob()"
+  (visibleChange)="closeReport()"
+/>

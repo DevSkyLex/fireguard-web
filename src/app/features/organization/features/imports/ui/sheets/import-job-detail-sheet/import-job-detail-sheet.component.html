@@ -1,0 +1,56 @@
+<hlm-sheet [side]="side()" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[560px]! sm:max-w-none!"
+    data-testid="import-job-detail-sheet"
+  >
+    @if (job(); as job) {
+      <hlm-sheet-header>
+        <h3 hlmSheetTitle class="flex items-center gap-2">
+          <span class="truncate">{{ job.originalFilename }}</span>
+          <app-import-status-tag [value]="job.status" />
+        </h3>
+        <p hlmSheetDescription>
+          {{ job.createdAt | date: 'medium' }}
+        </p>
+      </hlm-sheet-header>
+
+      <div class="flex flex-col gap-4 px-4 pb-4">
+        @if (summary(); as message) {
+          <p class="text-sm text-foreground" data-testid="import-job-detail-summary">
+            {{ message }}
+          </p>
+        } @else {
+          <p class="text-sm text-muted-foreground" i18n="@@imports.report.pending">
+            Queued — the report appears once processing starts.
+          </p>
+        }
+
+        @if (rows().length > 0) {
+          <ul class="flex flex-col gap-2" data-testid="import-job-detail-rows">
+            @for (row of rows(); track row.rowNumber + row.code + row.message) {
+              <li class="flex items-start gap-2 rounded-md border border-border p-2 text-sm">
+                <ng-icon
+                  [name]="rowTagOf(row).icon"
+                  [class]="rowTagOf(row).iconClass"
+                  class="mt-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+                <span class="flex flex-col">
+                  <span class="text-foreground">
+                    <span i18n="@@imports.report.row">Row</span> {{ row.rowNumber }}
+                    @if (row.column) {
+                      · {{ row.column }}
+                    }
+                    · {{ rowTagOf(row).label }}
+                  </span>
+                  <span class="text-muted-foreground">{{ row.message }}</span>
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </hlm-sheet-content>
+</hlm-sheet>

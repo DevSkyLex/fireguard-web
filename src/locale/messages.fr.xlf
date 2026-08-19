@@ -13566,6 +13566,230 @@
         <source>Team assigned</source>
         <target>Équipe assignée</target>
       </trans-unit>
+      <trans-unit id="route.imports" datatype="html">
+        <source>Imports</source>
+        <target>Imports</target>
+      </trans-unit>
+      <trans-unit id="imports.csvHelp.facility.coordinates" datatype="html">
+        <source>latitude and longitude must be given together.</source>
+        <target>latitude et longitude doivent être renseignées ensemble.</target>
+      </trans-unit>
+      <trans-unit id="imports.csvHelp.facility.parentCode" datatype="html">
+        <source>parentCode must reference a facility that already exists — order parent rows before their children. A dry run also resolves it against earlier &quot;would create&quot; rows in the same file.</source>
+        <target>parentCode doit référencer une installation déjà existante — placez les lignes parentes avant leurs lignes enfants. Un essai à blanc la résout aussi parmi les lignes &quot;à créer&quot; précédentes du même fichier.</target>
+      </trans-unit>
+      <trans-unit id="imports.csvHelp.general.delimiter" datatype="html">
+        <source>Comma or semicolon delimited, UTF-8 (a leading BOM is fine).</source>
+        <target>Délimité par virgule ou point-virgule, UTF-8 (un BOM en début de fichier est toléré).</target>
+      </trans-unit>
+      <trans-unit id="imports.csvHelp.general.limits" datatype="html">
+        <source>Up to 5,000 rows and 5 MB per file.</source>
+        <target>Jusqu'à 5 000 lignes et 5 Mo par fichier.</target>
+      </trans-unit>
+      <trans-unit id="imports.csvHelp.general.unknownColumns" datatype="html">
+        <source>Unknown columns are ignored.</source>
+        <target>Les colonnes inconnues sont ignorées.</target>
+      </trans-unit>
+      <trans-unit id="imports.kind.equipment" datatype="html">
+        <source>Equipment</source>
+        <target>Équipements</target>
+      </trans-unit>
+      <trans-unit id="imports.kind.facility" datatype="html">
+        <source>Facilities</source>
+        <target>Établissements</target>
+      </trans-unit>
+      <trans-unit id="imports.list.emptyDesc" datatype="html">
+        <source>Upload a CSV file above to bulk-create equipment or facilities.</source>
+        <target>Importez un fichier CSV ci-dessus pour créer des équipements ou des établissements en masse.</target>
+      </trans-unit>
+      <trans-unit id="imports.list.emptyTitle" datatype="html">
+        <source>No import jobs yet</source>
+        <target>Aucun import pour le moment</target>
+      </trans-unit>
+      <trans-unit id="imports.list.errorText" datatype="html">
+        <source>The jobs could not be loaded. Check your connection and try again.</source>
+        <target>Les imports n'ont pas pu être chargés. Vérifiez votre connexion et réessayez.</target>
+      </trans-unit>
+      <trans-unit id="imports.list.errorTitle" datatype="html">
+        <source>Couldn&apos;t load import jobs</source>
+        <target>Impossible de charger les imports</target>
+      </trans-unit>
+      <trans-unit id="imports.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="imports.report.allCreated" datatype="html">
+        <source><x id="count" equiv-text="job.successfulRows"/> row(s) created.</source>
+        <target><x id="count" equiv-text="job.successfulRows"/> ligne(s) créée(s).</target>
+      </trans-unit>
+      <trans-unit id="imports.report.dryRunSummary" datatype="html">
+        <source>Dry run — no data was written. <x id="would" equiv-text="job.successfulRows"/> row(s) would be created, <x id="issues" equiv-text="job.failedRows"/> with issues.</source>
+        <target>Essai à blanc — aucune donnée n'a été écrite. <x id="would" equiv-text="job.successfulRows"/> ligne(s) seraient créées, <x id="issues" equiv-text="job.failedRows"/> avec des problèmes.</target>
+      </trans-unit>
+      <trans-unit id="imports.report.partial" datatype="html">
+        <source><x id="created" equiv-text="job.successfulRows"/> of <x id="processed" equiv-text="job.processedRows"/> created; <x id="skipped" equiv-text="job.failedRows"/> skipped — <x id="reason" equiv-text="reason"/></source>
+        <target><x id="created" equiv-text="job.successfulRows"/> sur <x id="processed" equiv-text="job.processedRows"/> créée(s) ; <x id="skipped" equiv-text="job.failedRows"/> ignorée(s) — <x id="reason" equiv-text="reason"/></target>
+      </trans-unit>
+      <trans-unit id="imports.report.pending" datatype="html">
+        <source> Queued — the report appears once processing starts. </source>
+        <target> En attente — le rapport apparaît une fois le traitement commencé. </target>
+      </trans-unit>
+      <trans-unit id="imports.report.reasonIssues" datatype="html">
+        <source>see the list below</source>
+        <target>voir la liste ci-dessous</target>
+      </trans-unit>
+      <trans-unit id="imports.report.reasonQuota" datatype="html">
+        <source>plan limit reached</source>
+        <target>limite du forfait atteinte</target>
+      </trans-unit>
+      <trans-unit id="imports.report.row" datatype="html">
+        <source>Row</source>
+        <target>Ligne</target>
+      </trans-unit>
+      <trans-unit id="imports.rowErrorCode.invalid" datatype="html">
+        <source>Invalid value</source>
+        <target>Valeur invalide</target>
+      </trans-unit>
+      <trans-unit id="imports.rowErrorCode.missingRequired" datatype="html">
+        <source>Missing required value</source>
+        <target>Valeur obligatoire manquante</target>
+      </trans-unit>
+      <trans-unit id="imports.rowErrorCode.quotaExceeded" datatype="html">
+        <source>Plan limit reached</source>
+        <target>Limite du forfait atteinte</target>
+      </trans-unit>
+      <trans-unit id="imports.rowErrorCode.wouldCreate" datatype="html">
+        <source>Would create</source>
+        <target>À créer</target>
+      </trans-unit>
+      <trans-unit id="imports.status.completed" datatype="html">
+        <source>Completed</source>
+        <target>Terminé</target>
+      </trans-unit>
+      <trans-unit id="imports.status.failed" datatype="html">
+        <source>Failed</source>
+        <target>Échoué</target>
+      </trans-unit>
+      <trans-unit id="imports.status.pending" datatype="html">
+        <source>Pending</source>
+        <target>En attente</target>
+      </trans-unit>
+      <trans-unit id="imports.status.processing" datatype="html">
+        <source>Processing</source>
+        <target>En cours</target>
+      </trans-unit>
+      <trans-unit id="imports.table.colCreated" datatype="html">
+        <source>Created</source>
+        <target>Créé</target>
+      </trans-unit>
+      <trans-unit id="imports.table.colFile" datatype="html">
+        <source>File</source>
+        <target>Fichier</target>
+      </trans-unit>
+      <trans-unit id="imports.table.colKind" datatype="html">
+        <source>Type</source>
+        <target>Type</target>
+      </trans-unit>
+      <trans-unit id="imports.table.colResults" datatype="html">
+        <source>Results</source>
+        <target>Résultats</target>
+      </trans-unit>
+      <trans-unit id="imports.table.colStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="imports.table.dryRunBadge" datatype="html">
+        <source>Dry run</source>
+        <target>Essai à blanc</target>
+      </trans-unit>
+      <trans-unit id="imports.table.noResults" datatype="html">
+        <source> No results. </source>
+        <target> Aucun résultat. </target>
+      </trans-unit>
+      <trans-unit id="imports.table.title" datatype="html">
+        <source> Import jobs </source>
+        <target> Imports </target>
+      </trans-unit>
+      <trans-unit id="imports.table.viewReportNamed" datatype="html">
+        <source>View report for <x id="filename" equiv-text="item.originalFilename"/></source>
+        <target>Voir le rapport de <x id="filename" equiv-text="item.originalFilename"/></target>
+      </trans-unit>
+      <trans-unit id="imports.upload.choose" datatype="html">
+        <source>Choose file</source>
+        <target>Choisir un fichier</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.description" datatype="html">
+        <source> Bulk-create equipment or facilities from a spreadsheet export. </source>
+        <target> Créez des équipements ou des établissements en masse à partir d'un export de tableur. </target>
+      </trans-unit>
+      <trans-unit id="imports.upload.dryRun" datatype="html">
+        <source>Dry run</source>
+        <target>Essai à blanc</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.dryRunDescription" datatype="html">
+        <source> Validates every row and reports what would happen without creating anything. </source>
+        <target> Valide chaque ligne et indique ce qui se passerait, sans rien créer. </target>
+      </trans-unit>
+      <trans-unit id="imports.upload.file" datatype="html">
+        <source>CSV file</source>
+        <target>Fichier CSV</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.fileDescription" datatype="html">
+        <source> Comma or semicolon delimited, UTF-8, up to 5,000 rows and 5 MB. </source>
+        <target> Délimité par virgule ou point-virgule, UTF-8, jusqu'à 5 000 lignes et 5 Mo. </target>
+      </trans-unit>
+      <trans-unit id="imports.upload.fileErrorExtension" datatype="html">
+        <source>Choose a .csv file.</source>
+        <target>Choisissez un fichier .csv.</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.fileErrorSize" datatype="html">
+        <source>This file is larger than the 5 MB limit.</source>
+        <target>Ce fichier dépasse la limite de 5 Mo.</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.fileRequired" datatype="html">
+        <source>Choose a CSV file to upload.</source>
+        <target>Choisissez un fichier CSV à importer.</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.helpChooseKind" datatype="html">
+        <source>Choose an import type to see its columns.</source>
+        <target>Choisissez un type d'import pour voir ses colonnes.</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.helpOptional" datatype="html">
+        <source>Optional columns:</source>
+        <target>Colonnes facultatives :</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.helpRequired" datatype="html">
+        <source>Required columns:</source>
+        <target>Colonnes obligatoires :</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.helpTrigger" datatype="html">
+        <source>Expected CSV format</source>
+        <target>Format CSV attendu</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.kind" datatype="html">
+        <source>Import type</source>
+        <target>Type d'import</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.kindPlaceholder" datatype="html">
+        <source>Choose what to import</source>
+        <target>Choisissez quoi importer</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.kindRequired" datatype="html">
+        <source>Choose what the file imports.</source>
+        <target>Choisissez ce que le fichier importe.</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.submit" datatype="html">
+        <source>Start import</source>
+        <target>Démarrer l'import</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.submitting" datatype="html">
+        <source>Uploading…</source>
+        <target>Envoi…</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.title" datatype="html">
+        <source>Import from CSV</source>
+        <target>Import depuis un CSV</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

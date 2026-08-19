@@ -1,0 +1,149 @@
+import { DatePipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideEye } from '@ng-icons/lucide';
+import type {
+  ImportJobKind,
+  ImportJobOutput,
+} from '@features/organization/features/imports/models';
+import { ImportStatusTag } from '@features/organization/features/imports/ui/components/import-status-tag';
+import { HlmBadge } from '@shared/ui/badge';
+import { HlmButton } from '@shared/ui/button';
+import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTableImports } from '@shared/ui/table';
+
+/** Placeholder rows drawn while the first page loads. */
+const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
+
+/** Human labels for the two job kinds, matching `IMPORT_JOB_KIND_OPTIONS`. */
+const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
+  equipment: $localize`:@@imports.kind.equipment:Equipment`,
+  facility: $localize`:@@imports.kind.facility:Facilities`,
+};
+
+/**
+ * Component ImportJobTable
+ * @class ImportJobTable
+ *
+ * @description
+ * The import jobs grid: `hlmTable` inside a bordered, scrollable shell, one
+ * row per job — filename, kind, status, a dry-run badge when applicable,
+ * live `processedRows`/`totalRows` progress while `processing`, the
+ * successful/failed counts, and the created/completed dates. Every row
+ * carries a "View report" action, always enabled — a `pending`/`processing`
+ * row opens the same report view showing progress so far.
+ *
+ * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
+ * no service; the page owns loading and polling, this component only
+ * renders the rows it is handed and emits {@link selected}.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+@Component({
+  selector: 'app-import-job-table',
+  imports: [
+    DatePipe,
+    NgIcon,
+    ImportStatusTag,
+    HlmBadge,
+    HlmButton,
+    HlmSkeleton,
+    ...HlmTableImports,
+  ],
+  providers: [provideIcons({ lucideEye })],
+  templateUrl: './import-job-table.component.html',
+  host: { class: 'block min-h-0 w-full flex-1' },
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ImportJobTable {
+  //#region Inputs
+  /**
+   * Property items
+   * @readonly
+   * @description The rows to render.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<readonly ImportJobOutput[]>}
+   */
+  public readonly items: InputSignal<readonly ImportJobOutput[]> =
+    input.required<readonly ImportJobOutput[]>();
+
+  /**
+   * Property loading
+   * @readonly
+   * @description Whether to draw placeholder rows instead of the data.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property selected
+   * @readonly
+   * @description A row's "View report" action was activated; carries that row's job.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<ImportJobOutput>}
+   */
+  public readonly selected: OutputEmitterRef<ImportJobOutput> = output<ImportJobOutput>();
+  //#endregion
+
+  //#region Properties
+  /** Placeholder rows for the loading render. */
+  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method kindLabelOf
+   * @description Names a job's kind for the kind column.
+   * @access protected
+   * @since 1.0.0
+   * @param {ImportJobOutput} item - The rendered job.
+   * @returns {string} The localized kind label.
+   */
+  protected kindLabelOf(item: ImportJobOutput): string {
+    return KIND_LABEL[item.kind];
+  }
+
+  /**
+   * Method progressLabelOf
+   * @description The live row-progress text while a job is running, or `null` once it is not.
+   * @access protected
+   * @since 1.0.0
+   * @param {ImportJobOutput} item - The rendered job.
+   * @returns {string | null} `"processed / total"`, or `null` outside `processing`.
+   */
+  protected progressLabelOf(item: ImportJobOutput): string | null {
+    if (item.status !== 'processing') return null;
+
+    return item.totalRows === undefined
+      ? `${item.processedRows}`
+      : `${item.processedRows} / ${item.totalRows}`;
+  }
+
+  /**
+   * Method viewReportAriaLabelOf
+   * @description The row's "View report" button's accessible name, folding in the filename so two rows never announce identically.
+   * @access protected
+   * @since 1.0.0
+   * @param {ImportJobOutput} item - The rendered job.
+   * @returns {string} The accessible name.
+   */
+  protected viewReportAriaLabelOf(item: ImportJobOutput): string {
+    return $localize`:@@imports.table.viewReportNamed:View report for ${item.originalFilename}:filename:`;
+  }
+  //#endregion
+}

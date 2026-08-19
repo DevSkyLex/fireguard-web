@@ -42,11 +42,11 @@
     </app-inplace-field>
   </div>
 
-  <div data-testid="intervention-field-site">
+  <div data-testid="intervention-field-site" class="flex items-center gap-1">
     <app-inplace-field
       #siteField
       orientation="horizontal"
-      class="w-full"
+      class="min-w-0 flex-1"
       label="Site"
       i18n-label="@@intervention.prop.site"
       commit="pick"
@@ -91,6 +91,21 @@
         </hlm-combobox-content>
       </hlm-combobox>
     </app-inplace-field>
+
+    @if (siteFacilityId(); as facilityId) {
+      <a
+        hlmBtn
+        variant="ghost"
+        size="icon-sm"
+        class="size-6 shrink-0 max-sm:size-11"
+        data-testid="intervention-site-link"
+        [routerLink]="['/organizations', organizationId(), 'facilities', facilityId]"
+        aria-label="Open site facility"
+        i18n-aria-label="@@intervention.prop.openSiteFacility"
+      >
+        <ng-icon name="lucideExternalLink" aria-hidden="true" />
+      </a>
+    }
   </div>
 
   <div data-testid="intervention-field-responsible">

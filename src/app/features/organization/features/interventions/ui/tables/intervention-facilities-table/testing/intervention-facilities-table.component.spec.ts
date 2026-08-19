@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { InterventionFacilitiesTable } from '../intervention-facilities-table.component';
 
@@ -28,9 +29,12 @@ describe('InterventionFacilitiesTable', () => {
     root().querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
 
     fixture = TestBed.createComponent(InterventionFacilitiesTable);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('items', []);
     await fixture.whenStable();
   });
@@ -46,6 +50,32 @@ describe('InterventionFacilitiesTable', () => {
     expect(row.textContent).toContain('Main warehouse');
     expect(row.textContent).toContain('Building');
     expect(row.textContent).toContain('Active');
+  });
+
+  it('should link a published facility to its detail route', async () => {
+    fixture.componentRef.setInput('items', [
+      facility({ id: 'facility-1', name: 'Main warehouse', recordStatus: 'published' }),
+    ]);
+    await fixture.whenStable();
+
+    const link: HTMLAnchorElement | null = byTestId(
+      'intervention-facilities-table-row',
+    )?.querySelector('a') as HTMLAnchorElement | null;
+
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
+  });
+
+  it('should render a draft-record row as plain text, not a link', async () => {
+    fixture.componentRef.setInput('items', [
+      facility({ id: 'facility-1', name: 'Main warehouse', recordStatus: 'draft' }),
+    ]);
+    await fixture.whenStable();
+
+    const row: HTMLElement = byTestId('intervention-facilities-table-row') as HTMLElement;
+
+    expect(row.querySelector('a')).toBeNull();
+    expect(row.textContent).toContain('Main warehouse');
   });
 
   it('should draw skeleton rows while the tab fetch is in flight and nothing has loaded yet', async () => {

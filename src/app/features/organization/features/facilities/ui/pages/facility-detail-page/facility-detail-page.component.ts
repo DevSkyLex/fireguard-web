@@ -44,6 +44,7 @@ import {
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
+import { InterventionTag } from '@features/organization/features/interventions/ui/components';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
@@ -84,8 +85,13 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * Route entry page for one facility record
  * (`/organizations/:organizationId/facilities/:facilityId`). Three tabs:
  * **Overview** (default) renders the descendant hierarchy through
- * {@link FacilityHierarchyChart} plus the equipment/inspection summary from
- * {@link FacilityOverviewStore}; **Information** renders
+ * {@link FacilityHierarchyChart} plus the equipment/inspection/intervention
+ * summary from {@link FacilityOverviewStore} — the "Interventions on this
+ * site" section lists the most recently updated interventions whose `site`
+ * is this facility (read cross-feature from the interventions feature, see
+ * the store's own doc) with a "See all" link into
+ * `/organizations/:organizationId/interventions?site=:facilityId`, which the
+ * list page already parses; **Information** renders
  * {@link FacilityInformationPanel}, the in-place edit surface for every
  * writable property (`FEATURE.md` "The record is the edit surface" — there
  * is no separate edit page); **Plans** renders {@link FacilityPlanList} and
@@ -127,7 +133,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * segment linking to that ancestor's own detail route; a root facility
  * (empty `path`) renders nothing.
  *
- * @version 1.8.0
+ * @version 1.9.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -149,6 +155,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     FacilityPlanZoneGeometryDialog,
     FacilityQrDialog,
     FacilityStatusTag,
+    InterventionTag,
     PlanViewer,
     HlmButton,
     HlmSkeleton,

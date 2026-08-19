@@ -127,12 +127,15 @@
             aria-labelledby="facility-equipment-status-title"
             data-testid="facility-detail-equipment-status"
           >
-            <h2
-              id="facility-equipment-status-title"
-              class="px-2 text-base font-semibold"
-              i18n="@@facility.equipmentBreakdown.title"
-            >
-              Equipment status
+            <h2 id="facility-equipment-status-title" class="px-2 text-base font-semibold">
+              <a
+                class="hover:underline"
+                data-testid="facility-detail-equipment-status-link"
+                [routerLink]="['/organizations', organizationId(), 'assets']"
+                i18n="@@facility.equipmentBreakdown.title"
+              >
+                Equipment status
+              </a>
             </h2>
             @if (overview.isLoadingEquipment()) {
               <div
@@ -194,17 +197,92 @@
             } @else {
               <div class="flex flex-col divide-y divide-border px-2">
                 @for (inspection of overview.recentInspections(); track inspection.id) {
-                  <div class="flex items-center justify-between py-2 text-sm">
+                  <a
+                    class="flex min-h-11 items-center justify-between py-2 text-sm hover:underline sm:min-h-0"
+                    data-testid="facility-detail-recent-inspection-row"
+                    [routerLink]="[
+                      '/organizations',
+                      organizationId(),
+                      'inspections',
+                      inspection.id,
+                    ]"
+                  >
                     <span>{{ inspection.performedAt | date: 'mediumDate' }}</span>
                     <span class="text-muted-foreground">{{
                       resultLabelOf(inspection.result)
                     }}</span>
-                  </div>
+                  </a>
                 }
               </div>
             }
           </section>
         }
+
+        <section
+          class="flex flex-col gap-1"
+          aria-labelledby="facility-detail-interventions-title"
+          data-testid="facility-detail-interventions"
+        >
+          <div class="flex items-center justify-between gap-2 px-2">
+            <h2
+              id="facility-detail-interventions-title"
+              class="text-base font-semibold"
+              i18n="@@facility.recentInterventions.title"
+            >
+              Interventions on this site
+            </h2>
+            <a
+              class="shrink-0 text-sm text-muted-foreground hover:text-foreground hover:underline"
+              data-testid="facility-detail-interventions-see-all"
+              [routerLink]="['/organizations', organizationId(), 'interventions']"
+              [queryParams]="{ site: facilityId() }"
+              aria-label="See all interventions on this site"
+              i18n-aria-label="@@facility.recentInterventions.seeAllAria"
+              i18n="@@facility.recentInterventions.seeAll"
+            >
+              See all
+            </a>
+          </div>
+          @if (overview.isLoadingInterventions()) {
+            <div
+              class="flex flex-col gap-2 px-2"
+              role="status"
+              aria-label="Loading interventions on this site"
+              i18n-aria-label="@@facility.recentInterventions.loadingAria"
+            >
+              <hlm-skeleton class="h-4 w-full" />
+              <hlm-skeleton class="h-4 w-full" />
+            </div>
+          } @else if (overview.interventions().length === 0) {
+            <p
+              class="px-2 text-sm text-muted-foreground"
+              data-testid="facility-detail-interventions-empty"
+              i18n="@@facility.recentInterventions.empty"
+            >
+              No interventions on this site.
+            </p>
+          } @else {
+            <div class="flex flex-col divide-y divide-border px-2">
+              @for (intervention of overview.interventions(); track intervention.id) {
+                <a
+                  class="flex min-h-11 items-center justify-between gap-2 py-2 text-sm hover:underline sm:min-h-0"
+                  data-testid="facility-detail-intervention-row"
+                  [routerLink]="[
+                    '/organizations',
+                    organizationId(),
+                    'interventions',
+                    intervention.id,
+                  ]"
+                >
+                  <span class="min-w-0 flex-1 truncate font-medium text-foreground">{{
+                    intervention.name
+                  }}</span>
+                  <app-intervention-tag kind="status" [value]="intervention.status" />
+                </a>
+              }
+            </div>
+          }
+        </section>
       </div>
 
       <div hlmTabsContent="information" class="flex flex-col gap-4">

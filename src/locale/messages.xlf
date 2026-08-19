@@ -3687,6 +3687,13 @@
           <context context-type="linenumber">24,28</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="equipment.detail.siteInterventions" datatype="html">
+        <source> Interventions on this equipment&apos;s site </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.html</context>
+          <context context-type="linenumber">46,48</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="equipment.detail.loadingAria" datatype="html">
         <source>Loading equipment</source>
         <context-group purpose="location">
@@ -5140,6 +5147,41 @@
           <context context-type="linenumber">165,166</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="facility.recentInterventions.title" datatype="html">
+        <source> Interventions on this site </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
+          <context context-type="linenumber">227,232</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.seeAllAria" datatype="html">
+        <source>See all interventions on this site</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
+          <context context-type="linenumber">240</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.seeAll" datatype="html">
+        <source> See all </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
+          <context context-type="linenumber">233,240</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.loadingAria" datatype="html">
+        <source>Loading interventions on this site</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
+          <context context-type="linenumber">243,249</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.recentInterventions.empty" datatype="html">
+        <source> No interventions on this site. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
+          <context context-type="linenumber">252,259</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="facility.info.title" datatype="html">
         <source> Facility information </source>
         <context-group purpose="location">
@@ -5972,6 +6014,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.ts</context>
           <context context-type="linenumber">266</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="inspection.detail.siteInterventions" datatype="html">
+        <source>Interventions on this site</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
+          <context context-type="linenumber">17</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.table.searchPlaceholder" datatype="html">
@@ -7069,6 +7118,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-properties-grid/intervention-properties-grid.component.html</context>
           <context context-type="linenumber">63,67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.prop.openSiteFacility" datatype="html">
+        <source>Open site facility</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-properties-grid/intervention-properties-grid.component.html</context>
+          <context context-type="linenumber">85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cf.sitePlaceholder" datatype="html">
@@ -9155,6 +9211,41 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-facilities-table/intervention-facilities-table.component.html</context>
           <context context-type="linenumber">45,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.draftBadge" datatype="html">
+        <source>Draft</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-facilities-table/intervention-facilities-table.component.html</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.draftBadge" datatype="html">
+        <source>Draft</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-equipment-table/intervention-equipment-table.component.html</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.linkAriaLabel" datatype="html">
+        <source><x id="type" equiv-text="type"/> (<x id="serial" equiv-text="serial"/>)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-equipment-table/intervention-equipment-table.component.ts</context>
+          <context context-type="linenumber">218</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.draftBadge" datatype="html">
+        <source>Draft</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-inspections-table/intervention-inspections-table.component.html</context>
+          <context context-type="linenumber">78</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.linkAriaLabel" datatype="html">
+        <source>Inspection performed <x id="performed" equiv-text="performed"/>, <x id="result" equiv-text="result"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-inspections-table/intervention-inspections-table.component.ts</context>
+          <context context-type="linenumber">208</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.linked.facilities.columnName" datatype="html">
@@ -11648,6 +11739,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-member-profile-page/organization-member-profile-page.component.html</context>
           <context context-type="linenumber">40,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.memberProfile.responsibleInterventions" datatype="html">
+        <source>Interventions they are responsible for</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-member-profile-page/organization-member-profile-page.component.html</context>
+          <context context-type="linenumber">46,54</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.memberProfile.missingTitle" datatype="html">

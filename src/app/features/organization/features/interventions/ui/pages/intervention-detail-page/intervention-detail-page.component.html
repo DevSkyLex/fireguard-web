@@ -271,6 +271,7 @@
           <div hlmTabsContent="facilities" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-facilities-table
+                [organizationId]="organizationId()"
                 [items]="linkedResources.facilities()"
                 [loading]="linkedResources.facilitiesLoading()"
                 [error]="linkedResources.facilitiesError()?.message ?? null"
@@ -284,6 +285,7 @@
           <div hlmTabsContent="equipment" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-equipment-table
+                [organizationId]="organizationId()"
                 [items]="linkedResources.equipment()"
                 [loading]="linkedResources.equipmentLoading()"
                 [error]="linkedResources.equipmentError()?.message ?? null"
@@ -297,6 +299,7 @@
           <div hlmTabsContent="inspections" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-inspections-table
+                [organizationId]="organizationId()"
                 [items]="linkedResources.inspections()"
                 [loading]="linkedResources.inspectionsLoading()"
                 [error]="linkedResources.inspectionsError()?.message ?? null"
@@ -348,6 +351,7 @@
 
             <app-intervention-properties-grid
               [intervention]="intervention"
+              [organizationId]="organizationId()"
               [siteOptions]="planningOptions.sites()"
               [memberOptions]="planningOptions.members()"
               [labelOptions]="planningOptions.labels()"

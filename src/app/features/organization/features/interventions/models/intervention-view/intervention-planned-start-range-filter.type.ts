@@ -8,7 +8,7 @@
  * §2.9): two date-range filters do not yet justify a common generic type.
  * Each variant maps to one or both of the API's own
  * `plannedStartAtAfter`/`plannedStartAtBefore` bounds
- * (`ui/pages/interventions-page/utils/intervention-list-query/`):
+ * (`utils/intervention-list-query/`):
  *
  * - `greaterThan` — planned to start after {@link after} (`plannedStartAtAfter` only),
  * - `lessThan` — planned to start before {@link before} (`plannedStartAtBefore` only),

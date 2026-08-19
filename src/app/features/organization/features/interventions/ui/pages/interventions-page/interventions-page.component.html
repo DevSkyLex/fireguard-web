@@ -42,6 +42,31 @@
     </div>
 
     <div toolbarEnd class="flex flex-wrap items-center gap-2">
+      <div hlmButtonGroup data-testid="intervention-view-toggle">
+        <button
+          hlmBtn
+          type="button"
+          variant="default"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-view-toggle-list"
+          aria-current="page"
+        >
+          <span i18n="@@intervention.board.viewList">List</span>
+        </button>
+        <a
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-view-toggle-board"
+          [routerLink]="['/organizations', organizationId(), 'interventions', 'board']"
+          [queryParams]="boardQueryParams()"
+        >
+          <span i18n="@@intervention.board.viewBoard">Board</span>
+        </a>
+      </div>
+
       @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
         <button
           hlmBtn

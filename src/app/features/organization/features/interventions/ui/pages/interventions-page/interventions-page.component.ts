@@ -16,7 +16,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowDown,
@@ -53,6 +53,8 @@ import {
   type InterventionAssignSubmittedEvent,
   type InterventionDueRangeFilter,
   type InterventionDuplicatePrefill,
+  type InterventionFilterFieldKey,
+  type InterventionFilterFieldOption,
   type InterventionListFilters,
   type InterventionListSort,
   type InterventionOutput,
@@ -67,6 +69,13 @@ import {
   type SelectOption,
 } from '@features/organization/features/interventions/models';
 import {
+  INTERVENTION_FILTER_FIELDS,
+  INTERVENTION_PRIORITY_FILTER_OPTIONS,
+  INTERVENTION_SORT_OPTIONS,
+  INTERVENTION_STATUS_FILTER_OPTIONS,
+  INTERVENTION_TYPE_FILTER_OPTIONS,
+} from '@features/organization/features/interventions/options';
+import {
   BrowserDownloadService,
   InterventionListPreferencesService,
 } from '@features/organization/features/interventions/services';
@@ -77,6 +86,11 @@ import {
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import { buildInterventionDuplicatePrefill } from '@features/organization/features/interventions/utils';
+import {
+  buildInterventionListOptions,
+  parseInterventionListFilters,
+  serializeInterventionListFilters,
+} from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   OrganizationMemberAccessStore,
@@ -95,6 +109,7 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
@@ -128,24 +143,8 @@ import {
   type InterventionTableColumn,
   type InterventionTransitionRequest,
 } from '../../tables/intervention-table';
-import type {
-  InterventionFilterFieldKey,
-  InterventionFilterFieldOption,
-  InterventionListItemViewModel,
-} from './models';
-import {
-  INTERVENTION_FILTER_FIELDS,
-  INTERVENTION_PRIORITY_FILTER_OPTIONS,
-  INTERVENTION_SORT_OPTIONS,
-  INTERVENTION_STATUS_FILTER_OPTIONS,
-  INTERVENTION_TYPE_FILTER_OPTIONS,
-} from './options';
-import {
-  buildInterventionCsv,
-  buildInterventionListOptions,
-  parseInterventionListFilters,
-  serializeInterventionListFilters,
-} from './utils';
+import type { InterventionListItemViewModel } from './models';
+import { buildInterventionCsv } from './utils';
 
 /** How close a deadline must be to count as "due soon". */
 const DUE_SOON_WINDOW_MS: number = 48 * 60 * 60 * 1000;
@@ -306,6 +305,7 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
   selector: 'app-interventions-page',
   imports: [
     NgIcon,
+    RouterLink,
     EmptyState,
     ErrorState,
     HlmBadge,
@@ -325,6 +325,7 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
+    ...HlmButtonGroupImports,
     ...HlmCheckboxImports,
     ...HlmDatePickerImports,
     ...HlmDropdownMenuImports,
@@ -813,6 +814,38 @@ export class InterventionsPage {
    */
   protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'interventions'],
+  );
+
+  /**
+   * Property boardQueryParams
+   * @readonly
+   *
+   * @description
+   * Every query param the Board view should keep when the operator switches
+   * to it, `status` excluded — the board's columns ARE the status narrowing,
+   * so a status filter carried across would either duplicate that narrowing
+   * or contradict it.
+   *
+   * @access protected
+   * @since 9.0.0
+   *
+   * @type {Signal<Readonly<Record<string, string | null>>>}
+   */
+  protected readonly boardQueryParams: Signal<Readonly<Record<string, string | null>>> = computed(
+    (): Readonly<Record<string, string | null>> => ({
+      q: this.q() ?? null,
+      type: this.type() ?? null,
+      priority: this.priority() ?? null,
+      site: this.site() ?? null,
+      responsible: this.responsible() ?? null,
+      label: this.label() ?? null,
+      mine: this.mine() ?? null,
+      due: this.due() ?? null,
+      dueAfter: this.dueAfter() ?? null,
+      dueBefore: this.dueBefore() ?? null,
+      plannedStartAfter: this.plannedStartAfter() ?? null,
+      plannedStartBefore: this.plannedStartBefore() ?? null,
+    }),
   );
 
   /**

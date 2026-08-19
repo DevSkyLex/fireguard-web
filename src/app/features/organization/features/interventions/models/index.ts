@@ -9,6 +9,8 @@ export type { InterventionSiteStatisticOutput } from './intervention-statistics/
 export type { InterventionResponsibleStatisticOutput } from './intervention-statistics/intervention-responsible-statistic-output.interface';
 export type { InterventionCalendarFilters } from './intervention-view/intervention-calendar-filters.interface';
 export type { InterventionDueRangeFilter } from './intervention-view/intervention-due-range-filter.type';
+export type { InterventionFilterFieldOption } from './intervention-view/intervention-filter-field-option.interface';
+export type { InterventionFilterFieldKey } from './intervention-view/intervention-filter-field.type';
 export type {
   InterventionDueWindow,
   InterventionListFilters,

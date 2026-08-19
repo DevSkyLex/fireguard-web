@@ -1,4 +1,12 @@
 export { createInterventionCapabilities } from './intervention-capabilities/intervention-capabilities.utils';
+export { isInterventionBoardMoveAllowed } from './intervention-board-move/intervention-board-move.utils';
+export {
+  buildInterventionListOptions,
+  countActiveFilters,
+  parseInterventionListFilters,
+  resolveDueWindow,
+  serializeInterventionListFilters,
+} from './intervention-list-query/intervention-list-query.utils';
 export { buildInterventionDuplicatePrefill } from './intervention-duplicate-prefill/intervention-duplicate-prefill.utils';
 export { buildInterventionQueueRequests } from './intervention-queue-requests/intervention-queue-requests.utils';
 export { formatInterventionRelativeTime } from './intervention-relative-time/intervention-relative-time.utils';

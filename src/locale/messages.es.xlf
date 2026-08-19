@@ -10253,6 +10253,50 @@
         <source>Overdue</source>
         <target>Atrasado</target>
       </trans-unit>
+      <trans-unit id="intervention.board.cardMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Abrir menú</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.cardOpen" datatype="html">
+        <source>Open</source>
+        <target>Abrir</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.cardMoveTo" datatype="html">
+        <source>Move to</source>
+        <target>Mover a</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.withdrawOnly" datatype="html">
+        <source>Only the responsible can withdraw this submission.</source>
+        <target>Solo el responsable puede retirar este envío.</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.cardUpdating" datatype="html">
+        <source>This card is updating.</source>
+        <target>Esta tarjeta se está actualizando.</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.viewList" datatype="html">
+        <source>List</source>
+        <target>Lista</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.viewBoard" datatype="html">
+        <source>Board</source>
+        <target>Tablero</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.columnEmpty" datatype="html">
+        <source> No interventions. </source>
+        <target> Sin intervenciones. </target>
+      </trans-unit>
+      <trans-unit id="intervention.board.moved" datatype="html">
+        <source>Moved <x id="name" equiv-text="intervention.name"/> to <x id="status" equiv-text="this.statusLabelOf(target)"/>.</source>
+        <target>Se movió <x id="name" equiv-text="intervention.name"/> a <x id="status" equiv-text="this.statusLabelOf(target)"/>.</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.columnCount" datatype="html">
+        <source><x id="count" equiv-text="count"/> interventions in <x id="status" equiv-text="statusLabel"/></source>
+        <target><x id="count" equiv-text="count"/> intervenciones en <x id="status" equiv-text="statusLabel"/></target>
+      </trans-unit>
+      <trans-unit id="route.interventionsBoard" datatype="html">
+        <source>Board</source>
+        <target>Tablero</target>
+      </trans-unit>
       <trans-unit id="intervention.list.removeFilter" datatype="html">
         <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Quitar el filtro: <x id="field" equiv-text="fieldLabel"/></target>

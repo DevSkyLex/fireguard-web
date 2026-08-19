@@ -7755,6 +7755,10 @@
         <source>Create organization</source>
         <target>Crear organización</target>
       </trans-unit>
+      <trans-unit id="org.switcher.leave" datatype="html">
+        <source>Leave organization…</source>
+        <target>Abandonar la organización…</target>
+      </trans-unit>
       <trans-unit id="org.switcher.title" datatype="html">
         <source>Organizations</source>
         <target>Organizaciones</target>

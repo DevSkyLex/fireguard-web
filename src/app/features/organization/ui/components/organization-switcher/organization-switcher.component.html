@@ -64,8 +64,30 @@
         <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
         <span i18n="@@org.switcher.create">Create organization</span>
       </button>
+
+      <hlm-dropdown-menu-separator />
+
+      <button
+        hlmDropdownMenuItem
+        variant="destructive"
+        class="gap-2"
+        data-testid="organization-switcher-leave"
+        (click)="openLeaveDialog()"
+      >
+        <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
+        <span i18n="@@org.switcher.leave">Leave organization…</span>
+      </button>
     </hlm-dropdown-menu>
   </ng-template>
+
+  <app-organization-leave-dialog
+    [visible]="confirmingLeave()"
+    [organizationName]="organization.name"
+    [pending]="settingsStore.isLeaving()"
+    [error]="settingsStore.leaveError()?.message ?? null"
+    (visibleChange)="confirmingLeave.set($event)"
+    (confirmed)="leaveOrganization()"
+  />
 } @else {
   <ul hlmSidebarMenu>
     <li hlmSidebarMenuItem>

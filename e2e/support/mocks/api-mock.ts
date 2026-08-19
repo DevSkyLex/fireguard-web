@@ -921,6 +921,57 @@ export class ApiMock {
   }
 
   /**
+   * Mocks a successful `DELETE /api/organizations/{organizationId}/members/me`
+   * — the self-removal request `OrganizationSettingsStore.leave` sends from
+   * both the settings danger tab and the sidebar organization switcher's
+   * "Leave organization…" menu entry.
+   */
+  public async mockOrganizationMemberLeave(organizationId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/members/me`,
+      async (route) => {
+        if (route.request().method() !== 'DELETE') {
+          await route.fallback();
+          return;
+        }
+        await route.fulfill({ status: 204 });
+      },
+    );
+  }
+
+  /**
+   * Mocks a failing `DELETE /api/organizations/{organizationId}/members/me`
+   * — the backend's owner-cannot-leave / last-administrator 409 refusals,
+   * surfaced inline on `OrganizationLeaveDialog` regardless of which call
+   * site opened it.
+   */
+  public async mockOrganizationMemberLeaveError(
+    organizationId: string,
+    error: Partial<ApiErrorFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/members/me`,
+      async (route) => {
+        if (route.request().method() !== 'DELETE') {
+          await route.fallback();
+          return;
+        }
+        await fulfillJson(route, error.status ?? 409, {
+          '@id': '/errors/member-leave-failed',
+          '@type': 'Error',
+          status: 409,
+          type: 'about:blank',
+          title: 'You could not leave this organization.',
+          detail: 'You could not leave this organization.',
+          ...error,
+        });
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/invitations` — the
    * pending-invitations grid on the members page.
    */

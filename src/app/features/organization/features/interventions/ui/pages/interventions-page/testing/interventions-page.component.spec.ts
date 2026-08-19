@@ -328,6 +328,50 @@ describe('InterventionsPage', () => {
     expect(load.mock.calls.at(-1)?.[0].options.status).toBeUndefined();
   });
 
+  it('should read the "isAnyOf" operator and send a repeated status when the URL carries a comma-separated value', async () => {
+    fixture = await createPage({ status: 'planned,in_progress' });
+
+    expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('isAnyOf');
+    expect(load.mock.calls.at(-1)?.[0].options.status).toEqual(['planned', 'in_progress']);
+  });
+
+  it('should read the "equals" operator from a scalar-valued filter', async () => {
+    fixture = await createPage({ status: 'planned' });
+
+    expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('equals');
+    expect(load.mock.calls.at(-1)?.[0].options.status).toBe('planned');
+  });
+
+  it('should write a multi selection into the URL as a comma-joined param', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['applyEnumSelection']('status', ['planned', 'in_progress']);
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({ status: 'planned,in_progress' }),
+        queryParamsHandling: 'merge',
+      }),
+    );
+  });
+
+  it('should clear an emptied multi selection back to unfiltered rather than send an empty isAnyOf', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['applyEnumSelection']('status', []);
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({ status: null }),
+        queryParamsHandling: 'merge',
+      }),
+    );
+  });
+
   it('should reverse the ordering when the active column is picked again', async () => {
     fixture = await createPage();
 

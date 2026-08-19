@@ -21,23 +21,29 @@ import type { InterventionPlannedStartRangeFilter } from './intervention-planned
  */
 export interface InterventionListFilters {
   //#region Properties
-  /** Single workflow status. The API filters one at a time. */
-  readonly status: InterventionStatus | null;
+  /**
+   * Workflow status: a single value under the chip's `equals` operator, a
+   * readonly array under `isAnyOf` (OR-combined server side), `null` when
+   * unfiltered. Which shape is active discriminates the operator — there is
+   * no separate operator field for these six, matching how the page already
+   * modelled them before `isAnyOf` existed.
+   */
+  readonly status: InterventionStatus | readonly InterventionStatus[] | null;
 
-  /** Single workflow type. */
-  readonly type: InterventionType | null;
+  /** Workflow type. See {@link status}. */
+  readonly type: InterventionType | readonly InterventionType[] | null;
 
-  /** Single priority. */
-  readonly priority: InterventionPriority | null;
+  /** Priority. See {@link status}. */
+  readonly priority: InterventionPriority | readonly InterventionPriority[] | null;
 
-  /** IRI of the site the intervention concerns. */
-  readonly site: string | null;
+  /** IRI(s) of the site(s) the intervention concerns. See {@link status}. */
+  readonly site: string | readonly string[] | null;
 
-  /** IRI of the responsible agent. */
-  readonly responsible: string | null;
+  /** IRI(s) of the responsible agent(s). See {@link status}. */
+  readonly responsible: string | readonly string[] | null;
 
-  /** IRI of an intervention label the collection is narrowed to. */
-  readonly label: string | null;
+  /** IRI(s) of the intervention label(s) the collection is narrowed to. See {@link status}. */
+  readonly label: string | readonly string[] | null;
 
   /**
    * "My interventions" — matches the signed-in member as responsible OR

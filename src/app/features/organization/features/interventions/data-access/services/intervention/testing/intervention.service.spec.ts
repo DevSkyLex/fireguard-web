@@ -261,6 +261,38 @@ describe('InterventionService', () => {
     });
   });
 
+  it('sends the scalar equals form for a single status value', () => {
+    service.list('organization-1', { status: 'draft' }).subscribe();
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === `${mockEnv.apiUrl}/api/interventions` && req.params.get('status') === 'draft',
+    );
+    expect(request.request.params.getAll('status[]')).toBeNull();
+    request.flush({
+      '@id': '/api/interventions',
+      '@type': 'Collection',
+      totalItems: 0,
+      member: [],
+    });
+  });
+
+  it('sends a repeated status[] param for an isAnyOf array of statuses', () => {
+    service.list('organization-1', { status: ['draft', 'planned'] }).subscribe();
+
+    const request = httpMock.expectOne(
+      (req) => req.url === `${mockEnv.apiUrl}/api/interventions` && req.params.has('status[]'),
+    );
+    expect(request.request.params.get('status')).toBeNull();
+    expect(request.request.params.getAll('status[]')).toEqual(['draft', 'planned']);
+    request.flush({
+      '@id': '/api/interventions',
+      '@type': 'Collection',
+      totalItems: 0,
+      member: [],
+    });
+  });
+
   it('sends description and labelIds on create when provided', () => {
     service
       .create('organization-1', 'Site visit', {

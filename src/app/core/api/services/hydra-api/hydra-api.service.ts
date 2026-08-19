@@ -133,6 +133,10 @@ export abstract class HydraApiService {
    * unset. Callers still forwarding sort or search through `options.params`
    * keep working unchanged — this method never deduplicates against it.
    *
+   * A readonly array value in `options.params` is appended as a repeated
+   * `key[]=` param, one per member, the shape an `isAnyOf` narrowing sends —
+   * a scalar value still sends the single `key=` form (§10.6).
+   *
    * @access protected
    * @since 1.0.0
    *
@@ -157,9 +161,18 @@ export abstract class HydraApiService {
     }
     if (options?.params) {
       for (const [key, value] of Object.entries(options.params)) {
-        if (value !== undefined && value !== null) {
-          params = params.set(key, String(value));
+        if (value === undefined || value === null) continue;
+
+        if (Array.isArray(value)) {
+          for (const item of value) {
+            if (item !== undefined && item !== null) {
+              params = params.append(`${key}[]`, String(item));
+            }
+          }
+          continue;
         }
+
+        params = params.set(key, String(value));
       }
     }
 

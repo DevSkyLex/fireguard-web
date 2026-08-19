@@ -61,6 +61,28 @@ export function resolveDueWindow(
 }
 
 /**
+ * Function hasEnumValue
+ *
+ * @description
+ * Narrows one of the six `equals`/`isAnyOf` filter fields away from `null`
+ * (unfiltered) and an empty array (emptied back to unfiltered by
+ * {@link applyEnumFilter}-style clearing, kept out of the request the same
+ * way `null` is) — what is left is a real scalar or a non-empty readonly
+ * array, either way forwarded to {@link InterventionListOptions} as-is.
+ *
+ * @template T - The field's own value type (`InterventionStatus`, a raw IRI, …).
+ *
+ * @param {T | readonly T[] | null} value - The filter field's current value.
+ *
+ * @returns {value is T | readonly T[]} Whether the field is actually narrowing anything.
+ *
+ * @since 8.3.0
+ */
+function hasEnumValue<T>(value: T | readonly T[] | null): value is T | readonly T[] {
+  return Array.isArray(value) ? value.length > 0 : value !== null;
+}
+
+/**
  * Function buildInterventionListOptions
  *
  * @description
@@ -95,12 +117,12 @@ export function buildInterventionListOptions(
   } = { order: { [sort.field]: sort.direction } };
 
   if (search) options.name = search;
-  if (filters.status) options.status = filters.status;
-  if (filters.type) options.type = filters.type;
-  if (filters.priority) options.priority = filters.priority;
-  if (filters.site) options.site = filters.site;
-  if (filters.responsible) options.responsible = filters.responsible;
-  if (filters.label) options.label = filters.label;
+  if (hasEnumValue(filters.status)) options.status = filters.status;
+  if (hasEnumValue(filters.type)) options.type = filters.type;
+  if (hasEnumValue(filters.priority)) options.priority = filters.priority;
+  if (hasEnumValue(filters.site)) options.site = filters.site;
+  if (hasEnumValue(filters.responsible)) options.responsible = filters.responsible;
+  if (hasEnumValue(filters.label)) options.label = filters.label;
   if (filters.mine && memberIri) options.member = memberIri;
 
   if (filters.dueWindow) {
@@ -161,9 +183,112 @@ function parseOption<T extends string>(
   return options.find((option: SelectOption<T>): boolean => option.value === raw)?.value ?? null;
 }
 
+/**
+ * Function parseOptionSet
+ *
+ * @description
+ * The `isAnyOf`/`equals` counterpart of {@link parseOption}: a raw param may
+ * carry several comma-separated values (`?status=draft,planned`, the
+ * "isAnyOf" chip's own URL shape) or the legacy single value
+ * (`?status=draft`) unchanged. Each candidate is validated the same way
+ * {@link parseOption} validates one; an unknown value is dropped from the
+ * set rather than sent to the API. A single surviving value collapses back
+ * to a scalar — so a bookmarked `?status=draft` still round-trips to the
+ * exact `equals` shape it always has, never a one-element array — and no
+ * surviving value parses as unfiltered, matching {@link parseOption}.
+ *
+ * @template T - The option's own literal type.
+ *
+ * @param {string | undefined} raw - The raw, possibly comma-separated, query param value.
+ * @param {readonly SelectOption<T>[]} options - The field's known option catalog.
+ *
+ * @returns {T | readonly T[] | null} A scalar for one surviving value, an array for several, `null` for none.
+ *
+ * @since 8.3.0
+ */
+function parseOptionSet<T extends string>(
+  raw: string | undefined,
+  options: readonly SelectOption<T>[],
+): T | readonly T[] | null {
+  if (!raw) return null;
+
+  const values: T[] = raw
+    .split(',')
+    .map((candidate: string): T | null => parseOption(candidate, options))
+    .filter((value: T | null): value is T => value !== null);
+
+  if (values.length === 0) return null;
+  return values.length === 1 ? values[0] : values;
+}
+
+/**
+ * Function parseIriSet
+ *
+ * @description
+ * The IRI-valued counterpart of {@link parseOptionSet} — {@link status}'s raw
+ * ids are validated against a catalog, an IRI field's raw ids are only ever
+ * rebuilt into IRIs, never validated against one (the same trust level
+ * {@link parseInterventionListFilters}'s single-valued IRI parsing already
+ * carries).
+ *
+ * @param {string | undefined} raw - The raw, possibly comma-separated, query param value — bare ids, never full IRIs.
+ * @param {(id: string) => string} toIri - Rebuilds one raw id into its full IRI.
+ *
+ * @returns {string | readonly string[] | null} A scalar for one id, an array for several, `null` for none.
+ *
+ * @since 8.3.0
+ */
+function parseIriSet(
+  raw: string | undefined,
+  toIri: (id: string) => string,
+): string | readonly string[] | null {
+  if (!raw) return null;
+
+  const ids: string[] = raw
+    .split(',')
+    .map((id: string): string => id.trim())
+    .filter((id: string): boolean => id.length > 0);
+
+  if (ids.length === 0) return null;
+  return ids.length === 1 ? toIri(ids[0]) : ids.map(toIri);
+}
+
 /** The last path segment of an IRI, null in and null out. */
 function lastIriSegment(iri: string | null): string | null {
   return iri === null ? null : (iri.split('/').pop() ?? null);
+}
+
+/**
+ * Function serializeEnumFilter
+ *
+ * @description
+ * The shared serializer for one of the six `equals`/`isAnyOf` fields: a
+ * scalar becomes its own raw value, a non-empty array becomes its members
+ * comma-joined (`toRaw` rebuilding each to its URL-facing form — the bare id
+ * for an IRI field, the value itself for an enum one), `null` or an empty
+ * array becomes `null`, removing the param.
+ *
+ * @template T - The field's own value type.
+ *
+ * @param {T | readonly T[] | null} value - The field's current value.
+ * @param {(item: T) => string | null} toRaw - Rebuilds one value into its URL-facing raw form.
+ *
+ * @returns {string | null} The param value, `null` to remove it.
+ *
+ * @since 8.3.0
+ */
+function serializeEnumFilter<T>(
+  value: T | readonly T[] | null,
+  toRaw: (item: T) => string | null,
+): string | null {
+  if (value === null) return null;
+
+  const raw: readonly (string | null)[] = Array.isArray(value)
+    ? value.map(toRaw)
+    : [toRaw(value as T)];
+  const kept: string[] = raw.filter((item: string | null): item is string => item !== null);
+
+  return kept.length === 0 ? null : kept.join(',');
 }
 
 /** A `YYYY-MM-DD` query param parsed to a `Date`, `null` for an absent or unparseable value — a tampered date param is dropped rather than sent to the API. */
@@ -266,14 +391,15 @@ export function parseInterventionListFilters(
   organizationId: string,
 ): InterventionListFilters {
   return {
-    status: parseOption(raw.status, INTERVENTION_STATUS_FILTER_OPTIONS),
-    type: parseOption(raw.type, INTERVENTION_TYPE_FILTER_OPTIONS),
-    priority: parseOption(raw.priority, INTERVENTION_PRIORITY_FILTER_OPTIONS),
-    site: raw.site ? `/api/facilities/${raw.site}` : null,
-    responsible: raw.responsible
-      ? `/api/organizations/${organizationId}/members/${raw.responsible}`
-      : null,
-    label: raw.label ? `/api/intervention-labels/${raw.label}` : null,
+    status: parseOptionSet(raw.status, INTERVENTION_STATUS_FILTER_OPTIONS),
+    type: parseOptionSet(raw.type, INTERVENTION_TYPE_FILTER_OPTIONS),
+    priority: parseOptionSet(raw.priority, INTERVENTION_PRIORITY_FILTER_OPTIONS),
+    site: parseIriSet(raw.site, (id: string): string => `/api/facilities/${id}`),
+    responsible: parseIriSet(
+      raw.responsible,
+      (id: string): string => `/api/organizations/${organizationId}/members/${id}`,
+    ),
+    label: parseIriSet(raw.label, (id: string): string => `/api/intervention-labels/${id}`),
     mine: raw.mine === '1',
     dueWindow: parseOption(raw.due, INTERVENTION_DUE_WINDOW_OPTIONS),
     dueRange: parseDueRange(raw.dueAfter, raw.dueBefore),
@@ -304,12 +430,12 @@ export function serializeInterventionListFilters(
   const plannedStartRange: InterventionPlannedStartRangeFilter | null = filters.plannedStartRange;
 
   return {
-    status: filters.status,
-    type: filters.type,
-    priority: filters.priority,
-    site: lastIriSegment(filters.site),
-    responsible: lastIriSegment(filters.responsible),
-    label: lastIriSegment(filters.label),
+    status: serializeEnumFilter(filters.status, (status): string => status),
+    type: serializeEnumFilter(filters.type, (type): string => type),
+    priority: serializeEnumFilter(filters.priority, (priority): string => priority),
+    site: serializeEnumFilter(filters.site, lastIriSegment),
+    responsible: serializeEnumFilter(filters.responsible, lastIriSegment),
+    label: serializeEnumFilter(filters.label, lastIriSegment),
     mine: filters.mine ? '1' : null,
     due: filters.dueWindow,
     dueAfter:
@@ -349,6 +475,10 @@ export function serializeInterventionListFilters(
  */
 export function countActiveFilters(filters: InterventionListFilters): number {
   return Object.entries(filters).filter(
-    ([key, value]) => key !== 'mine' && value !== null && value !== false,
+    ([key, value]) =>
+      key !== 'mine' &&
+      value !== null &&
+      value !== false &&
+      !(Array.isArray(value) && value.length === 0),
   ).length;
 }

@@ -15,9 +15,13 @@ import type { InterventionType } from './intervention-type.type';
  * serves had no name anywhere a caller could reach. They are declared here now,
  * and the service takes this type.
  *
- * `status` is single-valued server side: a question spanning several statuses
- * is several requests, summed by the caller (see
- * `utils/intervention-queue-requests`).
+ * `status`, `type`, `priority`, `site`, `responsible` and `label` each accept
+ * either a single exact value (`equals`) or a readonly array of values
+ * (`isAnyOf`, OR-combined server side via `IN()`) — `InterventionService.list()`
+ * sends an array as a repeated `key[]=` param, a scalar as the plain `key=`
+ * form. `utils/intervention-queue-requests` still fans a status question out
+ * into several single-value requests; that helper predates the array form and
+ * is unaffected by it (`FEATURE.md`).
  */
 export type InterventionListOptions = PaginationOptions & {
   /**
@@ -27,18 +31,19 @@ export type InterventionListOptions = PaginationOptions & {
    */
   readonly name?: string;
 
-  /** @type {InterventionStatus} */
-  readonly status?: InterventionStatus;
+  /** @type {InterventionStatus | readonly InterventionStatus[]} */
+  readonly status?: InterventionStatus | readonly InterventionStatus[];
 
-  /** @type {InterventionType} */
-  readonly type?: InterventionType;
+  /** @type {InterventionType | readonly InterventionType[]} */
+  readonly type?: InterventionType | readonly InterventionType[];
 
   /**
-   * Exact priority; the API answers 400 on an unknown value.
+   * Exact priority, or a set of priorities OR-combined server side; the API
+   * answers 400 on an unknown value.
    *
-   * @type {InterventionPriority}
+   * @type {InterventionPriority | readonly InterventionPriority[]}
    */
-  readonly priority?: InterventionPriority;
+  readonly priority?: InterventionPriority | readonly InterventionPriority[];
 
   /**
    * Server-side due preset. `overdue` restricts to `dueAt` in the past AND a
@@ -66,11 +71,12 @@ export type InterventionListOptions = PaginationOptions & {
 
   /**
    * Member IRI of the responsible agent, e.g.
-   * `/api/organizations/{organizationId}/members/{memberId}`.
+   * `/api/organizations/{organizationId}/members/{memberId}`, or a set of
+   * such IRIs OR-combined server side.
    *
-   * @type {string}
+   * @type {string | readonly string[]}
    */
-  readonly responsible?: string;
+  readonly responsible?: string | readonly string[];
 
   /**
    * Member IRI of any participant on the intervention.
@@ -88,18 +94,20 @@ export type InterventionListOptions = PaginationOptions & {
   readonly member?: string;
 
   /**
-   * Facility IRI the intervention is attached to.
+   * Facility IRI the intervention is attached to, or a set of such IRIs
+   * OR-combined server side.
    *
-   * @type {string}
+   * @type {string | readonly string[]}
    */
-  readonly site?: string;
+  readonly site?: string | readonly string[];
 
   /**
-   * Intervention label IRI, e.g. `/api/intervention-labels/{id}`.
+   * Intervention label IRI, e.g. `/api/intervention-labels/{id}`, or a set of
+   * such IRIs OR-combined server side.
    *
-   * @type {string}
+   * @type {string | readonly string[]}
    */
-  readonly label?: string;
+  readonly label?: string | readonly string[];
 
   /**
    * Exact per-organization intervention number; the API accepts an optional

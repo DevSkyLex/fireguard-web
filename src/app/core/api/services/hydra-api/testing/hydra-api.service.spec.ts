@@ -116,5 +116,32 @@ describe('HydraApiService', () => {
       expect(req.request.params.get('search')).toBe('legacy-term');
       req.flush(mockCollection);
     });
+
+    it('should append a readonly array param as repeated key[]= values, the isAnyOf wire shape', () => {
+      resourceService.list({ params: { status: ['draft', 'planned'] } }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === baseUrl);
+      expect(req.request.params.has('status')).toBe(false);
+      expect(req.request.params.getAll('status[]')).toEqual(['draft', 'planned']);
+      req.flush(mockCollection);
+    });
+
+    it('should send the plain key= form for a scalar param, unaffected by array support', () => {
+      resourceService.list({ params: { status: 'draft' } }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === baseUrl);
+      expect(req.request.params.get('status')).toBe('draft');
+      expect(req.request.params.has('status[]')).toBe(false);
+      req.flush(mockCollection);
+    });
+
+    it('should drop an empty array param entirely rather than send an empty isAnyOf', () => {
+      resourceService.list({ params: { status: [] } }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === baseUrl);
+      expect(req.request.params.has('status')).toBe(false);
+      expect(req.request.params.has('status[]')).toBe(false);
+      req.flush(mockCollection);
+    });
   });
 });

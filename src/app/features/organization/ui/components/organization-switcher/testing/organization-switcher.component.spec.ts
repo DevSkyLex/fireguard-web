@@ -1,12 +1,22 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import type { ApiError } from '@core/api/models';
+import {
+  idleCallState,
+  pendingCallState,
+  successCallState,
+  toStoreError,
+  type CallState,
+  type StoreError,
+} from '@core/request-state';
 import type { OrganizationOutput } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { OrganizationStore } from '@features/organization/state';
+import { ActiveOrganizationStore, OrganizationStore } from '@features/organization/state';
+import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { OrganizationSwitcher } from '../organization-switcher.component';
 
 function organization(
@@ -37,12 +47,22 @@ interface StoreStub {
   loadOrganizations: () => void;
 }
 
+interface SettingsStoreStub {
+  readonly isLeaving: WritableSignal<boolean>;
+  readonly leaveError: WritableSignal<StoreError | null>;
+  readonly leaveCallState: WritableSignal<CallState<void>>;
+  leave: (params: { organizationId: string }) => void;
+}
+
 describe('OrganizationSwitcher', () => {
   let routedId: WritableSignal<string | null>;
   let selected: WritableSignal<OrganizationOutput | null>;
   let loadingContext: WritableSignal<boolean>;
   let store: StoreStub;
   let loadCalls: number;
+  let settingsStore: SettingsStoreStub;
+  let leaveCalls: ReadonlyArray<{ organizationId: string }>;
+  let clearActiveOrganization: ReturnType<typeof vi.fn>;
 
   async function render(): Promise<ComponentFixture<OrganizationSwitcher>> {
     const context: OrganizationContextPort = {
@@ -53,11 +73,20 @@ describe('OrganizationSwitcher', () => {
 
     await TestBed.configureTestingModule({
       imports: [OrganizationSwitcher],
-      providers: [provideRouter([]), { provide: ORGANIZATION_CONTEXT_PORT, useValue: context }],
+      providers: [
+        provideRouter([]),
+        { provide: ORGANIZATION_CONTEXT_PORT, useValue: context },
+        { provide: ActiveOrganizationStore, useValue: { clear: clearActiveOrganization } },
+      ],
     })
       .overrideComponent(OrganizationSwitcher, {
-        remove: { providers: [OrganizationStore] },
-        add: { providers: [{ provide: OrganizationStore, useValue: store }] },
+        remove: { providers: [OrganizationStore, OrganizationSettingsStore] },
+        add: {
+          providers: [
+            { provide: OrganizationStore, useValue: store },
+            { provide: OrganizationSettingsStore, useValue: settingsStore },
+          ],
+        },
       })
       .compileComponents();
 
@@ -81,6 +110,16 @@ describe('OrganizationSwitcher', () => {
       isLoadingOrganizations: signal<boolean>(false),
       loadOrganizations: (): void => {
         loadCalls += 1;
+      },
+    };
+    leaveCalls = [];
+    clearActiveOrganization = vi.fn();
+    settingsStore = {
+      isLeaving: signal<boolean>(false),
+      leaveError: signal<StoreError | null>(null),
+      leaveCallState: signal<CallState<void>>(idleCallState()),
+      leave: (params: { organizationId: string }): void => {
+        leaveCalls = [...leaveCalls, params];
       },
     };
   });
@@ -177,5 +216,81 @@ describe('OrganizationSwitcher', () => {
     await fixture.whenStable();
 
     expect(document.querySelectorAll('[aria-current="true"]').length).toBe(1);
+  });
+
+  it('offers Leave organization to a plain member holding no permission beyond membership', async () => {
+    const fixture = await render();
+    (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const leaveItem: HTMLElement | null = document.querySelector(
+      '[data-testid="organization-switcher-leave"]',
+    );
+
+    expect(leaveItem).not.toBeNull();
+    expect(leaveItem?.textContent).toContain('Leave organization');
+  });
+
+  it('opens the leave dialog for the open organization and confirms into a leave call', async () => {
+    const fixture = await render();
+    (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    (document.querySelector('[data-testid="organization-switcher-leave"]') as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const confirmButton: HTMLElement | null = document.querySelector(
+      '[data-testid="organization-leave-confirm"]',
+    );
+    expect(
+      confirmButton?.closest('[data-testid="organization-leave-dialog"]')?.textContent,
+    ).toContain('Acme Inc');
+
+    confirmButton?.click();
+
+    expect(leaveCalls).toEqual([{ organizationId: 'org-1' }]);
+  });
+
+  it("surfaces the backend's owner-cannot-leave 409 detail inline on the dialog", async () => {
+    const apiError: ApiError = {
+      '@id': '',
+      '@type': 'Error',
+      status: 409,
+      type: 'about:blank',
+      title: 'Conflict',
+      detail: 'The organization owner cannot leave; transfer ownership to another member first.',
+    };
+    settingsStore.leaveError.set(toStoreError(apiError));
+
+    const fixture = await render();
+    (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    (document.querySelector('[data-testid="organization-switcher-leave"]') as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(
+      document.querySelector('[data-testid="organization-leave-error"]')?.textContent,
+    ).toContain('The organization owner cannot leave; transfer ownership to another member first.');
+  });
+
+  it('clears the active organization and returns to the redirector once leaving succeeds', async () => {
+    const fixture = await render();
+    const router: Router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    settingsStore.leaveCallState.set(pendingCallState());
+    fixture.detectChanges();
+    settingsStore.leaveCallState.set(successCallState(undefined));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(clearActiveOrganization).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/organizations']);
   });
 });

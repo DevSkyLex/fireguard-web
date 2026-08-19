@@ -13235,6 +13235,13 @@
           <context context-type="linenumber">65,67</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.switcher.leave" datatype="html">
+        <source>Leave organization…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.html</context>
+          <context context-type="linenumber">78</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="org.today.queueAllClear" datatype="html">
         <source>0 — All clear</source>
         <context-group purpose="location">

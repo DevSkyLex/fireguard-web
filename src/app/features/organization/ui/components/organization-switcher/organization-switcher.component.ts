@@ -2,19 +2,25 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
+  signal,
+  untracked,
+  type EffectRef,
   type OnInit,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideChevronsUpDown, lucidePlus } from '@ng-icons/lucide';
+import { lucideCheck, lucideChevronsUpDown, lucideLogOut, lucidePlus } from '@ng-icons/lucide';
 import type { OrganizationOutput } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { OrganizationStore } from '@features/organization/state';
+import { ActiveOrganizationStore, OrganizationStore } from '@features/organization/state';
+import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { getOrganizationInitials } from '@features/organization/utils';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import {
@@ -31,6 +37,7 @@ import {
   HlmSidebarService,
 } from '@shared/ui/sidebar';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { OrganizationLeaveDialog } from '../../dialogs/organization-leave-dialog';
 import type { OrganizationSwitcherOption } from './models';
 
 /**
@@ -52,7 +59,20 @@ import type { OrganizationSwitcherOption } from './models';
  * the shell only lends it a slot (`ARCHITECTURE.md` §2.7). It is contributed
  * through `withOrganizationSwitcher()`.
  *
- * @version 1.0.0
+ * The menu's own "Leave organization…" entry is the only reachable path a
+ * rank-and-file member has to leave the open organization — the settings
+ * danger tab that already offers it is gated behind `organization.delete`,
+ * which most members never hold. It renders unconditionally for every
+ * member, including the owner: the backend's self-service
+ * `LeaveOrganizationProcessor` checks nothing beyond active membership, and
+ * its owner/last-administrator refusals surface as {@link OrganizationLeaveDialog}'s
+ * inline error rather than being re-derived client-side here. Provides its
+ * own {@link OrganizationSettingsStore} instance to reuse
+ * {@link OrganizationSettingsStore.leave} rather than re-implement the call —
+ * the store is designed for component-level provisioning, and this menu
+ * needs only that one method of its wider mutation surface.
+ *
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -77,8 +97,13 @@ import type { OrganizationSwitcherOption } from './models';
     HlmSidebarMenuButton,
     HlmSidebarMenuItem,
     HlmSkeleton,
+    OrganizationLeaveDialog,
   ],
-  providers: [OrganizationStore, provideIcons({ lucideCheck, lucideChevronsUpDown, lucidePlus })],
+  providers: [
+    OrganizationStore,
+    OrganizationSettingsStore,
+    provideIcons({ lucideCheck, lucideChevronsUpDown, lucideLogOut, lucidePlus }),
+  ],
   templateUrl: './organization-switcher.component.html',
   host: { class: 'block min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,6 +124,41 @@ export class OrganizationSwitcher implements OnInit {
    */
   private readonly organizationStore: OrganizationStore =
     inject<OrganizationStore>(OrganizationStore);
+
+  /**
+   * Property settingsStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped instance of the same store the settings danger tab
+   * uses, provided fresh here so the menu's "Leave organization…" entry
+   * reuses {@link OrganizationSettingsStore.leave} instead of duplicating
+   * the call.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {OrganizationSettingsStore}
+   */
+  protected readonly settingsStore: OrganizationSettingsStore =
+    inject<OrganizationSettingsStore>(OrganizationSettingsStore);
+
+  /**
+   * Property activeOrganizationStore
+   * @readonly
+   *
+   * @description
+   * Root-provided active-organization context, cleared once leaving
+   * succeeds — mirroring `OrganizationSettingsPage`'s own post-leave
+   * cleanup.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {ActiveOrganizationStore}
+   */
+  private readonly activeOrganizationStore: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property organizationContext
@@ -215,6 +275,61 @@ export class OrganizationSwitcher implements OnInit {
   protected readonly menuSide: Signal<'top' | 'right'> = computed((): 'top' | 'right' =>
     this.sidebar.isMobile() ? 'top' : 'right',
   );
+
+  /**
+   * Property confirmingLeave
+   * @readonly
+   *
+   * @description
+   * Whether the "Leave organization…" confirmation dialog is open.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly confirmingLeave: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property previousLeaveStatus
+   *
+   * @description
+   * The leave call state as of the last time {@link navigateAwayOnLeave} ran,
+   * so it can spot the transition into success rather than the state of
+   * being in it.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {string}
+   */
+  private previousLeaveStatus: string = 'idle';
+
+  /**
+   * Property navigateAwayOnLeave
+   * @readonly
+   *
+   * @description
+   * Once leaving succeeds, closes the dialog, clears the active organization
+   * context and returns to the organization redirector — mirroring
+   * `OrganizationSettingsPage`'s own `navigateAwayOnLeave`.
+   *
+   * @access private
+   * @since 2.0.0
+   */
+  private readonly navigateAwayOnLeave: EffectRef = effect((): void => {
+    const status: string = this.settingsStore.leaveCallState().status;
+    const previous: string = this.previousLeaveStatus;
+    this.previousLeaveStatus = status;
+
+    if (previous !== 'pending' || status !== 'success') return;
+
+    untracked((): void => {
+      this.confirmingLeave.set(false);
+      this.activeOrganizationStore.clear();
+      void this.router.navigate(['/organizations']);
+    });
+  });
   //#endregion
 
   //#region Lifecycle
@@ -280,6 +395,46 @@ export class OrganizationSwitcher implements OnInit {
    */
   protected createOrganization(): void {
     void this.router.navigate(['/onboarding']);
+  }
+
+  /**
+   * Method openLeaveDialog
+   * @method openLeaveDialog
+   *
+   * @description
+   * Opens the "Leave organization…" confirmation for the open organization.
+   * Rendered for every member regardless of role — the backend's own
+   * owner/last-administrator refusals are what gate the actual departure.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected openLeaveDialog(): void {
+    if (this.active() === null) return;
+
+    this.confirmingLeave.set(true);
+  }
+
+  /**
+   * Method leaveOrganization
+   * @method leaveOrganization
+   *
+   * @description
+   * Deactivates the acting member's own membership in the open organization
+   * once the dialog is confirmed.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected leaveOrganization(): void {
+    const organizationId: string | undefined = this.active()?.id;
+    if (organizationId === undefined) return;
+
+    this.settingsStore.leave({ organizationId });
   }
   //#endregion
 

@@ -154,7 +154,8 @@ organization; its candidate list is `OrganizationMemberService.listAll`, loaded 
 the tab, narrowed to active, non-owner members. Leave (`app-organization-leave-dialog`, self-removal
 via `DELETE /members/me`) renders for every member but the owner — the backend's own last-administrator
 lockout surfaces as the dialog's inline error rather than being re-derived client-side. The whole tab
-stays gated on `organization.delete`, unchanged.
+stays gated on `organization.delete`, unchanged. This danger-tab entry is additive: it is not a
+rank-and-file member's only path to leave — see `OrganizationSwitcher` below for the one that is.
 
 **`OrganizationOutput.isOwner` is declared but rarely populated on this page.** The backend sets it
 only on the user's organization list (`GET /api/organizations`) — confirmed by reading
@@ -336,6 +337,21 @@ published by the `interventions` subfeature as a header-action slot contribution
 only ever renders inside a layout: it reads organization state, and rendering location does not
 transfer ownership (`ARCHITECTURE.md` §2.7). It provides `OrganizationStore` itself, because that
 store is not root-provided.
+
+**Leaving an organization is self-service, and every member can always reach it.** The backend's
+`LeaveOrganizationProcessor` checks nothing beyond active membership — the owner-cannot-leave and
+last-administrator guards are both 409s the caller resolves by acting differently, not permission
+failures — but until now the only UI path to it sat behind the settings danger tab, gated on both
+`organization.settings.write` (the route) and `organization.delete` (the tab), which a
+rank-and-file member never holds. `OrganizationSwitcher`'s menu now carries its own
+"Leave organization…" entry, gated on nothing but there being an open organization to leave: it
+renders for every member, owner included, and provides its own `OrganizationSettingsStore`
+instance — mirroring how it already provides `OrganizationStore` — to reuse
+`OrganizationSettingsStore.leave` rather than duplicate the call. A 409 renders inline on
+`OrganizationLeaveDialog` exactly as it does from the danger tab, since both call sites read the
+same `toStoreError`-normalized `leaveError`. On success the switcher clears
+`ActiveOrganizationStore` and navigates to `/organizations`, matching
+`OrganizationSettingsPage`'s own post-leave cleanup.
 
 **The URL chooses the organization; the workspace outlives the route.** The dashboard shell serves
 global pages too — `/account` first among them — and those name no organization of their own.

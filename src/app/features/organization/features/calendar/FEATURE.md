@@ -7,10 +7,14 @@ One page: the organization's **unified calendar** —
 date-ranged feed (`GET /organizations/{organizationId}/calendar/feed`). The
 feed is the single source and merges exactly four contributors: standalone
 calendar events, inspections (`performedAt`), interventions
-(`plannedStartAt`/`dueAt`) and preventive maintenance (`nextDueAt`). This
-feature owns the feed transport, its models and the page; the month grid
-itself is the **shared generic `Calendar`** (`@shared/calendar`) — structure
-in Tailwind, every interactive or tonal element a spartan primitive.
+(`plannedStartAt`/`dueAt`) and preventive maintenance (`nextDueAt`). Of the
+four, only the `calendar_event` source is **writable** from this page: full
+CRUD against `POST/PATCH/DELETE /organizations/{organizationId}/calendar/events`,
+gated on `organization.events.write`. This feature owns the feed transport,
+the standalone-event write transport, its models and the page; the month
+grid itself is the **shared generic `Calendar`** (`@shared/calendar`) —
+structure in Tailwind, every interactive or tonal element a spartan
+primitive.
 
 The page is a **full-height console**, not a scrolling document: a
 page-level toolbar band (Today, prev/next month, the current period label)
@@ -33,19 +37,49 @@ entry, so a row is never hand-rolled twice.
 - `calendar.routes.ts` → `CALENDAR_ROUTES`, mounted by
   `organization.routes.ts` under `calendar`, gated by
   `organizationPermissionGuard({ permissions: [EVENTS_READ] })` — the same
-  `organization.events.read` the feed endpoint enforces.
+  `organization.events.read` the feed endpoint enforces. The write surface
+  (create/edit/delete) adds no route: it is dialogs on the same page, gated
+  in-page on `organization.events.write`.
 
 ## Stores and data access
 
 - `CalendarService` (`data-access/services/calendar/`) — `getFeed(orgId,
-from, to)`, the only call. Read-only in this pass.
+from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
+  only the dirty fields — see the Writable events invariant below) and
+  `deleteEvent`.
 - `CalendarFeedStore` (`state/calendar-feed/`) — component-scoped on the
-  page; exactly one query concern, so `withQueryState` carries the lifecycle.
-  `load` uses `switchMap`: paging to another month supersedes the in-flight
-  window.
+  page. The feed read stays `withQueryState`, its one query concern; the
+  three standalone-event writes are named `CallState` fields
+  (`createEventCallState`/`updateEventCallState`/`deleteEventCallState`)
+  since each reports independently. `load` uses `switchMap`: paging to
+  another month supersedes the in-flight window.
 
 ## Invariants
 
+- **Refresh-after-write, not client-side patching.** A successful
+  create/update/delete re-runs the feed's last loaded window
+  (`CalendarFeedStore` remembers it as `lastLoadCommand`) rather than
+  splicing the write's response into `queryData().items` in place. The feed
+  merges and sorts four sources server-side (`startsAt` ascending, tied by
+  `sourceKey`, tied by `id`); reconstructing that ordering client-side from
+  one write's response would drift from the server's own merge the moment a
+  second source's entry sits nearby. The store owns the refetch; the page
+  only closes the dialog once the write's own `CallState` reaches `success`.
+- **Only a `calendar_event`-source entry is ever editable.** `CalendarEntryList`
+  — not the page — enforces the gate: its `isEditableOf()` shows the
+  Edit/Delete icon buttons only when `item.sourceKey === 'calendar_event'`
+  **and** the caller-supplied `canWrite` input holds. Inspection,
+  intervention and maintenance entries are projections of records this
+  feature does not own; they never render a write affordance regardless of
+  permission.
+- **Merge-patch honors the backend's omitted-vs-`null` semantics.** An
+  omitted `UpdateCalendarEventInput` field leaves that property unchanged
+  server-side; only an explicit `null` clears `description`, `endsAt` or
+  `facilityId` (`Calendar\MODULE.md`). `CalendarPage.buildUpdatePatch()`
+  diffs the edit dialog's submitted values against the record being edited
+  and includes only the fields that actually changed — instant comparison
+  uses `Date#getTime()`, never string equality, since the same instant can
+  round-trip through a different UTC offset.
 - **The feed window is one week wider than the visible month on each side**:
   the shared grid shows leading/trailing filler days, and their chips must
   not silently vanish.
@@ -65,13 +99,14 @@ from, to)`, the only call. Read-only in this pass.
 ## Cross-feature dependencies
 
 - `@shared/calendar` (generic widget, no domain knowledge).
+- `FacilityService` (`@features/organization/features/facilities/data-access`)
+  — read-only, to populate the event dialog's optional facility select.
+  Mirrors the same cross-feature read `equipments`' detail page already
+  makes into `facilities`; approved precedent, not a new exception.
 - None on sibling subfeatures: intervention entries link by URL, not by
   importing the interventions feature.
 
 ## Follow-ups
 
-- Standalone-event CRUD ("New event", edit, delete) against
-  `POST/PATCH/DELETE /organizations/{organizationId}/calendar/events` —
-  the backend is ready; the UI surface is deliberately out of this pass.
 - Detail links for inspection and maintenance entries once their pages have
   stable per-record routes.

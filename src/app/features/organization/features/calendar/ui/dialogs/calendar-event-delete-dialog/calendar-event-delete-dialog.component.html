@@ -1,0 +1,47 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="calendar-event-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@calendar.eventDeleteDialog.title">
+        Delete "{{ eventTitle() }}"?
+      </h2>
+      <p hlmAlertDialogDescription i18n="@@calendar.eventDeleteDialog.description">
+        This standalone event is permanently removed from the calendar. This cannot be undone.
+      </p>
+      @if (errorMessage(); as message) {
+        <p role="alert" data-testid="calendar-event-delete-error" class="text-sm text-destructive">
+          {{ message }}
+        </p>
+      }
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button
+        hlmAlertDialogCancel
+        class="max-sm:min-h-11"
+        [disabled]="pending()"
+        i18n="@@calendar.eventDeleteDialog.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="calendar-event-delete-confirm"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@calendar.eventDeleteDialog.deleting">Deleting…</span>
+        } @else {
+          <span i18n="@@calendar.eventDeleteDialog.confirm">Delete</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

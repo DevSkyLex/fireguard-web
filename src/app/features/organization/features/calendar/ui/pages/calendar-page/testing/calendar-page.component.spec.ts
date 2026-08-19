@@ -1,9 +1,12 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import type { StoreError } from '@core/request-state';
+import { of } from 'rxjs';
+import { idleCallState, type CallState, type StoreError } from '@core/request-state';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { CalendarFeedStore } from '@features/organization/features/calendar/state';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { CalendarPage } from '../calendar-page.component';
 
 function feedItem(overrides: Partial<CalendarFeedItemOutput> = {}): CalendarFeedItemOutput {
@@ -25,24 +28,41 @@ describe('CalendarPage', () => {
   let queryError: WritableSignal<StoreError | null>;
   let isQueryLoading: WritableSignal<boolean>;
   let load: ReturnType<typeof vi.fn>;
+  let createEvent: ReturnType<typeof vi.fn>;
+  let updateEvent: ReturnType<typeof vi.fn>;
+  let deleteEvent: ReturnType<typeof vi.fn>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
-  async function render(): Promise<void> {
+  async function render(canWrite: boolean = false): Promise<void> {
     items = signal<readonly CalendarFeedItemOutput[]>([]);
     queryError = signal<StoreError | null>(null);
     isQueryLoading = signal<boolean>(false);
     load = vi.fn();
+    createEvent = vi.fn();
+    updateEvent = vi.fn();
+    deleteEvent = vi.fn();
 
     const storeMock = {
       items,
       queryError,
       isQueryLoading,
       load,
+      createEvent,
+      updateEvent,
+      deleteEvent,
+      createEventCallState: signal<CallState<unknown>>(idleCallState()),
+      updateEventCallState: signal<CallState<unknown>>(idleCallState()),
+      deleteEventCallState: signal<CallState<unknown>>(idleCallState()),
     };
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: OrganizationPermissionService, useValue: { hasPermission: () => canWrite } },
+        { provide: FacilityService, useValue: { list: () => of({ member: [], totalItems: 0 }) } },
+      ],
     });
 
     TestBed.overrideComponent(CalendarPage, {
@@ -159,5 +179,114 @@ describe('CalendarPage', () => {
 
     const agenda: HTMLElement | null = root().querySelector('[data-testid="calendar-agenda"]');
     expect(agenda?.textContent).toContain('Nothing scheduled in this period.');
+  });
+
+  it('hides "New event" when the member lacks organization.events.write', async () => {
+    await render(false);
+
+    expect(root().querySelector('[data-testid="calendar-new-event"]')).toBeNull();
+  });
+
+  it('opens the create dialog from "New event" and sends the create write on submit', async () => {
+    await render(true);
+
+    root().querySelector<HTMLButtonElement>('[data-testid="calendar-new-event"]')?.click();
+    await fixture.whenStable();
+
+    expect(document.querySelector('[data-testid="calendar-event-dialog"]')?.textContent).toContain(
+      'New event',
+    );
+
+    (
+      fixture.componentInstance as unknown as {
+        onEventFormSubmitted(values: {
+          title: string;
+          description: string | null;
+          startsAt: string;
+          endsAt: string | null;
+          allDay: boolean;
+          facilityId: string | null;
+        }): void;
+      }
+    ).onEventFormSubmitted({
+      title: 'Fire drill',
+      description: null,
+      startsAt: '2026-08-01T09:00:00.000Z',
+      endsAt: null,
+      allDay: false,
+      facilityId: null,
+    });
+
+    expect(createEvent).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      input: {
+        title: 'Fire drill',
+        description: null,
+        startsAt: '2026-08-01T09:00:00.000Z',
+        endsAt: null,
+        allDay: false,
+        facilityId: null,
+      },
+    });
+  });
+
+  it('sends only the changed fields as a merge-patch on an edit', async () => {
+    await render(true);
+
+    const original: CalendarFeedItemOutput = feedItem({
+      sourceKey: 'calendar_event',
+      id: 'evt-1',
+      title: 'Fire drill',
+      startsAt: '2026-08-01T09:00:00+02:00',
+      allDay: false,
+    });
+
+    (
+      fixture.componentInstance as unknown as {
+        openEditDialog(item: CalendarFeedItemOutput): void;
+      }
+    ).openEditDialog(original);
+    await fixture.whenStable();
+
+    (
+      fixture.componentInstance as unknown as {
+        onEventFormSubmitted(values: {
+          title: string;
+          description: string | null;
+          startsAt: string;
+          endsAt: string | null;
+          allDay: boolean;
+          facilityId: string | null;
+        }): void;
+      }
+    ).onEventFormSubmitted({
+      title: 'Fire drill (updated)',
+      description: null,
+      startsAt: '2026-08-01T09:00:00+02:00',
+      endsAt: null,
+      allDay: false,
+      facilityId: null,
+    });
+
+    expect(updateEvent).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      eventId: 'evt-1',
+      input: { title: 'Fire drill (updated)' },
+    });
+  });
+
+  it('sends the delete write for the confirmed target', async () => {
+    await render(true);
+
+    const target: CalendarFeedItemOutput = feedItem({ sourceKey: 'calendar_event', id: 'evt-1' });
+
+    (
+      fixture.componentInstance as unknown as {
+        requestDelete(item: CalendarFeedItemOutput): void;
+      }
+    ).requestDelete(target);
+    (fixture.componentInstance as unknown as { confirmDelete(): void }).confirmDelete();
+
+    expect(deleteEvent).toHaveBeenCalledWith({ organizationId: 'org-1', eventId: 'evt-1' });
   });
 });

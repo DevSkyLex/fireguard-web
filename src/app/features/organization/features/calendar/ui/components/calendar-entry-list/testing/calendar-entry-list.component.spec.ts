@@ -80,4 +80,37 @@ describe('CalendarEntryList', () => {
 
     expect(root().querySelectorAll('[data-testid="calendar-day-item"]')).toHaveLength(0);
   });
+
+  it('never shows Edit/Delete on a non-event source, even when canWrite is set', async () => {
+    await render([item({ sourceKey: 'maintenance' })]);
+    fixture.componentRef.setInput('canWrite', true);
+    await fixture.whenStable();
+
+    expect(root().querySelector('[data-testid="calendar-day-item-edit"]')).toBeNull();
+    expect(root().querySelector('[data-testid="calendar-day-item-delete"]')).toBeNull();
+  });
+
+  it('hides Edit/Delete on an event source when canWrite is false', async () => {
+    await render([item({ sourceKey: 'calendar_event' })]);
+
+    expect(root().querySelector('[data-testid="calendar-day-item-edit"]')).toBeNull();
+  });
+
+  it('shows and wires Edit/Delete on an event source when canWrite is set', async () => {
+    const target: CalendarFeedItemOutput = item({ sourceKey: 'calendar_event', id: 'evt-1' });
+    await render([target]);
+    fixture.componentRef.setInput('canWrite', true);
+    await fixture.whenStable();
+
+    const editRequested: CalendarFeedItemOutput[] = [];
+    const deleteRequested: CalendarFeedItemOutput[] = [];
+    fixture.componentInstance.editRequested.subscribe((entry) => editRequested.push(entry));
+    fixture.componentInstance.deleteRequested.subscribe((entry) => deleteRequested.push(entry));
+
+    root().querySelector<HTMLButtonElement>('[data-testid="calendar-day-item-edit"]')?.click();
+    root().querySelector<HTMLButtonElement>('[data-testid="calendar-day-item-delete"]')?.click();
+
+    expect(editRequested).toEqual([target]);
+    expect(deleteRequested).toEqual([target]);
+  });
 });

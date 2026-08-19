@@ -9039,6 +9039,122 @@
         <source> Nothing scheduled in this period. </source>
         <target>No hay nada previsto en este periodo.</target>
       </trans-unit>
+      <trans-unit id="calendar.entry.editAria" datatype="html">
+        <source>Edit <x id="eventTitle" equiv-text="eventTitle"/></source>
+        <target>Editar <x id="eventTitle" equiv-text="eventTitle"/></target>
+      </trans-unit>
+      <trans-unit id="calendar.entry.deleteAria" datatype="html">
+        <source>Delete <x id="eventTitle" equiv-text="eventTitle"/></source>
+        <target>Eliminar <x id="eventTitle" equiv-text="eventTitle"/></target>
+      </trans-unit>
+      <trans-unit id="calendar.newEvent" datatype="html">
+        <source>New event</source>
+        <target>Nuevo evento</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.createTitle" datatype="html">
+        <source>New event</source>
+        <target>Nuevo evento</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.createDescription" datatype="html">
+        <source> Adds a standalone event to the organization calendar. </source>
+        <target>Añade un evento independiente al calendario de la organización.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.editTitle" datatype="html">
+        <source>Edit event</source>
+        <target>Editar evento</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.editDescription" datatype="html">
+        <source> Changes apply only to this standalone event. </source>
+        <target>Los cambios solo se aplican a este evento independiente.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.title" datatype="html">
+        <source>Title</source>
+        <target>Título</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.titlePlaceholder" datatype="html">
+        <source>Fire drill</source>
+        <target>Simulacro de incendio</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.description" datatype="html">
+        <source>Description</source>
+        <target>Descripción</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.startsAt" datatype="html">
+        <source>Starts</source>
+        <target>Inicio</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.endsAt" datatype="html">
+        <source>Ends</source>
+        <target>Fin</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.allDay" datatype="html">
+        <source>All day</source>
+        <target>Todo el día</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.facility" datatype="html">
+        <source>Facility</source>
+        <target>Instalación</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.noFacility" datatype="html">
+        <source>No facility</source>
+        <target>Sin instalación</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.submitEdit" datatype="html">
+        <source>Save changes</source>
+        <target>Guardar cambios</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.submitCreate" datatype="html">
+        <source>Create event</source>
+        <target>Crear evento</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.titleRequired" datatype="html">
+        <source>A title is required.</source>
+        <target>Se requiere un título.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.titleTooLong" datatype="html">
+        <source>This title is too long.</source>
+        <target>Este título es demasiado largo.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.descriptionTooLong" datatype="html">
+        <source>This description is too long.</source>
+        <target>Esta descripción es demasiado larga.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.startsAtRequired" datatype="html">
+        <source>A start date/time is required.</source>
+        <target>Se requiere una fecha/hora de inicio.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.endBeforeStart" datatype="html">
+        <source>The end must not be before the start.</source>
+        <target>El fin no debe ser anterior al inicio.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.genericError" datatype="html">
+        <source>The event could not be saved.</source>
+        <target>No se pudo guardar el evento.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDeleteDialog.title" datatype="html">
+        <source> Delete &quot;<x id="INTERPOLATION" equiv-text="{{ eventTitle() }}"/>&quot;? </source>
+        <target> ¿Eliminar «<x id="INTERPOLATION" equiv-text="{{ eventTitle() }}"/>»? </target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDeleteDialog.description" datatype="html">
+        <source> This standalone event is permanently removed from the calendar. This cannot be undone. </source>
+        <target>Este evento independiente se elimina definitivamente del calendario. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDeleteDialog.cancel" datatype="html">
+        <source> Cancel </source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDeleteDialog.deleting" datatype="html">
+        <source>Deleting…</source>
+        <target>Eliminando…</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDeleteDialog.confirm" datatype="html">
+        <source>Delete</source>
+        <target>Eliminar</target>
+      </trans-unit>
       <trans-unit id="shared.commentComposer.placeholder" datatype="html">
         <source>Write a comment…</source>
         <target>Escribe un comentario…</target>

@@ -1,0 +1,63 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="approval-decision-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle>{{ title() }}</h2>
+      <p hlmAlertDialogDescription>{{ description() }}</p>
+    </hlm-alert-dialog-header>
+
+    <hlm-field class="gap-1">
+      <label
+        for="approval-decision-note"
+        hlmFieldLabel
+        class="text-xs font-medium text-muted-foreground"
+        i18n="@@approvals.decide.noteLabel"
+        >Decision note (optional)</label
+      >
+      <textarea
+        hlmTextarea
+        id="approval-decision-note"
+        rows="3"
+        class="w-full"
+        data-testid="approval-decision-note"
+        [attr.maxlength]="maxLength"
+        placeholder="Add context for the record"
+        i18n-placeholder="@@approvals.decide.notePlaceholder"
+        [value]="noteDraft()"
+        (input)="onNoteInput($event)"
+      ></textarea>
+      <hlm-field-description
+        id="approval-decision-note-counter"
+        class="self-end text-xs text-muted-foreground"
+        data-testid="approval-decision-note-counter"
+      >
+        {{ noteDraft().length }}/{{ maxLength }}
+      </hlm-field-description>
+    </hlm-field>
+
+    @if (errorText(); as error) {
+      <p class="text-sm text-destructive" role="alert" data-testid="approval-decision-error">
+        {{ error }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel class="min-w-0 shrink">
+        <span class="truncate" i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmAlertDialogAction
+        class="min-w-0 shrink"
+        data-testid="approval-decision-accept"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending()"
+        (click)="accept()"
+      >
+        <span class="truncate">{{ acceptLabel() }}</span>
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

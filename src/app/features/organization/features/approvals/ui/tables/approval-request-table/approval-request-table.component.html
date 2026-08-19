@@ -1,0 +1,146 @@
+<div class="h-full w-full overflow-hidden rounded-md border border-border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="approval-request-table-caption"
+  >
+    <table hlmTable data-testid="approval-request-table">
+      <caption
+        hlmTableCaption
+        id="approval-request-table-caption"
+        class="sr-only"
+        i18n="@@approvals.table.title"
+      >
+        Approval requests
+      </caption>
+
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@approvals.table.colActionType">Action</th>
+          <th hlmTableHead i18n="@@approvals.table.colSubject">Subject</th>
+          <th hlmTableHead i18n="@@approvals.table.colRequester">Requested by</th>
+          <th hlmTableHead i18n="@@approvals.table.colRequested">Requested</th>
+          <th hlmTableHead i18n="@@approvals.table.colExpires">Expires</th>
+          <th hlmTableHead i18n="@@approvals.table.colStatus">Status</th>
+          @if (canDecide()) {
+            <th hlmTableHead class="w-px">
+              <span class="sr-only" i18n="@@common.actions">Actions</span>
+            </th>
+          }
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @if (loading() && items().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-16" /></td>
+              @if (canDecide()) {
+                <td hlmTableCell><hlm-skeleton class="h-4 w-16" /></td>
+              }
+            </tr>
+          }
+        } @else {
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="approval-request-table-row">
+              <td hlmTableCell class="font-medium whitespace-normal text-foreground">
+                {{ actionTypeLabelOf()(item.actionType) }}
+              </td>
+
+              <td hlmTableCell class="whitespace-normal">
+                @if (subjectRouteOf(item); as route) {
+                  <a
+                    class="rounded-sm text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    [routerLink]="route"
+                    >{{ item.subjectId }}</a
+                  >
+                } @else {
+                  <span class="text-muted-foreground">{{ item.subjectId }}</span>
+                }
+              </td>
+
+              <td hlmTableCell class="whitespace-normal text-muted-foreground">
+                {{ item.requestedByUserId }}
+              </td>
+
+              <td hlmTableCell class="whitespace-normal">{{ item.createdAt | date: 'medium' }}</td>
+
+              <td hlmTableCell class="whitespace-normal">{{ item.expiresAt | date: 'medium' }}</td>
+
+              <td hlmTableCell>
+                <app-approval-status-tag [value]="item.status" />
+                @if (isDecided(item)) {
+                  <div class="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
+                    @if (item.decisionByUserId) {
+                      <span
+                        ><span i18n="@@approvals.table.decidedBy">Decided by</span>
+                        {{ item.decisionByUserId }}</span
+                      >
+                    }
+                    @if (item.decisionNote) {
+                      <span class="italic">"{{ item.decisionNote }}"</span>
+                    }
+                    @if (item.executionError) {
+                      <span class="text-destructive">{{ item.executionError }}</span>
+                    }
+                  </div>
+                }
+              </td>
+
+              @if (canDecide()) {
+                <td hlmTableCell>
+                  @if (item.status === 'pending') {
+                    <div class="flex gap-1">
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        class="max-sm:min-h-11"
+                        data-testid="approval-request-table-approve"
+                        [attr.aria-label]="approveAriaLabelOf(item)"
+                        (click)="approveRequested.emit(item)"
+                      >
+                        <ng-icon name="lucideCheck" aria-hidden="true" />
+                      </button>
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        class="max-sm:min-h-11"
+                        data-testid="approval-request-table-reject"
+                        [attr.aria-label]="rejectAriaLabelOf(item)"
+                        (click)="rejectRequested.emit(item)"
+                      >
+                        <ng-icon name="lucideX" aria-hidden="true" />
+                      </button>
+                    </div>
+                  }
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                [attr.colspan]="columnCount()"
+                i18n="@@approvals.table.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -574,6 +574,10 @@
           <context context-type="linenumber">85,87</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.html</context>
+          <context context-type="linenumber">49,51</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/forms/channel-create-form/channel-create-form.component.html</context>
           <context context-type="linenumber">67,69</context>
         </context-group>
@@ -2223,6 +2227,287 @@
           <context context-type="linenumber">44</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="route.approvals" datatype="html">
+        <source>Approvals</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/approvals.routes.ts</context>
+          <context context-type="linenumber">42</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.status.pending" datatype="html">
+        <source>Pending</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/models/approval-tag/approval-tag.util.ts</context>
+          <context context-type="linenumber">12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.status.approved" datatype="html">
+        <source>Approved</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/models/approval-tag/approval-tag.util.ts</context>
+          <context context-type="linenumber">17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.status.rejected" datatype="html">
+        <source>Rejected</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/models/approval-tag/approval-tag.util.ts</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.status.cancelled" datatype="html">
+        <source>Cancelled</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/models/approval-tag/approval-tag.util.ts</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.status.expired" datatype="html">
+        <source>Expired</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/models/approval-tag/approval-tag.util.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.subjectChanged" datatype="html">
+        <source>This request can no longer be applied — the item it gates has changed since it was requested. It has been cancelled; refresh to see the latest state.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/state/approval-requests/utils/decide-error-message/decide-error-message.utils.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.alreadyDecided" datatype="html">
+        <source>Someone else already decided this request. Refresh to see the outcome.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/state/approval-requests/utils/decide-error-message/decide-error-message.utils.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.selfApproval" datatype="html">
+        <source>You cannot decide on a request you submitted yourself.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/state/approval-requests/utils/decide-error-message/decide-error-message.utils.ts</context>
+          <context context-type="linenumber">38</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.belowMinRole" datatype="html">
+        <source>Your role does not meet this action&apos;s minimum approver requirement.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/state/approval-requests/utils/decide-error-message/decide-error-message.utils.ts</context>
+          <context context-type="linenumber">39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.generic" datatype="html">
+        <source>The decision could not be recorded. Try again.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/state/approval-requests/utils/decide-error-message/decide-error-message.utils.ts</context>
+          <context context-type="linenumber">44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.noteLabel" datatype="html">
+        <source>Decision note (optional)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.html</context>
+          <context context-type="linenumber">17,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.notePlaceholder" datatype="html">
+        <source>Add context for the record</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.html</context>
+          <context context-type="linenumber">27,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.rejectTitle" datatype="html">
+        <source>Reject approval request?</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.approveTitle" datatype="html">
+        <source>Approve approval request?</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.ts</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.rejectMessage" datatype="html">
+        <source>The gated action will never run. This cannot be undone.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.ts</context>
+          <context context-type="linenumber">157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.approveMessage" datatype="html">
+        <source>Approving executes the gated action immediately — it does not queue for later. This cannot be undone.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.ts</context>
+          <context context-type="linenumber">158</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.rejectAccept" datatype="html">
+        <source>Reject</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.ts</context>
+          <context context-type="linenumber">164</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.decide.approveAccept" datatype="html">
+        <source>Approve</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/dialogs/approval-decision-dialog/approval-decision-dialog.component.ts</context>
+          <context context-type="linenumber">165</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.filter.statusAriaLabel" datatype="html">
+        <source>Filter by status</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/pages/approvals-page/approvals-page.component.html</context>
+          <context context-type="linenumber">10,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.filter.actionType" datatype="html">
+        <source>Action type</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/pages/approvals-page/approvals-page.component.html</context>
+          <context context-type="linenumber">31,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.filter.anyAction" datatype="html">
+        <source>Any action</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/pages/approvals-page/approvals-page.component.html</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.list.errorTitle" datatype="html">
+        <source>Couldn&apos;t load approval requests</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/pages/approvals-page/approvals-page.component.html</context>
+          <context context-type="linenumber">62,63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.list.errorText" datatype="html">
+        <source>The requests could not be loaded. Check your connection and try again.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/pages/approvals-page/approvals-page.component.html</context>
+          <context context-type="linenumber">64,65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.list.retry" datatype="html">
+        <source>Retry</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/pages/approvals-page/approvals-page.component.html</context>
+          <context context-type="linenumber">68,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.list.emptyTitle" datatype="html">
+        <source>No approval requests</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/pages/approvals-page/approvals-page.component.html</context>
+          <context context-type="linenumber">74,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.list.emptyDesc" datatype="html">
+        <source>Nothing is waiting on a decision for this filter.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/pages/approvals-page/approvals-page.component.html</context>
+          <context context-type="linenumber">76,77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.title" datatype="html">
+        <source> Approval requests </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">16,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.colActionType" datatype="html">
+        <source>Action</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.colSubject" datatype="html">
+        <source>Subject</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">22,23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.colRequester" datatype="html">
+        <source>Requested by</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.colRequested" datatype="html">
+        <source>Requested</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.colExpires" datatype="html">
+        <source>Expires</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">25,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.colStatus" datatype="html">
+        <source>Status</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">26,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.actions" datatype="html">
+        <source>Actions</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">29,31</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.html</context>
+          <context context-type="linenumber">28,30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.decidedBy" datatype="html">
+        <source>Decided by</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">83,84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.noResults" datatype="html">
+        <source> No results. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.html</context>
+          <context context-type="linenumber">138,140</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.approveActionNamed" datatype="html">
+        <source>Approve <x id="actionType" equiv-text="actionType"/> request for <x id="subjectId" equiv-text="item.subjectId"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.ts</context>
+          <context context-type="linenumber">206</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="approvals.table.rejectActionNamed" datatype="html">
+        <source>Reject <x id="actionType" equiv-text="actionType"/> request for <x id="subjectId" equiv-text="item.subjectId"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/approvals/ui/tables/approval-request-table/approval-request-table.component.ts</context>
+          <context context-type="linenumber">226</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="route.calendar" datatype="html">
         <source>Calendar</source>
         <context-group purpose="location">
@@ -2377,7 +2662,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">163</context>
+          <context context-type="linenumber">176</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.messages" datatype="html">
@@ -10284,13 +10569,6 @@
           <context context-type="linenumber">25,27</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="common.actions" datatype="html">
-        <source>Actions</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/tables/maintenance-schedule-table/maintenance-schedule-table.component.html</context>
-          <context context-type="linenumber">28,30</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="maintenance.table.viewFacility" datatype="html">
         <source>View facility</source>
         <context-group purpose="location">
@@ -10392,88 +10670,88 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">65</context>
+          <context context-type="linenumber">66</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.assets" datatype="html">
         <source>Assets</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">177</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">99</context>
+          <context context-type="linenumber">190</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
           <context context-type="linenumber">100</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
+          <context context-type="linenumber">101</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.members" datatype="html">
         <source>Members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">185</context>
+          <context context-type="linenumber">198</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">149</context>
+          <context context-type="linenumber">155</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">150</context>
+          <context context-type="linenumber">156</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
         <source>Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">194</context>
+          <context context-type="linenumber">207</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">164</context>
+          <context context-type="linenumber">170</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">165</context>
+          <context context-type="linenumber">171</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.settings" datatype="html">
         <source>Settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">203</context>
+          <context context-type="linenumber">216</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">178</context>
+          <context context-type="linenumber">184</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">179</context>
+          <context context-type="linenumber">185</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.operations" datatype="html">
         <source>Operations</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">220</context>
+          <context context-type="linenumber">233</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.assets" datatype="html">
         <source>Assets</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">221</context>
+          <context context-type="linenumber">234</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.administration" datatype="html">
         <source>Administration</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">222</context>
+          <context context-type="linenumber">235</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.invitationAccept" datatype="html">
@@ -10487,11 +10765,11 @@
         <source>Profile</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">187</context>
+          <context context-type="linenumber">193</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">188</context>
+          <context context-type="linenumber">194</context>
         </context-group>
       </trans-unit>
       <trans-unit id="dash.granularity.daily" datatype="html">
@@ -10699,97 +10977,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
           <context context-type="linenumber">480</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.title" datatype="html">
-        <source>Four-eyes approval</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">3,4</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.description" datatype="html">
-        <source> Read-only until the approvals inbox exists to act on a gated request. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">5,9</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.emptyRules" datatype="html">
-        <source> No custom approval rules — every action type is unrestricted. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">12,15</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.columnAction" datatype="html">
-        <source>Action</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">19,20</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.columnEnabled" datatype="html">
-        <source>Enabled</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">20,21</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.columnMinRole" datatype="html">
-        <source>Min. approver role</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">21,22</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.columnMinSeverity" datatype="html">
-        <source>Min. severity</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">22,25</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.enabledYes" datatype="html">
-        <source>Yes</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">31,33</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.enabledNo" datatype="html">
-        <source>No</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">33,35</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.selfApprovalLabel" datatype="html">
-        <source>Self-approval allowed</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">48,50</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.selfApprovalYes" datatype="html">
-        <source>Yes</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">51,53</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.selfApprovalNo" datatype="html">
-        <source>No</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
-          <context context-type="linenumber">53,56</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.approval.ttlValue" datatype="html">
-        <source>Requests expire after <x id="days" equiv-text="this.approval().approvalTtlDays"/> days</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.ts</context>
-          <context context-type="linenumber">86</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logo.uploading" datatype="html">
@@ -11439,6 +11626,146 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-role-delete-dialog/organization-role-delete-dialog.component.html</context>
           <context context-type="linenumber">32,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.roleMember" datatype="html">
+        <source>Member</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/options/organization-approval-role-options.constants.ts</context>
+          <context context-type="linenumber">20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.roleAdmin" datatype="html">
+        <source>Admin</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/options/organization-approval-role-options.constants.ts</context>
+          <context context-type="linenumber">21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.severityLow" datatype="html">
+        <source>Low</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/options/organization-approval-severity-options.constants.ts</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.severityMedium" datatype="html">
+        <source>Medium</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/options/organization-approval-severity-options.constants.ts</context>
+          <context context-type="linenumber">23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.severityHigh" datatype="html">
+        <source>High</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/options/organization-approval-severity-options.constants.ts</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.severityCritical" datatype="html">
+        <source>Critical</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/options/organization-approval-severity-options.constants.ts</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.rulesTitle" datatype="html">
+        <source> Gated actions </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">9,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.rulesDescription" datatype="html">
+        <source> Actions requiring a second authorized member&apos;s decision before they run. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">12,16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.requireApprovalLabel" datatype="html">
+        <source> Require approval </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">28,30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.minApproverRoleLabel" datatype="html">
+        <source>Minimum approver role</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">43,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.minSeverityLabel" datatype="html">
+        <source>Minimum severity</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">69,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.noMinimumSeverity" datatype="html">
+        <source>No minimum</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">84,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalEditLabel" datatype="html">
+        <source>Allow self-approval</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">106,108</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalEditDescription" datatype="html">
+        <source> Let the requester decide on their own request. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">109,113</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlEditLabel" datatype="html">
+        <source>Request expiry (days)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">121,124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlHint" datatype="html">
+        <source> Between 1 and 90 days. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">134,136</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.submitting" datatype="html">
+        <source>Saving…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">155,157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.submit" datatype="html">
+        <source>Save changes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.html</context>
+          <context context-type="linenumber">157,160</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlTooLow" datatype="html">
+        <source>Enter at least <x id="min" equiv-text="MIN_APPROVAL_TTL_DAYS"/> day</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.ts</context>
+          <context context-type="linenumber">228</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlTooHigh" datatype="html">
+        <source>Enter at most <x id="max" equiv-text="MAX_APPROVAL_TTL_DAYS"/> days</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-approval-form/organization-approval-form.component.ts</context>
+          <context context-type="linenumber">231</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.assistant.enabledLabel" datatype="html">
@@ -13610,39 +13937,46 @@
           <context context-type="linenumber">339,341</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.settings.approval.sectionTitle" datatype="html">
+        <source> Four-eyes approval policy </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">353,355</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="org.settings.danger.title" datatype="html">
         <source>Delete this organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">374,376</context>
+          <context context-type="linenumber">387,389</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.description" datatype="html">
         <source> Permanently deletes every facility, piece of equipment, inspection, intervention and member record. This cannot be undone. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">377,379</context>
+          <context context-type="linenumber">390,392</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.open" datatype="html">
         <source>Delete organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">391,393</context>
+          <context context-type="linenumber">404,406</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.endsOn" datatype="html">
         <source>Ends on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">670</context>
+          <context context-type="linenumber">693</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.renewsOn" datatype="html">
         <source>Renews on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">671</context>
+          <context context-type="linenumber">694</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.loadErrorTitle" datatype="html">

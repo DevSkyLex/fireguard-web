@@ -3,6 +3,7 @@ import type { OrganizationAutomationSettings } from '../organization-settings/or
 import type { OrganizationComplianceSettings } from '../organization-settings/organization-compliance-settings.interface';
 import type { OrganizationNotificationSettings } from '../organization-settings/organization-notification-settings.interface';
 import type { OrganizationRegionalSettings } from '../organization-settings/organization-regional-settings.interface';
+import type { UpdateOrganizationApprovalInput } from '../organization-settings/update-organization-approval-input.interface';
 
 /**
  * Interface UpdateOrganizationInput
@@ -12,11 +13,12 @@ import type { OrganizationRegionalSettings } from '../organization-settings/orga
  * Partial payload used to update an organization's settings. Every field is
  * optional; only the provided fields are applied. Sending an empty
  * `description` clears it. The `notifications`, `regional`, `compliance`,
- * `automation` and `assistant` slices carry partial section payloads applied
- * on top of the current settings — `compliance` omits the two read-only
- * `customized*` hints, which the API never accepts as input. There is no
- * `approval` slice: the four-eyes approval policy is read-only on this page
- * until the approvals inbox exists to act on a gated request.
+ * `automation`, `approval` and `assistant` slices carry partial section
+ * payloads applied on top of the current settings — `compliance` omits the
+ * two read-only `customized*` hints, which the API never accepts as input.
+ * `approval` is now writable: the approvals inbox
+ * (`features/approvals/FEATURE.md`) gives a reader a surface to act on a
+ * gated request, which is what the read-only restriction was waiting on.
  */
 export interface UpdateOrganizationInput {
   //#region Properties
@@ -41,6 +43,8 @@ export interface UpdateOrganizationInput {
   >;
   /** @type {(Partial<OrganizationAutomationSettings> | undefined)} */
   readonly automation?: Partial<OrganizationAutomationSettings>;
+  /** @type {(UpdateOrganizationApprovalInput | undefined)} */
+  readonly approval?: UpdateOrganizationApprovalInput;
   /** @type {(Partial<OrganizationAssistantSettings> | undefined)} */
   readonly assistant?: Partial<OrganizationAssistantSettings>;
   //#endregion

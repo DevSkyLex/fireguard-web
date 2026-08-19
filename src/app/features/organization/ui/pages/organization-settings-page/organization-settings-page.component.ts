@@ -37,6 +37,8 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
+import type { ApprovalActionTypeOutput } from '@features/organization/features/approvals/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type {
   InvoiceOutput,
@@ -59,11 +61,14 @@ import { HlmCardImports } from '@shared/ui/card';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
-import { OrganizationApprovalSummaryCard } from '../../components/organization-approval-summary-card';
 import { OrganizationLogoPicker } from '../../components/organization-logo-picker';
 import { OrganizationPlanSelector } from '../../components/organization-plan-selector';
 import { OrganizationUsagePanel } from '../../components/organization-usage-panel';
 import { OrganizationDeleteDialog } from '../../dialogs/organization-delete-dialog';
+import {
+  OrganizationApprovalForm,
+  type OrganizationApprovalFormValues,
+} from '../../forms/organization-approval-form';
 import {
   OrganizationAssistantForm,
   type OrganizationAssistantFormValues,
@@ -211,12 +216,13 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
  * The organization settings route: eight sections synced two-way with the
  * `?tab=` query parameter (`FEATURE.md`) — general & branding, subscription,
  * usage, notifications, regional & formats, compliance (SLAs, inspection
- * periodicity, the automation toggle, and a read-only approval summary),
- * assistant (AI-assistant policy), and a permission-gated danger zone. Tab
- * content is deferred with `hlmTabsContentLazy`, so subscription
- * data (Stripe subscription, pricing, invoices, and the plan catalog owned by
- * `OrganizationPlanSelector`) loads only once the reader opens that tab, per
- * `AGENTS.md`'s hidden-UI SSR guidance.
+ * periodicity, the automation toggle, and the editable four-eyes approval
+ * policy form), assistant (AI-assistant policy), and a permission-gated
+ * danger zone. Tab content is deferred with `hlmTabsContentLazy`, so
+ * subscription data (Stripe subscription, pricing, invoices, and the plan
+ * catalog owned by `OrganizationPlanSelector`) and the approval-policy
+ * form's action-type catalog each load only once the reader opens their tab,
+ * per `AGENTS.md`'s hidden-UI SSR guidance.
  *
  * The page owns orchestration: it holds the settings and billing stores,
  * resolves permissions, seeds every form from the active organization, and
@@ -233,7 +239,7 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
  * renders no title band of its own. `app-organization-page-header` is
  * retired, and this page has no header actions of its own to register.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -243,7 +249,7 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
     NgIcon,
     NgTemplateOutlet,
     EmptyState,
-    OrganizationApprovalSummaryCard,
+    OrganizationApprovalForm,
     OrganizationAssistantForm,
     OrganizationAutomationForm,
     OrganizationComplianceForm,
@@ -361,6 +367,23 @@ export class OrganizationSettingsPage {
    */
   private readonly permissionService: OrganizationPermissionService =
     inject<OrganizationPermissionService>(OrganizationPermissionService);
+
+  /**
+   * Property approvalRequestService
+   * @readonly
+   *
+   * @description
+   * Direct cross-feature dependency on the `approvals` subfeature's
+   * `data-access` barrel, feeding the Compliance tab's approval-policy
+   * form's per-action-type rows — the same direct-service pattern
+   * `maintenance-schedules/FEATURE.md` documents for `FacilityService`.
+   *
+   * @access private
+   * @since 1.4.0
+   * @type {ApprovalRequestService}
+   */
+  private readonly approvalRequestService: ApprovalRequestService =
+    inject<ApprovalRequestService>(ApprovalRequestService);
 
   /**
    * Property route
@@ -682,6 +705,17 @@ export class OrganizationSettingsPage {
   protected readonly confirmingDelete: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property approvalActionTypes
+   * @readonly
+   * @description The regulated action-type catalog, feeding the approval-policy form's rows. Loaded once, the first time the Compliance tab opens.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<ReadonlyArray<ApprovalActionTypeOutput>>}
+   */
+  protected readonly approvalActionTypes: WritableSignal<ReadonlyArray<ApprovalActionTypeOutput>> =
+    signal<ReadonlyArray<ApprovalActionTypeOutput>>([]);
+
+  /**
    * Property currentPlanKey
    * @readonly
    *
@@ -708,6 +742,20 @@ export class OrganizationSettingsPage {
    * @type {boolean}
    */
   private hasRequestedBillingData: boolean = false;
+
+  /**
+   * Property hasRequestedApprovalActionTypes
+   *
+   * @description
+   * Guards the approval-policy form's catalog load so it fires once per
+   * page instance rather than on every re-evaluation of
+   * {@link loadApprovalActionTypes}.
+   *
+   * @access private
+   * @since 1.4.0
+   * @type {boolean}
+   */
+  private hasRequestedApprovalActionTypes: boolean = false;
 
   /**
    * Property previousDeleteStatus
@@ -747,6 +795,31 @@ export class OrganizationSettingsPage {
       this.billingStore.loadSubscription(organizationId);
       this.billingStore.loadPricing();
       this.billingStore.loadInvoices(organizationId);
+    });
+  });
+
+  /**
+   * Property loadApprovalActionTypes
+   * @readonly
+   *
+   * @description
+   * Loads the regulated action-type catalog the first time the reader opens
+   * the Compliance tab — including a direct deep link into it. Hidden-tab
+   * data loads on demand rather than on page mount (`AGENTS.md`).
+   *
+   * @access private
+   * @since 1.4.0
+   */
+  private readonly loadApprovalActionTypes: EffectRef = effect((): void => {
+    const tabId: OrganizationSettingsTabId = this.activeTab();
+
+    if (tabId !== 'compliance' || this.hasRequestedApprovalActionTypes) return;
+
+    untracked((): void => {
+      this.hasRequestedApprovalActionTypes = true;
+      this.approvalRequestService.listActionTypes().subscribe((response) => {
+        this.approvalActionTypes.set(response.member);
+      });
     });
   });
 
@@ -972,6 +1045,30 @@ export class OrganizationSettingsPage {
     if (organizationId === null) return;
 
     this.settingsStore.save({ organizationId, input: { automation: values } });
+  }
+
+  /**
+   * Method saveApproval
+   * @method saveApproval
+   *
+   * @description
+   * Persists the four-eyes approval policy: every catalog action type's
+   * rule row, self-approval, and the request TTL. Writable now that the
+   * approvals inbox exists to act on a gated request
+   * (`features/approvals/FEATURE.md`).
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @param {OrganizationApprovalFormValues} values - The edited policy.
+   *
+   * @returns {void}
+   */
+  protected saveApproval(values: OrganizationApprovalFormValues): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.settingsStore.save({ organizationId, input: { approval: values } });
   }
 
   /**

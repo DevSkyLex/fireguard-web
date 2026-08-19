@@ -101,6 +101,10 @@ export type { OrganizationComplianceSettings } from './organization-settings/org
 export type { OrganizationAutomationSettings } from './organization-settings/organization-automation-settings.interface';
 export type { OrganizationApprovalSettings } from './organization-settings/organization-approval-settings.interface';
 export type { OrganizationApprovalActionRule } from './organization-settings/organization-approval-action-rule.interface';
+export type {
+  UpdateOrganizationApprovalActionRuleInput,
+  UpdateOrganizationApprovalInput,
+} from './organization-settings/update-organization-approval-input.interface';
 export type { OrganizationAssistantSettings } from './organization-settings/organization-assistant-settings.interface';
 export type { BillingInterval } from './billing/billing-interval.type';
 export type { SubscriptionStatus } from './billing/subscription-status.type';

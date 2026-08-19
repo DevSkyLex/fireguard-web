@@ -6,6 +6,12 @@
     [baseRoute]="detailRouteBase()"
   />
 
+  <app-intervention-statistics-analysis
+    class="shrink-0"
+    [statistics]="statisticsStore.queryData()"
+    [organizationId]="organizationId()"
+  />
+
   <app-collection-toolbar>
     <div toolbarStart class="flex items-center gap-2">
       <app-collection-search-box
@@ -192,6 +198,21 @@
           </div>
         </hlm-popover-content>
       </hlm-popover>
+
+      @if (canReadRecurrences()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11 max-sm:grow"
+          data-testid="interventions-recurrences"
+          (click)="openRecurrences()"
+        >
+          <ng-icon name="lucideCalendarClock" aria-hidden="true" />
+          <span i18n="@@intervention.recurrences.toolbarButton">Recurrences</span>
+        </button>
+      }
 
       <button
         hlmBtn
@@ -638,6 +659,30 @@
   (submitted)="createIntervention($event)"
   (templateInstantiated)="instantiateFromTemplate($event)"
 />
+
+@if (canReadRecurrences()) {
+  <app-intervention-recurrences-sheet
+    [open]="recurrencesVisible()"
+    [recurrences]="recurrenceStore.recurrenceEntities()"
+    [templates]="planningOptions.templates()"
+    [siteOptions]="planningOptions.sites()"
+    [memberOptions]="planningOptions.members()"
+    [loading]="recurrenceStore.listCallState().status === 'pending'"
+    [creating]="recurrenceStore.createCallState().status === 'pending'"
+    [savingId]="recurrenceStore.savingId()"
+    [removingId]="recurrenceStore.removingId()"
+    [formError]="
+      (recurrenceStore.createCallState().error?.message ??
+        recurrenceStore.updateCallState().error?.message) ||
+      null
+    "
+    [canWrite]="canWriteRecurrences()"
+    (closed)="closeRecurrences()"
+    (submitted)="submitRecurrenceForm($event)"
+    (removed)="removeRecurrence($event)"
+    (activeToggled)="toggleRecurrenceActive($event)"
+  />
+}
 
 <app-intervention-bulk-delete-dialog
   [visible]="deleteDialogState() === 'open'"

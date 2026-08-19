@@ -15,6 +15,7 @@ import {
 import { HydraApiService } from '@core/api';
 import type { HydraCollection, HydraItem, PaginationOptions } from '@core/api/models';
 import type {
+  AssignInterventionTeamInput,
   CreateInterventionChangeInput,
   CreateInterventionWorkItemInput,
   InterventionActivityOutput,
@@ -444,6 +445,43 @@ export class InterventionService extends HydraApiService {
     return this.patch<Record<string, unknown>, InterventionOutput>(
       `/api/interventions/${interventionId}`,
       body,
+      {
+        headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` },
+      },
+    );
+  }
+
+  /**
+   * Method assignTeam
+   * @method assignTeam
+   *
+   * @description
+   * Snapshot-expands one organization team's CURRENT active members into
+   * the intervention's participants list (union, deduped — never a
+   * replace). Requires `organization.interventions.plan`; a `422` means the
+   * team has no active members, a `409` means the intervention has left the
+   * mutable window (draft/planned/in_progress/changes_requested). The
+   * endpoint sits behind the same optimistic-concurrency guard as
+   * {@link update}: the caller's known `revision` travels as `If-Match`,
+   * without which the backend answers `428 Precondition Required`.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} interventionId - intervention Id value.
+   * @param {AssignInterventionTeamInput} input - The team to assign.
+   * @param {number} [revision] - Known revision for the `If-Match` guard.
+   *
+   * @return {Observable<InterventionOutput>} The full updated intervention.
+   */
+  public assignTeam(
+    interventionId: string,
+    input: AssignInterventionTeamInput,
+    revision?: number,
+  ): Observable<InterventionOutput> {
+    return this.post<AssignInterventionTeamInput, InterventionOutput>(
+      `/api/interventions/${interventionId}/team-assignments`,
+      input,
       {
         headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` },
       },

@@ -33,6 +33,7 @@ export type { InterventionConfirmAcceptedEvent } from './intervention-confirm/in
 export type { InterventionConfirmRequest } from './intervention-confirm/intervention-confirm-request.type';
 export type { InterventionAssignRequest } from './intervention-assign/intervention-assign-request.type';
 export type { InterventionAssignSubmittedEvent } from './intervention-assign/intervention-assign-submitted-event.type';
+export type { AssignInterventionTeamInput } from './intervention-team-assignment/assign-intervention-team-input.interface';
 export type { InterventionEditState } from './intervention-edit/intervention-edit-state.interface';
 export type { InterventionEditTarget } from './intervention-edit/intervention-edit-target.type';
 export type { InterventionReadinessItem } from './intervention-edit/intervention-readiness-item.interface';
@@ -60,6 +61,13 @@ export type { UpdateInterventionChangeInput } from './intervention-change/update
 export type { InterventionTypeOutput } from './intervention-type/intervention-type-output.interface';
 export type { InterventionTemplateOutput } from './intervention-template/intervention-template-output.interface';
 export type { InterventionTemplateInstantiationOutput } from './intervention-template/intervention-template-instantiation-output.interface';
+export type { InstantiateInterventionTemplateInput } from './intervention-template/instantiate-intervention-template-input.interface';
+export type { InterventionTemplateInstantiateRequest } from './intervention-template/intervention-template-instantiate-request.interface';
+export type { InterventionRecurrenceFrequency } from './intervention-recurrence/intervention-recurrence-frequency.type';
+export type { InterventionRecurrenceOutput } from './intervention-recurrence/intervention-recurrence-output.interface';
+export type { CreateInterventionRecurrenceInput } from './intervention-recurrence/create-intervention-recurrence-input.interface';
+export type { UpdateInterventionRecurrenceInput } from './intervention-recurrence/update-intervention-recurrence-input.interface';
+export type { InterventionRecurrenceListOptions } from './intervention-recurrence/intervention-recurrence-list-options.interface';
 export type { InterventionOutboxOperationFor } from './intervention-outbox/intervention-outbox-operation-for.interface';
 export type { InterventionOutboxOperation } from './intervention-outbox/intervention-outbox-operation.type';
 export type { InterventionOutboxPayloadMap } from './intervention-outbox/intervention-outbox-payload-map.interface';

@@ -13257,6 +13257,322 @@
         <source> Between 1 and 90 days. </source>
         <target> Entre 1 y 90 días. </target>
       </trans-unit>
+      <trans-unit id="intervention.cf.plannedStartAt" datatype="html">
+        <source>Planned start</source>
+        <target>Inicio previsto</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templateOverrideDefaultPlaceholder" datatype="html">
+        <source>Use template default</source>
+        <target>Usar el valor de la plantilla</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templateOverrideNameLabel" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templateOverrideNamePlaceholder" datatype="html">
+        <source>Use template name</source>
+        <target>Usar el nombre de la plantilla</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.colorLabel" datatype="html">
+        <source>Color</source>
+        <target>Color</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.colorAria" datatype="html">
+        <source>Color for <x id="name" equiv-text="name"/></source>
+        <target>Color de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.nameAria" datatype="html">
+        <source>Name for <x id="name" equiv-text="name"/></source>
+        <target>Nombre de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.editAria" datatype="html">
+        <source>Edit <x id="name" equiv-text="name"/></source>
+        <target>Editar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.removeAria" datatype="html">
+        <source>Delete <x id="name" equiv-text="name"/></source>
+        <target>Eliminar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.saveAria" datatype="html">
+        <source>Save changes to <x id="name" equiv-text="name"/></source>
+        <target>Guardar los cambios de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.cancelEditAria" datatype="html">
+        <source>Cancel editing <x id="name" equiv-text="name"/></source>
+        <target>Cancelar la edición de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.confirmRemoveAria" datatype="html">
+        <source>Confirm deleting <x id="name" equiv-text="name"/></source>
+        <target>Confirmar la eliminación de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.keepAria" datatype="html">
+        <source>Keep <x id="name" equiv-text="name"/></source>
+        <target>Conservar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.activateAria" datatype="html">
+        <source>Activate <x id="name" equiv-text="name"/></source>
+        <target>Activar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.deactivateAria" datatype="html">
+        <source>Deactivate <x id="name" equiv-text="name"/></source>
+        <target>Desactivar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.editAria" datatype="html">
+        <source>Edit <x id="name" equiv-text="name"/></source>
+        <target>Editar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.removeAria" datatype="html">
+        <source>Delete <x id="name" equiv-text="name"/></source>
+        <target>Eliminar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.confirmRemoveAria" datatype="html">
+        <source>Confirm deleting <x id="name" equiv-text="name"/></source>
+        <target>Confirmar la eliminación de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.keepAria" datatype="html">
+        <source>Keep <x id="name" equiv-text="name"/></source>
+        <target>Conservar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.confirmDelete" datatype="html">
+        <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ label.name }}"/>&quot;?</source>
+        <target>&#191;Eliminar &quot;<x id="INTERPOLATION" equiv-text="{{ label.name }}"/>&quot;?</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.create" datatype="html">
+        <source>Add label</source>
+        <target>Añadir etiqueta</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.creating" datatype="html">
+        <source>Adding…</source>
+        <target>Añadiendo…</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.empty" datatype="html">
+        <source>No labels yet.</source>
+        <target>Aún no hay etiquetas.</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.error.duplicate" datatype="html">
+        <source>A label with this name already exists.</source>
+        <target>Ya existe una etiqueta con este nombre.</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.header" datatype="html">
+        <source>Manage labels</source>
+        <target>Gestionar etiquetas</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.intro" datatype="html">
+        <source>Labels are shared across every intervention in this organization.</source>
+        <target>Las etiquetas se comparten entre todas las intervenciones de esta organización.</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.loading" datatype="html">
+        <source>Loading labels…</source>
+        <target>Cargando etiquetas…</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.nameLabel" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.namePlaceholder" datatype="html">
+        <source>e.g. Compliance</source>
+        <target>p. ej. Cumplimiento</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.toast.created" datatype="html">
+        <source>Label created</source>
+        <target>Etiqueta creada</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.toast.removed" datatype="html">
+        <source>Label deleted</source>
+        <target>Etiqueta eliminada</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.toast.updated" datatype="html">
+        <source>Label updated</source>
+        <target>Etiqueta actualizada</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.activeColumn" datatype="html">
+        <source>Active</source>
+        <target>Activa</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.anchorDriftHint" datatype="html">
+        <source>Anchored past the 28th: occurrences drift after short months.</source>
+        <target>Anclada después del día 28: las repeticiones se desvían tras los meses cortos.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.anchorLabel" datatype="html">
+        <source>Anchor date</source>
+        <target>Fecha de anclaje</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.anchorPlaceholder" datatype="html">
+        <source>Pick a date</source>
+        <target>Elegir una fecha</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.cadenceColumn" datatype="html">
+        <source>Cadence</source>
+        <target>Cadencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.confirmDelete" datatype="html">
+        <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</source>
+        <target>&#191;Eliminar &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.empty" datatype="html">
+        <source>No recurrences yet.</source>
+        <target>Aún no hay recurrencias.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.endLabel" datatype="html">
+        <source>End date</source>
+        <target>Fecha de fin</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.endPlaceholder" datatype="html">
+        <source>No end</source>
+        <target>Sin fin</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequencyLabel" datatype="html">
+        <source>Frequency</source>
+        <target>Frecuencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.header" datatype="html">
+        <source>Recurrences</source>
+        <target>Recurrencias</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.intervalLabel" datatype="html">
+        <source>Every</source>
+        <target>Cada</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.intro" datatype="html">
+        <source>Recurring schedules periodically draft a new intervention from a template. A materialized intervention carries no link back to the rule that created it.</source>
+        <target>Las recurrencias crean periódicamente una nueva intervención a partir de una plantilla. Una intervención materializada no conserva ningún vínculo con la regla que la creó.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.leadTimeLabel" datatype="html">
+        <source>Lead time (days)</source>
+        <target>Antelación (días)</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.loading" datatype="html">
+        <source>Loading recurrences…</source>
+        <target>Cargando recurrencias…</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.nameLabel" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.new" datatype="html">
+        <source>New recurrence</source>
+        <target>Nueva recurrencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.nextOccurrenceColumn" datatype="html">
+        <source>Next occurrence</source>
+        <target>Próxima repetición</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.templateLabel" datatype="html">
+        <source>Template</source>
+        <target>Plantilla</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.timezoneLabel" datatype="html">
+        <source>Timezone</source>
+        <target>Zona horaria</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.toast.created" datatype="html">
+        <source>Recurrence created</source>
+        <target>Recurrencia creada</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.toast.removed" datatype="html">
+        <source>Recurrence deleted</source>
+        <target>Recurrencia eliminada</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.toast.updated" datatype="html">
+        <source>Recurrence updated</source>
+        <target>Recurrencia actualizada</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.toolbarButton" datatype="html">
+        <source>Recurrences</source>
+        <target>Recurrencias</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.manageLabels" datatype="html">
+        <source>Manage labels…</source>
+        <target>Gestionar etiquetas…</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.averagePublicationLabel" datatype="html">
+        <source>Average time to publication</source>
+        <target>Tiempo medio hasta la publicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.days" datatype="html">
+        <source>days</source>
+        <target>días</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.empty" datatype="html">
+        <source>Nothing to show yet.</source>
+        <target>Aún no hay nada que mostrar.</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.priorityTitle" datatype="html">
+        <source>By priority</source>
+        <target>Por prioridad</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.responsibleTitle" datatype="html">
+        <source>Top responsibles</source>
+        <target>Principales responsables</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.siteTitle" datatype="html">
+        <source>Top sites</source>
+        <target>Principales sitios</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.trigger" datatype="html">
+        <source>Analysis</source>
+        <target>Análisis</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.unknownResponsible" datatype="html">
+        <source>Unknown</source>
+        <target>Desconocido</target>
+      </trans-unit>
+      <trans-unit id="intervention.statistics.analysis.unknownSite" datatype="html">
+        <source>Unknown</source>
+        <target>Desconocido</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.empty" datatype="html">
+        <source>This organization has no teams yet.</source>
+        <target>Esta organización aún no tiene equipos.</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.error.conflict" datatype="html">
+        <source>This intervention can no longer be assigned a team; refreshing its current state.</source>
+        <target>Ya no se puede asignar un equipo a esta intervención; se está actualizando su estado actual.</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.error.generic" datatype="html">
+        <source>The team could not be assigned.</source>
+        <target>No se pudo asignar el equipo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.error.noActiveMembers" datatype="html">
+        <source>This team has no active members.</source>
+        <target>Este equipo no tiene miembros activos.</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.header" datatype="html">
+        <source>Assign a team</source>
+        <target>Asignar un equipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.intro" datatype="html">
+        <source>Every active member of the picked team is added to this intervention&apos;s participants. Nobody already on the list is removed, and assigning the same team again changes nothing.</source>
+        <target>Cada miembro activo del equipo elegido se añade a los participantes de esta intervención. Nadie que ya esté en la lista se elimina, y asignar de nuevo el mismo equipo no cambia nada.</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.loadFailed" datatype="html">
+        <source>Couldn&apos;t load the organization&apos;s teams.</source>
+        <target>No se pudieron cargar los equipos de la organización.</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.loading" datatype="html">
+        <source>Loading teams…</source>
+        <target>Cargando equipos…</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.memberCount" datatype="html">
+        <source>{VAR_PLURAL, plural, =0 {No members} =1 {1 member} other {<x id="INTERPOLATION"/> members}}</source>
+        <target>{VAR_PLURAL, plural, =0 {Sin miembros} =1 {1 miembro} other {<x id="INTERPOLATION"/> miembros}}</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.menuEntry" datatype="html">
+        <source>Assign team…</source>
+        <target>Asignar equipo…</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.submit" datatype="html">
+        <source>Assign team</source>
+        <target>Asignar equipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.submitting" datatype="html">
+        <source>Assigning…</source>
+        <target>Asignando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.team.assign.toast.succeeded" datatype="html">
+        <source>Team assigned</source>
+        <target>Equipo asignado</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

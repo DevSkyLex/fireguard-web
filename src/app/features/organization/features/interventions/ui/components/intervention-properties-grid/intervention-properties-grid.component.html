@@ -365,6 +365,19 @@
         </hlm-combobox-content>
       </hlm-combobox-multiple>
     </app-inplace-field>
+    @if (canManageLabels()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="link"
+        size="sm"
+        class="h-auto px-2 py-0 text-xs"
+        data-testid="intervention-manage-labels"
+        (click)="manageLabelsRequested.emit()"
+      >
+        <span i18n="@@intervention.sidebar.manageLabels">Manage labels…</span>
+      </button>
+    }
   </div>
 
   <div

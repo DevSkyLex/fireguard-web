@@ -23,6 +23,7 @@ import { isApiError } from '@core/api';
 import { ConnectivityService } from '@core/connectivity';
 import {
   errorCallState,
+  errorFeedback,
   idleCallState,
   isCallError,
   isCallPending,
@@ -38,6 +39,7 @@ import {
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
 import type {
+  AssignInterventionTeamInput,
   InterventionAttachmentOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
@@ -85,6 +87,7 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   rejectChangeCallState: idleCallState(),
   pendingChangeIds: new Set<string>(),
   deleteCallState: idleCallState(),
+  assignTeamCallState: idleCallState(),
   addCommentCallState: idleCallState(),
   attachments: [],
   attachmentsCallState: idleCallState(),
@@ -119,6 +122,7 @@ const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
   rejectChangeCallState: idleCallState(),
   pendingChangeIds: new Set<string>(),
   deleteCallState: idleCallState(),
+  assignTeamCallState: idleCallState(),
   addCommentCallState: idleCallState(),
   attachmentWriteCallState: idleCallState(),
   attachmentDeleteCallState: idleCallState(),
@@ -832,6 +836,72 @@ export const InterventionWorkspaceStore = signalStore(
                 }),
               );
             }),
+          ),
+        ),
+
+        /**
+         * Method assignTeam
+         * @method assignTeam
+         *
+         * @description
+         * Snapshot-expands one organization team's active members into the
+         * intervention's participants list (union, deduped — never a
+         * replace). Online-only, no offline queue: the operation depends on
+         * the team's current membership at request time, which cannot be
+         * meaningfully replayed later. On a `409` (the intervention left the
+         * mutable window between the dialog opening and submitting), the
+         * workspace is silently reloaded so the page reflects the current
+         * status rather than repeating a stale error.
+         *
+         * @access public
+         * @since 6.0.0
+         *
+         * @type {RxMethod<{ interventionId: string; input: AssignInterventionTeamInput }>}
+         */
+        assignTeam: rxMethod<{ interventionId: string; input: AssignInterventionTeamInput }>(
+          pipe(
+            tap(() => patchState(store, { assignTeamCallState: pendingCallState() })),
+            switchMap(({ interventionId, input }) =>
+              service.assignTeam(interventionId, input, store.intervention()?.revision).pipe(
+                tapResponse({
+                  next: (updatedIntervention: InterventionOutput): void => {
+                    patchState(store, {
+                      intervention: updatedIntervention,
+                      assignTeamCallState: successCallState(null),
+                    });
+                    dispatcher.dispatch(
+                      interventionWorkspaceStoreEvents.assignTeamSucceeded(
+                        successFeedback(
+                          $localize`:@@intervention.team.assign.toast.succeeded:Team assigned`,
+                        ),
+                      ),
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    const message: string =
+                      storeError.code === 422
+                        ? $localize`:@@intervention.team.assign.error.noActiveMembers:This team has no active members.`
+                        : storeError.code === 409
+                          ? $localize`:@@intervention.team.assign.error.conflict:This intervention can no longer be assigned a team; refreshing its current state.`
+                          : $localize`:@@intervention.team.assign.error.generic:The team could not be assigned.`;
+                    patchState(store, {
+                      assignTeamCallState: errorCallState({ ...storeError, message }),
+                    });
+                    dispatcher.dispatch(
+                      interventionWorkspaceStoreEvents.assignTeamFailed(
+                        errorFeedback(message, {
+                          code: storeError.code,
+                          retryable: storeError.retryable,
+                          timestamp: storeError.timestamp,
+                        }),
+                      ),
+                    );
+                    if (storeError.code === 409) reload(interventionId);
+                  },
+                }),
+              ),
+            ),
           ),
         ),
 

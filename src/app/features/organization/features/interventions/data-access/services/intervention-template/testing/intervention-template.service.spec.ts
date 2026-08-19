@@ -83,14 +83,36 @@ describe('InterventionTemplateService', () => {
     });
   });
 
-  it('instantiates a template with no body', () => {
+  it('instantiates a template with an empty body when no overrides are given', () => {
     service.instantiate('template-1').subscribe();
 
     const request = httpMock.expectOne(
       `${mockEnv.apiUrl}/api/intervention-templates/template-1/instantiate`,
     );
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toBeNull();
+    expect(request.request.body).toEqual({});
+    request.flush({ interventionId: 'intervention-1', number: 42 });
+  });
+
+  it('forwards the override fields, converting plannedStartAt to a seconds-precision UTC string', () => {
+    service
+      .instantiate('template-1', {
+        name: 'Spring round',
+        site: '/api/facilities/site-1',
+        responsible: '/api/organizations/org-1/members/member-1',
+        plannedStartAt: new Date('2026-03-01T09:30:00.000Z'),
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/intervention-templates/template-1/instantiate`,
+    );
+    expect(request.request.body).toEqual({
+      name: 'Spring round',
+      site: '/api/facilities/site-1',
+      responsible: '/api/organizations/org-1/members/member-1',
+      plannedStartAt: '2026-03-01T09:30:00Z',
+    });
     request.flush({ interventionId: 'intervention-1', number: 42 });
   });
 

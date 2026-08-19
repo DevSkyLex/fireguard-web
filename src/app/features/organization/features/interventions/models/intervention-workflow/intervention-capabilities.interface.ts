@@ -37,6 +37,10 @@ export interface InterventionCapabilities {
   readonly canEditResponsible: Signal<boolean>;
   /** Whether description and labels accept a write, until a terminal status. */
   readonly canEditDetails: Signal<boolean>;
+  /** Whether the "Manage labels…" trigger renders — `organization.interventions.write`, distinct from {@link canEditDetails}. */
+  readonly canManageLabels: Signal<boolean>;
+  /** Whether a team may be assigned — `organization.interventions.plan`, through draft/planned/in_progress/changes_requested. */
+  readonly canAssignTeam: Signal<boolean>;
   /** Whether the scope may still grow. */
   readonly canAddWorkItem: Signal<boolean>;
   /** Whether an item may be skipped with a reason. */

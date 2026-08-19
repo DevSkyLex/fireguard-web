@@ -1,6 +1,9 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { InterventionTemplateOutput } from '@features/organization/features/interventions/models';
+import type {
+  InterventionTemplateInstantiateRequest,
+  InterventionTemplateOutput,
+} from '@features/organization/features/interventions/models';
 import { InterventionCreateSheet } from '../intervention-create-sheet.component';
 
 const panel = (): HTMLElement | null =>
@@ -98,10 +101,12 @@ describe('InterventionCreateSheet', () => {
   });
 
   it('should show the template picker and emit the picked template on confirm', async () => {
-    const emitted: string[] = [];
-    fixture.componentInstance.templateInstantiated.subscribe((templateId: string): void => {
-      emitted.push(templateId);
-    });
+    const emitted: InterventionTemplateInstantiateRequest[] = [];
+    fixture.componentInstance.templateInstantiated.subscribe(
+      (request: InterventionTemplateInstantiateRequest): void => {
+        emitted.push(request);
+      },
+    );
 
     fixture.componentRef.setInput('visible', true);
     fixture.componentRef.setInput('templates', templates);
@@ -122,7 +127,47 @@ describe('InterventionCreateSheet', () => {
     confirmButton?.click();
     await fixture.whenStable();
 
-    expect(emitted).toEqual(['template-1']);
+    expect(emitted).toEqual([{ templateId: 'template-1' }]);
+  });
+
+  it('should include the drafted overrides in the emitted request', async () => {
+    const emitted: InterventionTemplateInstantiateRequest[] = [];
+    fixture.componentInstance.templateInstantiated.subscribe(
+      (request: InterventionTemplateInstantiateRequest): void => {
+        emitted.push(request);
+      },
+    );
+
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('templates', templates);
+    await fixture.whenStable();
+
+    fixture.componentInstance['selectedTemplateId'].set('template-1');
+    fixture.componentInstance['overrideName'].set('Spring round');
+    fixture.componentInstance['overrideSite'].set('/api/facilities/site-1');
+    await fixture.whenStable();
+
+    document
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-create-template-confirm"]')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(emitted).toEqual([
+      { templateId: 'template-1', name: 'Spring round', site: '/api/facilities/site-1' },
+    ]);
+  });
+
+  it('should reset the override drafts when the panel closes', async () => {
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('templates', templates);
+    await fixture.whenStable();
+
+    fixture.componentInstance['overrideName'].set('Spring round');
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['overrideName']()).toBe('');
   });
 
   it('should disable the confirm button while instantiating', async () => {

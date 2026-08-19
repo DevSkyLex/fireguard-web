@@ -507,9 +507,33 @@ describe('InterventionStore', () => {
     it('should instantiate a template and expose the created id for navigation handoff', () => {
       store.instantiateFromTemplate({ templateId: 'template-1' });
 
-      expect(mockInterventionTemplateService.instantiate).toHaveBeenCalledWith('template-1');
+      expect(mockInterventionTemplateService.instantiate).toHaveBeenCalledWith('template-1', {
+        name: undefined,
+        site: undefined,
+        responsible: undefined,
+        plannedStartAt: undefined,
+      });
       expect(store.createdInterventionId()).toBe('intervention-2');
       expect(store.isInstantiatingFromTemplate()).toBe(false);
+    });
+
+    it('should forward the drafted overrides to the template service', () => {
+      const plannedStartAt = new Date('2026-03-01T09:00:00.000Z');
+
+      store.instantiateFromTemplate({
+        templateId: 'template-1',
+        name: 'Spring round',
+        site: '/api/facilities/site-1',
+        responsible: '/api/organizations/org-1/members/member-1',
+        plannedStartAt,
+      });
+
+      expect(mockInterventionTemplateService.instantiate).toHaveBeenCalledWith('template-1', {
+        name: 'Spring round',
+        site: '/api/facilities/site-1',
+        responsible: '/api/organizations/org-1/members/member-1',
+        plannedStartAt,
+      });
     });
 
     it('should dispatch a failure event and surface the error when instantiation fails', () => {

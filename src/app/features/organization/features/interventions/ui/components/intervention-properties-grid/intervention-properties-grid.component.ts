@@ -239,6 +239,26 @@ export class InterventionPropertiesGrid {
   >(false, { transform: booleanAttribute });
 
   /**
+   * Property canManageLabels
+   * @readonly
+   *
+   * @description
+   * Whether the "Manage labels…" trigger renders beside the labels editor —
+   * gated on `organization.interventions.write`, the label catalog's own
+   * backend permission (distinct from `canEditDetails`, which only governs
+   * which labels **this** intervention carries).
+   *
+   * @access public
+   * @since 1.8.0
+   *
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly canManageLabels: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(false, { transform: booleanAttribute });
+
+  /**
    * Property editState
    * @readonly
    * @description Which field the page has open, writing, or showing a rejection.
@@ -272,6 +292,16 @@ export class InterventionPropertiesGrid {
    */
   public readonly editTargetChanged: OutputEmitterRef<InterventionEditTarget | null> =
     output<InterventionEditTarget | null>();
+
+  /**
+   * Property manageLabelsRequested
+   * @readonly
+   * @description The "Manage labels…" trigger was activated.
+   * @access public
+   * @since 1.8.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly manageLabelsRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties

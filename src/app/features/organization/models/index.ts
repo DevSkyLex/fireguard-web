@@ -124,3 +124,4 @@ export type { ComplianceFacilitySummary } from './compliance/compliance-facility
 export type { ComplianceSummaryOutput } from './compliance/compliance-summary-output.interface';
 export type { ComplianceBucketTagDescriptor } from './compliance-bucket-tag/compliance-bucket-tag-descriptor.interface';
 export { resolveComplianceBucketTag } from './compliance-bucket-tag/compliance-bucket-tag.util';
+export type { TeamOutput } from './team/team-output.interface';

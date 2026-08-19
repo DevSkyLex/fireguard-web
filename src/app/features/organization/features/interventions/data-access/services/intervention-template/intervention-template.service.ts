@@ -3,9 +3,13 @@ import type { Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
+  InstantiateInterventionTemplateInput,
   InterventionTemplateInstantiationOutput,
   InterventionTemplateOutput,
 } from '@features/organization/features/interventions/models';
+
+/** `Date` → the ATOM-with-seconds format the backend's `Assert\DateTime` expects. */
+const toSecondsUtc = (date: Date): string => `${date.toISOString().slice(0, 19)}Z`;
 
 /**
  * Service InterventionTemplateService
@@ -61,20 +65,30 @@ export class InterventionTemplateService extends HydraApiService {
    * @method instantiate
    *
    * @description
-   * Instantiates a template into a real intervention draft with the
-   * template's own defaults — no override payload, matching this feature's
-   * minimal "start from a template" flow.
+   * Instantiates a template into a real intervention draft. `input`'s four
+   * fields (`name`, `site`, `responsible`, `plannedStartAt`) each override
+   * the template's own default when provided; omitted or `undefined` means
+   * "use the template default". There is no `dueAt` override — the backend
+   * always derives it from `plannedStartAt` and the template's duration.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @param {string} templateId - The template to instantiate.
+   * @param {InstantiateInterventionTemplateInput} [input] - Optional overrides.
    *
    * @return {Observable<InterventionTemplateInstantiationOutput>} Result of the instantiate operation.
    */
-  public instantiate(templateId: string): Observable<InterventionTemplateInstantiationOutput> {
-    return this.postAction<InterventionTemplateInstantiationOutput>(
+  public instantiate(
+    templateId: string,
+    input?: InstantiateInterventionTemplateInput,
+  ): Observable<InterventionTemplateInstantiationOutput> {
+    const body: Record<string, unknown> = { ...input };
+    if (input?.plannedStartAt) body['plannedStartAt'] = toSecondsUtc(input.plannedStartAt);
+
+    return this.post<Record<string, unknown>, InterventionTemplateInstantiationOutput>(
       `/api/intervention-templates/${templateId}/instantiate`,
+      body,
     );
   }
   //#endregion

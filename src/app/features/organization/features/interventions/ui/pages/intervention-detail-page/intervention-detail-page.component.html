@@ -359,9 +359,11 @@
               [canEditSite]="canEditSite()"
               [canEditResponsible]="canEditResponsible()"
               [canEditDetails]="canEditDetails()"
+              [canManageLabels]="canManageLabels()"
               [editState]="editState()"
               (detailsChanged)="onDetailsChanged($event)"
               (editTargetChanged)="onEditTargetChanged($event)"
+              (manageLabelsRequested)="openManageLabels()"
             />
           </section>
 
@@ -535,6 +537,32 @@
   (recheckRequested)="recheckPublication()"
 />
 
+<app-intervention-label-manage-dialog
+  [open]="manageLabelsVisible()"
+  [labels]="labelStore.labelEntities()"
+  [loading]="labelStore.listCallState().status === 'pending'"
+  [creating]="labelStore.createCallState().status === 'pending'"
+  [savingId]="labelStore.savingId()"
+  [removingId]="labelStore.removingId()"
+  [createError]="labelStore.createCallState().error?.message ?? null"
+  (closed)="closeManageLabels()"
+  (created)="createLabel($event)"
+  (updated)="updateLabel($event)"
+  (removed)="removeLabel($event)"
+/>
+
+@if (canAssignTeam()) {
+  <app-intervention-team-assign-dialog
+    [open]="teamAssignVisible()"
+    [teams]="teams()"
+    [teamsLoading]="teamsLoading()"
+    [busy]="store.assignTeamCallState().status === 'pending'"
+    [errorMessage]="store.assignTeamCallState().error?.message ?? null"
+    (submitted)="submitTeamAssign($event)"
+    (dismissed)="closeTeamAssign()"
+  />
+}
+
 <ng-template #pageActions>
   @if (canDiscuss()) {
     <button
@@ -557,7 +585,13 @@
     </button>
   }
 
-  @if (transitionTargets().length > 0 || canPlan() || canAbandon() || canDeleteIntervention()) {
+  @if (
+    transitionTargets().length > 0 ||
+    canAssignTeam() ||
+    canPlan() ||
+    canAbandon() ||
+    canDeleteIntervention()
+  ) {
     <button
       hlmBtn
       type="button"
@@ -591,9 +625,18 @@
               </button>
             }
           </hlm-dropdown-menu-group>
-          @if (canPlan() || canAbandon() || canDeleteIntervention()) {
+          @if (canAssignTeam() || canPlan() || canAbandon() || canDeleteIntervention()) {
             <hlm-dropdown-menu-separator />
           }
+        }
+        @if (canAssignTeam()) {
+          <button
+            hlmDropdownMenuItem
+            data-testid="intervention-detail-assign-team"
+            (click)="openTeamAssign()"
+          >
+            <span i18n="@@intervention.team.assign.menuEntry">Assign team…</span>
+          </button>
         }
         @if (canPlan()) {
           <button

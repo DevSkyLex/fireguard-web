@@ -69,6 +69,14 @@ export interface InterventionWorkspaceState {
   readonly deleteCallState: CallState;
 
   /**
+   * Lifecycle of a team assignment (`assignTeam`). A `422` means the team
+   * has no active members; a `409` means the intervention has left the
+   * mutable window (draft/planned/in_progress/changes_requested) — both are
+   * rendered inline by the dialog through this field's `error`.
+   */
+  readonly assignTeamCallState: CallState;
+
+  /**
    * The intervention's attachments — loaded lazily by the detail page's
    * attachments section, never by the SSR-critical workspace fetch.
    */

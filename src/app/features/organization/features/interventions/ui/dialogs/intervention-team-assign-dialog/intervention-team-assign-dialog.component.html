@@ -1,0 +1,88 @@
+<hlm-dialog [state]="dialogState()" [disableClose]="busy()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-md"
+    data-testid="intervention-team-assign-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@intervention.team.assign.header">Assign a team</h3>
+      <p hlmDialogDescription i18n="@@intervention.team.assign.intro">
+        Every active member of the picked team is added to this intervention's participants. Nobody
+        already on the list is removed, and assigning the same team again changes nothing.
+      </p>
+    </hlm-dialog-header>
+
+    @if (teamsLoading()) {
+      <p class="text-sm text-muted-foreground" i18n="@@intervention.team.assign.loading">
+        Loading teams…
+      </p>
+    } @else if (teams().length === 0) {
+      <p class="text-sm text-muted-foreground" i18n="@@intervention.team.assign.empty">
+        This organization has no teams yet.
+      </p>
+    } @else {
+      <hlm-radio-group
+        class="max-h-64 gap-1 overflow-y-auto"
+        data-testid="intervention-team-assign-group"
+        [value]="selectedTeamId()"
+        (valueChange)="selectedTeamId.set($any($event))"
+      >
+        @for (team of teams(); track team.id) {
+          <label
+            [for]="'intervention-team-assign-' + team.id"
+            class="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 ring-1 ring-foreground/10 max-sm:min-h-11"
+            [attr.data-testid]="'intervention-team-assign-option-' + team.id"
+          >
+            <span class="flex items-center gap-3">
+              <hlm-radio [value]="team.id" [inputId]="'intervention-team-assign-' + team.id">
+                <hlm-radio-indicator indicator />
+              </hlm-radio>
+              <span class="flex flex-col">
+                <span class="text-sm font-medium">{{ team.name }}</span>
+                @if (team.description) {
+                  <span class="text-xs text-muted-foreground">{{ team.description }}</span>
+                }
+              </span>
+            </span>
+            <span
+              class="text-xs text-muted-foreground"
+              i18n="@@intervention.team.assign.memberCount"
+              >{team.memberCount, plural,
+                =0 {No members}
+                =1 {1 member}
+                other {{{ team.memberCount }} members}
+              }</span
+            >
+          </label>
+        }
+      </hlm-radio-group>
+    }
+
+    @if (errorMessage(); as message) {
+      <p role="alert" class="text-sm text-destructive" data-testid="intervention-team-assign-error">
+        {{ message }}
+      </p>
+    }
+
+    <hlm-dialog-footer>
+      <button hlmDialogClose hlmBtn type="button" variant="outline" class="max-sm:min-h-11">
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="intervention-team-assign-submit"
+        [disabled]="!canSubmit()"
+        [attr.aria-busy]="busy() ? 'true' : null"
+        (click)="submit()"
+      >
+        @if (busy()) {
+          <span i18n="@@intervention.team.assign.submitting">Assigning…</span>
+        } @else {
+          <span i18n="@@intervention.team.assign.submit">Assign team</span>
+        }
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

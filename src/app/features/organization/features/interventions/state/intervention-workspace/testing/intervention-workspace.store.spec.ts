@@ -681,6 +681,7 @@ describe('InterventionWorkspaceStore call state', () => {
       updateChange: vi.fn(),
       removeWorkItem: vi.fn().mockReturnValue(of(undefined)),
       remove: vi.fn().mockReturnValue(of(undefined)),
+      assignTeam: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -763,6 +764,64 @@ describe('InterventionWorkspaceStore call state', () => {
     expect(store.updateDetailsCallState().status).toBe('idle');
     expect(store.loadCallState().status).toBe('idle');
     expect(store.error()).toBeNull();
+  });
+
+  it('replaces the intervention with the server response on a successful team assignment', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    const updated = { ...intervention, participants: ['/api/organizations/org-1/members/m-1'] };
+    mockService['assignTeam'].mockReturnValue(of(updated));
+
+    store.assignTeam({ interventionId: 'intervention-1', input: { teamId: 'team-1' } });
+    await vi.waitFor(() => expect(store.assignTeamCallState().status).toBe('success'));
+
+    expect(mockService['assignTeam']).toHaveBeenCalledWith(
+      'intervention-1',
+      { teamId: 'team-1' },
+      intervention.revision,
+    );
+    expect(store.intervention()?.participants).toEqual(['/api/organizations/org-1/members/m-1']);
+  });
+
+  it('surfaces the no-active-members message on a 422', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    mockService['assignTeam'].mockReturnValue(
+      throwError(() => ({
+        '@type': 'ApiError',
+        status: 422,
+        type: '/errors/unprocessable-entity',
+        title: 'Unprocessable Entity',
+        detail: 'The team has no active members.',
+      })),
+    );
+
+    store.assignTeam({ interventionId: 'intervention-1', input: { teamId: 'team-1' } });
+    await vi.waitFor(() => expect(store.assignTeamCallState().status).toBe('error'));
+
+    expect(store.assignTeamCallState().error?.message).toBe('This team has no active members.');
+  });
+
+  it('reloads the workspace on a 409 conflict', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    mockService['assignTeam'].mockReturnValue(
+      throwError(() => ({
+        '@type': 'ApiError',
+        status: 409,
+        type: '/errors/conflict',
+        title: 'Conflict',
+        detail: 'The intervention has left the draft planning stage.',
+      })),
+    );
+    mockService['get'].mockClear();
+
+    store.assignTeam({ interventionId: 'intervention-1', input: { teamId: 'team-1' } });
+    await vi.waitFor(() => expect(store.assignTeamCallState().status).toBe('error'));
+    await vi.waitFor(() => expect(mockService['get']).toHaveBeenCalledWith('intervention-1'));
   });
 
   it('rejects a proposed change in place and unlocks its row', async () => {

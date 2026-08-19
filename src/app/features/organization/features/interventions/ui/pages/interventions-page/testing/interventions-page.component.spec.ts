@@ -21,7 +21,10 @@ import {
   type CallState,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionRecurrenceService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   InterventionLabelOutput,
   InterventionOutput,
@@ -194,6 +197,10 @@ describe('InterventionsPage', () => {
         {
           provide: InterventionService,
           useValue: { listAll, statistics: vi.fn().mockReturnValue(of(null)) },
+        },
+        {
+          provide: InterventionRecurrenceService,
+          useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
         },
         {
           provide: FeedbackService,
@@ -417,12 +424,18 @@ describe('InterventionsPage', () => {
     });
   });
 
-  it('should hand the picked template straight to the store', async () => {
+  it('should hand the picked template and its overrides straight to the store', async () => {
     fixture = await createPage();
 
-    fixture.componentInstance['instantiateFromTemplate']('template-1');
+    fixture.componentInstance['instantiateFromTemplate']({
+      templateId: 'template-1',
+      name: 'Spring round',
+    });
 
-    expect(instantiateFromTemplate).toHaveBeenCalledWith({ templateId: 'template-1' });
+    expect(instantiateFromTemplate).toHaveBeenCalledWith({
+      templateId: 'template-1',
+      name: 'Spring round',
+    });
   });
 
   describe('duplicate', () => {

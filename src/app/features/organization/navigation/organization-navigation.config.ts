@@ -93,9 +93,7 @@ export interface OrganizationNavigationSection {
  * @description
  * Canonical ordered list of organization destinations gated by organization-member
  * RBAC. The sidebar navigation and the landing guard both consume this list, so
- * route visibility and fallback behavior cannot diverge. The audit log is
- * deliberately absent: it is gated by the global `audit.read` account permission
- * and lives outside organization scope.
+ * route visibility and fallback behavior cannot diverge.
  *
  * @since 1.0.0
  */
@@ -234,6 +232,20 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     path: 'settings',
     group: 'administration',
     permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
+  },
+  {
+    /**
+     * The organization-scoped audit journal, over the backend's
+     * organization audit ledger. `organization.audit.read` is not in the
+     * default member role — admins hold it via the wildcard — so this row
+     * is absent for most members, matching the route's own guard.
+     */
+    id: 'audit',
+    label: $localize`:@@route.audit:Audit journal`,
+    icon: 'lucideHistory',
+    path: 'audit',
+    group: 'administration',
+    permissions: [ORGANIZATION_PERMISSION.AUDIT_READ],
   },
 ];
 

@@ -13797,6 +13797,438 @@
         <source>Import from CSV</source>
         <target>Importar desde CSV</target>
       </trans-unit>
+      <trans-unit id="route.audit" datatype="html">
+        <source>Audit journal</source>
+        <target>Registro de auditoría</target>
+      </trans-unit>
+      <trans-unit id="audit.module.organization" datatype="html">
+        <source>Organization</source>
+        <target>Organización</target>
+      </trans-unit>
+      <trans-unit id="audit.module.facility" datatype="html">
+        <source>Facilities</source>
+        <target>Instalaciones</target>
+      </trans-unit>
+      <trans-unit id="audit.module.equipment" datatype="html">
+        <source>Equipment</source>
+        <target>Equipos</target>
+      </trans-unit>
+      <trans-unit id="audit.module.inspection" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="audit.module.intervention" datatype="html">
+        <source>Interventions</source>
+        <target>Intervenciones</target>
+      </trans-unit>
+      <trans-unit id="audit.module.maintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>Mantenimiento</target>
+      </trans-unit>
+      <trans-unit id="audit.module.automation" datatype="html">
+        <source>Automation</source>
+        <target>Automatización</target>
+      </trans-unit>
+      <trans-unit id="audit.module.messaging" datatype="html">
+        <source>Messaging</source>
+        <target>Mensajería</target>
+      </trans-unit>
+      <trans-unit id="audit.module.import" datatype="html">
+        <source>Imports</source>
+        <target>Importaciones</target>
+      </trans-unit>
+      <trans-unit id="audit.module.compliance" datatype="html">
+        <source>Compliance</source>
+        <target>Cumplimiento</target>
+      </trans-unit>
+      <trans-unit id="audit.module.webhook" datatype="html">
+        <source>Webhooks</source>
+        <target>Webhooks</target>
+      </trans-unit>
+      <trans-unit id="audit.module.approval" datatype="html">
+        <source>Approvals</source>
+        <target>Aprobaciones</target>
+      </trans-unit>
+      <trans-unit id="audit.module.other" datatype="html">
+        <source>Other</source>
+        <target>Otro</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.created" datatype="html">
+        <source>Organization created</source>
+        <target>Organización creada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.archived" datatype="html">
+        <source>Organization archived</source>
+        <target>Organización archivada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.restored" datatype="html">
+        <source>Organization restored</source>
+        <target>Organización restaurada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.suspended" datatype="html">
+        <source>Organization suspended</source>
+        <target>Organización suspendida</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.settings_updated" datatype="html">
+        <source>Settings updated</source>
+        <target>Configuración actualizada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.plan_changed" datatype="html">
+        <source>Plan changed</source>
+        <target>Plan modificado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.ownership_transferred" datatype="html">
+        <source>Ownership transferred</source>
+        <target>Propiedad transferida</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.role_created" datatype="html">
+        <source>Role created</source>
+        <target>Rol creado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.role_updated" datatype="html">
+        <source>Role updated</source>
+        <target>Rol actualizado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.role_deleted" datatype="html">
+        <source>Role deleted</source>
+        <target>Rol eliminado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.role_assigned" datatype="html">
+        <source>Role assigned</source>
+        <target>Rol asignado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.role_unassigned" datatype="html">
+        <source>Role unassigned</source>
+        <target>Rol retirado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.permission_grant_denied" datatype="html">
+        <source>Permission grant denied</source>
+        <target>Concesión de permiso denegada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.last_admin_lockout_prevented" datatype="html">
+        <source>Last admin lockout prevented</source>
+        <target>Bloqueo del último administrador evitado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.member_added" datatype="html">
+        <source>Member added</source>
+        <target>Miembro añadido</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.member_removed" datatype="html">
+        <source>Member removed</source>
+        <target>Miembro eliminado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.invitation_sent" datatype="html">
+        <source>Invitation sent</source>
+        <target>Invitación enviada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.invitation_accepted" datatype="html">
+        <source>Invitation accepted</source>
+        <target>Invitación aceptada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.invitation_revoked" datatype="html">
+        <source>Invitation revoked</source>
+        <target>Invitación revocada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.team_created" datatype="html">
+        <source>Team created</source>
+        <target>Equipo creado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.team_updated" datatype="html">
+        <source>Team updated</source>
+        <target>Equipo actualizado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.team_deleted" datatype="html">
+        <source>Team deleted</source>
+        <target>Equipo eliminado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.team_member_added" datatype="html">
+        <source>Team member added</source>
+        <target>Miembro de equipo añadido</target>
+      </trans-unit>
+      <trans-unit id="audit.action.organization.team_member_removed" datatype="html">
+        <source>Team member removed</source>
+        <target>Miembro de equipo eliminado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.facility.created" datatype="html">
+        <source>Facility created</source>
+        <target>Instalación creada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.facility.archived" datatype="html">
+        <source>Facility archived</source>
+        <target>Instalación archivada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.facility.restored" datatype="html">
+        <source>Facility restored</source>
+        <target>Instalación restaurada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.facility.moved" datatype="html">
+        <source>Facility moved</source>
+        <target>Instalación trasladada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.facility.updated" datatype="html">
+        <source>Facility updated</source>
+        <target>Instalación actualizada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.facility.subtree_duplicated" datatype="html">
+        <source>Facility subtree duplicated</source>
+        <target>Subárbol de la instalación duplicado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.equipment.commissioned" datatype="html">
+        <source>Equipment commissioned</source>
+        <target>Equipo puesto en servicio</target>
+      </trans-unit>
+      <trans-unit id="audit.action.equipment.under_maintenance" datatype="html">
+        <source>Equipment put under maintenance</source>
+        <target>Equipo puesto en mantenimiento</target>
+      </trans-unit>
+      <trans-unit id="audit.action.equipment.returned_to_stock" datatype="html">
+        <source>Equipment returned to stock</source>
+        <target>Equipo devuelto a inventario</target>
+      </trans-unit>
+      <trans-unit id="audit.action.equipment.decommissioned" datatype="html">
+        <source>Equipment decommissioned</source>
+        <target>Equipo dado de baja</target>
+      </trans-unit>
+      <trans-unit id="audit.action.inspection.submitted" datatype="html">
+        <source>Inspection submitted</source>
+        <target>Inspección enviada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.inspection.closed" datatype="html">
+        <source>Inspection closed</source>
+        <target>Inspección cerrada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.inspection.cancelled" datatype="html">
+        <source>Inspection cancelled</source>
+        <target>Inspección cancelada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.inspection.non_conformity_recorded" datatype="html">
+        <source>Non-conformity recorded</source>
+        <target>No conformidad registrada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.inspection.non_conformity_status_changed" datatype="html">
+        <source>Non-conformity status changed</source>
+        <target>Estado de no conformidad modificado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.intervention.published" datatype="html">
+        <source>Intervention published</source>
+        <target>Intervención publicada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.intervention.publication_failed" datatype="html">
+        <source>Intervention publication failed</source>
+        <target>Fallo al publicar la intervención</target>
+      </trans-unit>
+      <trans-unit id="audit.action.intervention.status_transitioned" datatype="html">
+        <source>Intervention status changed</source>
+        <target>Estado de la intervención modificado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.intervention.recurrence_created" datatype="html">
+        <source>Recurrence created</source>
+        <target>Recurrencia creada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.intervention.recurrence_updated" datatype="html">
+        <source>Recurrence updated</source>
+        <target>Recurrencia actualizada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.intervention.recurrence_deleted" datatype="html">
+        <source>Recurrence deleted</source>
+        <target>Recurrencia eliminada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.intervention.recurrence_materialized" datatype="html">
+        <source>Recurrence materialized</source>
+        <target>Recurrencia materializada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.maintenance.schedule_overridden" datatype="html">
+        <source>Maintenance schedule overridden</source>
+        <target>Planificación de mantenimiento sobrescrita</target>
+      </trans-unit>
+      <trans-unit id="audit.action.maintenance.campaign_generated" datatype="html">
+        <source>Maintenance campaign generated</source>
+        <target>Campaña de mantenimiento generada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.automation.rule_executed" datatype="html">
+        <source>Automation rule executed</source>
+        <target>Regla de automatización ejecutada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.automation.rule_failed" datatype="html">
+        <source>Automation rule failed</source>
+        <target>Fallo de la regla de automatización</target>
+      </trans-unit>
+      <trans-unit id="audit.action.messaging.conversation_archived" datatype="html">
+        <source>Conversation archived</source>
+        <target>Conversación archivada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.messaging.message_moderated" datatype="html">
+        <source>Message moderated</source>
+        <target>Mensaje moderado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.messaging.message_unpin_moderated" datatype="html">
+        <source>Pinned message removed by moderation</source>
+        <target>Mensaje fijado retirado por moderación</target>
+      </trans-unit>
+      <trans-unit id="audit.action.messaging.channel_created" datatype="html">
+        <source>Channel created</source>
+        <target>Canal creado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.messaging.channel_participant_added" datatype="html">
+        <source>Channel participant added</source>
+        <target>Participante añadido al canal</target>
+      </trans-unit>
+      <trans-unit id="audit.action.messaging.channel_participant_removed" datatype="html">
+        <source>Channel participant removed</source>
+        <target>Participante eliminado del canal</target>
+      </trans-unit>
+      <trans-unit id="audit.action.messaging.channel_team_binding_changed" datatype="html">
+        <source>Channel team binding changed</source>
+        <target>Vinculación de equipo del canal modificada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.messaging.channel_parent_changed" datatype="html">
+        <source>Channel parent changed</source>
+        <target>Canal padre modificado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.import.job_completed" datatype="html">
+        <source>Import job completed</source>
+        <target>Trabajo de importación completado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.import.job_failed" datatype="html">
+        <source>Import job failed</source>
+        <target>Fallo del trabajo de importación</target>
+      </trans-unit>
+      <trans-unit id="audit.action.compliance.register_exported" datatype="html">
+        <source>Safety register exported</source>
+        <target>Registro de seguridad exportado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.webhook.subscription_created" datatype="html">
+        <source>Webhook subscription created</source>
+        <target>Suscripción de webhook creada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.webhook.subscription_deleted" datatype="html">
+        <source>Webhook subscription deleted</source>
+        <target>Suscripción de webhook eliminada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.approval.requested" datatype="html">
+        <source>Approval requested</source>
+        <target>Aprobación solicitada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.approval.approved" datatype="html">
+        <source>Approval granted</source>
+        <target>Aprobación concedida</target>
+      </trans-unit>
+      <trans-unit id="audit.action.approval.rejected" datatype="html">
+        <source>Approval rejected</source>
+        <target>Aprobación rechazada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.approval.expired" datatype="html">
+        <source>Approval request expired</source>
+        <target>Solicitud de aprobación caducada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.approval.execution_failed" datatype="html">
+        <source>Approved action failed to execute</source>
+        <target>Fallo al ejecutar la acción aprobada</target>
+      </trans-unit>
+      <trans-unit id="audit.filter.action" datatype="html">
+        <source>Action</source>
+        <target>Acción</target>
+      </trans-unit>
+      <trans-unit id="audit.filter.searchPlaceholder" datatype="html">
+        <source>Search an action</source>
+        <target>Buscar una acción</target>
+      </trans-unit>
+      <trans-unit id="audit.filter.clearAriaLabel" datatype="html">
+        <source>Clear action filter</source>
+        <target>Borrar el filtro de acción</target>
+      </trans-unit>
+      <trans-unit id="audit.filter.noAction" datatype="html">
+        <source>No action matches.</source>
+        <target>Ninguna acción coincide.</target>
+      </trans-unit>
+      <trans-unit id="audit.filter.dateRange" datatype="html">
+        <source>Date range</source>
+        <target>Intervalo de fechas</target>
+      </trans-unit>
+      <trans-unit id="audit.filter.dateRangePlaceholder" datatype="html">
+        <source>Pick a date range</source>
+        <target>Elegir un intervalo de fechas</target>
+      </trans-unit>
+      <trans-unit id="audit.list.forbiddenTitle" datatype="html">
+        <source>You need the audit permission</source>
+        <target>Necesita el permiso de auditoría</target>
+      </trans-unit>
+      <trans-unit id="audit.list.forbiddenDesc" datatype="html">
+        <source>Ask an organization admin to grant you read access to the audit journal.</source>
+        <target>Pida a un administrador de la organización que le conceda acceso de lectura al registro de auditoría.</target>
+      </trans-unit>
+      <trans-unit id="audit.list.errorTitle" datatype="html">
+        <source>Couldn&apos;t load the audit journal</source>
+        <target>No se pudo cargar el registro de auditoría</target>
+      </trans-unit>
+      <trans-unit id="audit.list.errorText" datatype="html">
+        <source>The audit journal could not be loaded. Check your connection and try again.</source>
+        <target>No se pudo cargar el registro de auditoría. Compruebe su conexión e inténtelo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="audit.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="audit.list.emptyTitle" datatype="html">
+        <source>No audit events</source>
+        <target>Sin eventos de auditoría</target>
+      </trans-unit>
+      <trans-unit id="audit.list.emptyDesc" datatype="html">
+        <source>No activity matches this filter yet.</source>
+        <target>Ninguna actividad coincide con este filtro por ahora.</target>
+      </trans-unit>
+      <trans-unit id="audit.table.title" datatype="html">
+        <source> Audit journal </source>
+        <target> Registro de auditoría </target>
+      </trans-unit>
+      <trans-unit id="audit.table.colTimestamp" datatype="html">
+        <source>Occurred at</source>
+        <target>Ocurrido el</target>
+      </trans-unit>
+      <trans-unit id="audit.table.colActor" datatype="html">
+        <source>Actor</source>
+        <target>Actor</target>
+      </trans-unit>
+      <trans-unit id="audit.table.colAction" datatype="html">
+        <source>Action</source>
+        <target>Acción</target>
+      </trans-unit>
+      <trans-unit id="audit.table.colSubject" datatype="html">
+        <source>Subject</source>
+        <target>Sujeto</target>
+      </trans-unit>
+      <trans-unit id="audit.table.metadataEmpty" datatype="html">
+        <source> No additional details. </source>
+        <target> Sin detalles adicionales. </target>
+      </trans-unit>
+      <trans-unit id="audit.table.noResults" datatype="html">
+        <source> No results. </source>
+        <target> Sin resultados. </target>
+      </trans-unit>
+      <trans-unit id="audit.table.collapseNamed" datatype="html">
+        <source>Hide details for <x id="label" equiv-text="label"/> at <x id="occurredAt" equiv-text="occurredAt"/></source>
+        <target>Ocultar los detalles de <x id="label" equiv-text="label"/> a las <x id="occurredAt" equiv-text="occurredAt"/></target>
+      </trans-unit>
+      <trans-unit id="audit.table.expandNamed" datatype="html">
+        <source>Show details for <x id="label" equiv-text="label"/> at <x id="occurredAt" equiv-text="occurredAt"/></source>
+        <target>Mostrar los detalles de <x id="label" equiv-text="label"/> a las <x id="occurredAt" equiv-text="occurredAt"/></target>
+      </trans-unit>
+      <trans-unit id="audit.actor.unknownMember" datatype="html">
+        <source>Unknown member</source>
+        <target>Miembro desconocido</target>
+      </trans-unit>
+      <trans-unit id="audit.actor.client" datatype="html">
+        <source>API client</source>
+        <target>Cliente API</target>
+      </trans-unit>
+      <trans-unit id="audit.actor.system" datatype="html">
+        <source>System</source>
+        <target>Sistema</target>
+      </trans-unit>
+      <trans-unit id="audit.actor.anonymous" datatype="html">
+        <source>Anonymous</source>
+        <target>Anónimo</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

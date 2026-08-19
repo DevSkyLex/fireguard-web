@@ -68,6 +68,23 @@ describe('buildInterventionListOptions', () => {
     expect('site' in options).toBe(false);
   });
 
+  it('should forward a readonly array narrowing as-is, for HydraApiService.buildParams to repeat', () => {
+    const options = buildInterventionListOptions(
+      { ...NO_FILTERS, status: ['draft', 'planned'] },
+      DUE_ASC,
+      '',
+      NOW,
+    );
+
+    expect(options).toEqual({ order: { dueAt: 'asc' }, status: ['draft', 'planned'] });
+  });
+
+  it('should omit an emptied-back-to-unfiltered array rather than send an empty isAnyOf', () => {
+    const options = buildInterventionListOptions({ ...NO_FILTERS, status: [] }, DUE_ASC, '', NOW);
+
+    expect('status' in options).toBe(false);
+  });
+
   it('should carry every set filter, the search term and the ordering together', () => {
     expect(
       buildInterventionListOptions(
@@ -317,6 +334,39 @@ describe('parseInterventionListFilters', () => {
     expect(parseInterventionListFilters({}, 'org-1')).toEqual(NO_FILTERS);
   });
 
+  it('should parse comma-separated enum and IRI params into a readonly array (isAnyOf)', () => {
+    expect(
+      parseInterventionListFilters(
+        {
+          status: 'draft,planned',
+          type: 'inventory,inspection_campaign',
+          priority: 'high,urgent',
+          site: 'f-1,f-2',
+          responsible: 'm-1,m-2',
+          label: 'l-1,l-2',
+        },
+        'org-1',
+      ),
+    ).toEqual({
+      ...NO_FILTERS,
+      status: ['draft', 'planned'],
+      type: ['inventory', 'inspection_campaign'],
+      priority: ['high', 'urgent'],
+      site: ['/api/facilities/f-1', '/api/facilities/f-2'],
+      responsible: ['/api/organizations/org-1/members/m-1', '/api/organizations/org-1/members/m-2'],
+      label: ['/api/intervention-labels/l-1', '/api/intervention-labels/l-2'],
+    });
+  });
+
+  it('should drop an unknown value out of a comma-separated enum set rather than send it to the API', () => {
+    expect(parseInterventionListFilters({ status: 'draft,bogus' }, 'org-1').status).toBe('draft');
+  });
+
+  it('should keep the legacy single-value scalar shape for a bookmarked ?status= link', () => {
+    expect(parseInterventionListFilters({ status: 'draft' }, 'org-1').status).toBe('draft');
+    expect(parseInterventionListFilters({ site: 'f-1' }, 'org-1').site).toBe('/api/facilities/f-1');
+  });
+
   it('should resolve dueAfter/dueBefore into the matching dueRange operator', () => {
     expect(parseInterventionListFilters({ dueAfter: '2026-08-10' }, 'org-1').dueRange).toEqual({
       operator: 'greaterThan',
@@ -389,6 +439,25 @@ describe('serializeInterventionListFilters', () => {
       plannedStartAfter: null,
       plannedStartBefore: null,
     });
+  });
+
+  it('should comma-join a readonly array narrowing (isAnyOf), enum and IRI alike', () => {
+    expect(
+      serializeInterventionListFilters({
+        ...NO_FILTERS,
+        status: ['draft', 'planned'],
+        site: ['/api/facilities/f-1', '/api/facilities/f-2'],
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        status: 'draft,planned',
+        site: 'f-1,f-2',
+      }),
+    );
+  });
+
+  it('should null an emptied-back-to-unfiltered array the same way it nulls a cleared scalar', () => {
+    expect(serializeInterventionListFilters({ ...NO_FILTERS, status: [] })['status']).toBeNull();
   });
 
   it('should null every param when nothing is filtered, removing them from the URL', () => {

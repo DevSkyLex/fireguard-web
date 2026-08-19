@@ -13,9 +13,9 @@ import type { InterventionFilterFieldOption } from '../models';
  * Constant INTERVENTION_STATUS_FILTER_OPTIONS
  *
  * @description
- * Every workflow status, offered one at a time because the API filters `status`
- * as a single value. Labels come from the feature's tag registry rather than a
- * second copy, so adding a status changes one map (ARCHITECTURE.md §10.10).
+ * Every workflow status. Labels come from the feature's tag registry rather
+ * than a second copy, so adding a status changes one map
+ * (ARCHITECTURE.md §10.10).
  *
  * @since 1.0.0
  */
@@ -47,8 +47,8 @@ export const INTERVENTION_TYPE_FILTER_OPTIONS: SelectOption<InterventionType>[] 
  * Constant INTERVENTION_PRIORITY_FILTER_OPTIONS
  *
  * @description
- * The four priorities, labelled from the tag registry. Single-valued like the
- * other narrowing selects; the API answers 400 on anything else.
+ * The four priorities, labelled from the tag registry. The API answers 400
+ * on any value outside this set, single- or multi-valued alike.
  *
  * @since 5.1.0
  */
@@ -103,6 +103,11 @@ export const INTERVENTION_SORT_OPTIONS: SelectOption<InterventionSortField>[] = 
  * select placeholders already carry, so nothing here duplicates translation
  * work.
  *
+ * `status`, `type`, `priority`, `site`, `responsible` and `label` each
+ * declare `['equals', 'isAnyOf']` now that the API accepts a repeated
+ * `key[]=` value OR-combined via `IN()` — `equals` stays first so it is
+ * still the default a freshly picked field's operator segment opens on.
+ *
  * @since 6.5.0
  */
 export const INTERVENTION_FILTER_FIELDS: readonly InterventionFilterFieldOption[] = [
@@ -110,37 +115,37 @@ export const INTERVENTION_FILTER_FIELDS: readonly InterventionFilterFieldOption[
     key: 'status',
     fieldLabel: $localize`:@@intervention.list.filterStatus:Status`,
     icon: 'lucideCircleDot',
-    operators: ['equals'],
+    operators: ['equals', 'isAnyOf'],
   },
   {
     key: 'type',
     fieldLabel: $localize`:@@intervention.list.filterType:Type`,
     icon: 'lucideWrench',
-    operators: ['equals'],
+    operators: ['equals', 'isAnyOf'],
   },
   {
     key: 'priority',
     fieldLabel: $localize`:@@intervention.list.filterPriority:Priority`,
     icon: 'lucideFlag',
-    operators: ['equals'],
+    operators: ['equals', 'isAnyOf'],
   },
   {
     key: 'site',
     fieldLabel: $localize`:@@intervention.list.filterSite:Site`,
     icon: 'lucideMapPin',
-    operators: ['equals'],
+    operators: ['equals', 'isAnyOf'],
   },
   {
     key: 'responsible',
     fieldLabel: $localize`:@@intervention.list.filterResponsible:Responsible`,
     icon: 'lucideUser',
-    operators: ['equals'],
+    operators: ['equals', 'isAnyOf'],
   },
   {
     key: 'label',
     fieldLabel: $localize`:@@intervention.list.filterLabel:Label`,
     icon: 'lucideTag',
-    operators: ['equals'],
+    operators: ['equals', 'isAnyOf'],
   },
   {
     key: 'dueRange',

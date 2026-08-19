@@ -9,11 +9,11 @@ import type { InterventionFilterFieldKey } from './intervention-filter-field.typ
  * One entry of the filter bar's field catalog: the key `applyFilter` patches,
  * its label, the icon its chip and its "+ Filter" menu entry both render, the
  * operators this field accepts, and an optional per-field operator label
- * override. Six entries declare `['equals']` alone, since the API filters
- * each of those six as a single exact value; `dueRange` is the one field
- * genuinely wired to more than `equals` — `greaterThan`, `lessThan` and
- * `between`, mapped to the real `dueAtAfter`/`dueAtBefore` API bounds
- * (`FEATURE.md`).
+ * override. Six entries declare `['equals', 'isAnyOf']` — the API accepts
+ * either a single exact value or a repeated `key[]=` value OR-combined via
+ * `IN()` for each; `dueRange` and `plannedStartRange` are the two fields
+ * wired to date-bound operators instead — `greaterThan`, `lessThan` and
+ * `between`, mapped to real API bounds (`FEATURE.md`).
  *
  * @since 6.5.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>

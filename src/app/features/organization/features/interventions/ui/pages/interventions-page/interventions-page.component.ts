@@ -205,6 +205,21 @@ type InterventionDueRangeOperator = 'greaterThan' | 'lessThan' | 'between';
 type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'between';
 
 /**
+ * Type InterventionEnumFilterKey
+ *
+ * @description
+ * The six {@link InterventionFilterFieldKey} entries whose
+ * `InterventionListFilters` value discriminates its own operator by shape —
+ * a scalar under `equals`, a readonly array under `isAnyOf` — rather than
+ * carrying a separate operator field the way {@link InterventionDueRangeFilter}
+ * does. Named locally so {@link InterventionsPage.enumFieldOperator} and its
+ * value-control methods stay narrower than {@link InterventionFilterFieldKey}.
+ *
+ * @since 8.3.0
+ */
+type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'responsible' | 'label';
+
+/**
  * Component InterventionsPage
  * @class InterventionsPage
  *
@@ -1258,6 +1273,27 @@ export class InterventionsPage {
     signal<InterventionFilterFieldKey | null>(null);
 
   /**
+   * Property enumFilterOperatorOverrides
+   * @readonly
+   *
+   * @description
+   * The operator the "+ Filter" menu's picker last chose for one of the six
+   * `equals`/`isAnyOf` fields, remembered only for the moment that field
+   * carries no value yet — once a value is applied, {@link enumFieldOperator}
+   * reads the value's own shape (scalar vs. array) instead, exactly as
+   * {@link dueRangeOperator} falls back to its own `linkedSignal` `previous`
+   * once `dueRange` clears. Never read directly by a template.
+   *
+   * @access private
+   * @since 8.3.0
+   *
+   * @type {WritableSignal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>}
+   */
+  private readonly enumFilterOperatorOverrides: WritableSignal<
+    Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>
+  > = signal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>({});
+
+  /**
    * Property filtersVisible
    * @readonly
    *
@@ -1481,7 +1517,7 @@ export class InterventionsPage {
   /**
    * Property filterOperators
    * @readonly
-   * @description The currently active operator per field key, for `app-collection-filter-bar`'s `activeOperators` input — only "Deadline" and "Planned start" ever need an entry, the other six fields have exactly one declared operator each.
+   * @description The currently active operator per field key, for `app-collection-filter-bar`'s `activeOperators` input — "Deadline" and "Planned start" from their own `linkedSignal`, the six `equals`/`isAnyOf` fields from {@link enumFieldOperator}.
    * @access protected
    * @since 8.1.0
    * @type {Signal<Readonly<Record<string, CollectionFilterOperator>>>}
@@ -1490,6 +1526,12 @@ export class InterventionsPage {
     computed<Readonly<Record<string, CollectionFilterOperator>>>(() => ({
       dueRange: this.dueRangeOperator(),
       plannedStartRange: this.plannedStartRangeOperator(),
+      status: this.enumFieldOperator('status'),
+      type: this.enumFieldOperator('type'),
+      priority: this.enumFieldOperator('priority'),
+      site: this.enumFieldOperator('site'),
+      responsible: this.enumFieldOperator('responsible'),
+      label: this.enumFieldOperator('label'),
     }));
 
   /**
@@ -1551,6 +1593,64 @@ export class InterventionsPage {
   /** Names a label IRI on a closed select trigger. */
   protected readonly labelLabelOf: (value: string) => string = (value: string): string =>
     this.labelDisplayMap().get(value) ?? '';
+
+  /**
+   * Method multiLabel
+   *
+   * @description
+   * Wraps one of the six `…LabelOf` single-item labellers for
+   * `hlm-select-multiple`'s `itemToString`: `stringifyAsLabel`
+   * (`@spartan-ng/brain/core`) calls it once per `hlm-select-item` with that
+   * item's own scalar value, but calls it a second time with the select's
+   * **whole current value** to render the trigger's own summary text — an
+   * array once `isAnyOf` has more than one pick. This dispatches on that
+   * shape: a scalar routes straight to `labelOf`, an array maps every member
+   * through it and joins with a comma, so both call sites resolve correctly
+   * through the one function `[itemToString]` takes.
+   *
+   * @access private
+   * @since 8.3.0
+   *
+   * @template T - The field's own value type.
+   *
+   * @param {(value: T) => string} labelOf - The field's own single-item labeller.
+   * @param {T | readonly T[]} value - Either one item's value or the select's whole current selection.
+   *
+   * @returns {string} The label for one item, or the comma-joined labels for a selection.
+   */
+  private multiLabel<T>(labelOf: (value: T) => string, value: T | readonly T[]): string {
+    return Array.isArray(value) ? value.map(labelOf).join(', ') : labelOf(value as T);
+  }
+
+  /** The "Status" chip's multi select `itemToString`. See {@link multiLabel}. */
+  protected readonly statusMultiLabelOf: (
+    value: InterventionStatus | readonly InterventionStatus[],
+  ) => string = (value): string => this.multiLabel(this.statusLabelOf, value);
+
+  /** The "Type" chip's multi select `itemToString`. See {@link multiLabel}. */
+  protected readonly typeMultiLabelOf: (
+    value: InterventionType | readonly InterventionType[],
+  ) => string = (value): string => this.multiLabel(this.typeLabelOf, value);
+
+  /** The "Priority" chip's multi select `itemToString`. See {@link multiLabel}. */
+  protected readonly priorityMultiLabelOf: (
+    value: InterventionPriority | readonly InterventionPriority[],
+  ) => string = (value): string => this.multiLabel(this.priorityLabelOf, value);
+
+  /** The "Site" chip's multi select `itemToString`. See {@link multiLabel}. */
+  protected readonly siteMultiLabelOf: (value: string | readonly string[]) => string = (
+    value,
+  ): string => this.multiLabel(this.siteLabelOf, value);
+
+  /** The "Responsible" chip's multi select `itemToString`. See {@link multiLabel}. */
+  protected readonly responsibleMultiLabelOf: (value: string | readonly string[]) => string = (
+    value,
+  ): string => this.multiLabel(this.responsibleLabelOf, value);
+
+  /** The "Label" chip's multi select `itemToString`. See {@link multiLabel}. */
+  protected readonly labelMultiLabelOf: (value: string | readonly string[]) => string = (
+    value,
+  ): string => this.multiLabel(this.labelLabelOf, value);
 
   /** Names a filter chip's value segment, so each is distinguishable by screen reader. */
   protected readonly changeFilterLabel: (fieldLabel: string) => string = (
@@ -1824,6 +1924,261 @@ export class InterventionsPage {
   protected onFilterOperatorChanged(event: CollectionFilterOperatorChangedEvent): void {
     if (event.key === 'dueRange') this.onDueRangeOperatorPicked(event.operator);
     if (event.key === 'plannedStartRange') this.onPlannedStartRangeOperatorPicked(event.operator);
+    if (this.isEnumFilterKey(event.key)) this.onEnumFilterOperatorPicked(event.key, event.operator);
+  }
+
+  /**
+   * Method isEnumFilterKey
+   * @description Narrows a filter bar field key to {@link InterventionEnumFilterKey} — the six fields sharing the `equals`/`isAnyOf` value-shape discriminant.
+   * @access private
+   * @since 8.3.0
+   * @param {string} key - The field key to narrow.
+   * @returns {key is InterventionEnumFilterKey} Whether the key is one of the six.
+   */
+  private isEnumFilterKey(key: string): key is InterventionEnumFilterKey {
+    return (
+      key === 'status' ||
+      key === 'type' ||
+      key === 'priority' ||
+      key === 'site' ||
+      key === 'responsible' ||
+      key === 'label'
+    );
+  }
+
+  /**
+   * Method enumFieldOperator
+   *
+   * @description
+   * The operator one of the six `equals`/`isAnyOf` fields currently reads:
+   * `isAnyOf` when its own {@link filters} value is a readonly array,
+   * `equals` when it is a set scalar, and — while unset — whatever the
+   * operator picker last chose in {@link enumFilterOperatorOverrides},
+   * defaulting to `equals`.
+   *
+   * @access protected
+   * @since 8.3.0
+   *
+   * @param {InterventionEnumFilterKey} key - The field to read.
+   *
+   * @returns {'equals' | 'isAnyOf'} The operator its chip's segment renders.
+   */
+  protected enumFieldOperator(key: InterventionEnumFilterKey): 'equals' | 'isAnyOf' {
+    const value: InterventionListFilters[InterventionEnumFilterKey] = this.filters()[key];
+
+    if (Array.isArray(value)) return 'isAnyOf';
+    if (value !== null) return 'equals';
+    return this.enumFilterOperatorOverrides()[key] ?? 'equals';
+  }
+
+  /**
+   * Method onEnumFilterOperatorPicked
+   *
+   * @description
+   * Switches one of the six `equals`/`isAnyOf` fields' value control to the
+   * picked operator's own shape (a single select for `equals`, a multi
+   * select for `isAnyOf`) and drops any already-applied narrowing on that
+   * field — its value was chosen under the previous operator's shape and no
+   * longer means the same thing, mirroring {@link onDueRangeOperatorPicked}.
+   *
+   * @access private
+   * @since 8.3.0
+   *
+   * @param {InterventionEnumFilterKey} key - The field whose operator segment changed.
+   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
+   *
+   * @returns {void}
+   */
+  private onEnumFilterOperatorPicked(
+    key: InterventionEnumFilterKey,
+    operator: CollectionFilterOperator,
+  ): void {
+    if (operator !== 'equals' && operator !== 'isAnyOf') return;
+
+    this.enumFilterOperatorOverrides.update(
+      (
+        overrides: Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>,
+      ): Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>> => ({
+        ...overrides,
+        [key]: operator,
+      }),
+    );
+    if (this.filters()[key] !== null) this.applyFilter(this.filterClearPatchOf(key));
+  }
+
+  /**
+   * Method toEnumValues
+   *
+   * @description
+   * Normalizes one of the six `equals`/`isAnyOf` fields' current value to a
+   * readonly array, for `hlm-select-multiple`'s own `value` input — `null`
+   * narrows to an empty selection, a scalar narrows to a one-element array,
+   * an array passes through as-is. Generic and typed per call site (see
+   * {@link statusValues} and its siblings) rather than keyed by
+   * {@link InterventionEnumFilterKey}, so `[itemToString]`/`[value]`
+   * inference on the template's `hlm-select-multiple` stays on the field's
+   * own literal type instead of widening to `string`.
+   *
+   * @access private
+   * @since 8.3.0
+   *
+   * @template T - The field's own value type.
+   *
+   * @param {T | readonly T[] | null} value - The field's current value.
+   *
+   * @returns {T[]} The field's currently selected values, mutable — the shape `hlm-select-multiple`'s `value` model itself takes.
+   */
+  private toEnumValues<T>(value: T | readonly T[] | null): T[] {
+    if (value === null) return [];
+    return Array.isArray(value) ? [...(value as readonly T[])] : [value as T];
+  }
+
+  /**
+   * Method toScalarValue
+   *
+   * @description
+   * The `equals`-mode counterpart of {@link toEnumValues}: the field's own
+   * scalar value, `null` for "unset" and — unreachable in practice, since
+   * the single select only ever renders while {@link enumFieldOperator}
+   * reads `equals` — also `null` for an array, so the template's single
+   * select stays typed on the field's own literal type rather than widening
+   * to include a readonly array it will never actually receive.
+   *
+   * @access private
+   * @since 8.3.0
+   *
+   * @template T - The field's own value type.
+   *
+   * @param {T | readonly T[] | null} value - The field's current value.
+   *
+   * @returns {T | null} The field's current scalar value.
+   */
+  private toScalarValue<T>(value: T | readonly T[] | null): T | null {
+    return Array.isArray(value) ? null : (value as T | null);
+  }
+
+  /** The "Status" chip's currently checked values, for its multi select. */
+  protected statusValues(): InterventionStatus[] {
+    return this.toEnumValues(this.filters().status);
+  }
+
+  /** The "Status" chip's own scalar value, for its single select. */
+  protected statusScalar(): InterventionStatus | null {
+    return this.toScalarValue(this.filters().status);
+  }
+
+  /** The "Type" chip's currently checked values, for its multi select. */
+  protected typeValues(): InterventionType[] {
+    return this.toEnumValues(this.filters().type);
+  }
+
+  /** The "Type" chip's own scalar value, for its single select. */
+  protected typeScalar(): InterventionType | null {
+    return this.toScalarValue(this.filters().type);
+  }
+
+  /** The "Priority" chip's currently checked values, for its multi select. */
+  protected priorityValues(): InterventionPriority[] {
+    return this.toEnumValues(this.filters().priority);
+  }
+
+  /** The "Priority" chip's own scalar value, for its single select. */
+  protected priorityScalar(): InterventionPriority | null {
+    return this.toScalarValue(this.filters().priority);
+  }
+
+  /** The "Site" chip's currently checked values, for its multi select. */
+  protected siteValues(): string[] {
+    return this.toEnumValues(this.filters().site);
+  }
+
+  /** The "Site" chip's own scalar value, for its single select. */
+  protected siteScalar(): string | null {
+    return this.toScalarValue(this.filters().site);
+  }
+
+  /** The "Responsible" chip's currently checked values, for its multi select. */
+  protected responsibleValues(): string[] {
+    return this.toEnumValues(this.filters().responsible);
+  }
+
+  /** The "Responsible" chip's own scalar value, for its single select. */
+  protected responsibleScalar(): string | null {
+    return this.toScalarValue(this.filters().responsible);
+  }
+
+  /** The "Label" chip's currently checked values, for its multi select. */
+  protected labelValues(): string[] {
+    return this.toEnumValues(this.filters().label);
+  }
+
+  /** The "Label" chip's own scalar value, for its single select. */
+  protected labelScalar(): string | null {
+    return this.toScalarValue(this.filters().label);
+  }
+
+  /**
+   * Method applyEnumSelection
+   *
+   * @description
+   * Applies one of the six `equals`/`isAnyOf` fields' multi select
+   * `valueChange` — every currently checked item. An empty selection clears
+   * the field back to `null` rather than sending an empty `isAnyOf`, which
+   * the API would read as a value, not as "any" (mirroring
+   * {@link buildInterventionListOptions}'s own omit-when-unset rule). A
+   * single remaining item still applies as a one-element array, not a
+   * collapsed scalar, so the chip's operator segment stays on `isAnyOf`
+   * instead of silently reading back as `equals`.
+   *
+   * @access private
+   * @since 8.3.0
+   *
+   * @template T - The field's own value type.
+   *
+   * @param {InterventionEnumFilterKey} key - The field the multi select belongs to.
+   * @param {readonly T[] | null | undefined} values - The multi select's current selection.
+   *
+   * @returns {void}
+   */
+  private applyEnumSelection<T>(
+    key: InterventionEnumFilterKey,
+    values: readonly T[] | null | undefined,
+  ): void {
+    const patch = {
+      [key]: values && values.length > 0 ? values : null,
+    } as Partial<InterventionListFilters>;
+
+    this.applyFilter(patch);
+  }
+
+  /** Applies the "Status" chip's multi select selection. See {@link applyEnumSelection}. */
+  protected applyStatusFilter(values: readonly InterventionStatus[] | null | undefined): void {
+    this.applyEnumSelection('status', values);
+  }
+
+  /** Applies the "Type" chip's multi select selection. See {@link applyEnumSelection}. */
+  protected applyTypeFilter(values: readonly InterventionType[] | null | undefined): void {
+    this.applyEnumSelection('type', values);
+  }
+
+  /** Applies the "Priority" chip's multi select selection. See {@link applyEnumSelection}. */
+  protected applyPriorityFilter(values: readonly InterventionPriority[] | null | undefined): void {
+    this.applyEnumSelection('priority', values);
+  }
+
+  /** Applies the "Site" chip's multi select selection. See {@link applyEnumSelection}. */
+  protected applySiteFilter(values: readonly string[] | null | undefined): void {
+    this.applyEnumSelection('site', values);
+  }
+
+  /** Applies the "Responsible" chip's multi select selection. See {@link applyEnumSelection}. */
+  protected applyResponsibleFilter(values: readonly string[] | null | undefined): void {
+    this.applyEnumSelection('responsible', values);
+  }
+
+  /** Applies the "Label" chip's multi select selection. See {@link applyEnumSelection}. */
+  protected applyLabelFilter(values: readonly string[] | null | undefined): void {
+    this.applyEnumSelection('label', values);
   }
 
   /**

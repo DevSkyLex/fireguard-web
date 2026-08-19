@@ -103,25 +103,43 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   generic vocabulary a field declares from — `equals`, `notEquals`,
   `contains`, `greaterThan`, `between`, `isAnyOf`, … (`CollectionFilterOperator`).**
   `INTERVENTION_FILTER_FIELDS` (`ui/pages/interventions-page/options/`)
-  declares `operators: ['equals']` for six fields — `status`, `type`,
-  `priority`, `site`, `responsible` and `label` — so each of those six chips'
-  operator segments still renders as a fixed, read-only label, unchanged in
-  appearance.
+  declares `operators: ['equals', 'isAnyOf']` for six fields — `status`,
+  `type`, `priority`, `site`, `responsible` and `label` (8.3) — so each of
+  those six chips' operator segments now renders as a picker offering both,
+  `equals` first as the default a freshly picked field opens on.
 
-  **This is now backend-verified, not merely unconfirmed (8.2).** Read
-  against `fireguard-sso-api`'s `InterventionResource`/`InterventionProvider`
-  (separate repo, read-only): `isAnyOf`, `notEquals`, `isEmpty`/`isNotEmpty`
-  and `contains` on any of these six enum/IRI fields are confirmed
-  **unsupported without a backend change** — the provider reads every filter
-  as a single value (`$query->get()`) and the gateway matches by equality
-  only. None of the six is declared beyond `equals` for exactly that reason;
-  this is the authoritative answer, not a placeholder pending verification.
+  **8.3 unbridled the six enum/IRI fields once the API caught up.**
+  `fireguard-sso-api`'s `InterventionProvider` now reads `status[]=`,
+  `type[]=`, `priority[]=`, `site[]=`, `label[]=` and `responsible[]=` as
+  repeated values, OR-combined server side via `IN()` (`multiValue()`,
+  reading `$query->all()[<field>]`) — the single scalar form (`status=draft`)
+  still works unchanged, so an existing bookmark or e2e assertion built on it
+  never breaks. `InterventionListFilters`' six properties are typed
+  `T | readonly T[] | null` (`models/intervention-view/`) — a scalar means
+  `equals`, a readonly array means `isAnyOf`; there is no separate operator
+  field for these six the way `InterventionDueRangeFilter` carries one,
+  because the value's own shape already says which operator is active. The
+  page's `enumFieldOperator`/`enumFilterOperatorOverrides` resolve the
+  operator a picked-but-not-yet-valued field should render, mirroring how
+  `dueRangeOperator`'s own `linkedSignal` remembers a pending pick with no
+  value yet. Each chip's value control switches between a plain `hlm-select`
+  (`equals`) and an `hlm-select-multiple` (`isAnyOf`) accordingly.
+  `InterventionListOptions` and `InterventionService.list` accept the same
+  scalar-or-array shape per field, and `HydraApiService.buildParams`
+  (`@core/api`) appends a readonly array as a repeated `key[]=` param — the
+  one place any Hydra service gets that behavior, not reimplemented per
+  feature. The URL round-trips a multi-value narrowing as
+  comma-joined raw values (`?status=draft,planned`); a bare `?status=draft`
+  still parses to the exact scalar `equals` shape it always has.
   `name` is the one field already confirmed `contains` server-side
   ("Case-insensitive partial match" — `InterventionListOptions`'s own JSDoc),
   but it is not a filter-bar field: it is `app-collection-search-box`'s own
   free-text `?q=` narrowing (`toolbarStart`), a distinct UI element with its
   own debounce and its own visible input, so there is no chip whose operator
-  label to correct — see 6.5's opening paragraph for that split.
+  label to correct — see 6.5's opening paragraph for that split. `notEquals`,
+  `isEmpty`/`isNotEmpty` and `contains` on any of the six remain
+  **unsupported without a further backend change** — only `equals`/`isAnyOf`
+  are wired.
 
   **`dueRange` (8.1) is the framework's first genuinely multi-operator,
   fully-wired field** — real proof, not a modeled-but-inert vocabulary.

@@ -117,7 +117,11 @@ export class InterventionService extends HydraApiService {
    * @description
    * Reads one page of `/api/interventions` scoped to the organization,
    * forwarding the name/status/type/site/people/label/number/due-date filters
-   * and the `order[field]` sort params alongside pagination.
+   * and the `order[field]` sort params alongside pagination. `status`,
+   * `type`, `priority`, `site`, `responsible` and `label` each forward as a
+   * single `key=` param for a scalar value, or as a repeated `key[]=` param
+   * for a readonly array (`isAnyOf`, OR-combined server side) —
+   * `HydraApiService.buildParams` does the actual repetition.
    *
    * @access public
    * @since 1.0.0
@@ -131,10 +135,16 @@ export class InterventionService extends HydraApiService {
     organizationId: string,
     options?: InterventionListOptions,
   ): Observable<HydraCollection<InterventionOutput>> {
-    const params: Record<string, string> = { organization: `/api/organizations/${organizationId}` };
+    const params: Record<string, string | readonly string[]> = {
+      organization: `/api/organizations/${organizationId}`,
+    };
     for (const [key, value] of Object.entries(options ?? {})) {
       if (key === 'page' || key === 'itemsPerPage' || key === 'order') continue;
-      if (value) params[key] = String(value);
+      if (Array.isArray(value)) {
+        if (value.length > 0) params[key] = value.map(String);
+        continue;
+      }
+      if (value !== undefined && value !== null && value !== '') params[key] = String(value);
     }
     if (options?.order) {
       for (const [field, direction] of Object.entries(options.order)) {

@@ -94,6 +94,11 @@ test.describe('Interventions board — Kanban view over the shared dataset', () 
     await expect(board.cardsIn('planned')).toHaveCount(0);
     await expect(board.liveRegion).toContainText('Board planned intervention');
     await expect(board.liveRegion).toContainText('In progress');
+    await expect(
+      page.locator(
+        `[data-intervention-id="${plannedIntervention.id}"] [data-testid="intervention-board-card-title"]`,
+      ),
+    ).toBeFocused();
   });
 
   test('never offers published as a "Move to…" target, and the column never accepts one', async ({

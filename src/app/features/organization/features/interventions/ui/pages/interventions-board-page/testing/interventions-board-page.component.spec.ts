@@ -197,6 +197,25 @@ describe('InterventionsBoardPage', () => {
     expect(fixture.componentInstance['liveMessage']()).toContain('Quarterly extinguisher sweep');
   });
 
+  it('should restore keyboard focus onto the moved card, whose DOM node a cross-column move recreates', async () => {
+    interventionList.set([intervention({ id: 'a1b2', status: 'in_progress' })]);
+    fixture = await createPage();
+    const title = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-intervention-id="a1b2"] a[data-testid="intervention-board-card-title"]',
+    );
+    expect(title).not.toBeNull();
+    // The harness's mocked Router renders no href, so jsdom refuses real focus — assert the call.
+    const focusSpy = vi.spyOn(title as HTMLAnchorElement, 'focus');
+
+    fixture.componentInstance['requestMove'](
+      intervention({ id: 'a1b2', status: 'in_progress' }),
+      'submitted',
+    );
+    await fixture.whenStable();
+
+    expect(focusSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('should not dispatch a transition for a server-illegal move', async () => {
     fixture = await createPage();
 

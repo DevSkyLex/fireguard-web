@@ -1,11 +1,14 @@
 import type { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { CdkDropList as CdkDropListDirective } from '@angular/cdk/drag-drop';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
+  Injector,
   input,
   signal,
   untracked,
@@ -177,6 +180,12 @@ export class InterventionsBoardPage {
 
   /** Round-trips `?q=` and reads the current query params for the "List" toggle link. */
   private readonly router: Router = inject(Router);
+
+  /** Hosts the DOM lookup {@link requestMove} needs to restore focus after a cross-column move. */
+  private readonly elementRef: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /** Anchors the {@link requestMove} post-render focus restoration outside the injection context. */
+  private readonly injector: Injector = inject(Injector);
 
   /** Anchors the relative query-param navigation. */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
@@ -428,7 +437,7 @@ export class InterventionsBoardPage {
 
   /**
    * Method requestMove
-   * @description The single entry point both the drop handler and each card's "Move to…" menu call — re-validates legality defensively, dispatches the transition and announces it.
+   * @description The single entry point both the drop handler and each card's "Move to…" menu call — re-validates legality defensively, dispatches the transition, announces it, and restores keyboard focus onto the moved card's title link: the optimistic move re-parents the card into another column's `@for`, so Angular destroys and recreates its DOM node and the menu's own focus-restore would land on a detached element, dropping focus to `<body>`.
    * @access protected
    * @since 1.0.0
    * @param {InterventionOutput} intervention - The card's intervention.
@@ -441,6 +450,16 @@ export class InterventionsBoardPage {
     this.store.transition({ id: intervention.id, status: target, revision: intervention.revision });
     this.liveMessage.set(
       $localize`:@@intervention.board.moved:Moved ${intervention.name}:name: to ${this.statusLabelOf(target)}:status:.`,
+    );
+    afterNextRender(
+      (): void => {
+        this.elementRef.nativeElement
+          .querySelector<HTMLAnchorElement>(
+            `[data-intervention-id="${intervention.id}"] a[data-testid="intervention-board-card-title"]`,
+          )
+          ?.focus();
+      },
+      { injector: this.injector },
     );
   }
 

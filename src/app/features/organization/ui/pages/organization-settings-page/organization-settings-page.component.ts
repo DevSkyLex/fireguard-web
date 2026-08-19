@@ -57,11 +57,7 @@ import type {
   OrganizationRegionalSettings,
   OrganizationTransferOwnershipConfirmedEvent,
 } from '@features/organization/models';
-import {
-  ActiveOrganizationStore,
-  OrganizationMemberAccessStore,
-  OrganizationQuotaStore,
-} from '@features/organization/state';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { EmptyState } from '@shared/empty-state';
@@ -441,26 +437,6 @@ export class OrganizationSettingsPage {
     inject<OrganizationService>(OrganizationService);
 
   /**
-   * Property memberAccessStore
-   * @readonly
-   *
-   * @description
-   * Root-provided store carrying the authenticated user's own `userId` in
-   * the active organization (`profile()`). Used to derive {@link isOwner}
-   * locally: the single-organization `GET` this page's {@link organization}
-   * comes from never populates `OrganizationOutput.isOwner` — only the list
-   * endpoint does — so comparing `ownerUserId` against the acting member's
-   * own `userId` is the reliable source here, with the declared `isOwner`
-   * field consulted first for forward compatibility.
-   *
-   * @access private
-   * @since 1.6.0
-   * @type {OrganizationMemberAccessStore}
-   */
-  private readonly memberAccessStore: OrganizationMemberAccessStore =
-    inject<OrganizationMemberAccessStore>(OrganizationMemberAccessStore);
-
-  /**
    * Property route
    * @readonly
    * @description Used to keep tab navigation relative to this route.
@@ -571,26 +547,19 @@ export class OrganizationSettingsPage {
    * @readonly
    *
    * @description
-   * Whether the authenticated user owns the active organization. Prefers the
-   * declared `OrganizationOutput.isOwner` field when it is present, and falls
-   * back to comparing `ownerUserId` against the acting member's own `userId`
-   * ({@link memberAccessStore}) when it is not — which is every read this
-   * page performs today (see {@link memberAccessStore}'s doc).
+   * Whether the authenticated user owns the active organization, as declared
+   * by the API: since backend 1.5.0 every read this page's
+   * {@link organization} comes from — the single-organization `GET` and each
+   * mutation's refreshed organization — projects `isOwner` through the same
+   * caller-membership port, so no client-side derivation remains.
    *
    * @access protected
    * @since 1.6.0
    * @type {Signal<boolean>}
    */
-  protected readonly isOwner: Signal<boolean> = computed((): boolean => {
-    const org: OrganizationOutput | null = this.organization();
-    if (org === null) return false;
-
-    const declared: boolean | null | undefined = org.isOwner;
-    if (declared !== null && declared !== undefined) return declared;
-
-    const actingUserId: string | undefined = this.memberAccessStore.profile()?.userId;
-    return actingUserId !== undefined && actingUserId === org.ownerUserId;
-  });
+  protected readonly isOwner: Signal<boolean> = computed(
+    (): boolean => this.organization()?.isOwner === true,
+  );
 
   /**
    * Property canSuspend

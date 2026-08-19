@@ -157,15 +157,11 @@ lockout surfaces as the dialog's inline error rather than being re-derived clien
 stays gated on `organization.delete`, unchanged. This danger-tab entry is additive: it is not a
 rank-and-file member's only path to leave — see `OrganizationSwitcher` below for the one that is.
 
-**`OrganizationOutput.isOwner` is declared but rarely populated on this page.** The backend sets it
-only on the user's organization list (`GET /api/organizations`) — confirmed by reading
-`GetOrganizationProvider`, and every mutation processor's `buildOutput`, none of which map it — so the
-single-organization `GET` `ActiveOrganizationStore` uses, and every settings mutation's refreshed
-organization, leave it `null`. The settings page therefore derives ownership itself:
-`organization().isOwner` when present, else `ownerUserId === OrganizationMemberAccessStore.profile()?.userId`
-— the acting member's own `userId`, already resolved root-wide for permission checks. This is a
-frontend-only workaround; populating `isOwner` on the single-organization read is a backend change
-outside this feature's repo.
+**`OrganizationOutput.isOwner` is authoritative.** Since backend 1.5.0 the API projects `isOwner`
+(and the caller's `roles`) through one shared caller-membership port on the user's organization list,
+the single-organization `GET`, and every mutation that returns a refreshed organization (suspend,
+restore, transfer-ownership, the settings PATCH). The settings page reads the declared field directly
+— `organization().isOwner === true` — with no client-side derivation from `ownerUserId`.
 
 **The settings General tab carries a "Legal information" section** (`app-organization-legal-form`):
 country (ISO 3166-1 alpha-2), legal entity type (`GET /organizations/legal-types`, a reference

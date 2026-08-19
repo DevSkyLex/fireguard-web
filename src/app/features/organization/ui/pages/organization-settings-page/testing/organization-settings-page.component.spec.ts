@@ -645,7 +645,15 @@ describe('OrganizationSettingsPage', () => {
     expect(byTestId('org-settings-danger-leave-open')).not.toBeNull();
   });
 
-  it('should offer ownership transfer and hide the leave control once the acting member owns the organization', async () => {
+  it('should offer ownership transfer and hide the leave control once the API declares the caller owner', async () => {
+    selectedOrganization.set(organization({ isOwner: true }));
+    await createPage('danger');
+
+    expect(byTestId('org-settings-danger-transfer-open')).not.toBeNull();
+    expect(byTestId('org-settings-danger-leave-open')).toBeNull();
+  });
+
+  it('should not derive ownership from ownerUserId when the API declares the caller a plain member', async () => {
     actingProfile.set({
       id: 'member-1',
       organizationId: 'org-1',
@@ -655,18 +663,11 @@ describe('OrganizationSettingsPage', () => {
       roles: [],
       permissions: [],
     } as unknown as CurrentOrganizationMemberProfileOutput);
+    selectedOrganization.set(organization({ ownerUserId: 'user-1', isOwner: false }));
     await createPage('danger');
 
-    expect(byTestId('org-settings-danger-transfer-open')).not.toBeNull();
-    expect(byTestId('org-settings-danger-leave-open')).toBeNull();
-  });
-
-  it('should prefer a declared isOwner over the derived comparison', async () => {
-    selectedOrganization.set(organization({ isOwner: true }));
-    await createPage('danger');
-
-    expect(byTestId('org-settings-danger-transfer-open')).not.toBeNull();
-    expect(byTestId('org-settings-danger-leave-open')).toBeNull();
+    expect(byTestId('org-settings-danger-transfer-open')).toBeNull();
+    expect(byTestId('org-settings-danger-leave-open')).not.toBeNull();
   });
 
   it('should hide ownership transfer for an archived organization even for the owner', async () => {

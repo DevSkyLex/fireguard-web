@@ -14,7 +14,7 @@ import type {
  * entities are managed by the `withEntities` feature; this interface tracks
  * auxiliary request state and server totals.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface InterventionState {
@@ -73,6 +73,23 @@ export interface InterventionState {
    * @type {CallState<InterventionOutput>}
    */
   readonly transitionCallState: CallState<InterventionOutput>;
+
+  /**
+   * Property transitioningInterventionIds
+   * @readonly
+   *
+   * @description
+   * Ids of the interventions whose status transition is currently in flight.
+   * The optimistic patch only writes `status`, so until the server entity
+   * lands an in-flight row's `allowedTransitions` and `revision` describe its
+   * pre-transition state — consumers use this list to withhold that row's
+   * transition controls for the duration instead of offering stale moves.
+   *
+   * @since 1.1.0
+   *
+   * @type {readonly string[]}
+   */
+  readonly transitioningInterventionIds: readonly string[];
 
   /**
    * Property deleteCallState

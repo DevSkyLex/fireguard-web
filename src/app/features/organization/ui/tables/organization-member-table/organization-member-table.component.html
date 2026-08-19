@@ -176,8 +176,23 @@
                         </button>
                       }
 
-                      @if (canRemove()) {
+                      @if (canRemove() && !member.isActive) {
                         @if (canAssignRoles()) {
+                          <hlm-dropdown-menu-separator />
+                        }
+                        <button
+                          hlmDropdownMenuItem
+                          data-testid="organization-member-table-row-reactivate"
+                          [disabled]="pending()"
+                          (click)="reactivateRequested.emit(member)"
+                        >
+                          <ng-icon name="lucideUserCheck" aria-hidden="true" />
+                          <span i18n="@@org.members.table.rowReactivate">Reactivate</span>
+                        </button>
+                      }
+
+                      @if (canRemove()) {
+                        @if (canAssignRoles() || !member.isActive) {
                           <hlm-dropdown-menu-separator />
                         }
                         <button

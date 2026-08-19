@@ -18,7 +18,7 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -48,6 +48,7 @@ import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { PlanViewer } from '@shared/plan-viewer';
+import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -121,9 +122,12 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * {@link FacilityOverviewStore} carries the Overview tab's summary data, and
  * a tab-scoped {@link FacilityPlansStore} carries the Plans tab's floor
  * plans. The record's name is the shell breadcrumb's title, resolved by
- * `facilityTitleResolver`.
+ * `facilityTitleResolver`. In-page, `facility.path` — populated only on this
+ * detail read — renders as a quiet ancestor trail above the status row, each
+ * segment linking to that ancestor's own detail route; a root facility
+ * (empty `path`) renders nothing.
  *
- * @version 1.7.0
+ * @version 1.8.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -132,6 +136,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
   imports: [
     DatePipe,
     NgIcon,
+    RouterLink,
     EmptyState,
     ErrorState,
     FacilityDeleteDialog,
@@ -148,6 +153,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     HlmButton,
     HlmSkeleton,
     HlmSwitch,
+    ...HlmBreadcrumbImports,
     ...HlmSelectImports,
     ...HlmSpinnerImports,
     ...HlmCardImports,

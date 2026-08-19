@@ -82,6 +82,7 @@ const createPage = async (
 
 describe('OrganizationAssetsPage', () => {
   let fixture: ComponentFixture<OrganizationAssetsPage>;
+  let hasPermission: ReturnType<typeof vi.fn>;
   let loadRoots: ReturnType<typeof vi.fn>;
   let ensureChildrenLoaded: ReturnType<typeof vi.fn>;
   let move: ReturnType<typeof vi.fn>;
@@ -95,6 +96,7 @@ describe('OrganizationAssetsPage', () => {
   let isExportingSignal: WritableSignal<boolean>;
 
   beforeEach(() => {
+    hasPermission = vi.fn().mockReturnValue(true);
     loadRoots = vi.fn();
     ensureChildrenLoaded = vi.fn();
     move = vi.fn();
@@ -156,7 +158,7 @@ describe('OrganizationAssetsPage', () => {
         },
         {
           provide: OrganizationPermissionService,
-          useValue: { hasPermission: vi.fn().mockReturnValue(true) },
+          useValue: { hasPermission },
         },
       ],
     });
@@ -413,6 +415,29 @@ describe('OrganizationAssetsPage', () => {
     expect(button?.disabled).toBe(false);
     expect(button?.getAttribute('aria-disabled')).toBe('true');
     expect(button?.getAttribute('aria-busy')).toBe('true');
+  });
+
+  it('withholds the export button from a member without the export permission', async () => {
+    hasPermission.mockImplementation(
+      (permission: string): boolean => permission !== 'organization.compliance.export',
+    );
+    fixture = await createPage();
+    summarySignal.set(complianceSummary());
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="assets-compliance-export"]',
+      ),
+    ).toBeNull();
   });
 
   it('labels the compliance summary pane with a visible heading', async () => {

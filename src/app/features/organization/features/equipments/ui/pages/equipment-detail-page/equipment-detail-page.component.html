@@ -13,6 +13,18 @@
           <span i18n="@@equipment.unassigned">Unassigned</span>
         }
       </span>
+      @if (equipment.planPosition != null) {
+        @if (equipment.facilityId; as pinnedFacilityId) {
+          <a
+            [routerLink]="['/organizations', organizationId(), 'facilities', pinnedFacilityId]"
+            class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            data-testid="equipment-detail-pinned"
+          >
+            <ng-icon name="lucideMapPin" class="text-sm" aria-hidden="true" />
+            <span i18n="@@equipment.detail.pinnedOnPlan">Pinned on floor plan</span>
+          </a>
+        }
+      }
     </div>
     <p class="text-sm text-muted-foreground" data-testid="equipment-detail-meta">
       {{ metaLine() }}

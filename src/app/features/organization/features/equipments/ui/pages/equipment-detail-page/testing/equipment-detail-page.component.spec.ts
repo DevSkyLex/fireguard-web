@@ -142,6 +142,45 @@ describe('EquipmentDetailPage', () => {
     expect(fixture.componentInstance['title']()).toBe('Fire extinguisher — Kidde Pro 210');
   });
 
+  describe('pinned on plan indicator', () => {
+    it('should show nothing when the equipment has no plan position', async () => {
+      await createPage();
+
+      const root: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('[data-testid="equipment-detail-pinned"]')).toBeNull();
+    });
+
+    it('should link to the owning facility when a plan position is set', async () => {
+      selectedEquipment.set(
+        equipment({
+          facilityId: 'facility-1',
+          planPosition: { attachmentId: 'plan-1', x: 0.4, y: 0.6 },
+        }),
+      );
+      await createPage();
+
+      const root: HTMLElement = fixture.nativeElement as HTMLElement;
+      const link: HTMLAnchorElement | null = root.querySelector(
+        '[data-testid="equipment-detail-pinned"]',
+      );
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
+    });
+
+    it('should not show the indicator when pinned but unassigned from any facility', async () => {
+      selectedEquipment.set(
+        equipment({
+          facilityId: null,
+          planPosition: { attachmentId: 'plan-1', x: 0.4, y: 0.6 },
+        }),
+      );
+      await createPage();
+
+      const root: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('[data-testid="equipment-detail-pinned"]')).toBeNull();
+    });
+  });
+
   it('should show a loading state before the equipment resolves', async () => {
     selectedEquipment.set(null);
     isLoadingEquipment.set(true);

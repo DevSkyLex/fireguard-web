@@ -284,13 +284,24 @@ export class OrganizationAssetsPage {
   );
 
   /**
-   * Whether the member may read compliance data, gating the compliance axis.
-   * The route already requires `FACILITIES_READ` to reach this page at all,
-   * so this stands in for a not-yet-published `organization.compliance.read`
-   * backend permission (`organization/FEATURE.md` records the decision).
+   * Whether the member may read compliance data, gating the compliance axis —
+   * the same `organization.compliance.read` the backend asserts on the tree
+   * and summary endpoints (held by the system member role and by admins
+   * through `organization.*`).
    */
   protected readonly canReadCompliance: Signal<boolean> = computed<boolean>(() =>
-    this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ),
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_READ),
+  );
+
+  /**
+   * Whether the member may export the safety register, gating the export
+   * button — the same `organization.compliance.export` the backend asserts.
+   * The backend additionally gates the export on the organization's plan
+   * tier; that refusal is backend-owned and surfaces through the export
+   * error state rather than being re-derived here.
+   */
+  protected readonly canExportCompliance: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_EXPORT),
   );
   //#endregion
 

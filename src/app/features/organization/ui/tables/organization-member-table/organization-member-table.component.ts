@@ -18,6 +18,7 @@ import {
   lucideEllipsis,
   lucideShieldCheck,
   lucideTrash2,
+  lucideUserCheck,
 } from '@ng-icons/lucide';
 import type {
   OrganizationMemberListSort,
@@ -45,7 +46,8 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * shell, a leading checkbox column for bulk removal, an avatar-and-name cell
  * linking to the member's profile, role badges, an active/inactive badge
  * that pairs a label with the state (never colour alone, `PRODUCT.md`), and
- * a trailing `…` menu.
+ * a trailing `…` menu carrying Assign roles, a conditional Reactivate for an
+ * inactive row, and Remove.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. `canRemove` and `canAssignRoles` are two independent
@@ -54,14 +56,18 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * folded into one flag, so a member holding only one of the two sees only
  * the control that would not 403. The checkbox column itself only renders
  * when `canRemove` is granted, since selection exists solely to feed the
- * page's bulk-remove action.
+ * page's bulk-remove action. Reactivate shares `canRemove`'s gate — it is
+ * the same `organization.members.manage` permission the backend checks —
+ * and only ever renders for a row whose `isActive` is `false`; unlike
+ * Remove it needs no confirm step, so it locks under `pending` instead of
+ * opening a dialog.
  *
  * "Member" (`displayName`) and "Joined" (`joinedAt`) are sortable heads,
  * mirroring `InterventionTable`'s ghost-button + direction-glyph pattern —
  * the backend's own sort whitelist (`ListOrganizationMembersProvider`) has
  * no other orderable field.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -89,6 +95,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
       lucideEllipsis,
       lucideShieldCheck,
       lucideTrash2,
+      lucideUserCheck,
     }),
   ],
   templateUrl: './organization-member-table.component.html',
@@ -133,7 +140,7 @@ export class OrganizationMemberTable {
   /**
    * Property canRemove
    * @readonly
-   * @description Whether the checkbox column and the row/bulk Remove action may render (`organization.members.manage`).
+   * @description Whether the checkbox column and the row/bulk Remove and Reactivate actions may render (`organization.members.manage`).
    * @access public
    * @since 1.0.0
    * @type {InputSignal<boolean>}
@@ -171,6 +178,16 @@ export class OrganizationMemberTable {
    */
   public readonly sortOrder: InputSignal<OrganizationMemberListSort> =
     input.required<OrganizationMemberListSort>();
+
+  /**
+   * Property pending
+   * @readonly
+   * @description Whether a mutation is in flight, locking the Reactivate action — the store carries no per-member request state.
+   * @access public
+   * @since 1.3.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly pending: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -194,6 +211,17 @@ export class OrganizationMemberTable {
    * @type {OutputEmitterRef<OrganizationMemberOutput>}
    */
   public readonly manageRolesRequested: OutputEmitterRef<OrganizationMemberOutput> =
+    output<OrganizationMemberOutput>();
+
+  /**
+   * Property reactivateRequested
+   * @readonly
+   * @description A row menu asked for this inactive member to be reactivated.
+   * @access public
+   * @since 1.3.0
+   * @type {OutputEmitterRef<OrganizationMemberOutput>}
+   */
+  public readonly reactivateRequested: OutputEmitterRef<OrganizationMemberOutput> =
     output<OrganizationMemberOutput>();
 
   /**

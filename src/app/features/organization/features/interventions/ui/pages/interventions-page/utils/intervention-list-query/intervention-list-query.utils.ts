@@ -23,9 +23,12 @@ const MILLISECONDS_PER_DAY = 86_400_000;
  * Function resolveDueWindow
  *
  * @description
- * Turns a named due-date window into the pair of ISO bounds that expresses it.
- * `overdue` is the only one that is open-ended below; the others start at the
- * instant asked and run forward.
+ * Turns a named due-date window into the query fragment that expresses it.
+ * The forward windows resolve to ISO bound pairs anchored on the instant
+ * asked. `overdue` resolves to the server-side `due=overdue` preset instead
+ * of a bare upper bound: the backend pairs the past-due check with the
+ * non-terminal status exclusion the statistics endpoint uses, so the KPI
+ * tile and the list it opens count the same set.
  *
  * The instant is a parameter rather than read here so the function stays pure
  * and its spec stays deterministic.
@@ -33,21 +36,21 @@ const MILLISECONDS_PER_DAY = 86_400_000;
  * @param {InterventionDueWindow} window - The window to resolve.
  * @param {Date} now - Instant the window is anchored on.
  *
- * @returns {{ dueAtAfter?: string; dueAtBefore?: string }} The bounds to send.
+ * @returns {{ due?: 'overdue'; dueAtAfter?: string; dueAtBefore?: string }} The query fragment to send.
  *
  * @since 1.0.0
  */
 export function resolveDueWindow(
   window: InterventionDueWindow,
   now: Date,
-): { readonly dueAtAfter?: string; readonly dueAtBefore?: string } {
+): { readonly due?: 'overdue'; readonly dueAtAfter?: string; readonly dueAtBefore?: string } {
   const at: string = now.toISOString();
   const forward = (days: number): string =>
     new Date(now.getTime() + days * MILLISECONDS_PER_DAY).toISOString();
 
   switch (window) {
     case 'overdue':
-      return { dueAtBefore: at };
+      return { due: 'overdue' };
     case 'today':
       return { dueAtAfter: at, dueAtBefore: forward(1) };
     case 'week':
@@ -102,6 +105,7 @@ export function buildInterventionListOptions(
 
   if (filters.dueWindow) {
     const bounds = resolveDueWindow(filters.dueWindow, now);
+    if (bounds.due) options.due = bounds.due;
     if (bounds.dueAtAfter) options.dueAtAfter = bounds.dueAtAfter;
     if (bounds.dueAtBefore) options.dueAtBefore = bounds.dueAtBefore;
   }

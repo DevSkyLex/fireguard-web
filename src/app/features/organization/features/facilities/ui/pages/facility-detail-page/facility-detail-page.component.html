@@ -1,5 +1,28 @@
 <div id="facility-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
   @if (activeFacilityStore.selectedFacility(); as facility) {
+    @if (facility.path.length > 0) {
+      <nav
+        hlmBreadcrumb
+        aria-label="Facility ancestors"
+        i18n-aria-label="@@facility.detail.ancestorsAriaLabel"
+        data-testid="facility-detail-ancestors"
+      >
+        <ol hlmBreadcrumbList>
+          @for (segment of facility.path; track segment.id; let last = $last) {
+            <li hlmBreadcrumbItem>
+              <a
+                hlmBreadcrumbLink
+                [routerLink]="['/organizations', organizationId(), 'facilities', segment.id]"
+                >{{ segment.name }}</a
+              >
+            </li>
+            @if (!last) {
+              <li hlmBreadcrumbSeparator></li>
+            }
+          }
+        </ol>
+      </nav>
+    }
     <div class="flex flex-wrap items-center gap-2">
       <app-facility-status-tag [value]="facility.status" />
       @if (facility.code; as code) {

@@ -32,6 +32,8 @@ export const organizationMembersStoreEvents = eventGroup({
     removeRoleSucceeded: type<FeedbackEventPayload>(),
     /** Dispatched when a single member is removed. */
     removeMemberSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when a deactivated member is reactivated. */
+    reactivateMemberSucceeded: type<FeedbackEventPayload>(),
     /** Dispatched when several members are removed in one action. */
     removeMembersSucceeded: type<FeedbackEventPayload>(),
     /** Dispatched when a bulk removal completes but some members could not be removed. */

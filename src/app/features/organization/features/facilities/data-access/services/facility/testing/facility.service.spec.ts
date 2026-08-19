@@ -54,6 +54,7 @@ describe('FacilityService', () => {
     status: 'active',
     address: '1 Rue de la Paix, 75001 Paris',
     metadata: {},
+    path: [],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-03-01T00:00:00+00:00',
   };

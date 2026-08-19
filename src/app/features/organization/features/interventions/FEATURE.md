@@ -164,13 +164,18 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   **`dueRange` is independent of the legacy `dueWindow` preset the KPI
   strip's overdue tile link and the Today page's deep link still drive**
   (`?due=overdue` and friends, `resolveDueWindow`,
-  `INTERVENTION_DUE_WINDOW_OPTIONS` — all unchanged). Both resolve into the
-  same `dueAtAfter`/`dueAtBefore` API bounds and, on the rare occasion both
-  are active at once (e.g. a shared `?due=overdue` link opened on top of a
-  manually narrowed "Deadline" chip), `buildInterventionListOptions`
+  `INTERVENTION_DUE_WINDOW_OPTIONS`). The forward windows resolve into the
+  same `dueAtAfter`/`dueAtBefore` API bounds, and when a forward window and
+  a "Deadline" chip are active at once `buildInterventionListOptions`
   **tightens rather than overwrites** — the later `dueAtAfter` and the
   earlier `dueAtBefore` win, so the two narrowings combine instead of one
-  silently discarding the other. `dueWindow` was deliberately left out of
+  silently discarding the other. **`overdue` resolves to the server-side
+  `due=overdue` preset instead of a bare upper bound**: the backend pairs
+  the past-due check with the terminal-status exclusion the statistics
+  endpoint uses, so the KPI tile's count and the list it opens agree — a
+  bare `dueAtBefore=now` also matched published and abandoned records the
+  tile never counted. The preset travels alongside any `dueRange` bounds
+  and the backend composes them. `dueWindow` was deliberately left out of
   `dueRange`'s own operator set: collapsing "Overdue"'s live,
   request-time-resolved bound into a frozen `dueBefore=<timestamp>` URL
   param would make a bookmarked "Overdue" link stop tracking "now" on
@@ -251,12 +256,13 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   `?due=overdue`, sent back → `?status=changes_requested`, awaiting review →
   `?status=submitted`. The unsynced queue has no server-side filter to
   deep-link to, so its "See all" stays absent. **The Overdue view is broader
-  than Today's overdue queue**: the view is every status past due
-  (`dueAtBefore=now`, no status narrowing), while `OrganizationTodayStore`'s
-  `overdue` queue narrows to `planned`/`in_progress` — a past-due `submitted`
-  or `changes_requested` intervention shows in the Overdue view but not in
-  the Today queue of the same name. Do not conflate the two when reasoning
-  about either.
+  than Today's overdue queue**: the view is every non-terminal status past
+  due (the server-side `due=overdue` preset — past `dueAt`, excluding
+  `published`/`abandoned`, the statistics endpoint's own definition), while
+  `OrganizationTodayStore`'s `overdue` queue narrows to
+  `planned`/`in_progress` — a past-due `submitted` or `changes_requested`
+  intervention shows in the Overdue view but not in the Today queue of the
+  same name. Do not conflate the two when reasoning about either.
 
   **The page is a full-height console (6.3): nothing scrolls except the table
   rows.** `InterventionsPage`'s host is `flex min-h-0 flex-1 flex-col` (not

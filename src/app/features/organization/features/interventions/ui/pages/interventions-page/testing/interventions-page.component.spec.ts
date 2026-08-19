@@ -121,6 +121,7 @@ describe('InterventionsPage', () => {
   let clearPendingDuplicatePrefill: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let interventionList: WritableSignal<readonly InterventionOutput[]>;
+  let transitioningInterventionIds: WritableSignal<readonly string[]>;
   let createdInterventionId: WritableSignal<string | null>;
   let listError: WritableSignal<unknown>;
   let pendingDuplicatePrefill: WritableSignal<unknown>;
@@ -142,6 +143,7 @@ describe('InterventionsPage', () => {
     clearPendingDuplicatePrefill = vi.fn();
     navigate = vi.fn().mockResolvedValue(true);
     interventionList = signal<readonly InterventionOutput[]>([]);
+    transitioningInterventionIds = signal<readonly string[]>([]);
     createdInterventionId = signal<string | null>(null);
     listError = signal<unknown>(null);
     pendingDuplicatePrefill = signal<unknown>(null);
@@ -169,6 +171,7 @@ describe('InterventionsPage', () => {
             clearCreatedIntervention: clearCreated,
             clearPendingDuplicatePrefill,
             interventionList,
+            transitioningInterventionIds,
             createdInterventionId,
             listError,
             pendingDuplicatePrefill,
@@ -742,6 +745,19 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['transitionableSelectedIds']('abandoned')).toEqual(['i-1']);
     });
 
+    it('should skip a selected row whose own transition is still in flight', async () => {
+      interventionList.set([
+        intervention({ id: 'i-1', allowedTransitions: ['abandoned'] }),
+        intervention({ id: 'i-2', allowedTransitions: ['abandoned'] }),
+      ]);
+      transitioningInterventionIds.set(['i-2']);
+      fixture = await createPage();
+
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-1', 'i-2']));
+
+      expect(fixture.componentInstance['transitionableSelectedIds']('abandoned')).toEqual(['i-1']);
+    });
+
     it('should gate the submitted target to the row’s own responsible', async () => {
       interventionList.set([
         intervention({
@@ -887,7 +903,8 @@ describe('InterventionsPage', () => {
       expect(load).toHaveBeenCalledTimes(1);
       const options = load.mock.calls[0][0].options;
       expect(options.status).toBeUndefined();
-      expect(typeof options.dueAtBefore).toBe('string');
+      expect(options.due).toBe('overdue');
+      expect(options.dueAtBefore).toBeUndefined();
     });
 
     it("should load the submitted status when the URL carries ?status=submitted — the KPI strip's awaiting-review tile link", async () => {

@@ -510,6 +510,10 @@ Primary services:
   (`interventions/FEATURE.md` § Cross-Feature Dependencies). Read-only: no
   new method was needed, `InterventionService.list`'s existing `site` filter
   covers it.
+- `maintenance-schedules`' page injects `FacilityService` directly (`list`)
+  to populate its facility filter and campaign-scoping selects — read-only,
+  the same direct cross-feature service dependency pattern
+  `FacilityPlansStore` already takes on `equipments`' `EquipmentService`.
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
 
 ### Deferred, not built

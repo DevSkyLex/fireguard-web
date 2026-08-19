@@ -1,0 +1,139 @@
+<div class="h-full w-full overflow-hidden rounded-md border border-border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="maintenance-schedule-table-caption"
+  >
+    <table hlmTable data-testid="maintenance-schedule-table">
+      <caption
+        hlmTableCaption
+        id="maintenance-schedule-table-caption"
+        class="sr-only"
+        i18n="@@maintenance.table.title"
+      >
+        Maintenance schedules
+      </caption>
+
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@maintenance.table.colEquipment">Equipment</th>
+          <th hlmTableHead i18n="@@maintenance.table.colFacility">Facility</th>
+          <th hlmTableHead i18n="@@maintenance.table.colNextDue">Next due</th>
+          <th hlmTableHead i18n="@@maintenance.table.colDueStatus">Status</th>
+          <th hlmTableHead i18n="@@maintenance.table.colOverride">Interval override</th>
+          @if (canManage()) {
+            <th hlmTableHead class="w-px">
+              <span class="sr-only" i18n="@@common.actions">Actions</span>
+            </th>
+          }
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @if (loading() && items().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              @if (canManage()) {
+                <td hlmTableCell><hlm-skeleton class="h-4 w-8" /></td>
+              }
+            </tr>
+          }
+        } @else {
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="maintenance-schedule-table-row">
+              <td hlmTableCell class="whitespace-normal">
+                <a
+                  class="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  [routerLink]="[...equipmentRouteBase(), equipmentIdOf(item)]"
+                  [attr.aria-label]="equipmentLinkAriaLabelOf(item)"
+                  >{{ equipmentTypeLabelOf(item.equipmentType) }}</a
+                >
+              </td>
+
+              <td hlmTableCell class="whitespace-normal">
+                @if (facilityIdOf(item); as facilityId) {
+                  <a
+                    class="rounded-sm text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    [routerLink]="[...facilityRouteBase(), facilityId]"
+                  >
+                    @if (facilityLabelOf()(facilityId); as facilityName) {
+                      {{ facilityName }}
+                    } @else {
+                      <span i18n="@@maintenance.table.viewFacility">View facility</span>
+                    }
+                  </a>
+                } @else {
+                  <span class="text-muted-foreground" i18n="@@maintenance.table.noFacility"
+                    >Unassigned</span
+                  >
+                }
+              </td>
+
+              <td hlmTableCell class="whitespace-normal">
+                @if (item.nextDueAt) {
+                  {{ item.nextDueAt | date: 'mediumDate' }}
+                } @else if (isNeverInspected(item)) {
+                  <span class="text-destructive" i18n="@@maintenance.table.neverInspected"
+                    >Never inspected</span
+                  >
+                } @else {
+                  <span class="text-muted-foreground">&mdash;</span>
+                }
+              </td>
+
+              <td hlmTableCell>
+                <app-maintenance-due-status-tag [value]="item.dueStatus" />
+              </td>
+
+              <td hlmTableCell class="whitespace-normal">
+                @if (overrideLabelOf(item); as overrideLabel) {
+                  {{ overrideLabel }}
+                } @else {
+                  <span class="text-muted-foreground" i18n="@@maintenance.table.defaultOverride"
+                    >&mdash;</span
+                  >
+                }
+              </td>
+
+              @if (canManage()) {
+                <td hlmTableCell>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="max-sm:min-h-11"
+                    data-testid="maintenance-schedule-table-override"
+                    aria-label="Edit interval override"
+                    i18n-aria-label="@@maintenance.table.editOverride"
+                    (click)="overrideRequested.emit(item)"
+                  >
+                    <ng-icon name="lucidePencil" aria-hidden="true" />
+                  </button>
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                [attr.colspan]="columnCount()"
+                i18n="@@maintenance.table.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1541,24 +1541,6 @@ export class ApiMock {
   }
 
   /**
-   * Mocks `GET /api/organizations/{organizationId}/equipment-types` — one of
-   * the parallel reads `InterventionPlanningOptionsStore.loadWorkspaceOptions`
-   * fires for the detail page's forms.
-   */
-  public async mockInterventionEquipmentTypes(
-    organizationId: string,
-    types: ReadonlyArray<{ readonly value: string; readonly label: string }> = [],
-  ): Promise<void> {
-    await this.installSafetyNet();
-    await this.page.route(
-      new RegExp(`/api/organizations/${organizationId}/equipment-types(\\?.*)?$`),
-      async (route) => {
-        await fulfillJson(route, 200, hydraCollection(types));
-      },
-    );
-  }
-
-  /**
    * Mocks a successful `PATCH /api/interventions/{interventionId}` — the
    * request `InterventionStore.transition` (single or bulk) sends. Pass the
    * fixture as the server would return it post-transition (new `status`,

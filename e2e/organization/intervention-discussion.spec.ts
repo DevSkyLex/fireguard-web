@@ -47,7 +47,6 @@ async function mockDetailPage(api: ApiMock): Promise<void> {
   await api.mockInterventionAttachments(interventionId, []);
   await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
   await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
-  await api.mockInterventionEquipmentTypes(E2E_ORGANIZATION_ID, []);
   await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
   await api.mockInterventionLabels(E2E_ORGANIZATION_ID, []);
 }

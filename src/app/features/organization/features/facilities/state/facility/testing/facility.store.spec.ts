@@ -2,7 +2,7 @@ import { PLATFORM_ID, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
-import type { ApiError, HydraCollection, OptionOutput } from '@core/api/models';
+import type { ApiError, HydraCollection } from '@core/api/models';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { ActiveFacilityStore } from '../../active-facility/active-facility.store';
@@ -27,7 +27,6 @@ describe('FacilityStore', () => {
     list: ReturnType<typeof vi.fn>;
     listChildren: ReturnType<typeof vi.fn>;
     listDescendants: ReturnType<typeof vi.fn>;
-    listTypes: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     archive: ReturnType<typeof vi.fn>;
@@ -50,19 +49,11 @@ describe('FacilityStore', () => {
     totalItems: 1,
     member: [facility],
   };
-  const typesCollection: HydraCollection<OptionOutput> = {
-    '@id': '/api/facility-types',
-    '@type': 'Collection',
-    totalItems: 1,
-    member: [{ '@id': '/api/options/site', '@type': 'Option', value: 'site', label: 'Site' }],
-  };
-
   beforeEach(() => {
     mockFacilityService = {
       list: vi.fn().mockReturnValue(of(collection)),
       listChildren: vi.fn().mockReturnValue(of(collection)),
       listDescendants: vi.fn().mockReturnValue(of(collection)),
-      listTypes: vi.fn().mockReturnValue(of(typesCollection)),
       create: vi.fn().mockReturnValue(of(facility)),
       update: vi.fn().mockReturnValue(of(facility)),
       archive: vi.fn().mockReturnValue(of(facility)),
@@ -98,15 +89,6 @@ describe('FacilityStore', () => {
     expect(mockFacilityService.list).toHaveBeenCalledWith('org-1', undefined);
     expect(store.facilities()).toEqual([facility]);
     expect(store.totalFacilities()).toBe(1);
-  });
-
-  it('should load facility types', async () => {
-    store.loadTypes();
-    await flushEffects();
-
-    expect(mockFacilityService.listTypes).toHaveBeenCalledTimes(1);
-    expect(store.facilityTypes()).toEqual(typesCollection.member);
-    expect(store.typesCallState().status).toBe('success');
   });
 
   it('should load root facilities scoped with a null parent', async () => {
@@ -323,21 +305,6 @@ describe('FacilityStore', () => {
       expect(store.loadedParentIds()).not.toContain('facility-1');
       expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
         expect.objectContaining({ type: '[Facility Store] listFailed' }),
-      );
-    });
-
-    it('should surface a loadTypes failure and dispatch typesFailed', async () => {
-      mockFacilityService.listTypes.mockReturnValueOnce(
-        throwError(() => apiError(500, 'Server error')),
-      );
-
-      store.loadTypes();
-      await flushEffects();
-
-      expect(store.typesCallState().status).toBe('error');
-      expect(store.typesCallState().error?.code).toBe(500);
-      expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ type: '[Facility Store] typesFailed' }),
       );
     });
   });

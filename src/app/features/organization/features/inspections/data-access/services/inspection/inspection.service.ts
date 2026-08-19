@@ -2,7 +2,7 @@ import type { HttpResponse } from '@angular/common/http';
 import { Service } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
-import type { HydraCollection, OptionOutput } from '@core/api/models';
+import type { HydraCollection } from '@core/api/models';
 import type {
   InspectionOutput,
   CreateInspectionInput,
@@ -88,80 +88,6 @@ export class InspectionService extends HydraApiService {
     return `${InspectionService.BASE_PATH}/${organizationId}/facilities/${facilityId}/inspections`;
   }
   //#endregion
-
-  /**
-   * Method listStatuses
-   * @method listStatuses
-   *
-   * @description
-   * Executes the list statuses operation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - options value.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list statuses operation.
-   */
-  public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>('/api/inspections/statuses', options);
-  }
-
-  /**
-   * Method listResults
-   * @method listResults
-   *
-   * @description
-   * Executes the list results operation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - options value.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list results operation.
-   */
-  public listResults(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>('/api/inspections/results', options);
-  }
-
-  /**
-   * Method listInspectorTypes
-   * @method listInspectorTypes
-   *
-   * @description
-   * Executes the list inspector types operation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - options value.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list inspector types operation.
-   */
-  public listInspectorTypes(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>('/api/inspections/inspector-types', options);
-  }
-
-  /**
-   * Method listNonConformityStatuses
-   * @method listNonConformityStatuses
-   *
-   * @description
-   * Executes the list non conformity statuses operation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - options value.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list non conformity statuses operation.
-   */
-  public listNonConformityStatuses(
-    options?: RequestOptions,
-  ): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>('/api/non-conformities/statuses', options);
-  }
 
   //#region Public Methods — Inspections
   /**

@@ -1,7 +1,7 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
-import type { HydraCollection, OptionOutput } from '@core/api/models';
+import type { HydraCollection } from '@core/api/models';
 import type {
   ChecklistOutput,
   ChecklistListOptions,
@@ -110,10 +110,6 @@ export class ChecklistService extends HydraApiService {
       `${ChecklistService.BASE_PATH}/${organizationId}/checklists`,
       input,
     );
-  }
-
-  public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>('/api/checklists/statuses', options);
   }
 
   /**

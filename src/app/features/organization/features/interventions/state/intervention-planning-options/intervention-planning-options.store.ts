@@ -33,7 +33,6 @@ import type { InterventionPlanningOptionsState } from './models';
 const INITIAL_STATE: InterventionPlanningOptionsState = {
   sites: [],
   targets: [],
-  equipmentTypes: [],
   members: [],
   labels: [],
   templates: [],
@@ -179,7 +178,6 @@ export const InterventionPlanningOptionsStore = signalStore(
             patchState(store, {
               sites: [],
               targets: [],
-              equipmentTypes: [],
               members: [],
               labels: [],
               templates: [],
@@ -230,7 +228,6 @@ export const InterventionPlanningOptionsStore = signalStore(
               patchState(store, {
                 sites: [],
                 targets: [],
-                equipmentTypes: [],
                 members: [],
                 labels: [],
                 templates: [],
@@ -265,7 +262,6 @@ export const InterventionPlanningOptionsStore = signalStore(
             patchState(store, {
               sites: [],
               targets: [],
-              equipmentTypes: [],
               members: [],
               labels: [],
               templates: [],
@@ -286,10 +282,6 @@ export const InterventionPlanningOptionsStore = signalStore(
                 itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
               }),
               equipment: equipment.list(organizationId, {
-                page: 1,
-                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-              }),
-              equipmentTypes: equipment.listTypes(organizationId, {
                 page: 1,
                 itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
               }),
@@ -321,10 +313,6 @@ export const InterventionPlanningOptionsStore = signalStore(
                     value: `/api/equipment/${item.id}`,
                   })),
                 ],
-                equipmentTypes: result.equipmentTypes.member.map((option) => ({
-                  label: option.label,
-                  value: option.value,
-                })),
                 members: result.members.member.map((member) =>
                   memberOption(member, result.organizationId),
                 ),
@@ -337,7 +325,6 @@ export const InterventionPlanningOptionsStore = signalStore(
               patchState(store, {
                 sites: [],
                 targets: [],
-                equipmentTypes: [],
                 members: [],
                 labels: [],
                 templates: [],

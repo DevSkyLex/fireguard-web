@@ -409,8 +409,10 @@ by id.
 While the layer is on:
 
 - each marker's bucket comes from `utils/compliance-bucket` (`≥90` positive,
-  `60–89` warning, `<60` critical, no data muted — thresholds in
-  `constants/compliance-bucket-thresholds.constants.ts`) instead of the
+  `60–89` warning, `<60` critical, no data muted — thresholds owned by the
+  parent organization feature's
+  `constants/compliance-bucket-thresholds.constants.ts`, the single source
+  shared with the compliance-status vocabulary) instead of the
   facility's lifecycle status, and the rate is folded into the marker's label
   (`"{name} — {rate}% compliant"`, `utils/facility-compliance-marker`) so the
   signal is never colour/glyph-only,

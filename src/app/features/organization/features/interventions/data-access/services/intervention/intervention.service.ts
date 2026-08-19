@@ -27,7 +27,6 @@ import type {
   InterventionListOptions,
   InterventionOutput,
   InterventionStatisticsOutput,
-  InterventionTypeOutput,
   InterventionWorkItemOutput,
   PublicationOutput,
   UpdateInterventionChangeInput,
@@ -346,22 +345,6 @@ export class InterventionService extends HydraApiService {
       `/api/interventions/${interventionId}/comments`,
       clientId === undefined ? { body } : { body, clientId },
     );
-  }
-
-  /**
-   * Method listTypes
-   * @method listTypes
-   *
-   * @description
-   * Reads the intervention-type catalog (`GET /api/intervention-types`).
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @return {Observable<HydraCollection<InterventionTypeOutput>>} Result of the list types operation.
-   */
-  public listTypes(): Observable<HydraCollection<InterventionTypeOutput>> {
-    return this.getCollection<InterventionTypeOutput>('/api/intervention-types');
   }
 
   /**

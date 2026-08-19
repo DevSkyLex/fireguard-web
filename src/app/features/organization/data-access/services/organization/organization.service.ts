@@ -18,6 +18,7 @@ import type {
   OrganizationQuotaOutput,
   OrganizationPermissionOutput,
   TransferOrganizationOwnershipInput,
+  OrganizationNavigationCountersOutput,
 } from '@features/organization/models';
 
 /**
@@ -587,6 +588,30 @@ export class OrganizationService extends HydraApiService {
     return this.getOne<OrganizationDashboardTrendOutput>(
       this.dashboardPath(organizationId, 'trends/facilities-created'),
       this.buildDashboardRequestOptions(options, true),
+    );
+  }
+
+  /**
+   * Method navigationCounters
+   * @method navigationCounters
+   *
+   * @description
+   * Retrieves the sidebar navigation badge counters for the organization.
+   * The caller only needs an active membership; each counter individually
+   * degrades to 0 when the caller lacks its underlying read permission.
+   *
+   * @access public
+   * @since 1.7.0
+   *
+   * @param {string} organizationId - The unique identifier of the organization.
+   *
+   * @return {Observable<OrganizationNavigationCountersOutput>} An observable emitting the navigation counters.
+   */
+  public navigationCounters(
+    organizationId: string,
+  ): Observable<OrganizationNavigationCountersOutput> {
+    return this.getOne<OrganizationNavigationCountersOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/navigation-counters`,
     );
   }
 

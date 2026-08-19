@@ -21,3 +21,5 @@ export { activeOrganizationStoreEvents } from './active-organization';
 export { organizationStoreEvents } from './organization-list';
 export { OrganizationQuotaStore } from './organization-quota';
 export type { OrganizationQuotaStoreType } from './organization-quota';
+export { OrganizationNavigationCountersStore } from './organization-navigation-counters';
+export type { OrganizationNavigationCountersStoreType } from './organization-navigation-counters';

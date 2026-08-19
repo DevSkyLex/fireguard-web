@@ -9692,6 +9692,14 @@
         <source>Operations</source>
         <target>Opérations</target>
       </trans-unit>
+      <trans-unit id="org.nav.interventions.awaitingReviewOne" datatype="html">
+        <source>1 intervention awaiting review</source>
+        <target>1 intervention en attente de revue</target>
+      </trans-unit>
+      <trans-unit id="org.nav.interventions.awaitingReviewMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> interventions awaiting review</source>
+        <target><x id="count" equiv-text="count"/> interventions en attente de revue</target>
+      </trans-unit>
       <trans-unit id="workspace.header.sidebar.show" datatype="html">
         <source>Show sidebar</source>
         <target>Afficher la barre latérale</target>

@@ -4,12 +4,14 @@ import { provideRouter } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { OrganizationNavigationCountersStore } from '@features/organization/state';
 import { OrganizationNav } from '../organization-nav.component';
 
 describe('OrganizationNav', () => {
   let fixture: ComponentFixture<OrganizationNav>;
   let selectedOrganizationId: WritableSignal<string | null>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
+  let submittedInterventions: WritableSignal<number>;
 
   /**
    * The rendered destinations, in order.
@@ -45,6 +47,7 @@ describe('OrganizationNav', () => {
   beforeEach(async () => {
     selectedOrganizationId = signal<string | null>('org-1');
     permissions = signal<ReadonlyArray<string>>([]);
+    submittedInterventions = signal<number>(0);
 
     TestBed.configureTestingModule({
       providers: [
@@ -59,6 +62,7 @@ describe('OrganizationNav', () => {
           },
         },
         { provide: OrganizationPermissionService, useValue: { permissions } },
+        { provide: OrganizationNavigationCountersStore, useValue: { submittedInterventions } },
       ],
     });
 
@@ -116,5 +120,56 @@ describe('OrganizationNav', () => {
     await fixture.whenStable();
 
     expect(routes()).toContain('/organizations/org-1');
+  });
+
+  it('should render the submitted-interventions badge on the Interventions row only, singular', async () => {
+    permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
+    submittedInterventions.set(1);
+    await fixture.whenStable();
+
+    const badges = fixture.nativeElement.querySelectorAll(
+      '[data-slot="sidebar-menu-button"] [hlmbadge]',
+    ) as NodeListOf<HTMLElement>;
+
+    expect(badges.length).toBe(1);
+    expect(badges[0].textContent?.trim()).toBe('1');
+    expect(badges[0].getAttribute('aria-label')).toBe('1 intervention awaiting review');
+    expect(badges[0].closest('a')?.textContent).toContain('Interventions');
+  });
+
+  it('should render the plural badge label for more than one submitted intervention', async () => {
+    permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
+    submittedInterventions.set(5);
+    await fixture.whenStable();
+
+    const badge = fixture.nativeElement.querySelector(
+      '[data-slot="sidebar-menu-button"] [hlmbadge]',
+    ) as HTMLElement;
+
+    expect(badge.textContent?.trim()).toBe('5');
+    expect(badge.getAttribute('aria-label')).toBe('5 interventions awaiting review');
+  });
+
+  it('should render no badge anywhere when the count is zero', async () => {
+    permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
+    submittedInterventions.set(0);
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-slot="sidebar-menu-button"] [hlmbadge]').length,
+    ).toBe(0);
+  });
+
+  it('should never carry a badge on a row without a counterKey', async () => {
+    permissions.set(['organization.*']);
+    submittedInterventions.set(3);
+    await fixture.whenStable();
+
+    const badges = fixture.nativeElement.querySelectorAll(
+      '[data-slot="sidebar-menu-button"] [hlmbadge]',
+    ) as NodeListOf<HTMLElement>;
+
+    expect(badges.length).toBe(1);
+    expect(badges[0].closest('a')?.textContent).toContain('Interventions');
   });
 });

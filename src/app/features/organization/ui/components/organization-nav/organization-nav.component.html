@@ -17,6 +17,13 @@
             >
               <ng-icon [name]="link.icon" aria-hidden="true" />
               <span>{{ link.label }}</span>
+              @if (counterOf(link.counterKey); as count) {
+                @if (count > 0) {
+                  <span hlmBadge variant="secondary" [attr.aria-label]="counterLabelOf(count)">
+                    {{ count }}
+                  </span>
+                }
+              }
             </a>
           </li>
         }

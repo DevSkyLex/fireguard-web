@@ -10,6 +10,7 @@ import type {
   UpdateOrganizationInput,
   OrganizationDashboardOutput,
   OrganizationDashboardTrendOutput,
+  OrganizationNavigationCountersOutput,
   OrganizationPermissionOutput,
   TransferOrganizationOwnershipInput,
 } from '@features/organization/models';
@@ -661,6 +662,40 @@ describe('OrganizationService', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toBeNull();
       req.flush(mockOrg);
+    });
+  });
+
+  // ── navigationCounters ─────────────────────────────────────────────────────
+
+  describe('navigationCounters', () => {
+    it('should send GET request and return the navigation counters', () => {
+      const mockCounters: OrganizationNavigationCountersOutput = {
+        '@id': '/api/organizations/org-uuid-1/navigation-counters',
+        '@type': 'OrganizationNavigationCounters',
+        openInterventions: 4,
+        openNonConformities: 2,
+        submittedInterventions: 7,
+      };
+
+      service.navigationCounters('org-uuid-1').subscribe((counters) => {
+        expect(counters).toEqual(mockCounters);
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/navigation-counters`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockCounters);
+    });
+
+    it('should propagate a forbidden error', () => {
+      service.navigationCounters('org-uuid-1').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(403);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/navigation-counters`);
+      req.flush({ status: 403, title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
     });
   });
 

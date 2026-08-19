@@ -15,6 +15,18 @@ import {
 export type OrganizationNavigationMatch = 'all' | 'any';
 
 /**
+ * Type OrganizationNavigationCounterKey
+ *
+ * @description
+ * A navigation-counters field an item's row may badge. Resolved to a live
+ * value by `OrganizationNav` from `OrganizationNavigationCountersStore` —
+ * this config stays permission-only and knows no counts itself.
+ *
+ * @since 3.1.0
+ */
+export type OrganizationNavigationCounterKey = 'submittedInterventions';
+
+/**
  * Type OrganizationNavigationGroupId
  *
  * @description
@@ -55,6 +67,7 @@ export interface OrganizationNavigationItem {
   readonly group: OrganizationNavigationGroupId;
   readonly permissions: ReadonlyArray<OrganizationPermissionName>;
   readonly match?: OrganizationNavigationMatch;
+  readonly counterKey?: OrganizationNavigationCounterKey;
 }
 
 /**
@@ -71,6 +84,7 @@ export interface OrganizationNavigationLink {
   readonly label: string;
   readonly icon: string;
   readonly route: string;
+  readonly counterKey?: OrganizationNavigationCounterKey;
 }
 
 /**
@@ -125,6 +139,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     path: 'interventions',
     group: 'operations',
     permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
+    counterKey: 'submittedInterventions',
   },
   {
     id: 'calendar',
@@ -351,6 +366,7 @@ export function buildOrganizationNavigation(
         label: item.label,
         icon: item.icon,
         route: item.path.length > 0 ? `${prefix}/${item.path}` : prefix,
+        counterKey: item.counterKey,
       })),
     }),
   ).filter((section: OrganizationNavigationSection): boolean => section.links.length > 0);

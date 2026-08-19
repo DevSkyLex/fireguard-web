@@ -7,7 +7,7 @@
  * InterventionListFilters.dueWindow} still drives (segmented views, the
  * Today page's deep link). Each variant maps to exactly one or both of the
  * API's own `dueAtAfter`/`dueAtBefore` bounds
- * (`ui/pages/interventions-page/utils/intervention-list-query/`):
+ * (`utils/intervention-list-query/`):
  *
  * - `greaterThan` — due after {@link after} (`dueAtAfter` only),
  * - `lessThan` — due before {@link before} (`dueAtBefore` only),

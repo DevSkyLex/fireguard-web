@@ -41,7 +41,7 @@ This subfeature is responsible for:
   now, never persisted" stance): one query param per filter, raw ids for the
   IRI-valued ones, parsed and validated by
   `parseInterventionListFilters` / `serializeInterventionListFilters`
-  (`ui/pages/interventions-page/utils/intervention-list-query/`). A filtered
+  (`utils/intervention-list-query/`, lifted to feature level when the board became its second consumer). A filtered
   list is therefore shareable, bookmarkable, and restored by the back button —
   an unknown or tampered param value parses as unfiltered rather than reaching
   the API. Sort, hidden columns and page size stay in the cookie
@@ -147,7 +147,7 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   (key renamed `dueWindow` → `dueRange`, same `fieldLabel`/icon), declaring
   `operators: ['greaterThan', 'lessThan', 'between']`, each mapped to the
   API's own already-existing `dueAtAfter`/`dueAtBefore` bounds
-  (`ui/pages/interventions-page/utils/intervention-list-query/`,
+  (`utils/intervention-list-query/`,
   `InterventionListOptions`'s own JSDoc) — no backend change, no unverified
   param. `greaterThan` sends `dueAtAfter` alone, `lessThan` sends
   `dueAtBefore` alone, `between` sends both.
@@ -301,6 +301,73 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   wrong (non-scrolling) ancestor. Changing any of these three files without
   the others reintroduces page-level scrolling or an unstuck header.
 
+- `/organizations/:organizationId/interventions/board` — the Kanban view over
+  the exact same dataset the list renders, resolving PRODUCT.md's "List /
+  Board / Calendar over one shared dataset" promise for interventions
+  (`InterventionsBoardPage`, `ui/pages/interventions-board-page/`). Registered
+  **before** `:interventionId` in `interventions.routes.ts` — a literal
+  segment must be matched ahead of the param route, or every board visit
+  would resolve as a detail page for an intervention id of `"board"`. Mounted
+  as a sibling of the list under the same pathless parent, so it shares the
+  one `InterventionStore` instead of a second copy of the dataset. Same
+  permission gate as the list (inherited from the parent).
+
+  **View switch.** Both the list and the board toolbars carry a compact
+  List/Board segmented toggle (`hlmButtonGroup`, two `hlmBtn`-styled links —
+  not the filter bar's chip shell, which `hlm-button-group` was ruled out for
+  because its join CSS cannot reach a value segment nested inside `hlm-select`;
+  a plain link pair has no such nesting, so the primitive fits here). The
+  toggle preserves every filter query param **except `status`** when it
+  navigates: the board's columns are the statuses, so a `status` narrowing
+  travelling into it would either duplicate or contradict the column split —
+  `InterventionsPage.boardQueryParams` / `InterventionsBoardPage.listQueryParams`
+  each build the param set without it.
+
+  **Columns and data.** One column per `InterventionStatus`, in workflow order
+  (`INTERVENTION_BOARD_COLUMNS`), each labelled and counted through the
+  existing `models/intervention-tag/` registry — never a second status
+  vocabulary. `published` renders as a column (an intervention does end up
+  there) but is never a legal drop target, since `allowedTransitions` never
+  lists it (see Invariants). The board loads through the **same**
+  `InterventionStore.load` single-server-page mechanism the list uses — there
+  is no new endpoint. It asks for one large page (200 rows, `BOARD_PAGE_SIZE`)
+  so a typical organization's open work fits in one load, distributed across
+  every column; an organization past that count sees only its first 200 (by
+  `dueAt`), a stated trade-off over adding a second, per-column pagination
+  surface to a Kanban board. The board applies whatever filters (`status`
+  excluded) the incoming URL already carries, but this first cut does **not**
+  render the list's full editable Linear-style filter bar
+  (`app-collection-filter-bar`) — replicating its eight chip templates is
+  populated-UI-scale work, left as a follow-up; only the search box is
+  repeated for parity.
+
+  **Drag-drop legality — one function, two call sites.**
+  `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) is a
+  pure function of one card's `InterventionOutput`: the target must be in the
+  card's own server `allowedTransitions`, and — mirroring the detail page's
+  `transitionTargets()` gate — the one identity-restricted move, withdrawing a
+  submission (`submitted` → `in_progress`), additionally requires
+  `allowedActions.canWithdraw === true`. Both `cdkDropListEnterPredicate` (the
+  pointer-drag path) and each card's own "Move to…" menu (the keyboard/AT
+  path) call the exact same function, so the two can never disagree about
+  what is legal. A card whose id is in `store.transitioningInterventionIds()`
+  is drag-disabled and its menu disabled entirely — its cached
+  `allowedTransitions`/`revision` are stale mid-flight
+  (`InterventionStore.transition`'s own doc already anticipates board
+  drag-drop firing several transitions in quick succession). A drop or a menu
+  pick calls `InterventionStore.transition({ id, status, revision })`
+  unchanged — the store's existing optimistic patch, `If-Match` revision and
+  rollback-plus-toast on failure serve the board exactly as they serve the
+  list and detail pages.
+
+  **Accessibility.** Drag is an enhancement, never the only path: every card
+  carries a "Move to…" menu — the same pattern `InterventionTable`'s row menu
+  uses, including the disabled-with-title styling for the gated withdraw
+  move — as the keyboard/AT equivalent, and the card's title is a real
+  `routerLink` to the detail page. A visually-hidden `aria-live="polite"`
+  region announces "Moved `<name>` to `<status>`" the moment a move is
+  requested, reflecting the store's own optimistic patch.
+
 - `/organizations/:organizationId/interventions/:interventionId` — the detail
   workspace, described below. Mounted as a second child of the same pathless
   parent, so `InterventionStore` survives list ↔ detail navigation and the
@@ -342,9 +409,11 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
 Stores:
 
 - `InterventionStore` — provided on the pathless parent route in
-  `interventions.routes.ts` (not on the list page), so it survives list ↔ detail
-  navigation. Intervention list and creation (normalized entities + request
-  state). `load` fetches **exactly one server page** — `page`/`itemsPerPage`
+  `interventions.routes.ts` (not on the list page), so it survives list ↔
+  board ↔ detail navigation — the list and the Board render the exact same
+  loaded entities, each calling `load` with its own options (the board's
+  omitting `status`). Intervention list and creation (normalized entities +
+  request state). `load` fetches **exactly one server page** — `page`/`itemsPerPage`
   travel in the options, the entities are replaced by that page, and
   `totalInterventions` carries the server's `totalItems` for the paginator. The
   former 500-item accumulation and its `isListCapped` notice are retired:
@@ -1502,6 +1571,18 @@ client action`).
 - Offline outbox replay belongs to this subfeature, not `core`.
 - Intervention pages orchestrate intervention services and intervention stores.
 - Intervention route pages live under `ui/pages/`.
+- **The board's drag-drop legality has exactly one implementation.**
+  `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) is the
+  sole authority both `InterventionsBoardPage.canDrop` (the
+  `cdkDropListEnterPredicate`) and `InterventionBoardCard`'s own "Move to…"
+  menu call — a second, independently-computed legality check on either side
+  is what would let the two silently disagree. The one rule it encodes:
+  target ∈ the card's own `allowedTransitions`, plus `allowedActions.canWithdraw`
+  for `submitted` → `in_progress`.
+- **Drag is an enhancement, never the only path**, on the same house rule
+  `shared/tree` established: every board card carries a "Move to…" menu
+  offering the identical set of legal moves, so the workflow is fully
+  reachable by keyboard/AT with no pointer drag at all.
 
 ### Retired invariants
 

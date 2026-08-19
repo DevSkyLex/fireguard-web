@@ -10,13 +10,19 @@ import { InterventionStore } from './state';
  *
  * @description
  * Organization-scoped intervention workflows: the index at
- * `/organizations/:organizationId/interventions`, and one intervention under
- * it.
+ * `/organizations/:organizationId/interventions`, the Kanban board at
+ * `/organizations/:organizationId/interventions/board`, and one intervention
+ * under it.
+ *
+ * `board` is registered before `:interventionId` — a literal segment must be
+ * matched ahead of the param route, or every board visit would instead
+ * resolve as a detail page for an intervention id of `"board"`.
  *
  * The children share a pathless parent so `InterventionStore`, bound in its
- * route-level `providers`, survives navigation between the list and a detail
- * page — the detail page's prev/next walks the same `orderedIds()` the list
- * populated, with no second fetch.
+ * route-level `providers`, survives navigation between the list, the board
+ * and a detail page — the list and the board render the exact same loaded
+ * dataset, and the detail page's prev/next walks the same `orderedIds()` the
+ * list populated, with no second fetch.
  *
  * The permission guard sits on the parent only, as it does in
  * `COLLABORATION_ROUTES`: it re-runs on an organization switch because the
@@ -60,6 +66,15 @@ export const INTERVENTION_ROUTES: Routes = [
           ),
         title: $localize`:@@route.interventions:Interventions`,
         data: { breadcrumb: false },
+      },
+      {
+        path: 'board',
+        loadComponent: () =>
+          import('./ui/pages/interventions-board-page/interventions-board-page.component').then(
+            (m) => m.InterventionsBoardPage,
+          ),
+        title: $localize`:@@route.interventionsBoard:Board`,
+        data: { breadcrumb: $localize`:@@route.interventionsBoard:Board` },
       },
       {
         path: ':interventionId',

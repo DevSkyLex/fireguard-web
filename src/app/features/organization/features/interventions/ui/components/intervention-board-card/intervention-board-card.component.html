@@ -1,0 +1,116 @@
+<div
+  cdkDrag
+  [cdkDragData]="dragData()"
+  [cdkDragDisabled]="locked() || !canTransition()"
+  data-testid="intervention-board-card"
+  [attr.data-intervention-id]="item().intervention.id"
+  [attr.aria-busy]="locked() ? 'true' : null"
+  [class.opacity-60]="locked()"
+  class="flex flex-col gap-2 rounded-md border border-border bg-card p-3 shadow-sm focus-within:ring-2 focus-within:ring-ring motion-reduce:transition-none"
+>
+  <div class="flex items-start justify-between gap-2">
+    <a
+      class="rounded-sm text-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      data-testid="intervention-board-card-title"
+      [routerLink]="[...detailRouteBase(), item().intervention.id]"
+    >
+      FG-{{ item().intervention.number }} · {{ item().intervention.name }}
+    </a>
+
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      align="end"
+      class="shrink-0 max-sm:min-h-11 max-sm:min-w-11"
+      data-testid="intervention-board-card-menu"
+      [disabled]="locked()"
+      [attr.aria-label]="locked() ? updatingReason : openMenuLabel"
+      [attr.aria-busy]="locked() ? 'true' : null"
+      [hlmDropdownMenuTrigger]="cardMenu"
+    >
+      @if (locked()) {
+        <hlm-spinner size="xs" aria-hidden="true" />
+      } @else {
+        <ng-icon name="lucideEllipsis" aria-hidden="true" />
+      }
+    </button>
+
+    <ng-template #cardMenu>
+      <hlm-dropdown-menu class="w-56">
+        <a hlmDropdownMenuItem [routerLink]="[...detailRouteBase(), item().intervention.id]">
+          <span i18n="@@intervention.board.cardOpen">Open</span>
+        </a>
+
+        @if (moveTargets().length > 0) {
+          <hlm-dropdown-menu-separator />
+          <hlm-dropdown-menu-label i18n="@@intervention.board.cardMoveTo"
+            >Move to</hlm-dropdown-menu-label
+          >
+          @for (target of moveTargets(); track target) {
+            <button
+              hlmDropdownMenuItem
+              data-testid="intervention-board-card-move"
+              [attr.data-status]="target"
+              [disabled]="isMoveGated(target)"
+              [attr.aria-describedby]="
+                isMoveGated(target)
+                  ? 'intervention-board-move-gate-' + item().intervention.id
+                  : null
+              "
+              [attr.title]="isMoveGated(target) ? withdrawOnlyReason : null"
+              (click)="requestMove(target)"
+            >
+              {{ statusLabelOf(target) }}
+            </button>
+          }
+          <span class="sr-only" [id]="'intervention-board-move-gate-' + item().intervention.id">{{
+            withdrawOnlyReason
+          }}</span>
+        }
+      </hlm-dropdown-menu>
+    </ng-template>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-1.5">
+    <app-intervention-tag kind="priority" [value]="item().intervention.priority" />
+
+    @if (item().intervention.dueAt) {
+      <span
+        class="inline-flex items-center gap-1 text-xs tabular-nums"
+        [class.text-destructive]="item().isOverdue"
+        [class.text-muted-foreground]="!item().isOverdue"
+      >
+        @if (item().isOverdue) {
+          <ng-icon
+            name="lucideCircleAlert"
+            aria-label="Overdue"
+            i18n-aria-label="@@intervention.list.overdueLabel"
+          />
+        }
+        {{ item().intervention.dueAt | date: 'mediumDate' }}
+      </span>
+    }
+  </div>
+
+  @if (item().intervention.labels.length > 0) {
+    <div class="flex flex-wrap gap-1">
+      @for (label of item().intervention.labels; track label.id) {
+        <hlm-badge variant="outline">{{ label.name }}</hlm-badge>
+      }
+    </div>
+  }
+
+  @if (item().responsible; as responsible) {
+    <div class="flex min-w-0 items-center gap-1.5">
+      <hlm-avatar size="sm" class="shrink-0">
+        @if (responsible.avatarUrl; as avatarUrl) {
+          <img hlmAvatarImage [src]="avatarUrl" alt="" />
+        }
+        <span hlmAvatarFallback>{{ responsible.initials }}</span>
+      </hlm-avatar>
+      <span class="truncate text-xs text-muted-foreground">{{ responsible.displayName }}</span>
+    </div>
+  }
+</div>

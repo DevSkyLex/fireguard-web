@@ -1,0 +1,134 @@
+@if (loading()) {
+  <div
+    class="flex flex-col gap-3"
+    role="status"
+    aria-label="Loading non-conformities"
+    i18n-aria-label="@@inspection.nc.list.loadingAria"
+  >
+    <hlm-skeleton class="h-24 w-full" />
+    <hlm-skeleton class="h-24 w-full" />
+  </div>
+} @else if (isEmpty()) {
+  <app-empty-state
+    icon="lucideCircleCheck"
+    title="No non-conformities recorded"
+    i18n-title="@@inspection.nc.list.emptyTitle"
+    description="Nothing was flagged during this inspection."
+    i18n-description="@@inspection.nc.list.emptyDescription"
+    data-testid="non-conformity-list-empty"
+  />
+} @else {
+  <ul class="flex flex-col gap-3" data-testid="non-conformity-list">
+    @for (nc of nonConformities(); track nc.id) {
+      <li
+        class="flex flex-col gap-2 rounded-md border border-border bg-card p-3"
+        [class.opacity-80]="isTerminal(nc.status)"
+        data-testid="non-conformity-row"
+        [attr.data-non-conformity-id]="nc.id"
+      >
+        <div class="flex flex-wrap items-center gap-2">
+          <app-inspection-status-tag kind="nonConformitySeverity" [value]="nc.severity" />
+          <app-inspection-status-tag kind="nonConformityStatus" [value]="nc.status" />
+          @if (dueDateOf(nc); as due) {
+            <span class="text-xs text-muted-foreground" data-testid="non-conformity-due">
+              <span i18n="@@inspection.nc.dueLabel">Due</span>
+              {{ due }}
+            </span>
+          }
+          @if (resolvedDateOf(nc); as resolved) {
+            <span class="text-xs text-muted-foreground" data-testid="non-conformity-resolved">
+              <span i18n="@@inspection.nc.resolvedLabel">Resolved</span>
+              {{ resolved }}
+            </span>
+          }
+        </div>
+
+        <p class="text-sm text-foreground" data-testid="non-conformity-description">
+          {{ nc.description }}
+        </p>
+
+        @if (nc.notes; as notes) {
+          <p class="text-xs text-muted-foreground" data-testid="non-conformity-notes">
+            {{ notes }}
+          </p>
+        }
+
+        @if (pendingFor(nc.id)) {
+          <div
+            hlmAlert
+            class="border-amber-500/30 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-400/10"
+            data-testid="non-conformity-pending-approval"
+          >
+            <p
+              hlmAlertTitle
+              class="text-sm text-foreground"
+              i18n="@@inspection.nc.pendingApproval.title"
+            >
+              Waiver pending approval
+            </p>
+            <p hlmAlertDescription class="text-sm text-muted-foreground">
+              <span i18n="@@inspection.nc.pendingApproval.description"
+                >This non-conformity stays open until a reviewer decides the request.</span
+              >
+              <a
+                class="font-medium text-foreground underline underline-offset-2"
+                [routerLink]="['/organizations', organizationId(), 'approvals']"
+                [attr.aria-label]="pendingApprovalLinkLabelOf(nc)"
+                data-testid="non-conformity-pending-approval-link"
+              >
+                <span aria-hidden="true" i18n="@@inspection.nc.pendingApproval.link"
+                  >View in approvals</span
+                >
+              </a>
+            </p>
+          </div>
+        }
+
+        @if (canWrite() && !isTerminal(nc.status)) {
+          <hlm-select
+            class="w-full max-w-48"
+            [value]="nc.status"
+            [disabled]="updatingId() === nc.id"
+            (valueChange)="pickStatus(nc, $any($event))"
+          >
+            <label [attr.for]="'non-conformity-status-' + nc.id" class="sr-only">{{
+              statusSelectLabelOf(nc)
+            }}</label>
+            <hlm-select-trigger
+              [buttonId]="'non-conformity-status-' + nc.id"
+              class="w-full max-sm:min-h-11"
+              data-testid="non-conformity-status-select"
+              [attr.aria-describedby]="statusErrorId() === nc.id ? statusErrorIdOf(nc.id) : null"
+            >
+              <hlm-select-value />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (status of statusValues; track status) {
+                  <hlm-select-item [value]="status">
+                    <app-inspection-status-tag
+                      kind="nonConformityStatus"
+                      [value]="status"
+                      asOption
+                    />
+                  </hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        }
+
+        @if (statusErrorId() === nc.id && statusErrorText(); as errorText) {
+          <p
+            role="alert"
+            [attr.id]="statusErrorIdOf(nc.id)"
+            class="text-sm text-destructive"
+            data-testid="non-conformity-status-error"
+          >
+            {{ errorText }}
+          </p>
+        }
+      </li>
+    }
+  </ul>
+}

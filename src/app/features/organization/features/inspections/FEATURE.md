@@ -63,13 +63,31 @@ the UI.
   `ui/components/inspection-information-panel` for the in-place edit
   surface. See "Cross-Feature Dependencies" below for exactly which fields
   it opens.
-- `ui/components/inspection-status-tag` — the `InspectionOutput.status` and
-  `.result` registry (`kind: 'status' | 'result'`), the only appearance of
-  either enum in this feature. Reuses the exact `inspectionStatus.*` /
-  `inspectionResult.*` i18n ids `interventions`' own registry already
-  defined for the same enums (one translation, two call sites) when it
-  renders an inspection read-only on the intervention detail page's Linked
-  tab.
+- `ui/components/inspection-status-tag` — the `InspectionOutput.status`,
+  `.result`, and the non-conformity `severity`/`status` registry
+  (`kind: 'status' | 'result' | 'nonConformitySeverity' | 'nonConformityStatus'`),
+  the only appearance of any of the four enums in this feature. Reuses the
+  exact `inspectionStatus.*` / `inspectionResult.*` i18n ids
+  `interventions`' own registry already defined for the same enums (one
+  translation, two call sites) when it renders an inspection read-only on
+  the intervention detail page's Linked tab.
+- `ui/dataviews/non-conformity-list` — the detail page's non-conformities
+  section, expanded from the header's non-conformity count (its anchor,
+  collapsed by default so the list loads only on first expansion — secondary
+  UI data, `AGENTS.md`). One card per record: severity/status tags,
+  description, due/resolved dates, notes, and — while `INSPECTION_WRITE` and
+  the status is not `done`/`waived` (both immutable server-side) — a status
+  select. A waive attempt that lands as **202** (the organization's
+  four-eyes waiver gate) renders an inline "pending approval" notice on that
+  row, linking to `/organizations/:organizationId/approvals`, instead of
+  changing the row's status tag — the record itself stays untouched until
+  the request is decided.
+- `ui/dialogs/non-conformity-add-dialog` — description, severity, optional
+  due date and notes, gated `INSPECTION_WRITE` and hidden — replaced by a
+  quiet one-line explanation — once the inspection is `closed`, the
+  backend's only documented 409 on the add endpoint. A status change, by
+  contrast, stays available regardless of the inspection's own status: only
+  the add endpoint is blocked on a closed record.
 
 ## State and Data Access
 
@@ -95,6 +113,25 @@ Primary service:
   backend's `ListInspectionsProvider` whitelist exactly; `createdAt` is
   whitelisted server-side but has no corresponding table column, so
   `InspectionTable` exposes no head for it.
+  `updateNonConformityStatus` uses `HydraApiService.patchWithStatus`
+  (`observe: 'response'`) rather than `patch`, because the endpoint's two
+  success statuses carry different, meaningful bodies: a plain **200**
+  returns the updated `NonConformityOutput`, a **202** (waiving above the
+  organization's waiver-approval threshold) returns a
+  `NonConformityWaivePendingOutput` instead and leaves the record itself
+  untouched. The method resolves both into one discriminated
+  `UpdateNonConformityStatusResult` (`{ kind: 'updated' | 'pendingApproval' }`)
+  rather than collapsing the distinction.
+
+`InspectionStore`'s non-conformity status write branches on that result:
+`updated` replaces the cached row (`setEntity`) and clears any stale pending
+waiver for it; `pendingApproval` leaves the row untouched and records the
+pending request under `nonConformityWaivePending`, keyed by non-conformity
+id, for `NonConformityList`'s inline notice. A **409** — `done`/`waived` is
+immutable server-side, so a further status write on either always answers
+409 — refreshes the row (`InspectionService.getNonConformity`) instead of
+dispatching the generic failure toast; `nonConformityStatusErrorText`
+carries the specific "already resolved" copy for it.
 
 Behavioral service:
 
@@ -105,16 +142,12 @@ Behavioral service:
 
 ## Deferred, not built
 
-Non-conformity creation, listing, detail and status updates have no `ui/`
-surface in this pass, even though `InspectionStore` already carries the full
-`loadNonConformities` / `loadNonConformity` / `addNonConformity` /
-`updateNonConformityStatus` data-access flow (see above) — the detail page
-reads only `InspectionOutput.nonConformitiesCount` for its header line.
-Building a table, an add form/sheet and a second presentation registry
-(severity + status) was judged disproportionate to what this pass needed,
-matching the same call `equipments` made for attachments/maintenance-log
-history and `facilities` made for its asset panes. Revisit when a route or
-the inspection detail page's design names a non-conformities surface.
+Non-conformity **attachments** have no `ui/` surface — the backend exposes
+attachment endpoints under `/non-conformities/{id}/attachments`, but
+building an upload/gallery surface for them was judged a separate pass from
+the list/status/add surface this document now describes, matching the same
+call `equipments` made for its own attachment history. Revisit once a route
+or design names an attachments surface for a non-conformity.
 
 The inspection creation form does not offer `facilityId` or `checklistId`,
 though both are accepted by `CreateInspectionInput`. Facility is optional
@@ -154,3 +187,19 @@ workflow actually needs to set the field.
 - Supporting dropdown or selector data from sibling subfeatures is consumed, not re-owned.
 - Inspection business rules and mutation flows remain local to this subfeature.
 - Only draft inspections can be edited, submitted, or cancelled; submitted inspections can be closed.
+- **The closed-inspection gate is asymmetric, and both pages honor it as
+  documented backend behavior rather than reconciling it themselves.**
+  Adding a non-conformity is blocked (409) once the parent inspection is
+  `closed`; changing an existing non-conformity's status is **not** — it
+  stays available regardless of the inspection's own lifecycle status. The
+  UI hides only the add entry point on a closed record; the row status
+  select is never gated by inspection status, only by `INSPECTION_WRITE` and
+  the non-conformity's own `done`/`waived` terminal state.
+- `done` and `waived` are immutable non-conformity statuses: any further
+  status write on either answers 409, surfaced as "already resolved" with
+  the row refreshed from the server, never as a silent no-op or a generic
+  error toast.
+- A waive that requires four-eyes approval (202) never renders as if the
+  non-conformity were waived — its status tag and the record itself stay
+  exactly as they were until a reviewer decides the request from the
+  organization's approvals inbox.

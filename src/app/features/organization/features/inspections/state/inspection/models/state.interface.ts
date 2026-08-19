@@ -2,6 +2,7 @@ import type { CallState } from '@core/request-state';
 import type {
   InspectionOutput,
   NonConformityOutput,
+  NonConformityWaivePendingOutput,
 } from '@features/organization/features/inspections/models';
 
 /**
@@ -47,5 +48,31 @@ export interface InspectionState {
   readonly addNonConformityCallState: CallState<NonConformityOutput | null>;
   /** Tracks the update non-conformity status operation state. */
   readonly updateNonConformityStatusCallState: CallState<NonConformityOutput | null>;
+  /**
+   * Property nonConformityStatusErrorId
+   *
+   * @description
+   * The id of the non-conformity {@link updateNonConformityStatusCallState}'s
+   * last failure belongs to, or `null`. Lets a consumer attribute the
+   * failure to its own row instead of a page-wide banner nothing ties to a
+   * specific record. Cleared the moment a new status write starts on that
+   * same id, or on any status write success.
+   *
+   * @type {string | null}
+   */
+  readonly nonConformityStatusErrorId: string | null;
+  /**
+   * Property nonConformityWaivePending
+   *
+   * @description
+   * Pending four-eyes waiver requests, keyed by non-conformity id. A key is
+   * present only for a non-conformity whose last waive attempt answered
+   * **202** — the record itself is unchanged server-side until the request
+   * is decided from the organization's approvals inbox — and is removed the
+   * moment a later status write on that same id resolves synchronously.
+   *
+   * @type {Readonly<Record<string, NonConformityWaivePendingOutput>>}
+   */
+  readonly nonConformityWaivePending: Readonly<Record<string, NonConformityWaivePendingOutput>>;
   //#endregion
 }

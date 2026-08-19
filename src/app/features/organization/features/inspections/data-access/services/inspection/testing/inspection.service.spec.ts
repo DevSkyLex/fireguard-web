@@ -9,8 +9,10 @@ import type {
   CreateInspectionInput,
   UpdateInspectionInput,
   NonConformityOutput,
+  NonConformityWaivePendingOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
+  UpdateNonConformityStatusResult,
   InspectionListOptions,
   NonConformityListOptions,
 } from '@features/organization/features/inspections/models';
@@ -447,7 +449,7 @@ describe('InspectionService', () => {
     const nonConformityId = 'nc-uuid-1';
     const input: UpdateNonConformityStatusInput = { status: 'done' };
 
-    it('should send PATCH request to update non-conformity status', () => {
+    it('should send PATCH request and return an "updated" result on a plain 200', () => {
       const resolved: NonConformityOutput = {
         ...mockNonConformity,
         status: 'done',
@@ -456,9 +458,10 @@ describe('InspectionService', () => {
 
       service
         .updateNonConformityStatus(orgId, inspectionId, nonConformityId, input)
-        .subscribe((nc) => {
-          expect(nc.status).toBe('done');
-          expect(nc.resolvedAt).not.toBeNull();
+        .subscribe((result: UpdateNonConformityStatusResult) => {
+          expect(result.kind).toBe('updated');
+          expect(result.kind === 'updated' && result.nonConformity.status).toBe('done');
+          expect(result.kind === 'updated' && result.nonConformity.resolvedAt).not.toBeNull();
         });
 
       const req = httpMock.expectOne(
@@ -469,6 +472,30 @@ describe('InspectionService', () => {
       expect(req.request.withCredentials).toBe(true);
       expect(req.request.headers.get('Content-Type')).toBe('application/merge-patch+json');
       req.flush(resolved);
+    });
+
+    it('should return a "pendingApproval" result on a 202, leaving the non-conformity unread', () => {
+      const waiveInput: UpdateNonConformityStatusInput = { status: 'waived' };
+      const pending: NonConformityWaivePendingOutput = {
+        status: 'pending_approval',
+        approvalRequestId: 'approval-uuid-1',
+        approvalStatus: 'pending',
+        expiresAt: '2026-04-01T00:00:00+00:00',
+      };
+
+      service
+        .updateNonConformityStatus(orgId, inspectionId, nonConformityId, waiveInput)
+        .subscribe((result: UpdateNonConformityStatusResult) => {
+          expect(result.kind).toBe('pendingApproval');
+          expect(result.kind === 'pendingApproval' && result.pending.approvalRequestId).toBe(
+            'approval-uuid-1',
+          );
+        });
+
+      const req = httpMock.expectOne(
+        `${inspectionsBaseUrl}/${inspectionId}/non-conformities/${nonConformityId}/status`,
+      );
+      req.flush(pending, { status: 202, statusText: 'Accepted' });
     });
 
     it('should handle not found error', () => {

@@ -1,5 +1,8 @@
 import type { InspectionResult, InspectionStatus } from '../inspection/inspection-output.interface';
-import type { NonConformitySeverity } from '../non-conformity/non-conformity-output.interface';
+import type {
+  NonConformitySeverity,
+  NonConformityStatus,
+} from '../non-conformity/non-conformity-output.interface';
 import type { InspectionStatusTagDescriptor } from './inspection-status-tag-descriptor.interface';
 import type { InspectionStatusTagKind } from './inspection-status-tag-kind.type';
 
@@ -87,11 +90,42 @@ const NON_CONFORMITY_SEVERITY: Record<NonConformitySeverity, InspectionStatusTag
   },
 };
 
+/**
+ * Non-conformity status descriptors. `waived` is drawn `neutral` with its own
+ * glyph (`lucideShieldOff`) rather than `success`'s `lucideCircleCheck` —
+ * distinct from `done` because a waiver excuses the finding instead of
+ * resolving it, and it may still be reversible pending a four-eyes decision
+ * (`InspectionStore.nonConformityWaivePending`).
+ */
+const NON_CONFORMITY_STATUS: Record<NonConformityStatus, InspectionStatusTagDescriptor> = {
+  open: {
+    label: $localize`:@@nonConformityStatus.open:Open`,
+    severity: 'danger',
+    icon: 'lucideCircleAlert',
+  },
+  in_progress: {
+    label: $localize`:@@nonConformityStatus.inProgress:In progress`,
+    severity: 'info',
+    icon: 'lucideCircleDotDashed',
+  },
+  done: {
+    label: $localize`:@@nonConformityStatus.done:Done`,
+    severity: 'success',
+    icon: 'lucideCircleCheck',
+  },
+  waived: {
+    label: $localize`:@@nonConformityStatus.waived:Waived`,
+    severity: 'neutral',
+    icon: 'lucideShieldOff',
+  },
+};
+
 /** Registry indexed by tag kind. */
 const REGISTRY: Record<InspectionStatusTagKind, Record<string, InspectionStatusTagDescriptor>> = {
   status: STATUS,
   result: RESULT,
   nonConformitySeverity: NON_CONFORMITY_SEVERITY,
+  nonConformityStatus: NON_CONFORMITY_STATUS,
 };
 
 /**

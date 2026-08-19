@@ -7,6 +7,7 @@ import { InspectionService } from '@features/organization/features/inspections/d
 import type {
   InspectionOutput,
   NonConformityOutput,
+  NonConformityWaivePendingOutput,
 } from '@features/organization/features/inspections/models';
 import { ActiveInspectionStore } from '../../active-inspection/active-inspection.store';
 import { InspectionStore } from '../inspection.store';
@@ -51,6 +52,12 @@ describe('InspectionStore', () => {
     title: 'Door blocked',
     status: 'resolved',
   } as unknown as NonConformityOutput;
+  const pendingApproval: NonConformityWaivePendingOutput = {
+    status: 'pending_approval',
+    approvalRequestId: 'approval-1',
+    approvalStatus: 'pending',
+    expiresAt: '2026-04-01T00:00:00+00:00',
+  };
   const inspectionsCollection: HydraCollection<InspectionOutput> = {
     '@id': '/api/organizations/org-1/inspections',
     '@type': 'Collection',
@@ -76,7 +83,9 @@ describe('InspectionStore', () => {
       listNonConformities: vi.fn().mockReturnValue(of(nonConformitiesCollection)),
       getNonConformity: vi.fn().mockReturnValue(of(nonConformity)),
       addNonConformity: vi.fn().mockReturnValue(of(nonConformity)),
-      updateNonConformityStatus: vi.fn().mockReturnValue(of(updatedNonConformity)),
+      updateNonConformityStatus: vi
+        .fn()
+        .mockReturnValue(of({ kind: 'updated', nonConformity: updatedNonConformity })),
     };
     mockDispatcher = { dispatch: vi.fn() };
     mockActiveInspectionStore = {
@@ -400,6 +409,172 @@ describe('InspectionStore', () => {
       expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
         expect.objectContaining({ type: '[Inspection Store] updateNonConformityStatusFailed' }),
       );
+    });
+
+    it('should attribute a failure to the row that caused it', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+      expect(store.nonConformityStatusErrorText()).not.toBeNull();
+    });
+
+    it('should clear the error id on a later success for the same row', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(
+        of({ kind: 'updated', nonConformity: updatedNonConformity }),
+      );
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformityStatusErrorId()).toBeNull();
+    });
+
+    it('should clear the error id the moment a new write starts on the same row', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(NEVER);
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformityStatusErrorId()).toBeNull();
+    });
+
+    it('should keep a row error while a different row is being written', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(NEVER);
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-2',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformityStatusErrorId()).toBe('nc-1');
+    });
+
+    it('should record the pending waiver and leave the entity untouched on a 202', async () => {
+      store.loadNonConformities({ organizationId: 'org-1', inspectionId: 'inspection-1' });
+      await flushEffects();
+
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(
+        of({ kind: 'pendingApproval', pending: pendingApproval }),
+      );
+
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(store.nonConformities()).toEqual([nonConformity]);
+      expect(store.nonConformityWaivePending()).toEqual({ 'nc-1': pendingApproval });
+    });
+
+    it('should refresh the row instead of dispatching a toast on a 409', async () => {
+      const conflict = { '@id': '', '@type': 'Error', status: 409, detail: 'Conflict' };
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => conflict));
+
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+
+      expect(mockInspectionService.getNonConformity).toHaveBeenCalledWith(
+        'org-1',
+        'inspection-1',
+        'nc-1',
+      );
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: '[Inspection Store] updateNonConformityStatusFailed' }),
+      );
+      expect(store.nonConformityStatusErrorText()).toContain('already resolved');
+    });
+  });
+
+  describe('resetAddNonConformityOperation', () => {
+    it('should reset the add non-conformity call state to idle', async () => {
+      mockInspectionService.addNonConformity.mockReturnValue(throwError(() => apiError));
+
+      store.addNonConformity({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        input: {} as never,
+      });
+      await flushEffects();
+      expect(store.isAddingNonConformity()).toBe(false);
+
+      store.resetAddNonConformityOperation();
+
+      expect(store.isAddingNonConformity()).toBe(false);
+    });
+  });
+
+  describe('resetUpdateNonConformityStatusOperation', () => {
+    it('should reset the update non-conformity status call state to idle', async () => {
+      mockInspectionService.updateNonConformityStatus.mockReturnValue(throwError(() => apiError));
+
+      store.updateNonConformityStatus({
+        organizationId: 'org-1',
+        inspectionId: 'inspection-1',
+        nonConformityId: 'nc-1',
+        input: {} as never,
+      });
+      await flushEffects();
+      expect(store.nonConformityStatusErrorText()).not.toBeNull();
+
+      store.resetUpdateNonConformityStatusOperation();
+
+      expect(store.nonConformityStatusErrorText()).toBeNull();
     });
   });
 

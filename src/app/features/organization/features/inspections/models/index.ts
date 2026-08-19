@@ -26,6 +26,12 @@ export type {
 } from './non-conformity/non-conformity-list-options.interface';
 export type { AddNonConformityInput } from './non-conformity/add-non-conformity-input.interface';
 export type { UpdateNonConformityStatusInput } from './non-conformity/update-non-conformity-status-input.interface';
+export type { NonConformityWaivePendingOutput } from './non-conformity/non-conformity-waive-pending-output.interface';
+export type {
+  NonConformityStatusPendingApproval,
+  NonConformityStatusUpdated,
+  UpdateNonConformityStatusResult,
+} from './non-conformity/update-non-conformity-status-result.type';
 export type { InspectionStatusTagDescriptor } from './inspection-status-tag/inspection-status-tag-descriptor.interface';
 export type { InspectionStatusTagKind } from './inspection-status-tag/inspection-status-tag-kind.type';
 export type { InspectionStatusTagSeverity } from './inspection-status-tag/inspection-status-tag-severity.type';

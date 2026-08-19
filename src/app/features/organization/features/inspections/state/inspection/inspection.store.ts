@@ -29,8 +29,10 @@ import type {
   CreateInspectionInput,
   UpdateInspectionInput,
   NonConformityOutput,
+  NonConformityWaivePendingOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
+  UpdateNonConformityStatusResult,
   InspectionListOptions,
   NonConformityListOptions,
 } from '@features/organization/features/inspections/models';
@@ -38,6 +40,7 @@ import { isQuotaExceededError } from '@features/organization/utils';
 import { ActiveInspectionStore } from '../active-inspection/active-inspection.store';
 import { inspectionStoreEvents } from './events';
 import type { InspectionState } from './models';
+import { nonConformityStatusErrorMessage } from './utils/non-conformity-status-error-message/non-conformity-status-error-message.utils';
 
 //#region Initial State
 /**
@@ -65,6 +68,8 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
   nonConformityGetCallState: idleCallState(),
   addNonConformityCallState: idleCallState(),
   updateNonConformityStatusCallState: idleCallState(),
+  nonConformityStatusErrorId: null,
+  nonConformityWaivePending: {},
 } as const;
 //#endregion
 
@@ -81,6 +86,18 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
  * For reading the currently active/selected inspection use the root-level
  * {@link ActiveInspectionStore} instead.
  *
+ * A non-conformity status write distinguishes the endpoint's two success
+ * statuses through `InspectionService`'s `UpdateNonConformityStatusResult`:
+ * a plain `200` replaces the cached row, a `202` (waiving above the
+ * organization's approval threshold) leaves it untouched and records the
+ * pending request in {@link InspectionState.nonConformityWaivePending}
+ * instead, keyed by non-conformity id. A `409` (the `done`/`waived`
+ * immutable-terminal-status conflict) refreshes the row rather than
+ * dispatching a generic failure toast. Every status-write failure is
+ * attributed to its row through {@link InspectionState.nonConformityStatusErrorId},
+ * so a consumer can render the message inline under the offending row
+ * instead of a page-wide banner nothing ties to a specific record.
+ *
  * @example
  * ```typescript
  * @Component({ providers: [InspectionStore] })
@@ -89,7 +106,7 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
  * }
  * ```
  *
- * @version 2.0.0
+ * @version 2.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InspectionStore = signalStore(
@@ -185,6 +202,26 @@ export const InspectionStore = signalStore(
         () => store.updateNonConformityStatusCallState().status === 'pending',
       ),
 
+      /**
+       * Property nonConformityStatusErrorText
+       * @readonly
+       *
+       * @description
+       * Specific, actionable copy for the last status-write failure, or
+       * `null` when it did not fail. `null` while pending or idle too, so
+       * the caller reads it only alongside {@link isUpdatingNonConformity}
+       * settling to `false`.
+       *
+       * @access public
+       * @since 1.1.0
+       * @type {Signal<string | null>}
+       */
+      nonConformityStatusErrorText: computed<string | null>(() => {
+        const error: StoreError | null = store.updateNonConformityStatusCallState().error;
+
+        return error ? nonConformityStatusErrorMessage(error) : null;
+      }),
+
       /** Error from the last create operation, if any. */
       createError: computed<StoreError | null>(() => store.createCallState().error),
 
@@ -261,6 +298,151 @@ export const InspectionStore = signalStore(
                 },
               }),
             ),
+          ),
+        ),
+      );
+
+      /**
+       * Constant loadNonConformityFn
+       * @const loadNonConformityFn
+       *
+       * @description
+       * Shared rxMethod implementation for re-reading one non-conformity and
+       * replacing its cached row. Exposed as {@link loadNonConformity} and
+       * also called internally by {@link updateNonConformityStatusFn} on a
+       * 409 — `done`/`waived` is immutable, so a reopen attempt means the
+       * cached row is already stale and must be refreshed from the server.
+       *
+       * @since 1.1.0
+       */
+      const loadNonConformityFn = rxMethod<{
+        organizationId: string;
+        inspectionId: string;
+        nonConformityId: string;
+      }>(
+        pipe(
+          tap((): void => {
+            patchState(store, { nonConformityGetCallState: pendingCallState() });
+          }),
+          switchMap(({ organizationId, inspectionId, nonConformityId }) =>
+            inspectionService.getNonConformity(organizationId, inspectionId, nonConformityId).pipe(
+              tapResponse({
+                next: (nonConformity: NonConformityOutput): void => {
+                  patchState(store, setEntity(nonConformity, { collection: 'nonConformity' }), {
+                    nonConformityGetCallState: successCallState(nonConformity),
+                  });
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { nonConformityGetCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    inspectionStoreEvents.nonConformityGetFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load non-conformity'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      );
+
+      /**
+       * Constant updateNonConformityStatusFn
+       * @const updateNonConformityStatusFn
+       *
+       * @description
+       * Shared rxMethod implementation for a non-conformity status write.
+       * `exhaustMap` prevents a concurrent submission. Branches on
+       * {@link UpdateNonConformityStatusResult.kind}: `updated` replaces the
+       * cached row and clears any stale pending-waiver entry for it;
+       * `pendingApproval` leaves the row untouched and records the pending
+       * waiver under {@link InspectionState.nonConformityWaivePending}
+       * instead. A `409` (the immutable-terminal-status conflict) refreshes
+       * the row via {@link loadNonConformityFn} rather than dispatching the
+       * generic failure toast — {@link InspectionStore.nonConformityStatusErrorText}
+       * carries the specific copy for it instead. A failure sets
+       * {@link InspectionState.nonConformityStatusErrorId} to the failed
+       * row's id, cleared on any success or the moment a new write starts
+       * on that same id — never on a write starting for a different row, so
+       * one row's error survives while another is edited.
+       *
+       * @since 1.1.0
+       */
+      const updateNonConformityStatusFn = rxMethod<{
+        organizationId: string;
+        inspectionId: string;
+        nonConformityId: string;
+        input: UpdateNonConformityStatusInput;
+      }>(
+        pipe(
+          tap(({ nonConformityId }): void => {
+            patchState(store, {
+              updateNonConformityStatusCallState: pendingCallState(),
+              nonConformityStatusErrorId:
+                store.nonConformityStatusErrorId() === nonConformityId
+                  ? null
+                  : store.nonConformityStatusErrorId(),
+            });
+          }),
+          exhaustMap(({ organizationId, inspectionId, nonConformityId, input }) =>
+            inspectionService
+              .updateNonConformityStatus(organizationId, inspectionId, nonConformityId, input)
+              .pipe(
+                tapResponse({
+                  next: (result: UpdateNonConformityStatusResult): void => {
+                    if (result.kind === 'pendingApproval') {
+                      patchState(store, {
+                        nonConformityWaivePending: {
+                          ...store.nonConformityWaivePending(),
+                          [nonConformityId]: result.pending,
+                        },
+                        nonConformityStatusErrorId: null,
+                        updateNonConformityStatusCallState: successCallState(null),
+                      });
+
+                      return;
+                    }
+
+                    const remainingPending: Record<string, NonConformityWaivePendingOutput> = {
+                      ...store.nonConformityWaivePending(),
+                    };
+                    delete remainingPending[nonConformityId];
+
+                    patchState(
+                      store,
+                      setEntity(result.nonConformity, { collection: 'nonConformity' }),
+                      {
+                        nonConformityWaivePending: remainingPending,
+                        nonConformityStatusErrorId: null,
+                        updateNonConformityStatusCallState: successCallState(result.nonConformity),
+                      },
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, {
+                      updateNonConformityStatusCallState: errorCallState(storeError),
+                      nonConformityStatusErrorId: nonConformityId,
+                    });
+
+                    if (storeError.code === 409) {
+                      loadNonConformityFn({ organizationId, inspectionId, nonConformityId });
+
+                      return;
+                    }
+
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.updateNonConformityStatusFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          'Failed to update non-conformity status',
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       );
@@ -533,44 +715,8 @@ export const InspectionStore = signalStore(
           ),
         ),
 
-        /**
-         * Loads one non-conformity and synchronizes the local collection.
-         */
-        loadNonConformity: rxMethod<{
-          organizationId: string;
-          inspectionId: string;
-          nonConformityId: string;
-        }>(
-          pipe(
-            tap((): void => {
-              patchState(store, { nonConformityGetCallState: pendingCallState() });
-            }),
-            switchMap(({ organizationId, inspectionId, nonConformityId }) =>
-              inspectionService
-                .getNonConformity(organizationId, inspectionId, nonConformityId)
-                .pipe(
-                  tapResponse({
-                    next: (nonConformity: NonConformityOutput): void => {
-                      patchState(store, setEntity(nonConformity, { collection: 'nonConformity' }), {
-                        nonConformityGetCallState: successCallState(nonConformity),
-                      });
-                    },
-                    error: (error: unknown): void => {
-                      const storeError: StoreError = toStoreError(error);
-                      patchState(store, {
-                        nonConformityGetCallState: errorCallState(storeError),
-                      });
-                      dispatcher.dispatch(
-                        inspectionStoreEvents.nonConformityGetFailed(
-                          toStoreFailureEventPayload(storeError, 'Failed to load non-conformity'),
-                        ),
-                      );
-                    },
-                  }),
-                ),
-            ),
-          ),
-        ),
+        /** Re-reads one non-conformity and replaces its cached row. See {@link loadNonConformityFn}. */
+        loadNonConformity: loadNonConformityFn,
 
         /**
          * Method addNonConformity
@@ -615,61 +761,24 @@ export const InspectionStore = signalStore(
           ),
         ),
 
-        /**
-         * Method updateNonConformityStatus
-         * @method updateNonConformityStatus
-         *
-         * @description
-         * Updates the status of a non-conformity. Uses `exhaustMap` to
-         * prevent concurrent submissions.
-         *
-         * @since 1.0.0
-         */
-        updateNonConformityStatus: rxMethod<{
-          organizationId: string;
-          inspectionId: string;
-          nonConformityId: string;
-          input: UpdateNonConformityStatusInput;
-        }>(
-          pipe(
-            tap((): void => {
-              patchState(store, { updateNonConformityStatusCallState: pendingCallState() });
-            }),
-            exhaustMap(({ organizationId, inspectionId, nonConformityId, input }) =>
-              inspectionService
-                .updateNonConformityStatus(organizationId, inspectionId, nonConformityId, input)
-                .pipe(
-                  tapResponse({
-                    next: (nonConformity: NonConformityOutput): void => {
-                      patchState(store, setEntity(nonConformity, { collection: 'nonConformity' }), {
-                        updateNonConformityStatusCallState: successCallState(nonConformity),
-                      });
-                    },
-                    error: (error: unknown): void => {
-                      const storeError: StoreError = toStoreError(error);
-                      patchState(store, {
-                        updateNonConformityStatusCallState: errorCallState(storeError),
-                      });
-                      dispatcher.dispatch(
-                        inspectionStoreEvents.updateNonConformityStatusFailed(
-                          toStoreFailureEventPayload(
-                            storeError,
-                            'Failed to update non-conformity status',
-                          ),
-                        ),
-                      );
-                    },
-                  }),
-                ),
-            ),
-          ),
-        ),
+        /** Writes a non-conformity status change. See {@link updateNonConformityStatusFn}. */
+        updateNonConformityStatus: updateNonConformityStatusFn,
 
         // ── Sync Helpers ───────────────────────────────────────────────────────
 
         /** Resets the create operation back to its idle state. */
         resetCreateOperation(): void {
           patchState(store, { createCallState: idleCallState() });
+        },
+
+        /** Resets the add non-conformity operation back to its idle state, for the dialog's close/reopen. */
+        resetAddNonConformityOperation(): void {
+          patchState(store, { addNonConformityCallState: idleCallState() });
+        },
+
+        /** Resets the update non-conformity status operation back to its idle state. */
+        resetUpdateNonConformityStatusOperation(): void {
+          patchState(store, { updateNonConformityStatusCallState: idleCallState() });
         },
       };
     },

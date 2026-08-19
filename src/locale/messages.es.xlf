@@ -3738,6 +3738,146 @@
         <source>Critical</source>
         <target>Crítica</target>
       </trans-unit>
+      <trans-unit id="nonConformityStatus.open" datatype="html">
+        <source>Open</source>
+        <target>Abierta</target>
+      </trans-unit>
+      <trans-unit id="nonConformityStatus.inProgress" datatype="html">
+        <source>In progress</source>
+        <target>En curso</target>
+      </trans-unit>
+      <trans-unit id="nonConformityStatus.done" datatype="html">
+        <source>Done</source>
+        <target>Resuelta</target>
+      </trans-unit>
+      <trans-unit id="nonConformityStatus.waived" datatype="html">
+        <source>Waived</source>
+        <target>Exonerada</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.title" datatype="html">
+        <source>Non-conformities</source>
+        <target>No conformidades</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addButton" datatype="html">
+        <source>Add non-conformity</source>
+        <target>Añadir no conformidad</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addClosedExplanation" datatype="html">
+        <source>A closed inspection can no longer record new non-conformities.</source>
+        <target>Una inspección cerrada ya no puede registrar nuevas no conformidades.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.dueLabel" datatype="html">
+        <source>Due</source>
+        <target>Vence</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.resolvedLabel" datatype="html">
+        <source>Resolved</source>
+        <target>Resuelta</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.statusSelectLabel" datatype="html">
+        <source>Status for <x id="description" equiv-text="description"/></source>
+        <target>Estado de <x id="description" equiv-text="description"/></target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.list.loadingAria" datatype="html">
+        <source>Loading non-conformities</source>
+        <target>Cargando no conformidades</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.list.emptyTitle" datatype="html">
+        <source>No non-conformities recorded</source>
+        <target>No se registraron no conformidades</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.list.emptyDescription" datatype="html">
+        <source>Nothing was flagged during this inspection.</source>
+        <target>No se señaló nada durante esta inspección.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.pendingApproval.title" datatype="html">
+        <source>Waiver pending approval</source>
+        <target>Exoneración pendiente de aprobación</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.pendingApproval.description" datatype="html">
+        <source>This non-conformity stays open until a reviewer decides the request.</source>
+        <target>Esta no conformidad permanece abierta hasta que un revisor decida la solicitud.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.pendingApproval.link" datatype="html">
+        <source>View in approvals</source>
+        <target>Ver en aprobaciones</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.pendingApproval.linkLabel" datatype="html">
+        <source>View in approvals for <x id="description" equiv-text="description"/></source>
+        <target>Ver en aprobaciones para <x id="description" equiv-text="description"/></target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.status.error.alreadyResolved" datatype="html">
+        <source>This non-conformity is already resolved — the row has been refreshed.</source>
+        <target>Esta no conformidad ya está resuelta — la fila se ha actualizado.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.status.error.generic" datatype="html">
+        <source>The status could not be updated.</source>
+        <target>No se pudo actualizar el estado.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.title" datatype="html">
+        <source>Add non-conformity</source>
+        <target>Añadir no conformidad</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.description" datatype="html">
+        <source>Record a finding on this inspection, with its severity and an optional due date.</source>
+        <target>Registre un hallazgo en esta inspección, con su gravedad y una fecha límite opcional.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.descriptionLabel" datatype="html">
+        <source>Description</source>
+        <target>Descripción</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.descriptionPlaceholder" datatype="html">
+        <source>Fire extinguisher pressure gauge in the red zone</source>
+        <target>Manómetro del extintor en la zona roja</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.descriptionRequired" datatype="html">
+        <source>Describe what was found.</source>
+        <target>Describa lo que se encontró.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.descriptionTooLong" datatype="html">
+        <source>This description is too long.</source>
+        <target>Esta descripción es demasiado larga.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.severityLabel" datatype="html">
+        <source>Severity</source>
+        <target>Gravedad</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.severityPlaceholder" datatype="html">
+        <source>Select a severity</source>
+        <target>Seleccionar una gravedad</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.severityRequired" datatype="html">
+        <source>Choose a severity.</source>
+        <target>Elija una gravedad.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.dueAtLabel" datatype="html">
+        <source>Due date (optional)</source>
+        <target>Fecha límite (opcional)</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.dueAtPlaceholder" datatype="html">
+        <source>Select a date</source>
+        <target>Seleccionar una fecha</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.notesLabel" datatype="html">
+        <source>Notes (optional)</source>
+        <target>Notas (opcionales)</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.notesTooLong" datatype="html">
+        <source>These notes are too long.</source>
+        <target>Estas notas son demasiado largas.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.genericError" datatype="html">
+        <source>This non-conformity could not be recorded.</source>
+        <target>No se pudo registrar esta no conformidad.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.submitting" datatype="html">
+        <source>Recording…</source>
+        <target>Registrando…</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.addDialog.submit" datatype="html">
+        <source>Add non-conformity</source>
+        <target>Añadir no conformidad</target>
+      </trans-unit>
       <trans-unit id="inspectionResult.partial" datatype="html">
         <source>Partial</source>
         <target>Parcial</target>

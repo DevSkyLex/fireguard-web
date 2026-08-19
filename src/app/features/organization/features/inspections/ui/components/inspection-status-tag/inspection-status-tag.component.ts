@@ -24,10 +24,11 @@ import { INSPECTION_STATUS_TAG_ICON_CLASS } from './constants/inspection-status-
  * @class InspectionStatusTag
  *
  * @description
- * A spartan badge rendering one inspection enum value (workflow `status` or
- * `result`) — the single appearance of either anywhere in this feature.
- * Resolves a `kind`/`value` pair through the inspection status registry, so
- * adding an enum member means editing one descriptor map.
+ * A spartan badge rendering one inspection enum value — workflow `status`,
+ * `result`, or a non-conformity's `severity`/`status` — the single
+ * appearance of any of them anywhere in this feature. Resolves a
+ * `kind`/`value` pair through the inspection status registry, so adding an
+ * enum member means editing one descriptor map.
  *
  * Drawn per `DESIGN.md`'s glyph rule: an `outline` badge with a transparent
  * ground and muted text, where only the icon carries the tone. The icon and
@@ -35,12 +36,13 @@ import { INSPECTION_STATUS_TAG_ICON_CLASS } from './constants/inspection-status-
  * (WCAG 1.4.1). {@link asOption} drops the badge for a plain icon-and-label
  * row inside a select or combobox item.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
  * <app-inspection-status-tag kind="status" value="draft" />
  * <app-inspection-status-tag kind="result" value="pass" asOption />
+ * <app-inspection-status-tag kind="nonConformityStatus" value="waived" />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>

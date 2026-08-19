@@ -19,13 +19,15 @@ import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBan, lucideCircleAlert, lucideWrench } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
-import { isCallPending, type CallState } from '@core/request-state';
+import { isCallPending, isCallSuccess, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
+  AddNonConformityInput,
   InspectionEditState,
   InspectionEditTarget,
   InspectionOutput,
+  NonConformityStatus,
   UpdateInspectionInput,
 } from '@features/organization/features/inspections/models';
 import {
@@ -40,7 +42,9 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InspectionInformationPanel } from '../../components/inspection-information-panel';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
+import { NonConformityList } from '../../dataviews/non-conformity-list';
 import { InspectionCancelDialog } from '../../dialogs/inspection-cancel-dialog';
+import { NonConformityAddDialog } from '../../dialogs/non-conformity-add-dialog';
 
 /** The inspection properties this page has open, writing or showing a rejection. */
 const IDLE_EDIT_STATE: InspectionEditState = {
@@ -88,7 +92,16 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * pre-filtered by that facility's `site`; it is a proxy by site, not a
  * filter by inspection, and is labelled as such.
  *
- * @version 1.4.0
+ * The header's non-conformity count is also the anchor that expands
+ * {@link NonConformityList} below it — collapsed by default, its list loads
+ * only on that first expansion (`AGENTS.md` "Secondary UI data"). Writing to
+ * a row (a status change or {@link NonConformityAddDialog}) is gated on
+ * {@link canWrite}; adding one is further hidden on a `closed` inspection
+ * through {@link canAddNonConformity}, while a status change stays available
+ * regardless of the inspection's own status — the backend blocks only the
+ * add endpoint on `closed` (`FEATURE.md`).
+ *
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -100,6 +113,8 @@ const IDLE_EDIT_STATE: InspectionEditState = {
     InspectionCancelDialog,
     InspectionInformationPanel,
     InspectionStatusTag,
+    NonConformityAddDialog,
+    NonConformityList,
     ErrorState,
     HlmButton,
     HlmSkeleton,
@@ -217,6 +232,36 @@ export class InspectionDetailPage {
   );
 
   /**
+   * Property canAddNonConformity
+   * @readonly
+   *
+   * @description
+   * Whether the "Add non-conformity" entry point renders at all — the write
+   * permission **and** the record not being `closed`, the backend's only
+   * documented 409 on the add endpoint (`FEATURE.md`). A member with write
+   * access still sees a quiet explanation instead of the form once the
+   * inspection is closed, rather than a confusing failed submission.
+   *
+   * @access protected
+   * @since 1.5.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canAddNonConformity: Signal<boolean> = computed<boolean>(
+    () => this.canWrite() && this.activeInspectionStore.selectedInspection()?.status !== 'closed',
+  );
+
+  /** Whether the non-conformities section is expanded — collapsed by default, its list loads on first expansion. */
+  protected readonly nonConformitiesExpanded: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the "Add non-conformity" dialog is open. */
+  protected readonly addNonConformityDialogOpen: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The id of the non-conformity whose status write is currently in flight, or `null`. */
+  protected readonly pendingNonConformityId: WritableSignal<string | null> = signal<string | null>(
+    null,
+  );
+
+  /**
    * Property title
    * @readonly
    * @description The record's own display title.
@@ -291,10 +336,12 @@ export class InspectionDetailPage {
    * template's `app-error-state` branch and {@link retryLoad}, the global
    * feedback listener already toasts the failure — returns to the list once
    * a cancellation succeeds — `InspectionStore.cancel` removes the record,
-   * so there is nothing left here to show — and registers {@link pageActions}.
+   * so there is nothing left here to show — clears {@link pendingNonConformityId}
+   * once its status write settles, closes the add-non-conformity dialog on a
+   * successful add, and registers {@link pageActions}.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.5.0
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
@@ -319,6 +366,25 @@ export class InspectionDetailPage {
         if (callState.status !== 'success') return;
 
         void this.router.navigate(['/organizations', this.organizationId(), 'inspections']);
+      });
+    });
+
+    effect((): void => {
+      const isUpdating: boolean = this.store.isUpdatingNonConformity();
+
+      untracked((): void => {
+        if (!isUpdating) this.pendingNonConformityId.set(null);
+      });
+    });
+
+    effect((): void => {
+      const succeeded: boolean = isCallSuccess(this.store.addNonConformityCallState());
+
+      untracked((): void => {
+        if (succeeded && this.addNonConformityDialogOpen()) {
+          this.addNonConformityDialogOpen.set(false);
+          this.store.resetAddNonConformityOperation();
+        }
       });
     });
   }
@@ -431,6 +497,94 @@ export class InspectionDetailPage {
     if (visible) return;
 
     this.pendingCancel.set(false);
+  }
+
+  /**
+   * Method toggleNonConformities
+   *
+   * @description
+   * Expands or collapses the non-conformities section — the header count's
+   * anchor. The list is secondary UI data (`AGENTS.md` "Routing, SSR, and
+   * hydration"), so it loads only on this first expansion rather than on
+   * page load.
+   *
+   * @access protected
+   * @since 1.5.0
+   * @returns {void}
+   */
+  protected toggleNonConformities(): void {
+    const expanding: boolean = !this.nonConformitiesExpanded();
+    this.nonConformitiesExpanded.set(expanding);
+
+    if (expanding && this.store.nonConformitiesListCallState().status === 'idle') {
+      this.store.loadNonConformities({
+        organizationId: this.organizationId(),
+        inspectionId: this.inspectionId(),
+      });
+    }
+  }
+
+  /**
+   * Method openAddNonConformityDialog
+   * @description Opens the "Add non-conformity" dialog, clearing any rejection left from a previous attempt.
+   * @access protected
+   * @since 1.5.0
+   * @returns {void}
+   */
+  protected openAddNonConformityDialog(): void {
+    this.store.resetAddNonConformityOperation();
+    this.addNonConformityDialogOpen.set(true);
+  }
+
+  /**
+   * Method closeAddNonConformityDialog
+   * @description Closes the dialog and resets its operation state — the backdrop, Escape or Cancel.
+   * @access protected
+   * @since 1.5.0
+   * @returns {void}
+   */
+  protected closeAddNonConformityDialog(): void {
+    this.addNonConformityDialogOpen.set(false);
+    this.store.resetAddNonConformityOperation();
+  }
+
+  /**
+   * Method onNonConformityAdded
+   * @description Sends the validated add-non-conformity payload. The dialog closes once the store settles, via the constructor effect.
+   * @access protected
+   * @since 1.5.0
+   * @param {AddNonConformityInput} payload - The dialog's validated payload.
+   * @returns {void}
+   */
+  protected onNonConformityAdded(payload: AddNonConformityInput): void {
+    this.store.addNonConformity({
+      organizationId: this.organizationId(),
+      inspectionId: this.inspectionId(),
+      input: payload,
+    });
+  }
+
+  /**
+   * Method onNonConformityStatusPicked
+   * @description Sends a row's status write, refusing a second one while one is already in flight.
+   * @access protected
+   * @since 1.5.0
+   * @param {{ nonConformityId: string; status: NonConformityStatus }} event - The row and the chosen status.
+   * @returns {void}
+   */
+  protected onNonConformityStatusPicked(event: {
+    nonConformityId: string;
+    status: NonConformityStatus;
+  }): void {
+    if (this.store.isUpdatingNonConformity()) return;
+
+    this.pendingNonConformityId.set(event.nonConformityId);
+    this.store.updateNonConformityStatus({
+      organizationId: this.organizationId(),
+      inspectionId: this.inspectionId(),
+      nonConformityId: event.nonConformityId,
+      input: { status: event.status },
+    });
   }
 
   /**

@@ -6,6 +6,7 @@ export {
   ORGANIZATION_NAVIGATION_ITEMS,
 } from './organization-navigation.config';
 export type {
+  OrganizationNavigationCounterKey,
   OrganizationNavigationGroup,
   OrganizationNavigationGroupId,
   OrganizationNavigationItem,

@@ -16,6 +16,7 @@ export type AuditActionModule =
   | 'inspection'
   | 'intervention'
   | 'maintenance'
+  | 'calendar'
   | 'automation'
   | 'messaging'
   | 'import'

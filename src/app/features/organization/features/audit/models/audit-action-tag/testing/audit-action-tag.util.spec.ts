@@ -39,7 +39,7 @@ describe('listAuditActionOptions', () => {
   it('should list every known action id with a resolved descriptor', () => {
     const options = listAuditActionOptions();
 
-    expect(options.length).toBe(68);
+    expect(options.length).toBe(71);
     expect(options.every((option) => option.descriptor.label.length > 0)).toBe(true);
   });
 

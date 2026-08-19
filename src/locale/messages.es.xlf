@@ -9699,6 +9699,14 @@
         <source>Operations</source>
         <target>Operaciones</target>
       </trans-unit>
+      <trans-unit id="org.nav.interventions.awaitingReviewOne" datatype="html">
+        <source>1 intervention awaiting review</source>
+        <target>1 intervención pendiente de revisión</target>
+      </trans-unit>
+      <trans-unit id="org.nav.interventions.awaitingReviewMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> interventions awaiting review</source>
+        <target><x id="count" equiv-text="count"/> intervenciones pendientes de revisión</target>
+      </trans-unit>
       <trans-unit id="workspace.header.sidebar.show" datatype="html">
         <source>Show sidebar</source>
         <target>Mostrar la barra lateral</target>
@@ -14217,6 +14225,10 @@
         <source>Maintenance</source>
         <target>Mantenimiento</target>
       </trans-unit>
+      <trans-unit id="audit.module.calendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendario</target>
+      </trans-unit>
       <trans-unit id="audit.module.automation" datatype="html">
         <source>Automation</source>
         <target>Automatización</target>
@@ -14436,6 +14448,18 @@
       <trans-unit id="audit.action.maintenance.campaign_generated" datatype="html">
         <source>Maintenance campaign generated</source>
         <target>Campaña de mantenimiento generada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.calendar.event_created" datatype="html">
+        <source>Calendar event created</source>
+        <target>Evento de calendario creado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.calendar.event_updated" datatype="html">
+        <source>Calendar event updated</source>
+        <target>Evento de calendario modificado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.calendar.event_deleted" datatype="html">
+        <source>Calendar event deleted</source>
+        <target>Evento de calendario eliminado</target>
       </trans-unit>
       <trans-unit id="audit.action.automation.rule_executed" datatype="html">
         <source>Automation rule executed</source>

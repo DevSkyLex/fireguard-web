@@ -20,12 +20,15 @@ import {
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   buildOrganizationNavigation,
+  type OrganizationNavigationCounterKey,
   type OrganizationNavigationSection,
 } from '@features/organization/navigation';
 import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
+import { OrganizationNavigationCountersStore } from '@features/organization/state';
+import { HlmBadge } from '@shared/ui/badge';
 import {
   HlmSidebarGroup,
   HlmSidebarGroupContent,
@@ -57,7 +60,12 @@ import {
  * and member permissions; the shell only lends it a slot (`ARCHITECTURE.md`
  * §2.7). It is contributed through `withOrganizationNav()`.
  *
- * @version 1.0.0
+ * A link whose config declares a `counterKey` (Interventions' `submittedInterventions`)
+ * carries a numeric badge from `OrganizationNavigationCountersStore`, hidden
+ * entirely at zero and never colour-only — the count and its `aria-label`
+ * both name what it counts.
+ *
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -72,6 +80,7 @@ import {
     NgIcon,
     RouterLink,
     RouterLinkActive,
+    HlmBadge,
     HlmSidebarGroup,
     HlmSidebarGroupContent,
     HlmSidebarGroupLabel,
@@ -133,6 +142,22 @@ export class OrganizationNav {
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
+   * Property navigationCountersStore
+   * @readonly
+   *
+   * @description
+   * Sidebar badge counters for the active organization, reloaded on
+   * organization switch by the root store itself.
+   *
+   * @access private
+   * @since 3.1.0
+   *
+   * @type {OrganizationNavigationCountersStore}
+   */
+  private readonly navigationCountersStore: OrganizationNavigationCountersStore =
+    inject<OrganizationNavigationCountersStore>(OrganizationNavigationCountersStore);
+
+  /**
    * Property sections
    * @readonly
    *
@@ -159,5 +184,49 @@ export class OrganizationNav {
       );
     },
   );
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method counterOf
+   * @method counterOf
+   *
+   * @description
+   * Reads the live value a link's `counterKey` names, or `0` for a link
+   * that declares none.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @param {OrganizationNavigationCounterKey} [counterKey] - The counters field to read.
+   *
+   * @returns {number} The current counter value.
+   */
+  protected counterOf(counterKey?: OrganizationNavigationCounterKey): number {
+    if (counterKey === undefined) return 0;
+
+    return this.navigationCountersStore[counterKey]();
+  }
+
+  /**
+   * Method counterLabelOf
+   * @method counterLabelOf
+   *
+   * @description
+   * Builds the badge's `aria-label`, naming what the count means rather than
+   * leaving a bare number for assistive technology.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @param {number} count - The counter value, always greater than zero when called.
+   *
+   * @returns {string} The localized, pluralized label.
+   */
+  protected counterLabelOf(count: number): string {
+    return count === 1
+      ? $localize`:@@org.nav.interventions.awaitingReviewOne:1 intervention awaiting review`
+      : $localize`:@@org.nav.interventions.awaitingReviewMany:${count}:count: interventions awaiting review`;
+  }
   //#endregion
 }

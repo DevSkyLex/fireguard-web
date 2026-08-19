@@ -30,8 +30,9 @@ import { OrganizationAssetsPaneStore } from './state/organization-assets-pane';
  * Statistics pages into one tabbed surface (`FEATURE.md`) — the
  * conversational surfaces (direct messages and channels), the estate
  * explorer (`assets`), the maintenance schedule board (`maintenance`), the
- * four-eyes approvals inbox (`approvals`), the administration pages (members,
- * team, settings) and a member's profile are mounted today; `checklists`
+ * four-eyes approvals inbox (`approvals`), the bulk CSV import surface
+ * (`imports`), the administration pages (members, team, settings) and a
+ * member's profile are mounted today; `checklists`
  * returns under `:organizationId` once its page
  * is rebuilt, and the sidebar navigation already lists it behind its
  * permissions. `statistics` is a permanent redirect to the landing page for
@@ -114,6 +115,11 @@ export const ORGANIZATION_ROUTES: Routes = [
         path: 'inspections',
         loadChildren: () =>
           import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
+      },
+      {
+        path: 'imports',
+        loadChildren: () =>
+          import('./features/imports/imports.routes').then((m) => m.IMPORT_ROUTES),
       },
       {
         path: 'maintenance',

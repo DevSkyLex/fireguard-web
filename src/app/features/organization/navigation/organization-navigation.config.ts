@@ -194,6 +194,22 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
   },
   {
+    /**
+     * The bulk CSV import surface for equipment and facilities. Gated on
+     * either read permission (`match: 'any'`) so a reader holding only one
+     * still reaches the page and imports that one kind — the backend's own
+     * `create` gate (`EQUIPMENT_WRITE`/`FACILITIES_WRITE` per submitted
+     * `kind`) is the actual write floor.
+     */
+    id: 'imports',
+    label: $localize`:@@route.imports:Imports`,
+    icon: 'lucideUpload',
+    path: 'imports',
+    group: 'assets',
+    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ, ORGANIZATION_PERMISSION.FACILITIES_READ],
+    match: 'any',
+  },
+  {
     id: 'members',
     label: $localize`:@@route.members:Members`,
     icon: 'lucideUsers',

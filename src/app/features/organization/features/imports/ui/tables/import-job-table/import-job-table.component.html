@@ -1,0 +1,111 @@
+<div class="h-full w-full overflow-hidden rounded-md border border-border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="import-job-table-caption"
+  >
+    <table hlmTable data-testid="import-job-table">
+      <caption
+        hlmTableCaption
+        id="import-job-table-caption"
+        class="sr-only"
+        i18n="@@imports.table.title"
+      >
+        Import jobs
+      </caption>
+
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@imports.table.colFile">File</th>
+          <th hlmTableHead i18n="@@imports.table.colKind">Type</th>
+          <th hlmTableHead i18n="@@imports.table.colStatus">Status</th>
+          <th hlmTableHead i18n="@@imports.table.colResults">Results</th>
+          <th hlmTableHead i18n="@@imports.table.colCreated">Created</th>
+          <th hlmTableHead class="w-px">
+            <span class="sr-only" i18n="@@common.actions">Actions</span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @if (loading() && items().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-8" /></td>
+            </tr>
+          }
+        } @else {
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="import-job-table-row">
+              <td hlmTableCell class="font-medium whitespace-normal text-foreground">
+                {{ item.originalFilename }}
+                @if (item.dryRun) {
+                  <span hlmBadge variant="outline" class="ml-1.5 align-middle text-xs">
+                    <span i18n="@@imports.table.dryRunBadge">Dry run</span>
+                  </span>
+                }
+              </td>
+
+              <td hlmTableCell class="whitespace-normal text-muted-foreground">
+                {{ kindLabelOf(item) }}
+              </td>
+
+              <td hlmTableCell>
+                <app-import-status-tag [value]="item.status" />
+                @if (progressLabelOf(item); as progress) {
+                  <div
+                    class="mt-1 text-xs text-muted-foreground"
+                    data-testid="import-job-table-progress"
+                  >
+                    {{ progress }}
+                  </div>
+                }
+              </td>
+
+              <td hlmTableCell class="text-sm whitespace-normal">
+                <span class="text-success">{{ item.successfulRows }}</span>
+                <span class="text-muted-foreground"> / </span>
+                <span class="text-destructive">{{ item.failedRows }}</span>
+              </td>
+
+              <td hlmTableCell class="whitespace-normal">{{ item.createdAt | date: 'medium' }}</td>
+
+              <td hlmTableCell>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  data-testid="import-job-table-view"
+                  [attr.aria-label]="viewReportAriaLabelOf(item)"
+                  (click)="selected.emit(item)"
+                >
+                  <ng-icon name="lucideEye" aria-hidden="true" />
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                colspan="6"
+                i18n="@@imports.table.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

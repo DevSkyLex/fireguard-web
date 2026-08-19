@@ -10406,6 +10406,34 @@
         <source>Board</source>
         <target>Tableau</target>
       </trans-unit>
+      <trans-unit id="route.interventionsCalendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendrier</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.viewCalendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendrier</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.errorTitle" datatype="html">
+        <source>Couldn't load the calendar</source>
+        <target>Impossible de charger le calendrier</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.errorText" datatype="html">
+        <source>The calendar could not be loaded. Check your connection and try again.</source>
+        <target>Le calendrier n'a pas pu être chargé. Vérifiez votre connexion et réessayez.</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.dayEmpty" datatype="html">
+        <source>Nothing scheduled this day.</source>
+        <target>Rien de prévu ce jour.</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.empty" datatype="html">
+        <source>Nothing scheduled in this period.</source>
+        <target>Rien de prévu sur cette période.</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.seeAllInList" datatype="html">
+        <source>See all <x id="INTERPOLATION" equiv-text="dayItems().length"/> in list</source>
+        <target>Voir les <x id="INTERPOLATION" equiv-text="dayItems().length"/> dans la liste</target>
+      </trans-unit>
       <trans-unit id="intervention.list.removeFilter" datatype="html">
         <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Retirer le filtre : <x id="field" equiv-text="fieldLabel"/></target>

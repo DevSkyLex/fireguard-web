@@ -36,6 +36,17 @@
         >
           <span i18n="@@intervention.board.viewBoard">Board</span>
         </button>
+        <a
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-view-toggle-calendar"
+          [routerLink]="['/organizations', organizationId(), 'interventions', 'calendar']"
+          [queryParams]="listQueryParams()"
+        >
+          <span i18n="@@intervention.board.viewCalendar">Calendar</span>
+        </a>
       </div>
     </div>
   </app-collection-toolbar>

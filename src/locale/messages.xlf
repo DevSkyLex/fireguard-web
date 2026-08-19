@@ -8595,6 +8595,71 @@
           <context context-type="linenumber">77</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="route.interventionsCalendar" datatype="html">
+        <source>Calendar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/interventions.routes.ts</context>
+          <context context-type="linenumber">85</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/interventions.routes.ts</context>
+          <context context-type="linenumber">86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.board.viewCalendar" datatype="html">
+        <source>Calendar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-page/interventions-page.component.html</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-board-page/interventions-board-page.component.html</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-calendar-page/interventions-calendar-page.component.html</context>
+          <context context-type="linenumber">46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.errorTitle" datatype="html">
+        <source>Couldn't load the calendar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-calendar-page/interventions-calendar-page.component.html</context>
+          <context context-type="linenumber">107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.errorText" datatype="html">
+        <source>The calendar could not be loaded. Check your connection and try again.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-calendar-page/interventions-calendar-page.component.html</context>
+          <context context-type="linenumber">109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.dayEmpty" datatype="html">
+        <source>Nothing scheduled this day.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-calendar-page/interventions-calendar-page.component.html</context>
+          <context context-type="linenumber">143</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.empty" datatype="html">
+        <source>Nothing scheduled in this period.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-calendar-page/interventions-calendar-page.component.html</context>
+          <context context-type="linenumber">183</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.seeAllInList" datatype="html">
+        <source>See all <x id="INTERPOLATION" equiv-text="dayItems().length"/> in list</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-calendar-page/interventions-calendar-page.component.html</context>
+          <context context-type="linenumber">161</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-calendar-page/interventions-calendar-page.component.html</context>
+          <context context-type="linenumber">217</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="interventionPriority.low" datatype="html">
         <source>Low</source>
         <context-group purpose="location">

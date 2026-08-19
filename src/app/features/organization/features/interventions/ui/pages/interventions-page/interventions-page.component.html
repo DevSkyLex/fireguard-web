@@ -65,6 +65,17 @@
         >
           <span i18n="@@intervention.board.viewBoard">Board</span>
         </a>
+        <a
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-view-toggle-calendar"
+          [routerLink]="['/organizations', organizationId(), 'interventions', 'calendar']"
+          [queryParams]="calendarQueryParams()"
+        >
+          <span i18n="@@intervention.board.viewCalendar">Calendar</span>
+        </a>
       </div>
 
       @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {

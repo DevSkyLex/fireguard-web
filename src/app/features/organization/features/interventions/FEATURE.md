@@ -312,16 +312,23 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   one `InterventionStore` instead of a second copy of the dataset. Same
   permission gate as the list (inherited from the parent).
 
-  **View switch.** Both the list and the board toolbars carry a compact
-  List/Board segmented toggle (`hlmButtonGroup`, two `hlmBtn`-styled links —
+  **View switch.** All three of the list, board and calendar toolbars carry a
+  compact List/Board/Calendar segmented toggle (`hlmButtonGroup`, `hlmBtn`-styled
+  links plus one `aria-current="page"` button for the page currently shown —
   not the filter bar's chip shell, which `hlm-button-group` was ruled out for
   because its join CSS cannot reach a value segment nested inside `hlm-select`;
   a plain link pair has no such nesting, so the primitive fits here). The
-  toggle preserves every filter query param **except `status`** when it
-  navigates: the board's columns are the statuses, so a `status` narrowing
-  travelling into it would either duplicate or contradict the column split —
-  `InterventionsPage.boardQueryParams` / `InterventionsBoardPage.listQueryParams`
-  each build the param set without it.
+  toggle preserves every filter query param when it navigates to the List or
+  the Calendar, **except `status`** when it navigates to the Board: the
+  board's columns are the statuses, so a `status` narrowing travelling into it
+  would either duplicate or contradict the column split — `status` is the one
+  field the three destinations disagree on. The board never carries `status`
+  itself, so its own two outgoing links (to the List and to the Calendar)
+  reuse the same `InterventionsBoardPage.listQueryParams` signal — nothing to
+  strip either way. `InterventionsPage.boardQueryParams` /
+  `InterventionsPage.calendarQueryParams` and
+  `InterventionsCalendarPage.boardQueryParams` are the three places that build
+  a param set with `status` excluded.
 
   **Columns and data.** One column per `InterventionStatus`, in workflow order
   (`INTERVENTION_BOARD_COLUMNS`), each labelled and counted through the
@@ -367,6 +374,78 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   `routerLink` to the detail page. A visually-hidden `aria-live="polite"`
   region announces "Moved `<name>` to `<status>`" the moment a move is
   requested, reflecting the store's own optimistic patch.
+
+- `/organizations/:organizationId/interventions/calendar` — the month-grid
+  view over the same dataset, the third and last leg of PRODUCT.md's "List /
+  Board / Calendar" promise (`InterventionsCalendarPage`,
+  `ui/pages/interventions-calendar-page/`). Registered before
+  `:interventionId`, same reason the board is. **Wakes, rather than rebuilds,
+  a dormant pair**: `InterventionCalendarStore` (component-scoped, provided on
+  this page, not on the pathless parent) and
+  `InterventionService.listCalendarWindow` had shipped with no page driving
+  them; both were already current-standard (named `loadCallState`,
+  `toStoreError`, `tapResponse`, a dispatched failure event) and needed no
+  refit. Unlike the Board, this leaf does **not** share `InterventionStore`:
+  the List/Board pair reads one server page, the calendar reads a bounded
+  date window — an incompatible shape for the same entity cache.
+
+  **Placement anchor.** Each intervention is placed on the day of its
+  schedule anchor — `plannedStartAt`, falling back to `dueAt` — the exact
+  anchor `listCalendarWindow` already fetches by (its own JSDoc: a single API
+  range filter cannot express that fallback, so the window is fetched as the
+  union of two bounded queries, one per field, de-duped by id;
+  over-fetching a few days at the grid's edges is harmless). An intervention
+  with neither bound set renders nowhere.
+
+  **Reuse, not a second month grid.** The grid is `@shared/calendar`'s
+  `Calendar`, used read-only and unmodified — a genuinely domain-agnostic
+  shared concept (`ARCHITECTURE.md` §2.7) already established by
+  `organization/features/calendar`'s own `CalendarPage`, and reused here
+  exactly the same way (`showToolbar="false"`, this page supplies its own
+  Today/prev/next band). What is **not** reused across the feature boundary
+  is the row shape: `shared/calendar` must never import an intervention
+  model, so `InterventionCalendarEntryList`
+  (`ui/components/intervention-calendar-entry-list/`) is a feature-local
+  mirror of `organization/features/calendar`'s own `CalendarEntryList` — one
+  component, rendered twice (the selected day's side panel on desktop, each
+  agenda group's rows on mobile), the same responsive split
+  `CalendarPage` established. This is the feature's **second** month-grid
+  consumer, not its third — extracting a shared entry-row component was
+  evaluated and declined (`ARCHITECTURE.md` §2.9): two consumers do not yet
+  justify it, and the row shapes already differ (an intervention row has no
+  Edit/Delete affordance, a feed row does).
+
+  **Filters.** Every narrowing the URL carries round-trips into this page —
+  unlike the Board, `status` travels too: the calendar has no columns for it
+  to conflict with, so narrowing the month to one or a few statuses is a
+  legitimate way to read it. `priority`, `label`, `due`, `dueAfter`/`dueBefore`
+  and `plannedStartAfter`/`plannedStartBefore` round-trip in the URL (so
+  switching away and back preserves them) but are **not** sent to the store:
+  `InterventionCalendarFilters` is a `Pick` of `status`/`type`/`site`/
+  `responsible` only, and the visible window already is the date filter, so a
+  second date narrowing would fight it rather than combine with it.
+  `mine` is **not** sent to the server either: the store resolves the
+  signed-in member's IRI once (`currentMemberIri`) and
+  `InterventionsCalendarPage.visibleInterventions` filters the loaded window
+  to it client-side — exactly the split `InterventionCalendarState`'s own doc
+  already described before this page existed. This first cut offers no
+  in-page filter control beyond the search box, mirroring the Board's own
+  stated trade-off; the URL is the only way to narrow it further.
+
+  **Overflow.** The grid's own per-day chip cap never hides an entry from the
+  reader: selecting a day always lists every one of its entries in the panel
+  or agenda group below. When a day holds more than the grid's cap shows, its
+  entry list additionally offers a "See all N in list" link, narrowing the
+  List view to that single day via the existing `dueAfter`/`dueBefore` filter
+  contract. **Stated trade-off**: an intervention placed on the grid by
+  `plannedStartAt` alone (no `dueAt` landing on that day) will not appear in
+  the linked list, since the list has no "planned start equals this day"
+  shortcut of its own — accepted rather than sending both bounds, which would
+  AND-narrow instead of matching either anchor.
+
+  Browser-only loading, the same reason `organization/features/calendar`'s
+  own page is: the window read is a dated, authenticated read that would
+  immediately refetch after hydration (`ARCHITECTURE.md` §12.5-3).
 
 - `/organizations/:organizationId/interventions/:interventionId` — the detail
   workspace, described below. Mounted as a second child of the same pathless
@@ -516,8 +595,17 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   completion — the page subscribes to that event for the toast and the
   skeleton-free `reload`. Component-scoped so a stale failure never leaks into
   the next intervention's visit.
-- `InterventionCalendarStore` — the interventions inside a bounded date window.
-  **Currently dormant**: the calendar render is not part of the rebuilt list page.
+- `InterventionCalendarStore` — component-scoped (provided in
+  `InterventionsCalendarPage`); the interventions inside a bounded date
+  window. One `load(request)` — `organizationId`, `window` (inclusive
+  `after`/`before`), an optional `InterventionCalendarFilters` narrowing —
+  driving one `loadCallState`, plus `currentMemberIri`, resolved once per
+  organization and reused across window refetches (`OrganizationMemberService
+.getCurrentProfile`, degrading gracefully to a disabled "Mine" scope on
+  failure rather than surfacing an error). Woken by 10.0's Calendar view
+  after shipping dormant: it needed no refit into current standards, since it
+  already used named `loadCallState`, `toStoreError` before `errorCallState`,
+  and a dispatched `loadFailed` event on a genuine fetch failure.
 - `InterventionStatisticsStore` (5.3) — component-scoped (provided in
   `InterventionsPage`); one `withQueryState` slice over
   `InterventionService.statistics`, backing the list page's KPI strip
@@ -1455,6 +1543,16 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
 
 ## Invariants
 
+- **The Calendar view places an intervention by `plannedStartAt ?? dueAt`,
+  never by `dueAt` alone.** `listCalendarWindow`, `InterventionCalendarStore`
+  and `InterventionsCalendarPage` must agree on this one anchor — placing it
+  differently in any one of the three would put an intervention in a
+  different cell than the window that fetched it expects.
+- **The Calendar's own `InterventionCalendarFilters` narrowing never grows
+  past `status`/`type`/`site`/`responsible` without a matching backend
+  change**: it is a `Pick` of `InterventionListOptions`, not a re-derivation,
+  specifically so it cannot silently drift from what `listCalendarWindow`
+  actually accepts.
 - **Publication is confirm-gated, and the confirmation _is_ the recap.** The phase
   command in `review` only opens the dialog; `confirmPublish()` on the detail
   page is reachable solely from `app-intervention-publish-dialog`'s

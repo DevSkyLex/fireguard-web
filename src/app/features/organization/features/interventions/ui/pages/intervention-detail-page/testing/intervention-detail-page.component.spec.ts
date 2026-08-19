@@ -13,7 +13,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
@@ -265,6 +265,7 @@ describe('InterventionDetailPage', () => {
   let permitted: Set<string>;
   let openSubjectThread: ReturnType<typeof vi.fn>;
   let downloadAttachment: ReturnType<typeof vi.fn>;
+  let exportReport: ReturnType<typeof vi.fn>;
   let browserDownloadTrigger: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
   let uploadAttachment: ReturnType<typeof vi.fn>;
@@ -314,6 +315,9 @@ describe('InterventionDetailPage', () => {
     downloadAttachment = vi
       .fn()
       .mockReturnValue(of(new Blob(['file-bytes'], { type: 'application/pdf' })));
+    exportReport = vi
+      .fn()
+      .mockReturnValue(of(new Blob(['pdf-bytes'], { type: 'application/pdf' })));
     browserDownloadTrigger = vi.fn();
     feedbackError = vi.fn();
     uploadAttachment = vi.fn();
@@ -351,7 +355,7 @@ describe('InterventionDetailPage', () => {
           },
         },
         { provide: ConnectivityService, useValue: { online } },
-        { provide: InterventionService, useValue: { downloadAttachment } },
+        { provide: InterventionService, useValue: { downloadAttachment, exportReport } },
         {
           provide: TeamService,
           useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
@@ -967,7 +971,7 @@ describe('InterventionDetailPage', () => {
       expect(root().textContent).not.toContain('Send it to');
     });
 
-    it('should drop a target the member lacks the capability for, and hide the overflow trigger with nothing left to offer', async () => {
+    it('should drop a target the member lacks the capability for, keeping the overflow trigger for Export report alone', async () => {
       permitted.delete('organization.interventions.plan');
       permitted.delete('organization.interventions.execute');
       current.set(
@@ -982,7 +986,16 @@ describe('InterventionDetailPage', () => {
       );
       fixture = await createPage();
 
-      expect(byPageActionsTestId('intervention-detail-menu')).toBeNull();
+      expect(byPageActionsTestId('intervention-detail-menu')).not.toBeNull();
+
+      byPageActionsTestId('intervention-detail-menu')?.click();
+      await fixture.whenStable();
+
+      expect(document.querySelector('[data-testid="intervention-detail-transition"]')).toBeNull();
+      expect(document.querySelector('[data-testid="intervention-detail-duplicate"]')).toBeNull();
+      expect(
+        document.querySelector('[data-testid="intervention-detail-export-report"]'),
+      ).not.toBeNull();
     });
 
     it('should still offer the menu and its transition group to a member with only transition rights, and dispatch the exact move on pick', async () => {
@@ -1483,6 +1496,74 @@ describe('InterventionDetailPage', () => {
 
       expect(browserDownloadTrigger).not.toHaveBeenCalled();
       expect(feedbackError).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('report export', () => {
+    it('should fetch the report and hand the blob to the browser download service with the FG filename', async () => {
+      fixture = await createPage();
+
+      byPageActionsTestId('intervention-detail-menu')?.click();
+      await fixture.whenStable();
+      (inBody('intervention-detail-export-report') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(exportReport).toHaveBeenCalledWith('intervention-1');
+      expect(browserDownloadTrigger).toHaveBeenCalledWith(
+        expect.any(Blob),
+        'intervention-FG-42-report.pdf',
+      );
+    });
+
+    it('should disable the entry and mark it aria-busy while the export is in flight', async () => {
+      exportReport.mockReturnValue(new Subject<Blob>());
+      fixture = await createPage();
+
+      byPageActionsTestId('intervention-detail-menu')?.click();
+      await fixture.whenStable();
+      (inBody('intervention-detail-export-report') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      byPageActionsTestId('intervention-detail-menu')?.click();
+      await fixture.whenStable();
+      const reopened = inBody('intervention-detail-export-report') as HTMLButtonElement;
+
+      expect(reopened.disabled).toBe(true);
+      expect(reopened.getAttribute('aria-busy')).toBe('true');
+    });
+
+    it('should clear the pending state and report a failure when the export errors', async () => {
+      exportReport.mockReturnValue(throwError(() => new Error('network down')));
+      fixture = await createPage();
+
+      byPageActionsTestId('intervention-detail-menu')?.click();
+      await fixture.whenStable();
+      (inBody('intervention-detail-export-report') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(browserDownloadTrigger).not.toHaveBeenCalled();
+      expect(feedbackError).toHaveBeenCalledTimes(1);
+    });
+
+    it('should offer Export report regardless of phase, even with no other menu entries available', async () => {
+      permitted.delete('organization.interventions.plan');
+      permitted.delete('organization.interventions.execute');
+      current.set(
+        intervention({
+          status: 'draft',
+          allowedTransitions: ['planned'],
+          allowedActions: {
+            ...actionsFor('published'),
+            canPublish: false,
+          },
+        }),
+      );
+      fixture = await createPage();
+
+      byPageActionsTestId('intervention-detail-menu')?.click();
+      await fixture.whenStable();
+
+      expect(inBody('intervention-detail-export-report')).not.toBeNull();
     });
   });
 

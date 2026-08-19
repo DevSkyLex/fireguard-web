@@ -63,6 +63,7 @@ export type AuditActionId =
   | 'intervention.recurrence_updated'
   | 'intervention.recurrence_deleted'
   | 'intervention.recurrence_materialized'
+  | 'intervention.report_exported'
   // maintenance
   | 'maintenance.schedule_overridden'
   | 'maintenance.campaign_generated'

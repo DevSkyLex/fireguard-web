@@ -585,13 +585,7 @@
     </button>
   }
 
-  @if (
-    transitionTargets().length > 0 ||
-    canAssignTeam() ||
-    canPlan() ||
-    canAbandon() ||
-    canDeleteIntervention()
-  ) {
+  @if (store.intervention(); as intervention) {
     <button
       hlmBtn
       type="button"
@@ -625,9 +619,7 @@
               </button>
             }
           </hlm-dropdown-menu-group>
-          @if (canAssignTeam() || canPlan() || canAbandon() || canDeleteIntervention()) {
-            <hlm-dropdown-menu-separator />
-          }
+          <hlm-dropdown-menu-separator />
         }
         @if (canAssignTeam()) {
           <button
@@ -648,6 +640,16 @@
             <span i18n="@@intervention.duplicate.action">Duplicate</span>
           </button>
         }
+        <button
+          hlmDropdownMenuItem
+          data-testid="intervention-detail-export-report"
+          [disabled]="reportExporting()"
+          [attr.aria-busy]="reportExporting() ? 'true' : null"
+          (click)="exportReport(intervention)"
+        >
+          <ng-icon name="lucideFileDown" aria-hidden="true" />
+          <span i18n="@@intervention.detail.exportReport">Export report</span>
+        </button>
         @if (canAbandon()) {
           <button
             hlmDropdownMenuItem

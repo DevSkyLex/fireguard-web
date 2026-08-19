@@ -938,6 +938,31 @@ export class InterventionService extends HydraApiService {
   }
 
   /**
+   * Method exportReport
+   * @method exportReport
+   *
+   * @description
+   * Reads the intervention's PDF report
+   * (`GET /api/interventions/{id}/report`). Available to any caller who can
+   * read the intervention, no phase gate. Calls `this.http` directly, like
+   * `downloadAttachment`, for a response shape (`responseType: 'blob'`) the
+   * base class does not support.
+   *
+   * @access public
+   * @since 4.7.0
+   *
+   * @param {string} interventionId - intervention Id value.
+   *
+   * @return {Observable<Blob>} The report's PDF binary content.
+   */
+  public exportReport(interventionId: string): Observable<Blob> {
+    return this.http.get(this.buildUrl(`/api/interventions/${interventionId}/report`), {
+      responseType: 'blob',
+      withCredentials: true,
+    });
+  }
+
+  /**
    * Method listIssues
    * @method listIssues
    *

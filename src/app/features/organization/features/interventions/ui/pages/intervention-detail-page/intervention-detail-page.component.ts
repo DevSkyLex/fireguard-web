@@ -28,6 +28,7 @@ import {
   lucideCompass,
   lucideCopy,
   lucideEllipsis,
+  lucideFileDown,
   lucideMessagesSquare,
   lucideScanLine,
   lucideTrash2,
@@ -263,6 +264,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideCompass,
       lucideCopy,
       lucideEllipsis,
+      lucideFileDown,
       lucideMessagesSquare,
       lucideScanLine,
       lucideTrash2,
@@ -1131,6 +1133,21 @@ export class InterventionDetailPage {
   >(new Set<string>());
 
   /**
+   * Property reportExporting
+   * @readonly
+   *
+   * @description
+   * Whether the intervention's PDF report is currently being fetched — a
+   * single boolean rather than a per-id set like {@link pendingDownloadIds},
+   * since there is exactly one report per intervention to export.
+   *
+   * @access protected
+   * @since 4.8.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly reportExporting: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property evidenceUploadingWorkItemIds
    * @readonly
    *
@@ -1784,6 +1801,42 @@ export class InterventionDetailPage {
           });
           this.feedback.error(
             $localize`:@@intervention.attachments.downloadFailed:Couldn't download ${attachment.fileName}:fileName:.`,
+          );
+        },
+      });
+  }
+
+  /**
+   * Method exportReport
+   *
+   * @description
+   * Fetches the intervention's PDF report and saves it to the visitor's
+   * device, locking the menu entry on {@link reportExporting} — a single
+   * boolean, since there is only one report to export at a time — rather
+   * than the store, mirroring {@link downloadAttachment}'s flow.
+   *
+   * @access protected
+   * @since 4.8.0
+   *
+   * @param {InterventionOutput} intervention - The intervention to export.
+   *
+   * @returns {void}
+   */
+  protected exportReport(intervention: InterventionOutput): void {
+    this.reportExporting.set(true);
+
+    this.interventionService
+      .exportReport(intervention.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.reportExporting.set(false);
+          this.browserDownload.trigger(blob, `intervention-FG-${intervention.number}-report.pdf`);
+        },
+        error: (): void => {
+          this.reportExporting.set(false);
+          this.feedback.error(
+            $localize`:@@intervention.report.exportFailed:Couldn't export the intervention report.`,
           );
         },
       });

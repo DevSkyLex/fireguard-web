@@ -828,8 +828,8 @@ wrapper — a one-time layout adjustment on desktop loads.
 1. **Header** — the intervention's name is the shell breadcrumb's `<h1>`
    (`interventionTitleResolver`, `data.title`), not an in-page band. Discussion
    and one `⋯` overflow menu — carrying both the status transition group (when
-   `transitionTargets().length > 0`) and Duplicate/Abandon/Delete — register on
-   the shell header through `PageActionsService` (`@core/page-actions`)
+   `transitionTargets().length > 0`) and Duplicate/Export report/Abandon/Delete
+   — register on the shell header through `PageActionsService` (`@core/page-actions`)
    instead, the same contract every other route page's header actions use
    (`organization/FEATURE.md` "Page header (shell contract)"). The status tag
    itself is on the band directly beneath (item 4).
@@ -963,6 +963,12 @@ so it reads as a fixed toolbar rather than a floating card at any width.
 Duplicate/Abandon/Delete rather than its own standalone trigger) — offers
 only the moves the status band does **not** own: starting or reopening field
 work (`in_progress`) and sending an intervention back (`changes_requested`).
+
+Unlike the other menu entries, **"Export report"** (`data-testid="intervention-detail-export-report"`)
+carries no permission or phase gate — any caller who can read the intervention
+can fetch its PDF (`InterventionService.exportReport`,
+`GET /api/interventions/{id}/report`), so it is the one entry that keeps the
+`⋯` trigger present even when every other action drops out.
 
 It used to offer the forward move too, which made the band's (then the
 action box's) readiness gate advisory: from `in_progress` an operator saw

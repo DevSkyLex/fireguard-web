@@ -3015,179 +3015,186 @@
           <context context-type="linenumber">102</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="audit.action.intervention.report_exported" datatype="html">
+        <source>Intervention report exported</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
+          <context context-type="linenumber">103</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="audit.action.maintenance.schedule_overridden" datatype="html">
         <source>Maintenance schedule overridden</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">103</context>
+          <context context-type="linenumber">104</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.maintenance.campaign_generated" datatype="html">
         <source>Maintenance campaign generated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">104</context>
+          <context context-type="linenumber">105</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.calendar.event_created" datatype="html">
         <source>Calendar event created</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">105</context>
+          <context context-type="linenumber">106</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.calendar.event_updated" datatype="html">
         <source>Calendar event updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">106</context>
+          <context context-type="linenumber">107</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.calendar.event_deleted" datatype="html">
         <source>Calendar event deleted</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">107</context>
+          <context context-type="linenumber">108</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.automation.rule_executed" datatype="html">
         <source>Automation rule executed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">108</context>
+          <context context-type="linenumber">109</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.automation.rule_failed" datatype="html">
         <source>Automation rule failed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">109</context>
+          <context context-type="linenumber">110</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.messaging.conversation_archived" datatype="html">
         <source>Conversation archived</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">110</context>
+          <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.messaging.message_moderated" datatype="html">
         <source>Message moderated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">111</context>
+          <context context-type="linenumber">112</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.messaging.message_unpin_moderated" datatype="html">
         <source>Pinned message removed by moderation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">112</context>
+          <context context-type="linenumber">113</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.messaging.channel_created" datatype="html">
         <source>Channel created</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">113</context>
+          <context context-type="linenumber">114</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.messaging.channel_participant_added" datatype="html">
         <source>Channel participant added</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">114</context>
+          <context context-type="linenumber">115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.messaging.channel_participant_removed" datatype="html">
         <source>Channel participant removed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">115</context>
+          <context context-type="linenumber">116</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.messaging.channel_team_binding_changed" datatype="html">
         <source>Channel team binding changed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">116</context>
+          <context context-type="linenumber">117</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.messaging.channel_parent_changed" datatype="html">
         <source>Channel parent changed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">117</context>
+          <context context-type="linenumber">118</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.import.job_completed" datatype="html">
         <source>Import job completed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">118</context>
+          <context context-type="linenumber">119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.import.job_failed" datatype="html">
         <source>Import job failed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">119</context>
+          <context context-type="linenumber">120</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.compliance.register_exported" datatype="html">
         <source>Safety register exported</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">120</context>
+          <context context-type="linenumber">121</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.webhook.subscription_created" datatype="html">
         <source>Webhook subscription created</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">121</context>
+          <context context-type="linenumber">122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.webhook.subscription_deleted" datatype="html">
         <source>Webhook subscription deleted</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">122</context>
+          <context context-type="linenumber">123</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.approval.requested" datatype="html">
         <source>Approval requested</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">123</context>
+          <context context-type="linenumber">124</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.approval.approved" datatype="html">
         <source>Approval granted</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">124</context>
+          <context context-type="linenumber">125</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.approval.rejected" datatype="html">
         <source>Approval rejected</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">125</context>
+          <context context-type="linenumber">126</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.approval.expired" datatype="html">
         <source>Approval request expired</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">126</context>
+          <context context-type="linenumber">127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.action.approval.execution_failed" datatype="html">
         <source>Approved action failed to execute</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/audit/models/audit-action-tag/audit-action-tag.util.ts</context>
-          <context context-type="linenumber">127</context>
+          <context context-type="linenumber">128</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.filter.action" datatype="html">
@@ -11394,215 +11401,229 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">583,589</context>
+          <context context-type="linenumber">583,588</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.moreActions" datatype="html">
         <source>More actions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">606,609</context>
+          <context context-type="linenumber">600,603</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.statusMenuLabel" datatype="html">
         <source>Send it to</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">616,618</context>
+          <context context-type="linenumber">610,612</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.menuEntry" datatype="html">
         <source>Assign team…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">638,641</context>
+          <context context-type="linenumber">630,633</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.duplicate.action" datatype="html">
         <source>Duplicate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">648,651</context>
+          <context context-type="linenumber">640,643</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-table/intervention-table.component.html</context>
           <context context-type="linenumber">210,212</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.detail.exportReport" datatype="html">
+        <source>Export report</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">651,653</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.abandon.action" datatype="html">
         <source>Abandon intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">658,661</context>
+          <context context-type="linenumber">660,663</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.delete.action" datatype="html">
         <source>Delete intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">669,672</context>
+          <context context-type="linenumber">671,674</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.publication.succeeded" datatype="html">
         <source>Published to the compliance record</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">568</context>
+          <context context-type="linenumber">570</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.site" datatype="html">
         <source>Choose a site</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1326</context>
+          <context context-type="linenumber">1343</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.responsible" datatype="html">
         <source>Assign a responsible agent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1332</context>
+          <context context-type="linenumber">1349</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.schedule" datatype="html">
         <source>Set a due date</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1338</context>
+          <context context-type="linenumber">1355</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.scope" datatype="html">
         <source>Prepare the field work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1344</context>
+          <context context-type="linenumber">1361</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.plan" datatype="html">
         <source>Plan intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1384</context>
+          <context context-type="linenumber">1401</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.recordWork" datatype="html">
         <source>Record field work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1400</context>
+          <context context-type="linenumber">1417</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.completeOne" datatype="html">
         <source>Complete 1 remaining item</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1411</context>
+          <context context-type="linenumber">1428</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.completeMany" datatype="html">
         <source>Complete <x id="count" equiv-text="remaining"/> remaining items</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1412</context>
+          <context context-type="linenumber">1429</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.submit" datatype="html">
         <source>Submit for review</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1420</context>
+          <context context-type="linenumber">1437</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.reasonResponsible" datatype="html">
         <source>Only the responsible agent can submit.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1425</context>
+          <context context-type="linenumber">1442</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.publish" datatype="html">
         <source>Publish intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1436</context>
+          <context context-type="linenumber">1453</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.reasonOffline" datatype="html">
         <source>Connect to the network to publish.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1442</context>
+          <context context-type="linenumber">1459</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2263</context>
+          <context context-type="linenumber">2316</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.reasonBlockersOne" datatype="html">
         <source>1 blocking issue to clear.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1444</context>
+          <context context-type="linenumber">1461</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.reasonBlockersMany" datatype="html">
         <source><x id="count" equiv-text="blockers"/> blocking issues to clear.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1445</context>
+          <context context-type="linenumber">1462</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.prepareFailed" datatype="html">
         <source><x id="fileName" equiv-text="fileName"/> could not be prepared for upload.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1656</context>
+          <context context-type="linenumber">1673</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1721</context>
+          <context context-type="linenumber">1738</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.downloadFailed" datatype="html">
         <source>Couldn&apos;t download <x id="fileName" equiv-text="attachment.fileName"/>.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1786</context>
+          <context context-type="linenumber">1803</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.report.exportFailed" datatype="html">
+        <source>Couldn&apos;t export the intervention report.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
+          <context context-type="linenumber">1839</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.unreadable" datatype="html">
         <source>No QR code could be read from this capture.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1819</context>
+          <context context-type="linenumber">1872</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.noMatch" datatype="html">
         <source>No work item of this intervention matches the scanned code.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1827</context>
+          <context context-type="linenumber">1880</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.matched" datatype="html">
         <source>Found: <x id="target" equiv-text="result.item.target ?? result.item.id"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1835</context>
+          <context context-type="linenumber">1888</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.loadFailed" datatype="html">
         <source>Couldn&apos;t load the organization&apos;s teams.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2136</context>
+          <context context-type="linenumber">2189</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.fieldSaved" datatype="html">
         <source>Change saved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2426</context>
+          <context context-type="linenumber">2479</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.list.searchPlaceholder" datatype="html">

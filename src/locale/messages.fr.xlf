@@ -5091,6 +5091,10 @@
         <source>Couldn&apos;t download <x id="fileName" equiv-text="attachment.fileName"/>.</source>
         <target>Impossible de télécharger <x id="fileName" equiv-text="attachment.fileName"/>.</target>
       </trans-unit>
+      <trans-unit id="intervention.report.exportFailed" datatype="html">
+        <source>Couldn&apos;t export the intervention report.</source>
+        <target>Impossible d'exporter le rapport de l'intervention.</target>
+      </trans-unit>
       <trans-unit id="intervention.changes.reject" datatype="html">
         <source>Reject</source>
         <target>Rejeter</target>
@@ -5322,6 +5326,10 @@
       <trans-unit id="intervention.detail.moreActions" datatype="html">
         <source>More actions</source>
         <target>Plus d'actions</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.exportReport" datatype="html">
+        <source>Export report</source>
+        <target>Exporter le rapport</target>
       </trans-unit>
       <trans-unit id="intervention.phase.stepperAria" datatype="html">
         <source>Workflow phases</source>
@@ -14593,6 +14601,10 @@
       <trans-unit id="audit.action.intervention.recurrence_materialized" datatype="html">
         <source>Recurrence materialized</source>
         <target>Récurrence matérialisée</target>
+      </trans-unit>
+      <trans-unit id="audit.action.intervention.report_exported" datatype="html">
+        <source>Intervention report exported</source>
+        <target>Rapport d'intervention exporté</target>
       </trans-unit>
       <trans-unit id="audit.action.maintenance.schedule_overridden" datatype="html">
         <source>Maintenance schedule overridden</source>

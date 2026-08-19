@@ -76,6 +76,16 @@ export class CalendarEventDeleteDialog {
    * @type {InputSignal<string | null>}
    */
   public readonly errorMessage: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property eventTitle
+   * @readonly
+   * @description Names the event about to be deleted in the dialog's own title, so the confirmation stays unambiguous even re-read out of context.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string>}
+   */
+  public readonly eventTitle: InputSignal<string> = input<string>('');
   //#endregion
 
   //#region Outputs

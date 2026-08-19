@@ -113,14 +113,16 @@
           </hlm-field>
         </div>
 
-        <label class="flex items-center gap-2 text-sm text-muted-foreground">
-          <hlm-checkbox
+        <hlm-field orientation="horizontal" class="justify-between">
+          <label hlmFieldLabel for="calendar-event-all-day" i18n="@@calendar.eventDialog.allDay"
+            >All day</label
+          >
+          <hlm-switch
             id="calendar-event-all-day"
             data-testid="calendar-event-all-day"
             [formField]="eventForm.allDay"
           />
-          <span i18n="@@calendar.eventDialog.allDay">All day</span>
-        </label>
+        </hlm-field>
 
         <hlm-field>
           <label hlmFieldLabel for="calendar-event-facility" i18n="@@calendar.eventDialog.facility"

@@ -158,6 +158,7 @@
   <app-calendar-event-delete-dialog
     [visible]="pendingDeleteEvent() !== null"
     [pending]="isDeletePending()"
+    [eventTitle]="pendingDeleteEvent()?.title ?? ''"
     [errorMessage]="deleteErrorMessage()"
     (visibleChange)="onDeleteDialogVisibleChanged($event)"
     (confirmed)="confirmDelete()"

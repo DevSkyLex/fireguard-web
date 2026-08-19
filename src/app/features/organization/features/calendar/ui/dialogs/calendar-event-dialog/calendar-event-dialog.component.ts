@@ -24,11 +24,11 @@ import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDialogImports } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { CalendarEventDraft, CalendarEventFormValues } from './models';
 
@@ -87,7 +87,7 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
   imports: [
     FormField,
     HlmButton,
-    HlmCheckbox,
+    HlmSwitch,
     HlmInput,
     ...HlmDialogImports,
     ...HlmFieldImports,

@@ -200,5 +200,33 @@ export class CalendarEntryList {
   protected isEditableOf(item: CalendarFeedItemOutput): boolean {
     return item.sourceKey === 'calendar_event' && this.canWrite();
   }
+
+  /**
+   * Method editAriaLabelOf
+   * @description The edit button's accessible name, naming the event so repeated rows stay distinguishable to assistive tech.
+   * @access protected
+   * @since 1.1.0
+   * @param {CalendarFeedItemOutput} item - The row's entry.
+   * @returns {string} The localized label.
+   */
+  protected editAriaLabelOf(item: CalendarFeedItemOutput): string {
+    const eventTitle: string = item.title;
+
+    return $localize`:@@calendar.entry.editAria:Edit ${eventTitle}:eventTitle:`;
+  }
+
+  /**
+   * Method deleteAriaLabelOf
+   * @description The delete button's accessible name, naming the event so repeated rows stay distinguishable to assistive tech.
+   * @access protected
+   * @since 1.1.0
+   * @param {CalendarFeedItemOutput} item - The row's entry.
+   * @returns {string} The localized label.
+   */
+  protected deleteAriaLabelOf(item: CalendarFeedItemOutput): string {
+    const eventTitle: string = item.title;
+
+    return $localize`:@@calendar.entry.deleteAria:Delete ${eventTitle}:eventTitle:`;
+  }
   //#endregion
 }

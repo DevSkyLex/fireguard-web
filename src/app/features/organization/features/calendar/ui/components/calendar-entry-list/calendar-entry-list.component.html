@@ -24,8 +24,7 @@
               size="icon-sm"
               class="max-sm:size-11"
               data-testid="calendar-day-item-edit"
-              i18n-aria-label="@@calendar.entry.edit"
-              aria-label="Edit event"
+              [attr.aria-label]="editAriaLabelOf(item)"
               (click)="editRequested.emit(item)"
             >
               <ng-icon name="lucidePencil" aria-hidden="true" />
@@ -37,8 +36,7 @@
               size="icon-sm"
               class="max-sm:size-11"
               data-testid="calendar-day-item-delete"
-              i18n-aria-label="@@calendar.entry.delete"
-              aria-label="Delete event"
+              [attr.aria-label]="deleteAriaLabelOf(item)"
               (click)="deleteRequested.emit(item)"
             >
               <ng-icon name="lucideTrash2" aria-hidden="true" />

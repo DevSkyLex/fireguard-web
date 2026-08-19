@@ -9032,13 +9032,13 @@
         <source> Nothing scheduled in this period. </source>
         <target>Rien de prévu sur cette période.</target>
       </trans-unit>
-      <trans-unit id="calendar.entry.edit" datatype="html">
-        <source>Edit event</source>
-        <target>Modifier l'événement</target>
+      <trans-unit id="calendar.entry.editAria" datatype="html">
+        <source>Edit <x id="eventTitle" equiv-text="eventTitle"/></source>
+        <target>Modifier <x id="eventTitle" equiv-text="eventTitle"/></target>
       </trans-unit>
-      <trans-unit id="calendar.entry.delete" datatype="html">
-        <source>Delete event</source>
-        <target>Supprimer l'événement</target>
+      <trans-unit id="calendar.entry.deleteAria" datatype="html">
+        <source>Delete <x id="eventTitle" equiv-text="eventTitle"/></source>
+        <target>Supprimer <x id="eventTitle" equiv-text="eventTitle"/></target>
       </trans-unit>
       <trans-unit id="calendar.newEvent" datatype="html">
         <source>New event</source>
@@ -9129,8 +9129,8 @@
         <target>L'événement n'a pas pu être enregistré.</target>
       </trans-unit>
       <trans-unit id="calendar.eventDeleteDialog.title" datatype="html">
-        <source>Delete event?</source>
-        <target>Supprimer l'événement ?</target>
+        <source> Delete &quot;<x id="INTERPOLATION" equiv-text="{{ eventTitle() }}"/>&quot;? </source>
+        <target> Supprimer «&#160;<x id="INTERPOLATION" equiv-text="{{ eventTitle() }}"/>&#160;» ? </target>
       </trans-unit>
       <trans-unit id="calendar.eventDeleteDialog.description" datatype="html">
         <source> This standalone event is permanently removed from the calendar. This cannot be undone. </source>

@@ -93,16 +93,33 @@ i18n ids `interventions`' own registry already defined for the same enum
 (one translation, two call sites) when it renders equipment read-only on the
 intervention detail page's Linked tab.
 
-**Deferred, not built:** attachments, maintenance-log history and the
-labeling-tag (`EquipmentTagOutput`) UI. `EquipmentStore` already carries the
-state and `EquipmentService` the transport for all three (see below), but
-none is named by a route in this document, and building three more
-subsystems (file upload, a log table, tag chips) was judged disproportionate
-to what is documented here. Revisit when a route requires one. Facility
-assignment/unassignment (`EquipmentStore.assignToFacility` /
-`unassignFromFacility`) is likewise data-access-only for now; the detail
-header shows the assigned facility's name (`EquipmentOutput.facilityName`)
-read-only.
+**Attachments, maintenance history, tags, and facility assignment are now
+built** on the detail page, closing the "Deferred, not built" gap this
+section used to record. Three tabs sit beside **Overview** (the identity
+fields, unchanged): **Attachments** (`EquipmentAttachments`, `ui/components/`)
+— upload/list/download/delete, base64 JSON on the wire
+(`EquipmentService.addAttachment`'s `AddAttachmentInput.content`; the page
+converts each picked `File` with the local `utils/file-to-base64/` before
+calling the store) and download via `EquipmentService.downloadAttachment`
+(`GET .../attachments/{attachmentId}/download`, `responseType: 'blob'`,
+mirroring `InterventionService.downloadAttachment`) saved through
+`BrowserDownloadService`; **Maintenance** (`EquipmentMaintenanceHistory`) —
+read-only, newest-first, rendering `EquipmentMaintenanceLogOutput`'s `source`
+(`'status_transition' | 'intervention'`) as an icon-and-label pair and
+linking to the originating intervention (`FG-{interventionNumber}`) when
+`interventionId` is present; **Tags** (`EquipmentTags`) — the current tags as
+removable chips plus an `hlm-combobox` over the organization's tag catalog
+that creates-or-attaches by name (`AddTagInput`) on a typed match or a "Create"
+pick, mirroring `FacilityMoveDialog`'s combobox pattern. Each tab's data
+loads once, on its own first activation (`EquipmentDetailPage.onTabActivated`),
+mirroring `FacilityDetailPage`'s Plans tab.
+
+Facility assignment/unassignment (`EquipmentStore.assignToFacility` /
+`unassignFromFacility`) gets its own dialog
+(`EquipmentAssignFacilityDialog`, `ui/dialogs/`) opened from the header's
+facility row — a single pick/clear action, not a browsing surface, so it did
+not earn a fourth tab. Unassign has no separate confirm dialog, matching the
+header's own Decommission action.
 
 There is no `/:equipmentId/edit` route: the record itself is the edit
 surface (see above), and no route in this document links to one.
@@ -118,6 +135,15 @@ Primary stores:
 - `ActiveEquipmentStore` — root-provided; the currently active record,
   populated by `equipmentResolver`.
 
+The list page's KPI strip is backed by `EquipmentKpisStore`
+(`state/equipment-kpis/`, `withQueryState`), component-scoped on the list
+route and reloaded only on an organization switch. Its data comes from
+`EquipmentService.kpis()` (`GET /organizations/{organizationId}/equipment/kpis`).
+`EquipmentKpiOutput.openNonConformities` is organization-wide, not
+equipment-scoped — non-conformities attach to inspections, not equipment —
+and the strip's tile label states that explicitly rather than implying a
+per-record count.
+
 Primary service:
 
 - `EquipmentService`
@@ -128,6 +154,9 @@ Utility:
   brand model" title, consumed by both `equipmentTitleResolver` (document
   title, breadcrumb) and `EquipmentDetailPage` (page `<h1>`), so the two
   never drift.
+- `fileToBase64` (`utils/file-to-base64/`) — converts a picked `File` to the
+  base64 string `AddAttachmentInput.content` expects; the single consumer is
+  `EquipmentDetailPage`'s attachment upload handler.
 
 ## Cross-Feature Dependencies
 
@@ -145,6 +174,13 @@ Utility:
   assigned facility's floor plan; the 409 the backend returns when the
   equipment carries no facility assignment is reworded client-side by the
   calling store, not here.
+- The reverse dependency: `EquipmentDetailPage` injects the `facilities`
+  subfeature's `FacilityService.list` directly, read-only, to preload the
+  organization's facilities as options for `EquipmentAssignFacilityDialog` —
+  the same pattern `maintenance-schedules`' `MaintenanceSchedulesPage` already
+  uses for its facility-scoping select. No write ever crosses into
+  `facilities`; the equipment side of the assignment stays on
+  `EquipmentStore.assignToFacility` / `unassignFromFacility`.
 
 ## Deletion (data-access only, no duplicate UI)
 

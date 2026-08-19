@@ -792,6 +792,41 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
+   * Method downloadAttachment
+   * @method downloadAttachment
+   *
+   * @description
+   * Reads one attachment's binary content
+   * (`GET /api/organizations/{organizationId}/equipment/{equipmentId}/attachments/{attachmentId}/download`).
+   * The route forces `Content-Disposition: attachment`, so a bare `<a href>`
+   * cannot carry it — the caller reads the resulting `Blob` and triggers the
+   * browser save itself, mirroring `InterventionService.downloadAttachment`.
+   * Calls `this.http` directly for a response shape (`responseType: 'blob'`)
+   * the base class does not support.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization the equipment belongs to.
+   * @param {string} equipmentId - The ID of the equipment the attachment belongs to.
+   * @param {string} attachmentId - The ID of the attachment to download.
+   *
+   * @return {Observable<Blob>} The attachment's binary content.
+   */
+  public downloadAttachment(
+    organizationId: string,
+    equipmentId: string,
+    attachmentId: string,
+  ): Observable<Blob> {
+    return this.http.get(
+      this.buildUrl(
+        `${this.equipmentPath(organizationId, equipmentId)}/attachments/${attachmentId}/download`,
+      ),
+      { responseType: 'blob', withCredentials: true },
+    );
+  }
+
+  /**
    * Method addTag
    * @method addTag
    *

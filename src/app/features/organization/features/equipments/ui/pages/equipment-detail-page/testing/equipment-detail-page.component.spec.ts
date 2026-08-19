@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -20,11 +21,18 @@ import {
 } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
+import type {
+  EquipmentAttachmentOutput,
+  EquipmentOutput,
+  EquipmentTagOutput,
+} from '@features/organization/features/equipments/models';
 import {
   ActiveEquipmentStore,
   EquipmentStore,
 } from '@features/organization/features/equipments/state';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { EquipmentDetailPage } from '../equipment-detail-page.component';
 
 const equipment = (overrides: Partial<EquipmentOutput> = {}): EquipmentOutput =>
@@ -79,12 +87,23 @@ describe('EquipmentDetailPage', () => {
   let commission: ReturnType<typeof vi.fn>;
   let maintenance: ReturnType<typeof vi.fn>;
   let decommission: ReturnType<typeof vi.fn>;
+  let loadAttachments: ReturnType<typeof vi.fn>;
+  let loadMaintenanceLogs: ReturnType<typeof vi.fn>;
+  let loadTags: ReturnType<typeof vi.fn>;
+  let addAttachment: ReturnType<typeof vi.fn>;
+  let deleteAttachment: ReturnType<typeof vi.fn>;
+  let addTag: ReturnType<typeof vi.fn>;
+  let removeTag: ReturnType<typeof vi.fn>;
+  let assignToFacility: ReturnType<typeof vi.fn>;
+  let unassignFromFacility: ReturnType<typeof vi.fn>;
   let setTitle: ReturnType<typeof vi.fn>;
   let selectedEquipment: WritableSignal<EquipmentOutput | null>;
   let getError: WritableSignal<StoreError | null>;
   let isLoadingEquipment: WritableSignal<boolean>;
   let resolveEquipment: ReturnType<typeof vi.fn>;
   let updateCallState: WritableSignal<CallState<EquipmentOutput | null>>;
+  let assignToFacilityCallState: WritableSignal<CallState<EquipmentOutput | null>>;
+  let unassignFromFacilityCallState: WritableSignal<CallState<EquipmentOutput | null>>;
   let isChangingLifecycle: WritableSignal<boolean>;
 
   const createPage = async (): Promise<void> => {
@@ -99,12 +118,23 @@ describe('EquipmentDetailPage', () => {
     commission = vi.fn();
     maintenance = vi.fn();
     decommission = vi.fn();
+    loadAttachments = vi.fn();
+    loadMaintenanceLogs = vi.fn();
+    loadTags = vi.fn();
+    addAttachment = vi.fn();
+    deleteAttachment = vi.fn();
+    addTag = vi.fn();
+    removeTag = vi.fn();
+    assignToFacility = vi.fn();
+    unassignFromFacility = vi.fn();
     setTitle = vi.fn();
     selectedEquipment = signal<EquipmentOutput | null>(equipment());
     getError = signal<StoreError | null>(null);
     isLoadingEquipment = signal<boolean>(false);
     resolveEquipment = vi.fn();
     updateCallState = signal<CallState<EquipmentOutput | null>>(idleCallState());
+    assignToFacilityCallState = signal<CallState<EquipmentOutput | null>>(idleCallState());
+    unassignFromFacilityCallState = signal<CallState<EquipmentOutput | null>>(idleCallState());
     isChangingLifecycle = signal<boolean>(false);
 
     TestBed.configureTestingModule({
@@ -123,15 +153,44 @@ describe('EquipmentDetailPage', () => {
             commission,
             maintenance,
             decommission,
+            loadAttachments,
+            loadMaintenanceLogs,
+            loadTags,
+            addAttachment,
+            deleteAttachment,
+            addTag,
+            removeTag,
+            assignToFacility,
+            unassignFromFacility,
             updateCallState,
             updateError: signal(null),
             isChangingLifecycle,
+            attachments: signal<readonly EquipmentAttachmentOutput[]>([]),
+            tags: signal<readonly EquipmentTagOutput[]>([]),
+            maintenanceLogs: signal([]),
+            isLoadingTags: signal(false),
+            isLoadingMaintenanceLogs: signal(false),
+            addAttachmentCallState: signal(idleCallState()),
+            addTagCallState: signal(idleCallState()),
+            deleteAttachmentCallState: signal(idleCallState()),
+            removeTagCallState: signal(idleCallState()),
+            assignToFacilityCallState,
+            unassignFromFacilityCallState,
           },
         },
         {
           provide: OrganizationPermissionService,
           useValue: { hasPermission: (): boolean => true },
         },
+        {
+          provide: FacilityService,
+          useValue: { list: (): unknown => of({ member: [], totalItems: 0 }) },
+        },
+        {
+          provide: EquipmentService,
+          useValue: { downloadAttachment: (): unknown => of(new Blob()) },
+        },
+        { provide: BrowserDownloadService, useValue: { trigger: vi.fn() } },
       ],
     });
   });
@@ -337,6 +396,150 @@ describe('EquipmentDetailPage', () => {
       saving: null,
       failed: 'brand',
       failure: 'Rejected',
+    });
+  });
+
+  describe('tab activation', () => {
+    it('should load attachments only once, on first activation of the Attachments tab', async () => {
+      await createPage();
+
+      fixture.componentInstance['onTabActivated']('attachments');
+      fixture.componentInstance['onTabActivated']('overview');
+      fixture.componentInstance['onTabActivated']('attachments');
+
+      expect(loadAttachments).toHaveBeenCalledTimes(1);
+      expect(loadAttachments).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        equipmentId: 'equipment-1',
+      });
+    });
+
+    it('should load maintenance logs on first activation of the Maintenance tab', async () => {
+      await createPage();
+
+      fixture.componentInstance['onTabActivated']('maintenance');
+
+      expect(loadMaintenanceLogs).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        equipmentId: 'equipment-1',
+      });
+    });
+
+    it('should load the tag catalog on first activation of the Tags tab', async () => {
+      await createPage();
+
+      fixture.componentInstance['onTabActivated']('tags');
+
+      expect(loadTags).toHaveBeenCalledWith({ organizationId: 'org-1' });
+    });
+  });
+
+  describe('attachments', () => {
+    const attachment: EquipmentAttachmentOutput = {
+      '@id': '/api/organizations/org-1/equipment/equipment-1/attachments/attachment-1',
+      '@type': 'EquipmentAttachment',
+      id: 'attachment-1',
+      revision: 1,
+      equipmentId: 'equipment-1',
+      fileName: 'datasheet.pdf',
+      mimeType: 'application/pdf',
+      size: 1024,
+      label: null,
+      uploadedAt: '2026-01-05T09:00:00Z',
+    };
+
+    it('should convert a picked file to base64 and call addAttachment', async () => {
+      await createPage();
+
+      const file: File = new File(['hello'], 'note.txt', { type: 'text/plain' });
+      fixture.componentInstance['onAttachmentFilesPicked']([file]);
+      await vi.waitFor(() => expect(addAttachment).toHaveBeenCalled());
+
+      expect(addAttachment).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        equipmentId: 'equipment-1',
+        input: { fileName: 'note.txt', content: btoa('hello'), mimeType: 'text/plain' },
+      });
+    });
+
+    it('should call deleteAttachment for the given attachment', async () => {
+      await createPage();
+
+      fixture.componentInstance['onAttachmentDeleteRequested'](attachment);
+
+      expect(deleteAttachment).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        equipmentId: 'equipment-1',
+        attachmentId: 'attachment-1',
+      });
+    });
+  });
+
+  describe('tags', () => {
+    it('should call addTag with the requested name', async () => {
+      await createPage();
+
+      fixture.componentInstance['onTagAddRequested']('critical');
+
+      expect(addTag).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        equipmentId: 'equipment-1',
+        input: { name: 'critical' },
+      });
+    });
+
+    it('should call removeTag for the given tag', async () => {
+      await createPage();
+
+      const tag: EquipmentTagOutput = {
+        '@id': '/api/organizations/org-1/equipment/tags/tag-1',
+        '@type': 'EquipmentTag',
+        id: 'tag-1',
+        name: 'critical',
+        organizationId: 'org-1',
+      };
+      fixture.componentInstance['onTagRemoveRequested'](tag);
+
+      expect(removeTag).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        equipmentId: 'equipment-1',
+        tagId: 'tag-1',
+      });
+    });
+  });
+
+  describe('facility assignment', () => {
+    it('should call assignToFacility with the picked facility', async () => {
+      await createPage();
+
+      fixture.componentInstance['onFacilityAssigned']('facility-2');
+
+      expect(assignToFacility).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        equipmentId: 'equipment-1',
+        input: { facilityId: 'facility-2' },
+      });
+    });
+
+    it('should call unassignFromFacility', async () => {
+      await createPage();
+
+      fixture.componentInstance['onFacilityUnassigned']();
+
+      expect(unassignFromFacility).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        equipmentId: 'equipment-1',
+      });
+    });
+
+    it('should close the dialog once the assignment succeeds', async () => {
+      await createPage();
+
+      fixture.componentInstance['assignFacilityDialogVisible'].set(true);
+      assignToFacilityCallState.set(successCallState(equipment({ facilityId: 'facility-2' })));
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['assignFacilityDialogVisible']()).toBe(false);
     });
   });
 });

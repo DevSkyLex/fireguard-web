@@ -13,7 +13,10 @@ export type { EquipmentAttachmentOutput } from './equipment-attachment/equipment
 export type { AddAttachmentInput } from './equipment-attachment/add-attachment-input.interface';
 export type { EquipmentTagOutput } from './equipment-tag/equipment-tag-output.interface';
 export type { AddTagInput } from './equipment-tag/add-tag-input.interface';
-export type { EquipmentMaintenanceLogOutput } from './equipment/equipment-maintenance-log-output.interface';
+export type {
+  EquipmentMaintenanceLogOutput,
+  EquipmentMaintenanceLogSource,
+} from './equipment/equipment-maintenance-log-output.interface';
 export type {
   EquipmentListSort,
   EquipmentSortField,

@@ -453,6 +453,24 @@ describe('EquipmentService', () => {
 
   // ── addTag ─────────────────────────────────────────────────────────────────
 
+  describe('downloadAttachment', () => {
+    it('should send a GET request for the blob content', () => {
+      const blob = new Blob(['content'], { type: 'application/pdf' });
+
+      service.downloadAttachment(orgId, equipmentId, 'attach-uuid-1').subscribe((result) => {
+        expect(result).toBeInstanceOf(Blob);
+      });
+
+      const req = httpMock.expectOne(
+        `${equipmentBaseUrl}/${equipmentId}/attachments/attach-uuid-1/download`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(blob);
+    });
+  });
+
   describe('addTag', () => {
     const input: AddTagInput = { name: 'critical' };
 

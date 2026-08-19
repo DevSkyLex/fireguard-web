@@ -1,0 +1,129 @@
+<div class="flex flex-col gap-3" data-testid="equipment-attachments">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="flex flex-col gap-0.5">
+      <h2 class="text-base font-semibold" i18n="@@equipment.attachments.title">Attachments</h2>
+      <p class="text-xs text-muted-foreground" i18n="@@equipment.attachments.caption">
+        Documents and photos kept with this equipment.
+      </p>
+    </div>
+
+    @if (canManage()) {
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          [disabled]="uploading()"
+          [attr.aria-busy]="uploading() ? 'true' : null"
+          data-testid="equipment-attachments-add"
+          (click)="pick(filesInput)"
+        >
+          @if (uploading()) {
+            <hlm-spinner size="xs" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucidePaperclip" aria-hidden="true" />
+          }
+          <span i18n="@@equipment.attachments.add">Add files</span>
+        </button>
+        <input
+          #filesInput
+          type="file"
+          class="sr-only"
+          tabindex="-1"
+          multiple
+          [disabled]="uploading()"
+          (change)="onFilesSelected($event)"
+        />
+      </div>
+    }
+  </div>
+
+  @if (attachments().length === 0) {
+    <app-empty-state
+      icon="lucidePaperclip"
+      class="rounded-md border border-dashed border-border p-6"
+      title="No files attached yet"
+      i18n-title="@@equipment.attachments.emptyTitle"
+      description="Add photos or documents to keep with this equipment."
+      i18n-description="@@equipment.attachments.emptyDesc"
+      data-testid="equipment-attachments-empty"
+    />
+  } @else {
+    <ul hlmItemGroup>
+      @for (attachment of attachments(); track attachment.id) {
+        <li
+          hlmItem
+          variant="outline"
+          size="sm"
+          class="rounded-md transition-colors hover:bg-muted/50"
+          data-testid="equipment-attachment-row"
+        >
+          <div hlmItemMedia variant="icon" class="relative text-muted-foreground">
+            <ng-icon [name]="iconOf(attachment)" class="text-3xl" aria-hidden="true" />
+            @if (extensionOf(attachment); as extension) {
+              <span
+                hlmBadge
+                class="absolute -right-1 -bottom-1 h-3.5 min-w-3.5 justify-center rounded-sm px-0.5 py-0 leading-none"
+                aria-hidden="true"
+                >{{ extension }}</span
+              >
+            }
+          </div>
+          <div hlmItemContent>
+            <span hlmItemTitle class="line-clamp-1">{{ attachment.fileName }}</span>
+            <span hlmItemDescription>
+              {{ sizeLabelOf(attachment) }}
+              @if (attachment.label) {
+                · {{ attachment.label }}
+              }
+            </span>
+          </div>
+          <div hlmItemActions>
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              class="text-muted-foreground max-sm:size-11"
+              data-testid="equipment-attachment-download"
+              i18n-aria-label="@@equipment.attachments.download"
+              aria-label="Download this file"
+              [disabled]="isRowDownloading(attachment)"
+              [attr.aria-busy]="isRowDownloading(attachment) ? 'true' : null"
+              (click)="downloadRequested.emit(attachment)"
+            >
+              @if (isRowDownloading(attachment)) {
+                <hlm-spinner size="xs" aria-hidden="true" />
+              } @else {
+                <ng-icon name="lucideDownload" aria-hidden="true" />
+              }
+            </button>
+            @if (canManage()) {
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                class="text-muted-foreground hover:text-destructive max-sm:size-11"
+                data-testid="equipment-attachment-delete"
+                i18n-aria-label="@@equipment.attachments.delete"
+                aria-label="Delete this file"
+                [disabled]="isRowPending(attachment)"
+                [attr.aria-busy]="isRowPending(attachment) ? 'true' : null"
+                (click)="deleteRequested.emit(attachment)"
+              >
+                @if (isRowPending(attachment)) {
+                  <hlm-spinner size="xs" aria-hidden="true" />
+                } @else {
+                  <ng-icon name="lucideTrash2" aria-hidden="true" />
+                }
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -2867,10 +2867,6 @@
         <source>Not commissioned</source>
         <target>Non mis en service</target>
       </trans-unit>
-      <trans-unit id="equipment.tags.title" datatype="html">
-        <source> Tags </source>
-        <target>Étiquettes</target>
-      </trans-unit>
       <trans-unit id="equipment.tags.empty" datatype="html">
         <source>No tags assigned.</source>
         <target>Aucune étiquette attribuée.</target>
@@ -3246,6 +3242,158 @@
       <trans-unit id="equipment.detail.metaUpdated" datatype="html">
         <source>Updated <x id="when" equiv-text="when"/></source>
         <target>Mis à jour <x id="when" equiv-text="when"/></target>
+      </trans-unit>
+      <trans-unit id="equipment.attachments.title" datatype="html">
+        <source>Attachments</source>
+        <target>Pièces jointes</target>
+      </trans-unit>
+      <trans-unit id="equipment.attachments.caption" datatype="html">
+        <source>Documents and photos kept with this equipment.</source>
+        <target>Documents et photos conservés avec cet équipement.</target>
+      </trans-unit>
+      <trans-unit id="equipment.attachments.add" datatype="html">
+        <source>Add files</source>
+        <target>Ajouter des fichiers</target>
+      </trans-unit>
+      <trans-unit id="equipment.attachments.emptyTitle" datatype="html">
+        <source>No files attached yet</source>
+        <target>Aucun fichier joint pour le moment</target>
+      </trans-unit>
+      <trans-unit id="equipment.attachments.emptyDesc" datatype="html">
+        <source>Add photos or documents to keep with this equipment.</source>
+        <target>Ajoutez des photos ou des documents à conserver avec cet équipement.</target>
+      </trans-unit>
+      <trans-unit id="equipment.attachments.download" datatype="html">
+        <source>Download this file</source>
+        <target>Télécharger ce fichier</target>
+      </trans-unit>
+      <trans-unit id="equipment.attachments.delete" datatype="html">
+        <source>Delete this file</source>
+        <target>Supprimer ce fichier</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.tabsAriaLabel" datatype="html">
+        <source>Equipment sections</source>
+        <target>Sections de l'équipement</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.tabs.overview" datatype="html">
+        <source>Overview</source>
+        <target>Aperçu</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.tabs.attachments" datatype="html">
+        <source>Attachments</source>
+        <target>Pièces jointes</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.tabs.maintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>Maintenance</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.tabs.tags" datatype="html">
+        <source>Tags</source>
+        <target>Étiquettes</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.title" datatype="html">
+        <source>Maintenance history</source>
+        <target>Historique de maintenance</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.caption" datatype="html">
+        <source>Every status change and intervention recorded against this equipment.</source>
+        <target>Chaque changement de statut et intervention enregistrés pour cet équipement.</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.loadingAria" datatype="html">
+        <source>Loading maintenance history</source>
+        <target>Chargement de l'historique de maintenance</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.emptyTitle" datatype="html">
+        <source>No maintenance recorded yet</source>
+        <target>Aucune maintenance enregistrée pour le moment</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.emptyDesc" datatype="html">
+        <source>Status changes and interventions on this equipment will appear here.</source>
+        <target>Les changements de statut et les interventions sur cet équipement apparaîtront ici.</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.source.statusTransition" datatype="html">
+        <source>Status change</source>
+        <target>Changement de statut</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.source.intervention" datatype="html">
+        <source>Intervention</source>
+        <target>Intervention</target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.completedAt" datatype="html">
+        <source>→ <x id="INTERPOLATION" equiv-text="{{ completed }}"/></source>
+        <target>→ <x id="INTERPOLATION" equiv-text="{{ completed }}"/></target>
+      </trans-unit>
+      <trans-unit id="equipment.tags.title" datatype="html">
+        <source>Tags</source>
+        <target>Étiquettes</target>
+      </trans-unit>
+      <trans-unit id="equipment.tags.caption" datatype="html">
+        <source>Labels used to search and group this equipment.</source>
+        <target>Libellés utilisés pour rechercher et regrouper cet équipement.</target>
+      </trans-unit>
+      <trans-unit id="equipment.tags.emptyTitle" datatype="html">
+        <source>No tags yet</source>
+        <target>Aucune étiquette pour le moment</target>
+      </trans-unit>
+      <trans-unit id="equipment.tags.emptyDesc" datatype="html">
+        <source>Add a tag to help find and group this equipment.</source>
+        <target>Ajoutez une étiquette pour aider à trouver et regrouper cet équipement.</target>
+      </trans-unit>
+      <trans-unit id="equipment.tags.addPlaceholder" datatype="html">
+        <source>Search or add a tag</source>
+        <target>Rechercher ou ajouter une étiquette</target>
+      </trans-unit>
+      <trans-unit id="equipment.tags.noMatch" datatype="html">
+        <source>No tag matches.</source>
+        <target>Aucune étiquette ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="equipment.tags.create" datatype="html">
+        <source>Create &quot;<x id="name" equiv-text="typed"/>&quot;</source>
+        <target>« <x id="name" equiv-text="typed"/> »</target>
+      </trans-unit>
+      <trans-unit id="equipment.tags.removeAria" datatype="html">
+        <source>Remove tag <x id="name" equiv-text="tag.name"/></source>
+        <target>Retirer l'étiquette <x id="name" equiv-text="tag.name"/></target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.editAria" datatype="html">
+        <source>Change the assigned facility</source>
+        <target>Modifier le site affecté</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.title" datatype="html">
+        <source>Assign to a facility</source>
+        <target>Affecter à un site</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.description" datatype="html">
+        <source>Choose the facility this equipment is installed at.</source>
+        <target>Choisissez le site où cet équipement est installé.</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.label" datatype="html">
+        <source>Facility</source>
+        <target>Site</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.placeholder" datatype="html">
+        <source>Search a facility</source>
+        <target>Rechercher un site</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.noMatch" datatype="html">
+        <source>No facility matches.</source>
+        <target>Aucun site ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.unassign" datatype="html">
+        <source>Unassign</source>
+        <target>Retirer l'affectation</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.unassigning" datatype="html">
+        <source>Unassigning…</source>
+        <target>Retrait en cours…</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.assign" datatype="html">
+        <source>Assign</source>
+        <target>Assigner</target>
+      </trans-unit>
+      <trans-unit id="equipment.facility.dialog.assigning" datatype="html">
+        <source>Assigning…</source>
+        <target>Attribution en cours…</target>
       </trans-unit>
       <trans-unit id="equipment.list.errorTitle" datatype="html">
         <source>Couldn't load equipment</source>

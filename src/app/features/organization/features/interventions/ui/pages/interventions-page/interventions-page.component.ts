@@ -76,10 +76,7 @@ import {
   type InterventionStatisticsStoreType,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
-import {
-  buildInterventionDuplicatePrefill,
-  isInterventionDeletable,
-} from '@features/organization/features/interventions/utils';
+import { buildInterventionDuplicatePrefill } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   OrganizationMemberAccessStore,
@@ -235,9 +232,10 @@ type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'betwe
  * Deletion is confirm-gated: a row's Delete entry and the toolbar's "Delete
  * selected" both set a `pending*` target signal instead of calling the store
  * directly, driving the single `hlm-alert-dialog` shared by both paths. A
- * bulk selection is filtered to `isInterventionDeletable` rows before the
- * dialog opens, so the count it shows is always what will actually delete —
- * never a promise the API would refuse with a 409.
+ * bulk selection is filtered to the rows whose server-computed
+ * `allowedActions.canDelete` is true before the dialog opens, so the count it
+ * shows is always what will actually delete — never a promise the API would
+ * refuse with a 409.
  *
  * "Duplicate" reuses the same creation sheet, prefilled — from a row's own
  * menu, or from a cross-route handoff `InterventionStore.pendingDuplicatePrefill`
@@ -1005,8 +1003,9 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * Ids of the current selection that are actually deletable — status
-   * `draft` or `abandoned`. What the bulk-delete action operates on and
+   * Ids of the current selection that are actually deletable — the rows whose
+   * server-computed `allowedActions.canDelete` is true, the same flag the
+   * table's row menu gates on. What the bulk-delete action operates on and
    * shows a count for, never the raw selection size.
    *
    * @access protected
@@ -1020,7 +1019,8 @@ export class InterventionsPage {
     return this.items()
       .filter(
         (item: InterventionListItemViewModel): boolean =>
-          selected.has(item.intervention.id) && isInterventionDeletable(item.intervention),
+          selected.has(item.intervention.id) &&
+          item.intervention.allowedActions?.canDelete === true,
       )
       .map((item: InterventionListItemViewModel): string => item.intervention.id);
   });

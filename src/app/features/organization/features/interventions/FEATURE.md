@@ -1469,18 +1469,15 @@ client action`).
   down on navigation. `InterventionWorkspaceStore.delete` is therefore **unreachable
   from the UI**; it is kept dormant rather than removed, and must not be wired to a
   surface without revisiting this.
-- **The detail page's delete gate is the split-capability one** (`INTERVENTIONS_PLAN`
-  for a draft, `INTERVENTIONS_EXECUTE` for an abandoned intervention), narrowed first
-  through `isInterventionDeletable`. The list page's row and bulk delete gate on
-  `INTERVENTIONS_WRITE` instead — this feature has no delete-specific permission
-  (the same approved exception as `facilities`). The two are intentionally different
-  gates on the same `DELETE /api/interventions/{id}`, and both now ship: keep them
-  explicit rather than collapsing one into the other.
-- **A row or bulk delete is never offered for a status the API would refuse.**
-  `InterventionTable`, `InterventionsPage` and `InterventionDetailPage` all narrow
-  through the shared `isInterventionDeletable` util (`utils/intervention-deletable/`,
-  statuses `draft`/`abandoned`) rather than duplicating the check, so the surfaces
-  cannot drift. A bulk selection is filtered to its deletable subset before the
+- **Every delete gate is the server-computed `allowedActions.canDelete`.**
+  `InterventionTable`'s row menu, `InterventionsPage`'s bulk selection and
+  `InterventionDetailPage`'s capability surface all read the flag the API attaches
+  to each intervention — it already folds the caller's permission and the
+  deletable-status window (`draft`/`abandoned`) the backend enforces, so the
+  surfaces cannot drift and no client mirror remains (the former
+  `utils/intervention-deletable/` is deleted). The page-level bulk-toolbar
+  visibility still gates on `INTERVENTIONS_WRITE`, the coarse permission; the rows
+  narrow it. A bulk selection is filtered to its deletable subset before the
   confirm dialog opens — the count it shows is always what will actually delete,
   never a promise a 409 would break.
 - Intervention workflows remain organization-scoped.

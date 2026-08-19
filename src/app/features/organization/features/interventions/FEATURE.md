@@ -684,11 +684,20 @@ relitigate this without a product-level reason.
 **Page decomposition (5.1) — behavior-frozen extractions, layout untouched.**
 The page component delegates to units that carry their own specs: the label
 derivations live in `utils/intervention-summary/`; the capability surface
-(phase, permission gates, the mutability matrix, the status-menu targets) is
-built by `createInterventionCapabilities` (`utils/intervention-capabilities/`),
-a factory over page-owned signals — a factory rather than store computeds
+(phase, the status-menu targets, and the action gates) is built by
+`createInterventionCapabilities` (`utils/intervention-capabilities/`), a
+factory over page-owned signals — a factory rather than store computeds
 because the workspace store and the route-provided member-access store live in
-different injectors; the abandon/delete/skip confirmation is the presentational
+different injectors. **The action gates read the API's own
+`InterventionOutput.allowedActions` block** (present on reads and on every
+mutation response since backend 1.3.0), computed server-side by the same
+`InterventionActionPolicy` that enforces each write — the factory no longer
+re-derives the permission/status/identity matrix; only phase, the menu
+composition (over `allowedTransitions`, with the withdraw move gated on
+`allowedActions.canWithdraw`), label management and QR scanning remain
+client-derived, since the backend does not advertise them. An intervention
+rehydrated from a pre-upgrade offline cache may lack the block; every
+server-advertised gate then degrades to denied until the next sync; the abandon/delete/skip confirmation is the presentational
 `ui/dialogs/intervention-confirm-dialog/` (its request/accepted types in
 `models/intervention-confirm/`); publication state is
 `InterventionPublicationStore` (above); QR-scan matching and upload preparation

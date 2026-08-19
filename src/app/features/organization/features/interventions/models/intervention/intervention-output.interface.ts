@@ -1,5 +1,6 @@
 import type { HydraItem } from '@core/api/models';
 import type { InterventionLabelSummary } from '../intervention-label/intervention-label-summary.interface';
+import type { InterventionAllowedActionsOutput } from './intervention-allowed-actions-output.interface';
 import type { InterventionPriority } from './intervention-priority.type';
 import type { InterventionStatus } from './intervention-status.type';
 import type { InterventionType } from './intervention-type.type';
@@ -106,6 +107,21 @@ export interface InterventionOutput extends HydraItem {
    * @type {readonly InterventionStatus[]}
    */
   readonly allowedTransitions: readonly InterventionStatus[];
+
+  /**
+   * Property allowedActions
+   * @readonly
+   *
+   * @description
+   * The caller-specific action-capability block — see
+   * {@link InterventionAllowedActionsOutput}. Present on every API response
+   * since backend 1.3.0; optional here because an intervention rehydrated
+   * from the offline cache may predate the field, in which case every
+   * server-advertised capability degrades to denied until the next sync.
+   *
+   * @type {InterventionAllowedActionsOutput | undefined}
+   */
+  readonly allowedActions?: InterventionAllowedActionsOutput;
 
   /**
    * Property site

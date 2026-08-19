@@ -26,6 +26,7 @@ import {
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
 import type {
+  InterventionAllowedActionsOutput,
   InterventionLabelOutput,
   InterventionOutput,
   MemberSelectOption,
@@ -35,6 +36,25 @@ import { InterventionStore } from '@features/organization/features/interventions
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import { InterventionsPage } from '../interventions-page.component';
+
+/**
+ * The `allowedActions` block the backend would compute for a fully-permitted
+ * caller: `canDelete` follows the deletable-status window these tests assume.
+ */
+const serverActions = (status: InterventionOutput['status']): InterventionAllowedActionsOutput => ({
+  canEditDetails: false,
+  canEditSite: false,
+  canEditResponsible: false,
+  canEditPlanning: false,
+  canMutateWorkItems: false,
+  canMutateChanges: false,
+  canAssignTeam: false,
+  canManageAttachments: false,
+  canSubmit: false,
+  canWithdraw: false,
+  canDelete: status === 'draft' || status === 'abandoned',
+  canPublish: false,
+});
 
 const intervention = (overrides: Partial<InterventionOutput> = {}): InterventionOutput =>
   ({
@@ -46,6 +66,7 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     description: null,
     status: 'planned',
     allowedTransitions: [],
+    allowedActions: serverActions(overrides.status ?? 'planned'),
     site: null,
     responsible: null,
     participants: [],

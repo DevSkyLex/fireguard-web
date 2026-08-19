@@ -2,12 +2,31 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type {
+  InterventionAllowedActionsOutput,
   InterventionOutput,
   InterventionSortField,
 } from '@features/organization/features/interventions/models';
 import type { InterventionListItemViewModel } from '../../../pages/interventions-page/models';
 import { InterventionTable } from '../intervention-table.component';
 import type { InterventionTableColumn, InterventionTransitionRequest } from '../models';
+
+const serverActions = (
+  overrides: Partial<InterventionAllowedActionsOutput> = {},
+): InterventionAllowedActionsOutput => ({
+  canEditDetails: false,
+  canEditSite: false,
+  canEditResponsible: false,
+  canEditPlanning: false,
+  canMutateWorkItems: false,
+  canMutateChanges: false,
+  canAssignTeam: false,
+  canManageAttachments: false,
+  canSubmit: false,
+  canWithdraw: false,
+  canDelete: false,
+  canPublish: false,
+  ...overrides,
+});
 
 const intervention = (overrides: Partial<InterventionOutput> = {}): InterventionOutput =>
   ({
@@ -322,7 +341,7 @@ describe('InterventionTable', () => {
   });
 
   describe('delete', () => {
-    it('should not offer Delete without the delete permission', async () => {
+    it('should not offer Delete when the server does not advertise it', async () => {
       fixture.componentRef.setInput('items', [
         row({ intervention: intervention({ status: 'draft' }) }),
       ]);
@@ -332,30 +351,22 @@ describe('InterventionTable', () => {
       expect(document.querySelector('[data-testid="intervention-table-row-delete"]')).toBeNull();
     });
 
-    it('should not offer Delete for a status the API would refuse', async () => {
-      fixture.componentRef.setInput('canDelete', true);
+    it('should follow the server-advertised canDelete flag, not a client status window', async () => {
       fixture.componentRef.setInput('items', [
-        row({ intervention: intervention({ status: 'planned' }) }),
+        row({
+          intervention: intervention({
+            status: 'planned',
+            allowedActions: serverActions({ canDelete: true }),
+          }),
+        }),
       ]);
       await fixture.whenStable();
       await openRowMenu();
 
-      expect(document.querySelector('[data-testid="intervention-table-row-delete"]')).toBeNull();
+      expect(
+        document.querySelector('[data-testid="intervention-table-row-delete"]'),
+      ).not.toBeNull();
     });
-
-    it.each<'draft' | 'abandoned'>(['draft', 'abandoned'])(
-      'should offer Delete for a %s intervention when permitted',
-      async (status: 'draft' | 'abandoned'): Promise<void> => {
-        fixture.componentRef.setInput('canDelete', true);
-        fixture.componentRef.setInput('items', [row({ intervention: intervention({ status }) })]);
-        await fixture.whenStable();
-        await openRowMenu();
-
-        expect(
-          document.querySelector('[data-testid="intervention-table-row-delete"]'),
-        ).not.toBeNull();
-      },
-    );
 
     it('should emit the row it was opened on when Delete is clicked', async () => {
       const emitted: InterventionOutput[] = [];
@@ -363,9 +374,14 @@ describe('InterventionTable', () => {
         emitted.push(deleted);
       });
 
-      fixture.componentRef.setInput('canDelete', true);
       fixture.componentRef.setInput('items', [
-        row({ intervention: intervention({ id: 'i-del', status: 'draft' }) }),
+        row({
+          intervention: intervention({
+            id: 'i-del',
+            status: 'draft',
+            allowedActions: serverActions({ canDelete: true }),
+          }),
+        }),
       ]);
       await fixture.whenStable();
       await openRowMenu();

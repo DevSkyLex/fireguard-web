@@ -29,7 +29,6 @@ import {
   type InterventionSortField,
   type InterventionStatus,
 } from '@features/organization/features/interventions/models';
-import { isInterventionDeletable } from '@features/organization/features/interventions/utils';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
@@ -59,11 +58,11 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * service. Sorting, column visibility and the row commands are all described
  * through `output()`; the page decides what they mean. The status transitions
  * a row offers come from that intervention's own `allowedTransitions`, so the
- * menu can never propose a move the backend would refuse. The leading
- * checkbox column follows the same rule: a row's Delete entry and its
- * selectability both gate on `isInterventionDeletable`, the same feature-level
- * check the page filters a bulk selection through, so the table never offers
- * a delete the API would refuse with a 409.
+ * menu can never propose a move the backend would refuse. A row's Delete
+ * entry follows the same rule: it gates on the row's own server-computed
+ * `allowedActions.canDelete` — which already folds the caller's permission
+ * and the deletable-status window — the same flag the page filters a bulk
+ * selection through, so the table never offers a delete the API would refuse.
  *
  * Submitting and withdrawing a submission are reserved to the intervention's
  * own responsible (mirroring `InterventionDetailPage`'s `canSubmit` gate): the
@@ -208,22 +207,6 @@ export class InterventionTable {
    * @type {InputSignal<readonly string[]>}
    */
   public readonly transitioningIds: InputSignal<readonly string[]> = input<readonly string[]>([]);
-
-  /**
-   * Property canDelete
-   * @readonly
-   *
-   * @description
-   * Whether the row menu may offer deletion. False hides the entry rather
-   * than showing a control that would be refused; the intervention's own
-   * status (`isInterventionDeletable`) narrows it further per row.
-   *
-   * @access public
-   * @since 5.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly canDelete: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property canAssign
@@ -566,9 +549,9 @@ export class InterventionTable {
    * @method isRowDeletable
    *
    * @description
-   * Whether a row's menu may offer Delete: the caller must have the
-   * permission (`canDelete`) and the intervention's own status must be one
-   * the API accepts (`isInterventionDeletable`).
+   * Whether a row's menu may offer Delete — the row's own server-computed
+   * `allowedActions.canDelete`, which already folds the caller's permission
+   * and the deletable-status window the API enforces.
    *
    * @access protected
    * @since 5.0.0
@@ -578,7 +561,7 @@ export class InterventionTable {
    * @returns {boolean} True when Delete should render.
    */
   protected isRowDeletable(intervention: InterventionOutput): boolean {
-    return this.canDelete() && isInterventionDeletable(intervention);
+    return intervention.allowedActions?.canDelete === true;
   }
 
   /**

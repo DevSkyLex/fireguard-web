@@ -1,0 +1,19 @@
+<hlm-field orientation="horizontal" class="justify-between">
+  <div class="flex flex-col gap-1">
+    <label
+      hlmFieldLabel
+      for="org-automation-auto-create-intervention"
+      i18n="@@org.settings.automation.autoCreateInterventionLabel"
+      >Auto-create intervention on critical non-conformity</label
+    >
+    <p hlmFieldDescription i18n="@@org.settings.automation.autoCreateInterventionDescription">
+      When a critical non-conformity is recorded, draft a corrective intervention automatically.
+    </p>
+  </div>
+  <hlm-switch
+    id="org-automation-auto-create-intervention"
+    data-testid="org-automation-auto-create-intervention"
+    [formField]="automationForm.autoCreateInterventionOnCriticalNc"
+    (checkedChange)="commit()"
+  />
+</hlm-field>

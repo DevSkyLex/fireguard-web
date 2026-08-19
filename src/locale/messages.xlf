@@ -13521,6 +13521,288 @@
           <context context-type="linenumber">18,20</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.settings.tabs.compliance" datatype="html">
+        <source>Compliance</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.tabs.assistant" datatype="html">
+        <source>Assistant</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.automationTitle" datatype="html">
+        <source> Automation </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP1M" datatype="html">
+        <source>Every month</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-periodicity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP3M" datatype="html">
+        <source>Every 3 months</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-periodicity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP6M" datatype="html">
+        <source>Every 6 months</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-periodicity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP1Y" datatype="html">
+        <source>Every year</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-periodicity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP2Y" datatype="html">
+        <source>Every 2 years</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-periodicity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.severityLow" datatype="html">
+        <source>Low</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-compliance-severity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.severityMedium" datatype="html">
+        <source>Medium</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-compliance-severity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.severityHigh" datatype="html">
+        <source>High</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-compliance-severity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.severityCritical" datatype="html">
+        <source>Critical</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/options/organization-compliance-severity-options.constants.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.slaTitle" datatype="html">
+        <source> Non-conformity resolution SLA </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.slaDescription" datatype="html">
+        <source> Days allowed to resolve a non-conformity, by severity. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.customizedBadge" datatype="html">
+        <source>Customized</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityTitle" datatype="html">
+        <source> Inspection periodicity </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityDescription" datatype="html">
+        <source> How often each equipment type must be inspected. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderTitle" datatype="html">
+        <source> Reminders </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderWindowLabel" datatype="html">
+        <source>Reminder window (days)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderWindowTooLow" datatype="html">
+        <source>Enter at least <x id="min" equiv-text="MIN_REMINDER_WINDOW_DAYS"/> day</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderWindowTooHigh" datatype="html">
+        <source>Enter at most <x id="max" equiv-text="MAX_REMINDER_WINDOW_DAYS"/> days</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.submitting" datatype="html">
+        <source>Saving…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.submit" datatype="html">
+        <source>Save changes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-compliance-form/organization-compliance-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.automation.autoCreateInterventionLabel" datatype="html">
+        <source>Auto-create intervention on critical non-conformity</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-automation-form/organization-automation-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.automation.autoCreateInterventionDescription" datatype="html">
+        <source> When a critical non-conformity is recorded, draft a corrective intervention automatically. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-automation-form/organization-automation-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.enabledLabel" datatype="html">
+        <source>AI assistant</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.modelLabel" datatype="html">
+        <source>Model</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.modelDefault" datatype="html">
+        <source>Using the operator default</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.temperatureLabel" datatype="html">
+        <source>Sampling temperature</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.temperatureTooLow" datatype="html">
+        <source>Enter at least <x id="min" equiv-text="MIN_TEMPERATURE"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.temperatureTooHigh" datatype="html">
+        <source>Enter at most <x id="max" equiv-text="MAX_TEMPERATURE"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.includeBusinessContextLabel" datatype="html">
+        <source>Include business context</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.submitting" datatype="html">
+        <source>Saving…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.submit" datatype="html">
+        <source>Save changes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-assistant-form/organization-assistant-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.title" datatype="html">
+        <source>Four-eyes approval</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.description" datatype="html">
+        <source> Read-only until the approvals inbox exists to act on a gated request. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.emptyRules" datatype="html">
+        <source> No custom approval rules — every action type is unrestricted. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.columnAction" datatype="html">
+        <source>Action</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.columnEnabled" datatype="html">
+        <source>Enabled</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.columnMinRole" datatype="html">
+        <source>Min. approver role</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.columnMinSeverity" datatype="html">
+        <source>Min. severity</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.enabledYes" datatype="html">
+        <source>Yes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.enabledNo" datatype="html">
+        <source>No</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalLabel" datatype="html">
+        <source>Self-approval allowed</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalYes" datatype="html">
+        <source>Yes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalNo" datatype="html">
+        <source>No</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlValue" datatype="html">
+        <source>Requests expire after <x id="days" equiv-text="this.approval().approvalTtlDays"/> days</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-approval-summary-card/organization-approval-summary-card.component.ts</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

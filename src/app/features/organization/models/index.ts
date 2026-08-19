@@ -97,6 +97,11 @@ export type { OrganizationRegionalSettings } from './organization-settings/organ
 export type { OrganizationDateFormat } from './organization-settings/organization-date-format.type';
 export type { OrganizationFirstDayOfWeek } from './organization-settings/organization-first-day-of-week.type';
 export type { OrganizationMeasurementSystem } from './organization-settings/organization-measurement-system.type';
+export type { OrganizationComplianceSettings } from './organization-settings/organization-compliance-settings.interface';
+export type { OrganizationAutomationSettings } from './organization-settings/organization-automation-settings.interface';
+export type { OrganizationApprovalSettings } from './organization-settings/organization-approval-settings.interface';
+export type { OrganizationApprovalActionRule } from './organization-settings/organization-approval-action-rule.interface';
+export type { OrganizationAssistantSettings } from './organization-settings/organization-assistant-settings.interface';
 export type { BillingInterval } from './billing/billing-interval.type';
 export type { SubscriptionStatus } from './billing/subscription-status.type';
 export type { OrganizationSubscriptionOutput } from './billing/organization-subscription-output.interface';

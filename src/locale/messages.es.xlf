@@ -12457,6 +12457,194 @@
         <source>Planned start</source>
         <target>Inicio planificado</target>
       </trans-unit>
+      <trans-unit id="org.settings.tabs.compliance" datatype="html">
+        <source>Compliance</source>
+        <target>Cumplimiento</target>
+      </trans-unit>
+      <trans-unit id="org.settings.tabs.assistant" datatype="html">
+        <source>Assistant</source>
+        <target>Asistente</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.automationTitle" datatype="html">
+        <source> Automation </source>
+        <target> Automatización </target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP1M" datatype="html">
+        <source>Every month</source>
+        <target>Cada mes</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP3M" datatype="html">
+        <source>Every 3 months</source>
+        <target>Cada 3 meses</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP6M" datatype="html">
+        <source>Every 6 months</source>
+        <target>Cada 6 meses</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP1Y" datatype="html">
+        <source>Every year</source>
+        <target>Cada año</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityP2Y" datatype="html">
+        <source>Every 2 years</source>
+        <target>Cada 2 años</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.severityLow" datatype="html">
+        <source>Low</source>
+        <target>Baja</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.severityMedium" datatype="html">
+        <source>Medium</source>
+        <target>Media</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.severityHigh" datatype="html">
+        <source>High</source>
+        <target>Alta</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.severityCritical" datatype="html">
+        <source>Critical</source>
+        <target>Crítica</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.slaTitle" datatype="html">
+        <source> Non-conformity resolution SLA </source>
+        <target> Plazo de resolución de no conformidades </target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.slaDescription" datatype="html">
+        <source> Days allowed to resolve a non-conformity, by severity. </source>
+        <target> Días permitidos para resolver una no conformidad, según la gravedad. </target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.customizedBadge" datatype="html">
+        <source>Customized</source>
+        <target>Personalizado</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityTitle" datatype="html">
+        <source> Inspection periodicity </source>
+        <target> Periodicidad de las inspecciones </target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.periodicityDescription" datatype="html">
+        <source> How often each equipment type must be inspected. </source>
+        <target> Frecuencia con la que debe inspeccionarse cada tipo de equipo. </target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderTitle" datatype="html">
+        <source> Reminders </source>
+        <target> Recordatorios </target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderWindowLabel" datatype="html">
+        <source>Reminder window (days)</source>
+        <target>Ventana de recordatorio (días)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderWindowTooLow" datatype="html">
+        <source>Enter at least <x id="min" equiv-text="MIN_REMINDER_WINDOW_DAYS"/> day</source>
+        <target>Introduce al menos <x id="min"/> día</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderWindowTooHigh" datatype="html">
+        <source>Enter at most <x id="max" equiv-text="MAX_REMINDER_WINDOW_DAYS"/> days</source>
+        <target>Introduce como máximo <x id="max"/> días</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Guardar cambios</target>
+      </trans-unit>
+      <trans-unit id="org.settings.automation.autoCreateInterventionLabel" datatype="html">
+        <source>Auto-create intervention on critical non-conformity</source>
+        <target>Crear automáticamente una intervención ante una no conformidad crítica</target>
+      </trans-unit>
+      <trans-unit id="org.settings.automation.autoCreateInterventionDescription" datatype="html">
+        <source> When a critical non-conformity is recorded, draft a corrective intervention automatically. </source>
+        <target> Cuando se registra una no conformidad crítica, se redacta automáticamente una intervención correctiva. </target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.enabledLabel" datatype="html">
+        <source>AI assistant</source>
+        <target>Asistente de IA</target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.modelLabel" datatype="html">
+        <source>Model</source>
+        <target>Modelo</target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.modelDefault" datatype="html">
+        <source>Using the operator default</source>
+        <target>Usa el modelo predeterminado del operador</target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.temperatureLabel" datatype="html">
+        <source>Sampling temperature</source>
+        <target>Temperatura de muestreo</target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.temperatureTooLow" datatype="html">
+        <source>Enter at least <x id="min" equiv-text="MIN_TEMPERATURE"/></source>
+        <target>Introduce al menos <x id="min"/></target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.temperatureTooHigh" datatype="html">
+        <source>Enter at most <x id="max" equiv-text="MAX_TEMPERATURE"/></source>
+        <target>Introduce como máximo <x id="max"/></target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.includeBusinessContextLabel" datatype="html">
+        <source>Include business context</source>
+        <target>Incluir el contexto empresarial</target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.assistant.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Guardar cambios</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.title" datatype="html">
+        <source>Four-eyes approval</source>
+        <target>Aprobación de doble verificación</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.description" datatype="html">
+        <source> Read-only until the approvals inbox exists to act on a gated request. </source>
+        <target> Solo lectura hasta que exista la bandeja de aprobaciones para actuar sobre una solicitud sujeta a aprobación. </target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.emptyRules" datatype="html">
+        <source> No custom approval rules — every action type is unrestricted. </source>
+        <target> Sin reglas de aprobación personalizadas: cada tipo de acción no tiene restricciones. </target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.columnAction" datatype="html">
+        <source>Action</source>
+        <target>Acción</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.columnEnabled" datatype="html">
+        <source>Enabled</source>
+        <target>Habilitado</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.columnMinRole" datatype="html">
+        <source>Min. approver role</source>
+        <target>Rol mínimo del aprobador</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.columnMinSeverity" datatype="html">
+        <source>Min. severity</source>
+        <target>Gravedad mínima</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.enabledYes" datatype="html">
+        <source>Yes</source>
+        <target>Sí</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.enabledNo" datatype="html">
+        <source>No</source>
+        <target>No</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalLabel" datatype="html">
+        <source>Self-approval allowed</source>
+        <target>Autoaprobación permitida</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalYes" datatype="html">
+        <source>Yes</source>
+        <target>Sí</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.selfApprovalNo" datatype="html">
+        <source>No</source>
+        <target>No</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.ttlValue" datatype="html">
+        <source>Requests expire after <x id="days" equiv-text="this.approval().approvalTtlDays"/> days</source>
+        <target>Las solicitudes caducan después de <x id="days"/> días</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

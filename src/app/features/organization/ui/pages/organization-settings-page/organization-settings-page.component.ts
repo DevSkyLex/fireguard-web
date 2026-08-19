@@ -20,6 +20,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBan,
   lucideBell,
+  lucideBot,
   lucideCircleAlert,
   lucideCircleCheck,
   lucideClock,
@@ -31,6 +32,7 @@ import {
   lucideReceipt,
   lucideRefreshCw,
   lucideSettings,
+  lucideShieldCheck,
   lucideTrash2,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
@@ -38,6 +40,10 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type {
   InvoiceOutput,
+  OrganizationApprovalSettings,
+  OrganizationAssistantSettings,
+  OrganizationAutomationSettings,
+  OrganizationComplianceSettings,
   OrganizationNotificationSettings,
   OrganizationOutput,
   OrganizationRegionalSettings,
@@ -53,10 +59,20 @@ import { HlmCardImports } from '@shared/ui/card';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
+import { OrganizationApprovalSummaryCard } from '../../components/organization-approval-summary-card';
 import { OrganizationLogoPicker } from '../../components/organization-logo-picker';
 import { OrganizationPlanSelector } from '../../components/organization-plan-selector';
 import { OrganizationUsagePanel } from '../../components/organization-usage-panel';
 import { OrganizationDeleteDialog } from '../../dialogs/organization-delete-dialog';
+import {
+  OrganizationAssistantForm,
+  type OrganizationAssistantFormValues,
+} from '../../forms/organization-assistant-form';
+import { OrganizationAutomationForm } from '../../forms/organization-automation-form';
+import {
+  OrganizationComplianceForm,
+  type OrganizationComplianceFormValues,
+} from '../../forms/organization-compliance-form';
 import {
   OrganizationGeneralForm,
   type OrganizationGeneralFormValues,
@@ -84,6 +100,8 @@ const TAB_IDS: ReadonlyArray<OrganizationSettingsTabId> = [
   'usage',
   'notifications',
   'regional',
+  'compliance',
+  'assistant',
   'danger',
 ];
 
@@ -108,14 +126,94 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
 };
 
 /**
+ * Constant DEFAULT_COMPLIANCE
+ *
+ * @description
+ * Seeded when an organization has never persisted compliance customizations
+ * of its own. Mirrors the backend's `OrganizationComplianceDefaults` catalog
+ * so an organization with no `settings.compliance` sees the same effective
+ * values the API would compute for it.
+ *
+ * @since 1.0.0
+ */
+const DEFAULT_COMPLIANCE: OrganizationComplianceSettings = {
+  nonConformitySlaDays: { low: 90, medium: 30, high: 7, critical: 1 },
+  inspectionPeriodicityDefaults: {
+    fire_extinguisher: 'P1Y',
+    smoke_detector: 'P1Y',
+    heat_detector: 'P1Y',
+    sprinkler: 'P1Y',
+    fire_alarm_panel: 'P6M',
+    hydrant: 'P1Y',
+    fire_door: 'P6M',
+    emergency_lighting: 'P6M',
+    access_control: 'P1Y',
+    camera: 'P1Y',
+    gas_detector: 'P6M',
+  },
+  reminderWindowDays: 30,
+  customizedSlaSeverities: [],
+  customizedPeriodicityTypes: [],
+};
+
+/**
+ * Constant DEFAULT_AUTOMATION
+ *
+ * @description
+ * Seeded when an organization has never persisted automation toggles of its
+ * own. Mirrors the backend's `OrganizationAutomationSettingsOutput` default.
+ *
+ * @since 1.0.0
+ */
+const DEFAULT_AUTOMATION: OrganizationAutomationSettings = {
+  autoCreateInterventionOnCriticalNc: false,
+};
+
+/**
+ * Constant DEFAULT_APPROVAL
+ *
+ * @description
+ * Seeded when an organization has never customized its four-eyes approval
+ * policy. Mirrors the backend's `OrganizationApprovalDefaults` catalog: every
+ * action type is disabled by default.
+ *
+ * @since 1.0.0
+ */
+const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
+  actionRules: {},
+  allowSelfApproval: false,
+  approvalTtlDays: 14,
+};
+
+/**
+ * Constant DEFAULT_ASSISTANT
+ *
+ * @description
+ * Seeded when an organization has never persisted an AI-assistant policy of
+ * its own. Mirrors the backend's `OrganizationAssistantDefaults` catalog:
+ * disabled by default, since a conversation transcript is sent to the
+ * inference backend once enabled.
+ *
+ * @since 1.0.0
+ */
+const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
+  enabled: false,
+  model: null,
+  temperature: 0.2,
+  includeBusinessContext: true,
+};
+
+/**
  * Component OrganizationSettingsPage
  * @class OrganizationSettingsPage
  *
  * @description
- * The organization settings route: six sections synced two-way with the
+ * The organization settings route: eight sections synced two-way with the
  * `?tab=` query parameter (`FEATURE.md`) — general & branding, subscription,
- * usage, notifications, regional & formats, and a permission-gated danger
- * zone. Tab content is deferred with `hlmTabsContentLazy`, so subscription
+ * usage, notifications, regional & formats, compliance (SLAs, inspection
+ * periodicity, the automation toggle, and a read-only approval summary),
+ * assistant (AI-assistant policy), and a permission-gated danger zone. Tab
+ * content is deferred with `hlmTabsContentLazy`, so subscription
  * data (Stripe subscription, pricing, invoices, and the plan catalog owned by
  * `OrganizationPlanSelector`) loads only once the reader opens that tab, per
  * `AGENTS.md`'s hidden-UI SSR guidance.
@@ -145,6 +243,10 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
     NgIcon,
     NgTemplateOutlet,
     EmptyState,
+    OrganizationApprovalSummaryCard,
+    OrganizationAssistantForm,
+    OrganizationAutomationForm,
+    OrganizationComplianceForm,
     OrganizationDeleteDialog,
     OrganizationGeneralForm,
     OrganizationLogoPicker,
@@ -166,6 +268,7 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
     provideIcons({
       lucideBan,
       lucideBell,
+      lucideBot,
       lucideCircleAlert,
       lucideCircleCheck,
       lucideClock,
@@ -177,6 +280,7 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
       lucideReceipt,
       lucideRefreshCw,
       lucideSettings,
+      lucideShieldCheck,
       lucideTrash2,
       lucideTriangleAlert,
     }),
@@ -453,6 +557,57 @@ export class OrganizationSettingsPage {
   protected readonly regionalSeed: Signal<OrganizationRegionalSettings> = computed(
     (): OrganizationRegionalSettings =>
       this.organization()?.settings?.regional ?? this.defaultRegional,
+  );
+
+  /**
+   * Property complianceSeed
+   * @readonly
+   * @description The active organization's compliance policy, defaulted for an organization that has never customized it.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<OrganizationComplianceSettings>}
+   */
+  protected readonly complianceSeed: Signal<OrganizationComplianceSettings> = computed(
+    (): OrganizationComplianceSettings =>
+      this.organization()?.settings?.compliance ?? DEFAULT_COMPLIANCE,
+  );
+
+  /**
+   * Property automationSeed
+   * @readonly
+   * @description The active organization's automation toggles, defaulted for an organization that has never persisted any.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<OrganizationAutomationSettings>}
+   */
+  protected readonly automationSeed: Signal<OrganizationAutomationSettings> = computed(
+    (): OrganizationAutomationSettings =>
+      this.organization()?.settings?.automation ?? DEFAULT_AUTOMATION,
+  );
+
+  /**
+   * Property approvalSeed
+   * @readonly
+   * @description The active organization's four-eyes approval policy, defaulted for an organization that has never customized it.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<OrganizationApprovalSettings>}
+   */
+  protected readonly approvalSeed: Signal<OrganizationApprovalSettings> = computed(
+    (): OrganizationApprovalSettings => this.organization()?.settings?.approval ?? DEFAULT_APPROVAL,
+  );
+
+  /**
+   * Property assistantSeed
+   * @readonly
+   * @description The active organization's AI-assistant policy, defaulted for an organization that has never persisted one.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<OrganizationAssistantSettings>}
+   */
+  protected readonly assistantSeed: Signal<OrganizationAssistantSettings> = computed(
+    (): OrganizationAssistantSettings =>
+      this.organization()?.settings?.assistant ?? DEFAULT_ASSISTANT,
   );
 
   /**
@@ -774,6 +929,71 @@ export class OrganizationSettingsPage {
     if (organizationId === null) return;
 
     this.settingsStore.save({ organizationId, input: { regional: values } });
+  }
+
+  /**
+   * Method saveCompliance
+   * @method saveCompliance
+   *
+   * @description
+   * Persists the compliance policy: the two effective-value maps and the
+   * reminder window.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {OrganizationComplianceFormValues} values - The edited policy.
+   *
+   * @returns {void}
+   */
+  protected saveCompliance(values: OrganizationComplianceFormValues): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.settingsStore.save({ organizationId, input: { compliance: values } });
+  }
+
+  /**
+   * Method saveAutomation
+   * @method saveAutomation
+   *
+   * @description
+   * Persists the automation toggles.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {OrganizationAutomationSettings} values - The edited toggles.
+   *
+   * @returns {void}
+   */
+  protected saveAutomation(values: OrganizationAutomationSettings): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.settingsStore.save({ organizationId, input: { automation: values } });
+  }
+
+  /**
+   * Method saveAssistant
+   * @method saveAssistant
+   *
+   * @description
+   * Persists the AI-assistant policy. The read-only model override is never
+   * part of this payload.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {OrganizationAssistantFormValues} values - The edited policy.
+   *
+   * @returns {void}
+   */
+  protected saveAssistant(values: OrganizationAssistantFormValues): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.settingsStore.save({ organizationId, input: { assistant: values } });
   }
 
   /**

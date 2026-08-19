@@ -216,7 +216,15 @@ describe('OrganizationSettingsPage', () => {
   it('should show an icon ahead of every tab label', async () => {
     await createPage();
 
-    for (const tabId of ['general', 'subscription', 'usage', 'notifications', 'regional']) {
+    for (const tabId of [
+      'general',
+      'subscription',
+      'usage',
+      'notifications',
+      'regional',
+      'compliance',
+      'assistant',
+    ]) {
       expect(byTestId(`org-settings-tab-${tabId}`)?.querySelector('ng-icon')).not.toBeNull();
     }
   });
@@ -242,7 +250,15 @@ describe('OrganizationSettingsPage', () => {
   it('should share the same max-width across every tab, including subscription', async () => {
     await createPage();
 
-    for (const tabId of ['general', 'subscription', 'usage', 'notifications', 'regional']) {
+    for (const tabId of [
+      'general',
+      'subscription',
+      'usage',
+      'notifications',
+      'regional',
+      'compliance',
+      'assistant',
+    ]) {
       const content: HTMLElement | null = fixture.nativeElement.querySelector(
         `[hlmtabscontent="${tabId}"]`,
       );
@@ -314,6 +330,76 @@ describe('OrganizationSettingsPage', () => {
     expect(save).toHaveBeenCalledWith({
       organizationId: 'org-1',
       input: { name: 'Renamed', slug: 'renamed', description: null },
+    });
+  });
+
+  it('should save the compliance form scoped to the active organization', async () => {
+    await createPage();
+
+    fixture.componentInstance['saveCompliance']({
+      nonConformitySlaDays: { low: 60, medium: 30, high: 7, critical: 1 },
+      inspectionPeriodicityDefaults: { fire_extinguisher: 'P1Y' },
+      reminderWindowDays: 45,
+    });
+
+    expect(save).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      input: {
+        compliance: {
+          nonConformitySlaDays: { low: 60, medium: 30, high: 7, critical: 1 },
+          inspectionPeriodicityDefaults: { fire_extinguisher: 'P1Y' },
+          reminderWindowDays: 45,
+        },
+      },
+    });
+  });
+
+  it('should save the automation form scoped to the active organization', async () => {
+    await createPage();
+
+    fixture.componentInstance['saveAutomation']({ autoCreateInterventionOnCriticalNc: true });
+
+    expect(save).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      input: { automation: { autoCreateInterventionOnCriticalNc: true } },
+    });
+  });
+
+  it('should save the assistant form scoped to the active organization', async () => {
+    await createPage();
+
+    fixture.componentInstance['saveAssistant']({
+      enabled: true,
+      temperature: 0.5,
+      includeBusinessContext: false,
+    });
+
+    expect(save).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      input: {
+        assistant: { enabled: true, temperature: 0.5, includeBusinessContext: false },
+      },
+    });
+  });
+
+  it('should default the compliance, automation, approval and assistant seeds for an organization with no settings', async () => {
+    selectedOrganization.set(organization({ settings: undefined }));
+    await createPage();
+
+    expect(fixture.componentInstance['complianceSeed']().reminderWindowDays).toBe(30);
+    expect(fixture.componentInstance['automationSeed']()).toEqual({
+      autoCreateInterventionOnCriticalNc: false,
+    });
+    expect(fixture.componentInstance['approvalSeed']()).toEqual({
+      actionRules: {},
+      allowSelfApproval: false,
+      approvalTtlDays: 14,
+    });
+    expect(fixture.componentInstance['assistantSeed']()).toEqual({
+      enabled: false,
+      model: null,
+      temperature: 0.2,
+      includeBusinessContext: true,
     });
   });
 

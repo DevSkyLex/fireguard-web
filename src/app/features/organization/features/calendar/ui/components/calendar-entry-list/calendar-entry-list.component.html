@@ -15,6 +15,36 @@
           <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
         </div>
         <span hlmBadge [variant]="toneOf(item)">{{ sourceLabelOf(item) }}</span>
+        @if (isEditableOf(item)) {
+          <div class="flex items-center gap-1">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              class="max-sm:size-11"
+              data-testid="calendar-day-item-edit"
+              i18n-aria-label="@@calendar.entry.edit"
+              aria-label="Edit event"
+              (click)="editRequested.emit(item)"
+            >
+              <ng-icon name="lucidePencil" aria-hidden="true" />
+            </button>
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              class="max-sm:size-11"
+              data-testid="calendar-day-item-delete"
+              i18n-aria-label="@@calendar.entry.delete"
+              aria-label="Delete event"
+              (click)="deleteRequested.emit(item)"
+            >
+              <ng-icon name="lucideTrash2" aria-hidden="true" />
+            </button>
+          </div>
+        }
       </div>
     }
   }

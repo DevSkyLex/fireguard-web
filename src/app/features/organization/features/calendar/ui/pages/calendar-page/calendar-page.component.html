@@ -48,6 +48,20 @@
     >
       {{ periodLabel() }}
     </span>
+
+    @if (canWriteEvents()) {
+      <button
+        hlmBtn
+        type="button"
+        size="sm"
+        class="ml-auto max-sm:min-h-11"
+        data-testid="calendar-new-event"
+        (click)="openCreateDialog()"
+      >
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+        <span i18n="@@calendar.newEvent">New event</span>
+      </button>
+    }
   </div>
 
   @if (loadFailed()) {
@@ -88,7 +102,13 @@
               Nothing scheduled this day.
             </p>
           } @else {
-            <app-calendar-entry-list [items]="dayItems()" [organizationId]="organizationId()" />
+            <app-calendar-entry-list
+              [items]="dayItems()"
+              [organizationId]="organizationId()"
+              [canWrite]="canWriteEvents()"
+              (editRequested)="openEditDialog($event)"
+              (deleteRequested)="requestDelete($event)"
+            />
           }
         </div>
       </div>
@@ -112,10 +132,34 @@
             data-testid="calendar-agenda-group"
           >
             <h2 class="text-sm font-semibold text-foreground">{{ group.label }}</h2>
-            <app-calendar-entry-list [items]="group.items" [organizationId]="organizationId()" />
+            <app-calendar-entry-list
+              [items]="group.items"
+              [organizationId]="organizationId()"
+              [canWrite]="canWriteEvents()"
+              (editRequested)="openEditDialog($event)"
+              (deleteRequested)="requestDelete($event)"
+            />
           </div>
         }
       }
     </div>
   }
+
+  <app-calendar-event-dialog
+    [visible]="eventDialogVisible()"
+    [pending]="isEventWritePending()"
+    [serverError]="eventWriteError()"
+    [editing]="editingEvent()"
+    [facilityOptions]="facilityOptions()"
+    (visibleChange)="onEventDialogVisibleChanged($event)"
+    (submitted)="onEventFormSubmitted($event)"
+  />
+
+  <app-calendar-event-delete-dialog
+    [visible]="pendingDeleteEvent() !== null"
+    [pending]="isDeletePending()"
+    [errorMessage]="deleteErrorMessage()"
+    (visibleChange)="onDeleteDialogVisibleChanged($event)"
+    (confirmed)="confirmDelete()"
+  />
 </div>

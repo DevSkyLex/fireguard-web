@@ -8,6 +8,8 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
+  type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -251,6 +253,14 @@ export class InterventionRecurrencesSheet {
       this.templates().find((template): boolean => template.id === templateId)?.name ?? templateIri
     );
   };
+
+  /**
+   * The inline delete confirmation's destructive button, focused whenever
+   * {@link confirmingRemoveId} opens — the confirmation replaces the row
+   * holding the button the user activated.
+   */
+  protected readonly confirmDeleteButtonRef: Signal<ElementRef<HTMLButtonElement> | undefined> =
+    viewChild<ElementRef<HTMLButtonElement>>('confirmDeleteButton');
   //#endregion
 
   //#region Constructor
@@ -296,6 +306,17 @@ export class InterventionRecurrencesSheet {
         this.confirmingRemoveId.set(null);
       });
     });
+
+    effect((): void => {
+      const confirming: string | null = this.confirmingRemoveId();
+      const button: ElementRef<HTMLButtonElement> | undefined = this.confirmDeleteButtonRef();
+
+      untracked((): void => {
+        if (confirming === null) return;
+
+        button?.nativeElement.focus();
+      });
+    });
   }
   //#endregion
 
@@ -309,6 +330,40 @@ export class InterventionRecurrencesSheet {
    * @param {BrnDialogState} state - The sheet's new state.
    * @returns {void}
    */
+  /**
+   * Method rowAriaLabelOf
+   *
+   * @description
+   * Accessible name for one row control, folding in the recurrence's own
+   * name so the otherwise identical switches and Edit/Delete entries stay
+   * distinguishable in a screen reader's control list.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @param {'activate' | 'deactivate' | 'edit' | 'remove' | 'confirmRemove' | 'keep'} kind - The control named.
+   * @param {string} name - The recurrence's name.
+   * @returns {string} The localized accessible name.
+   */
+  protected rowAriaLabelOf(
+    kind: 'activate' | 'deactivate' | 'edit' | 'remove' | 'confirmRemove' | 'keep',
+    name: string,
+  ): string {
+    switch (kind) {
+      case 'activate':
+        return $localize`:@@intervention.recurrences.activateAria:Activate ${name}:name:`;
+      case 'deactivate':
+        return $localize`:@@intervention.recurrences.deactivateAria:Deactivate ${name}:name:`;
+      case 'edit':
+        return $localize`:@@intervention.recurrences.editAria:Edit ${name}:name:`;
+      case 'remove':
+        return $localize`:@@intervention.recurrences.removeAria:Delete ${name}:name:`;
+      case 'confirmRemove':
+        return $localize`:@@intervention.recurrences.confirmRemoveAria:Confirm deleting ${name}:name:`;
+      case 'keep':
+        return $localize`:@@intervention.recurrences.keepAria:Keep ${name}:name:`;
+    }
+  }
+
   protected onStateChanged(state: BrnDialogState): void {
     if (state === 'open') return;
 

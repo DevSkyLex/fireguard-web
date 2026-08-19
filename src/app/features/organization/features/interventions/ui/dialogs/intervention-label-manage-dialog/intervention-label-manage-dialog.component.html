@@ -45,7 +45,7 @@
         <input
           id="intervention-label-create-color"
           type="color"
-          class="block h-9 w-12 cursor-pointer rounded-md border border-input"
+          class="block h-9 w-12 cursor-pointer rounded-md border border-input max-sm:min-h-11 max-sm:min-w-11"
           data-testid="intervention-label-create-color"
           [value]="draftColor()"
           (input)="draftColor.set($any($event.target).value)"
@@ -54,6 +54,7 @@
       <button
         hlmBtn
         type="submit"
+        class="max-sm:min-h-11"
         data-testid="intervention-label-create-submit"
         [disabled]="!canCreate()"
       >
@@ -66,7 +67,11 @@
     </form>
 
     @if (createError(); as message) {
-      <p class="text-sm text-destructive" data-testid="intervention-label-create-error">
+      <p
+        role="alert"
+        class="text-sm text-destructive"
+        data-testid="intervention-label-create-error"
+      >
         {{ message }}
       </p>
     }
@@ -97,16 +102,19 @@
             @if (editingId() === label.id) {
               <input
                 type="color"
-                class="block h-8 w-10 shrink-0 cursor-pointer rounded-md border border-input"
+                class="block h-8 w-10 shrink-0 cursor-pointer rounded-md border border-input max-sm:min-h-11 max-sm:min-w-11"
+                [attr.aria-label]="rowAriaLabelOf('editColor', label.name)"
                 [attr.data-testid]="'intervention-label-edit-color-' + label.id"
                 [value]="editColor()"
                 (input)="editColor.set($any($event.target).value)"
               />
               <input
+                #editNameInput
                 hlmInput
                 type="text"
                 maxlength="50"
-                class="h-8 flex-1"
+                class="h-8 flex-1 max-sm:min-h-11"
+                [attr.aria-label]="rowAriaLabelOf('editName', label.name)"
                 [attr.data-testid]="'intervention-label-edit-name-' + label.id"
                 [value]="editName()"
                 (input)="editName.set($any($event.target).value)"
@@ -115,13 +123,23 @@
                 hlmBtn
                 type="button"
                 size="sm"
+                class="max-sm:min-h-11"
+                [attr.aria-label]="rowAriaLabelOf('save', label.name)"
                 [attr.data-testid]="'intervention-label-edit-save-' + label.id"
                 [disabled]="savingId() === label.id || editName().trim().length === 0"
                 (click)="submitEdit()"
               >
                 <span i18n="@@common.save">Save</span>
               </button>
-              <button hlmBtn type="button" variant="ghost" size="sm" (click)="cancelEdit()">
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="max-sm:min-h-11"
+                [attr.aria-label]="rowAriaLabelOf('cancelEdit', label.name)"
+                (click)="cancelEdit()"
+              >
                 <span i18n="@@common.cancel">Cancel</span>
               </button>
             } @else if (confirmingRemoveId() === label.id) {
@@ -136,10 +154,13 @@
                 >Delete "{{ label.name }}"?</span
               >
               <button
+                #confirmDeleteButton
                 hlmBtn
                 type="button"
                 variant="destructive"
                 size="sm"
+                class="max-sm:min-h-11"
+                [attr.aria-label]="rowAriaLabelOf('confirmRemove', label.name)"
                 [attr.data-testid]="'intervention-label-remove-confirm-' + label.id"
                 [disabled]="removingId() === label.id"
                 (click)="confirmRemove(label.id)"
@@ -151,6 +172,8 @@
                 type="button"
                 variant="ghost"
                 size="sm"
+                class="max-sm:min-h-11"
+                [attr.aria-label]="rowAriaLabelOf('keep', label.name)"
                 (click)="confirmingRemoveId.set(null)"
               >
                 <span i18n="@@common.cancel">Cancel</span>
@@ -167,6 +190,8 @@
                 type="button"
                 variant="ghost"
                 size="sm"
+                class="max-sm:min-h-11"
+                [attr.aria-label]="rowAriaLabelOf('edit', label.name)"
                 [attr.data-testid]="'intervention-label-edit-' + label.id"
                 (click)="startEdit(label)"
               >
@@ -177,6 +202,8 @@
                 type="button"
                 variant="ghost"
                 size="sm"
+                class="max-sm:min-h-11"
+                [attr.aria-label]="rowAriaLabelOf('remove', label.name)"
                 [attr.data-testid]="'intervention-label-remove-' + label.id"
                 (click)="requestRemove(label.id)"
               >
@@ -194,6 +221,7 @@
         hlmBtn
         type="button"
         variant="outline"
+        class="max-sm:min-h-11"
         data-testid="intervention-label-manage-close"
       >
         <span i18n="@@common.close">Close</span>

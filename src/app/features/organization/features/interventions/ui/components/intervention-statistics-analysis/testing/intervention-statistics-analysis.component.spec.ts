@@ -67,19 +67,22 @@ describe('InterventionStatisticsAnalysis', () => {
       '[aria-labelledby="intervention-statistics-site-title"] a',
     );
 
-    expect(links.length).toBe(2);
+    expect(links.length).toBe(1);
     expect(links[0]?.getAttribute('href')).toBe('/organizations/org-1/facilities/site-1');
     expect(links[0]?.textContent).toContain('Main warehouse');
   });
 
-  it('should fall back to "Unknown" for a site whose facility no longer resolves', async () => {
+  it('should render an unresolvable site as plain "Unknown" text, never a link to the gone facility', async () => {
     const element: HTMLElement = await render(STATISTICS);
 
-    const links: NodeListOf<HTMLAnchorElement> = element.querySelectorAll(
-      '[aria-labelledby="intervention-statistics-site-title"] a',
-    );
+    const rows: readonly HTMLLIElement[] = [
+      ...element.querySelectorAll<HTMLLIElement>(
+        '[aria-labelledby="intervention-statistics-site-title"] li',
+      ),
+    ];
 
-    expect(links[1]?.textContent).toContain('Unknown');
+    expect(rows[1]?.querySelector('a')).toBeNull();
+    expect(rows[1]?.textContent).toContain('Unknown');
   });
 
   it('should render the top-10 responsible list with its count, and link each row into the members list', async () => {

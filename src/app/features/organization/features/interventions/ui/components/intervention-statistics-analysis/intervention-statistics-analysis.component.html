@@ -57,12 +57,16 @@
         <ul class="flex flex-col gap-1.5">
           @for (row of bySite(); track row.siteId) {
             <li class="flex items-center justify-between gap-2 text-sm">
-              <a
-                class="truncate text-foreground underline-offset-2 hover:underline"
-                [routerLink]="['/organizations', organizationId(), 'facilities', row.siteId]"
-              >
-                {{ row.siteName ?? siteFallbackLabel }}
-              </a>
+              @if (row.siteName) {
+                <a
+                  class="truncate text-foreground underline-offset-2 hover:underline"
+                  [routerLink]="['/organizations', organizationId(), 'facilities', row.siteId]"
+                >
+                  {{ row.siteName }}
+                </a>
+              } @else {
+                <span class="truncate text-muted-foreground">{{ siteFallbackLabel }}</span>
+              }
               <span class="font-medium tabular-nums">{{ row.count }}</span>
             </li>
           }

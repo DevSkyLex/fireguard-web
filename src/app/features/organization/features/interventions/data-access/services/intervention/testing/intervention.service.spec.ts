@@ -96,14 +96,15 @@ describe('InterventionService', () => {
     request.flush({});
   });
 
-  it('posts a team assignment and returns the updated intervention', () => {
-    service.assignTeam('intervention-1', { teamId: 'team-1' }).subscribe();
+  it('posts a team assignment with the current revision as If-Match', () => {
+    service.assignTeam('intervention-1', { teamId: 'team-1' }, 7).subscribe();
 
     const request = httpMock.expectOne(
       `${mockEnv.apiUrl}/api/interventions/intervention-1/team-assignments`,
     );
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ teamId: 'team-1' });
+    expect(request.request.headers.get('If-Match')).toBe('"revision-7"');
     request.flush({});
   });
 

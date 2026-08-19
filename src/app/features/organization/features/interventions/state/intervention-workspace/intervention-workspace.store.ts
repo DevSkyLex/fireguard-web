@@ -862,7 +862,7 @@ export const InterventionWorkspaceStore = signalStore(
           pipe(
             tap(() => patchState(store, { assignTeamCallState: pendingCallState() })),
             switchMap(({ interventionId, input }) =>
-              service.assignTeam(interventionId, input).pipe(
+              service.assignTeam(interventionId, input, store.intervention()?.revision).pipe(
                 tapResponse({
                   next: (updatedIntervention: InterventionOutput): void => {
                     patchState(store, {

@@ -776,7 +776,11 @@ describe('InterventionWorkspaceStore call state', () => {
     store.assignTeam({ interventionId: 'intervention-1', input: { teamId: 'team-1' } });
     await vi.waitFor(() => expect(store.assignTeamCallState().status).toBe('success'));
 
-    expect(mockService['assignTeam']).toHaveBeenCalledWith('intervention-1', { teamId: 'team-1' });
+    expect(mockService['assignTeam']).toHaveBeenCalledWith(
+      'intervention-1',
+      { teamId: 'team-1' },
+      intervention.revision,
+    );
     expect(store.intervention()?.participants).toEqual(['/api/organizations/org-1/members/m-1']);
   });
 

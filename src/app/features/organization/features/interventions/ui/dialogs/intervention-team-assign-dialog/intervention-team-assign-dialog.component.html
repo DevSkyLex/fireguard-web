@@ -30,7 +30,7 @@
         @for (team of teams(); track team.id) {
           <label
             [for]="'intervention-team-assign-' + team.id"
-            class="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 ring-1 ring-foreground/10"
+            class="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 ring-1 ring-foreground/10 max-sm:min-h-11"
             [attr.data-testid]="'intervention-team-assign-option-' + team.id"
           >
             <span class="flex items-center gap-3">
@@ -59,18 +59,19 @@
     }
 
     @if (errorMessage(); as message) {
-      <p class="text-sm text-destructive" data-testid="intervention-team-assign-error">
+      <p role="alert" class="text-sm text-destructive" data-testid="intervention-team-assign-error">
         {{ message }}
       </p>
     }
 
     <hlm-dialog-footer>
-      <button hlmDialogClose hlmBtn type="button" variant="outline">
+      <button hlmDialogClose hlmBtn type="button" variant="outline" class="max-sm:min-h-11">
         <span i18n="@@common.cancel">Cancel</span>
       </button>
       <button
         hlmBtn
         type="button"
+        class="max-sm:min-h-11"
         data-testid="intervention-team-assign-submit"
         [disabled]="!canSubmit()"
         [attr.aria-busy]="busy() ? 'true' : null"

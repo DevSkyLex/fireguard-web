@@ -3,10 +3,12 @@ import {
   Component,
   computed,
   effect,
+  ElementRef,
   input,
   output,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -52,7 +54,14 @@ const DEFAULT_LABEL_COLOR = '#3b82f6';
  * write and decides what to dispatch from {@link created}/{@link updated}/
  * {@link removed}.
  *
- * @version 1.0.0
+ * Opening a row's editor or its delete confirmation replaces the button that
+ * was focused to reach it, so a constructor effect moves focus into the
+ * fresh edit name input or the destructive confirm button whenever
+ * {@link editingId}/{@link confirmingRemoveId} changes ({@link editNameInputRef},
+ * {@link confirmDeleteButtonRef}) — otherwise focus silently falls back to
+ * the document body.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -134,10 +143,22 @@ export class InterventionLabelManageDialog {
   protected readonly canCreate: Signal<boolean> = computed<boolean>(
     () => !this.creating() && this.draftName().trim().length > 0,
   );
+
+  /** The open row's name input, focused whenever {@link editingId} changes. */
+  protected readonly editNameInputRef: Signal<ElementRef<HTMLInputElement> | undefined> =
+    viewChild<ElementRef<HTMLInputElement>>('editNameInput');
+
+  /** The open row's destructive confirm button, focused whenever {@link confirmingRemoveId} changes. */
+  protected readonly confirmDeleteButtonRef: Signal<ElementRef<HTMLButtonElement> | undefined> =
+    viewChild<ElementRef<HTMLButtonElement>>('confirmDeleteButton');
   //#endregion
 
   //#region Constructor
-  /** Clears every in-flight draft whenever the dialog closes. */
+  /**
+   * Clears every in-flight draft whenever the dialog closes, and moves focus
+   * into the row editor or the destructive confirm button whenever either
+   * opens — both replace the button that was focused to reach them.
+   */
   public constructor() {
     effect((): void => {
       const isOpen: boolean = this.open();
@@ -149,6 +170,28 @@ export class InterventionLabelManageDialog {
         this.draftColor.set(DEFAULT_LABEL_COLOR);
         this.editingId.set(null);
         this.confirmingRemoveId.set(null);
+      });
+    });
+
+    effect((): void => {
+      const editing: string | null = this.editingId();
+      const input: ElementRef<HTMLInputElement> | undefined = this.editNameInputRef();
+
+      untracked((): void => {
+        if (editing === null) return;
+
+        input?.nativeElement.focus();
+      });
+    });
+
+    effect((): void => {
+      const confirming: string | null = this.confirmingRemoveId();
+      const button: ElementRef<HTMLButtonElement> | undefined = this.confirmDeleteButtonRef();
+
+      untracked((): void => {
+        if (confirming === null) return;
+
+        button?.nativeElement.focus();
       });
     });
   }
@@ -168,6 +211,53 @@ export class InterventionLabelManageDialog {
     if (state === 'open') return;
 
     this.closed.emit();
+  }
+
+  /**
+   * Method rowAriaLabelOf
+   *
+   * @description
+   * Accessible name for one row action, folding in the label's own name so
+   * a screen reader browsing the dialog's control list can tell the
+   * otherwise identical Edit/Delete/Save/Cancel entries apart. The `kind`
+   * picks the localized verb phrase.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @param {'editColor' | 'editName' | 'edit' | 'remove' | 'save' | 'cancelEdit' | 'confirmRemove' | 'keep'} kind - The action named.
+   * @param {string} name - The row's label name.
+   * @returns {string} The localized accessible name.
+   */
+  protected rowAriaLabelOf(
+    kind:
+      | 'editColor'
+      | 'editName'
+      | 'edit'
+      | 'remove'
+      | 'save'
+      | 'cancelEdit'
+      | 'confirmRemove'
+      | 'keep',
+    name: string,
+  ): string {
+    switch (kind) {
+      case 'editColor':
+        return $localize`:@@intervention.labels.manage.colorAria:Color for ${name}:name:`;
+      case 'editName':
+        return $localize`:@@intervention.labels.manage.nameAria:Name for ${name}:name:`;
+      case 'edit':
+        return $localize`:@@intervention.labels.manage.editAria:Edit ${name}:name:`;
+      case 'remove':
+        return $localize`:@@intervention.labels.manage.removeAria:Delete ${name}:name:`;
+      case 'save':
+        return $localize`:@@intervention.labels.manage.saveAria:Save changes to ${name}:name:`;
+      case 'cancelEdit':
+        return $localize`:@@intervention.labels.manage.cancelEditAria:Cancel editing ${name}:name:`;
+      case 'confirmRemove':
+        return $localize`:@@intervention.labels.manage.confirmRemoveAria:Confirm deleting ${name}:name:`;
+      case 'keep':
+        return $localize`:@@intervention.labels.manage.keepAria:Keep ${name}:name:`;
+    }
   }
 
   /**
@@ -258,6 +348,110 @@ export class InterventionLabelManageDialog {
   protected confirmRemove(labelId: string): void {
     this.confirmingRemoveId.set(null);
     this.removed.emit(labelId);
+  }
+
+  /**
+   * Method colorInputLabelOf
+   *
+   * @description The open row's color input's accessible name — it carries no visible label of its own.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionLabelOutput} label - The row being edited.
+   * @returns {string} A localized label naming the row.
+   */
+  protected colorInputLabelOf(label: InterventionLabelOutput): string {
+    return $localize`:@@intervention.labels.manage.colorInputAria:Color for ${label.name}:name:`;
+  }
+
+  /**
+   * Method nameInputLabelOf
+   *
+   * @description The open row's name input's accessible name — it carries no visible label of its own.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionLabelOutput} label - The row being edited.
+   * @returns {string} A localized label naming the row.
+   */
+  protected nameInputLabelOf(label: InterventionLabelOutput): string {
+    return $localize`:@@intervention.labels.manage.nameInputAria:Name for ${label.name}:name:`;
+  }
+
+  /**
+   * Method editActionLabelOf
+   *
+   * @description A row's Edit button accessible name, naming the row so several rows do not announce identically.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionLabelOutput} label - The row the button acts on.
+   * @returns {string} A localized action label.
+   */
+  protected editActionLabelOf(label: InterventionLabelOutput): string {
+    return $localize`:@@intervention.labels.manage.editAria:Edit ${label.name}:name:`;
+  }
+
+  /**
+   * Method deleteActionLabelOf
+   *
+   * @description A row's Delete button accessible name, naming the row so several rows do not announce identically.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionLabelOutput} label - The row the button acts on.
+   * @returns {string} A localized action label.
+   */
+  protected deleteActionLabelOf(label: InterventionLabelOutput): string {
+    return $localize`:@@intervention.labels.manage.deleteAria:Delete ${label.name}:name:`;
+  }
+
+  /**
+   * Method saveActionLabelOf
+   *
+   * @description The open row editor's Save button accessible name, naming the row being saved.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionLabelOutput} label - The row being edited.
+   * @returns {string} A localized action label.
+   */
+  protected saveActionLabelOf(label: InterventionLabelOutput): string {
+    return $localize`:@@intervention.labels.manage.saveAria:Save ${label.name}:name:`;
+  }
+
+  /**
+   * Method cancelEditActionLabelOf
+   *
+   * @description The open row editor's Cancel button accessible name, naming the row being edited.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionLabelOutput} label - The row being edited.
+   * @returns {string} A localized action label.
+   */
+  protected cancelEditActionLabelOf(label: InterventionLabelOutput): string {
+    return $localize`:@@intervention.labels.manage.cancelEditAria:Cancel editing ${label.name}:name:`;
+  }
+
+  /**
+   * Method confirmDeleteActionLabelOf
+   *
+   * @description The inline delete confirmation's destructive button accessible name, naming the row it deletes.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionLabelOutput} label - The row pending confirmation.
+   * @returns {string} A localized action label.
+   */
+  protected confirmDeleteActionLabelOf(label: InterventionLabelOutput): string {
+    return $localize`:@@intervention.labels.manage.confirmDeleteAria:Confirm deleting ${label.name}:name:`;
+  }
+
+  /**
+   * Method cancelDeleteActionLabelOf
+   *
+   * @description The inline delete confirmation's Cancel button accessible name, naming the row it spares.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionLabelOutput} label - The row pending confirmation.
+   * @returns {string} A localized action label.
+   */
+  protected cancelDeleteActionLabelOf(label: InterventionLabelOutput): string {
+    return $localize`:@@intervention.labels.manage.cancelDeleteAria:Cancel deleting ${label.name}:name:`;
   }
   //#endregion
 }

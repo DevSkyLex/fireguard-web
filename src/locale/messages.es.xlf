@@ -13277,6 +13277,62 @@
         <source>Color</source>
         <target>Color</target>
       </trans-unit>
+      <trans-unit id="intervention.labels.manage.colorAria" datatype="html">
+        <source>Color for <x id="name" equiv-text="name"/></source>
+        <target>Color de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.nameAria" datatype="html">
+        <source>Name for <x id="name" equiv-text="name"/></source>
+        <target>Nombre de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.editAria" datatype="html">
+        <source>Edit <x id="name" equiv-text="name"/></source>
+        <target>Editar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.removeAria" datatype="html">
+        <source>Delete <x id="name" equiv-text="name"/></source>
+        <target>Eliminar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.saveAria" datatype="html">
+        <source>Save changes to <x id="name" equiv-text="name"/></source>
+        <target>Guardar los cambios de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.cancelEditAria" datatype="html">
+        <source>Cancel editing <x id="name" equiv-text="name"/></source>
+        <target>Cancelar la edición de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.confirmRemoveAria" datatype="html">
+        <source>Confirm deleting <x id="name" equiv-text="name"/></source>
+        <target>Confirmar la eliminación de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.keepAria" datatype="html">
+        <source>Keep <x id="name" equiv-text="name"/></source>
+        <target>Conservar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.activateAria" datatype="html">
+        <source>Activate <x id="name" equiv-text="name"/></source>
+        <target>Activar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.deactivateAria" datatype="html">
+        <source>Deactivate <x id="name" equiv-text="name"/></source>
+        <target>Desactivar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.editAria" datatype="html">
+        <source>Edit <x id="name" equiv-text="name"/></source>
+        <target>Editar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.removeAria" datatype="html">
+        <source>Delete <x id="name" equiv-text="name"/></source>
+        <target>Eliminar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.confirmRemoveAria" datatype="html">
+        <source>Confirm deleting <x id="name" equiv-text="name"/></source>
+        <target>Confirmar la eliminación de <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.keepAria" datatype="html">
+        <source>Keep <x id="name" equiv-text="name"/></source>
+        <target>Conservar <x id="name" equiv-text="name"/></target>
+      </trans-unit>
       <trans-unit id="intervention.labels.manage.confirmDelete" datatype="html">
         <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ label.name }}"/>&quot;?</source>
         <target>&#191;Eliminar &quot;<x id="INTERPOLATION" equiv-text="{{ label.name }}"/>&quot;?</target>

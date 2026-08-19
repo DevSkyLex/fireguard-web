@@ -21,7 +21,7 @@
       <button
         hlmBtn
         type="button"
-        class="self-start"
+        class="self-start max-sm:min-h-11"
         data-testid="intervention-recurrences-new"
         (click)="startCreate()"
       >
@@ -281,18 +281,29 @@
         </hlm-field>
 
         @if (formError(); as message) {
-          <p class="text-sm text-destructive" data-testid="intervention-recurrence-form-error">
+          <p
+            role="alert"
+            class="text-sm text-destructive"
+            data-testid="intervention-recurrence-form-error"
+          >
             {{ message }}
           </p>
         }
 
         <div class="flex justify-end gap-2">
-          <button hlmBtn type="button" variant="outline" (click)="cancelForm()">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="max-sm:min-h-11"
+            (click)="cancelForm()"
+          >
             <span i18n="@@common.cancel">Cancel</span>
           </button>
           <button
             hlmBtn
             type="submit"
+            class="max-sm:min-h-11"
             data-testid="intervention-recurrence-submit"
             [disabled]="!canSubmitForm()"
           >
@@ -353,10 +364,13 @@
                     >
                     <span class="flex gap-2">
                       <button
+                        #confirmDeleteButton
                         hlmBtn
                         type="button"
                         variant="destructive"
                         size="sm"
+                        class="max-sm:min-h-11"
+                        [attr.aria-label]="rowAriaLabelOf('confirmRemove', recurrence.name)"
                         [attr.data-testid]="
                           'intervention-recurrence-remove-confirm-' + recurrence.id
                         "
@@ -370,6 +384,8 @@
                         type="button"
                         variant="ghost"
                         size="sm"
+                        class="max-sm:min-h-11"
+                        [attr.aria-label]="rowAriaLabelOf('keep', recurrence.name)"
                         (click)="confirmingRemoveId.set(null)"
                       >
                         <span i18n="@@common.cancel">Cancel</span>
@@ -390,8 +406,15 @@
                   </td>
                   <td hlmTableCell>
                     <hlm-switch
+                      class="max-sm:min-h-11"
                       [checked]="recurrence.isActive"
                       [disabled]="!canWrite() || savingId() === recurrence.id"
+                      [attr.aria-label]="
+                        rowAriaLabelOf(
+                          recurrence.isActive ? 'deactivate' : 'activate',
+                          recurrence.name
+                        )
+                      "
                       [attr.data-testid]="'intervention-recurrence-toggle-' + recurrence.id"
                       (checkedChange)="toggleActive(recurrence.id, $event)"
                     />
@@ -404,6 +427,8 @@
                           type="button"
                           variant="ghost"
                           size="sm"
+                          class="max-sm:min-h-11"
+                          [attr.aria-label]="rowAriaLabelOf('edit', recurrence.name)"
                           [attr.data-testid]="'intervention-recurrence-edit-' + recurrence.id"
                           (click)="startEdit(recurrence)"
                         >
@@ -414,6 +439,8 @@
                           type="button"
                           variant="ghost"
                           size="sm"
+                          class="max-sm:min-h-11"
+                          [attr.aria-label]="rowAriaLabelOf('remove', recurrence.name)"
                           [attr.data-testid]="'intervention-recurrence-remove-' + recurrence.id"
                           (click)="requestRemove(recurrence.id)"
                         >

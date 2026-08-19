@@ -236,6 +236,34 @@ export class EquipmentAttachments {
   }
 
   /**
+   * Method downloadAriaLabelOf
+   * @description The download button's accessible name, naming the file so repeated rows stay distinguishable to assistive tech.
+   * @access protected
+   * @since 1.1.0
+   * @param {EquipmentAttachmentOutput} attachment - The row's attachment.
+   * @returns {string} The localized label.
+   */
+  protected downloadAriaLabelOf(attachment: EquipmentAttachmentOutput): string {
+    const fileName: string = attachment.fileName;
+
+    return $localize`:@@equipment.attachments.downloadAria:Download ${fileName}:fileName:`;
+  }
+
+  /**
+   * Method deleteAriaLabelOf
+   * @description The delete button's accessible name, naming the file so repeated rows stay distinguishable to assistive tech.
+   * @access protected
+   * @since 1.1.0
+   * @param {EquipmentAttachmentOutput} attachment - The row's attachment.
+   * @returns {string} The localized label.
+   */
+  protected deleteAriaLabelOf(attachment: EquipmentAttachmentOutput): string {
+    const fileName: string = attachment.fileName;
+
+    return $localize`:@@equipment.attachments.deleteAria:Delete ${fileName}:fileName:`;
+  }
+
+  /**
    * Method isRowPending
    * @description Whether this row's own delete is in flight.
    * @access protected

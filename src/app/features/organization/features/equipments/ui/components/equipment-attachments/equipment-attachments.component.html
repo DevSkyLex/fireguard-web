@@ -57,7 +57,7 @@
           hlmItem
           variant="outline"
           size="sm"
-          class="rounded-md transition-colors hover:bg-muted/50"
+          class="rounded-md transition-colors hover:bg-muted/50 motion-reduce:transition-none"
           data-testid="equipment-attachment-row"
         >
           <div hlmItemMedia variant="icon" class="relative text-muted-foreground">
@@ -88,8 +88,7 @@
               size="icon-sm"
               class="text-muted-foreground max-sm:size-11"
               data-testid="equipment-attachment-download"
-              i18n-aria-label="@@equipment.attachments.download"
-              aria-label="Download this file"
+              [attr.aria-label]="downloadAriaLabelOf(attachment)"
               [disabled]="isRowDownloading(attachment)"
               [attr.aria-busy]="isRowDownloading(attachment) ? 'true' : null"
               (click)="downloadRequested.emit(attachment)"
@@ -108,8 +107,7 @@
                 size="icon-sm"
                 class="text-muted-foreground hover:text-destructive max-sm:size-11"
                 data-testid="equipment-attachment-delete"
-                i18n-aria-label="@@equipment.attachments.delete"
-                aria-label="Delete this file"
+                [attr.aria-label]="deleteAriaLabelOf(attachment)"
                 [disabled]="isRowPending(attachment)"
                 [attr.aria-busy]="isRowPending(attachment) ? 'true' : null"
                 (click)="deleteRequested.emit(attachment)"

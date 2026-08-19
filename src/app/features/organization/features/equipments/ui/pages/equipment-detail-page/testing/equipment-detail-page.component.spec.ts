@@ -473,6 +473,16 @@ describe('EquipmentDetailPage', () => {
         attachmentId: 'attachment-1',
       });
     });
+
+    it('should mark the row pending while its delete is in flight, so the control announces busy', async () => {
+      await createPage();
+
+      fixture.componentInstance['onAttachmentDeleteRequested'](attachment);
+
+      expect(fixture.componentInstance['pendingAttachmentDeleteIds']().has('attachment-1')).toBe(
+        true,
+      );
+    });
   });
 
   describe('tags', () => {

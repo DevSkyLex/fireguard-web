@@ -3266,13 +3266,17 @@
         <source>Add photos or documents to keep with this equipment.</source>
         <target>Añada fotos o documentos para conservar con este equipo.</target>
       </trans-unit>
-      <trans-unit id="equipment.attachments.download" datatype="html">
-        <source>Download this file</source>
-        <target>Descargar este archivo</target>
+      <trans-unit id="equipment.attachments.downloadAria" datatype="html">
+        <source>Download <x id="fileName" equiv-text="fileName"/></source>
+        <target>Descargar <x id="fileName" equiv-text="fileName"/></target>
       </trans-unit>
-      <trans-unit id="equipment.attachments.delete" datatype="html">
-        <source>Delete this file</source>
-        <target>Eliminar este archivo</target>
+      <trans-unit id="equipment.attachments.deleteAria" datatype="html">
+        <source>Delete <x id="fileName" equiv-text="fileName"/></source>
+        <target>Eliminar <x id="fileName" equiv-text="fileName"/></target>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.interventionLinkAria" datatype="html">
+        <source>View intervention FG-<x id="number" equiv-text="number"/></source>
+        <target>Ver la intervención FG-<x id="number" equiv-text="number"/></target>
       </trans-unit>
       <trans-unit id="equipment.detail.tabsAriaLabel" datatype="html">
         <source>Equipment sections</source>

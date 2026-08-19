@@ -606,6 +606,9 @@ export class EquipmentDetailPage {
    * @returns {void}
    */
   protected onAttachmentDeleteRequested(attachment: EquipmentAttachmentOutput): void {
+    this.pendingAttachmentDeleteIds.update((ids: ReadonlySet<string>): ReadonlySet<string> =>
+      new Set(ids).add(attachment.id),
+    );
     this.store.deleteAttachment({
       organizationId: this.organizationId(),
       equipmentId: this.equipmentId(),

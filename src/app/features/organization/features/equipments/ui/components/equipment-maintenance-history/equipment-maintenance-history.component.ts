@@ -157,5 +157,19 @@ export class EquipmentMaintenanceHistory {
         };
     }
   }
+
+  /**
+   * Method interventionLinkAriaLabelOf
+   * @description The intervention link's accessible name — the bare FG-number alone reads ambiguously in an out-of-context link list.
+   * @access protected
+   * @since 1.1.0
+   * @param {EquipmentMaintenanceLogOutput} log - The row's log entry.
+   * @returns {string} The localized label.
+   */
+  protected interventionLinkAriaLabelOf(log: EquipmentMaintenanceLogOutput): string {
+    const number: number = log.interventionNumber ?? 0;
+
+    return $localize`:@@equipment.maintenance.interventionLinkAria:View intervention FG-${number}:number:`;
+  }
   //#endregion
 }

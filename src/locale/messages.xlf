@@ -4643,18 +4643,18 @@
           <context context-type="linenumber">49,50</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="equipment.attachments.download" datatype="html">
-        <source>Download this file</source>
+      <trans-unit id="equipment.attachments.downloadAria" datatype="html">
+        <source>Download <x id="fileName" equiv-text="fileName"/></source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/components/equipment-attachments/equipment-attachments.component.html</context>
-          <context context-type="linenumber">92,93</context>
+          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/components/equipment-attachments/equipment-attachments.component.ts</context>
+          <context context-type="linenumber">249</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="equipment.attachments.delete" datatype="html">
-        <source>Delete this file</source>
+      <trans-unit id="equipment.attachments.deleteAria" datatype="html">
+        <source>Delete <x id="fileName" equiv-text="fileName"/></source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/components/equipment-attachments/equipment-attachments.component.html</context>
-          <context context-type="linenumber">112,113</context>
+          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/components/equipment-attachments/equipment-attachments.component.ts</context>
+          <context context-type="linenumber">263</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.info.type" datatype="html">
@@ -4843,6 +4843,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/components/equipment-maintenance-history/equipment-maintenance-history.component.ts</context>
           <context context-type="linenumber">156</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="equipment.maintenance.interventionLinkAria" datatype="html">
+        <source>View intervention FG-<x id="number" equiv-text="number"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/components/equipment-maintenance-history/equipment-maintenance-history.component.ts</context>
+          <context context-type="linenumber">172</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.tags.title" datatype="html">

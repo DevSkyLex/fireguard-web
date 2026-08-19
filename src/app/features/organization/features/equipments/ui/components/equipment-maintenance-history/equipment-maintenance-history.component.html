@@ -52,6 +52,7 @@
             <a
               class="w-fit text-sm text-muted-foreground hover:text-foreground hover:underline"
               data-testid="equipment-maintenance-log-intervention-link"
+              [attr.aria-label]="interventionLinkAriaLabelOf(log)"
               [routerLink]="['/organizations', organizationId(), 'interventions', interventionId]"
               >FG-{{ log.interventionNumber }}</a
             >

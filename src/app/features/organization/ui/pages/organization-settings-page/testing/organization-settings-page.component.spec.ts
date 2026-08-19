@@ -10,9 +10,19 @@ import {
   type StoreError,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
-import { ORGANIZATION_PERMISSION, type OrganizationOutput } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import {
+  ORGANIZATION_PERMISSION,
+  type CurrentOrganizationMemberProfileOutput,
+  type OrganizationMemberOutput,
+  type OrganizationOutput,
+} from '@features/organization/models';
+import {
+  ActiveOrganizationStore,
+  OrganizationMemberAccessStore,
+  OrganizationQuotaStore,
+} from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
@@ -41,23 +51,54 @@ function organization(overrides: Partial<OrganizationOutput> = {}): Organization
   } as unknown as OrganizationOutput;
 }
 
+function member(overrides: Partial<OrganizationMemberOutput> = {}): OrganizationMemberOutput {
+  return {
+    '@id': '/api/organizations/org-1/members/member-2',
+    '@type': 'OrganizationMember',
+    id: 'member-2',
+    organizationId: 'org-1',
+    userId: 'user-2',
+    displayName: 'Jane Doe',
+    isActive: true,
+    isOwner: false,
+    joinedAt: '2026-01-01T00:00:00+00:00',
+    roleIds: [],
+    ...overrides,
+  } as unknown as OrganizationMemberOutput;
+}
+
 describe('OrganizationSettingsPage', () => {
   let fixture: ComponentFixture<OrganizationSettingsPage>;
   let selectedOrganization: WritableSignal<OrganizationOutput | null>;
   let deleteCallState: WritableSignal<CallState<void>>;
+  let statusCallState: WritableSignal<CallState<OrganizationOutput>>;
+  let transferOwnershipCallState: WritableSignal<CallState<OrganizationOutput>>;
+  let leaveCallState: WritableSignal<CallState<void>>;
+  let cancelCallState: WritableSignal<CallState<unknown>>;
+  let subscription: WritableSignal<{ hasSubscription: boolean; cancelAtPeriodEnd: boolean } | null>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
+  let actingProfile: WritableSignal<CurrentOrganizationMemberProfileOutput | null>;
   let navigate: ReturnType<typeof vi.fn>;
   let clearActiveOrganization: ReturnType<typeof vi.fn>;
 
   let save: ReturnType<typeof vi.fn>;
   let uploadLogo: ReturnType<typeof vi.fn>;
   let deleteOrganization: ReturnType<typeof vi.fn>;
+  let suspend: ReturnType<typeof vi.fn>;
+  let restore: ReturnType<typeof vi.fn>;
+  let transferOwnership: ReturnType<typeof vi.fn>;
+  let leave: ReturnType<typeof vi.fn>;
 
   let loadSubscription: ReturnType<typeof vi.fn>;
   let loadPricing: ReturnType<typeof vi.fn>;
   let loadInvoices: ReturnType<typeof vi.fn>;
   let startCheckout: ReturnType<typeof vi.fn>;
   let startPortal: ReturnType<typeof vi.fn>;
+  let cancelSubscription: ReturnType<typeof vi.fn>;
+  let resumeSubscription: ReturnType<typeof vi.fn>;
+
+  let listAllMembers: ReturnType<typeof vi.fn>;
+  let listLegalTypes: ReturnType<typeof vi.fn>;
 
   const byTestId = (id: string): HTMLElement | null =>
     (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
@@ -96,6 +137,18 @@ describe('OrganizationSettingsPage', () => {
           provide: ApprovalRequestService,
           useValue: { listActionTypes: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
         },
+        {
+          provide: OrganizationMemberAccessStore,
+          useValue: { profile: actingProfile },
+        },
+        {
+          provide: OrganizationMemberService,
+          useValue: { listAll: listAllMembers },
+        },
+        {
+          provide: OrganizationService,
+          useValue: { listLegalTypes },
+        },
       ],
     });
 
@@ -119,12 +172,25 @@ describe('OrganizationSettingsPage', () => {
               save,
               uploadLogo,
               deleteOrganization,
+              isChangingStatus: signal(false),
+              statusError: signal<StoreError | null>(null),
+              statusCallState,
+              suspend,
+              restore,
+              isTransferringOwnership: signal(false),
+              transferOwnershipError: signal<StoreError | null>(null),
+              transferOwnershipCallState,
+              transferOwnership,
+              isLeaving: signal(false),
+              leaveError: signal<StoreError | null>(null),
+              leaveCallState,
+              leave,
             },
           },
           {
             provide: OrganizationBillingStore,
             useValue: {
-              subscription: signal(null),
+              subscription,
               isLoadingSubscription: signal(false),
               pricing: signal([]),
               isLoadingPricing: signal(false),
@@ -133,12 +199,17 @@ describe('OrganizationSettingsPage', () => {
               invoicesError: signal<StoreError | null>(null),
               isStartingCheckout: signal(false),
               isStartingPortal: signal(false),
+              isCanceling: signal(false),
+              isResuming: signal(false),
+              cancelCallState,
               billingError: signal<StoreError | null>(null),
               loadSubscription,
               loadPricing,
               loadInvoices,
               startCheckout,
               startPortal,
+              cancelSubscription,
+              resumeSubscription,
             },
           },
         ],
@@ -176,16 +247,38 @@ describe('OrganizationSettingsPage', () => {
   beforeEach(() => {
     selectedOrganization = signal<OrganizationOutput | null>(organization());
     deleteCallState = signal<CallState<void>>(idleCallState());
+    statusCallState = signal<CallState<OrganizationOutput>>(idleCallState());
+    transferOwnershipCallState = signal<CallState<OrganizationOutput>>(idleCallState());
+    leaveCallState = signal<CallState<void>>(idleCallState());
+    cancelCallState = signal<CallState<unknown>>(idleCallState());
+    subscription = signal<{ hasSubscription: boolean; cancelAtPeriodEnd: boolean } | null>(null);
     permissions = signal<ReadonlyArray<string>>([ORGANIZATION_PERMISSION.DELETE]);
+    actingProfile = signal<CurrentOrganizationMemberProfileOutput | null>({
+      id: 'member-1',
+      organizationId: 'org-1',
+      userId: 'user-2',
+      isActive: true,
+      joinedAt: '2026-01-01T00:00:00+00:00',
+      roles: [],
+      permissions: [],
+    } as unknown as CurrentOrganizationMemberProfileOutput);
     clearActiveOrganization = vi.fn();
     save = vi.fn();
     uploadLogo = vi.fn();
     deleteOrganization = vi.fn();
+    suspend = vi.fn();
+    restore = vi.fn();
+    transferOwnership = vi.fn();
+    leave = vi.fn();
     loadSubscription = vi.fn();
     loadPricing = vi.fn();
     loadInvoices = vi.fn();
     startCheckout = vi.fn();
     startPortal = vi.fn();
+    cancelSubscription = vi.fn();
+    resumeSubscription = vi.fn();
+    listAllMembers = vi.fn().mockReturnValue(of([]));
+    listLegalTypes = vi.fn().mockReturnValue(of({ member: [], totalItems: 0 }));
   });
 
   afterEach(() => TestBed.resetTestingModule());
@@ -462,5 +555,237 @@ describe('OrganizationSettingsPage', () => {
     expect(clearActiveOrganization).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/organizations']);
     expect(fixture.componentInstance['confirmingDelete']()).toBe(false);
+  });
+
+  it('should save the legal information section scoped to the active organization', async () => {
+    await createPage();
+
+    fixture.componentInstance['saveLegal']({
+      country: 'FR',
+      legalType: 'limited_liability_company',
+      legalName: 'Fireguard Paris SARL',
+      registrationNumber: 'RCS PARIS 812345678',
+      vatNumber: 'FR12345678901',
+    });
+
+    expect(save).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      input: {
+        country: 'FR',
+        legalType: 'limited_liability_company',
+        legalName: 'Fireguard Paris SARL',
+        registrationNumber: 'RCS PARIS 812345678',
+        vatNumber: 'FR12345678901',
+      },
+    });
+  });
+
+  it('should load the legal type catalog once the general tab opens', async () => {
+    await createPage();
+
+    expect(listLegalTypes).toHaveBeenCalled();
+  });
+
+  it('should show Suspend but not Restore for an active organization', async () => {
+    await createPage('danger');
+
+    expect(byTestId('org-settings-danger-suspend-open')).not.toBeNull();
+    expect(byTestId('org-settings-danger-restore')).toBeNull();
+  });
+
+  it('should show Restore but not Suspend for a suspended organization', async () => {
+    selectedOrganization.set(organization({ status: 'suspended' }));
+    await createPage('danger');
+
+    expect(byTestId('org-settings-danger-suspend-open')).toBeNull();
+    expect(byTestId('org-settings-danger-restore')).not.toBeNull();
+  });
+
+  it('should show Restore for an archived organization too', async () => {
+    selectedOrganization.set(organization({ status: 'archived' }));
+    await createPage('danger');
+
+    expect(byTestId('org-settings-danger-restore')).not.toBeNull();
+  });
+
+  it('should suspend the active organization once confirmed', async () => {
+    await createPage('danger');
+
+    fixture.componentInstance['openSuspendDialog']();
+    fixture.componentInstance['suspendOrganization']();
+
+    expect(suspend).toHaveBeenCalledWith({ organizationId: 'org-1' });
+  });
+
+  it('should close the suspend dialog once the status change succeeds', async () => {
+    await createPage('danger');
+    fixture.componentInstance['openSuspendDialog']();
+
+    statusCallState.set(pendingCallState());
+    await fixture.whenStable();
+    statusCallState.set(successCallState(organization({ status: 'suspended' })));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['confirmingSuspend']()).toBe(false);
+  });
+
+  it('should restore the organization directly, without a confirmation dialog', async () => {
+    selectedOrganization.set(organization({ status: 'suspended' }));
+    await createPage('danger');
+
+    fixture.componentInstance['restoreOrganization']();
+
+    expect(restore).toHaveBeenCalledWith({ organizationId: 'org-1' });
+  });
+
+  it('should hide ownership transfer and show the leave control for a non-owner member', async () => {
+    await createPage('danger');
+
+    expect(byTestId('org-settings-danger-transfer-open')).toBeNull();
+    expect(byTestId('org-settings-danger-leave-open')).not.toBeNull();
+  });
+
+  it('should offer ownership transfer and hide the leave control once the acting member owns the organization', async () => {
+    actingProfile.set({
+      id: 'member-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      isActive: true,
+      joinedAt: '2026-01-01T00:00:00+00:00',
+      roles: [],
+      permissions: [],
+    } as unknown as CurrentOrganizationMemberProfileOutput);
+    await createPage('danger');
+
+    expect(byTestId('org-settings-danger-transfer-open')).not.toBeNull();
+    expect(byTestId('org-settings-danger-leave-open')).toBeNull();
+  });
+
+  it('should prefer a declared isOwner over the derived comparison', async () => {
+    selectedOrganization.set(organization({ isOwner: true }));
+    await createPage('danger');
+
+    expect(byTestId('org-settings-danger-transfer-open')).not.toBeNull();
+    expect(byTestId('org-settings-danger-leave-open')).toBeNull();
+  });
+
+  it('should hide ownership transfer for an archived organization even for the owner', async () => {
+    selectedOrganization.set(organization({ status: 'archived', isOwner: true }));
+    await createPage('danger');
+
+    expect(byTestId('org-settings-danger-transfer-open')).toBeNull();
+  });
+
+  it('should load active, non-owner members as transfer candidates once the owner opens the danger tab', async () => {
+    listAllMembers.mockReturnValue(
+      of([
+        member({ userId: 'user-1', isOwner: true, displayName: 'Acme Owner' }),
+        member({ userId: 'user-2', isOwner: false, isActive: true, displayName: 'Jane Doe' }),
+        member({ userId: 'user-3', isOwner: false, isActive: false, displayName: 'Inactive Roe' }),
+      ]),
+    );
+    selectedOrganization.set(organization({ isOwner: true }));
+    await createPage('danger');
+
+    expect(listAllMembers).toHaveBeenCalledWith('org-1');
+    expect(fixture.componentInstance['transferCandidates']()).toEqual([
+      { value: 'user-2', label: 'Jane Doe' },
+    ]);
+  });
+
+  it('should transfer ownership to the picked candidate, reading the slug from the resolved organization', async () => {
+    selectedOrganization.set(organization({ isOwner: true }));
+    await createPage('danger');
+
+    fixture.componentInstance['openTransferDialog']();
+    fixture.componentInstance['transferOwnership']({ newOwnerUserId: 'user-2' });
+
+    expect(transferOwnership).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      newOwnerUserId: 'user-2',
+      slug: 'acme-corp',
+    });
+  });
+
+  it('should close the transfer dialog once the transfer succeeds', async () => {
+    selectedOrganization.set(organization({ isOwner: true }));
+    await createPage('danger');
+    fixture.componentInstance['openTransferDialog']();
+
+    transferOwnershipCallState.set(pendingCallState());
+    await fixture.whenStable();
+    transferOwnershipCallState.set(successCallState(organization({ ownerUserId: 'user-2' })));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['confirmingTransfer']()).toBe(false);
+  });
+
+  it('should leave the organization once confirmed, then clear context and navigate away', async () => {
+    await createPage('danger');
+
+    fixture.componentInstance['openLeaveDialog']();
+    fixture.componentInstance['leaveOrganization']();
+    expect(leave).toHaveBeenCalledWith({ organizationId: 'org-1' });
+
+    leaveCallState.set(pendingCallState());
+    await fixture.whenStable();
+    leaveCallState.set(successCallState(undefined));
+    await fixture.whenStable();
+
+    expect(clearActiveOrganization).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/organizations']);
+    expect(fixture.componentInstance['confirmingLeave']()).toBe(false);
+  });
+
+  it('should offer Cancel when a subscription renews normally', async () => {
+    subscription.set({ hasSubscription: true, cancelAtPeriodEnd: false });
+    await createPage('subscription');
+
+    expect(byTestId('org-settings-subscription-cancel')).not.toBeNull();
+    expect(byTestId('org-settings-subscription-resume')).toBeNull();
+  });
+
+  it('should offer Resume once the subscription is scheduled to cancel', async () => {
+    subscription.set({ hasSubscription: true, cancelAtPeriodEnd: true });
+    await createPage('subscription');
+
+    expect(byTestId('org-settings-subscription-resume')).not.toBeNull();
+    expect(byTestId('org-settings-subscription-cancel')).toBeNull();
+  });
+
+  it('should offer neither control without an active subscription', async () => {
+    await createPage('subscription');
+
+    expect(byTestId('org-settings-subscription-cancel')).toBeNull();
+    expect(byTestId('org-settings-subscription-resume')).toBeNull();
+  });
+
+  it('should cancel the active subscription once confirmed', async () => {
+    await createPage('subscription');
+
+    fixture.componentInstance['openCancelSubscriptionDialog']();
+    fixture.componentInstance['cancelSubscription']();
+
+    expect(cancelSubscription).toHaveBeenCalledWith('org-1');
+  });
+
+  it('should close the cancel dialog once the cancellation succeeds', async () => {
+    await createPage('subscription');
+    fixture.componentInstance['openCancelSubscriptionDialog']();
+
+    cancelCallState.set(pendingCallState());
+    await fixture.whenStable();
+    cancelCallState.set(successCallState({}));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['confirmingCancelSubscription']()).toBe(false);
+  });
+
+  it('should resume a subscription directly, without a confirmation dialog', async () => {
+    await createPage('subscription');
+
+    fixture.componentInstance['resumeSubscription']();
+
+    expect(resumeSubscription).toHaveBeenCalledWith('org-1');
   });
 });

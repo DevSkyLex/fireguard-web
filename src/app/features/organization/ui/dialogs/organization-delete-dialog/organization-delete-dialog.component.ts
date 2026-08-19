@@ -221,7 +221,10 @@ export class OrganizationDeleteDialog {
    * @type {Signal<boolean>}
    */
   protected readonly canConfirm: Signal<boolean> = computed<boolean>(
-    () => this.typedName() === this.organizationName() && !this.pending(),
+    () =>
+      this.organizationName().length > 0 &&
+      this.typedName() === this.organizationName() &&
+      !this.pending(),
   );
   //#endregion
 

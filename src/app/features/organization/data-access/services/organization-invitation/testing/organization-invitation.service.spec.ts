@@ -73,7 +73,9 @@ describe('OrganizationInvitationService', () => {
     id: 'member-uuid-1',
     organizationId: orgId,
     userId: 'user-uuid-2',
+    displayName: 'Alex Martin',
     isActive: true,
+    isOwner: false,
     joinedAt: '2026-03-15T00:00:00+00:00',
     roleIds: ['role-uuid-1'],
   };

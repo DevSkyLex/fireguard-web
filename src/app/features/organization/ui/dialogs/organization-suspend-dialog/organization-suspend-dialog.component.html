@@ -1,0 +1,40 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-suspend-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.settings.danger.suspendConfirmTitle">
+        Suspend this organization?
+      </h2>
+      <p hlmAlertDialogDescription>{{ confirmText() }}</p>
+    </hlm-alert-dialog-header>
+
+    @if (error(); as message) {
+      <p role="alert" class="text-sm text-destructive" data-testid="organization-suspend-error">
+        {{ message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel class="max-sm:min-h-11" i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="organization-suspend-confirm"
+        aria-live="polite"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.danger.suspending">Suspending…</span>
+        } @else {
+          <span i18n="@@org.settings.danger.suspendConfirmAction">Suspend organization</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

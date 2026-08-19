@@ -11949,6 +11949,206 @@
         <source>Type <x id="organizationName" equiv-text="name"/> to confirm</source>
         <target>Escriba <x id="organizationName"/> para confirmar</target>
       </trans-unit>
+      <trans-unit id="org.settings.danger.statusTitle" datatype="html">
+        <source>Suspend or restore</source>
+        <target>Suspender o restaurar</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.statusDescription" datatype="html">
+        <source> Suspending blocks every member&apos;s access immediately without deleting any data. Restoring brings a suspended or archived organization back to active. </source>
+        <target>Suspender bloquea de inmediato el acceso de todos los miembros sin eliminar ningún dato. Restaurar devuelve a activa una organización suspendida o archivada.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspendOpen" datatype="html">
+        <source>Suspend organization</source>
+        <target>Suspender organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.restoring" datatype="html">
+        <source>Restoring…</source>
+        <target>Restaurando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.restoreAction" datatype="html">
+        <source>Restore organization</source>
+        <target>Restaurar organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspendConfirmTitle" datatype="html">
+        <source> Suspend this organization? </source>
+        <target>¿Suspender esta organización?</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspendConfirmText" datatype="html">
+        <source>Members of <x id="organizationName" equiv-text="name"/> immediately lose access. Every facility, piece of equipment, inspection and intervention is preserved, and you can restore the organization at any time.</source>
+        <target>Los miembros de <x id="organizationName"/> pierden el acceso de inmediato. Cada instalación, equipo, inspección e intervención se conserva, y puede restaurar la organización en cualquier momento.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspending" datatype="html">
+        <source>Suspending…</source>
+        <target>Suspendiendo…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspendConfirmAction" datatype="html">
+        <source>Suspend organization</source>
+        <target>Suspender organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferTitle" datatype="html">
+        <source>Transfer ownership</source>
+        <target>Transferir propiedad</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferDescription" datatype="html">
+        <source> Hand full control of this organization to another active member. You keep your own membership and roles, but no longer own it. </source>
+        <target>Ceda el control total de esta organización a otro miembro activo. Usted conserva su propia membresía y roles, pero deja de ser el propietario.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferOpen" datatype="html">
+        <source>Transfer ownership</source>
+        <target>Transferir propiedad</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferConfirmTitle" datatype="html">
+        <source> Transfer ownership </source>
+        <target>Transferir propiedad</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferConfirmDescription" datatype="html">
+        <source> The new owner gains full control, including the ability to delete the organization. You keep your membership and roles, but no longer own it. </source>
+        <target>El nuevo propietario obtiene el control total, incluida la posibilidad de eliminar la organización. Usted conserva su membresía y roles, pero deja de ser el propietario.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferMemberLabel" datatype="html">
+        <source>New owner</source>
+        <target>Nuevo propietario</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferMemberPlaceholder" datatype="html">
+        <source>Search a member</source>
+        <target>Buscar un miembro</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferMemberNoMatch" datatype="html">
+        <source>No member matches.</source>
+        <target>Ningún miembro coincide.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferMemberUnnamed" datatype="html">
+        <source>Member</source>
+        <target>Miembro</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferConfirmLabel" datatype="html">
+        <source>Type <x id="organizationName" equiv-text="name"/> to confirm</source>
+        <target>Escriba <x id="organizationName"/> para confirmar</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferring" datatype="html">
+        <source>Transferring…</source>
+        <target>Transfiriendo…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferConfirmAction" datatype="html">
+        <source>Transfer ownership</source>
+        <target>Transferir propiedad</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveTitle" datatype="html">
+        <source>Leave this organization</source>
+        <target>Salir de esta organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveDescription" datatype="html">
+        <source> Removes your own membership. Another member will need to invite you back. </source>
+        <target>Elimina su propia membresía. Otro miembro deberá volver a invitarlo.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveOpen" datatype="html">
+        <source>Leave organization</source>
+        <target>Salir de la organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveConfirmTitle" datatype="html">
+        <source> Leave this organization? </source>
+        <target>¿Salir de esta organización?</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveConfirmText" datatype="html">
+        <source>You will lose access to <x id="organizationName" equiv-text="name"/> and everything in it. You can only rejoin if another member invites you back.</source>
+        <target>Perderá el acceso a <x id="organizationName"/> y a todo su contenido. Solo podrá volver a unirse si otro miembro lo invita de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaving" datatype="html">
+        <source>Leaving…</source>
+        <target>Saliendo…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveConfirmAction" datatype="html">
+        <source>Leave organization</source>
+        <target>Salir de la organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.sectionTitle" datatype="html">
+        <source> Legal information </source>
+        <target>Información legal</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.countryLabel" datatype="html">
+        <source>Country</source>
+        <target>País</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.countryTooLong" datatype="html">
+        <source>Use the 2-letter country code</source>
+        <target>Use el código de país de 2 letras</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.typeLabel" datatype="html">
+        <source>Legal entity type</source>
+        <target>Forma jurídica</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.typeUnset" datatype="html">
+        <source>Not set</source>
+        <target>Sin definir</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.legalNameLabel" datatype="html">
+        <source>Registered legal name</source>
+        <target>Razón social</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.legalNameTooLong" datatype="html">
+        <source>This name is too long</source>
+        <target>Este nombre es demasiado largo</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.registrationNumberLabel" datatype="html">
+        <source>Registration number</source>
+        <target>Número de registro</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.registrationNumberTooLong" datatype="html">
+        <source>This number is too long</source>
+        <target>Este número es demasiado largo</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.vatNumberLabel" datatype="html">
+        <source>VAT number</source>
+        <target>Número de IVA</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.vatNumberTooLong" datatype="html">
+        <source>This number is too long</source>
+        <target>Este número es demasiado largo</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Guardar cambios</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelAction" datatype="html">
+        <source> Cancel subscription </source>
+        <target>Cancelar suscripción</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.resuming" datatype="html">
+        <source>Resuming…</source>
+        <target>Reanudando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.resumeAction" datatype="html">
+        <source> Resume subscription </source>
+        <target>Reanudar suscripción</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelConfirmTitle" datatype="html">
+        <source> Cancel this subscription? </source>
+        <target>¿Cancelar esta suscripción?</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelConfirmText" datatype="html">
+        <source>The subscription keeps working until <x id="date" equiv-text="date"/>, then it will not renew. You can resume it at any time before then.</source>
+        <target>La suscripción sigue funcionando hasta el <x id="date"/>, después no se renovará. Puede reanudarla en cualquier momento antes de esa fecha.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelConfirmTextUnknownDate" datatype="html">
+        <source>The subscription keeps working until the end of the current billing period, then it will not renew. You can resume it at any time before then.</source>
+        <target>La suscripción sigue funcionando hasta el final del período de facturación actual, después no se renovará. Puede reanudarla en cualquier momento antes de esa fecha.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelDismiss" datatype="html">
+        <source> Keep subscription </source>
+        <target>Mantener suscripción</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.canceling" datatype="html">
+        <source>Canceling…</source>
+        <target>Cancelando…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelConfirmAction" datatype="html">
+        <source>Cancel subscription</source>
+        <target>Cancelar suscripción</target>
+      </trans-unit>
       <trans-unit id="org.invitationAccept.missingTokenTitle" datatype="html">
         <source> Invalid invitation link </source>
         <target>Enlace de invitación no válido</target>

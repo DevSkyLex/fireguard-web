@@ -125,6 +125,21 @@
               [pending]="settingsStore.isSaving()"
               (submitted)="saveGeneral($event)"
             />
+
+            <section class="flex flex-col gap-3 border-t border-border pt-6">
+              <h3
+                class="text-sm font-semibold tracking-tight text-foreground"
+                i18n="@@org.settings.legal.sectionTitle"
+              >
+                Legal information
+              </h3>
+              <app-organization-legal-form
+                [legal]="legalFormValues()"
+                [legalTypeOptions]="legalTypeOptions()"
+                [pending]="settingsStore.isSaving()"
+                (submitted)="saveLegal($event)"
+              />
+            </section>
           </section>
         </ng-template>
       </div>
@@ -187,6 +202,47 @@
                       <span i18n="@@org.settings.subscription.startCheckout">Set up billing</span>
                       <ng-icon name="lucideExternalLink" class="text-xs" aria-hidden="true" />
                     </button>
+                  }
+                  @if (billingStore.subscription(); as subscription) {
+                    @if (subscription.hasSubscription && !subscription.cancelAtPeriodEnd) {
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        class="gap-2 max-sm:min-h-11"
+                        data-testid="org-settings-subscription-cancel"
+                        [disabled]="billingStore.isCanceling()"
+                        (click)="openCancelSubscriptionDialog()"
+                      >
+                        <ng-icon name="lucideCircleX" aria-hidden="true" />
+                        <span i18n="@@org.settings.subscription.cancelAction">
+                          Cancel subscription
+                        </span>
+                      </button>
+                    } @else if (subscription.hasSubscription && subscription.cancelAtPeriodEnd) {
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        class="gap-2 max-sm:min-h-11"
+                        data-testid="org-settings-subscription-resume"
+                        [disabled]="billingStore.isResuming()"
+                        [attr.aria-busy]="billingStore.isResuming() ? 'true' : null"
+                        aria-live="polite"
+                        (click)="resumeSubscription()"
+                      >
+                        <ng-icon name="lucideRefreshCw" aria-hidden="true" />
+                        @if (billingStore.isResuming()) {
+                          <span i18n="@@org.settings.subscription.resuming">Resuming…</span>
+                        } @else {
+                          <span i18n="@@org.settings.subscription.resumeAction">
+                            Resume subscription
+                          </span>
+                        }
+                      </button>
+                    }
                   }
                 </div>
 
@@ -289,6 +345,15 @@
                 </ul>
               }
             </section>
+
+            <app-organization-cancel-subscription-dialog
+              [visible]="confirmingCancelSubscription()"
+              [renewalDate]="renewalDate()"
+              [pending]="billingStore.isCanceling()"
+              [error]="billingStore.billingError()?.message ?? null"
+              (visibleChange)="confirmingCancelSubscription.set($event)"
+              (confirmed)="cancelSubscription()"
+            />
           </div>
         </ng-template>
       </div>
@@ -376,44 +441,202 @@
       @if (canDelete()) {
         <div hlmTabsContent="danger" class="max-w-3xl">
           <ng-template hlmTabsContentLazy>
-            <div hlmCard>
-              <div hlmCardHeader>
-                <h3 hlmCardTitle class="flex items-center gap-2">
-                  <ng-icon
-                    name="lucideTriangleAlert"
-                    class="shrink-0 text-destructive"
-                    aria-hidden="true"
-                  />
-                  <span i18n="@@org.settings.danger.title">Delete this organization</span>
-                </h3>
-                <p hlmCardDescription i18n="@@org.settings.danger.description">
-                  Permanently deletes every facility, piece of equipment, inspection, intervention
-                  and member record. This cannot be undone.
-                </p>
-              </div>
-              <div hlmCardContent>
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="destructive"
-                  class="w-fit gap-2 max-sm:min-h-11"
-                  data-testid="org-settings-danger-open"
-                  (click)="openDeleteDialog()"
-                >
-                  <ng-icon name="lucideTrash2" aria-hidden="true" />
-                  <span i18n="@@org.settings.danger.open">Delete organization</span>
-                </button>
-              </div>
-            </div>
+            <div class="flex flex-col gap-6">
+              @if (canSuspend() || canRestore()) {
+                <div hlmCard>
+                  <div hlmCardHeader>
+                    <h3 hlmCardTitle class="flex items-center gap-2">
+                      <ng-icon
+                        name="lucideBan"
+                        class="shrink-0 text-destructive"
+                        aria-hidden="true"
+                      />
+                      <span i18n="@@org.settings.danger.statusTitle">Suspend or restore</span>
+                    </h3>
+                    <p hlmCardDescription i18n="@@org.settings.danger.statusDescription">
+                      Suspending blocks every member's access immediately without deleting any data.
+                      Restoring brings a suspended or archived organization back to active.
+                    </p>
+                  </div>
+                  <div hlmCardContent class="flex flex-wrap items-start gap-2">
+                    @if (canSuspend()) {
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="outline"
+                        class="w-fit gap-2 max-sm:min-h-11"
+                        data-testid="org-settings-danger-suspend-open"
+                        (click)="openSuspendDialog()"
+                      >
+                        <ng-icon name="lucideBan" aria-hidden="true" />
+                        <span i18n="@@org.settings.danger.suspendOpen">Suspend organization</span>
+                      </button>
+                    }
+                    @if (canRestore()) {
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="outline"
+                        class="w-fit gap-2 max-sm:min-h-11"
+                        data-testid="org-settings-danger-restore"
+                        [disabled]="settingsStore.isChangingStatus()"
+                        [attr.aria-busy]="settingsStore.isChangingStatus() ? 'true' : null"
+                        aria-live="polite"
+                        (click)="restoreOrganization()"
+                      >
+                        <ng-icon name="lucideRefreshCw" aria-hidden="true" />
+                        @if (settingsStore.isChangingStatus()) {
+                          <span i18n="@@org.settings.danger.restoring">Restoring…</span>
+                        } @else {
+                          <span i18n="@@org.settings.danger.restoreAction"
+                            >Restore organization</span
+                          >
+                        }
+                      </button>
+                    }
+                    @if (settingsStore.statusError(); as error) {
+                      <p
+                        role="alert"
+                        class="w-full text-sm text-destructive"
+                        data-testid="org-settings-danger-status-error"
+                      >
+                        {{ error.message }}
+                      </p>
+                    }
+                  </div>
+                </div>
 
-            <app-organization-delete-dialog
-              [visible]="confirmingDelete()"
-              [organizationName]="organization()?.name ?? ''"
-              [pending]="settingsStore.isDeleting()"
-              [error]="settingsStore.deleteError()?.message ?? null"
-              (visibleChange)="confirmingDelete.set($event)"
-              (confirmed)="deleteOrganization()"
-            />
+                <app-organization-suspend-dialog
+                  [visible]="confirmingSuspend()"
+                  [organizationName]="organization()?.name ?? ''"
+                  [pending]="settingsStore.isChangingStatus()"
+                  [error]="settingsStore.statusError()?.message ?? null"
+                  (visibleChange)="confirmingSuspend.set($event)"
+                  (confirmed)="suspendOrganization()"
+                />
+              }
+
+              @if (canTransferOwnership()) {
+                <div hlmCard>
+                  <div hlmCardHeader>
+                    <h3 hlmCardTitle class="flex items-center gap-2">
+                      <ng-icon
+                        name="lucideArrowRightLeft"
+                        class="shrink-0 text-destructive"
+                        aria-hidden="true"
+                      />
+                      <span i18n="@@org.settings.danger.transferTitle">Transfer ownership</span>
+                    </h3>
+                    <p hlmCardDescription i18n="@@org.settings.danger.transferDescription">
+                      Hand full control of this organization to another active member. You keep your
+                      own membership and roles, but no longer own it.
+                    </p>
+                  </div>
+                  <div hlmCardContent>
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      class="w-fit gap-2 max-sm:min-h-11"
+                      data-testid="org-settings-danger-transfer-open"
+                      (click)="openTransferDialog()"
+                    >
+                      <ng-icon name="lucideArrowRightLeft" aria-hidden="true" />
+                      <span i18n="@@org.settings.danger.transferOpen">Transfer ownership</span>
+                    </button>
+                  </div>
+                </div>
+
+                <app-organization-transfer-ownership-dialog
+                  [visible]="confirmingTransfer()"
+                  [organizationName]="organization()?.name ?? ''"
+                  [candidates]="transferCandidates()"
+                  [pending]="settingsStore.isTransferringOwnership()"
+                  [error]="settingsStore.transferOwnershipError()?.message ?? null"
+                  (visibleChange)="confirmingTransfer.set($event)"
+                  (confirmed)="transferOwnership($event)"
+                />
+              }
+
+              @if (canLeave()) {
+                <div hlmCard>
+                  <div hlmCardHeader>
+                    <h3 hlmCardTitle class="flex items-center gap-2">
+                      <ng-icon
+                        name="lucideLogOut"
+                        class="shrink-0 text-destructive"
+                        aria-hidden="true"
+                      />
+                      <span i18n="@@org.settings.danger.leaveTitle">Leave this organization</span>
+                    </h3>
+                    <p hlmCardDescription i18n="@@org.settings.danger.leaveDescription">
+                      Removes your own membership. Another member will need to invite you back.
+                    </p>
+                  </div>
+                  <div hlmCardContent>
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="destructive"
+                      class="w-fit gap-2 max-sm:min-h-11"
+                      data-testid="org-settings-danger-leave-open"
+                      (click)="openLeaveDialog()"
+                    >
+                      <ng-icon name="lucideLogOut" aria-hidden="true" />
+                      <span i18n="@@org.settings.danger.leaveOpen">Leave organization</span>
+                    </button>
+                  </div>
+                </div>
+
+                <app-organization-leave-dialog
+                  [visible]="confirmingLeave()"
+                  [organizationName]="organization()?.name ?? ''"
+                  [pending]="settingsStore.isLeaving()"
+                  [error]="settingsStore.leaveError()?.message ?? null"
+                  (visibleChange)="confirmingLeave.set($event)"
+                  (confirmed)="leaveOrganization()"
+                />
+              }
+
+              <div hlmCard>
+                <div hlmCardHeader>
+                  <h3 hlmCardTitle class="flex items-center gap-2">
+                    <ng-icon
+                      name="lucideTriangleAlert"
+                      class="shrink-0 text-destructive"
+                      aria-hidden="true"
+                    />
+                    <span i18n="@@org.settings.danger.title">Delete this organization</span>
+                  </h3>
+                  <p hlmCardDescription i18n="@@org.settings.danger.description">
+                    Permanently deletes every facility, piece of equipment, inspection, intervention
+                    and member record. This cannot be undone.
+                  </p>
+                </div>
+                <div hlmCardContent>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="destructive"
+                    class="w-fit gap-2 max-sm:min-h-11"
+                    data-testid="org-settings-danger-open"
+                    (click)="openDeleteDialog()"
+                  >
+                    <ng-icon name="lucideTrash2" aria-hidden="true" />
+                    <span i18n="@@org.settings.danger.open">Delete organization</span>
+                  </button>
+                </div>
+              </div>
+
+              <app-organization-delete-dialog
+                [visible]="confirmingDelete()"
+                [organizationName]="organization()?.name ?? ''"
+                [pending]="settingsStore.isDeleting()"
+                [error]="settingsStore.deleteError()?.message ?? null"
+                (visibleChange)="confirmingDelete.set($event)"
+                (confirmed)="deleteOrganization()"
+              />
+            </div>
           </ng-template>
         </div>
       }

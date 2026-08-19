@@ -1,0 +1,121 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <hlm-field>
+        <label hlmFieldLabel for="org-legal-country" i18n="@@org.settings.legal.countryLabel"
+          >Country</label
+        >
+        <input
+          hlmInput
+          id="org-legal-country"
+          type="text"
+          autocomplete="country"
+          placeholder="FR"
+          data-testid="org-legal-country"
+          [formField]="legalForm.country"
+          [attr.aria-invalid]="legalForm.country().touched() && legalForm.country().invalid()"
+        />
+        @if (legalForm.country().touched() && legalForm.country().invalid()) {
+          <hlm-field-error>{{ legalForm.country().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="org-legal-type" i18n="@@org.settings.legal.typeLabel"
+          >Legal entity type</label
+        >
+        <hlm-select [itemToString]="legalTypeLabel" [formField]="legalForm.legalType">
+          <hlm-select-trigger buttonId="org-legal-type" class="w-full" data-testid="org-legal-type">
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              <hlm-select-item [value]="unsetLegalType">{{ unsetLegalTypeLabel }}</hlm-select-item>
+              @for (option of legalTypeOptions(); track option.value) {
+                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </hlm-field>
+    </div>
+
+    <hlm-field>
+      <label hlmFieldLabel for="org-legal-name" i18n="@@org.settings.legal.legalNameLabel"
+        >Registered legal name</label
+      >
+      <input
+        hlmInput
+        id="org-legal-name"
+        type="text"
+        data-testid="org-legal-name"
+        [formField]="legalForm.legalName"
+        [attr.aria-invalid]="legalForm.legalName().touched() && legalForm.legalName().invalid()"
+      />
+      @if (legalForm.legalName().touched() && legalForm.legalName().invalid()) {
+        <hlm-field-error>{{ legalForm.legalName().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="org-legal-registration-number"
+          i18n="@@org.settings.legal.registrationNumberLabel"
+          >Registration number</label
+        >
+        <input
+          hlmInput
+          id="org-legal-registration-number"
+          type="text"
+          data-testid="org-legal-registration-number"
+          [formField]="legalForm.registrationNumber"
+          [attr.aria-invalid]="
+            legalForm.registrationNumber().touched() && legalForm.registrationNumber().invalid()
+          "
+        />
+        @if (legalForm.registrationNumber().touched() && legalForm.registrationNumber().invalid()) {
+          <hlm-field-error>{{
+            legalForm.registrationNumber().errors()[0].message
+          }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="org-legal-vat-number" i18n="@@org.settings.legal.vatNumberLabel"
+          >VAT number</label
+        >
+        <input
+          hlmInput
+          id="org-legal-vat-number"
+          type="text"
+          data-testid="org-legal-vat-number"
+          [formField]="legalForm.vatNumber"
+          [attr.aria-invalid]="legalForm.vatNumber().touched() && legalForm.vatNumber().invalid()"
+        />
+        @if (legalForm.vatNumber().touched() && legalForm.vatNumber().invalid()) {
+          <hlm-field-error>{{ legalForm.vatNumber().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="org-legal-submit"
+        [disabled]="!canSubmit()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.legal.submitting">Saving…</span>
+        } @else {
+          <span i18n="@@org.settings.legal.submit">Save changes</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

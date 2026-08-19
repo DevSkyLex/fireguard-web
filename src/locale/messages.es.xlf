@@ -14217,6 +14217,10 @@
         <source>Maintenance</source>
         <target>Mantenimiento</target>
       </trans-unit>
+      <trans-unit id="audit.module.calendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendario</target>
+      </trans-unit>
       <trans-unit id="audit.module.automation" datatype="html">
         <source>Automation</source>
         <target>Automatización</target>
@@ -14436,6 +14440,18 @@
       <trans-unit id="audit.action.maintenance.campaign_generated" datatype="html">
         <source>Maintenance campaign generated</source>
         <target>Campaña de mantenimiento generada</target>
+      </trans-unit>
+      <trans-unit id="audit.action.calendar.event_created" datatype="html">
+        <source>Calendar event created</source>
+        <target>Evento de calendario creado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.calendar.event_updated" datatype="html">
+        <source>Calendar event updated</source>
+        <target>Evento de calendario modificado</target>
+      </trans-unit>
+      <trans-unit id="audit.action.calendar.event_deleted" datatype="html">
+        <source>Calendar event deleted</source>
+        <target>Evento de calendario eliminado</target>
       </trans-unit>
       <trans-unit id="audit.action.automation.rule_executed" datatype="html">
         <source>Automation rule executed</source>

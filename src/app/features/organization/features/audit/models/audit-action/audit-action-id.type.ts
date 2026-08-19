@@ -66,6 +66,10 @@ export type AuditActionId =
   // maintenance
   | 'maintenance.schedule_overridden'
   | 'maintenance.campaign_generated'
+  // calendar
+  | 'calendar.event_created'
+  | 'calendar.event_updated'
+  | 'calendar.event_deleted'
   // automation
   | 'automation.rule_executed'
   | 'automation.rule_failed'

@@ -13,6 +13,7 @@ import type {
   EquipmentTagOutput,
   AddTagInput,
   SetPlanPositionInput,
+  EquipmentKpiOutput,
 } from '@features/organization/features/equipments/models';
 
 /**
@@ -256,6 +257,29 @@ export class EquipmentService extends HydraApiService {
     return this.getCollection<OptionOutput>(
       `${EquipmentService.BASE_PATH}/${organizationId}/equipment-types`,
       options,
+    );
+  }
+
+  /**
+   * Method kpis
+   * @method kpis
+   *
+   * @description
+   * Reads the equipment overview KPI snapshot the list page's KPI strip
+   * renders (`GET /organizations/{organizationId}/equipment/kpis`):
+   * totalAssets, compliant, dueSoon, and the organization-wide
+   * openNonConformities count.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<EquipmentKpiOutput>} An observable emitting the KPI snapshot.
+   */
+  public kpis(organizationId: string): Observable<EquipmentKpiOutput> {
+    return this.getOne<EquipmentKpiOutput>(
+      `${EquipmentService.BASE_PATH}/${organizationId}/equipment/kpis`,
     );
   }
 

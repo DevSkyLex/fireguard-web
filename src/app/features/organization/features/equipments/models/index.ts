@@ -24,3 +24,4 @@ export type { EquipmentStatusTagSeverity } from './equipment-status-tag/equipmen
 export { resolveEquipmentStatusTag } from './equipment-status-tag/equipment-status-tag.util';
 export type { EquipmentEditState } from './equipment-edit/equipment-edit-state.interface';
 export type { EquipmentEditTarget } from './equipment-edit/equipment-edit-target.type';
+export type { EquipmentKpiOutput } from './equipment-kpi/equipment-kpi-output.interface';

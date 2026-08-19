@@ -2906,6 +2906,42 @@
         <source>File name, MIME type and Base64 content are required.</source>
         <target>El nombre del archivo, el tipo MIME y el contenido Base64 son obligatorios.</target>
       </trans-unit>
+      <trans-unit id="equipment.kpi.loadingAria" datatype="html">
+        <source>Loading key figures</source>
+        <target>Cargando indicadores clave</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.totalAssets" datatype="html">
+        <source>Total assets</source>
+        <target>Total de equipos</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.totalAssets.caption" datatype="html">
+        <source>Every recorded status</source>
+        <target>Todos los estados registrados</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.compliant" datatype="html">
+        <source>Compliant</source>
+        <target>Conformes</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.compliant.caption" datatype="html">
+        <source>Maintenance up to date</source>
+        <target>Mantenimiento al día</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Próximo vencimiento</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.dueSoon.caption" datatype="html">
+        <source>Maintenance approaching</source>
+        <target>Mantenimiento próximo</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.openNonConformities" datatype="html">
+        <source>Open non-conformities (organization)</source>
+        <target>No conformidades abiertas (organización)</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.openNonConformities.caption" datatype="html">
+        <source>Across every inspection, not this list</source>
+        <target>En todas las inspecciones, no en esta lista</target>
+      </trans-unit>
       <trans-unit id="equipment.form.type" datatype="html">
         <source>Type</source>
         <target>Tipo</target>

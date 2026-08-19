@@ -39,7 +39,9 @@ import type {
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { EquipmentListPreferencesService } from '@features/organization/features/equipments/services';
 import {
+  EquipmentKpisStore,
   EquipmentStore,
+  type EquipmentKpisStoreType,
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -55,6 +57,7 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSelectImports } from '@shared/ui/select';
+import { EquipmentKpiStrip } from '../../components/equipment-kpi-strip';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentTable } from '../../tables/equipment-table';
 
@@ -77,11 +80,12 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * @class EquipmentsPage
  *
  * @description
- * Route entry page for the organization's equipment: a search box and an
- * editable type/status filter chip row (`app-collection-filter-bar`,
- * `@shared/collection-filters`) above the grid, in its bordered shell, and a
- * footer carrying the row count, the page size and the pager — the same
- * shell `InterventionsPage` draws, whose filter bar this one now shares.
+ * Route entry page for the organization's equipment: a KPI strip
+ * (`app-equipment-kpi-strip`) above a search box and an editable type/status
+ * filter chip row (`app-collection-filter-bar`, `@shared/collection-filters`)
+ * above the grid, in its bordered shell, and a footer carrying the row
+ * count, the page size and the pager — the same shell `InterventionsPage`
+ * draws, whose filter bar this one now shares.
  *
  * It owns the query the table renders — search, filters, paging — and the
  * "New equipment" affordance; the record itself is where every property is
@@ -91,7 +95,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * Its title lives in the shell breadcrumb; "New equipment" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.4.0
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -102,6 +106,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     NgIcon,
     EmptyState,
     ErrorState,
+    EquipmentKpiStrip,
     EquipmentStatusTag,
     EquipmentTable,
     CollectionFilterBar,
@@ -152,6 +157,23 @@ export class EquipmentsPage {
   //#region Properties
   /** The list dataset, provided by this route. */
   protected readonly store: EquipmentStoreType = inject<EquipmentStoreType>(EquipmentStore);
+
+  /**
+   * Property kpisStore
+   * @readonly
+   *
+   * @description
+   * The KPI strip's organization-wide snapshot. Component-scoped and
+   * reloaded only on an organization switch — never on the list's own
+   * search or filters, since the strip reports the whole organization.
+   *
+   * @access protected
+   * @since 1.5.0
+   *
+   * @type {EquipmentKpisStoreType}
+   */
+  protected readonly kpisStore: EquipmentKpisStoreType =
+    inject<EquipmentKpisStoreType>(EquipmentKpisStore);
 
   /** Organization permission checks gating the "New equipment" action. */
   private readonly permissions: OrganizationPermissionService = inject(
@@ -389,6 +411,13 @@ export class EquipmentsPage {
           organizationId,
           options: { params, page, itemsPerPage: pageSize, sort },
         });
+      });
+    });
+
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+      untracked((): void => {
+        this.kpisStore.load(organizationId);
       });
     });
   }

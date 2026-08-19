@@ -2903,6 +2903,42 @@
         <source>File name, MIME type and Base64 content are required.</source>
         <target>Le nom du fichier, le type MIME et le contenu Base64 sont requis.</target>
       </trans-unit>
+      <trans-unit id="equipment.kpi.loadingAria" datatype="html">
+        <source>Loading key figures</source>
+        <target>Chargement des indicateurs clés</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.totalAssets" datatype="html">
+        <source>Total assets</source>
+        <target>Total des équipements</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.totalAssets.caption" datatype="html">
+        <source>Every recorded status</source>
+        <target>Tous statuts confondus</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.compliant" datatype="html">
+        <source>Compliant</source>
+        <target>Conformes</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.compliant.caption" datatype="html">
+        <source>Maintenance up to date</source>
+        <target>Maintenance à jour</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Échéance proche</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.dueSoon.caption" datatype="html">
+        <source>Maintenance approaching</source>
+        <target>Maintenance à prévoir</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.openNonConformities" datatype="html">
+        <source>Open non-conformities (organization)</source>
+        <target>Non-conformités ouvertes (organisation)</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.openNonConformities.caption" datatype="html">
+        <source>Across every inspection, not this list</source>
+        <target>Sur toutes les inspections, pas cette liste</target>
+      </trans-unit>
       <trans-unit id="equipment.form.type" datatype="html">
         <source>Type</source>
         <target>Type</target>

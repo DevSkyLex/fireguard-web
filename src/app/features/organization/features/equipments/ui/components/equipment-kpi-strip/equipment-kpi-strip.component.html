@@ -1,0 +1,24 @@
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+  @if (loading()) {
+    <span
+      class="sr-only"
+      role="status"
+      data-testid="equipment-kpi-strip-loading"
+      i18n="@@equipment.kpi.loadingAria"
+      >Loading key figures</span
+    >
+  }
+  @for (tile of tiles(); track tile.id) {
+    <div class="h-full" [attr.data-testid]="'equipment-kpi-strip-' + tile.id">
+      <app-stat-tile
+        class="block h-full"
+        [label]="tile.label"
+        [value]="tile.value"
+        [icon]="tile.icon"
+        [tone]="tile.tone"
+        [caption]="tile.caption"
+        [loading]="loading()"
+      />
+    </div>
+  }
+</div>

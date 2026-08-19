@@ -13,7 +13,12 @@
     </div>
 
     <div toolbarEnd class="flex items-center gap-2">
-      <div hlmButtonGroup data-testid="intervention-view-toggle">
+      <div
+        hlmButtonGroup
+        data-testid="intervention-view-toggle"
+        aria-label="Change view"
+        i18n-aria-label="@@intervention.list.viewToggleLabel"
+      >
         <a
           hlmBtn
           variant="outline"
@@ -143,7 +148,7 @@
             {{ selectedDayLabel() }}
           </h2>
         </div>
-        <div hlmCardContent class="flex flex-col gap-2">
+        <div hlmCardContent class="flex flex-col gap-2" aria-live="polite" aria-atomic="true">
           @if (dayItems().length === 0) {
             <p class="text-sm text-muted-foreground" i18n="@@intervention.calendar.dayEmpty">
               Nothing scheduled this day.
@@ -177,6 +182,7 @@
     <div
       id="interventions-calendar-agenda"
       data-testid="intervention-calendar-agenda"
+      aria-live="polite"
       class="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto md:hidden"
     >
       @if (loading() && events().length === 0) {

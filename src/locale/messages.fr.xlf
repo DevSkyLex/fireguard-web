@@ -10382,6 +10382,10 @@
         <source>This card is updating.</source>
         <target>Cette carte est en cours de mise à jour.</target>
       </trans-unit>
+      <trans-unit id="intervention.list.viewToggleLabel" datatype="html">
+        <source>Change view</source>
+        <target>Changer de vue</target>
+      </trans-unit>
       <trans-unit id="intervention.board.viewList" datatype="html">
         <source>List</source>
         <target>Liste</target>

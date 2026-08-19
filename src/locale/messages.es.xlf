@@ -10389,6 +10389,10 @@
         <source>This card is updating.</source>
         <target>Esta tarjeta se está actualizando.</target>
       </trans-unit>
+      <trans-unit id="intervention.list.viewToggleLabel" datatype="html">
+        <source>Change view</source>
+        <target>Cambiar de vista</target>
+      </trans-unit>
       <trans-unit id="intervention.board.viewList" datatype="html">
         <source>List</source>
         <target>Lista</target>

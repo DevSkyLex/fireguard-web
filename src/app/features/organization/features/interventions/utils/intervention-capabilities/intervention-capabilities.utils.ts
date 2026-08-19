@@ -116,6 +116,20 @@ export function createInterventionCapabilities(
 
       return canPlan() && status !== undefined && status !== 'published' && status !== 'abandoned';
     }),
+    canManageLabels: computed<boolean>(() =>
+      deps.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_WRITE),
+    ),
+    canAssignTeam: computed<boolean>(() => {
+      const status: InterventionStatus | undefined = deps.intervention()?.status;
+
+      return (
+        canPlan() &&
+        (status === 'draft' ||
+          status === 'planned' ||
+          status === 'in_progress' ||
+          status === 'changes_requested')
+      );
+    }),
     canAddWorkItem: computed<boolean>(() => canPlan() && deps.intervention()?.status === 'draft'),
     canSkipWorkItem: computed<boolean>(() => canExecute() && phase() === 'execute'),
     canAbandon: computed<boolean>(() => {

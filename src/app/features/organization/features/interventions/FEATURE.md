@@ -443,6 +443,30 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   organization" snapshot, not a precise live counter, and wiring it to every
   list mutation would trade a simple, obviously-correct reload trigger for a
   fragile one covering a case the KPI strip's own purpose does not need.
+  The list page's "Analysis" disclosure (`app-intervention-statistics-analysis`,
+  `ui/components/`) renders the rest of the same snapshot the strip does not —
+  `byPriority`, `bySite`/`byResponsible` and `averagePublicationDays` — reading
+  the same `InterventionStatisticsStore` query, no store of its own.
+- `InterventionLabelStore` — component-scoped (provided in
+  `InterventionDetailPage`); CRUD over the organization's intervention label
+  catalog (`InterventionLabelService`) via `withEntities`, backing
+  `ui/dialogs/intervention-label-manage-dialog`. Never writes to
+  `InterventionPlanningOptionsStore`, which still owns the labels a picker
+  offers — the page reloads that store's options after a mutation succeeds.
+- `InterventionRecurrenceStore` — component-scoped (provided in
+  `InterventionsPage`); CRUD over the organization's recurring intervention
+  schedules (`InterventionRecurrenceService`) via `withEntities`, backing
+  `ui/sheets/intervention-recurrences-sheet` from the list toolbar.
+  `create`/`update`/`remove` patch the entity collection from the response
+  rather than reloading the list, so the server-authoritative
+  `nextOccurrenceAt` lands without a second round trip. A materialized
+  intervention carries no back-reference to the recurrence that produced it.
+  `InterventionWorkspaceStore.assignTeam` (own `assignTeamCallState`) snapshot-expands
+  one organization team's active members into the intervention's participants —
+  union, deduped, never a replace — via `InterventionService.assignTeam`. Online-only,
+  no offline queue: team membership at request time cannot be meaningfully replayed
+  later. A `409` (the intervention left its mutable window) silently reloads the
+  workspace instead of surfacing a stale error.
 
 Data-access (transport boundary — `data-access/`):
 
@@ -456,6 +480,9 @@ Data-access (transport boundary — `data-access/`):
   for the organization-scoped intervention template catalog: `list` (feeds
   `InterventionPlanningOptionsStore.loadCreationOptions`'s `templates`) and
   `instantiate` (feeds `InterventionStore.instantiateFromTemplate`).
+- `InterventionRecurrenceService` — HTTP API service (`HydraApiService`) for
+  the organization-scoped recurring intervention schedule catalog (CRUD),
+  backing `InterventionRecurrenceStore`.
 - `InterventionOfflineService` — IndexedDB persistence façade + cross-cutting purges (public entry point). Delegates to its internal collaborators:
   - `InterventionDatabaseService` — IndexedDB connection/schema, CRUD primitives, owner binding (also published for logout reset).
   - `InterventionOutboxRepository` — replay outbox + `hasUnsyncedChanges` signal.
@@ -542,6 +569,12 @@ Internal code imports deep paths directly.
   `@features/organization/ui/components`) instead of hand-rolling stat cards — read-only
   presentational reuse through the parent's `ui/components` barrel, so the two stat surfaces
   cannot drift apart.
+- The detail page's team assignment imports `TeamService` from
+  `@features/organization/data-access` and `TeamOutput` from `@features/organization/models` —
+  the parent's own root concern barrels, the same pattern the KPI strip's `StatTile` reuse
+  establishes. Read-only: the page lists an organization's teams to offer as assignment targets;
+  it creates, edits and deletes no team and owns no team state beyond the picker dialog's local
+  selection.
 - Consumes `CollectionPagination`, `CollectionToolbar`, `CollectionSearchBox` and
   `CollectionFilterBar` from `@shared/collection-pagination`, `@shared/collection-toolbar` and
   `@shared/collection-filters` for the list page's shared pagination band, toolbar shell, search

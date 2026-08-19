@@ -5,3 +5,4 @@ export { OrganizationRoleService } from './services/organization-role/organizati
 export { PlanService } from './services/plan/plan.service';
 export { BillingService } from './services/billing/billing.service';
 export { ComplianceService } from './services/compliance/compliance.service';
+export { TeamService } from './services/team/team.service';

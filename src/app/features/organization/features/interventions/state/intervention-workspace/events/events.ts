@@ -17,10 +17,12 @@ import type { InterventionAttachmentOutput } from '@features/organization/featur
  * can navigate away before the store is torn down; `attachmentUploadSucceeded`
  * is dispatched on every successful upload so the page can chain a follow-up
  * write — the completion-signature flow submits only once the signature
- * upload it interposed has actually landed. The rest of the workspace's
+ * upload it interposed has actually landed. `assignTeamSucceeded` and
+ * `assignTeamFailed` report the outcome of a team assignment so the toolbar
+ * dialog can close and the toast fire. The rest of the workspace's
  * mutations still report failures through the inline `error` field.
  *
- * @version 1.1.0
+ * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const interventionWorkspaceStoreEvents = eventGroup({
@@ -30,5 +32,7 @@ export const interventionWorkspaceStoreEvents = eventGroup({
     rejectChangeFailed: type<StoreFailureEventPayload>(),
     deleteSucceeded: type<FeedbackEventPayload>(),
     attachmentUploadSucceeded: type<{ readonly attachment: InterventionAttachmentOutput }>(),
+    assignTeamSucceeded: type<FeedbackEventPayload>(),
+    assignTeamFailed: type<FeedbackEventPayload>(),
   },
 });

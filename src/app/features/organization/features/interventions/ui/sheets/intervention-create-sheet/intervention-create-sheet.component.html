@@ -65,6 +65,121 @@
         <p class="mt-1 text-xs text-muted-foreground" i18n="@@intervention.cf.templateHint">
           Opens a draft prefilled from the template. You can adjust everything afterward.
         </p>
+
+        @if (selectedTemplateId()) {
+          <div
+            class="mt-3 flex flex-col gap-3"
+            data-testid="intervention-create-template-overrides"
+          >
+            <hlm-field>
+              <label
+                hlmFieldLabel
+                for="intervention-create-template-name"
+                i18n="@@intervention.cf.templateOverrideNameLabel"
+                >Name</label
+              >
+              <input
+                hlmInput
+                id="intervention-create-template-name"
+                type="text"
+                maxlength="160"
+                data-testid="intervention-create-template-name"
+                placeholder="Use template name"
+                i18n-placeholder="@@intervention.cf.templateOverrideNamePlaceholder"
+                [value]="overrideName()"
+                (input)="overrideName.set($any($event.target).value)"
+              />
+            </hlm-field>
+
+            <hlm-field>
+              <label
+                hlmFieldLabel
+                for="intervention-create-template-site"
+                i18n="@@intervention.cf.site"
+                >Site</label
+              >
+              <hlm-select
+                [value]="overrideSite()"
+                [itemToString]="siteLabelOf"
+                (valueChange)="overrideSite.set($event ?? null)"
+              >
+                <hlm-select-trigger
+                  buttonId="intervention-create-template-site"
+                  class="w-full"
+                  data-testid="intervention-create-template-site"
+                >
+                  <hlm-select-value
+                    placeholder="Use template default"
+                    i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
+                  />
+                </hlm-select-trigger>
+                <hlm-select-content *hlmSelectPortal>
+                  <hlm-select-group>
+                    @for (option of siteOptions(); track option.value) {
+                      <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                    }
+                  </hlm-select-group>
+                </hlm-select-content>
+              </hlm-select>
+            </hlm-field>
+
+            <hlm-field>
+              <label
+                hlmFieldLabel
+                for="intervention-create-template-responsible"
+                i18n="@@intervention.cf.responsible"
+                >Responsible</label
+              >
+              <hlm-combobox
+                [value]="overrideResponsible()"
+                [itemToString]="memberLabelOf"
+                (valueChange)="overrideResponsible.set($any($event) ?? null)"
+              >
+                <hlm-combobox-input
+                  inputId="intervention-create-template-responsible"
+                  placeholder="Use template default"
+                  i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
+                  data-testid="intervention-create-template-responsible"
+                />
+                <hlm-combobox-content *hlmComboboxPortal>
+                  <hlm-combobox-empty i18n="@@intervention.list.filterNoMember"
+                    >No member matches.</hlm-combobox-empty
+                  >
+                  <div hlmComboboxList>
+                    @for (option of memberOptions(); track option.value) {
+                      <hlm-combobox-item [value]="option.value">{{
+                        option.displayName
+                      }}</hlm-combobox-item>
+                    }
+                  </div>
+                </hlm-combobox-content>
+              </hlm-combobox>
+            </hlm-field>
+
+            <hlm-field>
+              <label
+                hlmFieldLabel
+                for="intervention-create-template-planned-start"
+                i18n="@@intervention.cf.plannedStartAt"
+                >Planned start</label
+              >
+              <hlm-date-picker
+                [date]="overridePlannedStartAt() ?? undefined"
+                (dateChange)="overridePlannedStartAt.set($event ?? null)"
+              >
+                <hlm-date-picker-trigger
+                  buttonId="intervention-create-template-planned-start"
+                  class="w-full"
+                  data-testid="intervention-create-template-planned-start"
+                >
+                  <span i18n="@@intervention.cf.templateOverrideDefaultPlaceholder"
+                    >Use template default</span
+                  >
+                </hlm-date-picker-trigger>
+              </hlm-date-picker>
+            </hlm-field>
+          </div>
+        }
       </div>
     }
 

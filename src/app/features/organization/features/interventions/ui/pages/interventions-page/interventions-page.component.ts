@@ -60,6 +60,7 @@ import {
   type InterventionPriority,
   type InterventionSortField,
   type InterventionStatus,
+  type InterventionTemplateInstantiateRequest,
   type InterventionType,
   type MemberAvatar,
   type MemberSelectOption,
@@ -109,12 +110,21 @@ import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '../../../state/intervention-planning-options';
+import {
+  InterventionRecurrenceStore,
+  type InterventionRecurrenceStoreType,
+} from '../../../state/intervention-recurrence';
 import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
+import { InterventionStatisticsAnalysis } from '../../components/intervention-statistics-analysis';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import { InterventionBulkDeleteDialog } from '../../dialogs/intervention-bulk-delete-dialog';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
 import { InterventionCreateSheet } from '../../sheets/intervention-create-sheet';
+import {
+  InterventionRecurrencesSheet,
+  type InterventionRecurrenceFormSubmittedEvent,
+} from '../../sheets/intervention-recurrences-sheet';
 import {
   INTERVENTION_TABLE_COLUMNS,
   InterventionTable,
@@ -292,7 +302,9 @@ type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'betwe
     InterventionAssignDialog,
     InterventionBulkDeleteDialog,
     InterventionCreateSheet,
+    InterventionRecurrencesSheet,
     InterventionKpiStrip,
+    InterventionStatisticsAnalysis,
     InterventionTable,
     InterventionTag,
     CollectionFilterBar,
@@ -310,6 +322,7 @@ type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'betwe
   providers: [
     InterventionPlanningOptionsStore,
     InterventionStatisticsStore,
+    InterventionRecurrenceStore,
     provideIcons({
       lucideArrowDown,
       lucideArrowUp,
@@ -469,6 +482,17 @@ export class InterventionsPage {
    */
   protected readonly statisticsStore: InterventionStatisticsStoreType =
     inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
+
+  /**
+   * Property recurrenceStore
+   * @readonly
+   * @description The organization's recurring intervention schedules, backing the "Recurrences" sheet.
+   * @access protected
+   * @since 1.0.0
+   * @type {InterventionRecurrenceStoreType}
+   */
+  protected readonly recurrenceStore: InterventionRecurrenceStoreType =
+    inject<InterventionRecurrenceStoreType>(InterventionRecurrenceStore);
 
   /**
    * Property permissions
@@ -643,6 +667,9 @@ export class InterventionsPage {
 
   /** Whether the creation sheet is open. */
   protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the "Recurrences" sheet is open. */
+  protected readonly recurrencesVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property duplicatePrefill
@@ -834,6 +861,30 @@ export class InterventionsPage {
    * @type {Signal<boolean>}
    */
   protected readonly canAssign: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
+  );
+
+  /**
+   * Property canReadRecurrences
+   * @readonly
+   * @description Whether the "Recurrences" toolbar entry renders at all.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadRecurrences: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
+  );
+
+  /**
+   * Property canWriteRecurrences
+   * @readonly
+   * @description Whether the "Recurrences" sheet offers create/edit/delete/toggle, or renders read-only.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canWriteRecurrences: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
@@ -2350,19 +2401,19 @@ export class InterventionsPage {
    * @method instantiateFromTemplate
    *
    * @description
-   * Hands the chosen template to the store. The sheet closes and the page
-   * navigates once the store reports the new draft, the same as
-   * {@link createIntervention}.
+   * Hands the chosen template, plus whichever overrides the sheet drafted,
+   * to the store. The sheet closes and the page navigates once the store
+   * reports the new draft, the same as {@link createIntervention}.
    *
    * @access protected
    * @since 4.3.0
    *
-   * @param {string} templateId - The chosen template.
+   * @param {InterventionTemplateInstantiateRequest} request - The chosen template and its overrides.
    *
    * @returns {void}
    */
-  protected instantiateFromTemplate(templateId: string): void {
-    this.store.instantiateFromTemplate({ templateId });
+  protected instantiateFromTemplate(request: InterventionTemplateInstantiateRequest): void {
+    this.store.instantiateFromTemplate(request);
   }
 
   /**
@@ -2739,6 +2790,90 @@ export class InterventionsPage {
   protected dismissAssign(): void {
     this.assignRequest.set(null);
     this.pendingBulkAssignIds.set(null);
+  }
+
+  /**
+   * Method openRecurrences
+   *
+   * @description Opens the "Recurrences" sheet, fetching the organization's rules once on first open.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected openRecurrences(): void {
+    this.recurrencesVisible.set(true);
+    if (this.recurrenceStore.listCallState().status !== 'idle') return;
+
+    this.recurrenceStore.load({ organizationIri: `/api/organizations/${this.organizationId()}` });
+  }
+
+  /** Closes the "Recurrences" sheet. */
+  protected closeRecurrences(): void {
+    this.recurrencesVisible.set(false);
+  }
+
+  /**
+   * Method submitRecurrenceForm
+   *
+   * @description
+   * Creates or updates a recurrence, depending on whether the sheet's draft
+   * carries an existing row's id.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InterventionRecurrenceFormSubmittedEvent} event - The submitted draft.
+   *
+   * @returns {void}
+   */
+  protected submitRecurrenceForm(event: InterventionRecurrenceFormSubmittedEvent): void {
+    if (event.recurrenceId === null) {
+      this.recurrenceStore.create({
+        organization: `/api/organizations/${this.organizationId()}`,
+        template: `/api/intervention-templates/${event.templateId}`,
+        name: event.name,
+        site: event.site ?? undefined,
+        responsible: event.responsible ?? undefined,
+        frequency: event.frequency,
+        interval: event.interval,
+        anchorDate: event.anchorDate,
+        timezone: event.timezone,
+        leadTimeDays: event.leadTimeDays,
+        endAt: event.endAt ?? undefined,
+      });
+      return;
+    }
+
+    this.recurrenceStore.update({
+      recurrenceId: event.recurrenceId,
+      input: {
+        name: event.name,
+        site: event.site,
+        responsible: event.responsible,
+        frequency: event.frequency,
+        interval: event.interval,
+        anchorDate: event.anchorDate,
+        timezone: event.timezone,
+        leadTimeDays: event.leadTimeDays,
+        endAt: event.endAt,
+      },
+    });
+  }
+
+  /** Deletes a recurrence the sheet's inline confirmation approved. */
+  protected removeRecurrence(recurrenceId: string): void {
+    this.recurrenceStore.remove(recurrenceId);
+  }
+
+  /** Pauses or resumes a recurrence from the sheet's table toggle. */
+  protected toggleRecurrenceActive(event: {
+    readonly recurrenceId: string;
+    readonly isActive: boolean;
+  }): void {
+    this.recurrenceStore.update({
+      recurrenceId: event.recurrenceId,
+      input: { isActive: event.isActive },
+    });
   }
 
   /**

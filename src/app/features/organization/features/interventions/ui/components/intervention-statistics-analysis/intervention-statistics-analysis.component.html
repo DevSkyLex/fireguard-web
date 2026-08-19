@@ -1,0 +1,114 @@
+<hlm-collapsible [expanded]="expanded()" (expandedChange)="expanded.set($event)">
+  <button
+    hlmCollapsibleTrigger
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="sm"
+    class="gap-1.5"
+    data-testid="intervention-statistics-analysis-trigger"
+    [attr.aria-expanded]="expanded()"
+  >
+    <ng-icon
+      name="lucideChevronDown"
+      aria-hidden="true"
+      class="transition-transform"
+      [class.rotate-180]="expanded()"
+    />
+    <span i18n="@@intervention.statistics.analysis.trigger">Analysis</span>
+  </button>
+
+  <div
+    hlmCollapsibleContent
+    class="grid grid-cols-1 gap-4 pt-3 md:grid-cols-3"
+    data-testid="intervention-statistics-analysis"
+  >
+    <section aria-labelledby="intervention-statistics-priority-title">
+      <h3
+        id="intervention-statistics-priority-title"
+        class="mb-2 text-sm font-semibold text-foreground"
+        i18n="@@intervention.statistics.analysis.priorityTitle"
+      >
+        By priority
+      </h3>
+      <ul class="flex flex-col gap-1.5">
+        @for (row of priorityCounts(); track row.priority) {
+          <li class="flex items-center justify-between gap-2 text-sm">
+            <app-intervention-tag kind="priority" [value]="row.priority" asOption />
+            <span class="font-medium tabular-nums">{{ row.count }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section aria-labelledby="intervention-statistics-site-title">
+      <h3
+        id="intervention-statistics-site-title"
+        class="mb-2 text-sm font-semibold text-foreground"
+        i18n="@@intervention.statistics.analysis.siteTitle"
+      >
+        Top sites
+      </h3>
+      @if (bySite().length === 0) {
+        <p class="text-sm text-muted-foreground" i18n="@@intervention.statistics.analysis.empty">
+          Nothing to show yet.
+        </p>
+      } @else {
+        <ul class="flex flex-col gap-1.5">
+          @for (row of bySite(); track row.siteId) {
+            <li class="flex items-center justify-between gap-2 text-sm">
+              <a
+                class="truncate text-foreground underline-offset-2 hover:underline"
+                [routerLink]="['/organizations', organizationId(), 'facilities', row.siteId]"
+              >
+                {{ row.siteName ?? siteFallbackLabel }}
+              </a>
+              <span class="font-medium tabular-nums">{{ row.count }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section aria-labelledby="intervention-statistics-responsible-title">
+      <h3
+        id="intervention-statistics-responsible-title"
+        class="mb-2 text-sm font-semibold text-foreground"
+        i18n="@@intervention.statistics.analysis.responsibleTitle"
+      >
+        Top responsibles
+      </h3>
+      @if (byResponsible().length === 0) {
+        <p class="text-sm text-muted-foreground" i18n="@@intervention.statistics.analysis.empty">
+          Nothing to show yet.
+        </p>
+      } @else {
+        <ul class="flex flex-col gap-1.5">
+          @for (row of byResponsible(); track row.memberId) {
+            <li class="flex items-center justify-between gap-2 text-sm">
+              <a
+                class="truncate text-foreground underline-offset-2 hover:underline"
+                [routerLink]="['/organizations', organizationId(), 'members']"
+              >
+                {{ row.displayName ?? responsibleFallbackLabel }}
+              </a>
+              <span class="font-medium tabular-nums">{{ row.count }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <p
+      class="col-span-full text-sm text-muted-foreground"
+      data-testid="intervention-statistics-average-publication"
+    >
+      <span i18n="@@intervention.statistics.analysis.averagePublicationLabel"
+        >Average time to publication</span
+      >: {{ averagePublicationDaysLabel() }}
+      @if (averagePublicationDaysLabel() !== '—') {
+        <span i18n="@@intervention.statistics.analysis.days"> days</span>
+      }
+    </p>
+  </div>
+</hlm-collapsible>

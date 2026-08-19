@@ -1,0 +1,433 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="sheetState()"
+  [disableClose]="creating() || savingId() !== null"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-sm:max-h-[85svh] max-sm:overflow-y-auto sm:w-[640px]! sm:max-w-none!"
+    data-testid="intervention-recurrences-sheet"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@intervention.recurrences.header">Recurrences</h3>
+      <p hlmSheetDescription i18n="@@intervention.recurrences.intro">
+        Recurring schedules periodically draft a new intervention from a template. A materialized
+        intervention carries no link back to the rule that created it.
+      </p>
+    </hlm-sheet-header>
+
+    @if (canWrite() && formTarget() === null) {
+      <button
+        hlmBtn
+        type="button"
+        class="self-start"
+        data-testid="intervention-recurrences-new"
+        (click)="startCreate()"
+      >
+        <span i18n="@@intervention.recurrences.new">New recurrence</span>
+      </button>
+    }
+
+    @if (formTarget() !== null) {
+      <form
+        class="flex flex-col gap-3 rounded-lg border border-border p-3"
+        data-testid="intervention-recurrence-form"
+        (submit)="$event.preventDefault(); submitForm()"
+      >
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="intervention-recurrence-name"
+            i18n="@@intervention.recurrences.nameLabel"
+            >Name</label
+          >
+          <input
+            hlmInput
+            id="intervention-recurrence-name"
+            type="text"
+            maxlength="160"
+            data-testid="intervention-recurrence-name"
+            [value]="draftName()"
+            (input)="draftName.set($any($event.target).value)"
+          />
+        </hlm-field>
+
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="intervention-recurrence-template"
+            i18n="@@intervention.recurrences.templateLabel"
+            >Template</label
+          >
+          <hlm-select
+            [value]="draftTemplateId()"
+            [itemToString]="templateLabelOf"
+            (valueChange)="draftTemplateId.set($event ?? null)"
+          >
+            <hlm-select-trigger
+              buttonId="intervention-recurrence-template"
+              class="w-full"
+              data-testid="intervention-recurrence-template"
+            >
+              <hlm-select-value
+                placeholder="Choose a template"
+                i18n-placeholder="@@intervention.cf.templatePlaceholder"
+              />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (template of templates(); track template.id) {
+                  <hlm-select-item [value]="template.id">{{ template.name }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        </hlm-field>
+
+        <div class="grid grid-cols-2 gap-3">
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="intervention-recurrence-frequency"
+              i18n="@@intervention.recurrences.frequencyLabel"
+              >Frequency</label
+            >
+            <hlm-select [value]="draftFrequency()" (valueChange)="draftFrequency.set($any($event))">
+              <hlm-select-trigger
+                buttonId="intervention-recurrence-frequency"
+                class="w-full"
+                data-testid="intervention-recurrence-frequency"
+              >
+                <hlm-select-value />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal>
+                <hlm-select-group>
+                  @for (frequency of frequencies; track frequency) {
+                    <hlm-select-item [value]="frequency">{{ frequency }}</hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+          </hlm-field>
+
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="intervention-recurrence-interval"
+              i18n="@@intervention.recurrences.intervalLabel"
+              >Every</label
+            >
+            <input
+              hlmInput
+              id="intervention-recurrence-interval"
+              type="number"
+              min="1"
+              max="12"
+              data-testid="intervention-recurrence-interval"
+              [value]="draftInterval()"
+              (input)="draftInterval.set($any($event.target).valueAsNumber || 1)"
+            />
+          </hlm-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="intervention-recurrence-anchor"
+              i18n="@@intervention.recurrences.anchorLabel"
+              >Anchor date</label
+            >
+            <hlm-date-picker
+              [date]="draftAnchorDate() ?? undefined"
+              (dateChange)="draftAnchorDate.set($event ?? null)"
+            >
+              <hlm-date-picker-trigger
+                buttonId="intervention-recurrence-anchor"
+                class="w-full"
+                data-testid="intervention-recurrence-anchor"
+              >
+                <span i18n="@@intervention.recurrences.anchorPlaceholder">Pick a date</span>
+              </hlm-date-picker-trigger>
+            </hlm-date-picker>
+            @if (anchorDriftHintVisible()) {
+              <p hlmFieldDescription i18n="@@intervention.recurrences.anchorDriftHint">
+                Anchored past the 28th: occurrences drift after short months.
+              </p>
+            }
+          </hlm-field>
+
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="intervention-recurrence-timezone"
+              i18n="@@intervention.recurrences.timezoneLabel"
+              >Timezone</label
+            >
+            <input
+              hlmInput
+              id="intervention-recurrence-timezone"
+              type="text"
+              data-testid="intervention-recurrence-timezone"
+              [value]="draftTimezone()"
+              (input)="draftTimezone.set($any($event.target).value)"
+            />
+          </hlm-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="intervention-recurrence-lead-time"
+              i18n="@@intervention.recurrences.leadTimeLabel"
+              >Lead time (days)</label
+            >
+            <input
+              hlmInput
+              id="intervention-recurrence-lead-time"
+              type="number"
+              min="0"
+              max="90"
+              data-testid="intervention-recurrence-lead-time"
+              [value]="draftLeadTimeDays()"
+              (input)="draftLeadTimeDays.set($any($event.target).valueAsNumber || 0)"
+            />
+          </hlm-field>
+
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="intervention-recurrence-end"
+              i18n="@@intervention.recurrences.endLabel"
+              >End date</label
+            >
+            <hlm-date-picker
+              [date]="draftEndAt() ?? undefined"
+              (dateChange)="draftEndAt.set($event ?? null)"
+            >
+              <hlm-date-picker-trigger
+                buttonId="intervention-recurrence-end"
+                class="w-full"
+                data-testid="intervention-recurrence-end"
+              >
+                <span i18n="@@intervention.recurrences.endPlaceholder">No end</span>
+              </hlm-date-picker-trigger>
+            </hlm-date-picker>
+          </hlm-field>
+        </div>
+
+        <hlm-field>
+          <label hlmFieldLabel for="intervention-recurrence-site" i18n="@@intervention.cf.site"
+            >Site</label
+          >
+          <hlm-select
+            [value]="draftSite()"
+            [itemToString]="siteLabelOf"
+            (valueChange)="draftSite.set($event ?? null)"
+          >
+            <hlm-select-trigger
+              buttonId="intervention-recurrence-site"
+              class="w-full"
+              data-testid="intervention-recurrence-site"
+            >
+              <hlm-select-value
+                placeholder="Use template default"
+                i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
+              />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (option of siteOptions(); track option.value) {
+                  <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        </hlm-field>
+
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="intervention-recurrence-responsible"
+            i18n="@@intervention.cf.responsible"
+            >Responsible</label
+          >
+          <hlm-combobox
+            [value]="draftResponsible()"
+            [itemToString]="memberLabelOf"
+            (valueChange)="draftResponsible.set($any($event) ?? null)"
+          >
+            <hlm-combobox-input
+              inputId="intervention-recurrence-responsible"
+              placeholder="Use template default"
+              i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
+              data-testid="intervention-recurrence-responsible"
+            />
+            <hlm-combobox-content *hlmComboboxPortal>
+              <hlm-combobox-empty i18n="@@intervention.list.filterNoMember"
+                >No member matches.</hlm-combobox-empty
+              >
+              <div hlmComboboxList>
+                @for (option of memberOptions(); track option.value) {
+                  <hlm-combobox-item [value]="option.value">{{
+                    option.displayName
+                  }}</hlm-combobox-item>
+                }
+              </div>
+            </hlm-combobox-content>
+          </hlm-combobox>
+        </hlm-field>
+
+        @if (formError(); as message) {
+          <p class="text-sm text-destructive" data-testid="intervention-recurrence-form-error">
+            {{ message }}
+          </p>
+        }
+
+        <div class="flex justify-end gap-2">
+          <button hlmBtn type="button" variant="outline" (click)="cancelForm()">
+            <span i18n="@@common.cancel">Cancel</span>
+          </button>
+          <button
+            hlmBtn
+            type="submit"
+            data-testid="intervention-recurrence-submit"
+            [disabled]="!canSubmitForm()"
+          >
+            @if (creating() || savingId() !== null) {
+              <span i18n="@@common.saving">Saving…</span>
+            } @else {
+              <span i18n="@@common.save">Save</span>
+            }
+          </button>
+        </div>
+      </form>
+    }
+
+    <div hlmTableContainer class="max-h-[50vh]">
+      <table hlmTable data-testid="intervention-recurrences-table">
+        <thead hlmTableHeader>
+          <tr hlmTableRow>
+            <th hlmTableHead i18n="@@intervention.recurrences.nameLabel">Name</th>
+            <th hlmTableHead i18n="@@intervention.recurrences.templateLabel">Template</th>
+            <th hlmTableHead i18n="@@intervention.recurrences.cadenceColumn">Cadence</th>
+            <th hlmTableHead i18n="@@intervention.recurrences.nextOccurrenceColumn">
+              Next occurrence
+            </th>
+            <th hlmTableHead i18n="@@intervention.recurrences.activeColumn">Active</th>
+            <th hlmTableHead class="w-[100px]"></th>
+          </tr>
+        </thead>
+        <tbody hlmTableBody>
+          @if (loading()) {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                colspan="6"
+                class="text-center text-muted-foreground"
+                i18n="@@intervention.recurrences.loading"
+              >
+                Loading recurrences…
+              </td>
+            </tr>
+          } @else if (recurrences().length === 0) {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                colspan="6"
+                class="text-center text-muted-foreground"
+                i18n="@@intervention.recurrences.empty"
+              >
+                No recurrences yet.
+              </td>
+            </tr>
+          } @else {
+            @for (recurrence of recurrences(); track recurrence.id) {
+              @if (confirmingRemoveId() === recurrence.id) {
+                <tr hlmTableRow [attr.data-testid]="'intervention-recurrence-row-' + recurrence.id">
+                  <td hlmTableCell colspan="6" class="flex items-center justify-between gap-2">
+                    <span i18n="@@intervention.recurrences.confirmDelete"
+                      >Delete "{{ recurrence.name }}"?</span
+                    >
+                    <span class="flex gap-2">
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        [attr.data-testid]="
+                          'intervention-recurrence-remove-confirm-' + recurrence.id
+                        "
+                        [disabled]="removingId() === recurrence.id"
+                        (click)="confirmRemove(recurrence.id)"
+                      >
+                        <span i18n="@@common.delete">Delete</span>
+                      </button>
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        (click)="confirmingRemoveId.set(null)"
+                      >
+                        <span i18n="@@common.cancel">Cancel</span>
+                      </button>
+                    </span>
+                  </td>
+                </tr>
+              } @else {
+                <tr hlmTableRow [attr.data-testid]="'intervention-recurrence-row-' + recurrence.id">
+                  <td hlmTableCell>{{ recurrence.name }}</td>
+                  <td hlmTableCell>{{ templateNameOf(recurrence.template) }}</td>
+                  <td hlmTableCell>{{ recurrence.interval }}× {{ recurrence.frequency }}</td>
+                  <td
+                    hlmTableCell
+                    [attr.data-testid]="'intervention-recurrence-next-' + recurrence.id"
+                  >
+                    {{ recurrence.nextOccurrenceAt | date: 'short' }}
+                  </td>
+                  <td hlmTableCell>
+                    <hlm-switch
+                      [checked]="recurrence.isActive"
+                      [disabled]="!canWrite() || savingId() === recurrence.id"
+                      [attr.data-testid]="'intervention-recurrence-toggle-' + recurrence.id"
+                      (checkedChange)="toggleActive(recurrence.id, $event)"
+                    />
+                  </td>
+                  <td hlmTableCell>
+                    @if (canWrite()) {
+                      <span class="flex gap-1">
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          [attr.data-testid]="'intervention-recurrence-edit-' + recurrence.id"
+                          (click)="startEdit(recurrence)"
+                        >
+                          <span i18n="@@common.edit">Edit</span>
+                        </button>
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          [attr.data-testid]="'intervention-recurrence-remove-' + recurrence.id"
+                          (click)="requestRemove(recurrence.id)"
+                        >
+                          <span i18n="@@common.delete">Delete</span>
+                        </button>
+                      </span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </hlm-sheet-content>
+</hlm-sheet>

@@ -72,7 +72,15 @@ export interface InterventionAssignCommand {
 /**
  * Command instantiating an intervention draft from a template — the "start
  * from a template" path offered alongside the manual guided-creation form.
+ * The four optional fields each override the template's own default; an
+ * omitted field means "use the template default". There is no `dueAt` —
+ * the backend always derives it from `plannedStartAt` and the template's
+ * duration.
  */
 export interface InterventionInstantiateFromTemplateCommand {
   readonly templateId: string;
+  readonly name?: string;
+  readonly site?: string;
+  readonly responsible?: string;
+  readonly plannedStartAt?: Date;
 }

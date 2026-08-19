@@ -198,6 +198,7 @@ Primary services:
 - `OrganizationMemberService`
 - `OrganizationRoleService`
 - `ComplianceService` (the backend Compliance module's read-only surface: the enriched facility tree, the organization/facility compliance summary, and the safety-register PDF export — `services/browser-download`'s `BrowserDownloadService` saves the exported blob to the visitor's device, mirroring `features/interventions/services/browser-download` rather than importing it: two small, single-purpose classes, not yet a third consumer that would justify lifting one to a shared location)
+- `TeamService` (read-only: `list` only, no frontend team CRUD yet. Consumed directly by the nested `interventions` subfeature's team-assignment dialog and detail page, imported from this feature's `data-access` and `models` barrels rather than duplicated — see interventions/FEATURE.md Cross-Feature Dependencies)
 
 Access helpers (`access/`):
 

@@ -519,26 +519,28 @@ export const InterventionStore = signalStore(
                 instantiateCallState: pendingCallState<InterventionTemplateInstantiationOutput>(),
               }),
             ),
-            exhaustMap(({ templateId }) =>
-              templateService.instantiate(templateId).pipe(
-                tapResponse({
-                  next: (result) => {
-                    patchState(store, { instantiateCallState: successCallState(result) });
-                  },
-                  error: (error: unknown) => {
-                    const storeError = toStoreError(error);
-                    patchState(store, { instantiateCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      interventionStoreEvents.instantiateFailed(
-                        toStoreFailureEventPayload(
-                          storeError,
-                          instantiateFailureMessage(storeError),
+            exhaustMap(({ templateId, name, site, responsible, plannedStartAt }) =>
+              templateService
+                .instantiate(templateId, { name, site, responsible, plannedStartAt })
+                .pipe(
+                  tapResponse({
+                    next: (result) => {
+                      patchState(store, { instantiateCallState: successCallState(result) });
+                    },
+                    error: (error: unknown) => {
+                      const storeError = toStoreError(error);
+                      patchState(store, { instantiateCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        interventionStoreEvents.instantiateFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            instantiateFailureMessage(storeError),
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                }),
-              ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),

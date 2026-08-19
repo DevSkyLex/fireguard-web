@@ -25,11 +25,15 @@ import {
 } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { TeamService } from '@features/organization/data-access';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionLabelService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   InterventionActivityOutput,
   InterventionAttachmentOutput,
@@ -317,6 +321,14 @@ describe('InterventionDetailPage', () => {
         },
         { provide: ConnectivityService, useValue: { online } },
         { provide: InterventionService, useValue: { downloadAttachment } },
+        {
+          provide: TeamService,
+          useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
+        },
+        {
+          provide: InterventionLabelService,
+          useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
+        },
         { provide: BrowserDownloadService, useValue: { trigger: browserDownloadTrigger } },
         { provide: InterventionPublicationService, useValue: { publish } },
         { provide: FeedbackService, useValue: { success: vi.fn(), error: feedbackError } },
@@ -408,6 +420,8 @@ describe('InterventionDetailPage', () => {
               rejectChangeCallState: signal(idleCallState()),
               pendingChangeIds: signal(new Set<string>()),
               deleteCallState: signal(idleCallState()),
+              assignTeamCallState: signal(idleCallState()),
+              assignTeam: vi.fn(),
               addCommentCallState: signal(idleCallState()),
               attachments,
               attachmentsCallState: signal(idleCallState()),

@@ -1,0 +1,203 @@
+<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-lg"
+    data-testid="intervention-label-manage-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@intervention.labels.manage.header">Manage labels</h3>
+      <p hlmDialogDescription i18n="@@intervention.labels.manage.intro">
+        Labels are shared across every intervention in this organization.
+      </p>
+    </hlm-dialog-header>
+
+    <form
+      class="flex items-end gap-2"
+      data-testid="intervention-label-create-form"
+      (submit)="$event.preventDefault(); submitCreate()"
+    >
+      <hlm-field class="flex-1">
+        <label
+          hlmFieldLabel
+          for="intervention-label-create-name"
+          i18n="@@intervention.labels.manage.nameLabel"
+          >Name</label
+        >
+        <input
+          hlmInput
+          id="intervention-label-create-name"
+          type="text"
+          maxlength="50"
+          data-testid="intervention-label-create-name"
+          placeholder="e.g. Compliance"
+          i18n-placeholder="@@intervention.labels.manage.namePlaceholder"
+          [value]="draftName()"
+          (input)="draftName.set($any($event.target).value)"
+        />
+      </hlm-field>
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="intervention-label-create-color"
+          i18n="@@intervention.labels.manage.colorLabel"
+          >Color</label
+        >
+        <input
+          id="intervention-label-create-color"
+          type="color"
+          class="block h-9 w-12 cursor-pointer rounded-md border border-input"
+          data-testid="intervention-label-create-color"
+          [value]="draftColor()"
+          (input)="draftColor.set($any($event.target).value)"
+        />
+      </hlm-field>
+      <button
+        hlmBtn
+        type="submit"
+        data-testid="intervention-label-create-submit"
+        [disabled]="!canCreate()"
+      >
+        @if (creating()) {
+          <span i18n="@@intervention.labels.manage.creating">Adding…</span>
+        } @else {
+          <span i18n="@@intervention.labels.manage.create">Add label</span>
+        }
+      </button>
+    </form>
+
+    @if (createError(); as message) {
+      <p class="text-sm text-destructive" data-testid="intervention-label-create-error">
+        {{ message }}
+      </p>
+    }
+
+    <hlm-separator />
+
+    <div class="flex max-h-80 flex-col gap-1 overflow-y-auto" data-testid="intervention-label-list">
+      @if (loading()) {
+        <p
+          class="py-4 text-center text-sm text-muted-foreground"
+          i18n="@@intervention.labels.manage.loading"
+        >
+          Loading labels…
+        </p>
+      } @else if (labels().length === 0) {
+        <p
+          class="py-4 text-center text-sm text-muted-foreground"
+          i18n="@@intervention.labels.manage.empty"
+        >
+          No labels yet.
+        </p>
+      } @else {
+        @for (label of labels(); track label.id) {
+          <div
+            class="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-muted/50"
+            [attr.data-testid]="'intervention-label-row-' + label.id"
+          >
+            @if (editingId() === label.id) {
+              <input
+                type="color"
+                class="block h-8 w-10 shrink-0 cursor-pointer rounded-md border border-input"
+                [attr.data-testid]="'intervention-label-edit-color-' + label.id"
+                [value]="editColor()"
+                (input)="editColor.set($any($event.target).value)"
+              />
+              <input
+                hlmInput
+                type="text"
+                maxlength="50"
+                class="h-8 flex-1"
+                [attr.data-testid]="'intervention-label-edit-name-' + label.id"
+                [value]="editName()"
+                (input)="editName.set($any($event.target).value)"
+              />
+              <button
+                hlmBtn
+                type="button"
+                size="sm"
+                [attr.data-testid]="'intervention-label-edit-save-' + label.id"
+                [disabled]="savingId() === label.id || editName().trim().length === 0"
+                (click)="submitEdit()"
+              >
+                <span i18n="@@common.save">Save</span>
+              </button>
+              <button hlmBtn type="button" variant="ghost" size="sm" (click)="cancelEdit()">
+                <span i18n="@@common.cancel">Cancel</span>
+              </button>
+            } @else if (confirmingRemoveId() === label.id) {
+              <span
+                class="size-3 shrink-0 rounded-full"
+                [style.background-color]="label.color"
+                aria-hidden="true"
+              ></span>
+              <span
+                class="flex-1 truncate text-sm"
+                i18n="@@intervention.labels.manage.confirmDelete"
+                >Delete "{{ label.name }}"?</span
+              >
+              <button
+                hlmBtn
+                type="button"
+                variant="destructive"
+                size="sm"
+                [attr.data-testid]="'intervention-label-remove-confirm-' + label.id"
+                [disabled]="removingId() === label.id"
+                (click)="confirmRemove(label.id)"
+              >
+                <span i18n="@@common.delete">Delete</span>
+              </button>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                (click)="confirmingRemoveId.set(null)"
+              >
+                <span i18n="@@common.cancel">Cancel</span>
+              </button>
+            } @else {
+              <span
+                class="size-3 shrink-0 rounded-full"
+                [style.background-color]="label.color"
+                aria-hidden="true"
+              ></span>
+              <span class="flex-1 truncate text-sm">{{ label.name }}</span>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                [attr.data-testid]="'intervention-label-edit-' + label.id"
+                (click)="startEdit(label)"
+              >
+                <span i18n="@@common.edit">Edit</span>
+              </button>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                [attr.data-testid]="'intervention-label-remove-' + label.id"
+                (click)="requestRemove(label.id)"
+              >
+                <span i18n="@@common.delete">Delete</span>
+              </button>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    <hlm-dialog-footer>
+      <button
+        hlmDialogClose
+        hlmBtn
+        type="button"
+        variant="outline"
+        data-testid="intervention-label-manage-close"
+      >
+        <span i18n="@@common.close">Close</span>
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

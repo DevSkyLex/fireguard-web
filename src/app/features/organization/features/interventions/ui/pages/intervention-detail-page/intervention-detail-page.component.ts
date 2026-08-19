@@ -40,8 +40,11 @@ import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallError, isCallPending, type CallState, type StoreError } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { TeamService } from '@features/organization/data-access';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
+  AssignInterventionTeamInput,
+  CreateInterventionLabelInput,
   InterventionAttachmentOutput,
   InterventionCapabilities,
   InterventionCommandAction,
@@ -73,6 +76,11 @@ import {
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import {
+  InterventionLabelStore,
+  interventionLabelStoreEvents,
+  type InterventionLabelStoreType,
+} from '@features/organization/features/interventions/state/intervention-label';
+import {
   InterventionLinkedResourcesStore,
   type InterventionLinkedResourcesStoreType,
 } from '@features/organization/features/interventions/state/intervention-linked-resources';
@@ -98,7 +106,7 @@ import {
   resolveInterventionResponsibleLabel,
   summarizeInterventionLabels,
 } from '@features/organization/features/interventions/utils';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { ORGANIZATION_PERMISSION, type TeamOutput } from '@features/organization/models';
 import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
@@ -121,8 +129,14 @@ import { InterventionStatusBand } from '../../components/intervention-status-ban
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAttachmentDeleteDialog } from '../../dialogs/intervention-attachment-delete-dialog';
 import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
+import { InterventionLabelManageDialog } from '../../dialogs/intervention-label-manage-dialog';
+import type {
+  InterventionLabelCreateSubmittedEvent,
+  InterventionLabelUpdateSubmittedEvent,
+} from '../../dialogs/intervention-label-manage-dialog';
 import { InterventionPublishDialog } from '../../dialogs/intervention-publish-dialog';
 import { InterventionSignatureDialog } from '../../dialogs/intervention-signature-dialog';
+import { InterventionTeamAssignDialog } from '../../dialogs/intervention-team-assign-dialog';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionDiscussionSheet } from '../../sheets/intervention-discussion-sheet';
@@ -217,9 +231,11 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionChangeList,
     InterventionConfirmDialog,
     InterventionDiscussionSheet,
+    InterventionLabelManageDialog,
     InterventionPublishDialog,
     InterventionSignatureDialog,
     InterventionStatusBand,
+    InterventionTeamAssignDialog,
     InterventionCommentForm,
     InterventionGettingStarted,
     InterventionIssuesChecklist,
@@ -238,6 +254,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionPlanningOptionsStore,
     InterventionLinkedResourcesStore,
     InterventionPublicationStore,
+    InterventionLabelStore,
     provideIcons({
       lucideBan,
       lucideChevronLeft,
@@ -334,6 +351,20 @@ export class InterventionDetailPage {
    */
   protected readonly publicationStore: InterventionPublicationStoreType =
     inject<InterventionPublicationStoreType>(InterventionPublicationStore);
+
+  /**
+   * Property labelStore
+   * @readonly
+   * @description The organization's intervention label catalog, backing the "Manage labels" dialog.
+   * @access protected
+   * @since 1.0.0
+   * @type {InterventionLabelStoreType}
+   */
+  protected readonly labelStore: InterventionLabelStoreType =
+    inject<InterventionLabelStoreType>(InterventionLabelStore);
+
+  /** Lists organization teams for the "Assign team…" picker — read directly, not through a store: a one-shot fetch on dialog open, mirroring {@link downloadAttachment}. */
+  private readonly teamService: TeamService = inject(TeamService);
 
   /**
    * Property listStore
@@ -504,6 +535,12 @@ export class InterventionDetailPage {
     });
 
     effect((): void => {
+      if (this.store.assignTeamCallState().status !== 'success') return;
+
+      untracked((): void => this.teamAssignVisible.set(false));
+    });
+
+    effect((): void => {
       if (this.attachmentUploading() || this.evidenceUploadingWorkItemIds().size === 0) return;
 
       untracked((): void => this.evidenceUploadingWorkItemIds.set(new Set<string>()));
@@ -541,6 +578,26 @@ export class InterventionDetailPage {
         this.signingSubmitPending.set(false);
         this.store.transition({ interventionId: this.interventionId(), status: 'submitted' });
       });
+
+    /**
+     * Reloads the workspace options (which carry `labelOptions`) after every
+     * catalog mutation, so the properties grid's label picker reflects the
+     * change without a page reload — see `InterventionLabelStore`'s own
+     * description for why it does not write into
+     * `InterventionPlanningOptionsStore` directly.
+     */
+    for (const succeeded of [
+      interventionLabelStoreEvents.createSucceeded,
+      interventionLabelStoreEvents.updateSucceeded,
+      interventionLabelStoreEvents.removeSucceeded,
+    ]) {
+      this.events
+        .on(succeeded)
+        .pipe(takeUntilDestroyed())
+        .subscribe((): void => {
+          this.planningOptions.loadWorkspaceOptions(this.organizationId());
+        });
+    }
   }
   //#endregion
 
@@ -711,6 +768,23 @@ export class InterventionDetailPage {
   protected readonly pendingAttachmentDelete: WritableSignal<InterventionAttachmentOutput | null> =
     signal<InterventionAttachmentOutput | null>(null);
 
+  /** Whether the "Manage labels" dialog is open. */
+  protected readonly manageLabelsVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the "Assign team" dialog is open. */
+  protected readonly teamAssignVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The organization's teams, fetched on the "Assign team" dialog's first open. */
+  protected readonly teams: WritableSignal<readonly TeamOutput[]> = signal<readonly TeamOutput[]>(
+    [],
+  );
+
+  /** Whether {@link teams} is loading. */
+  protected readonly teamsLoading: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether {@link teams} has already been fetched once, so reopening the dialog does not refetch. */
+  private teamsLoaded = false;
+
   /**
    * Property offlineBlockReason
    * @readonly
@@ -810,6 +884,18 @@ export class InterventionDetailPage {
    */
   protected readonly canDiscuss: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.MESSAGING_READ),
+  );
+
+  /**
+   * Property canReadTeams
+   * @readonly
+   * @description Whether the member may list organization teams — gates the "Assign team…" entry, since it cannot list its own picker's options without it.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadTeams: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.TEAMS_READ),
   );
 
   /** Whether the browser can reach the API. */
@@ -920,6 +1006,28 @@ export class InterventionDetailPage {
 
   /** Whether description and labels accept a write, which holds until a terminal status. */
   protected readonly canEditDetails: Signal<boolean> = this.caps.canEditDetails;
+
+  /** Whether the "Manage labels…" trigger renders — `organization.interventions.write`. */
+  protected readonly canManageLabels: Signal<boolean> = this.caps.canManageLabels;
+
+  /**
+   * Property canAssignTeam
+   * @readonly
+   *
+   * @description
+   * Whether the "Assign team…" menu entry renders at all — requires both
+   * `organization.interventions.plan` and the mutable-window status gate
+   * ({@link InterventionCapabilities.canAssignTeam}) **and**
+   * `organization.teams.read`, since the entry would otherwise open a
+   * picker the member cannot populate.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canAssignTeam: Signal<boolean> = computed<boolean>(
+    () => this.caps.canAssignTeam() && this.canReadTeams(),
+  );
 
   /** Whether the scope may still grow. */
   protected readonly canAddWorkItem: Signal<boolean> = this.caps.canAddWorkItem;
@@ -1942,6 +2050,112 @@ export class InterventionDetailPage {
   /** Asks to delete the intervention. */
   protected requestDeleteIntervention(): void {
     this.pendingConfirm.set({ kind: 'deleteIntervention' });
+  }
+
+  /** Opens the label catalog dialog, fetching it on first open. */
+  protected openManageLabels(): void {
+    this.manageLabelsVisible.set(true);
+    this.labelStore.load(
+      this.store.intervention()?.organization ?? `/api/organizations/${this.organizationId()}`,
+    );
+  }
+
+  /** Closes the label catalog dialog. */
+  protected closeManageLabels(): void {
+    this.manageLabelsVisible.set(false);
+  }
+
+  /**
+   * Method createLabel
+   *
+   * @description Creates a label from the manage dialog's "New label" form.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionLabelCreateSubmittedEvent} event - The drafted name/color.
+   * @returns {void}
+   */
+  protected createLabel(event: InterventionLabelCreateSubmittedEvent): void {
+    const body: CreateInterventionLabelInput = {
+      organization:
+        this.store.intervention()?.organization ?? `/api/organizations/${this.organizationId()}`,
+      name: event.name,
+      color: event.color,
+    };
+    this.labelStore.create(body);
+  }
+
+  /**
+   * Method updateLabel
+   *
+   * @description Renames/recolors a label from the manage dialog's row editor.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionLabelUpdateSubmittedEvent} event - The row's draft.
+   * @returns {void}
+   */
+  protected updateLabel(event: InterventionLabelUpdateSubmittedEvent): void {
+    this.labelStore.update({
+      labelId: event.labelId,
+      input: { name: event.name, color: event.color },
+    });
+  }
+
+  /** Deletes a label the manage dialog's inline confirmation approved. */
+  protected removeLabel(labelId: string): void {
+    this.labelStore.remove(labelId);
+  }
+
+  /**
+   * Method openTeamAssign
+   *
+   * @description
+   * Opens the team-assignment dialog, fetching the organization's teams
+   * once on first open (secondary UI data behind a dialog, `AGENTS.md`).
+   *
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected openTeamAssign(): void {
+    this.teamAssignVisible.set(true);
+    if (this.teamsLoaded) return;
+
+    this.teamsLoading.set(true);
+    this.teamService
+      .list(this.organizationId())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (collection): void => {
+          this.teams.set([...collection.member]);
+          this.teamsLoading.set(false);
+          this.teamsLoaded = true;
+        },
+        error: (): void => {
+          this.teamsLoading.set(false);
+          this.feedback.error(
+            $localize`:@@intervention.team.assign.loadFailed:Couldn't load the organization's teams.`,
+          );
+        },
+      });
+  }
+
+  /** Closes the team-assignment dialog. */
+  protected closeTeamAssign(): void {
+    this.teamAssignVisible.set(false);
+  }
+
+  /**
+   * Method submitTeamAssign
+   *
+   * @description Submits the picked team for assignment. The dialog stays open on failure so the inline error is visible; it closes on success.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} teamId - The picked team's id.
+   * @returns {void}
+   */
+  protected submitTeamAssign(teamId: string): void {
+    const body: AssignInterventionTeamInput = { teamId };
+    this.store.assignTeam({ interventionId: this.interventionId(), input: body });
   }
 
   /** Asks to remove a prepared work item. */

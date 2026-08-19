@@ -176,6 +176,41 @@ describe('createInterventionCapabilities', () => {
     expect(capabilities.canAddWorkItem()).toBe(false);
   });
 
+  it('should gate canManageLabels on organization.interventions.write alone', () => {
+    const { capabilities: withWrite } = buildHarness(buildIntervention(), [
+      ORGANIZATION_PERMISSION.INTERVENTIONS_WRITE,
+    ]);
+    const { capabilities: withPlan } = buildHarness(buildIntervention(), [
+      ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN,
+    ]);
+
+    expect(withWrite.canManageLabels()).toBe(true);
+    expect(withPlan.canManageLabels()).toBe(false);
+  });
+
+  it.each([
+    ['draft', true],
+    ['planned', true],
+    ['in_progress', true],
+    ['changes_requested', true],
+    ['submitted', false],
+    ['published', false],
+    ['abandoned', false],
+  ] as const)('should gate canAssignTeam by status in %s', (status, expected) => {
+    const { capabilities } = buildHarness(
+      buildIntervention({ status: status as InterventionStatus }),
+      [ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN],
+    );
+
+    expect(capabilities.canAssignTeam()).toBe(expected);
+  });
+
+  it('should deny canAssignTeam without the plan permission', () => {
+    const { capabilities } = buildHarness(buildIntervention());
+
+    expect(capabilities.canAssignTeam()).toBe(false);
+  });
+
   it('should offer skip and scan only during execution', () => {
     const { capabilities, intervention, scanSupported } = buildHarness(
       buildIntervention({ status: 'in_progress', allowedTransitions: ['submitted', 'abandoned'] }),

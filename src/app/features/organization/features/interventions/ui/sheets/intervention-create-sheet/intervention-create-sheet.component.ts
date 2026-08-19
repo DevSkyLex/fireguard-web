@@ -15,12 +15,17 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
   InterventionDuplicatePrefill,
+  InterventionTemplateInstantiateRequest,
   InterventionTemplateOutput,
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmButton } from '@shared/ui/button';
+import { HlmComboboxImports } from '@shared/ui/combobox';
+import { HlmDatePickerImports } from '@shared/ui/date-picker';
+import { HlmFieldImports } from '@shared/ui/field';
+import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import {
@@ -54,7 +59,16 @@ import {
  */
 @Component({
   selector: 'app-intervention-create-sheet',
-  imports: [InterventionCreateForm, HlmButton, ...HlmSelectImports, ...HlmSheetImports],
+  imports: [
+    InterventionCreateForm,
+    HlmButton,
+    HlmInput,
+    ...HlmComboboxImports,
+    ...HlmDatePickerImports,
+    ...HlmFieldImports,
+    ...HlmSelectImports,
+    ...HlmSheetImports,
+  ],
   templateUrl: './intervention-create-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -219,14 +233,16 @@ export class InterventionCreateSheet {
    * @readonly
    *
    * @description
-   * The operator confirmed a template; carries its id.
+   * The operator confirmed a template, carrying its id plus whichever
+   * override fields were filled in.
    *
    * @access public
    * @since 4.3.0
    *
-   * @type {OutputEmitterRef<string>}
+   * @type {OutputEmitterRef<InterventionTemplateInstantiateRequest>}
    */
-  public readonly templateInstantiated: OutputEmitterRef<string> = output<string>();
+  public readonly templateInstantiated: OutputEmitterRef<InterventionTemplateInstantiateRequest> =
+    output<InterventionTemplateInstantiateRequest>();
   //#endregion
 
   //#region Properties
@@ -277,6 +293,31 @@ export class InterventionCreateSheet {
   /** Names a picked template on the closed select trigger. */
   protected readonly templateLabelOf: (value: string) => string = (value: string): string =>
     this.templates().find((template): boolean => template.id === value)?.name ?? '';
+
+  /** Override draft: name. Empty means "use the template default". */
+  protected readonly overrideName: WritableSignal<string> = signal<string>('');
+
+  /** Override draft: site (facility IRI), or `null` for "use the template default". */
+  protected readonly overrideSite: WritableSignal<string | null> = signal<string | null>(null);
+
+  /** Override draft: responsible (member IRI), or `null` for "use the template default". */
+  protected readonly overrideResponsible: WritableSignal<string | null> = signal<string | null>(
+    null,
+  );
+
+  /** Override draft: planned start, or `null` for "use the template default". */
+  protected readonly overridePlannedStartAt: WritableSignal<Date | null> = signal<Date | null>(
+    null,
+  );
+
+  /** Names a picked site override on the closed select trigger. */
+  protected readonly siteLabelOf: (value: string) => string = (value: string): string =>
+    this.siteOptions().find((option: SelectOption): boolean => option.value === value)?.label ?? '';
+
+  /** Names a picked responsible override on the closed select trigger. */
+  protected readonly memberLabelOf: (value: string) => string = (value: string): string =>
+    this.memberOptions().find((option: MemberSelectOption): boolean => option.value === value)
+      ?.label ?? '';
   //#endregion
 
   //#region Constructor
@@ -285,8 +326,8 @@ export class InterventionCreateSheet {
    * @constructor
    *
    * @description
-   * Clears the picked template whenever the panel closes, so a stale
-   * selection never survives to the next time it opens.
+   * Clears the picked template and its override drafts whenever the panel
+   * closes, so a stale selection never survives to the next time it opens.
    *
    * @access public
    * @since 4.3.0
@@ -296,7 +337,13 @@ export class InterventionCreateSheet {
       const isVisible: boolean = this.visible();
 
       untracked((): void => {
-        if (!isVisible) this.selectedTemplateId.set(null);
+        if (isVisible) return;
+
+        this.selectedTemplateId.set(null);
+        this.overrideName.set('');
+        this.overrideSite.set(null);
+        this.overrideResponsible.set(null);
+        this.overridePlannedStartAt.set(null);
       });
     });
   }
@@ -330,8 +377,12 @@ export class InterventionCreateSheet {
    * @method confirmTemplateInstantiate
    *
    * @description
-   * Emits {@link templateInstantiated} for the picked template. A no-op
-   * without a selection, so the confirm button never fires on an empty pick.
+   * Emits {@link templateInstantiated} for the picked template plus whichever
+   * override drafts were filled in. A no-op without a template selection, so
+   * the confirm button never fires on an empty pick. Placeholders on the
+   * override fields already communicate that an empty field means "use the
+   * template default", so a blank draft is simply omitted rather than sent
+   * as an empty string.
    *
    * @access protected
    * @since 4.3.0
@@ -343,7 +394,17 @@ export class InterventionCreateSheet {
 
     if (!templateId) return;
 
-    this.templateInstantiated.emit(templateId);
+    const name: string = this.overrideName().trim();
+
+    this.templateInstantiated.emit({
+      templateId,
+      ...(name ? { name } : {}),
+      ...(this.overrideSite() ? { site: this.overrideSite() as string } : {}),
+      ...(this.overrideResponsible() ? { responsible: this.overrideResponsible() as string } : {}),
+      ...(this.overridePlannedStartAt()
+        ? { plannedStartAt: this.overridePlannedStartAt() as Date }
+        : {}),
+    });
   }
   //#endregion
 }

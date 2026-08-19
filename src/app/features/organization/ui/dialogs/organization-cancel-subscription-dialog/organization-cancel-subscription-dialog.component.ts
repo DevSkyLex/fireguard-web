@@ -183,6 +183,8 @@ export class OrganizationCancelSubscriptionDialog {
    * @returns {void}
    */
   protected confirm(): void {
+    if (this.pending()) return;
+
     this.confirmed.emit();
   }
   //#endregion

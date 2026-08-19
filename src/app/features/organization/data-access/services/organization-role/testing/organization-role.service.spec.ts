@@ -214,7 +214,9 @@ describe('OrganizationRoleService', () => {
         id: memberId,
         organizationId: orgId,
         userId: 'user-uuid-2',
+        displayName: 'Alex Martin',
         isActive: true,
+        isOwner: false,
         joinedAt: '2026-01-15T10:00:00+00:00',
         roleIds: ['role-uuid-1'],
       };
@@ -290,7 +292,9 @@ describe('OrganizationRoleService', () => {
       id: memberId,
       organizationId: orgId,
       userId: 'user-uuid-2',
+      displayName: 'Alex Martin',
       isActive: true,
+      isOwner: false,
       joinedAt: '2026-01-15T10:00:00+00:00',
       roleIds: ['role-uuid-1', 'role-uuid-2'],
     };

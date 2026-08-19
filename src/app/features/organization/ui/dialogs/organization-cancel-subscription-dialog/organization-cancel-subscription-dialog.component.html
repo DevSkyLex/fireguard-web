@@ -25,13 +25,20 @@
     }
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@org.settings.subscription.cancelDismiss">
+      <button
+        hlmAlertDialogCancel
+        class="max-sm:min-h-11"
+        i18n="@@org.settings.subscription.cancelDismiss"
+      >
         Keep subscription
       </button>
       <button
         hlmAlertDialogAction
         variant="destructive"
+        class="max-sm:min-h-11"
         data-testid="organization-cancel-subscription-confirm"
+        aria-live="polite"
+        [attr.aria-busy]="pending() ? 'true' : null"
         [disabled]="pending()"
         (click)="confirm()"
       >

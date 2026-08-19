@@ -214,6 +214,7 @@ export class OrganizationTransferOwnershipDialog {
   protected readonly canConfirm: Signal<boolean> = computed<boolean>(
     () =>
       this.selectedUserId() !== NO_CANDIDATE_VALUE &&
+      this.organizationName().length > 0 &&
       this.typedName() === this.organizationName() &&
       !this.pending(),
   );

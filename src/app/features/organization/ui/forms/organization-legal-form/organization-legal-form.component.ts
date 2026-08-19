@@ -10,7 +10,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { form, FormField, maxLength, type FieldTree } from '@angular/forms/signals';
+import { form, FormField, maxLength, pattern, type FieldTree } from '@angular/forms/signals';
 import type { OptionOutput } from '@core/api/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -25,7 +25,9 @@ const UNSET_LEGAL_TYPE = '';
 const LEGAL_NAME_MAX_LENGTH = 255;
 const REGISTRATION_NUMBER_MAX_LENGTH = 64;
 const VAT_NUMBER_MAX_LENGTH = 64;
-const COUNTRY_MAX_LENGTH = 2;
+
+/** Backend `Assert\Regex` on `country`: exactly two letters (ISO 3166-1 alpha-2), or empty to clear. */
+const COUNTRY_PATTERN: RegExp = /^[A-Za-z]{2}$/;
 
 /**
  * Component OrganizationLegalForm
@@ -155,8 +157,9 @@ export class OrganizationLegalForm {
    *
    * @description
    * The field tree and its rules. No field is required — an organization
-   * with no legal profile is valid — only the same length caps the backend
-   * DTO enforces.
+   * with no legal profile is valid — only the backend DTO's own constraints:
+   * length caps on the three free-text fields, and the exact two-letter
+   * `Assert\Regex` on `country` (an empty value clears and skips the rule).
    *
    * @access protected
    * @since 1.0.0
@@ -166,7 +169,7 @@ export class OrganizationLegalForm {
   protected readonly legalForm: FieldTree<OrganizationLegalFormValues> = form(
     this.model,
     (path): void => {
-      maxLength(path.country, COUNTRY_MAX_LENGTH, {
+      pattern(path.country, COUNTRY_PATTERN, {
         message: $localize`:@@org.settings.legal.countryTooLong:Use the 2-letter country code`,
       });
       maxLength(path.legalName, LEGAL_NAME_MAX_LENGTH, {

@@ -142,6 +142,45 @@ permission substitutes for that. Suspend and restore, by contrast, need only
 settings `PATCH` but are not yet enforced (notification dispatch and app-wide date/locale
 formatting consume them in follow-up work).
 
+**The danger-zone tab now renders every action `OrganizationSettingsStore` owns, not only Delete.**
+Suspend (`app-organization-suspend-dialog`, stating the consequences — access blocked immediately,
+data preserved) renders when the organization is `active`; Restore (a direct button, no dialog,
+mirroring `OrganizationMemberTable`'s Reactivate) renders when it is `suspended` or `archived` — the
+two are mutually exclusive by status and both need only `organization.settings.write`, already
+implied by the route guard on `/settings`. Transfer ownership (`app-organization-transfer-ownership-dialog`
+— an `hlm-combobox` member picker mirroring `FacilityMoveDialog`, plus the typed-organization-name
+confirm gate `OrganizationDeleteDialog` uses) renders only for the current owner on a non-archived
+organization; its candidate list is `OrganizationMemberService.listAll`, loaded once the owner opens
+the tab, narrowed to active, non-owner members. Leave (`app-organization-leave-dialog`, self-removal
+via `DELETE /members/me`) renders for every member but the owner — the backend's own last-administrator
+lockout surfaces as the dialog's inline error rather than being re-derived client-side. The whole tab
+stays gated on `organization.delete`, unchanged.
+
+**`OrganizationOutput.isOwner` is declared but rarely populated on this page.** The backend sets it
+only on the user's organization list (`GET /api/organizations`) — confirmed by reading
+`GetOrganizationProvider`, and every mutation processor's `buildOutput`, none of which map it — so the
+single-organization `GET` `ActiveOrganizationStore` uses, and every settings mutation's refreshed
+organization, leave it `null`. The settings page therefore derives ownership itself:
+`organization().isOwner` when present, else `ownerUserId === OrganizationMemberAccessStore.profile()?.userId`
+— the acting member's own `userId`, already resolved root-wide for permission checks. This is a
+frontend-only workaround; populating `isOwner` on the single-organization read is a backend change
+outside this feature's repo.
+
+**The settings General tab carries a "Legal information" section** (`app-organization-legal-form`):
+country (ISO 3166-1 alpha-2), legal entity type (`GET /organizations/legal-types`, a reference
+catalog loaded once when the tab opens), registered legal name, registration number and VAT number.
+Every field is optional and clears on an empty string — unlike the general form's `description`,
+which clears on `null` — matching `UpdateOrganizationSettingsInput`'s own doc block. Saved through
+`OrganizationSettingsStore.save` with only these five keys, the same partial-save pattern every other
+section uses.
+
+**The subscription tab now offers Cancel and Resume alongside Checkout/Portal.** Cancel
+(`app-organization-cancel-subscription-dialog`, stating that the subscription keeps working until
+the current period ends rather than implying an immediate cutoff) renders while a subscription is
+active and not already scheduled to cancel; Resume (a direct button, no dialog — it undoes Cancel)
+renders once `cancelAtPeriodEnd` is true. Both call `OrganizationBillingStore.cancelSubscription`/
+`resumeSubscription`, gated by the same `organization.settings.write` the tab's other controls need.
+
 **Compliance, automation and assistant policy** (`OrganizationSettings.compliance` /
 `.automation` / `.assistant`) are persisted the same way, through the Compliance and Assistant
 tabs' own `OrganizationComplianceForm`, `OrganizationAutomationForm` and
@@ -172,7 +211,7 @@ Primary stores:
 - `OrganizationRoleListStore`
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
-- `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
+- `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history, and cancel/resume — both gated by `organization.settings.write` on the backend, same as Checkout/Portal)
 - `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped **once** to the landing Dashboard page, which reads it across the whole page — the overview counts, the alert feed and the recent-interventions list for the KPI strip and work-queue column, the health rates, comparison block and severity breakdown for the Trends section. Before the Today/Statistics merge each page held its own copy, fetching the aggregate `/dashboard` payload twice; one page now means one fetch)
 - `FacilityTreeStore` (owned by the facilities subfeature, component-scoped to the assets explorer; the site hierarchy, loaded one branch at a time)
 - `OrganizationAssetsPaneStore` (component-scoped to the assets explorer; the right pane's equipment and inspections, facility-scoped or organization-wide depending on the active axis. Reuses `EquipmentService`/`InspectionService` from the equipments/inspections subfeatures' `data-access` barrels rather than duplicating transport — it is a read-only preview, not the surface those subfeatures own)
@@ -200,7 +239,7 @@ filters server-side.
 
 Primary services:
 
-- `OrganizationService` (includes `changePlan` and `getQuota`)
+- `OrganizationService` (includes `changePlan`, `getQuota` and `listLegalTypes` — the settings Legal information section's type-picker catalog)
 - `PlanService`
 - `BillingService` (Stripe Checkout / Portal session creation and invoice listing)
 - `OrganizationInvitationService`

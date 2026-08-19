@@ -706,12 +706,24 @@
           <context context-type="linenumber">28,30</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.html</context>
+          <context context-type="linenumber">21,23</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-plan-change-dialog/organization-plan-change-dialog.component.html</context>
           <context context-type="linenumber">12,14</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-role-delete-dialog/organization-role-delete-dialog.component.html</context>
           <context context-type="linenumber">21,23</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-suspend-dialog/organization-suspend-dialog.component.html</context>
+          <context context-type="linenumber">21,23</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.html</context>
+          <context context-type="linenumber">75,77</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-invite-form/organization-invite-form.component.html</context>
@@ -13592,6 +13604,48 @@
           <context context-type="linenumber">348</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelConfirmTitle" datatype="html">
+        <source> Cancel this subscription? </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-cancel-subscription-dialog/organization-cancel-subscription-dialog.component.html</context>
+          <context context-type="linenumber">12,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelDismiss" datatype="html">
+        <source> Keep subscription </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-cancel-subscription-dialog/organization-cancel-subscription-dialog.component.html</context>
+          <context context-type="linenumber">29,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.canceling" datatype="html">
+        <source>Canceling…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-cancel-subscription-dialog/organization-cancel-subscription-dialog.component.html</context>
+          <context context-type="linenumber">39,41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelConfirmAction" datatype="html">
+        <source>Cancel subscription</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-cancel-subscription-dialog/organization-cancel-subscription-dialog.component.html</context>
+          <context context-type="linenumber">41,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelConfirmTextUnknownDate" datatype="html">
+        <source>The subscription keeps working until the end of the current billing period, then it will not renew. You can resume it at any time before then.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-cancel-subscription-dialog/organization-cancel-subscription-dialog.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelConfirmText" datatype="html">
+        <source>The subscription keeps working until <x id="date" equiv-text="date"/>, then it will not renew. You can resume it at any time before then.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-cancel-subscription-dialog/organization-cancel-subscription-dialog.component.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="org.settings.danger.confirmTitle" datatype="html">
         <source> Delete this organization? </source>
         <context-group purpose="location">
@@ -13660,6 +13714,34 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-invite-dialog/organization-invite-dialog.component.html</context>
           <context context-type="linenumber">8,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveConfirmTitle" datatype="html">
+        <source> Leave this organization? </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.html</context>
+          <context context-type="linenumber">9,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaving" datatype="html">
+        <source>Leaving…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.html</context>
+          <context context-type="linenumber">30,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveConfirmAction" datatype="html">
+        <source>Leave organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.html</context>
+          <context context-type="linenumber">32,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveConfirmText" datatype="html">
+        <source>You will lose access to <x id="organizationName" equiv-text="name"/> and everything in it. You can only rejoin if another member invites you back.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.ts</context>
+          <context context-type="linenumber">141</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmCancel" datatype="html">
@@ -13793,6 +13875,90 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-role-delete-dialog/organization-role-delete-dialog.component.html</context>
           <context context-type="linenumber">32,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspendConfirmTitle" datatype="html">
+        <source> Suspend this organization? </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-suspend-dialog/organization-suspend-dialog.component.html</context>
+          <context context-type="linenumber">9,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspending" datatype="html">
+        <source>Suspending…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-suspend-dialog/organization-suspend-dialog.component.html</context>
+          <context context-type="linenumber">30,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspendConfirmAction" datatype="html">
+        <source>Suspend organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-suspend-dialog/organization-suspend-dialog.component.html</context>
+          <context context-type="linenumber">32,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspendConfirmText" datatype="html">
+        <source>Members of <x id="organizationName" equiv-text="name"/> immediately lose access. Every facility, piece of equipment, inspection and intervention is preserved, and you can restore the organization at any time.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-suspend-dialog/organization-suspend-dialog.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferConfirmTitle" datatype="html">
+        <source> Transfer ownership </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.html</context>
+          <context context-type="linenumber">12,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferConfirmDescription" datatype="html">
+        <source> The new owner gains full control, including the ability to delete the organization. You keep your membership and roles, but no longer own it. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.html</context>
+          <context context-type="linenumber">15,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferMemberLabel" datatype="html">
+        <source>New owner</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.html</context>
+          <context context-type="linenumber">25,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferMemberPlaceholder" datatype="html">
+        <source>Search a member</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.html</context>
+          <context context-type="linenumber">34,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferMemberNoMatch" datatype="html">
+        <source>No member matches.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.html</context>
+          <context context-type="linenumber">40,42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferring" datatype="html">
+        <source>Transferring…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.html</context>
+          <context context-type="linenumber">84,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferConfirmAction" datatype="html">
+        <source>Transfer ownership</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.html</context>
+          <context context-type="linenumber">86,89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferConfirmLabel" datatype="html">
+        <source>Type <x id="organizationName" equiv-text="name"/> to confirm</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-transfer-ownership-dialog/organization-transfer-ownership-dialog.component.ts</context>
+          <context context-type="linenumber">203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.approval.roleMember" datatype="html">
@@ -14273,6 +14439,90 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-invite-form/organization-invite-form.component.ts</context>
           <context context-type="linenumber">166</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.countryLabel" datatype="html">
+        <source>Country</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.html</context>
+          <context context-type="linenumber">6,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.typeLabel" datatype="html">
+        <source>Legal entity type</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.html</context>
+          <context context-type="linenumber">25,27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.legalNameLabel" datatype="html">
+        <source>Registered legal name</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.html</context>
+          <context context-type="linenumber">45,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.registrationNumberLabel" datatype="html">
+        <source>Registration number</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.html</context>
+          <context context-type="linenumber">66,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.vatNumberLabel" datatype="html">
+        <source>VAT number</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.html</context>
+          <context context-type="linenumber">87,90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.submitting" datatype="html">
+        <source>Saving…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.html</context>
+          <context context-type="linenumber">114,116</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.submit" datatype="html">
+        <source>Save changes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.html</context>
+          <context context-type="linenumber">116,119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.typeUnset" datatype="html">
+        <source>Not set</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.ts</context>
+          <context context-type="linenumber">125</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.countryTooLong" datatype="html">
+        <source>Use the 2-letter country code</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.ts</context>
+          <context context-type="linenumber">170</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.legalNameTooLong" datatype="html">
+        <source>This name is too long</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.ts</context>
+          <context context-type="linenumber">173</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.registrationNumberTooLong" datatype="html">
+        <source>This number is too long</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.ts</context>
+          <context context-type="linenumber">176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.vatNumberTooLong" datatype="html">
+        <source>This number is too long</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-legal-form/organization-legal-form.component.ts</context>
+          <context context-type="linenumber">179</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.notifications.channelsTitle" datatype="html">
@@ -16020,130 +16270,242 @@
           <context context-type="linenumber">99,100</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="org.settings.legal.sectionTitle" datatype="html">
+        <source> Legal information </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">134,136</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="org.settings.subscription.currentTitle" datatype="html">
         <source>Current plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">137,139</context>
+          <context context-type="linenumber">152,154</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.managePortal" datatype="html">
         <source>Manage billing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">172,173</context>
+          <context context-type="linenumber">187,188</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.startCheckout" datatype="html">
         <source>Set up billing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">187,188</context>
+          <context context-type="linenumber">202,203</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.cancelAction" datatype="html">
+        <source> Cancel subscription </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">220,221</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.resuming" datatype="html">
+        <source>Resuming…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">238,240</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.resumeAction" datatype="html">
+        <source> Resume subscription </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">241,242</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.billingErrorTitle" datatype="html">
         <source> Couldn&apos;t complete the request </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">197,199</context>
+          <context context-type="linenumber">253,255</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.plansTitle" datatype="html">
         <source> Plans </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">210,212</context>
+          <context context-type="linenumber">266,268</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesTitle" datatype="html">
         <source> Invoices </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">225,228</context>
+          <context context-type="linenumber">281,284</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesLoadingAria" datatype="html">
         <source>Loading invoices</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">232,233</context>
+          <context context-type="linenumber">288,289</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesErrorTitle" datatype="html">
         <source> Couldn&apos;t load invoices </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">242,244</context>
+          <context context-type="linenumber">298,300</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesEmptyTitle" datatype="html">
         <source>No invoices yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">250,251</context>
+          <context context-type="linenumber">306,307</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.invoicesEmptyDescription" datatype="html">
         <source>Invoices appear here once the organization has been billed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">252,253</context>
+          <context context-type="linenumber">308,309</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.downloadInvoice" datatype="html">
         <source>Download invoice</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">281,283</context>
+          <context context-type="linenumber">337,339</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.compliance.automationTitle" datatype="html">
         <source> Automation </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">339,341</context>
+          <context context-type="linenumber">404,406</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.approval.sectionTitle" datatype="html">
         <source> Four-eyes approval policy </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">353,355</context>
+          <context context-type="linenumber">418,420</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.statusTitle" datatype="html">
+        <source>Suspend or restore</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">454,456</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.statusDescription" datatype="html">
+        <source> Suspending blocks every member&apos;s access immediately without deleting any data. Restoring brings a suspended or archived organization back to active. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">457,459</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.suspendOpen" datatype="html">
+        <source>Suspend organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">472,474</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.restoring" datatype="html">
+        <source>Restoring…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">489,491</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.restoreAction" datatype="html">
+        <source>Restore organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">492,494</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferTitle" datatype="html">
+        <source>Transfer ownership</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">528,530</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferDescription" datatype="html">
+        <source> Hand full control of this organization to another active member. You keep your own membership and roles, but no longer own it. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">531,533</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferOpen" datatype="html">
+        <source>Transfer ownership</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">545,547</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveTitle" datatype="html">
+        <source>Leave this organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">570,572</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveDescription" datatype="html">
+        <source> Removes your own membership. Another member will need to invite you back. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">573,575</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.leaveOpen" datatype="html">
+        <source>Leave organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">586,588</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.title" datatype="html">
         <source>Delete this organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">387,389</context>
+          <context context-type="linenumber">609,611</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.description" datatype="html">
         <source> Permanently deletes every facility, piece of equipment, inspection, intervention and member record. This cannot be undone. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">390,392</context>
+          <context context-type="linenumber">612,614</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.open" datatype="html">
         <source>Delete organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">404,406</context>
+          <context context-type="linenumber">626,628</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.endsOn" datatype="html">
         <source>Ends on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">693</context>
+          <context context-type="linenumber">868</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.renewsOn" datatype="html">
         <source>Renews on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">694</context>
+          <context context-type="linenumber">869</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.danger.transferMemberUnnamed" datatype="html">
+        <source>Member</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
+          <context context-type="linenumber">1880</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.loadErrorTitle" datatype="html">

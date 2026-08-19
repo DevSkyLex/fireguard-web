@@ -1,0 +1,46 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content
+    *hlmAlertDialogPortal
+    data-testid="organization-cancel-subscription-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.settings.subscription.cancelConfirmTitle">
+        Cancel this subscription?
+      </h2>
+      <p hlmAlertDialogDescription>{{ confirmText() }}</p>
+    </hlm-alert-dialog-header>
+
+    @if (error(); as message) {
+      <p
+        role="alert"
+        class="text-sm text-destructive"
+        data-testid="organization-cancel-subscription-error"
+      >
+        {{ message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@org.settings.subscription.cancelDismiss">
+        Keep subscription
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-cancel-subscription-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.subscription.canceling">Canceling…</span>
+        } @else {
+          <span i18n="@@org.settings.subscription.cancelConfirmAction">Cancel subscription</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

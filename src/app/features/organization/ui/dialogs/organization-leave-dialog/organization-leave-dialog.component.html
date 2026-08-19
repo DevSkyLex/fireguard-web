@@ -1,0 +1,37 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-leave-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.settings.danger.leaveConfirmTitle">
+        Leave this organization?
+      </h2>
+      <p hlmAlertDialogDescription>{{ confirmText() }}</p>
+    </hlm-alert-dialog-header>
+
+    @if (error(); as message) {
+      <p role="alert" class="text-sm text-destructive" data-testid="organization-leave-error">
+        {{ message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-leave-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.danger.leaving">Leaving…</span>
+        } @else {
+          <span i18n="@@org.settings.danger.leaveConfirmAction">Leave organization</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

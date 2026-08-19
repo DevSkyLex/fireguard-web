@@ -632,6 +632,28 @@ export class OrganizationService extends HydraApiService {
   }
 
   /**
+   * Method listLegalTypes
+   * @method listLegalTypes
+   *
+   * @description
+   * Retrieves the reference catalog of organization legal entity types,
+   * feeding the settings Legal information section's type picker.
+   *
+   * @access public
+   * @since 1.6.0
+   *
+   * @param {RequestOptions} [options] - Optional pagination parameters.
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} An observable emitting the legal type options.
+   */
+  public listLegalTypes(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>(
+      `${OrganizationService.BASE_PATH}/legal-types`,
+      options,
+    );
+  }
+
+  /**
    * Method listPermissions
    * @method listPermissions
    *

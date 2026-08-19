@@ -18,17 +18,20 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideArrowRightLeft,
   lucideBan,
   lucideBell,
   lucideBot,
   lucideCircleAlert,
   lucideCircleCheck,
+  lucideCircleX,
   lucideClock,
   lucideCreditCard,
   lucideDownload,
   lucideExternalLink,
   lucideGauge,
   lucideGlobe,
+  lucideLogOut,
   lucideReceipt,
   lucideRefreshCw,
   lucideSettings,
@@ -36,7 +39,9 @@ import {
   lucideTrash2,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
+import type { OptionOutput } from '@core/api/models';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
 import type { ApprovalActionTypeOutput } from '@features/organization/features/approvals/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -46,11 +51,17 @@ import type {
   OrganizationAssistantSettings,
   OrganizationAutomationSettings,
   OrganizationComplianceSettings,
+  OrganizationMemberOutput,
   OrganizationNotificationSettings,
   OrganizationOutput,
   OrganizationRegionalSettings,
+  OrganizationTransferOwnershipConfirmedEvent,
 } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import {
+  ActiveOrganizationStore,
+  OrganizationMemberAccessStore,
+  OrganizationQuotaStore,
+} from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { EmptyState } from '@shared/empty-state';
@@ -64,7 +75,11 @@ import { HlmTabsImports } from '@shared/ui/tabs';
 import { OrganizationLogoPicker } from '../../components/organization-logo-picker';
 import { OrganizationPlanSelector } from '../../components/organization-plan-selector';
 import { OrganizationUsagePanel } from '../../components/organization-usage-panel';
+import { OrganizationCancelSubscriptionDialog } from '../../dialogs/organization-cancel-subscription-dialog';
 import { OrganizationDeleteDialog } from '../../dialogs/organization-delete-dialog';
+import { OrganizationLeaveDialog } from '../../dialogs/organization-leave-dialog';
+import { OrganizationSuspendDialog } from '../../dialogs/organization-suspend-dialog';
+import { OrganizationTransferOwnershipDialog } from '../../dialogs/organization-transfer-ownership-dialog';
 import {
   OrganizationApprovalForm,
   type OrganizationApprovalFormValues,
@@ -82,6 +97,10 @@ import {
   OrganizationGeneralForm,
   type OrganizationGeneralFormValues,
 } from '../../forms/organization-general-form';
+import {
+  OrganizationLegalForm,
+  type OrganizationLegalFormValues,
+} from '../../forms/organization-legal-form';
 import { OrganizationNotificationsForm } from '../../forms/organization-notifications-form';
 import { OrganizationRegionalForm } from '../../forms/organization-regional-form';
 import { SUBSCRIPTION_STATUS_TAG_ICON_CLASS } from './constants/subscription-status-tag-icon-class.constants';
@@ -252,13 +271,18 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
     OrganizationApprovalForm,
     OrganizationAssistantForm,
     OrganizationAutomationForm,
+    OrganizationCancelSubscriptionDialog,
     OrganizationComplianceForm,
     OrganizationDeleteDialog,
     OrganizationGeneralForm,
+    OrganizationLeaveDialog,
+    OrganizationLegalForm,
     OrganizationLogoPicker,
     OrganizationNotificationsForm,
     OrganizationPlanSelector,
     OrganizationRegionalForm,
+    OrganizationSuspendDialog,
+    OrganizationTransferOwnershipDialog,
     OrganizationUsagePanel,
     HlmBadge,
     HlmButton,
@@ -272,17 +296,20 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
     OrganizationSettingsStore,
     OrganizationBillingStore,
     provideIcons({
+      lucideArrowRightLeft,
       lucideBan,
       lucideBell,
       lucideBot,
       lucideCircleAlert,
       lucideCircleCheck,
+      lucideCircleX,
       lucideClock,
       lucideCreditCard,
       lucideDownload,
       lucideExternalLink,
       lucideGauge,
       lucideGlobe,
+      lucideLogOut,
       lucideReceipt,
       lucideRefreshCw,
       lucideSettings,
@@ -384,6 +411,54 @@ export class OrganizationSettingsPage {
    */
   private readonly approvalRequestService: ApprovalRequestService =
     inject<ApprovalRequestService>(ApprovalRequestService);
+
+  /**
+   * Property memberService
+   * @readonly
+   *
+   * @description
+   * Loads the active, non-owner members offered as ownership-transfer
+   * candidates once the danger tab opens for an owner. The page injects it
+   * directly, mirroring {@link approvalRequestService} — this is orchestration,
+   * not something the transfer dialog itself may do (`ARCHITECTURE.md` §10.3).
+   *
+   * @access private
+   * @since 1.6.0
+   * @type {OrganizationMemberService}
+   */
+  private readonly memberService: OrganizationMemberService =
+    inject<OrganizationMemberService>(OrganizationMemberService);
+
+  /**
+   * Property organizationService
+   * @readonly
+   * @description Loads the legal entity type catalog for the Legal information section. The page injects it directly rather than routing it through {@link settingsStore}, which owns mutations, not reference catalogs.
+   * @access private
+   * @since 1.6.0
+   * @type {OrganizationService}
+   */
+  private readonly organizationService: OrganizationService =
+    inject<OrganizationService>(OrganizationService);
+
+  /**
+   * Property memberAccessStore
+   * @readonly
+   *
+   * @description
+   * Root-provided store carrying the authenticated user's own `userId` in
+   * the active organization (`profile()`). Used to derive {@link isOwner}
+   * locally: the single-organization `GET` this page's {@link organization}
+   * comes from never populates `OrganizationOutput.isOwner` — only the list
+   * endpoint does — so comparing `ownerUserId` against the acting member's
+   * own `userId` is the reliable source here, with the declared `isOwner`
+   * field consulted first for forward compatibility.
+   *
+   * @access private
+   * @since 1.6.0
+   * @type {OrganizationMemberAccessStore}
+   */
+  private readonly memberAccessStore: OrganizationMemberAccessStore =
+    inject<OrganizationMemberAccessStore>(OrganizationMemberAccessStore);
 
   /**
    * Property route
@@ -492,6 +567,84 @@ export class OrganizationSettingsPage {
   );
 
   /**
+   * Property isOwner
+   * @readonly
+   *
+   * @description
+   * Whether the authenticated user owns the active organization. Prefers the
+   * declared `OrganizationOutput.isOwner` field when it is present, and falls
+   * back to comparing `ownerUserId` against the acting member's own `userId`
+   * ({@link memberAccessStore}) when it is not — which is every read this
+   * page performs today (see {@link memberAccessStore}'s doc).
+   *
+   * @access protected
+   * @since 1.6.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isOwner: Signal<boolean> = computed((): boolean => {
+    const org: OrganizationOutput | null = this.organization();
+    if (org === null) return false;
+
+    const declared: boolean | null | undefined = org.isOwner;
+    if (declared !== null && declared !== undefined) return declared;
+
+    const actingUserId: string | undefined = this.memberAccessStore.profile()?.userId;
+    return actingUserId !== undefined && actingUserId === org.ownerUserId;
+  });
+
+  /**
+   * Property canSuspend
+   * @readonly
+   * @description Whether the Suspend control may render — the organization is currently active.
+   * @access protected
+   * @since 1.6.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canSuspend: Signal<boolean> = computed(
+    (): boolean => this.organization()?.status === 'active',
+  );
+
+  /**
+   * Property canRestore
+   * @readonly
+   * @description Whether the Restore control may render — the organization is currently suspended or archived.
+   * @access protected
+   * @since 1.6.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canRestore: Signal<boolean> = computed((): boolean => {
+    const status: string | undefined = this.organization()?.status;
+    return status === 'suspended' || status === 'archived';
+  });
+
+  /**
+   * Property canTransferOwnership
+   * @readonly
+   *
+   * @description
+   * Whether the Transfer ownership control may render. Ownership transfer is
+   * outside RBAC — only the current owner may call it — and the domain
+   * refuses it on an archived organization (`TransferOrganizationOwnershipHandler`).
+   *
+   * @access protected
+   * @since 1.6.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canTransferOwnership: Signal<boolean> = computed(
+    (): boolean => this.isOwner() && this.organization()?.status !== 'archived',
+  );
+
+  /**
+   * Property canLeave
+   * @readonly
+   * @description Whether the Leave control may render — the owner cannot leave (`LeaveOrganizationHandler`).
+   * @access protected
+   * @since 1.6.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canLeave: Signal<boolean> = computed((): boolean => !this.isOwner());
+
+  /**
    * Property activeTab
    * @readonly
    *
@@ -552,6 +705,28 @@ export class OrganizationSettingsPage {
         name: organization?.name ?? '',
         slug: organization?.slug ?? '',
         description: organization?.description ?? '',
+      };
+    },
+  );
+
+  /**
+   * Property legalFormValues
+   * @readonly
+   * @description The active organization mapped onto the legal information form's shape.
+   * @access protected
+   * @since 1.6.0
+   * @type {Signal<OrganizationLegalFormValues>}
+   */
+  protected readonly legalFormValues: Signal<OrganizationLegalFormValues> = computed(
+    (): OrganizationLegalFormValues => {
+      const organization: OrganizationOutput | null = this.organization();
+
+      return {
+        country: organization?.country ?? '',
+        legalType: organization?.legalType ?? '',
+        legalName: organization?.legalName ?? '',
+        registrationNumber: organization?.registrationNumber ?? '',
+        vatNumber: organization?.vatNumber ?? '',
       };
     },
   );
@@ -705,6 +880,75 @@ export class OrganizationSettingsPage {
   protected readonly confirmingDelete: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property confirmingSuspend
+   * @readonly
+   * @description Whether the danger-zone suspend confirmation dialog is open.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly confirmingSuspend: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property confirmingTransfer
+   * @readonly
+   * @description Whether the danger-zone ownership-transfer confirmation dialog is open.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly confirmingTransfer: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property confirmingLeave
+   * @readonly
+   * @description Whether the danger-zone leave confirmation dialog is open.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly confirmingLeave: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property confirmingCancelSubscription
+   * @readonly
+   * @description Whether the subscription tab's cancel confirmation dialog is open.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly confirmingCancelSubscription: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property legalTypeOptions
+   * @readonly
+   * @description The legal entity type catalog, feeding the Legal information section's type picker. Loaded once, the first time the General tab opens (it is the default tab, so effectively on mount).
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<ReadonlyArray<OptionOutput>>}
+   */
+  protected readonly legalTypeOptions: WritableSignal<ReadonlyArray<OptionOutput>> = signal<
+    ReadonlyArray<OptionOutput>
+  >([]);
+
+  /**
+   * Property transferCandidates
+   * @readonly
+   *
+   * @description
+   * Active members eligible to receive ownership — every active member but
+   * the current owner. Loaded once, the first time the danger tab opens for
+   * an owner (`canTransferOwnership`).
+   *
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   */
+  protected readonly transferCandidates: WritableSignal<
+    ReadonlyArray<{ readonly value: string; readonly label: string }>
+  > = signal<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+
+  /**
    * Property approvalActionTypes
    * @readonly
    * @description The regulated action-type catalog, feeding the approval-policy form's rows. Loaded once, the first time the Compliance tab opens.
@@ -758,6 +1002,34 @@ export class OrganizationSettingsPage {
   private hasRequestedApprovalActionTypes: boolean = false;
 
   /**
+   * Property hasRequestedLegalTypes
+   *
+   * @description
+   * Guards the legal information form's type-catalog load so it fires once
+   * per page instance rather than on every re-evaluation of
+   * {@link loadLegalTypes}.
+   *
+   * @access private
+   * @since 1.6.0
+   * @type {boolean}
+   */
+  private hasRequestedLegalTypes: boolean = false;
+
+  /**
+   * Property hasRequestedTransferCandidates
+   *
+   * @description
+   * Guards the ownership-transfer candidate load so it fires once per page
+   * instance rather than on every re-evaluation of
+   * {@link loadTransferCandidates}.
+   *
+   * @access private
+   * @since 1.6.0
+   * @type {boolean}
+   */
+  private hasRequestedTransferCandidates: boolean = false;
+
+  /**
    * Property previousDeleteStatus
    *
    * @description
@@ -770,6 +1042,42 @@ export class OrganizationSettingsPage {
    * @type {string}
    */
   private previousDeleteStatus: string = 'idle';
+
+  /**
+   * Property previousLeaveStatus
+   * @description The leave call state as of the last time {@link navigateAwayOnLeave} ran.
+   * @access private
+   * @since 1.6.0
+   * @type {string}
+   */
+  private previousLeaveStatus: string = 'idle';
+
+  /**
+   * Property previousStatusChangeStatus
+   * @description The suspend/restore call state as of the last time {@link closeSuspendDialogOnSuccess} ran.
+   * @access private
+   * @since 1.6.0
+   * @type {string}
+   */
+  private previousStatusChangeStatus: string = 'idle';
+
+  /**
+   * Property previousTransferStatus
+   * @description The transfer-ownership call state as of the last time {@link closeTransferDialogOnSuccess} ran.
+   * @access private
+   * @since 1.6.0
+   * @type {string}
+   */
+  private previousTransferStatus: string = 'idle';
+
+  /**
+   * Property previousCancelSubscriptionStatus
+   * @description The subscription cancel call state as of the last time {@link closeCancelSubscriptionDialogOnSuccess} ran.
+   * @access private
+   * @since 1.6.0
+   * @type {string}
+   */
+  private previousCancelSubscriptionStatus: string = 'idle';
 
   /**
    * Property loadSubscriptionTabData
@@ -824,6 +1132,74 @@ export class OrganizationSettingsPage {
   });
 
   /**
+   * Property loadLegalTypes
+   * @readonly
+   *
+   * @description
+   * Loads the legal entity type catalog the first time the reader opens the
+   * General tab — the default tab, so this effectively fires on mount.
+   * Hidden-tab data loads on demand rather than on page mount (`AGENTS.md`).
+   *
+   * @access private
+   * @since 1.6.0
+   */
+  private readonly loadLegalTypes: EffectRef = effect((): void => {
+    const tabId: OrganizationSettingsTabId = this.activeTab();
+
+    if (tabId !== 'general' || this.hasRequestedLegalTypes) return;
+
+    untracked((): void => {
+      this.hasRequestedLegalTypes = true;
+      this.organizationService.listLegalTypes().subscribe((response) => {
+        this.legalTypeOptions.set(response.member);
+      });
+    });
+  });
+
+  /**
+   * Property loadTransferCandidates
+   * @readonly
+   *
+   * @description
+   * Loads the active membership roster the first time the reader — who owns
+   * the organization — opens the danger tab, then narrows it to every active
+   * member but the owner themselves for the transfer dialog's picker.
+   *
+   * @access private
+   * @since 1.6.0
+   */
+  private readonly loadTransferCandidates: EffectRef = effect((): void => {
+    const tabId: OrganizationSettingsTabId = this.activeTab();
+    const organizationId: string | null = this.organizationId();
+    const eligible: boolean = this.canTransferOwnership();
+
+    if (
+      tabId !== 'danger' ||
+      !eligible ||
+      organizationId === null ||
+      this.hasRequestedTransferCandidates
+    ) {
+      return;
+    }
+
+    untracked((): void => {
+      this.hasRequestedTransferCandidates = true;
+      this.memberService.listAll(organizationId).subscribe((members) => {
+        this.transferCandidates.set(
+          members
+            .filter(
+              (member: OrganizationMemberOutput): boolean => member.isActive && !member.isOwner,
+            )
+            .map((member: OrganizationMemberOutput) => ({
+              value: member.userId,
+              label: this.memberDisplayName(member),
+            })),
+        );
+      });
+    });
+  });
+
+  /**
    * Property navigateAwayOnDelete
    * @readonly
    *
@@ -845,6 +1221,89 @@ export class OrganizationSettingsPage {
 
     untracked((): void => {
       this.confirmingDelete.set(false);
+      this.activeOrganizationStore.clear();
+      void this.router.navigate(['/organizations']);
+    });
+  });
+
+  /**
+   * Property closeSuspendDialogOnSuccess
+   * @readonly
+   *
+   * @description
+   * Closes the suspend confirmation once it succeeds. Keyed on the
+   * transition into success while the dialog is open, since {@link restore}
+   * shares `statusCallState` and opens no dialog of its own.
+   *
+   * @access private
+   * @since 1.6.0
+   */
+  private readonly closeSuspendDialogOnSuccess: EffectRef = effect((): void => {
+    const status: string = this.settingsStore.statusCallState().status;
+    const previous: string = this.previousStatusChangeStatus;
+    this.previousStatusChangeStatus = status;
+
+    if (previous !== 'pending' || status !== 'success' || !this.confirmingSuspend()) return;
+
+    untracked((): void => this.confirmingSuspend.set(false));
+  });
+
+  /**
+   * Property closeTransferDialogOnSuccess
+   * @readonly
+   * @description Closes the ownership-transfer confirmation once it succeeds. Keyed on the transition into success.
+   * @access private
+   * @since 1.6.0
+   */
+  private readonly closeTransferDialogOnSuccess: EffectRef = effect((): void => {
+    const status: string = this.settingsStore.transferOwnershipCallState().status;
+    const previous: string = this.previousTransferStatus;
+    this.previousTransferStatus = status;
+
+    if (previous !== 'pending' || status !== 'success') return;
+
+    untracked((): void => this.confirmingTransfer.set(false));
+  });
+
+  /**
+   * Property closeCancelSubscriptionDialogOnSuccess
+   * @readonly
+   * @description Closes the subscription cancel confirmation once it succeeds, mirroring {@link closeSuspendDialogOnSuccess}.
+   * @access private
+   * @since 1.6.0
+   */
+  private readonly closeCancelSubscriptionDialogOnSuccess: EffectRef = effect((): void => {
+    const status: string = this.billingStore.cancelCallState().status;
+    const previous: string = this.previousCancelSubscriptionStatus;
+    this.previousCancelSubscriptionStatus = status;
+
+    if (previous !== 'pending' || status !== 'success') return;
+
+    untracked((): void => this.confirmingCancelSubscription.set(false));
+  });
+
+  /**
+   * Property navigateAwayOnLeave
+   * @readonly
+   *
+   * @description
+   * Once leaving succeeds, clears the active organization context and
+   * returns to the organization redirector, mirroring
+   * {@link navigateAwayOnDelete} — the acting member no longer belongs here
+   * either way.
+   *
+   * @access private
+   * @since 1.6.0
+   */
+  private readonly navigateAwayOnLeave: EffectRef = effect((): void => {
+    const status: string = this.settingsStore.leaveCallState().status;
+    const previous: string = this.previousLeaveStatus;
+    this.previousLeaveStatus = status;
+
+    if (previous !== 'pending' || status !== 'success') return;
+
+    untracked((): void => {
+      this.confirmingLeave.set(false);
       this.activeOrganizationStore.clear();
       void this.router.navigate(['/organizations']);
     });
@@ -960,6 +1419,29 @@ export class OrganizationSettingsPage {
     if (organizationId === null) return;
 
     this.settingsStore.removeLogo({ organizationId });
+  }
+
+  /**
+   * Method saveLegal
+   * @method saveLegal
+   *
+   * @description
+   * Persists the legal information section. Every field is sent as typed —
+   * an empty string clears it, unlike {@link saveGeneral}'s `description`
+   * (`UpdateOrganizationInput`'s doc block).
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @param {OrganizationLegalFormValues} values - What the user typed.
+   *
+   * @returns {void}
+   */
+  protected saveLegal(values: OrganizationLegalFormValues): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.settingsStore.save({ organizationId, input: { ...values } });
   }
 
   /**
@@ -1155,6 +1637,63 @@ export class OrganizationSettingsPage {
   }
 
   /**
+   * Method openCancelSubscriptionDialog
+   * @method openCancelSubscriptionDialog
+   *
+   * @description
+   * Opens the subscription cancellation confirmation dialog.
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @returns {void}
+   */
+  protected openCancelSubscriptionDialog(): void {
+    this.confirmingCancelSubscription.set(true);
+  }
+
+  /**
+   * Method cancelSubscription
+   * @method cancelSubscription
+   *
+   * @description
+   * Schedules cancellation of the subscription at the end of the current
+   * billing period once the reader confirms.
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @returns {void}
+   */
+  protected cancelSubscription(): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.billingStore.cancelSubscription(organizationId);
+  }
+
+  /**
+   * Method resumeSubscription
+   * @method resumeSubscription
+   *
+   * @description
+   * Clears a scheduled cancellation so the subscription renews normally. No
+   * confirmation dialog: this undoes {@link cancelSubscription}, mirroring
+   * how {@link restoreOrganization} needs none either.
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @returns {void}
+   */
+  protected resumeSubscription(): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.billingStore.resumeSubscription(organizationId);
+  }
+
+  /**
    * Method openDeleteDialog
    * @method openDeleteDialog
    *
@@ -1194,6 +1733,151 @@ export class OrganizationSettingsPage {
     if (organizationId === null || slug === undefined) return;
 
     this.settingsStore.deleteOrganization({ organizationId, slug });
+  }
+
+  /**
+   * Method openSuspendDialog
+   * @method openSuspendDialog
+   * @description Opens the danger-zone suspend confirmation dialog.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected openSuspendDialog(): void {
+    this.confirmingSuspend.set(true);
+  }
+
+  /**
+   * Method suspendOrganization
+   * @method suspendOrganization
+   * @description Suspends the organization once the reader confirms.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected suspendOrganization(): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.settingsStore.suspend({ organizationId });
+  }
+
+  /**
+   * Method restoreOrganization
+   * @method restoreOrganization
+   *
+   * @description
+   * Restores the organization to active. No confirmation dialog: restoring
+   * is the undo, mirroring how {@link OrganizationMemberTable}'s Reactivate
+   * needs none either.
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @returns {void}
+   */
+  protected restoreOrganization(): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.settingsStore.restore({ organizationId });
+  }
+
+  /**
+   * Method openTransferDialog
+   * @method openTransferDialog
+   * @description Opens the danger-zone ownership-transfer confirmation dialog.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected openTransferDialog(): void {
+    this.confirmingTransfer.set(true);
+  }
+
+  /**
+   * Method transferOwnership
+   * @method transferOwnership
+   *
+   * @description
+   * Hands ownership to the picked candidate once the dialog's typed-name
+   * gate has been satisfied. The endpoint's own confirmation is the
+   * **slug**, not the name, so — exactly like {@link deleteOrganization} — it
+   * is read from the resolved organization rather than from what was typed.
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @param {OrganizationTransferOwnershipConfirmedEvent} event - The dialog's confirmed payload.
+   *
+   * @returns {void}
+   */
+  protected transferOwnership(event: OrganizationTransferOwnershipConfirmedEvent): void {
+    const organizationId: string | null = this.organizationId();
+    const slug: string | undefined = this.organization()?.slug;
+    if (organizationId === null || slug === undefined) return;
+
+    this.settingsStore.transferOwnership({
+      organizationId,
+      newOwnerUserId: event.newOwnerUserId,
+      slug,
+    });
+  }
+
+  /**
+   * Method openLeaveDialog
+   * @method openLeaveDialog
+   * @description Opens the danger-zone leave confirmation dialog.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected openLeaveDialog(): void {
+    this.confirmingLeave.set(true);
+  }
+
+  /**
+   * Method leaveOrganization
+   * @method leaveOrganization
+   * @description Deactivates the acting member's own membership once the reader confirms.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected leaveOrganization(): void {
+    const organizationId: string | null = this.organizationId();
+    if (organizationId === null) return;
+
+    this.settingsStore.leave({ organizationId });
+  }
+
+  /**
+   * Method memberDisplayName
+   * @method memberDisplayName
+   *
+   * @description
+   * The name a transfer-candidate option shows: the API's `displayName`, or
+   * the first/last name pair, or the email, in that order — the same
+   * fallback chain `OrganizationMemberTable.nameOf` applies to a row (two
+   * consumers, not a third yet, so this stays page-local rather than
+   * extracted, `ARCHITECTURE.md` §2.9).
+   *
+   * @access private
+   * @since 1.6.0
+   *
+   * @param {OrganizationMemberOutput} member - The candidate member.
+   *
+   * @returns {string} The name to render.
+   */
+  private memberDisplayName(member: OrganizationMemberOutput): string {
+    if (member.displayName) return member.displayName;
+
+    const composed: string = [member.firstName, member.lastName]
+      .filter((part): part is string => !!part)
+      .join(' ');
+    if (composed) return composed;
+
+    return member.email ?? $localize`:@@org.settings.danger.transferMemberUnnamed:Member`;
   }
 
   /**

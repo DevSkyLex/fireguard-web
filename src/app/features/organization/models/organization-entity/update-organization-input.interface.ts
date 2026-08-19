@@ -19,6 +19,10 @@ import type { UpdateOrganizationApprovalInput } from '../organization-settings/u
  * `approval` is now writable: the approvals inbox
  * (`features/approvals/FEATURE.md`) gives a reader a surface to act on a
  * gated request, which is what the read-only restriction was waiting on.
+ *
+ * The five legal-profile fields (`country`, `legalType`, `legalName`,
+ * `registrationNumber`, `vatNumber`) each clear on an **empty string**, not
+ * `null` like `description` above. Omit a field to leave it unchanged.
  */
 export interface UpdateOrganizationInput {
   //#region Properties
@@ -47,5 +51,15 @@ export interface UpdateOrganizationInput {
   readonly approval?: UpdateOrganizationApprovalInput;
   /** @type {(Partial<OrganizationAssistantSettings> | undefined)} */
   readonly assistant?: Partial<OrganizationAssistantSettings>;
+  /** ISO 3166-1 alpha-2 legal country code. Empty string clears it. @type {(string | undefined)} */
+  readonly country?: string;
+  /** See `GET /api/organizations/legal-types`. Empty string clears it. @type {(string | undefined)} */
+  readonly legalType?: string;
+  /** @type {(string | undefined)} Empty string clears it. */
+  readonly legalName?: string;
+  /** @type {(string | undefined)} Empty string clears it. */
+  readonly registrationNumber?: string;
+  /** @type {(string | undefined)} Empty string clears it. */
+  readonly vatNumber?: string;
   //#endregion
 }

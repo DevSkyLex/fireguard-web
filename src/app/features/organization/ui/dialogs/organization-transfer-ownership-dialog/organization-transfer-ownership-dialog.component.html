@@ -1,0 +1,91 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content
+    *hlmAlertDialogPortal
+    data-testid="organization-transfer-ownership-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.settings.danger.transferConfirmTitle">
+        Transfer ownership
+      </h2>
+      <p hlmAlertDialogDescription i18n="@@org.settings.danger.transferConfirmDescription">
+        The new owner gains full control, including the ability to delete the organization. You keep
+        your membership and roles, but no longer own it.
+      </p>
+    </hlm-alert-dialog-header>
+
+    <div class="flex flex-col gap-1.5">
+      <label
+        hlmFieldLabel
+        for="organization-transfer-candidate"
+        i18n="@@org.settings.danger.transferMemberLabel"
+        >New owner</label
+      >
+      <hlm-combobox
+        [value]="selectedUserId()"
+        [itemToString]="candidateLabelOf"
+        (valueChange)="selectedUserId.set($any($event))"
+      >
+        <hlm-combobox-input
+          inputId="organization-transfer-candidate"
+          placeholder="Search a member"
+          i18n-placeholder="@@org.settings.danger.transferMemberPlaceholder"
+          data-testid="organization-transfer-candidate-input"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@org.settings.danger.transferMemberNoMatch"
+            >No member matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (candidate of candidates(); track candidate.value) {
+              <hlm-combobox-item
+                [value]="candidate.value"
+                [attr.data-testid]="'organization-transfer-candidate-' + candidate.value"
+                >{{ candidate.label }}</hlm-combobox-item
+              >
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label hlmFieldLabel for="organization-transfer-confirm-name">{{ confirmLabel() }}</label>
+      <input
+        hlmInput
+        id="organization-transfer-confirm-name"
+        type="text"
+        autocomplete="off"
+        class="w-full"
+        data-testid="organization-transfer-confirm-input"
+        [value]="typedName()"
+        (input)="onTypedNameInput($event)"
+      />
+      @if (error(); as message) {
+        <p role="alert" class="text-sm text-destructive" data-testid="organization-transfer-error">
+          {{ message }}
+        </p>
+      }
+    </div>
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-transfer-confirm"
+        [disabled]="!canConfirm()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.settings.danger.transferring">Transferring…</span>
+        } @else {
+          <span i18n="@@org.settings.danger.transferConfirmAction">Transfer ownership</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

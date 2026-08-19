@@ -906,10 +906,11 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * The derived capability surface — phase, permission gates, the mutability
-   * matrix and the status-menu targets — built injector-free from the page's
-   * own signals by `createInterventionCapabilities`. The protected aliases
-   * below keep the template contract unchanged.
+   * The derived capability surface — phase, the status-menu targets, and the
+   * action gates read from the intervention's own server-computed
+   * `allowedActions` block — built injector-free from the page's own signals
+   * by `createInterventionCapabilities`. The protected aliases below keep the
+   * template contract unchanged.
    *
    * @access private
    * @since 5.1.0
@@ -918,8 +919,6 @@ export class InterventionDetailPage {
    */
   private readonly caps: InterventionCapabilities = createInterventionCapabilities({
     intervention: this.store.intervention,
-    organizationId: this.organizationId,
-    memberId: computed<string | undefined>(() => this.memberAccess.profile()?.id),
     hasPermission: (permission) => this.permissions.hasPermission(permission),
     scanSupported: () => this.fieldExecution.scanSupported(),
   });
@@ -985,8 +984,9 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * Whether the signed-in member is the responsible agent. The backend lets
-   * only that person submit, so the gate is identity, not permission.
+   * Whether this caller may submit for review right now — the API's own
+   * `allowedActions.canSubmit`, which folds the responsible-agent identity,
+   * the execute permission and the transition's current legality.
    *
    * @access protected
    * @since 1.0.0

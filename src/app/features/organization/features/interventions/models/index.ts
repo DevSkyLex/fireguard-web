@@ -21,6 +21,7 @@ export type {
 export type { InterventionQueue } from './intervention-queue/intervention-queue.interface';
 export type { InterventionQueueKey } from './intervention-queue/intervention-queue-key.type';
 export type { InterventionUnsyncedEntry } from './intervention-queue/intervention-unsynced-entry.interface';
+export type { InterventionAllowedActionsOutput } from './intervention/intervention-allowed-actions-output.interface';
 export type { InterventionOutput } from './intervention/intervention-output.interface';
 export type { InterventionDuplicatePrefill } from './intervention-duplicate/intervention-duplicate-prefill.interface';
 export type { InterventionPriority } from './intervention/intervention-priority.type';

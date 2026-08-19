@@ -26,6 +26,7 @@ export interface InterventionOutputFixture {
   readonly description: string | null;
   readonly status: string;
   readonly allowedTransitions: readonly string[];
+  readonly allowedActions: Readonly<Record<string, boolean>>;
   readonly site: string | null;
   readonly responsible: string | null;
   readonly participants: readonly string[];
@@ -62,6 +63,20 @@ export function interventionOutput(
     description: null,
     status: 'planned',
     allowedTransitions: ['in_progress', 'abandoned'],
+    allowedActions: {
+      canEditDetails: true,
+      canEditSite: false,
+      canEditResponsible: true,
+      canEditPlanning: true,
+      canMutateWorkItems: true,
+      canMutateChanges: false,
+      canAssignTeam: true,
+      canManageAttachments: true,
+      canSubmit: true,
+      canWithdraw: false,
+      canDelete: false,
+      canPublish: false,
+    },
     site: null,
     responsible: null,
     participants: [],

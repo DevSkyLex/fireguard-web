@@ -36,6 +36,7 @@ import {
 } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionActivityOutput,
+  InterventionAllowedActionsOutput,
   InterventionAttachmentOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
@@ -64,6 +65,35 @@ import { InterventionDetailPage } from '../intervention-detail-page.component';
 
 const MEMBER_IRI: string = '/api/organizations/org-1/members/member-1';
 
+/**
+ * The `allowedActions` block the backend would compute for a fully-entitled
+ * responsible caller in the given status — what these page tests assume,
+ * since they grant every intervention permission and make the caller the
+ * responsible agent.
+ */
+const actionsFor = (status: InterventionOutput['status']): InterventionAllowedActionsOutput => {
+  const schedulable: boolean =
+    status === 'draft' ||
+    status === 'planned' ||
+    status === 'in_progress' ||
+    status === 'changes_requested';
+
+  return {
+    canEditDetails: status !== 'published' && status !== 'abandoned',
+    canEditSite: status === 'draft',
+    canEditResponsible: status === 'draft' || status === 'planned',
+    canEditPlanning: schedulable,
+    canMutateWorkItems: schedulable,
+    canMutateChanges: status === 'in_progress' || status === 'changes_requested',
+    canAssignTeam: schedulable,
+    canManageAttachments: schedulable,
+    canSubmit: status === 'planned' || status === 'in_progress' || status === 'changes_requested',
+    canWithdraw: status === 'submitted',
+    canDelete: status === 'draft' || status === 'abandoned',
+    canPublish: status === 'submitted',
+  };
+};
+
 const intervention = (overrides: Partial<InterventionOutput> = {}): InterventionOutput =>
   ({
     id: 'intervention-1',
@@ -74,6 +104,7 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     description: null,
     status: 'draft',
     allowedTransitions: ['planned', 'abandoned'],
+    allowedActions: actionsFor(overrides.status ?? 'draft'),
     site: '/api/facilities/facility-1',
     responsible: MEMBER_IRI,
     participants: [],
@@ -560,7 +591,13 @@ describe('InterventionDetailPage', () => {
     });
 
     it('should refuse a submit from anyone but the responsible agent', async () => {
-      current.set(intervention({ status: 'in_progress', responsible: '/api/other/member-9' }));
+      current.set(
+        intervention({
+          status: 'in_progress',
+          responsible: '/api/other/member-9',
+          allowedActions: { ...actionsFor('in_progress'), canSubmit: false },
+        }),
+      );
       workItems.set([workItem({ status: 'completed' })]);
       fixture = await createPage();
 
@@ -933,7 +970,16 @@ describe('InterventionDetailPage', () => {
     it('should drop a target the member lacks the capability for, and hide the overflow trigger with nothing left to offer', async () => {
       permitted.delete('organization.interventions.plan');
       permitted.delete('organization.interventions.execute');
-      current.set(intervention({ status: 'draft', allowedTransitions: ['planned'] }));
+      current.set(
+        intervention({
+          status: 'draft',
+          allowedTransitions: ['planned'],
+          allowedActions: {
+            ...actionsFor('published'),
+            canPublish: false,
+          },
+        }),
+      );
       fixture = await createPage();
 
       expect(byPageActionsTestId('intervention-detail-menu')).toBeNull();
@@ -1241,8 +1287,20 @@ describe('InterventionDetailPage', () => {
       });
     });
 
-    it('should offer no add affordance once the intervention leaves draft', async () => {
+    it('should keep the add affordance while the server advertises mutable work items', async () => {
       current.set(intervention({ status: 'in_progress' }));
+      fixture = await createPage();
+
+      expect(root().querySelector('[data-testid="intervention-work-items-add"]')).not.toBeNull();
+    });
+
+    it('should offer no add affordance once the server stops advertising mutable work items', async () => {
+      current.set(
+        intervention({
+          status: 'in_progress',
+          allowedActions: { ...actionsFor('in_progress'), canMutateWorkItems: false },
+        }),
+      );
       fixture = await createPage();
 
       expect(root().querySelector('[data-testid="intervention-work-items-add"]')).toBeNull();

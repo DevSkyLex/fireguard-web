@@ -1,5 +1,6 @@
 import { signal, type WritableSignal } from '@angular/core';
 import type {
+  InterventionAllowedActionsOutput,
   InterventionCapabilities,
   InterventionOutput,
   InterventionStatus,
@@ -10,9 +11,25 @@ import {
 } from '@features/organization/models';
 import { createInterventionCapabilities } from '../intervention-capabilities.utils';
 
-const ORGANIZATION_ID = 'org-1';
-const MEMBER_ID = 'member-1';
-const RESPONSIBLE_IRI = `/api/organizations/${ORGANIZATION_ID}/members/${MEMBER_ID}`;
+function allowedActions(
+  overrides: Partial<InterventionAllowedActionsOutput> = {},
+): InterventionAllowedActionsOutput {
+  return {
+    canEditDetails: false,
+    canEditSite: false,
+    canEditResponsible: false,
+    canEditPlanning: false,
+    canMutateWorkItems: false,
+    canMutateChanges: false,
+    canAssignTeam: false,
+    canManageAttachments: false,
+    canSubmit: false,
+    canWithdraw: false,
+    canDelete: false,
+    canPublish: false,
+    ...overrides,
+  };
+}
 
 function buildIntervention(overrides: Partial<InterventionOutput> = {}): InterventionOutput {
   return {
@@ -24,6 +41,7 @@ function buildIntervention(overrides: Partial<InterventionOutput> = {}): Interve
     description: null,
     status: 'draft',
     allowedTransitions: ['planned', 'abandoned'],
+    allowedActions: allowedActions(),
     site: null,
     responsible: null,
     participants: [],
@@ -51,7 +69,6 @@ function buildIntervention(overrides: Partial<InterventionOutput> = {}): Interve
 interface CapabilityHarness {
   readonly capabilities: InterventionCapabilities;
   readonly intervention: WritableSignal<InterventionOutput | null>;
-  readonly memberId: WritableSignal<string | undefined>;
   readonly granted: WritableSignal<ReadonlySet<string>>;
   readonly scanSupported: WritableSignal<boolean>;
 }
@@ -61,47 +78,40 @@ function buildHarness(
   permissions: readonly OrganizationPermissionName[] = [],
 ): CapabilityHarness {
   const interventionSignal = signal<InterventionOutput | null>(intervention);
-  const memberId = signal<string | undefined>(MEMBER_ID);
   const granted = signal<ReadonlySet<string>>(new Set(permissions));
   const scanSupported = signal<boolean>(false);
 
   return {
     capabilities: createInterventionCapabilities({
       intervention: interventionSignal,
-      organizationId: signal(ORGANIZATION_ID),
-      memberId,
       hasPermission: (permission) => granted().has(permission),
       scanSupported: () => scanSupported(),
     }),
     intervention: interventionSignal,
-    memberId,
     granted,
     scanSupported,
   };
 }
 
 describe('createInterventionCapabilities', () => {
-  it('should mirror the four organization permissions', () => {
+  it('should mirror the three organization permissions the client still gates on', () => {
     const { capabilities, granted } = buildHarness(buildIntervention());
 
     expect(capabilities.canPlan()).toBe(false);
     expect(capabilities.canExecute()).toBe(false);
     expect(capabilities.canReview()).toBe(false);
-    expect(capabilities.canPublish()).toBe(false);
 
     granted.set(
       new Set([
         ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN,
         ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE,
         ORGANIZATION_PERMISSION.INTERVENTIONS_REVIEW,
-        ORGANIZATION_PERMISSION.INTERVENTIONS_PUBLISH,
       ]),
     );
 
     expect(capabilities.canPlan()).toBe(true);
     expect(capabilities.canExecute()).toBe(true);
     expect(capabilities.canReview()).toBe(true);
-    expect(capabilities.canPublish()).toBe(true);
   });
 
   it.each([
@@ -124,56 +134,43 @@ describe('createInterventionCapabilities', () => {
     },
   );
 
-  it('should gate submission on the responsible identity', () => {
-    const { capabilities, intervention, memberId } = buildHarness(
-      buildIntervention({ responsible: RESPONSIBLE_IRI }),
-    );
+  it.each([
+    ['canSubmit', 'canSubmit'],
+    ['canPublish', 'canPublish'],
+    ['canEditSchedule', 'canEditPlanning'],
+    ['canEditSite', 'canEditSite'],
+    ['canEditResponsible', 'canEditResponsible'],
+    ['canEditDetails', 'canEditDetails'],
+    ['canAssignTeam', 'canAssignTeam'],
+    ['canAddWorkItem', 'canMutateWorkItems'],
+    ['canManageAttachments', 'canManageAttachments'],
+    ['canDeleteIntervention', 'canDelete'],
+  ] as const)('should read %s from the server-advertised %s flag', (capability, flag) => {
+    const { capabilities, intervention } = buildHarness(buildIntervention());
 
-    expect(capabilities.canSubmit()).toBe(true);
+    expect(capabilities[capability]()).toBe(false);
 
-    memberId.set('someone-else');
-    expect(capabilities.canSubmit()).toBe(false);
-
-    memberId.set(undefined);
-    expect(capabilities.canSubmit()).toBe(false);
-
-    memberId.set(MEMBER_ID);
-    intervention.set(buildIntervention({ responsible: null }));
-    expect(capabilities.canSubmit()).toBe(false);
+    intervention.set(buildIntervention({ allowedActions: allowedActions({ [flag]: true }) }));
+    expect(capabilities[capability]()).toBe(true);
   });
 
-  it.each([
-    ['draft', true, true, true, true, true],
-    ['planned', true, false, true, true, false],
-    ['in_progress', true, false, false, true, false],
-    ['changes_requested', true, false, false, true, false],
-    ['submitted', false, false, false, true, false],
-    ['published', false, false, false, false, false],
-    ['abandoned', false, false, false, false, false],
-  ] as const)(
-    'should apply the mutability matrix in %s',
-    (status, schedule, site, responsible, details, addWorkItem) => {
-      const { capabilities } = buildHarness(
-        buildIntervention({ status: status as InterventionStatus }),
-        [ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN],
-      );
+  it('should deny every server-advertised gate when allowedActions is absent', () => {
+    const { capabilities } = buildHarness(buildIntervention({ allowedActions: undefined }), [
+      ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN,
+      ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE,
+      ORGANIZATION_PERMISSION.INTERVENTIONS_PUBLISH,
+    ]);
 
-      expect(capabilities.canEditSchedule()).toBe(schedule);
-      expect(capabilities.canEditSite()).toBe(site);
-      expect(capabilities.canEditResponsible()).toBe(responsible);
-      expect(capabilities.canEditDetails()).toBe(details);
-      expect(capabilities.canAddWorkItem()).toBe(addWorkItem);
-    },
-  );
-
-  it('should deny the whole mutability matrix without the plan permission', () => {
-    const { capabilities } = buildHarness(buildIntervention());
-
+    expect(capabilities.canSubmit()).toBe(false);
+    expect(capabilities.canPublish()).toBe(false);
     expect(capabilities.canEditSchedule()).toBe(false);
     expect(capabilities.canEditSite()).toBe(false);
     expect(capabilities.canEditResponsible()).toBe(false);
     expect(capabilities.canEditDetails()).toBe(false);
+    expect(capabilities.canAssignTeam()).toBe(false);
     expect(capabilities.canAddWorkItem()).toBe(false);
+    expect(capabilities.canManageAttachments()).toBe(false);
+    expect(capabilities.canDeleteIntervention()).toBe(false);
   });
 
   it('should gate canManageLabels on organization.interventions.write alone', () => {
@@ -188,44 +185,35 @@ describe('createInterventionCapabilities', () => {
     expect(withPlan.canManageLabels()).toBe(false);
   });
 
-  it.each([
-    ['draft', true],
-    ['planned', true],
-    ['in_progress', true],
-    ['changes_requested', true],
-    ['submitted', false],
-    ['published', false],
-    ['abandoned', false],
-  ] as const)('should gate canAssignTeam by status in %s', (status, expected) => {
-    const { capabilities } = buildHarness(
-      buildIntervention({ status: status as InterventionStatus }),
-      [ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN],
-    );
-
-    expect(capabilities.canAssignTeam()).toBe(expected);
-  });
-
-  it('should deny canAssignTeam without the plan permission', () => {
-    const { capabilities } = buildHarness(buildIntervention());
-
-    expect(capabilities.canAssignTeam()).toBe(false);
-  });
-
-  it('should offer skip and scan only during execution', () => {
-    const { capabilities, intervention, scanSupported } = buildHarness(
-      buildIntervention({ status: 'in_progress', allowedTransitions: ['submitted', 'abandoned'] }),
-      [ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE],
+  it('should offer skip only during execution, even when work items are mutable', () => {
+    const { capabilities, intervention } = buildHarness(
+      buildIntervention({
+        status: 'in_progress',
+        allowedTransitions: ['submitted', 'abandoned'],
+        allowedActions: allowedActions({ canMutateWorkItems: true }),
+      }),
     );
 
     expect(capabilities.canSkipWorkItem()).toBe(true);
+
+    intervention.set(
+      buildIntervention({
+        status: 'draft',
+        allowedActions: allowedActions({ canMutateWorkItems: true }),
+      }),
+    );
+    expect(capabilities.canSkipWorkItem()).toBe(false);
+  });
+
+  it('should offer scanning only during execution on a capable device', () => {
+    const { capabilities, scanSupported } = buildHarness(
+      buildIntervention({ status: 'in_progress', allowedTransitions: ['submitted', 'abandoned'] }),
+    );
+
     expect(capabilities.canScanWorkItem()).toBe(false);
 
     scanSupported.set(true);
     expect(capabilities.canScanWorkItem()).toBe(true);
-
-    intervention.set(buildIntervention({ status: 'draft' }));
-    expect(capabilities.canSkipWorkItem()).toBe(false);
-    expect(capabilities.canScanWorkItem()).toBe(false);
   });
 
   it.each([
@@ -258,24 +246,6 @@ describe('createInterventionCapabilities', () => {
     expect(capabilities.canAbandon()).toBe(false);
   });
 
-  it.each([
-    ['draft', ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN, true],
-    ['draft', ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE, false],
-    ['abandoned', ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE, true],
-    ['abandoned', ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN, false],
-    ['planned', ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN, false],
-  ] as const)(
-    'should gate outright deletion in %s on the %s permission',
-    (status, permission, expected) => {
-      const { capabilities } = buildHarness(
-        buildIntervention({ status: status as InterventionStatus }),
-        [permission],
-      );
-
-      expect(capabilities.canDeleteIntervention()).toBe(expected);
-    },
-  );
-
   it('should subtract the owned forward move and abandoned from the menu targets', () => {
     const { capabilities } = buildHarness(
       buildIntervention({
@@ -292,19 +262,25 @@ describe('createInterventionCapabilities', () => {
     expect(capabilities.transitionTargets()).toEqual(['in_progress']);
   });
 
-  it('should hide withdrawal from members other than the responsible', () => {
-    const { capabilities, memberId } = buildHarness(
+  it('should gate the withdraw move on the server-advertised canWithdraw flag', () => {
+    const { capabilities, intervention } = buildHarness(
       buildIntervention({
         status: 'submitted',
-        responsible: RESPONSIBLE_IRI,
         allowedTransitions: ['changes_requested', 'in_progress'],
+        allowedActions: allowedActions({ canWithdraw: true }),
       }),
       [ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE, ORGANIZATION_PERMISSION.INTERVENTIONS_REVIEW],
     );
 
     expect(capabilities.transitionTargets()).toEqual(['changes_requested', 'in_progress']);
 
-    memberId.set('someone-else');
+    intervention.set(
+      buildIntervention({
+        status: 'submitted',
+        allowedTransitions: ['changes_requested', 'in_progress'],
+        allowedActions: allowedActions({ canWithdraw: false }),
+      }),
+    );
     expect(capabilities.transitionTargets()).toEqual(['changes_requested']);
   });
 
@@ -332,25 +308,6 @@ describe('createInterventionCapabilities', () => {
       );
 
       expect(capabilities.canRejectChange()).toBe(expected);
-    },
-  );
-
-  it.each([
-    ['draft', ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN, true],
-    ['draft', ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE, false],
-    ['in_progress', ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE, true],
-    ['submitted', ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE, false],
-    ['published', ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN, false],
-    ['abandoned', ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE, false],
-  ] as const)(
-    'should gate attachment management in %s on the %s permission',
-    (status, permission, expected) => {
-      const { capabilities } = buildHarness(
-        buildIntervention({ status: status as InterventionStatus }),
-        [permission],
-      );
-
-      expect(capabilities.canManageAttachments()).toBe(expected);
     },
   );
 

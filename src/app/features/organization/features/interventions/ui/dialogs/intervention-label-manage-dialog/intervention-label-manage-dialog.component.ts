@@ -175,12 +175,12 @@ export class InterventionLabelManageDialog {
 
     effect((): void => {
       const editing: string | null = this.editingId();
-      const input: ElementRef<HTMLInputElement> | undefined = this.editNameInputRef();
+      const nameInput: ElementRef<HTMLInputElement> | undefined = this.editNameInputRef();
 
       untracked((): void => {
         if (editing === null) return;
 
-        input?.nativeElement.focus();
+        nameInput?.nativeElement.focus();
       });
     });
 

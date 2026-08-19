@@ -15,17 +15,21 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideMapPin, lucideWrench } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideMapPin, lucidePencil, lucideWrench } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
-import { isCallPending, type CallState } from '@core/request-state';
+import { isCallPending, isCallSuccess, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type {
+  EquipmentAttachmentOutput,
   EquipmentEditState,
   EquipmentEditTarget,
   EquipmentOutput,
+  EquipmentTagOutput,
   UpdateEquipmentInput,
 } from '@features/organization/features/equipments/models';
 import {
@@ -33,14 +37,28 @@ import {
   EquipmentStore,
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
-import { buildEquipmentTitle } from '@features/organization/features/equipments/utils';
+import {
+  buildEquipmentTitle,
+  fileToBase64,
+} from '@features/organization/features/equipments/utils';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { HlmTabsImports } from '@shared/ui/tabs';
+import { EquipmentAttachments } from '../../components/equipment-attachments';
 import { EquipmentInformationPanel } from '../../components/equipment-information-panel';
+import { EquipmentMaintenanceHistory } from '../../components/equipment-maintenance-history';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
+import { EquipmentTags } from '../../components/equipment-tags';
+import { EquipmentAssignFacilityDialog } from '../../dialogs/equipment-assign-facility-dialog';
+import type { EquipmentDetailTabId } from './models';
+
+/** How many facilities the assignment picker fetches — organizations rarely exceed this. */
+const FACILITY_OPTIONS_PAGE_SIZE = 200;
 
 /** The equipment properties this page has open, writing or showing a rejection. */
 const IDLE_EDIT_STATE: EquipmentEditState = {
@@ -87,7 +105,21 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * pre-filtered by that facility's `site`; it is a proxy by site, not a
  * filter by equipment, and is labelled as such.
  *
- * @version 1.4.0
+ * Three tabs beyond the identification fields (**Overview**): **Attachments**
+ * ({@link EquipmentAttachments}, base64-JSON wire — see
+ * {@link onAttachmentFilesPicked}), **Maintenance**
+ * ({@link EquipmentMaintenanceHistory}, read-only), and **Tags**
+ * ({@link EquipmentTags}). Facility assignment gets its own dialog
+ * ({@link EquipmentAssignFacilityDialog}) opened from the header's facility
+ * row rather than a fifth tab, since it is a single pick/clear action, not a
+ * browsing surface; its facility options come from the `facilities`
+ * subfeature's read-only `FacilityService.list` (`FEATURE.md`
+ * "Cross-Feature Dependencies"), mirroring `maintenance-schedules`'
+ * `MaintenanceSchedulesPage`. Each of the three data tabs loads once, on its
+ * own first activation ({@link onTabActivated}), matching
+ * `FacilityDetailPage`'s Plans tab.
+ *
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -96,14 +128,19 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
   imports: [
     NgIcon,
     RouterLink,
+    EquipmentAssignFacilityDialog,
+    EquipmentAttachments,
     EquipmentInformationPanel,
+    EquipmentMaintenanceHistory,
     EquipmentStatusTag,
+    EquipmentTags,
     ErrorState,
     HlmButton,
     HlmSkeleton,
     ...HlmSpinnerImports,
+    ...HlmTabsImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideMapPin, lucideWrench })],
+  providers: [provideIcons({ lucideCircleAlert, lucideMapPin, lucidePencil, lucideWrench })],
   templateUrl: './equipment-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -150,9 +187,62 @@ export class EquipmentDetailPage {
   /** The application's language, used to phrase the header's metadata line. */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
+  /**
+   * The `facilities` subfeature's read-only listing service, consumed
+   * directly for the assignment dialog's facility options — an approved
+   * cross-feature dependency (`FEATURE.md` "Cross-Feature Dependencies"),
+   * mirroring `MaintenanceSchedulesPage`.
+   */
+  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
+
+  /**
+   * The equipment transport service, injected directly (not through the
+   * store) for the one-shot attachment-download fetch — a download changes
+   * no persisted state, so it does not belong in `EquipmentStore`, mirroring
+   * `InterventionDetailPage`'s `downloadAttachment`.
+   */
+  private readonly equipmentService: EquipmentService = inject<EquipmentService>(EquipmentService);
+
+  /** Saves a fetched attachment blob to the visitor's device. */
+  private readonly browserDownload: BrowserDownloadService =
+    inject<BrowserDownloadService>(BrowserDownloadService);
+
+  /** For cancelling in-flight downloads when the page is destroyed. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
   /** Which in-place field is open, writing, or showing a rejection. */
   protected readonly editState: WritableSignal<EquipmentEditState> =
     signal<EquipmentEditState>(IDLE_EDIT_STATE);
+
+  /** Which tab is showing. */
+  protected readonly activeTab: WritableSignal<EquipmentDetailTabId> =
+    signal<EquipmentDetailTabId>('overview');
+
+  /** Ids of the tabs whose data has already been requested, so a re-activation never re-fetches. */
+  private readonly tabsLoaded: Set<EquipmentDetailTabId> = new Set<EquipmentDetailTabId>();
+
+  /** Ids of the attachments whose delete is in flight. */
+  protected readonly pendingAttachmentDeleteIds: WritableSignal<ReadonlySet<string>> = signal<
+    ReadonlySet<string>
+  >(new Set<string>());
+
+  /** Ids of the attachments whose download is in flight. */
+  protected readonly pendingAttachmentDownloadIds: WritableSignal<ReadonlySet<string>> = signal<
+    ReadonlySet<string>
+  >(new Set<string>());
+
+  /** Ids of the tags whose removal is in flight. */
+  protected readonly pendingTagRemoveIds: WritableSignal<ReadonlySet<string>> = signal<
+    ReadonlySet<string>
+  >(new Set<string>());
+
+  /** The organization's facilities, preloaded for the assignment dialog. */
+  protected readonly facilityOptions: WritableSignal<
+    ReadonlyArray<{ readonly value: string; readonly label: string }>
+  > = signal([]);
+
+  /** Whether the facility assignment dialog is open. */
+  protected readonly assignFacilityDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property canWrite
@@ -287,6 +377,47 @@ export class EquipmentDetailPage {
 
       untracked((): void => this.titleService.setTitle(title));
     });
+
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+
+      untracked((): void => {
+        this.facilityService
+          .list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE })
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((response) => {
+            this.facilityOptions.set(
+              response.member.map((facility) => ({ label: facility.name, value: facility.id })),
+            );
+          });
+      });
+    });
+
+    effect((): void => {
+      const state: CallState = this.store.deleteAttachmentCallState();
+      if (isCallPending(state)) return;
+
+      untracked((): void => this.pendingAttachmentDeleteIds.set(new Set<string>()));
+    });
+
+    effect((): void => {
+      const state: CallState = this.store.removeTagCallState();
+      if (isCallPending(state)) return;
+
+      untracked((): void => this.pendingTagRemoveIds.set(new Set<string>()));
+    });
+
+    effect((): void => {
+      const assignState: CallState<EquipmentOutput | null> = this.store.assignToFacilityCallState();
+      const unassignState: CallState<EquipmentOutput | null> =
+        this.store.unassignFromFacilityCallState();
+
+      untracked((): void => {
+        if (isCallSuccess(assignState) || isCallSuccess(unassignState)) {
+          this.assignFacilityDialogVisible.set(false);
+        }
+      });
+    });
   }
   //#endregion
 
@@ -395,6 +526,197 @@ export class EquipmentDetailPage {
     }
 
     this.editState.set({ open: state.saving, saving: null, failed: state.saving, failure });
+  }
+
+  /**
+   * Method onTabActivated
+   *
+   * @description
+   * Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing
+   * {@link activeTab}, and loads each data tab's collection on its own first
+   * activation only — {@link tabsLoaded} makes a re-activation a no-op.
+   *
+   * @access protected
+   * @since 1.5.0
+   *
+   * @param {string} tab - The `hlm-tabs` id that just activated.
+   *
+   * @returns {void}
+   */
+  protected onTabActivated(tab: string): void {
+    if (tab !== 'overview' && tab !== 'attachments' && tab !== 'maintenance' && tab !== 'tags') {
+      return;
+    }
+
+    this.activeTab.set(tab);
+    if (tab === 'overview' || this.tabsLoaded.has(tab)) return;
+
+    this.tabsLoaded.add(tab);
+    const organizationId: string = this.organizationId();
+    const equipmentId: string = this.equipmentId();
+    switch (tab) {
+      case 'attachments':
+        this.store.loadAttachments({ organizationId, equipmentId });
+        break;
+      case 'maintenance':
+        this.store.loadMaintenanceLogs({ organizationId, equipmentId });
+        break;
+      case 'tags':
+        this.store.loadTags({ organizationId });
+        break;
+    }
+  }
+
+  /**
+   * Method onAttachmentFilesPicked
+   *
+   * @description
+   * Converts each picked file to base64 (`fileToBase64`) and adds it as an
+   * attachment — `EquipmentService.addAttachment` takes base64 JSON, unlike
+   * `InterventionService.uploadAttachment`'s multipart shape.
+   *
+   * @access protected
+   * @since 1.5.0
+   *
+   * @param {readonly File[]} files - The picked files.
+   *
+   * @returns {void}
+   */
+  protected onAttachmentFilesPicked(files: readonly File[]): void {
+    const organizationId: string = this.organizationId();
+    const equipmentId: string = this.equipmentId();
+
+    for (const file of files) {
+      void fileToBase64(file).then((content) => {
+        this.store.addAttachment({
+          organizationId,
+          equipmentId,
+          input: { fileName: file.name, content, mimeType: file.type },
+        });
+      });
+    }
+  }
+
+  /**
+   * Method onAttachmentDeleteRequested
+   * @description Deletes the given attachment.
+   * @access protected
+   * @since 1.5.0
+   * @param {EquipmentAttachmentOutput} attachment - The attachment to delete.
+   * @returns {void}
+   */
+  protected onAttachmentDeleteRequested(attachment: EquipmentAttachmentOutput): void {
+    this.pendingAttachmentDeleteIds.update((ids: ReadonlySet<string>): ReadonlySet<string> =>
+      new Set(ids).add(attachment.id),
+    );
+    this.store.deleteAttachment({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+      attachmentId: attachment.id,
+    });
+  }
+
+  /**
+   * Method onAttachmentDownloadRequested
+   *
+   * @description
+   * Fetches one attachment's binary content and saves it to the visitor's
+   * device, locking the row on its own fetch through
+   * {@link pendingAttachmentDownloadIds} rather than the store — a download
+   * changes no persisted state.
+   *
+   * @access protected
+   * @since 1.5.0
+   *
+   * @param {EquipmentAttachmentOutput} attachment - The attachment to download.
+   *
+   * @returns {void}
+   */
+  protected onAttachmentDownloadRequested(attachment: EquipmentAttachmentOutput): void {
+    this.pendingAttachmentDownloadIds.update((ids) => new Set(ids).add(attachment.id));
+
+    this.equipmentService
+      .downloadAttachment(this.organizationId(), this.equipmentId(), attachment.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.pendingAttachmentDownloadIds.update((ids) => {
+            const next: Set<string> = new Set(ids);
+            next.delete(attachment.id);
+
+            return next;
+          });
+          this.browserDownload.trigger(blob, attachment.fileName);
+        },
+        error: (): void => {
+          this.pendingAttachmentDownloadIds.update((ids) => {
+            const next: Set<string> = new Set(ids);
+            next.delete(attachment.id);
+
+            return next;
+          });
+        },
+      });
+  }
+
+  /**
+   * Method onTagAddRequested
+   * @description Attaches (or creates and attaches) a tag by name.
+   * @access protected
+   * @since 1.5.0
+   * @param {string} name - The tag name.
+   * @returns {void}
+   */
+  protected onTagAddRequested(name: string): void {
+    this.store.addTag({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+      input: { name },
+    });
+  }
+
+  /**
+   * Method onTagRemoveRequested
+   * @description Detaches the given tag, locking its chip on its own write.
+   * @access protected
+   * @since 1.5.0
+   * @param {EquipmentTagOutput} tag - The tag to detach.
+   * @returns {void}
+   */
+  protected onTagRemoveRequested(tag: EquipmentTagOutput): void {
+    this.pendingTagRemoveIds.update((ids) => new Set(ids).add(tag.id));
+    this.store.removeTag({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+      tagId: tag.id,
+    });
+  }
+
+  /**
+   * Method onFacilityAssigned
+   * @description Submits the picked facility from the assignment dialog.
+   * @access protected
+   * @since 1.5.0
+   * @param {string} facilityId - The picked facility's id.
+   * @returns {void}
+   */
+  protected onFacilityAssigned(facilityId: string): void {
+    this.store.assignToFacility({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+      input: { facilityId },
+    });
+  }
+
+  /**
+   * Method onFacilityUnassigned
+   * @description Clears the equipment's facility assignment.
+   * @access protected
+   * @since 1.5.0
+   * @returns {void}
+   */
+  protected onFacilityUnassigned(): void {
+    this.store.unassignFromFacility(this.lifecycleArgs());
   }
   //#endregion
 }

@@ -13,6 +13,7 @@ import type {
   EquipmentTagOutput,
   AddTagInput,
   SetPlanPositionInput,
+  EquipmentKpiOutput,
 } from '@features/organization/features/equipments/models';
 
 /**
@@ -256,6 +257,29 @@ export class EquipmentService extends HydraApiService {
     return this.getCollection<OptionOutput>(
       `${EquipmentService.BASE_PATH}/${organizationId}/equipment-types`,
       options,
+    );
+  }
+
+  /**
+   * Method kpis
+   * @method kpis
+   *
+   * @description
+   * Reads the equipment overview KPI snapshot the list page's KPI strip
+   * renders (`GET /organizations/{organizationId}/equipment/kpis`):
+   * totalAssets, compliant, dueSoon, and the organization-wide
+   * openNonConformities count.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<EquipmentKpiOutput>} An observable emitting the KPI snapshot.
+   */
+  public kpis(organizationId: string): Observable<EquipmentKpiOutput> {
+    return this.getOne<EquipmentKpiOutput>(
+      `${EquipmentService.BASE_PATH}/${organizationId}/equipment/kpis`,
     );
   }
 
@@ -764,6 +788,41 @@ export class EquipmentService extends HydraApiService {
   ): Observable<void> {
     return this.delete(
       `${this.equipmentPath(organizationId, equipmentId)}/attachments/${attachmentId}`,
+    );
+  }
+
+  /**
+   * Method downloadAttachment
+   * @method downloadAttachment
+   *
+   * @description
+   * Reads one attachment's binary content
+   * (`GET /api/organizations/{organizationId}/equipment/{equipmentId}/attachments/{attachmentId}/download`).
+   * The route forces `Content-Disposition: attachment`, so a bare `<a href>`
+   * cannot carry it — the caller reads the resulting `Blob` and triggers the
+   * browser save itself, mirroring `InterventionService.downloadAttachment`.
+   * Calls `this.http` directly for a response shape (`responseType: 'blob'`)
+   * the base class does not support.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization the equipment belongs to.
+   * @param {string} equipmentId - The ID of the equipment the attachment belongs to.
+   * @param {string} attachmentId - The ID of the attachment to download.
+   *
+   * @return {Observable<Blob>} The attachment's binary content.
+   */
+  public downloadAttachment(
+    organizationId: string,
+    equipmentId: string,
+    attachmentId: string,
+  ): Observable<Blob> {
+    return this.http.get(
+      this.buildUrl(
+        `${this.equipmentPath(organizationId, equipmentId)}/attachments/${attachmentId}/download`,
+      ),
+      { responseType: 'blob', withCredentials: true },
     );
   }
 

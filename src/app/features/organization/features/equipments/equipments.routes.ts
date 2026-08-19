@@ -3,7 +3,7 @@ import { organizationPermissionGuard } from '@features/organization/http/guards'
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { equipmentResolver, equipmentTitleResolver } from './http/resolvers';
-import { EquipmentStore } from './state';
+import { EquipmentKpisStore, EquipmentStore } from './state';
 
 /**
  * Constant EQUIPMENT_ROUTES
@@ -24,7 +24,9 @@ import { EquipmentStore } from './state';
  * pathless parent: unlike interventions, equipment has no documented
  * list ↔ detail state-sharing requirement (no prev/next walk), so a fresh,
  * independently-scoped instance per page is the simpler default
- * (`ARCHITECTURE.md` §10.11).
+ * (`ARCHITECTURE.md` §10.11). The index leaf additionally provides
+ * {@link EquipmentKpisStore}, backing its KPI strip — component-scoped
+ * since the snapshot is specific to that route.
  *
  * `/:equipmentId` seeds the record fetch through {@link equipmentResolver}
  * without blocking activation — the page paints its skeleton from the store's
@@ -49,7 +51,7 @@ export const EQUIPMENT_ROUTES: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        providers: [EquipmentStore],
+        providers: [EquipmentStore, EquipmentKpisStore],
         loadComponent: () =>
           import('./ui/pages/equipments-page/equipments-page.component').then(
             (m) => m.EquipmentsPage,

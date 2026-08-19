@@ -13,6 +13,7 @@ import type {
   AddAttachmentInput,
   EquipmentTagOutput,
   AddTagInput,
+  EquipmentKpiOutput,
 } from '@features/organization/features/equipments/models';
 import { EquipmentService } from '../equipment.service';
 
@@ -152,6 +153,39 @@ describe('EquipmentService', () => {
 
       const req = httpMock.expectOne(`${equipmentBaseUrl}/nonexistent`);
       req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
+  });
+
+  // ── kpis ───────────────────────────────────────────────────────────────────
+
+  describe('kpis', () => {
+    it('should send GET request and return the KPI snapshot', () => {
+      const mockKpis: EquipmentKpiOutput = {
+        '@id': `/api/organizations/${orgId}/equipment/kpis`,
+        '@type': 'EquipmentKpi',
+        totalAssets: 40,
+        compliant: 30,
+        dueSoon: 5,
+        openNonConformities: 2,
+      };
+
+      service.kpis(orgId).subscribe((kpis) => {
+        expect(kpis).toEqual(mockKpis);
+      });
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/kpis`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockKpis);
+    });
+
+    it('should propagate a fetch failure untouched', () => {
+      service.kpis(orgId).subscribe({
+        error: (error: ApiError) => expect(error.status).toBe(403),
+      });
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/kpis`);
+      req.flush({ status: 403, title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
     });
   });
 
@@ -418,6 +452,24 @@ describe('EquipmentService', () => {
   });
 
   // ── addTag ─────────────────────────────────────────────────────────────────
+
+  describe('downloadAttachment', () => {
+    it('should send a GET request for the blob content', () => {
+      const blob = new Blob(['content'], { type: 'application/pdf' });
+
+      service.downloadAttachment(orgId, equipmentId, 'attach-uuid-1').subscribe((result) => {
+        expect(result).toBeInstanceOf(Blob);
+      });
+
+      const req = httpMock.expectOne(
+        `${equipmentBaseUrl}/${equipmentId}/attachments/attach-uuid-1/download`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(blob);
+    });
+  });
 
   describe('addTag', () => {
     const input: AddTagInput = { name: 'critical' };

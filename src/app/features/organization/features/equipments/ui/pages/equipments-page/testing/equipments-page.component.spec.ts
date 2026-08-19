@@ -19,7 +19,10 @@ import {
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-import { EquipmentStore } from '@features/organization/features/equipments/state';
+import {
+  EquipmentKpisStore,
+  EquipmentStore,
+} from '@features/organization/features/equipments/state';
 import { EquipmentsPage } from '../equipments-page.component';
 
 const createPage = async (
@@ -83,6 +86,14 @@ describe('EquipmentsPage', () => {
             listCallState,
             totalEquipment: signal(0),
             isLoadingEquipment: signal(false),
+          },
+        },
+        {
+          provide: EquipmentKpisStore,
+          useValue: {
+            load: vi.fn(),
+            queryData: signal(null),
+            isQueryLoading: signal(false),
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },

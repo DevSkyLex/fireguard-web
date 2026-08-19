@@ -1,0 +1,86 @@
+<hlm-dialog [state]="dialogState()" [disableClose]="busy()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-md"
+    data-testid="equipment-assign-facility-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@equipment.facility.dialog.title">Assign to a facility</h3>
+      <p hlmDialogDescription i18n="@@equipment.facility.dialog.description">
+        Choose the facility this equipment is installed at.
+      </p>
+    </hlm-dialog-header>
+
+    <hlm-field>
+      <label hlmFieldLabel for="equipment-facility-picker" i18n="@@equipment.facility.dialog.label"
+        >Facility</label
+      >
+      <hlm-combobox
+        [value]="selectedFacilityId()"
+        [itemToString]="facilityLabelOf"
+        [disabled]="busy()"
+        (valueChange)="selectedFacilityId.set($any($event))"
+      >
+        <hlm-combobox-input
+          inputId="equipment-facility-picker"
+          placeholder="Search a facility"
+          i18n-placeholder="@@equipment.facility.dialog.placeholder"
+          data-testid="equipment-facility-picker-input"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@equipment.facility.dialog.noMatch"
+            >No facility matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of options(); track option.value) {
+              <hlm-combobox-item
+                [value]="option.value"
+                [attr.data-testid]="'equipment-facility-option-' + option.value"
+                >{{ option.label }}</hlm-combobox-item
+              >
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+    </hlm-field>
+
+    <hlm-dialog-footer class="flex-wrap gap-2">
+      @if (canUnassign()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="max-sm:min-h-11"
+          data-testid="equipment-facility-unassign"
+          [disabled]="busy()"
+          [attr.aria-busy]="unassigning() ? 'true' : null"
+          (click)="submitUnassign()"
+        >
+          @if (unassigning()) {
+            <span i18n="@@equipment.facility.dialog.unassigning">Unassigning…</span>
+          } @else {
+            <span i18n="@@equipment.facility.dialog.unassign">Unassign</span>
+          }
+        </button>
+      }
+      <button hlmDialogClose hlmBtn type="button" variant="ghost" class="max-sm:min-h-11">
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="equipment-facility-assign"
+        [disabled]="!canAssign()"
+        [attr.aria-busy]="assigning() ? 'true' : null"
+        (click)="submitAssign()"
+      >
+        @if (assigning()) {
+          <span i18n="@@equipment.facility.dialog.assigning">Assigning…</span>
+        } @else {
+          <span i18n="@@equipment.facility.dialog.assign">Assign</span>
+        }
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

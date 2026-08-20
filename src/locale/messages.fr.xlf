@@ -3843,6 +3843,10 @@
         <source>Facility moved</source>
         <target>Établissement déplacé</target>
       </trans-unit>
+      <trans-unit id="facility.toast.duplicated" datatype="html">
+        <source>Facility duplicated</source>
+        <target>Établissement dupliqué</target>
+      </trans-unit>
       <trans-unit id="facility.header.updated" datatype="html">
         <source>Updated <x id="INTERPOLATION" equiv-text="{{ facility.updatedAt | date: &apos;mediumDate&apos; }}"/></source>
         <target>Mis à jour <x id="INTERPOLATION" equiv-text="{{ facility.updatedAt | date: &apos;mediumDate&apos; }}"/></target>
@@ -12685,6 +12689,10 @@
       <trans-unit id="org.assets.tree.move" datatype="html">
         <source>Move to…</source>
         <target>Déplacer vers…</target>
+      </trans-unit>
+      <trans-unit id="org.assets.tree.duplicate" datatype="html">
+        <source>Duplicate</source>
+        <target>Dupliquer</target>
       </trans-unit>
       <trans-unit id="facility.moveDialog.header" datatype="html">
         <source>Move facility</source>

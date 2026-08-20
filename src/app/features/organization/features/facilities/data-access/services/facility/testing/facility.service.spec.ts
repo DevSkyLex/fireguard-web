@@ -10,6 +10,7 @@ import type {
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
+  DuplicateFacilityInput,
 } from '@features/organization/features/facilities/models';
 import { FacilityService } from '../facility.service';
 
@@ -493,6 +494,39 @@ describe('FacilityService', () => {
       expect(req.request.body).toEqual(input);
       expect(req.request.withCredentials).toBe(true);
       req.flush(moved);
+    });
+  });
+
+  // ── duplicate ────────────────────────────────────────────────────────────
+
+  describe('duplicate', () => {
+    it('should send POST request with an empty body when no input is given', () => {
+      const duplicated: FacilityOutput = { ...mockFacility, id: 'facility-uuid-copy' };
+
+      service.duplicate(orgId, facilityId).subscribe((facility) => {
+        expect(facility.id).toBe('facility-uuid-copy');
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/duplicate`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({});
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(duplicated);
+    });
+
+    it('should send POST request with the given name and parent', () => {
+      const input: DuplicateFacilityInput = {
+        name: 'Building A (copy)',
+        parentFacilityId: 'facility-uuid-parent',
+      };
+      const duplicated: FacilityOutput = { ...mockFacility, id: 'facility-uuid-copy' };
+
+      service.duplicate(orgId, facilityId, input).subscribe();
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/duplicate`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(input);
+      req.flush(duplicated);
     });
   });
 });

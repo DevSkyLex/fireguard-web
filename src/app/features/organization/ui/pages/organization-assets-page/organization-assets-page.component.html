@@ -162,6 +162,15 @@
             <ng-icon name="lucideMove" aria-hidden="true" />
             <span i18n="@@org.assets.tree.move">Move to…</span>
           </button>
+          <button
+            hlmDropdownMenuItem
+            type="button"
+            data-testid="assets-tree-node-duplicate"
+            (click)="onDuplicateRequested(node)"
+          >
+            <ng-icon name="lucideCopy" aria-hidden="true" />
+            <span i18n="@@org.assets.tree.duplicate">Duplicate</span>
+          </button>
         }
       </hlm-dropdown-menu>
     </ng-template>

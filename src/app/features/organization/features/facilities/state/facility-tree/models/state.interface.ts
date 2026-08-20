@@ -32,5 +32,8 @@ export interface FacilityTreeState {
 
   /** The last drag-drop re-parent request, tracked so the primitive can be locked while one is in flight. */
   readonly moveCallState: CallState<FacilityOutput>;
+
+  /** The last duplicate request, tracked so the menu action can be locked while one is in flight. */
+  readonly duplicateCallState: CallState<FacilityOutput>;
   //#endregion
 }

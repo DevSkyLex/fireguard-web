@@ -81,6 +81,53 @@ function withFacilityReparented(
 }
 
 /**
+ * Function withFacilityInserted
+ *
+ * @description
+ * Pure insert over the tree's currently-loaded state: places a newly created
+ * facility — the root of a fresh duplicate — into the root list, or into its
+ * parent's branch if that branch is already loaded. Left alone (returned
+ * unchanged) when the parent's branch has not been expanded yet; the next
+ * expansion fetches the accurate list from the server.
+ *
+ * @access private
+ * @since 1.5.0
+ *
+ * @param {FacilityOutput} facility - The newly created facility.
+ * @param {readonly FacilityOutput[]} roots - The current root list.
+ * @param {Readonly<Record<string, readonly FacilityOutput[]>>} childrenByParent - The current loaded branches.
+ *
+ * @returns {{ roots: readonly FacilityOutput[]; childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>> }} The updated snapshot.
+ */
+function withFacilityInserted(
+  facility: FacilityOutput,
+  roots: readonly FacilityOutput[],
+  childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>>,
+): {
+  roots: readonly FacilityOutput[];
+  childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>>;
+} {
+  if (facility.parentFacilityId === null) {
+    return { roots: [...roots, facility], childrenByParent };
+  }
+
+  if (facility.parentFacilityId in childrenByParent) {
+    return {
+      roots,
+      childrenByParent: {
+        ...childrenByParent,
+        [facility.parentFacilityId]: [
+          ...(childrenByParent[facility.parentFacilityId] ?? []),
+          facility,
+        ],
+      },
+    };
+  }
+
+  return { roots, childrenByParent };
+}
+
+/**
  * How many sites one branch may hold before the rest is left unfetched. Deep
  * hierarchies are normal; a single node with hundreds of direct children is
  * not, and paging a tree branch would be a worse answer than not offering it.
@@ -101,6 +148,7 @@ const INITIAL_STATE: FacilityTreeState = {
   expandingParentIds: [],
   failedParentIds: [],
   moveCallState: idleCallState(),
+  duplicateCallState: idleCallState(),
 };
 
 /**
@@ -147,6 +195,9 @@ export const FacilityTreeStore = signalStore(
 
     /** True while a drag-drop re-parent is in flight — locks the primitive against a second concurrent move. */
     isMoving: computed<boolean>(() => isCallPending(store.moveCallState())),
+
+    /** True while a duplicate request is in flight — locks the menu action against a second concurrent duplicate. */
+    isDuplicating: computed<boolean>(() => isCallPending(store.duplicateCallState())),
   })),
   //#endregion
 
@@ -349,6 +400,65 @@ export const FacilityTreeStore = signalStore(
                     dispatcher.dispatch(
                       facilityTreeStoreEvents.moveFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to move facility'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method duplicate
+         *
+         * @description
+         * Duplicates a facility's active subtree — the tree node menu's
+         * "Duplicate" action. Fires a plain POST with no body: the copy's
+         * name and parent both default server-side, and the action is not
+         * destructive, so it needs no confirmation dialog. On success the
+         * returned copy is inserted next to its source (root list or the
+         * already-loaded parent branch); on failure
+         * `facilityTreeStoreEvents.duplicateFailed` is dispatched for the
+         * app-wide feedback listener to toast. Uses `mergeMap`: duplicating
+         * one node must not cancel a duplicate already in flight for another.
+         *
+         * @access public
+         * @since 1.5.0
+         *
+         * @type {RxMethod<{ organizationId: string; facilityId: string }>}
+         */
+        duplicate: rxMethod<{ readonly organizationId: string; readonly facilityId: string }>(
+          pipe(
+            tap(() => patchState(store, { duplicateCallState: pendingCallState() })),
+            mergeMap(({ organizationId, facilityId }) =>
+              facilityService.duplicate(organizationId, facilityId).pipe(
+                tapResponse({
+                  next: (facility: FacilityOutput): void => {
+                    const inserted = withFacilityInserted(
+                      facility,
+                      store.rootsCallState().data ?? [],
+                      store.childrenByParent(),
+                    );
+                    patchState(store, {
+                      rootsCallState: successCallState(inserted.roots),
+                      childrenByParent: inserted.childrenByParent,
+                      duplicateCallState: successCallState(facility),
+                    });
+                    dispatcher.dispatch(
+                      facilityTreeStoreEvents.duplicateSucceeded(
+                        successFeedback(
+                          $localize`:@@facility.toast.duplicated:Facility duplicated`,
+                        ),
+                      ),
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError = toStoreError(error);
+                    patchState(store, { duplicateCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      facilityTreeStoreEvents.duplicateFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to duplicate facility'),
                       ),
                     );
                   },

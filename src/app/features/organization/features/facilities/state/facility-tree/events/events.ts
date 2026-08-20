@@ -22,5 +22,9 @@ export const facilityTreeStoreEvents = eventGroup({
     moveFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when a facility is moved. */
     moveSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when duplicating a facility fails. */
+    duplicateFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when a facility is duplicated. */
+    duplicateSucceeded: type<FeedbackEventPayload>(),
   },
 });

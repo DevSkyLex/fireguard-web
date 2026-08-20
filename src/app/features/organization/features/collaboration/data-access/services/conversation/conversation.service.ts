@@ -1,19 +1,14 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
-import type { HydraCollection, RequestOptions } from '@core/api/models';
+import type { HydraCollection } from '@core/api/models';
 import type {
-  ArchiveConversationInput,
-  ConversationActivityBucketOutput,
-  ConversationActivityQuery,
-  ConversationAttachmentOutput,
   ConversationOutput,
   GetOrCreateConversationInput,
   GetOrCreateDirectConversationInput,
   ListConversationsQuery,
   ListDirectConversationsQuery,
   MarkConversationReadInput,
-  MessagingLinkOutput,
   MessagingSubscriptionOutput,
 } from '@features/organization/features/collaboration/models';
 
@@ -24,8 +19,10 @@ import type {
  *
  * @description
  * Transport boundary for conversations: subject threads, direct
- * conversations, read markers, favorites, the activity heatmap and the Mercure
- * subscription token.
+ * conversations, read markers, favorites and the Mercure subscription token.
+ * The API also exposes archive, activity buckets, attachments and links, but
+ * no UI consumes them — their transport methods were pruned rather than left
+ * dead (2026-08-20).
  *
  * `GET /api/conversations` never returns channels or direct conversations —
  * both have their own lists — so callers assembling a full sidebar must query
@@ -128,31 +125,6 @@ export class ConversationService extends HydraApiService {
   }
 
   /**
-   * Method setArchived
-   * @method setArchived
-   *
-   * @description
-   * Archives or unarchives a conversation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} conversationId - Bare conversation UUID.
-   * @param {ArchiveConversationInput} input - Always set `isArchived` explicitly.
-   *
-   * @returns {Observable<ConversationOutput>} The conversation, with fabricated derived fields.
-   */
-  public setArchived(
-    conversationId: string,
-    input: ArchiveConversationInput,
-  ): Observable<ConversationOutput> {
-    return this.patch<ArchiveConversationInput, ConversationOutput>(
-      `${this.endpoint}/${conversationId}`,
-      input,
-    );
-  }
-
-  /**
    * Method markRead
    * @method markRead
    *
@@ -235,91 +207,6 @@ export class ConversationService extends HydraApiService {
   public getSubscription(conversationId: string): Observable<MessagingSubscriptionOutput> {
     return this.getOne<MessagingSubscriptionOutput>(
       `${this.endpoint}/${conversationId}/subscription`,
-    );
-  }
-
-  /**
-   * Method listActivity
-   * @method listActivity
-   *
-   * @description
-   * Zero-filled daily message counts for the info panel's heatmap.
-   *
-   * Unpaginated: there is no `view`, and `totalItems` equals the row count.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} conversationId - Bare conversation UUID.
-   * @param {ConversationActivityQuery} [query] - Bucket count, 1–366.
-   *
-   * @returns {Observable<HydraCollection<ConversationActivityBucketOutput>>} Ascending buckets.
-   */
-  public listActivity(
-    conversationId: string,
-    query?: ConversationActivityQuery,
-  ): Observable<HydraCollection<ConversationActivityBucketOutput>> {
-    return this.getCollection<ConversationActivityBucketOutput>(
-      `${this.endpoint}/${conversationId}/activity`,
-      query?.buckets === undefined ? undefined : { params: { buckets: query.buckets } },
-    );
-  }
-
-  /**
-   * Method listAttachments
-   * @method listAttachments
-   *
-   * @description
-   * Files uploaded to the conversation, newest first — the info panel's Files
-   * tab.
-   *
-   * `uploadedAt DESC` has no tiebreaker, so paging is not stable across
-   * simultaneous uploads.
-   *
-   * @access public
-   * @since 1.1.0
-   *
-   * @param {string} conversationId - Bare conversation UUID.
-   * @param {RequestOptions} [options] - Paging; `itemsPerPage` is clamped to 1–100.
-   *
-   * @returns {Observable<HydraCollection<ConversationAttachmentOutput>>} One page of files.
-   */
-  public listAttachments(
-    conversationId: string,
-    options?: RequestOptions,
-  ): Observable<HydraCollection<ConversationAttachmentOutput>> {
-    return this.getCollection<ConversationAttachmentOutput>(
-      `${this.endpoint}/${conversationId}/attachments`,
-      options,
-    );
-  }
-
-  /**
-   * Method listLinks
-   * @method listLinks
-   *
-   * @description
-   * URLs extracted from the conversation's messages, newest first — the info
-   * panel's Links tab.
-   *
-   * Every link of one message shares its `createdAt`, so a multi-link message
-   * guarantees ties and rows can repeat or vanish across page boundaries.
-   *
-   * @access public
-   * @since 1.1.0
-   *
-   * @param {string} conversationId - Bare conversation UUID.
-   * @param {RequestOptions} [options] - Paging; `itemsPerPage` is clamped to 1–100.
-   *
-   * @returns {Observable<HydraCollection<MessagingLinkOutput>>} One page of links.
-   */
-  public listLinks(
-    conversationId: string,
-    options?: RequestOptions,
-  ): Observable<HydraCollection<MessagingLinkOutput>> {
-    return this.getCollection<MessagingLinkOutput>(
-      `${this.endpoint}/${conversationId}/links`,
-      options,
     );
   }
 

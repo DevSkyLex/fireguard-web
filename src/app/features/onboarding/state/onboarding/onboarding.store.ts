@@ -70,8 +70,6 @@ const INITIAL_ONBOARDING_STATE: OnboardingStoreState = {
   executeStepCallState: idleCallState(),
   skipStepCallState: idleCallState(),
   rollbackCallState: idleCallState(),
-  dismissCallState: idleCallState(),
-  resumeCallState: idleCallState(),
 } as const;
 //#endregion
 
@@ -180,31 +178,9 @@ export const OnboardingStore = signalStore(
         store.executeStepCallState(),
         store.skipStepCallState(),
         store.rollbackCallState(),
-        store.dismissCallState(),
-        store.resumeCallState(),
       ];
       return callStates.some((cs) => cs.status === 'pending');
     }),
-
-    /**
-     * Computed isDismissing
-     *
-     * @description
-     * Returns `true` while a dismiss-activation request is in-flight.
-     *
-     * @returns {boolean}
-     */
-    isDismissing: computed<boolean>(() => store.dismissCallState().status === 'pending'),
-
-    /**
-     * Computed isResuming
-     *
-     * @description
-     * Returns `true` while a resume-activation request is in-flight.
-     *
-     * @returns {boolean}
-     */
-    isResuming: computed<boolean>(() => store.resumeCallState().status === 'pending'),
 
     /**
      * Computed loadError
@@ -285,17 +261,6 @@ export const OnboardingStore = signalStore(
     }),
 
     /**
-     * Computed isDismissed
-     *
-     * @description
-     * `true` when the user has voluntarily hidden the non-blocking activation
-     * flow. The shell setup checklist stays hidden until the flow is resumed.
-     *
-     * @returns {boolean}
-     */
-    isDismissed: computed<boolean>(() => store.onboarding()?.dismissed ?? false),
-
-    /**
      * Computed progress
      *
      * @description
@@ -308,22 +273,6 @@ export const OnboardingStore = signalStore(
       const steps: readonly OnboardingStepOutput[] = store.onboarding()?.steps ?? [];
       const done = steps.filter((s) => s.status === 'completed' || s.status === 'skipped').length;
       return { done, total: steps.length };
-    }),
-
-    /**
-     * Computed isActivationVisible
-     *
-     * @description
-     * `true` when the guided activation surfaces (shell checklist, resume hint)
-     * should be shown: an onboarding record exists, it is not completed, and it
-     * has not been dismissed.
-     *
-     * @returns {boolean}
-     */
-    isActivationVisible: computed<boolean>(() => {
-      const onboarding: OnboardingOutput | null = store.onboarding();
-      if (!onboarding) return false;
-      return onboarding.state !== 'completed' && !onboarding.dismissed;
     }),
   })),
   //#endregion
@@ -587,87 +536,6 @@ export const OnboardingStore = signalStore(
                   dispatcher.dispatch(
                     onboardingStoreEvents.rollbackFailed(
                       toStoreFailureEventPayload(storeError, 'Failed to rollback step'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method dismiss
-       *
-       * @description
-       * Voluntarily hides the non-blocking activation flow (shell checklist).
-       * Progression is preserved server-side and can be resumed later. Uses
-       * `exhaustMap` to prevent duplicate submissions.
-       *
-       * @fires onboardingStoreEvents.dismissFailed  On API error.
-       *
-       * @since 3.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      dismiss: rxMethod<void>(
-        pipe(
-          tap(() => patchState(store, { dismissCallState: pendingCallState() })),
-          exhaustMap(() =>
-            onboardingService.dismiss().pipe(
-              tapResponse({
-                next: (response: OnboardingOutput) => {
-                  patchState(store, {
-                    onboarding: response,
-                    dismissCallState: successCallState(response),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { dismissCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    onboardingStoreEvents.dismissFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to dismiss onboarding'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method resume
-       *
-       * @description
-       * Clears a previous dismissal so the activation flow and setup checklist
-       * become visible again. Uses `exhaustMap` to prevent duplicate submissions.
-       *
-       * @fires onboardingStoreEvents.resumeFailed  On API error.
-       *
-       * @since 3.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      resume: rxMethod<void>(
-        pipe(
-          tap(() => patchState(store, { resumeCallState: pendingCallState() })),
-          exhaustMap(() =>
-            onboardingService.resume().pipe(
-              tapResponse({
-                next: (response: OnboardingOutput) => {
-                  patchState(store, {
-                    onboarding: response,
-                    resumeCallState: successCallState(response),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { resumeCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    onboardingStoreEvents.resumeFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to resume onboarding'),
                     ),
                   );
                 },

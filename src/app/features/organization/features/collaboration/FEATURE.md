@@ -8,11 +8,13 @@ belongs to.
 ## Purpose
 
 Owns the organization's conversational surface: direct conversations, channels, subject threads,
-messages and their reactions, pins, saves and attachments, plus presence and the AI assistant.
+messages and their reactions and attachments, plus presence and the AI assistant.
 
-**Direct conversations, channels and the assistant have a UI today.** The data layer covers all of
-it — stores, transport, offline outbox, presence — and each remaining surface (saved messages, the
-channel info panel, threaded replies) is a page plus a route away.
+**Direct conversations, channels and the assistant have a UI today, and the data layer covers
+exactly that.** The pin/save/edit/tombstone-delete, threaded-replies, saved-messages and
+channel-info-panel surfaces the API also exposes had complete frontend slices with no UI reaching
+them; they were pruned (2026-08-20) rather than left dead. Rebuilding one starts from the API
+contract (`MessageResource`, `ConversationResource`), not from a dormant store.
 
 Backed end-to-end by the API's `Messaging` and `Assistant` modules — nothing here is mocked. Those
 modules reach `Organization` exactly like `Intervention` and `Facility` do: through its inbound
@@ -79,14 +81,13 @@ inherited and it would otherwise render "Messages / Messages". The counterpart's
 there either — resolving it needs the whole conversation list _plus_ the member directory, more than
 a title resolver can ask for — so it lives in the conversation's own header.
 
-Saved messages are **not mounted**. Their store, service and models are complete and specced; only
-their page is absent. Mounting it is a UI change plus its route. The channel info panel
-(`ChannelPanelStore`: pins, files, links) is in the same position — the store is live and
-self-driving, its panel is not built.
+Saved messages and the channel info panel are **not built**: their former stores
+(`SavedMessagesStore`, `ChannelPanelStore`) and the transport methods only they consumed were
+removed in the 2026-08-20 prune. The backend endpoints (`/saved-messages`, the conversation
+`activity`/`attachments`/`links`/`pinned-messages` reads) remain available for a rebuild.
 
-Channel participant add/remove lives in its own `state/channel-participants/` slice —
-`ChannelPanelStore` only reads the roster, and widening a read-side store with writes for a sheet
-it does not own would blur both. Favoriting a channel calls `ConversationService` from the page and
+Channel participant add/remove lives in its own `state/channel-participants/` slice.
+Favoriting a channel calls `ConversationService` from the page and
 then re-reads through `ChannelsStore.loadOne`, never trusting the write response's fabricated
 `isFavorite`/`unreadCount` (see Invariants).
 
@@ -124,7 +125,7 @@ matters: a failed send does not vanish, it becomes a durable outbox row rendered
 which is more useful than a restored draft.
 
 **Only replay-safe work may be queued.** Sending qualifies because the client mints the message id;
-reactions, pins and saves qualify because the server swallows duplicates. Marking a conversation
+reactions qualify because the server swallows duplicates. Marking a conversation
 read does **not**: the server's upsert has no monotonic guard, so a stale marker replayed later
 moves the read pointer backwards.
 
@@ -350,23 +351,12 @@ These come from the backend contract and are easy to get wrong:
   must go through `postMessageWithClientId()` → `PUT .../messages/{clientId}` with
   `If-None-Match: *`, and must treat the `409` `/problems/client-resource-already-exists` as
   **success**.
-- **`/api/saved-messages` wants the organization as an IRI.** Every other collection accepts the
-  bare UUID; this one rejects it.
 - **A channel _is_ a conversation row.** `createChannel()` persists a `MessagingConversationRecord`
-  with the channel's own id, so `channelId === conversationId` and the four
-  `/api/conversations/{id}/…` panel reads take the channel id directly. The reverse does not hold:
+  with the channel's own id, so `channelId === conversationId` and the
+  `/api/conversations/{id}/…` reads take the channel id directly. The reverse does not hold:
   `/api/channels/{id}/participants` 404s for a DM or a subject thread.
-- **The activity endpoint sends counts, not levels.** The four-step heatmap ramp is a client
-  decision (`buildActivityCells`), graded against the busiest day in the window. The counts include
-  threaded replies and tombstoned messages, so the strip's total will not match the visible message
-  count.
-- **Deleting a message cleans up nothing.** Its links stay in the Links tab, its files in the Files
-  tab, and it stays pinned — redacted. Render a tombstone placeholder; never assume `body` exists.
 - **`contentUrl` is not a link.** The download route is bearer-authenticated and forces
   `Content-Disposition: attachment`, so it cannot go in `<img src>`, `<a href>` or `window.open`.
-  The Files tab lists metadata only.
-- **`MessagingLinkOutput.label` is never populated** and `ConversationAttachmentOutput.revision` is
-  always `1` on the list — the factory behind it never assigns the real value.
 - **The newest messages are on the _last_ page.** `listByConversation` orders `createdAt ASC` from a
   plain offset, so page 1 is the oldest 50. A thread therefore opens on the last page, reads history
   by walking page numbers **down**, and refreshes the last page rather than the first. Re-reading
@@ -478,28 +468,11 @@ reads as a control on its own, and colour alone never says whether the reader is
 Reacting is gated on `messaging.write`, not on being able to read the conversation. Without it the
 existing tallies still render, disabled, and the picker is absent.
 
-Reference cards, pins, saved messages and threaded replies are **not rendered**. Every one is
-supported by the stores already; each is a UI-only change.
-
-## Threaded replies live in their own store (their panel is not built)
-
-`GET /conversations/{id}/messages` **excludes replies** (`parentMessage IS NULL` in the repository),
-so a reply is not a row `MessageThreadStore` will ever hand back. It is a second collection, read
-from its parent — which is why `MessageRepliesStore` exists beside the thread rather than inside it,
-and why its surface, when it returns, is a panel over the conversation rather than an inline
-expansion.
-
-Threading is single-level: the API refuses a reply to a reply, so nothing recurses.
-
-Two consequences:
-
-- **A reply has no optimistic row.** `POST /messages/{id}/replies` mints the id server-side, unlike
-  the thread's client-id send, so an optimistic reply could not be reconciled with the confirmed one
-  and would appear twice.
-- **The parent's `replyCount` is bumped through an event, not a refetch.** `MessageRepliesStore`
-  emits `posted`, and `MessageThreadStore` increments the parent in place — `refresh()` only re-reads
-  page 1, and a parent the member scrolled back to is not on it. There is no
-  `GET /api/messages/{id}` to refetch one message with.
+Reference cards, pins, saved messages and threaded replies are **not rendered** — their frontend
+slices were pruned (2026-08-20; see Purpose). Two API facts to keep in mind for a rebuild:
+`GET /conversations/{id}/messages` excludes replies (`parentMessage IS NULL`), so replies are a
+second collection read from their parent, and threading is single-level — the API refuses a reply
+to a reply.
 
 Known gap, deliberately not fixed here: a failed send is only retryable from inside the conversation
 it belongs to, so a member who navigates away has no way back to it short of reopening that
@@ -523,7 +496,7 @@ the panel nor its toggle renders.
   and the directory needs `organization.members.read`, which messaging does not imply. Every
   unresolved case — deep link, conversation past the first page of the list, missing permission —
   renders the same neutral label.
-- Only replay-safe operations (message send, reactions, pins, saves) may be queued in the offline
+- Only replay-safe operations (message send, reactions) may be queued in the offline
   outbox; read-state mutations (conversation read markers) must never be queued.
 - **A mutating confirm dialog stays open, busy-locked, until the write settles.** The channel delete
   confirm mirrors interventions' publish confirmation: it stays open on failure and shows the outcome

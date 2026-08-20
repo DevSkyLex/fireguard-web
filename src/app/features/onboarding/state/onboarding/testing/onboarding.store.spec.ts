@@ -47,8 +47,6 @@ describe('OnboardingStore', () => {
     executeStep: ReturnType<typeof vi.fn>;
     skipStep: ReturnType<typeof vi.fn>;
     rollback: ReturnType<typeof vi.fn>;
-    dismiss: ReturnType<typeof vi.fn>;
-    resume: ReturnType<typeof vi.fn>;
   };
 
   const configure = (platformId: 'browser' | 'server' = 'browser') => {
@@ -59,8 +57,6 @@ describe('OnboardingStore', () => {
       executeStep: vi.fn(),
       skipStep: vi.fn(),
       rollback: vi.fn(),
-      dismiss: vi.fn(),
-      resume: vi.fn(),
     };
 
     TestBed.resetTestingModule();
@@ -126,42 +122,6 @@ describe('OnboardingStore', () => {
     await store.initialize({ reset: false });
 
     expect(mockOnboardingService.start).toHaveBeenCalledTimes(1);
-  });
-
-  it('should hide activation surfaces and keep progression after dismiss', () => {
-    mockOnboardingService.start.mockReturnValue(of(onboarding));
-    mockOnboardingService.dismiss.mockReturnValue(
-      of({ ...onboarding, dismissed: true, dismissedAt: '2026-04-15T11:00:00Z' }),
-    );
-
-    store.start({ reset: false });
-    expect(store.isActivationVisible()).toBe(true);
-
-    store.dismiss();
-
-    expect(mockOnboardingService.dismiss).toHaveBeenCalledTimes(1);
-    expect(store.isDismissed()).toBe(true);
-    expect(store.isActivationVisible()).toBe(false);
-    // Dismissal must not block progression.
-    expect(store.state()).toBe('in_progress');
-  });
-
-  it('should re-show activation surfaces after resume', () => {
-    mockOnboardingService.start.mockReturnValue(
-      of({ ...onboarding, dismissed: true, dismissedAt: '2026-04-15T11:00:00Z' }),
-    );
-    mockOnboardingService.resume.mockReturnValue(
-      of({ ...onboarding, dismissed: false, dismissedAt: null }),
-    );
-
-    store.start({ reset: false });
-    expect(store.isDismissed()).toBe(true);
-
-    store.resume();
-
-    expect(mockOnboardingService.resume).toHaveBeenCalledTimes(1);
-    expect(store.isDismissed()).toBe(false);
-    expect(store.isActivationVisible()).toBe(true);
   });
 
   it('should compute progress from completed and skipped steps', () => {
@@ -424,42 +384,6 @@ describe('OnboardingStore', () => {
     });
   });
 
-  describe('dismiss', () => {
-    it('should normalize the error and dispatch dismissFailed on failure', async () => {
-      mockOnboardingService.start.mockReturnValue(of(onboarding));
-      mockOnboardingService.dismiss.mockReturnValue(throwError(() => new Error('dismiss failed')));
-
-      store.start({ reset: false });
-      store.dismiss();
-      await flushEffects();
-
-      expect(store.dismissCallState().status).toBe('error');
-      expect(store.dismissCallState().error).not.toBeNull();
-      expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ type: '[Onboarding Store] dismissFailed' }),
-      );
-    });
-  });
-
-  describe('resume', () => {
-    it('should normalize the error and dispatch resumeFailed on failure', async () => {
-      mockOnboardingService.start.mockReturnValue(
-        of({ ...onboarding, dismissed: true, dismissedAt: '2026-04-15T11:00:00Z' }),
-      );
-      mockOnboardingService.resume.mockReturnValue(throwError(() => new Error('resume failed')));
-
-      store.start({ reset: false });
-      store.resume();
-      await flushEffects();
-
-      expect(store.resumeCallState().status).toBe('error');
-      expect(store.resumeCallState().error).not.toBeNull();
-      expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ type: '[Onboarding Store] resumeFailed' }),
-      );
-    });
-  });
-
   describe('clear', () => {
     it('should reset the store back to its initial idle state', async () => {
       mockOnboardingService.start.mockReturnValue(of(onboarding));
@@ -475,9 +399,6 @@ describe('OnboardingStore', () => {
       expect(store.executeStepCallState().status).toBe('idle');
       expect(store.skipStepCallState().status).toBe('idle');
       expect(store.rollbackCallState().status).toBe('idle');
-      expect(store.dismissCallState().status).toBe('idle');
-      expect(store.resumeCallState().status).toBe('idle');
-      expect(store.isActivationVisible()).toBe(false);
     });
   });
 
@@ -520,7 +441,7 @@ describe('OnboardingStore', () => {
   });
 
   describe('additional computed signals', () => {
-    it('should expose isBlocked, blockedReason and isDismissed when the workflow is blocked', () => {
+    it('should expose isBlocked and blockedReason when the workflow is blocked', () => {
       mockOnboardingService.start.mockReturnValue(
         of({ ...onboarding, state: 'blocked', blockedReason: 'missing_payment_method' }),
       );
@@ -545,8 +466,6 @@ describe('OnboardingStore', () => {
       expect(store.targetOrganizationId()).toBeNull();
       expect(store.targetOrganizationName()).toBeNull();
       expect(store.activeStepIndex()).toBe(0);
-      expect(store.isDismissed()).toBe(false);
-      expect(store.isActivationVisible()).toBe(false);
       expect(store.isBusy()).toBe(false);
     });
 
@@ -590,8 +509,6 @@ describe('OnboardingStore', () => {
         executeStep: vi.fn(),
         skipStep: vi.fn(),
         rollback: vi.fn(),
-        dismiss: vi.fn(),
-        resume: vi.fn(),
       };
 
       TestBed.resetTestingModule();

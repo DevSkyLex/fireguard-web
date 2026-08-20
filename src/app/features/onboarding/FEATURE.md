@@ -58,10 +58,11 @@ Primary store: `OnboardingStore` (root-provided).
 Primary service: `OnboardingService` (extends `HydraApiService`).
 
 The store exposes per-action `CallState`s plus progress-oriented computed signals
-(`steps`, `nextStep`, `activeStepIndex`, `completedSteps`, `progress`). It still
-carries `dismiss`/`resume`/`isDismissed`/`isActivationVisible` from the previous
-non-blocking design; these are no longer surfaced now that onboarding is
-mandatory.
+(`steps`, `nextStep`, `activeStepIndex`, `completedSteps`, `progress`). The
+`dismiss`/`resume`/`isDismissed`/`isActivationVisible` surface from the previous
+non-blocking design was removed (2026-08-20) — onboarding is mandatory and
+nothing rendered it. The API's `POST /onboarding/{dismiss,resume}` endpoints
+still exist; rebuilding a dismissible checklist would re-add the transport.
 
 ## Cross-Feature Dependencies
 
@@ -162,11 +163,10 @@ Recorded here rather than built speculatively (§2.9 — wait for a real need):
   yearly toggle is a real feature, not a checkbox, and nothing today asks for
   it during activation. `BillingInterval` already supports `'year'` when it
   does.
-- **Shell setup checklist.** `isActivationVisible`/`dismiss`/`resume` remain
-  on the store from the previous non-blocking design (see "State and Data
-  Access") but nothing renders them — onboarding is mandatory now, so there
-  is no dashboard checklist to dismiss or resume. Removing the dead surface
-  from the store is a separate cleanup, not bundled into shipping the wizard.
+- **Shell setup checklist.** The `isActivationVisible`/`dismiss`/`resume`
+  store surface from the previous non-blocking design was removed (2026-08-20)
+  — onboarding is mandatory, so there is no dashboard checklist to dismiss or
+  resume. The backend endpoints remain if a dismissible checklist returns.
 - **`authGuard`/`maintenanceGuard` on the dashboard shell root.** Only
   `onboardingRequiredGuard` was added there by this change; the root had
   neither guard before and widening that coverage is a distinct decision.

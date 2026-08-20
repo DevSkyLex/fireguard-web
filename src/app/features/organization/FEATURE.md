@@ -205,7 +205,6 @@ Primary stores:
 - `ActiveOrganizationStore`
 - `OrganizationMemberAccessStore`
 - `OrganizationStore`
-- `OrganizationRoleListStore`
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history, and cancel/resume — both gated by `organization.settings.write` on the backend, same as Checkout/Portal)
@@ -220,10 +219,9 @@ Primary stores:
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
 - `OrganizationInvitationAcceptStore` (page-scoped; loads the public invitation preview and accepts an invitation token)
 
-Sanctioned bounded drains (DESIGN.md § Collections' Server Rule): four of
+Sanctioned bounded drains (DESIGN.md § Collections' Server Rule): three of
 these stores deliberately fetch without user-facing pagination —
-`OrganizationRoleListStore` drains every role (a role catalog is small and the
-grid groups it client-side), `MemberDirectoryStore` drains the roster (a
+`MemberDirectoryStore` drains the roster (a
 capped single page would silently misattribute members past the cap),
 `OrganizationAssetsPaneStore` caps at 50 per axis because the pane is a
 preview that links to the owning subfeature's full list, not a browsing

@@ -4,7 +4,4 @@ export type { MessageReferenceOutput } from './message-reference-output.interfac
 export type { MessageReferenceInput } from './message-reference-input.interface';
 export type { MessageReferenceType } from './message-reference-type.type';
 export type { PostMessageInput } from './post-message-input.interface';
-export type { EditMessageInput } from './edit-message-input.interface';
-export type { PostReplyInput } from './post-reply-input.interface';
 export type { AddReactionInput } from './add-reaction-input.interface';
-export type { ListSavedMessagesQuery } from './list-saved-messages-query.interface';

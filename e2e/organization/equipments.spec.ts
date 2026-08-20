@@ -81,6 +81,8 @@ test.describe('Equipment list', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockEquipmentList(E2E_ORGANIZATION_ID, [equipmentOutput()]);
+    await api.mockEquipmentKpis(E2E_ORGANIZATION_ID);
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
     const equipments = new EquipmentsPage(page);
 
     await equipments.gotoList(E2E_ORGANIZATION_ID);
@@ -166,6 +168,7 @@ test.describe('Equipment detail', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockEquipmentDetail(E2E_ORGANIZATION_ID, inStockEquipmentOutput());
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
     const equipments = new EquipmentsPage(page);
 
     await equipments.gotoDetail(E2E_ORGANIZATION_ID, 'e2e-equipment-2');

@@ -385,6 +385,49 @@ export function mercureSubscriptionOutput(
   };
 }
 
+/**
+ * Sidebar navigation badge counters. The workspace shell reads these on every
+ * organization route, so `mockSessionData` serves them ambiently.
+ */
+export interface OrganizationNavigationCountersFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly openInterventions: number;
+  readonly openNonConformities: number;
+  readonly submittedInterventions: number;
+}
+
+export function organizationNavigationCountersOutput(
+  overrides: Partial<OrganizationNavigationCountersFixture> = {},
+): OrganizationNavigationCountersFixture {
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/navigation-counters`,
+    '@type': 'OrganizationNavigationCounters',
+    openInterventions: 0,
+    openNonConformities: 0,
+    submittedInterventions: 0,
+    ...overrides,
+  };
+}
+
+/** Generic value/label reference item returned by the catalog endpoints. */
+export interface OptionFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly value: string;
+  readonly label: string;
+}
+
+export function optionOutput(
+  overrides: Partial<OptionFixture> & Pick<OptionFixture, 'value' | 'label'>,
+): OptionFixture {
+  return {
+    '@id': `/api/options/${overrides.value}`,
+    '@type': 'Option',
+    ...overrides,
+  };
+}
+
 export interface ApiErrorFixture {
   readonly '@id': string;
   readonly '@type': string;

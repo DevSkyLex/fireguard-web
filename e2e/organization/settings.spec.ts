@@ -90,6 +90,7 @@ test.describe('Organization settings', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
+    await api.mockOrganizationLegalTypes();
     const settings = new OrganizationSettingsPage(page);
 
     await settings.goto(E2E_ORGANIZATION_ID);

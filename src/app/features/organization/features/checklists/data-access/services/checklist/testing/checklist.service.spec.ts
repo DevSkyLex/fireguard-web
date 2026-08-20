@@ -8,6 +8,7 @@ import type {
   ChecklistListOptions,
   ChecklistOutput,
   CreateChecklistInput,
+  UpdateChecklistInput,
 } from '@features/organization/features/checklists/models';
 import { ChecklistService } from '../checklist.service';
 
@@ -108,6 +109,14 @@ describe('ChecklistService', () => {
       req.flush(mockCollection([]));
     });
 
+    it('should forward a free-text search term as the search query param', () => {
+      service.list(orgId, { search: 'fire' }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === checklistsUrl);
+      expect(req.request.params.get('search')).toBe('fire');
+      req.flush(mockCollection([]));
+    });
+
     it('should handle API error', () => {
       service.list(orgId).subscribe({
         error: (error: ApiError) => expect(error.status).toBe(403),
@@ -176,6 +185,48 @@ describe('ChecklistService', () => {
         { status: 422, title: 'Unprocessable Entity' },
         { status: 422, statusText: 'Unprocessable Entity' },
       );
+    });
+  });
+
+  // ── update ─────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    const input: UpdateChecklistInput = { name: 'Fire Safety Inspection Checklist v2' };
+
+    it('should send PATCH request with merge-patch content type and return the updated checklist', () => {
+      const updated: ChecklistOutput = { ...mockChecklist, name: input.name as string };
+
+      service.update(orgId, checklistId, input).subscribe((checklist) => {
+        expect(checklist.name).toBe('Fire Safety Inspection Checklist v2');
+      });
+
+      const req = httpMock.expectOne(`${checklistsUrl}/${checklistId}`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual(input);
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.headers.get('Content-Type')).toBe('application/merge-patch+json');
+      req.flush(updated);
+    });
+
+    it('should send a full replacement items list when items are part of the update', () => {
+      const itemsInput: UpdateChecklistInput = {
+        items: [{ label: 'Check hydrants', required: true, position: 1 }],
+      };
+
+      service.update(orgId, checklistId, itemsInput).subscribe();
+
+      const req = httpMock.expectOne(`${checklistsUrl}/${checklistId}`);
+      expect(req.request.body).toEqual(itemsInput);
+      req.flush(mockChecklist);
+    });
+
+    it('should handle a conflict when the checklist is archived or already referenced', () => {
+      service.update(orgId, checklistId, input).subscribe({
+        error: (error: ApiError) => expect(error.status).toBe(409),
+      });
+
+      const req = httpMock.expectOne(`${checklistsUrl}/${checklistId}`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
     });
   });
 

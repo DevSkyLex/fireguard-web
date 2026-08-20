@@ -21,6 +21,13 @@ export type ChecklistListOptions = PaginationOptions & {
   readonly status?: ChecklistStatusFilter;
 
   /**
+   * Free-text search applied to the checklist name, forwarded as `search`.
+   *
+   * @type {string}
+   */
+  readonly search?: string;
+
+  /**
    * Column sort directions keyed by field name, forwarded as `order[field]`.
    *
    * @type {Readonly<Record<string, 'asc' | 'desc'>>}

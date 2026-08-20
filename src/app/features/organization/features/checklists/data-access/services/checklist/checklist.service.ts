@@ -6,6 +6,7 @@ import type {
   ChecklistOutput,
   ChecklistListOptions,
   CreateChecklistInput,
+  UpdateChecklistInput,
 } from '@features/organization/features/checklists/models';
 
 /**
@@ -51,6 +52,7 @@ export class ChecklistService extends HydraApiService {
     const params: NonNullable<RequestOptions['params']> = {};
 
     if (options?.status) params['status'] = options.status;
+    if (options?.search) params['search'] = options.search;
     if (options?.order) {
       for (const [field, direction] of Object.entries(options.order)) {
         params[`order[${field}]`] = direction;
@@ -108,6 +110,36 @@ export class ChecklistService extends HydraApiService {
   public create(organizationId: string, input: CreateChecklistInput): Observable<ChecklistOutput> {
     return this.post<CreateChecklistInput, ChecklistOutput>(
       `${ChecklistService.BASE_PATH}/${organizationId}/checklists`,
+      input,
+    );
+  }
+
+  /**
+   * Method update
+   * @method update
+   *
+   * @description
+   * Partially updates a checklist template (name, reference code, items).
+   * `items` is a full replacement list when provided, never a merge — the
+   * backend rejects the write with a conflict once the checklist is
+   * referenced by an existing inspection.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} checklistId - The ID of the checklist to update.
+   * @param {UpdateChecklistInput} input - The fields to change.
+   *
+   * @return {Observable<ChecklistOutput>} An observable emitting the updated checklist details.
+   */
+  public update(
+    organizationId: string,
+    checklistId: string,
+    input: UpdateChecklistInput,
+  ): Observable<ChecklistOutput> {
+    return this.patch<UpdateChecklistInput, ChecklistOutput>(
+      `${ChecklistService.BASE_PATH}/${organizationId}/checklists/${checklistId}`,
       input,
     );
   }

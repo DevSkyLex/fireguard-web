@@ -1,0 +1,18 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content class="sm:max-w-lg" data-testid="checklist-create-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@checklists.createDialog.title">New checklist</h3>
+    </hlm-dialog-header>
+
+    <app-checklist-create-form
+      [visible]="visible()"
+      [pending]="pending()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>

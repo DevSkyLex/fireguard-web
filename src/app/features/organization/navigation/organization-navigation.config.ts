@@ -158,6 +158,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
   },
   {
+    id: 'checklists',
+    label: $localize`:@@route.checklists:Checklists`,
+    icon: 'lucideListChecks',
+    path: 'checklists',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
+  },
+  {
     id: 'maintenance',
     label: $localize`:@@route.maintenance:Maintenance`,
     icon: 'lucideWrench',

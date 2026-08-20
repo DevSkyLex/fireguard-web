@@ -1,0 +1,118 @@
+<div class="h-full w-full overflow-hidden rounded-md border border-border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="checklist-table-caption"
+  >
+    <table hlmTable data-testid="checklist-table">
+      <caption
+        hlmTableCaption
+        id="checklist-table-caption"
+        class="sr-only"
+        i18n="@@checklists.list.tableCaption"
+      >
+        The organization's checklist templates.
+      </caption>
+
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+        <tr hlmTableRow>
+          <th hlmTableHead><span i18n="@@checklists.list.columnName">Name</span></th>
+          <th hlmTableHead><span i18n="@@checklists.list.columnStatus">Status</span></th>
+          <th hlmTableHead class="text-right">
+            <span i18n="@@checklists.list.columnItems">Items</span>
+          </th>
+          <th hlmTableHead><span i18n="@@checklists.list.columnUpdated">Updated</span></th>
+          <th hlmTableHead class="w-[52px]">
+            <span class="sr-only" i18n="@@checklists.list.columnActions">Actions</span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @if (loading() && items().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-40 max-w-full" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="ms-auto h-4 w-8" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
+              <td hlmTableCell><hlm-skeleton class="ms-auto size-6" /></td>
+            </tr>
+          }
+        } @else {
+          @for (item of items(); track item.id) {
+            <tr hlmTableRow data-testid="checklist-table-row">
+              <td hlmTableCell class="font-medium text-foreground">{{ item.name }}</td>
+
+              <td hlmTableCell>
+                <app-checklist-status-tag [value]="item.status" />
+              </td>
+
+              <td hlmTableCell class="text-right tabular-nums">{{ item.items.length }}</td>
+
+              <td hlmTableCell class="text-muted-foreground">
+                {{ item.updatedAt | date: 'mediumDate' }}
+              </td>
+
+              <td hlmTableCell class="text-right">
+                @if (canWrite()) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    align="end"
+                    class="max-sm:size-11"
+                    data-testid="checklist-table-row-menu"
+                    [hlmDropdownMenuTrigger]="rowMenu"
+                  >
+                    <ng-icon name="lucideEllipsis" aria-hidden="true" />
+                    <span class="sr-only" i18n="@@checklists.list.rowMenu">Open menu</span>
+                  </button>
+
+                  <ng-template #rowMenu>
+                    <hlm-dropdown-menu class="w-52">
+                      <button
+                        hlmDropdownMenuItem
+                        data-testid="checklist-table-row-edit"
+                        (click)="editRequested.emit(item)"
+                      >
+                        <ng-icon name="lucidePencil" aria-hidden="true" />
+                        <span i18n="@@checklists.list.rowEdit">Edit</span>
+                      </button>
+
+                      @if (item.status === 'active') {
+                        <hlm-dropdown-menu-separator />
+                        <button
+                          hlmDropdownMenuItem
+                          data-testid="checklist-table-row-archive"
+                          (click)="archiveRequested.emit(item)"
+                        >
+                          <ng-icon name="lucideArchive" aria-hidden="true" />
+                          <span i18n="@@checklists.list.rowArchive">Archive</span>
+                        </button>
+                      }
+                    </hlm-dropdown-menu>
+                  </ng-template>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                [attr.colspan]="columnCount()"
+                i18n="@@checklists.list.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

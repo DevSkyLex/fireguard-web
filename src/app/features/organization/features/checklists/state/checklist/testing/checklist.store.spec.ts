@@ -18,6 +18,7 @@ describe('ChecklistStore', () => {
     list: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     archive: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
   };
 
   const checklist = { id: 'checklist-1', name: 'Electrical audit' } as unknown as ChecklistOutput;
@@ -33,6 +34,7 @@ describe('ChecklistStore', () => {
       list: vi.fn().mockReturnValue(of(collection)),
       create: vi.fn(),
       archive: vi.fn(),
+      update: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -168,12 +170,45 @@ describe('ChecklistStore', () => {
     expect(store.isArchiving()).toBe(false);
   });
 
-  it('should reset the create and archive operations back to idle', () => {
+  it('should update a checklist and replace it in the collection', async () => {
+    const updated = {
+      id: 'checklist-1',
+      name: 'Electrical audit v2',
+    } as unknown as ChecklistOutput;
+    mockChecklistService.update.mockReturnValue(of(updated));
+    store.load({ organizationId: 'org-1' });
+    await flushEffects();
+
+    store.update({
+      organizationId: 'org-1',
+      checklistId: 'checklist-1',
+      input: { name: 'Electrical audit v2' },
+    });
+    await flushEffects();
+
+    expect(store.isUpdating()).toBe(false);
+    expect(store.updateError()).toBeNull();
+    expect(store.checklists()).toContainEqual(updated);
+  });
+
+  it('should record an update error', async () => {
+    mockChecklistService.update.mockReturnValue(throwError(() => new Error('rejected')));
+
+    store.update({ organizationId: 'org-1', checklistId: 'checklist-1', input: { name: 'x' } });
+    await flushEffects();
+
+    expect(store.isUpdating()).toBe(false);
+    expect(store.updateError()).not.toBeNull();
+  });
+
+  it('should reset the create, archive and update operations back to idle', () => {
     store.resetCreateOperation();
     store.resetArchiveOperation();
+    store.resetUpdateOperation();
 
     expect(store.isCreating()).toBe(false);
     expect(store.isArchiving()).toBe(false);
+    expect(store.isUpdating()).toBe(false);
     expect(store.createError()).toBeNull();
   });
 

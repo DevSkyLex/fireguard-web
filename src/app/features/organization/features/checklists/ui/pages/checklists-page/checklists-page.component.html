@@ -1,0 +1,120 @@
+<div id="checklists" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      [value]="searchTerm()"
+      placeholder="Search checklists"
+      i18n-placeholder="@@checklists.list.searchPlaceholder"
+      ariaLabel="Search checklists"
+      i18n-ariaLabel="@@checklists.list.searchAriaLabel"
+      testIdPrefix="checklists"
+      (queryChanged)="applySearch($event)"
+    />
+
+    <hlm-toggle-group
+      toolbarStart
+      type="single"
+      variant="outline"
+      size="sm"
+      [value]="status()"
+      data-testid="checklists-filter-status"
+      aria-label="Filter by status"
+      i18n-aria-label="@@checklists.filter.statusAriaLabel"
+      (valueChange)="applyStatus($event)"
+    >
+      @for (value of statusValues; track value) {
+        <button
+          hlmToggleGroupItem
+          class="max-sm:min-h-11"
+          [value]="value"
+          [attr.data-testid]="'checklists-filter-status-' + value"
+        >
+          {{ value }}
+        </button>
+      }
+    </hlm-toggle-group>
+
+    @if (canWrite()) {
+      <button
+        hlmBtn
+        toolbarEnd
+        type="button"
+        class="max-sm:min-h-11"
+        data-testid="checklists-new"
+        (click)="openCreateDialog()"
+      >
+        <span i18n="@@checklists.list.new">New checklist</span>
+      </button>
+    }
+  </app-collection-toolbar>
+
+  @if (store.listCallState().status === 'error') {
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="Couldn't load checklists"
+      i18n-title="@@checklists.list.errorTitle"
+      description="The checklists could not be loaded. Check your connection and try again."
+      i18n-description="@@checklists.list.errorText"
+    >
+      <button hlmBtn variant="outline" data-testid="checklists-retry" (click)="reload()">
+        <span i18n="@@checklists.list.retry">Retry</span>
+      </button>
+    </app-error-state>
+  } @else if (!store.isLoadingChecklists() && items().length === 0) {
+    <app-empty-state
+      icon="lucideListChecks"
+      title="No checklists"
+      i18n-title="@@checklists.list.emptyTitle"
+      description="No checklist templates match this filter."
+      i18n-description="@@checklists.list.emptyDesc"
+    >
+      @if (canWrite()) {
+        <button hlmBtn data-testid="checklists-empty-new" (click)="openCreateDialog()">
+          <span i18n="@@checklists.list.new">New checklist</span>
+        </button>
+      }
+    </app-empty-state>
+  } @else {
+    <app-checklist-table
+      [items]="items()"
+      [loading]="store.isLoadingChecklists()"
+      [canWrite]="canWrite()"
+      (editRequested)="requestEdit($event)"
+      (archiveRequested)="requestArchive($event)"
+    />
+
+    <app-collection-pagination
+      [page]="page()"
+      [pageCount]="pageCount()"
+      [pageSize]="pageSize()"
+      [total]="store.totalChecklists()"
+      [shown]="items().length"
+      testIdPrefix="checklists"
+      (pageChanged)="goToPage($event)"
+      (pageSizeChanged)="setPageSize($event)"
+    />
+  }
+</div>
+
+<app-checklist-create-dialog
+  [visible]="createDialogVisible()"
+  [pending]="store.isCreating()"
+  (visibleChange)="createDialogVisible.set($event)"
+  (submitted)="createChecklist($event)"
+/>
+
+<app-checklist-edit-dialog
+  [visible]="editingChecklist() !== null"
+  [checklist]="editingChecklist()"
+  [pending]="store.isUpdating()"
+  (visibleChange)="onEditDialogVisibleChanged($event)"
+  (submitted)="submitEdit($event)"
+/>
+
+<app-checklist-archive-dialog
+  [visible]="archivingChecklist() !== null"
+  [pending]="store.isArchiving()"
+  [checklistName]="archivingChecklist()?.name ?? ''"
+  (visibleChange)="onArchiveDialogVisibleChanged($event)"
+  (confirmed)="confirmArchive()"
+/>

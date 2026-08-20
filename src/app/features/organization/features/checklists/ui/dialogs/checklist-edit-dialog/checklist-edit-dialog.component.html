@@ -1,0 +1,19 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content class="sm:max-w-lg" data-testid="checklist-edit-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@checklists.editDialog.title">Edit checklist</h3>
+    </hlm-dialog-header>
+
+    <app-checklist-edit-form
+      [visible]="visible()"
+      [checklist]="checklist()"
+      [pending]="pending()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>

@@ -49,6 +49,21 @@ export interface ChecklistState {
   readonly archiveCallState: CallState<ChecklistOutput | null>;
 
   /**
+   * Property updateCallState
+   * @readonly
+   *
+   * @description
+   * Loading / success / error state for the partial-update checklist
+   * operation. Starts idle and transitions through loading → success | error
+   * when {@link ChecklistStore#update} is called.
+   *
+   * @since 2.1.0
+   *
+   * @type {CallState<ChecklistOutput | null>}
+   */
+  readonly updateCallState: CallState<ChecklistOutput | null>;
+
+  /**
    * Property totalChecklists
    * @readonly
    *

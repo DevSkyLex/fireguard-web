@@ -13657,6 +13657,202 @@
         <source><x id="type" equiv-text="type"/> at <x id="facility" equiv-text="facilityName"/></source>
         <target><x id="type" equiv-text="type"/> en <x id="facility" equiv-text="facilityName"/></target>
       </trans-unit>
+      <trans-unit id="route.checklists" datatype="html">
+        <source>Checklists</source>
+        <target>Listas de verificación</target>
+      </trans-unit>
+      <trans-unit id="checklists.filter.statusAriaLabel" datatype="html">
+        <source>Filter by status</source>
+        <target>Filtrar por estado</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.errorTitle" datatype="html">
+        <source>Couldn't load checklists</source>
+        <target>No se pudieron cargar las listas de verificación</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.errorText" datatype="html">
+        <source>The checklists could not be loaded. Check your connection and try again.</source>
+        <target>No se pudieron cargar las listas de verificación. Comprueba tu conexión e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.emptyTitle" datatype="html">
+        <source>No checklists</source>
+        <target>No hay listas de verificación</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.searchPlaceholder" datatype="html">
+        <source>Search checklists</source>
+        <target>Buscar checklists</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.searchAriaLabel" datatype="html">
+        <source>Search checklists</source>
+        <target>Buscar checklists</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.new" datatype="html">
+        <source>New checklist</source>
+        <target>Nueva checklist</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.tableCaption" datatype="html">
+        <source>The organization's checklist templates.</source>
+        <target>Las plantillas de checklist de la organización.</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnName" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnItems" datatype="html">
+        <source>Items</source>
+        <target>Elementos</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnUpdated" datatype="html">
+        <source>Updated</source>
+        <target>Actualizado</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnActions" datatype="html">
+        <source>Actions</source>
+        <target>Acciones</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.rowMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Abrir menú</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.rowEdit" datatype="html">
+        <source>Edit</source>
+        <target>Editar</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.rowArchive" datatype="html">
+        <source>Archive</source>
+        <target>Archivar</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.noResults" datatype="html">
+        <source>No results.</source>
+        <target>Sin resultados.</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.name" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.nameRequired" datatype="html">
+        <source>Give the checklist a name.</source>
+        <target>Asigna un nombre a la checklist.</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.nameLength" datatype="html">
+        <source>Use at most 255 characters.</source>
+        <target>Usa como máximo 255 caracteres.</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemLabelRequired" datatype="html">
+        <source>The item needs a label.</source>
+        <target>El elemento necesita una etiqueta.</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemLabelLength" datatype="html">
+        <source>Use at most 255 characters.</source>
+        <target>Usa como máximo 255 caracteres.</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemDescriptionLength" datatype="html">
+        <source>Use at most 1000 characters.</source>
+        <target>Usa como máximo 1000 caracteres.</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemOptional" datatype="html">
+        <source>Optional</source>
+        <target>Opcional</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemMoveUp" datatype="html">
+        <source>Move up</source>
+        <target>Subir</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemMoveDown" datatype="html">
+        <source>Move down</source>
+        <target>Bajar</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemRemove" datatype="html">
+        <source>Remove</source>
+        <target>Quitar</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemLabel" datatype="html">
+        <source>Item label</source>
+        <target>Etiqueta del elemento</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemLabelPlaceholder" datatype="html">
+        <source>Check fire extinguishers</source>
+        <target>Revisar extintores</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemDescription" datatype="html">
+        <source>Description (optional)</source>
+        <target>Descripción (opcional)</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemRequired" datatype="html">
+        <source>Required item</source>
+        <target>Elemento obligatorio</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemAdd" datatype="html">
+        <source>Add item</source>
+        <target>Añadir elemento</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.cancel" datatype="html">
+        <source>Cancel</source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.creating" datatype="html">
+        <source>Creating…</source>
+        <target>Creando…</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.create" datatype="html">
+        <source>Create checklist</source>
+        <target>Crear checklist</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.saving" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.save" datatype="html">
+        <source>Save changes</source>
+        <target>Guardar cambios</target>
+      </trans-unit>
+      <trans-unit id="checklists.createDialog.title" datatype="html">
+        <source>New checklist</source>
+        <target>Nueva checklist</target>
+      </trans-unit>
+      <trans-unit id="checklists.editDialog.title" datatype="html">
+        <source>Edit checklist</source>
+        <target>Editar checklist</target>
+      </trans-unit>
+      <trans-unit id="checklists.archiveDialog.title" datatype="html">
+        <source>Archive checklist?</source>
+        <target>¿Archivar checklist?</target>
+      </trans-unit>
+      <trans-unit id="checklists.archiveDialog.descriptionBefore" datatype="html">
+        <source>Archiving “<x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/>” keeps it readable but removes it from the checklists new inspections can use. This cannot be undone from here.</source>
+        <target>Archivar «<x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/>» la mantiene legible pero la retira de las checklists que las nuevas inspecciones pueden usar. Esto no se puede deshacer desde aquí.</target>
+      </trans-unit>
+      <trans-unit id="checklists.archiveDialog.cancel" datatype="html">
+        <source>Cancel</source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="checklists.archiveDialog.confirm" datatype="html">
+        <source>Archive</source>
+        <target>Archivar</target>
+      </trans-unit>
+      <trans-unit id="checklistStatus.active" datatype="html">
+        <source>Active</source>
+        <target>Activa</target>
+      </trans-unit>
+      <trans-unit id="checklistStatus.archived" datatype="html">
+        <source>Archived</source>
+        <target>Archivada</target>
+      </trans-unit>
+      <trans-unit id="checklist.toast.updated" datatype="html">
+        <source>Checklist updated</source>
+        <target>Checklist actualizada</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.emptyDesc" datatype="html">
+        <source>No checklist templates match this filter.</source>
+        <target>Ninguna plantilla de checklist coincide con este filtro.</target>
+      </trans-unit>
       <trans-unit id="route.approvals" datatype="html">
         <source>Approvals</source>
         <target>Aprobaciones</target>

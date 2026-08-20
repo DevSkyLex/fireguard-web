@@ -20,6 +20,8 @@ export const checklistStoreEvents = eventGroup({
     listFailed: type<StoreFailureEventPayload>(),
     createFailed: type<StoreFailureEventPayload>(),
     createSucceeded: type<FeedbackEventPayload>(),
+    updateFailed: type<StoreFailureEventPayload>(),
+    updateSucceeded: type<FeedbackEventPayload>(),
     archiveFailed: type<StoreFailureEventPayload>(),
   },
 });

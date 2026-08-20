@@ -26,9 +26,9 @@ This feature is responsible for:
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures: facilities, equipments, inspections, interventions,
-  maintenance-schedules, approvals (the four-eyes decision surface), imports (the bulk CSV import
-  surface), audit (the read-only audit journal) and collaboration (the conversational surface);
-  checklists returns once its page is rebuilt,
+  maintenance-schedules, approvals (the four-eyes decision surface), checklists (the checklist
+  template library), imports (the bulk CSV import surface), audit (the read-only audit journal)
+  and collaboration (the conversational surface),
 - publishing organization context to layouts and approved consumers.
 
 This feature does not own generic shell composition or account-level user identity.
@@ -43,13 +43,11 @@ This feature does not own generic shell composition or account-level user identi
 
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing
 > Dashboard page), `messages`, `channels`, `interventions`, `assets`, `equipments`, `facilities`,
-> `inspections`, `maintenance`, `approvals`, `imports`, `audit`, `calendar`, `statistics` (a permanent redirect to the landing page, kept for old
-> bookmarks and deep links — see Dashboard below), `members`, `members/:memberId`, `team`,
-> `settings`, and `/organizations/invitations/accept` (mounted at the app root, outside this
-> subtree — see below). `checklists` is the feature's remaining contract and is already listed by
-> the sidebar navigation behind its permissions; it is remounted in `organization.routes.ts` once
-> its page is rebuilt. A listed destination whose route is absent is a rebuild in progress, not a
-> deviation. `assets` (the estate explorer) is now the sidebar's single navigation entry for the
+> `inspections`, `maintenance`, `approvals`, `checklists`, `imports`, `audit`, `calendar`,
+> `statistics` (a permanent redirect to the landing page, kept for old bookmarks and deep links —
+> see Dashboard below), `members`, `members/:memberId`, `team`, `settings`, and
+> `/organizations/invitations/accept` (mounted at the app root, outside this subtree — see below).
+> `assets` (the estate explorer) is now the sidebar's single navigation entry for the
 > estate, gated on `FACILITIES_READ`; `facilities` and `equipments` stay mounted and gated on their
 > own read permissions so records, creation forms and deep links keep resolving, but neither is
 > listed by the sidebar navigation anymore.
@@ -115,7 +113,10 @@ This feature does not own generic shell composition or account-level user identi
   most members
 - `/organizations/:organizationId/statistics` — permanent redirect to `/organizations/:organizationId`
   (`pathMatch: 'full'`); the Trends section it used to be is one scroll away, on the same page
-- `/organizations/:organizationId/checklists`
+- `/organizations/:organizationId/checklists` — the checklist template library, owned by the
+  `checklists` subfeature, gated by `organization.inspection.read`. Write actions (create, edit,
+  archive) are additionally gated by `organization.inspection.write`. Checklists are consumed as
+  inspection templates by the `inspections` subfeature's create flow
 - `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
 - `/organizations/:organizationId/members/:memberId` — another member's profile, read-only
 - `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)

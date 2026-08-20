@@ -30,13 +30,11 @@ import { OrganizationAssetsPaneStore } from './state/organization-assets-pane';
  * Statistics pages into one tabbed surface (`FEATURE.md`) — the
  * conversational surfaces (direct messages and channels), the estate
  * explorer (`assets`), the maintenance schedule board (`maintenance`), the
- * four-eyes approvals inbox (`approvals`), the bulk CSV import surface
- * (`imports`), the audit journal (`audit`), the administration pages
- * (members, team, settings) and a member's profile are mounted today; `checklists`
- * returns under `:organizationId` once its page
- * is rebuilt, and the sidebar navigation already lists it behind its
- * permissions. `statistics` is a permanent redirect to the landing page for
- * old bookmarks and deep links.
+ * four-eyes approvals inbox (`approvals`), the checklist template library
+ * (`checklists`), the bulk CSV import surface (`imports`), the audit journal
+ * (`audit`), the administration pages (members, team, settings) and a
+ * member's profile are mounted today. `statistics` is a permanent redirect
+ * to the landing page for old bookmarks and deep links.
  *
  * `messages` and `channels` load the collaboration subfeature's route files
  * directly rather than its barrel, which also exports the offline sync
@@ -132,6 +130,11 @@ export const ORGANIZATION_ROUTES: Routes = [
         path: 'approvals',
         loadChildren: () =>
           import('./features/approvals/approvals.routes').then((m) => m.APPROVAL_ROUTES),
+      },
+      {
+        path: 'checklists',
+        loadChildren: () =>
+          import('./features/checklists/checklists.routes').then((m) => m.CHECKLIST_ROUTES),
       },
       {
         path: 'audit',

@@ -22,6 +22,7 @@ import type {
   ChecklistOutput,
   ChecklistListOptions,
   CreateChecklistInput,
+  UpdateChecklistInput,
 } from '@features/organization/features/checklists/models';
 import { ActiveChecklistStore } from '../active-checklist/active-checklist.store';
 import { checklistStoreEvents } from './events';
@@ -46,6 +47,7 @@ const INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE = 200;
 const INITIAL_CHECKLIST_STATE: ChecklistState = {
   createCallState: idleCallState(),
   archiveCallState: idleCallState(),
+  updateCallState: idleCallState(),
   totalChecklists: 0,
   listCallState: idleCallState(),
 } as const;
@@ -236,6 +238,31 @@ export const ChecklistStore = signalStore(
        * @type {boolean}
        */
       isArchiving: computed<boolean>(() => store.archiveCallState().status === 'pending'),
+
+      /**
+       * Property isUpdating
+       *
+       * @description
+       * True while a partial-update operation is in-flight.
+       *
+       * @since 2.1.0
+       *
+       * @type {boolean}
+       */
+      isUpdating: computed<boolean>(() => store.updateCallState().status === 'pending'),
+
+      /**
+       * Property updateError
+       *
+       * @description
+       * Error from the last update operation, if any. Null if the operation
+       * is idle, loading, or succeeded.
+       *
+       * @since 2.1.0
+       *
+       * @type {StoreError | null} The error object if the update operation is in error, or null otherwise.
+       */
+      updateError: computed<StoreError | null>(() => store.updateCallState().error),
 
       /**
        * Property createError
@@ -477,6 +504,77 @@ export const ChecklistStore = signalStore(
             ),
           ),
         ),
+
+        /**
+         * Method update
+         * @method update
+         *
+         * @description
+         * Partially updates a checklist by organization ID and checklist ID.
+         * Uses `exhaustMap` to prevent concurrent update operations. On
+         * success: updates the entity in the collection, syncs
+         * {@link ActiveChecklistStore} when the updated checklist is the
+         * currently active one, and dispatches a success feedback event.
+         *
+         * @since 2.1.0
+         *
+         * @type {RxMethod<{ organizationId: string; checklistId: string; input: UpdateChecklistInput }>} An RxMethod that accepts the organization ID, checklist ID and the fields to change.
+         */
+        update: rxMethod<{
+          organizationId: string;
+          checklistId: string;
+          input: UpdateChecklistInput;
+        }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { updateCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, checklistId, input }) =>
+              checklistService.update(organizationId, checklistId, input).pipe(
+                tapResponse({
+                  next: (checklist: ChecklistOutput): void => {
+                    patchState(store, setEntity(checklist, { collection: 'checklist' }), {
+                      updateCallState: successCallState(checklist),
+                    });
+                    if (activeChecklistStore.selectedChecklist()?.id === checklist.id) {
+                      activeChecklistStore.setChecklist(checklist);
+                    }
+                    dispatcher.dispatch(
+                      checklistStoreEvents.updateSucceeded(
+                        successFeedback($localize`:@@checklist.toast.updated:Checklist updated`),
+                      ),
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { updateCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      checklistStoreEvents.updateFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to update checklist'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method resetUpdateOperation
+         * @method resetUpdateOperation
+         *
+         * @description
+         * Resets the update operation back to its idle state. Call this
+         * after the edit dialog is closed.
+         *
+         * @since 2.1.0
+         *
+         * @returns {void} No return value.
+         */
+        resetUpdateOperation(): void {
+          patchState(store, { updateCallState: idleCallState() });
+        },
 
         /**
          * Method resetCreateOperation

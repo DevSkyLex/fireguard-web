@@ -1,0 +1,38 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="checklist-archive-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@checklists.archiveDialog.title">Archive checklist?</h2>
+      <p hlmAlertDialogDescription>
+        <span i18n="@@checklists.archiveDialog.descriptionBefore"
+          >Archiving “{{ checklistName() }}” keeps it readable but removes it from the checklists
+          new inspections can use. This cannot be undone from here.</span
+        >
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button
+        hlmAlertDialogCancel
+        class="max-sm:min-h-11"
+        [disabled]="pending()"
+        i18n="@@checklists.archiveDialog.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="checklist-archive-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+        i18n="@@checklists.archiveDialog.confirm"
+      >
+        Archive
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

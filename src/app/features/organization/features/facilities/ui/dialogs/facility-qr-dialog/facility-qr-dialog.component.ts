@@ -35,6 +35,25 @@ import { HlmDialogImports } from '@shared/ui/dialog';
 const QR_PIXEL_SIZE: number = 320;
 
 /**
+ * The one `qrcode` entry point this dialog needs.
+ *
+ * @since 1.0.0
+ */
+type QrCodeToDataUrl = typeof import('qrcode').toDataURL;
+
+/**
+ * The shape a dynamic `import('qrcode')` can take. The package is CommonJS,
+ * so depending on the interop the bundler applies, `toDataURL` sits either on
+ * the namespace or under `default`.
+ *
+ * @since 1.0.0
+ */
+interface QrCodeModule {
+  readonly toDataURL?: QrCodeToDataUrl;
+  readonly default?: { readonly toDataURL?: QrCodeToDataUrl };
+}
+
+/**
  * Component FacilityQrDialog
  * @class FacilityQrDialog
  *
@@ -248,7 +267,20 @@ export class FacilityQrDialog {
    */
   private async generateQr(url: string): Promise<void> {
     try {
-      const { toDataURL } = await import('qrcode');
+      // `qrcode` ships CommonJS. Whether the interop surfaces `toDataURL` as a
+      // named export or only under `default` depends on how the bundler wrapped
+      // it, and the two forms are NOT interchangeable: destructuring the named
+      // one threw `toDataURL is not a function` under a cold Vite dep-optimize,
+      // which the catch below then swallowed into a permanent "Generating…".
+      const module: QrCodeModule = await import('qrcode');
+      const toDataURL: QrCodeToDataUrl | undefined = module.toDataURL ?? module.default?.toDataURL;
+
+      if (!toDataURL) {
+        this.qrDataUrl.set(null);
+
+        return;
+      }
+
       this.qrDataUrl.set(
         await toDataURL(url, { errorCorrectionLevel: 'M', margin: 1, width: QR_PIXEL_SIZE }),
       );

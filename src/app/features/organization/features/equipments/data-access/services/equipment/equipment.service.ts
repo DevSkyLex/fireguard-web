@@ -1,7 +1,7 @@
 import { Service } from '@angular/core';
 import { catchError, EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
-import type { HydraCollection, HydraItem, OptionOutput } from '@core/api/models';
+import type { HydraCollection, HydraItem } from '@core/api/models';
 import type {
   EquipmentOutput,
   CreateEquipmentInput,
@@ -206,56 +206,6 @@ export class EquipmentService extends HydraApiService {
   ): Observable<HydraCollection<EquipmentOutput>> {
     return this.getCollection<EquipmentOutput>(
       this.facilityEquipmentPath(organizationId, facilityId),
-      options,
-    );
-  }
-
-  /**
-   * Method listStatuses
-   * @method listStatuses
-   *
-   * @description
-   * Executes the list statuses operation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} organizationId - organization Id value.
-   * @param {RequestOptions} [options] - options value.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list statuses operation.
-   */
-  public listStatuses(
-    organizationId: string,
-    options?: RequestOptions,
-  ): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>(
-      `${EquipmentService.BASE_PATH}/${organizationId}/equipment-statuses`,
-      options,
-    );
-  }
-
-  /**
-   * Method listTypes
-   * @method listTypes
-   *
-   * @description
-   * Executes the list types operation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} organizationId - organization Id value.
-   * @param {RequestOptions} [options] - options value.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list types operation.
-   */
-  public listTypes(
-    organizationId: string,
-    options?: RequestOptions,
-  ): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>(
-      `${EquipmentService.BASE_PATH}/${organizationId}/equipment-types`,
       options,
     );
   }

@@ -1,8 +1,5 @@
 import type { CallState } from '@core/request-state';
-import type {
-  FacilityOutput,
-  FacilityTypeOutput,
-} from '@features/organization/features/facilities/models';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 
 /**
  * Interface FacilityState
@@ -10,7 +7,7 @@ import type {
  *
  * @description
  * Component-level state interface for the facility store.
- * Manages facility list, CRUD, archiving, moving, and type reference data.
+ * Manages facility list, CRUD, archiving, and moving.
  *
  * The currently selected / active facility is tracked in the root-level
  * {@link ActiveFacilityStore} instead.
@@ -186,33 +183,5 @@ export interface FacilityState {
    * @type {ReadonlyArray<string>}
    */
   readonly loadingParentIds: ReadonlyArray<string>;
-  //#endregion
-
-  //#region Types
-  /**
-   * Property facilityTypes
-   * @readonly
-   *
-   * @description
-   * Cached list of facility types (reference data).
-   *
-   * @since 1.0.0
-   *
-   * @type {ReadonlyArray<FacilityTypeOutput>}
-   */
-  readonly facilityTypes: ReadonlyArray<FacilityTypeOutput>;
-
-  /**
-   * Property typesOperation
-   * @readonly
-   *
-   * @description
-   * Tracks the load facility types operation state.
-   *
-   * @since 1.0.0
-   *
-   * @type {CallState}
-   */
-  readonly typesCallState: CallState;
   //#endregion
 }

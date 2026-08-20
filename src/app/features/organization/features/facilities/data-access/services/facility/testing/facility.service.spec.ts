@@ -6,7 +6,6 @@ import type { HydraCollection, HydraItem, ApiError } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type {
   FacilityOutput,
-  FacilityTypeOutput,
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
@@ -22,7 +21,6 @@ describe('FacilityService', () => {
   const orgId = 'org-uuid-1';
   const facilityId = 'facility-uuid-1';
   const facilityBaseUrl = `${mockEnv.apiUrl}/api/organizations/${orgId}/facilities`;
-  const typesUrl = `${mockEnv.apiUrl}/api/facilities/types`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -60,13 +58,6 @@ describe('FacilityService', () => {
     updatedAt: '2026-03-01T00:00:00+00:00',
   };
 
-  const mockFacilityType: FacilityTypeOutput = {
-    '@id': '/api/facilities/types/building',
-    '@type': 'FacilityType',
-    value: 'building',
-    label: 'Building',
-  };
-
   const mockCollection = <T extends HydraItem>(items: T[]): HydraCollection<T> => ({
     '@context': '/api/contexts/Collection',
     '@id': facilityBaseUrl,
@@ -74,22 +65,6 @@ describe('FacilityService', () => {
     member: items,
     totalItems: items.length,
     view: { '@id': `${facilityBaseUrl}?page=1`, '@type': 'hydra:PartialCollectionView' },
-  });
-
-  // ── listTypes ──────────────────────────────────────────────────────────────
-
-  describe('listTypes', () => {
-    it('should send GET request and return facility types', () => {
-      service.listTypes().subscribe((response) => {
-        expect(response.member.length).toBe(1);
-        expect(response.member[0].value).toBe('building');
-      });
-
-      const req = httpMock.expectOne(typesUrl);
-      expect(req.request.method).toBe('GET');
-      expect(req.request.withCredentials).toBe(true);
-      req.flush(mockCollection([mockFacilityType]));
-    });
   });
 
   // ── list ───────────────────────────────────────────────────────────────────

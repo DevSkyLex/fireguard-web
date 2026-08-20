@@ -510,19 +510,6 @@ describe('InterventionService', () => {
     });
   });
 
-  it('loads intervention types', () => {
-    service.listTypes().subscribe();
-
-    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-types`);
-    expect(request.request.method).toBe('GET');
-    request.flush({
-      '@id': '/api/intervention-types',
-      '@type': 'Collection',
-      totalItems: 0,
-      member: [],
-    });
-  });
-
   it('publishes an intervention at its current revision', () => {
     const intervention = { id: 'intervention-1', revision: 5 } as InterventionOutput;
     service.publish(intervention).subscribe();

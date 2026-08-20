@@ -616,47 +616,6 @@ export class OrganizationService extends HydraApiService {
   }
 
   /**
-   * Method listStatuses
-   * @method listStatuses
-   *
-   * @description
-   * Retrieves the list of available organization status options.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - Optional pagination parameters.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} An observable emitting the organization status options.
-   */
-  public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>(`${OrganizationService.BASE_PATH}/statuses`, options);
-  }
-
-  /**
-   * Method listInvitationStatuses
-   * @method listInvitationStatuses
-   *
-   * @description
-   * Retrieves the list of available organization invitation status options.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - Optional pagination parameters.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} An observable emitting the invitation status options.
-   */
-  public listInvitationStatuses(
-    options?: RequestOptions,
-  ): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>(
-      `${OrganizationService.BASE_PATH}/invitation-statuses`,
-      options,
-    );
-  }
-
-  /**
    * Method listLegalTypes
    * @method listLegalTypes
    *

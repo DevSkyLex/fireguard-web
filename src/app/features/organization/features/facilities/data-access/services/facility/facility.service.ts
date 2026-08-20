@@ -1,10 +1,9 @@
 import { Service } from '@angular/core';
 import { catchError, EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
-import type { HydraCollection, OptionOutput } from '@core/api/models';
+import type { HydraCollection } from '@core/api/models';
 import type {
   FacilityOutput,
-  FacilityTypeOutput,
   FacilityListOptions,
   FacilityChildrenOptions,
   FacilityDescendantsOptions,
@@ -52,44 +51,6 @@ export class FacilityService extends HydraApiService {
   //#endregion
 
   //#region Public Methods
-  /**
-   * Method listTypes
-   * @method listTypes
-   *
-   * @description
-   * Retrieves the list of available facility types
-   * (site, building, floor, zone, area) as a labelled collection.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - Optional request parameters.
-   *
-   * @return {Observable<HydraCollection<FacilityTypeOutput>>} An observable emitting the facility types collection.
-   */
-  public listTypes(options?: RequestOptions): Observable<HydraCollection<FacilityTypeOutput>> {
-    return this.getCollection<FacilityTypeOutput>('/api/facilities/types', options);
-  }
-
-  /**
-   * Method listStatuses
-   * @method listStatuses
-   *
-   * @description
-   * Retrieves the list of possible facility statuses (active, archived, etc.)
-   * as a labelled collection. This can be used to populate status filters in the UI.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - Optional request parameters.
-   *
-   * @return {Observable<HydraCollection<OptionOutput>>} An observable emitting the facility statuses collection.
-   */
-  public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>('/api/facilities/statuses', options);
-  }
-
   /**
    * Method list
    * @method list
@@ -173,7 +134,7 @@ export class FacilityService extends HydraApiService {
    * **canonical** collection (`GET /api/facilities?intervention=…`). The
    * organization-scoped {@link list} endpoint has no `intervention` filter,
    * so this bypasses it and queries the bare resource directly, the same way
-   * {@link getCanonical} and {@link listTypes} already do.
+   * {@link getCanonical} already does.
    *
    * @access public
    * @since 4.5.0

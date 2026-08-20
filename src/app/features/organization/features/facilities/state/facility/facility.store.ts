@@ -28,7 +28,6 @@ import {
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   FacilityOutput,
-  FacilityTypeOutput,
   FacilityListOptions,
   CreateFacilityInput,
   UpdateFacilityInput,
@@ -95,8 +94,6 @@ const INITIAL_FACILITY_STATE: FacilityState = {
   childFacilityIdsByParent: {},
   loadedParentIds: [],
   loadingParentIds: [],
-  facilityTypes: [],
-  typesCallState: idleCallState(),
 } as const;
 //#endregion
 
@@ -106,7 +103,7 @@ const INITIAL_FACILITY_STATE: FacilityState = {
  *
  * @description
  * Component-scoped NgRx SignalStore for facility list management, CRUD,
- * archiving, moving, and type reference data.
+ * archiving, and moving.
  * Designed to be provided at **component level** (no `providedIn: 'root'`), so
  * each consumer gets an independent instance tied to its own lifecycle.
  *
@@ -381,7 +378,7 @@ export const FacilityStore = signalStore(
    * @description
    * Adds methods to the store for managing the facility list, including
    * loading a paginated list, creating, updating, archiving, moving
-   * facilities, loading facility types, and resetting operations.
+   * facilities, and resetting operations.
    *
    * @since 1.0.0
    *
@@ -1031,49 +1028,6 @@ export const FacilityStore = signalStore(
                     dispatcher.dispatch(
                       facilityStoreEvents.moveFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to move facility'),
-                      ),
-                    );
-                  },
-                }),
-              ),
-            ),
-          ),
-        ),
-
-        // ── Types ──────────────────────────────────────────────────────────────
-
-        /**
-         * Method loadTypes
-         * @method loadTypes
-         *
-         * @description
-         * Loads the list of available facility types (reference data).
-         * Uses `switchMap` to cancel any previous in-flight request.
-         *
-         * @since 1.0.0
-         *
-         * @type {RxMethod<void>}
-         */
-        loadTypes: rxMethod<void>(
-          pipe(
-            tap((): void => {
-              patchState(store, { typesCallState: pendingCallState() });
-            }),
-            switchMap(() =>
-              facilityService.listTypes().pipe(
-                tapResponse({
-                  next: (response: HydraCollection<FacilityTypeOutput>): void => {
-                    patchState(store, {
-                      facilityTypes: [...response.member],
-                      typesCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown): void => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { typesCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      facilityStoreEvents.typesFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to load facility types'),
                       ),
                     );
                   },

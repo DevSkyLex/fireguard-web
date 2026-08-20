@@ -61,7 +61,6 @@ export type { CreateInterventionChangeInput } from './intervention-change/create
 export type { InterventionChangeOutput } from './intervention-change/intervention-change-output.interface';
 export type { InterventionChangeStatus } from './intervention-change/intervention-change-status.type';
 export type { UpdateInterventionChangeInput } from './intervention-change/update-intervention-change-input.interface';
-export type { InterventionTypeOutput } from './intervention-type/intervention-type-output.interface';
 export type { InterventionTemplateOutput } from './intervention-template/intervention-template-output.interface';
 export type { InterventionTemplateInstantiationOutput } from './intervention-template/intervention-template-instantiation-output.interface';
 export type { InstantiateInterventionTemplateInput } from './intervention-template/instantiate-intervention-template-input.interface';

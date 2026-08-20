@@ -30,12 +30,17 @@ This subfeature is responsible for:
   permission-gated bulk actions. `?create=1` opens the creation sheet on
   arrival and is consumed once, so the parent feature's landing page can offer
   "New intervention" as a primary action that actually starts the work.
-  **Export is a client-side CSV serialization of the current question** (same
-  filters, sort and visible columns as the screen), never a backend endpoint:
-  the already-loaded page is downloaded directly when it is the whole result
-  set, otherwise every matching row is drained through
-  `InterventionService.listAll` and capped at 1000 rows
-  (`ui/pages/interventions-page/utils/intervention-csv-export/`).
+  **Export is a server-side CSV** (API #99): `InterventionService.exportCsv`
+  reads `GET /api/interventions/export` as a `Blob`, forwarding the accepted
+  subset of the current question — `name`, `status`, `type`, `priority`,
+  `site`, `responsible`, `due`/`dueAtAfter`/`dueAtBefore` — narrowed from the
+  page's own filters by `buildInterventionExportOptions`
+  (`utils/intervention-list-query/`). A filter the endpoint does not serve
+  (`mine`/`member`, `label`, a planned-start bound) is silently left out of
+  the request and the operator sees one toast when that narrows the file
+  below the screen. The endpoint caps the collection at 50,000 rows and
+  answers `422` with an RFC 7807 `detail` past it, which the page surfaces
+  as-is by reading the (blob-shaped) error body back through `Blob.text()`.
 
   **Filters live in the URL** (5.2 — this flips the earlier "questions asked
   now, never persisted" stance): one query param per filter, raw ids for the

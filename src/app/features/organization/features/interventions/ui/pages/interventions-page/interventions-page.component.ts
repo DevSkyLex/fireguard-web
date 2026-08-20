@@ -1,3 +1,4 @@
+import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -42,6 +43,7 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
+import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
@@ -87,6 +89,7 @@ import {
 } from '@features/organization/features/interventions/state';
 import { buildInterventionDuplicatePrefill } from '@features/organization/features/interventions/utils';
 import {
+  buildInterventionExportOptions,
   buildInterventionListOptions,
   parseInterventionListFilters,
   serializeInterventionListFilters,
@@ -144,7 +147,6 @@ import {
   type InterventionTransitionRequest,
 } from '../../tables/intervention-table';
 import type { InterventionListItemViewModel } from './models';
-import { buildInterventionCsv } from './utils';
 
 /** How close a deadline must be to count as "due soon". */
 const DUE_SOON_WINDOW_MS: number = 48 * 60 * 60 * 1000;
@@ -154,13 +156,6 @@ const SEARCH_DEBOUNCE_MS: number = 300;
 
 /** The page sizes offered under the table — the server default first, its clamp last. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
-
-/**
- * Hard cap on how many rows a multi-page CSV export drains before it stops
- * asking for more — a runaway `listAll` would otherwise pull an unbounded
- * organization history into one browser tab.
- */
-const EXPORT_ROW_CAP: number = 1000;
 
 /** The narrowing a freshly opened list applies: none. */
 const NO_FILTERS: InterventionListFilters = {
@@ -670,7 +665,7 @@ export class InterventionsPage {
   /** What the search box holds, before the debounce settles. */
   protected readonly draftSearch: WritableSignal<string> = signal<string>('');
 
-  /** Whether a multi-page export drain is currently in flight. */
+  /** Whether an export request is currently in flight. */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
   /** The page window, one-based. */
@@ -748,31 +743,12 @@ export class InterventionsPage {
   protected readonly sortOptions: SelectOption<InterventionSortField>[] = INTERVENTION_SORT_OPTIONS;
 
   /**
-   * Property visibleColumns
-   * @readonly
-   *
-   * @description
-   * The optional columns currently shown, in the table's own order — exactly
-   * what the CSV export mirrors, so a column hidden on screen never appears
-   * in the file.
-   *
-   * @access protected
-   * @since 6.2.0
-   *
-   * @type {Signal<ReadonlyArray<InterventionTableColumn>>}
-   */
-  protected readonly visibleColumns: Signal<ReadonlyArray<InterventionTableColumn>> = computed(
-    (): ReadonlyArray<InterventionTableColumn> =>
-      this.allColumns.filter((id: InterventionTableColumn): boolean => this.isColumnVisible(id)),
-  );
-
-  /**
    * Property exportDisabled
    * @readonly
    *
    * @description
    * Whether the "Export" button should be inert: nothing loaded yet, nothing
-   * matches the current query, or a multi-page drain is already running.
+   * matches the current query, or an export request is already in flight.
    *
    * @access protected
    * @since 6.2.0
@@ -3330,11 +3306,13 @@ export class InterventionsPage {
    * @method exportCsv
    *
    * @description
-   * Downloads the current question as CSV — same filters, same sort, same
-   * visible columns. The already-loaded page is exported directly when it
-   * is the entire matching collection; otherwise every matching row is
-   * drained first through `InterventionService.listAll`, capped at
-   * {@link EXPORT_ROW_CAP} rows with a toast when the cap truncates the file.
+   * Downloads the current question as CSV, serialized server-side
+   * (`InterventionService.exportCsv`, `GET /api/interventions/export`) —
+   * the file is never wider than 50,000 rows, past which the endpoint
+   * answers `422` instead. Filters the endpoint does not accept (`mine`,
+   * `label`, a planned-start bound, …) are silently left out of the request
+   * by {@link buildInterventionExportOptions}; when that narrows the export
+   * below what the screen shows, a toast says so before the request fires.
    *
    * @access protected
    * @since 6.2.0
@@ -3342,63 +3320,59 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected exportCsv(): void {
-    const loaded: readonly InterventionOutput[] = this.store.interventionList();
-    const total: number = this.store.totalInterventions();
+    if (this.store.totalInterventions() === 0) return;
 
-    if (total === 0) return;
+    const { options, droppedFilterCount } = buildInterventionExportOptions(
+      this.filters(),
+      this.sortOrder(),
+      this.searchTerm(),
+      new Date(),
+      this.filters().mine ? this.memberIri() : null,
+    );
 
-    if (total <= loaded.length) {
-      this.downloadInterventionCsv(loaded);
-      return;
+    if (droppedFilterCount > 0) {
+      this.feedback.warn(
+        $localize`:@@intervention.list.exportFiltersDropped:Some active filters aren't supported by the export and were left out.`,
+      );
     }
 
     this.exportBusy.set(true);
 
     this.interventionService
-      .listAll(this.organizationId(), {
-        ...buildInterventionListOptions(
-          this.filters(),
-          this.sortOrder(),
-          this.searchTerm(),
-          new Date(),
-          this.filters().mine ? this.memberIri() : null,
-        ),
-      })
+      .exportCsv(this.organizationId(), options)
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (rows: readonly InterventionOutput[]): void => {
+        next: (blob: Blob): void => {
           this.exportBusy.set(false);
-
-          const capped: boolean = rows.length > EXPORT_ROW_CAP;
-          if (capped) {
-            this.feedback.warn(
-              $localize`:@@intervention.list.exportCapped:Export capped at ${EXPORT_ROW_CAP}:cap: rows.`,
-            );
-          }
-
-          this.downloadInterventionCsv(capped ? rows.slice(0, EXPORT_ROW_CAP) : rows);
+          this.browserDownload.trigger(blob, this.exportFilename());
         },
-        error: (): void => {
+        error: (error: HttpErrorResponse): void => {
           this.exportBusy.set(false);
-          this.feedback.error(
-            $localize`:@@intervention.list.exportFailed:Couldn't export interventions.`,
-          );
+          void this.resolveExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ?? $localize`:@@intervention.list.exportFailed:Couldn't export interventions.`,
+            );
+          });
         },
       });
   }
 
-  /** Serializes `rows` into CSV and triggers the browser download. */
-  private downloadInterventionCsv(rows: readonly InterventionOutput[]): void {
-    const csv: string = buildInterventionCsv(rows, this.visibleColumns(), {
-      columnLabelOf: (id: InterventionTableColumn): string => this.columnLabelOf(id),
-      statusLabelOf: this.statusLabelOf,
-      typeLabelOf: this.typeLabelOf,
-      priorityLabelOf: this.priorityLabelOf,
-      siteLabelOf: this.siteLabelOf,
-    });
+  /**
+   * Resolves the RFC 7807 `detail` a `422` export response carries — the
+   * response is fetched as a blob, so a JSON error body arrives as one too
+   * and must be read back through `Blob.text()` before it can be parsed.
+   * `null` when the body isn't one (a network failure, a non-JSON body),
+   * letting the caller fall back to the generic message.
+   */
+  private async resolveExportErrorDetail(error: HttpErrorResponse): Promise<string | null> {
+    if (!(error.error instanceof Blob)) return null;
 
-    const blob: Blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    this.browserDownload.trigger(blob, this.exportFilename());
+    try {
+      const body: unknown = JSON.parse(await error.error.text());
+      return isApiError(body) ? body.detail : null;
+    } catch {
+      return null;
+    }
   }
 
   /** The export's filename: the organization, stamped with today's date (`yyyyMMdd`). */

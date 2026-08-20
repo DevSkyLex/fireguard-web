@@ -1,6 +1,7 @@
 export { createInterventionCapabilities } from './intervention-capabilities/intervention-capabilities.utils';
 export { isInterventionBoardMoveAllowed } from './intervention-board-move/intervention-board-move.utils';
 export {
+  buildInterventionExportOptions,
   buildInterventionListOptions,
   countActiveFilters,
   parseInterventionListFilters,

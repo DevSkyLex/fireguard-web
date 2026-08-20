@@ -56,7 +56,6 @@ import {
 } from '@features/organization/features/collaboration/data-access';
 import type {
   AddReactionInput,
-  EditMessageInput,
   MessageOutput,
   MessageReactionOutput,
   PostMessageInput,
@@ -70,7 +69,6 @@ import {
   ORGANIZATION_MEMBER_ACCESS_PORT,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
-import { messageRepliesStoreEvents } from '../message-replies';
 import {
   MESSAGE_PAGE_SIZE,
   MESSAGE_REALTIME_COALESCE_MS,
@@ -183,18 +181,19 @@ function optimisticMessage(
  * newest page rather than the first — re-reading page 1 would never see a new
  * message in any conversation longer than one page.
  *
- * Three contract hazards are absorbed here.
+ * Two contract hazards are absorbed here.
  *
- * Reaction and save responses rebuild the message *without* its real reply
- * count or references, always reporting `replyCount: 0` and `references: []`.
- * Merging them whole would silently erase both, so those two paths patch only
- * the field they own.
- *
- * Deletion is a tombstone answering `204`: the row stays, redacted. There is
- * nothing to merge, so `isDeleted` is flipped locally.
+ * Reaction responses rebuild the message *without* its real reply count or
+ * references, always reporting `replyCount: 0` and `references: []`. Merging
+ * them whole would silently erase both, so that path patches only the field
+ * it owns.
  *
  * And there is no `GET /api/messages/{id}` — a single message cannot be
  * refetched, which is why every mutation has to leave the local copy correct.
+ *
+ * The API's edit, tombstone-deletion, pin and save flows had store pipelines
+ * here with no UI reaching them; they were pruned rather than left dead
+ * (2026-08-20).
  *
  * @since 1.0.0
  *
@@ -223,24 +222,6 @@ export const MessageThreadStore = signalStore(
      */
     sortedMessages: computed((): readonly MessageOutput[] =>
       store.messageEntities().toSorted(byCreatedAt),
-    ),
-
-    /** Messages that survived redaction, for surfaces that hide tombstones. */
-    visibleMessages: computed((): readonly MessageOutput[] =>
-      store
-        .messageEntities()
-        .filter((message: MessageOutput): boolean => !message.isDeleted)
-        .toSorted(byCreatedAt),
-    ),
-
-    /** Pinned messages, most recently pinned first. */
-    pinnedMessages: computed((): readonly MessageOutput[] =>
-      store
-        .messageEntities()
-        .filter((message: MessageOutput): boolean => Boolean(message.pinnedAt))
-        .toSorted((a: MessageOutput, b: MessageOutput): number =>
-          (b.pinnedAt ?? '').localeCompare(a.pinnedAt ?? ''),
-        ),
     ),
   })),
 
@@ -460,80 +441,6 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
-       * Edits a message. The response is complete.
-       */
-      edit: rxMethod<{ readonly messageId: string; readonly input: EditMessageInput }>(
-        pipe(
-          tap(() => patchState(store, { postCallState: pendingCallState() })),
-          switchMap(({ messageId, input }) =>
-            service.edit(messageId, input).pipe(
-              tapResponse({
-                next: (message: MessageOutput): void =>
-                  patchState(store, upsertEntity(message, { collection: 'message' }), {
-                    postCallState: successCallState(null),
-                  }),
-                error: (error: unknown): void => {
-                  const storeError = toStoreError(error);
-                  patchState(store, { postCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    messageThreadStoreEvents.postFailed(
-                      toStoreFailureEventPayload(storeError, 'The message could not be edited.'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Tombstones a message.
-       *
-       * The `204` carries no body and the row is *kept* server-side, redacted.
-       * The local copy is redacted to match rather than removed, so the thread
-       * keeps its shape.
-       */
-      remove: rxMethod<string>(
-        pipe(
-          tap(() => patchState(store, { postCallState: pendingCallState() })),
-          switchMap((messageId: string) =>
-            service.remove(messageId).pipe(
-              tapResponse({
-                next: (): void =>
-                  patchState(
-                    store,
-                    updateEntity(
-                      {
-                        id: messageId,
-                        changes: {
-                          isDeleted: true,
-                          body: undefined,
-                          mentions: [],
-                          attachments: [],
-                          reactions: [],
-                        },
-                      },
-                      { collection: 'message' },
-                    ),
-                    { postCallState: successCallState(null) },
-                  ),
-                error: (error: unknown): void => {
-                  const storeError = toStoreError(error);
-                  patchState(store, { postCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    messageThreadStoreEvents.postFailed(
-                      toStoreFailureEventPayload(storeError, 'The message could not be deleted.'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
        * Adds a reaction.
        *
        * Only `reactions` is taken from the response: the reaction handler
@@ -620,144 +527,6 @@ export const MessageThreadStore = signalStore(
                   dispatcher.dispatch(
                     messageThreadStoreEvents.interactionFailed(
                       toStoreFailureEventPayload(storeError, 'The reaction could not be removed.'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Saves a message for the acting member.
-       *
-       * Same hazard as {@link react}: only `isSaved` is trustworthy here.
-       */
-      save: rxMethod<string>(
-        pipe(
-          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
-          switchMap((messageId: string) =>
-            service.save(messageId).pipe(
-              tapResponse({
-                next: (message: MessageOutput): void =>
-                  patchState(
-                    store,
-                    updateEntity(
-                      { id: messageId, changes: { isSaved: message.isSaved } },
-                      { collection: 'message' },
-                    ),
-                    { interactionCallState: successCallState(null) },
-                  ),
-                error: (error: unknown): void => {
-                  const storeError = toStoreError(error);
-                  patchState(store, { interactionCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    messageThreadStoreEvents.interactionFailed(
-                      toStoreFailureEventPayload(storeError, 'The message could not be saved.'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Removes the acting member's bookmark.
-       *
-       * `204`, so `isSaved` is flipped locally — the message stays in the
-       * thread, it has only left the bookmark list.
-       */
-      unsave: rxMethod<string>(
-        pipe(
-          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
-          switchMap((messageId: string) =>
-            service.unsave(messageId).pipe(
-              tapResponse({
-                next: (): void =>
-                  patchState(
-                    store,
-                    updateEntity(
-                      { id: messageId, changes: { isSaved: false } },
-                      { collection: 'message' },
-                    ),
-                    { interactionCallState: successCallState(null) },
-                  ),
-                error: (error: unknown): void => {
-                  const storeError = toStoreError(error);
-                  patchState(store, { interactionCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    messageThreadStoreEvents.interactionFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        'The message could not be removed from saved messages.',
-                      ),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Pins a message. Unlike reactions and saves, this response is complete.
-       */
-      pin: rxMethod<string>(
-        pipe(
-          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
-          switchMap((messageId: string) =>
-            service.pin(messageId).pipe(
-              tapResponse({
-                next: (message: MessageOutput): void =>
-                  patchState(store, upsertEntity(message, { collection: 'message' }), {
-                    interactionCallState: successCallState(null),
-                  }),
-                error: (error: unknown): void => {
-                  const storeError = toStoreError(error);
-                  patchState(store, { interactionCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    messageThreadStoreEvents.interactionFailed(
-                      toStoreFailureEventPayload(storeError, 'The message could not be pinned.'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Unpins a message.
-       *
-       * `204`, so both pin fields are cleared locally — the Pins tab reads
-       * `pinnedAt`, and a row that kept it would stay listed there.
-       */
-      unpin: rxMethod<string>(
-        pipe(
-          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
-          switchMap((messageId: string) =>
-            service.unpin(messageId).pipe(
-              tapResponse({
-                next: (): void =>
-                  patchState(
-                    store,
-                    updateEntity(
-                      { id: messageId, changes: { pinnedAt: undefined, pinnedBy: undefined } },
-                      { collection: 'message' },
-                    ),
-                    { interactionCallState: successCallState(null) },
-                  ),
-                error: (error: unknown): void => {
-                  const storeError = toStoreError(error);
-                  patchState(store, { interactionCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    messageThreadStoreEvents.interactionFailed(
-                      toStoreFailureEventPayload(storeError, 'The message could not be unpinned.'),
                     ),
                   );
                 },
@@ -878,28 +647,11 @@ export const MessageThreadStore = signalStore(
         refresh,
 
         /**
-         * Flips a message's bookmark, whichever way it currently points.
-         *
-         * The direction lives here rather than at the call site because the
-         * store is what holds the message: a surface handed only an id would
-         * have to look the row up again to answer a question already answered.
-         */
-        toggleSave(messageId: string): void {
-          if (store.messageEntityMap()[messageId]?.isSaved === true) {
-            store.unsave(messageId);
-
-            return;
-          }
-
-          store.save(messageId);
-        },
-
-        /**
          * Adds or withdraws the acting member's reaction with one emoji.
          *
-         * The direction lives here for the same reason as {@link toggleSave}:
-         * the store holds the tally, so a surface handed only an emoji would
-         * have to look the row up again to answer a question already answered.
+         * The direction lives here because the store holds the tally: a
+         * surface handed only an emoji would have to look the row up again to
+         * answer a question already answered.
          */
         toggleReaction(messageId: string, emoji: string): void {
           const message: MessageOutput | undefined = store.messageEntityMap()[messageId];
@@ -916,19 +668,6 @@ export const MessageThreadStore = signalStore(
           }
 
           store.react({ messageId, input: { emoji } });
-        },
-
-        /**
-         * Flips a message's pin. Same reasoning as {@link toggleSave}.
-         */
-        togglePin(messageId: string): void {
-          if (store.messageEntityMap()[messageId]?.pinnedAt !== undefined) {
-            store.unpin(messageId);
-
-            return;
-          }
-
-          store.pin(messageId);
         },
 
         /**
@@ -1031,26 +770,6 @@ export const MessageThreadStore = signalStore(
               .filter((id: string): boolean => !payload.clientIds.includes(id)),
           });
           store.refresh();
-        });
-
-      // A reply belongs to the replies store, but the count belongs to the
-      // parent, which lives here. Refetching would not do: `refresh` only
-      // re-reads page 1, and the parent may have scrolled well past it.
-      events
-        .on(messageRepliesStoreEvents.posted)
-        .pipe(takeUntilDestroyed())
-        .subscribe(({ payload: parentMessageId }): void => {
-          const parent: MessageOutput | undefined = store.messageEntityMap()[parentMessageId];
-
-          if (parent === undefined) return;
-
-          patchState(
-            store,
-            updateEntity(
-              { id: parentMessageId, changes: { replyCount: parent.replyCount + 1 } },
-              { collection: 'message' },
-            ),
-          );
         });
 
       let missedUpdates = false;

@@ -1,6 +1,5 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService, type MercureConnectionStatus } from '@core/mercure';
@@ -13,7 +12,6 @@ import {
 import type { MessageOutput } from '@features/organization/features/collaboration/models';
 import { MessagingSyncCoordinatorService } from '@features/organization/features/collaboration/services';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
-import { messageRepliesStoreEvents } from '../../message-replies';
 import { MESSAGE_PAGE_SIZE } from '../constants';
 import { MessageThreadStore, type MessageThreadStoreType } from '../message-thread.store';
 
@@ -68,14 +66,8 @@ describe('MessageThreadStore', () => {
     list: ReturnType<typeof vi.fn>;
     postMessage: ReturnType<typeof vi.fn>;
     postMessageWithClientId: ReturnType<typeof vi.fn>;
-    edit: ReturnType<typeof vi.fn>;
-    remove: ReturnType<typeof vi.fn>;
     addReaction: ReturnType<typeof vi.fn>;
     removeReaction: ReturnType<typeof vi.fn>;
-    save: ReturnType<typeof vi.fn>;
-    unsave: ReturnType<typeof vi.fn>;
-    pin: ReturnType<typeof vi.fn>;
-    unpin: ReturnType<typeof vi.fn>;
   };
 
   let conversations: {
@@ -134,14 +126,8 @@ describe('MessageThreadStore', () => {
       list: vi.fn(),
       postMessage: vi.fn(),
       postMessageWithClientId: vi.fn(),
-      edit: vi.fn(),
-      remove: vi.fn(),
       addReaction: vi.fn(),
       removeReaction: vi.fn(),
-      save: vi.fn(),
-      unsave: vi.fn(),
-      pin: vi.fn(),
-      unpin: vi.fn(),
     };
     realtime = new Subject<unknown>();
     topicStatus = signal<ReadonlyMap<string, MercureConnectionStatus>>(
@@ -347,24 +333,6 @@ describe('MessageThreadStore', () => {
     });
   });
 
-  it('should unsave a message that is already saved, and save one that is not', () => {
-    service.list.mockReturnValue(of(collection([message({ isSaved: true })])));
-    service.unsave.mockReturnValue(of(undefined));
-    service.save.mockReturnValue(of(message({ isSaved: true })));
-
-    const store = createStore();
-    store.load('conversation-1');
-
-    // The bookmark button is a toggle; before this it only ever saved, so a
-    // second press re-saved an already-saved message.
-    store.toggleSave('message-1');
-    expect(service.unsave).toHaveBeenCalledWith('message-1');
-    expect(store.messageEntityMap()['message-1'].isSaved).toBe(false);
-
-    store.toggleSave('message-1');
-    expect(service.save).toHaveBeenCalledWith('message-1');
-  });
-
   it('should withdraw a reaction the reader is part of, and add one they are not', () => {
     service.list.mockReturnValue(
       of(collection([message({ reactions: [{ emoji: '👍', count: 2, reactedByMe: true }] })])),
@@ -394,68 +362,6 @@ describe('MessageThreadStore', () => {
     store.toggleReaction('absent', '👍');
 
     expect(service.addReaction).toHaveBeenCalledWith('absent', { emoji: '👍' });
-  });
-
-  it('should unpin a pinned message and clear both pin fields', () => {
-    service.list.mockReturnValue(
-      of(collection([message({ pinnedAt: '2026-01-02T00:00:00+00:00', pinnedBy: 'member-2' })])),
-    );
-    service.unpin.mockReturnValue(of(undefined));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.togglePin('message-1');
-
-    expect(service.unpin).toHaveBeenCalledWith('message-1');
-    // The Pins tab reads `pinnedAt`; a row that kept it would stay listed.
-    expect(store.messageEntityMap()['message-1'].pinnedAt).toBeUndefined();
-    expect(store.pinnedMessages()).toHaveLength(0);
-  });
-
-  it('should bump the parent reply count when the replies store posts', () => {
-    service.list.mockReturnValue(of(collection([message()])));
-
-    const store = createStore();
-    store.load('conversation-1');
-
-    TestBed.inject(Dispatcher).dispatch(messageRepliesStoreEvents.posted('message-1'));
-
-    // Refetching would not do: `refresh` only re-reads page 1, and a parent
-    // deep in the history is not on it.
-    expect(store.messageEntityMap()['message-1'].replyCount).toBe(5);
-  });
-
-  it('should keep replyCount and references when a save lands', () => {
-    service.list.mockReturnValue(of(collection([message()])));
-    service.save.mockReturnValue(of(message({ isSaved: true, replyCount: 0, references: [] })));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.save('message-1');
-
-    const updated = store.messageEntityMap()['message-1'];
-
-    expect(updated.isSaved).toBe(true);
-    expect(updated.replyCount).toBe(4);
-    expect(updated.references).toHaveLength(1);
-  });
-
-  it('should redact a deleted message in place rather than removing it', () => {
-    service.list.mockReturnValue(of(collection([message({ reactions: [] })])));
-    service.remove.mockReturnValue(of(undefined));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.remove('message-1');
-
-    const tombstone = store.messageEntityMap()['message-1'];
-
-    // The server keeps the row for compliance and redacts it at the boundary;
-    // the local copy has to match, not disappear.
-    expect(tombstone).toBeDefined();
-    expect(tombstone.isDeleted).toBe(true);
-    expect(tombstone.body).toBeUndefined();
-    expect(store.visibleMessages()).toHaveLength(0);
   });
 
   describe('sending', () => {
@@ -601,95 +507,6 @@ describe('MessageThreadStore', () => {
       });
       expect(store.failedMessageIds()).toEqual([]);
     });
-  });
-
-  it('should order pinned messages most recently pinned first', () => {
-    service.list.mockReturnValue(
-      of(
-        collection([
-          message({ id: 'message-1', pinnedAt: '2026-01-01T00:00:00+00:00' }),
-          message({ id: 'message-2', pinnedAt: '2026-03-01T00:00:00+00:00' }),
-          message({ id: 'message-3' }),
-        ]),
-      ),
-    );
-
-    const store = createStore();
-    store.load('conversation-1');
-
-    expect(store.pinnedMessages().map((m: MessageOutput) => m.id)).toEqual([
-      'message-2',
-      'message-1',
-    ]);
-  });
-
-  it('should edit a message in place', () => {
-    service.list.mockReturnValue(of(collection([message()])));
-    service.edit.mockReturnValue(of(message({ body: 'Edited text.' })));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.edit({ messageId: 'message-1', input: { body: 'Edited text.' } });
-
-    expect(store.messageEntityMap()['message-1'].body).toBe('Edited text.');
-    expect(store.postError()).toBeNull();
-  });
-
-  it('should record a post error when editing fails', () => {
-    service.list.mockReturnValue(of(collection([message()])));
-    service.edit.mockReturnValue(throwError(() => new Error('rejected')));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.edit({ messageId: 'message-1', input: { body: 'Edited text.' } });
-
-    expect(store.postError()).not.toBeNull();
-  });
-
-  it('should record a post error when deleting a message fails', () => {
-    service.list.mockReturnValue(of(collection([message()])));
-    service.remove.mockReturnValue(throwError(() => new Error('rejected')));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.remove('message-1');
-
-    expect(store.postError()).not.toBeNull();
-    expect(store.messageEntityMap()['message-1'].isDeleted).toBe(false);
-  });
-
-  it('should record an interaction error when saving a message fails', () => {
-    service.list.mockReturnValue(of(collection([message()])));
-    service.save.mockReturnValue(throwError(() => new Error('rejected')));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.save('message-1');
-
-    expect(store.messageEntityMap()['message-1'].isSaved).toBe(false);
-  });
-
-  it('should upsert the returned message when pinning succeeds', () => {
-    service.list.mockReturnValue(of(collection([message()])));
-    service.pin.mockReturnValue(of(message({ pinnedAt: '2026-02-01T00:00:00+00:00' })));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.pin('message-1');
-
-    expect(store.messageEntityMap()['message-1'].pinnedAt).toBe('2026-02-01T00:00:00+00:00');
-    expect(store.pinnedMessages()).toHaveLength(1);
-  });
-
-  it('should record an interaction error when pinning fails', () => {
-    service.list.mockReturnValue(of(collection([message()])));
-    service.pin.mockReturnValue(throwError(() => new Error('rejected')));
-
-    const store = createStore();
-    store.load('conversation-1');
-    store.pin('message-1');
-
-    expect(store.messageEntityMap()['message-1'].pinnedAt).toBeUndefined();
   });
 
   it('should retry a failed message by re-queuing its outbox operation and flushing', async () => {

@@ -248,7 +248,7 @@ export class ChannelsPage {
    * @description
    * Every visible channel's children, keyed by the parent's id, so the tree
    * renders without an O(n) scan per row. Matched on the trailing IRI
-   * segment, the way `ChannelPanelStore.children` does — the id is what is
+   * segment — the id is what is
    * stable across responses, not the IRI.
    *
    * @access protected

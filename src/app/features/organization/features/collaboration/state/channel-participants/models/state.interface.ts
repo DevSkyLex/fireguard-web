@@ -9,9 +9,8 @@ import type { ChannelParticipantOutput } from '@features/organization/features/c
  * State of {@link ChannelParticipantsStore}.
  *
  * The roster is a fully-replaced read on every load, so it lives in a plain
- * `CallState` rather than an entity collection — the same choice
- * `ChannelPanelStore` makes for the same endpoint, since nothing here is
- * looked up by id outside the list itself.
+ * `CallState` rather than an entity collection — nothing here is looked up
+ * by id outside the list itself.
  *
  * @since 1.0.0
  *

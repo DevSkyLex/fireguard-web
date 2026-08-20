@@ -1,1 +1,0 @@
-export { savedMessagesStoreEvents } from './events';

@@ -8,7 +8,6 @@ export type {
   AssistantThreadDetailOutput,
   AssistantThreadOutput,
 } from './assistant';
-export type { ConversationAttachmentOutput } from './attachment';
 export type { DirectConversationView } from './direct-conversation-view';
 export type {
   BuildMessageViewsInput,
@@ -31,9 +30,6 @@ export type {
   UpdateChannelInput,
 } from './channel';
 export type {
-  ArchiveConversationInput,
-  ConversationActivityBucketOutput,
-  ConversationActivityQuery,
   ConversationOutput,
   ConversationSubjectType,
   ConversationVisibility,
@@ -47,8 +43,6 @@ export type {
 } from './conversation';
 export type {
   AddReactionInput,
-  EditMessageInput,
-  ListSavedMessagesQuery,
   MessageAttachmentSummary,
   MessageOutput,
   MessageReactionOutput,
@@ -56,10 +50,7 @@ export type {
   MessageReferenceOutput,
   MessageReferenceType,
   PostMessageInput,
-  PostReplyInput,
 } from './message';
-export type { ActivityCell, ActivityLevel, ChannelPanelTab } from './channel-panel';
-export type { MessagingLinkOutput } from './link';
 export type { MentionQuery } from './composer';
 export type {
   ListPresenceQuery,

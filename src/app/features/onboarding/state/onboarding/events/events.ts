@@ -32,12 +32,6 @@ export const onboardingStoreEvents = eventGroup({
 
     /** Emitted when rolling back the last step fails. */
     rollbackFailed: type<StoreFailureEventPayload>(),
-
-    /** Emitted when dismissing the activation flow fails. */
-    dismissFailed: type<StoreFailureEventPayload>(),
-
-    /** Emitted when resuming the activation flow fails. */
-    resumeFailed: type<StoreFailureEventPayload>(),
   },
 });
 //#endregion

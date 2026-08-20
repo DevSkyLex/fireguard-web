@@ -35,13 +35,8 @@ const INITIAL_STATE: ChannelParticipantsState = {
  * @description
  * One channel's roster, for the participants sheet's own add/remove flow.
  *
- * `ChannelPanelStore` already reads a channel's participants for the info
- * panel, but does not expose add or remove — it is root-provided and reads
- * the routed channel for a read-only surface. This slice exists because that
- * one has no mutation surface to extend without widening a store the panel
- * does not need widened; the roster itself is loaded the same way, a plain
- * `CallState` rather than an entity collection, since nothing here is looked
- * up by id outside the list.
+ * The roster is loaded as a plain `CallState` rather than an entity
+ * collection, since nothing here is looked up by id outside the list.
  *
  * Component-scoped: provided by `ChannelConversationPage` alongside
  * `MessageThreadStore`, and reset the same way — the router reuses the page

@@ -3,6 +3,7 @@ import type {
   InterventionListSort,
 } from '@features/organization/features/interventions/models';
 import {
+  buildInterventionExportOptions,
   buildInterventionListOptions,
   countActiveFilters,
   parseInterventionListFilters,
@@ -271,6 +272,74 @@ describe('buildInterventionListOptions', () => {
       plannedStartAtAfter: '2026-08-10T00:00:00.000Z',
       plannedStartAtBefore: '2026-08-20T00:00:00.000Z',
     });
+  });
+});
+
+describe('buildInterventionExportOptions', () => {
+  it('should send the ordering-free options with no drops when nothing is filtered', () => {
+    expect(buildInterventionExportOptions(NO_FILTERS, DUE_ASC, '', NOW)).toEqual({
+      options: {},
+      droppedFilterCount: 0,
+    });
+  });
+
+  it('should forward every exportable filter untouched', () => {
+    expect(
+      buildInterventionExportOptions(
+        { ...NO_FILTERS, status: 'planned', type: ['inspection_campaign', 'inventory'] },
+        DUE_ASC,
+        'sweep',
+        NOW,
+      ),
+    ).toEqual({
+      options: {
+        name: 'sweep',
+        status: 'planned',
+        type: ['inspection_campaign', 'inventory'],
+      },
+      droppedFilterCount: 0,
+    });
+  });
+
+  it('should drop the "mine" and label narrowing, and count each one dropped', () => {
+    const { options, droppedFilterCount } = buildInterventionExportOptions(
+      { ...NO_FILTERS, mine: true, label: '/api/intervention-labels/l-1' },
+      DUE_ASC,
+      '',
+      NOW,
+      'member-1',
+    );
+
+    expect(options).not.toHaveProperty('member');
+    expect(options).not.toHaveProperty('label');
+    expect(droppedFilterCount).toBe(2);
+  });
+
+  it('should drop a planned-start bound the export endpoint rejects', () => {
+    const { options, droppedFilterCount } = buildInterventionExportOptions(
+      {
+        ...NO_FILTERS,
+        plannedStartRange: { operator: 'greaterThan', after: new Date('2026-08-10') },
+      },
+      DUE_ASC,
+      '',
+      NOW,
+    );
+
+    expect(options).not.toHaveProperty('plannedStartAtAfter');
+    expect(droppedFilterCount).toBe(1);
+  });
+
+  it('should keep the due-date bounds and the overdue preset, both exportable', () => {
+    const { options, droppedFilterCount } = buildInterventionExportOptions(
+      { ...NO_FILTERS, dueWindow: 'overdue' },
+      DUE_ASC,
+      '',
+      NOW,
+    );
+
+    expect(options).toEqual({ due: 'overdue' });
+    expect(droppedFilterCount).toBe(0);
   });
 });
 

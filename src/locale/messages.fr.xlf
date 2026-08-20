@@ -10374,9 +10374,9 @@
         <source>Preparing the export…</source>
         <target>Préparation de l'export…</target>
       </trans-unit>
-      <trans-unit id="intervention.list.exportCapped" datatype="html">
-        <source>Export capped at <x id="cap" equiv-text="EXPORT_ROW_CAP"/> rows.</source>
-        <target>Export limité à <x id="cap" equiv-text="EXPORT_ROW_CAP"/> lignes.</target>
+      <trans-unit id="intervention.list.exportFiltersDropped" datatype="html">
+        <source>Some active filters aren&apos;t supported by the export and were left out.</source>
+        <target>Certains filtres actifs ne sont pas pris en charge par l'export et ont été exclus.</target>
       </trans-unit>
       <trans-unit id="intervention.list.exportFailed" datatype="html">
         <source>Couldn&apos;t export interventions.</source>

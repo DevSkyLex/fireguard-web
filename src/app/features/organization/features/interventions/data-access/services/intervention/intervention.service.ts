@@ -24,6 +24,7 @@ import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionCalendarFilters,
+  InterventionExportOptions,
   InterventionListOptions,
   InterventionOutput,
   InterventionStatisticsOutput,
@@ -247,6 +248,47 @@ export class InterventionService extends HydraApiService {
         return [...merged.values()];
       }),
     );
+  }
+
+  /**
+   * Method exportCsv
+   * @method exportCsv
+   *
+   * @description
+   * Reads the organization's intervention export as CSV
+   * (`GET /api/interventions/export`), forwarding the accepted subset of
+   * {@link list}'s own filters (see {@link InterventionExportOptions}) the same
+   * way `list` itself does — a scalar as `key=`, a non-empty readonly array as
+   * repeated `key[]=`. The collection is capped server-side at 50,000 rows;
+   * past it the endpoint answers `422` with an RFC 7807 `detail` instead of
+   * the file. Calls `this.http` directly, like {@link exportReport}, for a
+   * response shape (`responseType: 'blob'`) the base class does not support.
+   *
+   * @access public
+   * @since 8.4.0
+   *
+   * @param {string} organizationId - organization Id value.
+   * @param {InterventionExportOptions} [options] - The accepted narrowing to apply.
+   *
+   * @return {Observable<Blob>} The export's CSV binary content.
+   */
+  public exportCsv(organizationId: string, options?: InterventionExportOptions): Observable<Blob> {
+    const params: Record<string, string | readonly string[]> = {
+      organization: `/api/organizations/${organizationId}`,
+    };
+    for (const [key, value] of Object.entries(options ?? {})) {
+      if (Array.isArray(value)) {
+        if (value.length > 0) params[key] = value.map(String);
+        continue;
+      }
+      if (value !== undefined && value !== null && value !== '') params[key] = String(value);
+    }
+
+    return this.http.get(this.buildUrl('/api/interventions/export'), {
+      params: this.buildParams({ params }),
+      responseType: 'blob',
+      withCredentials: true,
+    });
   }
 
   /**

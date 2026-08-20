@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   input,
@@ -150,7 +151,7 @@ describe('InterventionsPage', () => {
   let listError: WritableSignal<unknown>;
   let pendingDuplicatePrefill: WritableSignal<unknown>;
   let totalInterventions: WritableSignal<number>;
-  let listAll: ReturnType<typeof vi.fn>;
+  let exportCsv: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
 
@@ -172,7 +173,7 @@ describe('InterventionsPage', () => {
     listError = signal<unknown>(null);
     pendingDuplicatePrefill = signal<unknown>(null);
     totalInterventions = signal<number>(0);
-    listAll = vi.fn().mockReturnValue(of([]));
+    exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
 
@@ -217,7 +218,7 @@ describe('InterventionsPage', () => {
         },
         {
           provide: InterventionService,
-          useValue: { listAll, statistics: vi.fn().mockReturnValue(of(null)) },
+          useValue: { exportCsv, statistics: vi.fn().mockReturnValue(of(null)) },
         },
         {
           provide: InterventionRecurrenceService,
@@ -898,51 +899,44 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['exportDisabled']()).toBe(true);
     });
 
-    it('should export the loaded page directly when it already is the whole collection', async () => {
-      interventionList.set([intervention({ id: 'i-1' })]);
-      totalInterventions.set(1);
-      fixture = await createPage();
-
-      fixture.componentInstance['exportCsv']();
-
-      expect(listAll).not.toHaveBeenCalled();
-      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
-    });
-
-    it('should drain every page through the service, with the current filters and sort, when more rows exist than are loaded', async () => {
-      interventionList.set([intervention({ id: 'i-1' })]);
+    it('should request the export from the service with the current filters and sort, then trigger the download', async () => {
       totalInterventions.set(2);
-      listAll.mockReturnValue(of([intervention({ id: 'i-1' }), intervention({ id: 'i-2' })]));
       fixture = await createPage({ status: 'planned', q: 'sweep' });
 
       fixture.componentInstance['exportCsv']();
       await fixture.whenStable();
 
-      expect(listAll).toHaveBeenCalledTimes(1);
-      expect(listAll.mock.calls[0][0]).toBe('org-1');
-      expect(listAll.mock.calls[0][1]).toMatchObject({ status: 'planned', name: 'sweep' });
+      expect(exportCsv).toHaveBeenCalledTimes(1);
+      expect(exportCsv.mock.calls[0][0]).toBe('org-1');
+      expect(exportCsv.mock.calls[0][1]).toMatchObject({ status: 'planned', name: 'sweep' });
       expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
       expect(fixture.componentInstance['exportBusy']()).toBe(false);
     });
 
-    it('should cap a drained export and warn once truncated', async () => {
-      totalInterventions.set(1_500);
-      const rows: InterventionOutput[] = Array.from({ length: 1_200 }, (_unused, index) =>
-        intervention({ id: `i-${index}` }),
-      );
-      listAll.mockReturnValue(of(rows));
-      fixture = await createPage();
+    it('should drop a filter the export endpoint does not accept and warn once', async () => {
+      totalInterventions.set(2);
+      fixture = await createPage({ mine: '1' });
 
       fixture.componentInstance['exportCsv']();
       await fixture.whenStable();
 
+      expect(exportCsv.mock.calls[0][1]).not.toHaveProperty('member');
       expect(feedbackWarn).toHaveBeenCalledTimes(1);
-      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     });
 
-    it('should clear the busy flag and report a failure when the drain errors', async () => {
+    it('should not warn when every active filter is exportable', async () => {
       totalInterventions.set(2);
-      listAll.mockReturnValue(throwError(() => new Error('network down')));
+      fixture = await createPage({ status: 'planned' });
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(feedbackWarn).not.toHaveBeenCalled();
+    });
+
+    it('should clear the busy flag and report a generic failure when the request errors without a parseable detail', async () => {
+      totalInterventions.set(2);
+      exportCsv.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
       fixture = await createPage();
 
       fixture.componentInstance['exportCsv']();
@@ -951,6 +945,33 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['exportBusy']()).toBe(false);
       expect(feedbackError).toHaveBeenCalledTimes(1);
       expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('should surface the RFC 7807 detail from a 422 export-cap response', async () => {
+      totalInterventions.set(2);
+      const problem = new Blob(
+        [
+          JSON.stringify({
+            '@type': 'Error',
+            status: 422,
+            detail: 'Export capped at 50,000 rows.',
+          }),
+        ],
+        {
+          type: 'application/problem+json',
+        },
+      );
+      exportCsv.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 422, error: problem })),
+      );
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(feedbackError).toHaveBeenCalledWith('Export capped at 50,000 rows.');
     });
 
     it('should mark the export button busy and announce it while the export is in flight', async () => {

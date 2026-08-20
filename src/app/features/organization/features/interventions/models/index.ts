@@ -1,6 +1,7 @@
 /**
  * Interventions model public exports.
  */
+export type { InterventionExportOptions } from './intervention/intervention-export-options.interface';
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';

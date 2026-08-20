@@ -1,6 +1,7 @@
 import type {
   InterventionDueRangeFilter,
   InterventionDueWindow,
+  InterventionExportOptions,
   InterventionListFilters,
   InterventionListOptions,
   InterventionListSort,
@@ -153,6 +154,75 @@ export function buildInterventionListOptions(
   }
 
   return options;
+}
+
+/**
+ * The {@link InterventionListOptions} keys the CSV export endpoint accepts —
+ * see {@link InterventionExportOptions}. Kept local rather than derived from
+ * the type itself: a `Pick` alias carries no runtime key list.
+ */
+const EXPORTABLE_OPTION_KEYS: ReadonlySet<string> = new Set([
+  'name',
+  'status',
+  'type',
+  'priority',
+  'site',
+  'responsible',
+  'due',
+  'dueAtAfter',
+  'dueAtBefore',
+]);
+
+/**
+ * Function buildInterventionExportOptions
+ *
+ * @description
+ * Narrows {@link buildInterventionListOptions}'s result to
+ * {@link InterventionExportOptions} — the keys the CSV export endpoint
+ * accepts — dropping `order`/`page`/`itemsPerPage` (a listing concern the
+ * export has no use for) and any active filter the endpoint does not serve
+ * (`member`, a `plannedStartAt*` bound, …). `droppedFilterCount` tells the
+ * caller how many of those were actually in force, so it can warn only when
+ * the export is narrower than the screen the operator is looking at.
+ *
+ * @param {InterventionListFilters} filters - Active narrowing.
+ * @param {InterventionListSort} sort - Active ordering, dropped from the result.
+ * @param {string} search - Trimmed free-text search, empty when unused.
+ * @param {Date} now - Instant the due-date windows are anchored on.
+ * @param {string | null} memberIri - See {@link buildInterventionListOptions}.
+ *
+ * @returns {{ readonly options: InterventionExportOptions; readonly droppedFilterCount: number }}
+ * The exportable options, plus how many active filters were left out.
+ *
+ * @since 8.4.0
+ */
+export function buildInterventionExportOptions(
+  filters: InterventionListFilters,
+  sort: InterventionListSort,
+  search: string,
+  now: Date,
+  memberIri: string | null = null,
+): { readonly options: InterventionExportOptions; readonly droppedFilterCount: number } {
+  const full: InterventionListOptions = buildInterventionListOptions(
+    filters,
+    sort,
+    search,
+    now,
+    memberIri,
+  );
+  const options: Record<string, unknown> = {};
+  let droppedFilterCount = 0;
+
+  for (const [key, value] of Object.entries(full)) {
+    if (key === 'order' || key === 'page' || key === 'itemsPerPage') continue;
+    if (EXPORTABLE_OPTION_KEYS.has(key)) {
+      options[key] = value;
+    } else {
+      droppedFilterCount += 1;
+    }
+  }
+
+  return { options: options as InterventionExportOptions, droppedFilterCount };
 }
 
 /**

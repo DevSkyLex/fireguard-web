@@ -575,6 +575,46 @@ describe('InterventionService', () => {
     expect(result).toEqual(content);
   });
 
+  it('reads the CSV export as a blob, scoped by organization', () => {
+    const content = new Blob(['csv-bytes'], { type: 'text/csv' });
+    let result: Blob | undefined;
+
+    service.exportCsv('organization-1').subscribe((blob) => {
+      result = blob;
+    });
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === `${mockEnv.apiUrl}/api/interventions/export` &&
+        req.params.get('organization') === '/api/organizations/organization-1',
+    );
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(content);
+
+    expect(result).toEqual(content);
+  });
+
+  it('forwards a scalar filter as key= and an array filter as repeated key[]=', () => {
+    service
+      .exportCsv('organization-1', {
+        status: ['planned', 'in_progress'],
+        name: 'sweep',
+        due: 'overdue',
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === `${mockEnv.apiUrl}/api/interventions/export` &&
+        req.params.getAll('status[]')?.join(',') === 'planned,in_progress' &&
+        req.params.get('name') === 'sweep' &&
+        req.params.get('due') === 'overdue',
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush(new Blob(['csv-bytes'], { type: 'text/csv' }));
+  });
+
   it('uploads an attachment scoped to a work item via the workItemId multipart field', () => {
     const file = new Blob(['data'], { type: 'image/jpeg' });
 

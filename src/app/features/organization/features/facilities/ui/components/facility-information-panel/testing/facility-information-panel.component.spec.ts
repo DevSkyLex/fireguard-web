@@ -7,6 +7,7 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type {
   FacilityEditState,
@@ -14,19 +15,25 @@ import type {
   FacilityOutput,
   UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
-import type { MapClickEvent, MapCoordinates } from '@shared/map';
-import { Map } from '@shared/map';
+import type { MapCoordinates } from '@shared/map';
 import { FacilityMapPickerDialog } from '../../../dialogs/facility-map-picker-dialog';
 import { FacilityInformationPanel } from '../facility-information-panel.component';
 
-/** Stands in for `@shared/map`'s `Map`, so no spec ever mounts MapLibre. */
-@Component({ selector: 'app-map', template: '' })
-class MapStub {
-  public readonly interactive: InputSignal<boolean> = input<boolean>(false);
+/**
+ * Stands in for `FacilityMapPickerDialog`, so no spec ever opens the CDK
+ * overlay and mounts MapLibre. Substituted on the fixture's own root
+ * component, never on a descendant: an override reaches a descendant only
+ * while its parent's compiled view has not already been cached by another
+ * spec file, which `isolate: false` makes a coin toss.
+ */
+@Component({ selector: 'app-facility-map-picker-dialog', template: '' })
+class MapPickerDialogStub {
+  public readonly visible: InputSignal<boolean> = input<boolean>(false);
   public readonly center: InputSignal<MapCoordinates | undefined> = input<
     MapCoordinates | undefined
   >(undefined);
-  public readonly mapClicked: OutputEmitterRef<MapClickEvent> = output<MapClickEvent>();
+  public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
+  public readonly picked: OutputEmitterRef<MapCoordinates> = output<MapCoordinates>();
 }
 
 const IDLE_EDIT_STATE: FacilityEditState = {
@@ -73,15 +80,18 @@ describe('FacilityInformationPanel', () => {
       '[data-testid="facility-field-coordinates"] input[type="number"]',
     ),
   ];
+  const picker = (): MapPickerDialogStub =>
+    fixture.debugElement.query(By.directive(MapPickerDialogStub))
+      .componentInstance as MapPickerDialogStub;
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), provideRouter([])],
     });
 
-    TestBed.overrideComponent(FacilityMapPickerDialog, {
-      remove: { imports: [Map] },
-      add: { imports: [MapStub] },
+    TestBed.overrideComponent(FacilityInformationPanel, {
+      remove: { imports: [FacilityMapPickerDialog] },
+      add: { imports: [MapPickerDialogStub] },
     });
 
     fixture = TestBed.createComponent(FacilityInformationPanel);
@@ -264,12 +274,26 @@ describe('FacilityInformationPanel', () => {
     };
 
     it('should open the picker dialog from the coordinates editor', async () => {
+      await openCoordinatesOn({ ...FACILITY, latitude: 48.8566, longitude: 2.3522 });
+
+      const trigger: HTMLElement | null = byTestId('facility-pick-on-map');
+      expect(trigger).not.toBeNull();
+
+      trigger?.click();
+      await fixture.whenStable();
+
+      expect(picker().visible()).toBe(true);
+      expect(picker().center()).toEqual({ latitude: 48.8566, longitude: 2.3522 });
+    });
+
+    it('should ask the picker to open on nothing in particular when no coordinates are set', async () => {
       await openCoordinatesOn({ ...FACILITY, latitude: null, longitude: null });
 
       byTestId('facility-pick-on-map')?.click();
       await fixture.whenStable();
 
-      expect(document.querySelector('[data-testid="facility-map-picker-dialog"]')).not.toBeNull();
+      expect(picker().visible()).toBe(true);
+      expect(picker().center()).toBeUndefined();
     });
 
     it('should fill both coordinate drafts from a pick, leaving Save to commit them', async () => {

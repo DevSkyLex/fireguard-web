@@ -1,0 +1,25 @@
+<div id="server-error-page" class="flex w-full max-w-md flex-col items-center gap-6 text-center">
+  <div class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+    <ng-icon name="lucideServerCrash" class="text-2xl" aria-hidden="true" />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <p class="font-mono text-sm text-muted-foreground">500</p>
+    <h1
+      class="text-2xl font-semibold tracking-tight text-foreground"
+      i18n="@@error.serverError.title"
+    >
+      Something went wrong on our side
+    </h1>
+    <p class="text-sm text-pretty text-muted-foreground" i18n="@@error.serverError.description">
+      Your workspace could not be reached. This is usually temporary — try again in a moment.
+    </p>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-center gap-3">
+    <button hlmBtn size="sm" class="gap-2 max-sm:min-h-11" (click)="retry()">
+      <ng-icon name="lucideRotateCcw" class="text-sm" aria-hidden="true" />
+      <span i18n="@@error.serverError.retry">Try again</span>
+    </button>
+  </div>
+</div>

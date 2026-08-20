@@ -1,0 +1,43 @@
+<div id="forbidden-page" class="flex w-full max-w-md flex-col items-center gap-6 text-center">
+  <div class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+    <ng-icon name="lucideShieldX" class="text-2xl" aria-hidden="true" />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <p class="font-mono text-sm text-muted-foreground">403</p>
+    <h1
+      class="text-2xl font-semibold tracking-tight text-foreground"
+      i18n="@@error.forbidden.title"
+    >
+      You cannot open this workspace
+    </h1>
+    <p class="text-sm text-pretty text-muted-foreground" i18n="@@error.forbidden.description">
+      None of your organizations is accessible with this account. Sign out and use another account,
+      or contact an administrator of your organization.
+    </p>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-center gap-3">
+    <button
+      hlmBtn
+      size="sm"
+      class="gap-2 max-sm:min-h-11"
+      [disabled]="logoutPort.isLoggingOut()"
+      [attr.aria-busy]="logoutPort.isLoggingOut() ? 'true' : null"
+      (click)="logoutPort.logout()"
+    >
+      <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
+      <span i18n="@@error.forbidden.signOut">Sign out</span>
+    </button>
+    <a
+      hlmBtn
+      variant="outline"
+      size="sm"
+      class="max-sm:min-h-11"
+      routerLink="/"
+      i18n="@@error.forbidden.home"
+    >
+      Try my workspace again
+    </a>
+  </div>
+</div>

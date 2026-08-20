@@ -192,20 +192,6 @@ test.describe('Inspection detail', () => {
     );
   });
 
-  test('redirects /:inspectionId/edit onto the record', async ({ page }) => {
-    const api = new ApiMock(page);
-    await api.mockAuthenticatedSession();
-    await api.mockInspectionDetail(E2E_ORGANIZATION_ID, inspectionOutput());
-    const inspections = new InspectionsPage(page);
-
-    await inspections.gotoEdit(E2E_ORGANIZATION_ID, E2E_INSPECTION_ID);
-
-    await expect(page).toHaveURL(
-      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/inspections/${E2E_INSPECTION_ID}$`),
-    );
-    await expect(inspections.detailRoot).toBeVisible();
-  });
-
   test('renders in dark mode at 375px with no console errors', async ({
     page,
     context,

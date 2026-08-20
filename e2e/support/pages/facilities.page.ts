@@ -159,10 +159,6 @@ export class FacilitiesPage {
     await this.page.goto(`/organizations/${organizationId}/facilities/map`);
   }
 
-  public async gotoEdit(organizationId: string, facilityId: string): Promise<void> {
-    await this.page.goto(`/organizations/${organizationId}/facilities/${facilityId}/edit`);
-  }
-
   /** Submits the create form empty, so only the required `type`/`name` rules fire. */
   public async submitEmptyCreateForm(): Promise<void> {
     await this.createSubmit.click();

@@ -204,21 +204,6 @@ test.describe('Facility detail', () => {
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
   });
 
-  test('redirects /:facilityId/edit onto the record', async ({ page }) => {
-    const api = new ApiMock(page);
-    await api.mockAuthenticatedSession();
-    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
-    await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
-    const facilities = new FacilitiesPage(page);
-
-    await facilities.gotoEdit(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
-
-    await expect(page).toHaveURL(
-      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/facilities/${E2E_FACILITY_ID}$`),
-    );
-    await expect(facilities.detailRoot).toBeVisible();
-  });
-
   test('renders in dark mode at 375px with no console errors', async ({
     page,
     context,

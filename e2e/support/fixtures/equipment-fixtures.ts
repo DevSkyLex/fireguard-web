@@ -76,3 +76,27 @@ export function inStockEquipmentOutput(
     ...overrides,
   });
 }
+
+/** KPI strip above the equipment list (`GET /organizations/{id}/equipment/kpis`). */
+export interface EquipmentKpiFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly totalAssets: number;
+  readonly compliant: number;
+  readonly dueSoon: number;
+  readonly openNonConformities: number;
+}
+
+export function equipmentKpiOutput(
+  overrides: Partial<EquipmentKpiFixture> = {},
+): EquipmentKpiFixture {
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/equipment/kpis`,
+    '@type': 'EquipmentKpi',
+    totalAssets: 1,
+    compliant: 1,
+    dueSoon: 0,
+    openNonConformities: 0,
+    ...overrides,
+  };
+}

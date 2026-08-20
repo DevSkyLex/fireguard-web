@@ -35,6 +35,17 @@ const BLANK_PNG_BASE64 =
  * defect — this suite covers what it can prove here: the map surface mounts
  * and paints without throwing.
  */
+/**
+ * Console-error messages the blocked OpenFreeMap requests are expected to
+ * produce. MapLibre logs its own `AJAXError ... Failed to fetch` line, and
+ * Chromium separately logs the bare resource failure for the aborted
+ * request — `Failed to load resource: net::ERR_FAILED`, with no URL in the
+ * text, so it can only be matched on the abort signature itself. Whether the
+ * second one lands before the assertion depends on how long the map takes to
+ * mount, which is why it appeared only under a loaded full-suite run.
+ */
+const BLOCKED_TILE_ERROR = /tile|ajax|fetch|network|net::ERR_FAILED/i;
+
 test.describe('Facility map', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**tiles.openfreemap.org**', (route) => route.abort());
@@ -124,7 +135,7 @@ test.describe('Facility map', () => {
     await expect(page.locator('.maplibregl-canvas')).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
-    const unexpected = consoleErrors.filter((message) => !/tile|ajax|fetch|network/i.test(message));
+    const unexpected = consoleErrors.filter((message) => !BLOCKED_TILE_ERROR.test(message));
     expect(unexpected, unexpected.join('\n')).toEqual([]);
   });
 
@@ -200,9 +211,7 @@ test.describe('Facility map', () => {
       await expect(facilities.mapWorstSites).toBeVisible();
       await expectNoHorizontalOverflow(page);
 
-      const unexpected = consoleErrors.filter(
-        (message) => !/tile|ajax|fetch|network/i.test(message),
-      );
+      const unexpected = consoleErrors.filter((message) => !BLOCKED_TILE_ERROR.test(message));
       expect(unexpected, unexpected.join('\n')).toEqual([]);
     });
   });

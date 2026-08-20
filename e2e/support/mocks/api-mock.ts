@@ -5,11 +5,14 @@ import {
   loginOutput,
   onboardingOutput,
   organizationOutput,
+  organizationNavigationCountersOutput,
+  optionOutput,
   mercureSubscriptionOutput,
   userProfileOutput,
   type CurrentOrganizationMemberProfileOutputFixture,
   type LoginOutputFixture,
   type OnboardingOutputFixture,
+  type OptionFixture,
   type OrganizationOutputFixture,
   type UserProfileOutputFixture,
 } from '../fixtures/api-fixtures';
@@ -36,6 +39,7 @@ import type {
   OrganizationDashboardOutputFixture,
   OrganizationDashboardTrendOutputFixture,
 } from '../fixtures/dashboard-fixtures';
+import { equipmentKpiOutput, type EquipmentKpiFixture } from '../fixtures/equipment-fixtures';
 import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
 import { facilityAttachmentOutput } from '../fixtures/facility-fixtures';
 import type {
@@ -201,6 +205,17 @@ export class ApiMock {
     await this.page.route(/\/api\/organizations\/[^/]+\/members(\?.*)?$/, async (route) => {
       await fulfillJson(route, 200, hydraCollection([]));
     });
+    // The workspace shell badges its sidebar entries from
+    // `OrganizationNavigationCountersStore`, which fires on every organization
+    // route regardless of the visited subfeature. Un-mocked it hits the
+    // safety net and puts a 404 in the console, which the dark-mode
+    // "no console errors" specs assert against.
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/navigation-counters(\?.*)?$/,
+      async (route) => {
+        await fulfillJson(route, 200, organizationNavigationCountersOutput());
+      },
+    );
     await this.page.route(`${API_BASE_URL}/api/onboarding/organization`, async (route) => {
       await fulfillJson(route, 200, onboarding);
     });
@@ -326,6 +341,39 @@ export class ApiMock {
         await fulfillJson(route, 200, equipment);
       },
     );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment/kpis` — the KPI
+   * strip above the equipment list, read by `EquipmentKpisStore`.
+   */
+  public async mockEquipmentKpis(
+    organizationId: string,
+    kpis: Partial<EquipmentKpiFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment/kpis(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, equipmentKpiOutput(kpis));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/legal-types` — the reference catalog behind
+   * the settings Legal information type picker.
+   */
+  public async mockOrganizationLegalTypes(
+    options: ReadonlyArray<OptionFixture> = [
+      optionOutput({ value: 'sas', label: 'SAS' }),
+      optionOutput({ value: 'sarl', label: 'SARL' }),
+    ],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/organizations\/legal-types(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(options));
+    });
   }
 
   /**

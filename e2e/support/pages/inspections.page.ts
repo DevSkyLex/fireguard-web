@@ -62,10 +62,6 @@ export class InspectionsPage {
     await this.page.goto(`/organizations/${organizationId}/inspections/${inspectionId}`);
   }
 
-  public async gotoEdit(organizationId: string, inspectionId: string): Promise<void> {
-    await this.page.goto(`/organizations/${organizationId}/inspections/${inspectionId}/edit`);
-  }
-
   /** Submits the create form empty, so every required field's rule fires at once. */
   public async submitEmptyCreateForm(): Promise<void> {
     await this.createSubmit.click();

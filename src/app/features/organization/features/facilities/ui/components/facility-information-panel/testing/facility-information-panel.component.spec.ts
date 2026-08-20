@@ -269,7 +269,12 @@ describe('FacilityInformationPanel', () => {
       byTestId('facility-pick-on-map')?.click();
       await fixture.whenStable();
 
-      expect(document.querySelector('[data-testid="facility-map-picker-dialog"]')).not.toBeNull();
+      // The dialog content is portalled into the CDK overlay container
+      // asynchronously; one stabilization pass is not always enough on a
+      // loaded CI runner, so the attach is awaited rather than assumed.
+      await vi.waitFor(() =>
+        expect(document.querySelector('[data-testid="facility-map-picker-dialog"]')).not.toBeNull(),
+      );
     });
 
     it('should fill both coordinate drafts from a pick, leaving Save to commit them', async () => {

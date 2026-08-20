@@ -45,8 +45,14 @@
       >Checklist</span
     >
     <span class="min-w-0 flex-1 text-sm">
-      @if (inspection().checklistId; as checklistId) {
-        <span class="font-medium tabular-nums">{{ checklistId }}</span>
+      @if (inspection().checklistId) {
+        @if (checklistName(); as name) {
+          <span class="font-medium">{{ name }}</span>
+        } @else {
+          <span class="text-muted-foreground" i18n="@@inspection.info.checklistUnknown"
+            >Checklist deleted or unavailable</span
+          >
+        }
       } @else {
         <span class="text-muted-foreground" i18n="@@inspection.notSpecified">Not specified</span>
       }

@@ -71,6 +71,7 @@ describe('InspectionCreateForm', () => {
       performedAt: new Date('2026-08-10T00:00:00.000Z'),
       inspectorType: 'user',
       inspectorName: '',
+      checklistId: '',
     });
     await fill('inspection-create-inspector-name', 'Ada Lovelace');
     await submit();
@@ -82,6 +83,35 @@ describe('InspectionCreateForm', () => {
         performedAt: '2026-08-10T00:00:00.000Z',
         inspectorType: 'user',
         inspectorName: 'Ada Lovelace',
+        checklistId: null,
+      },
+    ]);
+  });
+
+  it('should emit the picked checklistId when one is chosen', async () => {
+    const emitted: CreateInspectionInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value: CreateInspectionInput): void => {
+      emitted.push(value);
+    });
+
+    await setModel({
+      equipmentId: 'equipment-1',
+      result: 'pass',
+      performedAt: new Date('2026-08-10T00:00:00.000Z'),
+      inspectorType: 'user',
+      inspectorName: 'Ada Lovelace',
+      checklistId: 'checklist-1',
+    });
+    await submit();
+
+    expect(emitted).toEqual([
+      {
+        equipmentId: 'equipment-1',
+        result: 'pass',
+        performedAt: '2026-08-10T00:00:00.000Z',
+        inspectorType: 'user',
+        inspectorName: 'Ada Lovelace',
+        checklistId: 'checklist-1',
       },
     ]);
   });

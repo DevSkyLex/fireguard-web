@@ -680,6 +680,14 @@
           <context context-type="linenumber">82,84</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/collaboration/ui/forms/channel-create-form/channel-create-form.component.html</context>
           <context context-type="linenumber">7,9</context>
         </context-group>
@@ -840,7 +848,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.html</context>
-          <context context-type="linenumber">150,152</context>
+          <context context-type="linenumber">178,180</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/dialogs/intervention-assign-dialog/intervention-assign-dialog.component.html</context>
@@ -1875,74 +1883,53 @@
           <context context-type="linenumber">88</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="route.notFound" datatype="html">
-        <source>Page not found</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/error/error.routes.ts</context>
-          <context context-type="linenumber">24</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="route.forbidden" datatype="html">
         <source>Access denied</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/error.routes.ts</context>
-          <context context-type="linenumber">27</context>
+          <context context-type="linenumber">25</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.serverError" datatype="html">
         <source>Something went wrong</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/error.routes.ts</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.notFound" datatype="html">
+        <source>Page not found</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/error.routes.ts</context>
+          <context context-type="linenumber">39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.forbidden.title" datatype="html">
         <source> You cannot open this workspace </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
-          <context context-type="linenumber">8,10</context>
+          <context context-type="linenumber">12,14</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.forbidden.description" datatype="html">
         <source> None of your organizations is accessible with this account. Sign out and use another account, or contact an administrator of your organization. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
-          <context context-type="linenumber">11,14</context>
+          <context context-type="linenumber">15,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.forbidden.signOut" datatype="html">
         <source>Sign out</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
-          <context context-type="linenumber">27</context>
+          <context context-type="linenumber">30,33</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.forbidden.home" datatype="html">
         <source> Try my workspace again </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
-          <context context-type="linenumber">29,37</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="error.serverError.title" datatype="html">
-        <source> Something went wrong on our side </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
-          <context context-type="linenumber">8,13</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="error.serverError.description" datatype="html">
-        <source> Your workspace could not be reached. This is usually temporary — try again in a moment. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
-          <context context-type="linenumber">14,16</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="error.serverError.retry" datatype="html">
-        <source>Try again</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
-          <context context-type="linenumber">21</context>
+          <context context-type="linenumber">40,44</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.notFound.title" datatype="html">
@@ -1971,6 +1958,27 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
           <context context-type="linenumber">35,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.serverError.title" datatype="html">
+        <source> Something went wrong on our side </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
+          <context context-type="linenumber">12,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.serverError.description" datatype="html">
+        <source> Your workspace could not be reached. This is usually temporary — try again in a moment. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
+          <context context-type="linenumber">15,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.serverError.retry" datatype="html">
+        <source>Try again</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
+          <context context-type="linenumber">22,26</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.step.org.label" datatype="html">
@@ -2575,357 +2583,6 @@
           <context context-type="linenumber">44</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="route.checklists" datatype="html">
-        <source>Checklists</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/checklists.routes.ts</context>
-          <context context-type="linenumber">43</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">162</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.filter.statusAriaLabel" datatype="html">
-        <source>Filter by status</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">11</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.errorTitle" datatype="html">
-        <source>Couldn't load checklists</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">31</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.errorText" datatype="html">
-        <source>The checklists could not be loaded. Check your connection and try again.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">33</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.retry" datatype="html">
-        <source>Retry</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">36</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.emptyTitle" datatype="html">
-        <source>No checklists</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">43</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.emptyDesc" datatype="html">
-        <source>No checklist templates match this filter.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">45</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.searchPlaceholder" datatype="html">
-        <source>Search checklists</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">6</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.searchAriaLabel" datatype="html">
-        <source>Search checklists</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">8</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.new" datatype="html">
-        <source>New checklist</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
-          <context context-type="linenumber">40</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.tableCaption" datatype="html">
-        <source>The organization's checklist templates.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">14</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.columnName" datatype="html">
-        <source>Name</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">20</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.columnStatus" datatype="html">
-        <source>Status</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">21</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.columnItems" datatype="html">
-        <source>Items</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">23</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.columnUpdated" datatype="html">
-        <source>Updated</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">25</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.columnActions" datatype="html">
-        <source>Actions</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">27</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.rowMenu" datatype="html">
-        <source>Open menu</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">67</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.rowEdit" datatype="html">
-        <source>Edit</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">75</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.rowArchive" datatype="html">
-        <source>Archive</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">85</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.list.noResults" datatype="html">
-        <source>No results.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
-          <context context-type="linenumber">97</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.name" datatype="html">
-        <source>Name</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">5</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
-          <context context-type="linenumber">5</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.nameRequired" datatype="html">
-        <source>Give the checklist a name.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
-          <context context-type="linenumber">160</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.nameLength" datatype="html">
-        <source>Use at most 255 characters.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
-          <context context-type="linenumber">163</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemLabelRequired" datatype="html">
-        <source>The item needs a label.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
-          <context context-type="linenumber">178</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemLabelLength" datatype="html">
-        <source>Use at most 255 characters.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
-          <context context-type="linenumber">181</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemDescriptionLength" datatype="html">
-        <source>Use at most 1000 characters.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
-          <context context-type="linenumber">184</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemOptional" datatype="html">
-        <source>Optional</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">33</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemMoveUp" datatype="html">
-        <source>Move up</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">44</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemMoveDown" datatype="html">
-        <source>Move down</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">55</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemRemove" datatype="html">
-        <source>Remove</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">66</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemLabel" datatype="html">
-        <source>Item label</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">75</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemLabelPlaceholder" datatype="html">
-        <source>Check fire extinguishers</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">83</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemDescription" datatype="html">
-        <source>Description (optional)</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">93</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemRequired" datatype="html">
-        <source>Required item</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">112</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.itemAdd" datatype="html">
-        <source>Add item</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">124</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.cancel" datatype="html">
-        <source>Cancel</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">136</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.creating" datatype="html">
-        <source>Creating…</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">148</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.create" datatype="html">
-        <source>Create checklist</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
-          <context context-type="linenumber">150</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.saving" datatype="html">
-        <source>Saving…</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
-          <context context-type="linenumber">148</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.form.save" datatype="html">
-        <source>Save changes</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
-          <context context-type="linenumber">150</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.createDialog.title" datatype="html">
-        <source>New checklist</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-create-dialog/checklist-create-dialog.component.html</context>
-          <context context-type="linenumber">7</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.editDialog.title" datatype="html">
-        <source>Edit checklist</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-edit-dialog/checklist-edit-dialog.component.html</context>
-          <context context-type="linenumber">7</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.archiveDialog.title" datatype="html">
-        <source>Archive checklist?</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-archive-dialog/checklist-archive-dialog.component.html</context>
-          <context context-type="linenumber">7</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.archiveDialog.descriptionBefore" datatype="html">
-        <source>Archiving “<x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/>” keeps it readable but removes it from the checklists new inspections can use. This cannot be undone from here.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-archive-dialog/checklist-archive-dialog.component.html</context>
-          <context context-type="linenumber">9</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.archiveDialog.cancel" datatype="html">
-        <source>Cancel</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-archive-dialog/checklist-archive-dialog.component.html</context>
-          <context context-type="linenumber">19</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklists.archiveDialog.confirm" datatype="html">
-        <source>Archive</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-archive-dialog/checklist-archive-dialog.component.html</context>
-          <context context-type="linenumber">27</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklistStatus.active" datatype="html">
-        <source>Active</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/models/checklist-status-tag/checklist-status-tag.util.ts</context>
-          <context context-type="linenumber">10</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklistStatus.archived" datatype="html">
-        <source>Archived</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/models/checklist-status-tag/checklist-status-tag.util.ts</context>
-          <context context-type="linenumber">15</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklist.toast.updated" datatype="html">
-        <source>Checklist updated</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/state/checklist/checklist.store.ts</context>
-          <context context-type="linenumber">499</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="route.approvals" datatype="html">
         <source>Approvals</source>
         <context-group purpose="location">
@@ -2934,7 +2591,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">175</context>
+          <context context-type="linenumber">183</context>
         </context-group>
       </trans-unit>
       <trans-unit id="approvals.status.pending" datatype="html">
@@ -3223,7 +2880,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">259</context>
+          <context context-type="linenumber">267</context>
         </context-group>
       </trans-unit>
       <trans-unit id="audit.module.organization" datatype="html">
@@ -4346,7 +4003,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">133,135</context>
+          <context context-type="linenumber">134,136</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-activity-thread/intervention-activity-thread.component.html</context>
@@ -4379,6 +4036,424 @@
           <context context-type="linenumber">126,128</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="route.checklists" datatype="html">
+        <source>Checklists</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/checklists.routes.ts</context>
+          <context context-type="linenumber">43</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklistStatus.active" datatype="html">
+        <source>Active</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/models/checklist-status-tag/checklist-status-tag.util.ts</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklistStatus.archived" datatype="html">
+        <source>Archived</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/models/checklist-status-tag/checklist-status-tag.util.ts</context>
+          <context context-type="linenumber">16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklist.toast.created" datatype="html">
+        <source>Checklist created</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/state/checklist/checklist.store.ts</context>
+          <context context-type="linenumber">443</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklist.toast.updated" datatype="html">
+        <source>Checklist updated</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/state/checklist/checklist.store.ts</context>
+          <context context-type="linenumber">544</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.archiveDialog.title" datatype="html">
+        <source>Archive checklist?</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-archive-dialog/checklist-archive-dialog.component.html</context>
+          <context context-type="linenumber">8,10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.archiveDialog.descriptionBefore" datatype="html">
+        <source>Archiving “<x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/>” keeps it readable but removes it from the checklists new inspections can use. This cannot be undone from here.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-archive-dialog/checklist-archive-dialog.component.html</context>
+          <context context-type="linenumber">11,13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.archiveDialog.cancel" datatype="html">
+        <source> Cancel </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-archive-dialog/checklist-archive-dialog.component.html</context>
+          <context context-type="linenumber">23,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.archiveDialog.confirm" datatype="html">
+        <source> Archive </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-archive-dialog/checklist-archive-dialog.component.html</context>
+          <context context-type="linenumber">34,36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.createDialog.title" datatype="html">
+        <source>New checklist</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-create-dialog/checklist-create-dialog.component.html</context>
+          <context context-type="linenumber">8,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.editDialog.title" datatype="html">
+        <source>Edit checklist</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/dialogs/checklist-edit-dialog/checklist-edit-dialog.component.html</context>
+          <context context-type="linenumber">8,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.name" datatype="html">
+        <source>Name</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemOptional" datatype="html">
+        <source>Optional</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">37,40</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">37,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemMoveUp" datatype="html">
+        <source>Move up</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">52,53</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">52,53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemMoveDown" datatype="html">
+        <source>Move down</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">65,66</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">65,66</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemRemove" datatype="html">
+        <source>Remove</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">77,79</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">77,79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemLabel" datatype="html">
+        <source>Item label</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">87,90</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">87,90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemLabelPlaceholder" datatype="html">
+        <source>Check fire extinguishers</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">95,96</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemDescription" datatype="html">
+        <source>Description (optional)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">110,114</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">108,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemRequired" datatype="html">
+        <source>Required item</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">132,136</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">127,131</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemAdd" datatype="html">
+        <source>Add item</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">145,147</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">140,142</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.cancel" datatype="html">
+        <source>Cancel</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">159,161</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">154,156</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.creating" datatype="html">
+        <source>Creating…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">171,173</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.create" datatype="html">
+        <source>Create checklist</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.html</context>
+          <context context-type="linenumber">173,176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.nameRequired" datatype="html">
+        <source>Give the checklist a name.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
+          <context context-type="linenumber">144</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.ts</context>
+          <context context-type="linenumber">156</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.nameLength" datatype="html">
+        <source>Use at most 255 characters.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.ts</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemLabelRequired" datatype="html">
+        <source>The item needs a label.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
+          <context context-type="linenumber">164</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.ts</context>
+          <context context-type="linenumber">176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemLabelLength" datatype="html">
+        <source>Use at most 255 characters.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.ts</context>
+          <context context-type="linenumber">179</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.itemDescriptionLength" datatype="html">
+        <source>Use at most 1000 characters.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-create-form/checklist-create-form.component.ts</context>
+          <context context-type="linenumber">170</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.ts</context>
+          <context context-type="linenumber">182</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.saving" datatype="html">
+        <source>Saving…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">166,168</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.form.save" datatype="html">
+        <source>Save changes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/forms/checklist-edit-form/checklist-edit-form.component.html</context>
+          <context context-type="linenumber">168,171</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.searchPlaceholder" datatype="html">
+        <source>Search checklists</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.searchAriaLabel" datatype="html">
+        <source>Search checklists</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.filter.statusAriaLabel" datatype="html">
+        <source>Filter by status</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.new" datatype="html">
+        <source>New checklist</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">46,49</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">73,76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.errorTitle" datatype="html">
+        <source>Couldn&apos;t load checklists</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">54,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.errorText" datatype="html">
+        <source>The checklists could not be loaded. Check your connection and try again.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.retry" datatype="html">
+        <source>Retry</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">60,62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.emptyTitle" datatype="html">
+        <source>No checklists</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">66,67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.emptyDesc" datatype="html">
+        <source>No checklist templates match this filter.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklists-page/checklists-page.component.html</context>
+          <context context-type="linenumber">68,69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.tableCaption" datatype="html">
+        <source> The organization&apos;s checklist templates. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">16,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnName" datatype="html">
+        <source>Name</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnStatus" datatype="html">
+        <source>Status</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">22,23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnItems" datatype="html">
+        <source>Items</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">24,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnUpdated" datatype="html">
+        <source>Updated</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">26,27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.columnActions" datatype="html">
+        <source>Actions</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">28,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.rowMenu" datatype="html">
+        <source>Open menu</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">72,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.rowEdit" datatype="html">
+        <source>Edit</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">83,84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.rowArchive" datatype="html">
+        <source>Archive</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">94,95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklists.list.noResults" datatype="html">
+        <source> No results. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/tables/checklist-table/checklist-table.component.html</context>
+          <context context-type="linenumber">110,112</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="route.channels" datatype="html">
         <source>Channels</source>
         <context-group purpose="location">
@@ -4391,7 +4466,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">189</context>
+          <context context-type="linenumber">197</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.messages" datatype="html">
@@ -6538,11 +6613,11 @@
         <source>Facility moved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-tree/facility-tree.store.ts</context>
-          <context context-type="linenumber">332</context>
+          <context context-type="linenumber">383</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
-          <context context-type="linenumber">1024</context>
+          <context context-type="linenumber">1021</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.toast.duplicated" datatype="html">
@@ -6556,35 +6631,35 @@
         <source>Facility created</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
-          <context context-type="linenumber">781</context>
+          <context context-type="linenumber">778</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.toast.updated" datatype="html">
         <source>Facility updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
-          <context context-type="linenumber">836</context>
+          <context context-type="linenumber">833</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.toast.archived" datatype="html">
         <source>Facility archived</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
-          <context context-type="linenumber">888</context>
+          <context context-type="linenumber">885</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.toast.restored" datatype="html">
         <source>Facility restored</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
-          <context context-type="linenumber">927</context>
+          <context context-type="linenumber">924</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.toast.deleted" datatype="html">
         <source>Facility deleted</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
-          <context context-type="linenumber">977</context>
+          <context context-type="linenumber">974</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.map.compliance.worstSitesEmpty" datatype="html">
@@ -7931,7 +8006,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">218</context>
+          <context context-type="linenumber">226</context>
         </context-group>
       </trans-unit>
       <trans-unit id="imports.rowErrorCode.wouldCreate" datatype="html">
@@ -8335,7 +8410,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.ts</context>
-          <context context-type="linenumber">276</context>
+          <context context-type="linenumber">324</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.inspection.detail" datatype="html">
@@ -8564,19 +8639,19 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">51,56</context>
+          <context context-type="linenumber">57,62</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">70,75</context>
+          <context context-type="linenumber">76,81</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">162,166</context>
+          <context context-type="linenumber">168,172</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">196,200</context>
+          <context context-type="linenumber">202,206</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/tables/inspection-table/inspection-table.component.html</context>
@@ -8590,43 +8665,50 @@
           <context context-type="linenumber">45,47</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="inspection.info.checklistUnknown" datatype="html">
+        <source>Checklist deleted or unavailable</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
+          <context context-type="linenumber">53,57</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="inspection.info.inspector" datatype="html">
         <source>Inspector</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">61,63</context>
+          <context context-type="linenumber">67,69</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.info.result" datatype="html">
         <source>Result</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">78</context>
+          <context context-type="linenumber">84</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">95,97</context>
+          <context context-type="linenumber">101,103</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.info.performedAt" datatype="html">
         <source>Performed on</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">116,117</context>
+          <context context-type="linenumber">122,123</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.info.notes" datatype="html">
         <source>Notes</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">147</context>
+          <context context-type="linenumber">153</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.info.signature" datatype="html">
         <source>Signature</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/components/inspection-information-panel/inspection-information-panel.component.html</context>
-          <context context-type="linenumber">181,182</context>
+          <context context-type="linenumber">187,188</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.nc.list.loadingAria" datatype="html">
@@ -8909,67 +8991,88 @@
           <context context-type="linenumber">128,129</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="inspection.form.checklistLabel" datatype="html">
+        <source>Checklist</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.html</context>
+          <context context-type="linenumber">143,145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="inspection.form.checklistSelectPlaceholder" datatype="html">
+        <source>No checklist</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.html</context>
+          <context context-type="linenumber">152,153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="inspection.form.checklistNone" datatype="html">
+        <source>No checklist</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.html</context>
+          <context context-type="linenumber">159,161</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="inspection.cf.submitting" datatype="html">
         <source>Creating…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.html</context>
-          <context context-type="linenumber">162,164</context>
+          <context context-type="linenumber">190,192</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.form.submit" datatype="html">
         <source>Create inspection</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.html</context>
-          <context context-type="linenumber">164,167</context>
+          <context context-type="linenumber">192,195</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.cf.equipmentRequired" datatype="html">
         <source>Choose the inspected equipment.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.ts</context>
-          <context context-type="linenumber">172</context>
+          <context context-type="linenumber">187</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.cf.resultRequired" datatype="html">
         <source>Choose the inspection&apos;s result.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.ts</context>
-          <context context-type="linenumber">175</context>
+          <context context-type="linenumber">190</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.cf.performedAtRequired" datatype="html">
         <source>Pick the date the inspection was carried out.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.ts</context>
-          <context context-type="linenumber">178</context>
+          <context context-type="linenumber">193</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.cf.inspectorNameRequired" datatype="html">
         <source>Name the inspector.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.ts</context>
-          <context context-type="linenumber">181</context>
+          <context context-type="linenumber">196</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.cf.createFailed" datatype="html">
         <source>The inspection could not be created.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.ts</context>
-          <context context-type="linenumber">217</context>
+          <context context-type="linenumber">232</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.form.inspectorTypeUser" datatype="html">
         <source>Team member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.ts</context>
-          <context context-type="linenumber">230</context>
+          <context context-type="linenumber">245</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.form.inspectorTypeExternal" datatype="html">
         <source>External inspector</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.ts</context>
-          <context context-type="linenumber">231</context>
+          <context context-type="linenumber">246</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.create.description" datatype="html">
@@ -8983,7 +9086,7 @@
         <source>Back to inspections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-create-page/inspection-create-page.component.html</context>
-          <context context-type="linenumber">36,39</context>
+          <context context-type="linenumber">37,40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.detail.siteInterventions" datatype="html">
@@ -9004,77 +9107,77 @@
         <source> Non-conformities </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">67,69</context>
+          <context context-type="linenumber">68,70</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.nc.addButton" datatype="html">
         <source>Add non-conformity</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">79,81</context>
+          <context context-type="linenumber">80,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.nc.addClosedExplanation" datatype="html">
         <source> A closed inspection can no longer record new non-conformities. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">87,90</context>
+          <context context-type="linenumber">88,91</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.detail.loadingAria" datatype="html">
         <source>Loading inspection</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">109,110</context>
+          <context context-type="linenumber">110,111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.detail.loadFailedTitle" datatype="html">
         <source>This inspection could not be opened</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">120,121</context>
+          <context context-type="linenumber">121,122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.cancel" datatype="html">
         <source>Cancel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">168,171</context>
+          <context context-type="linenumber">169,172</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.submit" datatype="html">
         <source>Submit</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">182,184</context>
+          <context context-type="linenumber">183,185</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.close" datatype="html">
         <source>Close</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
-          <context context-type="linenumber">198,200</context>
+          <context context-type="linenumber">199,201</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.detail.nonConformitiesCountOne" datatype="html">
         <source>1 non-conformity</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.ts</context>
-          <context context-type="linenumber">293</context>
+          <context context-type="linenumber">341</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.detail.nonConformitiesCountMany" datatype="html">
         <source><x id="count" equiv-text="count"/> non-conformities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.ts</context>
-          <context context-type="linenumber">294</context>
+          <context context-type="linenumber">342</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.detail.metaUpdated" datatype="html">
         <source>Updated <x id="when" equiv-text="when"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.ts</context>
-          <context context-type="linenumber">316</context>
+          <context context-type="linenumber">364</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.table.searchPlaceholder" datatype="html">
@@ -9703,7 +9806,7 @@
         <source>No assigned role</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-planning-options/intervention-planning-options.store.ts</context>
-          <context context-type="linenumber">99</context>
+          <context context-type="linenumber">98</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.publication.failed" datatype="html">
@@ -13865,7 +13968,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">162</context>
+          <context context-type="linenumber">170</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.override.durationP28D" datatype="html">
@@ -14336,88 +14439,88 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">67</context>
+          <context context-type="linenumber">65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.assets" datatype="html">
         <source>Assets</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">203</context>
+          <context context-type="linenumber">211</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">99</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">102</context>
+          <context context-type="linenumber">100</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.members" datatype="html">
         <source>Members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">227</context>
+          <context context-type="linenumber">235</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">165</context>
+          <context context-type="linenumber">168</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">166</context>
+          <context context-type="linenumber">169</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
         <source>Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">236</context>
+          <context context-type="linenumber">244</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">180</context>
+          <context context-type="linenumber">183</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">181</context>
+          <context context-type="linenumber">184</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.settings" datatype="html">
         <source>Settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">245</context>
+          <context context-type="linenumber">253</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">194</context>
+          <context context-type="linenumber">197</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">195</context>
+          <context context-type="linenumber">198</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.operations" datatype="html">
         <source>Operations</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">276</context>
+          <context context-type="linenumber">284</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.assets" datatype="html">
         <source>Assets</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">277</context>
+          <context context-type="linenumber">285</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.administration" datatype="html">
         <source>Administration</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">278</context>
+          <context context-type="linenumber">286</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.invitationAccept" datatype="html">
@@ -14431,11 +14534,11 @@
         <source>Profile</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">203</context>
+          <context context-type="linenumber">206</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">204</context>
+          <context context-type="linenumber">207</context>
         </context-group>
       </trans-unit>
       <trans-unit id="dash.granularity.daily" datatype="html">
@@ -16422,168 +16525,168 @@
         <source>Duplicate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">172</context>
+          <context context-type="linenumber">172,175</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.equipment.title" datatype="html">
         <source>Equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">185,186</context>
+          <context context-type="linenumber">194,195</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.equipment.error" datatype="html">
         <source>Couldn&apos;t load equipment.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">192,194</context>
+          <context context-type="linenumber">201,203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.equipment.empty" datatype="html">
         <source> No equipment in view. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">196,198</context>
+          <context context-type="linenumber">205,207</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.equipment.columnName" datatype="html">
         <source>Equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">203,204</context>
+          <context context-type="linenumber">212,213</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.equipment.columnFacility" datatype="html">
         <source>Facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">204,205</context>
+          <context context-type="linenumber">213,214</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.equipment.columnStatus" datatype="html">
         <source>Status</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">205,207</context>
+          <context context-type="linenumber">214,216</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.inspections.title" datatype="html">
         <source>Inspections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">236,237</context>
+          <context context-type="linenumber">245,246</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.inspections.error" datatype="html">
         <source>Couldn&apos;t load inspections.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">243,245</context>
+          <context context-type="linenumber">252,254</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.inspections.empty" datatype="html">
         <source> No inspections in view. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">247,249</context>
+          <context context-type="linenumber">256,258</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.inspections.columnDate" datatype="html">
         <source>Performed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">254,255</context>
+          <context context-type="linenumber">263,264</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.inspections.columnResult" datatype="html">
         <source>Result</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">255,256</context>
+          <context context-type="linenumber">264,265</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.inspections.columnStatus" datatype="html">
         <source>Status</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">256,258</context>
+          <context context-type="linenumber">265,267</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.summaryTitle" datatype="html">
         <source>Compliance summary</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">322,325</context>
+          <context context-type="linenumber">331,334</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.summaryError" datatype="html">
         <source> Couldn&apos;t load the compliance summary. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">329,332</context>
+          <context context-type="linenumber">338,341</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.summaryLoading" datatype="html">
         <source> Loading compliance summary… </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">334,336</context>
+          <context context-type="linenumber">343,345</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.exporting" datatype="html">
         <source>Exporting…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">384,386</context>
+          <context context-type="linenumber">393,395</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.export" datatype="html">
         <source>Export safety register</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">386,388</context>
+          <context context-type="linenumber">395,397</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.exportError" datatype="html">
         <source> Couldn&apos;t export the safety register. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">401,404</context>
+          <context context-type="linenumber">410,413</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.totalEquipment" datatype="html">
         <source> Total equipment </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">416,418</context>
+          <context context-type="linenumber">425,427</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.upToDate" datatype="html">
         <source> Up to date </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">429,431</context>
+          <context context-type="linenumber">438,440</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.dueSoon" datatype="html">
         <source> Due soon </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">442,444</context>
+          <context context-type="linenumber">451,453</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.overdue" datatype="html">
         <source> Overdue </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">455,457</context>
+          <context context-type="linenumber">464,466</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.openNonConformities" datatype="html">
         <source> Open non-conformities </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">468,470</context>
+          <context context-type="linenumber">477,479</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.code.criticalNonConformitiesOpen" datatype="html">

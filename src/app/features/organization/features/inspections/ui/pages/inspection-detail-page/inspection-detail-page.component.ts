@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,6 +8,7 @@ import {
   inject,
   input,
   LOCALE_ID,
+  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
@@ -22,6 +24,8 @@ import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, isCallSuccess, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { ChecklistService } from '@features/organization/features/checklists/data-access';
+import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type {
   AddNonConformityInput,
   InspectionEditState,
@@ -101,7 +105,13 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * regardless of the inspection's own status — the backend blocks only the
  * add endpoint on `closed` (`FEATURE.md`).
  *
- * @version 1.5.0
+ * When the record carries a `checklistId`, this page also resolves the
+ * checklist's name directly through `ChecklistService` (browser-only) and
+ * feeds it to {@link InspectionInformationPanel} as {@link checklistName} —
+ * secondary UI data, so no fetch happens during a request-less server
+ * render.
+ *
+ * @version 1.6.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -169,6 +179,44 @@ export class InspectionDetailPage {
 
   /** The application's language, used to phrase the header's metadata line. */
   private readonly locale: string = inject<string>(LOCALE_ID);
+
+  /**
+   * Property checklistService
+   *
+   * @description
+   * Fetches the checklist named by {@link checklistName} directly — the
+   * checklist name is a single read-only label, so a full component-scoped
+   * store (`ChecklistStore`) would be disproportionate. Called browser-only:
+   * this is secondary UI data (`AGENTS.md` "Routing, SSR, and hydration"),
+   * so a request-less server render leaves the row blank rather than
+   * seeding a second resolver for it.
+   *
+   * @access private
+   * @since 1.6.0
+   * @type {ChecklistService}
+   */
+  private readonly checklistService: ChecklistService = inject<ChecklistService>(ChecklistService);
+
+  /** Whether this page is running in the browser — gates the checklist name fetch. */
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
+
+  /** The id last resolved into {@link checklistName}, so it is fetched at most once per record. */
+  private resolvedChecklistId: string | null = null;
+
+  /**
+   * Property checklistName
+   * @readonly
+   *
+   * @description
+   * The resolved name of the inspection's checklist template, or `null`
+   * while unset or unresolved (deleted, or not yet fetched) — the panel
+   * tells the two apart from the record's own `checklistId`.
+   *
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly checklistName: WritableSignal<string | null> = signal<string | null>(null);
 
   /** Which in-place field is open, writing, or showing a rejection. */
   protected readonly editState: WritableSignal<InspectionEditState> =
@@ -338,7 +386,8 @@ export class InspectionDetailPage {
    * a cancellation succeeds — `InspectionStore.cancel` removes the record,
    * so there is nothing left here to show — clears {@link pendingNonConformityId}
    * once its status write settles, closes the add-non-conformity dialog on a
-   * successful add, and registers {@link pageActions}.
+   * successful add, resolves {@link checklistName} once per checklist id,
+   * and registers {@link pageActions}.
    *
    * @access public
    * @since 1.5.0
@@ -350,6 +399,13 @@ export class InspectionDetailPage {
       const callState: CallState<InspectionOutput | null> = this.store.updateCallState();
 
       untracked((): void => this.settleUpdateWrite(callState));
+    });
+
+    effect((): void => {
+      const checklistId: string | null =
+        this.activeInspectionStore.selectedInspection()?.checklistId ?? null;
+
+      untracked((): void => this.resolveChecklistName(checklistId));
     });
 
     effect((): void => {
@@ -609,6 +665,42 @@ export class InspectionDetailPage {
     }
 
     this.editState.set({ open: state.saving, saving: null, failed: state.saving, failure });
+  }
+
+  /**
+   * Method resolveChecklistName
+   *
+   * @description
+   * Fetches the checklist named by {@link checklistName}, at most once per
+   * `checklistId` value. A `null` id clears it; a 404 or any other failure
+   * leaves it `null` too — the panel's own fallback text covers that case,
+   * so no toast is raised for what is an expected outcome (a deleted
+   * checklist), not an operator-facing error.
+   *
+   * @access private
+   * @since 1.6.0
+   * @param {string | null} checklistId - The inspection's checklist id, or null.
+   * @returns {void}
+   */
+  private resolveChecklistName(checklistId: string | null): void {
+    if (checklistId === this.resolvedChecklistId) return;
+
+    this.resolvedChecklistId = checklistId;
+
+    if (checklistId === null) {
+      this.checklistName.set(null);
+
+      return;
+    }
+
+    this.checklistName.set(null);
+
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    this.checklistService.get(this.organizationId(), checklistId).subscribe({
+      next: (checklist: ChecklistOutput): void => this.checklistName.set(checklist.name),
+      error: (): void => this.checklistName.set(null),
+    });
   }
   //#endregion
 }

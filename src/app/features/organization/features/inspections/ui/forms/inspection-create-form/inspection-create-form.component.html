@@ -138,6 +138,34 @@
       }
     </hlm-field>
 
+    <hlm-field>
+      <label hlmFieldLabel for="inspection-create-checklist" i18n="@@inspection.form.checklistLabel"
+        >Checklist</label
+      >
+      <hlm-select [itemToString]="checklistLabelOf" [formField]="createForm.checklistId">
+        <hlm-select-trigger
+          buttonId="inspection-create-checklist"
+          class="w-full"
+          data-testid="inspection-create-checklist"
+        >
+          <hlm-select-value
+            placeholder="No checklist"
+            i18n-placeholder="@@inspection.form.checklistSelectPlaceholder"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            <hlm-select-item value="">
+              <span i18n="@@inspection.form.checklistNone">No checklist</span>
+            </hlm-select-item>
+            @for (checklist of checklists(); track checklist.id) {
+              <hlm-select-item [value]="checklist.id">{{ checklist.name }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
     <hlm-field orientation="horizontal" class="justify-end">
       <button
         hlmBtn

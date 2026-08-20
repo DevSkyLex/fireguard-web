@@ -9,6 +9,7 @@
         [pending]="store.isCreating()"
         [serverError]="store.createError()"
         [equipmentOptions]="creationOptions.equipmentOptions()"
+        [checklists]="checklistStore.checklists()"
         (submitted)="onSubmitted($event)"
         (cancelled)="onCancelled()"
         (dirtyChanged)="formDirty.set($event)"

@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
+import { ChecklistService } from '@features/organization/features/checklists/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
@@ -34,12 +35,14 @@ describe('InspectionCreatePage', () => {
   let navigate: ReturnType<typeof vi.fn>;
   let createCallState: WritableSignal<CallState<InspectionOutput | null>>;
   let equipmentList: ReturnType<typeof vi.fn>;
+  let checklistList: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     create = vi.fn();
     resetCreateOperation = vi.fn();
     createCallState = signal<CallState<InspectionOutput | null>>(idleCallState());
     equipmentList = vi.fn().mockReturnValue(of({ member: [], totalItems: 0 }));
+    checklistList = vi.fn().mockReturnValue(of({ member: [], totalItems: 0 }));
 
     TestBed.configureTestingModule({
       providers: [
@@ -56,6 +59,7 @@ describe('InspectionCreatePage', () => {
           },
         },
         { provide: EquipmentService, useValue: { list: equipmentList } },
+        { provide: ChecklistService, useValue: { list: checklistList } },
       ],
     });
 
@@ -68,6 +72,13 @@ describe('InspectionCreatePage', () => {
 
   it('should load the equipment picker options for the workspace on arrival', () => {
     expect(equipmentList).toHaveBeenCalledWith('org-1', { page: 1, itemsPerPage: 100 });
+  });
+
+  it('should load the active checklist options for the workspace on arrival', () => {
+    expect(checklistList).toHaveBeenCalledWith('org-1', {
+      itemsPerPage: 200,
+      status: 'active',
+    });
   });
 
   it('should send the submitted payload to the store', () => {

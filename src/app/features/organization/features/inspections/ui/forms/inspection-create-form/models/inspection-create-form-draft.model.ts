@@ -11,7 +11,9 @@ import type {
  * The Signal Forms model this form actually edits. `equipmentId`,
  * `result` and `performedAt` start blank/null so the required rules have
  * something to reject; `inspectorType` defaults to `'user'`, the common
- * case, and never needs its own required rule.
+ * case, and never needs its own required rule. `checklistId` is optional
+ * and starts blank — an empty string means "no checklist", never a rule
+ * violation.
  *
  * @since 1.0.0
  */
@@ -30,4 +32,7 @@ export interface InspectionCreateFormDraft {
 
   /** The inspector's name. */
   readonly inspectorName: string;
+
+  /** The picked checklist template's id, or an empty string for "no checklist". */
+  readonly checklistId: string;
 }

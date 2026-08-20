@@ -11221,9 +11221,25 @@
         <source>Create inspection</source>
         <target>Crear inspección</target>
       </trans-unit>
+      <trans-unit id="inspection.form.checklistLabel" datatype="html">
+        <source>Checklist</source>
+        <target>Lista de verificación</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.checklistSelectPlaceholder" datatype="html">
+        <source>No checklist</source>
+        <target>Sin lista de verificación</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.checklistNone" datatype="html">
+        <source>No checklist</source>
+        <target>Sin lista de verificación</target>
+      </trans-unit>
       <trans-unit id="inspection.info.checklist" datatype="html">
         <source>Checklist</source>
         <target>Lista de verificación</target>
+      </trans-unit>
+      <trans-unit id="inspection.info.checklistUnknown" datatype="html">
+        <source>Checklist deleted or unavailable</source>
+        <target>Lista de verificación eliminada o no disponible</target>
       </trans-unit>
       <trans-unit id="inspection.info.equipment" datatype="html">
         <source>Equipment</source>

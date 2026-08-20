@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -21,6 +22,8 @@ import {
 } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { ChecklistService } from '@features/organization/features/checklists/data-access';
+import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type {
   InspectionOutput,
   NonConformityOutput,
@@ -96,6 +99,7 @@ describe('InspectionDetailPage', () => {
   let nonConformitiesListCallState: WritableSignal<CallState>;
   let addNonConformityCallState: WritableSignal<CallState<NonConformityOutput | null>>;
   let isUpdatingNonConformity: WritableSignal<boolean>;
+  let checklistGet: ReturnType<typeof vi.fn>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(InspectionDetailPage);
@@ -124,6 +128,12 @@ describe('InspectionDetailPage', () => {
     nonConformitiesListCallState = signal<CallState>(idleCallState());
     addNonConformityCallState = signal<CallState<NonConformityOutput | null>>(idleCallState());
     isUpdatingNonConformity = signal<boolean>(false);
+    checklistGet = vi.fn().mockReturnValue(
+      of({
+        id: 'checklist-1',
+        name: 'Monthly fire panel check',
+      } as unknown as ChecklistOutput),
+    );
 
     TestBed.configureTestingModule({
       providers: [
@@ -164,6 +174,7 @@ describe('InspectionDetailPage', () => {
           provide: OrganizationPermissionService,
           useValue: { hasPermission: (): boolean => true },
         },
+        { provide: ChecklistService, useValue: { get: checklistGet } },
       ],
     });
 
@@ -242,6 +253,41 @@ describe('InspectionDetailPage', () => {
         .querySelector('[data-testid="inspection-lifecycle-band"]')
         ?.textContent?.trim(),
     ).toBe('');
+  });
+
+  describe('checklist name resolution', () => {
+    it('should not fetch a checklist name when the inspection has none', async () => {
+      await createPage();
+
+      expect(checklistGet).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['checklistName']()).toBeNull();
+    });
+
+    it('should resolve and expose the checklist name once the record carries a checklistId', async () => {
+      selectedInspection.set(inspection({ checklistId: 'checklist-1' }));
+      await createPage();
+
+      expect(checklistGet).toHaveBeenCalledWith('org-1', 'checklist-1');
+      expect(fixture.componentInstance['checklistName']()).toBe('Monthly fire panel check');
+    });
+
+    it('should not re-fetch the same checklist id twice', async () => {
+      selectedInspection.set(inspection({ checklistId: 'checklist-1' }));
+      await createPage();
+
+      selectedInspection.set(inspection({ checklistId: 'checklist-1' }));
+      await fixture.whenStable();
+
+      expect(checklistGet).toHaveBeenCalledTimes(1);
+    });
+
+    it('should leave the checklist name null when it could not be resolved', async () => {
+      checklistGet.mockReturnValue(throwError(() => new Error('not found')));
+      selectedInspection.set(inspection({ checklistId: 'checklist-1' }));
+      await createPage();
+
+      expect(fixture.componentInstance['checklistName']()).toBeNull();
+    });
   });
 
   it('should gate the in-place fields to a draft inspection', async () => {

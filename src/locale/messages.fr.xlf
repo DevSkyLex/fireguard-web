@@ -1679,6 +1679,42 @@
         <source>Access denied</source>
         <target>Accès refusé</target>
       </trans-unit>
+      <trans-unit id="route.forbidden" datatype="html">
+        <source>Access denied</source>
+        <target>Accès refusé</target>
+      </trans-unit>
+      <trans-unit id="route.serverError" datatype="html">
+        <source>Something went wrong</source>
+        <target>Une erreur est survenue</target>
+      </trans-unit>
+      <trans-unit id="error.forbidden.title" datatype="html">
+        <source> You cannot open this workspace </source>
+        <target> Vous ne pouvez pas ouvrir cet espace de travail </target>
+      </trans-unit>
+      <trans-unit id="error.forbidden.description" datatype="html">
+        <source> None of your organizations is accessible with this account. Sign out and use another account, or contact an administrator of your organization. </source>
+        <target> Aucune de vos organisations n'est accessible avec ce compte. Déconnectez-vous et utilisez un autre compte, ou contactez un administrateur de votre organisation. </target>
+      </trans-unit>
+      <trans-unit id="error.forbidden.signOut" datatype="html">
+        <source>Sign out</source>
+        <target>Se déconnecter</target>
+      </trans-unit>
+      <trans-unit id="error.forbidden.home" datatype="html">
+        <source> Try my workspace again </source>
+        <target> Réessayer mon espace de travail </target>
+      </trans-unit>
+      <trans-unit id="error.serverError.title" datatype="html">
+        <source> Something went wrong on our side </source>
+        <target> Une erreur est survenue de notre côté </target>
+      </trans-unit>
+      <trans-unit id="error.serverError.description" datatype="html">
+        <source> Your workspace could not be reached. This is usually temporary — try again in a moment. </source>
+        <target> Votre espace de travail n'a pas pu être atteint. C'est généralement temporaire — réessayez dans un instant. </target>
+      </trans-unit>
+      <trans-unit id="error.serverError.retry" datatype="html">
+        <source>Try again</source>
+        <target>Réessayer</target>
+      </trans-unit>
       <trans-unit id="route.error.serverError" datatype="html">
         <source>Server error</source>
         <target>Erreur serveur</target>

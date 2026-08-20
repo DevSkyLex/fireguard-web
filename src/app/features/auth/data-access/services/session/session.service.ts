@@ -1,8 +1,8 @@
 import { Service } from '@angular/core';
-import { type Observable, catchError } from 'rxjs';
+import { type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
-import type { SessionOutput } from '@features/auth/models';
+import type { RevokeOtherSessionsOutput, SessionOutput } from '@features/auth/models';
 
 /**
  * Service SessionService
@@ -108,24 +108,24 @@ export class SessionService extends HydraApiService {
   }
 
   /**
-   * Method revokeAll
+   * Method revokeOthers
    *
    * @description
-   * Revokes all user sessions except the current one.
-   * Useful for security purposes (e.g., after password change).
+   * Revokes every session except the caller's current one. Idempotent,
+   * `200` with the number of sessions actually revoked.
+   *
+   * The API also exposes `POST /sessions/revoke-all` (current session
+   * included, `204`); it is deliberately not wired here — signing the
+   * caller out belongs to the logout flow, not to a session-management
+   * panel.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @returns {Observable<void>} Observable completing on success.
+   * @returns {Observable<RevokeOtherSessionsOutput>} How many sessions were revoked.
    */
-  public revokeAll(): Observable<void> {
-    return this.http
-      .post<void>(this.buildUrl(`${SessionService.BASE_PATH}/revoke-all`), null, {
-        headers: this.buildHeaders(),
-        withCredentials: true,
-      })
-      .pipe(catchError(this.handleError));
+  public revokeOthers(): Observable<RevokeOtherSessionsOutput> {
+    return this.postAction<RevokeOtherSessionsOutput>(`${SessionService.BASE_PATH}/revoke-others`);
   }
   //#endregion
 }

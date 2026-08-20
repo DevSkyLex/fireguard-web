@@ -13,7 +13,7 @@ describe('SessionService', () => {
 
   const mockEnv = { apiUrl: 'https://api.test.com' };
   const baseUrl = `${mockEnv.apiUrl}/api/sessions`;
-  const revokeAllUrl = `${baseUrl}/revoke-all`;
+  const revokeOthersUrl = `${baseUrl}/revoke-others`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -242,37 +242,40 @@ describe('SessionService', () => {
     });
   });
 
-  describe('revokeAll', () => {
-    it('should send POST request to revoke all sessions', () => {
-      service.revokeAll().subscribe(() => {
-        // Success - no content
+  describe('revokeOthers', () => {
+    it('should send POST request to revoke the other sessions and report the count', () => {
+      service.revokeOthers().subscribe((output) => {
+        expect(output.revokedCount).toBe(2);
       });
 
-      const req = httpMock.expectOne(revokeAllUrl);
+      const req = httpMock.expectOne(revokeOthersUrl);
       expect(req.request.method).toBe('POST');
       expect(req.request.withCredentials).toBe(true);
 
-      req.flush(null, { status: 204, statusText: 'No Content' });
+      req.flush(
+        { '@id': '/api/sessions/revoke-others', '@type': 'Session', revokedCount: 2 },
+        { status: 200, statusText: 'OK' },
+      );
     });
 
-    it('should handle error when no other sessions to revoke', () => {
+    it('should propagate a rejection', () => {
       const errorResponse: ApiError = {
         '@id': '',
         '@type': 'Error',
-        status: 400,
-        type: 'https://api.test.com/errors/no-sessions',
-        title: 'Bad Request',
-        detail: 'No other sessions to revoke.',
+        status: 401,
+        type: 'https://api.test.com/errors/unauthorized',
+        title: 'Unauthorized',
+        detail: 'Authentication required.',
       };
 
-      service.revokeAll().subscribe({
+      service.revokeOthers().subscribe({
         error: (error: ApiError) => {
-          expect(error.status).toBe(400);
+          expect(error.status).toBe(401);
         },
       });
 
-      const req = httpMock.expectOne(revokeAllUrl);
-      req.flush(errorResponse, { status: 400, statusText: 'Bad Request' });
+      const req = httpMock.expectOne(revokeOthersUrl);
+      req.flush(errorResponse, { status: 401, statusText: 'Unauthorized' });
     });
   });
 });

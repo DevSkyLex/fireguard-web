@@ -1,0 +1,154 @@
+<section id="account-sessions" class="flex flex-col gap-4">
+  @if (loadError()) {
+    <app-error-state
+      icon="lucideTriangleAlert"
+      title="Couldn't load your sessions"
+      i18n-title="@@account.sessions.errorTitle"
+      description="Your active sessions can't be shown right now."
+      i18n-description="@@account.sessions.errorDescription"
+    >
+      <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retried.emit()">
+        <span i18n="@@account.sessions.retry">Retry</span>
+      </button>
+    </app-error-state>
+  } @else if (loading()) {
+    <div
+      class="flex flex-col gap-3"
+      role="status"
+      aria-label="Loading your active sessions"
+      i18n-aria-label="@@account.sessions.loadingAria"
+      data-testid="account-sessions-loading"
+    >
+      @for (placeholder of [1, 2, 3]; track placeholder) {
+        <div class="flex items-center gap-3 rounded-lg border border-border p-3">
+          <hlm-skeleton class="size-9 shrink-0 rounded-full" />
+          <div class="flex flex-1 flex-col gap-2">
+            <hlm-skeleton class="h-4 w-40" />
+            <hlm-skeleton class="h-3 w-56" />
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <ul class="flex flex-col gap-3">
+      @for (session of sessions(); track session.id) {
+        <li
+          class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"
+          data-testid="account-sessions-row"
+        >
+          <div class="flex min-w-0 items-center gap-3">
+            <ng-icon
+              name="lucideMonitor"
+              class="shrink-0 text-lg text-muted-foreground"
+              aria-hidden="true"
+            />
+            <div class="flex min-w-0 flex-col gap-0.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="truncate text-sm font-medium text-foreground">
+                  {{ session.browser ?? session.deviceType ?? unknownDeviceLabel }}
+                </span>
+                @if (session.id === currentSessionId()) {
+                  <span
+                    hlmBadge
+                    variant="default"
+                    class="gap-1"
+                    data-testid="account-sessions-current"
+                  >
+                    <ng-icon name="lucideShieldCheck" class="text-xs" aria-hidden="true" />
+                    <span i18n="@@account.sessions.current">Current</span>
+                  </span>
+                }
+              </div>
+              <span class="truncate text-xs text-muted-foreground">
+                <span i18n="@@account.sessions.lastActive">Last active</span>
+                {{ session.lastActivityAt | date: 'medium' }}
+                &middot;
+                {{ session.ipAddress }}
+              </span>
+            </div>
+          </div>
+
+          @if (session.id !== currentSessionId()) {
+            <button
+              hlmBtn
+              type="button"
+              size="sm"
+              variant="outline"
+              class="shrink-0 max-sm:min-h-11"
+              data-testid="account-sessions-revoke"
+              [disabled]="revoking()"
+              (click)="revokeSession(session.id)"
+            >
+              <span i18n="@@account.sessions.revoke">Revoke</span>
+            </button>
+          }
+        </li>
+      } @empty {
+        <li class="rounded-lg border border-border p-4 text-sm text-muted-foreground">
+          <span i18n="@@account.sessions.empty">No active sessions.</span>
+        </li>
+      }
+    </ul>
+
+    @if (hasOtherSessions()) {
+      <div>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="gap-2 max-sm:min-h-11"
+          data-testid="account-sessions-revoke-others"
+          (click)="openConfirmOthers()"
+        >
+          <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
+          <span i18n="@@account.sessions.revokeOthers">Sign out other sessions</span>
+        </button>
+      </div>
+    }
+  }
+
+  <hlm-alert-dialog
+    [state]="confirmOthersState()"
+    [disableClose]="revokingOthers()"
+    (stateChanged)="onConfirmOthersStateChanged($event)"
+  >
+    <hlm-alert-dialog-content
+      *hlmAlertDialogPortal
+      data-testid="account-sessions-revoke-others-dialog"
+    >
+      <hlm-alert-dialog-header>
+        <h2 hlmAlertDialogTitle i18n="@@account.sessions.revokeOthersConfirmTitle">
+          Sign out other sessions?
+        </h2>
+        <p hlmAlertDialogDescription i18n="@@account.sessions.revokeOthersConfirmDescription">
+          Every other browser and device signed into your account will need to sign in again. This
+          session stays signed in.
+        </p>
+      </hlm-alert-dialog-header>
+
+      <hlm-alert-dialog-footer>
+        <button
+          hlmAlertDialogCancel
+          class="max-sm:min-h-11"
+          [disabled]="revokingOthers()"
+          i18n="@@account.sessions.revokeOthersConfirmCancel"
+        >
+          Cancel
+        </button>
+        <button
+          hlmAlertDialogAction
+          variant="destructive"
+          class="max-sm:min-h-11"
+          data-testid="account-sessions-revoke-others-confirm"
+          [disabled]="revokingOthers()"
+          [attr.aria-busy]="revokingOthers() ? 'true' : null"
+          (click)="confirmOthers()"
+          i18n="@@account.sessions.revokeOthersConfirmAction"
+        >
+          Sign out
+        </button>
+      </hlm-alert-dialog-footer>
+    </hlm-alert-dialog-content>
+  </hlm-alert-dialog>
+</section>

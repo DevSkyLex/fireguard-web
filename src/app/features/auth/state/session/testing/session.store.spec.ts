@@ -16,7 +16,7 @@ describe('SessionStore', () => {
   let mockSessionService: {
     list: ReturnType<typeof vi.fn>;
     revoke: ReturnType<typeof vi.fn>;
-    revokeAll: ReturnType<typeof vi.fn>;
+    revokeOthers: ReturnType<typeof vi.fn>;
   };
 
   const currentSession: SessionOutput = {
@@ -49,7 +49,7 @@ describe('SessionStore', () => {
     mockSessionService = {
       list: vi.fn(),
       revoke: vi.fn(),
-      revokeAll: vi.fn(),
+      revokeOthers: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -102,16 +102,18 @@ describe('SessionStore', () => {
     expect(store.totalSessions()).toBe(1);
   });
 
-  it('should revoke all sessions except current one', async () => {
+  it('should revoke every session except the current one via revoke-others', async () => {
     mockSessionService.list.mockReturnValue(of(sessionsCollection));
-    mockSessionService.revokeAll.mockReturnValue(of(undefined));
+    mockSessionService.revokeOthers.mockReturnValue(
+      of({ '@id': '/api/sessions/revoke-others', '@type': 'Session', revokedCount: 1 }),
+    );
 
     store.loadSessions();
     await flushEffects();
-    store.revokeAll();
+    store.revokeOthers();
     await flushEffects();
 
-    expect(mockSessionService.revokeAll).toHaveBeenCalledTimes(1);
+    expect(mockSessionService.revokeOthers).toHaveBeenCalledTimes(1);
     expect(store.revokeAllCallState().status).toBe('success');
     expect(store.sessions()).toEqual([currentSession]);
     expect(store.totalSessions()).toBe(1);

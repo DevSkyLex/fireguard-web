@@ -63,6 +63,64 @@
           (restarted)="passwordStore.restart()"
         />
       </section>
+
+      <section
+        id="account-sessions-section"
+        class="flex flex-col gap-3 border-t border-border pt-5"
+      >
+        <header class="flex min-w-0 flex-col gap-1">
+          <h3
+            class="text-sm font-semibold tracking-tight text-foreground"
+            i18n="@@account.sessions.title"
+          >
+            Active sessions
+          </h3>
+          <p class="text-sm text-muted-foreground" i18n="@@account.sessions.description">
+            Every browser and device currently signed into your account.
+          </p>
+        </header>
+
+        <app-account-sessions-panel
+          [sessions]="sessionStore.sessions()"
+          [currentSessionId]="sessionStore.currentSession()?.id ?? null"
+          [loading]="sessionsLoading()"
+          [loadError]="sessionsLoadError()"
+          [revoking]="sessionStore.isRevoking()"
+          [revokingOthers]="sessionStore.isRevokingAll()"
+          [hasOtherSessions]="sessionStore.hasOtherSessions()"
+          (sessionRevoked)="revokeSession($event)"
+          (othersRevoked)="revokeOtherSessions()"
+          (retried)="retrySessions()"
+        />
+      </section>
+
+      <section
+        id="account-trusted-devices-section"
+        class="flex flex-col gap-3 border-t border-border pt-5"
+      >
+        <header class="flex min-w-0 flex-col gap-1">
+          <h3
+            class="text-sm font-semibold tracking-tight text-foreground"
+            i18n="@@account.devices.title"
+          >
+            Trusted devices
+          </h3>
+          <p class="text-sm text-muted-foreground" i18n="@@account.devices.description">
+            Devices you told us to remember, so they skip the second factor for a while.
+          </p>
+        </header>
+
+        <app-account-trusted-devices-panel
+          [devices]="trustedDeviceStore.devices()"
+          [loading]="devicesLoading()"
+          [loadError]="devicesLoadError()"
+          [revoking]="trustedDeviceStore.isRevoking()"
+          [revokingAll]="trustedDeviceStore.isRevokingAll()"
+          (deviceRevoked)="revokeDevice($event)"
+          (allRevoked)="revokeAllDevices()"
+          (retried)="retryDevices()"
+        />
+      </section>
     }
   </div>
 </div>

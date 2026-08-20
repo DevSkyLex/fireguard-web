@@ -16,9 +16,11 @@ This feature is responsible for:
 This feature does not own authentication, session restoration, or auth transport concerns. Those
 belong to `features/auth` — including **active sessions and trusted devices**, whose stores and
 services (`SessionStore`, `TrustedDeviceStore`, `SessionService`, `TrustedDeviceService`) live in
-`features/auth` because they are session-lifecycle concerns. Neither has a UI surface today; when
-one is built, whether it renders under `/account/security` is a placement decision, not a transfer
-of ownership.
+`features/auth` because they are session-lifecycle concerns. `/account/security` renders their UI
+(`AccountSessionsPanel`, `AccountTrustedDevicesPanel`), a placement decision that is not a transfer
+of ownership: `AccountSecurityPage` injects both auth-owned stores directly, scoped to the page
+(`providers: [SessionStore, TrustedDeviceStore]`), the same way it already scopes its own workflow
+stores.
 
 ## Entry Points
 
@@ -31,7 +33,8 @@ of ownership.
 `/account` redirects to `/account/profile`. Each section is a full page:
 
 - `/account/profile` — identity, avatar, first/last name and interface language
-- `/account/security` — authenticator app (TOTP) and the two-step password change
+- `/account/security` — authenticator app (TOTP), the two-step password change, active sessions and
+  trusted devices
 - `/account/notifications` — the notification feed, filtered by category and paged on demand
 
 The tree carries `authGuard`: no shell route in this application carries one, and every account
@@ -122,6 +125,8 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   `applyPasswordConfirmation` — in the change-password form. Account owns the form; auth owns the
   policy, and is the single authority mirroring the API's constraints. Recorded in auth's
   `FEATURE.md`.
+- **Injects `features/auth`'s `SessionStore` and `TrustedDeviceStore` directly** in
+  `AccountSecurityPage`, scoped to that page. Recorded in auth's `FEATURE.md`.
 - Must not own auth guards, auth interceptors, or refresh-token behavior.
 - `accountPermissionGuard`/`ACCOUNT_PERMISSION`/`UserPermissionService` may be consumed by other
   features to gate routes or UI on a global permission.
@@ -172,8 +177,6 @@ Backend endpoints exist for these; no frontend model, service method or store do
   and Mercure delivery). Distinct from the bulk `/read-all`, which **is** wired.
 - **Account deactivation** — `POST /api/me/deactivate`. Self-service and irreversible without an
   administrator, so it needs a confirmation surface designed for that.
-- **Active sessions and trusted devices** — the auth-owned stores and services are complete and
-  specced; only the UI is absent.
 
 Email cannot be changed by the user at all: `email` is read-only on `CurrentUserProfileOutput` and
 absent from the input DTO, and no endpoint exists.

@@ -14805,6 +14805,130 @@
         <source>Anonymous</source>
         <target>Anónimo</target>
       </trans-unit>
+      <trans-unit id="account.sessions.title" datatype="html">
+        <source> Active sessions </source>
+        <target> Sesiones activas </target>
+      </trans-unit>
+      <trans-unit id="account.sessions.description" datatype="html">
+        <source> Every browser and device currently signed into your account. </source>
+        <target> Todos los navegadores y dispositivos actualmente conectados a su cuenta. </target>
+      </trans-unit>
+      <trans-unit id="account.sessions.errorTitle" datatype="html">
+        <source>Couldn&apos;t load your sessions</source>
+        <target>No se pudieron cargar sus sesiones</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.errorDescription" datatype="html">
+        <source>Your active sessions can&apos;t be shown right now.</source>
+        <target>Sus sesiones activas no se pueden mostrar en este momento.</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.loadingAria" datatype="html">
+        <source>Loading your active sessions</source>
+        <target>Cargando sus sesiones activas</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.current" datatype="html">
+        <source>Current</source>
+        <target>Actual</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.lastActive" datatype="html">
+        <source>Last active</source>
+        <target>Última actividad</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.revoke" datatype="html">
+        <source>Revoke</source>
+        <target>Revocar</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.empty" datatype="html">
+        <source>No active sessions.</source>
+        <target>No hay sesiones activas.</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.revokeOthers" datatype="html">
+        <source>Sign out other sessions</source>
+        <target>Cerrar las demás sesiones</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.revokeOthersConfirmTitle" datatype="html">
+        <source> Sign out other sessions? </source>
+        <target> ¿Cerrar las demás sesiones? </target>
+      </trans-unit>
+      <trans-unit id="account.sessions.revokeOthersConfirmDescription" datatype="html">
+        <source> Every other browser and device signed into your account will need to sign in again. This session stays signed in. </source>
+        <target> Todos los demás navegadores y dispositivos conectados a su cuenta deberán iniciar sesión de nuevo. Esta sesión permanece conectada. </target>
+      </trans-unit>
+      <trans-unit id="account.sessions.revokeOthersConfirmCancel" datatype="html">
+        <source> Cancel </source>
+        <target> Cancelar </target>
+      </trans-unit>
+      <trans-unit id="account.sessions.revokeOthersConfirmAction" datatype="html">
+        <source> Sign out </source>
+        <target> Cerrar sesión </target>
+      </trans-unit>
+      <trans-unit id="account.sessions.unknownDevice" datatype="html">
+        <source>Unknown device</source>
+        <target>Dispositivo desconocido</target>
+      </trans-unit>
+      <trans-unit id="account.devices.title" datatype="html">
+        <source> Trusted devices </source>
+        <target> Dispositivos de confianza </target>
+      </trans-unit>
+      <trans-unit id="account.devices.description" datatype="html">
+        <source> Devices you told us to remember, so they skip the second factor for a while. </source>
+        <target> Los dispositivos que nos pidió recordar, para que omitan el segundo factor durante un tiempo. </target>
+      </trans-unit>
+      <trans-unit id="account.devices.errorTitle" datatype="html">
+        <source>Couldn&apos;t load your trusted devices</source>
+        <target>No se pudieron cargar sus dispositivos de confianza</target>
+      </trans-unit>
+      <trans-unit id="account.devices.errorDescription" datatype="html">
+        <source>Your trusted devices can&apos;t be shown right now.</source>
+        <target>Sus dispositivos de confianza no se pueden mostrar en este momento.</target>
+      </trans-unit>
+      <trans-unit id="account.devices.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="account.devices.loadingAria" datatype="html">
+        <source>Loading your trusted devices</source>
+        <target>Cargando sus dispositivos de confianza</target>
+      </trans-unit>
+      <trans-unit id="account.devices.empty" datatype="html">
+        <source> No trusted devices. </source>
+        <target> No hay dispositivos de confianza. </target>
+      </trans-unit>
+      <trans-unit id="account.devices.lastUsed" datatype="html">
+        <source>Last used</source>
+        <target>Último uso</target>
+      </trans-unit>
+      <trans-unit id="account.devices.expires" datatype="html">
+        <source>Expires</source>
+        <target>Expira</target>
+      </trans-unit>
+      <trans-unit id="account.devices.revoke" datatype="html">
+        <source>Revoke</source>
+        <target>Revocar</target>
+      </trans-unit>
+      <trans-unit id="account.devices.revokeAll" datatype="html">
+        <source>Revoke all devices</source>
+        <target>Revocar todos los dispositivos</target>
+      </trans-unit>
+      <trans-unit id="account.devices.revokeAllConfirmTitle" datatype="html">
+        <source> Revoke all trusted devices? </source>
+        <target> ¿Revocar todos los dispositivos de confianza? </target>
+      </trans-unit>
+      <trans-unit id="account.devices.revokeAllConfirmDescription" datatype="html">
+        <source> Every device on this list will be asked for a second factor again the next time it signs in. </source>
+        <target> A cada dispositivo de esta lista se le pedirá un segundo factor la próxima vez que inicie sesión. </target>
+      </trans-unit>
+      <trans-unit id="account.devices.revokeAllConfirmCancel" datatype="html">
+        <source> Cancel </source>
+        <target> Cancelar </target>
+      </trans-unit>
+      <trans-unit id="account.devices.revokeAllConfirmAction" datatype="html">
+        <source> Revoke all </source>
+        <target> Revocar todo </target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

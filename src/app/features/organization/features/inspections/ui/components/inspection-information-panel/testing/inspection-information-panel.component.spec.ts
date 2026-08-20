@@ -83,6 +83,29 @@ describe('InspectionInformationPanel', () => {
     expect(byTestId('inspection-field-facility')?.textContent).toContain('Not specified');
   });
 
+  it('should show a placeholder for an unassigned checklist', () => {
+    expect(byTestId('inspection-field-checklist')?.textContent).toContain('Not specified');
+  });
+
+  it('should render the resolved checklist name', async () => {
+    fixture.componentRef.setInput('inspection', { ...INSPECTION, checklistId: 'checklist-1' });
+    fixture.componentRef.setInput('checklistName', 'Monthly fire panel check');
+    await fixture.whenStable();
+
+    expect(byTestId('inspection-field-checklist')?.textContent).toContain(
+      'Monthly fire panel check',
+    );
+  });
+
+  it('should fall back to a neutral label when the checklist name could not be resolved', async () => {
+    fixture.componentRef.setInput('inspection', { ...INSPECTION, checklistId: 'checklist-1' });
+    await fixture.whenStable();
+
+    expect(byTestId('inspection-field-checklist')?.textContent).toContain(
+      'Checklist deleted or unavailable',
+    );
+  });
+
   it('should ask the page to open the notes editor', () => {
     byTestId('inspection-field-notes')?.querySelector<HTMLButtonElement>('button')?.click();
 

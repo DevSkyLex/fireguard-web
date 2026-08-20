@@ -17,6 +17,7 @@ import { Router, RouterLink } from '@angular/router';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
+import { ChecklistStore } from '@features/organization/features/checklists/state';
 import type {
   CreateInspectionInput,
   InspectionOutput,
@@ -47,19 +48,25 @@ import { InspectionCreateForm } from '../../forms/inspection-create-form';
  * Its title lives in the shell breadcrumb (the route's static title); "Back
  * to inspections" registers on the shell header through `PageActionsService`.
  *
+ * Also provides a component-scoped {@link ChecklistStore} and loads its
+ * active checklist templates on arrival
+ * (`ChecklistStore.ensureInspectionCreateOptionsLoaded`), feeding the
+ * create form's optional checklist picker — the cross-feature pattern the
+ * checklists subfeature's `FEATURE.md` documents for this exact consumer.
+ *
  * Implements `UnsavedChangesAware` so `unsavedChangesGuard`
  * (`inspections.routes.ts`) can stop navigation while the form holds unsaved
  * work, hosting the shared {@link UnsavedChangesDialog} to resolve its own
  * confirmation.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-inspection-create-page',
   imports: [RouterLink, InspectionCreateForm, UnsavedChangesDialog, HlmButton, ...HlmCardImports],
-  providers: [InspectionCreationOptionsStore],
+  providers: [InspectionCreationOptionsStore, ChecklistStore],
   templateUrl: './inspection-create-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +92,9 @@ export class InspectionCreatePage implements UnsavedChangesAware {
   protected readonly creationOptions: InspectionCreationOptionsStore = inject(
     InspectionCreationOptionsStore,
   );
+
+  /** The organization's active checklist templates, loaded on arrival for the create form's optional picker. */
+  protected readonly checklistStore: ChecklistStore = inject<ChecklistStore>(ChecklistStore);
 
   /** Router used to open the new record once it exists. */
   private readonly router: Router = inject(Router);
@@ -127,6 +137,7 @@ export class InspectionCreatePage implements UnsavedChangesAware {
 
       untracked((): void => {
         this.creationOptions.loadEquipmentOptions(organizationId);
+        this.checklistStore.ensureInspectionCreateOptionsLoaded(organizationId);
       });
     });
 

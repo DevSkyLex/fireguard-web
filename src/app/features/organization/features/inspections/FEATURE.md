@@ -51,18 +51,25 @@ the UI.
   `services/inspection-list-preferences/`, cookie `fg-inspection-list`); page
   size is not.
 - `ui/pages/inspection-create-page` (`InspectionCreatePage`) —
-  `ui/forms/inspection-create-form`, asking only for what
-  `CreateInspectionInput` requires: `equipmentId` (a combobox sourced from
+  `ui/forms/inspection-create-form`, asking for what
+  `CreateInspectionInput` requires — `equipmentId` (a combobox sourced from
   `InspectionCreationOptionsStore`), `result`, `performedAt`, `inspectorType`
-  and `inspectorName`. `notes` and `signature` are filled in afterward, in
-  place, on the created record.
+  and `inspectorName` — plus the optional `checklistId` select, sourced from
+  a component-scoped `ChecklistStore` provided on this page
+  (`ChecklistStore.ensureInspectionCreateOptionsLoaded`, active checklists
+  only). `notes` and `signature` are filled in afterward, in place, on the
+  created record.
 - `ui/pages/inspection-detail-page` (`InspectionDetailPage`) — a header
   naming the record with its status, result and non-conformity count, a
   lifecycle band (Submit + confirm-gated Cancel while `draft`, Close while
   `submitted`, nothing once terminal), and
   `ui/components/inspection-information-panel` for the in-place edit
-  surface. See "Cross-Feature Dependencies" below for exactly which fields
-  it opens.
+  surface. When the record carries a `checklistId`, the page resolves the
+  checklist's name directly through `ChecklistService.get` (browser-only,
+  secondary UI data) and passes it to the panel as `checklistName`; a
+  deleted/unresolvable checklist degrades to the panel's own neutral
+  fallback text rather than a raw id or a toast. See "Cross-Feature
+  Dependencies" below for exactly which fields it opens.
 - `ui/components/inspection-status-tag` — the `InspectionOutput.status`,
   `.result`, and the non-conformity `severity`/`status` registry
   (`kind: 'status' | 'result' | 'nonConformitySeverity' | 'nonConformityStatus'`),
@@ -101,6 +108,9 @@ Primary stores:
   `data-access` barrel — the same cross-feature pattern
   `InterventionPlanningOptionsStore` already established for its own
   site/member pickers)
+- `ChecklistStore` (component-scoped to the create page, imported from the
+  sibling `checklists` feature's `state` barrel; feeds the create form's
+  optional checklist select through `ensureInspectionCreateOptionsLoaded`)
 
 Primary service:
 
@@ -149,15 +159,14 @@ the list/status/add surface this document now describes, matching the same
 call `equipments` made for its own attachment history. Revisit once a route
 or design names an attachments surface for a non-conformity.
 
-The inspection creation form does not offer `facilityId` or `checklistId`,
-though both are accepted by `CreateInspectionInput`. Facility is optional
-and the inspected equipment already carries its own facility assignment;
-checklist has no source at all — the sibling `checklists` subfeature has no
-`ui/` yet. Building a second full options picker (mirroring the equipment
-one) for an optional field was judged disproportionate. `inspectorUserId`
-and `inspectorOrganizationName` are likewise not asked for — `inspectorName`
-alone covers the minimum viable record. Revisit any of these once a
-workflow actually needs to set the field.
+The inspection creation form still does not offer `facilityId`, though it is
+accepted by `CreateInspectionInput`: the inspected equipment already carries
+its own facility assignment, so a second picker for it would be redundant.
+`checklistId` **is now offered** (checklists' `ui/` landed in #85) — see "UI
+(this pass)" above. `inspectorUserId` and `inspectorOrganizationName` are
+likewise not asked for — `inspectorName` alone covers the minimum viable
+record. Revisit any of these once a workflow actually needs to set the
+field.
 
 ## Cross-Feature Dependencies
 
@@ -169,7 +178,10 @@ workflow actually needs to set the field.
 - Equipment, facility and checklist stay read-only in the panel:
   `UpdateInspectionInput` accepts all three, but the detail page carries none
   of their option lists, and opening a picker with nothing to pick from would
-  be worse than a plain value.
+  be worse than a plain value. The checklist row does resolve and show the
+  checklist's **name** (via `ChecklistService.get`, browser-only) instead of
+  the raw id — see "UI (this pass)" above — but that is a read-only label,
+  not an editor.
 - The `/:inspectionId/edit` redirect was removed as dead weight: the record
   itself is the edit surface, and nothing in the app links to `/edit` anymore.
 - Depends on organization route context from the parent feature.

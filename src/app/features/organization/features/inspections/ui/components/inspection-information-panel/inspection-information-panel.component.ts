@@ -48,7 +48,10 @@ function toDateInputValue(iso: string): string {
  * render as plain read-only rows: `UpdateInspectionInput` only accepts the
  * four editable properties, and `FEATURE.md` deliberately keeps the
  * remaining three out of this panel rather than open a picker with nothing
- * to pick from.
+ * to pick from. The checklist row renders {@link checklistName} — resolved
+ * by the page, since this panel takes inputs only — falling back to a
+ * neutral "unknown" label when the id is set but the name could not be
+ * resolved (e.g. the checklist was deleted).
  *
  * `result` commits on selection (`pick`); the three free-value fields keep
  * an explicit Save (`confirm`) since none has a single "done" gesture. Only
@@ -56,7 +59,7 @@ function toDateInputValue(iso: string): string {
  * `signature` share one text draft while `performedAt` keeps its own,
  * date-shaped one, mirroring `EquipmentInformationPanel`.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -118,6 +121,23 @@ export class InspectionInformationPanel {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property checklistName
+   * @readonly
+   *
+   * @description
+   * The inspection's checklist template name, resolved by the page. `null`
+   * either means no checklist is assigned (when {@link inspection}'s
+   * `checklistId` is also null) or that the name could not be resolved
+   * (e.g. the checklist was deleted) — the template tells the two apart by
+   * checking `checklistId` itself.
+   *
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly checklistName: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs

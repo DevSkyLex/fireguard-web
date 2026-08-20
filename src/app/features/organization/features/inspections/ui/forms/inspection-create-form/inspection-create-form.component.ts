@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type {
   CreateInspectionInput,
   InspectionResult,
@@ -36,6 +37,7 @@ const EMPTY_VALUES: InspectionCreateFormDraft = {
   performedAt: null,
   inspectorType: 'user',
   inspectorName: '',
+  checklistId: '',
 };
 
 /** Every result the `result` field's select offers. */
@@ -57,16 +59,17 @@ const INSPECTOR_TYPE_VALUES: ReadonlyArray<InspectorType> = ['user', 'external']
  * {@link submitted} with the API-shaped payload — the page calls the store
  * (`ARCHITECTURE.md` §10.4). Only the properties `CreateInspectionInput`
  * requires are asked here (`equipmentId`, `result`, `performedAt`,
- * `inspectorType`, `inspectorName`); `notes` and `signature` are filled in
+ * `inspectorType`, `inspectorName`), plus the optional `checklistId` picker
+ * fed by {@link checklists} — `notes` and `signature` are filled in
  * afterward, in place, on the created record
- * (`FEATURE.md` "The record is the edit surface"). Facility and checklist
- * are deliberately not offered — see the feature's `FEATURE.md` for why.
+ * (`FEATURE.md` "The record is the edit surface"). Facility is still
+ * deliberately not offered — see the feature's `FEATURE.md` for why.
  *
  * Reports its own dirtiness through {@link dirtyChanged} so the hosting page
  * can implement `UnsavedChangesAware` (`DESIGN.md` § Action Surfaces)
  * without owning the field tree itself.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -118,6 +121,18 @@ export class InspectionCreateForm {
    */
   public readonly equipmentOptions: InputSignal<readonly SelectOption[]> = input<
     readonly SelectOption[]
+  >([]);
+
+  /**
+   * Property checklists
+   * @readonly
+   * @description The organization's active checklist templates, offered by the optional checklist select.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<readonly ChecklistOutput[]>}
+   */
+  public readonly checklists: InputSignal<readonly ChecklistOutput[]> = input<
+    readonly ChecklistOutput[]
   >([]);
   //#endregion
 
@@ -229,6 +244,11 @@ export class InspectionCreateForm {
     value === 'user'
       ? $localize`:@@inspection.form.inspectorTypeUser:Team member`
       : $localize`:@@inspection.form.inspectorTypeExternal:External inspector`;
+
+  /** Names a picked checklist on the closed combobox trigger. */
+  protected readonly checklistLabelOf: (value: string) => string = (value: string): string =>
+    this.checklists().find((checklist: ChecklistOutput): boolean => checklist.id === value)?.name ??
+    '';
   //#endregion
 
   //#region Constructor
@@ -279,6 +299,7 @@ export class InspectionCreateForm {
       performedAt: draft.performedAt.toISOString(),
       inspectorType: draft.inspectorType,
       inspectorName: draft.inspectorName.trim(),
+      checklistId: draft.checklistId === '' ? null : draft.checklistId,
     });
   }
   //#endregion

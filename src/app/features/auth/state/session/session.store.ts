@@ -283,22 +283,25 @@ export const SessionStore = signalStore(
         ),
 
         /**
-         * Method revokeAll
+         * Method revokeOthers
          *
          * @description
-         * Revokes all sessions except the current one. Uses `exhaustMap` to
-         * prevent duplicate requests. On success, only the current session
-         * (identified by `isCurrent`) is kept in the entity collection.
+         * Revokes every session except the current one, via
+         * `POST /sessions/revoke-others`. The previous implementation hit
+         * `/sessions/revoke-all`, which revokes the **current session too** —
+         * the caller would have been signed out by the very control promising
+         * to keep their session. Uses `exhaustMap` to prevent duplicate
+         * requests; on success only the current session is kept locally.
          *
          * @since 1.0.0
          */
-        revokeAll: rxMethod<void>(
+        revokeOthers: rxMethod<void>(
           pipe(
             tap(() => {
               patchState(store, { revokeAllCallState: pendingCallState() });
             }),
             exhaustMap(() =>
-              sessionService.revokeAll().pipe(
+              sessionService.revokeOthers().pipe(
                 tapResponse({
                   next: () => {
                     const currentSession: SessionOutput | undefined = store

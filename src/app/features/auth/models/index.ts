@@ -14,6 +14,7 @@ export type { LogoutOutput } from './logout/logout-output.interface';
 export type { MfaResendInput } from './mfa/mfa-resend-input.interface';
 export type { MfaVerifyInput } from './mfa/mfa-verify-input.interface';
 export type { SessionOutput } from './session/session-output.interface';
+export type { RevokeOtherSessionsOutput } from './session/revoke-other-sessions-output.interface';
 export type { TrustDeviceOutput } from './trusted-device/trust-device-output.interface';
 export type { TrustedDeviceOutput } from './trusted-device/trusted-device-output.interface';
 export type { PasswordResetRequestInput } from './password-reset/password-reset-request-input.interface';

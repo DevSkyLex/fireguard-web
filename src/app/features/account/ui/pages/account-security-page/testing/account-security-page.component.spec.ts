@@ -1,12 +1,14 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { StoreError } from '@core/request-state';
+import { idleCallState, type CallState, type StoreError } from '@core/request-state';
 import type { SetupTotpOutput, UserProfileOutput } from '@features/account/models';
 import {
   AccountPasswordChangeStore,
   AccountTotpEnrollmentStore,
   UserStore,
 } from '@features/account/state';
+import type { SessionOutput, TrustedDeviceOutput } from '@features/auth/models';
+import { SessionStore, TrustedDeviceStore } from '@features/auth/state';
 import { AccountSecurityPage } from '../account-security-page.component';
 
 const SETUP: SetupTotpOutput = {
@@ -46,6 +48,26 @@ describe('AccountSecurityPage', () => {
     isConfirming: WritableSignal<boolean>;
     maskedRecipient: WritableSignal<string | null>;
   };
+  let sessionStore: {
+    load: ReturnType<typeof vi.fn>;
+    revoke: ReturnType<typeof vi.fn>;
+    revokeOthers: ReturnType<typeof vi.fn>;
+    sessions: WritableSignal<ReadonlyArray<SessionOutput>>;
+    currentSession: WritableSignal<SessionOutput | null>;
+    listCallState: WritableSignal<CallState<null>>;
+    isRevoking: WritableSignal<boolean>;
+    isRevokingAll: WritableSignal<boolean>;
+    hasOtherSessions: WritableSignal<boolean>;
+  };
+  let trustedDeviceStore: {
+    load: ReturnType<typeof vi.fn>;
+    revokeDevice: ReturnType<typeof vi.fn>;
+    revokeAllDevices: ReturnType<typeof vi.fn>;
+    devices: WritableSignal<ReadonlyArray<TrustedDeviceOutput>>;
+    listCallState: WritableSignal<CallState<null>>;
+    isRevoking: WritableSignal<boolean>;
+    isRevokingAll: WritableSignal<boolean>;
+  };
 
   beforeEach(async () => {
     profile = signal<UserProfileOutput | null>({ totpEnabled: false } as UserProfileOutput);
@@ -76,6 +98,26 @@ describe('AccountSecurityPage', () => {
       isConfirming: signal(false),
       maskedRecipient: signal<string | null>(null),
     };
+    sessionStore = {
+      load: vi.fn(),
+      revoke: vi.fn(),
+      revokeOthers: vi.fn(),
+      sessions: signal<ReadonlyArray<SessionOutput>>([]),
+      currentSession: signal<SessionOutput | null>(null),
+      listCallState: signal<CallState<null>>(idleCallState()),
+      isRevoking: signal(false),
+      isRevokingAll: signal(false),
+      hasOtherSessions: signal(false),
+    };
+    trustedDeviceStore = {
+      load: vi.fn(),
+      revokeDevice: vi.fn(),
+      revokeAllDevices: vi.fn(),
+      devices: signal<ReadonlyArray<TrustedDeviceOutput>>([]),
+      listCallState: signal<CallState<null>>(idleCallState()),
+      isRevoking: signal(false),
+      isRevokingAll: signal(false),
+    };
 
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), { provide: UserStore, useValue: userStore }],
@@ -85,6 +127,8 @@ describe('AccountSecurityPage', () => {
           providers: [
             { provide: AccountTotpEnrollmentStore, useValue: totpStore },
             { provide: AccountPasswordChangeStore, useValue: passwordStore },
+            { provide: SessionStore, useValue: sessionStore },
+            { provide: TrustedDeviceStore, useValue: trustedDeviceStore },
           ],
         },
       })
@@ -186,8 +230,48 @@ describe('AccountSecurityPage', () => {
   });
 
   it('should render no error surface of its own', () => {
-    // Whole-request failures are toasts raised by the app-wide feedback
-    // listener; a banner here would show the same message twice.
+    // Whole-request failures are toasts raised by the app-wide feedback listener.
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('should ask for sessions and trusted devices on init', () => {
+    expect(sessionStore.load).toHaveBeenCalled();
+    expect(trustedDeviceStore.load).toHaveBeenCalled();
+  });
+
+  it('should forward a session revoke to the session store', () => {
+    fixture.componentInstance['revokeSession']('session-1');
+
+    expect(sessionStore.revoke).toHaveBeenCalledWith('session-1');
+  });
+
+  it('should forward "sign out other sessions" to the session store', () => {
+    fixture.componentInstance['revokeOtherSessions']();
+
+    expect(sessionStore.revokeOthers).toHaveBeenCalled();
+  });
+
+  it('should retry the sessions list through the session store', () => {
+    fixture.componentInstance['retrySessions']();
+
+    expect(sessionStore.load).toHaveBeenCalledTimes(2);
+  });
+
+  it('should forward a device revoke to the trusted-device store', () => {
+    fixture.componentInstance['revokeDevice']('device-1');
+
+    expect(trustedDeviceStore.revokeDevice).toHaveBeenCalledWith('device-1');
+  });
+
+  it('should forward "revoke all devices" to the trusted-device store', () => {
+    fixture.componentInstance['revokeAllDevices']();
+
+    expect(trustedDeviceStore.revokeAllDevices).toHaveBeenCalled();
+  });
+
+  it('should retry the trusted-devices list through the trusted-device store', () => {
+    fixture.componentInstance['retryDevices']();
+
+    expect(trustedDeviceStore.load).toHaveBeenCalledTimes(2);
   });
 });

@@ -96,6 +96,10 @@ every surface at once.
 
 - May coordinate with `features/account` during bootstrap and logout through the account-owned `USER_PROFILE_PORT` contract.
 - Must not move account-owned state or UI into auth just because auth initializes first.
+- **`features/account`'s `AccountSecurityPage` injects `SessionStore` and `TrustedDeviceStore`
+  directly**, scoped to that page (`providers: [SessionStore, TrustedDeviceStore]`), to render active
+  sessions and trusted devices at `/account/security`. The stores stay auth-owned; only their UI
+  renders under account.
 - **Publishes `AUTH_LOGOUT_PORT`** to two approved consumers outside auth:
   `features/account`'s `AccountMenu` (the shell's sign-out control) and
   `features/error`'s `ForbiddenPage` (the member has no organization they can

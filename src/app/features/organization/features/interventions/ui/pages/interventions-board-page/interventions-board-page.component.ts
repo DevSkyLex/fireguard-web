@@ -222,7 +222,12 @@ export class InterventionsBoardPage {
     () => ['/organizations', this.organizationId(), 'interventions'],
   );
 
-  /** Every query param the list view should keep when the operator switches back — the board never carries `status`, so nothing to strip. */
+  /**
+   * Every query param the List **and** Calendar views should keep when the
+   * operator switches to either — the board never carries `status`, so
+   * nothing to strip either way, which is why both toggle links reuse this
+   * one signal instead of two identical computeds.
+   */
   protected readonly listQueryParams: Signal<Record<string, string | null>> = computed(() => ({
     q: this.q() ?? null,
     type: this.type() ?? null,

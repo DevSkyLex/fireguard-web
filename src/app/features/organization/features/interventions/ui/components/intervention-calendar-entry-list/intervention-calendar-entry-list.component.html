@@ -1,0 +1,17 @@
+<div class="flex flex-col gap-2" data-testid="intervention-calendar-entry-list">
+  @for (item of items(); track item.id) {
+    <a
+      hlmItem
+      size="sm"
+      class="rounded-md"
+      data-testid="intervention-calendar-entry"
+      [routerLink]="detailLinkOf(item)"
+    >
+      <div hlmItemContent>
+        <span hlmItemTitle class="line-clamp-1">{{ numberLabelOf(item) }} {{ item.name }}</span>
+        <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
+      </div>
+      <app-intervention-tag kind="status" [value]="item.status" />
+    </a>
+  }
+</div>

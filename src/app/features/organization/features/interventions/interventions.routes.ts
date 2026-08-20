@@ -11,18 +11,23 @@ import { InterventionStore } from './state';
  * @description
  * Organization-scoped intervention workflows: the index at
  * `/organizations/:organizationId/interventions`, the Kanban board at
- * `/organizations/:organizationId/interventions/board`, and one intervention
- * under it.
+ * `/organizations/:organizationId/interventions/board`, the Calendar at
+ * `/organizations/:organizationId/interventions/calendar`, and one
+ * intervention under it.
  *
- * `board` is registered before `:interventionId` — a literal segment must be
- * matched ahead of the param route, or every board visit would instead
- * resolve as a detail page for an intervention id of `"board"`.
+ * `board` and `calendar` are both registered before `:interventionId` — a
+ * literal segment must be matched ahead of the param route, or every visit
+ * to either would instead resolve as a detail page for an intervention id of
+ * `"board"`/`"calendar"`.
  *
  * The children share a pathless parent so `InterventionStore`, bound in its
  * route-level `providers`, survives navigation between the list, the board
  * and a detail page — the list and the board render the exact same loaded
  * dataset, and the detail page's prev/next walks the same `orderedIds()` the
- * list populated, with no second fetch.
+ * list populated, with no second fetch. The Calendar leaf does **not** read
+ * `InterventionStore`: it reads a bounded date window instead of one server
+ * page, an incompatible shape for the same entity cache, so it owns its own
+ * component-scoped `InterventionCalendarStore` (`FEATURE.md`).
  *
  * The permission guard sits on the parent only, as it does in
  * `COLLABORATION_ROUTES`: it re-runs on an organization switch because the
@@ -75,6 +80,15 @@ export const INTERVENTION_ROUTES: Routes = [
           ),
         title: $localize`:@@route.interventionsBoard:Board`,
         data: { breadcrumb: $localize`:@@route.interventionsBoard:Board` },
+      },
+      {
+        path: 'calendar',
+        loadComponent: () =>
+          import('./ui/pages/interventions-calendar-page/interventions-calendar-page.component').then(
+            (m) => m.InterventionsCalendarPage,
+          ),
+        title: $localize`:@@route.interventionsCalendar:Calendar`,
+        data: { breadcrumb: $localize`:@@route.interventionsCalendar:Calendar` },
       },
       {
         path: ':interventionId',

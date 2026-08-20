@@ -10429,6 +10429,10 @@
         <source>This card is updating.</source>
         <target>Esta tarjeta se está actualizando.</target>
       </trans-unit>
+      <trans-unit id="intervention.list.viewToggleLabel" datatype="html">
+        <source>Change view</source>
+        <target>Cambiar de vista</target>
+      </trans-unit>
       <trans-unit id="intervention.board.viewList" datatype="html">
         <source>List</source>
         <target>Lista</target>
@@ -10452,6 +10456,34 @@
       <trans-unit id="route.interventionsBoard" datatype="html">
         <source>Board</source>
         <target>Tablero</target>
+      </trans-unit>
+      <trans-unit id="route.interventionsCalendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendario</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.viewCalendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendario</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.errorTitle" datatype="html">
+        <source>Couldn't load the calendar</source>
+        <target>No se pudo cargar el calendario</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.errorText" datatype="html">
+        <source>The calendar could not be loaded. Check your connection and try again.</source>
+        <target>No se pudo cargar el calendario. Compruebe su conexión e inténtelo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.dayEmpty" datatype="html">
+        <source>Nothing scheduled this day.</source>
+        <target>Nada programado este día.</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.empty" datatype="html">
+        <source>Nothing scheduled in this period.</source>
+        <target>Nada programado en este período.</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.seeAllInList" datatype="html">
+        <source>See all <x id="INTERPOLATION" equiv-text="dayItems().length"/> in list</source>
+        <target>Ver los <x id="INTERPOLATION" equiv-text="dayItems().length"/> en la lista</target>
       </trans-unit>
       <trans-unit id="intervention.list.removeFilter" datatype="html">
         <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>

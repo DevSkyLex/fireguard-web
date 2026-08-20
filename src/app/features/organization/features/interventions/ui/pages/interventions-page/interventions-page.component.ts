@@ -849,6 +849,38 @@ export class InterventionsPage {
   );
 
   /**
+   * Property calendarQueryParams
+   * @readonly
+   *
+   * @description
+   * Every query param the Calendar view should keep when the operator
+   * switches to it — unlike {@link boardQueryParams}, `status` travels
+   * across: the calendar has no columns to conflict with, so narrowing it to
+   * one or a few statuses is a legitimate way to read the month.
+   *
+   * @access protected
+   * @since 10.0.0
+   *
+   * @type {Signal<Readonly<Record<string, string | null>>>}
+   */
+  protected readonly calendarQueryParams: Signal<Readonly<Record<string, string | null>>> =
+    computed((): Readonly<Record<string, string | null>> => ({
+      q: this.q() ?? null,
+      status: this.status() ?? null,
+      type: this.type() ?? null,
+      priority: this.priority() ?? null,
+      site: this.site() ?? null,
+      responsible: this.responsible() ?? null,
+      label: this.label() ?? null,
+      mine: this.mine() ?? null,
+      due: this.due() ?? null,
+      dueAfter: this.dueAfter() ?? null,
+      dueBefore: this.dueBefore() ?? null,
+      plannedStartAfter: this.plannedStartAfter() ?? null,
+      plannedStartBefore: this.plannedStartBefore() ?? null,
+    }));
+
+  /**
    * Property canTransition
    * @readonly
    *

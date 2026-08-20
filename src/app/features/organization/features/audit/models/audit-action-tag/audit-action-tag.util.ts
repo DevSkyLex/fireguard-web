@@ -100,6 +100,7 @@ const AUDIT_ACTION_LABELS: Record<AuditActionId, string> = {
   'intervention.recurrence_updated': $localize`:@@audit.action.intervention.recurrence_updated:Recurrence updated`,
   'intervention.recurrence_deleted': $localize`:@@audit.action.intervention.recurrence_deleted:Recurrence deleted`,
   'intervention.recurrence_materialized': $localize`:@@audit.action.intervention.recurrence_materialized:Recurrence materialized`,
+  'intervention.report_exported': $localize`:@@audit.action.intervention.report_exported:Intervention report exported`,
   'maintenance.schedule_overridden': $localize`:@@audit.action.maintenance.schedule_overridden:Maintenance schedule overridden`,
   'maintenance.campaign_generated': $localize`:@@audit.action.maintenance.campaign_generated:Maintenance campaign generated`,
   'calendar.event_created': $localize`:@@audit.action.calendar.event_created:Calendar event created`,

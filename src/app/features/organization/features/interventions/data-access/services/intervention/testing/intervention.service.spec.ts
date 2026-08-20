@@ -559,6 +559,22 @@ describe('InterventionService', () => {
     expect(result).toEqual(content);
   });
 
+  it('reads the intervention report as a blob via GET responseType blob', () => {
+    const content = new Blob(['pdf-bytes'], { type: 'application/pdf' });
+    let result: Blob | undefined;
+
+    service.exportReport('intervention-1').subscribe((blob) => {
+      result = blob;
+    });
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/interventions/intervention-1/report`);
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(content);
+
+    expect(result).toEqual(content);
+  });
+
   it('uploads an attachment scoped to a work item via the workItemId multipart field', () => {
     const file = new Blob(['data'], { type: 'image/jpeg' });
 

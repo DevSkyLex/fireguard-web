@@ -86,6 +86,7 @@ describe('OrganizationAssetsPage', () => {
   let loadRoots: ReturnType<typeof vi.fn>;
   let ensureChildrenLoaded: ReturnType<typeof vi.fn>;
   let move: ReturnType<typeof vi.fn>;
+  let duplicate: ReturnType<typeof vi.fn>;
   let loadEquipment: ReturnType<typeof vi.fn>;
   let loadInspections: ReturnType<typeof vi.fn>;
   let loadTree: ReturnType<typeof vi.fn>;
@@ -100,6 +101,7 @@ describe('OrganizationAssetsPage', () => {
     loadRoots = vi.fn();
     ensureChildrenLoaded = vi.fn();
     move = vi.fn();
+    duplicate = vi.fn();
     loadEquipment = vi.fn();
     loadInspections = vi.fn();
     loadTree = vi.fn();
@@ -121,9 +123,11 @@ describe('OrganizationAssetsPage', () => {
             expandingParentIds: signal([]),
             failedParentIds: signal([]),
             isMoving: signal(false),
+            isDuplicating: signal(false),
             loadRoots,
             ensureChildrenLoaded,
             move,
+            duplicate,
           },
         },
         {
@@ -284,6 +288,22 @@ describe('OrganizationAssetsPage', () => {
 
     expect(move).not.toHaveBeenCalled();
     expect(fixture.componentInstance['moveTarget']()).toBeNull();
+  });
+
+  it('duplicates a facility from the tree row menu', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onDuplicateRequested']({
+      id: 'facility-2',
+      label: 'Wing',
+      hasChildren: false,
+      data: facility(),
+    });
+
+    expect(duplicate).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-2',
+    });
   });
 
   it('does not touch the equipment/inspection pane on the "Compliance" axis', async () => {

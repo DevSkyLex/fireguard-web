@@ -88,7 +88,10 @@ This feature does not own generic shell composition or account-level user identi
   `Tree`'s optional pointer drag-drop, calling `FacilityTreeStore.move`. The
   tree row menu's "Move to…" action opens `FacilityMoveDialog` for the same
   operation and is the keyboard/AT path: drag-drop is pointer-only by
-  construction and is never the only way to re-parent a site
+  construction and is never the only way to re-parent a site. The same menu's
+  "Duplicate" action, gated identically, calls `FacilityTreeStore.duplicate`
+  directly with no confirmation dialog — the backend defaults the copy's name
+  and parent, and duplicating is not destructive
 - `/organizations/:organizationId/messages` — the direct-messages workspace, owned by the
   `collaboration` subfeature, gated by `organization.messaging.read`. `messages/:conversationId`
   opens one. Reached from the shell's bottom navigation, not from the organization sections

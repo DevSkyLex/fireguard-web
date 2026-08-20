@@ -26,6 +26,7 @@ describe('FacilityTreeStore', () => {
     list: ReturnType<typeof vi.fn>;
     listChildren: ReturnType<typeof vi.fn>;
     move: ReturnType<typeof vi.fn>;
+    duplicate: ReturnType<typeof vi.fn>;
   };
   let dispatch: ReturnType<typeof vi.fn>;
 
@@ -50,6 +51,7 @@ describe('FacilityTreeStore', () => {
       list: vi.fn().mockReturnValue(of(rootsCollection)),
       listChildren: vi.fn().mockReturnValue(of(childrenCollection)),
       move: vi.fn(),
+      duplicate: vi.fn(),
     };
     dispatch = vi.fn();
 
@@ -298,6 +300,75 @@ describe('FacilityTreeStore', () => {
       expect(store.childrenByParent()['facility-b']).toEqual([]);
       expect(dispatch).toHaveBeenCalledWith(
         expect.objectContaining({ type: facilityTreeStoreEvents.moveFailed.type }),
+      );
+    });
+  });
+
+  describe('duplicate', () => {
+    const facilityA = {
+      id: 'facility-a',
+      name: 'A',
+      parentFacilityId: null,
+    } as unknown as FacilityOutput;
+
+    beforeEach(async () => {
+      mockFacilityService.list.mockReturnValue(
+        of({ '@id': '', '@type': 'Collection', totalItems: 1, member: [facilityA] }),
+      );
+
+      store.loadRoots('org-1');
+      await flushEffects();
+    });
+
+    it('inserts the duplicated root into the roots list on success', async () => {
+      const duplicated = { ...facilityA, id: 'facility-a-copy' } as FacilityOutput;
+      mockFacilityService.duplicate.mockReturnValue(of(duplicated));
+
+      store.duplicate({ organizationId: 'org-1', facilityId: 'facility-a' });
+      await flushEffects();
+
+      expect(mockFacilityService.duplicate).toHaveBeenCalledWith('org-1', 'facility-a');
+      expect(store.roots().map((f) => f.id)).toEqual(['facility-a', 'facility-a-copy']);
+      expect(store.isDuplicating()).toBe(false);
+      expect(dispatch).toHaveBeenCalledWith(
+        facilityTreeStoreEvents.duplicateSucceeded(
+          expect.objectContaining({ severity: 'success' }),
+        ),
+      );
+    });
+
+    it('inserts the duplicated copy into its parent branch when already loaded', async () => {
+      mockFacilityService.listChildren.mockReturnValue(
+        of({ '@id': '', '@type': 'Collection', totalItems: 0, member: [] }),
+      );
+      store.ensureChildrenLoaded({ organizationId: 'org-1', facilityId: 'facility-a' });
+      await flushEffects();
+
+      const duplicated = {
+        id: 'facility-a-child-copy',
+        name: 'Child copy',
+        parentFacilityId: 'facility-a',
+      } as unknown as FacilityOutput;
+      mockFacilityService.duplicate.mockReturnValue(of(duplicated));
+
+      store.duplicate({ organizationId: 'org-1', facilityId: 'facility-a-child' });
+      await flushEffects();
+
+      expect(store.childrenByParent()['facility-a']?.map((f) => f.id)).toEqual([
+        'facility-a-child-copy',
+      ]);
+    });
+
+    it('dispatches duplicateFailed and leaves the tree unchanged on error', async () => {
+      mockFacilityService.duplicate.mockReturnValue(throwError(() => new Error('boom')));
+
+      store.duplicate({ organizationId: 'org-1', facilityId: 'facility-a' });
+      await flushEffects();
+
+      expect(store.roots().map((f) => f.id)).toEqual(['facility-a']);
+      expect(store.isDuplicating()).toBe(false);
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: facilityTreeStoreEvents.duplicateFailed.type }),
       );
     });
   });

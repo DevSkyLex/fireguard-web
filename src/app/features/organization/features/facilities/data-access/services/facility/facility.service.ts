@@ -12,6 +12,7 @@ import type {
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
+  DuplicateFacilityInput,
   SetPlanGeometryInput,
 } from '@features/organization/features/facilities/models';
 
@@ -555,6 +556,34 @@ export class FacilityService extends HydraApiService {
     return this.post<MoveFacilityInput, FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/move`,
       input,
+    );
+  }
+
+  /**
+   * Method duplicate
+   * @method duplicate
+   *
+   * @description
+   * Duplicates a facility and its active subtree within the organization.
+   * Both the copy's name and parent default server-side when omitted.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the facility to duplicate.
+   * @param {DuplicateFacilityInput} [input] - Optional name and target parent for the copy.
+   *
+   * @return {Observable<FacilityOutput>} An observable emitting the duplicated root facility.
+   */
+  public duplicate(
+    organizationId: string,
+    facilityId: string,
+    input?: DuplicateFacilityInput,
+  ): Observable<FacilityOutput> {
+    return this.post<DuplicateFacilityInput, FacilityOutput>(
+      `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/duplicate`,
+      input ?? {},
     );
   }
   //#endregion

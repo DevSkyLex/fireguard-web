@@ -19,6 +19,7 @@ import {
   lucideCircleCheck,
   lucideCircleHelp,
   lucideClipboardList,
+  lucideCopy,
   lucideDownload,
   lucideEllipsis,
   lucideLayoutGrid,
@@ -126,6 +127,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
       lucideCircleCheck,
       lucideCircleHelp,
       lucideClipboardList,
+      lucideCopy,
       lucideDownload,
       lucideEllipsis,
       lucideLayoutGrid,
@@ -505,6 +507,18 @@ export class OrganizationAssetsPage {
    */
   protected onMoveDismissed(): void {
     this.moveTarget.set(null);
+  }
+
+  /**
+   * Method onDuplicateRequested
+   * @description Duplicates a node's subtree — the tree row menu's "Duplicate" action. No confirmation dialog: the action is not destructive.
+   * @access protected
+   * @since 1.3.0
+   * @param {TreeNode<FacilityOutput>} node - The node to duplicate.
+   * @returns {void}
+   */
+  protected onDuplicateRequested(node: TreeNode<FacilityOutput>): void {
+    this.tree.duplicate({ organizationId: this.organizationId(), facilityId: node.id });
   }
   //#endregion
 

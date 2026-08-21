@@ -1,4 +1,4 @@
-<hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+<hlm-dialog [state]="dialogState()" disableClose (stateChanged)="onStateChanged($event)">
   <hlm-dialog-content
     class="sm:max-w-lg"
     data-testid="intervention-label-manage-dialog"

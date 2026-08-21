@@ -366,10 +366,6 @@
         <source>Its messages, pins, files and links stay, but the channel itself is gone for everyone. This cannot be undone.</source>
         <target>Ses messages, épingles, fichiers et liens restent, mais le canal lui-même disparaît pour tout le monde. Cette action est irréversible.</target>
       </trans-unit>
-      <trans-unit id="channels.room.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
-      </trans-unit>
       <trans-unit id="channels.room.deleteConfirmAction" datatype="html">
         <source>Delete</source>
         <target>Supprimer</target>
@@ -1873,10 +1869,6 @@
       <trans-unit id="facility.detail.deleteConfirmDescription" datatype="html">
         <source>A published facility is archived and can be restored; a draft facility is permanently removed. This cannot be undone from here.</source>
         <target>Un établissement publié est archivé et peut être restauré ; un établissement brouillon est supprimé définitivement. Cette action est irréversible depuis cet écran.</target>
-      </trans-unit>
-      <trans-unit id="facility.detail.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="facility.detail.deleteConfirmAction" datatype="html">
         <source>Delete</source>
@@ -3414,10 +3406,6 @@
         <source>This will permanently delete <x id="count" equiv-text="bulkIds.length"/> interventions. This action cannot be undone.</source>
         <target>Cette action supprimera définitivement <x id="count" equiv-text="bulkIds.length"/> interventions. Elle est irréversible.</target>
       </trans-unit>
-      <trans-unit id="intervention.list.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
-      </trans-unit>
       <trans-unit id="intervention.list.deleteConfirmAction" datatype="html">
         <source> Delete </source>
         <target> Supprimer </target>
@@ -3773,10 +3761,6 @@
       <trans-unit id="calendar.eventDeleteDialog.description" datatype="html">
         <source> This standalone event is permanently removed from the calendar. This cannot be undone. </source>
         <target>Cet événement autonome est définitivement supprimé du calendrier. Cette action est irréversible.</target>
-      </trans-unit>
-      <trans-unit id="calendar.eventDeleteDialog.cancel" datatype="html">
-        <source> Cancel </source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="calendar.eventDeleteDialog.deleting" datatype="html">
         <source>Deleting…</source>
@@ -5507,10 +5491,6 @@
       <trans-unit id="org.invitations.emptyText" datatype="html">
         <source>Invitations you send will appear here until they are accepted, revoked or expire.</source>
         <target>Les invitations que vous envoyez apparaissent ici jusqu&apos;à ce qu&apos;elles soient acceptées, révoquées ou expirées.</target>
-      </trans-unit>
-      <trans-unit id="org.members.removeConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmAction" datatype="html">
         <source>Remove</source>
@@ -7567,10 +7547,6 @@
       <trans-unit id="checklists.archiveDialog.descriptionBefore" datatype="html">
         <source>Archiving “<x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/>” keeps it readable but removes it from the checklists new inspections can use. This cannot be undone from here.</source>
         <target>Archiver « <x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/> » la conserve lisible mais la retire des checklists utilisables par les nouvelles inspections. Cette action ne peut pas être annulée depuis ici.</target>
-      </trans-unit>
-      <trans-unit id="checklists.archiveDialog.cancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="checklists.archiveDialog.confirm" datatype="html">
         <source>Archive</source>
